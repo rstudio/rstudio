@@ -19,10 +19,10 @@ well as menu structures (for main menu and popup menus).
       string if no label should be used
    @menuLabel: Label that should be used in a menu.
    @desc: Extended description (e.g. for tooltip)
-   @checkable: Indicates whether the command has a stateful checked state, 
+   @checkable: Indicates whether the command has a stateful checked state,
       which is shown by the command when rendered in a menu (both GWT and
       native menus)
-  @preventShortcutWhenDisabled: Whether the command's shortcut should be 
+  @preventShortcutWhenDisabled: Whether the command's shortcut should be
       suppressed when the command is disabled
   @windowMode: Which window the command wants to operate on; possible values:
       "any": operates on current window (the default),
@@ -118,7 +118,7 @@ well as menu structures (for main menu and popup menus).
       </menu>
 
       <separator/>
-      
+
       <menu label="_Edit">
          <cmd refid="undoDummy"/>
          <cmd refid="redoDummy"/>
@@ -153,7 +153,7 @@ well as menu structures (for main menu and popup menus).
       </menu>
 
       <separator/>
-      
+
       <menu label="_Code">
          <cmd refid="sourceNavigateBack"/>
          <cmd refid="sourceNavigateForward"/>
@@ -194,7 +194,7 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="executeAllCode"/>
          </menu>
-         
+
          <separator/>
          <cmd refid="sourceActiveDocument"/>
          <cmd refid="sourceActiveDocumentWithEcho"/>
@@ -202,7 +202,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="sourceFile"/>
          <separator/>
       </menu>
-      
+
       <separator/>
 
       <menu label="_View">
@@ -237,7 +237,7 @@ well as menu structures (for main menu and popup menus).
       </menu>
 
       <separator/>
-      
+
       <menu label="_Plots">
          <cmd refid="nextPlot"/>
          <cmd refid="previousPlot"/>
@@ -253,15 +253,15 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="clearPlots"/>
       </menu>
-      
+
       <separator/>
-      
+
       <menu label="_Session">
          <cmd refid="newSession"/>
          <separator/>
          <cmd refid="interruptR"/>
          <cmd refid="restartR"/>
-         <separator/> 
+         <separator/>
          <cmd refid="terminateR"/>
          <separator/>
          <menu label="Set _Working Directory">
@@ -279,7 +279,7 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="quitSession"/>
       </menu>
-        
+
       <menu label="_Build">
          <cmd refid="devtoolsLoadAll"/>
          <cmd refid="buildAll"/>
@@ -304,9 +304,9 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="debugBreakpoint"/>
          <cmd refid="debugClearBreakpoints"/>
          <separator/>
-         <cmd refid="debugStep"/>   
+         <cmd refid="debugStep"/>
          <cmd refid="debugStepInto"/>
-         <cmd refid="debugFinish"/>      
+         <cmd refid="debugFinish"/>
          <cmd refid="debugContinue"/>
          <cmd refid="debugStop"/>
          <separator/>
@@ -318,9 +318,9 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="debugHelp"/>
       </menu>
-      
+
       <separator/>
-      
+
       <menu label="_Tools">
          <menu label="_Import Dataset">
             <cmd refid="importDatasetFromFile"/>
@@ -440,7 +440,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="foldAll" value="Alt+O" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Collapse All Folds"/>
          <shortcut refid="foldAll" value="Cmd+Alt+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Collapse All Folds"/>
          <shortcut refid="unfoldAll" value="Shift+Alt+O" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Expand All Folds"/>
-         <shortcut refid="unfoldAll" value="Cmd+Shift+Alt+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Expand All Folds"/>  
+         <shortcut refid="unfoldAll" value="Cmd+Shift+Alt+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Expand All Folds"/>
          <shortcut value="Ctrl+K" title="Delete to Line End" if="org.rstudio.core.client.BrowseCap.isMacintosh()" />
          <shortcut value="Alt+Up" title="Move Lines Up" />
          <shortcut value="Alt+Down" title="Move Lines Down" />
@@ -464,10 +464,10 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="findFromSelection" value="Ctrl+F3" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="findReplace" value="Meta+F" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="findReplace" value="Cmd+F" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="findNext" value="Cmd+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/> 
-         <shortcut refid="findNext" value="F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/> 
-         <shortcut refid="findPrevious" value="Cmd+Shift+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/> 
-         <shortcut refid="findPrevious" value="Shift+F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/> 
+         <shortcut refid="findNext" value="Cmd+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/>
+         <shortcut refid="findNext" value="F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/>
+         <shortcut refid="findPrevious" value="Cmd+Shift+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/>
+         <shortcut refid="findPrevious" value="Shift+F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/>
          <shortcut refid="replaceAndFind" value="Cmd+Shift+J"/>
          <shortcut refid="goToFileFunction" value="Ctrl+."/>
          <shortcut refid="goToLine" value="Shift+Alt+G" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -512,7 +512,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="nextTab" value="Ctrl+F12"/>
          <shortcut refid="firstTab" value="Ctrl+Shift+F11"/>
          <shortcut refid="lastTab" value="Ctrl+Shift+F12"/>
-         
+
       </shortcutgroup>
       <shortcutgroup name="Files">
          <shortcut refid="saveSourceDoc" value="Cmd+S"/>
@@ -614,459 +614,681 @@ well as menu structures (for main menu and popup menus).
 
       visible      [true|false] Whether the command should start out as visible
                    or hidden. Defaults to true.
+
+      rebindable   [true|false] Whether this command should be rebindable by the
+                   user to different keyboard shortcuts. Defaults to true.
    -->
 
    <cmd id="setWorkingDirToProjectDir"
-        buttonLabel = ""
+        label="Set Working Directory to Project Directory"
+        buttonLabel=""
         menuLabel="To Project Directory"
         desc="Change working directory to project root directory"/>
+
    <cmd id="setWorkingDirToActiveDoc"
+        label="Set Working Directory to Current Document's Directory"
         buttonLabel=""
         menuLabel="To Source File Location"
-        desc="Change working directory to path of active document"/> 
+        desc="Change working directory to path of active document"/>
+        
    <cmd id="setWorkingDirToFilesPane"
+        label="Set Working Directory to Directory in Files Pane"
         buttonLabel=""
         menuLabel="To _Files Pane Location"
         desc="Change working directory to location of Files pane"/>
+        
    <cmd id="setWorkingDir"
+        label="Set Working Directory..."
         buttonLabel=""
         menuLabel="_Choose Directory..."
         desc="Select and change to a new working directory"/>
 
    <cmd id="newSourceDoc"
+        label="Create a New R Script"
         buttonLabel=""
         menuLabel="_R Script"
         desc="Create a new R script"/>
-        
+
    <cmd id="newTextDoc"
         menuLabel="_Text File"
-        desc="Create a new text file"/>   
+        desc="Create a new text file"
+        rebindable="false"/>
         
    <cmd id="newCppDoc"
         menuLabel="_C++ File"
-        desc="Create a new C++ file"/>    
+        desc="Create a new C++ file"
+        rebindable="false"/>
         
    <cmd id="rcppHelp"
-        desc="Help on using Rcpp"/>         
-              
+        desc="Help on using Rcpp"
+        rebindable="false"/>
+        
    <cmd id="printCppCompletions"
-        desc="Print C++ Completions"/>           
-              
+        desc="Print C++ Completions"
+        rebindable="false"/>
+        
    <cmd id="newSweaveDoc"
         menuLabel="R _Sweave"
-        desc="Create a new R Sweave document"/>  
+        desc="Create a new R Sweave document"
+        rebindable="false"/>
         
    <cmd id="newRMarkdownDoc"
         menuLabel="R _Markdown..."
-        desc="Create a new R Markdown document"/>    
-   
+        desc="Create a new R Markdown document"
+        rebindable="false"/>
+        
     <cmd id="newRHTMLDoc"
         menuLabel="R _HTML"
-        desc="Create a new R HTML document"/>    
+        desc="Create a new R HTML document"
+        rebindable="false"/>
         
    <cmd id="newRPresentationDoc"
         menuLabel="R _Presentation"
-        desc="Create a new R presentation"/>     
+        desc="Create a new R presentation"
+        rebindable="false"/>
         
    <cmd id="newRDocumentationDoc"
         menuLabel="R _Documentation"
-        desc="Create a new Rd documentation file"/>  
+        desc="Create a new Rd documentation file"
+        rebindable="false"/>
         
    <cmd id="openSourceDoc"
+        label="Open File..."
         menuLabel="_Open File..."
         buttonLabel=""
         desc="Open an existing file"/>
+        
    <cmd id="reopenSourceDocWithEncoding"
+        label="Reopen Current Document with Encoding..."
         menuLabel="Reopen with _Encoding..."
         buttonLabel=""
         desc="Reopen the current file with a different encoding"/>
+        
    <cmd id="saveSourceDoc"
+        label="Save Current Document"
         menuLabel="_Save"
         buttonLabel=""
         desc="Save current document"/>
+        
    <cmd id="saveSourceDocAs"
+        label="Save Current Document As..."
         menuLabel="Save _As..."
         buttonLabel="Save as"
         desc="Save current file to a specific path" />
+        
    <cmd id="saveAllSourceDocs"
+        label="Save All Source Documents"
         menuLabel="Sa_ve All"
         buttonLabel=""
         desc="Save all open documents"/>
+        
    <cmd id="saveSourceDocWithEncoding"
+        label="Save Current Document with Encoding..."
         menuLabel="Save wit_h Encoding..."
         desc="Save the current file with a different encoding"/>
+        
    <cmd id="closeSourceDoc"
+        label="Close Current Document"
         menuLabel="_Close"
         enabled="false"
         preventShortcutWhenDisabled="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
+        
    <cmd id="closeAllSourceDocs"
+        label="Close All Documents"
         menuLabel="C_lose All"/>
+        
    <cmd id="closeOtherSourceDocs"
+        label="Close Other Documents"
         menuLabel="Close All E_xcept Current"/>
+        
    <cmd id="vcsFileDiff"
         menuLabel="_Diff of"
-        desc="Show differences for the file"/>
+        desc="Show differences for the file"
+        category="vcs"/>
+        
    <cmd id="vcsFileLog"
         menuLabel="_Log of"
-        desc="Show log of changes to the file"/>
+        desc="Show log of changes to the file"
+        category="vcs"/>
+        
    <cmd id="vcsFileRevert"
         menuLabel="_Revert"
-        desc="Revert changes to the file"/>
-   <cmd id="vcsViewOnGitHub" 
+        desc="Revert changes to the file"
+        category="vcs"/>
+        
+   <cmd id="vcsViewOnGitHub"
          menuLabel="_View FILE on GitHub"
-         desc="View this file on Github"/>     
-   <cmd id="vcsBlameOnGitHub" 
+         desc="View this file on Github"
+         category="vcs"/>
+         
+   <cmd id="vcsBlameOnGitHub"
          menuLabel="_Blame FILE on GitHub"
-         desc="Blame view for this file on Github"/>          
+         desc="Blame view for this file on Github"
+         category="vcs"/>
+         
    <cmd id="printSourceDoc"
         menuLabel="Pr_int..."
         buttonLabel=""
-        desc="Print the current file"/>
+        desc="Print the current file"
+        rebindable="false"/>
+        
    <cmd id="popoutDoc"
+        label="Show Document in New Window"
         desc="Show in new window"/>
 
-   <cmd id="mru0" visible="false"/>
-   <cmd id="mru1" visible="false"/>
-   <cmd id="mru2" visible="false"/>
-   <cmd id="mru3" visible="false"/>
-   <cmd id="mru4" visible="false"/>
-   <cmd id="mru5" visible="false"/>
-   <cmd id="mru6" visible="false"/>
-   <cmd id="mru7" visible="false"/>
-   <cmd id="mru8" visible="false"/>
-   <cmd id="mru9" visible="false"/>
-   <cmd id="mru10" visible="false"/>
-   <cmd id="mru11" visible="false"/>
-   <cmd id="mru12" visible="false"/>
-   <cmd id="mru13" visible="false"/>
-   <cmd id="mru14" visible="false"/>
-   <cmd id="clearRecentFiles" menuLabel="Clear List"/>
+   <cmd id="mru0" visible="false" rebindable="false"/>
+   <cmd id="mru1" visible="false" rebindable="false"/>
+   <cmd id="mru2" visible="false" rebindable="false"/>
+   <cmd id="mru3" visible="false" rebindable="false"/>
+   <cmd id="mru4" visible="false" rebindable="false"/>
+   <cmd id="mru5" visible="false" rebindable="false"/>
+   <cmd id="mru6" visible="false" rebindable="false"/>
+   <cmd id="mru7" visible="false" rebindable="false"/>
+   <cmd id="mru8" visible="false" rebindable="false"/>
+   <cmd id="mru9" visible="false" rebindable="false"/>
+   <cmd id="mru10" visible="false" rebindable="false"/>
+   <cmd id="mru11" visible="false" rebindable="false"/>
+   <cmd id="mru12" visible="false" rebindable="false"/>
+   <cmd id="mru13" visible="false" rebindable="false"/>
+   <cmd id="mru14" visible="false" rebindable="false"/>
    
+   <cmd id="clearRecentFiles"
+        menuLabel="Clear List"
+        rebindable="false"/>
+
    <cmd id="newProject"
+        label="Create a New Project..."
         menuLabel="New _Project..."
         buttonLabel=""
         desc="Create a project"/>
+        
    <cmd id="openProject"
+        label="Open Project..."
         menuLabel="Ope_n Project..."
         buttonLabel=""
         desc="Open a project"/>
-     <cmd id="openProjectInNewWindow"
+        
+   <cmd id="openProjectInNewWindow"
+        label="Open Project with New R Session"
         menuLabel="Open Project in New _Session..."
         buttonLabel=""
         desc="Open project in a new R session"/>
-   
-   <cmd id="projectMru0" visible="false"/>
-   <cmd id="projectMru1" visible="false"/>
-   <cmd id="projectMru2" visible="false"/>
-   <cmd id="projectMru3" visible="false"/>
-   <cmd id="projectMru4" visible="false"/>
-   <cmd id="projectMru5" visible="false"/>
-   <cmd id="projectMru6" visible="false"/>
-   <cmd id="projectMru7" visible="false"/>
-   <cmd id="projectMru8" visible="false"/>
-   <cmd id="projectMru9" visible="false"/>
-   <cmd id="projectMru10" visible="false"/>
-   <cmd id="projectMru11" visible="false"/>
-   <cmd id="projectMru12" visible="false"/>
-   <cmd id="projectMru13" visible="false"/>
-   <cmd id="projectMru14" visible="false"/>
-   <cmd id="clearRecentProjects" menuLabel="Clear Project List"/>     
 
+   <cmd id="projectMru0" visible="false" rebindable="false"/>
+   <cmd id="projectMru1" visible="false" rebindable="false"/>
+   <cmd id="projectMru2" visible="false" rebindable="false"/>
+   <cmd id="projectMru3" visible="false" rebindable="false"/>
+   <cmd id="projectMru4" visible="false" rebindable="false"/>
+   <cmd id="projectMru5" visible="false" rebindable="false"/>
+   <cmd id="projectMru6" visible="false" rebindable="false"/>
+   <cmd id="projectMru7" visible="false" rebindable="false"/>
+   <cmd id="projectMru8" visible="false" rebindable="false"/>
+   <cmd id="projectMru9" visible="false" rebindable="false"/>
+   <cmd id="projectMru10" visible="false" rebindable="false"/>
+   <cmd id="projectMru11" visible="false" rebindable="false"/>
+   <cmd id="projectMru12" visible="false" rebindable="false"/>
+   <cmd id="projectMru13" visible="false" rebindable="false"/>
+   <cmd id="projectMru14" visible="false" rebindable="false"/>
+   
+   <cmd id="clearRecentProjects"
+        menuLabel="Clear Project List"
+        rebindable="false"/>
+        
    <cmd id="closeProject"
+        label="Close Current Project"
         menuLabel="Close Projec_t"
         buttonLabel=""
         desc="Close the currently open project"/>
 
    <cmd id="projectOptions"
+        label="Edit Project Options..."
         menuLabel="_Project Options..."
         buttonLabel=""
         desc="Edit options for the current project"/>
-        
-    <cmd id="projectSweaveOptions"
+
+   <cmd id="projectSweaveOptions"
         menuLabel=""
         buttonLabel=""
         desc=""/>
-        
+
    <cmd id="showToolbar"
-        menuLabel="Show _Toolbar"/>
+        menuLabel="Show _Toolbar"
+        rebindable="false"/>
+        
    <cmd id="hideToolbar"
-        menuLabel="Hide _Toolbar"/>
+        menuLabel="Hide _Toolbar"
+        rebindable="false"/>
+        
    <cmd id="toggleToolbar"
+        label="Toggle Visibility of Toolbar"
         menuLabel="Toggle Toolbar"/>
+        
    <cmd id="zoomActualSize"
+        label="Zoom to Actual Size"
         menuLabel="Actual Size"/>
+        
    <cmd id="zoomIn"
         menuLabel="_Zoom In"/>
+        
    <cmd id="zoomOut"
         menuLabel="Zoom O_ut"/>
+        
    <cmd id="goToFileFunction"
-        menuLabel="Go To File/F_unction..."/>   
+        label="Go To File/Function..."
+        menuLabel="Go To File/F_unction..."/>
+        
    <cmd id="activateSource"
+        label="Move Focus to Source"
         menuLabel="Move Focus to Sou_rce"
         windowMode="main"/>
+        
    <cmd id="activateConsole"
+        label="Move Focus to Console"
         menuLabel="Move Focus to _Console"
         windowMode="main"/>
+        
    <cmd id="activateEnvironment"
+        label="Show Environment Pane"
         menuLabel="Show _Environment"
         windowMode="main"/>
+        
    <cmd id="activateData"
+        label="Show Data Pane"
         menuLabel="Show _Data"
         windowMode="main"/>
+        
    <cmd id="activateHistory"
+        label="Show History Pane"
         menuLabel="Show Histor_y"
         windowMode="main"/>
+        
    <cmd id="activateFiles"
+        label="Show Files Pane"
         menuLabel="Show F_iles"
         windowMode="main"/>
+        
    <cmd id="activatePlots"
+        label="Show Plots Pane"
         menuLabel="Show Pl_ots"
         windowMode="main"/>
+        
    <cmd id="activatePackages"
+        label="Show Packages Pane"
         menuLabel="Show P_ackages"
         windowMode="main"/>
+        
    <cmd id="activateHelp"
+        label="Show Help Pane"
         menuLabel="Move Focus to _Help"
         windowMode="main"/>
+        
    <cmd id="activateVcs"
+        label="Show VCS Pane"
         menuLabel="Show _Vcs"
         windowMode="main"/>
+        
    <cmd id="activateBuild"
+        label="Show Build Pane"
         menuLabel="Show _Build"
         windowMode="main"/>
-   <cmd id="activatePresentation"  
+        
+   <cmd id="activatePresentation"
+        label="Show Presentation Pane"
         menuLabel="Show Presentation"
         windowMode="main"/>
+        
    <cmd id="jumpTo"
+        label="Jump To..."
         menuLabel="_Jump To..."/>
+        
    <cmd id="switchToTab"
+        label="Switch to Tab..."
         menuLabel="Switch to Ta_b..."/>
+        
    <cmd id="previousTab"
+        label="Open Previous Tab"
         menuLabel="_Previous Tab"/>
+        
    <cmd id="nextTab"
+        label="Open Next Tab"
         menuLabel="_Next Tab"/>
+        
    <cmd id="firstTab"
+        label="Open First Tab"
         menuLabel="_First Tab"/>
+        
    <cmd id="lastTab"
+        label="Open Last Tab"
         menuLabel="_Last Tab"/>
+        
    <cmd id="goToLine"
+        label="Go to Line..."
         menuLabel="_Go to Line..."/>
+        
    <cmd id="toggleFullScreen"
         menuLabel="Toggle Full Screen"/>
 
    <cmd id="findFromSelection"
         menuLabel="_Use Selection for Find"/>
+        
    <cmd id="findReplace"
+        label="Find / Replace Text..."
         menuLabel="_Find..."/>
+        
    <cmd id="findNext"
         buttonLabel="Next"
         menuLabel="Find _Next"
-        desc="Find next occurrence"/>
+        desc="Find next occurrence"
+        rebindable="false"/>
+        
    <cmd id="findPrevious"
         buttonLabel="Prev"
         menuLabel="Find Pre_vious"
-        desc="Find previous occurrence"/>
+        desc="Find previous occurrence"
+        rebindable="false"/>
+        
    <cmd id="findSelectAll"
         buttonLabel="All"
         menuLabel="Find And Select All"
-        desc="Find and select all matches"/>
+        desc="Find and select all matches"
+        rebindable="false"/>
+        
    <cmd id="replaceAndFind"
         buttonLabel="Replace"
         menuLabel="_Replace and Find"
-        desc="Replace and find next occurrence"/>  
+        desc="Replace and find next occurrence"
+        rebindable="false"/>
+        
    <cmd id="findInFiles"
         menuLabel="Find _in Files..."
         windowMode="main"/>
+        
    <cmd id="fold"
         menuLabel="Collapse"/>
+        
    <cmd id="unfold"
         menuLabel="Expand"/>
+        
    <cmd id="foldAll"
         menuLabel="Collapse All"/>
+        
    <cmd id="unfoldAll"
         menuLabel="Expand All"/>
+        
    <cmd id="jumpToMatching"
+        label="Jump to Matching Bracket"
         menuLabel="Jump To _Matching"
-        desc="Jump to matching bracket"/>
+        desc="Jump to matching bracket"
+        category="editor"/>
+        
    <cmd id="expandToMatching"
+        label="Expand to Matching Bracket"
         menuLabel="Expand To _Matching"
-        desc="Expand selection to matching bracket"/>
+        desc="Expand selection to matching bracket"
+        category="editor"/>
+        
    <cmd id="splitIntoLines"
         menuLabel="Split Into Lines"
-        desc="Create a new cursor on each line in current selection"/>
+        desc="Create a new cursor on each line in current selection"
+        category="editor"/>
+        
    <cmd id="executeAllCode"
+        label="Run All Code in Current Source File"
         buttonLabel=""
         menuLabel="Run _All"
-        desc="Run all of the code in the source file"/>
+        desc="Run all of the code in the source file"
+        category="r"/>
+        
    <cmd id="executeCode"
+        label="Run Current Line or Selection"
         buttonLabel="Run"
         menuLabel="Run _Line(s)"
-        desc="Run the current line or selection"/>
+        desc="Run the current line or selection"
+        category="r"/>
+        
    <cmd id="executeCodeWithoutMovingCursor"
+        label="Run Current Line or Selection (Without Moving Cursor)"
         buttonLabel="Run"
         menuLabel="Run _Line(s) without moving cursor"
-        desc="Run the current line or selection without moving the cursor"/>
-   <cmd id="executeCodeWithoutFocus"/>
+        desc="Run the current line or selection without moving the cursor"
+        category="r"/>
+        
+   <cmd id="executeCodeWithoutFocus"
+        rebindable="false"/>
+        
    <cmd id="executeToCurrentLine"
+        label="Execute Code up to Current Line"
         menuLabel="Run From _Beginning To Line"
-        desc="Run from the beginning of the source file up through the current line"/>
+        desc="Run from the beginning of the source file up through the current line"
+        category="r"/>
+        
     <cmd id="executeFromCurrentLine"
+        label="Execute Code From Current Line to End of Document"
         menuLabel="Run From Line to _End"
-        desc="Run from the current line through the end of the source file"/>
+        desc="Run from the current line through the end of the source file"
+        category="r"/>
+        
    <cmd id="executeCurrentFunction"
+        label="Run Current Function Definition"
         menuLabel="Run _Function Definition"
-        desc="Run the top-level function definition, if any, that contains the cursor"/>
+        desc="Run the top-level function definition, if any, that contains the cursor"
+        category="r"/>
+        
    <cmd id="executeCurrentSection"
-	     buttonLabel="Run Section"
+        label="Execute Current Code Section"
+	    buttonLabel="Run Section"
         menuLabel="Run Code _Section"
-        desc="Run the code section that contains the cursor"/>
+        desc="Run the code section that contains the cursor"
+        category="r"/>
+        
    <cmd id="executeLastCode"
+        label="Re-Run Previous Code Execution"
         menuLabel="Re-Run _Previous"
-        desc="Re-run the previous code region"/>       
+        desc="Re-run the previous code region"
+        category="r"/>
+        
    <cmd id="insertChunk"
         menuLabel="_Insert Chunk"
-        desc="Insert a new code chunk"/>
+        desc="Insert a new code chunk"
+        category="editor"/>
+        
    <cmd id="insertSection"
         menuLabel="_Insert Section..."
-        desc="Insert a new code section"/>
+        desc="Insert a new code section"
+        category="editor"/>
+        
    <cmd id="executePreviousChunks"
         menuLabel="Run _Previous Chunks"
-        desc="Run all previous chunks in the source file"/>
+        desc="Run all previous chunks in the source file"
+        category="r"/>
+        
    <cmd id="executeCurrentChunk"
         menuLabel="Run _Current Chunk"
-        desc="Run the current code chunk"/>
+        desc="Run the current code chunk"
+        category="r"/>
+        
    <cmd id="executeNextChunk"
         menuLabel="Run _Next Chunk"
-        desc="Run the next code chunk"/>
+        desc="Run the next code chunk"
+        category="r"/>
+        
    <cmd id ="goToHelp"
+        label="Show Help for Current Function"
         menuLabel="Go To _Help"
-        desc="Go to help for the currently selected function"/>
+        desc="Go to help for the currently selected function"
+        category="help"/>
+        
    <cmd id ="goToFunctionDefinition"
         menuLabel="_Go To Function Definition"
-        desc="Go to to the definition of the currently selected function"/>
+        desc="Go to to the definition of the currently selected function"
+        category="help"/>
+        
    <cmd id="codeCompletion"
+        label="Retrieve Completions"
         menuLabel="Code Completion"
-        desc="Show code completions at the current cursor location"/>
-   <cmd id = "sourceNavigateBack"
+        desc="Show code completions at the current cursor location"
+        category="editor"/>
+        
+   <cmd id="sourceNavigateBack"
         menuLabel="Bac_k"
         desc="Go back to the previous source location"/>
-   <cmd id = "sourceNavigateForward"
+        
+   <cmd id="sourceNavigateForward"
         menuLabel="For_ward"
         desc="Go forward to the next source location"/>
+        
    <cmd id="extractFunction"
         menuLabel="E_xtract Function"
         desc="Turn the current selection into a function"/>
+        
    <cmd id="extractLocalVariable"
          menuLabel="Extract _Variable"
          desc="Extract a variable out of the current selection"/>
+         
    <cmd id="findUsages"
         menuLabel="Find _Usages"
         desc="Find source locations where this symbol is used"/>
+        
    <cmd id="sourceFile"
         buttonLabel=""
         menuLabel="Source _File..."
         desc="Source the contents of an R file"
         windowMode="main"/>
+        
    <cmd id="sourceActiveDocument"
         buttonLabel="Source"
         menuLabel="_Source"
         desc="Source the contents of the active document"/>
+        
    <cmd id="sourceActiveDocumentWithEcho"
         buttonLabel=""
         menuLabel="Source with _Echo"
         desc="Source the contents of the active document (with echo)"/>
+        
    <cmd id="commentUncomment"
+        label="Comment / Uncomment Selection"
         menuLabel="_Comment/Uncomment Lines"
         desc="Comment or uncomment the current line/selection"/>
+        
    <cmd id="reformatCode"
+        label="Reformat Current Selection"
         menuLabel="Re_format Code"
         desc="Reformat the current line/selection"/>
+        
    <cmd id="showDiagnosticsActiveDocument"
+        label="Show Diagnostics for Current Document"
         menuLabel="Show _Diagnostics"
         desc="Show diagnostics for the active document"/>
+        
    <cmd id="showDiagnosticsProject"
+        label="Show Diagnostics for Current Project"
         menuLabel="Show Diagnostics (Projec_t)"
         desc="Show diagnostics for all source files in the current project"/>
+        
    <cmd id="reindent"
+        label="Reindent Selection"
         menuLabel="_Reindent Lines"
         desc="Reindent the current line/selection"/>
+        
    <cmd id="reflowComment"
         menuLabel="Reflow Co_mment"
         desc="Reflow selected comment lines so they wrap evenly"/>
+        
    <cmd id="renameInFile"
+        label="Rename Symbol in File"
         menuLabel="Rename in File"
         desc="Rename symbol in current file"/>
+        
    <cmd id="insertSnippet"
         menuLabel="Insert Snippet"
         desc="Expand snippet at cursor"/>
+        
    <cmd id="insertRoxygenSkeleton"
         menuLabel="Insert Ro_xygen Skeleton"
         desc="Insert a roxygen comment for the current function"/>
+        
    <cmd id="expandSelection"
         menuLabel="Expand Selection"
         desc="Expand selection"/>
+        
    <cmd id="shrinkSelection"
         menuLabel="Shrink Selection"
         desc="Shrink selection"/>
+        
    <cmd id="markdownHelp"
+        label="Open Markdown Quick Reference"
         menuLabel="_Markdown Quick Reference"
         desc="Markdown quick reference"/>
+        
    <cmd id="openRoxygenQuickReference"
         menuLabel="_Roxygen Quick Reference"
         desc="Roxygen quick reference"/>
-        
+
    <cmd id="toggleDocumentOutline"
+        label="Toggle Document Outline"
         menuLabel="Show Document Outline"
         desc="Show document outline"/>
-        
+
    <cmd id="usingRMarkdownHelp"
         menuLabel="_Using R Markdown"
-        desc="Guide to using R Markdown"/>   
+        desc="Guide to using R Markdown"
+        category="help"/>
         
     <cmd id="authoringRPresentationsHelp"
         menuLabel="_Authoring R Presentations"
-        desc="Guide to using R Markdown"/>
-    
+        desc="Guide to using R Markdown"
+        category="help"/>
+
     <cmd id="openDataVisualizationCheatSheet"
          menuLabel="Data Visualization with ggplot2"
-         desc="Data visualization with ggplot2"/>
-         
+         desc="Data visualization with ggplot2"
+         category="help"/>
+
     <cmd id="openPackageDevelopmentCheatSheet"
          menuLabel="Package Development with devtools"
-         desc="Package development with devtools"/>
-         
+         desc="Package development with devtools"
+         category="help"/>
+
     <cmd id="openDataWranglingCheatSheet"
          menuLabel="Data Manipulation with dplyr, tidyr"
-         desc="Data manipulation with dplyr and tidyr"/>
-         
+         desc="Data manipulation with dplyr and tidyr"
+         category="help"/>
+
     <cmd id="openRMarkdownCheatSheet"
          menuLabel="R Markdown Cheat Sheet"
-         desc="R Markdown cheat sheet"/>
-         
+         desc="R Markdown cheat sheet"
+         category="help"/>
+
     <cmd id="openRMarkdownReferenceGuide"
          menuLabel="R Markdown Reference Guide"
-         desc="R Markdown reference guide"/>
-         
+         desc="R Markdown reference guide"
+         category="help"/>
+
     <cmd id="openShinyCheatSheet"
          menuLabel="Shiny Web Applications"
-         desc="Shiny web applications"/>
-  
+         desc="Shiny web applications"
+         category="help"/>
+
    <cmd id="knitDocument"
+        label="Knit Current Document"
         buttonLabel="Knit"
         menuLabel="_Knit Document"
         desc="Knit the current document"/>
- 
+
    <cmd id="previewHTML"
+        label="Preview Document as HTML"
         buttonLabel="Preview"
         menuLabel="Preview"
         desc="Show a preview of the current document as HTML"/>
-        
+
    <cmd id="publishHTML"
+        label="Publish to RPubs..."
         buttonLabel="Publish"
         menuLabel="P_ublish to RPubs..."
-        desc="Publish the current document"/>      
- 
+        desc="Publish the current document"/>
+        
    <cmd id="compilePDF"
+        label="Compile to PDF..."
         buttonLabel="Compile PDF"
         menuLabel="_Compile PDF"
         desc="Compile a PDF from the current LaTeX or Sweave document"/>
@@ -1078,8 +1300,9 @@ well as menu structures (for main menu and popup menus).
    <cmd id="editRmdFormatOptions"
         menuLabel="_Output Options..."
         desc="Edit the R Markdown format options for the current file"/>
-       
+
    <cmd id="knitWithParameters"
+        label="Knit with Parameters..."
         menuLabel="Knit _with Parameters..."
         desc="Knit the document with a set of custom parameters"/>
 
@@ -1090,312 +1313,481 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="checkSpelling"
         menuLabel="Check _Spelling..."/>
-        
+
    <cmd id="newFolder"
+        label="Create a New Folder..."
         menuLabel="Folder..."
         buttonLabel="New Folder"
         desc="Create a new folder"/>
+        
    <cmd id="uploadFile"
+        label="Upload Files..."
         menuLabel="Upload Files..."
         buttonLabel="Upload"
         desc="Upload files to server"/>
-  <cmd id="copyFile"
+        
+   <cmd id="copyFile"
+        label="Copy Files..."
         menuLabel="Copy..."
         buttonLabel="Copy"
-        desc="Copy selected file or folder"/>
+        desc="Copy selected file or folder"
+        rebindable="false"/>
+        
    <cmd id="moveFiles"
+        label="Move Files..."
         menuLabel="Move..."
         buttonLabel="Move"
-        desc="Move selected files or folders"/>
-  <cmd id="exportFiles"
+        desc="Move selected files or folders"
+        rebindable="false"/>
+        
+   <cmd id="exportFiles"
+        label="Export Files..."
         menuLabel="Export..."
         buttonLabel="Export"
-        desc="Export selected files or folders"/>
+        desc="Export selected files or folders"
+        rebindable="false"/>
+       
    <cmd id="renameFile"
+        label="Rename Current File..."
         buttonLabel="Rename"
-        desc="Rename selected file or folder"/>
+        desc="Rename selected file or folder"
+        rebindable="false"/>
+        
    <cmd id="deleteFiles"
+        label="Delete Files..."
         buttonLabel="Delete"
-        desc="Delete selected files or folders"/>
+        desc="Delete selected files or folders"
+        rebindable="false"/>
+        
    <cmd id="refreshFiles"
         menuLabel="Refresh"
-        desc="Refresh file listing"/>
+        desc="Refresh file listing"
+        rebindable="false"/>
+        
    <cmd id="goToWorkingDir"
-        buttonLabel = ""
+        buttonLabel=""
         menuLabel="Go To Working Directory"
-        desc="View the current working directory"/>
+        desc="View the current working directory"
+        rebindable="false"/>
+        
    <cmd id="setAsWorkingDir"
-        label="Set As Working Directory"/>
+        label="Set As Working Directory"
+        rebindable="false"/>
+        
    <cmd id="showFolder"
         label="Show Folder in New Window"
-        visible="false"/>
+        visible="false"
+        rebindable="false"/>
+        
    <cmd id="vcsAddFiles"
         menuLabel="Add"
         buttonLabel="Add"
-        desc="Add the selected files or folders"/>
+        desc="Add the selected files or folders"
+        rebindable="false"
+        category="vcs"/>
+        
    <cmd id="vcsRemoveFiles"
         menuLabel="Delete"
         buttonLabel="Delete"
-        desc="Delete the selected files or folders"/>
+        desc="Delete the selected files or folders"
+        rebindable="false"
+        category="vcs"/>
 
    <!-- VCS pane -->
    <cmd id="vcsDiff"
         buttonLabel="Diff"
         menuLabel="Diff"
-        desc="Diff selected file(s)"/>
+        desc="Diff selected file(s)"
+        rebindable="false"
+        category="vcs"/>
+        
    <cmd id="vcsCommit"
         buttonLabel="Commit"
         menuLabel="_Commit..."
-        desc="Commit pending changes"/>
+        desc="Commit pending changes"
+        rebindable="false"
+        category="vcs"/>
+        
    <cmd id="vcsRevert"
         buttonLabel="Revert"
         menuLabel="Revert..."
-        desc="Revert selected changes"/>
+        desc="Revert selected changes"
+        rebindable="false"
+        category="vcs"/>
+        
    <cmd id="vcsShowHistory"
         menuLabel="_History"
         buttonLabel="History"
-        desc="View history of previous commits"/>
+        desc="View history of previous commits"
+        rebindable="false"
+        category="vcs"/>
+        
    <cmd id="vcsRefresh"
-        desc="Refresh listing"/>
-   <cmd id="vcsRefreshNoError"/>
+        desc="Refresh listing"
+        rebindable="false"
+        category="vcs"/>
+        
+   <cmd id="vcsRefreshNoError"
+        rebindable="false"
+        category="vcs"/>
+        
    <cmd id="vcsOpen"
         menuLabel="Open File"
-        desc="Open selected file(s)"/>
+        desc="Open selected file(s)"
+        rebindable="false"
+        category="vcs"/>
+        
    <cmd id="vcsIgnore"
         menuLabel="Ignore..."
         buttonLabel="Ignore"
-        desc="Ignore the selected files or folders"/>
+        desc="Ignore the selected files or folders"
+        rebindable="false"
+        category="vcs"/>
+        
    <cmd id="vcsPull"
         menuLabel="_Pull Branches"
-        buttonLabel="Pull"/>
+        buttonLabel="Pull"
+        rebindable="false"
+        category="vcs"/>
+        
    <cmd id="vcsPush"
         menuLabel="P_ush Branch"
-        buttonLabel="Push"/>
+        buttonLabel="Push"
+        rebindable="false"
+        category="vcs"/>
+        
    <cmd id="vcsCleanup"
         menuLabel="Cleanu_p"
         buttonLabel="Cleanup"
-        desc="Recursively clean up the working copy (removing locks, etc)"/>
-   <cmd id="consoleClear"
-        menuLabel="Cle_ar Console"/>
-   <cmd id="interruptR"
-        menuLabel="_Interrupt R"/>
-   <cmd id="restartR"
-        menuLabel="_Restart R"
-        desc="Restart R"/>
-   <cmd id="terminateR"
-        menuLabel="_Terminate R..."
-        desc="Forcibly terminate R session"/>     
+        desc="Recursively clean up the working copy (removing locks, etc)"
+        rebindable="false"
+        category="vcs"/>
+        
    <cmd id="vcsResolve"
         menuLabel="Resolve..."
         buttonLabel="Resolve"
-        desc="Resolve conflicts in the selected files or folders"/>
+        desc="Resolve conflicts in the selected files or folders"
+        rebindable="false"
+        category="vcs"/>
+        
+   <cmd id="consoleClear"
+        label="Clear Console"
+        menuLabel="Cle_ar Console"/>
+        
+   <cmd id="interruptR"
+        label="Interrupt R Session"
+        menuLabel="_Interrupt R"/>
+        
+   <cmd id="restartR"
+        label="Restart R Session"
+        menuLabel="_Restart R"
+        desc="Restart R"/>
+        
+   <cmd id="terminateR"
+        label="Terminate R Session"
+        menuLabel="_Terminate R..."
+        desc="Forcibly terminate R session"/>
 
    <!-- PDF Viewer -->
    <cmd id="showPdfExternal"
+        label="Show PDF in External Viewer"
         menuLabel="Show PDF in External Viewer"
         desc="Show in an external PDF viewer window"/>
-        
-   <!-- HTML Preview -->     
+
+   <!-- HTML Preview -->
    <cmd id="openHtmlExternal"
+        label="Open Page with Web Browser"
         buttonLabel=""
         desc="View the page with the system web browser"/>
-   
+
    <cmd id="saveHtmlPreviewAsLocalFile"
         menuLabel="File on Local Computer..."
-        desc="Download the page to a local file"/>
-        
+        desc="Download the page to a local file"
+        rebindable="false"/>
+
    <cmd id="saveHtmlPreviewAs"
         menuLabel="File on RStudio Server..."
         buttonLabel="Save As"
-        desc="Save the page to another location"/>
-  
+        desc="Save the page to another location"
+        rebindable="false"/>
+
    <cmd id="showHtmlPreviewLog"
         buttonLabel="Log"
-        desc="Show the compilation log for this document"/>
-  
+        desc="Show the compilation log for this document"
+        rebindable="false"/>
+
    <cmd id="refreshHtmlPreview"
-        desc="Refresh the preview"/>
-        
+        desc="Refresh the preview"
+        rebindable="false"/>
+
    <!-- Presentation -->
    <cmd id="refreshPresentation"
-        desc="Refresh the presentation"/>
+        desc="Refresh the presentation"
+        rebindable="false"
+        category="presentation"/>
+        
    <cmd id="presentationFullscreen"
-        desc="Show presentation in full screen mode"/> 
+        desc="Show presentation in full screen mode"
+        rebindable="false"
+        category="presentation"/>
         
    <cmd id="presentationHome"
-        desc="Go to the first slide"/>
-   <cmd id="presentationNext"
-        desc="Go to the next slide"/>
-   <cmd id="presentationPrev"
-        desc="Go to the previous slide"/> 
-   <cmd id="presentationEdit"
-        desc="Edit this slide of the presentation"/>
+        desc="Go to the first slide"
+        rebindable="false"
+        category="presentation"/>
         
+   <cmd id="presentationNext"
+        desc="Go to the next slide"
+        rebindable="false"
+        category="presentation"/>
+        
+   <cmd id="presentationPrev"
+        desc="Go to the previous slide"
+        rebindable="false"
+        category="presentation"/>
+        
+   <cmd id="presentationEdit"
+        desc="Edit this slide of the presentation"
+        rebindable="false"
+        category="presentation"/>
+
    <cmd id="presentationViewInBrowser"
         menuLabel="_View in Browser"
-        desc="View the presentation in an external web browser"/>
+        desc="View the presentation in an external web browser"
+        rebindable="false"
+        category="presentation"/>
+        
    <cmd id="presentationSaveAsStandalone"
         menuLabel="_Save As Web Page..."
-        desc="Save the presentation as a standalone web page"/>
+        desc="Save the presentation as a standalone web page"
+        rebindable="false"
+        category="presentation"/>
 
    <cmd id="tutorialFeedback"
-        desc="Provide feedback on this tutorial"/>     
-       
+        desc="Provide feedback on this tutorial"
+        rebindable="false"
+        category="presentation"/>
+        
    <cmd id="clearPresentationCache"
         menuLabel="Clear Knitr Cache..."
-        desc="Clear knitr cache for this presentation"/>    
-       
+        desc="Clear knitr cache for this presentation"
+        rebindable="false"
+        category="presentation"/>
+        
    <cmd id="historySendToSource"
         menuLabel="Insert into _Source"
         buttonLabel="To Source"
-        desc="Insert the selected commands into the current document (Shift+Enter)"/>
+        desc="Insert the selected commands into the current document (Shift+Enter)"
+        rebindable="false"/>
+        
    <cmd id="historySendToConsole"
         menuLabel="Send to _Console"
         buttonLabel="To Console"
-        desc="Send the selected commands to the R console (Enter)"/>
+        desc="Send the selected commands to the R console (Enter)"
+        rebindable="false"/>
+        
    <cmd id="searchHistory"
         menuLabel="Search History"
         buttonLabel=""
-        desc="Search history for commands matching a pattern"/>
+        desc="Search history for commands matching a pattern"
+        rebindable="false"/>
+        
    <cmd id="loadHistory"
         menuLabel="_Load History..."
         buttonLabel=""
-        desc="Load history from an existing file"/>
+        desc="Load history from an existing file"
+        rebindable="false"/>
+        
    <cmd id="saveHistory"
         menuLabel="Sa_ve History As..."
         buttonLabel=""
-        desc="Save history into a file"/>
+        desc="Save history into a file"
+        rebindable="false"/>
+        
    <cmd id="historyRemoveEntries"
         menuLabel="_Remove Entries..."
         buttonLabel=""
-        desc="Remove the selected history entries"/>
+        desc="Remove the selected history entries"
+        rebindable="false"/>
+        
    <cmd id="clearHistory"
         menuLabel="Clear _All..."
         buttonLabel=""
-        desc="Clear all history entries"/>
+        desc="Clear all history entries"
+        rebindable="false"/>
+        
    <cmd id="historyDismissResults"
-        label="Done" />
+        label="Done"
+        rebindable="false"/>
+        
    <cmd id="historyShowContext"
-        label="Show In Context" />
+        label="Show In Context"
+        rebindable="false"/>
+        
    <cmd id="historyDismissContext"
-        label="&#x00AB; Back" />
+        label="&#x00AB; Back"
+        rebindable="false"/>
 
    <cmd id="nextPlot"
+        label="Show Next Plot"
         buttonLabel=""
         menuLabel="_Next Plot"
         desc="Next plot"/>
+        
    <cmd id="previousPlot"
+        label="Show Previous Plot"
         buttonLabel=""
         menuLabel="_Previous Plot"
         desc="Previous plot"/>
+        
    <cmd id="savePlotAsImage"
+        label="Save Plot As Image..."
         menuLabel="Save as _Image..."
-        desc="Save the current plot as an image file"/> 
+        desc="Save the current plot as an image file"/>
+        
     <cmd id="savePlotAsPdf"
-        menuLabel="Save as P_DF..."
-        desc="Save the current plot as a PDF file"/>
+         label="Save Plot as PDF..."
+         menuLabel="Save as P_DF..."
+         desc="Save the current plot as a PDF file"/>
+         
    <cmd id="copyPlotToClipboard"
+        label="Copy Current Plot to Clipboard..."
         menuLabel="Cop_y to Clipboard..."
-        desc="Copy the current plot to the clipboard"/>   
-   <cmd id ="zoomPlot" 
+        desc="Copy the current plot to the clipboard"/>
+        
+   <cmd id="zoomPlot"
         menuLabel="_Zoom Plot..."
         buttonLabel="Zoom"
-        desc="View a larger version of the plot in a new window"/>
+        desc="View a larger version of the plot in a new window"
+        rebindable="false"/>
+        
    <cmd id="removePlot"
+        label="Remove Current Plot..."
         buttonLabel=""
         menuLabel="_Remove Plot..."
-        desc="Remove the current plot"/> 
+        desc="Remove the current plot"/>
+        
    <cmd id="clearPlots"
+        label="Clear All Plots..."
         menuLabel="_Clear All..."
-        desc="Clear all Plots"/>    
+        desc="Clear all Plots"/>
+        
    <cmd id="refreshPlot"
+        label="Refresh Current Plot"
         buttonLabel=""
         menuLabel="Refresh"
-        desc="Refresh current plot"/>     
+        desc="Refresh current plot"/>
+        
    <cmd id="showManipulator"
+        label="Show Manipulator for Current Plot"
         buttonLabel=""
         menuLabel="Show _Manipulator"
         desc="Show the manipulator for this plot"/>
-        
+
    <cmd id="clearWorkspace"
         menuLabel="_Clear Workspace..."
         desc="Clear objects from the workspace"/>
+        
    <cmd id="loadWorkspace"
         menuLabel="_Load Workspace..."/>
+        
    <cmd id="saveWorkspace"
         menuLabel="_Save Workspace As..."/>
+        
    <cmd id="importDatasetFromFile"
+        label="Import Dataset from File..."
         menuLabel="From _Text File..."/>
+        
    <cmd id="importDatasetFromURL"
+        label="Import Dataset from URL..."
         menuLabel="From _Web URL..."/>
- 
+
    <cmd id="refreshWorkspace"
         buttonLabel=""
         menuLabel="Refresh"
         desc="Refresh Workspace"/>
 
    <cmd id="installPackage"
+        label="Install Packages..."
         menuLabel="Install Pac_kages..."
         buttonLabel="Install"
-        desc="Install R packages" />
-        
+        desc="Install R packages"/>
+
    <cmd id="updatePackages"
+        label="Update Packages..."
         menuLabel="Check for Package _Updates..."
         buttonLabel="Update"
-        desc="Check for package updates" /> 
+        desc="Check for package updates"/>
         
-   <cmd id ="refreshPackages"
+   <cmd id="refreshPackages"
+        label="Refresh Packages Pane"
         desc="Refresh Package listing"/>
-        
+
    <cmd id="packratBootstrap"
    		buttonLabel="Packrat"
    		menuLabel="_Initialize Packrat..."
-   		desc="Use packrat with this project" />
-   		
+   		desc="Use packrat with this project"
+   		rebindable="false"
+   		category="packrat"/>
+
    <cmd id="packratClean"
          menuLabel="_Clean Unused Packages..."
-         desc="Remove unused packages from your packrat library" />
-         
+         desc="Remove unused packages from your packrat library"
+   		 rebindable="false"
+         category="packrat"/>
+
    <cmd id="packratHelp"
          menuLabel="Using Packrat"
-         desc="Help on using packrat with R projects" />  		
-   		
+         desc="Help on using packrat with R projects"
+         rebindable="false"
+         category="packrat"/>
+         
    <cmd id="packratOptions"
          buttonLabel="Options"
          menuLabel="Packrat _Options..."
-         desc="Configure packrat options for this project" />		
+         desc="Configure packrat options for this project"
+         rebindable="false"
+         category="packrat"/>
          
    <cmd id="packratBundle"
    		buttonLabel="Bundle"
    		menuLabel="Export Project _Bundle..."
-   		desc="Bundle a Packrat Project" />
-   		
+   		desc="Bundle a Packrat Project"
+   		rebindable="false"
+   		category="packrat"/>
+
    <cmd id="versionControlOptions"
         menuLabel="_Options..."
-        desc="Configure version control options"/>
-        
+        desc="Configure version control options"
+        category="vcs"/>
+
    <cmd id="versionControlHelp"
         menuLabel="_Using Version Control"
-        desc="Help on using version control with RStudio"/>
-        
+        desc="Help on using version control with RStudio"
+        category="help"/>
+
    <cmd id="versionControlShowRsaKey"
+        label="Show Public Key..."
         menuLabel="Show Public Key..."
-        desc="Show RSA public key"/>     
+        desc="Show RSA public key"
+        category="vcs"/>
         
    <cmd id="versionControlProjectSetup"
         menuLabel="Project _Setup..."
-        desc="Setup version control for the current project"/>
+        desc="Setup version control for the current project"
+        category="vcs"/>
 
    <cmd id="showShellDialog"
+        label="Open Shell"
         menuLabel="_Shell..."
         desc="Execute shell commands(s)"/>
-        
+
    <cmd id="macPreferences"
-        menuLabel="_Preferences..."/>    
-             
+        menuLabel="_Preferences..."/>
+        
    <cmd id="showOptions"
         menuLabel="_Global Options..."/>
-        
+
    <cmd id="modifyKeyboardShortcuts"
         menuLabel="Modify Keyboard Shortcuts..."
         desc="Modify keyboard shortcuts"/>
@@ -1403,32 +1795,47 @@ well as menu structures (for main menu and popup menus).
    <cmd id="checkForUpdates"
         menuLabel="Check for _Updates"
         visible="false"/>
-       
+
    <cmd id="helpUsingRStudio"
-        menuLabel="RStudio _Docs"/>
-        
+        menuLabel="RStudio _Docs"
+        category="help"/>
+
    <cmd id="helpKeyboardShortcuts"
-        menuLabel="_Keyboard Shortcuts" />
- 
+        menuLabel="_Keyboard Shortcuts"
+        category="help"/>
+
    <cmd id="helpBack"
         buttonLabel=""
-        desc="Previous topic"/>
+        desc="Previous topic"
+        rebindable="false"/>
+        
    <cmd id="helpForward"
         buttonLabel=""
-        desc="Next topic"/>
+        desc="Next topic"
+        rebindable="false"/>
+        
    <cmd id="helpHome"
+        label="Show R Help"
         menuLabel="R _Help"
         buttonLabel=""
-        desc="Help home"/>
+        desc="Show R Help"/>
+        
    <cmd id="printHelp"
         buttonLabel=""
-        desc="Print topic"/>
+        desc="Print topic"
+        rebindable="false"/>
+        
    <cmd id="clearHelpHistory"
         menuLabel="Clear history"
-        desc="Clear history"/>
+        desc="Clear history"
+        rebindable="false"/>
+        
    <cmd id="helpPopout"
+        label="Show Help in New Window"
         buttonLabel=""
-        desc="Show in new window"/>
+        desc="Show in new window"
+        category="help"/>
+        
    <cmd id="refreshHelp"
         menuLabel="Refresh"
         desc="Refresh topic"/>
@@ -1436,112 +1843,165 @@ well as menu structures (for main menu and popup menus).
    <cmd id="viewerPopout"
         buttonLabel=""
         desc="Show in new window"/>
+        
    <cmd id="viewerBack"
         buttonLabel=""
-        desc="Go back"/>
+        desc="Go back"
+        rebindable="false"/>
+        
    <cmd id="viewerForward"
         buttonLabel=""
-        desc="Go forward"/>
+        desc="Go forward"
+        rebindable="false"/>
+        
    <cmd id="viewerZoom"
         buttonLabel="Zoom"
-        desc="View a larger version in a new window"/>
+        desc="View a larger version in a new window"
+        rebindable="false"/>
+        
    <cmd id="viewerRefresh"
-        desc="Refresh viewer"/> 
+        desc="Refresh viewer"
+        rebindable="false"/>
+        
    <cmd id="viewerSaveAllAndRefresh"
-        desc="Save source files and refresh viewer"/> 
+        desc="Save source files and refresh viewer"
+        rebindable="false"/>
+        
    <cmd id="viewerStop"
         buttonLabel=""
-        desc="Stop application"/>  
+        desc="Stop application"
+        rebindable="false"/>
+        
    <cmd id="viewerClear"
         buttonLabel=""
-        desc="Remove current viewer item"/>  
+        desc="Remove current viewer item"
+        rebindable="false"/>
+        
    <cmd id="viewerClearAll"
         buttonLabel=""
-        desc="Clear all viewer items"/> 
+        desc="Clear all viewer items"
+        rebindable="false"/>
+        
    <cmd id="viewerSaveAsImage"
         menuLabel = "Save as Image..."
-        desc="Save as an image file"/>
+        desc="Save as an image file"
+        rebindable="false"/>
+        
    <cmd id="viewerSaveAsWebPage"
-        menuLabel = "Save as Web Page..."
-        desc = "Save as a standalone web page"/>
+        menuLabel="Save as Web Page..."
+        desc="Save as a standalone web page"
+        rebindable="false"/>
+        
    <cmd id="viewerCopyToClipboard"
-        menuLabel = "Copy to Clipboard..."
-        desc="Copy to the system clipboard"/>    
+        menuLabel="Copy to Clipboard..."
+        desc="Copy to the system clipboard"
+        rebindable="false"/>
         
    <cmd id="raiseException"
-        menuLabel="Raise Exception"/>
+        menuLabel="Raise Exception"
+        rebindable="false"/>
+        
    <cmd id="raiseException2"
-        menuLabel="Raise Exception JS"/>
+        menuLabel="Raise Exception JS"
+        rebindable="false"/>
+        
    <cmd id="showWarningBar"
-        menuLabel="Show warning bar"/>
+        menuLabel="Show warning bar"
+        rebindable="false"/>
+        
    <cmd id="showRequestLog"
-        menuLabel="_Request Log"/>
+        menuLabel="_Request Log"
+        rebindable="false"/>
+        
    <cmd id="diagnosticsReport"
         menuLabel="_Write Diagnostics Report"
         visible="false"/>
+        
    <cmd id="logFocusedElement"
-        menuLabel="Log focused element"/>
+        menuLabel="Log focused element"
+        rebindable="false"/>
+        
    <cmd id="debugDumpContents"
-        menuLabel="_Dump Editor Contents..."/>
+        menuLabel="_Dump Editor Contents..."
+        rebindable="false"/>
+        
    <cmd id="debugImportDump"
-        menuLabel="_Import Editor Contents..."/>
-   <cmd id="refreshSuperDevMode"/>
+        menuLabel="_Import Editor Contents..."
+        rebindable="false"/>
+        
+   <cmd id="refreshSuperDevMode"
+        rebindable="false"/>
 
    <cmd id="newSession"
+        label="Open a New R Session"
         menuLabel="_New Session"
         desc="Open a new R session"/>
 
    <cmd id="quitSession"
+        label="Quite the Current R Session"
         menuLabel="_Quit Session..."
         desc="Quit the current R session"/>
 
    <cmd id="showAboutDialog"
-        menuLabel="_About RStudio"/>
+        label="About RStudio..."
+        menuLabel="_About RStudio"
+        rebindable="false"/>
+        
    <cmd id="showLogFiles"
         menuLabel="_Show Log Files"
-        visible="false"/>
-   <cmd id="updateCredentials"
-        menuLabel="_Update Credentials"/>
-               
-   <cmd id="rstudioSupport"
-        menuLabel="RStudio _Support" />
-               
-   <cmd id="rstudioAgreement"
-        menuLabel="RStudio Agreement" />
+        visible="false"
+        rebindable="false"/>
         
+   <cmd id="updateCredentials"
+        menuLabel="_Update Credentials"
+        rebindable="false"/>
+
+   <cmd id="rstudioSupport"
+        menuLabel="RStudio _Support"
+        rebindable="false"/>
+
+   <cmd id="rstudioAgreement"
+        menuLabel="RStudio Agreement"
+        rebindable="false"/>
+
     <cmd id="rstudioLicense"
         menuLabel="RStudio _License"
-        visible="false"/>
-              
+        visible="false"
+        rebindable="false"/>
+
    <cmd id="buildAll"
+        label="Build and Reload"
         buttonLabel="Build &amp; Reload"
         menuLabel="_Build and Reload"
         desc="Build and reload the package"
         windowMode="main"/>
-        
+
    <cmd id="rebuildAll"
+        label="Clean and Rebuild"
         menuLabel="Clean and _Rebuild"
         desc="Clean previous output and rebuild all"
         windowMode="main"/>
-        
+
    <cmd id="cleanAll"
+        label="Clean All"
         menuLabel="_Clean All"
         buttonLabel="Clean"
         desc="Clean all"/>
-        
+
    <cmd id="buildSourcePackage"
         menuLabel="Build _Source Package"
         desc="Build a source package"/>
-        
+
    <cmd id="buildBinaryPackage"
         menuLabel="Build Binar_y Package"
-        desc="Build a binary package"/>     
+        desc="Build a binary package"/>
         
    <cmd id="devtoolsLoadAll"
+        label="Execute devtools::load_all()"
         menuLabel="_Load All"
         desc="Execute devtools::load_all"
         windowMode="main"/>
-        
+
    <cmd id="roxygenizePackage"
         menuLabel="_Document"
         desc="Run roxygen2 to document this package"
@@ -1552,7 +2012,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Check Package"
         desc="R CMD check"
         windowMode="main"/>
-        
+
    <cmd id="testPackage"
         menuLabel="_Test Package"
         desc="Run tests for package"
@@ -1564,94 +2024,137 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
 
    <cmd id="buildToolsProjectSetup"
+        label="Configure Build Tools..."
         menuLabel="Configure Build _Tools..."
         desc="Configure build tools"/>
- 
+
    <cmd id="refreshEnvironment"
         menuLabel="_Refresh Environment"
         desc="Refresh the list of objects in the environment"/>
- 
+
    <cmd id="undoDummy"
-        menuLabel="_Undo"/>
-   <cmd id="redoDummy"
-        menuLabel="Re_do"/>
-   <cmd id="cutDummy"
-        menuLabel="Cu_t"/>
-   <cmd id="copyDummy"
-        menuLabel="_Copy"/>
-   <cmd id="pasteDummy"
-        menuLabel="_Paste"/>
+        menuLabel="_Undo"
+        rebindable="false"/>
         
+   <cmd id="redoDummy"
+        menuLabel="Re_do"
+        rebindable="false"/>
+        
+   <cmd id="cutDummy"
+        menuLabel="Cu_t"
+        rebindable="false"/>
+        
+   <cmd id="copyDummy"
+        menuLabel="_Copy"
+        rebindable="false"/>
+        
+   <cmd id="pasteDummy"
+        menuLabel="_Paste"
+        rebindable="false"/>
+
    <cmd id="maximizeConsole"
         menuLabel="Maximize Console"/>
 
    <cmd id="debugBreakpoint"
+        label="Toggle Breakpoint on Current Line"
         menuLabel="Toggle _Breakpoint"
         desc="Set or remove a breakpoint on the current line of code"/>
+        
    <cmd id="debugClearBreakpoints"
+        label="Clear All Breakpoints..."
         menuLabel="Clear _All Breakpoints..."
         desc="Remove all the breakpoints in the current project"/>
+        
    <cmd id="debugContinue"
         menuLabel="_Continue"
         buttonLabel="Continue"
-        desc="Continue execution until the next breakpoint is encountered"/>
+        desc="Continue execution until the next breakpoint is encountered"
+        rebindable="false"/>
+        
    <cmd id="debugStop"
         menuLabel="_Stop Debugging"
         buttonLabel="Stop"
-        desc="Exit debug mode"/>
+        desc="Exit debug mode"
+        rebindable="false"/>
+        
    <cmd id="debugStep"
         menuLabel="E_xecute Next Line"
         buttonLabel="Next"
-        desc="Execute the next line of code"/>
+        desc="Execute the next line of code"
+        rebindable="false"/>
+        
    <cmd id="debugStepInto"
         menuLabel="Step _Into Function"
         buttonLabel=""
-        desc="Step into the current function call"/>
+        desc="Step into the current function call"
+        rebindable="false"/>
+        
    <cmd id="debugFinish"
         menuLabel="_Finish Function/Loop"
         buttonLabel=""
-        desc="Execute the remainer of the current function or loop"/>
+        desc="Execute the remainer of the current function or loop"
+        rebindable="false"/>
+        
    <cmd id="debugHelp"
+        label="Show Guide on Debugging with RStudio"
         menuLabel="Debugging _Help"
-        desc="Guide to debugging features"/>
-   
+        desc="Guide to debugging features"
+        category="help"/>
+
    <cmd id="errorsMessage"
         menuLabel="_Message Only"
         desc="Print the error message when an unhandled error occurs"
-        checkable="true"/>
+        checkable="true"
+        rebindable="false"/>
+        
    <cmd id="errorsTraceback"
         menuLabel="_Error Inspector"
         desc="Show the error inspector when an unhandled error occurs"
-        checkable="true"/>
+        checkable="true"
+        rebindable="false"/>
+        
    <cmd id="errorsBreak"
         menuLabel="_Break in Code"
         desc="Break when any unhandled error occurs"
-        checkable="true"/>
-        
+        checkable="true"
+        rebindable="false"/>
+
    <cmd id="showProfiler"
         menuLabel= "_Profiler"
-        desc="Show the R code profiler"/>
+        desc="Show the R code profiler"
+        rebindable="false"/>
+        
    <cmd id="startProfiler"
         menuLabel="Start Profiling"
-        desc="Start profiling R code"/>
+        desc="Start profiling R code"
+        rebindable="false"/>
+        
    <cmd id="stopProfiler"
         menuLabel="Stop Profiling"
-        desc="Stop profiling R code"/>
+        desc="Stop profiling R code"
+        rebindable="false"/>
 
    <cmd id="reloadShinyApp"
+        label="Reload Shiny Application"
         menuLabel="Reload"
         desc="Reload the Shiny application"/>
+        
    <cmd id="shinyRunInPane"
+        label="Run Shiny Application in New Pane"
         menuLabel="Run in Viewer Pane"
         desc="Run the Shiny application in an RStudio pane"
         checkable="true"
         windowMode="background"/>
+        
    <cmd id="shinyRunInViewer"
+        label="Run Shiny Application in RStudio Viewer"
         menuLabel="Run in Window"
         desc="Run the Shiny application in an RStudio viewer window"
         checkable="true"
         windowMode="background"/>
+        
    <cmd id="shinyRunInBrowser"
+        label="Run Shiny Application in Web Browser"
         menuLabel="Run External"
         desc="Run the Shiny application in the system's default Web browser"
         checkable="true"
@@ -1660,14 +2163,19 @@ well as menu structures (for main menu and popup menus).
    <cmd id="rsconnectDeploy"
         menuLabel="_Publish..."
         desc="Publish the application or document"
-        visible="false"/>
+        visible="false"
+        rebindable="false"/>
+        
    <cmd id="rsconnectConfigure"
         menuLabel="_Configure Application..."
         desc="Configure the application"
-        visible="false"/>
+        visible="false"
+        rebindable="false"/>
+        
    <cmd id="rsconnectManageAccounts"
         menuLabel="_Manage Accounts..."
         desc="Connect or disconnect accounts"
-        visible="false"/>
+        visible="false"
+        rebindable="false"/>
 
 </commands>
