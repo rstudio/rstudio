@@ -28,11 +28,15 @@ import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperatio
 
 public class FileBacked<T extends JavaScriptObject>
 {
-   public FileBacked(String filePath, T defaultValue)
+   public FileBacked(String filePath,
+                     boolean logErrorIfNotFound,
+                     T defaultValue)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       filePath_ = filePath;
+      logErrorIfNotFound_ = logErrorIfNotFound;
       object_ = defaultValue;
+      
       loaded_ = false;
       loading_ = false;
    }
@@ -56,6 +60,7 @@ public class FileBacked<T extends JavaScriptObject>
       
       server_.readJSON(
             filePath_,
+            logErrorIfNotFound_,
             new ServerRequestCallback<JavaScriptObject>()
             {
                @Override
@@ -144,6 +149,7 @@ public class FileBacked<T extends JavaScriptObject>
    }
    
    private final String filePath_;
+   private final boolean logErrorIfNotFound_;
    
    private boolean loaded_;
    private boolean loading_;

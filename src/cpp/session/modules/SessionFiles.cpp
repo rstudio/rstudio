@@ -904,7 +904,8 @@ Error readJSON(const core::json::JsonRpcRequest& request,
    pResponse->setResult(json::Object());
    
    std::string path;
-   Error error = json::readParams(request.params, &path);
+   bool logErrorIfNotFound;
+   Error error = json::readParams(request.params, &path, &logErrorIfNotFound);
    if (error)
    {
       LOG_ERROR(error);
@@ -914,8 +915,12 @@ Error readJSON(const core::json::JsonRpcRequest& request,
    FilePath filePath = module_context::resolveAliasedPath(path);
    if (!filePath.exists())
    {
-      Error error = fileNotFoundError(ERROR_LOCATION);
-      LOG_ERROR(error);
+      if (logErrorIfNotFound)
+      {
+         Error error = fileNotFoundError(ERROR_LOCATION);
+         LOG_ERROR(error);
+      }
+      
       return error;
    }
    

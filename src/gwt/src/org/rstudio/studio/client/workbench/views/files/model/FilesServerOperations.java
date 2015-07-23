@@ -90,5 +90,6 @@ public interface FilesServerOperations
                   ServerRequestCallback<Boolean> requestCallback);
    
    void readJSON(String path,
+                 boolean logErrorIfNotFound,
                  ServerRequestCallback<JavaScriptObject> requestCallback);
 }

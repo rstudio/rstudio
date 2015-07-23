@@ -78,6 +78,7 @@ public class EditorCommandManager
       
       bindings_ = new FileBacked<EditorKeyBindings>(
             KEYBINDINGS_PATH,
+            false,
             EditorKeyBindings.create());
       
       events_.addHandler(

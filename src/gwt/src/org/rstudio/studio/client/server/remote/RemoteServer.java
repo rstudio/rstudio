@@ -1153,8 +1153,8 @@ public class RemoteServer implements Server
    }
    
    public void writeJSON(String path,
-                                 JavaScriptObject object,
-                                 ServerRequestCallback<Boolean> requestCallback)
+                         JavaScriptObject object,
+                         ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
@@ -1163,10 +1163,12 @@ public class RemoteServer implements Server
    }
    
    public void readJSON(String path,
-         ServerRequestCallback<JavaScriptObject> requestCallback)
+                        boolean logErrorIfNotFound,
+                        ServerRequestCallback<JavaScriptObject> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
+      params.set(1, JSONBoolean.getInstance(logErrorIfNotFound));
       sendRequest(RPC_SCOPE, "read_json", params, requestCallback);
    }
    
