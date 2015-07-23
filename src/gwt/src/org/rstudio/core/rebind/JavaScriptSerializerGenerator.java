@@ -22,6 +22,7 @@ import java.util.List;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.core.client.js.JavaScriptSerializer;
 
+
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
@@ -44,24 +45,17 @@ public class JavaScriptSerializerGenerator extends Generator
        // locate all the types annotated with JavaScriptSerializable
        for (JClassType classType : oracle.getTypes())
        {
-          for (Annotation annotation: classType.getDeclaredAnnotations())
-          {
-             if (annotation.annotationType() == JavaScriptSerializable.class)
-             {
-                classes.add(classType);
-             }
-          }
+          if (isAnnotatedSerializable(classType))
+             classes.add(classType);
        }
        
-       final String genPackageName = "org.rstudio.core.client.js";
-       final String genClassName = "JavaScriptSerializer__Impl";
-
        ClassSourceFileComposerFactory sourceFile = 
              new ClassSourceFileComposerFactory(genPackageName, 
                                                 genClassName );
        sourceFile.addImplementedInterface(
              JavaScriptSerializer.class.getCanonicalName());
        sourceFile.addImport("com.google.gwt.core.client.JavaScriptObject");
+       sourceFile.addImport("org.rstudio.core.client.js.JsObject;");
 
        PrintWriter printWriter = context.tryCreate(logger, genPackageName, 
              genClassName);
@@ -122,11 +116,24 @@ public class JavaScriptSerializerGenerator extends Generator
              JField field = fields[i];
              if (!field.isStatic())
              {
-                w.println("\"" + field.getName() + "\": " + 
-                          "source.@" + classType.getQualifiedSourceName() +
-                          "::" + field.getName() + 
-                          (i < (fields.length - 1) ? 
-                                ", " : ""));
+                w.print("\"" + field.getName() + "\": ");
+                if (isAnnotatedSerializable(field))
+                {
+                   w.print("this.@" + genPackageName + "." + genClassName + 
+                           "::serializeJso(L");
+                   w.print(field.getType().getQualifiedSourceName()
+                                          .replace(".", "/"));
+                   w.print(";)(");
+                }
+                w.println("source.@" + classType.getQualifiedSourceName() +
+                          "::" + field.getName());
+                if (isAnnotatedSerializable(field))
+                {
+                   w.print(")");
+                }
+                if (i < (fields.length - 1))
+                   w.print(", ");
+                w.println();
              }
           }
           w.outdent();
@@ -192,13 +199,46 @@ public class JavaScriptSerializerGenerator extends Generator
           {
              if (!field.isStatic())
              {
-                w.println("dest.@" + classType.getQualifiedSourceName() + "::" + 
-                          field.getName() + " = " + "source.class_data[\"" + 
-                          field.getName() + "\"];");
+                w.print("dest.@" + classType.getQualifiedSourceName() + "::");
+                w.print(field.getName() + " = ");
+                if (isAnnotatedSerializable(field))
+                {
+                   w.print("this.@" + genPackageName + "." + genClassName + 
+                             "::deserialize(");
+                   w.print("Lcom/google/gwt/core/client/JavaScriptObject;)(");
+                }
+                w.print("source.class_data[\"" + field.getName() + 
+                           "\"]");
+                if (isAnnotatedSerializable(field))
+                   w.print(")");
+                w.println(";");
              }
           }
           w.outdent();
           w.println("}-*/;");
        }
     }
+
+    private boolean isAnnotatedSerializable(JField field)
+    {
+       JClassType classType = field.getType().isClass();
+       if (classType == null)
+          return false;
+       return isAnnotatedSerializable(classType);
+    }
+    
+    private boolean isAnnotatedSerializable(JClassType classType)
+    {
+       for (Annotation annotation: classType.getDeclaredAnnotations())
+       {
+          if (annotation.annotationType() == JavaScriptSerializable.class)
+          {
+             return true;
+          }
+       }
+       return false;
+    }
+
+    private final String genPackageName = "org.rstudio.core.client.js";
+    private final String genClassName = "JavaScriptSerializer__Impl";
 }

@@ -1,7 +1,7 @@
 /*
  * GitHubViewRequest.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,22 +16,22 @@
 package org.rstudio.studio.client.workbench.views.vcs.common.model;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JavaScriptSerializable;
 
+@JavaScriptSerializable
 public class GitHubViewRequest
 {
-   public enum ViewType 
+   public GitHubViewRequest()
    {
-      View,
-      Blame
    }
-   
-   public GitHubViewRequest(FileSystemItem file, ViewType type)
+
+   public GitHubViewRequest(FileSystemItem file, int type)
    {
       this(file, type, -1, -1);
    }
    
    public GitHubViewRequest(FileSystemItem file,
-                            ViewType type,
+                            int type,
                             int startLine, 
                             int endLine)
    {
@@ -46,7 +46,7 @@ public class GitHubViewRequest
       return file_;
    }
 
-   public ViewType getViewType()
+   public int getViewType()
    {
       return type_;
    }
@@ -61,8 +61,11 @@ public class GitHubViewRequest
       return endLine_;
    }
 
-   private final FileSystemItem file_;
-   private final ViewType type_;
-   private final int startLine_;
-   private final int endLine_;
+   private FileSystemItem file_;
+   private int type_;
+   private int startLine_;
+   private int endLine_;
+   
+   public final static int VCS_VIEW = 0;
+   public final static int VCS_BLAME = 0;
 }

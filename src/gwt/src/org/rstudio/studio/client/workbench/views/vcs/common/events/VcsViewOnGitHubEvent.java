@@ -1,7 +1,7 @@
 /*
  * VcsViewOnGitHubEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,16 +14,23 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.common.events;
 
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequest;
 
 import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
 
-public class VcsViewOnGitHubEvent extends GwtEvent<VcsViewOnGitHubEvent.Handler>
+@JavaScriptSerializable
+public class VcsViewOnGitHubEvent 
+             extends CrossWindowEvent<VcsViewOnGitHubEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
       void onVcsViewOnGitHub(VcsViewOnGitHubEvent event);
+   }
+   
+   public VcsViewOnGitHubEvent()
+   {
    }
 
    public VcsViewOnGitHubEvent(GitHubViewRequest viewRequest)
@@ -50,5 +57,5 @@ public class VcsViewOnGitHubEvent extends GwtEvent<VcsViewOnGitHubEvent.Handler>
 
    public static final Type<Handler> TYPE = new Type<Handler>();
    
-   private final GitHubViewRequest viewRequest_;
+   private GitHubViewRequest viewRequest_;
 }

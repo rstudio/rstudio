@@ -2511,16 +2511,16 @@ public class TextEditingTarget implements
    @Handler
    void onVcsViewOnGitHub()
    {
-      fireVcsViewOnGithubEvent(GitHubViewRequest.ViewType.View);
+      fireVcsViewOnGithubEvent(GitHubViewRequest.VCS_VIEW);
    }
 
    @Handler
    void onVcsBlameOnGitHub()
    {
-      fireVcsViewOnGithubEvent(GitHubViewRequest.ViewType.Blame);
+      fireVcsViewOnGithubEvent(GitHubViewRequest.VCS_BLAME);
    }
    
-   private void fireVcsViewOnGithubEvent(GitHubViewRequest.ViewType type)
+   private void fireVcsViewOnGithubEvent(int type)
    {
       FileSystemItem file = 
                   FileSystemItem.createFile(docUpdateSentinel_.getPath());
