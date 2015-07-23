@@ -616,6 +616,15 @@ decidePolicyForMIMEType: (NSDictionary *) actionInformation
    [win setValue: gwtCallbacks forKey:@"desktop"];
 }
 
+- (BOOL) hasDesktopObject
+{
+   WebScriptObject* script = [webView_ windowScriptObject];
+   if (script == nil)
+      return NO;
+   
+   return [[script evaluateWebScript: @"!!window.desktopHooks"] boolValue];
+}
+
 - (id) invokeCommand: (NSString*) command
 {
    static NSArray* noRefocusCommands = [[NSArray alloc] initWithObjects:

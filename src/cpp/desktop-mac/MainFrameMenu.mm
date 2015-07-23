@@ -18,6 +18,7 @@
 #import <Cocoa/Cocoa.h>
 
 #import "MainFrameController.h"
+#import "SatelliteController.h"
 
 #import "MainFrameMenu.h"
 
@@ -172,7 +173,25 @@ NSString* charToStr(unichar c) {
 }
 
 - (void) invoke: (id) sender {
+   // get the command to invoke
    NSString* command = [commands_ objectAtIndex: [sender tag]];
+
+   // get the current key window; some satellites (right now, just the source
+   // window) have a desktop object and can handle commands themselves
+   NSWindow* keyWindow = [NSApp keyWindow];
+   NSWindowController* keyController = [keyWindow windowController];
+   if ([keyController isMemberOfClass: [SatelliteController class]])
+   {
+      SatelliteController* controller = (SatelliteController*)keyController;
+      if ([controller hasDesktopObject])
+      {
+         [controller invokeCommand: command];
+         return;
+      }
+   }
+   
+   // current key window isn't a webview or doesn't have desktop hooks; invoke
+   // the command on the main window
    [[MainFrameController instance] invokeCommand: command];
 }
 

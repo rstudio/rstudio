@@ -64,10 +64,13 @@
 // evaluate javascript
 - (id) evaluateJavaScript: (NSString*) js;
 
-// invoke a command (satellite or main frame)
+// indicate whether the window has desktop hooks
+- (BOOL) hasDesktopObject;
+
+// invoke a command (only for windows with a desktop object)
 - (id) invokeCommand: (NSString*) command;
 
-// check to see whether a command is enabled (satellite or main frame)
+// check to see whether a command is enabled (only for windows with a desktop object)
 - (BOOL) isCommandEnabled: (NSString*) command;
 
 

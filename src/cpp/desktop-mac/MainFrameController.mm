@@ -215,15 +215,6 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
    [self evaluateJavaScript: [NSString stringWithUTF8String: js.c_str()]];
 }
 
-- (BOOL) hasDesktopObject
-{
-   WebScriptObject* script = [webView_ windowScriptObject];
-   if (script == nil)
-      return NO;
-   
-   return [[script evaluateWebScript: @"!!window.desktopHooks"] boolValue];   
-}
-
 - (void) initiateQuit
 {
    [[self window] performClose: self];
