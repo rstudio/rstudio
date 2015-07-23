@@ -100,6 +100,17 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       private HandlerRegistration handlerReg2_;
       private Toolbar parentToolbar_;
    }
+   
+   public enum Category
+   {
+      WORKBENCH,
+      EDITOR,
+      R,
+      HELP,
+      VCS,
+      PACKRAT,
+      PRESENTATION
+   }
 
    public AppCommand()
    {
@@ -218,6 +229,42 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public void setWindowMode(String mode)
    {
       windowMode_ = mode;
+   }
+   
+   public boolean isRebindable()
+   {
+      return rebindable_;
+   }
+   
+   public void setRebindable(boolean rebindable)
+   {
+      rebindable_ = rebindable;
+   }
+   
+   public Category getCategory()
+   {
+      return category_;
+   }
+   
+   public void setCategory(String category)
+   {
+      String lower = category.toLowerCase();
+      if (lower.equals("workbench"))
+         category_ = Category.WORKBENCH;
+      else if (lower.equals("editor"))
+         category_ = Category.EDITOR;
+      else if (lower.equals("vcs"))
+         category_ = Category.VCS;
+      else if (lower.equals("r"))
+         category_ = Category.R;
+      else if (lower.equals("help"))
+         category_ = Category.HELP;
+      else if (lower.equals("packrat"))
+         category_ = Category.PACKRAT;
+      else if (lower.equals("presentation"))
+         category_ = Category.PRESENTATION;
+      else
+         throw new Error("Invalid AppCommand category '" + category + "'");
    }
 
    /**
@@ -545,6 +592,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private boolean checked_ = false;
    private String windowMode_ = "any";
    private final HandlerManager handlers_ = new HandlerManager(this);
+   private boolean rebindable_ = true;
+   private Category category_ = Category.WORKBENCH;
 
    private String label_ = null;
    private String buttonLabel_ = null;
