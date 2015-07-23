@@ -801,51 +801,57 @@ well as menu structures (for main menu and popup menus).
         label="Create a New Project..."
         menuLabel="New _Project..."
         buttonLabel=""
-        desc="Create a project"/>
+        desc="Create a project"
+        windowMode="main"/>
         
    <cmd id="openProject"
         label="Open Project..."
         menuLabel="Ope_n Project..."
         buttonLabel=""
-        desc="Open a project"/>
+        desc="Open a project"
+        windowMode="main"/>
         
    <cmd id="openProjectInNewWindow"
         label="Open Project with New R Session"
         menuLabel="Open Project in New _Session..."
         buttonLabel=""
-        desc="Open project in a new R session"/>
+        desc="Open project in a new R session"
+        windowMode="main"/>
 
-   <cmd id="projectMru0" visible="false" rebindable="false"/>
-   <cmd id="projectMru1" visible="false" rebindable="false"/>
-   <cmd id="projectMru2" visible="false" rebindable="false"/>
-   <cmd id="projectMru3" visible="false" rebindable="false"/>
-   <cmd id="projectMru4" visible="false" rebindable="false"/>
-   <cmd id="projectMru5" visible="false" rebindable="false"/>
-   <cmd id="projectMru6" visible="false" rebindable="false"/>
-   <cmd id="projectMru7" visible="false" rebindable="false"/>
-   <cmd id="projectMru8" visible="false" rebindable="false"/>
-   <cmd id="projectMru9" visible="false" rebindable="false"/>
-   <cmd id="projectMru10" visible="false" rebindable="false"/>
-   <cmd id="projectMru11" visible="false" rebindable="false"/>
-   <cmd id="projectMru12" visible="false" rebindable="false"/>
-   <cmd id="projectMru13" visible="false" rebindable="false"/>
-   <cmd id="projectMru14" visible="false" rebindable="false"/>
+   <cmd id="projectMru0" visible="false" rebindable="false" windowMode="main"/>
+   <cmd id="projectMru1" visible="false" rebindable="false" windowMode="main"/>
+   <cmd id="projectMru2" visible="false" rebindable="false" windowMode="main"/>
+   <cmd id="projectMru3" visible="false" rebindable="false" windowMode="main"/>
+   <cmd id="projectMru4" visible="false" rebindable="false" windowMode="main"/>
+   <cmd id="projectMru5" visible="false" rebindable="false" windowMode="main"/>
+   <cmd id="projectMru6" visible="false" rebindable="false" windowMode="main"/>
+   <cmd id="projectMru7" visible="false" rebindable="false" windowMode="main"/>
+   <cmd id="projectMru8" visible="false" rebindable="false" windowMode="main"/>
+   <cmd id="projectMru9" visible="false" rebindable="false" windowMode="main"/>
+   <cmd id="projectMru10" visible="false" rebindable="false" windowMode="main"/>
+   <cmd id="projectMru11" visible="false" rebindable="false" windowMode="main"/>
+   <cmd id="projectMru12" visible="false" rebindable="false" windowMode="main"/>
+   <cmd id="projectMru13" visible="false" rebindable="false" windowMode="main"/>
+   <cmd id="projectMru14" visible="false" rebindable="false" windowMode="main"/>
    
    <cmd id="clearRecentProjects"
         menuLabel="Clear Project List"
-        rebindable="false"/>
+        rebindable="false"
+        windowMode="main"/>
         
    <cmd id="closeProject"
         label="Close Current Project"
         menuLabel="Close Projec_t"
         buttonLabel=""
-        desc="Close the currently open project"/>
+        desc="Close the currently open project"
+        windowMode="main"/>
 
    <cmd id="projectOptions"
         label="Edit Project Options..."
         menuLabel="_Project Options..."
         buttonLabel=""
-        desc="Edit options for the current project"/>
+        desc="Edit options for the current project"
+        windowMode="main"/>
 
    <cmd id="projectSweaveOptions"
         menuLabel=""
@@ -1475,21 +1481,25 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="consoleClear"
         label="Clear Console"
-        menuLabel="Cle_ar Console"/>
+        menuLabel="Cle_ar Console"
+        windowMode="main"/>
         
    <cmd id="interruptR"
         label="Interrupt R Session"
-        menuLabel="_Interrupt R"/>
+        menuLabel="_Interrupt R"
+        windowMode="main"/>
         
    <cmd id="restartR"
         label="Restart R Session"
         menuLabel="_Restart R"
-        desc="Restart R"/>
+        desc="Restart R"
+        windowMode="main"/>
         
    <cmd id="terminateR"
         label="Terminate R Session"
         menuLabel="_Terminate R..."
-        desc="Forcibly terminate R session"/>
+        desc="Forcibly terminate R session"
+        windowMode="main"/>
 
    <!-- PDF Viewer -->
    <cmd id="showPdfExternal"
@@ -1690,21 +1700,26 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="clearWorkspace"
         menuLabel="_Clear Workspace..."
-        desc="Clear objects from the workspace"/>
+        desc="Clear objects from the workspace"
+        windowMode="main"/>
         
    <cmd id="loadWorkspace"
-        menuLabel="_Load Workspace..."/>
+        menuLabel="_Load Workspace..."
+        windowMode="main"/>
         
    <cmd id="saveWorkspace"
-        menuLabel="_Save Workspace As..."/>
+        menuLabel="_Save Workspace As..."
+        windowMode="main"/>
         
    <cmd id="importDatasetFromFile"
         label="Import Dataset from File..."
-        menuLabel="From _Text File..."/>
+        menuLabel="From _Text File..."
+        windowMode="main"/>
         
    <cmd id="importDatasetFromURL"
         label="Import Dataset from URL..."
-        menuLabel="From _Web URL..."/>
+        menuLabel="From _Web URL..."
+        windowMode="main"/>
 
    <cmd id="refreshWorkspace"
         buttonLabel=""
@@ -1715,13 +1730,15 @@ well as menu structures (for main menu and popup menus).
         label="Install Packages..."
         menuLabel="Install Pac_kages..."
         buttonLabel="Install"
-        desc="Install R packages"/>
+        desc="Install R packages"
+        windowMode="main"/>
 
    <cmd id="updatePackages"
         label="Update Packages..."
         menuLabel="Check for Package _Updates..."
         buttonLabel="Update"
-        desc="Check for package updates"/>
+        desc="Check for package updates"
+        windowMode="main"/>
         
    <cmd id="refreshPackages"
         label="Refresh Packages Pane"
@@ -1764,7 +1781,8 @@ well as menu structures (for main menu and popup menus).
    <cmd id="versionControlOptions"
         menuLabel="_Options..."
         desc="Configure version control options"
-        category="vcs"/>
+        category="vcs"
+        windowMode="main"/>
 
    <cmd id="versionControlHelp"
         menuLabel="_Using Version Control"
@@ -1780,22 +1798,26 @@ well as menu structures (for main menu and popup menus).
    <cmd id="versionControlProjectSetup"
         menuLabel="Project _Setup..."
         desc="Setup version control for the current project"
-        category="vcs"/>
+        category="vcs"
+        windowMode="main"/>
 
    <cmd id="showShellDialog"
         label="Open Shell"
         menuLabel="_Shell..."
-        desc="Execute shell commands(s)"/>
+        desc="Execute shell commands(s)"
+        windowMode="main"/>
 
    <cmd id="macPreferences"
         menuLabel="_Preferences..."/>
         
    <cmd id="showOptions"
-        menuLabel="_Global Options..."/>
+        menuLabel="_Global Options..."
+        windowMode="main"/>
 
    <cmd id="modifyKeyboardShortcuts"
         menuLabel="Modify Keyboard Shortcuts..."
-        desc="Modify keyboard shortcuts"/>
+        desc="Modify keyboard shortcuts"
+        windowMode="main"/>
 
    <cmd id="checkForUpdates"
         menuLabel="Check for _Updates"
@@ -1803,7 +1825,8 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="helpUsingRStudio"
         menuLabel="RStudio _Docs"
-        category="help"/>
+        category="help"
+        windowMode="main"/>
 
    <cmd id="helpKeyboardShortcuts"
         menuLabel="_Keyboard Shortcuts"
@@ -1823,7 +1846,8 @@ well as menu structures (for main menu and popup menus).
         label="Show R Help"
         menuLabel="R _Help"
         buttonLabel=""
-        desc="Show R Help"/>
+        desc="Show R Help"
+        windowMode="main"/>
         
    <cmd id="printHelp"
         buttonLabel=""
@@ -1940,7 +1964,8 @@ well as menu structures (for main menu and popup menus).
    <cmd id="newSession"
         label="Open a New R Session"
         menuLabel="_New Session"
-        desc="Open a new R session"/>
+        desc="Open a new R session"
+        windowMode="main"/>
 
    <cmd id="quitSession"
         label="Quit the Current R Session"
@@ -1952,7 +1977,8 @@ well as menu structures (for main menu and popup menus).
    <cmd id="showAboutDialog"
         label="About RStudio..."
         menuLabel="_About RStudio"
-        rebindable="false"/>
+        rebindable="false"
+        windowMode="main"/>
         
    <cmd id="showLogFiles"
         menuLabel="_Show Log Files"
@@ -1965,7 +1991,8 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="rstudioSupport"
         menuLabel="RStudio _Support"
-        rebindable="false"/>
+        rebindable="false"
+        windowMode="main"/>
 
    <cmd id="rstudioAgreement"
         menuLabel="RStudio Agreement"
@@ -2033,7 +2060,8 @@ well as menu structures (for main menu and popup menus).
    <cmd id="buildToolsProjectSetup"
         label="Configure Build Tools..."
         menuLabel="Configure Build _Tools..."
-        desc="Configure build tools"/>
+        desc="Configure build tools"
+        windowMode="main"/>
 
    <cmd id="refreshEnvironment"
         menuLabel="_Refresh Environment"
@@ -2106,7 +2134,8 @@ well as menu structures (for main menu and popup menus).
         label="Show Guide on Debugging with RStudio"
         menuLabel="Debugging _Help"
         desc="Guide to debugging features"
-        category="help"/>
+        category="help"
+        windowMode="main"/>
 
    <cmd id="errorsMessage"
         menuLabel="_Message Only"
