@@ -215,8 +215,8 @@ public class SourceWindow implements LastSourceDocClosedHandler,
    
    private void closeSourceWindow()
    {
-      ApplicationQuit.handleUnsavedChanges(SaveAction.SAVEASK, 
-            "Close Source Window", sourceShim_, null, null, 
+      
+      ApplicationQuit.QuitContext quitContext = 
             new ApplicationQuit.QuitContext()
             {
                @Override
@@ -225,7 +225,14 @@ public class SourceWindow implements LastSourceDocClosedHandler,
                   markReadyToClose();
                   WindowEx.get().close();
                }
-            });
+            };
+
+      // prompt to save any unsaved documents
+      if (sourceShim_.getUnsavedChanges().size() == 0)
+         quitContext.onReadyToQuit(false);
+      else
+         ApplicationQuit.handleUnsavedChanges(SaveAction.SAVEASK, 
+               "Close Source Window", sourceShim_, null, null, quitContext);
    }
    
    private final native void markReadyToClose() /*-{
