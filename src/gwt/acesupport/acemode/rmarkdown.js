@@ -131,6 +131,8 @@ oop.inherits(Mode, MarkdownMode);
          return "R";
       else if (mode === "r-cpp")
          return "C_CPP";
+      else if (mode === "yaml")
+         return "YAML";
       else
          return "Markdown";
    };

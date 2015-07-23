@@ -2740,7 +2740,7 @@ public class TextEditingTarget implements
    {
       if (isCursorInTexMode())
          doCommentUncomment("%");
-      else if (isCursorInRMode())
+      else if (isCursorInRMode() || isCursorInYamlMode())
          doCommentUncomment("#");
       else if (fileType_.isCpp() || fileType_.isStan())
          doCommentUncomment("//"); 
@@ -4812,6 +4812,18 @@ public class TextEditingTarget implements
          return true;
       if (mode.equals(TextFileType.R_LANG_MODE))
          return true;
+      return false;
+   }
+   
+   private boolean isCursorInYamlMode()
+   {
+      String mode = docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());
+      if (mode == null)
+         return false;
+      
+      if (mode.equals("YAML"))
+         return true;
+      
       return false;
    }
    
