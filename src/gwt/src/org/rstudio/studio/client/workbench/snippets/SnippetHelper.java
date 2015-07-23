@@ -66,7 +66,8 @@ public class SnippetHelper
          @Override
          public void onEditorLoaded(EditorLoadedEvent event)
          {
-            ensureSnippetsLoaded();
+            if (editor_.getFileType() != null)
+               ensureSnippetsLoaded();
          }
       });
    }
