@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.command;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.files.FileBacked;
@@ -75,7 +76,7 @@ public class EditorCommandManager
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      manager_ = createAceCommandManager();
+      manager_ = createAceCommandManager(BrowseCap.isWindows());
       
       bindings_ = new FileBacked<EditorKeyBindings>(
             KEYBINDINGS_PATH,
@@ -106,25 +107,12 @@ public class EditorCommandManager
       return $wnd.require("ace/commands/default_commands").commands;
    }-*/;
    
-   // Create an Ace command manager not attached to any parent editor. We use
-   // this as the 'source of truth' for commands + their bindings, and sync
-   // the commands as set on this object with all existing Ace editor sessions.
-   private static final native AceCommandManager createAceCommandManager()
+   private static final native AceCommandManager createAceCommandManager(boolean isWindows)
    /*-{
-      var Handler = $wnd.require("ace/keyboard/hash_handler").HashHandler;
+      var CommandManager = $wnd.require("ace/commands/command_manager").CommandManager;
       var commands = $wnd.require("ace/commands/default_commands").commands;
-      
-      var manager = new Handler();
-      manager.byName = {};
-      for (var i = 0; i < commands.length; i++) {
-         var command = commands[i];
-         manager.addCommand(command);
-         if (command.name) {
-            manager.byName[command.name] = command;
-         }
-      }
-      
-      return manager;
+      var platform = isWindows ? "win" : "mac";
+      return new CommandManager(platform, commands);
    }-*/;
    
    public boolean hasBinding(KeySequence keys)
