@@ -2494,6 +2494,31 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
+.rs.addFunction("extractFunctionNameFromCall", function(object)
+{
+   if (!is.call(object))
+      return("")
+   
+   if (.rs.isSymbolCalled(object[[1]], "::") ||
+       .rs.isSymbolCalled(object[[1]], ":::") ||
+       (is.character(object[[1]]) && object[[1]] %in% c("::", ":::")))
+   {
+      if (length(object) > 2)
+         return(as.character(object[[3]]))
+      else
+         return("")
+   }
+   
+   if (is.character(object[[1]]) || is.symbol(object[[1]]))
+      return(as.character(object[[1]]))
+   
+   if (is.call(object[[1]]))
+      return(.rs.extractFunctionNameFromCall(object[[1]]))
+   
+   return("")
+   
+})
+
 .rs.addFunction("doShinyUICompletions", function(object,
                                                  inputs,
                                                  outputs,
@@ -2503,7 +2528,7 @@ assign(x = ".rs.acCompletionTypes",
 {
    if (is.call(object) && length(object) > 1)
    {
-      functionName <- as.character(object[[1]])
+      functionName <- .rs.extractFunctionNameFromCall(object)
       firstArgName <- if (is.character(object[[2]]) && length(object[[2]]) == 1)
          object[[2]]
       else
