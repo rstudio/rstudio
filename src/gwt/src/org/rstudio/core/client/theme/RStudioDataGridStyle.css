@@ -157,8 +157,3 @@
 .dataGridKeyboardSelectedCell {
   border: selectionBorderWidth solid transparent;
 }
-
-.dataGridLoading {
-  margin: 30px;
-}
-

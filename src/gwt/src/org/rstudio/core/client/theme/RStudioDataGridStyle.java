@@ -18,5 +18,5 @@ import com.google.gwt.user.cellview.client.DataGrid;
 
 public interface RStudioDataGridStyle extends DataGrid.Style
 {
-   String RSTUDIO_DEFAULT_CSS = "org/rstudio/core/client/theme/RStudioCellTableStyle.css";
+   String RSTUDIO_DEFAULT_CSS = "org/rstudio/core/client/theme/RStudioDataGridStyle.css";
 }

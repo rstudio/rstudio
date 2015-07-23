@@ -24,9 +24,8 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
+import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.ui.DockPanel;
@@ -38,7 +37,6 @@ import com.google.gwt.view.client.ProvidesKey;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.cellview.ScrollingDataGrid;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
@@ -50,9 +48,10 @@ import org.rstudio.core.client.command.UserCommandManager;
 import org.rstudio.core.client.command.UserCommandManager.UserCommand;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
+import org.rstudio.core.client.theme.RStudioDataGridResources;
+import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
 
@@ -127,7 +126,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       changes_ = new HashMap<CommandBinding, CommandBinding>();
       buffer_ = new KeySequence();
       
-      table_ = new ScrollingDataGrid<CommandBinding>(1000, KEY_PROVIDER);
+      table_ = new DataGrid<CommandBinding>(1000, RES, KEY_PROVIDER);
+      
       table_.setWidth("500px");
       table_.setHeight("400px");
       
@@ -228,14 +228,12 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    public void initialize(UserCommandManager userCommands,
                           EditorCommandManager editorCommands,
                           ApplicationCommandManager appCommands,
-                          Commands commands,
-                          FilesServerOperations files)
+                          Commands commands)
    {
       userCommands_ = userCommands;
       editorCommands_ = editorCommands;
       appCommands_ = appCommands;
       commands_ = commands;
-      files_ = files;
    }
    
    private void addColumns()
@@ -395,7 +393,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          
          if (rowEl != null)
          {
-            rowEl.addClassName(RES.styles().modifiedRow());
+            // add modified row style
+            rowEl.addClassName(RES.dataGridStyle().modifiedRow());
          }
          
          // Add the new command binding to later be accepted + registered
@@ -514,7 +513,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    };
    
    private final KeySequence buffer_;
-   private final ScrollingDataGrid<CommandBinding> table_;
+   private final DataGrid<CommandBinding> table_;
    private final ListDataProvider<CommandBinding> dataProvider_;
    private final Map<CommandBinding, CommandBinding> changes_;
    private final SearchWidget searchWidget_;
@@ -531,25 +530,23 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private EditorCommandManager editorCommands_;
    private ApplicationCommandManager appCommands_;
    private Commands commands_;
-   private FilesServerOperations files_;
    
    // Resources, etc ----
-   public interface Resources extends ClientBundle
+   public interface Resources extends RStudioDataGridResources
    {
-      @Source("ModifyKeyboardShortcutsWidget.css")
-      Styles styles();
+      @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "ModifyKeyboardShortcutsWidget.css"})
+      Styles dataGridStyle();
    }
    
-   public interface Styles extends CssResource
+   public interface Styles extends RStudioDataGridStyle
    {
       String modifiedRow();
-      String checkColumn();
    }
    
-   private static Resources RES = GWT.create(Resources.class);
+   private static final Resources RES = GWT.create(Resources.class);
+   
    static {
-      RES.styles().ensureInjected();
+      RES.dataGridStyle().ensureInjected();
    }
-   
    
 }
