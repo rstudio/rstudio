@@ -11,3 +11,7 @@
 .dataGridCell {
 	border-bottom: 1px solid #ddd !important;
 }
+
+.dataGridHeader:active, .dataGridHeader:focus {
+	outline: 0;
+}
