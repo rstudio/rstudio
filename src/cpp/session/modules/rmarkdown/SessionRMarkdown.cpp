@@ -1120,8 +1120,8 @@ SEXP rs_paramsFileForRmd(SEXP fileSEXP)
 
 bool knitParamsAvailable()
 {
-   return module_context::isPackageVersionInstalled("rmarkdown", "0.7.2") &&
-          module_context::isPackageVersionInstalled("knitr", "1.10.17");
+   return module_context::isPackageVersionInstalled("rmarkdown", "0.7.3") &&
+          module_context::isPackageVersionInstalled("knitr", "1.10.18");
 }
 
 bool rmarkdownPackageAvailable()
