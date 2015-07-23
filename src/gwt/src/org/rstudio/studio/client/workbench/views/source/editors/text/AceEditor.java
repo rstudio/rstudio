@@ -1624,17 +1624,27 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
+   public void scrollCursorIntoViewIfNecessary(int rowsAround)
+   {
+      Position cursorPos = getCursorPosition();
+      int cursorRow = cursorPos.getRow();
+      
+      if (cursorRow >= widget_.getEditor().getLastVisibleRow() - rowsAround)
+      {
+         Position alignPos = Position.create(cursorRow + rowsAround, 0);
+         widget_.getEditor().getRenderer().alignCursor(alignPos, 1);
+      }
+      else if (cursorRow <= widget_.getEditor().getFirstVisibleRow() + rowsAround)
+      {
+         Position alignPos = Position.create(cursorRow - rowsAround, 0);
+         widget_.getEditor().getRenderer().alignCursor(alignPos, 0);
+      }
+   }
+   
+   @Override
    public void scrollCursorIntoViewIfNecessary()
    {
-      int cursorRow = getCursorPosition().getRow();
-      if (cursorRow >= widget_.getEditor().getLastVisibleRow())
-      {
-         widget_.getEditor().getRenderer().alignCursor(getCursorPosition(), 1);
-      }
-      else if (cursorRow <= widget_.getEditor().getFirstVisibleRow())
-      {
-         widget_.getEditor().getRenderer().alignCursor(getCursorPosition(), 0);
-      }
+      scrollCursorIntoViewIfNecessary(0);
    }
 
    @Override
