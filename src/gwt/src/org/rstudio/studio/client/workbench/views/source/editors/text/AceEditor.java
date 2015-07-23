@@ -49,6 +49,7 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
@@ -58,6 +59,7 @@ import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.EventBasedChangeTracker;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager.InitCompletionFilter;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanel;
@@ -242,6 +244,7 @@ public class AceEditor implements DocDisplay,
    public AceEditor()
    {
       widget_ = new AceEditorWidget();
+      snippets_ = new SnippetHelper(this);
       ElementIds.assignElementId(widget_.getElement(),
                                  ElementIds.SOURCE_TEXT_EDITOR);
 
@@ -519,10 +522,12 @@ public class AceEditor implements DocDisplay,
       updateKeyboardHandlers();
       syncCompletionPrefs();
       syncDiagnosticsPrefs();
-
+      
+      snippets_.ensureSnippetsLoaded();
       getSession().setEditorMode(
             fileType_.getEditorLanguage().getParserName(),
             false);
+      
       getSession().setUseWrapMode(fileType_.getWordWrap());
       syncWrapLimit();
    }
@@ -2465,10 +2470,16 @@ public class AceEditor implements DocDisplay,
    {
       widget_.setDragEnabled(enabled);
    }
+   
+   public boolean onInsertSnippet()
+   {
+      return snippets_.onInsertSnippet();
+   }
 
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
+   private final SnippetHelper snippets_;
    private CompletionManager completionManager_;
    private CodeToolsServerOperations server_;
    private UIPrefs uiPrefs_;
@@ -2487,15 +2498,33 @@ public class AceEditor implements DocDisplay,
    private AceInfoBar infoBar_;
     
    private static final ExternalJavaScriptLoader aceLoader_ =
-         new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());
+         getAceLoader();
+   
+   private static final ExternalJavaScriptLoader getAceLoader()
+   {
+      if (SuperDevMode.isActive())
+         return new ExternalJavaScriptLoader(AceResources.INSTANCE.acejsUncompressed().getSafeUri().asString());
+      else
+         return new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());
+   }
+   
    private static final ExternalJavaScriptLoader aceSupportLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acesupportjs().getSafeUri().asString());
    private static final ExternalJavaScriptLoader vimLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.keybindingVimJs().getSafeUri().asString());
    private static final ExternalJavaScriptLoader emacsLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.keybindingEmacsJs().getSafeUri().asString());
+   
    private static final ExternalJavaScriptLoader extLanguageToolsLoader_ =
-         new ExternalJavaScriptLoader(AceResources.INSTANCE.extLanguageTools().getSafeUri().asString());
+         getExtLanguageToolsLoader();
+   
+   private static final ExternalJavaScriptLoader getExtLanguageToolsLoader()
+   {
+      if (SuperDevMode.isActive())
+         return new ExternalJavaScriptLoader(AceResources.INSTANCE.extLanguageToolsUncompressed().getSafeUri().asString());
+      else
+         return new ExternalJavaScriptLoader(AceResources.INSTANCE.extLanguageTools().getSafeUri().asString());
+   }
 
    private boolean popupVisible_;
 

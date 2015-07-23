@@ -312,4 +312,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void showInfoBar(String message);
    
    void setDragEnabled(boolean enabled);
+   
+   boolean onInsertSnippet();
 }

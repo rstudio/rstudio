@@ -127,6 +127,7 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
       snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.SQL));
       snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.JAVA));
       snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.PYTHON));
+      snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.STAN));
      
       panel_.addWest(snippetTypes_, 150);
      
