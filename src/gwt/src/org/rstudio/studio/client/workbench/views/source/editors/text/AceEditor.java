@@ -413,10 +413,7 @@ public class AceEditor implements DocDisplay,
    
    public void addEditorCommandBinding(String id, KeySequence keys, boolean replace)
    {
-      getWidget().getEditor().addEditorCommandBinding(
-            id,
-            keys.toString(),
-            replace);
+      getWidget().getEditor().getCommandManager().rebindCommand(id, keys);
    }
 
    @Inject

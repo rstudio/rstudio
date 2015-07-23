@@ -101,6 +101,23 @@ public class AceCommandManager extends JavaScriptObject
       return binding != null && binding === "chainKeys";
    }-*/;
    
+   public final void rebindCommand(String id, KeySequence keys)
+   {
+      rebindCommand(id, toAceStyleShortcutString(keys));
+   }
+   
+   private final native void rebindCommand(String id, String keys)
+   /*-{
+      var command = this.byName[id];
+      
+      if (command == null) {
+         throw new Error("No command with id '" + id + "'");
+      }
+      
+      command.bindKey = keys;
+      this.addCommand(command);
+   }-*/;
+   
    private static final JsObject EXCLUDED_COMMANDS_MAP =
          makeExcludedCommandsMap();
    

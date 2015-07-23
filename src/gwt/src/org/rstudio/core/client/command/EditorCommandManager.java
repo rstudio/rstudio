@@ -21,7 +21,6 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AddEditorCommandEvent;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.RequestEditorCommandsEvent;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
@@ -76,6 +75,8 @@ public class EditorCommandManager
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
+      manager_ = createAceCommandManager();
+      
       bindings_ = new FileBacked<EditorKeyBindings>(
             KEYBINDINGS_PATH,
             false,
@@ -105,31 +106,40 @@ public class EditorCommandManager
       return $wnd.require("ace/commands/default_commands").commands;
    }-*/;
    
-   private AceCommandManager getAceCommandManager()
-   {
-      RequestEditorCommandsEvent event = new RequestEditorCommandsEvent();
-      events_.fireEvent(event);
-      return event.getAceCommandManager();
-   }
+   // Create an Ace command manager not attached to any parent editor. We use
+   // this as the 'source of truth' for commands + their bindings, and sync
+   // the commands as set on this object with all existing Ace editor sessions.
+   private static final native AceCommandManager createAceCommandManager()
+   /*-{
+      var Handler = $wnd.require("ace/keyboard/hash_handler").HashHandler;
+      var commands = $wnd.require("ace/commands/default_commands").commands;
+      
+      var manager = new Handler();
+      manager.byName = {};
+      for (var i = 0; i < commands.length; i++) {
+         var command = commands[i];
+         manager.addCommand(command);
+         if (command.name) {
+            manager.byName[command.name] = command;
+         }
+      }
+      
+      return manager;
+   }-*/;
    
    public boolean hasBinding(KeySequence keys)
    {
-      AceCommandManager manager = getAceCommandManager();
-      if (manager == null)
-         return false;
-      return manager.hasBinding(keys);
+      return manager_.hasBinding(keys);
    }
    
    public boolean hasPrefix(KeySequence keys)
    {
-      AceCommandManager manager = getAceCommandManager();
-      if (manager == null)
-         return false;
-      return manager.hasPrefix(keys);
+      return manager_.hasPrefix(keys);
    }
    
    public void rebindCommand(String id, KeySequence keySequence)
    {
+      manager_.rebindCommand(id, keySequence);
       events_.fireEvent(new AddEditorCommandEvent(id, keySequence, true));
    }
    
@@ -172,6 +182,8 @@ public class EditorCommandManager
    }
    
    private final FileBacked<EditorKeyBindings> bindings_;
+   private final AceCommandManager manager_;
+   
    private boolean isBindingsLoaded_ = false;
    public static final String KEYBINDINGS_PATH =
          "~/.R/rstudio/keybindings/editor_bindings.json";
