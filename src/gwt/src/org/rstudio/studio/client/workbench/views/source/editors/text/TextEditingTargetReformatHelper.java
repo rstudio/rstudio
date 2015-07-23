@@ -82,6 +82,11 @@ public class TextEditingTargetReformatHelper
          complements_ = complements;
       }
       
+      public int getOffset()
+      {
+         return offset_;
+      }
+      
       public SimpleTokenCursor clone()
       {
          return new SimpleTokenCursor(
@@ -839,11 +844,17 @@ public class TextEditingTargetReformatHelper
          // Ensure newlines around 'naked' else
          if (cursor.currentValue().equals("else"))
          {
-            if (!cursor.previousSignificantToken().getValue().equals("}"))
+            if (!cursor.previousSignificantToken().getValue().equals("}") &&
+                 cursor.getOffset() >= 2)
+            {
                cursor.ensureNewlinePreceeds();
+            }
             
-            if (!cursor.previousToken().getValue().matches(".*\\s+"))
+            if (!(cursor.previousToken().getType().contains("comment") ||
+                  cursor.previousToken().getValue().matches(".*\\s+")))
+            {
                cursor.ensureWhitespacePreceeds();
+            }
             
             String nextValue = cursor.nextSignificantToken().getValue();
             if (!(nextValue.equals("{") || nextValue.equals("if")))
