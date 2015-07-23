@@ -1406,8 +1406,9 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Commit..."
         desc="Commit pending changes"
         rebindable="false"
-        category="vcs"/>
-        
+        category="vcs"
+        windowMode="main"/>
+
    <cmd id="vcsRevert"
         buttonLabel="Revert"
         menuLabel="Revert..."

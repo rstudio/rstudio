@@ -96,6 +96,7 @@ import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataHandler;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager.NavigationResult;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
@@ -2004,37 +2005,13 @@ public class Source implements InsertSourceHandler,
                                  final int navMethod, 
                                  final boolean forceHighlightMode)
    {
-      // if this is the main window, check to see if we should route an event
-      // there instead
-      String sourceWindowId = 
-            windowManager_.getWindowIdOfDocPath(file.getPath());
-      if (windowManager_.isMainSourceWindow())
-      {
-         // if this is the main window but the doc is open in a satellite,
-         // forward the navigation event to the appropriate source window
-         if (!StringUtil.isNullOrEmpty(sourceWindowId) && 
-             windowManager_.isSourceWindowOpen(sourceWindowId))
-         {
-            windowManager_.fireEventToSourceWindow(sourceWindowId, 
-                  new OpenSourceFileEvent(file, position, null, navMethod));
-            return;
-         }
-      }
-      else if (sourceWindowId != null && 
-               sourceWindowId != windowManager_.getSourceWindowId())
-      {
-         // if this is the satellite, and we know the doc is open somewhere
-         // else, forward the event there (route through main window)
-         events_.fireEventToMainWindow(
-               new OpenSourceFileEvent(file, position, null, navMethod));
-         
-         // if the destination is the main window, raise it
-         if (sourceWindowId.isEmpty())
-         {
-            RStudioGinjector.INSTANCE.getSatellite().focusMainWindow();
-         }
+      // if the navigation should happen in another window, do that instead
+      NavigationResult navResult = 
+            windowManager_.navigateToFile(file, position, navMethod);
+      
+      // we navigated externally, just skip this
+      if (navResult.getType() == NavigationResult.RESULT_NAVIGATED)
          return;
-      }
       
       final boolean isDebugNavigation = 
             navMethod == NavigationMethods.DEBUG_STEP ||
@@ -2116,6 +2093,28 @@ public class Source implements InsertSourceHandler,
             });
          }
       };
+
+      if (navResult.getType() == NavigationResult.RESULT_RELOCATE)
+      {
+         server_.getSourceDocument(navResult.getDocId(),
+               new ServerRequestCallback<SourceDocument>()
+         {
+            @Override
+            public void onResponseReceived(final SourceDocument doc)
+            {
+               editingTargetAction.execute(addTab(doc));
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               globalDisplay_.showErrorMessage("Document Tab Move Failed", 
+                     "Couldn't move the tab to this window: \n" + 
+                      error.getMessage());
+            }
+         });
+         return;
+      }
 
       final CommandWithArg<FileSystemItem> action = new CommandWithArg<FileSystemItem>()
       {
