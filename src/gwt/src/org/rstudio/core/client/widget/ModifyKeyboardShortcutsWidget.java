@@ -471,7 +471,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             continue;
          
          String id = command.getId();
-         String name = StringUtil.prettyCamel(command.getId());
+         String name = getAppCommandName(command);
          KeySequence keySequence = command.getKeySequence();
          int type = CommandBinding.TYPE_RSTUDIO_COMMAND;
          bindings.add(new CommandBinding(id, name, keySequence, type));
@@ -481,14 +481,23 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       dataProvider_.setList(bindings);
    }
    
+   private String getAppCommandName(AppCommand command)
+   {
+      String label = command.getLabel();
+      if (!StringUtil.isNullOrEmpty(label))
+         return label;
+      
+      return StringUtil.prettyCamel(command.getId());
+   }
+   
    private boolean isExcludedCommand(AppCommand command)
    {
+      if (!command.isRebindable() || !command.isVisible())
+         return true;
+      
       String id = command.getId();
       
-      if (id == null)
-         return false;
-      
-      if (id.startsWith("mru"))
+      if (StringUtil.isNullOrEmpty(id))
          return true;
       
       return false;
