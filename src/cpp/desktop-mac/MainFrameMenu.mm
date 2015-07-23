@@ -174,22 +174,7 @@ NSString* charToStr(unichar c) {
 
 - (WebViewController*) menuTargetController
 {
-   // get the current key window; some satellites (right now, just the source
-   // window) have a desktop object and can handle commands themselves
-   NSWindow* keyWindow = [NSApp keyWindow];
-   NSWindowController* keyController = [keyWindow windowController];
-   if ([keyController isMemberOfClass: [SatelliteController class]])
-   {
-      SatelliteController* controller = (SatelliteController*)keyController;
-      if ([controller hasDesktopObject])
-      {
-         return controller;
-      }
-   }
-   
-   // current key window isn't a webview or doesn't have desktop hooks; use the
-   // main window
-   return [MainFrameController instance];
+   return [WebViewController activeDesktopController];
 }
 
 - (void) invoke: (id) sender {

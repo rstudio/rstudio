@@ -104,6 +104,26 @@ static PendingWindow pendingWindow_;
    return [namedWindows_ objectForKey: name];
 }
 
++ (WebViewController*) activeDesktopController
+{
+   // get the current key window; some satellites (right now, just the source
+   // window) have a desktop object and can handle commands themselves
+   NSWindow* keyWindow = [NSApp keyWindow];
+   NSWindowController* keyController = [keyWindow windowController];
+   if ([keyController isMemberOfClass: [SatelliteController class]])
+   {
+      SatelliteController* controller = (SatelliteController*)keyController;
+      if ([controller hasDesktopObject])
+      {
+         return controller;
+      }
+   }
+   
+   // current key window isn't a webview or doesn't have desktop hooks; use the
+   // main window
+   return [MainFrameController instance];
+}
+
 + (void) activateNamedWindow: (NSString*) name
 {
    WebViewController* controller = [self windowNamed: name];
@@ -233,22 +253,33 @@ static PendingWindow pendingWindow_;
 - (void) syncZoomLevel
 {
    // reset to a known baseline
-   [webView_ resetPageZoom: self];
+   [self adjustZoomLevel: 0];
    
    // get the zoom level
    int zoomLevel = desktop::options().zoomLevel();
-   
-   // zoom in
-   if (zoomLevel > 0)
+  
+   // apply it to the view
+   [self adjustZoomLevel: zoomLevel];
+}
+
+- (void) adjustZoomLevel: (int) zoomLevel
+{
+   // reset
+   if (zoomLevel == 0)
    {
-      for (int i=0; i<zoomLevel; i++)
+      [webView_ resetPageZoom: self];
+   }
+   // zoom in
+   else if (zoomLevel > 0)
+   {
+      for (int i=0; i < zoomLevel; i++)
          [webView_ zoomPageIn: self];
    }
    // zoom out
    else if (zoomLevel < 0)
    {
       zoomLevel = std::abs(zoomLevel);
-      for (int i=0; i<zoomLevel; i++)
+      for (int i = 0; i < zoomLevel; i++)
          [webView_ zoomPageOut: self];
    }
 }

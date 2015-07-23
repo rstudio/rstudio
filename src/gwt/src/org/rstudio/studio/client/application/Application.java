@@ -84,6 +84,7 @@ public class Application implements ApplicationEventHandlers
                       Projects projects,
                       SatelliteManager satelliteManager,
                       ApplicationUncaughtExceptionHandler uncaughtExHandler,
+                      MacZoomHandler zoomHandler,
                       Provider<UIPrefs> uiPrefs,
                       Provider<Workbench> workbench,
                       Provider<EventBus> eventBusProvider,
@@ -310,30 +311,6 @@ public class Application implements ApplicationEventHandlers
       SuperDevMode.reload();
    }
    
-   @Handler
-   public void onZoomActualSize()
-   {
-      // only supported in cocoa desktop
-      if (BrowseCap.isCocoaDesktop())
-         Desktop.getFrame().macZoomActualSize();
-   }
-   
-   @Handler
-   public void onZoomIn()
-   {
-      // pass on to cocoa desktop (qt desktop intercepts)
-      if (BrowseCap.isCocoaDesktop())
-         Desktop.getFrame().macZoomIn();
-   }
-   
-   @Handler
-   public void onZoomOut()
-   {
-      // pass on to cocoa desktop (qt desktop intercepts)
-      if (BrowseCap.isCocoaDesktop())
-         Desktop.getFrame().macZoomOut();
-   }
-  
    public void onSessionSerialization(SessionSerializationEvent event)
    {
       switch(event.getAction().getType())

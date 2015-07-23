@@ -21,6 +21,8 @@
 
 + (WebViewController*) windowNamed: (NSString*) name;
 
++ (WebViewController*) activeDesktopController;
+
 + (void) activateNamedWindow: (NSString*) name;
 
 + (void) prepareForSatelliteWindow: (NSString*) name
@@ -54,6 +56,9 @@
 
 // sync the web view's zoom level
 - (void) syncZoomLevel;
+
+// adjust the zoom level (up or down; 0 to reset)
+- (void) adjustZoomLevel: (int) zoomLevel;
 
 // print
 - (void) printFrameView: (WebFrameView*) frameView;

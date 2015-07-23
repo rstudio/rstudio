@@ -860,24 +860,35 @@ private:
 
 - (void) macZoomActualSize
 {
-   // reset the zoom level
-   desktop::options().setZoomLevel(0);
-   [[MainFrameController instance] syncZoomLevel];
+   [self macZoomDelta: 0];
 }
-
 
 - (void) macZoomIn
 {
-   // increment the current zoom level
-   desktop::options().setZoomLevel(desktop::options().zoomLevel() + 1);
-   [[MainFrameController instance] syncZoomLevel];
+   [self macZoomDelta: 1];
 }
 
 - (void) macZoomOut
 {
-   // decrement the current zoom level
-   desktop::options().setZoomLevel(desktop::options().zoomLevel() - 1);
-   [[MainFrameController instance] syncZoomLevel];
+   [self macZoomDelta: -1];
+}
+
+- (void) macZoomDelta: (int) delta
+{
+   WebViewController* controller = [WebViewController activeDesktopController];
+   if ([controller isMemberOfClass: [MainFrameController class]])
+   {
+      // if this is the main frame, save its zoom level and sync
+      int newZoomLevel = delta == 0 ?
+                                  0 : desktop::options().zoomLevel() + delta;
+      desktop::options().setZoomLevel(newZoomLevel);
+      [controller syncZoomLevel];
+   }
+   else
+   {
+      // not the main frame, zoom it independently
+      [controller adjustZoomLevel: delta];
+   }
 }
 
 
