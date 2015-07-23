@@ -774,6 +774,7 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="popoutDoc"
         label="Show Document in New Window"
+        buttonLabel=""
         desc="Show in new window"/>
 
    <cmd id="mru0" visible="false" rebindable="false"/>
@@ -1942,8 +1943,9 @@ well as menu structures (for main menu and popup menus).
         desc="Open a new R session"/>
 
    <cmd id="quitSession"
-        label="Quite the Current R Session"
+        label="Quit the Current R Session"
         menuLabel="_Quit Session..."
+        buttonLabel=""
         desc="Quit the current R session"/>
 
    <cmd id="showAboutDialog"
