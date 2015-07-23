@@ -172,10 +172,8 @@ NSString* charToStr(unichar c) {
       return [menuStack_ lastObject];
 }
 
-- (void) invoke: (id) sender {
-   // get the command to invoke
-   NSString* command = [commands_ objectAtIndex: [sender tag]];
-
+- (WebViewController*) menuTargetController
+{
    // get the current key window; some satellites (right now, just the source
    // window) have a desktop object and can handle commands themselves
    NSWindow* keyWindow = [NSApp keyWindow];
@@ -185,14 +183,21 @@ NSString* charToStr(unichar c) {
       SatelliteController* controller = (SatelliteController*)keyController;
       if ([controller hasDesktopObject])
       {
-         [controller invokeCommand: command];
-         return;
+         return controller;
       }
    }
    
-   // current key window isn't a webview or doesn't have desktop hooks; invoke
-   // the command on the main window
-   [[MainFrameController instance] invokeCommand: command];
+   // current key window isn't a webview or doesn't have desktop hooks; use the
+   // main window
+   return [MainFrameController instance];
+}
+
+- (void) invoke: (id) sender {
+   // get the command to invoke
+   NSString* command = [commands_ objectAtIndex: [sender tag]];
+   
+   // invoke it on the window that currently wants commands
+   [[self menuTargetController] invokeCommand: command];
 }
 
 - (void) assignShortcut: (NSString*) shortcut toMenuItem: (NSMenuItem*) menuItem {
@@ -228,23 +233,27 @@ NSString* charToStr(unichar c) {
    if ([item tag] == 0) {
       return YES;
    }
+   
+   // get the window to query for command state
+   WebViewController *menuController = [self menuTargetController];
 
    NSString* command = [commands_ objectAtIndex: [item tag]];
 
    NSString* labelJs = [NSString stringWithFormat: @"window.desktopHooks.getCommandLabel(\"%@\");", command];
-   NSString* title = [[MainFrameController instance] evaluateJavaScript: labelJs];
+   
+   NSString* title = [menuController evaluateJavaScript: labelJs];
    if (title == nil) // setTitleWithMnemonic raises exception if passed nil
       title = @"";
    [item setTitleWithMnemonic: title];
 
    NSString* checkedJs = [NSString stringWithFormat: @"window.desktopHooks.isCommandChecked(\"%@\");", command];
-   if ([[[MainFrameController instance] evaluateJavaScript: checkedJs] boolValue])
+   if ([[menuController evaluateJavaScript: checkedJs] boolValue])
       [item setState: NSOnState];
    else
       [item setState: NSOffState];
 
    NSString* visibleJs = [NSString stringWithFormat: @"window.desktopHooks.isCommandVisible(\"%@\");", command];
-   [item setHidden: ![[[MainFrameController instance] evaluateJavaScript: visibleJs] boolValue]];
+   [item setHidden: ![[menuController evaluateJavaScript: visibleJs] boolValue]];
 
    // Suppress any unnecessary separators. This code will run once per menu item which seems more
    // effort than necessary, but there's no guarantee that I know of that validateMenuItem will be
@@ -268,7 +277,7 @@ NSString* charToStr(unichar c) {
    if (trailingSep != Nil)
       [trailingSep setHidden: YES];
 
-   if ([[MainFrameController instance] isCommandEnabled: command])
+   if ([menuController isCommandEnabled: command])
       return YES;
    else
       return NO;
@@ -438,6 +447,7 @@ NSString* charToStr(unichar c) {
 
 - (void) menuNeedsUpdate: (NSMenu *) menu
 {
+   WebViewController* menuController = [self menuTargetController];
    for (NSMenuItem* item in [menu itemArray])
    {
       if ([item hasSubmenu])
@@ -455,7 +465,7 @@ NSString* charToStr(unichar c) {
                NSString* visibleJs =
                   [NSString stringWithFormat:
                    @"window.desktopHooks.isCommandVisible(\"%@\");", command];
-               id result = [[MainFrameController instance] evaluateJavaScript: visibleJs];
+               id result = [menuController evaluateJavaScript: visibleJs];
                if ([result boolValue])
                {
                   hide = false;

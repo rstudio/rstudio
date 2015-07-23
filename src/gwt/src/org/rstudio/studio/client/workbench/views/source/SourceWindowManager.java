@@ -199,8 +199,14 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       
       private final int type_;
       private final String docId_;
+      
+      // no navigation was performed
       public final static int RESULT_NONE = 0;
+      
+      // the document was found and should be moved to the requesting window
       public final static int RESULT_RELOCATE = 1;
+      
+      // the document was found, and the navigation was completed
       public final static int RESULT_NAVIGATED = 2;
    }
 
