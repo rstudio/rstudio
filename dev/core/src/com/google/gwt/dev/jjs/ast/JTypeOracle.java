@@ -1009,25 +1009,11 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
-   * Whether the type is a JS interface (does not check supertypes).
-   */
-  public boolean isJsType(JType type) {
-    return type instanceof JDeclaredType && ((JDeclaredType) type).isJsType();
-  }
-
-  /**
    * Whether the type or any supertypes is a JS type, optionally, only return true if
    * one of the types has a js prototype.
    */
   public boolean isOrExtendsJsType(JType type, boolean mustHavePrototype) {
     return getNearestJsType(type, mustHavePrototype) != null;
-  }
-
-  /**
-   * Whether the type is a JsFunction interface.
-   */
-  public boolean isJsFunction(JType type) {
-    return type instanceof JInterfaceType && ((JInterfaceType) type).isJsFunction();
   }
 
   /**

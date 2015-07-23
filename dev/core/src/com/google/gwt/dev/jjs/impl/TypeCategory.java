@@ -53,13 +53,12 @@ public  enum TypeCategory {
     } else if (program.typeOracle.willCrossCastLikeJso(type)) {
       return TypeCategory.TYPE_JSO;
     } else if (program.typeOracle.isDualJsoInterface(type) ||
-        program.typeOracle.hasLiveImplementors(type) &&
         program.typeOracle.isOrExtendsJsType(type, false) &&
         !program.typeOracle.isOrExtendsJsType(type, true)) {
       return TypeCategory.TYPE_JAVA_OBJECT_OR_JSO;
     } else if (program.typeOracle.isOrExtendsJsType(type, true)) {
       return TypeCategory.TYPE_JS_INTERFACE;
-    } else if (program.typeOracle.isJsFunction(type)) {
+    } else if (type.isJsFunction()) {
       return TypeCategory.TYPE_JS_FUNCTION;
     }
     return TypeCategory.TYPE_JAVA_OBJECT;

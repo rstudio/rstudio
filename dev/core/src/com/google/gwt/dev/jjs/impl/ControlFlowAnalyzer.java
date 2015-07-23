@@ -31,7 +31,6 @@ import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
-import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
@@ -305,16 +304,6 @@ public class ControlFlowAnalyzer {
         if (!liveFieldsAndMethods.contains(target)) {
           membersToRescueIfTypeIsInstantiated.add(target);
         }
-      }
-      return true;
-    }
-
-    @Override
-    public boolean visit(JInstanceOf x, Context ctx) {
-      JReferenceType targetType = x.getTestType();
-      if (program.typeOracle.isJsType(targetType) || program.typeOracle.isJsFunction(targetType)) {
-        // keep alive JsType used in instanceof so it is not pruned and re-written as null check.
-        rescue(targetType, true);
       }
       return true;
     }
@@ -659,8 +648,7 @@ public class ControlFlowAnalyzer {
         return;
       }
       JArrayType arrayType = (JArrayType) type;
-      if (program.typeOracle.isJsType(arrayType.getLeafType()) ||
-          program.typeOracle.isJsFunction(arrayType.getLeafType())) {
+      if (arrayType.isJsType()) {
         rescue(arrayType, true);
         maybeRescueJsTypeArray(arrayType.getElementType());
       }
@@ -693,7 +681,7 @@ public class ControlFlowAnalyzer {
 
       accept(type);
 
-      if (!program.typeOracle.isJsType(type) && !program.typeOracle.isJsFunction(type)) {
+      if (!(type instanceof JDeclaredType)) {
         return;
       }
 
