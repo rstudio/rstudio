@@ -115,12 +115,16 @@ public class EditorCommandManager
    public boolean hasBinding(KeySequence keys)
    {
       AceCommandManager manager = getAceCommandManager();
+      if (manager == null)
+         return false;
       return manager.hasBinding(keys);
    }
    
    public boolean hasPrefix(KeySequence keys)
    {
       AceCommandManager manager = getAceCommandManager();
+      if (manager == null)
+         return false;
       return manager.hasPrefix(keys);
    }
    
