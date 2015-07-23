@@ -107,7 +107,9 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       EDITOR,
       R,
       HELP,
-      VCS
+      VCS,
+      PACKRAT,
+      PRESENTATION
    }
 
    public AppCommand()
@@ -257,8 +259,12 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          category_ = Category.R;
       else if (lower.equals("help"))
          category_ = Category.HELP;
+      else if (lower.equals("packrat"))
+         category_ = Category.PACKRAT;
+      else if (lower.equals("presentation"))
+         category_ = Category.PRESENTATION;
       else
-         throw new Error("Invalid AppCommand category");
+         throw new Error("Invalid AppCommand category '" + category + "'");
    }
 
    /**
