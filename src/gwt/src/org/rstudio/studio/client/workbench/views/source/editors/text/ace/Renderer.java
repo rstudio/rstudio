@@ -166,5 +166,4 @@ public class Renderer extends JavaScriptObject
       this.alignCursor(position, ratio);
    }-*/;
    
-   
 }
