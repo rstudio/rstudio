@@ -57,15 +57,15 @@ var snippets = [
    },
    {
       name: "<l",
-      content: "<lower=${1:expression}>${0}"
+      content: "<lower = ${1:expression}>${0}"
    },
    {
       name: "<u",
-      content: "<upper=${1:expression}>${0}"
+      content: "<upper = ${1:expression}>${0}"
    },
    {
       name: "<lu",
-      content: "<lower=${1:expression}, upper=${2:expression}>${0}"
+      content: "<lower = ${1:expression}, upper = ${2:expression}>${0}"
    },
    {
       name: "while",
@@ -125,10 +125,10 @@ var snippets = [
    },
    {
       name: "ode",
-      content: "integrate_ode(${1:function},${2:y0},${3:t0},${4:t},${5:theta},${6:x_r},${7:x_i});"
+      content: "integrate_ode(${1:function}, ${2:y0}, ${3:t0}, ${4:t}, ${5:theta}, ${6:x_r}, ${7:x_i});"
    },
    {
-      name: "functions",
+      name: "funs",
       content: [
          'functions {',
          '  ${0}',
@@ -138,7 +138,7 @@ var snippets = [
    {
       name: "fun",
       content: [
-         '${1:return} ${2:name} (${args}) {',
+         '${1:return} ${2:name} (${3:args}) {',
          '  ${0}',
          '}'
       ].join("\n")
