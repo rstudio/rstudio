@@ -64,9 +64,13 @@ public class FileBacked<T extends JavaScriptObject>
             new ServerRequestCallback<JavaScriptObject>()
             {
                @Override
+               @SuppressWarnings("unchecked")
                public void onResponseReceived(JavaScriptObject object)
                {
-                  object_ = object.cast();
+                  // object.cast() is sufficient on JDK 1.7, but on 1.6 
+                  // the compiler doesn't like to cast from <T> (cast()) to 
+                  // <T extends JavaScriptObject> (this class's template)
+                  object_ = (T)object;
                   loaded_ = true;
                   loading_ = false;
                }
