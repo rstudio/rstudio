@@ -1192,7 +1192,7 @@ public class AceEditor implements DocDisplay,
          int col =  (match != null) ? match.getIndex() : 0;
          getSession().getSelection().moveCursorTo(curRow, col, false);
          getSession().unfold(curRow, true);
-         ensureCursorVisible();
+         scrollCursorIntoViewIfNecessary();
          return true;
       }
       return false;
@@ -1615,7 +1615,28 @@ public class AceEditor implements DocDisplay,
       if (!widget_.getEditor().isRowFullyVisible(screenRow))
          moveCursorNearTop();
    }
+
+   @Override
+   public void ensureRowVisible(int row)
+   {
+      if (!widget_.getEditor().isRowFullyVisible(row))
+         setCursorPosition(Position.create(row, 0));
+   }
    
+   @Override
+   public void scrollCursorIntoViewIfNecessary()
+   {
+      int cursorRow = getCursorPosition().getRow();
+      if (cursorRow >= widget_.getEditor().getLastVisibleRow())
+      {
+         widget_.getEditor().getRenderer().alignCursor(getCursorPosition(), 1);
+      }
+      else if (cursorRow <= widget_.getEditor().getFirstVisibleRow())
+      {
+         widget_.getEditor().getRenderer().alignCursor(getCursorPosition(), 0);
+      }
+   }
+
    @Override
    public boolean isCursorInSingleLineString()
    {
