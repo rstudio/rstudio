@@ -140,6 +140,14 @@ public class TextEditingTargetReformatHelper
          return true;
       }
       
+      public Token previousToken()
+      {
+         SimpleTokenCursor clone = clone();
+         if (!clone.moveToPreviousToken())
+            return Token.create();
+         return clone.currentToken();
+      }
+      
       public Token previousSignificantToken()
       {
          SimpleTokenCursor clone = clone();
@@ -149,6 +157,15 @@ public class TextEditingTargetReformatHelper
          while (clone.isWhitespaceOrNewline())
             if (!clone.moveToPreviousToken())
                return Token.create();
+         
+         return clone.currentToken();
+      }
+      
+      public Token nextToken()
+      {
+         SimpleTokenCursor clone = clone();
+         if (!clone.moveToNextToken())
+            return Token.create();
          
          return clone.currentToken();
       }
@@ -825,6 +842,9 @@ public class TextEditingTargetReformatHelper
             if (!cursor.previousSignificantToken().getValue().equals("}"))
                cursor.ensureNewlinePreceeds();
             
+            if (!cursor.previousToken().getValue().matches(".*\\s+"))
+               cursor.ensureWhitespacePreceeds();
+            
             String nextValue = cursor.nextSignificantToken().getValue();
             if (!(nextValue.equals("{") || nextValue.equals("if")))
                cursor.ensureNewlineFollows();
@@ -923,7 +943,7 @@ public class TextEditingTargetReformatHelper
          }
          
          // Ensure spaces, or newlines, after commas, if so desired.
-         if (cursor.currentType().equals("text"))
+         if (cursor.currentValue().equals(","))
          {
             if (newlineAfterComma &&
                 cursor.peek(1).currentValue().indexOf('\n') == -1)
@@ -935,12 +955,15 @@ public class TextEditingTargetReformatHelper
             else if (!newlineAfterComma &&
                      !cursor.peek(1).isWhitespaceOrNewline())
             {
-               cursor.setValue(cursor.getValue().replaceAll(",[\\s\\n]*", ", "));
+               cursor.setValue(", ");
             }
+         }
             
             // Transform semi-colons into newlines.
             // TODO: Too destructive?
-            cursor.setValue(cursor.getValue().replaceAll(";+\\s*(?!\\n)", "\n"));
+         if (cursor.currentValue().equals(";"))
+         {
+            cursor.setValue("\n");
          }
          
          // If we encounter an opening paren, recurse a new token cursor within,
