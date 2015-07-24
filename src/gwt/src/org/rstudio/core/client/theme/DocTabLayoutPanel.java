@@ -998,7 +998,9 @@ public class DocTabLayoutPanel
 
          initWidget(layoutPanel);
 
-         this.sinkEvents(Event.ONCLICK);
+         this.sinkEvents(Event.ONMOUSEMOVE |
+               Event.ONMOUSEUP |
+               Event.ONLOSECAPTURE);
          closeHandler_ = closeHandler;
          closeElement_ = img.getElement();
       }
@@ -1044,7 +1046,7 @@ public class DocTabLayoutPanel
       {  
          switch(DOM.eventGetType(event))
          {
-            case Event.ONCLICK:
+            case Event.ONMOUSEUP:
             {
                // middlemouse should close a tab
                if (event.getButton() == Event.BUTTON_MIDDLE)
@@ -1054,8 +1056,12 @@ public class DocTabLayoutPanel
                   closeHandler_.onTabClose();
                   break;
                }
-               else if (event.getButton() == Event.BUTTON_LEFT &&
-                        Element.as(event.getEventTarget()) == closeElement_)
+               
+               // note: fallthrough
+            }
+            case Event.ONLOSECAPTURE: 
+            {
+               if (Element.as(event.getEventTarget()) == closeElement_)
                {
                   // handle click on close button
                   closeHandler_.onTabClose();
