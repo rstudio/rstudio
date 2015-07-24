@@ -524,6 +524,9 @@ Error createSshKey(const json::JsonRpcRequest& request,
 
    // resolve key path
    FilePath sshKeyPath = module_context::resolveAliasedPath(path);
+   error = sshKeyPath.parent().ensureDirectory();
+   if (error)
+      return error;
    FilePath sshPublicKeyPath = sshKeyPath.parent().complete(
                                              sshKeyPath.stem() + ".pub");
    if (sshKeyPath.exists() || sshPublicKeyPath.exists())
