@@ -40,6 +40,7 @@
 * Move running Shiny apps between IDE panes and windows without restarting the app
 * Parse TeX magic comments that start with "%%" (ESS compatibility).
 * Change default Rpres template to specify autosize: true
+* Automatically create ~/.ssh directory if necessary on Windows
 
 
 ### Server
