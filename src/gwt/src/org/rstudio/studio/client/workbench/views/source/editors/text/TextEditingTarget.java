@@ -3697,6 +3697,12 @@ public class TextEditingTarget implements
    } 
    
    @Handler
+   void onFindAll()
+   {
+      docDisplay_.selectAll(docDisplay_.getSelectionValue());
+   }
+   
+   @Handler
    void onFindUsages()
    {
       cppHelper_.findUsages();
