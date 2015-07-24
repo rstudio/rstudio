@@ -28,44 +28,54 @@ define("mode/r_highlight_rules", function(require, exports, module)
 
    var RHighlightRules = function()
    {
+      var keywordFunctions = lang.arrayToMap([
+         "function", "if", "else", "in", "break", "next", "repeat", "for", "while"
+      ]);
 
-      var keywords = lang.arrayToMap(
-            ("function|if|in|break|next|repeat|else|for|return|switch|while|try|tryCatch|stop|warning|require|library|attach|detach|source|setMethod|setGeneric|setGroupGeneric|setClass|setRefClass")
-                  .split("|")
-            );
+      var specialFunctions = lang.arrayToMap([
+         "return", "switch", "try", "tryCatch", "stop",
+         "warning", "require", "library", "attach", "detach",
+         "source", "setMethod", "setGeneric", "setGroupGeneric",
+         "setClass", "setRefClass", "R6Class"
+      ]);
 
-      var buildinConstants = lang.arrayToMap(
-            ("NULL|NA|TRUE|FALSE|T|F|Inf|NaN|NA_integer_|NA_real_|NA_character_|" +
-             "NA_complex_").split("|")
-            );
+      var buildinConstants = lang.arrayToMap([
+         "NULL", "NA", "TRUE", "FALSE", "T", "F", "Inf",
+         "NaN", "NA_integer_", "NA_real_", "NA_character_",
+         "NA_complex_"
+      ]);
 
       // regexp must not have capturing parentheses. Use (?:) instead.
       // regexps are ordered -> the first match is used
-
       this.$rules = {
-         "start" : [
+
+         "before": [
             {
                // Roxygen
                token : "comment.sectionhead",
-               regex : "#+(?!').*(?:----|====|####)\\s*$"
+               regex : "#+(?!').*(?:----|====|####)\\s*$",
+               next  : "start"
             },
             {
                // Roxygen
                token : "comment",
                regex : "#+'",
-               next : "rd-start"
+               next  : "rd-start"
             },
             {
                token : "comment",
-               regex : "#.*$"
+               regex : "#.*$",
+               next  : "start"
             },
             {
                token : "string", // single line
-               regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
+               regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]',
+               next  : "start"
             },
             {
                token : "string", // single line
-               regex : "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
+               regex : "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']",
+               next  : "start"
             },
             {
                token : "string", // multi line string start
@@ -82,51 +92,79 @@ define("mode/r_highlight_rules", function(require, exports, module)
             {
                token : "constant.numeric", // hex
                regex : "0[xX][0-9a-fA-F]+[Li]?\\b",
-               merge : false
+               merge : false,
+               next  : "start"
             },
             {
                token : "constant.numeric", // number + integer
                regex : "\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?[iL]?\\b",
-               merge : false
+               merge : false,
+               next  : "start"
             },
             {
                token : "constant.numeric", // number + integer with leading decimal
                regex : "\\.\\d+(?:[eE][+\\-]?\\d*)?[iL]?\\b",
-               merge : false
+               merge : false,
+               next  : "start"
             },
             {
                token : "constant.language.boolean",
                regex : "(?:TRUE|FALSE|T|F)\\b",
-               merge : false
+               merge : false,
+               next  : "start"
             },
             {
                token : "identifier",
                regex : "`.*?`",
-               merge : false
-            },
+               merge : false,
+               next  : "start"
+            }
+         ],
+
+         "allowKeywordFunctions": [
+            {
+               token : function(value) {
+                  if (keywordFunctions[value] || specialFunctions[value])
+                     return "keyword";
+                  else
+                     return "identifier";
+               },
+               regex : "[a-zA-Z.][a-zA-Z0-9._]*(?=\\s*\\()",
+               next  : "start"
+            }
+         ],
+
+         "after": [
             {
                token : function(value)
                {
-                  if (keywords[value])
-                     return "keyword";
-                  else if (buildinConstants[value])
+                  if (buildinConstants[value])
                      return "constant.language";
                   else if (value.match(/^\.\.\d+$/))
                      return "variable.language";
                   else
                      return "identifier";
                },
-               regex : "[a-zA-Z.][a-zA-Z0-9._]*"
+               regex : "[a-zA-Z.][a-zA-Z0-9._]*",
+               next  : "start"
+            },
+            {
+               token : "keyword.operator",
+               regex : "\\$|@",
+               merge : false,
+               next  : "afterDollar"
             },
             {
                token : "keyword.operator",
                regex : ":::|::|:=|%%|>=|<=|==|!=|\\->|<\\-|<<\\-|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||~|\\$|:|@",
-               merge : false
+               merge : false,
+               next  : "start"
             },
             {
                token : "keyword.operator.infix", // infix operators
                regex : "%.*?%",
-               merge : false
+               merge : false,
+               next  : "start"
             },
             {
                // Obviously these are neither keywords nor operators, but
@@ -134,7 +172,8 @@ define("mode/r_highlight_rules", function(require, exports, module)
                // to be colored distinctly from regular text
                token : "paren.keyword.operator",
                merge : false,
-               regex : "[[({]"
+               regex : "[[({]",
+               next  : "start"
             },
             {
                // Obviously these are neither keywords nor operators, but
@@ -142,23 +181,48 @@ define("mode/r_highlight_rules", function(require, exports, module)
                // to be colored distinctly from regular text
                token : "paren.keyword.operator",
                merge : false,
-               regex : "[\\])}]"
+               regex : "[\\])}]",
+               next  : "start"
             },
             {
                token : "punctuation",
                regex : "[;,]",
-               merge : false
+               merge : false,
+               next  : "start"
             },
             {
                token : "text",
-               regex : "\\s+"
+               regex : "\\s+",
+               next  : "start"
             }
          ],
+
+         "start" : [
+            {
+               include: "before"
+            },
+            {
+               include: "allowKeywordFunctions"
+            },
+            {
+               include: "after"
+            }
+         ],
+
+         "afterDollar" : [
+            {
+               include : "before"
+            },
+            {
+               include: "after"
+            }
+         ],
+
          "qqstring" : [
             {
                token : "string",
                regex : '(?:(?:\\\\.)|(?:[^"\\\\]))*?"',
-               next : "start"
+               next  : "start"
             },
             {
                token : "string",
@@ -166,11 +230,12 @@ define("mode/r_highlight_rules", function(require, exports, module)
                merge : true
             }
          ],
+
          "qstring" : [
             {
                token : "string",
                regex : "(?:(?:\\\\.)|(?:[^'\\\\]))*?'",
-               next : "start"
+               next  : "start"
             },
             {
                token : "string",
@@ -178,6 +243,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
                merge : true
             }
          ]
+
       };
 
       var rdRules = new TexHighlightRules("comment").getRules();
@@ -206,6 +272,8 @@ define("mode/r_highlight_rules", function(require, exports, module)
          token : "comment",
          regex : "[^%\\\\[({\\])}]+"
       });
+
+      this.normalizeRules();
    };
 
    oop.inherits(RHighlightRules, TextHighlightRules);
