@@ -184,6 +184,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="executeCode"/>
          <cmd refid="executeLastCode"/>
          <menu label="Run Regi_on">
+            <cmd refid="executeSetupChunk"/>
             <cmd refid="executePreviousChunks"/>
             <cmd refid="executeCurrentChunk"/>
             <cmd refid="executeNextChunk"/>
@@ -1121,7 +1122,7 @@ well as menu structures (for main menu and popup menus).
         category="r"/>
         
    <cmd id="executeSetupChunk"
-        menuLabel="Execute Setup Chunk"
+        menuLabel="Run _Setup Chunk"
         desc="Run the initial setup chunk"
         category="r"/>
         

@@ -20,6 +20,7 @@
 * New shortcut for run current chunk (Cmd+Shift+Enter)
 * Outline view for quick navigation between sections/code chunks
 * Support for htmlwidgets in R Presentations
+* Added Run Setup Chunk command
 
 ### Data Viewer
 
