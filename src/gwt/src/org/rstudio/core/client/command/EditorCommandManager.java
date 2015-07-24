@@ -14,7 +14,6 @@
  */
 package org.rstudio.core.client.command;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.files.FileBacked;
@@ -22,6 +21,7 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AddEditorCommandEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.ResetEditorCommandsEvent;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
@@ -76,7 +76,7 @@ public class EditorCommandManager
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      manager_ = createAceCommandManager(BrowseCap.isWindows());
+      manager_ = AceCommandManager.create();
       
       bindings_ = new FileBacked<EditorKeyBindings>(
             KEYBINDINGS_PATH,
@@ -105,14 +105,6 @@ public class EditorCommandManager
    
    public static final native JsArray<AceCommand> getDefaultAceCommands() /*-{
       return $wnd.require("ace/commands/default_commands").commands;
-   }-*/;
-   
-   private static final native AceCommandManager createAceCommandManager(boolean isWindows)
-   /*-{
-      var CommandManager = $wnd.require("ace/commands/command_manager").CommandManager;
-      var commands = $wnd.require("ace/commands/default_commands").commands;
-      var platform = isWindows ? "win" : "mac";
-      return new CommandManager(platform, commands);
    }-*/;
    
    public boolean hasBinding(KeySequence keys)
@@ -169,8 +161,26 @@ public class EditorCommandManager
       });
    }
    
+   public void resetBindings()
+   {
+      bindings_.set(EditorKeyBindings.create(), new Command()
+      {
+         @Override
+         public void execute()
+         {
+            manager_ = AceCommandManager.create();
+            events_.fireEvent(new ResetEditorCommandsEvent());
+         }
+      });
+   }
+   
+   public JsArray<AceCommand> getCommands()
+   {
+      return manager_.getRelevantCommands();
+   }
+   
    private final FileBacked<EditorKeyBindings> bindings_;
-   private final AceCommandManager manager_;
+   private AceCommandManager manager_;
    
    private boolean isBindingsLoaded_ = false;
    public static final String KEYBINDINGS_PATH =

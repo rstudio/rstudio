@@ -167,6 +167,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    AceCommandManager getCommandManager();
    void addEditorCommandBinding(String id, KeySequence keys, boolean replace);
+   void resetCommands();
 
    HandlerRegistration addEditorFocusHandler(FocusHandler handler);
    

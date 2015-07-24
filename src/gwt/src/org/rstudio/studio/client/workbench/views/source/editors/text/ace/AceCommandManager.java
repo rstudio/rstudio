@@ -2,28 +2,45 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut.KeyCombination;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.js.JsUtil;
 
 public class AceCommandManager extends JavaScriptObject
 {
    protected AceCommandManager() {}
+   
+   public static final AceCommandManager create()
+   {
+      return _createImpl(BrowseCap.isWindows());
+   }
+   
+   public static final native AceCommandManager _createImpl(boolean isWindows)
+   /*-{
+      var CommandManager = $wnd.require("ace/commands/command_manager").CommandManager;
+      var commands = $wnd.require("ace/commands/default_commands").commands;
+      var platform = isWindows ? "win" : "mac";
+      return new CommandManager(platform, commands);
+   }-*/;
    
    public static native final JsArray<AceCommand> getDefaultCommands()
    /*-{
       return $wnd.require("ace/commands/default_commands").commands;
    }-*/;
    
-   public static final JsArray<AceCommand> getRelevantCommands()
+   public final JsArray<AceCommand> getRelevantCommands()
    {
-      JsArray<AceCommand> allCommands = getDefaultCommands();
+      JsObject allCommands = getCommands();
       JsArray<AceCommand> filtered = JavaScriptObject.createArray().cast();
-      for (int i = 0; i < allCommands.length(); i++)
+      JsArrayString keys = allCommands.keys();
+      for (String key : JsUtil.asIterable(keys))
       {
-         AceCommand command = allCommands.get(i);
+         AceCommand command = allCommands.getObject(key);
          String name = command.getInternalName();
          if (!EXCLUDED_COMMANDS_MAP.hasKey(name))
          {
@@ -114,7 +131,20 @@ public class AceCommandManager extends JavaScriptObject
          throw new Error("No command with id '" + id + "'");
       }
       
-      command.bindKey = keys;
+      // Clone the command (we don't want to modify the default
+      // commands because we might want to reset in the future)
+      var newCommand = {};
+      for (var key in command) {
+         if (command.hasOwnProperty(key)) {
+            newCommand[key] = command[key];
+         }
+      }
+      
+      newCommand.bindKey = keys;
+      this.addCommand(newCommand);
+   }-*/;
+   
+   public final native void addCommand(AceCommand command) /*-{
       this.addCommand(command);
    }-*/;
    

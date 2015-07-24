@@ -382,4 +382,8 @@ public class AceEditorNative extends JavaScriptObject {
       return this.commands;
    }-*/;
    
+   public final native void setCommandManager(AceCommandManager commands)
+   /*-{
+      this.commands = commands;
+   }-*/;
 }

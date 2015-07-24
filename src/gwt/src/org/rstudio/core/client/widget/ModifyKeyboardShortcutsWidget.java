@@ -28,6 +28,7 @@ import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
@@ -51,9 +52,9 @@ import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -128,7 +129,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       table_ = new DataGrid<CommandBinding>(1000, RES, KEY_PROVIDER);
       
-      table_.setWidth("500px");
+      table_.setWidth("800px");
       table_.setHeight("400px");
       
       dataProvider_ = new ListDataProvider<CommandBinding>();
@@ -146,6 +147,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             applyChanges();
          }
       }));
+      
       addCancelButton();
       
       searchWidget_ = new SearchWidget(new SuggestOracle() {
@@ -174,6 +176,42 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       searchWidget_.setPlaceholderText("Filter...");
       
       addLeftWidget(searchWidget_);
+      
+      addLeftWidget(new ThemedButton("Reset...", new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            globalDisplay_.showYesNoMessage(
+                  GlobalDisplay.MSG_QUESTION,
+                  "Reset Keyboard Shortcuts",
+                  "Are you sure you want to reset keyboard shortcuts to their default values?",
+                  new ProgressOperation()
+                  {
+                     @Override
+                     public void execute(final ProgressIndicator indicator)
+                     {
+                        indicator.onProgress("Resetting Keyboard Shortcuts...");
+                        appCommands_.resetBindings();
+                        editorCommands_.resetBindings();
+
+                        // TODO: Rather than using a timer instead chain progress
+                        // operations on the 'resetBindings()' calls.
+                        new Timer()
+                        {
+                           @Override
+                           public void run()
+                           {
+                              indicator.onCompleted();
+                              searchWidget_.clear();
+                              collectShortcuts();
+                           }
+                        }.schedule(1000);
+                     }
+                  },
+                  false);
+         }
+      }));
    }
    
    private void applyChanges()
@@ -228,12 +266,14 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    public void initialize(UserCommandManager userCommands,
                           EditorCommandManager editorCommands,
                           ApplicationCommandManager appCommands,
-                          Commands commands)
+                          Commands commands,
+                          GlobalDisplay globalDisplay)
    {
       userCommands_ = userCommands;
       editorCommands_ = editorCommands;
       appCommands_ = appCommands;
       commands_ = commands;
+      globalDisplay_ = globalDisplay;
    }
    
    private void addColumns()
@@ -441,7 +481,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       }
       
       // Ace Commands
-      JsArray<AceCommand> aceCommands = AceCommandManager.getRelevantCommands();
+      JsArray<AceCommand> aceCommands = editorCommands_.getCommands();
       for (int i = 0; i < aceCommands.length(); i++)
       {
          AceCommand command = aceCommands.get(i);
@@ -530,6 +570,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private EditorCommandManager editorCommands_;
    private ApplicationCommandManager appCommands_;
    private Commands commands_;
+   private GlobalDisplay globalDisplay_;
    
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources

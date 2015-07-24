@@ -45,6 +45,8 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DynamicIFrame;
@@ -414,6 +416,17 @@ public class AceEditor implements DocDisplay,
    public void addEditorCommandBinding(String id, KeySequence keys, boolean replace)
    {
       getWidget().getEditor().getCommandManager().rebindCommand(id, keys);
+   }
+   
+   public void resetCommands()
+   {
+      AceCommandManager manager = AceCommandManager.create();
+      JsObject commands = manager.getCommands();
+      for (String key : JsUtil.asIterable(commands.keys()))
+      {
+         AceCommand command = commands.getObject(key);
+         getWidget().getEditor().getCommandManager().addCommand(command);
+      }
    }
 
    @Inject
