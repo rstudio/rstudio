@@ -3562,6 +3562,21 @@ public class TextEditingTarget implements
             executeSweaveChunk(scope, false);
    }
    
+   @Handler
+   public void onExecuteSetupChunk()
+   {
+      JsArray<Scope> scopes = docDisplay_.getScopeTree();
+      for (int i = 0; i < scopes.length(); i++)
+      {
+         Scope scope = scopes.get(i);
+         if (scope.isChunk())
+         {
+            executeSweaveChunk(scope, false);
+            return;
+         }
+      }
+   }
+   
    private boolean isRChunk(Scope scope)
    {
       String labelText = docDisplay_.getLine(scope.getPreamble().getRow());

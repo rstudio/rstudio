@@ -1120,6 +1120,11 @@ well as menu structures (for main menu and popup menus).
         desc="Run the next code chunk"
         category="r"/>
         
+   <cmd id="executeSetupChunk"
+        menuLabel="Execute Setup Chunk"
+        desc="Run the initial setup chunk"
+        category="r"/>
+        
    <cmd id ="goToHelp"
         label="Show Help for Current Function"
         menuLabel="Go To _Help"
