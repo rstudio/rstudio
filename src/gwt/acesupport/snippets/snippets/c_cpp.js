@@ -67,7 +67,7 @@ var snippets = [
    },
    {
       name: "ept",
-      content: "// [[Rcpp::export]]"
+      content: "// [[Rcpp::export]]\n"
    }
 ];
 
