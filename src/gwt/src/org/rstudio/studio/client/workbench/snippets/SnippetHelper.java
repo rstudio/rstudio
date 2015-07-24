@@ -408,6 +408,21 @@ public class SnippetHelper
                return true;
             }
          }
+         
+         // Try 'special' snippets (those that start with punctuation characters)
+         String line = editor_.getCurrentLine().trim();
+         if (!Character.isLetterOrDigit(line.charAt(0)))
+         {
+            for (int i = 0; i < snippets.size(); i++)
+            {
+               String snippetName = snippets.get(i);
+               if (line.startsWith(snippetName))
+               {
+                  applySnippet(line, snippetName);
+                  return true;
+               }
+            }
+         }
       }
       
       return false;

@@ -475,7 +475,7 @@
       object <- if (length(output))
          output
       else
-         evaled
+         deparse(evaled)
       
       paste(as.character(object), collapse = "\n")
    })
