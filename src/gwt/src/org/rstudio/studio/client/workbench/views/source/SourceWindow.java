@@ -132,6 +132,7 @@ public class SourceWindow implements LastSourceDocClosedHandler,
    {
       // if this is a source document window and its last document closed,
       // close the window itself
+      markReadyToClose();
       WindowEx.get().close();
    }
    
@@ -217,7 +218,6 @@ public class SourceWindow implements LastSourceDocClosedHandler,
    
    private void closeSourceWindow()
    {
-      
       ApplicationQuit.QuitContext quitContext = 
             new ApplicationQuit.QuitContext()
             {
