@@ -4,6 +4,7 @@
 
 ### Source Editor
 
+* Support for multiple source windows (tear editor tabs off main window)
 * Snippets: pass parameters to snippet generating R functions
 * Split into lines command for multiple cursors (Ctrl+Alt+A)
 * New keyboard shortcuts for expand/contract selection
@@ -11,6 +12,7 @@
 * Added document outline display to R and C++ documents
 * New Close All Except Current command
 * Rename variable in scope (Cmd+Shift+Alt+M)
+* New Emacs editing mode
 
 ### R Markdown
 
@@ -25,6 +27,7 @@
 
 ### Miscellaneous
 
+* Editor and IDE keyboard shortcuts can now be customized
 * New Session command (create new R session with same project or working directory)
 * Open project in a new window from the projects recently used menu
 * Increase the number of items on file and project recently used menus to 15
@@ -49,6 +52,7 @@
 * Server Pro: Don't close PAM sessions by default (configurable via an option)
 * Server Pro: Remove Google OpenID auth (deprecated by Google in favor of OAuth)
 * Server Pro: Add option to specify client-id for Graphite metrics back end
+* Server Pro: Ability to record user console history for audit purposes
 
 
 ### Bug Fixes
