@@ -1420,8 +1420,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Commit..."
         desc="Commit pending changes"
         rebindable="false"
-        category="vcs"
-        windowMode="main"/>
+        category="vcs"/>
 
    <cmd id="vcsRevert"
         buttonLabel="Revert"
@@ -1464,15 +1463,13 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Pull Branches"
         buttonLabel="Pull"
         rebindable="false"
-        category="vcs"
-        windowMode="main"/>
+        category="vcs"/>
         
    <cmd id="vcsPush"
         menuLabel="P_ush Branch"
         buttonLabel="Push"
         rebindable="false"
-        category="vcs"
-        windowMode="main"/>
+        category="vcs"/>
         
    <cmd id="vcsCleanup"
         menuLabel="Cleanu_p"
