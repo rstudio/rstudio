@@ -522,7 +522,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          @Override
          public boolean execute()
          {
-            if (window.isClosed() || 
+            if (window == null ||
+                window.isClosed() || 
                 pSatelliteManager_.get().getSatelliteWindowObject(
                       event.getName()) == null)
             {
