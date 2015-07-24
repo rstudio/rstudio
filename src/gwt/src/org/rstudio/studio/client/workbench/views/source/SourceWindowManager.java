@@ -65,6 +65,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
@@ -498,7 +499,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    }
 
    @Override
-   public void onSatelliteClosed(SatelliteClosedEvent event)
+   public void onSatelliteClosed(final SatelliteClosedEvent event)
    {
       // if this satellite is closing for quit/shutdown/close/etc., ignore it
       // (we only care about user-initiated window closure)
@@ -509,26 +510,32 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       if (!event.getName().startsWith(SourceSatellite.NAME_PREFIX))
          return;
       
-      // when the user closes a source window, close all the source docs it
-      // contained
-      for (int i = 0; i < sourceDocs_.length(); i++)
+      // we get this event when the window is unloaded; it could be that the
+      // window is unloading for refresh (in which case its docs could be
+      // preserved) or closing for good. to distinguish between the two cases,
+      // we ping the window for 5 seconds after receiving the unload; if it
+      // closes, we can safely close the docs it contained.
+      final WindowEx window = pSatelliteManager_.get().getSatelliteWindowObject(
+            event.getName());
+      Scheduler.get().scheduleFixedDelay(new Scheduler.RepeatingCommand()
       {
-         final SourceDocument doc = sourceDocs_.get(i);
-         if (doc.getSourceWindowId() == sourceWindowId(event.getName()))
+         @Override
+         public boolean execute()
          {
-            // change the window ID of the doc back to the main window
-            assignSourceDocWindowId(doc.getId(), "", new Command()
+            if (window.isClosed() || 
+                pSatelliteManager_.get().getSatelliteWindowObject(
+                      event.getName()) == null)
             {
-               @Override
-               public void execute()
-               {
-                  // close the document when finished
-                  server_.closeDocument(doc.getId(), 
-                        new VoidServerRequestCallback());
-               }
-            });
+               closeSourceWindowDocs(sourceWindowId(event.getName()));
+               return false;
+            }
+            // retry up to 5 seconds (250ms per try)
+            return retries_++ < 20;
          }
-      }
+         
+         private int retries_ = 0;
+         
+      }, 250);
    }
 
    @Override
@@ -850,6 +857,30 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                         error.getMessage());
                }
             });
+   }
+   
+   private void closeSourceWindowDocs(String windowId)
+   {
+      // when the user closes a source window, close all the source docs it
+      // contained
+      for (int i = 0; i < sourceDocs_.length(); i++)
+      {
+         final SourceDocument doc = sourceDocs_.get(i);
+         if (doc.getSourceWindowId() == windowId)
+         {
+            // change the window ID of the doc back to the main window
+            assignSourceDocWindowId(doc.getId(), "", new Command()
+            {
+               @Override
+               public void execute()
+               {
+                  // close the document when finished
+                  server_.closeDocument(doc.getId(), 
+                        new VoidServerRequestCallback());
+               }
+            });
+         }
+      }
    }
    
    // Private types -----------------------------------------------------------
