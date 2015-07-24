@@ -92,6 +92,7 @@ public abstract class
    public abstract AppCommand findPrevious();
    public abstract AppCommand findSelectAll();
    public abstract AppCommand findFromSelection();
+   public abstract AppCommand findAll();
    public abstract AppCommand replaceAndFind();
    public abstract AppCommand findInFiles();
    public abstract AppCommand fold();

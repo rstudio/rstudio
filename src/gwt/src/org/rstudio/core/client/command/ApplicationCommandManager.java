@@ -102,6 +102,18 @@ public class ApplicationCommandManager
       });
    }
    
+   public void resetBindings()
+   {
+      bindings_.set(EditorKeyBindings.create(), new Command()
+      {
+         @Override
+         public void execute()
+         {
+            loadBindings();
+         }
+      });
+   }
+   
    private final FileBacked<EditorKeyBindings> bindings_;
    public static final String KEYBINDINGS_PATH =
          "~/.R/rstudio/keybindings/rstudio_bindings.json";
