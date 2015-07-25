@@ -100,7 +100,7 @@ public class Token extends JavaScriptObject
    
    public native final boolean isValidForFunctionCall() /*-{
       return this.type && (
-         this.type === "identifier" ||
+         this.type.indexOf("identifier") !== -1 ||
          this.type === "string" ||
          this.type === "keyword"
       );
