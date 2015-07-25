@@ -46,7 +46,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
          "return", "switch", "try", "tryCatch", "stop",
          "warning", "require", "library", "attach", "detach",
          "source", "setMethod", "setGeneric", "setGroupGeneric",
-         "setClass", "setRefClass", "R6Class"
+         "setClass", "setRefClass", "R6Class", "UseMethod", "NextMethod"
       ]);
 
       var builtinConstants = lang.arrayToMap([
