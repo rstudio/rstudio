@@ -38,7 +38,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
 
    var RHighlightRules = function()
    {
-      var keywordFunctions = lang.arrayToMap([
+      var keywords = lang.arrayToMap([
          "function", "if", "else", "in", "break", "next", "repeat", "for", "while"
       ]);
 
@@ -148,6 +148,30 @@ define("mode/r_highlight_rules", function(require, exports, module)
          }
       ];
 
+      rules["#keyword-or-identifier"] = [
+         {
+            token : "identifier",
+            regex : "`.*?`",
+            merge : false,
+            next  : "start"
+         },
+         {
+            token : function(value)
+            {
+               if (buildinConstants[value])
+                  return "constant.language";
+               else if (keywords[value])
+                  return "keyword";
+               else if (value.match(/^\.\.\d+$/))
+                  return "variable.language";
+               else
+                  return "identifier";
+            },
+            regex : reIdentifier,
+            next  : "start"
+         }
+      ];
+
       rules["#package-access"] = [
          {
             token : function(value) {
@@ -164,7 +188,20 @@ define("mode/r_highlight_rules", function(require, exports, module)
       rules["#function-call"] = [
          {
             token : function(value) {
-               if (keywordFunctions[value] || specialFunctions[value])
+               if ($colorFunctionCalls)
+                  return "support.function.identifier";
+               else
+                  return "identifier";
+            },
+            regex : reIdentifier + "(?=\\s*\\()",
+            next  : "start"
+         }
+      ];
+
+      rules["#function-call-or-keyword"] = [
+         {
+            token : function(value) {
+               if (specialFunctions[value] || keywords[value])
                   return "keyword";
                else if ($colorFunctionCalls)
                   return "support.function.identifier";
@@ -189,7 +226,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
             token : "keyword.operator",
             regex : "\\$|@",
             merge : false,
-            next  : "start"
+            next  : "after-dollar"
          },
          {
             token : "keyword.operator",
@@ -222,13 +259,21 @@ define("mode/r_highlight_rules", function(require, exports, module)
             next  : "start"
          },
          {
-            token : "punctuation",
+            token : function(value) {
+               return $colorFunctionCalls ?
+                  "punctuation.keyword.operator" :
+                  "punctuation";
+            },
             regex : "[;]",
             merge : false,
             next  : "start"
          },
          {
-            token : "punctuation",
+            token : function(value) {
+               return $colorFunctionCalls ?
+                  "punctuation.keyword.operator" :
+                  "punctuation";
+            },
             regex : "[,]",
             merge : false,
             next  : "start"
@@ -245,8 +290,14 @@ define("mode/r_highlight_rules", function(require, exports, module)
       // Construct rules from previously defined blocks.
       rules["start"] = include(
          "#comment", "#string", "#number",
-         "#package-access", "#function-call",
-         "#identifier", "#operator", "#text"
+         "#package-access", "#function-call-or-keyword", "#keyword-or-identifier",
+         "#operator", "#text"
+      );
+
+      rules["after-dollar"] = include(
+         "#comment", "#string", "#number",
+         "#function-call", "#identifier",
+         "#operator", "#text"
       );
 
       rules["qqstring"] = [
