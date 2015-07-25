@@ -877,7 +877,7 @@ oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
              type === "symbol" ||
              type === "keyword" ||
              type === "string" ||
-             type === "constant";
+             this.hasType("constant");
    };
 
    this.isExtractionOperator = function()
