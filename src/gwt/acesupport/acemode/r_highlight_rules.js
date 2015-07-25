@@ -55,6 +55,8 @@ define("mode/r_highlight_rules", function(require, exports, module)
          "NA_complex_"
       ]);
 
+      var reIdentifier = "[a-zA-Z.][a-zA-Z0-9._]*";
+
       var rules = {};
 
       // Define rule sub-blocks that can be included to create
@@ -141,7 +143,20 @@ define("mode/r_highlight_rules", function(require, exports, module)
                else
                   return "identifier";
             },
-            regex : "[a-zA-Z.][a-zA-Z0-9._]*",
+            regex : reIdentifier,
+            next  : "start"
+         }
+      ];
+
+      rules["#package-access"] = [
+         {
+            token : function(value) {
+               if ($colorFunctionCalls)
+                  return "identifier.support.class";
+               else
+                  return "identifier";
+            },
+            regex : reIdentifier + "(?=\\s*::)",
             next  : "start"
          }
       ];
@@ -156,7 +171,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
                else
                   return "identifier";
             },
-            regex : "[a-zA-Z.][a-zA-Z0-9._]*(?=\\s*\\()",
+            regex : reIdentifier + "(?=\\s*\\()",
             next  : "start"
          }
       ];
@@ -164,7 +179,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
       rules["#variable-assignment"] = [
          {
             token : "variable.identifier",
-            regex : "[a-zA-Z.][a-zA-Z0-9._]*(?=\\s*=)",
+            regex : reIdentifier + "(?=\\s*=)",
             next  : "start"
          }
       ];
@@ -174,7 +189,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
             token : "keyword.operator",
             regex : "\\$|@",
             merge : false,
-            next  : "after-dollar"
+            next  : "start"
          },
          {
             token : "keyword.operator",
@@ -230,14 +245,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
       // Construct rules from previously defined blocks.
       rules["start"] = include(
          "#comment", "#string", "#number",
-         "#function-call", "#identifier",
-         "#operator", "#text"
-      );
-
-      // We don't highlight '#special-functions'
-      // following '$' or '@'.
-      rules["after-dollar"] = include(
-         "#comment", "#string", "#number",
+         "#package-access", "#function-call",
          "#identifier", "#operator", "#text"
       );
 
