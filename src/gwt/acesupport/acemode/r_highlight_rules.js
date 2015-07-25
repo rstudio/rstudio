@@ -20,6 +20,14 @@
 define("mode/r_highlight_rules", function(require, exports, module)
 {
 
+   function include(/*...*/) {
+      var result = [];
+      for (var i = 0; i < arguments.length; i++) {
+         result.push({include: arguments[i]});
+      }
+      return result;
+   }
+
    var oop = require("ace/lib/oop");
    var lang = require("ace/lib/lang");
    var TextHighlightRules = require("ace/mode/text_highlight_rules")
@@ -45,207 +53,219 @@ define("mode/r_highlight_rules", function(require, exports, module)
          "NA_complex_"
       ]);
 
-      // regexp must not have capturing parentheses. Use (?:) instead.
-      // regexps are ordered -> the first match is used
-      this.$rules = {
+      var rules = {};
 
-         "before": [
-            {
-               // Roxygen
-               token : "comment.sectionhead",
-               regex : "#+(?!').*(?:----|====|####)\\s*$",
-               next  : "start"
-            },
-            {
-               // Roxygen
-               token : "comment",
-               regex : "#+'",
-               next  : "rd-start"
-            },
-            {
-               token : "comment",
-               regex : "#.*$",
-               next  : "start"
-            },
-            {
-               token : "string", // single line
-               regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]',
-               next  : "start"
-            },
-            {
-               token : "string", // single line
-               regex : "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']",
-               next  : "start"
-            },
-            {
-               token : "string", // multi line string start
-               merge : true,
-               regex : '["]',
-               next : "qqstring"
-            },
-            {
-               token : "string", // multi line string start
-               merge : true,
-               regex : "[']",
-               next : "qstring"
-            },
-            {
-               token : "constant.numeric", // hex
-               regex : "0[xX][0-9a-fA-F]+[Li]?\\b",
-               merge : false,
-               next  : "start"
-            },
-            {
-               token : "constant.numeric", // number + integer
-               regex : "\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?[iL]?\\b",
-               merge : false,
-               next  : "start"
-            },
-            {
-               token : "constant.numeric", // number + integer with leading decimal
-               regex : "\\.\\d+(?:[eE][+\\-]?\\d*)?[iL]?\\b",
-               merge : false,
-               next  : "start"
-            },
-            {
-               token : "constant.language.boolean",
-               regex : "(?:TRUE|FALSE|T|F)\\b",
-               merge : false,
-               next  : "start"
-            },
-            {
-               token : "identifier",
-               regex : "`.*?`",
-               merge : false,
-               next  : "start"
-            }
-         ],
+      // Define rule sub-blocks that can be included to create
+      // full rule states.
+      rules["#comment"] = [
+         {
+            token : "comment.sectionhead",
+            regex : "#+(?!').*(?:----|====|####)\\s*$",
+            next  : "start"
+         },
+         {
+            // Roxygen
+            token : "comment",
+            regex : "#+'",
+            next  : "rd-start"
+         },
+         {
+            token : "comment",
+            regex : "#.*$",
+            next  : "start"
+         }
+      ];
 
-         "allowKeywordFunctions": [
-            {
-               token : function(value) {
-                  if (keywordFunctions[value] || specialFunctions[value])
-                     return "keyword";
-                  else
-                     return "identifier";
-               },
-               regex : "[a-zA-Z.][a-zA-Z0-9._]*(?=\\s*\\()",
-               next  : "start"
-            }
-         ],
+      rules["#string"] = [
+         {
+            token : "string", // single line
+            regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]',
+            next  : "start"
+         },
+         {
+            token : "string", // single line
+            regex : "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']",
+            next  : "start"
+         },
+         {
+            token : "string", // multi line string start
+            merge : true,
+            regex : '["]',
+            next : "qqstring"
+         },
+         {
+            token : "string", // multi line string start
+            merge : true,
+            regex : "[']",
+            next : "qstring"
+         }
+      ];
 
-         "after": [
-            {
-               token : function(value)
-               {
-                  if (buildinConstants[value])
-                     return "constant.language";
-                  else if (value.match(/^\.\.\d+$/))
-                     return "variable.language";
-                  else
-                     return "identifier";
-               },
-               regex : "[a-zA-Z.][a-zA-Z0-9._]*",
-               next  : "start"
-            },
-            {
-               token : "keyword.operator",
-               regex : "\\$|@",
-               merge : false,
-               next  : "afterDollar"
-            },
-            {
-               token : "keyword.operator",
-               regex : ":::|::|:=|%%|>=|<=|==|!=|\\->|<\\-|<<\\-|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||~|\\$|:|@",
-               merge : false,
-               next  : "start"
-            },
-            {
-               token : "keyword.operator.infix", // infix operators
-               regex : "%.*?%",
-               merge : false,
-               next  : "start"
-            },
-            {
-               // Obviously these are neither keywords nor operators, but
-               // labelling them as such was the easiest way to get them
-               // to be colored distinctly from regular text
-               token : "paren.keyword.operator",
-               merge : false,
-               regex : "[[({]",
-               next  : "start"
-            },
-            {
-               // Obviously these are neither keywords nor operators, but
-               // labelling them as such was the easiest way to get them
-               // to be colored distinctly from regular text
-               token : "paren.keyword.operator",
-               merge : false,
-               regex : "[\\])}]",
-               next  : "start"
-            },
-            {
-               token : "punctuation",
-               regex : "[;,]",
-               merge : false,
-               next  : "start"
-            },
-            {
-               token : "text",
-               regex : "\\s+",
-               next  : "start"
-            }
-         ],
+      rules["#number"] = [
+         {
+            token : "constant.numeric", // hex
+            regex : "0[xX][0-9a-fA-F]+[Li]?\\b",
+            merge : false,
+            next  : "start"
+         },
+         {
+            token : "constant.numeric", // number + integer
+            regex : "\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?[iL]?\\b",
+            merge : false,
+            next  : "start"
+         },
+         {
+            token : "constant.numeric", // number + integer with leading decimal
+            regex : "\\.\\d+(?:[eE][+\\-]?\\d*)?[iL]?\\b",
+            merge : false,
+            next  : "start"
+         }
+      ];
 
-         "start" : [
+      rules["#identifier"] = [
+         {
+            token : "identifier",
+            regex : "`.*?`",
+            merge : false,
+            next  : "start"
+         },
+         {
+            token : function(value)
             {
-               include: "before"
+               if (buildinConstants[value])
+                  return "constant.language";
+               else if (value.match(/^\.\.\d+$/))
+                  return "variable.language";
+               else
+                  return "identifier";
             },
-            {
-               include: "allowKeywordFunctions"
+            regex : "[a-zA-Z.][a-zA-Z0-9._]*",
+            next  : "start"
+         }
+      ];
+
+      rules["#function-call"] = [
+         {
+            token : function(value) {
+               if (keywordFunctions[value] || specialFunctions[value])
+                  return "keyword";
+               else
+                  return "support.function.identifier";
             },
-            {
-               include: "after"
-            }
-         ],
+            regex : "[a-zA-Z.][a-zA-Z0-9._]*(?=\\s*\\()",
+            next  : "start"
+         }
+      ];
 
-         "afterDollar" : [
-            {
-               include : "before"
-            },
-            {
-               include: "after"
-            }
-         ],
+      rules["#variable-assignment"] = [
+         {
+            token : "variable.identifier",
+            regex : "[a-zA-Z.][a-zA-Z0-9._]*(?=\\s*=)",
+            next  : "start"
+         }
+      ];
 
-         "qqstring" : [
-            {
-               token : "string",
-               regex : '(?:(?:\\\\.)|(?:[^"\\\\]))*?"',
-               next  : "start"
-            },
-            {
-               token : "string",
-               regex : '.+',
-               merge : true
-            }
-         ],
+      rules["#operator"] = [
+         {
+            token : "keyword.operator",
+            regex : "\\$|@",
+            merge : false,
+            next  : "after-dollar"
+         },
+         {
+            token : "keyword.operator",
+            regex : ":::|::|:=|%%|>=|<=|==|!=|\\->|<\\-|<<\\-|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||~|\\$|:|@",
+            merge : false,
+            next  : "start"
+         },
+         {
+            token : "keyword.operator.infix", // infix operators
+            regex : "%.*?%",
+            merge : false,
+            next  : "start"
+         },
+         {
+            // Obviously these are neither keywords nor operators, but
+            // labelling them as such was the easiest way to get them
+            // to be colored distinctly from regular text
+            token : "paren.keyword.operator",
+            merge : false,
+            regex : "[[({]",
+            next  : "start"
+         },
+         {
+            // Obviously these are neither keywords nor operators, but
+            // labelling them as such was the easiest way to get them
+            // to be colored distinctly from regular text
+            token : "paren.keyword.operator",
+            merge : false,
+            regex : "[\\])}]",
+            next  : "start"
+         },
+         {
+            token : "punctuation",
+            regex : "[;]",
+            merge : false,
+            next  : "start"
+         },
+         {
+            token : "punctuation",
+            regex : "[,]",
+            merge : false,
+            next  : "start"
+         },
+      ];
 
-         "qstring" : [
-            {
-               token : "string",
-               regex : "(?:(?:\\\\.)|(?:[^'\\\\]))*?'",
-               next  : "start"
-            },
-            {
-               token : "string",
-               regex : '.+',
-               merge : true
-            }
-         ]
+      rules["#text"] = [
+         {
+            token : "text",
+            regex : "\\s+"
+         }
+      ];
 
-      };
+      // Construct rules from previously defined blocks.
+      rules["start"] = include(
+         "#comment", "#string", "#number",
+         "#function-call", "#identifier",
+         "#operator", "#text"
+      );
 
+      // We don't highlight '#special-functions'
+      // following '$' or '@'.
+      rules["after-dollar"] = include(
+         "#comment", "#string", "#number",
+         "#identifier", "#operator", "#text"
+      );
+
+      rules["qqstring"] = [
+         {
+            token : "string",
+            regex : '(?:(?:\\\\.)|(?:[^"\\\\]))*?"',
+            next  : "start"
+         },
+         {
+            token : "string",
+            regex : '.+',
+            merge : true
+         }
+      ];
+
+      rules["qstring"] = [
+         {
+            token : "string",
+            regex : "(?:(?:\\\\.)|(?:[^'\\\\]))*?'",
+            next  : "start"
+         },
+         {
+            token : "string",
+            regex : '.+',
+            merge : true
+         }
+      ];
+
+      this.$rules = rules;
+
+      // Embed 'Rd' comment rules, for Roxygen.
       var rdRules = new TexHighlightRules("comment").getRules();
 
       // Make all embedded TeX virtual-comment so they don't interfere with
