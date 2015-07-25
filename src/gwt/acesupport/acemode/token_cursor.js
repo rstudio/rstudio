@@ -873,11 +873,10 @@ oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
    this.isValidAsIdentifier = function()
    {
       var type = this.currentType();
-      return this.hasType("identifier") ||
+      return this.hasType("identifier", "constant") ||
              type === "symbol" ||
              type === "keyword" ||
-             type === "string" ||
-             this.hasType("constant");
+             type === "string";
    };
 
    this.isExtractionOperator = function()
