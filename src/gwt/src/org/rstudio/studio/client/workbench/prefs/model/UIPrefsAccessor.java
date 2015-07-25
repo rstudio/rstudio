@@ -266,6 +266,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("syntax_color_console", false);
    }
    
+   public PrefValue<Boolean> highlightRFunctionCalls()
+   {
+      return bool("highlight_r_function_calls", false);
+   }
+   
    public PrefValue<Boolean> showInlineToolbarForRCodeChunks()
    {
       return bool("show_inline_toolbar_for_r_code_chunks", true);

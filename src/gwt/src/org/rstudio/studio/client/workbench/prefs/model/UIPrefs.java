@@ -264,6 +264,9 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          syntaxColorConsole().setGlobalValue(
                              newUiPrefs.syntaxColorConsole().getGlobalValue());
          
+         highlightRFunctionCalls().setGlobalValue(
+                             newUiPrefs.highlightRFunctionCalls().getGlobalValue());
+         
          // chunk toolbar
          showInlineToolbarForRCodeChunks().setGlobalValue(
                newUiPrefs.showInlineToolbarForRCodeChunks().getGlobalValue());

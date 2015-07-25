@@ -161,4 +161,9 @@ public class Tokenizer extends JavaScriptObject
       
       return tokens;
    }
+   
+   public final native void retokenizeDocument()
+   /*-{
+      return this.start(0);
+   }-*/;
 }

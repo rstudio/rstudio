@@ -17,9 +17,11 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
+var $colorFunctionCalls = false;
+
 define("mode/r_highlight_rules", function(require, exports, module)
 {
-
    function include(/*...*/) {
       var result = [];
       for (var i = 0; i < arguments.length; i++) {
@@ -149,8 +151,10 @@ define("mode/r_highlight_rules", function(require, exports, module)
             token : function(value) {
                if (keywordFunctions[value] || specialFunctions[value])
                   return "keyword";
-               else
+               else if ($colorFunctionCalls)
                   return "support.function.identifier";
+               else
+                  return "identifier";
             },
             regex : "[a-zA-Z.][a-zA-Z0-9._]*(?=\\s*\\()",
             next  : "start"
@@ -299,4 +303,8 @@ define("mode/r_highlight_rules", function(require, exports, module)
    oop.inherits(RHighlightRules, TextHighlightRules);
 
    exports.RHighlightRules = RHighlightRules;
+   exports.setHighlightRFunctionCalls = function(value) {
+      $colorFunctionCalls = value;
+   };
+
 });

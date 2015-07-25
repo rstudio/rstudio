@@ -82,4 +82,9 @@ public class Mode extends JavaScriptObject
    }-*/;
    
    public native final String getId() /*-{ return this.$id; }-*/;
+   
+   public native final void setHighlightRFunctionCalls(boolean show) /*-{
+      this.setHighlightRFunctionCalls && this.setHighlightRFunctionCalls(show);
+   }-*/;
+   
 }
