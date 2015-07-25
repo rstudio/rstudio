@@ -23,9 +23,9 @@ var $colorFunctionCalls = false;
 define("mode/r_highlight_rules", function(require, exports, module)
 {
    function include(/*...*/) {
-      var result = [];
+      var result = new Array(arguments.length);
       for (var i = 0; i < arguments.length; i++) {
-         result.push({include: arguments[i]});
+         result[i] = {include: arguments[i]};
       }
       return result;
    }
@@ -49,7 +49,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
          "setClass", "setRefClass", "R6Class"
       ]);
 
-      var buildinConstants = lang.arrayToMap([
+      var builtinConstants = lang.arrayToMap([
          "NULL", "NA", "TRUE", "FALSE", "T", "F", "Inf",
          "NaN", "NA_integer_", "NA_real_", "NA_character_",
          "NA_complex_"
@@ -126,17 +126,20 @@ define("mode/r_highlight_rules", function(require, exports, module)
          }
       ];
 
-      rules["#identifier"] = [
+      rules["#quoted-identifier"] = [
          {
             token : "identifier",
             regex : "`.*?`",
             merge : false,
             next  : "start"
-         },
+         }
+      ];
+
+      rules["#identifier"] = [
          {
             token : function(value)
             {
-               if (buildinConstants[value])
+               if (builtinConstants[value])
                   return "constant.language";
                else if (value.match(/^\.\.\d+$/))
                   return "variable.language";
@@ -150,15 +153,9 @@ define("mode/r_highlight_rules", function(require, exports, module)
 
       rules["#keyword-or-identifier"] = [
          {
-            token : "identifier",
-            regex : "`.*?`",
-            merge : false,
-            next  : "start"
-         },
-         {
             token : function(value)
             {
-               if (buildinConstants[value])
+               if (builtinConstants[value])
                   return "constant.language";
                else if (keywords[value])
                   return "keyword";
@@ -209,14 +206,6 @@ define("mode/r_highlight_rules", function(require, exports, module)
                   return "identifier";
             },
             regex : reIdentifier + "(?=\\s*\\()",
-            next  : "start"
-         }
-      ];
-
-      rules["#variable-assignment"] = [
-         {
-            token : "variable.identifier",
-            regex : reIdentifier + "(?=\\s*=)",
             next  : "start"
          }
       ];
@@ -290,13 +279,15 @@ define("mode/r_highlight_rules", function(require, exports, module)
       // Construct rules from previously defined blocks.
       rules["start"] = include(
          "#comment", "#string", "#number",
-         "#package-access", "#function-call-or-keyword", "#keyword-or-identifier",
+         "#package-access", "#quoted-identifier",
+         "#function-call-or-keyword", "#keyword-or-identifier",
          "#operator", "#text"
       );
 
       rules["after-dollar"] = include(
          "#comment", "#string", "#number",
-         "#function-call", "#identifier",
+         "#quoted-identifier",
+         "#function-call", "#keyword-or-identifier",
          "#operator", "#text"
       );
 
