@@ -1357,6 +1357,9 @@ var RCodeModel = function(session, tokenizer,
 
             if (tokenCursor.isAtStartOfNewExpression(false))
             {
+               if (currentValue === "{")
+                  continuationIndent = tab;
+               
                return this.$getIndent(
                   this.$doc.getLine(tokenCursor.$row)
                ) + continuationIndent;
