@@ -410,6 +410,21 @@ public class TextEditingTargetReformatHelper
          return tokens_.get(index).getValue();
       }
       
+      public boolean hasType(String... targetTypes)
+      {
+         String tokenType = tokens_.get(offset_).getType();
+         for (String targetType : targetTypes)
+         {
+            if (tokenType.equals(targetType) ||
+                tokenType.contains(targetType + ".") ||
+                tokenType.contains("." + targetType))
+            {
+               return true;
+            }
+         }
+         return false;
+      }
+      
       public String currentType()
       {
          return tokens_.get(offset_).getType();

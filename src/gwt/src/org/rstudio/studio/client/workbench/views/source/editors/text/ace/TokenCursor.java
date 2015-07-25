@@ -50,6 +50,11 @@ public class TokenCursor extends JavaScriptObject
       return currentToken().typeEquals(type);
    }
    
+   public final boolean hasType(String... types)
+   {
+      return currentToken().hasType(types);
+   }
+   
    public final Token peek(int offset)
    {
       return offset > 0 ? peekFwd(offset) : peekBwd(-offset);

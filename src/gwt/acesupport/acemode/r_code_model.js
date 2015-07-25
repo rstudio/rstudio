@@ -198,7 +198,7 @@ var RCodeModel = function(session, tokenizer,
       var clone = cursor.cloneCursor();
       
       var token = "";
-      if (clone.currentType() === "identifier")
+      if (clone.hasType("identifier"))
          token = clone.currentValue();
       
       // We're expecting to be within e.g.
@@ -212,7 +212,7 @@ var RCodeModel = function(session, tokenizer,
       if (clone.currentValue() === "=")
          cursorPos = "right";
 
-      if (clone.currentType() === "identifier")
+      if (clone.hasType("identifier"))
       {
          if (!clone.moveToPreviousToken())
             return null;
@@ -322,7 +322,7 @@ var RCodeModel = function(session, tokenizer,
       if (cursor.currentValue() === ")")
          return false;
 
-      if (cursor.currentType() === "identifier")
+      if (cursor.hasType("identifier"))
          data.additionalArgs.push(cursor.currentValue());
       
       if (fnName === "rename")
@@ -358,7 +358,7 @@ var RCodeModel = function(session, tokenizer,
             if (!cursor.moveToNextToken())
                return false;
 
-            if (cursor.currentType() === "identifier")
+            if (cursor.hasType("identifier"))
                data.additionalArgs.push(cursor.currentValue());
             
             if (!cursor.moveToNextToken())
@@ -370,7 +370,7 @@ var RCodeModel = function(session, tokenizer,
                {
                   if (!cursor.moveToNextToken())
                      return false;
-                  if (cursor.currentType() === "identifier")
+                  if (cursor.hasType("identifier"))
                      data.excludeArgs.push(cursor.currentValue());
                }
 
@@ -1359,7 +1359,7 @@ var RCodeModel = function(session, tokenizer,
             {
                if (currentValue === "{")
                   continuationIndent = tab;
-               
+
                return this.$getIndent(
                   this.$doc.getLine(tokenCursor.$row)
                ) + continuationIndent;
@@ -1619,7 +1619,7 @@ var RCodeModel = function(session, tokenizer,
                
                // If we're on a constant, then we need to find an
                // operator beforehand, or give up.
-               if (/\bconstant\b|\bidentifier\b/.test(tokenCursor.currentType()))
+               if (tokenCursor.hasType("constant", "identifier"))
                {
 
                   if (!tokenCursor.moveToPreviousToken())
@@ -1649,7 +1649,7 @@ var RCodeModel = function(session, tokenizer,
 
                   }
 
-                  if (!/\boperator\b/.test(tokenCursor.currentType()))
+                  if (!tokenCursor.hasType("operator"))
                      break;
 
                   continue;
@@ -1712,8 +1712,7 @@ var RCodeModel = function(session, tokenizer,
       }
       else if (isOneOf(tokenCursor.currentValue(),
                        ["else", "repeat", "<-", "<<-", "="]) ||
-        tokenCursor.currentType().indexOf("infix") !== -1 ||
-        tokenCursor.currentType() === "keyword.operator")
+               tokenCursor.hasType("infix", "keyword.operator"))
       {
          return this.$getIndent(this.$getLine(tokenCursor.$row));
       }
