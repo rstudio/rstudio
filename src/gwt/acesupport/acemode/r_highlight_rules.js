@@ -186,7 +186,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
          {
             token : function(value) {
                if ($colorFunctionCalls)
-                  return "support.function.identifier";
+                  return "identifier.support.function";
                else
                   return "identifier";
             },
@@ -201,7 +201,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
                if (specialFunctions[value] || keywords[value])
                   return "keyword";
                else if ($colorFunctionCalls)
-                  return "support.function.identifier";
+                  return "identifier.support.function";
                else
                   return "identifier";
             },
