@@ -1712,7 +1712,8 @@ var RCodeModel = function(session, tokenizer,
       }
       else if (isOneOf(tokenCursor.currentValue(),
                        ["else", "repeat", "<-", "<<-", "="]) ||
-               tokenCursor.hasType("infix", "keyword.operator"))
+               tokenCursor.hasType("infix") ||
+               tokenCursor.currentType() === "keyword.operator")
       {
          return this.$getIndent(this.$getLine(tokenCursor.$row));
       }
