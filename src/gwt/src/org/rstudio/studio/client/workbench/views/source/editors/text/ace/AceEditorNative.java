@@ -383,7 +383,9 @@ public class AceEditorNative extends JavaScriptObject {
    }-*/;
    
    public final native void retokenizeDocument() /*-{
-      this.session.bgTokenizer.start(0);
+      this.session.bgTokenizer &&
+         this.session.bgTokenizer.start &&
+         this.session.bgTokenizer.start(0);
    }-*/;
    
    public final native void setCommandManager(AceCommandManager commands)
