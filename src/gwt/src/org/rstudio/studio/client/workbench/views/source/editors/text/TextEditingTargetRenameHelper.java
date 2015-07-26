@@ -51,13 +51,8 @@ public class TextEditingTargetRenameHelper
       // Validate that we're looking at an R identifier
       String targetValue = cursor.currentValue();
       String targetType = cursor.currentType();
-      
-      boolean isVariableType =
-            targetType.equals("identifier") ||
-            targetType.equals("keyword") ||
-            targetType.equals("constant.language");
-      
-      if (!isVariableType)
+
+      if (!cursor.hasType("identifier", "keyword", "constant.language"))
          return -1;
       
       // Check to see if we're refactoring the name of an argument in a function call,

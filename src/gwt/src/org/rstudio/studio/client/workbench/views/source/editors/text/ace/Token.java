@@ -55,6 +55,21 @@ public class Token extends JavaScriptObject
       return value.equals(getValue());
    }
    
+   public final boolean hasType(String... types)
+   {
+      String tokenType = getType();
+      for (String type : types)
+      {
+         if (tokenType.equals(type) ||
+             tokenType.contains(type + ".") ||
+             tokenType.contains("." + type))
+         {
+            return true;
+         }
+      }
+      return false;
+   }
+   
    public final boolean typeEquals(String type)
    {
       return type.equals(getType());
@@ -85,7 +100,7 @@ public class Token extends JavaScriptObject
    
    public native final boolean isValidForFunctionCall() /*-{
       return this.type && (
-         this.type === "identifier" ||
+         this.type.indexOf("identifier") !== -1 ||
          this.type === "string" ||
          this.type === "keyword"
       );

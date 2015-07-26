@@ -384,6 +384,21 @@ var TokenCursor = function(tokens, row, offset) {
       return this.currentToken().type;
    };
 
+   this.hasType = function(/*...*/)
+   {
+      var tokenType = this.currentType();
+      for (var i = 0; i < arguments.length; i++) {
+         var type = arguments[i];
+         if (tokenType === type ||
+             tokenType.indexOf(type + ".") !== -1 ||
+             tokenType.indexOf("." + type) !== -1)
+         {
+            return true;
+         }
+      }
+      return false;
+   };
+
    this.currentPosition = function()
    {
       var token = this.currentToken();
@@ -812,13 +827,9 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
       }
 
       // Chomp keywords
-      while (clonedCursor.currentType() === "keyword") {
-         
-         if (!clonedCursor.moveToPreviousToken()) {
+      while (clonedCursor.currentType() === "keyword")
+         if (!clonedCursor.moveToPreviousToken())
             return false;
-         }
-         
-      }
       
       // Move backwards over the name of the element initialized
       if (clonedCursor.moveToPreviousToken()) {
@@ -859,13 +870,13 @@ oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
 
    var contains = Utils.contains;
 
-   this.isValidAsIdentifier = function() {
+   this.isValidAsIdentifier = function()
+   {
       var type = this.currentType();
-      return type === "identifier" ||
+      return this.hasType("identifier", "constant") ||
              type === "symbol" ||
              type === "keyword" ||
-             type === "string" ||
-             type.indexOf("constant") !== -1;
+             type === "string";
    };
 
    this.isExtractionOperator = function()
@@ -922,8 +933,9 @@ oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
 
    this.isLookingAtBinaryOp = function()
    {
-      return this.currentType() === "keyword.operator" ||
-             this.currentType() === "keyword.operator.infix";
+      var type = this.currentType();
+      return type === "keyword.operator" ||
+             type === "keyword.operator.infix";
    };
 
    this.moveToStartOfCurrentStatement = function()
@@ -1067,35 +1079,25 @@ oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
    // or 'operator' types.
    this.isValidForEndOfStatement = function()
    {
-      var token = this.currentToken();
-      if (!token) return false;
-      
-      var value = token.value;
-      var type  = token.type;
-
+      var type = this.currentType();
       if (type === "paren.keyword.operator")
-         return isRightBracket(value);
+         return isRightBracket(this.currentValue());
+
+      var value = this.currentValue();
 
       return isSingleLineString(value) ||
-             type === "identifier" ||
-             type.indexOf("constant") !== -1 ||
-             type.indexOf("variable") !== -1;
+             this.hasType("identifier", "constant", "variable");
    };
 
    this.isValidForStartOfStatement = function()
    {
-      var token = this.currentToken();
-      
-      var value = token.value;
-      var type = token.type;
-
+      var type = this.currentType();
       if (type === "paren.keyword.operator")
-         return isLeftBracket(value);
+         return isLeftBracket(this.currentValue());
 
+      var value = this.currentValue();
       return isSingleLineString(value) ||
-             type === "identifier" ||
-             type.indexOf("constant") !== -1 ||
-             type.indexOf("variable") !== -1;
+             this.hasType("identifier", "constant", "variable");
    };
 
    // NOTE: By 'conditional' we mean following by a parenthetical

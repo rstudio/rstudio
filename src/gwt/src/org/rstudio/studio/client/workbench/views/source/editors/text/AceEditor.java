@@ -553,12 +553,14 @@ public class AceEditor implements DocDisplay,
                                        UIPrefsAccessor.COMPLETION_ALWAYS);
       int characterThreshold = uiPrefs_.alwaysCompleteCharacters().getValue();
       int delay = uiPrefs_.alwaysCompleteDelayMs().getValue();
+      
       widget_.getEditor().setCompletionOptions(
             enabled,
             uiPrefs_.enableSnippets().getValue(),
             live,
             characterThreshold,
             delay);
+      
    }
 
    @Override
@@ -1447,6 +1449,18 @@ public class AceEditor implements DocDisplay,
    {
       getSession().setUseSoftTabs(on);
    }
+   
+   public void setHighlightRFunctionCalls(boolean highlight)
+   {
+      _setHighlightRFunctionCallsImpl(highlight);
+      widget_.getEditor().retokenizeDocument();
+   }
+   
+   private native final void _setHighlightRFunctionCallsImpl(boolean highlight)
+   /*-{
+      var Mode = $wnd.require("mode/r_highlight_rules");
+      Mode.setHighlightRFunctionCalls(highlight);
+   }-*/;
 
    /**
     * Warning: This will be overridden whenever the file type is set
@@ -2508,7 +2522,7 @@ public class AceEditor implements DocDisplay,
    {
       return snippets_.onInsertSnippet();
    }
-
+   
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;

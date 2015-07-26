@@ -1099,7 +1099,7 @@ public class RCompletionManager implements CompletionManager
          if (cursor.moveToPosition(input_.getCursorPosition()))
          {
             String token = "";
-            if (cursor.currentType() == "identifier")
+            if (cursor.hasType("identifier"))
                token = cursor.currentValue();
             
             String cursorPos = "left";

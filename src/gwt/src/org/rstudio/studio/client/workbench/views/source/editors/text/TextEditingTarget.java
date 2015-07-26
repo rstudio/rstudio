@@ -5022,6 +5022,11 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.setShowIndentGuides(arg);
                }}));
+      releaseOnDismiss.add(prefs.highlightRFunctionCalls().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.setHighlightRFunctionCalls(arg);
+               }}));
       releaseOnDismiss.add(prefs.useVimMode().bind(
             new CommandWithArg<Boolean>() {
                public void execute(Boolean arg) {
