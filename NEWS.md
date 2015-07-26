@@ -13,6 +13,9 @@
 * New Close All Except Current command
 * Rename variable in scope (Cmd+Shift+Alt+M)
 * New Emacs editing mode
+* More context-sensitive highlighting of R keywords
+* Option to enable highlighting of R function calls
+
 
 ### R Markdown
 
