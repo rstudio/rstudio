@@ -56,6 +56,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceMouseEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunksEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidgetManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -961,6 +962,11 @@ public class AceEditorWidget extends Composite
       // read-only mode while dragging, which prevents it from accepting the
       // text 
       editor_.setReadOnly(!enabled);
+   }
+   
+   public LineWidgetManager getLineWidgetManager()
+   {
+      return editor_.getLineWidgetManager();
    }
    
    private final AceEditorNative editor_;

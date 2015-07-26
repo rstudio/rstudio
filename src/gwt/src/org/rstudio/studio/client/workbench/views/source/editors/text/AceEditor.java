@@ -2523,6 +2523,12 @@ public class AceEditor implements DocDisplay,
       return snippets_.onInsertSnippet();
    }
    
+   @Override
+   public LineWidgetManager getLineWidgetManager()
+   {
+      return widget_.getLineWidgetManager();
+   }
+   
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
@@ -2580,5 +2586,4 @@ public class AceEditor implements DocDisplay,
 
    private long lastCursorChangedTime_;
    private long lastModifiedTime_;
-
 }
