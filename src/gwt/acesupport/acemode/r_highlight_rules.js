@@ -266,7 +266,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
             regex : "[,]",
             merge : false,
             next  : "start"
-         },
+         }
       ];
 
       rules["#text"] = [
