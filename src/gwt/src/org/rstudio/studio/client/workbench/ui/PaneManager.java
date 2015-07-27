@@ -40,7 +40,6 @@ import org.rstudio.core.client.theme.PrimaryWindowFrame;
 import org.rstudio.core.client.theme.WindowFrame;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ToolbarButton;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -53,6 +52,7 @@ import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import java.util.ArrayList;
@@ -161,8 +161,7 @@ public class PaneManager
       // count the number of source docs assigned to this window
       JsArray<SourceDocument> docs = 
             session_.getSessionInfo().getSourceDocuments();
-      String windowId = RStudioGinjector.INSTANCE.getSourceWindowManager()
-                                                 .getSourceWindowId();
+      String windowId = SourceWindowManager.getSourceWindowId();
       int numDocs = 0;
       for (int i = 0; i < docs.length(); i++)
       {

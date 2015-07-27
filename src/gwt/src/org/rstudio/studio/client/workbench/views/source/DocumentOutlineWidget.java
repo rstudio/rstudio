@@ -122,7 +122,7 @@ public class DocumentOutlineWidget extends Composite
          }
 
          if (text.equals(""))
-            text = "(untitled)";
+            text = "(chunk)";
 
          if (label_ == null)
             label_ = new Label(text);

@@ -15,8 +15,8 @@
 package org.rstudio.studio.client.workbench.views.source.events;
 
 import org.rstudio.core.client.js.JavaScriptSerializable;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -37,8 +37,7 @@ public class SourceDocAddedEvent
    public SourceDocAddedEvent(SourceDocument doc)
    {
       doc_ = doc;
-      windowId_ = RStudioGinjector.INSTANCE.getSourceWindowManager()
-                                           .getSourceWindowId();
+      windowId_ = SourceWindowManager.getSourceWindowId();
    }
 
    public SourceDocument getDoc()

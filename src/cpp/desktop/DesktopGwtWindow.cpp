@@ -14,7 +14,7 @@
  */
 
 #include "DesktopGwtWindow.hpp"
-
+#include "DesktopOptions.hpp"
 
 
 namespace rstudio {
@@ -25,8 +25,58 @@ GwtWindow::GwtWindow(bool showToolbar,
                      QString name,
                      QUrl baseUrl,
                      QWidget* pParent) :
-   BrowserWindow(showToolbar, adjustTitle, name, baseUrl, pParent)
+   BrowserWindow(showToolbar, adjustTitle, name, baseUrl, pParent),
+   zoomLevel_(options().zoomLevel())
 {
+   // initialize zoom levels
+   zoomLevels_.push_back(1.0);
+   zoomLevels_.push_back(1.1);
+   zoomLevels_.push_back(1.20);
+   zoomLevels_.push_back(1.30);
+   zoomLevels_.push_back(1.40);
+   zoomLevels_.push_back(1.50);
+   zoomLevels_.push_back(1.75);
+   zoomLevels_.push_back(2.00);
+}
+
+void GwtWindow::zoomIn()
+{
+   // get next greatest value
+   std::vector<double>::const_iterator it = std::upper_bound(
+            zoomLevels_.begin(), zoomLevels_.end(), getZoomLevel());
+   if (it != zoomLevels_.end())
+   {
+      setZoomLevel(*it);
+      webView()->reload();
+   }
+}
+
+void GwtWindow::zoomOut()
+{
+   // get next smallest value
+   std::vector<double>::const_iterator it = std::lower_bound(
+            zoomLevels_.begin(), zoomLevels_.end(), getZoomLevel());
+   if (it != zoomLevels_.begin() && it != zoomLevels_.end())
+   {
+      setZoomLevel(*(it-1));
+      webView()->reload();
+   }
+}
+
+void GwtWindow::onJavaScriptWindowObjectCleared()
+{
+   if (getZoomLevel() != webView()->dpiAwareZoomFactor())
+      webView()->setDpiAwareZoomFactor(getZoomLevel());
+}
+
+double GwtWindow::getZoomLevel()
+{
+   return zoomLevel_;
+}
+
+void GwtWindow::setZoomLevel(double zoomLevel)
+{
+   zoomLevel_ = zoomLevel;
 }
 
 bool GwtWindow::event(QEvent* pEvent)

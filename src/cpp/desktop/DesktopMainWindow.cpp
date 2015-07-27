@@ -51,16 +51,6 @@ MainWindow::MainWindow(QUrl url) :
    quitConfirmed_ = false;
    pToolbar_->setVisible(false);
 
-   // initialize zoom levels
-   zoomLevels_.push_back(1.0);
-   zoomLevels_.push_back(1.1);
-   zoomLevels_.push_back(1.20);
-   zoomLevels_.push_back(1.30);
-   zoomLevels_.push_back(1.40);
-   zoomLevels_.push_back(1.50);
-   zoomLevels_.push_back(1.75);
-   zoomLevels_.push_back(2.00);
-
    // Dummy menu bar to deal with the fact that
    // the real menu bar isn't ready until well
    // after startup.
@@ -206,9 +196,7 @@ void MainWindow::quit()
 
 void MainWindow::onJavaScriptWindowObjectCleared()
 {
-   double zoomLevel = options().zoomLevel();
-   if (zoomLevel != webView()->dpiAwareZoomFactor())
-      webView()->setDpiAwareZoomFactor(zoomLevel);
+   GwtWindow::onJavaScriptWindowObjectCleared();
 
    webView()->page()->mainFrame()->addToJavaScriptWindowObject(
          QString::fromUtf8("desktop"),
@@ -224,30 +212,6 @@ void MainWindow::invokeCommand(QString commandId)
 {
    webView()->page()->mainFrame()->evaluateJavaScript(
          QString::fromUtf8("window.desktopHooks.invokeCommand('") + commandId + QString::fromUtf8("');"));
-}
-
-void MainWindow::zoomIn()
-{
-   // get next greatest value
-   std::vector<double>::const_iterator it = std::upper_bound(
-            zoomLevels_.begin(), zoomLevels_.end(), options().zoomLevel());
-   if (it != zoomLevels_.end())
-   {
-      options().setZoomLevel(*it);
-      webView()->reload();
-   }
-}
-
-void MainWindow::zoomOut()
-{
-   // get next smallest value
-   std::vector<double>::const_iterator it = std::lower_bound(
-            zoomLevels_.begin(), zoomLevels_.end(), options().zoomLevel());
-   if (it != zoomLevels_.begin() && it != zoomLevels_.end())
-   {
-      options().setZoomLevel(*(it-1));
-      webView()->reload();
-   }
 }
 
 void MainWindow::manageCommand(QString cmdId, QAction* action)
@@ -304,6 +268,16 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
       pFrame->evaluateJavaScript(QString::fromUtf8("window.desktopHooks.quitR()"));
       pEvent->ignore();
    }
+}
+
+double MainWindow::getZoomLevel()
+{
+   return options().zoomLevel();
+}
+
+void MainWindow::setZoomLevel(double zoomLevel)
+{
+   options().setZoomLevel(zoomLevel);
 }
 
 void MainWindow::setMenuBar(QMenuBar *pMenubar)
