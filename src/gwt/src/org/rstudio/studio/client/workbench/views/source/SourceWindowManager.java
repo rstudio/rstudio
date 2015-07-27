@@ -734,6 +734,10 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          // this is the main window; pass the event on to the window that just
          // lost its doc
          fireEventToSourceWindow(event.getOldWindowId(), event, false);
+         
+         // raise the window that received the doc (doesn't happen 
+         // automatically)
+         focusSourceWindow(event.getNewWindowId());
       }
       else if (event.getNewWindowId() == getSourceWindowId())
       {
@@ -977,6 +981,25 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       return Desktop.isDesktop() || BrowseCap.INSTANCE.isInternetExplorer();
    }
    
+   
+   private void focusSourceWindow(String windowId)
+   {
+      if (StringUtil.isNullOrEmpty(windowId))
+      {
+         // activate main window
+         if (Desktop.isDesktop())
+            Desktop.getFrame().bringMainFrameToFront();
+         else
+            WindowEx.get().focus();
+      }
+      else
+      {
+         // activate satellite window
+         pSatelliteManager_.get().activateSatelliteWindow(
+               SourceSatellite.NAME_PREFIX + windowId);
+      }
+   }
+
    // Private types -----------------------------------------------------------
    
    private interface SourceWindowCommand
