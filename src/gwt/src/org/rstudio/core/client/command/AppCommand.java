@@ -138,15 +138,18 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          return;
       
       // if this window is a satellite but the command only wants to be handled
-      // in the main window, activate the main window and execute the command
-      // there instead
+      // in the a different window, execute the command there instead
       Satellite satellite = RStudioGinjector.INSTANCE.getSatellite();
-      if (satellite.isCurrentWindowSatellite() 
-          && (getWindowMode().equals(WINDOW_MODE_MAIN) ||
-              getWindowMode().equals(WINDOW_MODE_BACKGROUND)))
+      if (getWindowMode() != "any" &&
+          satellite.isCurrentWindowSatellite() && 
+          satellite.getSatelliteName() != getWindowMode()) 
       {
-         if (getWindowMode().equals(WINDOW_MODE_MAIN))
+         // raise the main window if it's not a background command
+         if (!getWindowMode().equals(WINDOW_MODE_BACKGROUND))
             satellite.focusMainWindow();
+         
+         // satellites don't fire commands peer-to-peer--route it to the main
+         // window for processing
          SatelliteManager mgr = RStudioGinjector.INSTANCE.getSatelliteManager();
          mgr.dispatchCommand(this, null);
          return;
@@ -608,6 +611,5 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private boolean executedFromShortcut_ = false;
  
    private static boolean enableNoHandlerAssertions_ = true;
-   private static final String WINDOW_MODE_MAIN = "main";
    private static final String WINDOW_MODE_BACKGROUND = "background";
 }

@@ -28,6 +28,8 @@ well as menu structures (for main menu and popup menus).
       "any": operates on current window (the default),
       "main": always operates on main window, and raises main window
       "background": always operates on main window, but in the background
+      "<satellite name>": operates on named satellite; sent to the main window
+        for processing unless fired from the named satellite
 -->
 <commands>
    <menu id="mainMenu" vertical="false">
@@ -1424,7 +1426,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Commit..."
         desc="Commit pending changes"
         rebindable="false"
-        category="vcs"/>
+        category="vcs"
+        windowMode="review_changes"/>
 
    <cmd id="vcsRevert"
         buttonLabel="Revert"
@@ -1467,13 +1470,15 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Pull Branches"
         buttonLabel="Pull"
         rebindable="false"
-        category="vcs"/>
+        category="vcs"
+        windowMode="review_changes"/>
         
    <cmd id="vcsPush"
         menuLabel="P_ush Branch"
         buttonLabel="Push"
         rebindable="false"
-        category="vcs"/>
+        category="vcs"
+        windowMode="review_changes"/>
         
    <cmd id="vcsCleanup"
         menuLabel="Cleanu_p"
