@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.Pair;
@@ -40,6 +41,7 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.satellite.events.AllSatellitesClosingEvent;
 import org.rstudio.studio.client.common.satellite.events.SatelliteClosedEvent;
+import org.rstudio.studio.client.common.satellite.events.SatelliteFocusedEvent;
 import org.rstudio.studio.client.common.satellite.model.SatelliteWindowGeometry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -75,6 +77,7 @@ import com.google.inject.Singleton;
 @Singleton
 public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             SourceDocAddedEvent.Handler,
+                                            SatelliteFocusedEvent.Handler,
                                             SatelliteClosedEvent.Handler,
                                             DocTabDragStartedEvent.Handler,
                                             DocWindowChangedEvent.Handler,
@@ -113,6 +116,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          events_.addHandler(AllSatellitesClosingEvent.TYPE, this);
          events_.addHandler(SourceDocAddedEvent.TYPE, this);
          events_.addHandler(SatelliteClosedEvent.TYPE, this);
+         events_.addHandler(SatelliteFocusedEvent.TYPE, this);
          events_.addHandler(DocTabClosedEvent.TYPE, this);
          events_.addHandler(ShowHelpEvent.TYPE, this);
 
@@ -540,6 +544,17 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    }
 
    @Override
+   public void onSatelliteFocused(SatelliteFocusedEvent event)
+   {
+      // ignore window focus when not a source window
+      if (!event.getName().startsWith(SourceSatellite.NAME_PREFIX))
+         return;
+      
+      mostRecentSourceWindow_ = sourceWindowId(event.getName());
+      Debug.devlog("set most recent source window to " + mostRecentSourceWindow_);
+   }
+
+   @Override
    public void onAllSatellitesClosing(AllSatellitesClosingEvent event)
    {
       windowsClosing_ = true;
@@ -626,7 +641,28 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          if (position == null)
             position = geometry.getPosition();
       }
-
+      
+      // if we don't have window geometry for this window, tile based on the
+      // geometry of the most recently used source window (otherwise the new
+      // window may exactly overlap an existing source window)
+      if (geometry == null)
+      {
+         if (!StringUtil.isNullOrEmpty(mostRecentSourceWindow_) &&
+             isSourceWindowOpen(mostRecentSourceWindow_))
+         {
+            WindowEx window = getSourceWindowObject(mostRecentSourceWindow_);
+            if (window != null && !window.isClosed())
+            {
+               size = new Size(window.getOuterWidth(), 
+                     window.getOuterHeight());
+               if (position == null)
+                  position = new Point(
+                        window.getScreenX() + 50,
+                        window.getScreenY() + 50);
+            }
+         }
+      }
+      
       // assign ordinal if not already assigned
       if (ordinal == null)
          ordinal = ++maxOrdinal_;
@@ -638,6 +674,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                   pWorkbenchContext_.get().createWindowTitle()), 
             size, position);
       
+      mostRecentSourceWindow_ = windowId;
       sourceWindows_.put(windowId, ordinal);
    }
    
@@ -909,6 +946,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private JsObject windowGeometry_ = JsObject.createJsObject();
    private int maxOrdinal_ = 0;
    private int thisWindowOrdinal_ = 0;
+   private String mostRecentSourceWindow_ = "";
    
    public final static String SOURCE_WINDOW_ID = "source_window_id";
 }

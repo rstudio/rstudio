@@ -25,9 +25,10 @@ import java.lang.annotation.Target;
  * There are a few prerequisites that must be met for classes that wish to be
  * serialized:
  * 
- * 1. The class must contain only "plain old data" fields (e.g. String, int,
- *    boolean, JavaScriptObject). The behavior for other fields is not
- *    currently defined; these fields may be null on hydration.
+ * 1. The class must contain only fields which are "plain old data" (e.g.
+ *    String, int, boolean, JavaScriptObject), or classes which are themselves 
+ *    JavaScriptSerializable The behavior for other fields is not currently
+ *    defined; these fields may be null on hydration.
  *    
  * 2. The class must have an empty constructor; the deserializer works by 
  *    constructing an empty instance of the class and then using JSNI to 
