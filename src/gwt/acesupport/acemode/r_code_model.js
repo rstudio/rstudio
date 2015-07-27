@@ -1212,6 +1212,12 @@ var RCodeModel = function(session, tokenizer,
       );
    };
 
+   function isOperatorType(type)
+   {
+      return type === "keyword.operator" ||
+             type === "keyword.operator.infix";
+   }
+
    // NOTE: 'row' is an optional parameter, and is not used by default
    // on enter keypresses. When unset, we attempt to indent based on
    // the cursor position (which is what we want for 'enter'
@@ -1275,9 +1281,7 @@ var RCodeModel = function(session, tokenizer,
          var continuationIndent = "";
          var startedOnOperator = false;
 
-         if (prevToken &&
-             /\boperator\b/.test(prevToken.token.type) &&
-             !/\bparen\b/.test(prevToken.token.type))
+         if (prevToken && isOperatorType(prevToken.token.type))
          {
             // Fix issue 2579: If the previous significant token is an operator
             // (commonly, "+" when used with ggplot) then this line is a

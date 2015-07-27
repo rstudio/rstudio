@@ -398,6 +398,7 @@ var RMode = require('mode/r').Mode;
 var EditSession = require("ace/edit_session").EditSession;
 var Range = require('ace/range').Range;
 require('mode/auto_brace_insert').setInsertMatching(true);
+// require('mode/r_highlight_rules').setHighlightRFunctionCalls(true);
 
 var editor = ace.edit('editor');
 editor.$blockScrolling = Infinity;
