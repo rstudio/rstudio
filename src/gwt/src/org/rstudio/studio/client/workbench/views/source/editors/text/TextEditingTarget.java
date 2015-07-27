@@ -136,6 +136,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar.HideMessageHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
@@ -1251,6 +1252,9 @@ public class TextEditingTarget implements
       }));
       
       spelling_ = new TextEditingTargetSpelling(docDisplay_, 
+                                                docUpdateSentinel_);
+      
+      notebook_ = new TextEditingTargetNotebook(docDisplay_,
                                                 docUpdateSentinel_);
 
       // show/hide the debug toolbar when the dirty state changes. (note:
@@ -3629,8 +3633,11 @@ public class TextEditingTarget implements
             {
                codeExecution_.setLastExecuted(range.getStart(), range.getEnd());
                String code = scopeHelper_.getSweaveChunkText(chunk);
-               events_.fireEvent(new SendToConsoleEvent(code, true));
-               docDisplay_.collapseSelection(true);
+               if (prefs_.showRmdChunkOutputInline().getValue())
+                  notebook_.executeChunk(chunk, code);
+               else
+                  events_.fireEvent(new SendToConsoleEvent(code, true));
+               docDisplay_.collapseSelection(true);   
             }
          }
       };
@@ -5264,6 +5271,7 @@ public class TextEditingTarget implements
    private boolean forceSaveCommandActive_ = false;
    private final TextEditingTargetScopeHelper scopeHelper_;
    private TextEditingTargetSpelling spelling_;
+   private TextEditingTargetNotebook notebook_;
    private BreakpointManager breakpointManager_;
    private final LintManager lintManager_;
    private final TextEditingTargetRenameHelper renameHelper_;
