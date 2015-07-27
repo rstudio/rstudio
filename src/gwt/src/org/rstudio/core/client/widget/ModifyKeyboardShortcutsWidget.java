@@ -19,6 +19,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -55,6 +56,7 @@ import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
 
@@ -496,7 +498,18 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       VerticalPanel container = new VerticalPanel();
       
-      container.add(searchWidget_);
+      FlowPanel headerPanel = new FlowPanel();
+      
+      searchWidget_.getElement().getStyle().setFloat(Style.Float.LEFT);
+      headerPanel.add(searchWidget_);
+      
+      HelpLink link = new HelpLink(
+            "Customizing Keyboard Shortcuts",
+            "custom_keyboard_shortcuts");
+      link.getElement().getStyle().setFloat(Style.Float.RIGHT);
+      headerPanel.add(link);
+      
+      container.add(headerPanel);
       
       FlowPanel spacer = new FlowPanel();
       spacer.setWidth("100%");
