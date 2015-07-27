@@ -746,7 +746,7 @@ public class Source implements InsertSourceHandler,
                      SourceWindowManager.SOURCE_WINDOW_ID);
          if (docWindowId == null)
             docWindowId = "";
-         String currentSourceWindowId = windowManager_.getSourceWindowId();
+         String currentSourceWindowId = SourceWindowManager.getSourceWindowId();
          
          // it belongs in this window if (a) it's assigned to it, or (b) this
          // is the main window, and the window it's assigned to isn't open.
@@ -1488,7 +1488,7 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onDocWindowChanged(final DocWindowChangedEvent e)
    {
-      if (e.getNewWindowId() == windowManager_.getSourceWindowId())
+      if (e.getNewWindowId() == SourceWindowManager.getSourceWindowId())
       {
          // if we're the adopting window, add the doc
          server_.getSourceDocument(e.getDocId(),
@@ -1509,7 +1509,7 @@ public class Source implements InsertSourceHandler,
             }
          });
       }
-      else if (e.getOldWindowId() == windowManager_.getSourceWindowId())
+      else if (e.getOldWindowId() == SourceWindowManager.getSourceWindowId())
       {
          // cancel tab drag if it was occurring
          view_.cancelTabDrag();

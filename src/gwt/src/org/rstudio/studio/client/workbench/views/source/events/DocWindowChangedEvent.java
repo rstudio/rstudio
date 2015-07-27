@@ -16,8 +16,8 @@
 package org.rstudio.studio.client.workbench.views.source.events;
 
 import org.rstudio.core.client.js.JavaScriptSerializable;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -45,8 +45,7 @@ public class DocWindowChangedEvent
    {
       docId_ = docId;
       oldWindowId_ = oldWindowId;
-      newWindowId_ = RStudioGinjector.INSTANCE.getSourceWindowManager()
-            .getSourceWindowId();
+      newWindowId_ = SourceWindowManager.getSourceWindowId();
       pos_ = pos;
    }
    

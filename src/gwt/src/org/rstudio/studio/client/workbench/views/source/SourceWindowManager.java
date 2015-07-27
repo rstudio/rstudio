@@ -213,7 +213,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
 
    // Public methods ----------------------------------------------------------
    
-   public String getSourceWindowId()
+   public static String getSourceWindowId()
    {
       return sourceWindowId(Window.Location.getParameter("view"));
    }
@@ -669,7 +669,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       return id;
    }
    
-   private String sourceWindowId(String input)
+   private static String sourceWindowId(String input)
    {
       if (input != null && input.startsWith(SourceSatellite.NAME_PREFIX))
       {

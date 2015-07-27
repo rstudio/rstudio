@@ -40,6 +40,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
@@ -965,8 +966,7 @@ public class DocTabLayoutPanel
             {
                evt.getDataTransfer().setData(
                      getDataTransferFormat(), docId_ + "|" + 
-                  RStudioGinjector.INSTANCE.getSourceWindowManager()
-                                           .getSourceWindowId());
+                  SourceWindowManager.getSourceWindowId());
                JsObject dt = evt.getDataTransfer().cast();
                dt.setString("effectAllowed", "move");
                events_.fireEvent(new DocTabDragStartedEvent(docId_, 
