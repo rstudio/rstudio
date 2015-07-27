@@ -43,9 +43,10 @@ public class TextEditingTargetNotebook
       options.setFixedWidth(true);
       LineWidget widget = LineWidget.create(
             chunk.getEnd().getRow(),
-            div, 
+            div,
+            null,
             options);
-      docDisplay_.getLineWidgetManager().addLineWidget(widget);
+      docDisplay_.addLineWidget(widget);
    }
    
    

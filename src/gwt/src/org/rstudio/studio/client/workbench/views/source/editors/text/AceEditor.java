@@ -190,6 +190,13 @@ public class AceEditor implements DocDisplay,
                changed_ = true;
             }
          });
+         AceEditor.this.addLineWidgetsChangedHandler(new org.rstudio.studio.client.workbench.views.source.editors.text.events.LineWidgetsChangedEvent.Handler() {
+            @Override
+            public void onLineWidgetsChanged(LineWidgetsChangedEvent event)
+            {
+               changed_ = true;
+            }
+         });
       }
 
       @Override
@@ -2061,6 +2068,12 @@ public class AceEditor implements DocDisplay,
    {
       return handlers_.addHandler(FoldChangeEvent.TYPE, handler);
    }
+   
+   public HandlerRegistration addLineWidgetsChangedHandler(
+                           LineWidgetsChangedEvent.Handler handler)
+   {
+      return handlers_.addHandler(LineWidgetsChangedEvent.TYPE, handler);
+   }
 
    public HandlerRegistration addRenderFinishedHandler(RenderFinishedEvent.Handler handler)
    {
@@ -2524,9 +2537,29 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
-   public LineWidgetManager getLineWidgetManager()
+   public void addLineWidget(LineWidget widget)
    {
-      return widget_.getLineWidgetManager();
+      widget_.getLineWidgetManager().addLineWidget(widget);
+      fireLineWidgetsChanged();
+   }
+   
+   @Override
+   public void removeLineWidget(LineWidget widget)
+   {
+      widget_.getLineWidgetManager().removeLineWidget(widget);
+      fireLineWidgetsChanged();
+   }
+   
+   @Override
+   public void onLineWidgetChanged(LineWidget widget)
+   {
+      widget_.getLineWidgetManager().onWidgetChanged(widget);
+      fireLineWidgetsChanged();
+   }
+   
+   private void fireLineWidgetsChanged()
+   {
+      AceEditor.this.fireEvent(new LineWidgetsChangedEvent());
    }
    
    private static final int DEBUG_CONTEXT_LINES = 2;

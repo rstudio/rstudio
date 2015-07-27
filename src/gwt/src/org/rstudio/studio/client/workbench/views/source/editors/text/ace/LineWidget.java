@@ -53,24 +53,32 @@ public class LineWidget extends JavaScriptObject
    
    protected LineWidget() {}
  
-   public static final LineWidget create(int row, String html, Options options)
+   public static final LineWidget create(int row, 
+                                         String html, 
+                                         String data,
+                                         Options options)
    {
-      return create(row, html, null, options);
+      return create(row, html, null, data, options);
    }
    
-   public static final LineWidget create(int row, Element el, Options options)
+   public static final LineWidget create(int row, 
+                                         Element el,
+                                         String data,
+                                         Options options)
    {
-      return create(row, null, el, options);
+      return create(row, null, el, data, options);
    }
    
    private static native final LineWidget create(int row, 
                                                  String html,
                                                  Element element,
+                                                 String data,
                                                  Options options) /*-{
       return {
          row: row,
          html: html,
          el: element,   
+         data: data,
          pixelHeight: options.pixelHeight,
          rowCount: options.rowCount,
          fixedWidth: options.fixedWidth,
@@ -100,5 +108,9 @@ public class LineWidget extends JavaScriptObject
    
    public native final boolean getCoverGutter()  /*-{
       return this.coverGutter;
+   }-*/;
+   
+   public native final String getData()  /*-{
+      return this.data;
    }-*/;
 }
