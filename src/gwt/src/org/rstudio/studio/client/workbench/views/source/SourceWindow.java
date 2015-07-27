@@ -62,7 +62,7 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       
       // this class is for satellite source windows only; if an instance gets
       // created in the main window, don't hook up any of its behaviors
-      if (satellite.isCurrentWindowSatellite())
+      if (!satellite.isCurrentWindowSatellite())
          return;
       
       // add event handlers
