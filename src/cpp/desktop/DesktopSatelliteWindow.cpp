@@ -43,6 +43,8 @@ SatelliteWindow::SatelliteWindow(MainWindow* pMainWindow, QString name) :
 
 void SatelliteWindow::onJavaScriptWindowObjectCleared()
 {
+   GwtWindow::onJavaScriptWindowObjectCleared();
+
    webView()->page()->mainFrame()->addToJavaScriptWindowObject(
          QString::fromUtf8("desktop"),
          &gwtCallback_,
