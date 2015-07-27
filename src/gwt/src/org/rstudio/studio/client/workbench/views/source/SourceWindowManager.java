@@ -958,6 +958,9 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             });
          }
       }
+      
+      // clean up our own reference to the window
+      sourceWindows_.remove(windowId);
    }
    
    private static boolean canActivateSourceWindows()
