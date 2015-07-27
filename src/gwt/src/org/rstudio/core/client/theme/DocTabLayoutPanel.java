@@ -859,10 +859,7 @@ public class DocTabLayoutPanel
          
          // this is the case when our own drag ends; if it ended outside our
          // window and outside all satellites, treat it as a tab tear-off
-         // (only if multiple source windows are enabled)
-         if (dragElement_ != null && evt != null && action == ACTION_CANCEL &&
-             RStudioGinjector.INSTANCE.getUIPrefs().enableSourceWindows()
-                                                   .getGlobalValue())
+         if (dragElement_ != null && evt != null && action == ACTION_CANCEL)
          {
             // if this is the last tab in satellite, we don't want to tear
             // it out
