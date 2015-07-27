@@ -83,8 +83,6 @@ import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkIconsManager;
-import org.rstudio.studio.client.workbench.views.source.editors.text.SetupChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCppHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
@@ -92,6 +90,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.SetupChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
 import org.rstudio.studio.client.workbench.views.environment.ClearAllDialog;
 

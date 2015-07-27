@@ -187,8 +187,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSou
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkIconsManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.TexServerOperations;

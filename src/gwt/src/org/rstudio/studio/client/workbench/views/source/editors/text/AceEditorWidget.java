@@ -63,6 +63,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.events.AfterAceRenderEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent.Handler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager;
 
 public class AceEditorWidget extends Composite
       implements RequiresResize,

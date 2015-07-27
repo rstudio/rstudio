@@ -104,7 +104,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditing
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkIconsManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
@@ -117,6 +116,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.File
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRdDialog;
 import org.rstudio.studio.client.workbench.views.source.events.*;

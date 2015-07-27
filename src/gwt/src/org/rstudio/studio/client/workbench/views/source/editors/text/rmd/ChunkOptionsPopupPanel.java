@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.source.editors.text;
+package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,6 +32,7 @@ import org.rstudio.core.client.widget.ThemedCheckBox;
 import org.rstudio.core.client.widget.TriStateCheckBox;
 import org.rstudio.core.client.widget.TriStateCheckBox.State;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
 import com.google.gwt.core.client.GWT;
