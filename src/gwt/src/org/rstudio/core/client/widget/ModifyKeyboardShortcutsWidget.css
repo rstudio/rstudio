@@ -8,6 +8,22 @@
 	border-color: MODIFIED_COLOUR !important;
 }
 
+/* Avoid GWT's inset styling for selected cells */
+.dataGridKeyboardSelectedRowCell, .dataGridKeyboardSelectedRowCell:active,
+.dataGridKeyboardSelectedRowCell:hover, .dataGridKeyboardSelectedRowCell:focus {
+	border-top: 1px solid #FFF !important;
+	border-left: 1px solid #FFF !important;
+	border-right: 1px solid #FFF !important;
+}
+
+.dataGridKeyboardSelectedCell {
+	background: #def;
+}
+
+.dataGridWidget > div {
+	min-height: 18px !important;
+}
+
 .dataGridCell {
 	border-bottom: 1px solid #ddd !important;
 }
