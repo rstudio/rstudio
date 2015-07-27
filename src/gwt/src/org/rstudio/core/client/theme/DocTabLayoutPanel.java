@@ -863,8 +863,15 @@ public class DocTabLayoutPanel
              RStudioGinjector.INSTANCE.getUIPrefs().enableSourceWindows()
                                                    .getGlobalValue())
          {
-            // did the drag end outside our doc?
-            if (DomUtils.elementFromPoint(evt.getClientX(), 
+            // if this is the last tab in satellite, we don't want to tear
+            // it out
+            boolean isLastSatelliteTab = docTabs_.size() == 1 && 
+                  !RStudioGinjector.INSTANCE.getSourceWindowManager()
+                                            .isMainSourceWindow();
+
+            // did the user drag the tab outside this doc?
+            if (!isLastSatelliteTab &&
+                DomUtils.elementFromPoint(evt.getClientX(), 
                   evt.getClientY()) == null)
             {
                // did it end in any RStudio satellite window?

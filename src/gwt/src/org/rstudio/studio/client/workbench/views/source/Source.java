@@ -2461,7 +2461,12 @@ public class Source implements InsertSourceHandler,
       });
       
       events_.fireEvent(new SourceDocAddedEvent(doc));
-
+      
+      // adding a tab may enable commands that are only available when 
+      // multiple documents are open; if this is the second document, go check
+      if (editors_.size() == 2)
+         manageMultiTabCommands();
+      
       return target;
    }
 
@@ -2712,7 +2717,6 @@ public class Source implements InsertSourceHandler,
       boolean hasDocs = editors_.size() > 0;
 
       commands_.closeSourceDoc().setEnabled(hasDocs);
-      commands_.closeOtherSourceDocs().setEnabled(editors_.size() > 1);
       commands_.closeAllSourceDocs().setEnabled(hasDocs);
       commands_.nextTab().setEnabled(hasDocs);
       commands_.previousTab().setEnabled(hasDocs);
@@ -2767,11 +2771,31 @@ public class Source implements InsertSourceHandler,
       
       // manage R Markdown commands
       manageRMarkdownCommands();
-
+      
+      // manage multi-tab commands
+      manageMultiTabCommands();
+      
       activeCommands_ = newCommands;
 
       assert verifyNoUnsupportedCommands(newCommands)
             : "Unsupported commands detected (please add to Source.dynamicCommands_)";
+   }
+   
+   private void manageMultiTabCommands()
+   {
+      boolean hasMultipleDocs = editors_.size() > 1;
+
+      // special case--the TextEditingTarget always supports popout, but it's
+      // nonsensical to show it if it's the only tab in a satellite; hide it in
+      // this case
+      if (activeEditor_ != null &&
+          activeEditor_ instanceof TextEditingTarget &&
+          !windowManager_.isMainSourceWindow())
+      {
+         commands_.popoutDoc().setVisible(hasMultipleDocs);
+      }
+      
+      commands_.closeOtherSourceDocs().setEnabled(hasMultipleDocs);
    }
    
    private void manageSynctexCommands()
