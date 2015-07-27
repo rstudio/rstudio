@@ -28,7 +28,7 @@ import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
-import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
@@ -192,21 +192,23 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                      public void execute(final ProgressIndicator indicator)
                      {
                         indicator.onProgress("Resetting Keyboard Shortcuts...");
-                        appCommands_.resetBindings();
-                        editorCommands_.resetBindings();
-
-                        // TODO: Rather than using a timer instead chain progress
-                        // operations on the 'resetBindings()' calls.
-                        new Timer()
+                        appCommands_.resetBindings(new Command()
                         {
                            @Override
-                           public void run()
+                           public void execute()
                            {
-                              indicator.onCompleted();
-                              searchWidget_.clear();
-                              collectShortcuts();
+                              editorCommands_.resetBindings(new Command()
+                              {
+                                 @Override
+                                 public void execute()
+                                 {
+                                    indicator.onCompleted();
+                                    searchWidget_.clear();
+                                    collectShortcuts();
+                                 }
+                              });
                            }
-                        }.schedule(1000);
+                        });
                      }
                   },
                   false);

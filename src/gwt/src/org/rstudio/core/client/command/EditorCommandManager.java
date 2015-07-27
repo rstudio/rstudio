@@ -145,6 +145,11 @@ public class EditorCommandManager
    
    public void loadBindings()
    {
+      loadBindings(null);
+   }
+   
+   public void loadBindings(final Command afterLoad)
+   {
       bindings_.execute(new CommandWithArg<EditorKeyBindings>()
       {
          @Override
@@ -156,12 +161,20 @@ public class EditorCommandManager
                rebindCommand(
                      commandName,
                      binding.getKeyBinding());
+               
+               if (afterLoad != null)
+                  afterLoad.execute();
             }
          }
       });
    }
    
    public void resetBindings()
+   {
+      resetBindings(null);
+   }
+   
+   public void resetBindings(final Command afterReset)
    {
       bindings_.set(EditorKeyBindings.create(), new Command()
       {
@@ -170,6 +183,9 @@ public class EditorCommandManager
          {
             manager_ = AceCommandManager.create();
             events_.fireEvent(new ResetEditorCommandsEvent());
+            
+            if (afterReset != null)
+               afterReset.execute();
          }
       });
    }
