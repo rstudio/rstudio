@@ -143,5 +143,7 @@ public class UserCommandManager
    
    // Injected ----
    private EventBus events_;
+   
+   @SuppressWarnings("unused")
    private FilesServerOperations files_;
 }
