@@ -36,6 +36,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
+import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.satellite.events.AllSatellitesClosingEvent;
@@ -336,26 +337,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       onCompleted);
    }
    
-   public void fireEventToSourceWindow(String windowId, CrossWindowEvent<?> evt)
-   {
-      if (StringUtil.isNullOrEmpty(windowId) && !isMainSourceWindow())
-      {
-         pSatellite_.get().focusMainWindow();
-         events_.fireEventToMainWindow(evt);
-      }
-      else
-      {
-         pSatelliteManager_.get().activateSatelliteWindow(
-               SourceSatellite.NAME_PREFIX + windowId);
-         WindowEx window = getSourceWindowObject(windowId);
-         if (window != null)
-         {
-            events_.fireEventToSatellite(evt, window);
-         }
-         
-      }
-   }
-
    public void closeAllSatelliteDocs(final String caption, 
          final Command onCompleted)
    {
@@ -409,7 +390,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                // in desktop mode (and IE) we can bring the appropriate window
                // forward 
                fireEventToSourceWindow(sourceWindowId, 
-                     new OpenSourceFileEvent(file, position, null, navMethod));
+                     new OpenSourceFileEvent(file, position, null, navMethod),
+                     navMethod == NavigationMethods.DEFAULT);
                return new NavigationResult(NavigationResult.RESULT_NAVIGATED);
             }
             else
@@ -425,7 +407,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                            getSourceWindowId(), null);
                      fireEventToSourceWindow(sourceWindowId, 
                            new DocWindowChangedEvent(
-                                 sourceDocs.get(i).getId(), sourceWindowId, 0));
+                                 sourceDocs.get(i).getId(), sourceWindowId, 0),
+                           true);
                      return new NavigationResult(
                            NavigationResult.RESULT_RELOCATE, 
                            sourceDocs.get(i).getId());
@@ -664,6 +647,32 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    }
    // Private methods ---------------------------------------------------------
    
+   public void fireEventToSourceWindow(String windowId, 
+         CrossWindowEvent<?> evt,
+         boolean focus)
+   {
+      if (StringUtil.isNullOrEmpty(windowId) && !isMainSourceWindow())
+      {
+         pSatellite_.get().focusMainWindow();
+         events_.fireEventToMainWindow(evt);
+      }
+      else
+      {
+         // focus window if requested
+         if (focus)
+         {
+            pSatelliteManager_.get().activateSatelliteWindow(
+                  SourceSatellite.NAME_PREFIX + windowId);
+         }
+         WindowEx window = getSourceWindowObject(windowId);
+         if (window != null)
+         {
+            events_.fireEventToSatellite(evt, window);
+         }
+         
+      }
+   }
+
    private void openSourceWindow(String windowId, Point position)
    {
       // create default options
@@ -724,7 +733,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       {
          // this is the main window; pass the event on to the window that just
          // lost its doc
-         fireEventToSourceWindow(event.getOldWindowId(), event);
+         fireEventToSourceWindow(event.getOldWindowId(), event, false);
       }
       else if (event.getNewWindowId() == getSourceWindowId())
       {
@@ -834,7 +843,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    {
       for (String sourceWindowId: sourceWindows_.keySet())
       {
-         fireEventToSourceWindow(sourceWindowId, event);
+         fireEventToSourceWindow(sourceWindowId, event, false);
       }
    }
    
