@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.Pair;
@@ -222,6 +221,16 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       return sourceWindowId(Window.Location.getParameter("view"));
    }
    
+   public void setLastFocusedSourceWindowId(String windowId)
+   {
+      lastFocusedSourceWindow_ = windowId;
+   }
+   
+   public String getLastFocusedSourceWindowId()
+   {
+      return lastFocusedSourceWindow_;
+   }
+   
    public int getSourceWindowOrdinal()
    {
       return thisWindowOrdinal_;
@@ -232,9 +241,9 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       thisWindowOrdinal_ = ordinal;
    }
    
-   public boolean isMainSourceWindow()
+   public static boolean isMainSourceWindow()
    {
-      return !pSatellite_.get().isCurrentWindowSatellite();
+      return !Satellite.isCurrentWindowSatellite();
    }
    
    public JsArray<SourceDocument> getSourceDocs()
@@ -395,7 +404,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          if (!StringUtil.isNullOrEmpty(sourceWindowId) && 
              isSourceWindowOpen(sourceWindowId))
          {
-            if (Desktop.isDesktop() || BrowseCap.INSTANCE.isInternetExplorer())
+            if (canActivateSourceWindows())
             {
                // in desktop mode (and IE) we can bring the appropriate window
                // forward 
@@ -428,7 +437,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       else if (sourceWindowId != null && 
                sourceWindowId != getSourceWindowId())
       {
-         if (Desktop.isDesktop() || BrowseCap.INSTANCE.isInternetExplorer())
+         if (canActivateSourceWindows())
          {
             // in desktop mode (and IE) we can just route to the main window
            events_.fireEventToMainWindow(
@@ -462,6 +471,35 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          }
       }
       return new NavigationResult(NavigationResult.RESULT_NONE);
+   }
+   
+   public boolean activateLastFocusedSource()
+   {
+      // if this is a source window, it's a no-op
+      if (!StringUtil.isNullOrEmpty(getSourceWindowId()))
+         return true;
+      
+      // if we don't have the capacity to activate source windows, let the
+      // current window handle it
+      if (!canActivateSourceWindows())
+         return false;
+      
+      // if the last window focused was the main one, or there's no longer an
+      // addressable window, there's nothing to do
+      if (StringUtil.isNullOrEmpty(lastFocusedSourceWindow_) ||
+          !isSourceWindowOpen(lastFocusedSourceWindow_))
+         return false;
+      
+      WindowEx window = getSourceWindowObject(lastFocusedSourceWindow_);
+      if (window != null && !window.isClosed())
+      {
+         // we found the window that last had focus--refocus it
+         pSatelliteManager_.get().activateSatelliteWindow(
+               SourceSatellite.NAME_PREFIX + lastFocusedSourceWindow_);
+         return true;
+      }
+      
+      return false;
    }
 
    // Event handlers ----------------------------------------------------------
@@ -546,12 +584,12 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    @Override
    public void onSatelliteFocused(SatelliteFocusedEvent event)
    {
-      // ignore window focus when not a source window
-      if (!event.getName().startsWith(SourceSatellite.NAME_PREFIX))
-         return;
-      
-      mostRecentSourceWindow_ = sourceWindowId(event.getName());
-      Debug.devlog("set most recent source window to " + mostRecentSourceWindow_);
+      if (event.getName().startsWith(SourceSatellite.NAME_PREFIX))
+      {
+         String windowId = sourceWindowId(event.getName());
+         setLastFocusedSourceWindowId(windowId);
+         mostRecentSourceWindow_ = windowId;
+      }
    }
 
    @Override
@@ -674,6 +712,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                   pWorkbenchContext_.get().createWindowTitle()), 
             size, position);
       
+      setLastFocusedSourceWindowId(windowId);
       mostRecentSourceWindow_ = windowId;
       sourceWindows_.put(windowId, ordinal);
    }
@@ -921,6 +960,11 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
    }
    
+   private static boolean canActivateSourceWindows()
+   {
+      return Desktop.isDesktop() || BrowseCap.INSTANCE.isInternetExplorer();
+   }
+   
    // Private types -----------------------------------------------------------
    
    private interface SourceWindowCommand
@@ -946,7 +990,9 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private JsObject windowGeometry_ = JsObject.createJsObject();
    private int maxOrdinal_ = 0;
    private int thisWindowOrdinal_ = 0;
+
    private String mostRecentSourceWindow_ = "";
+   private String lastFocusedSourceWindow_ = "";
    
    public final static String SOURCE_WINDOW_ID = "source_window_id";
 }

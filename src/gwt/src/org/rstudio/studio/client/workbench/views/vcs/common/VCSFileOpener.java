@@ -43,13 +43,13 @@ public class VCSFileOpener
       fileTypeRegistry_ = fileTypeRegistry;
       satellite_ = satellite;
       
-      if (!satellite.isCurrentWindowSatellite())
+      if (!Satellite.isCurrentWindowSatellite())
          exportOpenFilesCallback();
    }
    
    public void openFiles(final ArrayList<StatusAndPath> items)
    {
-      if (satellite_.isCurrentWindowSatellite())
+      if (Satellite.isCurrentWindowSatellite())
       {
          satellite_.focusMainWindow();
          callSatelliteOpenFiles(toJsArray(items));

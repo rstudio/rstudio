@@ -88,7 +88,6 @@ public class RSConnect implements SessionInitHandler,
    public RSConnect(EventBus events, 
                     Commands commands, 
                     Session session,
-                    Satellite satellite,
                     GlobalDisplay display,
                     DependencyManager dependencyManager,
                     Binder binder, 
@@ -108,7 +107,6 @@ public class RSConnect implements SessionInitHandler,
       sourceServer_ = sourceServer;
       rpubsServer_ = rpubsServer;
       events_ = events;
-      satellite_ = satellite;
       connector_ = connector;
       pUiPrefs_ = pUiPrefs;
       plotMru_ = plotMru;
@@ -122,7 +120,7 @@ public class RSConnect implements SessionInitHandler,
       
       // satellite windows don't get session init events, so initialize the
       // session here
-      if (satellite_.isCurrentWindowSatellite())
+      if (Satellite.isCurrentWindowSatellite())
       {
          ensureSessionInit();
       }
@@ -600,7 +598,7 @@ public class RSConnect implements SessionInitHandler,
    public void fireRSConnectPublishEvent(RSConnectPublishResult result,
          boolean launchBrowser)
    {
-      if (satellite_.isCurrentWindowSatellite())
+      if (Satellite.isCurrentWindowSatellite())
       {
          // in a satellite window, call back to the main window to do a 
          // deployment
@@ -936,7 +934,6 @@ public class RSConnect implements SessionInitHandler,
    private final SourceServerOperations sourceServer_;
    private final DependencyManager dependencyManager_;
    private final EventBus events_;
-   private final Satellite satellite_;
    private final RSAccountConnector connector_;
    private final Provider<UIPrefs> pUiPrefs_;
    private final PlotPublishMRUList plotMru_;

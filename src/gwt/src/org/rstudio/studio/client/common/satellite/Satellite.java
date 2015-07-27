@@ -192,7 +192,7 @@ public class Satellite implements HasCloseHandlers<Satellite>
    
    
    // check whether the current window is a satellite
-   public native boolean isCurrentWindowSatellite() /*-{
+   public static native boolean isCurrentWindowSatellite() /*-{
       return !!$wnd.isRStudioSatellite;
    }-*/;
    

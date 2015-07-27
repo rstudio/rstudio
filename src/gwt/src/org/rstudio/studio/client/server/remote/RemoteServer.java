@@ -182,7 +182,6 @@ public class RemoteServer implements Server
    @Inject
    public RemoteServer(Session session, 
                        EventBus eventBus,
-                       Satellite satellite,
                        final SatelliteManager satelliteManager,
                        Provider<ConsoleProcessFactory> pConsoleProcessFactory)
    {
@@ -192,13 +191,12 @@ public class RemoteServer implements Server
       listeningForEvents_ = false;
       session_ = session;
       eventBus_ = eventBus;
-      satellite_ = satellite;
       serverAuth_ = new RemoteServerAuth(this);
       
       // define external event listener if we are the main window
       // (so we can forward to the satellites)
       ClientEventHandler externalListener = null;
-      if (!satellite.isCurrentWindowSatellite())
+      if (!Satellite.isCurrentWindowSatellite())
       {
          externalListener = new ClientEventHandler() {
             @Override
@@ -218,7 +216,7 @@ public class RemoteServer implements Server
    public void initializeForMainWorkbench()
    {
       // satellite windows should never call onWorkbenchReady
-      if (satellite_.isCurrentWindowSatellite())
+      if (Satellite.isCurrentWindowSatellite())
       {
          Debug.log("Satellite window cannot call onWorkbenchReady!");
          assert false;
@@ -2228,7 +2226,7 @@ public class RemoteServer implements Server
                   RetryHandler retryHandler)
    {
       // satellite windows should never call getEvents directly!
-      if (satellite_.isCurrentWindowSatellite())
+      if (Satellite.isCurrentWindowSatellite())
       {
          Debug.log("Satellite window shoudl not call getEvents!");
          assert false;
@@ -2346,7 +2344,7 @@ public class RemoteServer implements Server
    {
       // if this is a satellite window then we handle this by proxying
       // back through the main workbench window
-      if (satellite_.isCurrentWindowSatellite())
+      if (Satellite.isCurrentWindowSatellite())
       {
          sendRequestViaMainWorkbench(scope, method, params, redactLog, cb);
 
@@ -4238,7 +4236,6 @@ public class RemoteServer implements Server
 
    private final Session session_;
    private final EventBus eventBus_;
-   private final Satellite satellite_;
 
    // url scopes
    private static final String RPC_SCOPE = "rpc";

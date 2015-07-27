@@ -867,8 +867,7 @@ public class DocTabLayoutPanel
             // if this is the last tab in satellite, we don't want to tear
             // it out
             boolean isLastSatelliteTab = docTabs_.size() == 1 && 
-                  !RStudioGinjector.INSTANCE.getSourceWindowManager()
-                                            .isMainSourceWindow();
+                  Satellite.isCurrentWindowSatellite();
 
             // did the user drag the tab outside this doc?
             if (!isLastSatelliteTab &&
@@ -878,7 +877,7 @@ public class DocTabLayoutPanel
                // did it end in any RStudio satellite window?
                String targetWindowName;
                Satellite satellite = RStudioGinjector.INSTANCE.getSatellite();
-               if (satellite.isCurrentWindowSatellite())
+               if (Satellite.isCurrentWindowSatellite())
                {
                   // this is a satellite, ask the main window 
                   targetWindowName = satellite.getWindowAtPoint(

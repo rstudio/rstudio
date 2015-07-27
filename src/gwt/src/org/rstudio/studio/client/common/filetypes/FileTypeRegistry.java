@@ -273,7 +273,7 @@ public class FileTypeRegistry
       session_ = session;
       globalDisplay_ = globalDisplay;
 
-      if (!satellite_.isCurrentWindowSatellite())
+      if (!Satellite.isCurrentWindowSatellite())
          exportEditFileCallback();
 
       FileIconResources icons = ICONS;
@@ -476,7 +476,7 @@ public class FileTypeRegistry
    {
       // edit the file in the main window unless this is a source satellite
       // (in which case we want to edit it locally)
-      if (satellite_.isCurrentWindowSatellite() && 
+      if (Satellite.isCurrentWindowSatellite() && 
           !satellite_.getSatelliteName().startsWith(SourceSatellite.NAME_PREFIX))
       {
          satellite_.focusMainWindow();

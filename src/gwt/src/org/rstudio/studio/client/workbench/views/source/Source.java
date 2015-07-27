@@ -547,7 +547,7 @@ public class Source implements InsertSourceHandler,
       // get the key to use for active tab persistence; use ordinal-based key
       // for source windows rather than their ID to avoid unbounded accumulation
       String activeTabKey = KEY_ACTIVETAB;
-      if (!windowManager_.isMainSourceWindow())
+      if (!SourceWindowManager.isMainSourceWindow())
          activeTabKey += "SourceWindow" + 
                          windowManager_.getSourceWindowOrdinal();
 
@@ -751,7 +751,7 @@ public class Source implements InsertSourceHandler,
          // it belongs in this window if (a) it's assigned to it, or (b) this
          // is the main window, and the window it's assigned to isn't open.
          if (currentSourceWindowId == docWindowId ||
-             (windowManager_.isMainSourceWindow() && 
+             (SourceWindowManager.isMainSourceWindow() && 
               !windowManager_.isSourceWindowOpen(docWindowId)))
          {
             addTab(doc, true);
@@ -832,7 +832,7 @@ public class Source implements InsertSourceHandler,
    public void onShowData(ShowDataEvent event)
    {
       // ignore if we're a satellite
-      if (!windowManager_.isMainSourceWindow())
+      if (!SourceWindowManager.isMainSourceWindow())
          return;
       
       DataItem data = event.getData();
@@ -1384,6 +1384,10 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onActivateSource()
    {
+      // give the window manager a chance to activate the last source pane
+      if (windowManager_.activateLastFocusedSource())
+         return;
+      
       if (activeEditor_ == null)
       {
          newDoc(FileTypeRegistry.R, new ResultCallback<EditingTarget, ServerError>()
@@ -1716,7 +1720,7 @@ public class Source implements InsertSourceHandler,
    public void closeAllSourceDocs(final String caption, 
          final Command onCompleted, final boolean excludeActive)
    { 
-      if (windowManager_.isMainSourceWindow() && !excludeActive)
+      if (SourceWindowManager.isMainSourceWindow() && !excludeActive)
       {
          // if this is the main window, close docs in the satellites first 
          windowManager_.closeAllSatelliteDocs(caption, new Command()
@@ -1799,7 +1803,7 @@ public class Source implements InsertSourceHandler,
 
       // if this is the main window, collect all unsaved changes from 
       // the satellite windows as well
-      if (windowManager_.isMainSourceWindow())
+      if (SourceWindowManager.isMainSourceWindow())
       {
          targets.addAll(windowManager_.getAllSatelliteUnsavedChanges());
       }
@@ -1820,7 +1824,7 @@ public class Source implements InsertSourceHandler,
                               Command onCompleted,
                               Command onCancelled)
    {
-      if (windowManager_.isMainSourceWindow() &&
+      if (SourceWindowManager.isMainSourceWindow() &&
           !windowManager_.getWindowIdOfDocId(target.getId()).isEmpty())
       {
          // we are the main window, and we're being asked to save a document
@@ -1850,7 +1854,7 @@ public class Source implements InsertSourceHandler,
 
       // if this is the main source window, let satellite windows save any
       // changes first
-      if (windowManager_.isMainSourceWindow())
+      if (SourceWindowManager.isMainSourceWindow())
       {
          windowManager_.handleUnsavedChangesBeforeExit(
                saveTargets, new Command()
@@ -2790,7 +2794,7 @@ public class Source implements InsertSourceHandler,
       // this case
       if (activeEditor_ != null &&
           activeEditor_ instanceof TextEditingTarget &&
-          !windowManager_.isMainSourceWindow())
+          !SourceWindowManager.isMainSourceWindow())
       {
          commands_.popoutDoc().setVisible(hasMultipleDocs);
       }

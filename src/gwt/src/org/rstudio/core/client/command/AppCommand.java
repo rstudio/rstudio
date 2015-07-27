@@ -141,7 +141,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       // in the a different window, execute the command there instead
       Satellite satellite = RStudioGinjector.INSTANCE.getSatellite();
       if (getWindowMode() != "any" &&
-          satellite.isCurrentWindowSatellite() && 
+          Satellite.isCurrentWindowSatellite() && 
           satellite.getSatelliteName() != getWindowMode()) 
       {
          // raise the main window if it's not a background command

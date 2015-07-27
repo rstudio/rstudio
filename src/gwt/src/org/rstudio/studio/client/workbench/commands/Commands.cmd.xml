@@ -889,8 +889,7 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="activateSource"
         label="Move Focus to Source"
-        menuLabel="Move Focus to Sou_rce"
-        windowMode="main"/>
+        menuLabel="Move Focus to Sou_rce"/>
         
    <cmd id="activateConsole"
         label="Move Focus to Console"
