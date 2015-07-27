@@ -78,7 +78,27 @@ public class LineWidget extends JavaScriptObject
       };
    }-*/;
    
+   public native final int getRow()  /*-{
+      return this.row;
+   }-*/;
+   
    public native final Element getElement() /*-{
       return this.el;
+   }-*/;
+   
+   public native final int getPixelHeight()  /*-{
+      return this.pixelHeight;
+   }-*/;
+   
+   public native final int getRowCount()  /*-{
+      return this.rowCount;
+   }-*/;
+   
+   public native final boolean getFixedWidth()  /*-{
+      return this.fixedWidth;
+   }-*/;
+   
+   public native final boolean getCoverGutter()  /*-{
+      return this.coverGutter;
    }-*/;
 }
