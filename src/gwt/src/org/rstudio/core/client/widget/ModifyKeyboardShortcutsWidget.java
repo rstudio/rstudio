@@ -21,6 +21,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
@@ -406,9 +407,16 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private void onShortcutCellPreview(CellPreviewEvent<CommandBinding> preview)
    {
       NativeEvent event = preview.getNativeEvent();
+      
       String type = event.getType();
-      if (type.equals("focus") || type.equals("blur"))
+      if (type.equals("focus"))
       {
+         setEscapeDisabled(true);
+         buffer_.clear();
+      }
+      else if (type.equals("blur"))
+      {
+         setEscapeDisabled(false);
          buffer_.clear();
       }
       else if (event.getType().equals("keydown"))
@@ -416,27 +424,49 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          if (KeyboardHelper.isModifierKey(event.getKeyCode()))
             return;
          
-         buffer_.add(event);
          Element target = event.getEventTarget().cast();
-         target.setInnerHTML(buffer_.toString());
-         
-         // Provide a visual cue that this row has changed
-         Element rowEl = DomUtils.findParentElement(
-               target,
-               new ElementPredicate()
-               {
-                  @Override
-                  public boolean test(Element el)
-                  {
-                     return el.getTagName().toLowerCase().equals("tr");
-                  }
-               });
-         
-         if (rowEl != null)
+         Element rowEl = DomUtils.findParentElement(target, new ElementPredicate()
          {
-            // add modified row style
-            rowEl.addClassName(RES.dataGridStyle().modifiedRow());
+            @Override
+            public boolean test(Element el)
+            {
+               return el.getTagName().toLowerCase().equals("tr");
+            }
+         });
+         
+         if (event.getKeyCode() == KeyCodes.KEY_BACKSPACE)
+         {
+            // Stop event propagation to prevent browser 'Back'.
+            event.stopPropagation();
+            event.preventDefault();
+            
+            buffer_.pop();
+            target.setInnerHTML(buffer_.toString());
+            return;
          }
+         
+         if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
+         {
+            String keyString = "";
+            KeySequence sequence = preview.getValue().getKeySequence();
+            if (sequence != null)
+               keyString = sequence.toString();
+            
+            String current = target.getInnerHTML();
+            if (current.equals(keyString))
+            {
+               closeDialog();
+               return;
+            }
+            
+            target.setInnerHTML(keyString);
+            rowEl.removeClassName(RES.dataGridStyle().modifiedRow());
+            return;
+         }
+         
+         buffer_.add(event);
+         target.setInnerHTML(buffer_.toString());
+         rowEl.addClassName(RES.dataGridStyle().modifiedRow());
          
          // Add the new command binding to later be accepted + registered
          CommandBinding oldBinding = preview.getValue();
@@ -588,7 +618,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private final SearchWidget searchWidget_;
    
    private List<CommandBinding> originalBindings_;
-   private Map<String, CommandBinding> originalBindingsMap_;
    
    // Columns ----
    private TextColumn<CommandBinding> nameColumn_;

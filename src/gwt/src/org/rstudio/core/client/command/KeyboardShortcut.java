@@ -227,6 +227,12 @@ public class KeyboardShortcut
          add(new KeyCombination(event.getKeyCode(), getModifierValue(event)));
       }
       
+      public void pop()
+      {
+         if (keyCombinations_ != null && keyCombinations_.size() > 0)
+            keyCombinations_.remove(keyCombinations_.size() - 1);
+      }
+      
       public void add(int keyCode, int modifiers)
       {
          add(new KeyCombination(keyCode, modifiers));
