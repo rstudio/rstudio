@@ -1,4 +1,5 @@
 @def MODIFIED_COLOUR #cdefcd;
+@def CUSTOM_COLOUR #EFF;
 
 .modifiedRow {
 	background-color: MODIFIED_COLOUR !important;
@@ -6,6 +7,14 @@
 
 .modifiedRow td {
 	border-color: MODIFIED_COLOUR !important;
+}
+
+.customBindingRow {
+	background-color: CUSTOM_COLOUR !important;
+}
+
+.customBindingRow td {
+	border-color: CUSTOM_COLOUR !important;
 }
 
 /* Avoid GWT's inset styling for selected cells */
