@@ -41,10 +41,12 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.events.DocTabDragInitiatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
+import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;
 
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.Scheduler;
@@ -464,8 +466,8 @@ public class DocTabLayoutPanel
       @Override
       public void onDocTabDragStarted(DocTabDragStartedEvent event)
       {
-         initDragWidth_ = event.getWidth();
-         initDragDocId_ = event.getDocId();
+         initDragParams_ = event.getDragParams();
+         initDragWidth_ = initDragParams_.getTabWidth();
       }
       
       private void beginDrag(Event evt)
@@ -853,8 +855,9 @@ public class DocTabLayoutPanel
             if (pieces.length < 1)
                return;
             
-            events_.fireEvent(new DocWindowChangedEvent(pieces[0], 
-                        pieces.length > 1 ? pieces[1] : "", destPos_));
+            events_.fireEvent(new DocWindowChangedEvent(pieces[0],
+                  pieces.length > 1 ? pieces[1] : "", 
+                  initDragParams_, destPos_));
          }
          
          // this is the case when our own drag ends; if it ended outside our
@@ -892,7 +895,8 @@ public class DocTabLayoutPanel
                   // it was dragged over nothing RStudio owns--pop it out
                   events_.fireEvent(new PopoutDocEvent(
                         initDragDocId_, new Point(
-                              evt.getScreenX(), evt.getScreenY())));
+                              evt.getScreenX(), evt.getScreenY()),
+                        null));
                }
             }
          }
@@ -912,6 +916,7 @@ public class DocTabLayoutPanel
       private int dragMax_ = 0;
       private int outOfBounds_ = 0;
       private int initDragWidth_;
+      private DocTabDragParams initDragParams_;
       private Element dragElement_;
       private Element dragTabsHost_;
       private Element dragScrollHost_;
@@ -965,7 +970,7 @@ public class DocTabLayoutPanel
                   SourceWindowManager.getSourceWindowId());
                JsObject dt = evt.getDataTransfer().cast();
                dt.setString("effectAllowed", "move");
-               events_.fireEvent(new DocTabDragStartedEvent(docId_, 
+               events_.fireEvent(new DocTabDragInitiatedEvent(docId_, 
                            getElement().getClientWidth()));
             }
          }, DragStartEvent.getType());

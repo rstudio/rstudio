@@ -523,6 +523,14 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       docDisplay_.setCursorPosition(position);
    }
+
+   @Override
+   public SourcePosition currentPosition()
+   {
+      Position cursor = docDisplay_.getCursorPosition();
+      return SourcePosition.create(getContext(), cursor.getRow(), 
+            cursor.getColumn(), docDisplay_.getScrollTop());
+   }
    
    @Override
    public void ensureCursorVisible()

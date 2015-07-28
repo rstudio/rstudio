@@ -407,7 +407,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                            getSourceWindowId(), null);
                      fireEventToSourceWindow(sourceWindowId, 
                            new DocWindowChangedEvent(
-                                 sourceDocs.get(i).getId(), sourceWindowId, 0),
+                                 sourceDocs.get(i).getId(), sourceWindowId, 
+                                 null, 0),
                            true);
                      return new NavigationResult(
                            NavigationResult.RESULT_RELOCATE, 
@@ -446,7 +447,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                   assignSourceDocWindowId(sourceDocs.get(i).getId(), 
                         getSourceWindowId(), null);
                   events_.fireEventToMainWindow(new DocWindowChangedEvent(
-                              sourceDocs.get(i).getId(), sourceWindowId, 0));
+                              sourceDocs.get(i).getId(), sourceWindowId, null, 
+                              0));
                   return new NavigationResult(NavigationResult.RESULT_RELOCATE,
                         sourceDocs.get(i).getId());
                }

@@ -77,6 +77,7 @@ public interface EditingTarget extends IsWidget,
                            boolean recordCurrent,
                            boolean highlightLine);
    void restorePosition(SourcePosition position);
+   SourcePosition currentPosition();
    boolean isAtSourceRow(SourcePosition position);
    
    void forceLineHighlighting();

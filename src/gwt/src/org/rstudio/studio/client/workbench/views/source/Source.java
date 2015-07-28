@@ -122,6 +122,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRdDia
 import org.rstudio.studio.client.workbench.views.source.events.*;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
+import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;
 import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
@@ -150,7 +151,8 @@ public class Source implements InsertSourceHandler,
                              BeforeShowHandler,
                              SnippetsChangedEvent.Handler,
                              PopoutDocEvent.Handler,
-                             DocWindowChangedEvent.Handler
+                             DocWindowChangedEvent.Handler,
+                             DocTabDragInitiatedEvent.Handler
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -522,6 +524,7 @@ public class Source implements InsertSourceHandler,
             });
 
       events.addHandler(DocWindowChangedEvent.TYPE, this);
+      events.addHandler(DocTabDragInitiatedEvent.TYPE, this);
 
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
       Event.addNativePreviewHandler(new NativePreviewHandler()
@@ -1501,7 +1504,15 @@ public class Source implements InsertSourceHandler,
             @Override
             public void onResponseReceived(final SourceDocument doc)
             {
-               addTab(doc, e.getPos());
+               EditingTarget target = addTab(doc, e.getPos());
+               
+               // if we know the source position, restore it
+               if (e.getParams() != null &&
+                   e.getParams().getSourcePosition() != null)
+               {
+                  Debug.log("restoring source position");
+                  target.restorePosition(e.getParams().getSourcePosition());
+               }
             }
 
             @Override
@@ -1535,6 +1546,21 @@ public class Source implements InsertSourceHandler,
          }
       }
       suspendDocumentClose_ = false;
+   }
+
+   @Override
+   public void onDocTabDragInitiated(DocTabDragInitiatedEvent event)
+   {
+      for (EditingTarget editor: editors_)
+      {
+         if (editor.getId() == event.getDragParams().getDocId())
+         {
+            DocTabDragParams params = event.getDragParams();
+            params.setSourcePosition(editor.currentPosition());
+            events_.fireEvent(new DocTabDragStartedEvent(params));
+            break;
+         }
+      }
    }
 
    @Handler

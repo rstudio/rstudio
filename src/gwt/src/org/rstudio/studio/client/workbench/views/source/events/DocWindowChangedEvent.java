@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.source.events;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -41,12 +42,14 @@ public class DocWindowChangedEvent
    // this event is fired by the window on which the document was dropped; it
    // is rebroadcast to the the window from which the drop originated to 
    // negotiate its end of the transfer
-   public DocWindowChangedEvent(String docId, String oldWindowId, int pos)
+   public DocWindowChangedEvent(String docId, String oldWindowId, 
+         DocTabDragParams params, int pos)
    {
       docId_ = docId;
       oldWindowId_ = oldWindowId;
       newWindowId_ = SourceWindowManager.getSourceWindowId();
       pos_ = pos;
+      params_ = params;
    }
    
    public String getDocId()
@@ -68,6 +71,11 @@ public class DocWindowChangedEvent
    {
       return pos_;
    }
+   
+   public DocTabDragParams getParams()
+   {
+      return params_;
+   }
 
    @Override
    public boolean forward() 
@@ -87,8 +95,9 @@ public class DocWindowChangedEvent
       return TYPE;
    }
    
-   private String docId_;
    private String oldWindowId_;
    private String newWindowId_;
+   private String docId_;
+   private DocTabDragParams params_;
    private int pos_;
 }

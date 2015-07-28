@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.events;
 
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
+import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -41,20 +42,14 @@ public class DocTabDragStartedEvent
    // begins; since the data being dragged is not available until the drop 
    // occurs, this side channel allows the satellites to know e.g. how wide
    // to draw the shadow tab when the tab is dragged over them
-   public DocTabDragStartedEvent(String docId, int width)
+   public DocTabDragStartedEvent(DocTabDragParams params)
    {
-      docId_ = docId;
-      width_ = width;
+      dragParams_ = params;
    }
    
-   public String getDocId()
+   public DocTabDragParams getDragParams()
    {
-      return docId_;
-   }
-   
-   public int getWidth()
-   {
-      return width_;
+      return dragParams_;
    }
    
    @Override
@@ -75,6 +70,5 @@ public class DocTabDragStartedEvent
       return TYPE;
    }
    
-   private String docId_;
-   private int width_;
+   private DocTabDragParams dragParams_;
 }
