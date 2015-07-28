@@ -324,5 +324,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
     
    void addLineWidget(LineWidget widget);
    void removeLineWidget(LineWidget widget);
-   void onLineWidgetChanged(LineWidget widget);   
+   void onLineWidgetChanged(LineWidget widget); 
+   JsArray<LineWidget> getLineWidgets();
 }

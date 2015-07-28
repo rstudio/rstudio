@@ -2557,6 +2557,13 @@ public class AceEditor implements DocDisplay,
       fireLineWidgetsChanged();
    }
    
+   @Override
+   public JsArray<LineWidget> getLineWidgets()
+   {
+      return widget_.getLineWidgetManager().getLineWidgets();
+   }
+   
+   
    private void fireLineWidgetsChanged()
    {
       AceEditor.this.fireEvent(new LineWidgetsChangedEvent());

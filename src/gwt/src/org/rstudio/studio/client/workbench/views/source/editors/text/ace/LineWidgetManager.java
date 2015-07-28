@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
 public class LineWidgetManager extends JavaScriptObject
 {
@@ -32,4 +33,7 @@ public class LineWidgetManager extends JavaScriptObject
       this.onWidgetChanged(widget);
    }-*/;
    
+   public native final JsArray<LineWidget> getLineWidgets() /*-{
+      return this.session.lineWidgets || [];
+   }-*/;
 }
