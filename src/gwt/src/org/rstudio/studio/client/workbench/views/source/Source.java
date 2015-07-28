@@ -772,6 +772,7 @@ public class Source implements InsertSourceHandler,
                {
                   editor.restorePosition(
                         sourceWindow.getInitialSourcePosition());
+                  editor.ensureCursorVisible();
                }
             }
          }
@@ -1526,8 +1527,8 @@ public class Source implements InsertSourceHandler,
                if (e.getParams() != null &&
                    e.getParams().getSourcePosition() != null)
                {
-                  Debug.log("restoring source position");
                   target.restorePosition(e.getParams().getSourcePosition());
+                  target.ensureCursorVisible();
                }
             }
 
