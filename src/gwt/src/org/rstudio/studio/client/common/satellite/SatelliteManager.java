@@ -97,7 +97,7 @@ public class SatelliteManager implements CloseHandler<Window>
    }
 
    // open a satellite window (re-activate existing if possible)
-   private void openSatellite(String name,
+   public void openSatellite(String name,
                              JavaScriptObject params,
                              Size preferredSize, 
                              boolean adjustSize, 

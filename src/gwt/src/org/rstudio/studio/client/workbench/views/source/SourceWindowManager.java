@@ -700,8 +700,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             WindowEx window = getSourceWindowObject(mostRecentSourceWindow_);
             if (window != null && !window.isClosed())
             {
-               size = new Size(window.getOuterWidth(), 
-                     window.getOuterHeight());
+               size = new Size(window.getInnerWidth(), 
+                     window.getInnerHeight());
                if (position == null)
                   position = new Point(
                         window.getScreenX() + 50,
@@ -719,7 +719,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             SourceWindowParams.create(
                   ordinal,
                   pWorkbenchContext_.get().createWindowTitle()), 
-            size, position);
+            size, false, position);
       
       setLastFocusedSourceWindowId(windowId);
       mostRecentSourceWindow_ = windowId;
@@ -818,8 +818,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                         sourceWindows_.get(windowId),
                         window.getScreenX(), 
                         window.getScreenY(), 
-                        window.getOuterWidth(), 
-                        window.getOuterHeight());
+                        window.getInnerWidth(), 
+                        window.getInnerHeight());
             
             // compare to the old geometry (if any)
             if (windowGeometry_.hasKey(windowId))
