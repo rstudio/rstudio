@@ -202,13 +202,17 @@ public class DocTabLayoutPanel
       }
    }
    
-   public void moveTab(int index, int dir)
+   public void moveTab(int index, int delta)
    {
+      // do no work if we haven't been asked to move anywhere
+      if (delta == 0)
+         return;
+
       Element tabHost = getTabBarElement();
       
       // ignore moving left if the tab is already the leftmost tab (same for
       // right)
-      int dest = index + dir;
+      int dest = index + delta;
       if (dest < 0 || dest >= tabHost.getChildCount())
          return;
       
@@ -216,7 +220,7 @@ public class DocTabLayoutPanel
       Element tab = Element.as(tabHost.getChild(index));
       Element prev = Element.as(tabHost.getChild(dest));
       tabHost.removeChild(tab);
-      if (dir > 0)
+      if (delta > 0)
          tabHost.insertAfter(tab, prev);
       else
          tabHost.insertBefore(tab, prev);

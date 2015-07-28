@@ -110,6 +110,10 @@ public class SourceShim extends Composite
       @Handler
       public abstract void onMoveTabRight();
       @Handler
+      public abstract void onMoveTabToFirst();
+      @Handler
+      public abstract void onMoveTabToLast();
+      @Handler
       public abstract void onSourceNavigateBack();
       @Handler
       public abstract void onSourceNavigateForward();

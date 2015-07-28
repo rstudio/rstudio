@@ -178,7 +178,7 @@ public class Source implements InsertSourceHandler,
       void closeTab(Widget widget, boolean interactive, Command onClosed);
       void closeTab(int index, boolean interactive);
       void closeTab(int index, boolean interactive, Command onClosed);
-      void moveTab(int index, int dir);
+      void moveTab(int index, int delta);
       void setDirty(Widget widget, boolean dirty);
       void manageChevronVisibility();
       void showOverflowPopup();
@@ -1505,6 +1505,19 @@ public class Source implements InsertSourceHandler,
    public void onMoveTabLeft()
    {
       view_.moveTab(getPhysicalTabIndex(), -1);
+   }
+   
+   @Handler
+   public void onMoveTabToFirst()
+   {
+      view_.moveTab(getPhysicalTabIndex(), getPhysicalTabIndex() * -1);
+   }
+
+   @Handler
+   public void onMoveTabToLast()
+   {
+      view_.moveTab(getPhysicalTabIndex(), (view_.getTabCount() - 
+            getPhysicalTabIndex()) - 1);
    }
 
    @Override

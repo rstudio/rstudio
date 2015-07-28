@@ -197,9 +197,9 @@ public class SourcePane extends Composite implements Display,
    }
 
    @Override
-   public void moveTab(int index, int dir)
+   public void moveTab(int index, int delta)
    {
-      tabPanel_.moveTab(index, dir);
+      tabPanel_.moveTab(index, delta);
    }
 
    public HandlerRegistration addTabClosingHandler(TabClosingHandler handler)

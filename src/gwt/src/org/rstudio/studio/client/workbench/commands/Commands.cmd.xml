@@ -972,11 +972,19 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="moveTabLeft"
         label="Move Tab Left"
-        menuLabel="Move Tab Le_ft"/>
+        menuLabel="Move Tab Lef_t"/>
 
    <cmd id="moveTabRight"
         label="Move Tab Right"
         menuLabel="Move Tab _Right"/>
+        
+   <cmd id="moveTabToFirst"
+        label="Move Tab to First"
+        menuLabel="Move Tab to _First"/>
+        
+   <cmd id="moveTabToLast"
+        label="Move Tab to Last"
+        menuLabel="Move Tab to La_st"/>
         
    <cmd id="goToLine"
         label="Go to Line..."

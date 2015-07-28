@@ -227,6 +227,8 @@ public abstract class
    public abstract AppCommand toggleFullScreen();
    public abstract AppCommand moveTabLeft();
    public abstract AppCommand moveTabRight();
+   public abstract AppCommand moveTabToFirst();
+   public abstract AppCommand moveTabToLast();
 
    // History
    public abstract AppCommand historySendToSource();
