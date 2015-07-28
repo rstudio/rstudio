@@ -63,11 +63,7 @@ json::Array jsonFromUserCommandResult(SEXP resultSEXP)
    json::Array jsonData;
    
    if (!isUserCommandResult(resultSEXP))
-   {
-      Error error(r::errc::UnexpectedDataTypeError, ERROR_LOCATION);
-      LOG_ERROR(error);
       return jsonData;
-   }
    
    std::size_t n = r::sexp::length(resultSEXP);
    for (std::size_t i = 0; i < n; ++i)

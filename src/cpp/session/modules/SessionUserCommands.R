@@ -123,8 +123,10 @@ assign(".rs.userCommands", new.env(parent = emptyenv()), envir = .rs.toolsEnv())
 .rs.addFunction("loadUserCommands", function()
 {
    env <- new.env(parent = globalenv())
+   
    env$registerUserCommand <- .rs.registerUserCommand
    env$replaceTextAction <- .rs.replaceTextAction
+   env$userCommandResult <- .rs.userCommandResult
    
    files <- list.files("~/.R/keybindings/R", full.names = TRUE)
    lapply(files, function(file) {
