@@ -2098,7 +2098,8 @@ public class TextEditingTarget implements
                                                            executeOnSuccess));
 
                            events_.fireEvent(
-                                 new SourceFileSavedEvent(saveItem.getPath()));
+                                 new SourceFileSavedEvent(getId(),
+                                       saveItem.getPath()));
                         }
  
                      };

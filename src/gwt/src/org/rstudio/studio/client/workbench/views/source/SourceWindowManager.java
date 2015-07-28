@@ -61,6 +61,8 @@ import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStarted
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedHandler;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -78,6 +80,7 @@ import com.google.inject.Singleton;
 @Singleton
 public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             SourceDocAddedEvent.Handler,
+                                            SourceFileSavedHandler,
                                             SatelliteFocusedEvent.Handler,
                                             SatelliteClosedEvent.Handler,
                                             DocTabDragStartedEvent.Handler,
@@ -116,6 +119,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          events_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
          events_.addHandler(AllSatellitesClosingEvent.TYPE, this);
          events_.addHandler(SourceDocAddedEvent.TYPE, this);
+         events_.addHandler(SourceFileSavedEvent.TYPE, this);
          events_.addHandler(SatelliteClosedEvent.TYPE, this);
          events_.addHandler(SatelliteFocusedEvent.TYPE, this);
          events_.addHandler(DocTabClosedEvent.TYPE, this);
@@ -525,6 +529,21 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
       
       sourceDocs_.push(e.getDoc());
+   }
+
+   @Override
+   public void onSourceFileSaved(SourceFileSavedEvent event)
+   {
+      // when a user saves a new doc or does file -> save as, we need to update
+      // our internal doc mappings so we can route navigations to the right
+      // window for that path
+      for (int i = 0; i < sourceDocs_.length(); i++)
+      {
+         if (sourceDocs_.get(i).getId() == event.getDocId())
+         {
+            sourceDocs_.get(i).setPath(event.getPath());
+         }
+      }
    }
 
    @Override
