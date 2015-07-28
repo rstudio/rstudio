@@ -26,18 +26,34 @@ public class LineWidget extends JavaScriptObject
       return create(row, html, null);
    }
    
+   public static final LineWidget create(int row, 
+                                         String html,
+                                         JavaScriptObject data)
+   {
+      return create(row, html, null, data);
+   }
+   
    public static final LineWidget create(int row, Element el)
    {
-      return create(row, null, el);
+      return create(row, el, null);
+   }
+   
+   public static final LineWidget create(int row, 
+                                         Element el, 
+                                         JavaScriptObject data)
+   {
+      return create(row, null, el, data);
    }
    
    private static native final LineWidget create(int row, 
                                                  String html,
-                                                 Element element) /*-{
+                                                 Element element,
+                                                 JavaScriptObject data) /*-{
       return {
          row: row,
          html: html,
-         el: element
+         el: element,
+         data: data
       };
    }-*/;
    
@@ -79,5 +95,13 @@ public class LineWidget extends JavaScriptObject
    
    public native final void setCoverGutter(boolean coverGutter) /*-{
       this.coverGutter = coverGutter;
+   }-*/;
+   
+   public final native <T> T getData() /*-{
+      return this.data;
+   }-*/;
+   
+   public final native void setData(JavaScriptObject data) /*-{
+      this.data = data;
    }-*/;
 }
