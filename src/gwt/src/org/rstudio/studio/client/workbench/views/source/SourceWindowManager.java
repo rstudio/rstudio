@@ -62,6 +62,7 @@ import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedE
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams;
 
@@ -170,7 +171,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             if (!StringUtil.isNullOrEmpty(windowId) &&
                 !isSourceWindowOpen(windowId))
             {
-               openSourceWindow(windowId, null);
+               openSourceWindow(windowId, null, null, null);
             }
          }
       }
@@ -499,7 +500,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                @Override
                public void execute()
                {
-                  openSourceWindow(windowId, evt.getPosition());
+                  openSourceWindow(windowId, evt.getOriginator().getPosition(),
+                        evt.getDocId(), evt.getSourcePosition());
                }
             });
    }
@@ -675,7 +677,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
    }
 
-   private void openSourceWindow(String windowId, Point position)
+   private void openSourceWindow(String windowId, Point position,
+         String docId, SourcePosition sourcePosition)
    {
       // create default options
       Size size = new Size(800, 800);
@@ -720,7 +723,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             SourceSatellite.NAME_PREFIX + windowId, 
             SourceWindowParams.create(
                   ordinal,
-                  pWorkbenchContext_.get().createWindowTitle()), 
+                  pWorkbenchContext_.get().createWindowTitle(),
+                  docId, sourcePosition), 
             size, false, position);
       
       setLastFocusedSourceWindowId(windowId);

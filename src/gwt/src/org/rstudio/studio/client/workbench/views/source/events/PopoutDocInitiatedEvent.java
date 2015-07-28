@@ -1,5 +1,5 @@
 /*
- * PopoutDocEvent.java
+ * PopoutDocInitiatedEvent.java
  *
  * Copyright (C) 2009-15 by RStudio, Inc.
  *
@@ -14,49 +14,47 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
+import org.rstudio.core.client.Point;
 import org.rstudio.core.client.js.JavaScriptSerializable;
-import org.rstudio.studio.client.application.events.CrossWindowEvent;
-import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
 
 @JavaScriptSerializable
-public class PopoutDocEvent extends CrossWindowEvent<PopoutDocEvent.Handler>
+public class PopoutDocInitiatedEvent 
+             extends GwtEvent<PopoutDocInitiatedEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onPopoutDoc(PopoutDocEvent e);
+      void onPopoutDocInitiated(PopoutDocInitiatedEvent e);
    }
    
-   public PopoutDocEvent()
+   public PopoutDocInitiatedEvent()
    {
+      posX_ = 0;
+      posY_ = 0;
    }
    
-   public PopoutDocEvent(String docId, SourcePosition sourcePosition)
+   public PopoutDocInitiatedEvent(String docId, Point position)
    {
-      this(new PopoutDocInitiatedEvent(docId, null), sourcePosition);
+      docId_ = docId;
+      if (position != null)
+      { 
+         posX_ = position.getX();
+         posY_ = position.getY();
+      }
    }
-   
-   public PopoutDocEvent(PopoutDocInitiatedEvent originator,
-         SourcePosition sourcePosition)
-   {
-      originator_ = originator;
-      sourcePosition_ = sourcePosition;
-   }
-   
-   public PopoutDocInitiatedEvent getOriginator()
-   {
-      return originator_;
-   }
-   
-   public SourcePosition getSourcePosition()
-   {
-      return sourcePosition_;
-   }
-   
+
    public String getDocId()
    {
-      return originator_.getDocId();
+      return docId_;
+   }
+   
+   public Point getPosition()
+   {
+      if (posX_ == 0 && posY_ == 0)
+         return null;
+      return new Point(posX_, posY_);
    }
    
    @Override
@@ -68,17 +66,12 @@ public class PopoutDocEvent extends CrossWindowEvent<PopoutDocEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onPopoutDoc(this);
+      handler.onPopoutDocInitiated(this);
    }
    
-   @Override
-   public boolean forward()
-   {
-      return false;
-   }
-
-   private SourcePosition sourcePosition_;
-   private PopoutDocInitiatedEvent originator_;
+   private String docId_;
+   private int posX_;
+   private int posY_;
    
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

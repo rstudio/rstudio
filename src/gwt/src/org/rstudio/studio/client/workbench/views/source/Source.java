@@ -152,7 +152,8 @@ public class Source implements InsertSourceHandler,
                              SnippetsChangedEvent.Handler,
                              PopoutDocEvent.Handler,
                              DocWindowChangedEvent.Handler,
-                             DocTabDragInitiatedEvent.Handler
+                             DocTabDragInitiatedEvent.Handler,
+                             PopoutDocInitiatedEvent.Handler
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -525,6 +526,7 @@ public class Source implements InsertSourceHandler,
 
       events.addHandler(DocWindowChangedEvent.TYPE, this);
       events.addHandler(DocTabDragInitiatedEvent.TYPE, this);
+      events.addHandler(PopoutDocInitiatedEvent.TYPE, this);
 
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
       Event.addNativePreviewHandler(new NativePreviewHandler()
@@ -757,7 +759,21 @@ public class Source implements InsertSourceHandler,
              (SourceWindowManager.isMainSourceWindow() && 
               !windowManager_.isSourceWindowOpen(docWindowId)))
          {
-            addTab(doc, true);
+            EditingTarget editor = addTab(doc, true);
+            
+            // if this is a source window, check to see if it was opened to
+            // pop out a particular doc, and restore that doc's position if so
+            if (!SourceWindowManager.isMainSourceWindow())
+            {
+               SourceWindow sourceWindow = 
+                     RStudioGinjector.INSTANCE.getSourceWindow();
+               if (sourceWindow.getInitialDocId() == doc.getId() &&
+                   sourceWindow.getInitialSourcePosition() != null)
+               {
+                  editor.restorePosition(
+                        sourceWindow.getInitialSourcePosition());
+               }
+            }
          }
       }
    }
@@ -1549,18 +1565,36 @@ public class Source implements InsertSourceHandler,
    }
 
    @Override
-   public void onDocTabDragInitiated(DocTabDragInitiatedEvent event)
+   public void onDocTabDragInitiated(final DocTabDragInitiatedEvent event)
    {
-      for (EditingTarget editor: editors_)
+      inEditorForId(event.getDragParams().getDocId(), 
+            new OperationWithInput<EditingTarget>()
       {
-         if (editor.getId() == event.getDragParams().getDocId())
+         @Override
+         public void execute(EditingTarget editor)
          {
             DocTabDragParams params = event.getDragParams();
             params.setSourcePosition(editor.currentPosition());
             events_.fireEvent(new DocTabDragStartedEvent(params));
-            break;
+            
          }
-      }
+      });
+   }
+
+   @Override
+   public void onPopoutDocInitiated(final PopoutDocInitiatedEvent event)
+   {
+      Debug.devlog("got popout initiated for doc " + event.getDocId());
+      inEditorForId(event.getDocId(), new OperationWithInput<EditingTarget>()
+      {
+         @Override
+         public void execute(EditingTarget editor)
+         {
+            Debug.devlog("firing event with pos " + editor.currentPosition().getRow());
+            events_.fireEvent(new PopoutDocEvent(event, 
+                  editor.currentPosition()));
+         }
+      });
    }
 
    @Handler
@@ -3448,6 +3482,20 @@ public class Source implements InsertSourceHandler,
       {
          String editorPath = editors_.get(i).getPath();
          if (editorPath != null && editorPath.equals(path))
+         {
+            onEditorLocated.execute(editors_.get(i));
+            break;
+         }
+      }
+   }
+
+   private void inEditorForId(String id, 
+         OperationWithInput<EditingTarget> onEditorLocated)
+   {
+      for (int i = 0; i < editors_.size(); i++)
+      {
+         String editorId = editors_.get(i).getId();
+         if (editorId != null && editorId.equals(id))
          {
             onEditorLocated.execute(editors_.get(i));
             break;

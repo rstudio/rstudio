@@ -45,7 +45,7 @@ import org.rstudio.studio.client.workbench.views.source.events.DocTabDragInitiat
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
+import org.rstudio.studio.client.workbench.views.source.events.PopoutDocInitiatedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;
 
 import com.google.gwt.animation.client.Animation;
@@ -472,7 +472,7 @@ public class DocTabLayoutPanel
       
       private void beginDrag(Event evt)
       {
-         String docId = initDragDocId_;
+         String docId = initDragParams_.getDocId();
          int dragTabWidth = initDragWidth_;
          
          // set drag element state
@@ -893,10 +893,9 @@ public class DocTabLayoutPanel
                if (targetWindowName == null)
                {
                   // it was dragged over nothing RStudio owns--pop it out
-                  events_.fireEvent(new PopoutDocEvent(
-                        initDragDocId_, new Point(
-                              evt.getScreenX(), evt.getScreenY()),
-                        null));
+                  events_.fireEvent(new PopoutDocInitiatedEvent(
+                        initDragParams_.getDocId(), new Point(
+                              evt.getScreenX(), evt.getScreenY())));
                }
             }
          }
@@ -921,7 +920,6 @@ public class DocTabLayoutPanel
       private Element dragTabsHost_;
       private Element dragScrollHost_;
       private Element dragPlaceholder_;
-      private String initDragDocId_;
       private int curState_ = STATE_NONE;
       private Point dropPoint_;
 
