@@ -154,7 +154,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       addCancelButton();
       
-      searchWidget_ = new SearchWidget(new SuggestOracle() {
+      filterWidget_ = new SearchWidget(new SuggestOracle() {
 
          @Override
          public void requestSuggestions(Request request, Callback callback)
@@ -166,7 +166,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          
       });
       
-      searchWidget_.addValueChangeHandler(new ValueChangeHandler<String>()
+      filterWidget_.addValueChangeHandler(new ValueChangeHandler<String>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
@@ -175,7 +175,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       });
       
-      searchWidget_.setPlaceholderText("Filter...");
+      filterWidget_.setPlaceholderText("Filter...");
       
       addLeftWidget(new ThemedButton("Reset...", new ClickHandler()
       {
@@ -486,7 +486,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    private void resetState()
    {
-      searchWidget_.clear();
+      filterWidget_.clear();
       changes_.clear();
       collectShortcuts();
    }
@@ -500,8 +500,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       FlowPanel headerPanel = new FlowPanel();
       
-      searchWidget_.getElement().getStyle().setFloat(Style.Float.LEFT);
-      headerPanel.add(searchWidget_);
+      filterWidget_.getElement().getStyle().setFloat(Style.Float.LEFT);
+      headerPanel.add(filterWidget_);
       
       HelpLink link = new HelpLink(
             "Customizing Keyboard Shortcuts",
@@ -628,7 +628,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private final DataGrid<CommandBinding> table_;
    private final ListDataProvider<CommandBinding> dataProvider_;
    private final Map<CommandBinding, CommandBinding> changes_;
-   private final SearchWidget searchWidget_;
+   private final SearchWidget filterWidget_;
    
    private List<CommandBinding> originalBindings_;
    
