@@ -517,6 +517,10 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       // document, make it the owner
       if (e.getDoc().getSourceWindowId() != e.getWindowId())
       {
+         // assign on the doc itself
+         e.getDoc().assignSourceWindowId(e.getWindowId());
+         
+         // assign on the server
          assignSourceDocWindowId(e.getDoc().getId(), 
                e.getWindowId(), null);
       }
@@ -542,6 +546,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          if (sourceDocs_.get(i).getId() == event.getDocId())
          {
             sourceDocs_.get(i).setPath(event.getPath());
+            break;
          }
       }
    }

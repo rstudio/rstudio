@@ -1611,13 +1611,11 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onPopoutDocInitiated(final PopoutDocInitiatedEvent event)
    {
-      Debug.devlog("got popout initiated for doc " + event.getDocId());
       inEditorForId(event.getDocId(), new OperationWithInput<EditingTarget>()
       {
          @Override
          public void execute(EditingTarget editor)
          {
-            Debug.devlog("firing event with pos " + editor.currentPosition().getRow());
             events_.fireEvent(new PopoutDocEvent(event, 
                   editor.currentPosition()));
          }
