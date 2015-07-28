@@ -21,8 +21,8 @@ public class YamlFrontMatter
 {
    public static int[] getFrontMatterRange(String code)
    {
-      RegExp frontMatterReg = RegExp.compile("^---\\s*$", "gm");
-      MatchResult beginMatch = frontMatterReg.exec(code);
+      RegExp frontMatterBegin = RegExp.compile("^---\\s*$", "gm");
+      MatchResult beginMatch = frontMatterBegin.exec(code);
       if (beginMatch == null)
          return null;
 
@@ -32,7 +32,14 @@ public class YamlFrontMatter
       if (!code.substring(0, beginMatch.getIndex()).matches("\\s*")) 
          return null;
       
-      MatchResult endMatch = frontMatterReg.exec(code);
+      // front matter can end with ... rather than ---; see spec:
+      // http://www.yaml.org/spec/1.2/spec.html#id2760395
+      RegExp frontMatterEnd = RegExp.compile("^(---|\\.\\.\\.)\\s*$", "gm");
+      
+      // begin looking where the last regexp left off
+      frontMatterEnd.setLastIndex(frontMatterBegin.getLastIndex());
+
+      MatchResult endMatch = frontMatterEnd.exec(code);
       if (endMatch == null)
          return null;
 
