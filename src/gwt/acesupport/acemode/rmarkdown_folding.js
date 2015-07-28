@@ -50,7 +50,7 @@ oop.inherits(FoldMode, BaseFoldMode);
           Utils.startsWith(line, "---") ||
           Utils.startsWith(line, "..."))
       {
-         if (beforeState.startsWith("yaml"))
+         if (Utils.startsWith(beforeState, "yaml"))
             return "end";
          else
             return "start";
@@ -60,7 +60,7 @@ oop.inherits(FoldMode, BaseFoldMode);
       // highlighting only for the YAML header in an R Markdown document.
       // That is, the 'entry point' state is 'start' while all following
       // states are '$start'.
-      if (state === "$start" && line.startsWith("#"))
+      if (state === "$start" && Utils.startsWith(line, "#"))
          return "start";
 
       var trimmed = line.trim();
