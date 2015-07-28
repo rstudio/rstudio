@@ -18,78 +18,33 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
 
 public class LineWidget extends JavaScriptObject
-{
-   public static class Options extends JavaScriptObject
-   {
-      protected Options()
-      {
-      }
-      
-      public static native Options create() /*-{
-         return {
-            pixelHeight: null,
-            rowCount: null,
-            fixedWidth: null,
-            coverGutter: null
-         };
-      }-*/;
-      
-      public native final void setPixelHeight(int pixelHeight) /*-{
-         this.pixelHeight = pixelHeight;
-      }-*/;
-      
-      public native final void setRowCount(int rowCount) /*-{
-         this.rowCount = rowCount;
-      }-*/;
-      
-      public native final void setFixedWidth(boolean fixedWidth) /*-{
-         this.fixedWidth = fixedWidth;
-      }-*/;
-      
-      public native final void setCoverGutter(boolean coverGutter) /*-{
-         this.coverGutter = coverGutter;
-      }-*/;
-   }
-   
+{ 
    protected LineWidget() {}
  
-   public static final LineWidget create(int row, 
-                                         String html, 
-                                         String data,
-                                         Options options)
+   public static final LineWidget create(int row, String html)
    {
-      return create(row, html, null, data, options);
+      return create(row, html, null);
    }
    
-   public static final LineWidget create(int row, 
-                                         Element el,
-                                         String data,
-                                         Options options)
+   public static final LineWidget create(int row, Element el)
    {
-      return create(row, null, el, data, options);
+      return create(row, null, el);
    }
    
    private static native final LineWidget create(int row, 
                                                  String html,
-                                                 Element element,
-                                                 String data,
-                                                 Options options) /*-{
+                                                 Element element) /*-{
       return {
          row: row,
          html: html,
-         el: element,   
-         data: data,
-         pixelHeight: options.pixelHeight,
-         rowCount: options.rowCount,
-         fixedWidth: options.fixedWidth,
-         coverGutter: options.coverGutter
+         el: element
       };
    }-*/;
    
    public native final int getRow()  /*-{
       return this.row;
    }-*/;
-   
+  
    public native final Element getElement() /*-{
       return this.el;
    }-*/;
@@ -98,19 +53,31 @@ public class LineWidget extends JavaScriptObject
       return this.pixelHeight;
    }-*/;
    
+   public native final void setPixelHeight(int pixelHeight) /*-{
+      this.pixelHeight = pixelHeight;
+   }-*/;
+
    public native final int getRowCount()  /*-{
       return this.rowCount;
    }-*/;
    
+   public native final void setRowCount(int rowCount) /*-{
+      this.rowCount = rowCount;
+   }-*/;
+
    public native final boolean getFixedWidth()  /*-{
       return this.fixedWidth;
    }-*/;
    
+   public native final void setFixedWidth(boolean fixedWidth) /*-{
+      this.fixedWidth = fixedWidth;
+   }-*/;
+
    public native final boolean getCoverGutter()  /*-{
       return this.coverGutter;
    }-*/;
    
-   public native final String getData()  /*-{
-      return this.data;
+   public native final void setCoverGutter(boolean coverGutter) /*-{
+      this.coverGutter = coverGutter;
    }-*/;
 }

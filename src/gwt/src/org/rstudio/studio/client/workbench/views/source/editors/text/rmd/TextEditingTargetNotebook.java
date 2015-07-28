@@ -17,11 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
-
-import com.google.gwt.dom.client.DivElement;
-import com.google.gwt.dom.client.Document;
 
 public class TextEditingTargetNotebook
 {
@@ -34,18 +30,10 @@ public class TextEditingTargetNotebook
    
    public void executeChunk(Scope chunk, String code)
    {
-      DivElement div = Document.get().createDivElement();
-      div.getStyle().setBackgroundColor("white");
-      div.getStyle().setOpacity(1.0);
-      div.setInnerText("Here is some output right now");
       
-      LineWidget.Options options = LineWidget.Options.create();
-      options.setFixedWidth(true);
-      LineWidget widget = LineWidget.create(
-            chunk.getEnd().getRow(),
-            div,
-            null,
-            options);
+      int row = chunk.getEnd().getRow();
+      ChunkOutputLineWidget widget = ChunkOutputLineWidget.create(row);
+      widget.setFixedWidth(true);
       docDisplay_.addLineWidget(widget);
    }
    
