@@ -145,6 +145,13 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       table_ = new DataGrid<CommandBinding>(1000, RES, KEY_PROVIDER);
       
+      FlowPanel emptyWidget = new FlowPanel();
+      Label emptyLabel = new Label("No bindings available");
+      emptyLabel.getElement().getStyle().setMarginTop(20, Unit.PX);
+      emptyLabel.getElement().getStyle().setColor("#888");
+      emptyWidget.add(emptyLabel);
+      table_.setEmptyTableWidget(emptyWidget);
+      
       table_.setWidth("800px");
       table_.setHeight("400px");
       
