@@ -18,6 +18,8 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 public class ChunkOutput extends JavaScriptObject
 {
+   public static final String LINE_WIDGET_TYPE = "ChunkOutput";
+   
    protected ChunkOutput()
    {
    }

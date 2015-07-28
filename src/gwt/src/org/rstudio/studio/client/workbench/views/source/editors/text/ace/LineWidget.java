@@ -21,40 +21,48 @@ public class LineWidget extends JavaScriptObject
 { 
    protected LineWidget() {}
  
-   public static final LineWidget create(int row, String html)
+   public static final LineWidget create(String type, int row, String html)
    {
-      return create(row, html, null);
+      return create(type, row, html, null);
    }
    
-   public static final LineWidget create(int row, 
+   public static final LineWidget create(String type,
+                                         int row, 
                                          String html,
                                          JavaScriptObject data)
    {
-      return create(row, html, null, data);
+      return create(type, row, html, null, data);
    }
    
-   public static final LineWidget create(int row, Element el)
+   public static final LineWidget create(String type, int row, Element el)
    {
-      return create(row, el, null);
+      return create(type, row, el, null);
    }
    
-   public static final LineWidget create(int row, 
+   public static final LineWidget create(String type,
+                                         int row, 
                                          Element el, 
                                          JavaScriptObject data)
    {
-      return create(row, null, el, data);
+      return create(type, row, null, el, data);
    }
    
-   private static native final LineWidget create(int row, 
+   private static native final LineWidget create(String type,
+                                                 int row, 
                                                  String html,
                                                  Element element,
                                                  JavaScriptObject data) /*-{
       return {
+         type: type,
          row: row,
          html: html,
          el: element,
          data: data
       };
+   }-*/;
+   
+   public native final String getType()  /*-{
+      return this.type;
    }-*/;
    
    public native final int getRow()  /*-{

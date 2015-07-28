@@ -43,7 +43,10 @@ public class TextEditingTargetNotebook
       
       ChunkOutput output = ChunkOutput.create(row, 1, true, "ref");
      
-      LineWidget widget = LineWidget.create(row, div, output);
+      LineWidget widget = LineWidget.create(ChunkOutput.LINE_WIDGET_TYPE,
+                                            row, 
+                                            div, 
+                                            output);
       widget.setFixedWidth(true);
       docDisplay_.addLineWidget(widget);
    }
