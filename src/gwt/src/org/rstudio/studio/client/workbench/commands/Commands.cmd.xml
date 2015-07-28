@@ -970,6 +970,14 @@ well as menu structures (for main menu and popup menus).
         label="Open Last Tab"
         menuLabel="_Last Tab"/>
         
+   <cmd id="moveTabLeft"
+        label="Move Tab Left"
+        menuLabel="Move Tab Le_ft"/>
+
+   <cmd id="moveTabRight"
+        label="Move Tab Right"
+        menuLabel="Move Tab _Right"/>
+        
    <cmd id="goToLine"
         label="Go to Line..."
         menuLabel="_Go to Line..."/>

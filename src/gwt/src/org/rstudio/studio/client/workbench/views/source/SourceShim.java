@@ -106,6 +106,10 @@ public class SourceShim extends Composite
       @Handler
       public abstract void onSwitchToTab();
       @Handler
+      public abstract void onMoveTabLeft();
+      @Handler
+      public abstract void onMoveTabRight();
+      @Handler
       public abstract void onSourceNavigateBack();
       @Handler
       public abstract void onSourceNavigateForward();

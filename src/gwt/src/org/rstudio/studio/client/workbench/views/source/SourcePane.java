@@ -196,6 +196,12 @@ public class SourcePane extends Composite implements Display,
       return tabPanel_.getWidgetCount();
    }
 
+   @Override
+   public void moveTab(int index, int dir)
+   {
+      tabPanel_.moveTab(index, dir);
+   }
+
    public HandlerRegistration addTabClosingHandler(TabClosingHandler handler)
    {
       return tabPanel_.addTabClosingHandler(handler);

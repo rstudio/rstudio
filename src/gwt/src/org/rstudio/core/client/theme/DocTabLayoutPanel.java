@@ -201,6 +201,30 @@ public class DocTabLayoutPanel
             onClosed.execute();
       }
    }
+   
+   public void moveTab(int index, int dir)
+   {
+      Element tabHost = getTabBarElement();
+      
+      // ignore moving left if the tab is already the leftmost tab (same for
+      // right)
+      int dest = index + dir;
+      if (dest < 0 || dest >= tabHost.getChildCount())
+         return;
+      
+      // rearrange the DOM 
+      Element tab = Element.as(tabHost.getChild(index));
+      Element prev = Element.as(tabHost.getChild(dest));
+      tabHost.removeChild(tab);
+      if (dir > 0)
+         tabHost.insertAfter(tab, prev);
+      else
+         tabHost.insertBefore(tab, prev);
+
+      // fire the tab reorder event (this syncs the editor state)
+      TabReorderEvent event = new TabReorderEvent(index, dest);
+      fireEvent(event);
+   }
 
    @Override
    public void selectTab(int index)
