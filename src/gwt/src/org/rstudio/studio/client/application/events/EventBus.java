@@ -56,7 +56,7 @@ public class EventBus extends HandlerManager
       // window (and wasn't itself forwarded from somewhere else), pass it to
       // the main window
       if (event instanceof CrossWindowEvent &&
-          pSatellite_.get().isCurrentWindowSatellite() &&
+          Satellite.isCurrentWindowSatellite() &&
           !fromOtherWindow)
       {
          CrossWindowEvent<?> crossWindow = (CrossWindowEvent<?>)(event);

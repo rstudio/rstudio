@@ -15,8 +15,10 @@
 package org.rstudio.studio.client.common.satellite;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.satellite.events.SatelliteFocusedEvent;
 import org.rstudio.studio.client.server.remote.ClientEventDispatcher;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -24,6 +26,8 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.HasCloseHandlers;
@@ -49,6 +53,7 @@ public class Satellite implements HasCloseHandlers<Satellite>
       session_ = session;
       pUIPrefs_ = pUIPrefs;
       commands_ = commands;
+      events_ = eventBus;
       eventDispatcher_ = new ClientEventDispatcher(eventBus);
    }
    
@@ -71,6 +76,17 @@ public class Satellite implements HasCloseHandlers<Satellite>
             }
          });
       }
+      
+      // let main window know when we get focus
+      WindowEx.addFocusHandler(new FocusHandler()
+      {
+         
+         @Override
+         public void onFocus(FocusEvent arg0)
+         {
+            events_.fireEvent(new SatelliteFocusedEvent(getSatelliteName()));
+         }
+      });
    }
 
    @Override
@@ -176,7 +192,7 @@ public class Satellite implements HasCloseHandlers<Satellite>
    
    
    // check whether the current window is a satellite
-   public native boolean isCurrentWindowSatellite() /*-{
+   public static native boolean isCurrentWindowSatellite() /*-{
       return !!$wnd.isRStudioSatellite;
    }-*/;
    
@@ -267,6 +283,7 @@ public class Satellite implements HasCloseHandlers<Satellite>
    private final ClientEventDispatcher eventDispatcher_;
    private final HandlerManager handlerManager_ = new HandlerManager(this);
    private final Commands commands_;
+   private final EventBus events_;
    private boolean pendingReactivate_ = false;
    private boolean pendingClose_ = false;
    private JavaScriptObject params_ = null;

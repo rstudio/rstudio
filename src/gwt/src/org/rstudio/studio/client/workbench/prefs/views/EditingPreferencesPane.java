@@ -133,7 +133,6 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref("Blinking cursor", prefs_.blinkingCursor()));
       displayPanel.add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
       displayPanel.add(checkboxPref("Highlight R function calls", prefs_.highlightRFunctionCalls()));
-      displayPanel.add(checkboxPref("Allow multiple source windows", prefs_.enableSourceWindows()));
       
       Label rMarkdownLabel = headerLabel("R Markdown");
       rMarkdownLabel.getElement().getStyle().setPaddingTop(14, Unit.PX);

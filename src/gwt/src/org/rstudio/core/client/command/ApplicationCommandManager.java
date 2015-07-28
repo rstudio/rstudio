@@ -81,6 +81,11 @@ public class ApplicationCommandManager
    
    public void loadBindings()
    {
+      loadBindings(null);
+   }
+   
+   public void loadBindings(final Command afterLoad)
+   {
       bindings_.execute(new CommandWithArg<EditorKeyBindings>()
       {
          @Override
@@ -98,18 +103,26 @@ public class ApplicationCommandManager
                KeySequence keys = bindings.get(commandId).getKeyBinding();
                ShortcutManager.INSTANCE.replaceBinding(keys, command);
             }
+            
+            if (afterLoad != null)
+               afterLoad.execute();
          }
       });
    }
    
    public void resetBindings()
    {
+      resetBindings(null);
+   }
+   
+   public void resetBindings(final Command afterReset)
+   {
       bindings_.set(EditorKeyBindings.create(), new Command()
       {
          @Override
          public void execute()
          {
-            loadBindings();
+            loadBindings(afterReset);
          }
       });
    }

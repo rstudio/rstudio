@@ -22,6 +22,7 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2Prefs;
@@ -67,8 +68,7 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
                               UiPrefsChangedEvent.GLOBAL_TYPE,
                               session_.getSessionInfo().getUiPrefs()));
 
-               if (RStudioGinjector.INSTANCE.getSatellite()
-                                            .isCurrentWindowSatellite())
+               if (Satellite.isCurrentWindowSatellite())
                {
                   RStudioGinjector.INSTANCE.getEventBus()
                      .fireEventToMainWindow(event);

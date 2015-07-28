@@ -212,12 +212,9 @@ public class TextEditingTargetWidget
    {
       Toolbar toolbar = new EditingTargetToolbar(commands_);
        
-      if (uiPrefs_.enableSourceWindows().getGlobalValue())
-      {
-         toolbar.addLeftSeparator();
-         toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
-         toolbar.addLeftSeparator();
-      }
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
+      toolbar.addLeftSeparator();
 
       toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
       sourceOnSave_.getElement().getStyle().setMarginRight(0, Unit.PX);

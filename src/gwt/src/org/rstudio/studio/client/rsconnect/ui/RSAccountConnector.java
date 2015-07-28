@@ -78,14 +78,13 @@ public class RSAccountConnector implements
       optionsLoader_ = optionsLoader;
       pUiPrefs_ = pUiPrefs;
       session_ = session;
-      satellite_ = satellite;
 
       events.addHandler(EnableRStudioConnectUIEvent.TYPE, this);
 
       binder.bind(commands, this);
       
       // register satellite callback
-      if (!satellite_.isCurrentWindowSatellite())
+      if (!Satellite.isCurrentWindowSatellite())
          exportManageAccountsCallback();
    }
    
@@ -160,7 +159,7 @@ public class RSAccountConnector implements
    @Handler
    public void onRsconnectManageAccounts()
    {
-      if (satellite_.isCurrentWindowSatellite())
+      if (Satellite.isCurrentWindowSatellite())
       {
          callSatelliteManageAccounts();
       }
@@ -371,5 +370,4 @@ public class RSAccountConnector implements
    private final OptionsLoader.Shim optionsLoader_;
    private final Provider<UIPrefs> pUiPrefs_;
    private final Session session_;
-   private final Satellite satellite_;
 }

@@ -19,18 +19,21 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
-import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.DockPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.ListDataProvider;
@@ -53,6 +56,7 @@ import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
 
@@ -171,11 +175,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       });
       
-      searchWidget_.getElement().getStyle().setMarginTop(3, Unit.PX);
-      searchWidget_.getElement().getStyle().setMarginLeft(3, Unit.PX);
       searchWidget_.setPlaceholderText("Filter...");
-      
-      addLeftWidget(searchWidget_);
       
       addLeftWidget(new ThemedButton("Reset...", new ClickHandler()
       {
@@ -185,28 +185,30 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             globalDisplay_.showYesNoMessage(
                   GlobalDisplay.MSG_QUESTION,
                   "Reset Keyboard Shortcuts",
-                  "Are you sure you want to reset keyboard shortcuts to their default values?",
+                  "Are you sure you want to reset keyboard shortcuts to their default values? " +
+                  "This action cannot be undone.",
                   new ProgressOperation()
                   {
                      @Override
                      public void execute(final ProgressIndicator indicator)
                      {
                         indicator.onProgress("Resetting Keyboard Shortcuts...");
-                        appCommands_.resetBindings();
-                        editorCommands_.resetBindings();
-
-                        // TODO: Rather than using a timer instead chain progress
-                        // operations on the 'resetBindings()' calls.
-                        new Timer()
+                        appCommands_.resetBindings(new Command()
                         {
                            @Override
-                           public void run()
+                           public void execute()
                            {
-                              indicator.onCompleted();
-                              searchWidget_.clear();
-                              collectShortcuts();
+                              editorCommands_.resetBindings(new Command()
+                              {
+                                 @Override
+                                 public void execute()
+                                 {
+                                    indicator.onCompleted();
+                                    resetState();
+                                 }
+                              });
                            }
-                        }.schedule(1000);
+                        });
                      }
                   },
                   false);
@@ -344,7 +346,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             else if (event.getColumn().equals(typeColumn_))
                sort(data, 2, event.isSortAscending());
             
-            dataProvider_.setList(data);
+            updateData(data);
          }
       });
    }
@@ -399,15 +401,24 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          if (name.toLowerCase().indexOf(query.toLowerCase()) != -1)
             filtered.add(binding);
       }
-      dataProvider_.setList(filtered);
+      
+      updateData(filtered);
+      
    }
    
    private void onShortcutCellPreview(CellPreviewEvent<CommandBinding> preview)
    {
       NativeEvent event = preview.getNativeEvent();
+      
       String type = event.getType();
-      if (type.equals("focus") || type.equals("blur"))
+      if (type.equals("focus"))
       {
+         setEscapeDisabled(true);
+         buffer_.clear();
+      }
+      else if (type.equals("blur"))
+      {
+         setEscapeDisabled(false);
          buffer_.clear();
       }
       else if (event.getType().equals("keydown"))
@@ -415,27 +426,49 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          if (KeyboardHelper.isModifierKey(event.getKeyCode()))
             return;
          
-         buffer_.add(event);
          Element target = event.getEventTarget().cast();
-         target.setInnerHTML(buffer_.toString());
-         
-         // Provide a visual cue that this row has changed
-         Element rowEl = DomUtils.findParentElement(
-               target,
-               new ElementPredicate()
-               {
-                  @Override
-                  public boolean test(Element el)
-                  {
-                     return el.getTagName().toLowerCase().equals("tr");
-                  }
-               });
-         
-         if (rowEl != null)
+         Element rowEl = DomUtils.findParentElement(target, new ElementPredicate()
          {
-            // add modified row style
-            rowEl.addClassName(RES.dataGridStyle().modifiedRow());
+            @Override
+            public boolean test(Element el)
+            {
+               return el.getTagName().toLowerCase().equals("tr");
+            }
+         });
+         
+         if (event.getKeyCode() == KeyCodes.KEY_BACKSPACE)
+         {
+            // Stop event propagation to prevent browser 'Back'.
+            event.stopPropagation();
+            event.preventDefault();
+            
+            buffer_.pop();
+            target.setInnerHTML(buffer_.toString());
+            return;
          }
+         
+         if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
+         {
+            String keyString = "";
+            KeySequence sequence = preview.getValue().getKeySequence();
+            if (sequence != null)
+               keyString = sequence.toString();
+            
+            String current = target.getInnerHTML();
+            if (current.equals(keyString))
+            {
+               closeDialog();
+               return;
+            }
+            
+            target.setInnerHTML(keyString);
+            rowEl.removeClassName(RES.dataGridStyle().modifiedRow());
+            return;
+         }
+         
+         buffer_.add(event);
+         target.setInnerHTML(buffer_.toString());
+         rowEl.addClassName(RES.dataGridStyle().modifiedRow());
          
          // Add the new command binding to later be accepted + registered
          CommandBinding oldBinding = preview.getValue();
@@ -447,19 +480,47 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                
          changes_.put(oldBinding, newBinding);
          
-         // TODO: Highlight any existing conflicts.
-         
+         // TODO: update conflicts
       }
+   }
+   
+   private void resetState()
+   {
+      searchWidget_.clear();
+      changes_.clear();
+      collectShortcuts();
    }
    
    @Override
    protected Widget createMainWidget()
    {
-      changes_.clear();
-      collectShortcuts();
+      resetState();
+      
+      VerticalPanel container = new VerticalPanel();
+      
+      FlowPanel headerPanel = new FlowPanel();
+      
+      searchWidget_.getElement().getStyle().setFloat(Style.Float.LEFT);
+      headerPanel.add(searchWidget_);
+      
+      HelpLink link = new HelpLink(
+            "Customizing Keyboard Shortcuts",
+            "custom_keyboard_shortcuts");
+      link.getElement().getStyle().setFloat(Style.Float.RIGHT);
+      headerPanel.add(link);
+      
+      container.add(headerPanel);
+      
+      FlowPanel spacer = new FlowPanel();
+      spacer.setWidth("100%");
+      spacer.setHeight("4px");
+      container.add(spacer);
+      
       DockPanel dockPanel = new DockPanel();
       dockPanel.add(table_, DockPanel.CENTER);
-      return dockPanel;
+      container.add(dockPanel);
+      
+      return container;
    }
    
    private void collectShortcuts()
@@ -517,7 +578,18 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       }
       
       originalBindings_ = bindings;
+      updateData(bindings);
+   }
+   
+   private void updateData(List<CommandBinding> bindings)
+   {
+      discoverConflicts(bindings);
       dataProvider_.setList(bindings);
+   }
+   
+   private void discoverConflicts(List<CommandBinding> bindings)
+   {
+      // TODO
    }
    
    private String getAppCommandName(AppCommand command)

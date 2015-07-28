@@ -88,7 +88,7 @@ public class KeyboardShortcut
             return ((modifiers_ & CTRL) == CTRL ? "Ctrl+" : "")
                   + ((modifiers_ & SHIFT) == SHIFT ? "Shift+" : "")
                   + ((modifiers_ & ALT) == ALT ? "Alt+" : "")
-                  + ((modifiers_ & META) == META ? "Meta+" : "")
+                  + ((modifiers_ & META) == META ? "Cmd+" : "")
                   + getKeyName(pretty);
          }
       }
@@ -225,6 +225,12 @@ public class KeyboardShortcut
       public void add(NativeEvent event)
       {
          add(new KeyCombination(event.getKeyCode(), getModifierValue(event)));
+      }
+      
+      public void pop()
+      {
+         if (keyCombinations_ != null && keyCombinations_.size() > 0)
+            keyCombinations_.remove(keyCombinations_.size() - 1);
       }
       
       public void add(int keyCode, int modifiers)

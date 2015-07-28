@@ -34,6 +34,8 @@ public class VCSApplication extends SatelliteApplication
                          ApplicationUncaughtExceptionHandler uncaughtExHandler,
                          AskPassManager askPassManager) // force gin to create
    {
-      super("review_changes", view, satellite, pAceThemes, uncaughtExHandler);
+      super(NAME, view, satellite, pAceThemes, uncaughtExHandler);
    }
+
+   public final static String NAME = "review_changes";
 }

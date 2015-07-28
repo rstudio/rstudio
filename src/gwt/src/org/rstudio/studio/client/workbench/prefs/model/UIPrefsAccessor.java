@@ -520,11 +520,6 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_unnamed_chunks_in_document_outline", true);
    }
    
-   public PrefValue<Boolean> enableSourceWindows()
-   {
-      return bool("enable_source_windows", false);
-   }
-   
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())

@@ -67,6 +67,7 @@ import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResou
 import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy;
 import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
+import org.rstudio.studio.client.vcs.VCSApplication;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
@@ -155,7 +156,7 @@ public class RStudio implements EntryPoint
                   ensureStylesInjected();
                   
                   String view = Window.Location.getParameter("view");
-                  if ("review_changes".equals(view))
+                  if (VCSApplication.NAME.equals(view))
                   {
                      RStudioGinjector.INSTANCE.getVCSApplication().go(
                            RootLayoutPanel.get(),
