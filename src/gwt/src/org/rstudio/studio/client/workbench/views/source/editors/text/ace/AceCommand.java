@@ -183,6 +183,8 @@ public class AceCommand extends JavaScriptObject
    
       return $;
    }-*/;
+   
+   public final native boolean isCustomBinding() /*-{ return !!this.isCustom; }-*/;
 
    private static final JsObject DISPLAY_NAME_MAP = makeDisplayNameMap();
 }

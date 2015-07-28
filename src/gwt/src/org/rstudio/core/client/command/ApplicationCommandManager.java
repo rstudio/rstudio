@@ -84,7 +84,7 @@ public class ApplicationCommandManager
       loadBindings(null);
    }
    
-   public void loadBindings(final Command afterLoad)
+   public void loadBindings(final CommandWithArg<EditorKeyBindings> afterLoad)
    {
       bindings_.execute(new CommandWithArg<EditorKeyBindings>()
       {
@@ -105,7 +105,7 @@ public class ApplicationCommandManager
             }
             
             if (afterLoad != null)
-               afterLoad.execute();
+               afterLoad.execute(bindings);
          }
       });
    }
@@ -115,7 +115,7 @@ public class ApplicationCommandManager
       resetBindings(null);
    }
    
-   public void resetBindings(final Command afterReset)
+   public void resetBindings(final CommandWithArg<EditorKeyBindings> afterReset)
    {
       bindings_.set(EditorKeyBindings.create(), new Command()
       {

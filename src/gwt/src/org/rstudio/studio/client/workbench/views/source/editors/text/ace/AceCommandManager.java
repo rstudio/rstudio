@@ -141,6 +141,7 @@ public class AceCommandManager extends JavaScriptObject
       }
       
       newCommand.bindKey = keys;
+      newCommand.isCustom = true;
       this.addCommand(newCommand);
    }-*/;
    
