@@ -60,6 +60,10 @@ public class LineWidget extends JavaScriptObject
    public native final int getRow()  /*-{
       return this.row;
    }-*/;
+   
+   public native final String getHtml() /*-{
+      return this.html;
+   }-*/;
   
    public native final Element getElement() /*-{
       return this.el;
