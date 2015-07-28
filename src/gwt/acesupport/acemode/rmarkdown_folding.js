@@ -39,28 +39,31 @@ oop.inherits(FoldMode, BaseFoldMode);
 
       var line = session.getLine(row);
       var state = session.getState(row);
+      var beforeState = row > 0 ?
+             session.getState(row - 1) :
+             "start";
 
       // Check for header starts. Note that we don't check the state
       // explicitly here as not all headers will occur at the 'start' state;
       // this is done to support YAML blocks and R Presentation features.
-      if (Utils.startsWith(line, "===") || Utils.startsWith(line, "---"))
+      if (Utils.startsWith(line, "===") ||
+          Utils.startsWith(line, "---") ||
+          Utils.startsWith(line, "..."))
       {
-         if (line[0] === "#")
-            return "start";
-         else if (/^[=-]{3,}\s*$/.test(line))
+         if (beforeState.startsWith("yaml"))
+            return "end";
+         else
             return "start";
       }
+
+      // Note the '$start' state is a proxy state used to allow YAML
+      // highlighting only for the YAML header in an R Markdown document.
+      // That is, the 'entry point' state is 'start' while all following
+      // states are '$start'.
+      if (state === "$start" && line.startsWith("#"))
+         return "start";
 
       var trimmed = line.trim();
-
-      // YAML
-      if (trimmed === "---")
-      {
-         if (row === 0)
-            return "start";
-         else if (state === "start")
-            return "end";
-      }
 
       // Chunk
       if (Utils.startsWith(trimmed, "```"))
@@ -88,10 +91,12 @@ oop.inherits(FoldMode, BaseFoldMode);
    // looking forward or backwards. It's encoded this way both for
    // efficiency and to avoid duplicating this function for each
    // direction.
-   var $getBracedWidgetRange = function(session, state, row, prefix)
+   var $getBracedWidgetRange = function(session, state, row, prefix, prefix2)
    {
       var increment;
-      if (state === "start" || state === "$start")
+      if (row === 0)
+         increment = 1;
+      else if (state === "start" || state === "$start")
          increment = -1;
       else
          increment = 1;
@@ -110,6 +115,9 @@ oop.inherits(FoldMode, BaseFoldMode);
 
          var trimmed = session.getLine(idx).trim();
          if (Utils.startsWith(trimmed, prefix))
+            break;
+
+         if (prefix2 && Utils.startsWith(trimmed, prefix2))
             break;
       }
       
@@ -159,7 +167,7 @@ oop.inherits(FoldMode, BaseFoldMode);
       var isYamlEnd = Utils.startsWith(prevState, "yaml");
       
       if (isYamlStart || isYamlEnd)
-         return $getBracedWidgetRange(session, state, row, "---");
+         return $getBracedWidgetRange(session, state, row, "---", isYamlStart ? "..." : undefined);
 
       // Handle Markdown header folds. They fold up until the next
       // header of the same depth.
