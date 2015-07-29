@@ -2565,6 +2565,12 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
+   public LineWidget getLineWidgetForRow(int row)
+   {
+      return widget_.getLineWidgetManager().getLineWidgetForRow(row);
+   }
+   
+   @Override
    public JsArray<ChunkOutput> getChunkOutput()
    {
       JsArray<ChunkOutput> chunks = JsArray.createArray().cast();

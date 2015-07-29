@@ -24,6 +24,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 
 public class TextEditingTargetNotebook
 {
@@ -55,20 +56,28 @@ public class TextEditingTargetNotebook
    public void executeChunk(Scope chunk, String code)
    {
       int row = chunk.getEnd().getRow();
-       
-      DivElement div = Document.get().createDivElement();
-      div.getStyle().setBackgroundColor("white");
-      div.getStyle().setOpacity(1.0);
-      div.setInnerText("Here is some output right now");
       
-      ChunkOutput chunkOutput = ChunkOutput.create(row, 1, true, "ref");
-     
-      LineWidget widget = LineWidget.create(ChunkOutput.LINE_WIDGET_TYPE,
-                                            row, 
-                                            elementForChunkOutput(chunkOutput), 
-                                            chunkOutput);
-      widget.setFixedWidth(true);
-      docDisplay_.addLineWidget(widget);
+      // if there is an existing widget just modify it in place
+      LineWidget existingWidget = docDisplay_.getLineWidgetForRow(row);
+      if (existingWidget != null && 
+          existingWidget.getType().equals(ChunkOutput.LINE_WIDGET_TYPE))
+      {
+         setChunkOutput(existingWidget.getElement());
+         docDisplay_.onLineWidgetChanged(existingWidget);
+      }
+      // otherwise create a new one
+      else
+      {
+         ChunkOutput chunkOutput = ChunkOutput.create(row, 1, true, "ref");
+        
+         LineWidget widget = LineWidget.create(
+                               ChunkOutput.LINE_WIDGET_TYPE,
+                               row, 
+                               elementForChunkOutput(chunkOutput), 
+                               chunkOutput);
+         widget.setFixedWidth(true);
+         docDisplay_.addLineWidget(widget);
+      }
    }
    
    private DivElement elementForChunkOutput(ChunkOutput chunkOutput)
@@ -76,10 +85,14 @@ public class TextEditingTargetNotebook
       DivElement div = Document.get().createDivElement();
       div.getStyle().setBackgroundColor("white");
       div.getStyle().setOpacity(1.0);
-      div.setInnerText("Here is some output right now");
+      setChunkOutput(div);
       return div;
    }
    
+   private void setChunkOutput(Element div)
+   {
+      div.setInnerText(Document.get().createUniqueId());
+   }
    
    private final DocDisplay docDisplay_;
    @SuppressWarnings("unused")

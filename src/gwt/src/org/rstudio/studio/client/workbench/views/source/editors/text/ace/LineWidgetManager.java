@@ -44,4 +44,11 @@ public class LineWidgetManager extends JavaScriptObject
       });
       return lineWidgets;
    }-*/;
+   
+   public native final LineWidget getLineWidgetForRow(int row) /*-{
+      if (this.session.lineWidgets && this.session.lineWidgets[row])
+         return this.session.lineWidgets[row];
+      else
+         return null;
+   }-*/;
 }
