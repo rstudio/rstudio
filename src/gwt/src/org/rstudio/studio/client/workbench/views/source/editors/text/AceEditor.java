@@ -2581,7 +2581,7 @@ public class AceEditor implements DocDisplay,
          if (lineWidget.getType().equals(ChunkOutput.LINE_WIDGET_TYPE))
          {
             ChunkOutput chunk = lineWidget.getData();
-            chunks.push(chunk);
+            chunks.push(chunk.withRow(lineWidget.getRow()));
          }
       }
       

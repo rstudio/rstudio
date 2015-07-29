@@ -15,9 +15,11 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
@@ -29,29 +31,44 @@ import com.google.gwt.dom.client.Element;
 public class TextEditingTargetNotebook
 {
    public TextEditingTargetNotebook(DocDisplay docDisplay,
-                                    DocUpdateSentinel docUpdateSentinel)
+                                    DocUpdateSentinel docUpdateSentinel,
+                                    SourceDocument document)
    {
       docDisplay_ = docDisplay;
-      docUpdateSentinel_ = docUpdateSentinel;      
+      docUpdateSentinel_ = docUpdateSentinel;  
+      initialChunkOutputs_ = document.getChunkOutput();
+      
+      // single shot rendering of chunk output line widgets
+      // (we wait until after the first render to ensure that
+      // ace places the line widgets correctly)
+      docDisplay_.addRenderFinishedHandler(new RenderFinishedEvent.Handler()
+      { 
+         @Override
+         public void onRenderFinished(RenderFinishedEvent event)
+         {
+            if (initialChunkOutputs_ != null)
+            {
+               for (int i = 0; i<initialChunkOutputs_.length(); i++)
+               {
+                  ChunkOutput chunkOutput = initialChunkOutputs_.get(i);
+                  LineWidget widget = LineWidget.create(
+                        ChunkOutput.LINE_WIDGET_TYPE,
+                        chunkOutput.getRow(), 
+                        elementForChunkOutput(chunkOutput), 
+                        chunkOutput);
+                  widget.setFixedWidth(true);
+                  docDisplay_.addLineWidget(widget);
+               }
+               initialChunkOutputs_ = null;
+            }
+         }
+      });
    }
    
-   public void initialize(SourceDocument document)
-   {
-      // if there is chunk output then use it to reconstruct
-      // the chunk output line widgets for the document
-      JsArray<ChunkOutput> chunkOutputs = document.getChunkOutput();
-      for (int i = 0; i<chunkOutputs.length(); i++)
-      {
-         ChunkOutput chunkOutput = chunkOutputs.get(i);
-         LineWidget widget = LineWidget.create(
-               ChunkOutput.LINE_WIDGET_TYPE,
-               chunkOutput.getRow(), 
-               elementForChunkOutput(chunkOutput), 
-               chunkOutput);
-         widget.setFixedWidth(true);
-         docDisplay_.addLineWidget(widget);
-      }
-   }
+
+   
+   // TODO: on removal of the chunk we need to remove the line widget
+   
    
    public void executeChunk(Scope chunk, String code)
    {
@@ -83,6 +100,7 @@ public class TextEditingTargetNotebook
    private DivElement elementForChunkOutput(ChunkOutput chunkOutput)
    {
       DivElement div = Document.get().createDivElement();
+      div.addClassName(ThemeStyles.INSTANCE.selectableText());
       div.getStyle().setBackgroundColor("white");
       div.getStyle().setOpacity(1.0);
       setChunkOutput(div);
@@ -93,6 +111,9 @@ public class TextEditingTargetNotebook
    {
       div.setInnerText(Document.get().createUniqueId());
    }
+  
+   
+   private JsArray<ChunkOutput> initialChunkOutputs_;
    
    private final DocDisplay docDisplay_;
    @SuppressWarnings("unused")

@@ -1041,6 +1041,9 @@ public class TextEditingTarget implements
       
       roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
       
+      notebook_ = new TextEditingTargetNotebook(
+                              docDisplay_, docUpdateSentinel_, document);   
+      
       // ensure that Makefile and Makevars always use tabs
       name_.addValueChangeHandler(new ValueChangeHandler<String>() {
          @Override
@@ -1272,16 +1275,6 @@ public class TextEditingTarget implements
       spelling_ = new TextEditingTargetSpelling(docDisplay_, 
                                                 docUpdateSentinel_);
       
-      notebook_ = new TextEditingTargetNotebook(docDisplay_,
-                                                docUpdateSentinel_);
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         @Override
-         public void execute()
-         {
-            notebook_.initialize(document);
-         }
-      });
 
       // show/hide the debug toolbar when the dirty state changes. (note:
       // this doesn't yet handle the case where the user saves the document,

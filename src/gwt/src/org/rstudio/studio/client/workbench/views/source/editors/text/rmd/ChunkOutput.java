@@ -37,6 +37,11 @@ public class ChunkOutput extends JavaScriptObject
       };
    }-*/;
    
+   public final ChunkOutput withRow(int row)
+   {
+      return ChunkOutput.create(row, getRowCount(), getVisible(), getHtmlRef());
+   }
+   
    public native final int getRow()  /*-{
       return this.row;
    }-*/;
