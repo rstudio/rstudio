@@ -1007,7 +1007,7 @@ public class TextEditingTarget implements
          docDisplay_.navigateToPosition(toSourcePosition(jumpTo), true);
    }
 
-   public void initialize(SourceDocument document,
+   public void initialize(final SourceDocument document,
                           FileSystemContext fileContext,
                           FileType type,
                           Provider<String> defaultNameProvider)
@@ -1274,6 +1274,14 @@ public class TextEditingTarget implements
       
       notebook_ = new TextEditingTargetNotebook(docDisplay_,
                                                 docUpdateSentinel_);
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            notebook_.initialize(document);
+         }
+      });
 
       // show/hide the debug toolbar when the dirty state changes. (note:
       // this doesn't yet handle the case where the user saves the document,

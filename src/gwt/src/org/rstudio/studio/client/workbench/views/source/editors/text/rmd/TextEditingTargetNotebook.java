@@ -19,7 +19,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 
@@ -32,6 +34,24 @@ public class TextEditingTargetNotebook
       docUpdateSentinel_ = docUpdateSentinel;      
    }
    
+   public void initialize(SourceDocument document)
+   {
+      // if there is chunk output then use it to reconstruct
+      // the chunk output line widgets for the document
+      JsArray<ChunkOutput> chunkOutputs = document.getChunkOutput();
+      for (int i = 0; i<chunkOutputs.length(); i++)
+      {
+         ChunkOutput chunkOutput = chunkOutputs.get(i);
+         LineWidget widget = LineWidget.create(
+               ChunkOutput.LINE_WIDGET_TYPE,
+               chunkOutput.getRow(), 
+               elementForChunkOutput(chunkOutput), 
+               chunkOutput);
+         widget.setFixedWidth(true);
+         docDisplay_.addLineWidget(widget);
+      }
+   }
+   
    public void executeChunk(Scope chunk, String code)
    {
       int row = chunk.getEnd().getRow();
@@ -41,14 +61,23 @@ public class TextEditingTargetNotebook
       div.getStyle().setOpacity(1.0);
       div.setInnerText("Here is some output right now");
       
-      ChunkOutput output = ChunkOutput.create(row, 1, true, "ref");
+      ChunkOutput chunkOutput = ChunkOutput.create(row, 1, true, "ref");
      
       LineWidget widget = LineWidget.create(ChunkOutput.LINE_WIDGET_TYPE,
                                             row, 
-                                            div, 
-                                            output);
+                                            elementForChunkOutput(chunkOutput), 
+                                            chunkOutput);
       widget.setFixedWidth(true);
       docDisplay_.addLineWidget(widget);
+   }
+   
+   private DivElement elementForChunkOutput(ChunkOutput chunkOutput)
+   {
+      DivElement div = Document.get().createDivElement();
+      div.getStyle().setBackgroundColor("white");
+      div.getStyle().setOpacity(1.0);
+      div.setInnerText("Here is some output right now");
+      return div;
    }
    
    
