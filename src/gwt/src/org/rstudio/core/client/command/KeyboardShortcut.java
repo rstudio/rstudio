@@ -88,7 +88,7 @@ public class KeyboardShortcut
             return ((modifiers_ & CTRL) == CTRL ? "Ctrl+" : "")
                   + ((modifiers_ & SHIFT) == SHIFT ? "Shift+" : "")
                   + ((modifiers_ & ALT) == ALT ? "Alt+" : "")
-                  + ((modifiers_ & META) == META ? "Meta+" : "")
+                  + ((modifiers_ & META) == META ? "Cmd+" : "")
                   + getKeyName(pretty);
          }
       }
