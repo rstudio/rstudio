@@ -1,5 +1,5 @@
 /*
- * SourceWindowParams.java
+ * DocTabDragParams.java
  *
  * Copyright (C) 2009-15 by RStudio, Inc.
  *
@@ -16,35 +16,34 @@ package org.rstudio.studio.client.workbench.views.source.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class SourceWindowParams extends JavaScriptObject
+public class DocTabDragParams extends JavaScriptObject
 {
-   protected SourceWindowParams()
+   protected DocTabDragParams()
    {
    }
-
-   public final static native SourceWindowParams create(int ordinal, 
-         String title, String docId, SourcePosition sourcePosition) /*-{
-      return { 
-         "ordinal"        : ordinal,
-         "title"          : title,
-         "doc_id"         : docId,
-         "source_position": sourcePosition,
-      };
-   }-*/;
    
-   public final native String getTitle() /*-{
-      return this.title;
-   }-*/;
-
-   public final native int getOrdinal() /*-{
-      return this.ordinal;
+   public final native static DocTabDragParams create(String docId, 
+         int tabWidth) /*-{
+     return {
+        doc_id         : docId,
+        tab_width      : tabWidth,
+        source_position: null
+     };
    }-*/;
    
    public final native String getDocId() /*-{
       return this.doc_id;
    }-*/;
-
+   
+   public final native int getTabWidth() /*-{
+      return this.tab_width;
+   }-*/;
+   
    public final native SourcePosition getSourcePosition() /*-{
       return this.source_position;
+   }-*/;
+   
+   public final native void setSourcePosition(SourcePosition position) /*-{
+      this.source_position = position;
    }-*/;
 }

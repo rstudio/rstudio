@@ -79,6 +79,7 @@ import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.source.DocsMenu;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
+import org.rstudio.studio.client.workbench.views.source.SourceWindow;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -177,4 +178,5 @@ public interface RStudioGinjector extends Ginjector
    Satellite getSatellite();
    SatelliteManager getSatelliteManager();
    SourceWindowManager getSourceWindowManager();
+   SourceWindow getSourceWindow();
 }

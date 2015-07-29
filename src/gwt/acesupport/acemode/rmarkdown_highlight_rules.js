@@ -72,7 +72,7 @@ var RMarkdownHighlightRules = function() {
       YamlHighlightRules,
       "yaml",
       "---",
-      "---"
+      "(?:---|\\.\\.\\.)"
    );
 
 };

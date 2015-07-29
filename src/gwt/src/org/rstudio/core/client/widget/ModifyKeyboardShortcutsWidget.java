@@ -17,9 +17,10 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -32,6 +33,8 @@ import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -40,6 +43,7 @@ import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.ApplicationCommandManager;
@@ -51,7 +55,6 @@ import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.command.UserCommandManager;
 import org.rstudio.core.client.command.UserCommandManager.UserCommand;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -74,12 +77,14 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       public CommandBinding(String id,
                             String displayName,
                             KeySequence keySequence,
-                            int commandType)
+                            int commandType,
+                            boolean isCustom)
       {
          id_ = id;
          name_ = displayName;
          keySequence_ = keySequence;
          commandType_ = commandType;
+         isCustom_ = isCustom;
       }
       
       public String getId()
@@ -94,6 +99,9 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       public KeySequence getKeySequence()
       {
+         if (newKeySequence_ != null)
+            return newKeySequence_;
+         
          return keySequence_;
       }
       
@@ -114,10 +122,33 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          return "<Unknown Command>";
       }
       
+      public boolean isCustomBinding()
+      {
+         return isCustom_;
+      }
+      
+      public void setKeySequence(KeySequence keys)
+      {
+         newKeySequence_ = keys.clone();
+      }
+      
+      public void restoreOriginalKeySequence()
+      {
+         newKeySequence_ = null;
+      }
+      
+      public boolean isModified()
+      {
+         return newKeySequence_ != null;
+      }
+      
       private final String id_;
       private final String name_;
       private final KeySequence keySequence_;
       private final int commandType_;
+      private final boolean isCustom_;
+      
+      private KeySequence newKeySequence_;
       
       public static final int TYPE_USER_COMMAND =     0; // execute user R code
       public static final int TYPE_RSTUDIO_COMMAND =  1; // RStudio AppCommands
@@ -132,6 +163,13 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       buffer_ = new KeySequence();
       
       table_ = new DataGrid<CommandBinding>(1000, RES, KEY_PROVIDER);
+      
+      FlowPanel emptyWidget = new FlowPanel();
+      Label emptyLabel = new Label("No bindings available");
+      emptyLabel.getElement().getStyle().setMarginTop(20, Unit.PX);
+      emptyLabel.getElement().getStyle().setColor("#888");
+      emptyWidget.add(emptyLabel);
+      table_.setEmptyTableWidget(emptyWidget);
       
       table_.setWidth("800px");
       table_.setHeight("400px");
@@ -154,7 +192,25 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       addCancelButton();
       
-      searchWidget_ = new SearchWidget(new SuggestOracle() {
+      radioAll_ = radioButton("All", new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            filter();
+         }
+      });
+      
+      radioCustomized_ = radioButton("Customized", new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            filter();
+         }
+      });
+      
+      filterWidget_ = new SearchWidget(new SuggestOracle() {
 
          @Override
          public void requestSuggestions(Request request, Callback callback)
@@ -166,16 +222,16 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          
       });
       
-      searchWidget_.addValueChangeHandler(new ValueChangeHandler<String>()
+      filterWidget_.addValueChangeHandler(new ValueChangeHandler<String>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
          {
-            filter(event.getValue());
+            filter();
          }
       });
       
-      searchWidget_.setPlaceholderText("Filter...");
+      filterWidget_.setPlaceholderText("Filter...");
       
       addLeftWidget(new ThemedButton("Reset...", new ClickHandler()
       {
@@ -193,10 +249,10 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                      public void execute(final ProgressIndicator indicator)
                      {
                         indicator.onProgress("Resetting Keyboard Shortcuts...");
-                        appCommands_.resetBindings(new Command()
+                        appCommands_.resetBindings(new CommandWithArg<EditorKeyBindings>()
                         {
                            @Override
-                           public void execute()
+                           public void execute(EditorKeyBindings appBindings)
                            {
                               editorCommands_.resetBindings(new Command()
                               {
@@ -349,6 +405,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             updateData(data);
          }
       });
+      
    }
    
    private void sort(List<CommandBinding> data,
@@ -388,14 +445,21 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       });
    }
    
-   private void filter(String query)
+   private void filter()
    {
+      String query = filterWidget_.getValue();
+      boolean customOnly = radioCustomized_.getValue();
+      
       List<CommandBinding> filtered = new ArrayList<CommandBinding>();
       for (int i = 0; i < originalBindings_.size(); i++)
       {
          CommandBinding binding = originalBindings_.get(i);
          String name = binding.getName();
+         
          if (StringUtil.isNullOrEmpty(name))
+            continue;
+         
+         if (customOnly && !binding.isCustomBinding())
             continue;
          
          if (name.toLowerCase().indexOf(query.toLowerCase()) != -1)
@@ -409,14 +473,11 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private void onShortcutCellPreview(CellPreviewEvent<CommandBinding> preview)
    {
       NativeEvent event = preview.getNativeEvent();
-      
       String type = event.getType();
-      if (type.equals("focus"))
-      {
-         setEscapeDisabled(true);
-         buffer_.clear();
-      }
-      else if (type.equals("blur"))
+      
+      setEscapeDisabled(true);
+      
+      if (type.equals("blur"))
       {
          setEscapeDisabled(false);
          buffer_.clear();
@@ -426,15 +487,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          if (KeyboardHelper.isModifierKey(event.getKeyCode()))
             return;
          
-         Element target = event.getEventTarget().cast();
-         Element rowEl = DomUtils.findParentElement(target, new ElementPredicate()
-         {
-            @Override
-            public boolean test(Element el)
-            {
-               return el.getTagName().toLowerCase().equals("tr");
-            }
-         });
+         CommandBinding binding = preview.getValue();
          
          if (event.getKeyCode() == KeyCodes.KEY_BACKSPACE)
          {
@@ -443,51 +496,49 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             event.preventDefault();
             
             buffer_.pop();
-            target.setInnerHTML(buffer_.toString());
-            return;
+            binding.setKeySequence(buffer_);
          }
-         
-         if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
+         else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
          {
-            String keyString = "";
-            KeySequence sequence = preview.getValue().getKeySequence();
-            if (sequence != null)
-               keyString = sequence.toString();
-            
-            String current = target.getInnerHTML();
-            if (current.equals(keyString))
-            {
-               closeDialog();
-               return;
-            }
-            
-            target.setInnerHTML(keyString);
-            rowEl.removeClassName(RES.dataGridStyle().modifiedRow());
-            return;
+            buffer_.clear();
+            binding.restoreOriginalKeySequence();
+         }
+         else
+         {
+            buffer_.add(event);
+            binding.setKeySequence(buffer_);
+
+            // Add the new command binding to later be accepted + registered
+            CommandBinding newBinding = new CommandBinding(
+                  binding.getId(),
+                  binding.getName(),
+                  buffer_.clone(),
+                  binding.getCommandType(),
+                  true);
+
+            changes_.put(binding, newBinding);
          }
          
-         buffer_.add(event);
-         target.setInnerHTML(buffer_.toString());
-         rowEl.addClassName(RES.dataGridStyle().modifiedRow());
+         updateData(dataProvider_.getList());
          
-         // Add the new command binding to later be accepted + registered
-         CommandBinding oldBinding = preview.getValue();
-         CommandBinding newBinding = new CommandBinding(
-               oldBinding.getId(),
-               oldBinding.getName(),
-               buffer_.clone(),
-               oldBinding.getCommandType());
-               
-         changes_.put(oldBinding, newBinding);
-         
-         // TODO: update conflicts
       }
+   }
+   
+   private RadioButton radioButton(String label, ClickHandler handler)
+   {
+      RadioButton button = new RadioButton(RADIO_BUTTON_GROUP, label);
+      button.getElement().getStyle().setMarginRight(6, Unit.PX);
+      button.getElement().getStyle().setFloat(Style.Float.LEFT);
+      button.getElement().getStyle().setMarginTop(-2, Unit.PX);
+      button.addClickHandler(handler);
+      return button;
    }
    
    private void resetState()
    {
-      searchWidget_.clear();
+      filterWidget_.clear();
       changes_.clear();
+      radioAll_.setValue(true);
       collectShortcuts();
    }
    
@@ -500,8 +551,18 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       FlowPanel headerPanel = new FlowPanel();
       
-      searchWidget_.getElement().getStyle().setFloat(Style.Float.LEFT);
-      headerPanel.add(searchWidget_);
+      Label radioLabel = new Label("Show:");
+      radioLabel.getElement().getStyle().setFloat(Style.Float.LEFT);
+      radioLabel.getElement().getStyle().setMarginRight(8, Unit.PX);
+      headerPanel.add(radioLabel);
+      headerPanel.add(radioAll_);
+      radioAll_.setValue(true);
+      headerPanel.add(radioCustomized_);
+      
+      filterWidget_.getElement().getStyle().setFloat(Style.Float.LEFT);
+      filterWidget_.getElement().getStyle().setMarginLeft(10, Unit.PX);
+      filterWidget_.getElement().getStyle().setMarginTop(-1, Unit.PX);
+      headerPanel.add(filterWidget_);
       
       HelpLink link = new HelpLink(
             "Customizing Keyboard Shortcuts",
@@ -525,7 +586,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    private void collectShortcuts()
    {
-      List<CommandBinding> bindings = new ArrayList<CommandBinding>();
+      final List<CommandBinding> bindings = new ArrayList<CommandBinding>();
       
       // User Commands
       Map<KeyboardShortcut, UserCommand> userCommands = userCommands_.getCommands();
@@ -538,7 +599,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                command.getName(),
                StringUtil.prettyCamel(command.getName()),
                shortcut.getKeySequence(),
-               CommandBinding.TYPE_USER_COMMAND));
+               CommandBinding.TYPE_USER_COMMAND,
+               false));
       }
       
       // Ace Commands
@@ -546,45 +608,67 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       for (int i = 0; i < aceCommands.length(); i++)
       {
          AceCommand command = aceCommands.get(i);
-         String id = command.getInternalName();
-         String name = command.getDisplayName();
          JsArrayString shortcuts = command.getBindingsForCurrentPlatform();
          
          if (shortcuts != null)
          {
+            String id = command.getInternalName();
+            String name = command.getDisplayName();
+            boolean custom = command.isCustomBinding();
+         
             for (int j = 0; j < shortcuts.length(); j++)
             {
                String shortcut = shortcuts.get(j);
                KeySequence keys = KeySequence.fromShortcutString(shortcut);
                int type = CommandBinding.TYPE_EDITOR_COMMAND;
-               bindings.add(new CommandBinding(id, name, keys, type));
+               bindings.add(new CommandBinding(id, name, keys, type, custom));
             }
          }
       }
       
       // RStudio Commands
-      Map<String, AppCommand> commands = commands_.getCommands();
-      for (Map.Entry<String, AppCommand> entry : commands.entrySet())
+      appCommands_.loadBindings(new CommandWithArg<EditorKeyBindings>()
       {
-         AppCommand command = entry.getValue();
-         if (isExcludedCommand(command))
-            continue;
-         
-         String id = command.getId();
-         String name = getAppCommandName(command);
-         KeySequence keySequence = command.getKeySequence();
-         int type = CommandBinding.TYPE_RSTUDIO_COMMAND;
-         bindings.add(new CommandBinding(id, name, keySequence, type));
-      }
-      
-      originalBindings_ = bindings;
-      updateData(bindings);
+         @Override
+         public void execute(final EditorKeyBindings customBindings)
+         {
+            Map<String, AppCommand> commands = commands_.getCommands();
+            for (Map.Entry<String, AppCommand> entry : commands.entrySet())
+            {
+               AppCommand command = entry.getValue();
+               if (isExcludedCommand(command))
+                  continue;
+
+               String id = command.getId();
+               String name = getAppCommandName(command);
+               KeySequence keySequence = command.getKeySequence();
+               int type = CommandBinding.TYPE_RSTUDIO_COMMAND;
+               boolean isCustom = customBindings.hasKey(id);
+               bindings.add(new CommandBinding(id, name, keySequence, type, isCustom));
+            }
+
+            originalBindings_ = bindings;
+            updateData(bindings);
+         }
+      });
    }
    
    private void updateData(List<CommandBinding> bindings)
    {
       discoverConflicts(bindings);
       dataProvider_.setList(bindings);
+      
+      // Loop through and update styling on each row.
+      for (int i = 0; i < bindings.size(); i++)
+      {
+         CommandBinding binding = bindings.get(i);
+         if (binding.isCustomBinding() || binding.isModified())
+         {
+            TableRowElement rowEl = table_.getRowElement(i);
+            DomUtils.toggleClass(rowEl, RES.dataGridStyle().customBindingRow(), binding.isCustomBinding());
+            DomUtils.toggleClass(rowEl, RES.dataGridStyle().modifiedRow(), binding.isModified());
+         }
+      }
    }
    
    private void discoverConflicts(List<CommandBinding> bindings)
@@ -628,7 +712,12 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private final DataGrid<CommandBinding> table_;
    private final ListDataProvider<CommandBinding> dataProvider_;
    private final Map<CommandBinding, CommandBinding> changes_;
-   private final SearchWidget searchWidget_;
+   private final SearchWidget filterWidget_;
+   
+   private final RadioButton radioAll_;
+   private final RadioButton radioCustomized_;
+   private static final String RADIO_BUTTON_GROUP =
+         "radioCustomizeKeyboardShortcuts";
    
    private List<CommandBinding> originalBindings_;
    
@@ -653,6 +742,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    public interface Styles extends RStudioDataGridStyle
    {
+      String customBindingRow();
       String modifiedRow();
    }
    

@@ -31,6 +31,7 @@ import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStarted
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedHandler;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -123,6 +124,22 @@ public class SourceWindow implements LastSourceDocClosedHandler,
             }
          });
       }
+   }
+   
+   public void setInitialDoc(String docId, SourcePosition sourcePosition)
+   {
+      initialDocId_ = docId;
+      initialSourcePosition_ = sourcePosition;
+   }
+   
+   public String getInitialDocId()
+   {
+      return initialDocId_;
+   }
+   
+   public SourcePosition getInitialSourcePosition()
+   {
+      return initialSourcePosition_;
    }
    
    // Event handlers ----------------------------------------------------------
@@ -255,4 +272,6 @@ public class SourceWindow implements LastSourceDocClosedHandler,
    private final EventBus events_;
    private final SourceShim sourceShim_;
    private final Satellite satellite_;
+   private String initialDocId_;
+   private SourcePosition initialSourcePosition_;
 }

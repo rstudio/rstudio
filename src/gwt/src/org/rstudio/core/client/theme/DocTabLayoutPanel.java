@@ -41,10 +41,12 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.events.DocTabDragInitiatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
+import org.rstudio.studio.client.workbench.views.source.events.PopoutDocInitiatedEvent;
+import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;
 
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.Scheduler;
@@ -198,6 +200,34 @@ public class DocTabLayoutPanel
          if (onClosed != null)
             onClosed.execute();
       }
+   }
+   
+   public void moveTab(int index, int delta)
+   {
+      // do no work if we haven't been asked to move anywhere
+      if (delta == 0)
+         return;
+
+      Element tabHost = getTabBarElement();
+      
+      // ignore moving left if the tab is already the leftmost tab (same for
+      // right)
+      int dest = index + delta;
+      if (dest < 0 || dest >= tabHost.getChildCount())
+         return;
+      
+      // rearrange the DOM 
+      Element tab = Element.as(tabHost.getChild(index));
+      Element prev = Element.as(tabHost.getChild(dest));
+      tabHost.removeChild(tab);
+      if (delta > 0)
+         tabHost.insertAfter(tab, prev);
+      else
+         tabHost.insertBefore(tab, prev);
+
+      // fire the tab reorder event (this syncs the editor state)
+      TabReorderEvent event = new TabReorderEvent(index, dest);
+      fireEvent(event);
    }
 
    @Override
@@ -464,13 +494,13 @@ public class DocTabLayoutPanel
       @Override
       public void onDocTabDragStarted(DocTabDragStartedEvent event)
       {
-         initDragWidth_ = event.getWidth();
-         initDragDocId_ = event.getDocId();
+         initDragParams_ = event.getDragParams();
+         initDragWidth_ = initDragParams_.getTabWidth();
       }
       
       private void beginDrag(Event evt)
       {
-         String docId = initDragDocId_;
+         String docId = initDragParams_.getDocId();
          int dragTabWidth = initDragWidth_;
          
          // set drag element state
@@ -853,8 +883,9 @@ public class DocTabLayoutPanel
             if (pieces.length < 1)
                return;
             
-            events_.fireEvent(new DocWindowChangedEvent(pieces[0], 
-                        pieces.length > 1 ? pieces[1] : "", destPos_));
+            events_.fireEvent(new DocWindowChangedEvent(pieces[0],
+                  pieces.length > 1 ? pieces[1] : "", 
+                  initDragParams_, destPos_));
          }
          
          // this is the case when our own drag ends; if it ended outside our
@@ -890,8 +921,8 @@ public class DocTabLayoutPanel
                if (targetWindowName == null)
                {
                   // it was dragged over nothing RStudio owns--pop it out
-                  events_.fireEvent(new PopoutDocEvent(
-                        initDragDocId_, new Point(
+                  events_.fireEvent(new PopoutDocInitiatedEvent(
+                        initDragParams_.getDocId(), new Point(
                               evt.getScreenX(), evt.getScreenY())));
                }
             }
@@ -912,11 +943,11 @@ public class DocTabLayoutPanel
       private int dragMax_ = 0;
       private int outOfBounds_ = 0;
       private int initDragWidth_;
+      private DocTabDragParams initDragParams_;
       private Element dragElement_;
       private Element dragTabsHost_;
       private Element dragScrollHost_;
       private Element dragPlaceholder_;
-      private String initDragDocId_;
       private int curState_ = STATE_NONE;
       private Point dropPoint_;
 
@@ -965,7 +996,7 @@ public class DocTabLayoutPanel
                   SourceWindowManager.getSourceWindowId());
                JsObject dt = evt.getDataTransfer().cast();
                dt.setString("effectAllowed", "move");
-               events_.fireEvent(new DocTabDragStartedEvent(docId_, 
+               events_.fireEvent(new DocTabDragInitiatedEvent(docId_, 
                            getElement().getClientWidth()));
             }
          }, DragStartEvent.getType());

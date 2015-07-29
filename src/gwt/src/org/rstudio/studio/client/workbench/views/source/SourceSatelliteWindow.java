@@ -52,10 +52,6 @@ public class SourceSatelliteWindow extends SatelliteWindow
    @Override
    protected void onInitialize(LayoutPanel mainPanel, JavaScriptObject params)
    {
-      
-      // set up the source window
-      pSourceWindow_.get();
-      
       // read the params and set up window ordinal / title
       SourceWindowParams windowParams = params.cast();
       String title = null;
@@ -72,7 +68,18 @@ public class SourceSatelliteWindow extends SatelliteWindow
       title += "RStudio Source Editor";
       Window.setTitle(title);
       
-
+      // set up the source window
+      SourceWindow sourceWindow = pSourceWindow_.get();
+      if (windowParams != null &&
+          windowParams.getDocId() != null &&
+          windowParams.getSourcePosition() != null)
+      {
+         // if this source window is being opened to pop out a particular doc,
+         // read that doc's ID and current position so we can restore it 
+         sourceWindow.setInitialDoc(windowParams.getDocId(), 
+               windowParams.getSourcePosition());
+      }
+      
       SourceSatellitePresenter appPresenter = pPresenter_.get();
       
       // make it fill the containing layout panel

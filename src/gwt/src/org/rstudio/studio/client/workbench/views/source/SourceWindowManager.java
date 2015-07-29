@@ -61,7 +61,10 @@ import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStarted
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedHandler;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams;
 
@@ -77,6 +80,7 @@ import com.google.inject.Singleton;
 @Singleton
 public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             SourceDocAddedEvent.Handler,
+                                            SourceFileSavedHandler,
                                             SatelliteFocusedEvent.Handler,
                                             SatelliteClosedEvent.Handler,
                                             DocTabDragStartedEvent.Handler,
@@ -115,6 +119,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          events_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
          events_.addHandler(AllSatellitesClosingEvent.TYPE, this);
          events_.addHandler(SourceDocAddedEvent.TYPE, this);
+         events_.addHandler(SourceFileSavedEvent.TYPE, this);
          events_.addHandler(SatelliteClosedEvent.TYPE, this);
          events_.addHandler(SatelliteFocusedEvent.TYPE, this);
          events_.addHandler(DocTabClosedEvent.TYPE, this);
@@ -170,7 +175,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             if (!StringUtil.isNullOrEmpty(windowId) &&
                 !isSourceWindowOpen(windowId))
             {
-               openSourceWindow(windowId, null);
+               openSourceWindow(windowId, null, null, null);
             }
          }
       }
@@ -407,7 +412,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                            getSourceWindowId(), null);
                      fireEventToSourceWindow(sourceWindowId, 
                            new DocWindowChangedEvent(
-                                 sourceDocs.get(i).getId(), sourceWindowId, 0),
+                                 sourceDocs.get(i).getId(), sourceWindowId, 
+                                 null, 0),
                            true);
                      return new NavigationResult(
                            NavigationResult.RESULT_RELOCATE, 
@@ -446,7 +452,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                   assignSourceDocWindowId(sourceDocs.get(i).getId(), 
                         getSourceWindowId(), null);
                   events_.fireEventToMainWindow(new DocWindowChangedEvent(
-                              sourceDocs.get(i).getId(), sourceWindowId, 0));
+                              sourceDocs.get(i).getId(), sourceWindowId, null, 
+                              0));
                   return new NavigationResult(NavigationResult.RESULT_RELOCATE,
                         sourceDocs.get(i).getId());
                }
@@ -497,7 +504,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                @Override
                public void execute()
                {
-                  openSourceWindow(windowId, evt.getPosition());
+                  openSourceWindow(windowId, evt.getOriginator().getPosition(),
+                        evt.getDocId(), evt.getSourcePosition());
                }
             });
    }
@@ -509,6 +517,10 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       // document, make it the owner
       if (e.getDoc().getSourceWindowId() != e.getWindowId())
       {
+         // assign on the doc itself
+         e.getDoc().assignSourceWindowId(e.getWindowId());
+         
+         // assign on the server
          assignSourceDocWindowId(e.getDoc().getId(), 
                e.getWindowId(), null);
       }
@@ -521,6 +533,22 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
       
       sourceDocs_.push(e.getDoc());
+   }
+
+   @Override
+   public void onSourceFileSaved(SourceFileSavedEvent event)
+   {
+      // when a user saves a new doc or does file -> save as, we need to update
+      // our internal doc mappings so we can route navigations to the right
+      // window for that path
+      for (int i = 0; i < sourceDocs_.length(); i++)
+      {
+         if (sourceDocs_.get(i).getId() == event.getDocId())
+         {
+            sourceDocs_.get(i).setPath(event.getPath());
+            break;
+         }
+      }
    }
 
    @Override
@@ -673,7 +701,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
    }
 
-   private void openSourceWindow(String windowId, Point position)
+   private void openSourceWindow(String windowId, Point position,
+         String docId, SourcePosition sourcePosition)
    {
       // create default options
       Size size = new Size(800, 800);
@@ -700,8 +729,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             WindowEx window = getSourceWindowObject(mostRecentSourceWindow_);
             if (window != null && !window.isClosed())
             {
-               size = new Size(window.getOuterWidth(), 
-                     window.getOuterHeight());
+               size = new Size(window.getInnerWidth(), 
+                     window.getInnerHeight());
                if (position == null)
                   position = new Point(
                         window.getScreenX() + 50,
@@ -718,8 +747,9 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             SourceSatellite.NAME_PREFIX + windowId, 
             SourceWindowParams.create(
                   ordinal,
-                  pWorkbenchContext_.get().createWindowTitle()), 
-            size, position);
+                  pWorkbenchContext_.get().createWindowTitle(),
+                  docId, sourcePosition), 
+            size, false, position);
       
       setLastFocusedSourceWindowId(windowId);
       mostRecentSourceWindow_ = windowId;
@@ -818,8 +848,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                         sourceWindows_.get(windowId),
                         window.getScreenX(), 
                         window.getScreenY(), 
-                        window.getOuterWidth(), 
-                        window.getOuterHeight());
+                        window.getInnerWidth(), 
+                        window.getInnerHeight());
             
             // compare to the old geometry (if any)
             if (windowGeometry_.hasKey(windowId))

@@ -122,6 +122,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRdDia
 import org.rstudio.studio.client.workbench.views.source.events.*;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
+import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;
 import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
@@ -150,7 +151,9 @@ public class Source implements InsertSourceHandler,
                              BeforeShowHandler,
                              SnippetsChangedEvent.Handler,
                              PopoutDocEvent.Handler,
-                             DocWindowChangedEvent.Handler
+                             DocWindowChangedEvent.Handler,
+                             DocTabDragInitiatedEvent.Handler,
+                             PopoutDocInitiatedEvent.Handler
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -175,6 +178,7 @@ public class Source implements InsertSourceHandler,
       void closeTab(Widget widget, boolean interactive, Command onClosed);
       void closeTab(int index, boolean interactive);
       void closeTab(int index, boolean interactive, Command onClosed);
+      void moveTab(int index, int delta);
       void setDirty(Widget widget, boolean dirty);
       void manageChevronVisibility();
       void showOverflowPopup();
@@ -522,6 +526,8 @@ public class Source implements InsertSourceHandler,
             });
 
       events.addHandler(DocWindowChangedEvent.TYPE, this);
+      events.addHandler(DocTabDragInitiatedEvent.TYPE, this);
+      events.addHandler(PopoutDocInitiatedEvent.TYPE, this);
 
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
       Event.addNativePreviewHandler(new NativePreviewHandler()
@@ -754,7 +760,22 @@ public class Source implements InsertSourceHandler,
              (SourceWindowManager.isMainSourceWindow() && 
               !windowManager_.isSourceWindowOpen(docWindowId)))
          {
-            addTab(doc, true);
+            EditingTarget editor = addTab(doc, true);
+            
+            // if this is a source window, check to see if it was opened to
+            // pop out a particular doc, and restore that doc's position if so
+            if (!SourceWindowManager.isMainSourceWindow())
+            {
+               SourceWindow sourceWindow = 
+                     RStudioGinjector.INSTANCE.getSourceWindow();
+               if (sourceWindow.getInitialDocId() == doc.getId() &&
+                   sourceWindow.getInitialSourcePosition() != null)
+               {
+                  editor.restorePosition(
+                        sourceWindow.getInitialSourcePosition());
+                  editor.ensureCursorVisible();
+               }
+            }
          }
       }
    }
@@ -1473,6 +1494,31 @@ public class Source implements InsertSourceHandler,
       if (view_.getTabCount() > 0)
          setPhysicalTabIndex(view_.getTabCount() - 1);
    }
+   
+   @Handler
+   public void onMoveTabRight()
+   {
+      view_.moveTab(getPhysicalTabIndex(), 1);
+   }
+
+   @Handler
+   public void onMoveTabLeft()
+   {
+      view_.moveTab(getPhysicalTabIndex(), -1);
+   }
+   
+   @Handler
+   public void onMoveTabToFirst()
+   {
+      view_.moveTab(getPhysicalTabIndex(), getPhysicalTabIndex() * -1);
+   }
+
+   @Handler
+   public void onMoveTabToLast()
+   {
+      view_.moveTab(getPhysicalTabIndex(), (view_.getTabCount() - 
+            getPhysicalTabIndex()) - 1);
+   }
 
    @Override
    public void onPopoutDoc(final PopoutDocEvent e)
@@ -1501,7 +1547,15 @@ public class Source implements InsertSourceHandler,
             @Override
             public void onResponseReceived(final SourceDocument doc)
             {
-               addTab(doc, e.getPos());
+               EditingTarget target = addTab(doc, e.getPos());
+               
+               // if we know the source position, restore it
+               if (e.getParams() != null &&
+                   e.getParams().getSourcePosition() != null)
+               {
+                  target.restorePosition(e.getParams().getSourcePosition());
+                  target.ensureCursorVisible();
+               }
             }
 
             @Override
@@ -1535,6 +1589,37 @@ public class Source implements InsertSourceHandler,
          }
       }
       suspendDocumentClose_ = false;
+   }
+
+   @Override
+   public void onDocTabDragInitiated(final DocTabDragInitiatedEvent event)
+   {
+      inEditorForId(event.getDragParams().getDocId(), 
+            new OperationWithInput<EditingTarget>()
+      {
+         @Override
+         public void execute(EditingTarget editor)
+         {
+            DocTabDragParams params = event.getDragParams();
+            params.setSourcePosition(editor.currentPosition());
+            events_.fireEvent(new DocTabDragStartedEvent(params));
+            
+         }
+      });
+   }
+
+   @Override
+   public void onPopoutDocInitiated(final PopoutDocInitiatedEvent event)
+   {
+      inEditorForId(event.getDocId(), new OperationWithInput<EditingTarget>()
+      {
+         @Override
+         public void execute(EditingTarget editor)
+         {
+            events_.fireEvent(new PopoutDocEvent(event, 
+                  editor.currentPosition()));
+         }
+      });
    }
 
    @Handler
@@ -3422,6 +3507,20 @@ public class Source implements InsertSourceHandler,
       {
          String editorPath = editors_.get(i).getPath();
          if (editorPath != null && editorPath.equals(path))
+         {
+            onEditorLocated.execute(editors_.get(i));
+            break;
+         }
+      }
+   }
+
+   private void inEditorForId(String id, 
+         OperationWithInput<EditingTarget> onEditorLocated)
+   {
+      for (int i = 0; i < editors_.size(); i++)
+      {
+         String editorId = editors_.get(i).getId();
+         if (editorId != null && editorId.equals(id))
          {
             onEditorLocated.execute(editors_.get(i));
             break;

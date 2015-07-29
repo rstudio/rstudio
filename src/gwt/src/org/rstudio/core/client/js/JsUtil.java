@@ -164,5 +164,5 @@ public class JsUtil
    public native static JavaScriptObject createEmptyArray(int length) /*-{
       return new Array(length);
    }-*/;
-
+   
 }

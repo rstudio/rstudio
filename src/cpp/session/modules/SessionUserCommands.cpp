@@ -63,11 +63,7 @@ json::Array jsonFromUserCommandResult(SEXP resultSEXP)
    json::Array jsonData;
    
    if (!isUserCommandResult(resultSEXP))
-   {
-      Error error(r::errc::UnexpectedDataTypeError, ERROR_LOCATION);
-      LOG_ERROR(error);
       return jsonData;
-   }
    
    std::size_t n = r::sexp::length(resultSEXP);
    for (std::size_t i = 0; i < n; ++i)
@@ -192,12 +188,22 @@ SEXP rs_registerUserCommand(SEXP nameSEXP, SEXP shortcutsSEXP)
    return R_NilValue;
 }
 
+void onDeferredInit(bool newSession)
+{
+   r::exec::RFunction loadUserCommands(".rs.loadUserCommands");
+   Error error = loadUserCommands.call();
+   if (error)
+      LOG_ERROR(error);
+}
+
 } // anonymous namespace
 
 Error initialize()
 {
    using boost::bind;
    using namespace module_context;
+   
+   events().onDeferredInit.connect(onDeferredInit);
    
    RS_REGISTER_CALL_METHOD(rs_registerUserCommand, 2);
    

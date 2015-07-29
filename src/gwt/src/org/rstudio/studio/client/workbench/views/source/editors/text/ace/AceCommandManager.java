@@ -48,9 +48,24 @@ public class AceCommandManager extends JavaScriptObject
          }
       }
       
-      return filtered;
-      
+      return sorted(filtered);
    }
+   
+   private static final native JsArray<AceCommand> sorted(JsArray<AceCommand> commands) /*-{
+      var clone = commands.slice();
+      clone.sort(function(o1, o2) {
+         var n1 = o1.name;
+         var n2 = o2.name;
+         
+         if (n1 == null)
+            return 1;
+         else if (n2 == null)
+            return -1;
+         
+         return n1 < n2 ? -1 : 1;
+      });
+      return clone;
+   }-*/;
    
    public final native boolean hasCommand(String id) /*-{
       return this.byName[id] != null;
@@ -141,6 +156,7 @@ public class AceCommandManager extends JavaScriptObject
       }
       
       newCommand.bindKey = keys;
+      newCommand.isCustom = true;
       this.addCommand(newCommand);
    }-*/;
    

@@ -812,6 +812,14 @@ public class TextEditingTarget implements
    }
    
    @Override
+   public SourcePosition currentPosition()
+   {
+      Position cursor = docDisplay_.getCursorPosition();
+      return SourcePosition.create(getContext(), cursor.getRow(), 
+            cursor.getColumn(), docDisplay_.getScrollTop());
+   }
+   
+   @Override
    public boolean isAtSourceRow(SourcePosition position)
    {
       return docDisplay_.isAtSourceRow(position);
@@ -2094,7 +2102,8 @@ public class TextEditingTarget implements
                                                            executeOnSuccess));
 
                            events_.fireEvent(
-                                 new SourceFileSavedEvent(saveItem.getPath()));
+                                 new SourceFileSavedEvent(getId(),
+                                       saveItem.getPath()));
                         }
  
                      };
@@ -2760,7 +2769,7 @@ public class TextEditingTarget implements
    void onPopoutDoc()
    {
       if (docUpdateSentinel_ != null)
-         events_.fireEvent(new PopoutDocEvent(getId(), null));
+         events_.fireEvent(new PopoutDocEvent(getId(), currentPosition()));
    }
 
    private void doCommentUncomment(String c)

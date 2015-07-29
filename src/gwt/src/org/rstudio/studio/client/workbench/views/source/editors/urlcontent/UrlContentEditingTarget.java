@@ -245,6 +245,12 @@ public class UrlContentEditingTarget implements EditingTarget
    }
    
    @Override
+   public SourcePosition currentPosition()
+   {
+      return null;
+   }
+   
+   @Override
    public void setCursorPosition(Position position)
    {
    }
