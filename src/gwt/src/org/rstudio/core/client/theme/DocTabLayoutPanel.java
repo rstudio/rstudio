@@ -22,6 +22,7 @@ import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
+import org.rstudio.core.client.dom.ElementEx;
 import org.rstudio.core.client.events.HasTabCloseHandlers;
 import org.rstudio.core.client.events.HasTabClosedHandlers;
 import org.rstudio.core.client.events.HasTabClosingHandlers;
@@ -539,12 +540,17 @@ public class DocTabLayoutPanel
                DocTabDragStateChangedEvent.STATE_DRAGGING));
 
          // the relative position of the last node determines how far we
-         // can drag--add 10px so it stretches a little
+         // can drag
          dragMax_ = DomUtils.leftRelativeTo(dragTabsHost_, 
                getLastChildElement(dragTabsHost_)) + 
-               getLastChildElement(dragTabsHost_).getClientWidth() + 
-               10;
+               getLastChildElement(dragTabsHost_).getClientWidth();
          lastCursorX_= evt.getClientX();
+         
+         // account for cursor starting out of bounds (e.g. dragging into 
+         // empty space on the right of the panel)
+         if (lastCursorX_ > dragMax_ + (initDragParams_.getCursorOffset()))
+            outOfBounds_ = (lastCursorX_ - dragMax_) - 
+               initDragParams_.getCursorOffset();
          
          // attempt to ascertain whether the element being dragged is one of
          // our own documents
@@ -562,16 +568,7 @@ public class DocTabLayoutPanel
          // to the end
          if (candidatePos_ == null)
          {
-            if (dragElement_ == null)
-            {
-               // a brand new tab--add it 
-               candidatePos_ = dragTabsHost_.getChildCount();
-            }
-            else
-            {
-               // an existing tab--swap it with the last tab
-               candidatePos_ = dragTabsHost_.getChildCount() - 1;
-            }
+            candidatePos_ = dragTabsHost_.getChildCount();
          }
          
          destPos_ = candidatePos_;
@@ -737,6 +734,13 @@ public class DocTabLayoutPanel
             {
                continue;
             }
+
+            // skip the current candidate (no point in testing it for swap)
+            if (i == candidatePos_)
+            {
+               continue;
+            }
+
             // skip the element we're dragging and elements that are not tabs
             Element ele = (Element)node;
             if (ele == dragElement_ || 
@@ -744,7 +748,7 @@ public class DocTabLayoutPanel
             {
                continue;
             }
-
+            
             int left = DomUtils.leftRelativeTo(dragTabsHost_, ele);
             int right = left + ele.getClientWidth();
             int minOverlap = Math.min(initDragWidth_ / 2, 
@@ -996,8 +1000,16 @@ public class DocTabLayoutPanel
                   SourceWindowManager.getSourceWindowId());
                JsObject dt = evt.getDataTransfer().cast();
                dt.setString("effectAllowed", "move");
+
+               // figure out where the cursor is inside the element; because the
+               // drag shows an image of the tab, knowing where the cursor is
+               // inside that image is necessary for us to know the screen
+               // location of the dragged image
+               int evtX = evt.getNativeEvent().getClientX();
+               ElementEx ele = getElement().cast();
                events_.fireEvent(new DocTabDragInitiatedEvent(docId_, 
-                           getElement().getClientWidth()));
+                           getElement().getClientWidth(), 
+                           evtX - ele.getBoundingClientRect().getLeft()));
             }
          }, DragStartEvent.getType());
 
