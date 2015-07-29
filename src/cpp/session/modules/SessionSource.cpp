@@ -232,6 +232,7 @@ Error saveDocumentCore(const std::string& contents,
                        const json::Value& jsonType,
                        const json::Value& jsonEncoding,
                        const json::Value& jsonFoldSpec,
+                       const json::Value& jsonChunkOutput,
                        boost::shared_ptr<SourceDocument> pDoc)
 {
    // check whether we have a path and if we do get/resolve its value
@@ -267,6 +268,12 @@ Error saveDocumentCore(const std::string& contents,
    if (hasFoldSpec)
    {
       pDoc->setFolds(jsonFoldSpec.get_str());
+   }
+
+   bool hasChunkOutput = json::isType<json::Array>(jsonChunkOutput);
+   if (hasChunkOutput)
+   {
+      pDoc->setChunkOutput(jsonChunkOutput.get_array());
    }
 
    // handle document (varies depending upon whether we have a path)
@@ -339,13 +346,14 @@ Error saveDocument(const json::JsonRpcRequest& request,
 {
    // params
    std::string id, contents;
-   json::Value jsonPath, jsonType, jsonEncoding, jsonFoldSpec;
+   json::Value jsonPath, jsonType, jsonEncoding, jsonFoldSpec, jsonChunkOutput;
    Error error = json::readParams(request.params, 
                                   &id, 
                                   &jsonPath, 
                                   &jsonType, 
                                   &jsonEncoding,
                                   &jsonFoldSpec,
+                                  &jsonChunkOutput,
                                   &contents);
    if (error)
       return error ;
@@ -357,7 +365,7 @@ Error saveDocument(const json::JsonRpcRequest& request,
       return error ;
    
    error = saveDocumentCore(contents, jsonPath, jsonType, jsonEncoding,
-                            jsonFoldSpec, pDoc);
+                            jsonFoldSpec, jsonChunkOutput, pDoc);
    if (error)
       return error;
    
@@ -378,7 +386,7 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
 
    // unique id and jsonPath (can be null for auto-save)
    std::string id;
-   json::Value jsonPath, jsonType, jsonEncoding, jsonFoldSpec;
+   json::Value jsonPath, jsonType, jsonEncoding, jsonFoldSpec, jsonChunkOutput;
    
    // This is a chunk of text that should be inserted into the
    // current document. It replaces the subrange [offset, offset+length).
@@ -397,6 +405,7 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
                                   &jsonType,
                                   &jsonEncoding,
                                   &jsonFoldSpec,
+                                  &jsonChunkOutput,
                                   &replacement,
                                   &offset,
                                   &length,
@@ -437,7 +446,7 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
       contents.insert(rangeBegin, replacement.begin(), replacement.end());
       
       error = saveDocumentCore(contents, jsonPath, jsonType, jsonEncoding,
-                               jsonFoldSpec, pDoc);
+                               jsonFoldSpec, jsonChunkOutput, pDoc);
       if (error)
          return error;
       

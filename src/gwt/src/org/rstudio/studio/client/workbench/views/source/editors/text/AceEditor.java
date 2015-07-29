@@ -84,6 +84,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spellin
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutput;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
@@ -2561,6 +2562,24 @@ public class AceEditor implements DocDisplay,
    public JsArray<LineWidget> getLineWidgets()
    {
       return widget_.getLineWidgetManager().getLineWidgets();
+   }
+   
+   @Override
+   public JsArray<ChunkOutput> getChunkOutput()
+   {
+      JsArray<ChunkOutput> chunks = JsArray.createArray().cast();
+      JsArray<LineWidget> lineWidgets = getLineWidgets();
+      for (int i = 0; i<lineWidgets.length(); i++)
+      {
+         LineWidget lineWidget = lineWidgets.get(i);
+         if (lineWidget.getType().equals(ChunkOutput.LINE_WIDGET_TYPE))
+         {
+            ChunkOutput chunk = lineWidget.getData();
+            chunks.push(chunk);
+         }
+      }
+      
+      return chunks;
    }
    
    

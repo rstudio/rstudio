@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
 public class ChunkOutput extends JavaScriptObject
 {
@@ -59,4 +60,20 @@ public class ChunkOutput extends JavaScriptObject
              getVisible() == other.getVisible() &&
              getHtmlRef() == other.getHtmlRef();
    }
+   
+   
+   public final static boolean equalTo(JsArray<ChunkOutput> a, 
+                                       JsArray<ChunkOutput> b)
+   {
+      if (a.length() != b.length())
+         return false;
+      
+      for (int i = 0; i<a.length(); i++)
+         if (!a.get(i).equalTo(b.get(i)))
+            return false;
+      
+      return true;
+   }
+   
+   
 }

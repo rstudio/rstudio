@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -40,6 +41,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Fold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutput;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -313,14 +315,18 @@ public class DocUpdateSentinel
 
       final String foldSpec = Fold.encode(Fold.flatten(docDisplay_.getFolds()));
       String oldFoldSpec = sourceDoc_.getFoldSpec();
-
+      
+      final JsArray<ChunkOutput> chunkOutput = docDisplay_.getChunkOutput();
+      JsArray<ChunkOutput> oldChunkOutput = sourceDoc_.getChunkOutput();
+      
       //String patch = DiffMatchPatch.diff(oldContents, newContents);
       SubstringDiff diff = new SubstringDiff(oldContents, newContents);
 
       // Don't auto-save when there are no changes. In addition to being
       // wasteful, it causes the server to think the document is dirty.
       if (path == null && fileType == null && diff.isEmpty()
-          && foldSpec.equals(oldFoldSpec))
+          && foldSpec.equals(oldFoldSpec) 
+          && ChunkOutput.equalTo(chunkOutput, oldChunkOutput))
       {
          changesPending_ = false;
          return false;
@@ -345,6 +351,7 @@ public class DocUpdateSentinel
             fileType,
             encoding,
             foldSpec,
+            chunkOutput,
             diff.getReplacement(),
             diff.getOffset(),
             diff.getLength(),
@@ -404,6 +411,7 @@ public class DocUpdateSentinel
                            fileType,
                            encoding,
                            foldSpec,
+                           chunkOutput,
                            newContents,
                            this);
                   }

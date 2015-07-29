@@ -57,6 +57,7 @@ public:
    int relativeOrder() const { return relativeOrder_; } 
    const core::json::Object& properties() const { return properties_; }
    const std::string& folds() const { return folds_; }
+   const core::json::Array& chunkOutput() const { return chunkOutput_; }
    const std::string& collabServer() const { return collabServer_; }
    std::string getProperty(const std::string& name) const;
 
@@ -92,6 +93,11 @@ public:
    void setFolds(const std::string& folds)
    {
       folds_ = folds;
+   }
+
+   void setChunkOutput(const core::json::Array& chunkOutput)
+   {
+      chunkOutput_ = chunkOutput;
    }
 
    void setRelativeOrder(int order) 
@@ -156,6 +162,7 @@ private:
    std::string collabServer_;
    std::string sourceWindow_;
    core::json::Object properties_;
+   core::json::Array chunkOutput_;
    
 public:
    

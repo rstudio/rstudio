@@ -15,8 +15,11 @@
 package org.rstudio.studio.client.workbench.views.source.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutput;
 
 public class SourceDocument extends JavaScriptObject
 {
@@ -122,6 +125,14 @@ public class SourceDocument extends JavaScriptObject
 
    public native final void setFoldSpec(String foldSpec) /*-{
       this.folds = foldSpec;
+   }-*/;
+   
+   public native final JsArray<ChunkOutput> getChunkOutput() /*-{
+      return this.chunk_output || [];
+   }-*/;
+   
+   public native final void setChunkOutput(JsArray<ChunkOutput> chunkOutput) /*-{
+      this.chunk_output = chunkOutput;
    }-*/;
    
    public final String getSourceWindowId() 

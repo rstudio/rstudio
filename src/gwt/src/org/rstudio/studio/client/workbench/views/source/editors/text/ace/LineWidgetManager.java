@@ -34,6 +34,14 @@ public class LineWidgetManager extends JavaScriptObject
    }-*/;
    
    public native final JsArray<LineWidget> getLineWidgets() /*-{
-      return this.session.lineWidgets || [];
+      var lineWidgetsByRow = this.session.lineWidgets;
+      if (!lineWidgetsByRow) 
+         return [];
+      var lineWidgets = [];  
+      lineWidgetsByRow.forEach(function(w, i) {
+         if (w) 
+            lineWidgets.push(w);
+      });
+      return lineWidgets;
    }-*/;
 }
