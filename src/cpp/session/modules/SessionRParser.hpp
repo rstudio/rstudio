@@ -369,7 +369,7 @@ public:
    {
       addLintItem(token,
                   LintTypeStyle,
-                  "expected whitespace around binary operator");
+                  "expected whitespace around '" + token.contentAsUtf8() + "' token");
    }
 
    void tooManyErrors(const Position& position)

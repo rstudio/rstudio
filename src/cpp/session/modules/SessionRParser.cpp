@@ -2306,8 +2306,9 @@ ARGUMENT_START:
       // arguments, with any of [`'"].
       if (cursor.isLookingAtNamedArgumentInFunctionCall())
       {
-         MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
-         MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+         checkBinaryOperatorWhitespace(cursor, status);
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       }
       
       goto START;
