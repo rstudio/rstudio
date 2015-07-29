@@ -1666,6 +1666,10 @@ bool skipFormulas(RTokenCursor& origin, ParseStatus& status)
 
       if (cursor.contentEquals(L"~"))
          foundTilde = true;
+      
+      while (cursor.fwdToMatchingToken())
+         if (!cursor.moveToNextSignificantToken())
+            break;
 
       if (!isBinaryOp(cursor))
          break;
@@ -1884,7 +1888,9 @@ START:
       checkIncorrectComparison(cursor, status);
       
       // We want to skip over formulas if necessary.
-      skipFormulas(cursor, status);
+      if (skipFormulas(cursor, status))
+         if (cursor.isAtEndOfDocument())
+            return;
       
       DEBUG("Start: " << cursor);
       // Move over unary operators -- any sequence is valid,
