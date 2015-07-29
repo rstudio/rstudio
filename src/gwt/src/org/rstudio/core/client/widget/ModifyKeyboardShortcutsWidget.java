@@ -50,10 +50,7 @@ import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
 import org.rstudio.core.client.command.KeyboardHelper;
-import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
-import org.rstudio.core.client.command.UserCommandManager;
-import org.rstudio.core.client.command.UserCommandManager.UserCommand;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
@@ -112,9 +109,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       public String getDisplayType()
       {
-         if (commandType_ == TYPE_USER_COMMAND)
-            return "User-Defined Command";
-         else if (commandType_ == TYPE_RSTUDIO_COMMAND)
+         if (commandType_ == TYPE_RSTUDIO_COMMAND)
             return "RStudio Command";
          else if (commandType_ == TYPE_EDITOR_COMMAND)
             return "Editor Command";
@@ -150,7 +145,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       private KeySequence newKeySequence_;
       
-      public static final int TYPE_USER_COMMAND =     0; // execute user R code
       public static final int TYPE_RSTUDIO_COMMAND =  1; // RStudio AppCommands
       public static final int TYPE_EDITOR_COMMAND =   2; // e.g. Ace commands
    }
@@ -298,20 +292,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                   newBinding.getId(),
                   newBinding.getKeySequence());
          }
-         else if (commandType == CommandBinding.TYPE_USER_COMMAND)
-         {
-            Map<KeyboardShortcut, UserCommand> userCommands = userCommands_.getCommands();
-            UserCommand command = userCommands.get(
-                  new KeyboardShortcut(oldBinding.getKeySequence()));
-            assert command != null :
-               "Failed to find user command bound to '" + oldBinding.getKeySequence().toString() + "'";
-            
-            KeyboardShortcut oldShortcut = new KeyboardShortcut(oldBinding.getKeySequence());
-            userCommands.remove(oldShortcut);
-            
-            KeyboardShortcut newShortcut = new KeyboardShortcut(newBinding.getKeySequence());
-            userCommands.put(newShortcut, command);
-         }
       }
       
       appCommands_.addBindingsAndSave(appBindings);
@@ -321,13 +301,11 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    }
    
    @Inject
-   public void initialize(UserCommandManager userCommands,
-                          EditorCommandManager editorCommands,
+   public void initialize(EditorCommandManager editorCommands,
                           ApplicationCommandManager appCommands,
                           Commands commands,
                           GlobalDisplay globalDisplay)
    {
-      userCommands_ = userCommands;
       editorCommands_ = editorCommands;
       appCommands_ = appCommands;
       commands_ = commands;
@@ -588,21 +566,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    {
       final List<CommandBinding> bindings = new ArrayList<CommandBinding>();
       
-      // User Commands
-      Map<KeyboardShortcut, UserCommand> userCommands = userCommands_.getCommands();
-      for (Map.Entry<KeyboardShortcut, UserCommand> entry : userCommands.entrySet())
-      {
-         KeyboardShortcut shortcut = entry.getKey();
-         UserCommand command = entry.getValue();
-         
-         bindings.add(new CommandBinding(
-               command.getName(),
-               StringUtil.prettyCamel(command.getName()),
-               shortcut.getKeySequence(),
-               CommandBinding.TYPE_USER_COMMAND,
-               false));
-      }
-      
       // Ace Commands
       JsArray<AceCommand> aceCommands = editorCommands_.getCommands();
       for (int i = 0; i < aceCommands.length(); i++)
@@ -727,7 +690,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private TextColumn<CommandBinding> typeColumn_;
    
    // Injected ----
-   private UserCommandManager userCommands_;
    private EditorCommandManager editorCommands_;
    private ApplicationCommandManager appCommands_;
    private Commands commands_;
