@@ -378,7 +378,13 @@ public class DocUpdateSentinel
                      {
                         if (!thisChangeTracker.hasChanged())
                            changeTracker_.reset();
-
+                        
+                        // update the foldSpec and chunkOutput so we 
+                        // can use them for change detection the next
+                        // time around
+                        sourceDoc_.setFoldSpec(foldSpec);
+                        sourceDoc_.setChunkOutput(chunkOutput);
+                        
                         onSuccessfulUpdate(newContents,
                                            newHash,
                                            path,
