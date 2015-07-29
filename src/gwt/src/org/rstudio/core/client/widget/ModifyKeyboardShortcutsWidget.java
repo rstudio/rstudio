@@ -17,6 +17,7 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -24,6 +25,8 @@ import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
@@ -276,7 +279,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       // Loop through all changes and apply based on type
       for (Map.Entry<CommandBinding, CommandBinding> entry : changes_.entrySet())
       {
-         CommandBinding oldBinding = entry.getKey();
          CommandBinding newBinding = entry.getValue();
          
          int commandType = newBinding.getCommandType();
@@ -384,6 +386,24 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       });
       
+      // Fix a bug where clicking on a table header would also
+      // select the cell at position [0, 0]. It seems that GWT's
+      // DataGrid over-aggressively selects the first cell on the
+      // _first_ mouse down event seen; after the first click,
+      // cell selection occurs only after full mouse clicks.
+      table_.addDomHandler(new MouseDownHandler()
+      {
+         @Override
+         public void onMouseDown(MouseDownEvent event)
+         {
+            Element target = event.getNativeEvent().getEventTarget().cast();
+            if (target.hasAttribute("__gwt_header"))
+            {
+               event.stopPropagation();
+               event.preventDefault();
+            }
+         }
+      }, MouseDownEvent.getType());
    }
    
    private void sort(List<CommandBinding> data,
