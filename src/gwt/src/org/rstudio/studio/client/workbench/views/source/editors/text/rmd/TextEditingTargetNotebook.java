@@ -64,12 +64,7 @@ public class TextEditingTargetNotebook
          }
       });
    }
-   
-
-   
-   // TODO: on removal of the chunk we need to remove the line widget
-   
-   
+     
    public void executeChunk(Scope chunk, String code)
    {
       int row = chunk.getEnd().getRow();
