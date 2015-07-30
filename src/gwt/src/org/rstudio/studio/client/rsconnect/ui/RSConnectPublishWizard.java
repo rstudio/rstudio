@@ -44,9 +44,10 @@ public class RSConnectPublishWizard
                false);
       }
       else if (input.getContentType() == RSConnect.CONTENT_TYPE_DOCUMENT &&
-               input.getSourceRmd().getExtension().toLowerCase().equals(".md"))
+               (input.getSourceRmd().getExtension().toLowerCase().equals(".md") ||
+                input.getSourceRmd().getExtension().toLowerCase().equals(".html")))
       {
-         // pure Markdown -- always publish as static
+         // static input => static output
          return new PublishStaticDestPage("Publish", "Publish", null, input, 
                false);
       }
