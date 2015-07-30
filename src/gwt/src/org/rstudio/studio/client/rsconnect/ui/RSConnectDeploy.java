@@ -274,7 +274,6 @@ public class RSConnectDeploy extends Composite
                   onDeployEnabled_.execute();
                else if (!existing)
                   appName_.validateAppName();
-                  
             }
          }
       });
@@ -545,14 +544,21 @@ public class RSConnectDeploy extends Composite
 
                      // find an app with the same account, server, and name;
                      // when found, populate the UI with app details
+                     boolean found = false;
                      for (int i = 0; i < infos.length(); i++)
                      {
                         RSConnectApplicationInfo info = infos.get(i);
                         if (info.getName() == fromPrevious_.getName())
                         {
                            showAppInfo(info);
+                           found = true;
                            break;
                         }
+                     }
+
+                     if (!found)
+                     {
+                        handleRemovedApp();
                      }
                   }
                   @Override
@@ -913,6 +919,20 @@ public class RSConnectDeploy extends Composite
             });
    }
    
+   private void handleRemovedApp()
+   {
+      // set the UI state to creating a new app with the same name as the one
+      // that was removed
+      appName_.setVisible(true);
+      if (fromPrevious_ != null)
+         appName_.setText(fromPrevious_.getName());
+      appInfoPanel_.setVisible(false);
+      newAppPanel_.setVisible(true);
+
+      // pretend we're creating a brand-new app
+      fromPrevious_ = null;
+   }
+   
    
    @UiField Anchor addAccountAnchor_;
    @UiField Anchor urlAnchor_;
@@ -950,8 +970,8 @@ public class RSConnectDeploy extends Composite
    private boolean asStatic_;
    private int contentType_;
    private Command onDeployEnabled_;
+   private RSConnectDeploymentRecord fromPrevious_;
 
    private final DeployStyle style_;
    private final boolean forDocument_;
-   private final RSConnectDeploymentRecord fromPrevious_;
 }
