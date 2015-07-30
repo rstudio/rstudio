@@ -355,9 +355,10 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="versionControlProjectSetup"/>
          </menu>
          <separator/>
-         <cmd refid="modifyKeyboardShortcuts"/>
-         <separator/>
          <cmd refid="showShellDialog"/>
+         <separator/>
+         <cmd refid="helpKeyboardShortcuts"/>
+         <cmd refid="modifyKeyboardShortcuts"/>
          <separator/>
          <cmd refid="projectOptions"/>
          <separator/>
@@ -384,8 +385,6 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="openRMarkdownReferenceGuide"/>
             <cmd refid="openShinyCheatSheet"/>
          </menu>
-         <separator/>
-         <cmd refid="helpKeyboardShortcuts"/>
          <separator/>
          <cmd refid="rstudioAgreement"/>
          <separator/>
@@ -1860,7 +1859,7 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
 
    <cmd id="helpKeyboardShortcuts"
-        menuLabel="_Keyboard Shortcuts"
+        menuLabel="_Keyboard Shortcuts Help"
         category="help"/>
 
    <cmd id="helpBack"
