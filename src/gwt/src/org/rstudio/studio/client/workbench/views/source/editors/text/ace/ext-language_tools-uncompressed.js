@@ -982,11 +982,9 @@ var showCompletionPopupDelayed = function(editor) {
             return;
         
         var line = editor.getSession().getLine(row);
-        console.log(line);
         for (var i = 0; i < $characterThreshold; i++)
         {
             var idx = column - i - 1;
-            console.log(line[idx]);
             if (line[idx] == null || " \t\n\r\v".indexOf(line[idx]) !== -1)
                 return;
         }
