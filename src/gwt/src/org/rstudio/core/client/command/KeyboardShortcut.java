@@ -166,7 +166,7 @@ public class KeyboardShortcut
             int modifiers = KeyboardShortcut.NONE;
             if (sc.indexOf("ctrl") != -1)
                modifiers |= KeyboardShortcut.CTRL;
-            if (sc.indexOf("alt") != -1)
+            if (sc.indexOf("alt") != -1 || sc.indexOf("option") != -1)
                modifiers |= KeyboardShortcut.ALT;
             if (sc.indexOf("shift") != -1)
                modifiers |= KeyboardShortcut.SHIFT;

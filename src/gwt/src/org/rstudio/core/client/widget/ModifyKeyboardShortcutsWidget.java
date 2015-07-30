@@ -140,6 +140,18 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          return newKeySequence_ != null;
       }
       
+      @Override
+      public boolean equals(Object object)
+      {
+         if (object == null || !(object instanceof CommandBinding))
+            return false;
+         
+         CommandBinding other = (CommandBinding) object;
+         return
+               commandType_ == other.commandType_ &&
+               id_.equals(other.id_);
+      }
+      
       private final String id_;
       private final String name_;
       private final KeySequence keySequence_;
@@ -638,7 +650,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    private void updateData(List<CommandBinding> bindings)
    {
-      discoverConflicts(bindings);
       dataProvider_.setList(bindings);
       
       // Loop through and update styling on each row.
@@ -652,11 +663,71 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             DomUtils.toggleClass(rowEl, RES.dataGridStyle().modifiedRow(), binding.isModified());
          }
       }
+      
+      // Identify conflicts / masking in the set of bindings and report
+      // them. Note that this is an O(n^2) run through of commands but
+      // given that the list shouldn't be excessively large it's probably
+      // something we could live with.
+      for (int i = 0; i < bindings.size(); i++)
+      {
+         for (int j = 0; j < originalBindings_.size(); j++)
+         {
+            CommandBinding cb1 = bindings.get(i);
+            CommandBinding cb2 = originalBindings_.get(j);
+            
+            if (cb1.equals(cb2))
+               continue;
+            
+            int t1 = cb1.getCommandType();
+            int t2 = cb2.getCommandType();
+            
+            KeySequence ks1 = cb1.getKeySequence();
+            KeySequence ks2 = cb2.getKeySequence();
+            
+            if (ks1 == null || ks2 == null)
+               continue;
+            
+            boolean hasConflict =
+                  ks1.equals(ks2) ||
+                  ks1.startsWith(ks2) ||
+                  ks2.startsWith(ks1);
+            
+            if (hasConflict)
+            {
+               if (t1 == CommandBinding.TYPE_EDITOR_COMMAND && t1 != t2)
+                  addMaskedCommandStyles(i, cb2);
+               else if (t1 == t2)
+                  addConflictCommandStyles(i, cb2);
+            }
+         }
+      }
    }
    
-   private void discoverConflicts(List<CommandBinding> bindings)
+   private String describeCommand(CommandBinding command)
    {
-      // TODO
+      StringBuilder builder = new StringBuilder();
+      builder.append("'").append(command.getName()).append("'");
+      if (command.getKeySequence() != null)
+         builder.append(" (").append(command.getKeySequence().toString()).append(")");
+      return builder.toString();
+   }
+   
+   private void addMaskedCommandStyles(int index, CommandBinding maskedBy)
+   {
+      Element shortcutCell =
+            table_.getRowElement(index).getChild(1).cast();
+      shortcutCell.addClassName(RES.dataGridStyle().maskedEditorCommandCell());
+      shortcutCell.setTitle(
+            "Masked by RStudio command: " + describeCommand(maskedBy));
+   }
+   
+   private void addConflictCommandStyles(int index, CommandBinding conflictsWith)
+   {
+      Element shortcutCell =
+            table_.getRowElement(index).getChild(1).cast();
+      shortcutCell.addClassName(RES.dataGridStyle().conflictRow());
+      shortcutCell.setTitle(
+            "Conflicts with command: " + describeCommand(conflictsWith));
    }
    
    private String getAppCommandName(AppCommand command)
@@ -726,6 +797,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    {
       String customBindingRow();
       String modifiedRow();
+      String maskedEditorCommandCell();
+      String conflictRow();
    }
    
    private static final Resources RES = GWT.create(Resources.class);
