@@ -182,7 +182,7 @@ public class RSConnect implements SessionInitHandler,
          switch (event.getContentType())
          {
          case CONTENT_TYPE_APP:
-            publishAsCode(event);
+            publishAsCode(event, true);
             break;
          case CONTENT_TYPE_PRES:
          case CONTENT_TYPE_PLOT:
@@ -208,10 +208,11 @@ public class RSConnect implements SessionInitHandler,
                               new RSConnectPublishSource(event.getPath(), 
                                     event.getHtmlFile(), 
                                     arg.isSelfContained(), 
+                                    arg.isShiny(),
                                     arg.getDescription(),
                                     event.getContentType()));
                      else
-                        publishAsCode(event);
+                        publishAsCode(event, arg.isShiny());
                   }
                });
             }
@@ -282,7 +283,7 @@ public class RSConnect implements SessionInitHandler,
             else
             {
                // single Shiny doc
-               publishAsCode(event);
+               publishAsCode(event, true);
             }
          }
          else
@@ -298,7 +299,7 @@ public class RSConnect implements SessionInitHandler,
                else
                {
                   // we don't have output, always publish the code
-                  publishAsCode(event);
+                  publishAsCode(event, false);
                }
             }
             else if (input.isSelfContained() && input.hasDocOutput())
@@ -317,11 +318,11 @@ public class RSConnect implements SessionInitHandler,
       }
       else if (input.getContentType() == CONTENT_TYPE_APP)
       {
-         publishAsCode(event);
+         publishAsCode(event, true);
       }
    }
    
-   private void publishAsCode(RSConnectActionEvent event)
+   private void publishAsCode(RSConnectActionEvent event, boolean isShiny)
    {
       RSConnectPublishSource source = null;
       if (event.getContentType() == CONTENT_TYPE_APP)
@@ -339,7 +340,7 @@ public class RSConnect implements SessionInitHandler,
       else
       {
          source = new RSConnectPublishSource(event.getPath(), 
-            false, null, event.getContentType());
+            false, isShiny, null, event.getContentType());
       }
          
       publishAsFiles(event, source);
@@ -353,6 +354,7 @@ public class RSConnect implements SessionInitHandler,
          source = new RSConnectPublishSource(
                      input.getOriginatingEvent().getFromPreview(),
                      input.isSelfContained(),
+                     input.isShiny(),
                      input.getDescription());
       }
       else
@@ -360,6 +362,7 @@ public class RSConnect implements SessionInitHandler,
          source = new RSConnectPublishSource(
                input.getOriginatingEvent().getHtmlFile(),
                input.isSelfContained(), 
+               input.isShiny(),
                input.getDescription(),
                input.getContentType());
       }
@@ -567,14 +570,15 @@ public class RSConnect implements SessionInitHandler,
          JsArrayString additionalFiles,
          JsArrayString ignoredFiles,
          boolean isSelfContained,
+         boolean isShiny,
          boolean asMultiple,
          boolean asStatic,
          boolean launch, 
          JavaScriptObject record) /*-{
       $wnd.opener.deployToRSConnect(sourceFile, deployDir, deployFile, 
                                     description, deployFiles, additionalFiles, 
-                                    ignoredFiles, isSelfContained, asMultiple, 
-                                    asStatic, launch, record);
+                                    ignoredFiles, isSelfContained, isShiny,
+                                    asMultiple, asStatic, launch, record);
    }-*/;
    
    public static String contentTypeDesc(int contentType)
@@ -614,6 +618,7 @@ public class RSConnect implements SessionInitHandler,
                JsArrayUtil.toJsArrayString(
                      result.getSettings().getIgnoredFiles()),
                result.getSource().isSelfContained(),
+               result.getSource().isShiny(),
                result.getSettings().getAsMultiple(),
                result.getSettings().getAsStatic(),
                launchBrowser, 
@@ -839,7 +844,7 @@ public class RSConnect implements SessionInitHandler,
       var thiz = this;     
       $wnd.deployToRSConnect = $entry(
          function(sourceFile, deployDir, deployFile, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, asMultiple, asStatic, launch, record) {
-            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;ZZZZLcom/google/gwt/core/client/JavaScriptObject;)(sourceFile, deployDir, deployFile, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, asMultiple, asStatic, launch, record);
+            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;ZZZZZLcom/google/gwt/core/client/JavaScriptObject;)(sourceFile, deployDir, deployFile, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, isShiny, asMultiple, asStatic, launch, record);
          }
       ); 
    }-*/;
@@ -852,6 +857,7 @@ public class RSConnect implements SessionInitHandler,
                                   JsArrayString additionalFiles, 
                                   JsArrayString ignoredFiles, 
                                   boolean isSelfContained,
+                                  boolean isShiny,
                                   boolean asMultiple, 
                                   boolean asStatic,
                                   boolean launch, 
@@ -874,7 +880,7 @@ public class RSConnect implements SessionInitHandler,
       RSConnectDeploymentRecord record = jsoRecord.cast();
       events_.fireEvent(new RSConnectDeployInitiatedEvent(
             new RSConnectPublishSource(sourceFile, deployDir, deployFile,
-                  isSelfContained, description),
+                  isSelfContained, isShiny, description),
             new RSConnectPublishSettings(deployFilesList, 
                   additionalFilesList, ignoredFilesList, asMultiple, asStatic), 
             launch, record));

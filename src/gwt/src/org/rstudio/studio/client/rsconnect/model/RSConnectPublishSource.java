@@ -28,22 +28,24 @@ public class RSConnectPublishSource
       description_ = null;
       deployDir_ = sourceDir;
       contentCategory_ = null;
+      isShiny_ = true;
    }
 
    public RSConnectPublishSource(String sourceFile, boolean isSelfContained, 
-         String description, int type)
+         boolean isShiny, String description, int type)
    {
-      this(sourceFile, sourceFile, isSelfContained, description,
+      this(sourceFile, sourceFile, isSelfContained, isShiny, description,
             type);
    }
    
    public RSConnectPublishSource(String sourceFile, String outputFile, 
-         boolean isSelfContained, String description, int type)
+         boolean isSelfContained, boolean isShiny, String description, int type)
    {
       deployFile_ = outputFile;
       sourceFile_ = sourceFile;
       description_ = description;
       isSelfContained_ = isSelfContained;
+      isShiny_ = isShiny;
 
       // consider plots and raw HTML published from the viewer pane to be 
       // plots 
@@ -55,24 +57,27 @@ public class RSConnectPublishSource
    }
    
    public RSConnectPublishSource(RenderedDocPreview preview, 
-         boolean isSelfContained, String description)
+         boolean isSelfContained, boolean isShiny, String description)
    {
       deployFile_ = preview.getOutputFile();
       sourceFile_ = preview.getSourceFile();
       description_ = description;
       isSelfContained_ = isSelfContained;
+      isShiny_ = isShiny;
       contentCategory_ = null;
       deployDir_ = FileSystemItem.createFile(preview.getOutputFile())
             .getParentPathString();
    }
    
    public RSConnectPublishSource(String sourceFile, String deployDir, 
-         String deployFile, boolean isSelfContained, String description)
+         String deployFile, boolean isSelfContained, boolean isShiny, 
+         String description)
    {
       sourceFile_ = sourceFile;
       deployDir_ = deployDir;
       deployFile_ = deployFile;
       isSelfContained_ = isSelfContained;
+      isShiny_ = isShiny;
       description_ = description;
       contentCategory_ = null;
    }
@@ -123,6 +128,11 @@ public class RSConnectPublishSource
       return isSelfContained_;
    }
    
+   public boolean isShiny()
+   {
+      return isShiny_;
+   }
+   
    public String getContentCategory()
    {
       return contentCategory_;
@@ -134,4 +144,5 @@ public class RSConnectPublishSource
    private final String description_;
    private final String contentCategory_;
    private final boolean isSelfContained_;
+   private final boolean isShiny_;
 }

@@ -186,6 +186,11 @@ public class RSConnectAccountList extends Composite
       showCloudAccounts_ = show;
    }
    
+   public boolean getShowCloudAccounts()
+   {
+      return showCloudAccounts_;
+   }
+   
    private final WidgetListBox<AccountEntry> accountList_;
    private final RSConnectServerOperations server_; 
    private final GlobalDisplay display_;

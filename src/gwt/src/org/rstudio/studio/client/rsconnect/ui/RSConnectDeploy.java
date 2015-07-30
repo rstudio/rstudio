@@ -368,10 +368,10 @@ public class RSConnectDeploy extends Composite
       contentType_ = contentType;
       asMultipleRmd_ = asMultipleRmd;
       
-      // not all destination accounts support static content
-      if (asStatic_ != asStatic)
+      // we want to show cloud accounts only for non-static content
+      if (source.isShiny() != accountList_.getShowCloudAccounts())
       {
-         accountList_.setShowCloudAccounts(!asStatic);
+         accountList_.setShowCloudAccounts(source.isShiny());
          accountList_.refreshAccountList();
       }
       
