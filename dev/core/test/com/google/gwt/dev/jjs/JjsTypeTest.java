@@ -260,8 +260,8 @@ public class JjsTypeTest extends TestCase {
     assertCastableDestinationTypes(intfCloneable, intfCloneable, classObject);
     assertCastableDestinationTypes(intfIBase, intfIBase, classObject);
     assertCastableDestinationTypes(intfI, intfI, intfIBase, classObject);
-    assertCastableDestinationTypes(intfJ, intfJ, classJso, classObject);
-    assertCastableDestinationTypes(intfK, intfK, classJso, classObject);
+    assertCastableDestinationTypes(intfJ, intfJ, classObject);
+    assertCastableDestinationTypes(intfK, intfK, classObject);
     assertCastableDestinationTypes(classBase, classBase, classObject);
     assertCastableDestinationTypes(classA, classA, classObject, classBase);
     assertCastableDestinationTypes(classB, classB, classObject, classBase, intfIBase, intfI);
@@ -574,8 +574,8 @@ public class JjsTypeTest extends TestCase {
     // assertShouldSucceedTrivially(thatType, thisType));
     assertShouldNotFailTrivially(thisType, thatType);
     assertShouldNotFailTrivially(thatType, thisType);
-    assertTrue(typeOracle.canCrossCastLikeJso(thisType));
-    assertTrue(typeOracle.canCrossCastLikeJso(thatType));
+    assertTrue(typeOracle.canBeJavaScriptObject(thisType));
+    assertTrue(typeOracle.canBeJavaScriptObject(thatType));
   }
 
   private void assertShouldNotFailTrivially(JReferenceType thisType, JReferenceType thatType) {

@@ -26,9 +26,18 @@ import com.google.gwt.dev.jjs.ast.JType;
  * These are used in Cast checking and array implementation.
  */
 public  enum TypeCategory {
-    TYPE_JAVA_OBJECT, TYPE_JAVA_OBJECT_OR_JSO, TYPE_JSO, TYPE_JAVA_LANG_OBJECT,
-    TYPE_JAVA_LANG_STRING, TYPE_JS_INTERFACE, TYPE_PRIMITIVE_LONG, TYPE_PRIMITIVE_NUMBER,
-    TYPE_PRIMITIVE_BOOLEAN, TYPE_JS_FUNCTION;
+  /* Make sure this list is kept in sync with the one in Array.java */
+
+  TYPE_JAVA_OBJECT,
+  TYPE_JAVA_OBJECT_OR_JSO,
+  TYPE_JSO,
+  TYPE_JAVA_LANG_OBJECT,
+  TYPE_JAVA_LANG_STRING,
+  TYPE_JS_PROTOTYPE,
+  TYPE_JS_FUNCTION,
+  TYPE_PRIMITIVE_LONG,
+  TYPE_PRIMITIVE_NUMBER,
+  TYPE_PRIMITIVE_BOOLEAN;
 
   /**
    * Determines the type category for a specific type.
@@ -50,14 +59,13 @@ public  enum TypeCategory {
       return TypeCategory.TYPE_JAVA_LANG_OBJECT;
     } else if (type == program.getTypeJavaLangString()) {
       return TypeCategory.TYPE_JAVA_LANG_STRING;
-    } else if (program.typeOracle.willCrossCastLikeJso(type)) {
+    } else if (program.typeOracle.isEffectivelyJavaScriptObject(type)) {
       return TypeCategory.TYPE_JSO;
-    } else if (program.typeOracle.isDualJsoInterface(type) ||
-        program.typeOracle.isOrExtendsJsType(type, false) &&
-        !program.typeOracle.isOrExtendsJsType(type, true)) {
+    } else if (program.typeOracle.isDualJsoInterface(type)
+        || program.typeOracle.isJsTypeInterfaceWithoutPrototype(type)) {
       return TypeCategory.TYPE_JAVA_OBJECT_OR_JSO;
-    } else if (program.typeOracle.isOrExtendsJsType(type, true)) {
-      return TypeCategory.TYPE_JS_INTERFACE;
+    } else if (program.typeOracle.isJsTypeInterfaceWithPrototype(type)) {
+      return TypeCategory.TYPE_JS_PROTOTYPE;
     } else if (type.isJsFunction()) {
       return TypeCategory.TYPE_JS_FUNCTION;
     }

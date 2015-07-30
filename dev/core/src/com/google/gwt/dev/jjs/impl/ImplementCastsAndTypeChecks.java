@@ -23,6 +23,7 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
+import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
@@ -96,8 +97,8 @@ public class ImplementCastsAndTypeChecks {
           // just remove the cast
           ctx.replaceMe(curExpr);
           return;
-        } else if (program.typeOracle.willCrossCastLikeJso(argType)
-            && program.typeOracle.willCrossCastLikeJso(refType)) {
+        } else if (program.typeOracle.isEffectivelyJavaScriptObject(argType)
+            && program.typeOracle.isEffectivelyJavaScriptObject(refType)) {
           // leave the cast instance for Pruner/CFA, remove in GenJSAST
           return;
         }
@@ -200,8 +201,8 @@ public class ImplementCastsAndTypeChecks {
 
       boolean isTrivialCast = program.typeOracle.castSucceedsTrivially(argType, toType)
           // don't depend on type-tightener having run
-          || (program.typeOracle.willCrossCastLikeJso(argType)
-              && program.typeOracle.willCrossCastLikeJso(toType));
+          || (program.typeOracle.isEffectivelyJavaScriptObject(argType)
+              && program.typeOracle.isEffectivelyJavaScriptObject(toType));
       if (pruneTrivialCasts && isTrivialCast) {
         // trivially true if non-null; replace with a null test
         JBinaryOperation eq =
@@ -225,7 +226,7 @@ public class ImplementCastsAndTypeChecks {
 
     assert EnumSet.of(TypeCategory.TYPE_JSO, TypeCategory.TYPE_JAVA_OBJECT_OR_JSO,
         TypeCategory.TYPE_JAVA_LANG_OBJECT, TypeCategory.TYPE_JAVA_LANG_STRING,
-        TypeCategory.TYPE_JAVA_OBJECT, TypeCategory.TYPE_JS_INTERFACE,
+        TypeCategory.TYPE_JAVA_OBJECT, TypeCategory.TYPE_JS_PROTOTYPE,
         TypeCategory.TYPE_JS_FUNCTION).contains(typeCategory);
 
     return typeCategory;
@@ -240,6 +241,7 @@ public class ImplementCastsAndTypeChecks {
 
     TypeCategory targetTypeCategory = determineTypeCategoryForType(targetType);
     JMethod method = targetMethodByTypeCategory.get(targetTypeCategory);
+    assert method != null;
     JMethodCall call;
     if (overrideReturnType) {
       // Create a method call overriding the return type so that operations like Cast.dynamicCast
@@ -256,9 +258,9 @@ public class ImplementCastsAndTypeChecks {
     }
     if (method.getParams().size() == 3) {
 
-     assert targetTypeCategory == TypeCategory.TYPE_JS_INTERFACE;
+     assert targetTypeCategory == TypeCategory.TYPE_JS_PROTOTYPE;
      call.addArg(program.getStringLiteral(sourceInfo,
-         program.typeOracle.getNearestJsType(targetType, true).getJsPrototype()));
+         ((JInterfaceType) targetType).getJsPrototype()));
     }
     return call;
   }
@@ -300,7 +302,7 @@ public class ImplementCastsAndTypeChecks {
     this.instanceOfMethodsByTargetTypeCategory.put(
         TypeCategory.TYPE_JAVA_LANG_STRING, program.getIndexedMethod("Cast.isJavaString"));
     this.instanceOfMethodsByTargetTypeCategory.put(
-        TypeCategory.TYPE_JS_INTERFACE, program.getIndexedMethod("Cast.instanceOfJsType"));
+        TypeCategory.TYPE_JS_PROTOTYPE, program.getIndexedMethod("Cast.instanceOfJsPrototype"));
     this.instanceOfMethodsByTargetTypeCategory.put(
         TypeCategory.TYPE_JS_FUNCTION, program.getIndexedMethod("Cast.instanceOfJsFunction"));
 
@@ -316,7 +318,7 @@ public class ImplementCastsAndTypeChecks {
     this.dynamicCastMethodsByTargetTypeCategory.put(
         TypeCategory.TYPE_JAVA_LANG_STRING, program.getIndexedMethod("Cast.dynamicCastToString"));
     this.dynamicCastMethodsByTargetTypeCategory.put(
-        TypeCategory.TYPE_JS_INTERFACE, program.getIndexedMethod("Cast.dynamicCastWithPrototype"));
+        TypeCategory.TYPE_JS_PROTOTYPE, program.getIndexedMethod("Cast.dynamicCastWithPrototype"));
     this.dynamicCastMethodsByTargetTypeCategory.put(
         TypeCategory.TYPE_JS_FUNCTION, program.getIndexedMethod("Cast.dynamicCastToJsFunction"));
   }

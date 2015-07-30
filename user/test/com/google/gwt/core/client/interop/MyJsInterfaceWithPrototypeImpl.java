@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Google Inc.
+ * Copyright 2015 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,36 +15,24 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsProperty;
-import com.google.gwt.core.client.js.JsType;
-import com.google.gwt.core.client.js.impl.PrototypeOfJsType;
+/**
+ * Implements MyJsInterface.
+ */
+public class MyJsInterfaceWithPrototypeImpl implements MyJsInterfaceWithPrototype {
+  private int x;
 
-@JsType(prototype = "MyJsInterface")
-interface MyJsInterface {
+  @Override
+  public int getX() {
+    return x;
+  }
 
-  @JsProperty
-  int getX();
+  @Override
+  public void setX(int x) {
+    this.x = x;
+  }
 
-  @JsProperty
-  void setX(int a);
-
-  int sum(int bias);
-
-  @PrototypeOfJsType
-  static class Prototype implements MyJsInterface {
-
-    @Override
-    public int getX() {
-      return 0;
-    }
-
-    @Override
-    public void setX(int a) {
-    }
-
-    @Override
-    public int sum(int bias) {
-      return 0;
-    }
+  @Override
+  public int sum(int bias) {
+    return bias;
   }
 }

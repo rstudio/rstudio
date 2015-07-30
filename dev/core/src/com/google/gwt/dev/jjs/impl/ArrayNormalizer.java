@@ -106,7 +106,7 @@ public class ArrayNormalizer {
         elementType = JReferenceType.NULL_TYPE;
       }
 
-      if (program.typeOracle.willCrossCastLikeJso(elementType)) {
+      if (program.typeOracle.isEffectivelyJavaScriptObject(elementType)) {
         /*
          * treat types that are effectively JSO's as JSO's, for the purpose of
          * castability checking

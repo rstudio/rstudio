@@ -28,16 +28,17 @@ import javaemul.internal.annotations.HasNoSideEffects;
  * This class should contain only static methods or fields.
  */
 public final class Array {
-  // Array element type classes
+  // Array element type classes. Needs to be in sync with enums in TypeCategory.java.
   private static final int TYPE_JAVA_OBJECT = 0;
   private static final int TYPE_JAVA_OBJECT_OR_JSO = 1;
   private static final int TYPE_JSO = 2;
   private static final int TYPE_JAVA_LANG_OBJECT = 3;
   private static final int TYPE_JAVA_LANG_STRING = 4;
-  private static final int TYPE_JS_INTERFACE = 5;
-  private static final int TYPE_PRIMITIVE_LONG = 6;
-  private static final int TYPE_PRIMITIVE_NUMBER = 7;
-  private static final int TYPE_PRIMITIVE_BOOLEAN = 8;
+  private static final int TYPE_JS_PROTOTYPE = 5;
+  private static final int TYPE_JS_FUNCTION = 6;
+  private static final int TYPE_PRIMITIVE_LONG = 7;
+  private static final int TYPE_PRIMITIVE_NUMBER = 8;
+  private static final int TYPE_PRIMITIVE_BOOLEAN = 9;
 
   /**
    * Creates a copy of a subrange of the specified array.

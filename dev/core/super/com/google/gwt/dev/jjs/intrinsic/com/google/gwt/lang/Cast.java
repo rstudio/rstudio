@@ -106,7 +106,7 @@ final class Cast {
     return (src != null) && canCast(src, dstId);
   }
 
-  static boolean instanceOfJsType(Object src, JavaScriptObject dstId, String jsType) {
+  static boolean instanceOfJsPrototype(Object src, JavaScriptObject dstId, String jsType) {
     return instanceOf(src, dstId) || jsInstanceOf(src, jsType);
   }
 
