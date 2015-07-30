@@ -295,9 +295,9 @@ public class RSConnectDeploy extends Composite
       accountList_.selectAccount(account);
    }
    
-   public void setAccountList(JsArray<RSConnectAccount> accounts)
+   public int setAccountList(JsArray<RSConnectAccount> accounts)
    {
-      accountList_.setAccountList(accounts);
+      return accountList_.setAccountList(accounts);
    }
    
    public void addFileToList(String path)
@@ -582,11 +582,16 @@ public class RSConnectDeploy extends Composite
          @Override
          public void onResponseReceived(JsArray<RSConnectAccount> accounts)
          {
+            // populate the accounts in the UI (the account display widget 
+            // filters based on account criteria)
+            int numAccounts = setAccountList(accounts);
+
             // if this is our first try, ask the user to connect an account
             // since none are currently connected
-            if (accounts.length() == 0 && !isRetry)
+            if (numAccounts == 0 && !isRetry)
             {
-               connector_.showAccountWizard(true, !asStatic_,
+               connector_.showAccountWizard(accounts.length() == 0, 
+                     source_.isShiny(),
                      new OperationWithInput<Boolean>() 
                {
                   @Override
@@ -598,7 +603,6 @@ public class RSConnectDeploy extends Composite
             }
             else
             {
-               setAccountList(accounts);
                setPreviousInfo();
             }
          }

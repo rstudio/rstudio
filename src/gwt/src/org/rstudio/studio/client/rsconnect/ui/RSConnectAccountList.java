@@ -107,7 +107,7 @@ public class RSConnectAccountList extends Composite
       });
    }
    
-   public void setAccountList(JsArray<RSConnectAccount> accounts)
+   public int setAccountList(JsArray<RSConnectAccount> accounts)
    {
       accounts_.clear();
       accountList_.clearItems();
@@ -123,6 +123,7 @@ public class RSConnectAccountList extends Composite
       {
          onRefreshCompleted_.execute();
       }
+      return accounts_.size();
    }
    
    public RSConnectAccount getSelectedAccount()
