@@ -3653,10 +3653,15 @@ public class TextEditingTarget implements
             {
                codeExecution_.setLastExecuted(range.getStart(), range.getEnd());
                String code = scopeHelper_.getSweaveChunkText(chunk);
-               if (prefs_.showRmdChunkOutputInline().getValue())
+               if (fileType_.isRmd() && 
+                   prefs_.showRmdChunkOutputInline().getValue())
+               {
                   notebook_.executeChunk(chunk, code);
+               }
                else
+               {
                   events_.fireEvent(new SendToConsoleEvent(code, true));
+               }
                docDisplay_.collapseSelection(true);   
             }
          }
