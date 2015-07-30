@@ -479,6 +479,10 @@ public class TextEditingTarget implements
                if (docDisplay_.isPopupVisible())
                   return;
                
+               // Don't send an interrupt if we're in a source window
+               if (!SourceWindowManager.isMainSourceWindow())
+                  return;
+               
                if (commands_.interruptR().isEnabled())
                   commands_.interruptR().execute();
             }
