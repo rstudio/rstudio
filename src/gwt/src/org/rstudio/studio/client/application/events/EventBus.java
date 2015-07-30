@@ -16,6 +16,7 @@ package org.rstudio.studio.client.application.events;
 
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JavaScriptSerializer;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.satellite.Satellite;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -63,6 +64,14 @@ public class EventBus extends HandlerManager
          if (crossWindow.forward())
          {
             JavaScriptObject jso = serializer_.serialize(event);
+
+            // raise the main window if requested
+            if (crossWindow.focusMode() == CrossWindowEvent.MODE_FOCUS)
+               pSatellite_.get().focusMainWindow();
+            else if (crossWindow.focusMode() == CrossWindowEvent.MODE_AUXILIARY &&
+                     Desktop.isDesktop())
+               Desktop.getFrame().bringMainFrameBehindActive();
+
             fireEventToMainWindow(jso, pSatellite_.get().getSatelliteName());
          }
          else

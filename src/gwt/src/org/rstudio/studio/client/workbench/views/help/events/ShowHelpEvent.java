@@ -40,6 +40,12 @@ public class ShowHelpEvent extends CrossWindowEvent<ShowHelpHandler>
    }
    
    @Override
+   public int focusMode()
+   {
+      return CrossWindowEvent.MODE_AUXILIARY;
+   }
+   
+   @Override
    protected void dispatch(ShowHelpHandler handler)
    {
       handler.onShowHelp(this);

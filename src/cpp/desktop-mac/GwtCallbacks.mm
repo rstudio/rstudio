@@ -762,6 +762,14 @@ private:
    [[[MainFrameController instance] window] makeKeyAndOrderFront: self];
 }
 
+- (void) bringMainFrameBehindActive
+{
+   NSWindow* keyWindow = [NSApp keyWindow];
+   NSWindow* mainWindow =  [[MainFrameController instance] window];
+   [mainWindow orderWindow: NSWindowBelow
+                relativeTo: [keyWindow windowNumber]];
+}
+
 - (void) cleanClipboard: (Boolean) stripHtml
 {
    // Remove all but plain-text and (optionally) HTML data from the pasteboard.

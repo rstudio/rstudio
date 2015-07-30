@@ -55,8 +55,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
-import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
-import org.rstudio.studio.client.workbench.views.help.events.ShowHelpHandler;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
@@ -87,8 +85,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             DocWindowChangedEvent.Handler,
                                             DocTabClosedEvent.Handler,
                                             AllSatellitesClosingEvent.Handler,
-                                            ShinyApplicationStatusEvent.Handler,
-                                            ShowHelpHandler
+                                            ShinyApplicationStatusEvent.Handler
 {
    @Inject
    public SourceWindowManager(
@@ -123,7 +120,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          events_.addHandler(SatelliteClosedEvent.TYPE, this);
          events_.addHandler(SatelliteFocusedEvent.TYPE, this);
          events_.addHandler(DocTabClosedEvent.TYPE, this);
-         events_.addHandler(ShowHelpEvent.TYPE, this);
 
          JsArray<SourceDocument> docs = 
                session.getSessionInfo().getSourceDocuments();
@@ -644,19 +640,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       fireEventToAllSourceWindows(event);
    }
 
-
-   @Override
-   public void onShowHelp(ShowHelpEvent event)
-   {
-      // when help requests come in from satellites, focus the main frame 
-      if (!event.isFromMainWindow())
-      {
-         if (Desktop.isDesktop())
-            Desktop.getFrame().bringMainFrameToFront();
-         else
-            WindowEx.get().focus();
-      }
-   }
    // Private methods ---------------------------------------------------------
    
    public void fireEventToSourceWindow(String windowId, 
@@ -994,7 +977,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    {
       return Desktop.isDesktop() || BrowseCap.INSTANCE.isInternetExplorer();
    }
-   
    
    private void focusSourceWindow(String windowId)
    {

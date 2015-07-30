@@ -90,6 +90,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
 
    void showAboutDialog();
    void bringMainFrameToFront();
+   void bringMainFrameBehindActive();
 
    String getRVersion();
    String chooseRVersion();

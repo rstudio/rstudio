@@ -35,6 +35,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 
@@ -140,13 +141,23 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       // if this window is a satellite but the command only wants to be handled
       // in the a different window, execute the command there instead
       Satellite satellite = RStudioGinjector.INSTANCE.getSatellite();
-      if (getWindowMode() != "any" &&
+      if (getWindowMode() != WINDOW_MODE_ANY &&
           Satellite.isCurrentWindowSatellite() && 
           satellite.getSatelliteName() != getWindowMode()) 
       {
-         // raise the main window if it's not a background command
-         if (!getWindowMode().equals(WINDOW_MODE_BACKGROUND))
+         if (getWindowMode().equals(WINDOW_MODE_MAIN))
+         {
+            // raise the main window if it's not a background command
             satellite.focusMainWindow();
+         }
+         else if (getWindowMode().equals(WINDOW_MODE_BACKGROUND) &&
+                  Desktop.isDesktop())
+         {
+            // for background commands, we still want the main window to be
+            // as visible as possible, so bring it up behind the current window
+            // (this is of course only possible in desktop mode)
+            Desktop.getFrame().bringMainFrameBehindActive();
+         }
          
          // satellites don't fire commands peer-to-peer--route it to the main
          // window for processing
@@ -612,4 +623,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
  
    private static boolean enableNoHandlerAssertions_ = true;
    private static final String WINDOW_MODE_BACKGROUND = "background";
+   private static final String WINDOW_MODE_MAIN = "main";
+   private static final String WINDOW_MODE_ANY = "any";
 }

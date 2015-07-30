@@ -39,6 +39,12 @@ public abstract class CrossWindowEvent<T extends EventHandler>
       return true;
    }
    
+   // The focus behavior for the event
+   public int focusMode()
+   {
+      return MODE_BACKGROUND;
+   }
+   
    public boolean isFromMainWindow()
    {
       return StringUtil.isNullOrEmpty(originWindowName_);
@@ -55,4 +61,14 @@ public abstract class CrossWindowEvent<T extends EventHandler>
    }
    
    private String originWindowName_;
+   
+   // this event is processed in the background; don't raise the window
+   public static final int MODE_BACKGROUND = 0;
+   
+   // this event does auxiliary processing; make the window visible if possible
+   // but don't give it focus (affects desktop only)
+   public static final int MODE_AUXILIARY = 1;
+   
+   // this event makes the window interactive; give it focus
+   public static final int MODE_FOCUS = 2;
 }
