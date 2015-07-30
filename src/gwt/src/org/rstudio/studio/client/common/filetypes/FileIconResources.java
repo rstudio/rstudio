@@ -73,6 +73,7 @@ public interface FileIconResources extends ClientBundle
    ImageResource iconJulia();
    ImageResource iconLisp();
    ImageResource iconLua();
+   ImageResource iconMakefile();
    ImageResource iconMatlab();
    ImageResource iconPerl();
    ImageResource iconRuby();
