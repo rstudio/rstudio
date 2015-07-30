@@ -20,7 +20,6 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopHooks;
-import org.rstudio.studio.client.application.MacZoomHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.FilePathUtils;
@@ -54,7 +53,6 @@ public class SourceWindow implements LastSourceDocClosedHandler,
          Provider<DesktopHooks> pDesktopHooks,
          Satellite satellite,
          EventBus events,
-         MacZoomHandler zoomHandler,
          SourceShim shim)
    {
       sourceShim_ = shim;

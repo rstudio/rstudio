@@ -24,6 +24,7 @@
 #include "Utils.hpp"
 
 #import "MainFrameController.h"
+#import "SatelliteController.h"
 
 #define kMinimalSuffix @"_minimal"
 
@@ -875,19 +876,20 @@ private:
 
 - (void) macZoomDelta: (int) delta
 {
-   WebViewController* controller = [WebViewController activeDesktopController];
-   if ([controller isMemberOfClass: [MainFrameController class]])
+   NSWindowController* controller = [[NSApp keyWindow] windowController];
+   if ([controller isMemberOfClass: [SatelliteController class]])
    {
-      // if this is the main frame, save its zoom level and sync
-      int newZoomLevel = delta == 0 ?
-                                  0 : desktop::options().zoomLevel() + delta;
-      desktop::options().setZoomLevel(newZoomLevel);
-      [controller syncZoomLevel];
+      // a satellite, zoom it independently
+      SatelliteController* satellite = (SatelliteController*)controller;
+      [satellite adjustZoomLevel: delta];
    }
    else
    {
-      // not the main frame, zoom it independently
-      [controller adjustZoomLevel: delta];
+      // not a satellite, apply to the main frame
+      int newZoomLevel = delta == 0 ?
+                                  0 : desktop::options().zoomLevel() + delta;
+      desktop::options().setZoomLevel(newZoomLevel);
+      [[MainFrameController instance] syncZoomLevel];
    }
 }
 

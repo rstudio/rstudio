@@ -17,6 +17,7 @@ package org.rstudio.studio.client.common.satellite;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.MacZoomHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.events.SatelliteFocusedEvent;
 import org.rstudio.studio.client.server.remote.ClientEventDispatcher;
@@ -48,6 +49,7 @@ public class Satellite implements HasCloseHandlers<Satellite>
    public Satellite(Session session,
                     EventBus eventBus,
                     Commands commands,
+                    MacZoomHandler macZoomHandler,
                     Provider<UIPrefs> pUIPrefs)
    {
       session_ = session;

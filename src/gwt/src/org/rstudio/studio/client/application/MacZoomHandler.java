@@ -20,7 +20,9 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
+@Singleton
 public class MacZoomHandler
 {
    public interface Binder extends CommandBinder<Commands, MacZoomHandler> {}
