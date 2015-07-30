@@ -45,6 +45,7 @@
 * Parse TeX magic comments that start with "%%" (ESS compatibility).
 * Change default Rpres template to specify autosize: true
 * Automatically create ~/.ssh directory if necessary on Windows
+* Added `Makefile` mode (used for `Makefile`, `Makevars`)
 
 
 ### Server
@@ -64,6 +65,7 @@
 
 * Diagnostics: Avoid linting symbols in R formulas
 * Diagnostics: Resolve functions in correct namespace 
+* Diagnostics: Fix invalid diagnostics within formulas
 * Enable outdenting in Rhtml documents
 * Find all now respects active search/replace options
 * Fix issue with cursor disappearing in Rmd chunks for ambiance theme
