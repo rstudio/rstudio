@@ -114,13 +114,13 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
       @Override
       public void buildRowImpl(String rowValue, int absRowIndex) {
         builtRows.add(absRowIndex);
-        TableRowBuilder tr = startRow();
+        TableRowBuilder tr = startRow(rowValue);
         tr.endTR(); // End the tr.
         tr.end(); // Accidentally end the table section.
 
         // Try to start another row.
         try {
-          startRow();
+          startRow(rowValue);
           fail("Expected IllegalStateException: tbody is already ended");
         } catch (IllegalStateException e) {
           // Expected.
@@ -149,7 +149,7 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
         // Add child rows to row five.
         if (absRowIndex == 5) {
           for (int i = 0; i < 4; i++) {
-            TableRowBuilder tr = startRow();
+            TableRowBuilder tr = startRow(rowValue);
             tr.startTD().colSpan(2).text("child " + i).endTD();
             tr.endTR();
           }
@@ -677,7 +677,7 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
 
         // Add some children.
         for (int i = 0; i < 4; i++) {
-          TableRowBuilder tr = startRow();
+          TableRowBuilder tr = startRow(rowValue);
           tr.startTD().colSpan(2).text("child " + absRowIndex + ":" + i).endTD();
           tr.endTR();
         }

@@ -167,7 +167,8 @@ public abstract class AbstractCellTableBuilder<T> implements CellTableBuilder<T>
   }
   
   /**
-   * Return if an element contains a cell. This may be faster to execute than {@link getColumn}.
+   * Return if an element contains a cell. This may be faster to execute than
+   * {@link #getColumn(Element)}.
    *
    * @param elem the element of interest
    */
@@ -239,6 +240,16 @@ public abstract class AbstractCellTableBuilder<T> implements CellTableBuilder<T>
    * Start a row and return the {@link TableRowBuilder} for this row.
    */
   public final TableRowBuilder startRow() {
+    return startRow(null);
+  }
+
+  /**
+   * Start a row and return the {@link TableRowBuilder} for this row. The row can be initialized
+   * according to its corresponding value.
+   *
+   * @param rowValue the value for the row corresponding to the element. Can be null.
+   */
+  public final TableRowBuilder startRow(T rowValue) {
     // End any dangling rows.
     while (tbody.getDepth() > 1) {
       tbody.end();
@@ -254,7 +265,7 @@ public abstract class AbstractCellTableBuilder<T> implements CellTableBuilder<T>
     TableRowBuilder row = tbody.startTR();
     row.attribute(ROW_ATTRIBUTE, rowIndex);
     row.attribute(SUBROW_ATTRIBUTE, subrowIndex);
-    addRowAttributes(row);
+    addRowAttributes(row, rowValue);
     subrowIndex++;
     return row;
   }
@@ -264,8 +275,21 @@ public abstract class AbstractCellTableBuilder<T> implements CellTableBuilder<T>
    * The default does nothing.
    *
    * @param row the row element
+   *
+   * @see #addRowAttributes(TableRowBuilder, Object)
    */
   protected void addRowAttributes(TableRowBuilder row) {
+  }
+
+  /**
+   * Hook for subclasses to add their own attributes to each row in the table.
+   * The default does nothing.
+   *
+   * @param row the row element
+   * @param rowValue the value for the row corresponding to the element. Can be null.
+   */
+  protected void addRowAttributes(TableRowBuilder row, T rowValue) {
+    addRowAttributes(row);
   }
 
   /**

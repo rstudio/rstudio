@@ -81,7 +81,7 @@ public class DefaultCellTableBuilder<T> extends AbstractCellTableBuilder<T> {
     }
 
     // Build the row.
-    TableRowBuilder tr = startRow();
+    TableRowBuilder tr = startRow(rowValue);
     tr.className(trClasses.toString());
 
     // Build the columns.
