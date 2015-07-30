@@ -55,7 +55,8 @@ public class Console
       {
          public void onSendToConsole(SendToConsoleEvent event)
          {
-            view.bringToFront();
+            if (event.shouldRaise())
+               view.bringToFront();
          }
       });
 

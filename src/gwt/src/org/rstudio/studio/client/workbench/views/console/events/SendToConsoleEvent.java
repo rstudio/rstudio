@@ -36,16 +36,26 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleHandler>
    
    public SendToConsoleEvent(String code, boolean execute, boolean focus)
    {
-      this(code, execute, focus, false);
+      this(code, execute, true, focus, false);
    }
    
    public SendToConsoleEvent(String code, 
                              boolean execute, 
+                             boolean raise,
+                             boolean focus)
+   {
+      this(code, execute, raise, focus, false);
+   }
+   
+   public SendToConsoleEvent(String code, 
+                             boolean execute, 
+                             boolean raise,
                              boolean focus,
                              boolean animate)
    {
       code_ = code;
       execute_ = execute;
+      raise_ = raise;
       focus_ = focus;
       animate_ = animate;
    }
@@ -58,6 +68,11 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleHandler>
    public boolean shouldExecute()
    {
       return execute_;
+   }
+   
+   public boolean shouldRaise()
+   {
+      return raise_;
    }
    
    public boolean shouldFocus()
@@ -85,5 +100,6 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleHandler>
    private String code_;
    private boolean execute_;
    private boolean focus_;
+   private boolean raise_;
    private boolean animate_;
 }

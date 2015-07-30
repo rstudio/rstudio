@@ -103,7 +103,7 @@ public class TextEditingTargetNotebook
       }
       
       // still execute in console
-      events_.fireEvent(new SendToConsoleEvent(code, true));
+      events_.fireEvent(new SendToConsoleEvent(code, true, false, false));
    }
    
    private DivElement elementForChunkOutput(ChunkOutput chunkOutput)
