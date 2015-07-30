@@ -33,6 +33,10 @@
 	min-height: 18px !important;
 }
 
+.dataGridWidget td > div {
+	float: left;
+}
+
 .dataGridCell {
 	border-bottom: 1px solid #ddd !important;
 }
@@ -41,10 +45,20 @@
 	outline: 0;
 }
 
-.maskedEditorCommandCell {
+.maskedEditorCommandCell div {
 	text-decoration: line-through;
 }
 
 .conflictRow {
 	background-color: #FED;
+}
+
+.icon {
+	float: right;
+	margin-right: 10px;
+}
+
+.icon:hover {
+	border-radius: 20px;
+	box-shadow: 0 0 4px #8BF;
 }

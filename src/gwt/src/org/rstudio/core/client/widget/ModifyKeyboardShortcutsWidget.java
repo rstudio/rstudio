@@ -29,6 +29,7 @@ import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
@@ -36,6 +37,7 @@ import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.SuggestOracle;
@@ -57,10 +59,12 @@ import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
 
 import java.util.ArrayList;
@@ -716,18 +720,62 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    {
       Element shortcutCell =
             table_.getRowElement(index).getChild(1).cast();
-      shortcutCell.addClassName(RES.dataGridStyle().maskedEditorCommandCell());
-      shortcutCell.setTitle(
+      
+      embedIcon(
+            shortcutCell,
+            ThemeResources.INSTANCE.syntaxInfo(),
             "Masked by RStudio command: " + describeCommand(maskedBy));
+      
+      shortcutCell.addClassName(RES.dataGridStyle().maskedEditorCommandCell());
    }
    
    private void addConflictCommandStyles(int index, CommandBinding conflictsWith)
    {
       Element shortcutCell =
             table_.getRowElement(index).getChild(1).cast();
-      shortcutCell.addClassName(RES.dataGridStyle().conflictRow());
-      shortcutCell.setTitle(
+      
+      embedIcon(
+            shortcutCell,
+            ThemeResources.INSTANCE.syntaxWarning(),
             "Conflicts with command: " + describeCommand(conflictsWith));
+      
+      shortcutCell.addClassName(RES.dataGridStyle().conflictRow());
+   }
+   
+   private void embedIcon(Element el, ImageResource res, String toolTipText)
+   {
+      Image icon = new Image(res);
+      icon.addStyleName(RES.dataGridStyle().icon());
+      icon.setTitle(toolTipText);
+      bindNativeClickToShowToolTip(icon.getElement(), toolTipText);
+      el.appendChild(icon.getElement());
+   }
+   
+   private static native final void bindNativeClickToShowToolTip(Element icon, String text)
+   /*-{
+      icon.addEventListener("click", $entry(function(evt) {
+         
+         // Prevent click from reaching shortcut cell
+         evt.stopPropagation();
+         evt.preventDefault();
+         
+         @org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget::showToolTip(Ljava/lang/Object;Ljava/lang/String;)(icon, text);
+      }));
+   }-*/;
+   
+   private static void showToolTip(Object object, String text)
+   {
+      assert object instanceof Element;
+      Element el = (Element) object;
+      
+      MiniPopupPanel tooltip = new MiniPopupPanel(true);
+      tooltip.add(new Label(text));
+      tooltip.show();
+      PopupPositioner.setPopupPosition(
+            tooltip,
+            el.getAbsoluteRight(),
+            el.getAbsoluteBottom(),
+            10);
    }
    
    private String getAppCommandName(AppCommand command)
@@ -799,6 +847,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       String modifiedRow();
       String maskedEditorCommandCell();
       String conflictRow();
+      String icon();
    }
    
    private static final Resources RES = GWT.create(Resources.class);
