@@ -93,6 +93,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppComp
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.SetupChunkOptionsPopupPanel;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
 import org.rstudio.studio.client.workbench.views.environment.ClearAllDialog;
 
@@ -149,6 +150,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(EditorCommandManager manager);
    void injectMembers(ApplicationCommandManager manager);
    void injectMembers(FileBacked<?> object);
+   void injectMembers(TextEditingTargetNotebook notebook);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

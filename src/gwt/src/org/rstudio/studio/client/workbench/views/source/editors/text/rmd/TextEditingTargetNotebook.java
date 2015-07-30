@@ -16,6 +16,9 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
@@ -27,6 +30,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.inject.Inject;
 
 public class TextEditingTargetNotebook
 {
@@ -37,6 +41,7 @@ public class TextEditingTargetNotebook
       docDisplay_ = docDisplay;
       docUpdateSentinel_ = docUpdateSentinel;  
       initialChunkOutputs_ = document.getChunkOutput();
+      RStudioGinjector.INSTANCE.injectMembers(this);
       
       // single shot rendering of chunk output line widgets
       // (we wait until after the first render to ensure that
@@ -64,6 +69,12 @@ public class TextEditingTargetNotebook
          }
       });
    }
+   
+   @Inject
+   public void initialize(EventBus events)
+   {
+      events_ = events;
+   }
      
    public void executeChunk(Scope chunk, String code)
    {
@@ -90,6 +101,9 @@ public class TextEditingTargetNotebook
          widget.setFixedWidth(true);
          docDisplay_.addLineWidget(widget);
       }
+      
+      // still execute in console
+      events_.fireEvent(new SendToConsoleEvent(code, true));
    }
    
    private DivElement elementForChunkOutput(ChunkOutput chunkOutput)
@@ -113,4 +127,6 @@ public class TextEditingTargetNotebook
    private final DocDisplay docDisplay_;
    @SuppressWarnings("unused")
    private final DocUpdateSentinel docUpdateSentinel_;
+   
+   private EventBus events_;
 }
