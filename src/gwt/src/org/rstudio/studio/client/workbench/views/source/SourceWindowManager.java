@@ -26,6 +26,7 @@ import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.WindowCloseMonitor;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
@@ -70,7 +71,6 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
@@ -565,31 +565,15 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       
       // we get this event when the window is unloaded; it could be that the
       // window is unloading for refresh (in which case its docs could be
-      // preserved) or closing for good. to distinguish between the two cases,
-      // we ping the window for 5 seconds after receiving the unload; if it
-      // closes, we can safely close the docs it contained.
-      final WindowEx window = pSatelliteManager_.get().getSatelliteWindowObject(
-            event.getName());
-      Scheduler.get().scheduleFixedDelay(new Scheduler.RepeatingCommand()
+      // preserved) or closing for good.
+      WindowCloseMonitor.monitorSatelliteClosure(event.getName(), new Command() 
       {
          @Override
-         public boolean execute()
+         public void execute()
          {
-            if (window == null ||
-                window.isClosed() || 
-                pSatelliteManager_.get().getSatelliteWindowObject(
-                      event.getName()) == null)
-            {
-               closeSourceWindowDocs(sourceWindowId(event.getName()));
-               return false;
-            }
-            // retry up to 5 seconds (250ms per try)
-            return retries_++ < 20;
+            closeSourceWindowDocs(sourceWindowId(event.getName()));
          }
-         
-         private int retries_ = 0;
-         
-      }, 250);
+      });
    }
 
    @Override

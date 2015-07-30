@@ -18,6 +18,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.WindowCloseMonitor;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.Desktop;
@@ -277,14 +278,28 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       disconnectingUrl_ = appState.getUrl();
    }
 
-   private void notifyShinyAppClosed(JavaScriptObject params)
+   private void notifyShinyAppClosed(final JavaScriptObject params)
    {
-      ShinyApplicationParams appState = params.cast();
-
       // if we don't know that an app is running, ignore this event
       if (params_ == null)
          return;
       
+      // wait for confirmation of window closure (could be a reload)
+      WindowCloseMonitor.monitorSatelliteClosure(
+            ShinyApplicationSatellite.NAME, new Command()
+      {
+         @Override
+         public void execute()
+         {
+            onShinyApplicationClosed(params);
+         }
+      });
+   }
+   
+   private void onShinyApplicationClosed(JavaScriptObject params)
+   {
+      ShinyApplicationParams appState = params.cast();
+
       // this completes any pending disconnection
       disconnectingUrl_ = null;
       
