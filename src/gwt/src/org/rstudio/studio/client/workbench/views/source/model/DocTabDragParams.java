@@ -23,10 +23,11 @@ public class DocTabDragParams extends JavaScriptObject
    }
    
    public final native static DocTabDragParams create(String docId, 
-         int tabWidth) /*-{
+         int tabWidth, int cursorOffset) /*-{
      return {
         doc_id         : docId,
         tab_width      : tabWidth,
+        cursor_offset  : cursorOffset,
         source_position: null
      };
    }-*/;
@@ -39,6 +40,10 @@ public class DocTabDragParams extends JavaScriptObject
       return this.tab_width;
    }-*/;
    
+   public final native int getCursorOffset() /*-{
+      return this.cursor_offset;
+   }-*/;
+
    public final native SourcePosition getSourcePosition() /*-{
       return this.source_position;
    }-*/;

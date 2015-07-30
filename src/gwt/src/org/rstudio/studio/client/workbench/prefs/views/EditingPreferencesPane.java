@@ -36,6 +36,7 @@ import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.common.DiagnosticsHelpLink;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
@@ -141,6 +142,22 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref("Show R chunk execution output within editor", prefs_.showRmdChunkOutputInline()));
       displayPanel.add(checkboxPref("Show document outline by default", prefs_.showDocumentOutlineRmd()));
       displayPanel.add(checkboxPref("Show unnamed entries in document outline", prefs_.showUnnamedEntriesInDocumentOutline()));
+      rmdViewerMode_ = new SelectWidget(
+            "Show R Markdown output in: ",
+            new String[] {
+                  "Its own window",
+                  "The Viewer pane",
+                  "Do not show output"
+            },
+            new String[] {
+                  new Integer(RmdOutput.RMD_VIEWER_TYPE_WINDOW).toString(),
+                  new Integer(RmdOutput.RMD_VIEWER_TYPE_PANE).toString(),
+                  new Integer(RmdOutput.RMD_VIEWER_TYPE_NONE).toString()
+            },
+            false,
+            true,
+            false);
+      displayPanel.add(rmdViewerMode_);
       
       VerticalPanel completionPanel = new VerticalPanel();
       
@@ -335,6 +352,7 @@ public class EditingPreferencesPane extends PreferencesPane
          editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS);
       else
          editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_DEFAULT);
+      rmdViewerMode_.setValue(prefs_.rmdViewerType().getValue().toString());
    }
    
    @Override
@@ -351,6 +369,8 @@ public class EditingPreferencesPane extends PreferencesPane
       
       prefs_.useVimMode().setGlobalValue(isVim);
       prefs_.enableEmacsKeybindings().setGlobalValue(isEmacs);
+      prefs_.rmdViewerType().setGlobalValue(Integer.decode(
+            rmdViewerMode_.getValue()));
       
       return reload;
    }
@@ -388,6 +408,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final SelectWidget showCompletions_;
    private final SelectWidget showCompletionsOther_;
    private final SelectWidget editorMode_;
+   private final SelectWidget rmdViewerMode_;
    
    
 }

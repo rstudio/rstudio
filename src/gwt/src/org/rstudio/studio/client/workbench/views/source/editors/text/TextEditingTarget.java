@@ -1050,6 +1050,7 @@ public class TextEditingTarget implements
          public void onValueChange(ValueChangeEvent<String> event)
          {
             if ("Makefile".equals(event.getValue()) ||
+                "Makefile.win".equals(event.getValue()) ||
                 "Makevars".equals(event.getValue()) ||
                 "Makevars.win".equals(event.getValue()))
             {

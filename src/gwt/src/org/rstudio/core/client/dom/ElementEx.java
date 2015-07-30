@@ -63,6 +63,10 @@ public class ElementEx extends Element
          top += iFrame.getClientTop();
       return top;
    }
+   
+   public final native DOMRect getBoundingClientRect() /*-{
+      return this.getBoundingClientRect();
+   }-*/;
 
    private final native ElementEx getOwningIFrame() /*-{
       var doc = this.ownerDocument;

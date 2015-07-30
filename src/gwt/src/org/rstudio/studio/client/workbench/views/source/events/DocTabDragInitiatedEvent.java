@@ -31,9 +31,9 @@ public class DocTabDragInitiatedEvent
    public static final GwtEvent.Type<DocTabDragInitiatedEvent.Handler> TYPE =
       new GwtEvent.Type<DocTabDragInitiatedEvent.Handler>();
    
-   public DocTabDragInitiatedEvent(String docId, int width)
+   public DocTabDragInitiatedEvent(String docId, int width, int cursorOffset)
    {
-      params_ = DocTabDragParams.create(docId, width);
+      params_ = DocTabDragParams.create(docId, width, cursorOffset);
    }
    
    public DocTabDragParams getDragParams()

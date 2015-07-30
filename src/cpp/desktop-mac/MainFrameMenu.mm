@@ -186,7 +186,16 @@ NSString* charToStr(unichar c) {
 }
 
 - (void) assignShortcut: (NSString*) shortcut toMenuItem: (NSMenuItem*) menuItem {
+   
    if ([shortcut length] == 0)
+      return;
+   
+   // Don't assign shortcuts for commands bound to a key sequence (until
+   // we figure out how to handle this).
+   //
+   // Note that e.g. Sublime Text has 'Hide Side Bar' bound to 'Cmd+K Cmd+B'
+   // so it's definitely possible.
+   if ([shortcut rangeOfString: @" "].length != 0)
       return;
 
    NSArray* parts = [shortcut componentsSeparatedByString: @"+"];
@@ -199,7 +208,7 @@ NSString* charToStr(unichar c) {
          modifiers |= NSShiftKeyMask;
       else if ([mod isEqualToString: @"Alt"])
          modifiers |= NSAlternateKeyMask;
-      else if ([mod isEqualToString: @"Meta"])
+      else if ([mod isEqualToString: @"Meta"] || [mod isEqualToString: @"Cmd"])
          modifiers |= NSCommandKeyMask;
    }
    NSString* key = [parts lastObject];
