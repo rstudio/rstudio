@@ -115,6 +115,18 @@ void raiseAndActivateWindow(QWidget* pWindow)
    pWindow->activateWindow();
 }
 
+void moveWindowBeneath(QWidget* pTop, QWidget* pBottom)
+{
+#ifdef WIN32
+   HWND hwndTop = reinterpret_cast<HWND>(pTop->winId());
+   HWND hwndBottom = reinterpret_cast<HWND>(pBottom->winId());
+   ::SetWindowPos(hwndBottom, hwndTop, 0, 0, 0, 0,
+                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+#endif
+   // not currently supported on Linux--Qt doesn't provide a way to view or
+   // change the window stacking order
+}
+
 void closeWindow(QWidget* pWindow)
 {
    pWindow->close();

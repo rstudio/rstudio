@@ -689,6 +689,11 @@ void GwtCallback::bringMainFrameToFront()
    desktop::raiseAndActivateWindow(pMainWindow_);
 }
 
+void GwtCallback::bringMainFrameBehindActive()
+{
+   desktop::moveWindowBeneath(QApplication::activeWindow(), pMainWindow_);
+}
+
 QString GwtCallback::filterText(QString text)
 {
    // Ace doesn't do well with NFD Unicode text. To repro on
