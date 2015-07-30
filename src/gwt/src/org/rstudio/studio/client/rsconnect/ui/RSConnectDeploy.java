@@ -178,6 +178,17 @@ public class RSConnectDeploy extends Composite
             event.stopPropagation();
          }
       });
+      
+      createNewAnchor_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            forgetPreviousDeployment();
+            event.preventDefault();
+            event.stopPropagation();
+         }
+      });
 
       addFileButton_.setVisible(forDocument_);
       addFileButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
@@ -558,7 +569,7 @@ public class RSConnectDeploy extends Composite
 
                      if (!found)
                      {
-                        handleRemovedApp();
+                        forgetPreviousDeployment();
                      }
                   }
                   @Override
@@ -923,7 +934,7 @@ public class RSConnectDeploy extends Composite
             });
    }
    
-   private void handleRemovedApp()
+   private void forgetPreviousDeployment()
    {
       // set the UI state to creating a new app with the same name as the one
       // that was removed
@@ -939,6 +950,7 @@ public class RSConnectDeploy extends Composite
    
    
    @UiField Anchor addAccountAnchor_;
+   @UiField Anchor createNewAnchor_;
    @UiField Anchor urlAnchor_;
    @UiField AppNameTextbox appName_;
    @UiField Grid mainGrid_;
