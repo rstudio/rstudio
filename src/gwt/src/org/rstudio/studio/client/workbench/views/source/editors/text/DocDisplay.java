@@ -117,6 +117,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void shrinkSelection();
    void clearSelectionHistory();
    
+   void expandRaggedSelection();
+   
    void reindent();
    void reindent(Range range);
    ChangeTracker getChangeTracker();

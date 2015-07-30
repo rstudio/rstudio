@@ -1302,6 +1302,68 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
+   public void expandRaggedSelection()
+   {
+      if (!inMultiSelectMode())
+         return;
+      
+      // TODO: It looks like we need to use an alternative API when
+      // using Vim mode.
+      if (isVimModeOn())
+         return;
+      
+      boolean hasSelection = hasSelection();
+      
+      Range[] ranges =
+            widget_.getEditor().getSession().getSelection().getAllRanges();
+      
+      // Get the maximum columns for the current selection.
+      int colMin = Integer.MAX_VALUE;
+      int colMax = 0;
+      for (Range range : ranges)
+      {
+         colMin = Math.min(range.getStart().getColumn(), colMin);
+         colMax = Math.max(range.getEnd().getColumn(), colMax);
+      }
+      
+      // For each range:
+      //
+      //    1. Set the left side of the selection to the minimum,
+      //    2. Set the right side of the selection to the maximum,
+      //       moving the cursor and inserting whitespace as necessary.
+      for (Range range : ranges)
+      {
+         range.getStart().setColumn(colMin);
+         range.getEnd().setColumn(colMax);
+         
+         String line = getLine(range.getStart().getRow());
+         if (line.length() < colMax)
+         {
+            insertCode(
+                  Position.create(range.getStart().getRow(), line.length()),
+                  StringUtil.repeat(" ", colMax - line.length()));
+         }
+      }
+      
+      clearSelection();
+      Selection selection = getNativeSelection();
+      for (Range range : ranges)
+      {
+         if (hasSelection)
+            selection.addRange(range, true);
+         else
+         {
+            Range newRange = Range.create(
+                  range.getEnd().getRow(),
+                  range.getEnd().getColumn(),
+                  range.getEnd().getRow(),
+                  range.getEnd().getColumn());
+            selection.addRange(newRange, true);
+         }
+      }
+   }
+   
+   @Override
    public void clearSelectionHistory()
    {
       widget_.getEditor().clearSelectionHistory();

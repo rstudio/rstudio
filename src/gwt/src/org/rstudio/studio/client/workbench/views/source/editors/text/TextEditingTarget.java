@@ -2401,6 +2401,12 @@ public class TextEditingTarget implements
    }
    
    @Handler
+   void onExpandRaggedSelection()
+   {
+      docDisplay_.expandRaggedSelection();
+   }
+   
+   @Handler
    void onInsertSnippet()
    {
       // NOTE: Bound to Shift + Tab so we delegate back there
