@@ -690,9 +690,12 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       // something we could live with.
       for (int i = 0; i < bindings.size(); i++)
       {
+         CommandBinding cb1 = bindings.get(i);
+         if (cb1.getKeySequence() == null || cb1.getKeySequence().isEmpty())
+            continue;
+         
          for (int j = 0; j < originalBindings_.size(); j++)
          {
-            CommandBinding cb1 = bindings.get(i);
             CommandBinding cb2 = originalBindings_.get(j);
             
             if (cb1.equals(cb2))
