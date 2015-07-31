@@ -22,6 +22,10 @@ import java.util.*;
 
 public class PaneConfig extends JavaScriptObject
 {
+   public final static String SOURCE = "Source";
+   public final static String CONSOLE = "Console";
+   
+   
    public native static PaneConfig create(JsArrayString panes,
                                           JsArrayString tabSet1,
                                           JsArrayString tabSet2) /*-{
@@ -31,8 +35,8 @@ public class PaneConfig extends JavaScriptObject
    public static PaneConfig createDefault()
    {
       JsArrayString panes = createArray().cast();
-      panes.push("Source");
-      panes.push("Console");
+      panes.push(SOURCE);
+      panes.push(CONSOLE);
       panes.push("TabSet1");
       panes.push("TabSet2");
 
@@ -55,7 +59,7 @@ public class PaneConfig extends JavaScriptObject
 
    public static String[] getAllPanes()
    {
-      return new String[] {"Source", "Console", "TabSet1", "TabSet2"};
+      return new String[] {SOURCE, CONSOLE, "TabSet1", "TabSet2"};
    }
 
    public static String[] getAllTabs()
@@ -156,7 +160,7 @@ public class PaneConfig extends JavaScriptObject
       JsArrayString panes = getPanes();
       if (panes == null)
          return false;
-      if (!sameElements(panes, new String[] {"Source", "Console", "TabSet1", "TabSet2"}))
+      if (!sameElements(panes, new String[] {SOURCE, CONSOLE, "TabSet1", "TabSet2"}))
          return false;
 
       JsArrayString ts1 = getTabSet1();

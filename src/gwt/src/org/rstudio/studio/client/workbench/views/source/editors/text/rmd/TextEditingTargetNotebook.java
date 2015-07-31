@@ -18,17 +18,22 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.MaximizeSourceWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -83,13 +88,18 @@ public class TextEditingTargetNotebook
    }
    
    @Inject
-   public void initialize(EventBus events)
+   public void initialize(EventBus events, UIPrefs uiPrefs)
    {
       events_ = events;
+      uiPrefs_ = uiPrefs;
    }
      
    public void executeChunk(Scope chunk, String code)
    {
+      // maximize the source window if it's paired with the console
+      maximizeSourcePaneIfNecessary();
+      
+      // get the row that ends the chunk
       int row = chunk.getEnd().getRow();
       
       // if there is an existing widget just modify it in place
@@ -135,6 +145,44 @@ public class TextEditingTargetNotebook
       }
    }
    
+   private void maximizeSourcePaneIfNecessary()
+   {
+      if (SourceWindowManager.isMainSourceWindow())
+      {
+         // see if the Source and Console are paired
+         PaneConfig paneConfig = uiPrefs_.paneConfig().getValue();
+         if (hasSourceAndConsolePaired(paneConfig.getPanes()))
+         {
+            events_.fireEvent(new MaximizeSourceWindowEvent());
+         }  
+      }
+   }
+   
+   private boolean hasSourceAndConsolePaired(JsArrayString panes)
+   {
+      // default config
+      if (panes == null)
+         return true;
+      
+      // if there aren't 4 panes this is a configuration we
+      // don't recognize
+      if (panes.length() != 4)
+         return false;
+      
+      // check for paired config
+      return hasSourceAndConsolePaired(panes.get(0), panes.get(1)) ||
+             hasSourceAndConsolePaired(panes.get(2), panes.get(3));
+   }
+   
+   private boolean hasSourceAndConsolePaired(String pane1, String pane2)
+   {
+      return (pane1.equals(PaneConfig.SOURCE) &&
+              pane2.equals(PaneConfig.CONSOLE))
+                 ||
+             (pane1.equals(PaneConfig.CONSOLE) &&
+              pane2.equals(PaneConfig.SOURCE));
+   }
+   
    
    private DivElement elementForChunkOutput(ChunkOutput chunkOutput)
    {
@@ -168,6 +216,7 @@ public class TextEditingTargetNotebook
    private final DocUpdateSentinel docUpdateSentinel_;
    
    private EventBus events_;
+   private UIPrefs uiPrefs_;
    
    private Style editorStyle_;
 }
