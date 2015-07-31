@@ -407,7 +407,6 @@ public class TextEditingTarget implements
                                                                   docDisplay_);
       reformatHelper_ = new TextEditingTargetReformatHelper(docDisplay_);
       renameHelper_ = new TextEditingTargetRenameHelper(docDisplay_);
-      themeHelper_ = new TextEditingTargetThemeHelper(this, events_);
       
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
       docDisplay_.setCppCompletionContext(cppCompletionContext_);
@@ -1021,6 +1020,8 @@ public class TextEditingTarget implements
       extendedType_ = rmarkdownHelper_.detectExtendedType(document.getContents(),
                                                           extendedType_, 
                                                           fileType_);
+      
+      themeHelper_ = new TextEditingTargetThemeHelper(this, events_);
       
       view_ = new TextEditingTargetWidget(this,
                                           commands_,
@@ -5299,7 +5300,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetCppHelper cppHelper_;
    private final TextEditingTargetPresentationHelper presentationHelper_;
    private final TextEditingTargetReformatHelper reformatHelper_;
-   private final TextEditingTargetThemeHelper themeHelper_;
+   private TextEditingTargetThemeHelper themeHelper_;
    private RoxygenHelper roxygenHelper_;
    private boolean ignoreDeletes_;
    private boolean forceSaveCommandActive_ = false;
