@@ -584,15 +584,8 @@ public class Source implements InsertSourceHandler,
             return getPhysicalTabIndex();
          }
       };
-
-      uiPrefs_.verticallyAlignArgumentIndent().bind(new CommandWithArg<Boolean>()
-      {
-         @Override
-         public void execute(Boolean arg)
-         {
-            AceEditorNative.setVerticallyAlignFunctionArgs(arg);
-         }
-      });
+      
+      AceEditorNative.syncUiPrefs(uiPrefs_);
       
       // adjust shortcuts when vim mode changes
       uiPrefs_.useVimMode().bind(new CommandWithArg<Boolean>()
