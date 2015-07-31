@@ -747,31 +747,36 @@ well as menu structures (for main menu and popup menus).
         label="Show Differences for File"
         menuLabel="_Diff of"
         desc="Show differences for the file"
-        context="vcs"/>
+        context="vcs"
+        rebindable="false"/>
         
    <cmd id="vcsFileLog"
         label="Show Changelog for File"
         menuLabel="_Log of"
         desc="Show log of changes to the file"
-        context="vcs"/>
+        context="vcs"
+        rebindable="false"/>
         
    <cmd id="vcsFileRevert"
         label="Revert Changes to File"
         menuLabel="_Revert"
         desc="Revert changes to the file"
-        context="vcs"/>
+        context="vcs"
+        rebindable="false"/>
         
    <cmd id="vcsViewOnGitHub"
         label="View file on GitHub"
         menuLabel="_View FILE on GitHub"
         desc="View this file on Github"
-        context="vcs"/>
+        context="vcs"
+        rebindable="false"/>
          
    <cmd id="vcsBlameOnGitHub"
         label="View 'git blame' on GitHub"
         menuLabel="_Blame FILE on GitHub"
         desc="Blame view for this file on Github"
-        context="vcs"/>
+        context="vcs"
+        rebindable="false"/>
          
    <cmd id="printSourceDoc"
         menuLabel="Pr_int..."
