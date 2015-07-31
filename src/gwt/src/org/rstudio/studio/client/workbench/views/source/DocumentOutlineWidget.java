@@ -19,14 +19,13 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -51,6 +50,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 public class DocumentOutlineWidget extends Composite
+                  implements EditorThemeStyleChangedEvent.Handler
 {
    public class VerticalSeparator extends Composite
    {
@@ -191,10 +191,8 @@ public class DocumentOutlineWidget extends Composite
    }
    
    @Inject
-   private void initialize(EventBus events,
-                           UIPrefs uiPrefs)
+   private void initialize(UIPrefs uiPrefs)
    {
-      events_ = events;
       uiPrefs_ = uiPrefs;
    }
    
@@ -240,23 +238,21 @@ public class DocumentOutlineWidget extends Composite
          }
       };
       
-      // Sync themes with editor on startup. Because this requires the CSS
-      // styles to have been read and rendered, we briefly time this out.
-      new Timer()
-      {
-         @Override
-         public void run()
-         {
-            syncThemesWithEditor();
-         }
-      }.schedule(100);
-      
+      target.addEditorThemeStyleChangedHandler(this);
+          
       initWidget(container_);
    }
    
    public Widget getLeftSeparator()
    {
       return separator_;
+   }
+   
+   @Override
+   public void onEditorThemeStyleChanged(EditorThemeStyleChangedEvent event)
+   {
+      updateStyles(container_, event.getStyle());
+      updateStyles(emptyPlaceholder_, event.getStyle());
    }
    
    private void initHandlers()
@@ -287,17 +283,6 @@ public class DocumentOutlineWidget extends Composite
                }
             });
       
-      events_.addHandler(
-            EditorThemeChangedEvent.TYPE,
-            new EditorThemeChangedEvent.Handler()
-            {
-               @Override
-               public void onEditorThemeChanged(EditorThemeChangedEvent event)
-               {
-                  syncThemesWithEditor();
-               }
-            });
-      
    }
    
    private void onRenderFinished()
@@ -325,23 +310,6 @@ public class DocumentOutlineWidget extends Composite
       };
       
       docUpdateTimer_.schedule(1000);
-   }
-   
-   private void syncThemesWithEditor()
-   {
-      Element editorContainer = target_.asWidget().getElement();
-      Element[] aceContentElements =
-            DomUtils.getElementsByClassName(editorContainer, "ace_scroller");
-      
-      int n = aceContentElements.length;
-      assert n == 1
-            : "Expected a single editor instance; found " + n;
-      
-      Element content = aceContentElements[0];
-      Style computed = DomUtils.getComputedStyles(content);
-      
-      updateStyles(container_, computed);
-      updateStyles(emptyPlaceholder_, computed);
    }
    
    private void updateStyles(Widget widget, Style computed)
@@ -516,7 +484,6 @@ public class DocumentOutlineWidget extends Composite
    private Timer docUpdateTimer_;
    private JsArray<Scope> scopeTree_;
    
-   private EventBus events_;
    private UIPrefs uiPrefs_;
    
    // Styles, Resources etc. ----

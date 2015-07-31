@@ -407,6 +407,7 @@ public class TextEditingTarget implements
                                                                   docDisplay_);
       reformatHelper_ = new TextEditingTargetReformatHelper(docDisplay_);
       renameHelper_ = new TextEditingTargetRenameHelper(docDisplay_);
+      themeHelper_ = new TextEditingTargetThemeHelper(this, events_);
       
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
       docDisplay_.setCppCompletionContext(cppCompletionContext_);
@@ -1787,6 +1788,12 @@ public class TextEditingTarget implements
    public HandlerRegistration addCloseHandler(CloseHandler<java.lang.Void> handler)
    {
       return handlers_.addHandler(CloseEvent.getType(), handler);
+   }
+   
+   public HandlerRegistration addEditorThemeStyleChangedHandler(
+                        EditorThemeStyleChangedEvent.Handler handler)
+   {
+      return themeHelper_.addEditorThemeStyleChangedHandler(handler);
    }
 
    public void fireEvent(GwtEvent<?> event)
@@ -5292,6 +5299,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetCppHelper cppHelper_;
    private final TextEditingTargetPresentationHelper presentationHelper_;
    private final TextEditingTargetReformatHelper reformatHelper_;
+   private final TextEditingTargetThemeHelper themeHelper_;
    private RoxygenHelper roxygenHelper_;
    private boolean ignoreDeletes_;
    private boolean forceSaveCommandActive_ = false;
