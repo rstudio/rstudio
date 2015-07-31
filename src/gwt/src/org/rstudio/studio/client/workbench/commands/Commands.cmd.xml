@@ -744,29 +744,34 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Close All E_xcept Current"/>
         
    <cmd id="vcsFileDiff"
+        label="Show Differences for File"
         menuLabel="_Diff of"
         desc="Show differences for the file"
         context="vcs"/>
         
    <cmd id="vcsFileLog"
+        label="Show Changelog for File"
         menuLabel="_Log of"
         desc="Show log of changes to the file"
         context="vcs"/>
         
    <cmd id="vcsFileRevert"
+        label="Revert Changes to File"
         menuLabel="_Revert"
         desc="Revert changes to the file"
         context="vcs"/>
         
    <cmd id="vcsViewOnGitHub"
-         menuLabel="_View FILE on GitHub"
-         desc="View this file on Github"
-         context="vcs"/>
+        label="View file on GitHub"
+        menuLabel="_View FILE on GitHub"
+        desc="View this file on Github"
+        context="vcs"/>
          
    <cmd id="vcsBlameOnGitHub"
-         menuLabel="_Blame FILE on GitHub"
-         desc="Blame view for this file on Github"
-         context="vcs"/>
+        label="View 'git blame' on GitHub"
+        menuLabel="_Blame FILE on GitHub"
+        desc="Blame view for this file on Github"
+        context="vcs"/>
          
    <cmd id="printSourceDoc"
         menuLabel="Pr_int..."
@@ -1173,15 +1178,18 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="extractFunction"
         menuLabel="E_xtract Function"
-        desc="Turn the current selection into a function"/>
+        desc="Turn the current selection into a function"
+        context="r"/>
         
    <cmd id="extractLocalVariable"
          menuLabel="Extract _Variable"
-         desc="Extract a variable out of the current selection"/>
+         desc="Extract a variable out of the current selection"
+         context="r"/>
          
    <cmd id="findUsages"
         menuLabel="Find _Usages"
-        desc="Find source locations where this symbol is used"/>
+        desc="Find source locations where this symbol is used"
+        context="cpp"/>
         
    <cmd id="sourceFile"
         buttonLabel=""
@@ -1350,7 +1358,8 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="editRmdFormatOptions"
         menuLabel="_Output Options..."
-        desc="Edit the R Markdown format options for the current file"/>
+        desc="Edit the R Markdown format options for the current file"
+        context="rmarkdown"/>
 
    <cmd id="knitWithParameters"
         label="Knit with Parameters..."
@@ -1546,6 +1555,7 @@ well as menu structures (for main menu and popup menus).
         label="Terminate R Session"
         menuLabel="_Terminate R..."
         desc="Forcibly terminate R session"
+        context="r"
         windowMode="main"/>
 
    <!-- PDF Viewer -->
@@ -1867,6 +1877,7 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
 
    <cmd id="checkForUpdates"
+        label="Check for RStudio Updates"
         menuLabel="Check for _Updates"
         visible="false"/>
 

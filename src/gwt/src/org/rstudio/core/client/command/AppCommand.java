@@ -246,12 +246,15 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    
    public enum Context
    {
-      Workbench, Editor, R, PackageDevelopment, RMarkdown,
+      Workbench, Editor, R, Cpp, PackageDevelopment, RMarkdown,
       Markdown, Sweave, Help, VCS, Packrat, RPresentation;
       
       @Override
       public String toString()
       {
+         if (this == Cpp)
+            return "C / C++";
+         
          return StringUtil.prettyCamel(super.toString());
       }
    }
@@ -272,6 +275,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          context_ = Context.VCS;
       else if (lower.equals("r"))
          context_ = Context.R;
+      else if (lower.equals("cpp"))
+         context_ = Context.Cpp;
       else if (lower.equals("packagedevelopment"))
          context_ = Context.PackageDevelopment;
       else if (lower.equals("rmarkdown"))

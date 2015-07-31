@@ -203,35 +203,28 @@ public class ShortcutManager implements NativePreviewHandler,
       keyBuffer_.clear();
    }
    
-   private boolean cancel(NativeEvent event)
-   {
-      event.stopPropagation();
-      event.preventDefault();
-      return true;
-   }
-   
    // Returns 'true' if the event is canceled.
-   private boolean updateKeyBuffer(NativeEvent event)
+   private void updateKeyBuffer(NativeEvent event)
    {
       if (keyBuffer_.isEmpty())
-         return false;
+         return;
       
       // If we have a prefix match, keep the keybuffer alive and cancel the
-      // event (to ensure Ace doesn't see it.
+      // event (to ensure Ace doesn't see it)
       for (KeyboardShortcut shortcut : commands_.keySet())
          if (shortcut.startsWith(keyBuffer_))
-            return cancel(event);
+            return;
       
       for (KeyboardShortcut shortcut : userCommands_.getKeyboardShortcuts())
          if (shortcut.startsWith(keyBuffer_))
-            return cancel(event);
+            return;
       
       if (editorCommands_.hasPrefix(keyBuffer_))
-         return false;
+         return;
       
       // Otherwise, clear the keybuffer.
       resetKeyBuffer();
-      return false;
+      return;
    }
 
    public void onKeyDown(NativeKeyDownEvent evt)
