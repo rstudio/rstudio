@@ -1,7 +1,7 @@
 /*
  * BuildTab.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,7 +30,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
-import org.rstudio.studio.client.workbench.views.buildtools.ui.BuildPaneResources;
 
 
 public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
@@ -93,52 +92,8 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
          public void onSessionInit(SessionInitEvent sie)
          {
             SessionInfo sessionInfo = session.getSessionInfo();
+            BuildCommands.setBuildCommandState(commands, sessionInfo);
 
-            // remove devtools commands if it isn't installed
-            if (!sessionInfo.isDevtoolsInstalled())
-            {
-               commands.devtoolsLoadAll().remove();
-            }
-            
-            // adapt or remove package commands if this isn't a package
-            String type = sessionInfo.getBuildToolsType();
-            if (!type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
-            {
-               commands.devtoolsLoadAll().remove();
-               commands.buildSourcePackage().remove();
-               commands.buildBinaryPackage().remove();
-               commands.roxygenizePackage().remove();
-               commands.checkPackage().remove();
-               commands.testPackage().remove();
-               commands.buildAll().setImageResource(
-                                 BuildPaneResources.INSTANCE.iconBuild());
-               commands.buildAll().setMenuLabel("_Build All");
-               commands.buildAll().setButtonLabel("Build All");
-               commands.buildAll().setDesc("Build all");
-               
-            }
-            
-            // remove makefile commands if this isn't a makefile
-            if (type.equals(SessionInfo.BUILD_TOOLS_CUSTOM))
-            {
-               commands.rebuildAll().remove();
-            }
-            
-            if (!type.equals(SessionInfo.BUILD_TOOLS_MAKEFILE))
-            {
-               commands.cleanAll().remove();
-            }
-            
-            // remove all other commands if there are no build tools
-            if (type.equals(SessionInfo.BUILD_TOOLS_NONE))
-            {
-               commands.buildAll().remove();
-               commands.rebuildAll().remove();
-               commands.cleanAll().remove();
-               commands.stopBuild().remove();
-               commands.activateBuild().remove();
-            }
-            
             // initialize from build state if necessary
             BuildState buildState = sessionInfo.getBuildState();
             if (buildState != null)

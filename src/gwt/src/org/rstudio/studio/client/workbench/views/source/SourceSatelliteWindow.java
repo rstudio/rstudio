@@ -24,10 +24,12 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.CodeSearchLauncher;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
+import org.rstudio.studio.client.workbench.views.buildtools.BuildCommands;
 import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams;
 
 @Singleton
@@ -81,6 +83,11 @@ public class SourceSatelliteWindow extends SatelliteWindow
       }
       
       SourceSatellitePresenter appPresenter = pPresenter_.get();
+      
+      // initialize build commands (we want these to work from source windows)
+      BuildCommands.setBuildCommandState(
+            RStudioGinjector.INSTANCE.getCommands(), 
+            RStudioGinjector.INSTANCE.getSession().getSessionInfo());
       
       // make it fill the containing layout panel
       Widget presWidget = appPresenter.asWidget();

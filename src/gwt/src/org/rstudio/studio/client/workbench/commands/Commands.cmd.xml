@@ -2056,13 +2056,13 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Build &amp; Reload"
         menuLabel="_Build and Reload"
         desc="Build and reload the package"
-        windowMode="main"/>
+        windowMode="background"/>
 
    <cmd id="rebuildAll"
         label="Clean and Rebuild"
         menuLabel="Clean and _Rebuild"
         desc="Clean previous output and rebuild all"
-        windowMode="main"/>
+        windowMode="background"/>
 
    <cmd id="cleanAll"
         label="Clean All"
@@ -2082,23 +2082,23 @@ well as menu structures (for main menu and popup menus).
         label="Execute devtools::load_all()"
         menuLabel="_Load All"
         desc="Execute devtools::load_all"
-        windowMode="main"/>
+        windowMode="background"/>
 
    <cmd id="roxygenizePackage"
         menuLabel="_Document"
         desc="Run roxygen2 to document this package"
-        windowMode="main"/>
+        windowMode="background"/>
 
    <cmd id="checkPackage"
         buttonLabel="Check"
         menuLabel="_Check Package"
         desc="R CMD check"
-        windowMode="main"/>
+        windowMode="background"/>
 
    <cmd id="testPackage"
         menuLabel="_Test Package"
         desc="Run tests for package"
-        windowMode="main"/>
+        windowMode="background"/>
 
    <cmd id="stopBuild"
         menuLabel="Sto_p Build"
