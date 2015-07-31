@@ -660,7 +660,19 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                boolean isCustom = customBindings.hasKey(id);
                bindings.add(new CommandBinding(id, name, keySequence, type, isCustom));
             }
-
+            
+            Collections.sort(bindings, new Comparator<CommandBinding>()
+            {
+               @Override
+               public int compare(CommandBinding o1, CommandBinding o2)
+               {
+                  if (o1.getCommandType() != o2.getCommandType())
+                     return o1.getCommandType() < o2.getCommandType() ? 1 : -1;
+                  
+                  return o1.getName().compareTo(o2.getName());
+               }
+            });
+            
             originalBindings_ = bindings;
             updateData(bindings);
          }
