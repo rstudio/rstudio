@@ -142,11 +142,11 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref("Show document outline by default", prefs_.showDocumentOutlineRmd()));
       displayPanel.add(checkboxPref("Show unnamed entries in document outline", prefs_.showUnnamedEntriesInDocumentOutline()));
       rmdViewerMode_ = new SelectWidget(
-            "Show R Markdown output in: ",
+            "Show output preview in: ",
             new String[] {
-                  "Its own window",
-                  "The Viewer pane",
-                  "Do not show output"
+                  "Window",
+                  "Viewer Pane",
+                  "(None)"
             },
             new String[] {
                   new Integer(RmdOutput.RMD_VIEWER_TYPE_WINDOW).toString(),
