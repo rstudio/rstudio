@@ -21,6 +21,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.testing.TestUtils;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.Locale;
 
 /**
@@ -203,6 +204,21 @@ public class StringTest extends GWTTestCase {
       assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
     } catch (IndexOutOfBoundsException expected) {
     }
+    try {
+      new String(bytes, 1, 6, Charset.forName(encoding));
+      assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
+    } catch (IndexOutOfBoundsException expected) {
+    }
+    try {
+      new String(bytes, -1, 2, Charset.forName(encoding));
+      assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
+    } catch (IndexOutOfBoundsException expected) {
+    }
+    try {
+      new String(bytes, 6, 2, Charset.forName(encoding));
+      assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
+    } catch (IndexOutOfBoundsException expected) {
+    }
   }
 
   public void testConstructorUtf8() throws UnsupportedEncodingException {
@@ -231,6 +247,21 @@ public class StringTest extends GWTTestCase {
     }
     try {
       new String(bytes, 12, 2, encoding);
+      assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
+    } catch (IndexOutOfBoundsException expected) {
+    }
+    try {
+      new String(bytes, 2, 12, Charset.forName(encoding));
+      assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
+    } catch (IndexOutOfBoundsException expected) {
+    }
+    try {
+      new String(bytes, -1, 2, Charset.forName(encoding));
+      assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
+    } catch (IndexOutOfBoundsException expected) {
+    }
+    try {
+      new String(bytes, 12, 2, Charset.forName(encoding));
       assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
     } catch (IndexOutOfBoundsException expected) {
     }

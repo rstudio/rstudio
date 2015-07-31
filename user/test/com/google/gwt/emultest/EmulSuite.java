@@ -38,6 +38,8 @@ import com.google.gwt.emultest.java.lang.ThrowableTest;
 import com.google.gwt.emultest.java.math.MathContextTest;
 import com.google.gwt.emultest.java.math.MathContextWithObfuscatedEnumsTest;
 import com.google.gwt.emultest.java.math.RoundingModeTest;
+import com.google.gwt.emultest.java.nio.charset.CharsetTest;
+import com.google.gwt.emultest.java.nio.charset.StandardCharsetsTest;
 import com.google.gwt.emultest.java.security.MessageDigestTest;
 import com.google.gwt.emultest.java.sql.SqlDateTest;
 import com.google.gwt.emultest.java.sql.SqlTimeTest;
@@ -86,6 +88,10 @@ public class EmulSuite {
     suite.addTestSuite(RoundingModeTest.class);
     suite.addTestSuite(MathContextTest.class);
     suite.addTestSuite(MathContextWithObfuscatedEnumsTest.class);
+
+    //-- java.nio
+    suite.addTestSuite(CharsetTest.class);
+    suite.addTestSuite(StandardCharsetsTest.class);
 
     //-- java.security
     suite.addTestSuite(MessageDigestTest.class);
