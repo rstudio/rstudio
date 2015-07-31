@@ -29,6 +29,8 @@ public class RCompletionToolTip extends CppCompletionToolTip
 
       // set the max width
       setMaxWidth(Window.getClientWidth() - 200);
+      
+      getElement().getStyle().setZIndex(10000);
    }
    
    public boolean previewKeyDown(NativeEvent event)
