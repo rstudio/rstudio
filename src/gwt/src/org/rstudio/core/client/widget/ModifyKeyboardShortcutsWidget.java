@@ -133,7 +133,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       public void setKeySequence(KeySequence keys)
       {
-         newKeySequence_ = keys.clone();
+         newKeySequence_ = keys == null ? null : keys.clone();
       }
       
       public void restoreOriginalKeySequence()
@@ -156,6 +156,13 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          return
                commandType_ == other.commandType_ &&
                id_.equals(other.id_);
+      }
+      
+      public CommandBinding clone()
+      {
+         CommandBinding result =
+               new CommandBinding(id_, name_, null, commandType_, true);
+         return result;
       }
       
       private final String id_;
@@ -285,6 +292,27 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                   false);
          }
       }));
+      
+      addLeftWidget(new ThemedButton("Duplicate", new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            int row = lastSelectedRow_;
+            if (row == -1)
+               return;
+            
+            List<CommandBinding> bindings = dataProvider_.getList();
+            
+            CommandBinding currentBinding = bindings.get(row);
+            CommandBinding clone = currentBinding.clone();
+            clone.setKeySequence(null);
+            bindings.add(row + 1, clone);
+            
+            updateData(bindings);
+            
+         }
+      }));
    }
    
    private void applyChanges()
@@ -377,6 +405,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          @Override
          public void onCellPreview(CellPreviewEvent<CommandBinding> preview)
          {
+            lastSelectedRow_ = preview.getIndex();
+            
             int column = preview.getColumn();
             if (column == 0)
                ;
@@ -841,6 +871,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          "radioCustomizeKeyboardShortcuts";
    
    private List<CommandBinding> originalBindings_;
+   
+   private int lastSelectedRow_ = -1;
    
    // Columns ----
    private TextColumn<CommandBinding> nameColumn_;
