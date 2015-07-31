@@ -174,7 +174,7 @@ public class AceCommandManager extends JavaScriptObject
          "showSettingsMenu", "goToNextError", "goToPreviousError",
          "togglerecording", "replaymacro", "passKeysToBrowser",
          "copy", "cut", "cut_or_delete", "paste", "replace",
-         "insertstring", "inserttext", "gotoline"
+         "insertstring", "inserttext", "gotoline", "jumptomatching"
       ];
       
       var map = {};
