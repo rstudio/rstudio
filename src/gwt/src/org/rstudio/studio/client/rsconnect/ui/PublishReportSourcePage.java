@@ -21,6 +21,8 @@ import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 
+import com.google.gwt.resources.client.ImageResource;
+
 public class PublishReportSourcePage 
    extends WizardNavigationPage<RSConnectPublishInput, RSConnectPublishResult>
 {
@@ -28,13 +30,11 @@ public class PublishReportSourcePage
    public PublishReportSourcePage(
          String title,
          String subTitle,
+         ImageResource icon,
          RSConnectPublishInput input,
          boolean asMultiple)
    {
-      super(title, subTitle, "Publish Source Code", asMultiple ? 
-            RSConnectResources.INSTANCE.publishMultipleRmd() :
-            RSConnectResources.INSTANCE.publishSingleRmd(),
-            null, 
+      super(title, subTitle, "Publish Source Code", icon, null, 
             createPages(input, asMultiple));
    }
 
@@ -59,27 +59,9 @@ public class PublishReportSourcePage
             (asMultiple ? "documents" : "document") + " only";
       String staticSubtitle = "Choose this option to publish the content as " +
              "it appears in RStudio.";
-      if (input.isConnectUIEnabled() && input.isExternalUIEnabled() && 
-          input.isSelfContained() && !asMultiple)
-      {
-         // if RStudio Connect and external accounts are both enabled, static 
-         // content could go to either RPubs or Connect
-         pages.add(new PublishStaticDestPage(staticTitle, staticSubtitle, 
-               RSConnectResources.INSTANCE.publishDocWithoutSource(),
-               input, asMultiple));
-      }
-      else if (input.isConnectUIEnabled())
-      {
-         // only RStudio Connect is available for static content
-         pages.add(new PublishFilesPage(staticTitle, staticSubtitle, 
-               RSConnectResources.INSTANCE.publishDocWithoutSource(), 
-               input, asMultiple, true));
-      }
-      else if (input.isSelfContained())
-      {
-         // only RPubs is available for static content
-         pages.add(new PublishRPubsPage(staticTitle, staticSubtitle));
-      }
+      pages.add(new PublishFilesPage(staticTitle, staticSubtitle, 
+            RSConnectResources.INSTANCE.publishDocWithoutSource(), 
+            input, asMultiple, true));
       return pages;
    }
 }

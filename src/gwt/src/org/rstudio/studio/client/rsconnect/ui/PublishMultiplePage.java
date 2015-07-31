@@ -21,13 +21,16 @@ import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 
+import com.google.gwt.resources.client.ImageResource;
+
 public class PublishMultiplePage 
    extends WizardNavigationPage<RSConnectPublishInput, RSConnectPublishResult>
 {
-   public PublishMultiplePage(RSConnectPublishInput input)
+   public PublishMultiplePage(String title, String subTitle, ImageResource icon,
+         RSConnectPublishInput input)
    {
-      super("Multiple R Markdown Files", "", "What do you want to publish?", 
-            null, null, createPages(input));
+      super(title, subTitle, "What do you want to publish?", 
+            icon, null, createPages(input));
    }
    
    private static ArrayList<WizardPage<RSConnectPublishInput, 
@@ -58,9 +61,9 @@ public class PublishMultiplePage
       else
       {
          pages.add(new PublishReportSourcePage(singleTitle, singleSubtitle,
-               input, false));
+               RSConnectResources.INSTANCE.publishSingleRmd(), input, false));
          pages.add(new PublishReportSourcePage(multipleTitle, multipleSubtitle,
-               input, true));
+               RSConnectResources.INSTANCE.publishMultipleRmd(), input, true));
       }
       return pages;
    }
