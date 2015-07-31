@@ -491,11 +491,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       NativeEvent event = preview.getNativeEvent();
       String type = event.getType();
       
-      setEscapeDisabled(true);
-      
       if (type.equals("blur"))
       {
-         setEscapeDisabled(false);
          buffer_.clear();
       }
       else if (event.getType().equals("keydown"))
@@ -507,15 +504,15 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          
          if (event.getKeyCode() == KeyCodes.KEY_BACKSPACE)
          {
-            // Stop event propagation to prevent browser 'Back'.
             event.stopPropagation();
             event.preventDefault();
-            
             buffer_.pop();
             binding.setKeySequence(buffer_);
          }
-         else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
+         else if (event.getKeyCode() == KeyCodes.KEY_DELETE)
          {
+            event.stopPropagation();
+            event.preventDefault();
             buffer_.clear();
             binding.restoreOriginalKeySequence();
          }
