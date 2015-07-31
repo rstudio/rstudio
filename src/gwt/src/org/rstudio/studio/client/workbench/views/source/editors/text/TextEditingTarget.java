@@ -1475,7 +1475,8 @@ public class TextEditingTarget implements
                menu.addItem(createMenuItemForType(fileType_));
          
             // show the menu
-            menu.showRelativeToUpward((UIObject) statusBar_.getLanguage());  
+            menu.showRelativeToUpward((UIObject) statusBar_.getLanguage(), 
+                  true);
          }
       });      
 
@@ -1535,7 +1536,7 @@ public class TextEditingTarget implements
             }
          });
       }
-      menu.showRelativeToUpward((UIObject) statusBar_.getScope());
+      menu.showRelativeToUpward((UIObject) statusBar_.getScope(), false);
    }
    
    private MenuItem createMenuItemForType(final TextFileType type)

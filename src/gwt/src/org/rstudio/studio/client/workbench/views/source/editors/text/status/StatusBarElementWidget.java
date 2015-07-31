@@ -65,7 +65,8 @@ public class StatusBarElementWidget extends FlowPanel
                      SelectionEvent.fire(StatusBarElementWidget.this, option);
                   }
                }));
-            menu.showRelativeToUpward(label_);
+            menu.showRelativeToUpward(label_, 
+                  popupAlignment_ == POPUP_ALIGNMENT_RIGHT);
          }
       }, MouseDownEvent.getType());
    }
@@ -96,6 +97,11 @@ public class StatusBarElementWidget extends FlowPanel
                                                             false, false,
                                                             false, false, 0);
       ClickEvent.fireNativeEvent(evt, this);
+   }
+   
+   public void setPopupAlignment(String alignment)
+   {
+      popupAlignment_ = alignment;
    }
 
    public void setShowArrows(boolean showArrows)
@@ -160,4 +166,8 @@ public class StatusBarElementWidget extends FlowPanel
    private final Label label_;
    private Image arrows_;
    private boolean clicksEnabled_ = true;
+   private String popupAlignment_ = POPUP_ALIGNMENT_LEFT;
+         
+   public final static String POPUP_ALIGNMENT_LEFT = "left";
+   public final static String POPUP_ALIGNMENT_RIGHT = "right";
 }
