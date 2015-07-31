@@ -119,9 +119,9 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       public String getDisplayType()
       {
          if (commandType_ == TYPE_RSTUDIO_COMMAND)
-            return "RStudio Command";
+            return "RStudio";
          else if (commandType_ == TYPE_EDITOR_COMMAND)
-            return "Editor Command";
+            return "Editor";
          
          return "<Unknown Command>";
       }
@@ -186,7 +186,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       emptyWidget.add(emptyLabel);
       table_.setEmptyTableWidget(emptyWidget);
       
-      table_.setWidth("800px");
+      table_.setWidth("600px");
       table_.setHeight("400px");
       
       dataProvider_ = new ListDataProvider<CommandBinding>();
@@ -353,7 +353,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       });
       
-      typeColumn_ = textColumn("Type", new TextColumn<CommandBinding>()
+      typeColumn_ = textColumn("Scope", new TextColumn<CommandBinding>()
       {
          @Override
          public String getValue(CommandBinding object)
@@ -361,6 +361,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             return object.getDisplayType();
          }
       });
+      table_.setColumnWidth(typeColumn_, "80px");
    }
    
    private TextColumn<CommandBinding> textColumn(String name, TextColumn<CommandBinding> column)
