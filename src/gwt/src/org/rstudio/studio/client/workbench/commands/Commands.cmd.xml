@@ -2057,63 +2057,77 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Build and Reload"
         desc="Build and reload the package"
         windowMode="background"/>
+        context="packageDevelopment"
+        windowMode="main"/>
 
    <cmd id="rebuildAll"
         label="Clean and Rebuild"
         menuLabel="Clean and _Rebuild"
         desc="Clean previous output and rebuild all"
         windowMode="background"/>
+        context="packageDevelopment"
+        windowMode="main"/>
 
    <cmd id="cleanAll"
         label="Clean All"
         menuLabel="_Clean All"
         buttonLabel="Clean"
+        context="packageDevelopment"
         desc="Clean all"/>
 
    <cmd id="buildSourcePackage"
         menuLabel="Build _Source Package"
+        context="packageDevelopment"
         desc="Build a source package"/>
 
    <cmd id="buildBinaryPackage"
         menuLabel="Build Binar_y Package"
+        context="packageDevelopment"
         desc="Build a binary package"/>
         
    <cmd id="devtoolsLoadAll"
         label="Execute devtools::load_all()"
         menuLabel="_Load All"
         desc="Execute devtools::load_all"
-        windowMode="background"/>
+        windowMode="background"
+        context="packageDevelopment"/>
 
    <cmd id="roxygenizePackage"
         menuLabel="_Document"
         desc="Run roxygen2 to document this package"
-        windowMode="background"/>
+        windowMode="background"
+        context="packageDevelopment"/>
 
    <cmd id="checkPackage"
         buttonLabel="Check"
         menuLabel="_Check Package"
         desc="R CMD check"
-        windowMode="background"/>
+        windowMode="background"
+        context="packageDevelopment"/>
 
    <cmd id="testPackage"
         menuLabel="_Test Package"
         desc="Run tests for package"
         windowMode="background"/>
+        context="packageDevelopment"/>
 
    <cmd id="stopBuild"
         menuLabel="Sto_p Build"
         desc="Stop the current build"
+        context="packageDevelopment"
         windowMode="main"/>
 
    <cmd id="buildToolsProjectSetup"
         label="Configure Build Tools..."
         menuLabel="Configure Build _Tools..."
         desc="Configure build tools"
+        context="packageDevelopment"
         windowMode="main"/>
 
    <cmd id="refreshEnvironment"
         menuLabel="_Refresh Environment"
-        desc="Refresh the list of objects in the environment"/>
+        desc="Refresh the list of objects in the environment"
+        context="r"/>
 
    <cmd id="undoDummy"
         menuLabel="_Undo"

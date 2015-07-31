@@ -120,12 +120,10 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       public String getDisplayType()
       {
-         if (commandType_ == TYPE_RSTUDIO_COMMAND)
-            return "RStudio";
-         else if (commandType_ == TYPE_EDITOR_COMMAND)
+         if (commandType_ == TYPE_EDITOR_COMMAND)
             return "Editor";
          
-         return "<Unknown Command>";
+         return context_.toString();
       }
       
       public boolean isCustomBinding()
@@ -194,7 +192,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       emptyWidget.add(emptyLabel);
       table_.setEmptyTableWidget(emptyWidget);
       
-      table_.setWidth("600px");
+      table_.setWidth("700px");
       table_.setHeight("400px");
       
       dataProvider_ = new ListDataProvider<CommandBinding>();
@@ -369,7 +367,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             return object.getDisplayType();
          }
       });
-      table_.setColumnWidth(typeColumn_, "80px");
+      table_.setColumnWidth(typeColumn_, "160px");
+      
    }
    
    private TextColumn<CommandBinding> textColumn(String name, TextColumn<CommandBinding> column)
@@ -462,7 +461,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             }
             else if (column == 2)
             {
-               result = o1.getCommandType() > o2.getCommandType() ? 1 : -1;
+               result = o1.getContext().toString().compareTo(o2.getContext().toString());
             }
                
             return ascending ? result : -result;
@@ -473,13 +472,17 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private void filter()
    {
       String query = filterWidget_.getValue();
+      
+      boolean isEmptyQuery = StringUtil.isNullOrEmpty(query);
       boolean customOnly = radioCustomized_.getValue();
       
       List<CommandBinding> filtered = new ArrayList<CommandBinding>();
       for (int i = 0; i < originalBindings_.size(); i++)
       {
          CommandBinding binding = originalBindings_.get(i);
+         
          String name = binding.getName();
+         String context = binding.getContext().toString();
          
          if (StringUtil.isNullOrEmpty(name))
             continue;
@@ -487,7 +490,12 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          if (customOnly && !binding.isCustomBinding())
             continue;
          
-         if (name.toLowerCase().indexOf(query.toLowerCase()) != -1)
+         boolean isGoodBinding =
+               isEmptyQuery ||
+               name.toLowerCase().indexOf(query.toLowerCase()) != -1 ||
+               context.toLowerCase().indexOf(query.toLowerCase()) != -1;
+         
+         if (isGoodBinding)
             filtered.add(binding);
       }
       
@@ -678,8 +686,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                @Override
                public int compare(CommandBinding o1, CommandBinding o2)
                {
-                  if (o1.getCommandType() != o2.getCommandType())
-                     return o1.getCommandType() < o2.getCommandType() ? 1 : -1;
+                  if (o1.getContext() != o2.getContext())
+                     return o1.getContext().compareTo(o2.getContext());
                   
                   return o1.getName().compareTo(o2.getName());
                }

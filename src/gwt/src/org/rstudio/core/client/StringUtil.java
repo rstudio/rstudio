@@ -965,6 +965,9 @@ public class StringUtil
       if (isNullOrEmpty(string))
          return string;
       
+      if (string.equals(string.toUpperCase()))
+         return string;
+      
       String result = string.replaceAll("\\s*([A-Z])", " $1");
       return result.substring(0, 1).toUpperCase() +
              result.substring(1);
