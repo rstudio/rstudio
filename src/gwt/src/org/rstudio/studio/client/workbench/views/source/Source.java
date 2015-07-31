@@ -2103,6 +2103,10 @@ public class Source implements InsertSourceHandler,
       if (navResult.getType() == NavigationResult.RESULT_NAVIGATED)
          return;
       
+      // we're about to open in this window--if it's the main window, focus it
+      if (SourceWindowManager.isMainSourceWindow() && Desktop.isDesktop())
+         Desktop.getFrame().bringMainFrameToFront();
+      
       final boolean isDebugNavigation = 
             navMethod == NavigationMethods.DEBUG_STEP ||
             navMethod == NavigationMethods.DEBUG_END;
