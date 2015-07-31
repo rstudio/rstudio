@@ -500,19 +500,18 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          if (KeyboardHelper.isModifierKey(event.getKeyCode()))
             return;
          
+         event.stopPropagation();
+         event.preventDefault();
+         
          CommandBinding binding = preview.getValue();
          
          if (event.getKeyCode() == KeyCodes.KEY_BACKSPACE)
          {
-            event.stopPropagation();
-            event.preventDefault();
             buffer_.pop();
             binding.setKeySequence(buffer_);
          }
          else if (event.getKeyCode() == KeyCodes.KEY_DELETE)
          {
-            event.stopPropagation();
-            event.preventDefault();
             buffer_.clear();
             binding.restoreOriginalKeySequence();
          }
