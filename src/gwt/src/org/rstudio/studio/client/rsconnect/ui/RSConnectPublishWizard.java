@@ -36,6 +36,14 @@ public class RSConnectPublishWizard
          // multiple docs -- see if we should send them all up
          return new PublishMultiplePage("Publish", "Publish", null, input);
       }
+      else if (!input.isMultiRmd() && 
+               (!input.isExternalUIEnabled() || !input.isSelfContained()))
+      {
+         // a single doc, but it can't go to RPubs because RPubs is disabled,
+         // or because the doc is not self-contained
+         return new PublishReportSourcePage("Publish", "Publish", null, input, 
+               false);
+      }
       else
       {
          // non-Shiny doc--see which service user wants to publish to
