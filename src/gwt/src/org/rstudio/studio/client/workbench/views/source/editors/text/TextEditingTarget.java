@@ -1043,7 +1043,7 @@ public class TextEditingTarget implements
       roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
       
       notebook_ = new TextEditingTargetNotebook(
-                              docDisplay_, docUpdateSentinel_, document);   
+                              this, docDisplay_, docUpdateSentinel_, document);   
       
       // ensure that Makefile and Makevars always use tabs
       name_.addValueChangeHandler(new ValueChangeHandler<String>() {

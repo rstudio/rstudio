@@ -21,8 +21,10 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
@@ -30,11 +32,14 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style;
 import com.google.inject.Inject;
 
-public class TextEditingTargetNotebook
+public class TextEditingTargetNotebook 
+               implements EditorThemeStyleChangedEvent.Handler
 {
-   public TextEditingTargetNotebook(DocDisplay docDisplay,
+   public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
+                                    DocDisplay docDisplay,
                                     DocUpdateSentinel docUpdateSentinel,
                                     SourceDocument document)
    {
@@ -65,9 +70,16 @@ public class TextEditingTargetNotebook
                   docDisplay_.addLineWidget(widget);
                }
                initialChunkOutputs_ = null;
+               
+               // sync to editor style changes
+               editingTarget.addEditorThemeStyleChangedHandler(
+                                             TextEditingTargetNotebook.this);
             }
          }
       });
+      
+      
+      
    }
    
    @Inject
@@ -106,11 +118,29 @@ public class TextEditingTargetNotebook
       events_.fireEvent(new SendToConsoleEvent(code, true, false, false));
    }
    
+   
+   @Override
+   public void onEditorThemeStyleChanged(EditorThemeStyleChangedEvent event)
+   {
+      // update cached style 
+      editorStyle_ = event.getStyle();
+      
+      // update existing widgets
+      JsArray<LineWidget> lineWidgets = docDisplay_.getLineWidgets();
+      for (int i=0; i<lineWidgets.length(); i++)
+      {
+         LineWidget lineWidget = lineWidgets.get(i);
+         if (lineWidget.getType().equals(ChunkOutput.LINE_WIDGET_TYPE))
+            setChunkOutputStyle(lineWidget.getElement());
+      }
+   }
+   
+   
    private DivElement elementForChunkOutput(ChunkOutput chunkOutput)
    {
       DivElement div = Document.get().createDivElement();
       div.addClassName(ThemeStyles.INSTANCE.selectableText());
-      div.getStyle().setBackgroundColor("white");
+      setChunkOutputStyle(div);
       div.getStyle().setOpacity(1.0);
       setChunkOutput(div);
       return div;
@@ -120,6 +150,15 @@ public class TextEditingTargetNotebook
    {
       div.setInnerText(Document.get().createUniqueId());
    }
+   
+   private void setChunkOutputStyle(Element div)
+   {
+      if (editorStyle_ != null)
+      {
+         div.getStyle().setBackgroundColor(editorStyle_.getBackgroundColor());
+      }
+   }
+   
   
    
    private JsArray<ChunkOutput> initialChunkOutputs_;
@@ -129,4 +168,6 @@ public class TextEditingTargetNotebook
    private final DocUpdateSentinel docUpdateSentinel_;
    
    private EventBus events_;
+   
+   private Style editorStyle_;
 }
