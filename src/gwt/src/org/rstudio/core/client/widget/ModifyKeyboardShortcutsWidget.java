@@ -17,6 +17,8 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
@@ -533,9 +535,26 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             changes_.put(binding, newBinding);
          }
          
+         ensureCellSelectionUnchanged();
          updateData(dataProvider_.getList());
          
       }
+   }
+   
+   private void ensureCellSelectionUnchanged()
+   {
+      final int row = table_.getKeyboardSelectedRow();
+      final int column = table_.getKeyboardSelectedColumn();
+      
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            table_.setKeyboardSelectedRow(row, true);
+            table_.setKeyboardSelectedColumn(column);
+         }
+      });
    }
    
    private RadioButton radioButton(String label, ClickHandler handler)
