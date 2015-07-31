@@ -31,12 +31,12 @@ public class RSConnectPublishWizard
    private static WizardPage<RSConnectPublishInput, RSConnectPublishResult>
       createFirstPage(RSConnectPublishInput input)
    {
-      if (input.isShiny() && input.isMultiRmd())
+      if (!input.hasDocOutput() && input.isMultiRmd())
       {
-         // multiple Shiny docs -- see if we should send them all up
+         // multiple docs -- see if we should send them all up
          return new PublishMultiplePage("Publish", "Publish", null, input);
       }
-      else 
+      else
       {
          // non-Shiny doc--see which service user wants to publish to
          return new PublishDocServicePage("Publish", "Publish", null, input);
