@@ -102,17 +102,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       private Toolbar parentToolbar_;
    }
    
-   public enum Category
-   {
-      WORKBENCH,
-      EDITOR,
-      R,
-      HELP,
-      VCS,
-      PACKRAT,
-      PRESENTATION
-   }
-
    public AppCommand()
    {
    }
@@ -255,30 +244,50 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       rebindable_ = rebindable;
    }
    
-   public Category getCategory()
+   public enum Context
    {
-      return category_;
+      Workbench,
+      Editor,
+      R,
+      RMarkdown,
+      Markdown,
+      Sweave,
+      Help,
+      VCS,
+      Packrat,
+      RPresentation
+   }
+
+   public Context getContext()
+   {
+      return context_;
    }
    
-   public void setCategory(String category)
+   public void setContext(String context)
    {
-      String lower = category.toLowerCase();
+      String lower = context.toLowerCase();
       if (lower.equals("workbench"))
-         category_ = Category.WORKBENCH;
+         context_ = Context.Workbench;
       else if (lower.equals("editor"))
-         category_ = Category.EDITOR;
+         context_ = Context.Editor;
       else if (lower.equals("vcs"))
-         category_ = Category.VCS;
+         context_ = Context.VCS;
       else if (lower.equals("r"))
-         category_ = Category.R;
+         context_ = Context.R;
+      else if (lower.equals("rmarkdown"))
+         context_ = Context.RMarkdown;
+      else if (lower.equals("sweave"))
+         context_ = Context.Markdown;
+      else if (lower.equals("markdown"))
+         context_ = Context.Sweave;
       else if (lower.equals("help"))
-         category_ = Category.HELP;
+         context_ = Context.Help;
       else if (lower.equals("packrat"))
-         category_ = Category.PACKRAT;
+         context_ = Context.Packrat;
       else if (lower.equals("presentation"))
-         category_ = Category.PRESENTATION;
+         context_ = Context.RPresentation;
       else
-         throw new Error("Invalid AppCommand category '" + category + "'");
+         throw new Error("Invalid AppCommand context '" + context + "'");
    }
 
    /**
@@ -607,7 +616,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private String windowMode_ = "any";
    private final HandlerManager handlers_ = new HandlerManager(this);
    private boolean rebindable_ = true;
-   private Category category_ = Category.WORKBENCH;
+   private Context context_ = Context.Workbench;
 
    private String label_ = null;
    private String buttonLabel_ = null;

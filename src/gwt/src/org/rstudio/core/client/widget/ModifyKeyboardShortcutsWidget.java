@@ -84,13 +84,15 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                             String displayName,
                             KeySequence keySequence,
                             int commandType,
-                            boolean isCustom)
+                            boolean isCustom,
+                            AppCommand.Context context)
       {
          id_ = id;
          name_ = displayName;
          keySequence_ = keySequence;
          commandType_ = commandType;
          isCustom_ = isCustom;
+         context_ = context;
       }
       
       public String getId()
@@ -131,6 +133,11 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          return isCustom_;
       }
       
+      public AppCommand.Context getContext()
+      {
+         return context_;
+      }
+      
       public void setKeySequence(KeySequence keys)
       {
          newKeySequence_ = keys.clone();
@@ -163,6 +170,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       private final KeySequence keySequence_;
       private final int commandType_;
       private final boolean isCustom_;
+      private final AppCommand.Context context_;
       
       private KeySequence newKeySequence_;
       
@@ -527,7 +535,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                   binding.getName(),
                   buffer_.clone(),
                   binding.getCommandType(),
-                  true);
+                  true,
+                  binding.getContext());
 
             changes_.put(binding, newBinding);
          }
@@ -636,7 +645,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                String shortcut = shortcuts.get(j);
                KeySequence keys = KeySequence.fromShortcutString(shortcut);
                int type = CommandBinding.TYPE_EDITOR_COMMAND;
-               bindings.add(new CommandBinding(id, name, keys, type, custom));
+               bindings.add(new CommandBinding(id, name, keys, type, custom,
+                     AppCommand.Context.Editor));
             }
          }
       }
@@ -659,7 +669,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                KeySequence keySequence = command.getKeySequence();
                int type = CommandBinding.TYPE_RSTUDIO_COMMAND;
                boolean isCustom = customBindings.hasKey(id);
-               bindings.add(new CommandBinding(id, name, keySequence, type, isCustom));
+               bindings.add(new CommandBinding(id, name, keySequence, type, isCustom,
+                     command.getContext()));
             }
             
             Collections.sort(bindings, new Comparator<CommandBinding>()
@@ -711,6 +722,9 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             CommandBinding cb2 = originalBindings_.get(j);
             
             if (cb1.equals(cb2))
+               continue;
+            
+            if (cb1.getContext() != cb2.getContext())
                continue;
             
             int t1 = cb1.getCommandType();
@@ -820,7 +834,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    private boolean isExcludedCommand(AppCommand command)
    {
-      if (!command.isRebindable() || !command.isVisible())
+      if (!command.isRebindable())
          return true;
       
       String id = command.getId();
