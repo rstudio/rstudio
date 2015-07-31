@@ -31,6 +31,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.widget.HelpButton;
+import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.SmallButton;
@@ -66,8 +67,9 @@ public class EditingPreferencesPane extends PreferencesPane
             prefs_.continueCommentsOnNewline(),
             "When enabled, pressing enter will continue comments on new lines. Press Shift + Enter to exit a comment."));
       
+      HorizontalPanel keyboardPanel = new HorizontalPanel();
       editorMode_ = new SelectWidget(
-            "Editor Keybindings:",
+            "Keybindings:",
             new String[] {
                   "Default",
                   "Vim",
@@ -82,8 +84,21 @@ public class EditingPreferencesPane extends PreferencesPane
             true,
             false);
       
-      spaced(editorMode_);
-      editingPanel.add(editorMode_);
+      keyboardPanel.add(editorMode_);
+      SmallButton editShortcuts = new SmallButton("Modify Keyboard Shortcuts...");
+      editShortcuts.getElement().getStyle().setMarginLeft(15, Unit.PX);
+      editShortcuts.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            new ModifyKeyboardShortcutsWidget().showModal();
+         }         
+      });
+      keyboardPanel.add(editShortcuts);
+      
+      
+      lessSpaced(keyboardPanel);
+      editingPanel.add(keyboardPanel);
       
       Label executionLabel = headerLabel("Execution");
       editingPanel.add(executionLabel);
