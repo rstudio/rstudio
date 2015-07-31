@@ -58,6 +58,15 @@ public class PublishMultiplePage
                RSConnectResources.INSTANCE.publishMultipleRmd(), 
                input, true, false));
       }
+      else if (input.isStaticDocInput())
+      {
+         pages.add(new PublishFilesPage(singleTitle, singleSubtitle, 
+               RSConnectResources.INSTANCE.publishSingleRmd(), 
+               input, false, true));
+         pages.add(new PublishFilesPage(multipleTitle, multipleSubtitle,
+               RSConnectResources.INSTANCE.publishMultipleRmd(), 
+               input, true, true));
+      }
       else
       {
          pages.add(new PublishReportSourcePage(singleTitle, singleSubtitle,

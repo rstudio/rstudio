@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rsconnect.model;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 
 public class RSConnectPublishInput
@@ -112,6 +113,16 @@ public class RSConnectPublishInput
    public RSConnectActionEvent getOriginatingEvent()
    {
       return originatingEvent_;
+   }
+   
+   public boolean isStaticDocInput()
+   {
+      if (getContentType() != RSConnect.CONTENT_TYPE_DOCUMENT)
+         return false;
+      if (getSourceRmd() == null)
+         return true;
+      final String ext = getSourceRmd().getExtension().toLowerCase();
+      return ext == ".html" || ext == ".md";
    }
    
    private boolean isShiny_;

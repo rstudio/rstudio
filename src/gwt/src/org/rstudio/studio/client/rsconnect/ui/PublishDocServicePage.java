@@ -17,7 +17,6 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
-import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 
@@ -54,9 +53,7 @@ public class PublishDocServicePage
       }
       else 
       {
-         String ext = input.getSourceRmd().getExtension().toLowerCase();
-         if (input.getContentType() == RSConnect.CONTENT_TYPE_DOCUMENT &&
-             (ext == ".html" || ext == ".md"))
+         if (input.isStaticDocInput())
          {
             // static input implies static output
             pages.add(new PublishFilesPage(rscTitle, rscDesc,
