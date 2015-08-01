@@ -510,11 +510,6 @@ public class UIPrefsAccessor extends Prefs
       return integer("preferred_document_outline_width", 125);
    }
    
-   public PrefValue<Boolean> showDocumentOutlineRmd()
-   {
-      return bool("show_document_outline_rmd", true);
-   }
-   
    public PrefValue<Boolean> showUnnamedEntriesInDocumentOutline()
    {
       return bool("show_unnamed_chunks_in_document_outline", true);
