@@ -37,19 +37,29 @@ inline unsigned applyTranslationUnitOptions(unsigned defaultOptions)
    return defaultOptions;
 }
 
+bool isHeaderExtension(const std::string& ex)
+{
+   return ex == ".h" || ex == ".hh" || ex == ".hpp";
+}
+
 } // anonymous namespace
 
 bool SourceIndex::isSourceFile(const FilePath& filePath)
 {
    std::string ex = filePath.extensionLowerCase();
-   return (ex == ".h" || ex == ".hh" || ex == ".hpp" ||
+   return  isHeaderExtension(ex) ||
            ex == ".c" || ex == ".cc" || ex == ".cpp" ||
-           ex == ".m" || ex == ".mm");
+           ex == ".m" || ex == ".mm";
 }
 
 bool SourceIndex::isSourceFile(const std::string& filename)
 {
    return isSourceFile(FilePath(filename));
+}
+
+bool SourceIndex::isHeaderFile(const FilePath& filePath)
+{
+   return isHeaderExtension(filePath.extensionLowerCase());
 }
 
 SourceIndex::SourceIndex(CompilationDatabase compilationDB, int verbose)

@@ -66,6 +66,7 @@
 * Diagnostics: Avoid linting symbols in R formulas
 * Diagnostics: Resolve functions in correct namespace 
 * Diagnostics: Fix invalid diagnostics within formulas
+* Rcpp: Parse attributes when generating diagnostics for header files
 * Enable outdenting in Rhtml documents
 * Find all now respects active search/replace options
 * Fix issue with cursor disappearing in Rmd chunks for ambiance theme
