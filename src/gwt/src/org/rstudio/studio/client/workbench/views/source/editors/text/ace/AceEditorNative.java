@@ -21,6 +21,8 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Command;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+
 import java.util.LinkedList;
 
 public class AceEditorNative extends JavaScriptObject {
@@ -404,4 +406,31 @@ public class AceEditorNative extends JavaScriptObject {
       this.commands = commands;
    }-*/;
    
+   public final static void syncUiPrefs(UIPrefs uiPrefs)
+   {
+      if (uiPrefsSynced_)
+         return;
+
+      uiPrefs.insertMatching().bind(new CommandWithArg<Boolean>() 
+      {
+         @Override
+         public void execute(Boolean arg) 
+         {
+            setInsertMatching(arg);
+         }
+      });
+      
+      uiPrefs.verticallyAlignArgumentIndent().bind(new CommandWithArg<Boolean>()
+      {
+         @Override
+         public void execute(Boolean arg)
+         {
+            setVerticallyAlignFunctionArgs(arg);
+         }
+      });
+
+      uiPrefsSynced_ = true;
+   }
+   
+   private static boolean uiPrefsSynced_ = false;
 }

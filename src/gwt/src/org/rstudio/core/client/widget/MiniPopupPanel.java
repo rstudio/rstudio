@@ -19,6 +19,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
@@ -65,6 +66,21 @@ public class MiniPopupPanel extends DecoratedPopupPanel
    
    private void commonInit()
    {
+      escapeHandler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
+      {
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent event)
+         {
+            if (event.getTypeInt() == Event.ONKEYDOWN &&
+                  event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ESCAPE)
+            {
+               event.cancel();
+               escapeHandler_.removeHandler();
+               escapeHandler_ = null;
+               hide();
+            }
+         }
+      });
       addStyleName(RES.styles().popupPanel());
    }
    
@@ -238,6 +254,7 @@ public class MiniPopupPanel extends DecoratedPopupPanel
    
    private HandlerRegistration dragHandler_;
    private HandlerRegistration clickAfterDragHandler_;
+   private HandlerRegistration escapeHandler_;
    
    private static final String[] TAGS_EXCLUDE_DRAG = new String[] {
       "a", "input", "button", "select"

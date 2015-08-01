@@ -584,15 +584,8 @@ public class Source implements InsertSourceHandler,
             return getPhysicalTabIndex();
          }
       };
-
-      uiPrefs_.verticallyAlignArgumentIndent().bind(new CommandWithArg<Boolean>()
-      {
-         @Override
-         public void execute(Boolean arg)
-         {
-            AceEditorNative.setVerticallyAlignFunctionArgs(arg);
-         }
-      });
+      
+      AceEditorNative.syncUiPrefs(uiPrefs_);
       
       // adjust shortcuts when vim mode changes
       uiPrefs_.useVimMode().bind(new CommandWithArg<Boolean>()
@@ -2102,6 +2095,10 @@ public class Source implements InsertSourceHandler,
       // we navigated externally, just skip this
       if (navResult.getType() == NavigationResult.RESULT_NAVIGATED)
          return;
+      
+      // we're about to open in this window--if it's the main window, focus it
+      if (SourceWindowManager.isMainSourceWindow() && Desktop.isDesktop())
+         Desktop.getFrame().bringMainFrameToFront();
       
       final boolean isDebugNavigation = 
             navMethod == NavigationMethods.DEBUG_STEP ||

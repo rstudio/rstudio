@@ -220,6 +220,11 @@ public class FileTypeRegistry
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
+   public static final TextFileType MAKEFILE = 
+         new TextFileType("makefile", "Makefile", EditorLanguage.LANG_MAKEFILE, ".makefile", ICONS.iconMakefile(),
+               false, false, false, false, false,
+               false, false, false, false, false, false, false, false);
+   
    public static final TextFileType MATLAB = 
          new TextFileType("matlab", "Matlab", EditorLanguage.LANG_MATLAB, ".m", ICONS.iconMatlab(),
                false, false, false, false, false,
@@ -308,8 +313,10 @@ public class FileTypeRegistry
       register("configure.win", SH, icons.iconSh());
       register("cleanup", SH, icons.iconSh());
       register("cleanup.win", SH, icons.iconSh());
-      register("Makevars", SH, icons.iconSh());
-      register("Makevars.win", SH, icons.iconSh());
+      register("Makefile", MAKEFILE, icons.iconMakefile());
+      register("Makefile.win", MAKEFILE, icons.iconMakefile());
+      register("Makevars", MAKEFILE, icons.iconMakefile());
+      register("Makevars.win", MAKEFILE, icons.iconMakefile());
       register("TUTORIAL", DCF, icons.iconText());
       register("NAMESPACE", NAMESPACE, icons.iconText());
       register("*.rhistory", RHISTORY, icons.iconRhistory());

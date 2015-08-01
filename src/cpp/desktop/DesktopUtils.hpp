@@ -40,6 +40,8 @@ bool isOSXMavericks();
 
 void raiseAndActivateWindow(QWidget* pWindow);
 
+void moveWindowBeneath(QWidget* pTop, QWidget* pBottom);
+
 void closeWindow(QWidget* pWindow);
 
 QMessageBox::Icon safeMessageBoxIcon(QMessageBox::Icon icon);

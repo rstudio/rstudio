@@ -21,6 +21,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.events.SatelliteFocusedEvent;
 import org.rstudio.studio.client.server.remote.ClientEventDispatcher;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -238,6 +239,10 @@ public class Satellite implements HasCloseHandlers<Satellite>
   
       // ensure ui prefs initialize
       pUIPrefs_.get();
+      
+      // some objects wait for SessionInit in order to initialize themselves
+      // with SessionInfo
+      events_.fireEvent(new SessionInitEvent());
    }
    
    // called by main window to setParams

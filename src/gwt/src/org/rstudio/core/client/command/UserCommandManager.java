@@ -12,7 +12,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
 import org.rstudio.studio.client.server.remote.RegisterUserCommandEvent;
-import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 import java.util.HashMap;
@@ -73,11 +72,9 @@ public class UserCommandManager
    }
    
    @Inject
-   public void initialize(EventBus events,
-                          FilesServerOperations files)
+   public void initialize(EventBus events)
    {
       events_ = events;
-      files_ = files;
    }
    
    public boolean dispatch(KeyboardShortcut shortcut)
@@ -127,23 +124,8 @@ public class UserCommandManager
       return commandMap_;
    }
    
-   public void saveBindings()
-   {
-      // TODO: Save binding list as well as the R environment
-      // holding the functions bound.
-   }
-   
-   public void loadBindings()
-   {
-      // TODO: Load the binding list as well as the R environment
-      // holding the functions bound.
-   }
-   
    private final Map<KeyboardShortcut, UserCommand> commandMap_;
    
    // Injected ----
    private EventBus events_;
-   
-   @SuppressWarnings("unused")
-   private FilesServerOperations files_;
 }

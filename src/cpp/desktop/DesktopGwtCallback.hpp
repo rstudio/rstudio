@@ -126,6 +126,7 @@ public slots:
 
    void showAboutDialog();
    void bringMainFrameToFront();
+   void bringMainFrameBehindActive();
 
    QString filterText(QString text);
 

@@ -60,4 +60,20 @@ didClearWindowObject:(WebScriptObject *)windowObject
       "   window.notifyRStudioSatelliteReactivated(null);"];
 }
 
+- (BOOL) performKeyEquivalent: (NSEvent *) theEvent
+{
+   NSString* chr = [theEvent charactersIgnoringModifiers];
+   NSUInteger mod = [theEvent modifierFlags] & NSDeviceIndependentModifierFlagsMask;
+
+   // enable the preferences keyboard shortcut in satellites (brings up pref
+   // dialog in main window)
+   if (([chr isEqualToString: @","] && mod == NSCommandKeyMask))
+   {
+      if ([[NSApp mainMenu] performKeyEquivalent: theEvent])
+         return YES;
+   }
+   
+   return [super performKeyEquivalent: theEvent];
+}
+
 @end

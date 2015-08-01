@@ -26,6 +26,7 @@ import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.WindowCloseMonitor;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
@@ -54,8 +55,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
-import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
-import org.rstudio.studio.client.workbench.views.help.events.ShowHelpHandler;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
@@ -70,7 +69,6 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
@@ -87,8 +85,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             DocWindowChangedEvent.Handler,
                                             DocTabClosedEvent.Handler,
                                             AllSatellitesClosingEvent.Handler,
-                                            ShinyApplicationStatusEvent.Handler,
-                                            ShowHelpHandler
+                                            ShinyApplicationStatusEvent.Handler
 {
    @Inject
    public SourceWindowManager(
@@ -123,7 +120,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          events_.addHandler(SatelliteClosedEvent.TYPE, this);
          events_.addHandler(SatelliteFocusedEvent.TYPE, this);
          events_.addHandler(DocTabClosedEvent.TYPE, this);
-         events_.addHandler(ShowHelpEvent.TYPE, this);
 
          JsArray<SourceDocument> docs = 
                session.getSessionInfo().getSourceDocuments();
@@ -565,31 +561,15 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       
       // we get this event when the window is unloaded; it could be that the
       // window is unloading for refresh (in which case its docs could be
-      // preserved) or closing for good. to distinguish between the two cases,
-      // we ping the window for 5 seconds after receiving the unload; if it
-      // closes, we can safely close the docs it contained.
-      final WindowEx window = pSatelliteManager_.get().getSatelliteWindowObject(
-            event.getName());
-      Scheduler.get().scheduleFixedDelay(new Scheduler.RepeatingCommand()
+      // preserved) or closing for good.
+      WindowCloseMonitor.monitorSatelliteClosure(event.getName(), new Command() 
       {
          @Override
-         public boolean execute()
+         public void execute()
          {
-            if (window == null ||
-                window.isClosed() || 
-                pSatelliteManager_.get().getSatelliteWindowObject(
-                      event.getName()) == null)
-            {
-               closeSourceWindowDocs(sourceWindowId(event.getName()));
-               return false;
-            }
-            // retry up to 5 seconds (250ms per try)
-            return retries_++ < 20;
+            closeSourceWindowDocs(sourceWindowId(event.getName()));
          }
-         
-         private int retries_ = 0;
-         
-      }, 250);
+      });
    }
 
    @Override
@@ -660,19 +640,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       fireEventToAllSourceWindows(event);
    }
 
-
-   @Override
-   public void onShowHelp(ShowHelpEvent event)
-   {
-      // when help requests come in from satellites, focus the main frame 
-      if (!event.isFromMainWindow())
-      {
-         if (Desktop.isDesktop())
-            Desktop.getFrame().bringMainFrameToFront();
-         else
-            WindowEx.get().focus();
-      }
-   }
    // Private methods ---------------------------------------------------------
    
    public void fireEventToSourceWindow(String windowId, 
@@ -1010,7 +977,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    {
       return Desktop.isDesktop() || BrowseCap.INSTANCE.isInternetExplorer();
    }
-   
    
    private void focusSourceWindow(String windowId)
    {

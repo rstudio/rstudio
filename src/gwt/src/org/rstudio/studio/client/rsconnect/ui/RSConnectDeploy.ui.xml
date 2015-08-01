@@ -40,12 +40,12 @@
      <g:customCell styleName="{res.style.rootCell}">
       <g:HTMLPanel>
          <g:HorizontalPanel width="100%">
-         <g:Label styleName="{res.style.firstControlLabel}" 
-                  text="Destination Account:">
-         </g:Label>
-         <g:Anchor styleName="rstudio-HyperlinkLabel {res.style.accountAnchor}" 
-                    ui:field="addAccountAnchor_" text="Add New Account">
-         </g:Anchor>
+            <g:Label styleName="{res.style.firstControlLabel}" 
+                     text="Destination Account:">
+            </g:Label>
+            <g:Anchor styleName="rstudio-HyperlinkLabel {res.style.accountAnchor}" 
+                       ui:field="addAccountAnchor_" text="Add New Account">
+            </g:Anchor>
          </g:HorizontalPanel>
          <rsc:RSConnectAccountList styleName="{res.style.accountList}" 
                                    ui:field="accountList_">
@@ -59,8 +59,14 @@
          </g:HTMLPanel>
          <g:HTMLPanel styleName="{res.style.controlLabel}" visible="false" 
                       ui:field="appInfoPanel_">
-            <g:Label text="Update:" 
-                     styleName="{res.style.controlLabel}"></g:Label>
+            <g:HorizontalPanel width="100%" 
+                               styleName="{res.style.controlLabel}">
+               <g:Label text="Update:">
+               </g:Label>
+               <g:Anchor styleName="rstudio-HyperlinkLabel {res.style.accountAnchor}" 
+                          ui:field="createNewAnchor_" text="Create New">
+               </g:Anchor>
+            </g:HorizontalPanel>
             <g:HTMLPanel ui:field="appDetailsPanel_" 
                          styleName="{res.style.appDetailsPanel}" 
                          visible="false">

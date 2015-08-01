@@ -480,6 +480,10 @@ public class TextEditingTarget implements
                if (docDisplay_.isPopupVisible())
                   return;
                
+               // Don't send an interrupt if we're in a source window
+               if (!SourceWindowManager.isMainSourceWindow())
+                  return;
+               
                if (commands_.interruptR().isEnabled())
                   commands_.interruptR().execute();
             }
@@ -1478,7 +1482,8 @@ public class TextEditingTarget implements
                menu.addItem(createMenuItemForType(fileType_));
          
             // show the menu
-            menu.showRelativeToUpward((UIObject) statusBar_.getLanguage());  
+            menu.showRelativeToUpward((UIObject) statusBar_.getLanguage(), 
+                  true);
          }
       });      
 
@@ -1538,7 +1543,7 @@ public class TextEditingTarget implements
             }
          });
       }
-      menu.showRelativeToUpward((UIObject) statusBar_.getScope());
+      menu.showRelativeToUpward((UIObject) statusBar_.getScope(), false);
    }
    
    private MenuItem createMenuItemForType(final TextFileType type)
@@ -2407,6 +2412,12 @@ public class TextEditingTarget implements
    void onShrinkSelection()
    {
       docDisplay_.shrinkSelection();
+   }
+   
+   @Handler
+   void onExpandRaggedSelection()
+   {
+      docDisplay_.expandRaggedSelection();
    }
    
    @Handler

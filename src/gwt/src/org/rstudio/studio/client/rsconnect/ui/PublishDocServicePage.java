@@ -1,5 +1,5 @@
 /*
- * PublishStaticDestPage.java
+ * PublishDocServicePage.java
  *
  * Copyright (C) 2009-15 by RStudio, Inc.
  *
@@ -22,20 +22,19 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 
 import com.google.gwt.resources.client.ImageResource;
 
-public class PublishStaticDestPage 
+public class PublishDocServicePage 
    extends WizardNavigationPage<RSConnectPublishInput, RSConnectPublishResult>
 {
-   public PublishStaticDestPage(String title, String subTitle, 
+   public PublishDocServicePage(String title, String subTitle, 
                                 ImageResource icon,
-                                RSConnectPublishInput input, boolean asMultiple)
+                                RSConnectPublishInput input)
    {
-      super(title, subTitle, "Publish To", icon, null, createPages(input,
-            asMultiple));
+      super(title, subTitle, "Publish To", icon, null, createPages(input));
    }
    
    private static ArrayList<WizardPage<RSConnectPublishInput, 
                                        RSConnectPublishResult>> 
-           createPages(RSConnectPublishInput input, boolean asMultiple)
+           createPages(RSConnectPublishInput input)
    {
       ArrayList<WizardPage<RSConnectPublishInput, 
                            RSConnectPublishResult>> pages =
@@ -43,11 +42,31 @@ public class PublishStaticDestPage
                                                     RSConnectPublishResult>>();
       pages.add(new PublishRPubsPage("RPubs", "RPubs is a free service from " + 
          "RStudio for sharing documents on the web."));
-      pages.add(new PublishFilesPage("RStudio Connect", 
+      String rscTitle = "RStudio Connect";
+      String rscDesc = 
             "A local service running inside your organization. Publish and " +
-            "collaborate privately and securely.",
-         RSConnectResources.INSTANCE.localAccountIcon(),
-         input, asMultiple, true));
+            "collaborate privately and securely.";
+      if (input.isMultiRmd())
+      {
+         pages.add(new PublishMultiplePage(rscTitle, rscDesc, 
+               RSConnectResources.INSTANCE.localAccountIcon(), input));
+      }
+      else 
+      {
+         if (input.isStaticDocInput())
+         {
+            // static input implies static output
+            pages.add(new PublishFilesPage(rscTitle, rscDesc,
+                  RSConnectResources.INSTANCE.localAccountIcon(), input, 
+                  false, true));
+         }
+         else
+         {
+            pages.add(new PublishReportSourcePage(rscTitle, rscDesc, 
+                  RSConnectResources.INSTANCE.localAccountIcon(), input, 
+                  false));
+         }
+      }
       return pages;
    }
 }

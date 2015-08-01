@@ -178,6 +178,17 @@ public class RSConnectDeploy extends Composite
             event.stopPropagation();
          }
       });
+      
+      createNewAnchor_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            forgetPreviousDeployment();
+            event.preventDefault();
+            event.stopPropagation();
+         }
+      });
 
       addFileButton_.setVisible(forDocument_);
       addFileButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
@@ -274,7 +285,6 @@ public class RSConnectDeploy extends Composite
                   onDeployEnabled_.execute();
                else if (!existing)
                   appName_.validateAppName();
-                  
             }
          }
       });
@@ -296,9 +306,9 @@ public class RSConnectDeploy extends Composite
       accountList_.selectAccount(account);
    }
    
-   public void setAccountList(JsArray<RSConnectAccount> accounts)
+   public int setAccountList(JsArray<RSConnectAccount> accounts)
    {
-      accountList_.setAccountList(accounts);
+      return accountList_.setAccountList(accounts);
    }
    
    public void addFileToList(String path)
@@ -369,10 +379,10 @@ public class RSConnectDeploy extends Composite
       contentType_ = contentType;
       asMultipleRmd_ = asMultipleRmd;
       
-      // not all destination accounts support static content
-      if (asStatic_ != asStatic)
+      // we want to show cloud accounts only for non-static content
+      if (source.isShiny() != accountList_.getShowCloudAccounts())
       {
-         accountList_.setShowCloudAccounts(!asStatic);
+         accountList_.setShowCloudAccounts(source.isShiny());
          accountList_.refreshAccountList();
       }
       
@@ -545,14 +555,21 @@ public class RSConnectDeploy extends Composite
 
                      // find an app with the same account, server, and name;
                      // when found, populate the UI with app details
+                     boolean found = false;
                      for (int i = 0; i < infos.length(); i++)
                      {
                         RSConnectApplicationInfo info = infos.get(i);
                         if (info.getName() == fromPrevious_.getName())
                         {
                            showAppInfo(info);
+                           found = true;
                            break;
                         }
+                     }
+
+                     if (!found)
+                     {
+                        forgetPreviousDeployment();
                      }
                   }
                   @Override
@@ -576,11 +593,16 @@ public class RSConnectDeploy extends Composite
          @Override
          public void onResponseReceived(JsArray<RSConnectAccount> accounts)
          {
+            // populate the accounts in the UI (the account display widget 
+            // filters based on account criteria)
+            int numAccounts = setAccountList(accounts);
+
             // if this is our first try, ask the user to connect an account
             // since none are currently connected
-            if (accounts.length() == 0 && !isRetry)
+            if (numAccounts == 0 && !isRetry)
             {
-               connector_.showAccountWizard(true, !asStatic_,
+               connector_.showAccountWizard(accounts.length() == 0, 
+                     source_.isShiny(),
                      new OperationWithInput<Boolean>() 
                {
                   @Override
@@ -592,7 +614,6 @@ public class RSConnectDeploy extends Composite
             }
             else
             {
-               setAccountList(accounts);
                setPreviousInfo();
             }
          }
@@ -913,8 +934,23 @@ public class RSConnectDeploy extends Composite
             });
    }
    
+   private void forgetPreviousDeployment()
+   {
+      // set the UI state to creating a new app with the same name as the one
+      // that was removed
+      appName_.setVisible(true);
+      if (fromPrevious_ != null)
+         appName_.setText(fromPrevious_.getName());
+      appInfoPanel_.setVisible(false);
+      newAppPanel_.setVisible(true);
+
+      // pretend we're creating a brand-new app
+      fromPrevious_ = null;
+   }
+   
    
    @UiField Anchor addAccountAnchor_;
+   @UiField Anchor createNewAnchor_;
    @UiField Anchor urlAnchor_;
    @UiField AppNameTextbox appName_;
    @UiField Grid mainGrid_;
@@ -950,8 +986,8 @@ public class RSConnectDeploy extends Composite
    private boolean asStatic_;
    private int contentType_;
    private Command onDeployEnabled_;
+   private RSConnectDeploymentRecord fromPrevious_;
 
    private final DeployStyle style_;
    private final boolean forDocument_;
-   private final RSConnectDeploymentRecord fromPrevious_;
 }

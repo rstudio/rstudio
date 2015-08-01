@@ -107,7 +107,7 @@ public class RSConnectAccountList extends Composite
       });
    }
    
-   public void setAccountList(JsArray<RSConnectAccount> accounts)
+   public int setAccountList(JsArray<RSConnectAccount> accounts)
    {
       accounts_.clear();
       accountList_.clearItems();
@@ -123,6 +123,7 @@ public class RSConnectAccountList extends Composite
       {
          onRefreshCompleted_.execute();
       }
+      return accounts_.size();
    }
    
    public RSConnectAccount getSelectedAccount()
@@ -184,6 +185,11 @@ public class RSConnectAccountList extends Composite
    public void setShowCloudAccounts(boolean show)
    {
       showCloudAccounts_ = show;
+   }
+   
+   public boolean getShowCloudAccounts()
+   {
+      return showCloudAccounts_;
    }
    
    private final WidgetListBox<AccountEntry> accountList_;

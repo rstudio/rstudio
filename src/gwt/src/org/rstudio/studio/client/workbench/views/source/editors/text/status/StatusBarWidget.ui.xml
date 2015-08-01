@@ -68,6 +68,7 @@
                                  
       <sb:StatusBarElementWidget ui:field="language_"
                                  styleName="{style.element} {style.last}"
-                                 showArrows="true"/>
+                                 showArrows="true"
+                                 popupAlignment="right"/>
    </g:HorizontalPanel>
 </ui:UiBinder>

@@ -35,6 +35,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 
@@ -101,17 +102,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       private Toolbar parentToolbar_;
    }
    
-   public enum Category
-   {
-      WORKBENCH,
-      EDITOR,
-      R,
-      HELP,
-      VCS,
-      PACKRAT,
-      PRESENTATION
-   }
-
    public AppCommand()
    {
    }
@@ -140,13 +130,23 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       // if this window is a satellite but the command only wants to be handled
       // in the a different window, execute the command there instead
       Satellite satellite = RStudioGinjector.INSTANCE.getSatellite();
-      if (getWindowMode() != "any" &&
+      if (getWindowMode() != WINDOW_MODE_ANY &&
           Satellite.isCurrentWindowSatellite() && 
           satellite.getSatelliteName() != getWindowMode()) 
       {
-         // raise the main window if it's not a background command
-         if (!getWindowMode().equals(WINDOW_MODE_BACKGROUND))
+         if (getWindowMode().equals(WINDOW_MODE_MAIN))
+         {
+            // raise the main window if it's not a background command
             satellite.focusMainWindow();
+         }
+         else if (getWindowMode().equals(WINDOW_MODE_BACKGROUND) &&
+                  Desktop.isDesktop())
+         {
+            // for background commands, we still want the main window to be
+            // as visible as possible, so bring it up behind the current window
+            // (this is of course only possible in desktop mode)
+            Desktop.getFrame().bringMainFrameBehindActive();
+         }
          
          // satellites don't fire commands peer-to-peer--route it to the main
          // window for processing
@@ -244,30 +244,55 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       rebindable_ = rebindable;
    }
    
-   public Category getCategory()
+   public enum Context
    {
-      return category_;
+      Workbench, Editor, R, Cpp, PackageDevelopment, RMarkdown,
+      Markdown, Sweave, Help, VCS, Packrat, RPresentation;
+      
+      @Override
+      public String toString()
+      {
+         if (this == Cpp)
+            return "C / C++";
+         
+         return StringUtil.prettyCamel(super.toString());
+      }
+   }
+
+   public Context getContext()
+   {
+      return context_;
    }
    
-   public void setCategory(String category)
+   public void setContext(String context)
    {
-      String lower = category.toLowerCase();
+      String lower = context.toLowerCase();
       if (lower.equals("workbench"))
-         category_ = Category.WORKBENCH;
+         context_ = Context.Workbench;
       else if (lower.equals("editor"))
-         category_ = Category.EDITOR;
+         context_ = Context.Editor;
       else if (lower.equals("vcs"))
-         category_ = Category.VCS;
+         context_ = Context.VCS;
       else if (lower.equals("r"))
-         category_ = Category.R;
+         context_ = Context.R;
+      else if (lower.equals("cpp"))
+         context_ = Context.Cpp;
+      else if (lower.equals("packagedevelopment"))
+         context_ = Context.PackageDevelopment;
+      else if (lower.equals("rmarkdown"))
+         context_ = Context.RMarkdown;
+      else if (lower.equals("sweave"))
+         context_ = Context.Markdown;
+      else if (lower.equals("markdown"))
+         context_ = Context.Sweave;
       else if (lower.equals("help"))
-         category_ = Category.HELP;
+         context_ = Context.Help;
       else if (lower.equals("packrat"))
-         category_ = Category.PACKRAT;
+         context_ = Context.Packrat;
       else if (lower.equals("presentation"))
-         category_ = Category.PRESENTATION;
+         context_ = Context.RPresentation;
       else
-         throw new Error("Invalid AppCommand category '" + category + "'");
+         throw new Error("Invalid AppCommand context '" + context + "'");
    }
 
    /**
@@ -596,7 +621,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private String windowMode_ = "any";
    private final HandlerManager handlers_ = new HandlerManager(this);
    private boolean rebindable_ = true;
-   private Category category_ = Category.WORKBENCH;
+   private Context context_ = Context.Workbench;
 
    private String label_ = null;
    private String buttonLabel_ = null;
@@ -612,4 +637,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
  
    private static boolean enableNoHandlerAssertions_ = true;
    private static final String WINDOW_MODE_BACKGROUND = "background";
+   private static final String WINDOW_MODE_MAIN = "main";
+   private static final String WINDOW_MODE_ANY = "any";
 }

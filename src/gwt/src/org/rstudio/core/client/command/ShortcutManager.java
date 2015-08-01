@@ -203,12 +203,14 @@ public class ShortcutManager implements NativePreviewHandler,
       keyBuffer_.clear();
    }
    
-   private void updateKeyBuffer()
+   // Returns 'true' if the event is canceled.
+   private void updateKeyBuffer(NativeEvent event)
    {
       if (keyBuffer_.isEmpty())
          return;
       
-      // If we have a prefix match, keep the keybuffer alive.
+      // If we have a prefix match, keep the keybuffer alive and cancel the
+      // event (to ensure Ace doesn't see it)
       for (KeyboardShortcut shortcut : commands_.keySet())
          if (shortcut.startsWith(keyBuffer_))
             return;
@@ -222,6 +224,7 @@ public class ShortcutManager implements NativePreviewHandler,
       
       // Otherwise, clear the keybuffer.
       resetKeyBuffer();
+      return;
    }
 
    public void onKeyDown(NativeKeyDownEvent evt)
@@ -237,7 +240,7 @@ public class ShortcutManager implements NativePreviewHandler,
       }
       else
       {
-         updateKeyBuffer();
+         updateKeyBuffer(evt.getEvent());
       }
    }
 
@@ -256,7 +259,7 @@ public class ShortcutManager implements NativePreviewHandler,
          }
          else
          {
-            updateKeyBuffer();
+            updateKeyBuffer(event.getNativeEvent());
          }
       }
    }

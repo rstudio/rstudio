@@ -153,10 +153,7 @@ public class Shell implements ConsoleInputHandler,
       addKeyDownPreviewHandler(new HistoryCompletionManager(
             view_.getInputEditorDisplay(), server));
 
-      uiPrefs.insertMatching().bind(new CommandWithArg<Boolean>() {
-         public void execute(Boolean arg) {
-            AceEditorNative.setInsertMatching(arg);
-         }});
+      AceEditorNative.syncUiPrefs(uiPrefs);
 
       sessionInit(session);
    }

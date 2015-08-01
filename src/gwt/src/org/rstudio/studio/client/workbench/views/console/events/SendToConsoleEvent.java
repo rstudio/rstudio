@@ -86,6 +86,13 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleHandler>
    }
    
    @Override
+   public int focusMode()
+   {
+      return shouldFocus() ? CrossWindowEvent.MODE_FOCUS : 
+                             CrossWindowEvent.MODE_AUXILIARY;
+   }
+   
+   @Override
    public Type<SendToConsoleHandler> getAssociatedType()
    {
       return TYPE;
