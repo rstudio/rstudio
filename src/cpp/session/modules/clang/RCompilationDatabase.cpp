@@ -746,12 +746,11 @@ RCompilationDatabase::CompilationConfig
 
    // if this is a header file we need to rename it as a temporary .cpp
    // file so that R CMD SHLIB is willing to compile it
-   FilePath tempSrcFile;
+   FilePath tempSrcFile = srcFile.parent().childPath(
+            kCompilationDbPrefix + core::system::generateUuid() + ".cpp");
    RemoveOnExitScope removeOnExit(tempSrcFile, ERROR_LOCATION);
    if (SourceIndex::isHeaderFile(srcFile))
    {
-      tempSrcFile = srcFile.parent().childPath(
-          kCompilationDbPrefix + core::system::generateUuid() + ".cpp");
       Error error = srcFile.copy(tempSrcFile);
       if (error)
       {
