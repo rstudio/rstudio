@@ -5254,7 +5254,7 @@ public class TextEditingTarget implements
    {
       String property = docUpdateSentinel_.getProperty("docOutlineVisible");
       return StringUtil.isNullOrEmpty(property)
-            ? false
+            ? (getTextFileType().isRmd() && prefs_.showDocumentOutlineRmd().getGlobalValue())
             : Integer.parseInt(property) > 0;
    }
    
