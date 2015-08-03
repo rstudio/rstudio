@@ -141,8 +141,19 @@
 
 .rs.addFunction("getFunction", function(name, namespaceName)
 {
+   # resolve "namespace:" environments
+   envir <- if (identical(substring(namespaceName, 1, nchar("namespace:")), 
+                          "namespace:"))
+   {
+     asNamespace(substring(namespaceName, nchar("namespace:") + 1))
+   }
+   else
+   {
+     as.environment(namespaceName);
+   }
+
    tryCatch(eval(parse(text = name),
-                 envir = as.environment(namespaceName),
+                 envir = envir,
                  enclos = NULL),
             error = function(e) NULL)
 })

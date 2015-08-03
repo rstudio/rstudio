@@ -540,14 +540,25 @@
 
 .rs.addFunction("environmentName", function(env)
 {
+   # global environment 
+   if (identical(env, globalenv()))
+     return(".GlobalEnv")
+
    # look for the environment's given name; if it doesn't have a name, check
    # the callstack to see if it matches the environment in one of the call 
    # frames.
    result <- environmentName(env)
+   
    if (nchar(result) == 0)
       .rs.environmentCallFrameName(env)$name
    else
-      result
+   {
+      # resolve namespaces
+      if (isNamespaceLoaded(result) && identical(asNamespace(result), env))
+         paste("namespace:", result, sep="")
+      else
+         result
+   }
 })
 
 .rs.addFunction("environmentList", function(startEnv)
@@ -643,4 +654,6 @@
       is(obj, "externalptr") && capture.output(print(obj)) == "<pointer: 0x0>"
    }
 })
+
+
 

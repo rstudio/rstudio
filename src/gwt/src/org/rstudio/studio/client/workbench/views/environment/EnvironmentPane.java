@@ -216,7 +216,7 @@ public class EnvironmentPane extends WorkbenchPane
       environmentButton_.setLeftImage(imageOfEnvironment(environmentName, 
                                                          local));
       objects_.setEnvironmentName(friendlyEnvironmentName());
-      if (environmentName.equals("R_GlobalEnv"))
+      if (environmentName.equals(".GlobalEnv"))
          commands_.clearWorkspace().setEnabled(true); 
       else
          commands_.clearWorkspace().setEnabled(false);
@@ -430,7 +430,7 @@ public class EnvironmentPane extends WorkbenchPane
    
    private String friendlyNameOfEnvironment(String name)
    {
-      if (name.equals("R_GlobalEnv"))
+      if (name.equals(".GlobalEnv") || name.equals("R_GlobalEnv"))
          return GLOBAL_ENVIRONMENT_NAME;
       else if (name.equals("base"))
          return "package:base";
@@ -442,7 +442,7 @@ public class EnvironmentPane extends WorkbenchPane
    {
       if (name.endsWith("()"))
          return EnvironmentResources.INSTANCE.functionEnvironment();
-      else if (name.equals("R_GlobalEnv"))
+      else if (name.equals(".GlobalEnv") || name.equals("R_GlobalEnv"))
          return EnvironmentResources.INSTANCE.globalEnvironment();
       else if (name.startsWith("package:") ||
                name.equals("base") || 

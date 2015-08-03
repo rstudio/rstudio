@@ -201,6 +201,7 @@ public class EnvironmentPresenter extends BasePresenter
          {
             loadNewContextState(event.getContextDepth(), 
                   event.getEnvironmentName(),
+                  event.getFunctionEnvName(),
                   event.environmentIsLocal(),
                   event.getCallFrames(),
                   event.useProvidedSource(),
@@ -540,6 +541,7 @@ public class EnvironmentPresenter extends BasePresenter
    {
       loadNewContextState(environmentState.contextDepth(),
             environmentState.environmentName(),
+            environmentState.functionEnvName(),
             environmentState.environmentIsLocal(),
             environmentState.callFrames(),
             environmentState.useProvidedSource(),
@@ -578,6 +580,7 @@ public class EnvironmentPresenter extends BasePresenter
 
    private void loadNewContextState(int contextDepth, 
          String environmentName,
+         String functionEnvName,
          boolean isLocalEvironment, 
          JsArray<CallFrame> callFrames,
          boolean useBrowseSources,
@@ -585,6 +588,7 @@ public class EnvironmentPresenter extends BasePresenter
    {
       boolean enteringDebugMode = setContextDepth(contextDepth);
       environmentName_ = environmentName;
+      functionEnvName_ = functionEnvName;
       view_.setEnvironmentName(environmentName_, isLocalEvironment);
       if (callFrames != null && 
           callFrames.length() > 0 &&
@@ -703,12 +707,24 @@ public class EnvironmentPresenter extends BasePresenter
                {
                   functionName = functionName.substring(0, idx);
                }
+               
+               // omit qualifiers
+               idx = functionName.indexOf("::");
+               if (idx > 0)
+               {
+                  functionName = functionName.substring(idx + 1);
+                  // :::, too
+                  if (functionName.startsWith(":"))
+                     functionName = functionName.substring(1);
+               }
+               
                // if this is a different source file than we already have open,
                // open it 
                eventBus_.fireEvent(new CodeBrowserNavigationEvent(
                      SearchPathFunctionDefinition.create(
                            functionName, 
-                           "debugging", 
+                           StringUtil.isNullOrEmpty(functionEnvName_) ? 
+                                 "debugging" : functionEnvName_, 
                            currentBrowseSource_,
                            true),
                      currentBrowsePosition_.functionRelativePosition(
@@ -888,5 +904,6 @@ public class EnvironmentPresenter extends BasePresenter
    private boolean useCurrentBrowseSource_;
    private String currentBrowseSource_;
    private String environmentName_;
+   private String functionEnvName_;
    private Timer requeryContextTimer_;
 }

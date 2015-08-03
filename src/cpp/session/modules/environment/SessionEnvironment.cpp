@@ -719,6 +719,12 @@ json::Object commonEnvironmentStateData(
       if (env != R_GlobalEnv && env == pContext->cloenv)
       {
          varJson["environment_name"] = functionName + "()";
+         std::string envLocation;
+         error = r::exec::RFunction(".rs.environmentName", 
+               ENCLOS(pContext->cloenv)).call(&envLocation);
+         if (error)
+            LOG_ERROR(error);
+         varJson["function_environment_name"] = envLocation;
          varJson["environment_is_local"] = true;
          inFunctionEnvironment = true;
       }
