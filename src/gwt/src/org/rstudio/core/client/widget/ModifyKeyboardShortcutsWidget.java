@@ -63,6 +63,7 @@ import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
+import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
@@ -185,6 +186,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    public ModifyKeyboardShortcutsWidget()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
+      shortcuts_ = ShortcutManager.INSTANCE;
       
       changes_ = new HashMap<CommandBinding, CommandBinding>();
       buffer_ = new KeySequence();
@@ -741,7 +743,11 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
 
                String id = command.getId();
                String name = getAppCommandName(command);
-               KeySequence keySequence = command.getKeySequence();
+               
+               KeySequence keySequence = customBindings.hasKey(id) ?
+                     customBindings.get(id).getKeyBinding() :
+                     command.getKeySequence();
+                     
                int type = CommandBinding.TYPE_RSTUDIO_COMMAND;
                boolean isCustom = customBindings.hasKey(id);
                bindings.add(new CommandBinding(id, name, keySequence, type, isCustom,
@@ -808,7 +814,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             KeySequence ks1 = cb1.getKeySequence();
             KeySequence ks2 = cb2.getKeySequence();
             
-            if (ks1 == null || ks2 == null)
+            if (ks1 == null || ks2 == null || ks1.isEmpty() || ks2.isEmpty())
                continue;
             
             boolean hasConflict =
@@ -930,6 +936,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             }
    };
    
+   private final ShortcutManager shortcuts_;
    private final KeySequence buffer_;
    private final DataGrid<CommandBinding> table_;
    private final ListDataProvider<CommandBinding> dataProvider_;
