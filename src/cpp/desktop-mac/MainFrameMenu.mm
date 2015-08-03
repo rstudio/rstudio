@@ -172,17 +172,25 @@ NSString* charToStr(unichar c) {
       return [menuStack_ lastObject];
 }
 
-- (WebViewController*) menuTargetController
-{
-   return [WebViewController activeDesktopController];
-}
-
 - (void) invoke: (id) sender {
    // get the command to invoke
    NSString* command = [commands_ objectAtIndex: [sender tag]];
+   WebViewController* targetController =
+      [WebViewController activeDesktopController];
+   
+   // when the window that wants commands wasn't the one active when the
+   // command was invoked, check for commands which shouldn't be forwarded
+   if (targetController != [[NSApp keyWindow] windowController])
+   {
+      if ([command isEqualToString: @"findReplace"])
+      {
+         // the find command should always be invoked on the active window
+         return;
+      }
+   }
    
    // invoke it on the window that currently wants commands
-   [[self menuTargetController] invokeCommand: command];
+   [[WebViewController activeDesktopController] invokeCommand: command];
 }
 
 - (void) assignShortcut: (NSString*) shortcut toMenuItem: (NSMenuItem*) menuItem {
@@ -229,7 +237,8 @@ NSString* charToStr(unichar c) {
    }
    
    // get the window to query for command state
-   WebViewController *menuController = [self menuTargetController];
+   WebViewController *menuController =
+      [WebViewController activeDesktopController];
 
    NSString* command = [commands_ objectAtIndex: [item tag]];
 
@@ -441,7 +450,8 @@ NSString* charToStr(unichar c) {
 
 - (void) menuNeedsUpdate: (NSMenu *) menu
 {
-   WebViewController* menuController = [self menuTargetController];
+   WebViewController* menuController =
+      [WebViewController activeDesktopController];
    for (NSMenuItem* item in [menu itemArray])
    {
       if ([item hasSubmenu])
