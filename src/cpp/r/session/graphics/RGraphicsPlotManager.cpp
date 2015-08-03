@@ -556,6 +556,10 @@ void PlotManager::onBeforeExecute()
 
 Error PlotManager::savePlotsState()
 {
+   // exit if we don't have a plot list
+   if (!plotsStateFile_.exists())
+      return Success() ;
+
    // list to write
    std::vector<std::string> plots ;
    
