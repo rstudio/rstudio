@@ -544,6 +544,10 @@
    if (identical(env, globalenv()))
      return(".GlobalEnv")
 
+   # base environment
+   if (identical(env, baseenv()))
+     return("package:base")
+
    # look for the environment's given name; if it doesn't have a name, check
    # the callstack to see if it matches the environment in one of the call 
    # frames.

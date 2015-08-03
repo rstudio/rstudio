@@ -729,7 +729,7 @@ public class EnvironmentPresenter extends BasePresenter
                            true),
                      currentBrowsePosition_.functionRelativePosition(
                            currentFunctionLineNumber_),
-                     contextDepth_ == 1));
+                     contextDepth_ == 1, false));
             }
             else if (currentBrowsePosition_.getLine() > 0)
             {
