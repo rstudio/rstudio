@@ -1,7 +1,6 @@
 
 ## v0.99b - Release Notes
 
-
 ### Source Editor
 
 * Support for multiple source windows (tear editor tabs off main window)
@@ -15,7 +14,6 @@
 * New Emacs editing mode
 * More context-sensitive highlighting of R keywords
 * Option to enable highlighting of R function calls
-
 
 ### R Markdown
 
@@ -47,7 +45,6 @@
 * Automatically create ~/.ssh directory if necessary on Windows
 * Added `Makefile` mode (used for `Makefile`, `Makevars`)
 
-
 ### Server
 
 * Include active project in document title (caption of browser tab) 
@@ -59,7 +56,6 @@
 * Server Pro: Remove Google OpenID auth (deprecated by Google in favor of OAuth)
 * Server Pro: Add option to specify client-id for Graphite metrics back end
 * Server Pro: Ability to record user console history for audit purposes
-
 
 ### Bug Fixes
 
