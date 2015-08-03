@@ -366,6 +366,8 @@ public class WebApplicationHeader extends Composite
          usernameLabel.getElement().getStyle().setMarginRight(2, Unit.PX);
          if (!BrowseCap.isFirefox())
             usernameLabel.getElement().getStyle().setMarginTop(2, Unit.PX);
+         String userIdentity = sessionInfo.getUserIdentity();
+         userIdentity = userIdentity.split("@")[0];
          usernameLabel.setText(sessionInfo.getUserIdentity());
          headerBarCommandsPanel_.add(usernameLabel);
         
