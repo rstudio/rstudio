@@ -198,7 +198,8 @@
    # check for parameters 
    if (length(knitr::knit_params(readLines(file, 
                                            warn = FALSE, 
-                                           encoding = encoding))) > 0) {
+                                           encoding = encoding),
+                                 evaluate = FALSE)) > 0) {
       
       # allocate temp file to hold parameter values
       paramsFile <- .Call("rs_paramsFileForRmd", file)
