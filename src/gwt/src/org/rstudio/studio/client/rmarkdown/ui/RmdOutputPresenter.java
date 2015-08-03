@@ -55,6 +55,7 @@ public class RmdOutputPresenter implements
       void refresh();
       String getTitle();
       String getAnchor();
+      void focusFind();
    }
    
    @Inject
@@ -142,6 +143,12 @@ public class RmdOutputPresenter implements
    public void onRefreshSuperDevMode()
    {
       SuperDevMode.reload();
+   }
+   
+   @Handler
+   public void onFindReplace()
+   {
+      view_.focusFind();
    }
 
    public void showOutput(RmdPreviewParams params) 

@@ -178,19 +178,8 @@ NSString* charToStr(unichar c) {
    WebViewController* targetController =
       [WebViewController activeDesktopController];
    
-   // when the window that wants commands wasn't the one active when the
-   // command was invoked, check for commands which shouldn't be forwarded
-   if (targetController != [[NSApp keyWindow] windowController])
-   {
-      if ([command isEqualToString: @"findReplace"])
-      {
-         // the find command should always be invoked on the active window
-         return;
-      }
-   }
-   
    // invoke it on the window that currently wants commands
-   [[WebViewController activeDesktopController] invokeCommand: command];
+   [targetController invokeCommand: command];
 }
 
 - (void) assignShortcut: (NSString*) shortcut toMenuItem: (NSMenuItem*) menuItem {
