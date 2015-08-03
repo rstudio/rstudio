@@ -34,6 +34,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.cellview.client.AbstractCellTable;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
@@ -202,6 +203,34 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       table_.setWidth("700px");
       table_.setHeight("400px");
+      
+      
+      table_.setKeyboardSelectionHandler(new CellPreviewEvent.Handler<CommandBinding>()
+      {
+         private final AbstractCellTable.CellTableKeyboardSelectionHandler<CommandBinding> handler_ =
+               new AbstractCellTable.CellTableKeyboardSelectionHandler<ModifyKeyboardShortcutsWidget.CommandBinding>(table_);
+         
+         @Override
+         public void onCellPreview(CellPreviewEvent<CommandBinding> preview)
+         {
+            // Don't let arrow keys change the selection when a shortcut cell
+            // has been selected.
+            if (preview.getColumn() == 1)
+            {
+               NativeEvent event = preview.getNativeEvent();
+               int code = event.getKeyCode();
+               if (code == KeyCodes.KEY_UP ||
+                   code == KeyCodes.KEY_DOWN ||
+                   code == KeyCodes.KEY_LEFT ||
+                   code == KeyCodes.KEY_RIGHT)
+               {
+                  return;
+               }
+            }
+            
+            handler_.onCellPreview(preview);
+         }
+      });
       
       dataProvider_ = new ListDataProvider<CommandBinding>();
       dataProvider_.addDataDisplay(table_);
@@ -395,7 +424,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          {
             int column = preview.getColumn();
             if (column == 0)
-               ;
+               onNameCellPreview(preview);
             else if (column == 1)
                onShortcutCellPreview(preview);
             else if (column == 2)
@@ -511,6 +540,18 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
    }
    
+   private void onNameCellPreview(CellPreviewEvent<CommandBinding> preview)
+   {
+      NativeEvent event = preview.getNativeEvent();
+      String type = event.getType();
+      if (type.equals("keydown") && event.getKeyCode() == KeyCodes.KEY_ESCAPE)
+      {
+         event.stopPropagation();
+         event.preventDefault();
+         filterWidget_.focus();
+      }
+   }
+   
    private void onShortcutCellPreview(CellPreviewEvent<CommandBinding> preview)
    {
       NativeEvent event = preview.getNativeEvent();
@@ -546,7 +587,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          {
             buffer_.clear();
             binding.restoreOriginalKeySequence();
-            filterWidget_.focus();
+            table_.setKeyboardSelectedColumn(0);
          }
          else
          {
@@ -611,42 +652,47 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       resetState();
       
       setEscapeDisabled(true);
-      escapeHandler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
+      setEnterDisabled(true);
+      
+      previewHandler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
       {
          @Override
-         public void onPreviewNativeEvent(NativePreviewEvent event)
+         public void onPreviewNativeEvent(NativePreviewEvent preview)
          {
-            if (event.getTypeInt() == Event.ONKEYDOWN &&
-                event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ESCAPE)
+            if (preview.getTypeInt() == Event.ONKEYDOWN)
             {
-               if (filterWidget_.isFocused())
+               int keyCode = preview.getNativeEvent().getKeyCode();
+               if (keyCode == KeyCodes.KEY_ESCAPE || keyCode == KeyCodes.KEY_ENTER)
                {
-                  closeDialog();
-                  return;
-               }
-               
-               Element target = event.getNativeEvent().getEventTarget().cast();
-               Element foundTable = DomUtils.findParentElement(target, new ElementPredicate()
-               {
-                  @Override
-                  public boolean test(Element el)
+                  if (filterWidget_.isFocused())
                   {
-                     return el.equals(table_.getElement());
+                     closeDialog();
+                     return;
                   }
-               });
-               
-               // If an element within the underlying CellTable has focus, let it
-               // handle Escape. Otherwise, take over and provide modal dialog closing
-               // behaviours.
-               if (foundTable != null)
-                  return;
-               
-               // Pressing escape should focus the filter widget if it does
-               // not have focus.
-               event.cancel();
-               event.getNativeEvent().stopPropagation();
-               event.getNativeEvent().preventDefault();
-               filterWidget_.focus();
+
+                  Element target = preview.getNativeEvent().getEventTarget().cast();
+                  Element foundTable = DomUtils.findParentElement(target, new ElementPredicate()
+                  {
+                     @Override
+                     public boolean test(Element el)
+                     {
+                        return el.equals(table_.getElement());
+                     }
+                  });
+
+                  // If an element within the underlying CellTable has focus, let it
+                  // handle Escape. Otherwise, take over and provide modal dialog closing
+                  // behaviours.
+                  if (foundTable != null)
+                     return;
+
+                  // Pressing escape should focus the filter widget if it does
+                  // not have focus.
+                  preview.cancel();
+                  preview.getNativeEvent().stopPropagation();
+                  preview.getNativeEvent().preventDefault();
+                  filterWidget_.focus();
+               }
             }
          }
       });
@@ -659,7 +705,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             if (event.isAttached())
                ;
             else
-               escapeHandler_.removeHandler();
+               previewHandler_.removeHandler();
          }
       });
       
@@ -948,7 +994,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private static final String RADIO_BUTTON_GROUP =
          "radioCustomizeKeyboardShortcuts";
    
-   private HandlerRegistration escapeHandler_;
+   private HandlerRegistration previewHandler_;
    private List<CommandBinding> originalBindings_;
    
    // Columns ----
