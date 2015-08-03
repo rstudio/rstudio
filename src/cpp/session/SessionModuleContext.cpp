@@ -198,6 +198,12 @@ SEXP rs_rstudioProgramMode()
    return r::sexp::create(session::options().programMode(), &rProtect);
 }
 
+// get rstudio edition
+SEXP rs_rstudioEdition()
+{
+   return R_NilValue;
+}
+
 // get version
 SEXP rs_rstudioVersion()
 {
@@ -2038,6 +2044,13 @@ Error initialize()
    methodDef15.fun = (DL_FUNC) rs_rstudioCRANReposUrl;
    methodDef15.numArgs = 0;
    r::routines::addCallMethod(methodDef15);
+
+   // register rs_rstudioEdition with R
+   R_CallMethodDef methodDef16 ;
+   methodDef16.name = "rs_rstudioEdition" ;
+   methodDef16.fun = (DL_FUNC) rs_rstudioEdition ;
+   methodDef16.numArgs = 0;
+   r::routines::addCallMethod(methodDef16);
    
    // register rs_isRScriptInPackageBuildTarget
    r::routines::registerCallMethod(

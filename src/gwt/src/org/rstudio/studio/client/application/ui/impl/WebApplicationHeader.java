@@ -367,8 +367,9 @@ public class WebApplicationHeader extends Composite
          if (!BrowseCap.isFirefox())
             usernameLabel.getElement().getStyle().setMarginTop(2, Unit.PX);
          String userIdentity = sessionInfo.getUserIdentity();
+         usernameLabel.setTitle(userIdentity);
          userIdentity = userIdentity.split("@")[0];
-         usernameLabel.setText(sessionInfo.getUserIdentity());
+         usernameLabel.setText(userIdentity);
          headerBarCommandsPanel_.add(usernameLabel);
         
          ToolbarButton signOutButton = new ToolbarButton(RESOURCES.signOut(),

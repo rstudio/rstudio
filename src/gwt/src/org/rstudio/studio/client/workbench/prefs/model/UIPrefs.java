@@ -148,7 +148,11 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // document outline width
          preferredDocumentOutlineWidth().setGlobalValue(
                               newUiPrefs.preferredDocumentOutlineWidth().getGlobalValue());
-              
+         
+         // show document outline by default for Rmd
+         showDocumentOutlineRmd().setGlobalValue(
+                              newUiPrefs.showDocumentOutlineRmd().getGlobalValue());
+         
          // use vim mode
          useVimMode().setGlobalValue(
                               newUiPrefs.useVimMode().getGlobalValue());
