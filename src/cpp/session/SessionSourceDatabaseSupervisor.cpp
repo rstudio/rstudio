@@ -61,9 +61,9 @@ FilePath mostRecentTitledDir()
    return module_context::scopedScratchPath().complete("sdb/mt");
 }
 
-FilePath persistentTitledDir()
+FilePath persistentTitledDir(bool multiSession = true)
 {
-   if (!module_context::activeSession().empty())
+   if (multiSession && !module_context::activeSession().empty())
    {
       std::string id = module_context::activeSession().id();
       return sourceDatabaseRoot().complete("per/t/" + id);
@@ -83,9 +83,9 @@ FilePath oldPersistentTitledDir()
       return FilePath();
 }
 
-FilePath persistentUntitledDir()
+FilePath persistentUntitledDir(bool multiSession = true)
 {
-   if (!module_context::activeSession().empty())
+   if (multiSession && !module_context::activeSession().empty())
    {
       std::string id = module_context::activeSession().id();
       return sourceDatabaseRoot().complete("per/u/" + id);
@@ -263,6 +263,9 @@ Error createSessionDirFromOldSourceDatabase(FilePath* pSessionDir)
 
 Error createSessionDirFromPersistent(FilePath* pSessionDir)
 {
+   // note whether we are in multi-session mode
+   bool multiSession = !module_context::activeSession().empty();
+
    // create new session dir
    Error error = createSessionDir(pSessionDir);
    if (error)
@@ -275,10 +278,16 @@ Error createSessionDirFromPersistent(FilePath* pSessionDir)
    {
       attemptToMoveSourceDbFiles(persistentTitledDir(), *pSessionDir);
    }
-   else if (!module_context::activeSession().empty() &&
-            mostRecentTitledDir().exists())
+   // check for the most recent titled directory
+   else if (multiSession && mostRecentTitledDir().exists())
    {
       attemptToMoveSourceDbFiles(mostRecentTitledDir(), *pSessionDir);
+   }
+   // last resort: if we are in multi-session mode see if there is a set of
+   // mono-session source documents that we can migrate
+   else if (multiSession && persistentTitledDir(false).exists())
+   {
+      attemptToMoveSourceDbFiles(persistentTitledDir(false), *pSessionDir);
    }
 
    // get legacy titled docs if they exist
@@ -287,7 +296,15 @@ Error createSessionDirFromPersistent(FilePath* pSessionDir)
 
    // move persistent untitled files
    if (persistentUntitledDir().exists())
+   {
       attemptToMoveSourceDbFiles(persistentUntitledDir(), *pSessionDir);
+   }
+   // last resort: if we are in multi-session mode see if there is a set of
+   // mono-session source documents that we can migrate
+   else if (multiSession && persistentUntitledDir(false).exists())
+   {
+       attemptToMoveSourceDbFiles(persistentUntitledDir(false), *pSessionDir);
+   }
 
    // get legacy untitled docs if they exist
    if (oldPersistentUntitledDir().exists())
