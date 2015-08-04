@@ -173,6 +173,13 @@ void attemptToMoveSourceDbFiles(const FilePath& fromPath,
    // move the files
    BOOST_FOREACH(const FilePath& filePath, children)
    {
+      // skip directories (directories can exist because multi-session
+      // mode writes top level directories into the /sdb/t and /sdb/u
+      // stores -- these directories correspond to the persistent docs
+      // of particular long-running sessions)
+      if (filePath.isDirectory())
+         continue;
+
       // if the target path already exists then skip it and log
       // (we used to generate a new uniqueFilePath however this
       // caused the filename and id (stored in the source doc)
@@ -183,8 +190,9 @@ void attemptToMoveSourceDbFiles(const FilePath& fromPath,
       FilePath targetPath = toPath.complete(filePath.filename());
       if (targetPath.exists())
       {
-         LOG_WARNING_MESSAGE("Skipping source db move for: " +
-                             filePath.absolutePath());
+         LOG_WARNING_MESSAGE("Skipping source db move from: " +
+                             filePath.absolutePath() + " to " +
+                             targetPath.absolutePath());
 
          Error error = filePath.remove();
          if (error)
