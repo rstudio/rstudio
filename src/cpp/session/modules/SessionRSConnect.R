@@ -1,7 +1,7 @@
 #
 # SessionRSConnect.R
 #
-# Copyright (C) 2009-14 by RStudio, Inc.
+# Copyright (C) 2009-15 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -76,6 +76,7 @@
      account = character(0),
      server = character(0),
      bundleId = character(0),
+     appId = character(0),
      asStatic = logical(0),
      when = numeric(0))
    deployments <- list()
@@ -110,6 +111,8 @@
        rpubsDeployment[col] = "rpubs"
      else if (col == "server")
        rpubsDeployment[col] = "rpubs.com"
+     else if (col == "appId")
+       rpubsDeployment[col] = rpubsUploadId
      else if (col == "bundleId") 
        rpubsDeployment[col] = rpubsUploadId
      else if (col == "asStatic")
@@ -144,6 +147,9 @@
    .rs.scalarListFromFrame(rsconnect::applications(account, server))
 })
 
+.rs.addJsonRpcHandler("get_rsconnect_app", function(id, account, server) {
+   .rs.scalarListFromList(rsconnect:::getAppById(id, account, server))
+})
 
 .rs.addJsonRpcHandler("validate_server_url", function(url) {
    .rs.scalarListFromList(rsconnect:::validateServerUrl(url))

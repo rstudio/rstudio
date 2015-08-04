@@ -3763,6 +3763,20 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void getRSConnectApp(String appId, String accountName, String server,
+         ServerRequestCallback<RSConnectApplicationInfo> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(appId));
+      params.set(1, new JSONString(accountName));
+      params.set(2, new JSONString(server));
+      sendRequest(RPC_SCOPE,
+            GET_RSCONNECT_APP,
+            params,
+            requestCallback);
+   }
+
+   @Override
    public void getRSConnectDeployments(
          String sourcePath,
          String outputPath,
@@ -4526,6 +4540,7 @@ public class RemoteServer implements Server
    private static final String REMOVE_RSCONNECT_ACCOUNT = "remove_rsconnect_account";
    private static final String CONNECT_RSCONNECT_ACCOUNT = "connect_rsconnect_account";
    private static final String GET_RSCONNECT_APP_LIST = "get_rsconnect_app_list";
+   private static final String GET_RSCONNECT_APP = "get_rsconnect_app";
    private static final String GET_RSCONNECT_DEPLOYMENTS = "get_rsconnect_deployments";
    private static final String RSCONNECT_PUBLISH = "rsconnect_publish";
    private static final String GET_DEPLOYMENT_FILES = "get_deployment_files";

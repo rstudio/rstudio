@@ -540,47 +540,86 @@ public class RSConnectDeploy extends Composite
          appProgressPanel_.setVisible(true);
          appInfoPanel_.setVisible(true);
 
-         // get all of the apps deployed from the account to the server
-         server_.getRSConnectAppList(
-               fromPrevious_.getAccountName(), 
-               fromPrevious_.getServer(), 
+         final ServerRequestCallback<JsArray<RSConnectApplicationInfo>> 
+               onAppsReceived = 
                new ServerRequestCallback<JsArray<RSConnectApplicationInfo>>()
+         {
+            @Override
+            public void onResponseReceived(
+                  JsArray<RSConnectApplicationInfo> infos)
+            {
+               // hide server progress
+               appProgressPanel_.setVisible(false);
+
+               // find an app with the same account, server, and name;
+               // when found, populate the UI with app details
+               boolean found = false;
+               if (infos != null)
                {
-                  @Override
-                  public void onResponseReceived(
-                        JsArray<RSConnectApplicationInfo> infos)
+                  for (int i = 0; i < infos.length(); i++)
                   {
-                     // hide server progress
-                     appProgressPanel_.setVisible(false);
-
-                     // find an app with the same account, server, and name;
-                     // when found, populate the UI with app details
-                     boolean found = false;
-                     for (int i = 0; i < infos.length(); i++)
+                     RSConnectApplicationInfo info = infos.get(i);
+                     if (info.getName() == fromPrevious_.getName())
                      {
-                        RSConnectApplicationInfo info = infos.get(i);
-                        if (info.getName() == fromPrevious_.getName())
-                        {
-                           showAppInfo(info);
-                           found = true;
-                           break;
-                        }
-                     }
-
-                     if (!found)
-                     {
-                        forgetPreviousDeployment();
+                        showAppInfo(info);
+                        found = true;
+                        break;
                      }
                   }
-                  @Override
-                  public void onError(ServerError error)
+               }
+
+               if (!found)
+               {
+                  forgetPreviousDeployment();
+               }
+            }
+            @Override
+            public void onError(ServerError error)
+            {
+               // it's okay if we fail here, since the application info
+               // display is purely informative
+               appProgressPanel_.setVisible(false);
+               showAppInfo(null);
+            }
+         };
+
+         
+         if (!StringUtil.isNullOrEmpty(fromPrevious_.getAppId()))
+         {
+            // we know this app's ID, so get its details directly
+            server_.getRSConnectApp(
+                  fromPrevious_.getAppId(),
+                  fromPrevious_.getAccountName(), 
+                  fromPrevious_.getServer(), 
+                  new ServerRequestCallback<RSConnectApplicationInfo>()
                   {
-                     // it's okay if we fail here, since the application info
-                     // display is purely informative
-                     appProgressPanel_.setVisible(false);
-                     showAppInfo(null);
-                  }
-               });
+                     @Override
+                     public void onResponseReceived(
+                           RSConnectApplicationInfo info)
+                     {
+                        // create a single-entry array with the app ID 
+                        JsArray<RSConnectApplicationInfo> infos = 
+                              JsArray.createArray().cast();
+                        if (info != null)
+                           infos.push(info);
+                        onAppsReceived.onResponseReceived(infos);
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        onAppsReceived.onError(error);
+                     }
+                  });
+         }
+         else
+         {
+            // we don't know the app ID, get the apps by name
+            server_.getRSConnectAppList(
+                  fromPrevious_.getAccountName(), 
+                  fromPrevious_.getServer(), 
+                  onAppsReceived);
+            }
       }
    }
    
@@ -589,7 +628,7 @@ public class RSConnectDeploy extends Composite
    {
        server_.getRSConnectAccountList(
             new ServerRequestCallback<JsArray<RSConnectAccount>>()
-      {
+       {
          @Override
          public void onResponseReceived(JsArray<RSConnectAccount> accounts)
          {
