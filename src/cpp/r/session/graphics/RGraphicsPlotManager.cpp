@@ -292,7 +292,7 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
                                         bool useDevicePixelRatio)
 {
    // default res
-   int res = 72;
+   int res = 96;
 
    // adjust for device pixel ratio if necessary
    if (useDevicePixelRatio)
@@ -316,7 +316,7 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
    // generate code for creating bitmap file device
    boost::format fmt(
       "{ require(grDevices, quietly=TRUE); "
-      "  %1%(filename=\"%2%\", width=%3%, height=%4%, res = %5%, pointsize = 16 %6%); }");
+      "  %1%(filename=\"%2%\", width=%3%, height=%4%, res = %5% %6%); }");
    std::string deviceCreationCode = boost::str(fmt % bitmapFileType %
                                                      string_utils::utf8ToSystem(targetPath.absolutePath()) %
                                                      width %
