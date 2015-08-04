@@ -460,24 +460,24 @@ public class DocTabLayoutPanel
             if (curState_ == STATE_NONE)
                return;
             
-            // Qt occasionally fires a dragleave @ 0, 0 even though the cursor
-            // is elsewhere; ignore this
-            if (event.getClientX() == 0 && event.getClientY() == 0)
-               return;
-
-            // look at where the cursor is now--if it's inside the tab panel,
-            // do nothing, but if it's outside the tab panel, treat that as
-            // a cancel
-            Element ele = DomUtils.elementFromPoint(event.getClientX(), 
-                  event.getClientY());
-            while (ele != null && ele != Document.get().getBody())
+            // when a drag leaves the window entirely, we get a dragleave event
+            // at 0, 0 (which we always want to treat as a cancel)
+            if (!(event.getClientX() == 0 && event.getClientY() == 0))
             {
-               if (ele.getClassName().contains("gwt-TabLayoutPanelTabs"))
+               // look at where the cursor is now--if it's inside the tab panel,
+               // do nothing, but if it's outside the tab panel, treat that as
+               // a cancel
+               Element ele = DomUtils.elementFromPoint(event.getClientX(), 
+                     event.getClientY());
+               while (ele != null && ele != Document.get().getBody())
                {
-                  return;
-               }
-               ele = ele.getParentElement();
-            } 
+                  if (ele.getClassName().contains("gwt-TabLayoutPanelTabs"))
+                  {
+                     return;
+                  }
+                  ele = ele.getParentElement();
+               } 
+            }
             
             if (dragElement_ != null)
             {
