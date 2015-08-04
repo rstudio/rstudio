@@ -16,23 +16,26 @@
 
 package java.nio.charset;
 
+import static javaemul.internal.InternalPreconditions.checkArgument;
+
 import java.util.Collections;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import javaemul.internal.EmulatedCharset;
+
 /**
- * A minimal GWT emulation of {@link Charset}.
+ * A minimal emulation of {@link Charset}.
  */
 public abstract class Charset implements Comparable<Charset> {
-  static final Charset ISO_8859_1 = new Charset("ISO-8859-1") { };
-  static final Charset UTF_8 = new Charset("UTF-8") { };
 
   private static final class AvailableCharsets {
     private static final SortedMap<String, Charset> CHARSETS;
     static {
       SortedMap<String, Charset> map = new TreeMap<String, Charset>() { };
-      map.put(ISO_8859_1.name(), ISO_8859_1);
-      map.put(UTF_8.name(), UTF_8);
+      map.put(EmulatedCharset.ISO_8859_1.name(), EmulatedCharset.ISO_8859_1);
+      map.put(EmulatedCharset.ISO_LATIN_1.name(), EmulatedCharset.ISO_LATIN_1);
+      map.put(EmulatedCharset.UTF_8.name(), EmulatedCharset.UTF_8);
       CHARSETS = Collections.unmodifiableSortedMap(map);
     }
   }
@@ -42,16 +45,22 @@ public abstract class Charset implements Comparable<Charset> {
   }
 
   public static Charset forName(String charsetName) {
-    if (charsetName == null) {
-      throw new IllegalArgumentException("Null charset name");
-    } else if (!isLegalCharsetName(charsetName)) {
-      throw new IllegalCharsetNameException(charsetName);
+    checkArgument(charsetName != null, "Null charset name");
+
+    charsetName = charsetName.toUpperCase();
+    if (EmulatedCharset.ISO_8859_1.name().equals(charsetName)) {
+      return EmulatedCharset.ISO_8859_1;
+    } else if (EmulatedCharset.ISO_LATIN_1.name().equals(charsetName)) {
+      return EmulatedCharset.ISO_LATIN_1;
+    } else if (EmulatedCharset.UTF_8.name().equals(charsetName)) {
+      return EmulatedCharset.UTF_8;
     }
-    Charset charset = AvailableCharsets.CHARSETS.get(charsetName.toUpperCase());
-    if (charset == null) {
+
+    if (!isLegalCharsetName(charsetName)) {
+      throw new IllegalCharsetNameException(charsetName);
+    } else {
       throw new UnsupportedCharsetException(charsetName);
     }
-    return charset;
   }
 
   private static native boolean isLegalCharsetName(String name) /*-{
@@ -60,7 +69,7 @@ public abstract class Charset implements Comparable<Charset> {
 
   private final String name;
 
-  private Charset(String name) {
+  protected Charset(String name, String[] aliasesIgnored) {
     this.name = name;
   }
 

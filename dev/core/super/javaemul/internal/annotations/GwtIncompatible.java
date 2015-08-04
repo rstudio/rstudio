@@ -13,19 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package javaemul.internal.annotations;
 
-package java.nio.charset;
-
-import javaemul.internal.EmulatedCharset;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Constant definitions for the standard Charsets.
+ * A simple of a GwtIncompatible annotation for internal emulation use.
  */
-public final class StandardCharsets {
-  public static final Charset ISO_8859_1 = EmulatedCharset.ISO_8859_1;
-  public static final Charset UTF_8 = EmulatedCharset.UTF_8;
-
-  private StandardCharsets() {
-    // Hides the constructor.
-  }
+@Retention(RetentionPolicy.CLASS)
+@Target({ElementType.TYPE, ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.FIELD})
+@Documented
+public @interface GwtIncompatible {
+  String value() default "";
 }
