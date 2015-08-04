@@ -61,6 +61,12 @@ FilePath mostRecentTitledDir()
    return module_context::scopedScratchPath().complete("sdb/mt");
 }
 
+FilePath mostRecentUntitledDir()
+{
+   return module_context::scopedScratchPath().complete("sdb/mu");
+}
+
+
 FilePath persistentTitledDir(bool multiSession = true)
 {
    if (multiSession && !module_context::activeSession().empty())
@@ -299,6 +305,11 @@ Error createSessionDirFromPersistent(FilePath* pSessionDir)
    {
       attemptToMoveSourceDbFiles(persistentUntitledDir(), *pSessionDir);
    }
+   // check for the most recent untitled directory
+   else if (multiSession && mostRecentUntitledDir().exists())
+   {
+      attemptToMoveSourceDbFiles(mostRecentUntitledDir(), *pSessionDir);
+   }
    // last resort: if we are in multi-session mode see if there is a set of
    // mono-session source documents that we can migrate
    else if (multiSession && persistentUntitledDir(false).exists())
@@ -336,6 +347,15 @@ bool reclaimOrphanedSession(const std::vector<FilePath>& sessionDirs,
    }
 
    return false;
+}
+
+Error removeAndRecreate(const FilePath& dir)
+{
+   // blow it away if it exists then recreate it
+   Error error = dir.removeIfExists();
+   if (error)
+      LOG_ERROR(error);
+   return dir.ensureDirectory();
 }
 
 } // anonymous namespace
@@ -393,20 +413,22 @@ Error attachToSourceDatabase(FilePath* pSessionDir)
       return createSessionDirFromPersistent(pSessionDir);
 }
 
-// preserve all titled documents for re-opening in a future session
+// preserve documents for re-opening in a future session
 Error saveMostRecentDocuments()
 {
    // only do this for multi-session contexts
    if (!module_context::activeSession().empty())
    {
-      // get the path to the most recent titled directory
+      // most recent docs is last one wins so we remove and recreate
       FilePath mostRecentDir = mostRecentTitledDir();
-
-      // blow it away if it exists then recreate it
-      Error error = mostRecentDir.removeIfExists();
+      Error error = removeAndRecreate(mostRecentDir);
       if (error)
-         LOG_ERROR(error);
-      error = mostRecentDir.ensureDirectory();
+         return error;
+
+      // untitled are aggregated (so we never lose unsaved docs)
+      // so we just ensure the directory exists)
+      FilePath mostRecentDirUntitled = mostRecentUntitledDir();
+      error = mostRecentDirUntitled.ensureDirectory();
       if (error)
          return error;
 
@@ -416,15 +438,15 @@ Error saveMostRecentDocuments()
       if (error)
          return error;
 
-      // write the titled docs into the mru directory
+      // write the docs into the mru directories
       BOOST_FOREACH(boost::shared_ptr<SourceDocument> pDoc, sourceDocs)
       {
-         if (!pDoc->isUntitled())
-         {
-            error = pDoc->writeToFile(mostRecentDir.complete(pDoc->id()));
-            if (error)
-               LOG_ERROR(error);
-         }
+         FilePath targetDir = pDoc->isUntitled() ? mostRecentDirUntitled :
+                                                   mostRecentDir;
+
+         Error error = pDoc->writeToFile(targetDir.childPath(pDoc->id()));
+         if (error)
+            LOG_ERROR(error);
       }
    }
 
