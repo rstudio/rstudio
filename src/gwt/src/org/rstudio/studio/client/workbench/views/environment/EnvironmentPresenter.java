@@ -697,36 +697,40 @@ public class EnvironmentPresenter extends BasePresenter
       {
          if (debugging)
          {
+            // create the function name for the code browser by removing the
+            // () indicator supplied by the server
+            String functionName = environmentName_;
+            int idx = functionName.indexOf('(');
+            if (idx > 0)
+            {
+               functionName = functionName.substring(0, idx);
+            }
+            
+            // omit qualifiers
+            idx = functionName.indexOf("::");
+            if (idx > 0)
+            {
+               functionName = functionName.substring(idx + 1);
+               // :::, too
+               if (functionName.startsWith(":"))
+                  functionName = functionName.substring(1);
+            }
+               
+            // create the function definition
+            searchFunction_ = 
+                  SearchPathFunctionDefinition.create(
+                     functionName, 
+                     StringUtil.isNullOrEmpty(functionEnvName_) ? 
+                           "debugging" : functionEnvName_, 
+                     currentBrowseSource_,
+                     true);
+
             if (sourceChanged)
             {
-               // create the function name for the code browser by removing the
-               // () indicator supplied by the server
-               String functionName = environmentName_;
-               int idx = functionName.indexOf('(');
-               if (idx > 0)
-               {
-                  functionName = functionName.substring(0, idx);
-               }
-               
-               // omit qualifiers
-               idx = functionName.indexOf("::");
-               if (idx > 0)
-               {
-                  functionName = functionName.substring(idx + 1);
-                  // :::, too
-                  if (functionName.startsWith(":"))
-                     functionName = functionName.substring(1);
-               }
-               
                // if this is a different source file than we already have open,
                // open it 
                eventBus_.fireEvent(new CodeBrowserNavigationEvent(
-                     SearchPathFunctionDefinition.create(
-                           functionName, 
-                           StringUtil.isNullOrEmpty(functionEnvName_) ? 
-                                 "debugging" : functionEnvName_, 
-                           currentBrowseSource_,
-                           true),
+                     searchFunction_,
                      currentBrowsePosition_.functionRelativePosition(
                            currentFunctionLineNumber_),
                      contextDepth_ == 1, false));
@@ -736,13 +740,14 @@ public class EnvironmentPresenter extends BasePresenter
                // if this is the same one currently open, just move the 
                // highlight
                eventBus_.fireEvent(new CodeBrowserHighlightEvent(
+                     searchFunction_,
                      currentBrowsePosition_.functionRelativePosition(
                            currentFunctionLineNumber_)));
             }
          }
          else
          {
-            eventBus_.fireEvent(new CodeBrowserFinishedEvent());
+            eventBus_.fireEvent(new CodeBrowserFinishedEvent(searchFunction_));
          }
       }
    }
@@ -906,4 +911,5 @@ public class EnvironmentPresenter extends BasePresenter
    private String environmentName_;
    private String functionEnvName_;
    private Timer requeryContextTimer_;
+   private SearchPathFunctionDefinition searchFunction_;
 }

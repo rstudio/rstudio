@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.events;
 
 import org.rstudio.core.client.DebugFilePosition;
+import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -30,8 +31,10 @@ public class CodeBrowserHighlightEvent
    public static final GwtEvent.Type<CodeBrowserHighlightEvent.Handler> TYPE =
       new GwtEvent.Type<CodeBrowserHighlightEvent.Handler>();
    
-   public CodeBrowserHighlightEvent(DebugFilePosition debugPosition)
+   public CodeBrowserHighlightEvent(SearchPathFunctionDefinition function,
+         DebugFilePosition debugPosition)
    {
+      function_ = function;
       debugPosition_ = debugPosition;
    }
    
@@ -40,6 +43,10 @@ public class CodeBrowserHighlightEvent
       return debugPosition_;
    }
    
+   public SearchPathFunctionDefinition getFunction()
+   {
+      return function_;
+   }
    
    @Override
    protected void dispatch(CodeBrowserHighlightEvent.Handler handler)
@@ -54,4 +61,5 @@ public class CodeBrowserHighlightEvent
    }
 
    final DebugFilePosition debugPosition_;
+   final SearchPathFunctionDefinition function_;
 }

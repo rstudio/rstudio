@@ -3179,9 +3179,10 @@ public class Source implements InsertSourceHandler,
       
       // check for code browser navigation
       else if ((navigation.getPath() != null) &&
-               navigation.getPath().equals(CodeBrowserEditingTarget.PATH))
+               navigation.getPath().startsWith(CodeBrowserEditingTarget.PATH))
       {
          activateCodeBrowser(
+            navigation.getPath(),
             new SourceNavigationResultCallback<CodeBrowserEditingTarget>(
                                                       navigation.getPosition(),
                                                       retryCommand));
@@ -3234,7 +3235,9 @@ public class Source implements InsertSourceHandler,
          setPendingDebugSelection();
       }
       
-      activateCodeBrowser(new ResultCallback<CodeBrowserEditingTarget,ServerError>() {
+      activateCodeBrowser(
+         CodeBrowserEditingTarget.getCodeBrowserPath(event.getFunction()),
+         new ResultCallback<CodeBrowserEditingTarget,ServerError>() {
          @Override
          public void onSuccess(CodeBrowserEditingTarget target)
          {
@@ -3251,24 +3254,26 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onCodeBrowserFinished(final CodeBrowserFinishedEvent event)
    {
-      int codeBrowserTabIndex = indexOfCodeBrowserTab();
-      if (codeBrowserTabIndex >= 0)
+      String path = CodeBrowserEditingTarget.getCodeBrowserPath(
+            event.getFunction());
+      for (int i = 0; i < editors_.size(); i++)
       {
-         view_.closeTab(codeBrowserTabIndex, false);
-         return;
+         Debug.devlog(editors_.get(i).getPath());
+         if (editors_.get(i).getPath() == path)
+         {
+            view_.closeTab(i, false);
+            return;
+         }
       }
    }
-   
 
    @Override
    public void onCodeBrowserHighlight(final CodeBrowserHighlightEvent event)
    {
-      // no need to highlight if we don't have a code browser tab to highlight
-      if (indexOfCodeBrowserTab() < 0)
-         return;
-      
       setPendingDebugSelection();
-      activateCodeBrowser(new ResultCallback<CodeBrowserEditingTarget,ServerError>() {
+      activateCodeBrowser(
+         CodeBrowserEditingTarget.getCodeBrowserPath(event.getFunction()),
+         new ResultCallback<CodeBrowserEditingTarget,ServerError>() {
          @Override
          public void onSuccess(CodeBrowserEditingTarget target)
          {
@@ -3290,39 +3295,28 @@ public class Source implements InsertSourceHandler,
             executing);
    }
 
-   // returns the index of the tab currently containing the code browser, or
-   // -1 if the code browser tab isn't currently open;
-   private int indexOfCodeBrowserTab()
-   {
-      // see if there is an existing target to use
-      for (int idx = 0; idx < editors_.size(); idx++)
-      {
-         String path = editors_.get(idx).getPath();
-         if (CodeBrowserEditingTarget.PATH.equals(path))
-         {
-            return idx;
-         }
-      }
-      return -1;
-   }
-     
    private void activateCodeBrowser(
+         String codeBrowserPath, 
          final ResultCallback<CodeBrowserEditingTarget,ServerError> callback)
    {
-      int codeBrowserTabIndex = indexOfCodeBrowserTab();
-      if (codeBrowserTabIndex >= 0)
+      // first check to see if this request can be fulfilled with an existing
+      // code browser tab
+      for (int i = 0; i < editors_.size(); i++)
       {
-         ensureVisible(false);
-         view_.selectTab(codeBrowserTabIndex);
-         
-         // callback
-         callback.onSuccess( (CodeBrowserEditingTarget)
-               editors_.get(codeBrowserTabIndex));
-         
-         // satisfied request
-         return;
+         if (editors_.get(i).getPath() == codeBrowserPath)
+         {
+            // select the tab
+            ensureVisible(false);
+            view_.selectTab(i);
+            
+            // callback
+            callback.onSuccess((CodeBrowserEditingTarget) editors_.get(i));
+            
+            // satisfied request
+            return;
+         }
       }
-
+      
       // create a new one
       newDoc(FileTypeRegistry.CODEBROWSER,
              new ResultCallback<EditingTarget, ServerError>()
