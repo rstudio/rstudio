@@ -630,7 +630,8 @@ public class ClientEventDispatcher
          else if (type.equals(ClientEvent.ViewFunction))
          {
             SearchPathFunctionDefinition data = event.getData();
-            eventBus_.fireEvent(new CodeBrowserNavigationEvent(data, null, false));
+            eventBus_.fireEvent(new CodeBrowserNavigationEvent(
+                  data, null, false, true));
          }
          else if (type.equals(ClientEvent.MarkersChanged))
          {

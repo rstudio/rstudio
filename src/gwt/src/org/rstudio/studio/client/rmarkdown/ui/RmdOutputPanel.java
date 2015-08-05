@@ -329,6 +329,13 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       showUrl(url);
    }
 
+   
+   @Override
+   public void focusFind()
+   {
+      findTextBox_.focus();
+   }
+
    @Override
    public int getScrollPosition()
    {

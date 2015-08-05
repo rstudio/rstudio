@@ -548,7 +548,12 @@
      # either this function doesn't have a source reference or its source
      # reference points to a file we can't locate on disk--show a deparsed
      # version of the function
-     namespace <- environmentName(env)
+   
+     # remove package qualifiers from function name
+     title <- sub("^[^:]+:::?", "", title)
+
+     # infer environment location
+     namespace <- .rs.environmentName(environment(x))
      if (identical(namespace, "R_EmptyEnv") || identical(namespace, ""))
        namespace <- "viewing"
      else if (identical(namespace, "R_GlobalEnv"))

@@ -292,6 +292,12 @@ public class KeyboardShortcut
             return false;
          
          KeySequence other = (KeySequence) object;
+         if (keyCombinations_ == null || other.keyCombinations_ == null)
+            return false;
+         
+         if (keyCombinations_.size() != other.keyCombinations_.size())
+            return false;
+         
          for (int i = 0; i < keyCombinations_.size(); i++)
             if (!keyCombinations_.get(i).equals(other.keyCombinations_.get(i)))
                return false;

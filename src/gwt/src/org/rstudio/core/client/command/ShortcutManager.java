@@ -19,12 +19,14 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 import org.rstudio.studio.client.RStudioGinjector;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
@@ -101,13 +103,19 @@ public class ShortcutManager implements NativePreviewHandler,
       };
    }
    
-   public void replaceBinding(KeySequence keys, AppCommand command)
+   public void addCustomBinding(KeySequence keys, AppCommand command)
    {
       KeyboardShortcut shortcut = new KeyboardShortcut(keys);
-      if (commands_.containsKey(shortcut))
-         commands_.remove(shortcut);
+      if (!customBindings_.containsKey(shortcut))
+         customBindings_.put(shortcut, new ArrayList<AppCommand>());
       
-      register(keys, command, "", "", "");
+      ArrayList<AppCommand> commands = customBindings_.get(shortcut);
+      commands.add(command);
+   }
+   
+   public void clearCustomBindings()
+   {
+      customBindings_.clear();
    }
    
    public void register(int modifiers, 
@@ -209,9 +217,12 @@ public class ShortcutManager implements NativePreviewHandler,
       if (keyBuffer_.isEmpty())
          return;
       
-      // If we have a prefix match, keep the keybuffer alive and cancel the
-      // event (to ensure Ace doesn't see it)
+      // If we have a prefix match, keep the keybuffer alive.
       for (KeyboardShortcut shortcut : commands_.keySet())
+         if (shortcut.startsWith(keyBuffer_))
+            return;
+      
+      for (KeyboardShortcut shortcut : customBindings_.keySet())
          if (shortcut.startsWith(keyBuffer_))
             return;
       
@@ -334,14 +345,13 @@ public class ShortcutManager implements NativePreviewHandler,
    private boolean handleKeyDown(NativeEvent e)
    {
       // Don't dispatch on bare modifier keypresses.
-      // TODO: We might want to enable e.g. 'Shift + Shift' dispatch in the future.
       if (KeyboardHelper.isModifierKey(e.getKeyCode()))
          return false;
       
       keyBuffer_.add(e);
       KeyboardShortcut shortcut = new KeyboardShortcut(keyBuffer_);
 
-      // check for disabled modal shortcuts if we're modal
+      // Check for disabled modal shortcuts if we're modal
       if (editorMode_ > 0)
       {
          for (KeyboardShortcut modalShortcut: modalShortcuts_)
@@ -358,17 +368,28 @@ public class ShortcutManager implements NativePreviewHandler,
       if (userCommands_.dispatch(shortcut))
          return true;
       
-      // Check for RStudio AppCommands.
-      if (!commands_.containsKey(shortcut) || commands_.get(shortcut) == null) 
-      {
-         return false;
-      }
+      if (dispatch(shortcut, customBindings_, e))
+         return true;
       
+      // Check for RStudio AppCommands.
+      if (dispatch(shortcut, commands_, e))
+         return true;
+      
+      return false;
+      
+   }
+   
+   private boolean dispatch(KeyboardShortcut shortcut,
+                            Map<KeyboardShortcut, ArrayList<AppCommand>> bindings,
+                            NativeEvent event)
+   {
+      if (!bindings.containsKey(shortcut) || bindings.get(shortcut) == null) 
+         return false;
       
       AppCommand command = null;
-      for (int i = 0; i < commands_.get(shortcut).size(); i++) 
+      for (int i = 0; i < bindings.get(shortcut).size(); i++) 
       {
-         command = commands_.get(shortcut).get(i);
+         command = bindings.get(shortcut).get(i);
          if (command != null)
          {
             boolean enabled = isEnabled() && command.isEnabled();
@@ -378,7 +399,7 @@ public class ShortcutManager implements NativePreviewHandler,
             if (!enabled && !command.preventShortcutWhenDisabled())
                return false;
             
-            e.preventDefault();
+            event.preventDefault();
 
             // if this command is enabled, execute it and stop looking  
             if (enabled) 
@@ -398,13 +419,17 @@ public class ShortcutManager implements NativePreviewHandler,
    private final KeySequence keyBuffer_;
    private final Timer keyTimer_;
    
-   private final HashMap<KeyboardShortcut, ArrayList<AppCommand> > commands_
-                                  = new HashMap<KeyboardShortcut, ArrayList<AppCommand> >();
+   private final Map<KeyboardShortcut, ArrayList<AppCommand>> commands_ =
+         new HashMap<KeyboardShortcut, ArrayList<AppCommand>>();
    
-   private ArrayList<KeyboardShortcut> unboundShortcuts_
-                                  = new ArrayList<KeyboardShortcut>();
-   private ArrayList<KeyboardShortcut> modalShortcuts_ 
-                                  = new ArrayList<KeyboardShortcut>();
+   private final Map<KeyboardShortcut, ArrayList<AppCommand>> customBindings_ =
+         new HashMap<KeyboardShortcut, ArrayList<AppCommand>>();
+   
+   private List<KeyboardShortcut> unboundShortcuts_ =
+         new ArrayList<KeyboardShortcut>();
+   
+   private List<KeyboardShortcut> modalShortcuts_ =
+         new ArrayList<KeyboardShortcut>();
    
    // Injected ----
    private UserCommandManager userCommands_;

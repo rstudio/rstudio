@@ -3222,6 +3222,13 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onCodeBrowserNavigation(final CodeBrowserNavigationEvent event)
    {
+      // if this isn't the main source window, don't handle server-dispatched
+      // code browser events
+      if (event.serverDispatched() && !SourceWindowManager.isMainSourceWindow())
+      {
+         return;
+      }
+
       if (event.getDebugPosition() != null)
       {
          setPendingDebugSelection();

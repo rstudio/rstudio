@@ -139,6 +139,16 @@ public abstract class ModalDialogBase extends DialogBox
       escapeDisabled_ = escapeDisabled;
    }
 
+   public boolean isEnterDisabled()
+   {
+      return enterDisabled_;
+   }
+
+   public void setEnterDisabled(boolean enterDisabled)
+   {
+      enterDisabled_ = enterDisabled;
+   }
+   
    public void showModal()
    {
       if (mainWidget_ == null)
@@ -427,6 +437,9 @@ public abstract class ModalDialogBase extends DialogBox
          {
             case KeyCodes.KEY_ENTER:
                
+               if (enterDisabled_)
+                  break;
+               
                // allow Enter on textareas
                Element e = DomUtils.getActiveElement();
                if (e.hasTagName("TEXTAREA"))
@@ -519,7 +532,8 @@ public abstract class ModalDialogBase extends DialogBox
 
    private Handle shortcutDisableHandle_;
 
-   private boolean escapeDisabled_;
+   private boolean escapeDisabled_ = false;
+   private boolean enterDisabled_ = false;
    private SimplePanel containerPanel_;
    private VerticalPanel mainPanel_ ;
    private HorizontalPanel bottomPanel_;

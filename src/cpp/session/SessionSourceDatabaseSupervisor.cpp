@@ -61,9 +61,15 @@ FilePath mostRecentTitledDir()
    return module_context::scopedScratchPath().complete("sdb/mt");
 }
 
-FilePath persistentTitledDir()
+FilePath mostRecentUntitledDir()
 {
-   if (!module_context::activeSession().empty())
+   return module_context::scopedScratchPath().complete("sdb/mu");
+}
+
+
+FilePath persistentTitledDir(bool multiSession = true)
+{
+   if (multiSession && !module_context::activeSession().empty())
    {
       std::string id = module_context::activeSession().id();
       return sourceDatabaseRoot().complete("per/t/" + id);
@@ -83,9 +89,9 @@ FilePath oldPersistentTitledDir()
       return FilePath();
 }
 
-FilePath persistentUntitledDir()
+FilePath persistentUntitledDir(bool multiSession = true)
 {
-   if (!module_context::activeSession().empty())
+   if (multiSession && !module_context::activeSession().empty())
    {
       std::string id = module_context::activeSession().id();
       return sourceDatabaseRoot().complete("per/u/" + id);
@@ -173,6 +179,13 @@ void attemptToMoveSourceDbFiles(const FilePath& fromPath,
    // move the files
    BOOST_FOREACH(const FilePath& filePath, children)
    {
+      // skip directories (directories can exist because multi-session
+      // mode writes top level directories into the /sdb/t and /sdb/u
+      // stores -- these directories correspond to the persistent docs
+      // of particular long-running sessions)
+      if (filePath.isDirectory())
+         continue;
+
       // if the target path already exists then skip it and log
       // (we used to generate a new uniqueFilePath however this
       // caused the filename and id (stored in the source doc)
@@ -183,8 +196,9 @@ void attemptToMoveSourceDbFiles(const FilePath& fromPath,
       FilePath targetPath = toPath.complete(filePath.filename());
       if (targetPath.exists())
       {
-         LOG_WARNING_MESSAGE("Skipping source db move for: " +
-                             filePath.absolutePath());
+         LOG_WARNING_MESSAGE("Skipping source db move from: " +
+                             filePath.absolutePath() + " to " +
+                             targetPath.absolutePath());
 
          Error error = filePath.remove();
          if (error)
@@ -255,6 +269,9 @@ Error createSessionDirFromOldSourceDatabase(FilePath* pSessionDir)
 
 Error createSessionDirFromPersistent(FilePath* pSessionDir)
 {
+   // note whether we are in multi-session mode
+   bool multiSession = !module_context::activeSession().empty();
+
    // create new session dir
    Error error = createSessionDir(pSessionDir);
    if (error)
@@ -267,10 +284,16 @@ Error createSessionDirFromPersistent(FilePath* pSessionDir)
    {
       attemptToMoveSourceDbFiles(persistentTitledDir(), *pSessionDir);
    }
-   else if (!module_context::activeSession().empty() &&
-            mostRecentTitledDir().exists())
+   // check for the most recent titled directory
+   else if (multiSession && mostRecentTitledDir().exists())
    {
       attemptToMoveSourceDbFiles(mostRecentTitledDir(), *pSessionDir);
+   }
+   // last resort: if we are in multi-session mode see if there is a set of
+   // mono-session source documents that we can migrate
+   else if (multiSession && persistentTitledDir(false).exists())
+   {
+      attemptToMoveSourceDbFiles(persistentTitledDir(false), *pSessionDir);
    }
 
    // get legacy titled docs if they exist
@@ -279,7 +302,20 @@ Error createSessionDirFromPersistent(FilePath* pSessionDir)
 
    // move persistent untitled files
    if (persistentUntitledDir().exists())
+   {
       attemptToMoveSourceDbFiles(persistentUntitledDir(), *pSessionDir);
+   }
+   // check for the most recent untitled directory
+   else if (multiSession && mostRecentUntitledDir().exists())
+   {
+      attemptToMoveSourceDbFiles(mostRecentUntitledDir(), *pSessionDir);
+   }
+   // last resort: if we are in multi-session mode see if there is a set of
+   // mono-session source documents that we can migrate
+   else if (multiSession && persistentUntitledDir(false).exists())
+   {
+       attemptToMoveSourceDbFiles(persistentUntitledDir(false), *pSessionDir);
+   }
 
    // get legacy untitled docs if they exist
    if (oldPersistentUntitledDir().exists())
@@ -311,6 +347,15 @@ bool reclaimOrphanedSession(const std::vector<FilePath>& sessionDirs,
    }
 
    return false;
+}
+
+Error removeAndRecreate(const FilePath& dir)
+{
+   // blow it away if it exists then recreate it
+   Error error = dir.removeIfExists();
+   if (error)
+      LOG_ERROR(error);
+   return dir.ensureDirectory();
 }
 
 } // anonymous namespace
@@ -368,20 +413,22 @@ Error attachToSourceDatabase(FilePath* pSessionDir)
       return createSessionDirFromPersistent(pSessionDir);
 }
 
-// preserve all titled documents for re-opening in a future session
+// preserve documents for re-opening in a future session
 Error saveMostRecentDocuments()
 {
    // only do this for multi-session contexts
    if (!module_context::activeSession().empty())
    {
-      // get the path to the most recent titled directory
+      // most recent docs is last one wins so we remove and recreate
       FilePath mostRecentDir = mostRecentTitledDir();
-
-      // blow it away if it exists then recreate it
-      Error error = mostRecentDir.removeIfExists();
+      Error error = removeAndRecreate(mostRecentDir);
       if (error)
-         LOG_ERROR(error);
-      error = mostRecentDir.ensureDirectory();
+         return error;
+
+      // untitled are aggregated (so we never lose unsaved docs)
+      // so we just ensure the directory exists)
+      FilePath mostRecentDirUntitled = mostRecentUntitledDir();
+      error = mostRecentDirUntitled.ensureDirectory();
       if (error)
          return error;
 
@@ -391,15 +438,15 @@ Error saveMostRecentDocuments()
       if (error)
          return error;
 
-      // write the titled docs into the mru directory
+      // write the docs into the mru directories
       BOOST_FOREACH(boost::shared_ptr<SourceDocument> pDoc, sourceDocs)
       {
-         if (!pDoc->isUntitled())
-         {
-            error = pDoc->writeToFile(mostRecentDir.complete(pDoc->id()));
-            if (error)
-               LOG_ERROR(error);
-         }
+         FilePath targetDir = pDoc->isUntitled() ? mostRecentDirUntitled :
+                                                   mostRecentDir;
+
+         Error error = pDoc->writeToFile(targetDir.childPath(pDoc->id()));
+         if (error)
+            LOG_ERROR(error);
       }
    }
 

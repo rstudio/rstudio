@@ -75,6 +75,11 @@ public class ContextDepthChangedEvent extends
       return contextData_.environmentName();
    }
    
+   public String getFunctionEnvName()
+   {
+      return contextData_.functionEnvName();
+   }
+   
    public boolean environmentIsLocal()
    {
       return contextData_.environmentIsLocal();
