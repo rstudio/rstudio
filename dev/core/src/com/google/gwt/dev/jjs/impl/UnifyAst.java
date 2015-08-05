@@ -20,7 +20,6 @@ import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.MinimalRebuildCache;
-import com.google.gwt.dev.Permutation;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.javac.CompilationProblemReporter;
@@ -30,7 +29,6 @@ import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.PrecompilationContext;
-import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasName;
@@ -743,7 +741,6 @@ public class UnifyAst {
   private MinimalRebuildCache minimalRebuildCache;
   private boolean incrementalCompile;
   private final List<String> rootTypeSourceNames = Lists.newArrayList();
-  private final Permutation[] permutations;
 
   public UnifyAst(TreeLogger logger, CompilerContext compilerContext, JProgram program,
       JsProgram jsProgram, PrecompilationContext precompilationContext) {
@@ -755,7 +752,6 @@ public class UnifyAst {
     this.program = program;
     this.jsProgram = jsProgram;
     this.rpo = precompilationContext.getRebindPermutationOracle();
-    this.permutations = precompilationContext.getPermutations();
     this.compilationState = rpo.getCompilationState();
     this.compiledClassesByInternalName = compilationState.getClassFileMap();
     this.compiledClassesBySourceName = compilationState.getClassFileMapBySource();
@@ -1028,16 +1024,23 @@ public class UnifyAst {
         }
       }
     }
-    /*
-     * Eagerly instantiate any type that requires devirtualization, i.e. String and JavaScriptObject
-     * subtypes. That way we don't have to copy the exact semantics of ControlFlowAnalyzer.
-     */
+
     for (JDeclaredType t : types) {
-      if (t instanceof JClassType && requiresDevirtualization(t)) {
+      /*
+       * Eagerly instantiate any type that requires devirtualization, i.e. String and
+       * JavaScriptObject subtypes. That way we don't have to copy the exact semantics of
+       * ControlFlowAnalyzer.
+       */
+      if (requiresDevirtualization(t)) {
         instantiate(t);
       }
+
+      /*
+       * We also flow into the JsInterop types because our first pass on root types
+       * are missing these inner classes.
+       */
       if (t.hasAnyExports() || t.isOrExtendsJsType() || t.isOrExtendsJsFunction()) {
-        instantiate(t);
+        fullFlowIntoType(t);
       }
     }
   }
@@ -1236,12 +1239,6 @@ public class UnifyAst {
   private void implementMagicMethod(JMethod method, JExpression returnValue) {
     JMethodBody body = (JMethodBody) method.getBody();
     JBlock block = body.getBlock();
-    SourceInfo info;
-    if (block.getStatements().size() > 0) {
-      info = block.getStatements().get(0).getSourceInfo();
-    } else {
-      info = method.getSourceInfo();
-    }
     block.clear();
     block.addStmt(returnValue.makeReturnStatement());
   }
@@ -1341,8 +1338,7 @@ public class UnifyAst {
 
     // Flow into any reachable virtual methods.
     for (JMethod method : type.getMethods()) {
-      if (isJsTypeOrFunction && method.canBePolymorphic()
-          || method.isExported()) {
+      if (isJsTypeOrFunction && method.canBePolymorphic() || method.isExported()) {
         // Fake a call into the method to keep it around. For JsType, JsFunction and exported
         // methods.
         flowInto(method);

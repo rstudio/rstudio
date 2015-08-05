@@ -109,10 +109,6 @@ public class Devirtualizer {
       }
       JType instanceType = x.getInstance().getType().getUnderlyingType();
 
-      if (instanceType instanceof JInterfaceType && ((JInterfaceType) instanceType).isJsType()) {
-        return;
-      }
-
       // If the instance can't possibly be a JSO, String or an interface implemented by String, do
       // not devirtualize.
       if (instanceType != program.getTypeJavaLangObject()
