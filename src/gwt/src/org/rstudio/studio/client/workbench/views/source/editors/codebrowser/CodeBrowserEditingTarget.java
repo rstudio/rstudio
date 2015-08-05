@@ -63,6 +63,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.WarningBarD
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
+import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.model.CodeBrowserContents;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -296,6 +297,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
       view_.findFromSelection();
    }
    
+   @Handler
+   void onPopoutDoc()
+   {
+      events_.fireEvent(new PopoutDocEvent(getId(), currentPosition()));
+   }
+
    @Override
    public Position search(String regex)
    {
@@ -412,6 +419,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
       commands.add(commands_.executeCode());
       commands.add(commands_.executeCodeWithoutFocus());
       commands.add(commands_.executeLastCode());
+      commands.add(commands_.popoutDoc());
       return commands;
    }
 

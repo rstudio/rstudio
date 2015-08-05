@@ -3229,14 +3229,20 @@ public class Source implements InsertSourceHandler,
       {
          return;
       }
+      
+      final String path = CodeBrowserEditingTarget.getCodeBrowserPath(
+            event.getFunction());
+      NavigationResult result = windowManager_.navigateToCodeBrowser(
+            path, event);
+      if (result.getType() == NavigationResult.RESULT_NAVIGATED)
+         return;
 
       if (event.getDebugPosition() != null)
       {
          setPendingDebugSelection();
       }
       
-      activateCodeBrowser(
-         CodeBrowserEditingTarget.getCodeBrowserPath(event.getFunction()),
+      activateCodeBrowser(path,
          new ResultCallback<CodeBrowserEditingTarget,ServerError>() {
          @Override
          public void onSuccess(CodeBrowserEditingTarget target)
@@ -3254,8 +3260,13 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onCodeBrowserFinished(final CodeBrowserFinishedEvent event)
    {
-      String path = CodeBrowserEditingTarget.getCodeBrowserPath(
+      final String path = CodeBrowserEditingTarget.getCodeBrowserPath(
             event.getFunction());
+      NavigationResult result = windowManager_.navigateToCodeBrowser(
+            path, event);
+      if (result.getType() == NavigationResult.RESULT_NAVIGATED)
+         return;
+
       for (int i = 0; i < editors_.size(); i++)
       {
          Debug.devlog(editors_.get(i).getPath());
@@ -3296,7 +3307,7 @@ public class Source implements InsertSourceHandler,
    }
 
    private void activateCodeBrowser(
-         String codeBrowserPath, 
+         final String codeBrowserPath, 
          final ResultCallback<CodeBrowserEditingTarget,ServerError> callback)
    {
       // first check to see if this request can be fulfilled with an existing
@@ -3324,6 +3335,8 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onSuccess(EditingTarget arg)
                {
+                  events_.fireEvent(new CodeBrowserCreatedEvent(
+                        arg.getId(), codeBrowserPath));
                   callback.onSuccess( (CodeBrowserEditingTarget)arg);
                }
                

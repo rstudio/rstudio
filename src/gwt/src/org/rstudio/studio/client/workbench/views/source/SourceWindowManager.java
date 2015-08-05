@@ -55,6 +55,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserCreatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
@@ -79,6 +80,7 @@ import com.google.inject.Singleton;
 public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             SourceDocAddedEvent.Handler,
                                             SourceFileSavedHandler,
+                                            CodeBrowserCreatedEvent.Handler,
                                             SatelliteFocusedEvent.Handler,
                                             SatelliteClosedEvent.Handler,
                                             DocTabDragStartedEvent.Handler,
@@ -117,6 +119,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          events_.addHandler(AllSatellitesClosingEvent.TYPE, this);
          events_.addHandler(SourceDocAddedEvent.TYPE, this);
          events_.addHandler(SourceFileSavedEvent.TYPE, this);
+         events_.addHandler(CodeBrowserCreatedEvent.TYPE, this);
          events_.addHandler(SatelliteClosedEvent.TYPE, this);
          events_.addHandler(SatelliteFocusedEvent.TYPE, this);
          events_.addHandler(DocTabClosedEvent.TYPE, this);
@@ -377,86 +380,15 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          FilePosition position,
          int navMethod)
    {
-      // if this is the main window, check to see if we should route an event
-      // there instead
-      String sourceWindowId = getWindowIdOfDocPath(file.getPath());
-      if (isMainSourceWindow())
-      {
-         // if this is the main window but the doc is open in a satellite...
-         if (!StringUtil.isNullOrEmpty(sourceWindowId) && 
-             isSourceWindowOpen(sourceWindowId))
-         {
-            if (canActivateSourceWindows())
-            {
-               // in desktop mode (and IE) we can bring the appropriate window
-               // forward 
-               fireEventToSourceWindow(sourceWindowId, 
+      return navigateToPath(file.getPath(),
                      new OpenSourceFileEvent(file, position, null, navMethod),
                      navMethod == NavigationMethods.DEFAULT);
-               return new NavigationResult(NavigationResult.RESULT_NAVIGATED);
-            }
-            else
-            {
-               // otherwise, move the tab over to this window by closing it in
-               // in its origin window
-               JsArray<SourceDocument> sourceDocs = getSourceDocs();
-               for (int i = 0; i < sourceDocs.length(); i++)
-               {
-                  if (sourceDocs.get(i).getPath() == file.getPath())
-                  {
-                     assignSourceDocWindowId(sourceDocs.get(i).getId(), 
-                           getSourceWindowId(), null);
-                     fireEventToSourceWindow(sourceWindowId, 
-                           new DocWindowChangedEvent(
-                                 sourceDocs.get(i).getId(), sourceWindowId, 
-                                 null, 0),
-                           true);
-                     return new NavigationResult(
-                           NavigationResult.RESULT_RELOCATE, 
-                           sourceDocs.get(i).getId());
-                  }
-               }
-            }
-         }
-      }
-      else if (sourceWindowId != null && 
-               sourceWindowId != getSourceWindowId())
-      {
-         if (canActivateSourceWindows())
-         {
-            // in desktop mode (and IE) we can just route to the main window
-           events_.fireEventToMainWindow(
-                  new OpenSourceFileEvent(file, position, null, navMethod));
-            
-            // if the destination is the main window, raise it
-            if (sourceWindowId.isEmpty())
-            {
-               pSatellite_.get().focusMainWindow();
-            }
-            return new NavigationResult(NavigationResult.RESULT_NAVIGATED);
-         }
-         else
-         {
-            // otherwise, move the tab over to this window by closing it in
-            // in its origin window
-            JsArray<SourceDocument> sourceDocs = getSourceDocs();
-            for (int i = 0; i < sourceDocs.length(); i++)
-            {
-               if (sourceDocs.get(i).getPath() == file.getPath())
-               {
-                  // take ownership of the doc immediately 
-                  assignSourceDocWindowId(sourceDocs.get(i).getId(), 
-                        getSourceWindowId(), null);
-                  events_.fireEventToMainWindow(new DocWindowChangedEvent(
-                              sourceDocs.get(i).getId(), sourceWindowId, null, 
-                              0));
-                  return new NavigationResult(NavigationResult.RESULT_RELOCATE,
-                        sourceDocs.get(i).getId());
-               }
-            }
-         }
-      }
-      return new NavigationResult(NavigationResult.RESULT_NONE);
+   }
+   
+   public NavigationResult navigateToCodeBrowser(String path, 
+         CrossWindowEvent<?> codeBrowserEvent) 
+   {
+      return navigateToPath(path, codeBrowserEvent, true);
    }
    
    public boolean activateLastFocusedSource()
@@ -537,14 +469,13 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       // when a user saves a new doc or does file -> save as, we need to update
       // our internal doc mappings so we can route navigations to the right
       // window for that path
-      for (int i = 0; i < sourceDocs_.length(); i++)
-      {
-         if (sourceDocs_.get(i).getId() == event.getDocId())
-         {
-            sourceDocs_.get(i).setPath(event.getPath());
-            break;
-         }
-      }
+      updateDocPath(event.getDocId(), event.getPath());
+   }
+
+   @Override
+   public void onCodeBrowserCreated(CodeBrowserCreatedEvent event)
+   {
+      updateDocPath(event.getId(), event.getPath());
    }
 
    @Override
@@ -993,6 +924,108 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          // activate satellite window
          pSatelliteManager_.get().activateSatelliteWindow(
                SourceSatellite.NAME_PREFIX + windowId);
+      }
+   }
+
+   // this function implements the core of routing navigation requests among
+   // source windows; it does the following:
+   // 1. attempts to find a window open with the given path 
+   //    (which can be a physical file or e.g. a code browser) 
+   // 2. if such a window is found, fires the given event to the window, or
+   //    closes the window's instance of the tab (server mode w/tab stealing)
+   // 3. if such a window is not found, indicates as much
+   private NavigationResult navigateToPath(String path,
+         CrossWindowEvent<?> event,
+         boolean focus)
+   {
+      // if this is the main window, check to see if we should route an event
+      // there instead
+      String sourceWindowId = getWindowIdOfDocPath(path);
+      if (isMainSourceWindow())
+      {
+         // if this is the main window but the doc is open in a satellite...
+         if (!StringUtil.isNullOrEmpty(sourceWindowId) && 
+             isSourceWindowOpen(sourceWindowId))
+         {
+            if (canActivateSourceWindows())
+            {
+               // in desktop mode (and IE) we can bring the appropriate window
+               // forward 
+               fireEventToSourceWindow(sourceWindowId, event, focus);
+               return new NavigationResult(NavigationResult.RESULT_NAVIGATED);
+            }
+            else
+            {
+               // otherwise, move the tab over to this window by closing it in
+               // in its origin window
+               JsArray<SourceDocument> sourceDocs = getSourceDocs();
+               for (int i = 0; i < sourceDocs.length(); i++)
+               {
+                  if (sourceDocs.get(i).getPath() == path)
+                  {
+                     assignSourceDocWindowId(sourceDocs.get(i).getId(), 
+                           getSourceWindowId(), null);
+                     fireEventToSourceWindow(sourceWindowId, 
+                           new DocWindowChangedEvent(
+                                 sourceDocs.get(i).getId(), sourceWindowId, 
+                                 null, 0),
+                           true);
+                     return new NavigationResult(
+                           NavigationResult.RESULT_RELOCATE, 
+                           sourceDocs.get(i).getId());
+                  }
+               }
+            }
+         }
+      }
+      else if (sourceWindowId != null && 
+               sourceWindowId != getSourceWindowId())
+      {
+         if (canActivateSourceWindows())
+         {
+            // in desktop mode (and IE) we can just route to the main window
+           events_.fireEventToMainWindow(event);
+            
+            // if the destination is the main window, raise it
+            if (sourceWindowId.isEmpty())
+            {
+               pSatellite_.get().focusMainWindow();
+            }
+            return new NavigationResult(NavigationResult.RESULT_NAVIGATED);
+         }
+         else
+         {
+            // otherwise, move the tab over to this window by closing it in
+            // in its origin window
+            JsArray<SourceDocument> sourceDocs = getSourceDocs();
+            for (int i = 0; i < sourceDocs.length(); i++)
+            {
+               if (sourceDocs.get(i).getPath() == path)
+               {
+                  // take ownership of the doc immediately 
+                  assignSourceDocWindowId(sourceDocs.get(i).getId(), 
+                        getSourceWindowId(), null);
+                  events_.fireEventToMainWindow(new DocWindowChangedEvent(
+                              sourceDocs.get(i).getId(), sourceWindowId, null, 
+                              0));
+                  return new NavigationResult(NavigationResult.RESULT_RELOCATE,
+                        sourceDocs.get(i).getId());
+               }
+            }
+         }
+      }
+      return new NavigationResult(NavigationResult.RESULT_NONE);
+   }
+   
+   private void updateDocPath(String id, String path)
+   {
+      for (int i = 0; i < sourceDocs_.length(); i++)
+      {
+         if (sourceDocs_.get(i).getId() == id)
+         {
+            sourceDocs_.get(i).setPath(path);
+            break;
+         }
       }
    }
 
