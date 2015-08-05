@@ -99,7 +99,7 @@ class StringHashCache {
     return map[key];
   }-*/;
 
-  private static native Object set(Object map, String key, int value) /*-{
+  private static native void set(Object map, String key, int value) /*-{
     map[key] = value;
   }-*/;
 
