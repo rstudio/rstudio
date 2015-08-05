@@ -544,11 +544,21 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    {
       NativeEvent event = preview.getNativeEvent();
       String type = event.getType();
-      if (type.equals("keydown") && event.getKeyCode() == KeyCodes.KEY_ESCAPE)
+      if (type.equals("keydown"))
       {
-         event.stopPropagation();
-         event.preventDefault();
-         filterWidget_.focus();
+         int keyCode = event.getKeyCode();
+         if (keyCode == KeyCodes.KEY_ESCAPE)
+         {
+            event.stopPropagation();
+            event.preventDefault();
+            filterWidget_.focus();
+         }
+         else if (keyCode == KeyCodes.KEY_ENTER)
+         {
+            event.stopPropagation();
+            event.preventDefault();
+            table_.setKeyboardSelectedColumn(1);
+         }
       }
    }
    
