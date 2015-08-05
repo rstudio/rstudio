@@ -798,7 +798,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
     addSnippetClassDecl("public interface Buggy extends MyJsFunctionInterface {}");
 
-    assertBuggyFails("Interface 'test.EntryPoint$Buggy' cannot extend a JsFunction interface.");
+    assertBuggyFails("JsFunction 'test.MyJsFunctionInterface' cannot be extended by other "
+        + "interfaces:\n\ttest.EntryPoint$Buggy");
   }
 
   public void testJsFunctionMarkedAsJsTypeFails() throws Exception {
@@ -857,8 +858,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "public static class Buggy extends BaseClass  {",
         "}");
 
-    assertBuggyFails("JsFunction implementation 'test.EntryPoint$BaseClass' cannot be extended by "
-        + "other classes.");
+    assertBuggyFails("Implementation of JsFunction 'test.EntryPoint$BaseClass' cannot be extended "
+        + "by other classes:\n\ttest.EntryPoint$Buggy");
   }
 
   public void testJsFunctionImplementationMarkedAsJsTypeFails() throws Exception {

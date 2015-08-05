@@ -17,6 +17,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
@@ -95,10 +96,12 @@ public class JsInteropRestrictionChecker extends JVisitor {
     minimalRebuildCache.removeJsInteropNames(x.getName());
     currentType = x;
 
-    checkJsFunctionHierarchy(x);
-
-    if (currentType instanceof JInterfaceType) {
-      checkJsTypeHierarchy((JInterfaceType) currentType);
+    if (x.isJsFunction()) {
+      checkJsFunction(x);
+    } else if (x.isOrExtendsJsFunction() && x instanceof JClassType) {
+      checkJsFunctionImplementation(x);
+    } else if (x.isJsType() && x instanceof JInterfaceType) {
+      checkJsInterface(x);
     } else {
       checkConstructors(x);
     }
@@ -217,14 +220,12 @@ public class JsInteropRestrictionChecker extends JVisitor {
     }
   }
 
-  private void checkJsTypeHierarchy(JInterfaceType interfaceType) {
-    if (currentType.isJsType()) {
-      for (JDeclaredType superInterface : interfaceType.getImplements()) {
-        if (!superInterface.isJsType()) {
-          logWarning(
-              "JsType interface '%s' extends non-JsType interface '%s'. This is not recommended.",
-              interfaceType.getName(), superInterface.getName());
-        }
+  private void checkJsInterface(JDeclaredType interfaceType) {
+    for (JDeclaredType superInterface : interfaceType.getImplements()) {
+      if (!superInterface.isJsType()) {
+        logWarning(
+            "JsType interface '%s' extends non-JsType interface '%s'. This is not recommended.",
+            interfaceType.getName(), superInterface.getName());
       }
     }
   }
@@ -326,29 +327,23 @@ public class JsInteropRestrictionChecker extends JVisitor {
     }
   }
 
-  private void checkJsFunctionHierarchy(JDeclaredType type) {
-    if (!type.isOrExtendsJsFunction()) {
-      return;
+  private void checkJsFunction(JDeclaredType type) {
+    if (type.getImplements().size() > 0) {
+      logError("JsFunction '%s' cannot extend other interfaces.", type);
     }
 
-    List<JInterfaceType> implementedInterfaces = type.getImplements();
-
-    if (type.isJsFunction()) {
-      if (implementedInterfaces.size() > 0) {
-        logError("JsFunction '%s' cannot extend other interfaces.", type);
-      }
-      if (type.isJsType()) {
-        logError("'%s' cannot be both a JsFunction and a JsType at the same time.", type);
-      }
-      return;
+    if (type.isJsType()) {
+      logError("'%s' cannot be both a JsFunction and a JsType at the same time.", type);
     }
 
-    if (type instanceof JInterfaceType) {
-      logError("Interface '%s' cannot extend a JsFunction interface.", type);
-      return;
+    Set<String> subTypes = jprogram.typeOracle.getSubTypeNames(type.getName());
+    if (!subTypes.isEmpty()) {
+      logError("JsFunction '%s' cannot be extended by other interfaces:%s", type, subTypes);
     }
+  }
 
-    if (implementedInterfaces.size() != 1) {
+  private void checkJsFunctionImplementation(JDeclaredType type) {
+    if (type.getImplements().size() != 1) {
       logError("JsFunction implementation '%s' cannot implement more than one interface.", type);
     }
 
@@ -361,13 +356,23 @@ public class JsInteropRestrictionChecker extends JVisitor {
       logError("JsFunction implementation '%s' cannot extend a class.", type);
     }
 
-    if (!jprogram.typeOracle.getSubTypeNames(type.getName()).isEmpty()) {
-      logError("JsFunction implementation '%s' cannot be extended by other classes.", type);
+    Set<String> subTypes = jprogram.typeOracle.getSubTypeNames(type.getName());
+    if (!subTypes.isEmpty()) {
+      logError("Implementation of JsFunction '%s' cannot be extended by other classes:%s", type,
+          subTypes);
     }
   }
 
   private void logError(String format, JType type) {
     logError(format, type.getName());
+  }
+
+  private void logError(String format, JType type, Set<String> subTypes) {
+    StringBuilder subTypeNames = new StringBuilder();
+    for (String typeName : subTypes) {
+      subTypeNames.append("\n\t").append(typeName);
+    }
+    logError(format, type.getName(), subTypeNames);
   }
 
   private void logError(String format, Object... args) {

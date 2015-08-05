@@ -192,8 +192,11 @@ public abstract class OptimizerTestBase extends JJSTestBase {
       optimize(errorLogger, "void", code);
       fail("Compile should have failed but succeeded.");
     } catch (Exception e) {
-      assertTrue(e.getCause() instanceof UnableToCompleteException
-          || e instanceof UnableToCompleteException);
+      if (!(e.getCause() instanceof UnableToCompleteException)
+          && !(e instanceof UnableToCompleteException)) {
+        e.printStackTrace();
+        fail();
+      }
     }
     errorLogger.assertCorrectLogEntries();
   }
