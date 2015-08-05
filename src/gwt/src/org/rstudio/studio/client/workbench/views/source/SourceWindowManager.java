@@ -56,6 +56,7 @@ import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserCreatedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
@@ -388,7 +389,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    public NavigationResult navigateToCodeBrowser(String path, 
          CrossWindowEvent<?> codeBrowserEvent) 
    {
-      return navigateToPath(path, codeBrowserEvent, true);
+      return navigateToPath(path, codeBrowserEvent, 
+            codeBrowserEvent instanceof CodeBrowserNavigationEvent);
    }
    
    public boolean activateLastFocusedSource()
