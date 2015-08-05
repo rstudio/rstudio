@@ -64,7 +64,7 @@ public class ArrayHelper {
     return arrayToSclice.slice(start, end);
   }-*/;
 
-  private static native Object nativeArraySplice(Object array, int index, int deleteCount,
+  private static native void nativeArraySplice(Object array, int index, int deleteCount,
       Object arrayToAdd) /*-{
     Array.prototype.splice.apply(array, [index, deleteCount].concat(arrayToAdd));
   }-*/;
