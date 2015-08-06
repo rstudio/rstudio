@@ -21,6 +21,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.PreElement;
 import com.google.gwt.dom.client.Style.Unit;
@@ -2357,6 +2358,15 @@ public class AceEditor implements DocDisplay,
                "ace_executing-line");
          executionLine_ = null;
       }
+   }
+   
+   public void clearMarkerLayer()
+   {
+      Element[] markerLayers =
+            DomUtils.getElementsByClassName(widget_.getElement(), "ace_marker-layer");
+      
+      for (Element layer : markerLayers)
+         layer.removeAllChildren();
    }
 
    public void setPopupVisible(boolean visible)
