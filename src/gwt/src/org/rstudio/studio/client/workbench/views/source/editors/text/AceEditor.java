@@ -31,6 +31,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -252,13 +253,16 @@ public class AceEditor implements DocDisplay,
 
       completionManager_ = new NullCompletionManager();
       diagnosticsBgPopup_ = new DiagnosticsBackgroundPopup(this);
-
+      
+      bgTokenizer_ = new BackgroundTokenizer();
+      
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       widget_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
          public void onValueChange(ValueChangeEvent<Void> evt)
          {
+            bgTokenizer_.scheduleTokenization(widget_.getEditor().getSession().getSelection().getRange().getStart().getRow());
             if (!valueChangeSuppressed_)
             {
                ValueChangeEvent.fire(AceEditor.this, null);
@@ -2605,6 +2609,31 @@ public class AceEditor implements DocDisplay,
    private Integer executionLine_ = null;
    private boolean valueChangeSuppressed_ = false;
    private AceInfoBar infoBar_;
+   private final BackgroundTokenizer bgTokenizer_;
+   
+   private class BackgroundTokenizer
+   {
+      public BackgroundTokenizer()
+      {
+         timer_ = new Timer()
+         {
+            @Override
+            public void run()
+            {
+              widget_.getEditor().retokenizeDocument(row_);
+            }
+         };
+      }
+      
+      public void scheduleTokenization(int row)
+      {
+         row_ = row;
+         timer_.schedule(300);
+      }
+      
+      private int row_ = 0;
+      private final Timer timer_;
+   }
     
    private static final ExternalJavaScriptLoader aceLoader_ =
          getAceLoader();
