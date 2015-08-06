@@ -27,9 +27,31 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
       this.$textIsTerminator = textIsTerminator;
 
       var that = this;
-      this.$doc.on('change', function(evt) {
-         that.$onDocChange.apply(that, [evt]);
-      });
+
+      var onDocChange = function(evt) {
+         this.$onDocChange(evt);
+      }.bind(this);
+
+      this.$doc.on('change', onDocChange);
+
+      // When the session's mode is changed, a new background
+      // highlighter will get attached. In that case, we need
+      // to detach the old highlighter.
+      var onChangeMode = function(data, session) {
+
+         // Ignore this change event if this 'changeMode' event is
+         // actually associated with the attachment of this highlighter.
+         if (session.$mode.$sweaveBackgroundHighlighter === this)
+            return;
+
+         // Clear markers and remove handlers.
+         this.$clearMarkers();
+         this.$doc.off('change', onDocChange);
+         this.$session.off('changeMode', onChangeMode);
+
+      }.bind(this);
+
+      this.$session.on('changeMode', onChangeMode);
 
       this.$rowState = new Array(this.$doc.getLength());
       this.$markers = new Array();
