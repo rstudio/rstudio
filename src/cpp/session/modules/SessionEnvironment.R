@@ -542,7 +542,8 @@
    else
    {
       # resolve namespaces
-      if (isNamespaceLoaded(result) && identical(asNamespace(result), env))
+      if ((result %in% loadedNamespaces()) && 
+          identical(asNamespace(result), env))
          paste("namespace:", result, sep="")
       else
          result
