@@ -287,8 +287,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void toggleBreakpointAtCursor();
    boolean hasBreakpoints();
    
-   void clearMarkerLayer();
-   
    void setAnnotations(JsArray<AceAnnotation> annotations);
    void showLint(JsArray<LintItem> lint);
    void clearLint();
