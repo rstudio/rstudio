@@ -889,4 +889,10 @@ public class DomUtils
    public final static native Element elementFromPoint(int x, int y) /*-{
       return $doc.elementFromPoint(x, y);
    }-*/;
+   
+   public static final native void setSelectionRange(Element el, int start, int end)
+   /*-{
+      if (el.setSelectionRange)
+         el.setSelectionRange(start, end);
+   }-*/;
 }

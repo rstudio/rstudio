@@ -218,10 +218,13 @@ public class ShortcutManager implements NativePreviewHandler,
       return returnValue;
    }
    
-   // Returns 'true' if the event is canceled.
+   // Returns 'true' if the keyBuffer was reset, or is already empty.
    private boolean updateKeyBuffer(NativeEvent event)
    {
       if (keyBuffer_.isEmpty())
+         return true;
+      
+      if (!isEnabled())
          return false;
       
       // We need to let the Ace editor see prefix matches.

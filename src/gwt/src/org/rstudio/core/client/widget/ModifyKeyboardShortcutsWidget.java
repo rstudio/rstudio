@@ -14,12 +14,14 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.cell.client.EditTextCell;
+import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -35,6 +37,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.AbstractCellTable;
+import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
@@ -57,14 +60,17 @@ import com.google.gwt.view.client.ProvidesKey;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
 import org.rstudio.core.client.command.KeyboardHelper;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.command.ShortcutManager;
+import org.rstudio.core.client.command.ShortcutManager.Handle;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
@@ -146,7 +152,15 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       public void setKeySequence(KeySequence keys)
       {
-         newKeySequence_ = keys.clone();
+         if (keys.equals(keySequence_))
+            newKeySequence_ = null;
+         else
+            newKeySequence_ = keys.clone();
+      }
+      
+      public KeySequence getOriginalKeySequence()
+      {
+         return keySequence_;
       }
       
       public void restoreOriginalKeySequence()
@@ -175,13 +189,18 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       private final String name_;
       private final KeySequence keySequence_;
       private final int commandType_;
-      private final boolean isCustom_;
       private final AppCommand.Context context_;
       
+      private boolean isCustom_ = false;
       private KeySequence newKeySequence_;
       
       public static final int TYPE_RSTUDIO_COMMAND =  1; // RStudio AppCommands
       public static final int TYPE_EDITOR_COMMAND =   2; // e.g. Ace commands
+   }
+   
+   private static interface ValueGetter<T>
+   {
+      public String getValue(T object);
    }
    
    public ModifyKeyboardShortcutsWidget()
@@ -213,12 +232,13 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          @Override
          public void onCellPreview(CellPreviewEvent<CommandBinding> preview)
          {
+            NativeEvent event = preview.getNativeEvent();
+            int code = event.getKeyCode();
+            
             // Don't let arrow keys change the selection when a shortcut cell
             // has been selected.
             if (preview.getColumn() == 1)
             {
-               NativeEvent event = preview.getNativeEvent();
-               int code = event.getKeyCode();
                if (code == KeyCodes.KEY_UP ||
                    code == KeyCodes.KEY_DOWN ||
                    code == KeyCodes.KEY_LEFT ||
@@ -226,6 +246,12 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                {
                   return;
                }
+            }
+            
+            if (code == KeyCodes.KEY_LEFT ||
+                code == KeyCodes.KEY_RIGHT)
+            {
+               return;
             }
             
             handler_.onCellPreview(preview);
@@ -377,7 +403,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    private void addColumns()
    {
-      nameColumn_ = textColumn("Name", new TextColumn<CommandBinding>()
+      nameColumn_ = textColumn("Name", new ValueGetter<CommandBinding>()
       {
          @Override
          public String getValue(CommandBinding object)
@@ -386,7 +412,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       });
       
-      shortcutColumn_ = textColumn("Shortcut", new TextColumn<CommandBinding>()
+      shortcutColumn_ = editableTextColumn("Shortcut", new ValueGetter<CommandBinding>()
       {
          @Override
          public String getValue(CommandBinding object)
@@ -396,7 +422,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       });
       
-      typeColumn_ = textColumn("Scope", new TextColumn<CommandBinding>()
+      typeColumn_ = textColumn("Scope", new ValueGetter<CommandBinding>()
       {
          @Override
          public String getValue(CommandBinding object)
@@ -408,8 +434,96 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
    }
    
-   private TextColumn<CommandBinding> textColumn(String name, TextColumn<CommandBinding> column)
+   private TextColumn<CommandBinding>
+   textColumn(String name, final ValueGetter<CommandBinding> getter)
    {
+      TextColumn<CommandBinding> column = new TextColumn<CommandBinding>()
+      {
+         @Override
+         public String getValue(CommandBinding binding)
+         {
+            return getter.getValue(binding);
+         }
+      };
+      
+      column.setSortable(true);
+      table_.addColumn(column, new TextHeader(name));
+      return column;
+   }
+   
+   private Column<CommandBinding, String>
+   editableTextColumn(String name, final ValueGetter<CommandBinding> getter)
+   {
+      EditTextCell editTextCell = new EditTextCell()
+      {
+         @Override
+         public void onBrowserEvent(final Context context,
+                                    final Element parent,
+                                    final String value,
+                                    final NativeEvent event,
+                                    final ValueUpdater<String> updater)
+         {
+            // GWT's EditTextCell will reset the text of the cell to the last
+            // entered text on an Escape keypress. We don't desire that
+            // behaviour (we want to restore the _first_ value presented when
+            // the user opened the widget); so instead we just blur the input
+            // element (thereby committing the current selection) and ensure
+            // that selection has been appropriately reset in an earlier preview
+            // handler.
+            if (event.getType().equals("keyup") &&
+                event.getKeyCode() == KeyCodes.KEY_ESCAPE)
+            {
+               parent.getFirstChildElement().blur();
+               return;
+            }
+            
+            super.onBrowserEvent(context, parent, value, event, updater);
+         }
+      };
+      
+      Column<CommandBinding, String> column =
+            new Column<CommandBinding, String>(editTextCell)
+      {
+         @Override
+         public String getValue(CommandBinding binding)
+         {
+            return getter.getValue(binding);
+         }
+      };
+      
+      column.setFieldUpdater(new FieldUpdater<CommandBinding, String>()
+      {
+         @Override
+         public void update(int index, CommandBinding binding, String value)
+         {
+            KeySequence keys = KeySequence.fromShortcutString(value);
+            
+            // Differentiate between resetting the key sequence and
+            // adding a new key sequence.
+            if (keys.equals(binding.getOriginalKeySequence()))
+            {
+               changes_.remove(binding);
+               binding.restoreOriginalKeySequence();
+            }
+            else
+            {
+               CommandBinding newBinding = new CommandBinding(
+                     binding.getId(),
+                     binding.getName(),
+                     keys,
+                     binding.getCommandType(),
+                     true,
+                     binding.getContext());
+               
+               changes_.put(binding, newBinding);
+               binding.setKeySequence(keys);
+            }
+
+            table_.setKeyboardSelectedColumn(0);
+            updateData(dataProvider_.getList());
+         }
+      });
+      
       column.setSortable(true);
       table_.addColumn(column, new TextHeader(name));
       return column;
@@ -422,6 +536,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          @Override
          public void onCellPreview(CellPreviewEvent<CommandBinding> preview)
          {
+            Handle shortcutsHandler = shortcuts_.disable();
             int column = preview.getColumn();
             if (column == 0)
                onNameCellPreview(preview);
@@ -429,6 +544,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                onShortcutCellPreview(preview);
             else if (column == 2)
                ;
+            shortcutsHandler.close();
          }
       });
       
@@ -524,7 +640,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          if (StringUtil.isNullOrEmpty(name))
             continue;
          
-         if (customOnly && !binding.isCustomBinding())
+         if (customOnly && !(binding.isCustomBinding() || binding.isModified()))
             continue;
          
          boolean isGoodBinding =
@@ -544,7 +660,11 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    {
       NativeEvent event = preview.getNativeEvent();
       String type = event.getType();
-      if (type.equals("keydown"))
+      if (type.equals("blur"))
+      {
+         buffer_.clear();
+      }
+      else if (type.equals("keydown"))
       {
          int keyCode = event.getKeyCode();
          if (keyCode == KeyCodes.KEY_ESCAPE)
@@ -562,80 +682,70 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       }
    }
    
+   private Element getElement(DataGrid<?> grid, int row, int column)
+   {
+      return grid.getRowElement(row).getChild(column).cast();
+   }
+   
+   private Element shortcutInput()
+   {
+      Element el = new FlowPanel(InputElement.TAG).getElement();
+      el.addClassName(RES.dataGridStyle().shortcutInput());
+      return el;
+   }
+   
    private void onShortcutCellPreview(CellPreviewEvent<CommandBinding> preview)
    {
       NativeEvent event = preview.getNativeEvent();
       String type = event.getType();
       
-      if (type.equals("blur"))
+      if (type.equals("keydown"))
       {
-         buffer_.clear();
-      }
-      else if (event.getType().equals("keydown"))
-      {
+         int keyCode = event.getKeyCode();
+         int modifiers = KeyboardShortcut.getModifierValue(event);
+         
+         // Don't handle raw 'Enter' keypresses (let underlying input
+         // widget process)
+         if (keyCode == KeyCodes.KEY_ENTER &&
+             (modifiers & KeyboardShortcut.NONE) == KeyboardShortcut.NONE)
+         {
+            return;
+         }
+         
+         // Handle any other key events.
          event.stopPropagation();
          event.preventDefault();
          
          if (KeyboardHelper.isModifierKey(event.getKeyCode()))
             return;
          
-         CommandBinding binding = preview.getValue();
-         
-         if (event.getKeyCode() == KeyCodes.KEY_BACKSPACE)
+         if (keyCode == KeyCodes.KEY_BACKSPACE)
          {
             buffer_.pop();
-            binding.setKeySequence(buffer_);
-            ensureCellSelectionUnchanged();
          }
-         else if (event.getKeyCode() == KeyCodes.KEY_DELETE)
+         else if (keyCode == KeyCodes.KEY_DELETE)
          {
             buffer_.clear();
-            binding.restoreOriginalKeySequence();
-            ensureCellSelectionUnchanged();
          }
-         else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
+         else if (keyCode == KeyCodes.KEY_ESCAPE)
          {
-            buffer_.clear();
-            binding.restoreOriginalKeySequence();
-            table_.setKeyboardSelectedColumn(0);
+            buffer_.set(preview.getValue().getOriginalKeySequence());
          }
          else
          {
             buffer_.add(event);
-            binding.setKeySequence(buffer_);
-
-            // Add the new command binding to later be accepted + registered
-            CommandBinding newBinding = new CommandBinding(
-                  binding.getId(),
-                  binding.getName(),
-                  buffer_.clone(),
-                  binding.getCommandType(),
-                  true,
-                  binding.getContext());
-
-            changes_.put(binding, newBinding);
-            ensureCellSelectionUnchanged();
          }
          
-         updateData(dataProvider_.getList());
-         
+         // Sneak into the element and find the active <input>, then update it.
+         Element el = getElement(table_, preview.getIndex(), preview.getColumn());
+         Element input = el.getFirstChildElement().getFirstChildElement();
+         assert input.getTagName().toLowerCase().equals("input")
+         : "Failed to find <input> element in table";
+
+         String bufferString = buffer_.toString();
+         input.setAttribute("value", bufferString);
+         input.setInnerHTML(bufferString);
       }
-   }
-   
-   private void ensureCellSelectionUnchanged()
-   {
-      final int row = table_.getKeyboardSelectedRow();
-      final int column = table_.getKeyboardSelectedColumn();
-      
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         @Override
-         public void execute()
-         {
-            table_.setKeyboardSelectedRow(row, true);
-            table_.setKeyboardSelectedColumn(column);
-         }
-      });
    }
    
    private RadioButton radioButton(String label, ClickHandler handler)
@@ -1006,10 +1116,11 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    private HandlerRegistration previewHandler_;
    private List<CommandBinding> originalBindings_;
+   private Pair<Integer, Integer> lastSelectedIndices_;
    
    // Columns ----
    private TextColumn<CommandBinding> nameColumn_;
-   private TextColumn<CommandBinding> shortcutColumn_;
+   private Column<CommandBinding, String> shortcutColumn_;
    private TextColumn<CommandBinding> typeColumn_;
    
    // Injected ----
@@ -1031,6 +1142,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       String modifiedRow();
       String maskedEditorCommandCell();
       String conflictRow();
+      String shortcutInput();
       String icon();
    }
    
