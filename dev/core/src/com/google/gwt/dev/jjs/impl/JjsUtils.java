@@ -22,6 +22,7 @@ import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.HasType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
+import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
 import com.google.gwt.dev.jjs.ast.JCharLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
@@ -290,6 +291,13 @@ public class JjsUtils {
     return createEmptyMethodFromExample(type, superTypeMethod, true);
   }
 
+  public static void replaceMethodBody(JMethod method, JExpression returnValue) {
+    JMethodBody body = (JMethodBody) method.getBody();
+    JBlock block = body.getBlock();
+    block.clear();
+    block.addStmt(returnValue.makeReturnStatement());
+  }
+
   /**
    * Returns types from typed nodes.
    */
@@ -352,7 +360,7 @@ public class JjsUtils {
   }
 
   private static Map<Class<? extends JLiteral>, LiteralTranslators> translatorByLiteralClass =
-      new ImmutableMap.Builder()
+      new ImmutableMap.Builder<Class<? extends JLiteral>, LiteralTranslators>()
           .put(JBooleanLiteral.class, LiteralTranslators.BOOLEAN_LITERAL_TRANSLATOR)
           .put(JCharLiteral.class, LiteralTranslators.CHAR_LITERAL_TRANSLATOR)
           .put(JFloatLiteral.class, LiteralTranslators.FLOAT_LITERAL_TRANSLATOR)
