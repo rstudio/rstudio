@@ -1,7 +1,7 @@
 #
 # ModuleTools.R
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-15 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -257,6 +257,18 @@
    .Call(.rs.routines$rs_restartR, afterRestartCommand)
 })
 
+.rs.addFunction("readUiPref", function(prefName) {
+  if (missing(prefName) || is.null(prefName))
+    stop("No preference name supplied")
+  .Call(.rs.routines$rs_readUiPref, prefName)
+})
 
 
+.rs.addFunction("writeUiPref", function(prefName, value) {
+  if (missing(prefName) || is.null(prefName))
+    stop("No preference name supplied")
+  if (missing(value))
+    stop("No value supplied")
+  invisible(.Call(.rs.routines$rs_writeUiPref, prefName, .rs.scalar(value)))
+})
 
