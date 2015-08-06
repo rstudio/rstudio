@@ -782,6 +782,9 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          String bufferString = buffer_.toString();
          input.setAttribute("value", bufferString);
          input.setInnerHTML(bufferString);
+         
+         // Move the cursor to the end of the selection.
+         DomUtils.setSelectionRange(input, bufferString.length(), bufferString.length());
       }
    }
    
