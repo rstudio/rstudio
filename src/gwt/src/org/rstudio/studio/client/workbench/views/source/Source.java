@@ -3186,6 +3186,7 @@ public class Source implements InsertSourceHandler,
       {
          activateCodeBrowser(
             navigation.getPath(),
+            false,
             new SourceNavigationResultCallback<CodeBrowserEditingTarget>(
                                                       navigation.getPosition(),
                                                       retryCommand));
@@ -3245,6 +3246,7 @@ public class Source implements InsertSourceHandler,
             
             activateCodeBrowser(
                CodeBrowserEditingTarget.getCodeBrowserPath(event.getFunction()),
+               !event.serverDispatched(),
                new ResultCallback<CodeBrowserEditingTarget,ServerError>() {
                @Override
                public void onSuccess(CodeBrowserEditingTarget target)
@@ -3295,6 +3297,7 @@ public class Source implements InsertSourceHandler,
             setPendingDebugSelection();
             activateCodeBrowser(
                CodeBrowserEditingTarget.getCodeBrowserPath(event.getFunction()),
+               false,
                new ResultCallback<CodeBrowserEditingTarget,ServerError>() {
                @Override
                public void onSuccess(CodeBrowserEditingTarget target)
@@ -3335,6 +3338,7 @@ public class Source implements InsertSourceHandler,
 
    private void activateCodeBrowser(
          final String codeBrowserPath, 
+         boolean replaceIfActive,
          final ResultCallback<CodeBrowserEditingTarget,ServerError> callback)
    {
       // first check to see if this request can be fulfilled with an existing
@@ -3353,6 +3357,18 @@ public class Source implements InsertSourceHandler,
             // satisfied request
             return;
          }
+      }
+      
+      // then check to see if the active editor is a code browser -- if it is,
+      // we'll use it as is, replacing its contents
+      if (replaceIfActive &&
+          activeEditor_ != null && 
+          activeEditor_ instanceof CodeBrowserEditingTarget)
+      {
+         events_.fireEvent(new CodeBrowserCreatedEvent(activeEditor_.getId(),
+               codeBrowserPath));
+         callback.onSuccess((CodeBrowserEditingTarget) activeEditor_);
+         return;
       }
       
       // create a new one
