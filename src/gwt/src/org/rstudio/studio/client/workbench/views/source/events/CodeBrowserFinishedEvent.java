@@ -16,11 +16,13 @@
 package org.rstudio.studio.client.workbench.views.source.events;
 
 
+import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 
 import com.google.gwt.event.shared.GwtEvent;
 
+@JavaScriptSerializable
 public class CodeBrowserFinishedEvent extends 
              CrossWindowEvent<CodeBrowserFinishedHandler>
 {
