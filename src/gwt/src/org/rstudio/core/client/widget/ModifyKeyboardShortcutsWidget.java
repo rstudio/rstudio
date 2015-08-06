@@ -60,6 +60,7 @@ import com.google.gwt.view.client.ProvidesKey;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
@@ -223,11 +224,45 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       table_.setWidth("700px");
       table_.setHeight("400px");
       
+      // Add a 'global' click handler that performs a row selection regardless
+      // of the cell clicked (it seems GWT clicks can be 'fussy' about whether
+      // you click on the contents of a cell vs. the '<td>' element iteself)
+      table_.addDomHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            Element el = event.getNativeEvent().getEventTarget().cast();
+            Element rowEl = DomUtils.findParentElement(el, new ElementPredicate()
+            {
+               @Override
+               public boolean test(Element el)
+               {
+                  return el.getTagName().toLowerCase().equals("tr");
+               }
+            });
+            
+            if (rowEl == null)
+               return;
+            
+            if (rowEl.hasAttribute("__gwt_row"))
+            {
+               int row = StringUtil.parseInt(rowEl.getAttribute("__gwt_row"), -1);
+               if (row != -1)
+               {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  table_.setKeyboardSelectedRow(row);
+                  table_.setKeyboardSelectedColumn(0);
+               }
+            }
+         }
+      }, ClickEvent.getType());
       
       table_.setKeyboardSelectionHandler(new CellPreviewEvent.Handler<CommandBinding>()
       {
          private final AbstractCellTable.CellTableKeyboardSelectionHandler<CommandBinding> handler_ =
-               new AbstractCellTable.CellTableKeyboardSelectionHandler<ModifyKeyboardShortcutsWidget.CommandBinding>(table_);
+               new AbstractCellTable.CellTableKeyboardSelectionHandler<CommandBinding>(table_);
          
          @Override
          public void onCellPreview(CellPreviewEvent<CommandBinding> preview)
@@ -248,6 +283,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                }
             }
             
+            // Also disable 'left', 'right' keys as they can 'navigate' the widget
+            // into an unusable state.
             if (code == KeyCodes.KEY_LEFT ||
                 code == KeyCodes.KEY_RIGHT)
             {
@@ -543,7 +580,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             else if (column == 1)
                onShortcutCellPreview(preview);
             else if (column == 2)
-               ;
+               onNameCellPreview(preview);
             shortcutsHandler.close();
          }
       });

@@ -34,6 +34,10 @@
 	outline: 0;
 }
 
+.dataGridWidget input {
+	height: 14px !important;
+}
+
 /* Other styling */
 
 .modifiedRow {
