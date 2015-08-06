@@ -154,22 +154,6 @@
       ""
 })
 
-.rs.addFunction("sourceCodeFromFunction", function(fun)
-{
-   if (is.null(attr(fun, "srcref")))
-   {
-      # The function does not have source refs, so deparse it to get a 
-      # formatted representation. 
-      paste(deparse(fun), collapse="\n")
-   }
-   else
-   {
-      # The function has source refs; use them to get exactly the code that
-      # was used to create the function.
-      paste(capture.output(attr(fun, "srcref")), collapse="\n")
-   }
-})
-
 # Given a function and some content inside that function, returns a vector
 # in the standard R source reference format that represents the location of
 # the content in the deparsed representation of the function.
@@ -188,7 +172,7 @@
       (is.null(call) && is.null(calltext)) )
      return(c(0L, 0L, 0L, 0L, 0L, 0L))
 
-  lines <- deparse(fun)
+  lines <- unlist(strsplit(.rs.deparseFunction(fun, FALSE), "\n", fixed = TRUE))
 
   # Remember the indentation level on each line (added by deparse), and remove
   # it along with any other leading or trailing whitespace. 
@@ -250,7 +234,6 @@
   {
      endpos <- pos + attr(pos, "match.length")
   }
-
 
   # Return an empty source ref if we couldn't find a match
   if (length(pos) == 0 || pos < 0)

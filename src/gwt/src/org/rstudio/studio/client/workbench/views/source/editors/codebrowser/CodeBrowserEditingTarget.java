@@ -159,7 +159,6 @@ public class CodeBrowserEditingTarget implements EditingTarget
       view_ = new CodeBrowserEditingTargetWidget(commands_,
                                                  globalDisplay_,
                                                  events_,
-                                                 prefs_, 
                                                  server_, 
                                                  docDisplay_);
       

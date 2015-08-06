@@ -632,8 +632,8 @@ bool functionIsOutOfSync(const RCNTXT *pContext,
    SEXP sexpCode = R_NilValue;
 
    // start by extracting the source code from the call site
-   error = r::exec::RFunction(".rs.sourceCodeFromFunction",
-                              getOriginalFunctionCallObject(pContext))
+   error = r::exec::RFunction(".rs.deparseFunction",
+                              getOriginalFunctionCallObject(pContext), true)
          .call(&sexpCode, &protect);
    if (error)
    {

@@ -29,9 +29,6 @@ import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.core.client.regex.Match;
-import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.core.client.regex.Pattern.ReplaceOperation;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.SecondaryToolbar;
@@ -50,7 +47,6 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorLineWithCursorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
@@ -70,12 +66,10 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    public CodeBrowserEditingTargetWidget(Commands commands,
                                          final GlobalDisplay globalDisplay,
                                          final EventBus eventBus,
-                                         final UIPrefs uiPrefs,
                                          final CodeToolsServerOperations server,
                                          final DocDisplay docDisplay)
    {
       commands_ = commands;
-      uiPrefs_ = uiPrefs;
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
       server_ = server;
@@ -219,7 +213,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    public void showFunction(SearchPathFunctionDefinition functionDef)
    {
       currentFunctionNamespace_ = functionDef.getNamespace();
-      docDisplay_.setCode(formatCode(functionDef), false); 
+      docDisplay_.setCode(functionDef.getCode(), false); 
       // don't send focus to the display for debugging; we want it to stay in
       // the console
       if (!functionDef.isActiveDebugCode())
@@ -409,55 +403,6 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       return toolbar;
    }
    
-   private String formatCode(SearchPathFunctionDefinition functionDef)
-   {
-      // deal with null
-      String code = functionDef.getCode();
-      if (code == null)
-         return "";
-      
-      // if this is from a source ref then leave it alone
-      if (functionDef.isCodeFromSrcAttrib())
-         return code;
-      
-      // determine the replacement text based on the user's current
-      // editing preferences
-      String replaceText = "\t";
-      if (uiPrefs_.useSpacesForTab().getValue())
-      {
-         StringBuilder replaceBuilder = new StringBuilder();
-         for (int i=0; i<uiPrefs_.numSpacesForTab().getValue(); i++)
-            replaceBuilder.append(' ');
-         replaceText = replaceBuilder.toString();
-      }
-      
-      // create regex pattern used to find leading space
-      // NOTE: the 4 spaces comes from the implementation of printtab2buff
-      // in deparse.c -- it is hard-coded to use 4 spaces for the first 4 
-      // levels of indentation and then 2 spaces for subsequent levels.
-      final String replaceWith = replaceText;
-      Pattern pattern = Pattern.create("^(    ){1,4}");
-      code = pattern.replaceAll(code, new ReplaceOperation()
-      {
-         @Override
-         public String replace(Match m)
-         {
-            return m.getValue().replace("    ", replaceWith);
-         }
-      });
-      Pattern pattern2 = Pattern.create("^\t{4}(  )+");
-      code = pattern2.replaceAll(code, new ReplaceOperation()
-      {
-         @Override
-         public String replace(Match m)
-         {
-            return m.getValue().replace("  ",  replaceWith);
-         }
-      });
-
-      return code;
-   }
-   
    public static void ensureStylesInjected()
    {
       RES.styles().ensureInjected();
@@ -488,7 +433,6 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
    private final Commands commands_;
-   private final UIPrefs uiPrefs_;
    private final DocDisplay docDisplay_;
    private final TextEditingTargetFindReplace findReplace_;
    private String currentFunctionNamespace_ = null;

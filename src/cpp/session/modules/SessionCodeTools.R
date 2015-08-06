@@ -170,7 +170,59 @@
    if (useSource)
      control <- append(control, "useSource")
 
-   deparse(func, width.cutoff = 59, control = control)
+   code <- deparse(func, width.cutoff = 59, control = control)
+   
+   # if we were asked not to use source refs, or we were but there wasn't a
+   # source ref to use, then format the code according to user pref
+   if (!useSource || is.null(attr(func, "srcref", exact = TRUE)))
+   {
+     replaceText <- "\t"
+
+     # determine the replacement text based on the user's current editing
+     # preferences
+     if (isTRUE(.rs.readUiPref("use_spaces_for_tab"))) 
+     {
+       replaceText <- paste(rep(" ", .rs.readUiPref("num_spaces_for_tab")),
+                                collapse = "")
+     }
+
+     # split the code into individual lines -- R's immutable strings make it
+     # quicker to process these small chunks than on the whole code text
+     lines <- unlist(strsplit(code, "\n", fixed = TRUE))
+     for (l in seq_along(lines))
+     {
+       line <- lines[[l]]
+       pos <- 1
+       # convert up to 20 indentation levels per line
+       for (lvl in seq_len(20))
+       {
+         # NOTE: the 4 spaces comes from the implementation of printtab2buff in
+         # deparse.c -- it is hard-coded to use 4 spaces for the first 4 levels
+         # of indentation and then 2 spaces for subsequent levels.
+         indent <- if (lvl <= 4) "    " else "  "
+         if (substring(line, pos, pos + (nchar(indent) - 1)) == indent)
+         {
+           # convert this indent to the user's preferred indentation 
+           line <- paste(substring(line, 0, pos - 1),
+                         replaceText, 
+                         substring(line, pos + nchar(indent)),
+                         sep = "")
+           pos <- pos + nchar(replaceText)
+         }
+         else
+         {
+           # no more indents we want to convert on this line
+           break
+         }
+       }
+       lines[[l]] <- line
+     }
+
+     code <- paste(lines, collapse = "\n")
+   }
+
+   # return (possibly formatted) code
+   code
 })
 
 .rs.addFunction("isS3Generic", function(object)
