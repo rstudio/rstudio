@@ -466,7 +466,9 @@ public class TextEditingTargetWidget
 
    public void adaptToFileType(TextFileType fileType)
    {
-      editor_.clearMarkerLayer();
+      if (!fileType.equals(editor_.getFileType()))
+         editor_.clearMarkerLayer();
+      
       editor_.setFileType(fileType);
       boolean canCompilePdf = fileType.canCompilePDF();
       boolean canKnitToHTML = fileType.canKnitToHTML();
