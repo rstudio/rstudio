@@ -20,6 +20,8 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
+import javaemul.internal.ArrayHelper;
+
 /**
  * Encapsulates logic to create a stack trace. This class should only be used in
  * Production Mode.
@@ -353,11 +355,18 @@ public class StackTraceCreator {
     int numberOfFrameToSearch = Math.min(stackTrace.length, DROP_FRAME_LIMIT);
     for (int i = 0; i < numberOfFrameToSearch; i++) {
       if (stackTrace[i].getMethodName().equals(dropFrameUntilFnName)) {
-        return splice(stackTrace, i + 1);
+        splice(stackTrace, i + 1);
+        break;
       }
     }
 
     return stackTrace;
+  }
+
+  private static <T> void splice(Object[] arr, int length) {
+    if (arr.length >= length) {
+      ArrayHelper.removeFrom(arr, 0, length);
+    }
   }
 
   // Visible for testing
@@ -394,10 +403,5 @@ public class StackTraceCreator {
   private static native JsArrayString split(Object t) /*-{
     var e = t.__gwt$backingJsError;
     return (e && e.stack) ? e.stack.split('\n') : [];
-  }-*/;
-
-  private static native <T> T splice(T arr, int length) /*-{
-    (arr.length >= length) && arr.splice(0, length);
-    return arr;
   }-*/;
 }

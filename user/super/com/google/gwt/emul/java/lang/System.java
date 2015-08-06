@@ -85,7 +85,7 @@ public final class System {
         }
       }
     } else if (len > 0) {
-      ArrayHelper.arrayCopy(src, srcOfs, dest, destOfs, len);
+      ArrayHelper.copy(src, srcOfs, dest, destOfs, len);
     }
   }
 

@@ -26,6 +26,8 @@ import java.util.InternalJsMapFactory.InternalJsIteratorEntry;
 import java.util.InternalJsMapFactory.InternalJsMap;
 import java.util.Map.Entry;
 
+import javaemul.internal.ArrayHelper;
+
 /**
  * A simple wrapper around JavaScriptObject to provide {@link java.util.Map}-like semantics for any
  * key type.
@@ -77,7 +79,7 @@ class InternalHashCodeMap<K, V> implements Iterable<Entry<K, V>> {
           backingMap.delete(hashCode);
         } else {
           // splice out the entry we're removing
-          splice(chain, i);
+          ArrayHelper.removeFrom(chain, i, 1);
         }
         size--;
         structureChanged(host);
@@ -176,8 +178,4 @@ class InternalHashCodeMap<K, V> implements Iterable<Entry<K, V>> {
   private int hash(Object key) {
     return key == null ? 0 : host.getHashCode(key);
   }
-
-  private static native void splice(Object arr, int index) /*-{
-    arr.splice(index, 1);
-  }-*/;
 }

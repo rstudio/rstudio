@@ -16,55 +16,73 @@
 package javaemul.internal;
 
 /**
- * Forwards array operations to GWT's internal array class.
+ * Provides utilities to perform operations on Arrays.
  */
 public class ArrayHelper {
 
   public static final int ARRAY_PROCESS_BATCH_SIZE = 10000;
 
-  public static native <T> T[] clone(T[] array, int fromIndex, int toIndex) /*-{
-    return @com.google.gwt.lang.Array::cloneSubrange(*)(array, fromIndex, toIndex);
-  }-*/;
-
-  public static native <T> T[] createFrom(T[] array, int length) /*-{
-    return @com.google.gwt.lang.Array::createFrom(*)(array, length);
-  }-*/;
-
-  public static void arrayCopy(Object src, int srcOfs, Object dest, int destOfs, int len) {
-    arraySplice(src, srcOfs, dest, destOfs, len, true);
-  }
-
-  public static void arrayInsert(Object src, int srcOfs, Object dest, int destOfs, int len) {
-    arraySplice(src, srcOfs, dest, destOfs, len, false);
+  public static <T> T[] clone(T[] array, int fromIndex, int toIndex) {
+    Object result = unsafeClone(array, fromIndex, toIndex);
+    return ArrayStamper.stampJavaTypeInfo(result, array);
   }
 
   /**
-   * A replacement for Array.prototype.splice to overcome the limits imposed to the number of
-   * function parameters by browsers.
+   * Unlike clone, this method returns a copy of the array that is not type marked. This is only
+   * safe for temp arrays as returned array will not do any type checks.
    */
-  private static void arraySplice(
+  public static native Object unsafeClone(Object array, int fromIndex, int toIndex) /*-{
+    return array.slice(fromIndex, toIndex);
+  }-*/;
+
+  public static <T> T[] createFrom(T[] array, int length) {
+    Object result = createNativeArray(length);
+    return ArrayStamper.stampJavaTypeInfo(result, array);
+  }
+
+  private static native Object createNativeArray(int length)/*-{
+    return new Array(length);
+  }-*/;
+
+  public static native void removeFrom(Object array, int index, int deleteCount) /*-{
+    array.splice(index, deleteCount);
+  }-*/;
+
+  public static native void insertTo(Object array, int index, Object value) /*-{
+    array.splice(index, 0, value);
+  }-*/;
+
+  public static void insertTo(Object array, int index, Object[] values) {
+    copy(values, 0, array, index, values.length, false);
+  }
+
+  public static void copy(Object array, int srcOfs, Object dest, int destOfs, int len) {
+    copy(array, srcOfs, dest, destOfs, len, true);
+  }
+
+  private static void copy(
       Object src, int srcOfs, Object dest, int destOfs, int len, boolean overwrite) {
+    /*
+     * Array.prototype.splice is not used directly to overcome the limits imposed to the number of
+     * function parameters by browsers.
+     */
+
     if (src == dest) {
       // copying to the same array, make a copy first
-      src = nativeArraySlice(src, srcOfs, srcOfs + len);
+      src = unsafeClone(src, srcOfs, srcOfs + len);
       srcOfs = 0;
     }
     for (int batchStart = srcOfs, end = srcOfs + len; batchStart < end;) {
       // increment in block
       int batchEnd = Math.min(batchStart + ARRAY_PROCESS_BATCH_SIZE, end);
       len = batchEnd - batchStart;
-      nativeArraySplice(
-          dest, destOfs, overwrite ? len : 0, nativeArraySlice(src, batchStart, batchEnd));
+      applySplice(dest, destOfs, overwrite ? len : 0, unsafeClone(src, batchStart, batchEnd));
       batchStart = batchEnd;
       destOfs += len;
     }
   }
 
-  static native Object nativeArraySlice(Object arrayToSclice, int start, int end) /*-{
-    return arrayToSclice.slice(start, end);
-  }-*/;
-
-  private static native void nativeArraySplice(Object array, int index, int deleteCount,
+  private static native void applySplice(Object array, int index, int deleteCount,
       Object arrayToAdd) /*-{
     Array.prototype.splice.apply(array, [index, deleteCount].concat(arrayToAdd));
   }-*/;

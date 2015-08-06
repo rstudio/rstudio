@@ -40,31 +40,10 @@ public final class Array {
   private static final int TYPE_PRIMITIVE_NUMBER = 8;
   private static final int TYPE_PRIMITIVE_BOOLEAN = 9;
 
-  /**
-   * Creates a copy of a subrange of the specified array.
-   */
-  public static <T> T[] cloneSubrange(T[] array, int fromIndex, int toIndex) {
-    Object result = arraySlice(array, fromIndex, toIndex);
-    initValues(array.getClass(), Util.getCastableTypeMap(array), Array.getElementTypeId(array),
-        Array.getElementTypeCategory(array), result);
-    // implicit type arg not inferred (as of JDK 1.5.0_07)
-    return Array.<T> asArray(result);
-  }
-
-  /**
-   * Creates an empty array of the exact same type as a given array, with the
-   * specified length.
-   */
-  public static <T> T[] createFrom(T[] array, int length) {
-    // TODO(rluble): The behaviour here seems erroneous as the array elements will not be
-    // initialized but left undefined. However the usages seem to be safe and changing here
-    // might have performace penalty. Maybe rename to createUninitializedFrom(), to make
-    // the meaning clearer.
-    Object result = initializeArrayElementsWithDefaults(TYPE_JAVA_OBJECT, length);
-    initValues(array.getClass(), Util.getCastableTypeMap(array), Array.getElementTypeId(array),
-        Array.getElementTypeCategory(array), result);
-    // implicit type arg not inferred (as of JDK 1.5.0_07)
-    return Array.<T> asArray(result);
+  public static <T> T[] stampJavaTypeInfo(Object array, T[] referenceType) {
+    initValues(referenceType.getClass(), Util.getCastableTypeMap(referenceType),
+        Array.getElementTypeId(referenceType), Array.getElementTypeCategory(referenceType), array);
+    return Array.asArray(array);
   }
 
   /**
@@ -189,10 +168,6 @@ public final class Array {
         return true;
     }
   }
-
-  private static native Object arraySlice(Object array, int fromIndex, int toIndex) /*-{
-    return array.slice(fromIndex, toIndex);
-  }-*/;
 
   /**
    * Use JSNI to effect a castless type change.

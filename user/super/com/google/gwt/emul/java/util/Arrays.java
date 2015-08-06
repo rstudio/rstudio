@@ -1359,20 +1359,17 @@ public class Arrays {
    * Sort an entire array of number primitives.
    */
   private static native void nativeLongSort(Object array) /*-{
-    array.sort(@com.google.gwt.lang.LongLib::compare(Lcom/google/gwt/lang/LongLibBase$LongEmul;Lcom/google/gwt/lang/LongLibBase$LongEmul;));
+    array.sort(@com.google.gwt.lang.LongLib::compare(*));
   }-*/;
 
   /**
    * Sort a subset of an array of number primitives.
    */
-  private static native void nativeLongSort(Object array, int fromIndex,
-      int toIndex) /*-{
-    var temp = array.slice(fromIndex, toIndex);
-    temp.sort(@com.google.gwt.lang.LongLib::compare(Lcom/google/gwt/lang/LongLibBase$LongEmul;Lcom/google/gwt/lang/LongLibBase$LongEmul;));
-    var n = toIndex - fromIndex;
-    @javaemul.internal.ArrayHelper::arrayCopy(Ljava/lang/Object;ILjava/lang/Object;II)(
-        temp, 0, array, fromIndex, n)
-  }-*/;
+  private static void nativeLongSort(Object array, int fromIndex, int toIndex) {
+    Object temp = ArrayHelper.unsafeClone(array, fromIndex, toIndex);
+    nativeLongSort(temp);
+    ArrayHelper.copy(temp, 0, array, fromIndex, toIndex - fromIndex);
+  }
 
   /**
    * Sort an entire array of number primitives.
@@ -1386,14 +1383,9 @@ public class Arrays {
   /**
    * Sort a subset of an array of number primitives.
    */
-  private static native void nativeNumberSort(Object array, int fromIndex,
-      int toIndex) /*-{
-    var temp = array.slice(fromIndex, toIndex);
-    temp.sort(function(a, b) {
-      return a - b;
-    });
-    var n = toIndex - fromIndex;
-    @javaemul.internal.ArrayHelper::arrayCopy(Ljava/lang/Object;ILjava/lang/Object;II)(
-        temp, 0, array, fromIndex, n)
-  }-*/;
+  private static void nativeNumberSort(Object array, int fromIndex, int toIndex) {
+    Object temp = ArrayHelper.unsafeClone(array, fromIndex, toIndex);
+    nativeNumberSort(temp);
+    ArrayHelper.copy(temp, 0, array, fromIndex, toIndex - fromIndex);
+  }
 }

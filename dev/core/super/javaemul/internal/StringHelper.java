@@ -28,8 +28,7 @@ public class StringHelper {
     String s = "";
     for (int batchStart = start; batchStart < end;) {
       int batchEnd = Math.min(batchStart + batchSize, end);
-      Object slicedArray = ArrayHelper.nativeArraySlice(x, batchStart, batchEnd);
-      s += fromCharCode(slicedArray);
+      s += fromCharCode(ArrayHelper.unsafeClone(x, batchStart, batchEnd));
       batchStart = batchEnd;
     }
     return s;
