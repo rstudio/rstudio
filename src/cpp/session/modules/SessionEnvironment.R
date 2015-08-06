@@ -346,7 +346,8 @@
               || is.numeric(obj)
               || is.factor(obj)
               || is.raw(obj) 
-              || is.character(obj))
+              || is.character(obj)
+              || is.logical(obj))
       {
          return(.rs.valueFromStr(obj))
       }
