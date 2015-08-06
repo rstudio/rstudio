@@ -1,7 +1,7 @@
 /*
  * CodeBrowserHighlightEvent.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,12 +15,16 @@
 package org.rstudio.studio.client.workbench.views.source.events;
 
 import org.rstudio.core.client.DebugFilePosition;
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
+import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
+@JavaScriptSerializable
 public class CodeBrowserHighlightEvent 
-   extends GwtEvent<CodeBrowserHighlightEvent.Handler>
+             extends CrossWindowEvent<CodeBrowserHighlightEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
@@ -30,8 +34,15 @@ public class CodeBrowserHighlightEvent
    public static final GwtEvent.Type<CodeBrowserHighlightEvent.Handler> TYPE =
       new GwtEvent.Type<CodeBrowserHighlightEvent.Handler>();
    
-   public CodeBrowserHighlightEvent(DebugFilePosition debugPosition)
+   public CodeBrowserHighlightEvent()
    {
+      this(null, null);
+   }
+   
+   public CodeBrowserHighlightEvent(SearchPathFunctionDefinition function,
+         DebugFilePosition debugPosition)
+   {
+      function_ = function;
       debugPosition_ = debugPosition;
    }
    
@@ -40,6 +51,10 @@ public class CodeBrowserHighlightEvent
       return debugPosition_;
    }
    
+   public SearchPathFunctionDefinition getFunction()
+   {
+      return function_;
+   }
    
    @Override
    protected void dispatch(CodeBrowserHighlightEvent.Handler handler)
@@ -52,6 +67,13 @@ public class CodeBrowserHighlightEvent
    {
       return TYPE;
    }
+   
+   @Override
+   public boolean forward()
+   {
+      return false;
+   }
 
-   final DebugFilePosition debugPosition_;
+   private DebugFilePosition debugPosition_;
+   private SearchPathFunctionDefinition function_;
 }

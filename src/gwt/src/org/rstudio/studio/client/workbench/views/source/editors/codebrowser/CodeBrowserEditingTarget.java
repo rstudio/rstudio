@@ -63,6 +63,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.WarningBarD
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
+import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.model.CodeBrowserContents;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -198,7 +199,6 @@ public class CodeBrowserEditingTarget implements EditingTarget
       {
          docDisplay_.setCode("", false);
       }
-      
    }
    
    public void showFunction(SearchPathFunctionDefinition functionDef)
@@ -207,6 +207,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
       currentFunction_ = functionDef;
       view_.showFunction(functionDef);
       view_.scrollToLeft();
+      name_.setValue(functionDef.getName(), true);
 
       // we only show the warning bar (for debug line matching) once per 
       // function; don't keep showing it if the user dismisses
@@ -296,6 +297,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
       view_.findFromSelection();
    }
    
+   @Handler
+   void onPopoutDoc()
+   {
+      events_.fireEvent(new PopoutDocEvent(getId(), currentPosition()));
+   }
+
    @Override
    public Position search(String regex)
    {
@@ -340,7 +347,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Override
    public HasValue<String> getName()
    {
-      return new Value<String>("Source Viewer");
+      return name_;
    }
    
    @Override
@@ -352,7 +359,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Override
    public String getPath()
    {
-      return PATH;
+      return getCodeBrowserPath(currentFunction_);
    }
    
    @Override
@@ -369,6 +376,15 @@ public class CodeBrowserEditingTarget implements EditingTarget
       }
    }
    
+   public static String getCodeBrowserPath(SearchPathFunctionDefinition func)
+   {
+      String path = PATH;
+      if (func != null)
+      {
+         path += (func.getNamespace() + "/" + func.getName());
+      }
+      return path;
+   }
    
 
    @Override
@@ -403,6 +419,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
       commands.add(commands_.executeCode());
       commands.add(commands_.executeCodeWithoutFocus());
       commands.add(commands_.executeLastCode());
+      commands.add(commands_.popoutDoc());
       return commands;
    }
 
@@ -735,7 +752,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    private Display view_;
    private HandlerRegistration commandReg_;
    private boolean shownWarningBar_ = false;
-   
+   private final Value<String> name_ = new Value<String>("Source Viewer");  
    private DocDisplay docDisplay_;
    private EditingTargetCodeExecution codeExecution_;
    

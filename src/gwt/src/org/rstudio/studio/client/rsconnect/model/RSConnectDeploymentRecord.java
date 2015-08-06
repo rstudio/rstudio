@@ -62,6 +62,10 @@ public class RSConnectDeploymentRecord extends JavaScriptObject
       return this.server;
    }-*/;
 
+   public final native String getAppId() /*-{
+      return this.appId;
+   }-*/;
+
    public final native String getBundleId() /*-{
       return this.bundleId;
    }-*/;

@@ -51,6 +51,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -80,6 +81,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
+import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -2871,11 +2873,12 @@ public class Source implements InsertSourceHandler,
    {
       boolean hasMultipleDocs = editors_.size() > 1;
 
-      // special case--the TextEditingTarget always supports popout, but it's
+      // special case--these editing targets always support popout, but it's
       // nonsensical to show it if it's the only tab in a satellite; hide it in
       // this case
       if (activeEditor_ != null &&
-          activeEditor_ instanceof TextEditingTarget &&
+          (activeEditor_ instanceof TextEditingTarget ||
+           activeEditor_ instanceof CodeBrowserEditingTarget) &&
           !SourceWindowManager.isMainSourceWindow())
       {
          commands_.popoutDoc().setVisible(hasMultipleDocs);
@@ -3179,9 +3182,10 @@ public class Source implements InsertSourceHandler,
       
       // check for code browser navigation
       else if ((navigation.getPath() != null) &&
-               navigation.getPath().equals(CodeBrowserEditingTarget.PATH))
+               navigation.getPath().startsWith(CodeBrowserEditingTarget.PATH))
       {
          activateCodeBrowser(
+            navigation.getPath(),
             new SourceNavigationResultCallback<CodeBrowserEditingTarget>(
                                                       navigation.getPosition(),
                                                       retryCommand));
@@ -3229,21 +3233,31 @@ public class Source implements InsertSourceHandler,
          return;
       }
 
-      if (event.getDebugPosition() != null)
+      tryExternalCodeBrowser(event.getFunction(), event, new Command()
       {
-         setPendingDebugSelection();
-      }
-      
-      activateCodeBrowser(new ResultCallback<CodeBrowserEditingTarget,ServerError>() {
          @Override
-         public void onSuccess(CodeBrowserEditingTarget target)
+         public void execute()
          {
-            target.showFunction(event.getFunction());
             if (event.getDebugPosition() != null)
             {
-               highlightDebugBrowserPosition(target, event.getDebugPosition(), 
-                                             event.getExecuting());
+               setPendingDebugSelection();
             }
+            
+            activateCodeBrowser(
+               CodeBrowserEditingTarget.getCodeBrowserPath(event.getFunction()),
+               new ResultCallback<CodeBrowserEditingTarget,ServerError>() {
+               @Override
+               public void onSuccess(CodeBrowserEditingTarget target)
+               {
+                  target.showFunction(event.getFunction());
+                  if (event.getDebugPosition() != null)
+                  {
+                     highlightDebugBrowserPosition(target, 
+                           event.getDebugPosition(), 
+                           event.getExecuting());
+                  }
+               }
+            });
          }
       });
    }
@@ -3251,32 +3265,61 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onCodeBrowserFinished(final CodeBrowserFinishedEvent event)
    {
-      int codeBrowserTabIndex = indexOfCodeBrowserTab();
-      if (codeBrowserTabIndex >= 0)
+      tryExternalCodeBrowser(event.getFunction(), event, new Command()
       {
-         view_.closeTab(codeBrowserTabIndex, false);
-         return;
-      }
-   }
-   
-
-   @Override
-   public void onCodeBrowserHighlight(final CodeBrowserHighlightEvent event)
-   {
-      // no need to highlight if we don't have a code browser tab to highlight
-      if (indexOfCodeBrowserTab() < 0)
-         return;
-      
-      setPendingDebugSelection();
-      activateCodeBrowser(new ResultCallback<CodeBrowserEditingTarget,ServerError>() {
          @Override
-         public void onSuccess(CodeBrowserEditingTarget target)
+         public void execute()
          {
-            highlightDebugBrowserPosition(target, event.getDebugPosition(), true);
+            final String path = CodeBrowserEditingTarget.getCodeBrowserPath(
+                  event.getFunction());
+            for (int i = 0; i < editors_.size(); i++)
+            {
+               if (editors_.get(i).getPath() == path)
+               {
+                  view_.closeTab(i, false);
+                  return;
+               }
+            }
          }
       });
    }
    
+   @Override
+   public void onCodeBrowserHighlight(final CodeBrowserHighlightEvent event)
+   {
+      tryExternalCodeBrowser(event.getFunction(), event, new Command()
+      {
+         @Override
+         public void execute()
+         {
+            setPendingDebugSelection();
+            activateCodeBrowser(
+               CodeBrowserEditingTarget.getCodeBrowserPath(event.getFunction()),
+               new ResultCallback<CodeBrowserEditingTarget,ServerError>() {
+               @Override
+               public void onSuccess(CodeBrowserEditingTarget target)
+               {
+                  highlightDebugBrowserPosition(target, event.getDebugPosition(), 
+                        true);
+               }
+            });
+         }
+      });
+   }
+   
+   private void tryExternalCodeBrowser(SearchPathFunctionDefinition func, 
+         CrossWindowEvent<?> event, 
+         Command withLocalCodeBrowser)
+   {
+      final String path = CodeBrowserEditingTarget.getCodeBrowserPath(func);
+      NavigationResult result = windowManager_.navigateToCodeBrowser(
+            path, event);
+      if (result.getType() != NavigationResult.RESULT_NAVIGATED)
+      {
+         withLocalCodeBrowser.execute();
+      }
+   }
+
    private void highlightDebugBrowserPosition(CodeBrowserEditingTarget target,
                                               DebugFilePosition pos,
                                               boolean executing)
@@ -3290,39 +3333,28 @@ public class Source implements InsertSourceHandler,
             executing);
    }
 
-   // returns the index of the tab currently containing the code browser, or
-   // -1 if the code browser tab isn't currently open;
-   private int indexOfCodeBrowserTab()
-   {
-      // see if there is an existing target to use
-      for (int idx = 0; idx < editors_.size(); idx++)
-      {
-         String path = editors_.get(idx).getPath();
-         if (CodeBrowserEditingTarget.PATH.equals(path))
-         {
-            return idx;
-         }
-      }
-      return -1;
-   }
-     
    private void activateCodeBrowser(
+         final String codeBrowserPath, 
          final ResultCallback<CodeBrowserEditingTarget,ServerError> callback)
    {
-      int codeBrowserTabIndex = indexOfCodeBrowserTab();
-      if (codeBrowserTabIndex >= 0)
+      // first check to see if this request can be fulfilled with an existing
+      // code browser tab
+      for (int i = 0; i < editors_.size(); i++)
       {
-         ensureVisible(false);
-         view_.selectTab(codeBrowserTabIndex);
-         
-         // callback
-         callback.onSuccess( (CodeBrowserEditingTarget)
-               editors_.get(codeBrowserTabIndex));
-         
-         // satisfied request
-         return;
+         if (editors_.get(i).getPath() == codeBrowserPath)
+         {
+            // select the tab
+            ensureVisible(false);
+            view_.selectTab(i);
+            
+            // callback
+            callback.onSuccess((CodeBrowserEditingTarget) editors_.get(i));
+            
+            // satisfied request
+            return;
+         }
       }
-
+      
       // create a new one
       newDoc(FileTypeRegistry.CODEBROWSER,
              new ResultCallback<EditingTarget, ServerError>()
@@ -3330,6 +3362,8 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onSuccess(EditingTarget arg)
                {
+                  events_.fireEvent(new CodeBrowserCreatedEvent(
+                        arg.getId(), codeBrowserPath));
                   callback.onSuccess( (CodeBrowserEditingTarget)arg);
                }
                

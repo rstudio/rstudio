@@ -44,7 +44,7 @@
 * Parse TeX magic comments that start with "%%" (ESS compatibility).
 * Change default Rpres template to specify autosize: true
 * Automatically create ~/.ssh directory if necessary on Windows
-* Added `Makefile` mode (used for `Makefile`, `Makevars`)
+* Added Makefile mode (used for Makefile, Makevars)
 
 ### Server
 
