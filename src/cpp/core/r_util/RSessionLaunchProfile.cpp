@@ -70,8 +70,14 @@ Error cpuAffinityFromJson(const json::Array& affinityJson,
 
 json::Value toJson(RLimitType limit)
 {
-   boost::uint64_t value = safe_convert::numberTo<boost::uint64_t>(limit, 0);
-   return json::Value(value);
+   try
+   {
+      return json::Value(boost::uint64_t(limit));
+   }
+   catch(...)
+   {
+      return json::Value(0);
+   }
 }
 
 } // anonymous namespace
@@ -170,6 +176,8 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    // return profile
    return profile;
 }
+
+
 
 } // namespace r_util
 } // namespace core 
