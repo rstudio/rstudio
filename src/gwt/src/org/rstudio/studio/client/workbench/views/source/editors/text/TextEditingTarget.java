@@ -3601,7 +3601,7 @@ public class TextEditingTarget implements
       // execute the previous chunks
       Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks(position);
       for (Scope scope : previousScopes)
-         if (isRChunk(scope))
+         if (isRChunk(scope) && isExecutableChunk(scope))
             executeSweaveChunk(scope, false);
    }
    
@@ -3634,6 +3634,19 @@ public class TextEditingTarget implements
       // intended to be run in their own process so it might not make sense to
       // collect those here.
       return engine.equals("r");
+   }
+   
+   private boolean isExecutableChunk(final Scope chunk)
+   {
+      if (!chunk.isChunk())
+         return false;
+      
+      String headerText = docDisplay_.getLine(chunk.getPreamble().getRow());
+      Pattern reEvalFalse = Pattern.create("eval\\s*=\\s*F(?:ALSE)?");
+      if (reEvalFalse.test(headerText))
+         return false;
+      
+      return true;
    }
    
    private void executeSweaveChunk(final Scope chunk, 
