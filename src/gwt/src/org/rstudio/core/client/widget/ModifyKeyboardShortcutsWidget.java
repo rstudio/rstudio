@@ -60,7 +60,6 @@ import com.google.gwt.view.client.ProvidesKey;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
@@ -776,8 +775,11 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          // Sneak into the element and find the active <input>, then update it.
          Element el = getElement(table_, preview.getIndex(), preview.getColumn());
          Element input = el.getFirstChildElement().getFirstChildElement();
+         if (input == null)
+            return;
+         
          assert input.getTagName().toLowerCase().equals("input")
-         : "Failed to find <input> element in table";
+            : "Failed to find <input> element in table";
 
          String bufferString = buffer_.toString();
          input.setAttribute("value", bufferString);
@@ -824,12 +826,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                int keyCode = preview.getNativeEvent().getKeyCode();
                if (keyCode == KeyCodes.KEY_ESCAPE || keyCode == KeyCodes.KEY_ENTER)
                {
-                  if (filterWidget_.isFocused())
-                  {
-                     closeDialog();
-                     return;
-                  }
-
+                  // If the DataGrid (or an underlying element) has focus, let it
+                  // handle the escape / enter key.
                   Element target = preview.getNativeEvent().getEventTarget().cast();
                   Element foundTable = DomUtils.findParentElement(target, new ElementPredicate()
                   {
@@ -840,18 +838,42 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                      }
                   });
 
-                  // If an element within the underlying CellTable has focus, let it
-                  // handle Escape. Otherwise, take over and provide modal dialog closing
-                  // behaviours.
                   if (foundTable != null)
                      return;
+                  
+                  // If the filter widget has focus, Enter / Escape shouldn't close
+                  // the widget.
+                  if (filterWidget_.isFocused())
+                  {
+                     if (keyCode == KeyCodes.KEY_ENTER)
+                     {
+                        table_.setKeyboardSelectedRow(0);
+                        table_.setKeyboardSelectedColumn(0);
+                        return;
+                     }
+                     else if (keyCode == KeyCodes.KEY_ESCAPE)
+                     {
+                        focusOkButton();
+                        return;
+                     }
+                  }
 
-                  // Pressing escape should focus the filter widget if it does
-                  // not have focus.
+                  // Otherwise, handle Enter / Escape 'modally' as we might normally do.
                   preview.cancel();
                   preview.getNativeEvent().stopPropagation();
                   preview.getNativeEvent().preventDefault();
-                  filterWidget_.focus();
+                  
+                  if (keyCode == KeyCodes.KEY_ENTER)
+                  {
+                     clickOkButton();
+                     return;
+                  }
+                  
+                  if (keyCode == KeyCodes.KEY_ESCAPE)
+                  {
+                     closeDialog();
+                     return;
+                  }
                }
             }
          }
