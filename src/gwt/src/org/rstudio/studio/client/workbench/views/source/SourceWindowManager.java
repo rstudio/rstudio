@@ -314,6 +314,19 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       saveWithPrompt(getSourceWindowObject(windowId), item, onCompleted);
    }
    
+   public void saveAllUnsaved(Command onCompleted)
+   {
+      doForAllSourceWindows(new SourceWindowCommand()
+      {
+         @Override
+         public void execute(String windowId, WindowEx window,
+               Command continuation)
+         {
+            saveAllUnsaved(window, continuation);
+         }
+      }, onCompleted);
+   }
+   
    public void handleUnsavedChangesBeforeExit(
          ArrayList<UnsavedChangesTarget> targets,
          Command onCompleted)
@@ -728,6 +741,12 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          UnsavedChangesItem item, Command onCompleted) /*-{
       satellite.rstudioSaveWithPrompt(item, onCompleted);
    }-*/;
+
+   private final native void saveAllUnsaved(WindowEx satellite, 
+         Command onCompleted) /*-{
+      satellite.rstudioSaveAllUnsaved(onCompleted);
+   }-*/;
+   
    
    private boolean updateWindowGeometry()
    {

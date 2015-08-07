@@ -192,6 +192,10 @@ public class SourceWindow implements LastSourceDocClosedHandler,
          satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::saveWithPrompt(Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/user/client/Command;)(target, onCompleted);
       });
       
+      $wnd.rstudioSaveAllUnsaved = $entry(function(onCompleted) {
+         satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::saveAllUnsaved(Lcom/google/gwt/user/client/Command;)(onCompleted);
+      });
+      
       $wnd.rstudioReadyToClose = false;
       $wnd.rstudioCloseSourceWindow = $entry(function() {
          satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::closeSourceWindow()();
@@ -202,6 +206,11 @@ public class SourceWindow implements LastSourceDocClosedHandler,
    {
       UnsavedChangesItem item = jsoItem.cast();
       sourceShim_.saveWithPrompt(item, onCompleted, null);
+   }
+   
+   private void saveAllUnsaved(Command onCompleted)
+   {
+      sourceShim_.saveAllUnsaved(onCompleted);
    }
    
    private void handleUnsavedChangesBeforeExit(JavaScriptObject jsoItems, 

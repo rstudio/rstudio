@@ -1895,9 +1895,22 @@ public class Source implements InsertSourceHandler,
       return targets;
    }
    
-   public void saveAllUnsaved(Command onCompleted)
+   public void saveAllUnsaved(final Command onCompleted)
    {
-      saveChanges(getUnsavedChanges(), onCompleted);
+      Command saveAllLocal = new Command()
+      {
+         @Override
+         public void execute()
+         {
+            saveChanges(getUnsavedChanges(), onCompleted);
+         }
+      };
+
+      // if this is the main source window, save all files in satellites first
+      if (SourceWindowManager.isMainSourceWindow())
+         windowManager_.saveAllUnsaved(saveAllLocal);
+      else
+         saveAllLocal.execute();
    }
    
    public void saveWithPrompt(UnsavedChangesTarget target, 
