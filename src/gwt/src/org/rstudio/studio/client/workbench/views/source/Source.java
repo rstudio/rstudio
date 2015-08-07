@@ -3315,6 +3315,10 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onSuccess(CodeBrowserEditingTarget target)
                {
+                  // if we just stole this code browser from another window,
+                  // we may need to repopulate it
+                  if (StringUtil.isNullOrEmpty(target.getContext()))
+                     target.showFunction(event.getFunction());
                   highlightDebugBrowserPosition(target, event.getDebugPosition(), 
                         true);
                }
