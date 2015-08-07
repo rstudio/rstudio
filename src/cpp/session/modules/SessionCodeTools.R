@@ -164,7 +164,11 @@
    return (!is.null(attr(func, "srcref")))
 })
 
-.rs.addFunction("deparseFunction", function(func, useSource)
+# Returns a function's code as a string. Arguments:
+# useSource -- Whether to use the function's source references (if available)
+# asString -- Whether to return the result as a single string
+#             (otherwise a character vector of lines is returned)
+.rs.addFunction("deparseFunction", function(func, useSource, asString)
 {
    control <- c("keepInteger", "keepNA")
    if (useSource)
@@ -218,11 +222,16 @@
        lines[[l]] <- line
      }
 
-     code <- paste(lines, collapse = "\n")
+     # if we were asked to return individual lines, we're done now
+     if (!asString)
+       return(lines)
    }
 
    # return (possibly formatted) code
-   code
+   if (asString)
+     paste(code, collapse = "\n")
+   else
+     code
 })
 
 .rs.addFunction("isS3Generic", function(object)

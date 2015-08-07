@@ -1717,6 +1717,7 @@ void getFunctionSource(SEXP functionSEXP,
    r::exec::RFunction deparseFunc(".rs.deparseFunction");
    deparseFunc.addParam(functionSEXP);
    deparseFunc.addParam(*pFromSrcAttrib);
+   deparseFunc.addParam(false);
    error = deparseFunc.call(pLines);
    if (error)
       LOG_ERROR(error);

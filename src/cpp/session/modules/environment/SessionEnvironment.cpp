@@ -633,7 +633,8 @@ bool functionIsOutOfSync(const RCNTXT *pContext,
 
    // start by extracting the source code from the call site
    error = r::exec::RFunction(".rs.deparseFunction",
-                              getOriginalFunctionCallObject(pContext), true)
+                              getOriginalFunctionCallObject(pContext), 
+                              true, true)
          .call(&sexpCode, &protect);
    if (error)
    {

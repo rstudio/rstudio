@@ -172,7 +172,7 @@
       (is.null(call) && is.null(calltext)) )
      return(c(0L, 0L, 0L, 0L, 0L, 0L))
 
-  lines <- unlist(strsplit(.rs.deparseFunction(fun, FALSE), "\n", fixed = TRUE))
+  lines <- .rs.deparseFunction(fun, FALSE, FALSE)
 
   # Remember the indentation level on each line (added by deparse), and remove
   # it along with any other leading or trailing whitespace. 
@@ -367,7 +367,7 @@
          }
          # otherwise it's a function, write it to a file for editing
          else {
-            functionSrc <- .rs.deparseFunction(name, TRUE)
+            functionSrc <- .rs.deparseFunction(name, TRUE, FALSE)
             targetFile <- scratchFile
             writeLines(functionSrc, targetFile)
          }
