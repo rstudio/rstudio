@@ -19,22 +19,47 @@ import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileEvent;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
+import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationCommand;
+import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
+import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.http.client.URL;
+import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 
 public class PresentationDispatcher 
 {   
    @Inject
-   public PresentationDispatcher(EventBus eventBus,
-                                 FileTypeRegistry fileTypeRegistry)
+   public PresentationDispatcher(PresentationServerOperations server,
+                                 GlobalDisplay globalDisplay,
+                                 EventBus eventBus,
+                                 Commands commands,
+                                 FileTypeRegistry fileTypeRegistry,
+                                 Session session,
+                                 WorkbenchContext workbenchContext)
    {
       eventBus_ = eventBus;
       fileTypeRegistry_ = fileTypeRegistry;
+      server_ = server;
+      globalDisplay_ = globalDisplay;
+      commands_ = commands;
+      session_ = session;
+      workbenchContext_ = workbenchContext;
    }
    
    public interface Context
@@ -117,16 +142,136 @@ public class PresentationDispatcher
    }
    
    protected void performOtherCommand(String cmdName, 
-                                      String params,
-                                      String param1, 
-                                      String param2)
+         String params, 
+         String param1, 
+         String param2)
    {
+      if (cmdName.equals("help-doc"))
+         performHelpDocCommand(param1, param2);
+      else if (cmdName.equals("help-topic"))
+         performHelpTopicCommand(param1, param2);
+      else if (cmdName.equals("console"))
+         performConsoleCommand(params);
+      else if (cmdName.equals("console-input"))
+         performConsoleInputCommand(params);
+      else if (cmdName.equals("execute"))
+         performExecuteCommand(params);
+      else if (cmdName.equals("pause"))
+         performPauseCommand();
+      else if (cmdName.equals("tutorial"))
+         performTutorialCommand(params);
+      else 
+      {
+         globalDisplay_.showErrorMessage(
+               "Unknown Presentation Command", 
+               cmdName + ": " + params);
+      }
    }
-   
+
    protected void fireOpenSourceFileEvent(OpenPresentationSourceFileEvent event) 
    {
-      eventBus_.fireEvent(event);
+      fireEventFromTutorialDirectory(event);
    }
+
+
+   private void performHelpDocCommand(String param1, String param2)
+   {
+      if (param1 != null)
+      {
+         String docFile = getPresentationPath(param1);
+         String url = "help/presentation/?file=" + URL.encodeQueryString(docFile);
+         eventBus_.fireEvent(new ShowHelpEvent(url));  
+      }
+   }
+
+   private void performHelpTopicCommand(String param1, String param2)
+   {
+      // split on :: if it's there
+      if (param1 != null)
+      {
+         String topic = param1;
+         String packageName = null;
+         int delimLoc = param1.indexOf("::");
+         if (delimLoc != -1)
+         {
+            packageName = param1.substring(0, delimLoc);
+            topic = param1.substring(delimLoc+2);
+         }
+
+         server_.showHelpTopic(topic, packageName, RCompletionType.FUNCTION);
+      }
+   }
+
+   private void performConsoleCommand(String params)
+   {  
+      String[] cmds = params.split(",");
+      for (String cmd : cmds)
+      {         
+         cmd = cmd.trim();
+         if (cmd.equals("maximize"))
+            commands_.maximizeConsole().execute();
+         else if (cmd.equals("clear"))
+            commands_.consoleClear().execute();
+         else
+            globalDisplay_.showErrorMessage("Unknown Console Directive", cmd);
+      }
+   }
+
+   private void performPauseCommand()
+   {
+      context_.pauseMedia();
+   }
+
+   private void performTutorialCommand(String params)
+   {
+      String projectParam = URL.encodeQueryString(params);
+      String url = GWT.getHostPageBaseURL() + "?project=" + projectParam;
+      Window.Location.assign(url);
+   }
+
+   private void performConsoleInputCommand(String params)
+   {
+      fireEventFromTutorialDirectory(new SendToConsoleEvent(params, 
+            true, 
+            false, 
+            true));
+   }
+
+   private void performExecuteCommand(String params)
+   {
+      server_.presentationExecuteCode(params, new VoidServerRequestCallback());
+   }
+
+   private void fireEventFromTutorialDirectory(final GwtEvent<?> event)
+   {
+      SessionInfo sessionInfo = session_.getSessionInfo();
+      PresentationState state = sessionInfo.getPresentationState();
+      FileSystemItem projectDir = sessionInfo.getActiveProjectDir();
+      if (state.isTutorial() && (projectDir != null))
+      {
+         if (!workbenchContext_.getCurrentWorkingDir().equalTo(projectDir))
+         {
+            server_.setWorkingDirectory(projectDir.getPath(),
+                  new VoidServerRequestCallback() {
+               @Override
+               protected void onSuccess()
+               {
+                  eventBus_.fireEvent(event);
+               }
+            });
+
+         }
+         else
+         {
+            eventBus_.fireEvent(event);
+         }
+      }
+      else
+      {
+         eventBus_.fireEvent(event);
+      }
+   }
+ 
        
    protected String getPresentationPath(String file)
    {
@@ -136,6 +281,12 @@ public class PresentationDispatcher
    }
      
    protected Context context_;
-   protected final EventBus eventBus_;
-   protected final FileTypeRegistry fileTypeRegistry_;
+   private final EventBus eventBus_;
+   private final FileTypeRegistry fileTypeRegistry_;
+   private final PresentationServerOperations server_;
+   private final GlobalDisplay globalDisplay_;
+   private final Commands commands_;
+   private final Session session_;
+   private final WorkbenchContext workbenchContext_;
+   
 }

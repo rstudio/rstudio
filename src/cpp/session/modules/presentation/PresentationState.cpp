@@ -22,6 +22,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
+#include "Tutorial.hpp"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -222,8 +224,8 @@ Error initialize()
    // attempt to load any cached state
    loadPresentationState();
 
-   // call overlay hook
-   return initializeOverlay();
+   // call tutorial init
+   return initializeTutorial();
 }
 
 } // namespace state
