@@ -570,7 +570,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public KeySequence getKeySequence()
    {
       if (shortcut_ == null)
-         return null;
+         return new KeySequence();
       
       return shortcut_.getKeySequence();
    }

@@ -18,6 +18,8 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.StringUtil;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -158,6 +160,9 @@ public class KeyboardShortcut
       public static KeySequence fromShortcutString(String shortcut)
       {
          KeySequence sequence = new KeySequence();
+         if (StringUtil.isNullOrEmpty(shortcut))
+            return sequence;
+         
          String[] splat = shortcut.split("\\s+");
          for (int i = 0; i < splat.length; i++)
          {
@@ -193,6 +198,12 @@ public class KeyboardShortcut
          }
          
          return sequence;
+      }
+      
+      public void set(KeySequence others)
+      {
+         keyCombinations_.clear();
+         keyCombinations_.addAll(others.keyCombinations_);
       }
       
       public void clear()
