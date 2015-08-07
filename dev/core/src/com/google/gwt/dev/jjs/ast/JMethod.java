@@ -43,10 +43,10 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
    * Indicates whether a JsProperty method is a getter or setter. Getters come with names like isX()
    * and getX() while setters have signatures like setX(int a). If the property doesn't match these
    * patterns, then it will marked as {@code UNDEFINED} to be later signaled as error in
-   * {@link JsInteropRestrictionChecker}.
+   * {@link com.google.gwt.dev.jjs.impl.JsInteropRestrictionChecker}.
    */
-  public static enum JsPropertyType {
-    GET, SET, UNDEFINED;
+  public static enum JsPropertyAccessorType {
+    GETTER, SETTER, UNDEFINED;
   }
 
   public static final Comparator<JMethod> BY_SIGNATURE_COMPARATOR = new Comparator<JMethod>() {
@@ -56,30 +56,44 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
     }
   };
 
-  private String jsTypeName;
-  private String exportName;
+  private String jsName;
+  private boolean exported;
   private String exportNamespace;
-  private JsPropertyType jsPropertyType;
+  private JsPropertyAccessorType jsPropertyType;
   private Specialization specialization;
   private boolean inliningAllowed = true;
   private boolean hasSideEffects = true;
   private boolean defaultMethod = false;
 
   @Override
-  public void setExportInfo(String namespace, String name) {
-    this.exportName = name;
+  public void setJsMemberInfo(String namespace, String name, boolean exported) {
+    this.jsName = name;
     this.exportNamespace = namespace;
+    this.exported = exported;
   }
 
-  @Override
-  public boolean isExported() {
-    return exportName != null;
+  public boolean isJsInteropEntryPoint() {
+    return exported && !needsVtable();
   }
 
-  @Override
-  public String getExportName() {
-    assert exportName != null;
-    return exportName;
+  public boolean canBeCalledExternally() {
+    if (exported || isJsFunctionMethod()) {
+      return true;
+    }
+    for (JMethod overriddenMethod : getOverriddenMethods()) {
+      if (exported || overriddenMethod.isJsFunctionMethod()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean canBeImplementedExternally() {
+    return isJsFunctionMethod() || isJsInterfaceMethod();
+  }
+
+  private boolean isJsInterfaceMethod() {
+    return enclosingType instanceof JInterfaceType && enclosingType.isJsType();
   }
 
   @Override
@@ -93,29 +107,20 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
   @Override
   public String getQualifiedExportName() {
     String namespace = getExportNamespace();
-    if (exportName.isEmpty()) {
+    if (jsName.isEmpty()) {
       return namespace;
     } else if (namespace.isEmpty()) {
-      return exportName;
+      return jsName;
     } else {
-      return namespace + "." + exportName;
+      return namespace + "." + jsName;
     }
   }
 
   @Override
-  public void setJsMemberName(String jsTypeName) {
-    this.jsTypeName = jsTypeName;
-  }
-
-  @Override
-  public String getJsMemberName() {
-    return jsTypeName;
-  }
-
-  public String getImmediateOrTransitiveJsMemberName() {
-    String jsMemberName = getJsMemberName();
+  public String getJsName() {
+    String jsMemberName = jsName;
     for (JMethod override : getOverriddenMethods()) {
-      String jsMemberOverrideName = override.getJsMemberName();
+      String jsMemberOverrideName = override.jsName;
       if (jsMemberOverrideName == null) {
         continue;
       }
@@ -127,38 +132,34 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
     return jsMemberName;
   }
 
-  @Override
-  public boolean isJsTypeMember() {
-    return jsTypeName != null;
+  public boolean isJsConstructor() {
+    return isConstructor() && jsName != null;
   }
 
-  public boolean isOrOverridesJsTypeMethod() {
-    if (isJsTypeMember()) {
+  public boolean isOrOverridesJsMethod() {
+    if (jsName != null) {
       return true;
     }
     for (JMethod overriddenMethod : getOverriddenMethods()) {
-      if (overriddenMethod.isJsTypeMember()) {
+      if (overriddenMethod.jsName != null) {
         return true;
       }
     }
     return false;
   }
 
-  public void setJsPropertyType(JsPropertyType jsPropertyType) {
+  public void setJsPropertyInfo(String jsName, JsPropertyAccessorType jsPropertyType) {
+    this.jsName = jsName;
     this.jsPropertyType = jsPropertyType;
   }
 
-  public JsPropertyType getJsPropertyType() {
-    return jsPropertyType;
-  }
-
-  public JsPropertyType getImmediateOrTransitiveJsPropertyType() {
+  public JsPropertyAccessorType getJsPropertyAccessorType() {
     if (isJsPropertyAccessor()) {
-      return getJsPropertyType();
+      return jsPropertyType;
     }
     for (JMethod overriddenMethod : getOverriddenMethods()) {
       if (overriddenMethod.isJsPropertyAccessor()) {
-        return overriddenMethod.getJsPropertyType();
+        return overriddenMethod.jsPropertyType;
       }
     }
     return null;
@@ -168,19 +169,19 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
     return jsPropertyType != null;
   }
 
-  public boolean isOrOverridesJsProperty() {
+  public boolean isOrOverridesJsPropertyAccessor() {
     if (isJsPropertyAccessor()) {
       return true;
     }
     for (JMethod overriddenMethod : getOverriddenMethods()) {
-      if (overriddenMethod.isOrOverridesJsProperty()) {
+      if (overriddenMethod.isJsPropertyAccessor()) {
         return true;
       }
     }
     return false;
   }
 
-  public boolean isJsFunctionMethod() {
+  private boolean isJsFunctionMethod() {
     return enclosingType != null && enclosingType.isJsFunction();
   }
 
@@ -465,6 +466,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
     return name;
   }
 
+  @Override
   public String getQualifiedName() {
     return enclosingType.getName() + "." + getSignature();
   }

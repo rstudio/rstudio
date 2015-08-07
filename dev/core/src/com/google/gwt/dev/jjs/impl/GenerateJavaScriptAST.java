@@ -435,7 +435,7 @@ public class GenerateJavaScriptAST {
         recordSymbol(x, jsName);
       } else {
         JsName jsName;
-        if (x.isJsTypeMember()) {
+        if (x.isJsProperty()) {
           jsName = scopeStack.peek().declareName(name, name);
           jsName.setObfuscatable(false);
         } else {
@@ -563,8 +563,8 @@ public class GenerateJavaScriptAST {
             // so that it can be referred when generating the vtable of a subclass that
             // increases the visibility of this method.
             polymorphicNames.put(typeOracle.getTopMostDefinition(x), polyName);
-          } else if (x.isOrOverridesJsTypeMethod() && !typeOracle.needsJsInteropBridgeMethod(x)) {
-            if (x.isOrOverridesJsProperty()) {
+          } else if (x.isOrOverridesJsMethod() && !typeOracle.needsJsInteropBridgeMethod(x)) {
+            if (x.isOrOverridesJsPropertyAccessor()) {
               // Prevent JsProperty functions like x() from colliding with intended JS native
               // properties like .x;
               polyName = interfaceScope.declareName(mangleNameForJsProperty(x), name);
@@ -1348,8 +1348,8 @@ public class GenerateJavaScriptAST {
       JsNameRef qualifier = null;
       JsExpression unnecessaryQualifier = null;
       JsExpression result = null;
-      boolean isJsProperty = false;
-      boolean isSam = false;
+      boolean isJsPropertyAccessor = false;
+      boolean isJsFunction = false;
       result = jsInvocation;
 
       if (method.isStatic()) {
@@ -1407,22 +1407,22 @@ public class GenerateJavaScriptAST {
       } else {
         JsName polyName = polymorphicNames.get(method);
         // potentially replace method call with property access
-        isJsProperty = method.isOrOverridesJsProperty();
-        isSam = method.isOrOverridesJsFunctionMethod();
+        isJsPropertyAccessor = method.isOrOverridesJsPropertyAccessor();
+        isJsFunction = method.isOrOverridesJsFunctionMethod();
 
-        if (isJsProperty) {
+        if (isJsPropertyAccessor) {
           JsExpression qualExpr = pop();
-          switch (method.getImmediateOrTransitiveJsPropertyType()) {
-            case GET:
+          switch (method.getJsPropertyAccessorType()) {
+            case GETTER:
               result = createGetterDispatch(x, unnecessaryQualifier, method, qualExpr);
               break;
-            case SET:
+            case SETTER:
               result = createSetterDispatch(x, jsInvocation, method, qualExpr);
               break;
             default:
               throw new InternalCompilerException("JsProperty not a setter or getter.");
           }
-        } else if (isSam) {
+        } else if (isJsFunction) {
           JsExpression qualExpr = pop();
           result = createSAMcallDispatch(x, jsInvocation, qualExpr);
         } else {
@@ -1440,7 +1440,7 @@ public class GenerateJavaScriptAST {
           }
         }
       }
-      if (!isJsProperty && !isSam) {
+      if (!isJsPropertyAccessor && !isJsFunction) {
         jsInvocation.setQualifier(qualifier);
       }
       push(createCommaExpression(unnecessaryQualifier, result));
@@ -1515,7 +1515,7 @@ public class GenerateJavaScriptAST {
 
     private JsExpression createSetterDispatch(JMethodCall x, JsInvocation jsInvocation,
         JMethod targetMethod, JsExpression qualExpr) {
-      String propertyName = targetMethod.getImmediateOrTransitiveJsMemberName();
+      String propertyName = targetMethod.getJsName();
       JsNameRef propertyReference = new JsNameRef(x.getSourceInfo(), propertyName);
       propertyReference.setQualifier(qualExpr);
       return createAssignment(propertyReference, jsInvocation.getArguments().get(0));
@@ -1523,7 +1523,7 @@ public class GenerateJavaScriptAST {
 
     private JsExpression createGetterDispatch(JMethodCall x, JsExpression unnecessaryQualifier,
         JMethod targetMethod, JsExpression qualExpr) {
-      String propertyName = targetMethod.getImmediateOrTransitiveJsMemberName();
+      String propertyName = targetMethod.getJsName();
       JsNameRef propertyReference = new JsNameRef(x.getSourceInfo(), propertyName);
       propertyReference.setQualifier(qualExpr);
       return createCommaExpression(unnecessaryQualifier, propertyReference);
@@ -1549,7 +1549,7 @@ public class GenerateJavaScriptAST {
 
       // in JsType case, super.foo() call requires SuperCtor.prototype.foo.call(this, args)
       // the method target should be on a class that ends with $Prototype and implements a JsType
-      if (!(method instanceof JConstructor) && method.isOrOverridesJsTypeMethod()) {
+      if (!(method instanceof JConstructor) && method.isOrOverridesJsMethod()) {
         JsNameRef protoRef = prototype.makeRef(x.getSourceInfo());
         methodRef = new JsNameRef(methodRef.getSourceInfo(), method.getName());
         // add qualifier so we have jsPrototype.prototype.methodName.call(this, args)
@@ -1598,18 +1598,27 @@ public class GenerateJavaScriptAST {
       JsNew newOp = new JsNew(x.getSourceInfo(), ctorName.makeRef(x.getSourceInfo()));
       popList(newOp.getArguments(), x.getArgs().size()); // args
       JsExpression newExpr = newOp;
-      JMethod sam = typeOracle.getJsFunctionMethod(x.getClassType());
-      if (sam != null) {
+      if (x.getClassType().isJsFunctionImplementation()) {
         JsFunction makeLambdaFunc =
             indexedFunctions.get("JavaClassHierarchySetupUtil.makeLambdaFunction");
-        JsNameRef samFuncNameRef = polymorphicNames.get(sam).makeRef(x.getSourceInfo());
+        JMethod jsFunctionMethod = getJsFunctionMethod(x.getClassType());
+        JsNameRef funcNameRef = polymorphicNames.get(jsFunctionMethod).makeRef(x.getSourceInfo());
         JsNameRef protoRef = prototype.makeRef(x.getSourceInfo());
-        samFuncNameRef.setQualifier(protoRef);
+        funcNameRef.setQualifier(protoRef);
         protoRef.setQualifier(ctorName.makeRef(x.getSourceInfo()));
         // makeLambdaFunction(Foo.prototype.samMethod, new Foo(...))
-        newExpr = new JsInvocation(x.getSourceInfo(), makeLambdaFunc, samFuncNameRef, newOp);
+        newExpr = new JsInvocation(x.getSourceInfo(), makeLambdaFunc, funcNameRef, newOp);
       }
       push(newExpr);
+    }
+
+    private JMethod getJsFunctionMethod(JClassType type) {
+      for (JMethod method : type.getMethods()) {
+        if (method.isOrOverridesJsFunctionMethod()) {
+          return method;
+        }
+      }
+      throw new AssertionError("Should never reach here.");
     }
 
     @Override
@@ -2574,7 +2583,7 @@ public class GenerateJavaScriptAST {
       // check if there's an overriding prototype
       JInterfaceType jsPrototypeIntf = JProgram.maybeGetJsTypeFromPrototype(superClass);
       String jsPrototype = jsPrototypeIntf != null ? jsPrototypeIntf.getJsPrototype() : null;
-      if (x.isOrExtendsJsFunction()) {
+      if (x.isJsFunctionImplementation()) {
         jsPrototype = "Function";
       }
 
@@ -2873,13 +2882,13 @@ public class GenerateJavaScriptAST {
       }
 
       for (JMethod m : x.getMethods()) {
-        if (m.isExported()) {
+        if (m.isJsInteropEntryPoint()) {
           exportedMembersByExportName.put(m.getQualifiedExportName(), m);
         }
       }
 
       for (JField f : x.getFields()) {
-        if (f.isExported()) {
+        if (f.isJsInteropEntryPoint()) {
           if (!f.isFinal()) {
             logger.log(TreeLogger.Type.WARN, "Exporting effectively non-final field "
                 + f.getQualifiedName() + ". Due to the way exporting works, the value of the"
@@ -2973,7 +2982,7 @@ public class GenerateJavaScriptAST {
     private boolean isMethodPotentiallyCalledAcrossClasses(JMethod method) {
       assert incremental || crossClassTargets != null;
       return crossClassTargets == null || crossClassTargets.contains(method)
-          || method.isExported() || method.isOrOverridesJsTypeMethod();
+          || method.isJsInteropEntryPoint();
     }
 
     private Iterable<JMethod> getPotentiallyAliveConstructors(JClassType x) {
@@ -3211,8 +3220,8 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JMethod x, Context ctx) {
       // methods which are exported or static indexed methods may be called externally
-      if (x.isExported() || x.isStatic() && program.getIndexedMethods()
-          .contains(x)) {
+      if (x.isJsInteropEntryPoint()
+          || (x.isStatic() && program.getIndexedMethods().contains(x))) {
         if (x instanceof JConstructor) {
           // exported ctors always considered live
           liveCtors.add((JConstructor) x);
@@ -3513,7 +3522,6 @@ public class GenerateJavaScriptAST {
   }
 
   String mangleNameForJsProperty(JMethod x) {
-    assert x.isOrOverridesJsProperty();
     String mangledName = Joiner.on("$").join(
         "jsproperty$",
         JjsUtils.mangledNameString(x));

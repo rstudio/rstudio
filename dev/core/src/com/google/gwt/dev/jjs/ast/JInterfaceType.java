@@ -50,6 +50,11 @@ public class JInterfaceType extends JDeclaredType {
   }
 
   @Override
+  public boolean canBeImplementedExternally() {
+    return isJsType() || isJsFunction();
+  }
+
+  @Override
   public JClassType getSuperClass() {
     return null;
   }

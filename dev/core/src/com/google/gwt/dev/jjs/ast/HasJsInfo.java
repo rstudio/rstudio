@@ -20,17 +20,9 @@ package com.google.gwt.dev.jjs.ast;
  */
 public interface HasJsInfo {
 
-  void setJsMemberName(String memberName);
+  void setJsMemberInfo(String namespace, String name, boolean exported);
 
-  String getJsMemberName();
-
-  boolean isJsTypeMember();
-
-  void setExportInfo(String namespace, String name);
-
-  boolean isExported();
-
-  String getExportName();
+  String getJsName();
 
   String getExportNamespace();
 

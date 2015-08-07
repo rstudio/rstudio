@@ -17,7 +17,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.jjs.ast.Context;
-import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
@@ -25,7 +24,7 @@ import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMember;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JMethod.JsPropertyType;
+import com.google.gwt.dev.jjs.ast.JMethod.JsPropertyAccessorType;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -98,7 +97,7 @@ public class JsInteropRestrictionChecker extends JVisitor {
 
     if (x.isJsFunction()) {
       checkJsFunction(x);
-    } else if (x.isOrExtendsJsFunction() && x instanceof JClassType) {
+    } else if (x.isJsFunctionImplementation()) {
       checkJsFunctionImplementation(x);
     } else if (x.isJsType() && x instanceof JInterfaceType) {
       checkJsInterface(x);
@@ -124,7 +123,7 @@ public class JsInteropRestrictionChecker extends JVisitor {
         .filter(new Predicate<JMethod>() {
            @Override
            public boolean apply(JMethod m) {
-             return m.isExported() && m instanceof JConstructor;
+             return m.isJsConstructor();
            }
         }).toList();
 
@@ -137,7 +136,7 @@ public class JsInteropRestrictionChecker extends JVisitor {
     }
 
     final JConstructor exportedCtor = (JConstructor) exportedCtors.get(0);
-    if (!exportedCtor.getExportName().isEmpty()) {
+    if (!exportedCtor.getJsName().isEmpty()) {
       logError("Constructor '%s' cannot have an export name.", exportedCtor.getQualifiedName());
     }
 
@@ -165,10 +164,14 @@ public class JsInteropRestrictionChecker extends JVisitor {
 
   @Override
   public boolean visit(JField x, Context ctx) {
-    if (currentType == x.getEnclosingType() && x.isExported()) {
+    if (!x.isJsProperty()) {
+      return false;
+    }
+
+    if (x.needsVtable()) {
+      checkJsTypeFieldName(x, x.getJsName());
+    } else if (currentType == x.getEnclosingType()) {
       checkExportName(x);
-    } else if (x.isJsTypeMember()) {
-      checkJsTypeFieldName(x, x.getJsMemberName());
     }
 
     return false;
@@ -181,10 +184,14 @@ public class JsInteropRestrictionChecker extends JVisitor {
     }
     currentJsTypeProcessedMethods.addAll(x.getOverriddenMethods());
 
-    if (currentType == x.getEnclosingType() && x.isExported()) {
-      checkExportName(x);
-    } else if (x.isOrOverridesJsTypeMethod()) {
+    if (!x.isOrOverridesJsMethod()) {
+      return false;
+    }
+
+    if (x.needsVtable()) {
       checkJsTypeMethod(x);
+    } else if (currentType == x.getEnclosingType()) {
+      checkExportName(x);
     }
 
     if (currentType == x.getEnclosingType()) {
@@ -251,17 +258,17 @@ public class JsInteropRestrictionChecker extends JVisitor {
       return;
     }
 
-    String jsMemberName = method.getImmediateOrTransitiveJsMemberName();
+    String jsMemberName = method.getJsName();
     String qualifiedMethodName = method.getQualifiedName();
     String typeName = method.getEnclosingType().getName();
-    JsPropertyType jsPropertyType = method.getImmediateOrTransitiveJsPropertyType();
+    JsPropertyAccessorType accessorType = method.getJsPropertyAccessorType();
 
     if (jsMemberName == null) {
       logError("'%s' can't be exported because the method overloads multiple methods with "
           + "different names.", qualifiedMethodName);
     }
 
-    if (jsPropertyType == JsPropertyType.GET) {
+    if (accessorType == JsPropertyAccessorType.GETTER) {
       if (!method.getParams().isEmpty() || method.getType() == JPrimitiveType.VOID) {
         logError("There can't be void return type or any parameters for the JsProperty getter"
             + " '%s'.", qualifiedMethodName);
@@ -280,7 +287,7 @@ public class JsInteropRestrictionChecker extends JVisitor {
       }
       checkNameCollisionForGetterAndRegular(jsMemberName, typeName);
       checkInconsistentPropertyType(jsMemberName, typeName, method.getOriginalReturnType());
-    } else if (jsPropertyType == JsPropertyType.SET) {
+    } else if (accessorType == JsPropertyAccessorType.SETTER) {
       if (method.getParams().size() != 1 || method.getType() != JPrimitiveType.VOID) {
         logError("There needs to be single parameter and void return type for the JsProperty setter"
             + " '%s'.", qualifiedMethodName);
@@ -295,7 +302,7 @@ public class JsInteropRestrictionChecker extends JVisitor {
       checkNameCollisionForSetterAndRegular(jsMemberName, typeName);
       checkInconsistentPropertyType(jsMemberName, typeName,
           Iterables.getOnlyElement(method.getParams()).getType());
-    } else if (jsPropertyType == JsPropertyType.UNDEFINED) {
+    } else if (accessorType == JsPropertyAccessorType.UNDEFINED) {
       // We couldn't extract the JsPropertyType.
       logError("JsProperty '%s' doesn't follow Java Bean naming conventions.", qualifiedMethodName);
     } else {

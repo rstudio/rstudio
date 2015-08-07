@@ -815,8 +815,7 @@ public class UnifyAst {
       }
 
       rootTypeBinaryNames.add(rootType.getName());
-      if (rootType.hasAnyExports() || rootType.isOrExtendsJsType()
-          || rootType.isOrExtendsJsFunction()) {
+      if (rootType.hasJsInteropEntryPoints()) {
         fullFlowIntoType(rootType);
       }
     }
@@ -1036,10 +1035,10 @@ public class UnifyAst {
       }
 
       /*
-       * We also flow into the JsInterop types because our first pass on root types
-       * are missing these inner classes.
+       * We also flow into the types with JsInterop entry point because our first pass on root types
+       * with JsInterop entry points are missing these inner classes.
        */
-      if (t.hasAnyExports() || t.isOrExtendsJsType() || t.isOrExtendsJsFunction()) {
+      if (t.hasJsInteropEntryPoints()) {
         fullFlowIntoType(t);
       }
     }
@@ -1334,13 +1333,10 @@ public class UnifyAst {
       instantiate(translate(intf));
     }
     staticInitialize(type);
-    boolean isJsTypeOrFunction = type.isOrExtendsJsType() || type.isOrExtendsJsFunction();
 
     // Flow into any reachable virtual methods.
     for (JMethod method : type.getMethods()) {
-      if (isJsTypeOrFunction && method.canBePolymorphic() || method.isExported()) {
-        // Fake a call into the method to keep it around. For JsType, JsFunction and exported
-        // methods.
+      if (method.canBeCalledExternally()) {
         flowInto(method);
         continue;
       }
@@ -1358,7 +1354,7 @@ public class UnifyAst {
     }
 
     for (JField field : type.getFields()) {
-      if (field.isExported()) {
+      if (field.canBeReferencedExternally()) {
         flowInto(field);
       }
     }

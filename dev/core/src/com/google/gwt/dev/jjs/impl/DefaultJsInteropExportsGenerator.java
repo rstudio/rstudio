@@ -68,7 +68,7 @@ class DefaultJsInteropExportsGenerator implements JsInteropExportsGenerator {
    */
   @Override
   public void exportMember(JMember x, JsExpression bridgeMethodOrAlias) {
-    if (x.getExportName().isEmpty()) {
+    if (x.getJsName().isEmpty()) {
       assert x instanceof JConstructor;
 
       // _ = provide('foo.bar.ExportNamespace', ExportedConstructor)
@@ -80,7 +80,7 @@ class DefaultJsInteropExportsGenerator implements JsInteropExportsGenerator {
     ensureProvideNamespace(x, null);
 
     // _.memberName = RHS
-    JsNameRef lhs = new JsNameRef(x.getSourceInfo(), x.getExportName());
+    JsNameRef lhs = new JsNameRef(x.getSourceInfo(), x.getJsName());
     lhs.setQualifier(globalTemp.makeRef(x.getSourceInfo()));
     exportStmts.add(createAssignment(lhs, bridgeMethodOrAlias).makeStmt());
   }

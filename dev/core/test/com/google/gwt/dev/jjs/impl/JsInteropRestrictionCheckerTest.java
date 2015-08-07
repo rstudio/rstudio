@@ -613,11 +613,11 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     addSnippetClassDecl(
         "public static class Buggy {",
         "  @JsProperty",
-        "  public int x() {return 0;}",
+        "  public int getX() {return 0;}",
         "}");
 
-    assertBuggyFails(
-        "Method 'x' can't be a JsProperty since 'test.EntryPoint$Buggy' " + "is not an interface.");
+    assertBuggyFails("Method 'getX' can't be a JsProperty since 'test.EntryPoint$Buggy' "
+        + "is not an interface.");
   }
 
   public void testJsPropertyInTransitiveNonJsTypeFails() throws Exception {
@@ -629,11 +629,11 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}",
         "public static interface Exported extends ParentExported {",
         "  @JsProperty",
-        "  public int x();",
+        "  public int getX();",
         "}",
         "public static class Buggy {} // Unrelated class");
 
-    assertBuggyFails("Method 'x' can't be a JsProperty since interface "
+    assertBuggyFails("Method 'getX' can't be a JsProperty since interface "
         + "'test.EntryPoint$Exported' is not a JsType.");
   }
 

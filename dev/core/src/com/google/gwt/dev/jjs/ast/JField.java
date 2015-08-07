@@ -80,9 +80,9 @@ public class JField extends JVariable implements JMember {
   public static final JField NULL_FIELD = new JField(SourceOrigin.UNKNOWN, "nullField", null,
       JReferenceType.NULL_TYPE, false, Disposition.FINAL);
 
-  private String jsTypeName;
-  private String exportName;
+  private String jsName;
   private String exportNamespace;
+  private boolean exported;
   private final JDeclaredType enclosingType;
   private final boolean isCompileTimeConstant;
   private final boolean isStatic;
@@ -112,6 +112,7 @@ public class JField extends JVariable implements JMember {
     this(info, name, enclosingType, type, isStatic, disposition, AccessModifier.DEFAULT);
   }
 
+  @Override
   public String getQualifiedName() {
     return getEnclosingType().getName() + "." + getName();
   }
@@ -130,20 +131,18 @@ public class JField extends JVariable implements JMember {
   }
 
   @Override
-  public void setExportInfo(String namespace, String name) {
-    this.exportName = name;
+  public void setJsMemberInfo(String namespace, String name, boolean exported) {
+    this.jsName = name;
     this.exportNamespace = namespace;
+    this.exported = exported;
   }
 
-  @Override
-  public boolean isExported() {
-    return exportName != null;
+  public boolean isJsInteropEntryPoint() {
+    return exported && isStatic();
   }
 
-  @Override
-  public String getExportName() {
-    assert exportName != null;
-    return exportName;
+  public boolean canBeReferencedExternally() {
+    return exported;
   }
 
   @Override
@@ -154,22 +153,16 @@ public class JField extends JVariable implements JMember {
   @Override
   public String getQualifiedExportName() {
     String namespace = getExportNamespace();
-    return namespace.isEmpty() ? exportName : namespace + "." + exportName;
+    return namespace.isEmpty() ? jsName : namespace + "." + jsName;
+  }
+
+  public boolean isJsProperty() {
+    return jsName != null;
   }
 
   @Override
-  public void setJsMemberName(String jsTypeName) {
-    this.jsTypeName = jsTypeName;
-  }
-
-  @Override
-  public boolean isJsTypeMember() {
-    return jsTypeName != null;
-  }
-
-  @Override
-  public String getJsMemberName() {
-    return jsTypeName;
+  public String getJsName() {
+    return jsName;
   }
 
   public String getSignature() {

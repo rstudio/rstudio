@@ -179,12 +179,12 @@ public class JTypeOracle implements Serializable {
      */
     // covariant methods need JS bridges
     List<JParameter> xParams = x.getParams();
-    if (x.isOrOverridesJsTypeMethod()) {
+    if (x.isOrOverridesJsMethod()) {
       for (JMethod other : x.getEnclosingType().getMethods()) {
          if (other == x) {
            continue;
          }
-        if (other.isOrOverridesJsTypeMethod() && x.getName().equals(other.getName())) {
+        if (other.isOrOverridesJsMethod() && x.getName().equals(other.getName())) {
            List<JParameter> otherParams = other.getParams();
            if (otherParams.size() == xParams.size()) {
              for (int i = 0; i < otherParams.size(); i++) {
@@ -201,16 +201,16 @@ public class JTypeOracle implements Serializable {
       }
     }
 
-    if (x.needsVtable() && x.isOrOverridesJsTypeMethod()) {
+    if (x.needsVtable() && x.isOrOverridesJsMethod()) {
       for (JMethod override : x.getOverriddenMethods()) {
-        if (!override.isOrOverridesJsTypeMethod()) {
+        if (!override.isOrOverridesJsMethod()) {
           return true;
         }
       }
     }
 
     // implicit builtin @JsConvert, longs are converted
-    if (x.isOrOverridesJsTypeMethod() || x.isExported()) {
+    if (x.isOrOverridesJsMethod()) {
       if (x.getOriginalReturnType() == JPrimitiveType.LONG) {
         return true;
       }
@@ -772,18 +772,6 @@ public class JTypeOracle implements Serializable {
     }
 
     return null;
-  }
-
-  /**
-   * Get the JsFunction method of {@code type}.
-   */
-  public JMethod getJsFunctionMethod(JClassType type) {
-    for (JMethod method : type.getMethods()) {
-      if (method.isOrOverridesJsFunctionMethod()) {
-        return method;
-      }
-    }
-    return (type.getSuperClass() != null) ? getJsFunctionMethod(type.getSuperClass()) : null;
   }
 
   public JMethod getInstanceMethodBySignature(JClassType type, String signature) {

@@ -618,7 +618,7 @@ public class ControlFlowAnalyzer {
           // Returning from this method passes a value from JavaScript into Java.
           maybeRescueJavaScriptObjectPassingIntoJava(method.getType());
         }
-        if (method.isExported() || method.isJsTypeMember() || method.isJsFunctionMethod()) {
+        if (method.canBeCalledExternally()) {
           for (JParameter param : method.getParams()) {
             // Parameters in JsExport, JsType, JsFunction methods should not be pruned in order to
             // keep the API intact.
@@ -648,7 +648,7 @@ public class ControlFlowAnalyzer {
         return;
       }
       JArrayType arrayType = (JArrayType) type;
-      if (arrayType.isJsType()) {
+      if (arrayType.canBeImplementedExternally()) {
         rescue(arrayType, true);
         maybeRescueJsTypeArray(arrayType.getElementType());
       }
@@ -692,12 +692,12 @@ public class ControlFlowAnalyzer {
       JDeclaredType declaredType = (JDeclaredType) type;
 
       for (JMethod method : declaredType.getMethods()) {
-        if (method.isJsTypeMember() || method.isJsFunctionMethod()) {
+        if (method.canBeCalledExternally()) {
           rescue(method);
         }
       }
       for (JField field : declaredType.getFields()) {
-        if (field.isJsTypeMember()) {
+        if (field.canBeReferencedExternally()) {
           rescue(field);
         }
       }
@@ -880,8 +880,7 @@ public class ControlFlowAnalyzer {
       return false;
     }
 
-    return type.isJsoType() || type.isJsFunction() || type.isJsType()
-        || instantiatedTypes.contains(type);
+    return type.isJsoType() || instantiatedTypes.contains(type);
   }
 
   /**
@@ -1022,20 +1021,20 @@ public class ControlFlowAnalyzer {
       // More appropriate solution is to track casts and JSNI methods (see
       // #canBeInstantiatedInJavaScript) but unfortunately casts are replaced at a later stage
       // that causes type and all calls to be pruned.
-      if (type instanceof JInterfaceType && (type.isJsType() || type.isJsFunction())) {
+      if (type.canBeImplementedExternally()) {
         rescuer.rescue(type, true);
       }
 
       // first time through, record all exported methods
       for (JMethod method : type.getMethods()) {
-        if (method.isExported()) {
+        if (method.isJsInteropEntryPoint()) {
           // treat class as instantiated, since a ctor may be called from JS export
           rescuer.rescue(method.getEnclosingType(), true);
           traverseFrom(method);
         }
       }
       for (JField field : type.getFields()) {
-        if (field.isExported()) {
+        if (field.isJsInteropEntryPoint()) {
           rescuer.rescue(field.getEnclosingType(), true);
           rescuer.rescue(field);
         }

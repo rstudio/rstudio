@@ -20,7 +20,7 @@ import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMember;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JMethod.JsPropertyType;
+import com.google.gwt.dev.jjs.ast.JMethod.JsPropertyAccessorType;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
 
 import org.eclipse.jdt.internal.compiler.ast.Annotation;
@@ -46,11 +46,9 @@ public final class JsInteropUtil {
   public static void maybeSetJsInteropProperties(JDeclaredType type, Annotation... annotations) {
     AnnotationBinding jsType = JdtUtil.getAnnotation(annotations, JSTYPE_CLASS);
     String jsPrototype = JdtUtil.getAnnotationParameterString(jsType, "prototype");
-    type.setJsTypeInfo(jsType != null, jsPrototype);
-
     String namespace = maybeGetJsNamespace(annotations);
     String exportName = maybeGetJsExportName(annotations, "");
-    type.setExportInfo(namespace, exportName);
+    type.setJsTypeInfo(jsType != null, namespace, exportName, exportName != null, jsPrototype);
 
     type.setJsFunctionInfo(JdtUtil.getAnnotation(annotations, JSFUNCTION_CLASS) != null);
   }
@@ -68,44 +66,43 @@ public final class JsInteropUtil {
 
   private static void setJsInteropProperties(JMember member, Annotation... annotations) {
     String namespace = maybeGetJsNamespace(annotations);
-    String exportName = maybeGetJsExportName(annotations, computeExportName(member));
-    member.setExportInfo(namespace, exportName);
+    String exportName = maybeGetJsExportName(annotations, computeName(member));
+    member.setJsMemberInfo(namespace, exportName, exportName != null);
 
     /* Apply class wide JsInterop annotations */
 
     boolean ignore = JdtUtil.getAnnotation(annotations, JSNOEXPORT_CLASS) != null;
-    if (ignore || !member.isPublic()) {
+    if (ignore || !member.isPublic() || exportName != null) {
       return;
     }
 
     JDeclaredType enclosingType = member.getEnclosingType();
 
     if (enclosingType.isJsType() && member.needsVtable()) {
-      member.setJsMemberName(member.getName());
+      member.setJsMemberInfo(namespace, computeName(member), true);
     }
 
-    if (enclosingType.isClassWideExport() && !member.needsVtable() && exportName == null) {
-      member.setExportInfo(namespace, computeExportName(member));
+    if (enclosingType.isClassWideExport() && !member.needsVtable()) {
+      member.setJsMemberInfo(namespace, computeName(member), true);
     }
   }
-
   private static void setJsPropertyProperties(JMethod method) {
     String methodName = method.getName();
     if (startsWithCamelCase(methodName, "set")) {
-      method.setJsPropertyType(JsPropertyType.SET);
-      method.setJsMemberName(Introspector.decapitalize(methodName.substring(3)));
+      String jsName = Introspector.decapitalize(methodName.substring(3));
+      method.setJsPropertyInfo(jsName, JsPropertyAccessorType.SETTER);
     } else if (startsWithCamelCase(methodName, "get")) {
-      method.setJsPropertyType(JsPropertyType.GET);
-      method.setJsMemberName(Introspector.decapitalize(methodName.substring(3)));
+      String jsName = Introspector.decapitalize(methodName.substring(3));
+      method.setJsPropertyInfo(jsName, JsPropertyAccessorType.GETTER);
     } else if (startsWithCamelCase(methodName, "is")) {
-      method.setJsPropertyType(JsPropertyType.GET);
-      method.setJsMemberName(Introspector.decapitalize(methodName.substring(2)));
+      String jsName = Introspector.decapitalize(methodName.substring(2));
+      method.setJsPropertyInfo(jsName, JsPropertyAccessorType.GETTER);
     } else {
-      method.setJsPropertyType(JsPropertyType.UNDEFINED);
+      method.setJsPropertyInfo("<invalid>", JsPropertyAccessorType.UNDEFINED);
     }
   }
 
-  private static String computeExportName(JMember member) {
+  private static String computeName(JMember member) {
     return member instanceof JConstructor ? "" : member.getName();
   }
 

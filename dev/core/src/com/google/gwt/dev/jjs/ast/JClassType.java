@@ -89,6 +89,16 @@ public class JClassType extends JDeclaredType {
     return isJso;
   }
 
+  @Override
+  public boolean isJsFunctionImplementation() {
+    for (JInterfaceType superInterface : getImplements()) {
+      if (superInterface.isJsFunction()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /**
    * Sets this type's super class.
    */

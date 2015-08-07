@@ -457,8 +457,7 @@ public class TypeTightener {
 
     @Override
     public void exit(JField x, Context ctx) {
-      if (program.codeGenTypes.contains(x.getEnclosingType())
-          || x.isExported() || x.isJsTypeMember()) {
+      if (program.codeGenTypes.contains(x.getEnclosingType()) || x.canBeReferencedExternally()) {
         // We cannot tighten this field as we don't see all references.
         return;
       }
@@ -522,8 +521,7 @@ public class TypeTightener {
        * The only information that we can infer about native methods is if they
        * are declared to return a leaf type.
        */
-      if (x.isNative() || x.isOrOverridesJsTypeMethod()
-          || x.isOrOverridesJsFunctionMethod()) {
+      if (x.isNative() || x.canBeImplementedExternally()) {
         return;
       }
 
@@ -564,9 +562,7 @@ public class TypeTightener {
     public void endVisit(JParameter x, Context ctx) {
       JMethod currentMethod = getCurrentMethod();
       if (program.codeGenTypes.contains(currentMethod.getEnclosingType())
-          || currentMethod.isExported()
-          || currentMethod.isOrOverridesJsFunctionMethod()
-          || currentMethod.isOrOverridesJsTypeMethod()) {
+          || currentMethod.canBeCalledExternally()) {
         // We cannot tighten this parameter as we don't know all callers.
         return;
       }
@@ -626,7 +622,7 @@ public class TypeTightener {
      * type.
      */
     private JReferenceType getSingleConcreteType(JType type) {
-      if (!(type instanceof JReferenceType) || type.isJsType() || type.isJsFunction()) {
+      if (!(type instanceof JReferenceType) || type.canBeImplementedExternally()) {
         return null;
       }
 
