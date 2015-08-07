@@ -423,6 +423,122 @@ public class Java8AstTest extends FullCompileTestBase {
         formatSource(lambdaMethod2.toSource()));
   }
 
+  public void testLambdaNestingInAnonymousCaptureLocal() throws Exception {
+    String lambda =
+        "int x = 42;\n" +
+        "new Runnable() { public void run() { Lambda<Integer> l = (a, b) -> x + a + b; l.run(1, 2); } }.run();";
+    assertEqualBlock("int x=42;(new EntryPoint$1(this,x)).run();", lambda);
+    JProgram program = compileSnippet("void", lambda, false);
+    JClassType outerClass = (JClassType) getType(program, "test.EntryPoint$1");
+
+    // check that anonymous class implementation uses synthetic field val$x2 to initialize lambda
+    // synthetic class
+    assertEquals(
+        "public void run(){Lambda l=new EntryPoint$1$lambda$0$Type(this.val$x2);l.run(1,2);}",
+        formatSource(findMethod(outerClass, "run").toSource()));
+  }
+
+  public void testLambdaNestingInMultipleAnonymousCaptureLocal() throws Exception {
+    addSnippetClassDecl("interface I { int foo(Integer i); }");
+    // checks that lambda has access to local variable and arguments when placed in local anonymous
+    // class with multiple nesting
+    String snippet =
+        "int[] x = new int[] {42};\n" +
+        "int result = new I(){\n" +
+        "  public int foo(Integer i1){\n" +
+        "    return new I(){\n" +
+        "      public int foo(Integer i2){\n" +
+        "        return new I(){\n" +
+        "          public int foo(Integer i3){\n" +
+        "            Lambda<Integer> l = (a, b) -> x[0] = x[0] + a + b + i1 + i2 + i3;\n" +
+        "            return l.run(1, 2);\n" +
+        "          }\n" +
+        "        }.foo(3);\n" +
+        "      }\n" +
+        "    }.foo(2);\n" +
+        "  }\n" +
+        "}.foo(1);\n";
+
+    JProgram program = compileSnippet("void", snippet, false);
+    JClassType outer1 = (JClassType) getType(program, "test.EntryPoint$1");
+    JClassType outer2 = (JClassType) getType(program, "test.EntryPoint$1$1");
+    JClassType outer3 = (JClassType) getType(program, "test.EntryPoint$1$1$1");
+
+    assertNotNull(outer1);
+    assertNotNull(outer2);
+    assertNotNull(outer3);
+
+    JMethod outer1Method = findMethod(outer1, "foo");
+    JMethod outer2Method = findMethod(outer2, "foo");
+    JMethod outer3Method = findMethod(outer3, "foo");
+    assertNotNull(outer3Method);
+    assertEquals(
+        "public int foo(Integer i1){"
+        + "return(new EntryPoint$1$1(this,this.val$x2,i1)).foo(Integer.valueOf(2));"
+        + "}",
+        formatSource(outer1Method.toSource()));
+    assertEquals(
+        "public int foo(Integer i2){"
+        + "return(new EntryPoint$1$1$1(this,this.val$x2,this.val$i13,i2)).foo(Integer.valueOf(3));"
+        + "}",
+        formatSource(outer2Method.toSource()));
+    // checks that lambda scope initialized similar to anonymous class
+    assertEquals(
+        "public int foo(Integer i3){"
+        + "Lambda l=new EntryPoint$1$1$1$lambda$0$Type(this.val$x2,this.val$i13,this.val$i24,i3);"
+        + "return((Integer)l.run(1,2)).intValue();"
+        + "}",
+        formatSource(outer3Method.toSource()));
+  }
+
+  public void testLambdaNestingInMultipleMixedAnonymousCaptureLocal() throws Exception {
+    // checks that lambda has access to local variable and arguments when placed in mixed scopes
+    // Local Class -> Local Class -> Local Anonymous -> lambda -> Local Anonymous
+    addSnippetClassDecl("interface I { int foo(Integer i); }");
+    addSnippetClassDecl("class A {\n" +
+      "int a() {\n" +
+      "  int[] x = new int[] {42};\n" +
+      "  class B {\n" +
+      "    void b() {\n" +
+      "      I i = new I(){\n" +
+      "        public int foo(Integer arg){\n" +
+      "          Runnable r = () ->{\n" +
+      "            new Runnable() {\n" +
+      "              public void run() {\n" +
+      "                Lambda<Integer> l = (a, b) -> x[0] = x[0] + a + b + arg;\n" +
+      "                x[0] = l.run(1, 2);\n" +
+      "              }\n" +
+      "            }.run();\n" +
+      "          };\n" +
+      "          r.run();\n" +
+      "          return x[0];\n" +
+      "        }\n" +
+      "      };\n" +
+      "      i.foo(1);\n" +
+      "    }\n" +
+      "  }\n" +
+      "  B b = new B();\n" +
+      "  b.b();\n" +
+      "  return x[0];\n" +
+      "}\n" +
+    "}\n");
+
+    String snippet = "A a = new A();";
+    JProgram program = compileSnippet("void", snippet, false);
+    JClassType lambdaOuter = (JClassType) getType(program, "test.EntryPoint$A$1B$1$1");
+    assertNotNull(lambdaOuter);
+
+    JMethod lambdaOuterMethod = findMethod(lambdaOuter, "run");
+    assertNotNull(lambdaOuterMethod);
+    // checks that lambda initialization properly uses synthetic fields from outer class
+    assertEquals(
+        "public void run(){"
+        + "Lambda l=new EntryPoint$A$1B$1$1$lambda$0$Type(this.val$x2,this.val$arg3);"
+        + "this.val$x2[0]=((Integer)l.run(1,2)).intValue();"
+        + "}",
+        formatSource(lambdaOuterMethod.toSource()));
+  }
+
   public void testLambdaNestingCaptureField() throws Exception {
     addSnippetClassDecl("interface Inner {\n" +
         "    void f();\n" +

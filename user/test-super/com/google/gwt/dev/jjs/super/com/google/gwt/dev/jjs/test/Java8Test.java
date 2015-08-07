@@ -804,6 +804,190 @@ public class Java8Test extends GWTTestCase {
     assertEquals(10, success[0]);
   }
 
+  public void testLambdaNestingInAnonymousCaptureLocal() {
+    int[] x = new int[] {42};
+    new Runnable() {
+      public void run() {
+        Lambda<Integer> l = (a, b) -> x[0] = x[0] + a + b;
+        l.run(1, 2);
+      }
+    }.run();
+    assertEquals(45, x[0]);
+  }
+
+  public void testLambdaNestingInMultipleMixedAnonymousCaptureLocal() {
+    // checks that lambda has access to local variable and arguments when placed in mixed scopes
+    // Local Class -> Local Class -> Local Anonymous -> lambda -> Local Anonymous
+    class A {
+      int a() {
+        int[] x = new int[] {42};
+        class B {
+          void b() {
+            I i = new I() {
+              public int foo(Integer arg) {
+                Runnable r = () -> {
+                  new Runnable() {
+                    public void run() {
+                      Lambda<Integer> l = (a, b) -> x[0] = x[0] + a + b + arg;
+                      l.run(1, 2);
+                    }
+                  }.run();
+                };
+                r.run();
+                return x[0];
+              }
+            };
+            i.foo(1);
+          }
+        }
+        B b = new B();
+        b.b();
+        return x[0];
+      }
+    }
+    A a = new A();
+    assertEquals(46, a.a());
+  }
+
+  public void testLambdaNestingInMultipleMixedAnonymousCaptureLocal_withInterference() {
+    // checks that lambda has access to NEAREST local variable and arguments when placed in mixed
+    // scopes Local Class -> Local Class -> Local Anonymous -> lambda -> Local Anonymous
+    class A {
+      int a() {
+        int[] x = new int[] {42};
+        class B {
+          int b() {
+            int[] x = new int[] {22};
+            I i = new I() {
+              public int foo(Integer arg) {
+                Runnable r = () -> {
+                  new Runnable() {
+                    public void run() {
+                      Lambda<Integer> l = (a, b) -> x[0] = x[0] + a + b + arg;
+                      l.run(1, 2);
+                    }
+                  }.run();
+                };
+                r.run();
+                return x[0];
+              }
+            };
+            return i.foo(1);
+          }
+        }
+        B b = new B();
+        return b.b();
+      }
+    }
+    A a = new A();
+    assertEquals(26, a.a());
+  }
+
+  public void testLambdaNestingInMultipleMixedAnonymousCaptureLocalAndField() {
+    // checks that lambda has access to local variable, field and arguments when placed in mixed
+    // scopes - Local Class -> Local Class -> Local Anonymous -> lambda -> Local Anonymous
+    class A {
+      int fA = 1;
+
+      int a() {
+        int[] x = new int[] {42};
+        class B {
+          int fB = 2;
+
+          int b() {
+            I i = new I() {
+              int fI = 3;
+
+              public int foo(Integer arg) {
+                Runnable r = () -> {
+                  new Runnable() {
+                    public void run() {
+                      Lambda<Integer> l = (a, b) -> x[0] = x[0] + a + b + arg + fA + fB + fI;
+                      l.run(1, 2);
+                    }
+                  }.run();
+                };
+                r.run();
+                return x[0];
+              }
+            };
+            return i.foo(1);
+          }
+        }
+        B b = new B();
+        return b.b();
+      }
+    }
+    A a = new A();
+    assertEquals(52, a.a());
+  }
+
+  public void testLambdaNestingInMultipleAnonymousCaptureLocal() {
+    // checks that lambda has access to local variable and arguments when placed in local anonymous
+    // class with multile nesting
+    int[] x = new int[] {42};
+    int result = new I() {
+      public int foo(Integer i1) {
+        return new I() {
+          public int foo(Integer i2) {
+            return new I() {
+              public int foo(Integer i3) {
+                Lambda<Integer> l = (a, b) -> x[0] = x[0] + a + b + i1 + i2 + i3;
+                return l.run(1, 2);
+              }
+            }.foo(3);
+          }
+        }.foo(2);
+      }
+    }.foo(1);
+    assertEquals(51, x[0]);
+  }
+
+  static class TestLambda_ClassA {
+    int[] f = new int[] {42};
+
+    class B {
+      void m() {
+        Runnable r = () -> f[0] = f[0] + 1;
+        r.run();
+      }
+    }
+
+    int a() {
+      B b = new B();
+      b.m();
+      return f[0];
+    }
+  }
+
+  public void testLambdaNestingCaptureField_InnerClassCapturingOuterClassVariable() {
+    TestLambda_ClassA a = new TestLambda_ClassA();
+    assertEquals(43, a.a());
+  }
+
+  public void testInnerClassCaptureLocalFromOuterLambda() {
+    int[] x = new int[] {42};
+    Lambda<Integer> l = (a, b) -> {
+      int[] x1 = new int[] {32};
+      Lambda<Integer> r = (rA, rB) -> {
+        int[] x2 = new int[] {22};
+        I i = new I() {
+          public int foo(Integer arg) {
+            x1[0] = x1[0] + 1;
+            x[0] = x[0] + 1;
+            return x2[0] = x2[0] + rA + rB + a + b;
+          }
+        };
+        return i.foo(1);
+      };
+      return r.run(3, 4) + x1[0];
+    };
+
+    // x1[0](32) + 1 + x2[0](22) + rA(3) + rB(4) + a(1) + b(2)
+    assertEquals(65, l.run(1, 2).intValue());
+    assertEquals(43, x[0]);
+  }
+
   static class TestLambda_Class {
     public int[] s = new int[] {0};
     public void call(TestLambda_Outer a) {

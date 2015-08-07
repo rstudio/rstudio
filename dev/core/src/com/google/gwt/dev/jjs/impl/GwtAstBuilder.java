@@ -231,6 +231,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -1362,7 +1363,7 @@ public class GwtAstBuilder {
       return lambdaMethod;
     }
 
-    private void replaceLambdaWithInnerClassAllocation(LambdaExpression x, SourceInfo info,
+    private void replaceLambdaWithInnerClassAllocation(LambdaExpression x, final SourceInfo info,
         JClassType innerLambdaClass, JConstructor ctor, SyntheticArgumentBinding[] synthArgs) {
       // Finally, we replace the LambdaExpression with
       // new InnerLambdaClass(this, local1, local2, ...);
@@ -1373,23 +1374,47 @@ public class GwtAstBuilder {
         allocLambda.addArg(new JThisRef(info, innerLambdaClass.getEnclosingType()));
       }
       for (final SyntheticArgumentBinding sa : synthArgs) {
-        MethodInfo method = methodStack.peek();
+        final MethodInfo method = methodStack.peek();
+        JExpression capturedLocalReference = null;
         // Find the local variable in the current method context that is referred by the inner
         // lambda.
-        LocalVariableBinding argument = FluentIterable.from(method.locals.keySet()).firstMatch(
+        LocalVariableBinding localVariable = FluentIterable.from(method.locals.keySet()).firstMatch(
             new Predicate<LocalVariableBinding>() {
               @Override
               public boolean apply(LocalVariableBinding enclosingLocal) {
-                // Either the inner lambda refers direcly to the enclosing scope variable, or
-                // it is a capture from an enclosing scope, in which case both synthetic arguments
-                // point to the same outer local variable.
-                return enclosingLocal == sa.actualOuterLocalVariable ||
-                    (enclosingLocal instanceof SyntheticArgumentBinding) &&
-                        ((SyntheticArgumentBinding) enclosingLocal)
-                            .actualOuterLocalVariable == sa.actualOuterLocalVariable;
+                // Either the inner lambda refers directly to the enclosing scope variable, or
+                // it is a capture from an enclosing scope, in which case both synthetic
+                // arguments point to the same outer local variable.
+                return enclosingLocal == sa.actualOuterLocalVariable
+                    || (enclosingLocal instanceof SyntheticArgumentBinding)
+                        && ((SyntheticArgumentBinding) enclosingLocal).actualOuterLocalVariable == 
+                          sa.actualOuterLocalVariable;
               }
-            }).get();
-        allocLambda.addArg(makeLocalRef(info, argument, method));
+            }).orNull();
+        if (localVariable != null) {
+          // lambda is capturing a local from the immediate context
+          capturedLocalReference = makeLocalRef(info, localVariable, method);
+        } else {
+          // Local variable not found in current method context. Trying to find corresponding
+          // synthetic field in case if lambda is placed in anonymous/local class
+          // e.g. { int x = 1; new Outer(){ void m (){ Lambda l = () -> x+1;} }; }
+          Entry<SyntheticArgumentBinding, JField> capturedLocalInOuterClass = FluentIterable.from(
+              curClass.syntheticFields.entrySet()).firstMatch(
+                  new Predicate<Entry<SyntheticArgumentBinding, JField>>() {
+                    @Override
+                    public boolean apply(Entry<SyntheticArgumentBinding, JField> entry) {
+                      return entry.getKey().actualOuterLocalVariable == sa.actualOuterLocalVariable;
+                    }
+                  }).orNull();
+          if (capturedLocalInOuterClass != null) {
+            // local from outer scope has already been captured by enclosing class.
+            capturedLocalReference = makeInstanceFieldRef(info, capturedLocalInOuterClass
+                .getValue());
+          }
+        }
+
+        assert capturedLocalReference != null;
+        allocLambda.addArg(capturedLocalReference);
       }
       // put the result on the stack, and pop out synthetic method from the scope
       push(allocLambda);

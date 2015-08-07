@@ -158,6 +158,27 @@ public class Java8Test extends GWTTestCase {
   public void testLambdaNestingCaptureLocal() {
   }
 
+  public void testLambdaNestingInAnonymousCaptureLocal() {
+  }
+
+  public void testLambdaNestingInMultipleMixedAnonymousCaptureLocal() {
+  }
+
+  public void testLambdaNestingInMultipleMixedAnonymousCaptureLocal_withInterference() {
+  }
+
+  public void testLambdaNestingInMultipleMixedAnonymousCaptureLocalAndField() {
+  }
+
+  public void testLambdaNestingInMultipleAnonymousCaptureLocal() {
+  }
+
+  public void testLambdaNestingCaptureField_InnerClassCapturingOuterClassVariable() {
+  }
+
+  public void testInnerClassCaptureLocalFromOuterLambda() {
+  }
+
   public void testLambdaNestingCaptureField() {
   }
 
