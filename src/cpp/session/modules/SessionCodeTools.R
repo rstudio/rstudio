@@ -225,6 +225,8 @@
      # if we were asked to return individual lines, we're done now
      if (!asString)
        return(lines)
+     else 
+       code <- lines
    }
 
    # return (possibly formatted) code
