@@ -33,8 +33,8 @@
 #include <session/SessionModuleContext.hpp>
 
 #include <session/projects/ProjectsSettings.hpp>
+#include <session/projects/SessionProjectSharing.hpp>
 
-#include "SessionProjectSharing.hpp"
 #include "SessionProjectFirstRun.hpp"
 
 using namespace rstudio::core;
