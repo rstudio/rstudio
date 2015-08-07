@@ -829,6 +829,13 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         desc="Open project in a new R session"
         windowMode="main"/>
+   
+   <cmd id="shareProject"
+        label="Share Project..."
+        menuLabel="_Share Project..."
+        buttonLabel=""
+        desc="Share this project with others"
+        windowMode="main"/>
 
    <cmd id="projectMru0" visible="false" rebindable="false" windowMode="main"/>
    <cmd id="projectMru1" visible="false" rebindable="false" windowMode="main"/>

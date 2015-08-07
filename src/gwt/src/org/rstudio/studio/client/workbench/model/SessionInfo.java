@@ -238,6 +238,10 @@ public class SessionInfo extends JavaScriptObject
          this.project_open_docs = {};
       return this.project_open_docs;
    }-*/;
+   
+   public final native boolean projectSupportsSharing() /*-{
+      return !!this.project_supports_sharing;
+   }-*/;
 
    public final native JsArray<ConsoleProcessInfo> getConsoleProcesses() /*-{
       return this.console_processes;

@@ -46,6 +46,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       addSeparator();
       addItem(commands.openProject().createMenuItem(false));
       addItem(commands.openProjectInNewWindow().createMenuItem(false));
+      addItem(commands.shareProject().createMenuItem(false));
       addItem(commands.closeProject().createMenuItem(false));
       addSeparator();
       addItem(commands.projectMru0().createMenuItem(false));

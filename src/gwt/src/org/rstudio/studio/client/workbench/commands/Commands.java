@@ -1,7 +1,7 @@
 /*
  * Commands.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -125,6 +125,7 @@ public abstract class
    public abstract AppCommand newProject();
    public abstract AppCommand openProject();
    public abstract AppCommand openProjectInNewWindow();
+   public abstract AppCommand shareProject();
    public abstract AppCommand projectMru0();
    public abstract AppCommand projectMru1();
    public abstract AppCommand projectMru2();

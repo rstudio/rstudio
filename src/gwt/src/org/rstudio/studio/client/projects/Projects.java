@@ -138,6 +138,11 @@ public class Projects implements OpenProjectFileHandler,
                commands.setWorkingDirToProjectDir().remove();
                commands.showDiagnosticsProject().remove();
             }
+            boolean enableProjectSharing = hasProject && 
+                  pUIPrefs_.get().enableSharedProjectUi().getValue() &&
+                  sessionInfo.projectSupportsSharing();
+            commands.shareProject().setEnabled(enableProjectSharing);
+            commands.shareProject().setVisible(enableProjectSharing);
             
             // remove version control commands if necessary
             if (!sessionInfo.isVcsEnabled())
