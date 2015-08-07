@@ -34,6 +34,7 @@
 
 #include <session/projects/ProjectsSettings.hpp>
 
+#include "SessionProjectSharing.hpp"
 #include "SessionProjectFirstRun.hpp"
 
 using namespace rstudio::core;
@@ -687,6 +688,11 @@ Error ProjectContext::writeBuildOptions(const RProjectBuildOptions& options)
 bool ProjectContext::isPackageProject()
 {
    return r_util::isPackageDirectory(directory());
+}
+
+bool ProjectContext::supportsSharing()
+{
+   return options().getBoolOverlayOption(kProjectSharingSessionOption);
 }
 
 
