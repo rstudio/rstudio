@@ -315,7 +315,7 @@ void handleContentError(
    if (server::isAuthenticationError(error))
    {
       http::Response& response = ptrConnection->response();
-      response.setStatusCode(http::status::Unauthorized);
+      response.setError(http::status::Unauthorized, "Unauthorized");
       ptrConnection->writeResponse();
       return;
    }
