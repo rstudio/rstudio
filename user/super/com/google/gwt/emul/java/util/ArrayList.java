@@ -232,7 +232,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     return -1;
   }
 
-  native void setSize(int newSize) /*-{
-    this.@ArrayList::array.length = newSize;
-  }-*/;
+  void setSize(int newSize) {
+    ArrayHelper.setLength(array, newSize);
+  }
 }

@@ -44,6 +44,10 @@ public class ArrayHelper {
     return new Array(length);
   }-*/;
 
+  public static native void setLength(Object array, int length)/*-{
+    array.length = length;
+  }-*/;
+
   public static native void removeFrom(Object array, int index, int deleteCount) /*-{
     array.splice(index, deleteCount);
   }-*/;
