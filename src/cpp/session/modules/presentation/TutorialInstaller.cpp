@@ -15,7 +15,7 @@
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <core/system/FileMode.hpp>
 #endif
 
@@ -51,7 +51,7 @@ bool okayToCopy(const FilePath& sourceFile,
 
 Error changeFileModeIfNecessary(const FilePath& targetFile, bool readOnly)
 {
-#ifndef WIN32
+#ifndef _WIN32
    if (readOnly)
    {
       return core::system::changeFileMode(targetFile,
