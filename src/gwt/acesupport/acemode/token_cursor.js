@@ -830,7 +830,7 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
             return this.doBwdOverInitializationList(clonedCursor, tokenCursor);
          } else if (value === ":") {
             var prevValue = clonedCursor.peekBwd().currentValue();
-            if (contains(
+            if (!contains(
                ["public", "private", "protected"],
                prevValue
             ))
