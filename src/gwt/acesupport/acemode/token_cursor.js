@@ -396,6 +396,9 @@ var TokenCursor = function(tokens, row, offset) {
    this.hasType = function(/*...*/)
    {
       var tokenType = this.currentType();
+      if (tokenType == null)
+         return false;
+
       for (var i = 0; i < arguments.length; i++) {
          var type = arguments[i];
          if (tokenType === type ||
