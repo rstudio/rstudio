@@ -35,6 +35,7 @@ import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
@@ -86,6 +87,12 @@ public class DiagnosticsBackgroundPopup
    {
       isRunning_ = true;
       stopRequested_ = false;
+      
+      if (handler_ != null)
+      {
+         handler_.removeHandler();
+         handler_ = null;
+      }
       
       handler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
       {
@@ -194,7 +201,7 @@ public class DiagnosticsBackgroundPopup
       }
    }
    
-   class DiagnosticsPopupPanel extends PopupPanel
+   private class DiagnosticsPopupPanel extends PopupPanel
    {
       public DiagnosticsPopupPanel(
             String text,
@@ -202,7 +209,7 @@ public class DiagnosticsBackgroundPopup
       {
          super(true, false);
          range_ = range;
-         editor_.addCursorChangedHandler(new CursorChangedHandler()
+         cursorChangedHandler_ = editor_.addCursorChangedHandler(new CursorChangedHandler()
          {
             @Override
             public void onCursorChanged(CursorChangedEvent event)
@@ -213,21 +220,40 @@ public class DiagnosticsBackgroundPopup
          });
          addStyleName(RES.styles().popup());
          setWidget(new Label(text));
+         addAttachHandler(new AttachEvent.Handler()
+         {
+            @Override
+            public void onAttachOrDetach(AttachEvent event)
+            {
+               if (!event.isAttached())
+                  detachHandlers();
+            }
+         });
       }
       
+      private void detachHandlers()
+      {
+         if (cursorChangedHandler_ != null)
+         {
+            cursorChangedHandler_.removeHandler();
+            cursorChangedHandler_ = null;
+         }
+      }
+      
+      @Override
       public void hide()
       {
+         detachHandlers();
          super.hide();
       }
       
       private final Range range_;
+      private HandlerRegistration cursorChangedHandler_;
    }
    
    private void showPopup(String text, Range range)
    {
-      if (popup_ != null)
-         popup_.hide();
-      
+      hidePopup();
       popup_ = new DiagnosticsPopupPanel(text, range);
       final Rectangle coords = editor_.toScreenCoordinates(range);
       popup_.setTitle("Diagnostics");
