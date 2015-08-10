@@ -27,6 +27,15 @@ var TokenCursor = function(tokens, row, offset) {
 
 (function () {
 
+   this.cloneCursor = function()
+   {
+      return new TokenCursor(
+         this.$tokens,
+         this.$row,
+         this.$offset
+      );
+   };
+
    var isArray = Utils.isArray;
    var contains = Utils.contains;
    var construct = Utils.construct;
@@ -408,19 +417,6 @@ var TokenCursor = function(tokens, row, offset) {
          return {row: this.$row, column: token.column};
    };
 
-   // Perform a (shallow) copy of a cursor. This is sufficient as
-   // long as the new cursor has its own $row and $offset (which
-   // is ensured by their being primtive types)
-   this.cloneCursor = function()
-   {
-      var args = [];
-      for (var item in this)
-         if (this.hasOwnProperty(item))
-            args.push(this[item]);
-
-      return construct(this.constructor, args);
-   };
-
    this.isFirstSignificantTokenOnLine = function()
    {
       return this.$offset === 0;
@@ -613,6 +609,16 @@ var CppTokenCursor = function(tokens, row, offset, codeModel) {
 oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
 
 (function() {
+
+   this.cloneCursor = function()
+   {
+      return new CppTokenCursor(
+         this.$tokens,
+         this.$row,
+         this.$offset,
+         this.$codeModel
+      );
+   };
 
    var contains = Utils.contains;
 
@@ -867,6 +873,16 @@ var RTokenCursor = function(tokens, row, offset, codeModel) {
 oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
 
 (function() {
+
+   this.cloneCursor = function()
+   {
+      return new RTokenCursor(
+         this.$tokens,
+         this.$row,
+         this.$offset,
+         this.$codeModel
+      );
+   };
 
    var contains = Utils.contains;
 
