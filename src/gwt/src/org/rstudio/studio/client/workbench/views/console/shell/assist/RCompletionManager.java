@@ -135,7 +135,7 @@ public class RCompletionManager implements CompletionManager
       docDisplay_ = docDisplay;
       isConsole_ = isConsole;
       sigTip_ = new RCompletionToolTip(docDisplay_);
-      suggestTimer_ = new SuggestionTimer();
+      suggestTimer_ = new SuggestionTimer(this, uiPrefs_);
       snippets_ = new SnippetHelper((AceEditor) docDisplay, getSourceDocumentPath());
       requester_ = new CompletionRequester(rnwContext, navigableSourceEditor, snippets_);
       
@@ -2131,17 +2131,18 @@ public class RCompletionManager implements CompletionManager
    private Timer helpRequest_;
    private final SuggestionTimer suggestTimer_;
    
-   private class SuggestionTimer
+   private static class SuggestionTimer
    {
-      
-      SuggestionTimer()
+      SuggestionTimer(RCompletionManager manager, UIPrefs uiPrefs)
       {
+         manager_ = manager;
+         uiPrefs_ = uiPrefs;
          timer_ = new Timer()
          {
             @Override
             public void run()
             {
-               beginSuggest(
+               manager_.beginSuggest(
                      flushCache_,
                      implicit_,
                      canAutoInsert_);
@@ -2164,18 +2165,13 @@ public class RCompletionManager implements CompletionManager
          timer_.cancel();
       }
       
-      @SuppressWarnings("unused")
-      public boolean isRunning()
-      {
-         return timer_.isRunning();
-      }
-      
-      
+      private final RCompletionManager manager_;
+      private final UIPrefs uiPrefs_;
+      private final Timer timer_;
       
       private boolean flushCache_;
       private boolean implicit_;
       private boolean canAutoInsert_;
-      private final Timer timer_;
       
    }
 }
