@@ -370,6 +370,8 @@ void scheduleDelayedWork(const boost::posix_time::time_duration& period,
                          bool idleOnly = true);
 
 
+core::string_utils::LineEnding lineEndings(const core::FilePath& filePath);
+
 core::Error readAndDecodeFile(const core::FilePath& filePath,
                               const std::string& encoding,
                               bool allowSubstChars,

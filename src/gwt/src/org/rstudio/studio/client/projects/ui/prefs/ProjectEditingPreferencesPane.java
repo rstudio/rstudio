@@ -21,6 +21,7 @@ import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
+import org.rstudio.studio.client.workbench.prefs.views.LineEndingsSelectWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -56,6 +57,11 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       chkStripTrailingWhitespace_ = new CheckBox("Strip trailing horizontal whitespace when saving");
       chkStripTrailingWhitespace_.addStyleName(RESOURCES.styles().editingOption());
       add(chkStripTrailingWhitespace_);
+      
+      lineEndings_ = new LineEndingsSelectWidget(true);
+      lineEndings_.addStyleName(RESOURCES.styles().editingOption());
+      lineEndings_.addStyleName(RESOURCES.styles().lineEndings());
+      add(lineEndings_);
       
       encoding_ = new TextBoxWithButton(
             "Text encoding:",
@@ -119,6 +125,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       numSpacesForTab_.setValue(initialConfig_.getNumSpacesForTab() + "");
       chkAutoAppendNewline_.setValue(initialConfig_.getAutoAppendNewline());
       chkStripTrailingWhitespace_.setValue(initialConfig_.getStripTrailingWhitespace());
+      lineEndings_.setIntValue(initialConfig_.getLineEndings());
       setEncoding(initialConfig_.getEncoding());
    }
    
@@ -137,6 +144,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       config.setNumSpacesForTab(getTabWidth());
       config.setAutoAppendNewline(chkAutoAppendNewline_.getValue());
       config.setStripTrailingWhitespace(chkStripTrailingWhitespace_.getValue());
+      config.setLineEndings(lineEndings_.getIntValue());
       config.setEncoding(encodingValue_);
       return false;
    }
@@ -166,6 +174,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    private NumericValueWidget numSpacesForTab_;
    private CheckBox chkAutoAppendNewline_;
    private CheckBox chkStripTrailingWhitespace_;
+   private LineEndingsSelectWidget lineEndings_;
    private TextBoxWithButton encoding_;
    private String encodingValue_;
    private RProjectConfig initialConfig_;

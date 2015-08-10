@@ -64,6 +64,7 @@ const char * const kBioconductorMirrorName = "bioconductorMirrorName";
 const char * const kBioconductorMirrorUrl = "bioconductorMirrorUrl";
 const char * const kAlwaysSaveHistory = "alwaysSaveHistory";
 const char * const kRemoveHistoryDuplicates = "removeHistoryDuplicates";
+const char * const kLineEndings = "lineEndingConversion";
 
 template <typename T>
 T readPref(const json::Object& prefs,
@@ -761,6 +762,19 @@ void UserSettings::setRemoveHistoryDuplicates(bool removeDuplicates)
    // update in underlying R session
    r::session::consoleHistory().setRemoveDuplicates(removeDuplicates);
 }
+
+string_utils::LineEnding UserSettings::lineEndings() const
+{
+   return (string_utils::LineEnding)settings_.getInt(
+                                     kLineEndings,
+                                     string_utils::LineEndingNative);
+}
+
+void UserSettings::setLineEndings(string_utils::LineEnding lineEndings)
+{
+   settings_.set(kLineEndings, (int)lineEndings);
+}
+
 
 void UserSettings::setInitialWorkingDirectory(const FilePath& filePath)
 {

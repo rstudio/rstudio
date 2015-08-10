@@ -24,6 +24,7 @@
 
 #include <core/Settings.hpp>
 #include <core/FilePath.hpp>
+#include <core/StringUtils.hpp>
 
 #include <core/json/Json.hpp>
 
@@ -122,6 +123,9 @@ public:
 
    bool removeHistoryDuplicates() const;
    void setRemoveHistoryDuplicates(bool removeDuplicates);
+
+   core::string_utils::LineEnding lineEndings() const;
+   void setLineEndings(core::string_utils::LineEnding lineEndings);
 
    CRANMirror cranMirror() const;
    void setCRANMirror(const CRANMirror& cranMirror);

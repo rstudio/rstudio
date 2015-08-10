@@ -153,6 +153,15 @@ public class SelectWidget extends Composite
       return listBox_.getValue(listBox_.getSelectedIndex());
    }
 
+   public int getIntValue()
+   {
+      return Integer.parseInt(getValue());
+   }
+   
+   public void setIntValue(int value)
+   {
+      setValue(new Integer(value).toString());
+   }
    
    public void addWidget(Widget widget)
    {

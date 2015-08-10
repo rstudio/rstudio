@@ -31,7 +31,6 @@ import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
-import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.application.Desktop;
@@ -40,7 +39,6 @@ import org.rstudio.studio.client.application.model.RVersionsInfo;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -49,9 +47,6 @@ import org.rstudio.studio.client.workbench.prefs.model.HistoryPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.ProjectsPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
-import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 public class GeneralPreferencesPane extends PreferencesPane
 {
@@ -61,13 +56,11 @@ public class GeneralPreferencesPane extends PreferencesPane
                                  UIPrefs prefs,
                                  Session session,
                                  final GlobalDisplay globalDisplay,
-                                 WorkbenchContext context,
-                                 SourceServerOperations server)
+                                 WorkbenchContext context)
    {
       fsContext_ = fsContext;
       fileDialogs_ = fileDialogs;
       prefs_ = prefs;
-      server_ = server;
       session_ = session;
       
       RVersionsInfo versionsInfo = context.getRVersionsInfo();
@@ -157,6 +150,10 @@ public class GeneralPreferencesPane extends PreferencesPane
       spaced(removeHistoryDuplicates_);
       add(removeHistoryDuplicates_);
 
+      showLastDotValue_ = new CheckBox("Show .Last.value in environment listing");
+      lessSpaced(showLastDotValue_);
+      add(showLastDotValue_);
+      
       rProfileOnResume_ = new CheckBox("Run Rprofile when resuming suspended session");
       spaced(rProfileOnResume_);
       if (!Desktop.isDesktop())
@@ -175,49 +172,6 @@ public class GeneralPreferencesPane extends PreferencesPane
          chkTracebacks.getElement().getStyle().setMarginBottom(15, Unit.PX);
          add(chkTracebacks);
       }
-        
-      showLastDotValue_ = new CheckBox("Show .Last.value in environment listing");
-      spaced(showLastDotValue_);
-      add(showLastDotValue_);
-      
-      encodingValue_ = prefs_.defaultEncoding().getGlobalValue();
-      add(encoding_ = new TextBoxWithButton(
-            "Default text encoding:",
-            "Change...",
-            new ClickHandler()
-            {
-               public void onClick(ClickEvent event)
-               {
-                  server_.iconvlist(new SimpleRequestCallback<IconvListResult>()
-                  {
-                     @Override
-                     public void onResponseReceived(IconvListResult response)
-                     {
-                        new ChooseEncodingDialog(
-                              response.getCommon(),
-                              response.getAll(),
-                              encodingValue_,
-                              true,
-                              false,
-                              new OperationWithInput<String>()
-                              {
-                                 public void execute(String encoding)
-                                 {
-                                    if (encoding == null)
-                                       return;
-
-                                    setEncoding(encoding);
-                                 }
-                              }).showModal();
-                     }
-                  });
-
-               }
-            }));
-      nudgeRight(encoding_);
-      textBoxWithChooser(encoding_);
-      spaced(encoding_);
-      setEncoding(prefs.defaultEncoding().getGlobalValue());
       
       // provide check for updates option in desktop mode when not
       // already globally disabled
@@ -308,9 +262,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    public boolean onApply(RPrefs rPrefs)
    {
       boolean restartRequired = super.onApply(rPrefs);
-
-      prefs_.defaultEncoding().setGlobalValue(encodingValue_);
-      
+ 
       if (saveWorkspace_.isEnabled())
       {
          int saveAction;
@@ -360,14 +312,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       return "General";
    }
 
-   private void setEncoding(String encoding)
-   {
-      encodingValue_ = encoding;
-      if (StringUtil.isNullOrEmpty(encoding))
-         encoding_.setText(ChooseEncodingDialog.ASK_LABEL);
-      else
-         encoding_.setText(encoding);
-   }
+  
    
    private RVersionSpec getDefaultRVersion()
    {
@@ -490,9 +435,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox restoreLastProject_;
    private CheckBox rProfileOnResume_;
    private CheckBox showLastDotValue_;
-   private final SourceServerOperations server_;
    private final UIPrefs prefs_;
-   private final TextBoxWithButton encoding_;
-   private String encodingValue_;
    private final Session session_;
 }

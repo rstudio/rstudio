@@ -645,6 +645,29 @@ void onBackgroundProcessing(bool isIdle)
       executeScheduledCommands(&s_idleScheduledCommands);
 }
 
+core::string_utils::LineEnding lineEndings(const core::FilePath& srcFile)
+{
+   // get the global default behavior
+   string_utils::LineEnding lineEndings = userSettings().lineEndings();
+
+   // use project-level override if available
+   using namespace session::projects;
+   ProjectContext& context = projectContext();
+   if (context.hasProject())
+   {
+      if (context.config().lineEndings != r_util::kLineEndingsUseDefault)
+         lineEndings = (string_utils::LineEnding)context.config().lineEndings;
+   }
+
+   // if we are doing no conversion (passthrough) and there is an existing file
+   // then we need to peek inside it to see what the existing line endings are
+   if (lineEndings == string_utils::LineEndingPassthrough)
+      string_utils::detectLineEndings(srcFile, &lineEndings);
+
+   // return computed lineEndings
+   return lineEndings;
+}
+
 Error readAndDecodeFile(const FilePath& filePath,
                         const std::string& encoding,
                         bool allowSubstChars,

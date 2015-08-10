@@ -25,10 +25,10 @@ namespace core {
 namespace string_utils {
 
 enum LineEnding {
-   LineEndingWindows,
-   LineEndingPosix,
-   LineEndingNative,
-   LineEndingPassthrough
+   LineEndingWindows = 0,
+   LineEndingPosix = 1,
+   LineEndingNative = 2,
+   LineEndingPassthrough = 3
 };
 
 bool isSubsequence(std::string const& self,
@@ -69,6 +69,8 @@ std::string jsonLiteralEscape(const std::string& str);
 std::string jsonLiteralUnescape(const std::string& str);
 
 void convertLineEndings(std::string* str, LineEnding type);
+
+bool detectLineEndings(const FilePath& filePath, LineEnding* pType);
 
 std::string filterControlChars(const std::string& str);
 

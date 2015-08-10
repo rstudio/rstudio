@@ -4,6 +4,7 @@
 ### Source Editor
 
 * Support for multiple source windows (tear editor tabs off main window)
+* New global and per-project options for line feed conversion
 * Snippets: pass parameters to snippet generating R functions
 * Split into lines command for multiple cursors (Ctrl+Alt+A)
 * New keyboard shortcuts for expand/contract selection

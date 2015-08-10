@@ -36,9 +36,14 @@
 }
 
 .encodingChooser {
-   margin-top: 13px; 
+   margin-top: 3px; 
    margin-left: 10px;
    margin-bottom: 15px;
+}
+
+.lineEndings {
+   margin-top: 14px;
+   margin-bottom: 12px;
 }
 
 .vcsSelectExtraSpaced {

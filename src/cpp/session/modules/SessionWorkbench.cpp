@@ -169,11 +169,12 @@ FilePath detectedTerminalPath()
 Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 {
    // read params
-   json::Object generalPrefs, historyPrefs, packagesPrefs, projectsPrefs,
-                sourceControlPrefs, compilePdfPrefs;
+   json::Object generalPrefs, historyPrefs, editingPrefs, packagesPrefs,
+                projectsPrefs, sourceControlPrefs, compilePdfPrefs;
    Error error = json::readObjectParam(request.params, 0,
                               "general_prefs", &generalPrefs,
                               "history_prefs", &historyPrefs,
+                              "editing_prefs", &editingPrefs,
                               "packages_prefs", &packagesPrefs,
                               "projects_prefs", &projectsPrefs,
                               "source_control_prefs", &sourceControlPrefs,
@@ -246,6 +247,16 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().beginUpdate();
    userSettings().setAlwaysSaveHistory(alwaysSave);
    userSettings().setRemoveHistoryDuplicates(removeDuplicates);
+   userSettings().endUpdate();
+
+   // read and set editing prefs
+   int lineEndings;
+   error = json::readObject(editingPrefs,
+                            "line_endings", &lineEndings);
+   if (error)
+      return error;
+   userSettings().beginUpdate();
+   userSettings().setLineEndings((core::string_utils::LineEnding)lineEndings);
    userSettings().endUpdate();
 
    // read and set packages prefs
@@ -413,6 +424,10 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    historyPrefs["always_save"] = userSettings().alwaysSaveHistory();
    historyPrefs["remove_duplicates"] = userSettings().removeHistoryDuplicates();
 
+   // get editing prefs
+   json::Object editingPrefs;
+   editingPrefs["line_endings"] = (int)userSettings().lineEndings();
+
    // get packages prefs
    json::Object packagesPrefs;
    packagesPrefs["use_devtools"] = userSettings().useDevtools();
@@ -466,6 +481,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    json::Object result;
    result["general_prefs"] = generalPrefs;
    result["history_prefs"] = historyPrefs;
+   result["editing_prefs"] = editingPrefs;
    result["packages_prefs"] = packagesPrefs;
    result["projects_prefs"] = projectsPrefs;
    result["source_control_prefs"] = sourceControlPrefs;
