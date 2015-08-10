@@ -138,7 +138,8 @@ public class CodeServer {
     JsonExporter exporter = new JsonExporter(options, outboxes);
 
     SourceHandler sourceHandler = new SourceHandler(outboxes, exporter);
-    WebServer webServer = new WebServer(sourceHandler, exporter, outboxes,
+    SymbolMapHandler symbolMapHandler = new SymbolMapHandler(outboxes);
+    WebServer webServer = new WebServer(sourceHandler, symbolMapHandler, exporter, outboxes,
         runner, eventTable, options.getBindAddress(), options.getPort());
     webServer.start(topLogger);
 

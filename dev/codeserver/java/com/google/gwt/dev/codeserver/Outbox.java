@@ -212,6 +212,20 @@ class Outbox {
   }
 
   /**
+   * Returns the symbol map file given a strong name.
+   *
+   * @throws RuntimeException if unable
+   */
+  File findSymbolMap(String strongName) {
+    File dir = findSymbolMapDir();
+    File file = new File(dir, strongName + ".symbolMap");
+    if (!file.isFile()) {
+      throw new RuntimeException("Symbolmap file doesn't exist for " + strongName);
+    }
+    return file;
+  }
+
+  /**
    * Returns the symbols map folder for this modulename.
    * @throws RuntimeException if unable
    */

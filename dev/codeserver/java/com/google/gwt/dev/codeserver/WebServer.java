@@ -92,7 +92,8 @@ public class WebServer {
 
   private static final String TIME_IN_THE_PAST = "Fri, 01 Jan 1990 00:00:00 GMT";
 
-  private final SourceHandler handler;
+  private final SourceHandler sourceHandler;
+  private final SymbolMapHandler symbolMapHandler;
   private final JsonExporter jsonExporter;
   private final OutboxTable outboxes;
   private final JobRunner runner;
@@ -103,9 +104,11 @@ public class WebServer {
 
   private Server server;
 
-  WebServer(SourceHandler handler, JsonExporter jsonExporter, OutboxTable outboxes,
-      JobRunner runner, JobEventTable eventTable, String bindAddress, int port) {
-    this.handler = handler;
+  WebServer(SourceHandler handler, SymbolMapHandler symbolMapHandler, JsonExporter jsonExporter,
+      OutboxTable outboxes, JobRunner runner, JobEventTable eventTable, String bindAddress,
+      int port) {
+    this.sourceHandler = handler;
+    this.symbolMapHandler = symbolMapHandler;
     this.jsonExporter = jsonExporter;
     this.outboxes = outboxes;
     this.runner = runner;
@@ -303,13 +306,16 @@ public class WebServer {
 
     matcher = SAFE_DIRECTORY_PATH.matcher(target);
     if (matcher.matches() && SourceHandler.isSourceMapRequest(target)) {
-      return handler.handle(target, request, logger);
+      return sourceHandler.handle(target, request, logger);
     }
 
     matcher = SAFE_FILE_PATH.matcher(target);
     if (matcher.matches()) {
       if (SourceHandler.isSourceMapRequest(target)) {
-        return handler.handle(target, request, logger);
+        return sourceHandler.handle(target, request, logger);
+      }
+      if (SymbolMapHandler.isSymbolMapRequest(target)) {
+        return symbolMapHandler.handle(target, request, logger);
       }
       if (target.startsWith("/policies/")) {
         return makePolicyFilePage(target);
