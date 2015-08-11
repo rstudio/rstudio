@@ -49,6 +49,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocu
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceMouseEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AnchoredRange;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -662,20 +663,34 @@ public class AceEditorWidget extends Composite
    
    // ---- Annotation related methods
    
-   private Range createAnchoredRange(Position start,
-                                     Position end)
+   private AnchoredRange createAnchoredRange(Position start,
+                                             Position end)
    {
       return getEditor().getSession().createAnchoredRange(start, end);
    }
    
    // This class binds an ace annotation (used for the gutter) with an
-   // inline marker (the underlining for associated lint)
-   class AnchoredAceAnnotation
+   // inline marker (the underlining for associated lint). We also store
+   // the associated marker. Ie, with some beautiful ASCII art:
+   //
+   //
+   //   1. | 
+   //   2. | foo <- function(apple) {    
+   //  /!\ |   print(Apple)
+   //   3. | }       ~~~~~
+   //   4. |
+   //
+   // The 'anchor' is associated with the position of the warning icon
+   // /!\; while the anchored range is associated with the underlying
+   // '~~~~~'. The marker id is needed to detach the annotation later.
+   private class AnchoredAceAnnotation
    {
       public AnchoredAceAnnotation(AceAnnotation annotation,
+                                   AnchoredRange range,
                                    int markerId)
       {
          annotation_ = annotation;
+         range_ = range;
          anchor_ = Anchor.createAnchor(
                editor_.getSession().getDocument(),
                annotation.row(),
@@ -684,8 +699,17 @@ public class AceEditorWidget extends Composite
       }
       
       public int getMarkerId() { return markerId_; }
-      public int row() { return anchor_.getRow(); }
-      public int column() { return anchor_.getColumn(); }
+      
+      public void detach()
+      {
+         if (range_ != null)
+            range_.detach();
+         
+         if (anchor_ != null)
+            anchor_.detach();
+         
+         editor_.getSession().removeMarker(markerId_);
+      }
       
       public AceAnnotation asAceAnnotation()
       {
@@ -697,6 +721,7 @@ public class AceEditorWidget extends Composite
       }
       
       private final AceAnnotation annotation_;
+      private final AnchoredRange range_;
       private final Anchor anchor_;
       private final int markerId_;
    }
@@ -729,7 +754,7 @@ public class AceEditorWidget extends Composite
       for (int i = 0; i < lint.length(); i++)
       {
          LintItem item = lint.get(i);
-         Range range = createAnchoredRange(
+         AnchoredRange range = createAnchoredRange(
                Position.create(item.getStartRow(), item.getStartColumn()),
                Position.create(item.getEndRow(), item.getEndColumn()));
          
@@ -743,11 +768,11 @@ public class AceEditorWidget extends Composite
          else if (item.getType() == "style")
             clazz = lintStyles_.style();
          
-         int id = editor_.getSession().addMarker(
-               range, clazz, "text", true);
+         int id = editor_.getSession().addMarker(range, clazz, "text", true);
          
          annotations_.add(new AnchoredAceAnnotation(
                annotations.get(i),
+               range,
                id));
       }
    }
@@ -773,7 +798,7 @@ public class AceEditorWidget extends Composite
          if (!range.contains(pos))
             annotations.add(annotation);
          else
-            editor_.getSession().removeMarker(annotation.getMarkerId());
+            annotation.detach();
       }
       annotations_ = annotations;
    }
@@ -781,7 +806,7 @@ public class AceEditorWidget extends Composite
    public void clearAnnotations()
    {
       for (int i = 0; i < annotations_.size(); i++)
-         editor_.getSession().removeMarker(annotations_.get(i).getMarkerId());
+         annotations_.get(i).detach();
       annotations_.clear();
    }
    
@@ -850,13 +875,9 @@ public class AceEditorWidget extends Composite
                
                Range range = marker.getRange();
                if (!range.contains(cursor))
-               {
                   newAnnotations.push(annotation.asAceAnnotation());
-               }
                else
-               {
                   editor_.getSession().removeMarker(markerId);
-               }
             }
             
             editor_.getSession().setAnnotations(newAnnotations);
