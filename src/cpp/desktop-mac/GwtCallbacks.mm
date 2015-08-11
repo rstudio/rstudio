@@ -233,13 +233,11 @@ private:
    return [self runSheetFileDialog: open];
 }
 
-- (void) undo
+- (void) undo: (bool) forAce
 {
-   if ([NSApp mainWindow] == [[MainFrameController instance] window])
+   if (forAce)
    {
-      // It appears that using the webView's undoManager doesn't work (for what we want it to do).
-      // It doesn't do anything in the main window when we use the menu to invoke.
-      // However the native handling of Cmd+Z seems to do the right thing.
+      // in the ACE editor, synthesize a literal Cmd+Z for Ace to handle
       CGEventRef event1, event2, event3, event4;
       event1 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)55, true);
       event2 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)6, true);
@@ -254,20 +252,17 @@ private:
    }
    else
    {
-      // undoManager works just fine on secondary windows, and sending Cmd+Z sends us into an
-      // endless loop of Cmd+Z-ing.
+      // elsewhere, let the webview handle it natively
       WebViewController* webViewController = (WebViewController*)[[NSApp mainWindow] delegate];
       [[[webViewController webView] undoManager] undo];
    }
 }
 
-- (void) redo
+- (void) redo: (bool) forAce
 {
-   if ([NSApp mainWindow] == [[MainFrameController instance] window])
+   if (forAce)
    {
-      // It appears that using the webView's undoManager doesn't work (for what we want it to do).
-      // It doesn't do anything in the main window when we use the menu to invoke.
-      // However the native handling of Cmd+Shift+Z seems to do the right thing.
+      // in the ACE editor, synthesize a literal Cmd+Shift+Z for Ace to handle
       CGEventRef event1, event2, event3, event4, event5, event6;
       event1 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)55, true);
       event2 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)56, true);
@@ -286,8 +281,7 @@ private:
    }
    else
    {
-      // undoManager works just fine on secondary windows, and sending Cmd+Z sends us into an
-      // endless loop of Cmd+Shift+Z-ing.
+      // elsewhere, let the webview handle it natively
       WebViewController* webViewController = (WebViewController*)[[NSApp mainWindow] delegate];
       [[[webViewController webView] undoManager] redo];
    }
@@ -1169,6 +1163,10 @@ enum RS_NSActivityOptions : uint64_t
       return @"prepareForNamedWindow";
    else if (sel == @selector(closeNamedWindow:))
       return @"closeNamedWindow";
+   else if (sel == @selector(undo:))
+      return @"undo";
+   else if (sel == @selector(redo:))
+      return @"redo";
    
    return nil;
 }

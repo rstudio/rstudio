@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.impl.DesktopMenuCallback;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -57,6 +58,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
@@ -196,13 +198,13 @@ public class DesktopApplicationHeader implements ApplicationHeader
    @Handler
    void onUndoDummy()
    {
-      Desktop.getFrame().undo();
+      Desktop.getFrame().undo(isFocusInAceInstance());
    }
 
    @Handler
    void onRedoDummy()
    {
-      Desktop.getFrame().redo();
+      Desktop.getFrame().redo(isFocusInAceInstance());
    }
 
    @Handler
@@ -381,6 +383,14 @@ public class DesktopApplicationHeader implements ApplicationHeader
                               "No Update Available", 
                               "You're using the newest version of RStudio.");
       }
+   }
+   
+   private static boolean isFocusInAceInstance()
+   {
+      Element focusElem = DomUtils.getActiveElement();
+      if (focusElem != null)
+         return focusElem.hasClassName("ace_text-input");
+      return false;
    }
    
    private Session session_;
