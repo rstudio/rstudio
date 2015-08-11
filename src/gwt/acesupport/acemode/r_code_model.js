@@ -53,11 +53,28 @@ var RCodeModel = function(session, tokenizer,
    this.$codeEndPattern = codeEndPattern;
    this.$scopes = new ScopeManager(ScopeNode);
 
+   var $firstChange = true;
+   var onChangeMode = function(data, session)
+   {
+      if ($firstChange)
+      {
+         $firstChange = false;
+         return;
+      }
+
+      this.$doc.off('change', onDocChange);
+      this.$session.off('changeMode', onChangeMode)
+   }.bind(this);
+
+   var onDocChange = function(evt)
+   {
+      this.$onDocChange(evt);
+   }.bind(this);
+
+   this.$session.on('changeMode', onChangeMode);
+   this.$doc.on('change', onDocChange);
+
    var that = this;
-   this.$doc.on('change', function(evt) {
-      that.$onDocChange.apply(that, [evt]);
-   });
-   
 };
 
 (function () {
