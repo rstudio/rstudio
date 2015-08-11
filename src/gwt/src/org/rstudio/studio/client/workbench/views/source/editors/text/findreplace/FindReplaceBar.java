@@ -325,6 +325,12 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    {
       return RES.findReplaceLatched();
    }
+   
+   @Override
+   public Widget getUnderlyingWidget()
+   {
+      return getWidget();
+   }
 
    private FindTextBox txtFind_;
    private FindTextBox txtReplace_;

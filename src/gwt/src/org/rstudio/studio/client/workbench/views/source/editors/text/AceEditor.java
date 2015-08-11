@@ -25,6 +25,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.PreElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -1399,7 +1400,14 @@ public class AceEditor implements DocDisplay,
       return new AceEditorChangeTracker();
    }
 
-   public AnchoredSelection createAnchoredSelection(Position startPos,
+   // Because anchored selections create Ace event listeners, they
+   // must be explicitly detached (otherwise they will listen for
+   // edit events into perpetuity). The easiest way to facilitate this
+   // is to have anchored selection tied to the lifetime of a particular
+   // 'host' widget; this way, on detach, we can ensure that the associated
+   // anchors are detached as well.
+   public AnchoredSelection createAnchoredSelection(Widget hostWidget,
+                                                    Position startPos,
                                                     Position endPos)
    {
       Anchor start = Anchor.createAnchor(getSession().getDocument(),
@@ -1408,7 +1416,27 @@ public class AceEditor implements DocDisplay,
       Anchor end = Anchor.createAnchor(getSession().getDocument(),
                                        endPos.getRow(),
                                        endPos.getColumn());
-      return new AnchoredSelectionImpl(start, end);
+      final AnchoredSelection selection = new AnchoredSelectionImpl(start, end);
+      if (hostWidget != null)
+      {
+         hostWidget.addAttachHandler(new AttachEvent.Handler()
+         {
+            @Override
+            public void onAttachOrDetach(AttachEvent event)
+            {
+               if (!event.isAttached() && selection != null)
+                  selection.detach();
+            }
+            
+         });
+      }
+      
+      return selection;
+   }
+   
+   public AnchoredSelection createAnchoredSelection(Position start, Position end)
+   {
+      return createAnchoredSelection(null, start, end);
    }
 
    public void fitSelectionToLines(boolean expand)

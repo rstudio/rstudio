@@ -54,6 +54,7 @@ import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.IsWidget;
+import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
@@ -124,8 +125,11 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    ChangeTracker getChangeTracker();
 
    String getCode(Position start, Position end);
+   DocDisplay.AnchoredSelection createAnchoredSelection(Widget hostWidget,
+                                                        Position start,
+                                                        Position end);
    DocDisplay.AnchoredSelection createAnchoredSelection(Position start,
-                                             Position end);
+                                                        Position end);
    String getCode(InputEditorSelection selection);
 
    void fitSelectionToLines(boolean expand);

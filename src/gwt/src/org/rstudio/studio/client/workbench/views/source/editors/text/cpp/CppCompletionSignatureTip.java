@@ -40,7 +40,7 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
       start = Position.create(start.getRow(), start.getColumn() - 1);
       Position end = docDisplay_.getSelectionEnd();
       end = Position.create(end.getRow(), end.getColumn() + 1);
-      anchor_ = docDisplay_.createAnchoredSelection(start, end);
+      anchor_ = docDisplay_.createAnchoredSelection(this, start, end);
      
       // set the max width
       setMaxWidth(Window.getClientWidth() - 200);
