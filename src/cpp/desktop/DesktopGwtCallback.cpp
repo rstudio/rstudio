@@ -259,12 +259,12 @@ void GwtCallback::doAction(QKeySequence::StandardKey key)
    pOwner_->postWebViewEvent(keyEvent);
 }
 
-void GwtCallback::undo()
+void GwtCallback::undo(bool forAce)
 {
    doAction(QKeySequence::Undo);
 }
 
-void GwtCallback::redo()
+void GwtCallback::redo(bool forAce)
 {
    doAction(QKeySequence::Redo);
 }
