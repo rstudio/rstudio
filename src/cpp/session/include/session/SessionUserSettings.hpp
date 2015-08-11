@@ -127,6 +127,9 @@ public:
    core::string_utils::LineEnding lineEndings() const;
    void setLineEndings(core::string_utils::LineEnding lineEndings);
 
+   bool useNewlineInMakefiles() const;
+   void setUseNewlineInMakefiles(bool useNewline);
+
    CRANMirror cranMirror() const;
    void setCRANMirror(const CRANMirror& cranMirror);
 

@@ -613,6 +613,34 @@ bool performDelayedWork(const boost::function<void()> &execute,
    return false;
 }
 
+bool isPackagePosixMakefile(const FilePath& srcPath)
+{
+   if (!srcPath.exists())
+      return false;
+
+   using namespace projects;
+   ProjectContext& context = session::projects::projectContext();
+   if (!context.hasProject())
+      return false;
+
+   if (context.config().buildType != r_util::kBuildTypePackage)
+      return false;
+
+   FilePath parentDir = srcPath.parent();
+   if (parentDir.filename() != "src")
+      return false;
+
+   FilePath packagePath = context.buildTargetPath();
+   if (parentDir.parent() != packagePath)
+      return false;
+
+   std::string filename = srcPath.filename();
+   return (filename == "Makevars" ||
+           filename == "Makevars.in" ||
+           filename == "Makefile" ||
+           filename == "Makefile.in");
+}
+
 } // anonymous namespeace
 
 void scheduleDelayedWork(const boost::posix_time::time_duration& period,
@@ -647,6 +675,10 @@ void onBackgroundProcessing(bool isIdle)
 
 core::string_utils::LineEnding lineEndings(const core::FilePath& srcFile)
 {
+   // potential special case for Makevars
+   if (userSettings().useNewlineInMakefiles() && isPackagePosixMakefile(srcFile))
+      return string_utils::LineEndingPosix;
+
    // get the global default behavior
    string_utils::LineEnding lineEndings = userSettings().lineEndings();
 

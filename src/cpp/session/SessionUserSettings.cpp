@@ -65,6 +65,7 @@ const char * const kBioconductorMirrorUrl = "bioconductorMirrorUrl";
 const char * const kAlwaysSaveHistory = "alwaysSaveHistory";
 const char * const kRemoveHistoryDuplicates = "removeHistoryDuplicates";
 const char * const kLineEndings = "lineEndingConversion";
+const char * const kUseNewlineInMakefiles = "newlineInMakefiles";
 
 template <typename T>
 T readPref(const json::Object& prefs,
@@ -773,6 +774,17 @@ string_utils::LineEnding UserSettings::lineEndings() const
 void UserSettings::setLineEndings(string_utils::LineEnding lineEndings)
 {
    settings_.set(kLineEndings, (int)lineEndings);
+}
+
+
+bool UserSettings::useNewlineInMakefiles() const
+{
+   return settings_.getBool(kUseNewlineInMakefiles, true);
+}
+
+void UserSettings::setUseNewlineInMakefiles(bool useNewline)
+{
+   settings_.set(kUseNewlineInMakefiles, useNewline);
 }
 
 

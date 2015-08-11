@@ -46,6 +46,7 @@
 * Change default Rpres template to specify autosize: true
 * Automatically create ~/.ssh directory if necessary on Windows
 * Added Makefile mode (used for Makefile, Makevars)
+* Always use LF for line endings in Unix Makefiles
 
 ### Server
 
