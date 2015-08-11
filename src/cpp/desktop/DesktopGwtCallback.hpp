@@ -65,8 +65,8 @@ public slots:
                            bool forceDefaultExtension);
    QString getExistingDirectory(const QString& caption,
                                 const QString& dir);
-   void undo();
-   void redo();
+   void undo(bool forAce);
+   void redo(bool forAce);
    void clipboardCut();
    void clipboardCopy();
    void clipboardPaste();
