@@ -58,7 +58,9 @@ Error requiredFieldError(const std::string& field,
                          std::string* pUserErrMsg)
 {
    *pUserErrMsg = field + " not correctly specified in project config file";
-   return systemError(boost::system::errc::protocol_error, ERROR_LOCATION);
+   Error error = systemError(boost::system::errc::protocol_error, ERROR_LOCATION);
+   error.addProperty("user-msg", *pUserErrMsg);
+   return error;
 }
 
 std::string yesNoAskValueToString(int value)
@@ -145,31 +147,30 @@ bool interpretBuildTypeValue(const std::string& value, std::string* pValue)
    }
 }
 
-bool interpretLineEndingsValue(const std::string& value, int* pValue)
+bool interpretLineEndingsValue(std::string value, int* pValue)
 {
-   std::string valueLower = string_utils::toLower(value);
-   boost::algorithm::trim(valueLower);
-   if (valueLower == "")
+   value = boost::algorithm::trim_copy(value);
+   if (value == "")
    {
       *pValue = kLineEndingsUseDefault;
       return true;
    }
-   else if (valueLower == kLineEndingPassthough)
+   else if (value == kLineEndingPassthough)
    {
       *pValue = string_utils::LineEndingPassthrough;
       return true;
    }
-   else if (valueLower == kLineEndingNative)
+   else if (value == kLineEndingNative)
    {
       *pValue = string_utils::LineEndingNative;
       return true;
    }
-   else if (valueLower == kLineEndingWindows)
+   else if (value == kLineEndingWindows)
    {
       *pValue = string_utils::LineEndingWindows;
       return true;
    }
-   else if (valueLower == kLineEndingPosix)
+   else if (value == kLineEndingPosix)
    {
       *pValue = string_utils::LineEndingPosix;
       return true;
