@@ -35,7 +35,6 @@ import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
-import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
@@ -209,7 +208,7 @@ public class DiagnosticsBackgroundPopup
       {
          super(true, false);
          range_ = range;
-         cursorChangedHandler_ = editor_.addCursorChangedHandler(new CursorChangedHandler()
+         editor_.addCursorChangedHandler(new CursorChangedHandler()
          {
             @Override
             public void onCursorChanged(CursorChangedEvent event)
@@ -220,35 +219,9 @@ public class DiagnosticsBackgroundPopup
          });
          addStyleName(RES.styles().popup());
          setWidget(new Label(text));
-         addAttachHandler(new AttachEvent.Handler()
-         {
-            @Override
-            public void onAttachOrDetach(AttachEvent event)
-            {
-               if (!event.isAttached())
-                  detachHandlers();
-            }
-         });
-      }
-      
-      private void detachHandlers()
-      {
-         if (cursorChangedHandler_ != null)
-         {
-            cursorChangedHandler_.removeHandler();
-            cursorChangedHandler_ = null;
-         }
-      }
-      
-      @Override
-      public void hide()
-      {
-         detachHandlers();
-         super.hide();
       }
       
       private final Range range_;
-      private HandlerRegistration cursorChangedHandler_;
    }
    
    private void showPopup(String text, Range range)
