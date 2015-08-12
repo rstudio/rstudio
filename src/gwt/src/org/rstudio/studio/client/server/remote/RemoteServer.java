@@ -4238,6 +4238,22 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, TRANSFORM_SNIPPET, params, requestCallback);
    }
    
+   @Override
+   public void getProjectSharedUsers(
+         ServerRequestCallback<JsArrayString> callback)
+   {
+      sendRequest(RPC_SCOPE, "get_shared_users", callback);
+   }
+
+   @Override
+   public void setProjectSharedUsers(JsArrayString users,
+         ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONArray(users));
+      sendRequest(RPC_SCOPE, "set_shared_users", params, callback);
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;

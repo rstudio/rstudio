@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.projects.model;
 
 import org.rstudio.studio.client.server.Void;
+
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.remote.RResult;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
@@ -47,4 +48,9 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
                                ServerRequestCallback<Void> callback);
    
    void analyzeProject(ServerRequestCallback<Void> callback);
+   
+   void getProjectSharedUsers(ServerRequestCallback<JsArrayString> callback);
+   
+   void setProjectSharedUsers(JsArrayString users, 
+                              ServerRequestCallback<Void> callback);
 }
