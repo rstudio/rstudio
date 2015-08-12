@@ -254,9 +254,12 @@ public class KeyboardShortcut
          keyCombinations_.add(combination);
       }
       
-      public boolean startsWith(KeySequence other)
+      public boolean startsWith(KeySequence other, boolean strict)
       {
          if (other.keyCombinations_.size() > keyCombinations_.size())
+            return false;
+         
+         if (strict && other.keyCombinations_.size() == keyCombinations_.size())
             return false;
          
          for (int i = 0; i < other.keyCombinations_.size(); i++)
@@ -373,14 +376,14 @@ public class KeyboardShortcut
       return keySequence_;
    }
    
-   public boolean startsWith(KeyboardShortcut other)
+   public boolean startsWith(KeyboardShortcut other, boolean strict)
    {
-      return getKeySequence().startsWith(other.getKeySequence());
+      return getKeySequence().startsWith(other.getKeySequence(), strict);
    }
    
-   public boolean startsWith(KeySequence sequence)
+   public boolean startsWith(KeySequence sequence, boolean strict)
    {
-      return getKeySequence().startsWith(sequence);
+      return getKeySequence().startsWith(sequence, strict);
    }
    
    @Override
