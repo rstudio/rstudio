@@ -26,6 +26,7 @@ import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
@@ -367,6 +368,8 @@ public class TextFileType extends EditableFileType
       results.add(commands.debugDumpContents());
       results.add(commands.debugImportDump());
       results.add(commands.popoutDoc());
+      if (!SourceWindowManager.isMainSourceWindow())
+         results.add(commands.returnDocToMain());
 
       return results;
    }

@@ -789,6 +789,11 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         desc="Show in new window"/>
 
+   <cmd id="returnDocToMain"
+        label="Return Document to Main Window"
+        buttonLabel=""
+        desc="Return to main window"/>
+
    <cmd id="mru0" visible="false" rebindable="false"/>
    <cmd id="mru1" visible="false" rebindable="false"/>
    <cmd id="mru2" visible="false" rebindable="false"/>

@@ -63,6 +63,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
@@ -213,7 +214,9 @@ public class TextEditingTargetWidget
       Toolbar toolbar = new EditingTargetToolbar(commands_);
        
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
+      if (SourceWindowManager.isMainSourceWindow())
+         toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
+      toolbar.addLeftWidget(commands_.returnDocToMain().createToolbarButton());
       toolbar.addLeftSeparator();
 
       toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());

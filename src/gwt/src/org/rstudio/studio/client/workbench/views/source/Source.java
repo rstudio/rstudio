@@ -288,6 +288,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.compileNotebook());
       dynamicCommands_.add(commands.synctexSearch());
       dynamicCommands_.add(commands.popoutDoc());
+      dynamicCommands_.add(commands.returnDocToMain());
       dynamicCommands_.add(commands.findReplace());
       dynamicCommands_.add(commands.findNext());
       dynamicCommands_.add(commands.findPrevious());
@@ -1535,6 +1536,8 @@ public class Source implements InsertSourceHandler,
    {
       if (e.getNewWindowId() == SourceWindowManager.getSourceWindowId())
       {
+         ensureVisible(true);
+         
          // if we're the adopting window, add the doc
          server_.getSourceDocument(e.getDocId(),
                new ServerRequestCallback<SourceDocument>()

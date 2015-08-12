@@ -146,6 +146,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEn
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.RMarkdownNoParamsDialog;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStateChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
@@ -2778,6 +2779,18 @@ public class TextEditingTarget implements
    {
       if (docUpdateSentinel_ != null)
          events_.fireEvent(new PopoutDocEvent(getId(), currentPosition()));
+   }
+   
+   @Handler
+   void onReturnDocToMain()
+   {
+      if (!SourceWindowManager.isMainSourceWindow() && 
+          docUpdateSentinel_ != null)
+      {
+         events_.fireEventToMainWindow(new DocWindowChangedEvent(
+               getId(), SourceWindowManager.getSourceWindowId(), "",
+               null, 0));
+      }
    }
 
    private void doCommentUncomment(String c)

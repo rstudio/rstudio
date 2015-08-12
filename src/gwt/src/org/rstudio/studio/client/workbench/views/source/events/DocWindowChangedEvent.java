@@ -38,16 +38,23 @@ public class DocWindowChangedEvent
    public DocWindowChangedEvent()
    {
    }
+
+   public DocWindowChangedEvent(String docId, String oldWindowId, 
+                                DocTabDragParams params, int pos)
+   {
+      this(docId, oldWindowId, SourceWindowManager.getSourceWindowId(), params, 
+           pos);
+   }
    
    // this event is fired by the window on which the document was dropped; it
    // is rebroadcast to the the window from which the drop originated to 
    // negotiate its end of the transfer
    public DocWindowChangedEvent(String docId, String oldWindowId, 
-         DocTabDragParams params, int pos)
+         String newWindowId, DocTabDragParams params, int pos)
    {
       docId_ = docId;
       oldWindowId_ = oldWindowId;
-      newWindowId_ = SourceWindowManager.getSourceWindowId();
+      newWindowId_ = newWindowId;
       pos_ = pos;
       params_ = params;
    }
