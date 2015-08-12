@@ -168,8 +168,6 @@ public class Help extends BasePresenter implements ShowHelpHandler
    // Home handled by Shim for activation from main menu context
    public void onHelpHome() { view_.bringToFront(); home(); }
    
-    
-   
    @Handler public void onHelpBack() { view_.back(); }
    @Handler public void onHelpForward() { view_.forward(); }
    @Handler public void onPrintHelp() { view_.print(); }
@@ -225,43 +223,36 @@ public class Help extends BasePresenter implements ShowHelpHandler
          return helpUrl;
    }
    
-   @Handler
    void onOpenDataVisualizationCheatSheet()
    {
       globalDisplay_.openRStudioLink("data_visualization_cheat_sheet");
    }
    
-   @Handler
    void onOpenPackageDevelopmentCheatSheet()
    {
       globalDisplay_.openRStudioLink("package_development_cheat_sheet");
    }
    
-   @Handler
    void onOpenDataWranglingCheatSheet()
    {
       globalDisplay_.openRStudioLink("data_wrangling_cheat_sheet");
    }
    
-   @Handler
    void onOpenRMarkdownCheatSheet()
    {
       globalDisplay_.openRStudioLink("r_markdown_cheat_sheet");
    }
    
-   @Handler
    void onOpenRMarkdownReferenceGuide()
    {
       globalDisplay_.openRStudioLink("r_markdown_reference_guide");
    }
    
-   @Handler
    void onOpenShinyCheatSheet()
    {
       globalDisplay_.openRStudioLink("shiny_cheat_sheet");
    }
    
-   @Handler
    void onOpenRoxygenQuickReference()
    {
       events_.fireEvent(new ShowHelpEvent("help/doc/roxygen_help.html"));
