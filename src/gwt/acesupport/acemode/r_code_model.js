@@ -63,7 +63,7 @@ var RCodeModel = function(session, tokenizer,
       }
 
       this.$doc.off('change', onDocChange);
-      this.$session.off('changeMode', onChangeMode)
+      this.$session.off('changeMode', onChangeMode);
    }.bind(this);
 
    var onDocChange = function(evt)
