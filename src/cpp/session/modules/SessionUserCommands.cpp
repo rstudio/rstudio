@@ -110,6 +110,7 @@ Error executeUserCommand(const json::JsonRpcRequest& request,
    // Read JSON params
    std::string name;
    json::Array contentJson;
+   std::string path;
    int rowStart;
    int columnStart;
    int rowEnd;
@@ -117,6 +118,7 @@ Error executeUserCommand(const json::JsonRpcRequest& request,
    error = json::readParams(request.params,
                             &name,
                             &contentJson,
+                            &path,
                             &rowStart,
                             &columnStart,
                             &rowEnd,
@@ -151,6 +153,7 @@ Error executeUserCommand(const json::JsonRpcRequest& request,
    
    r::exec::RFunction userCommand(fnSEXP);
    userCommand.addParam(content);
+   userCommand.addParam(path);
    userCommand.addParam(rowStart);
    userCommand.addParam(columnStart);
    userCommand.addParam(rowEnd);
