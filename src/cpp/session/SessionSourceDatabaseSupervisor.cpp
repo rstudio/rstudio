@@ -325,9 +325,17 @@ Error createSessionDirFromPersistent(FilePath* pSessionDir)
    return Success();
 }
 
-bool reclaimOrphanedSession(const std::vector<FilePath>& sessionDirs,
-                            FilePath* pSessionDir)
+bool reclaimOrphanedSession(FilePath* pSessionDir)
 {
+   // check for existing sessions
+   std::vector<FilePath> sessionDirs;
+   Error error = enumerateSessionDirs(&sessionDirs);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
    BOOST_FOREACH(const FilePath& sessionDir, sessionDirs)
    {
       FilePath lockFilePath = sessionLockFilePath(sessionDir);
@@ -379,6 +387,12 @@ Error removeAndRecreate(const FilePath& dir)
 //      a lock on them -- for volumes that don't support locks this will
 //      always be an error so we'll never be able to recover an orphan dir
 //
+// In some multi-machine cases it's actually possible for two proccesses
+// to both get a lock on the same file. For this reason if we are running
+// multi-machine (i.e. load balancing enabled) we don't attempt orphan
+// recovery because it could result in one session stealing the other's
+// source database out from under it.
+//
 
 Error attachToSourceDatabase(FilePath* pSessionDir)
 {  
@@ -394,18 +408,15 @@ Error attachToSourceDatabase(FilePath* pSessionDir)
    if (error)
       return error;
 
-   // check for existing sessions (use this to decide how to startup below)
-   std::vector<FilePath> sessionDirs;
-   error = enumerateSessionDirs(&sessionDirs);
-   if (error)
-      LOG_ERROR(error);
-
    // attempt to migrate if necessary
    if (needToMigrate)
       return createSessionDirFromOldSourceDatabase(pSessionDir);
 
-   // if there is an orphan (crash) then reclaim it
-   else if (reclaimOrphanedSession(sessionDirs, pSessionDir))
+   // if there is an orphan (crash) then reclaim it. don't do this if
+   // we are load balanced since we can't ensure that lock files work
+   // across the load balanced nodes
+   else if (!module_context::isLoadBalanced() &&
+            reclaimOrphanedSession(pSessionDir))
       return Success();
 
    // attempt to create from persistent
