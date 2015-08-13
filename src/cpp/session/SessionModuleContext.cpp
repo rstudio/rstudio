@@ -64,6 +64,7 @@
 
 #include <session/projects/SessionProjects.hpp>
 
+#include <session/SessionConstants.hpp>
 #include <session/SessionContentUrls.hpp>
 
 #include "modules/SessionBreakpoints.hpp"
@@ -1998,6 +1999,11 @@ SourceMarker::Type sourceMarkerTypeFromString(const std::string& type)
 }
 
 core::json::Array sourceMarkersAsJson(const std::vector<SourceMarker>& markers);
+
+bool isLoadBalanced()
+{
+   return !core::system::getenv(kRStudioSessionRoute).empty();
+}
 
 
 Error initialize()

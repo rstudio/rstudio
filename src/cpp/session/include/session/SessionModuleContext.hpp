@@ -803,6 +803,9 @@ enum MarkerAutoSelect
 void showSourceMarkers(const SourceMarkerSet& markerSet,
                        MarkerAutoSelect autoSelect);
 
+
+bool isLoadBalanced();
+
 } // namespace module_context
 } // namespace session
 } // namespace rstudio

@@ -27,6 +27,7 @@
 #define kRStudioMultiSession              "RSTUDIO_MULTI_SESSION"
 #define kRStudioSessionScopeProject       "RSTUDIO_SESSION_SCOPE_PROJECT"
 #define kRStudioSessionScopeId            "RSTUDIO_SESSION_SCOPE_ID"
+#define kRStudioSessionRoute              "RSTUDIO_SESSION_ROUTE"
 
 #define kProgramModeSessionOption         "program-mode"
 #define kSessionProgramModeDesktop        "desktop"
