@@ -2513,9 +2513,24 @@ public class Source implements InsertSourceHandler,
       final Widget widget = createWidget(target);
 
       if (position == null)
+      {
          editors_.add(target);
+      }
       else
+      {
+         // we're inserting into an existing permuted tabset -- push aside 
+         // any tabs physically to the right of this tab
          editors_.add(position, target);
+         for (int i = 0; i < tabOrder_.size(); i++)
+         {
+            int pos = tabOrder_.get(i);
+            if (pos >= position)
+               tabOrder_.set(i, pos + 1);
+         }
+
+         // add this tab in its "natural" position
+         tabOrder_.add(position, position);
+      }
 
       view_.addTab(widget,
                    target.getIcon(),

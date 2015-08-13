@@ -15,8 +15,6 @@
  */
 package org.rstudio.core.client.theme;
 
-import java.util.ArrayList;
-
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
@@ -168,7 +166,6 @@ public class DocTabLayoutPanel
                }
             }
          });
-         docTabs_.add(tab);
          if (position == null || position < 0)
             super.add(child, tab);
          else
@@ -359,7 +356,6 @@ public class DocTabLayoutPanel
       if (!super.remove(index))
          return false;
 
-      docTabs_.remove(index);
       fireEvent(new TabClosedEvent(index));
       ensureSelectedTabIsVisible(true);
       return true;
@@ -554,8 +550,9 @@ public class DocTabLayoutPanel
          
          // attempt to ascertain whether the element being dragged is one of
          // our own documents
-         for (DocTab tab: docTabs_)
+         for (int i = 0; i < getWidgetCount(); i++)
          {
+            DocTab tab = (DocTab)getTabWidget(i);
             if (tab.getDocId() == docId)
             {
                dragElement_ = 
@@ -898,7 +895,7 @@ public class DocTabLayoutPanel
          {
             // if this is the last tab in satellite, we don't want to tear
             // it out
-            boolean isLastSatelliteTab = docTabs_.size() == 1 && 
+            boolean isLastSatelliteTab = getWidgetCount() == 1 && 
                   Satellite.isCurrentWindowSatellite();
 
             // did the user drag the tab outside this doc?
@@ -1223,5 +1220,4 @@ public class DocTabLayoutPanel
    private final ThemeStyles styles_;
    private Animation currentAnimation_;
    private DragManager dragManager_;
-   private ArrayList<DocTab> docTabs_ = new ArrayList<DocTab>();
 }
