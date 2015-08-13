@@ -122,6 +122,9 @@ well as menu structures (for main menu and popup menus).
       <separator/>
 
       <menu label="_Edit">
+         <cmd refid="sourceNavigateBack"/>
+         <cmd refid="sourceNavigateForward"/>
+         <separator/>
          <cmd refid="undoDummy"/>
          <cmd refid="redoDummy"/>
          <separator/>
@@ -157,9 +160,6 @@ well as menu structures (for main menu and popup menus).
       <separator/>
 
       <menu label="_Code">
-         <cmd refid="sourceNavigateBack"/>
-         <cmd refid="sourceNavigateForward"/>
-         <separator/>
          <cmd refid="insertChunk"/>
          <cmd refid="insertSection"/>
          <separator/>
@@ -167,6 +167,9 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="goToFileFunction"/>
          <separator/>
          <cmd refid="toggleDocumentOutline"/>
+         <separator/>
+         <cmd refid="showDiagnosticsActiveDocument"/>
+         <cmd refid="showDiagnosticsProject"/>
          <separator/>
          <cmd refid="goToHelp"/>
          <cmd refid="goToFunctionDefinition"/>
@@ -332,9 +335,6 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="installPackage"/>
          <cmd refid="updatePackages"/>
-         <separator/>
-         <cmd refid="showDiagnosticsActiveDocument"/>
-         <cmd refid="showDiagnosticsProject"/>
          <separator/>
          <menu label="_Version Control">
             <cmd refid="vcsFileDiff"/>
