@@ -402,6 +402,10 @@ public class RCompletionManager implements CompletionManager
 
       if (!popup_.isShowing())
       {
+         // don't allow ctrl + space for completions in Emacs mode
+         if (docDisplay_.isEmacsModeOn() && event.getKeyCode() == KeyCodes.KEY_SPACE)
+            return false;
+         
          if (CompletionUtils.isCompletionRequest(event, modifier))
          {
             if (initFilter_ == null || initFilter_.shouldComplete(event))

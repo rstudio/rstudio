@@ -1600,6 +1600,12 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
+   public boolean isEmacsModeOn()
+   {
+      return useEmacsKeybindings_;
+   }
+   
+   @Override
    public void setUseVimMode(boolean use)
    {
       // no-op if the editor is read-only (since vim mode doesn't
