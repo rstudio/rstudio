@@ -39,6 +39,7 @@ import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -270,6 +271,18 @@ public class RCompletionManager implements CompletionManager
                cursor.moveToNextToken();
             }
             
+            // if this is a string, try resolving that string as a file name
+            if (cursor.hasType("string"))
+            {
+               String tokenValue = cursor.currentValue();
+               String path = tokenValue.substring(1, tokenValue.length() - 1);
+               FileSystemItem filePath = FileSystemItem.createFile(path);
+               
+               // This will show a dialog error if no such file exists; this
+               // seems the most appropriate action in such a case.
+               fileTypeRegistry_.editFile(filePath);
+            }
+            
             String functionName = cursor.currentValue();
             JsArray<ScopeFunction> scopes =
                   editor.getAllFunctionScopes();
@@ -389,6 +402,10 @@ public class RCompletionManager implements CompletionManager
 
       if (!popup_.isShowing())
       {
+         // don't allow ctrl + space for completions in Emacs mode
+         if (docDisplay_.isEmacsModeOn() && event.getKeyCode() == KeyCodes.KEY_SPACE)
+            return false;
+         
          if (CompletionUtils.isCompletionRequest(event, modifier))
          {
             if (initFilter_ == null || initFilter_.shouldComplete(event))

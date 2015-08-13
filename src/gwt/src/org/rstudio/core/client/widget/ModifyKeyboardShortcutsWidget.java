@@ -1047,8 +1047,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             
             boolean hasConflict =
                   ks1.equals(ks2) ||
-                  ks1.startsWith(ks2) ||
-                  ks2.startsWith(ks1);
+                  ks1.startsWith(ks2, true) ||
+                  ks2.startsWith(ks1, true);
             
             if (hasConflict)
             {

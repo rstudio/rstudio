@@ -154,14 +154,13 @@ public class ChunkIconsManager
    
    private boolean isSetupChunk(Element el, AceEditorNative editor)
    {
-      int pageX = el.getAbsoluteLeft();
-      int pageY = el.getAbsoluteTop();
+      int pageX = el.getAbsoluteLeft() + 5;
+      int pageY = el.getAbsoluteTop() + 5;
       
       Position position =
             editor.getRenderer().screenToTextCoordinates(pageX, pageY);
       
       String line = editor.getSession().getLine(position.getRow());
-      
       return line.contains("r setup");
    }
    

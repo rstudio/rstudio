@@ -234,15 +234,15 @@ public class ShortcutManager implements NativePreviewHandler,
       // If we have a prefix match, keep the keybuffer alive, but
       // cancel the event (so nobody else attempts to handle it).
       for (KeyboardShortcut shortcut : commands_.keySet())
-         if (shortcut.startsWith(keyBuffer_))
+         if (shortcut.startsWith(keyBuffer_, true))
             return cancel(event, false);
       
       for (KeyboardShortcut shortcut : customBindings_.keySet())
-         if (shortcut.startsWith(keyBuffer_))
+         if (shortcut.startsWith(keyBuffer_, true))
             return cancel(event, false);
       
       for (KeyboardShortcut shortcut : userCommands_.getKeyboardShortcuts())
-         if (shortcut.startsWith(keyBuffer_))
+         if (shortcut.startsWith(keyBuffer_, true))
             return cancel(event, false);
       
       // Otherwise, clear the keybuffer.
@@ -380,6 +380,7 @@ public class ShortcutManager implements NativePreviewHandler,
       if (userCommands_.dispatch(shortcut))
          return true;
       
+      // Check for custom bindings for RStudio AppCommands.
       if (dispatch(shortcut, customBindings_, e))
          return true;
       

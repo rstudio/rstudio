@@ -122,6 +122,9 @@ well as menu structures (for main menu and popup menus).
       <separator/>
 
       <menu label="_Edit">
+         <cmd refid="sourceNavigateBack"/>
+         <cmd refid="sourceNavigateForward"/>
+         <separator/>
          <cmd refid="undoDummy"/>
          <cmd refid="redoDummy"/>
          <separator/>
@@ -157,9 +160,6 @@ well as menu structures (for main menu and popup menus).
       <separator/>
 
       <menu label="_Code">
-         <cmd refid="sourceNavigateBack"/>
-         <cmd refid="sourceNavigateForward"/>
-         <separator/>
          <cmd refid="insertChunk"/>
          <cmd refid="insertSection"/>
          <separator/>
@@ -167,6 +167,9 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="goToFileFunction"/>
          <separator/>
          <cmd refid="toggleDocumentOutline"/>
+         <separator/>
+         <cmd refid="showDiagnosticsActiveDocument"/>
+         <cmd refid="showDiagnosticsProject"/>
          <separator/>
          <cmd refid="goToHelp"/>
          <cmd refid="goToFunctionDefinition"/>
@@ -332,9 +335,6 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="installPackage"/>
          <cmd refid="updatePackages"/>
-         <separator/>
-         <cmd refid="showDiagnosticsActiveDocument"/>
-         <cmd refid="showDiagnosticsProject"/>
          <separator/>
          <menu label="_Version Control">
             <cmd refid="vcsFileDiff"/>
@@ -570,7 +570,7 @@ well as menu structures (for main menu and popup menus).
       </shortcutgroup>
       <shortcutgroup name="Other">
          <shortcut value="F1" title="Show Function Help" />
-         <shortcut value="F2" title="Show Function Code" />
+         <shortcut value="F2" title="Go To Function / File"/>
          <shortcut value="Tab" title="Complete Code" />
          <shortcut refid="quitSession" value="Cmd+Q" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
          <shortcut refid="restartR" value="Cmd+Shift+0" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>

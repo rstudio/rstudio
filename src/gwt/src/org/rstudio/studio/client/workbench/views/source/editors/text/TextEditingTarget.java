@@ -753,9 +753,11 @@ public class TextEditingTarget implements
          public void execute()
          {
             Range range = docDisplay_.getSelectionRange();
+            String filePath = StringUtil.notNull(docUpdateSentinel_.getPath());
             server_.executeUserCommand(
                   event.getCommandName(),
                   docDisplay_.getLines(),
+                  filePath,
                   range.getStart().getRow(),
                   range.getStart().getColumn(),
                   range.getEnd().getRow(),

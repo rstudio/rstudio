@@ -80,12 +80,12 @@ assign(".rs.userCommands", new.env(parent = emptyenv()), envir = .rs.toolsEnv())
       if (!overwrite && exists(name, envir = .rs.userCommands))
          stop(sprintf("'%s' is already bound to a function (set 'overwrite = TRUE' to overwrite)", name))
       
-      wrapper <- function(content, rowStart, columnStart, rowEnd, columnEnd)
+      wrapper <- function(content, filePath, rowStart, columnStart, rowEnd, columnEnd)
       {
          range <- list(start = list(row = rowStart, column = columnStart),
                        end   = list(row = rowEnd,   column = columnEnd))
          
-         fn(content, range)
+         fn(content, filePath, range)
       }
       .rs.userCommands[[name]] <- wrapper
       

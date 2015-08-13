@@ -78,6 +78,7 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
    void executeUserCommand(
          String functionName,
          JsArrayString content,
+         String filePath,
          int rowStart,
          int columnStart,
          int rowEnd,
