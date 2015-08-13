@@ -117,11 +117,13 @@
   # get the specified CRAN repo
   repo <- NA
   repos <- getOption("repos")
-  if (is.character(repos)) {
+  # the repos option is canonically a named character vector, but could also
+  # be a named list
+  if (is.character(repos) || is.list(repos)) {
     if (is.null(names(repos))) {
       # no indication of which repo is which, presume the first entry to be
-      # CRAN
-      if (length(repos) > 0)
+      # CRAN if it's of character type
+      if (length(repos) > 0 && is.character(repos[[1]]))
         repo <- repos[[1]]
     } else {
       # use repo named CRAN
