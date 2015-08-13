@@ -30,7 +30,7 @@ var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBr
 var RMatchingBraceOutdent = require("mode/r_matching_brace_outdent").RMatchingBraceOutdent;
 var CppMatchingBraceOutdent = require("mode/c_cpp_matching_brace_outdent").CppMatchingBraceOutdent;
 
-var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").SweaveBackgroundHighlighter;
+var BackgroundHighlighter = require("mode/background_highlighter").BackgroundHighlighter;
 
 var RCodeModel = require("mode/r_code_model").RCodeModel;
 var CppCodeModel = require("mode/cpp_code_model").CppCodeModel;
@@ -103,7 +103,7 @@ var Mode = function(suppressHighlighting, session) {
 
    };
 
-   this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
+   this.$sweaveBackgroundHighlighter = new BackgroundHighlighter(
          session,
          /^(?:[ ]{4})?`{3,}\s*\{(?:.*)\}\s*$/,
          /^(?:[ ]{4})?`{3,}\s*$/

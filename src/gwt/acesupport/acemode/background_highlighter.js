@@ -1,5 +1,5 @@
 /*
- * sweave_background_highlighter.js
+ * background_highlighter.js
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,10 +12,10 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-define("mode/sweave_background_highlighter", function(require, exports, module)
+define("mode/background_highlighter", function(require, exports, module)
 {
    var Range = require("ace/range").Range;
-   var markerClass = "ace_foreign_line sweave_background_highlight";
+   var markerClass = "ace_foreign_line background_highlight";
    var markerType = "background";
 
    var debuglog = function(/*...*/)
@@ -24,7 +24,7 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
          console.log(arguments[i]);
    };
 
-   var SweaveBackgroundHighlighter = function(session,
+   var BackgroundHighlighter = function(session,
                                               reChunkStart,
                                               reChunkEnd)
    {
@@ -246,7 +246,7 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
          this.$syncMarkers(startRow);
       };
 
-   }).call(SweaveBackgroundHighlighter.prototype);
+   }).call(BackgroundHighlighter.prototype);
 
-   exports.SweaveBackgroundHighlighter = SweaveBackgroundHighlighter;
+   exports.BackgroundHighlighter = BackgroundHighlighter;
 });
