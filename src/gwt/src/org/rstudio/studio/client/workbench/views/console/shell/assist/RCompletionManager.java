@@ -1102,6 +1102,15 @@ public class RCompletionManager implements CompletionManager
       
       AutocompletionContext context = getAutocompletionContext();
       
+      // Fix up the context token for non-file completions -- e.g. in
+      //
+      //    foo<-rn
+      //
+      // we erroneously capture '-' as part of the token name. This is awkward
+      // but is effectively a bandaid until the autocompletion revamp.
+      if (context.getToken().startsWith("-"))
+         context.setToken(context.getToken().substring(1));
+      
       context_ = new CompletionRequestContext(invalidation_.getInvalidationToken(),
                                               selection,
                                               canAutoInsert);
