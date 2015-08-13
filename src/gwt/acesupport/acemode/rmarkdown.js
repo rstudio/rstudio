@@ -106,8 +106,8 @@ var Mode = function(suppressHighlighting, session) {
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
          session,
          /^(?:[ ]{4})?`{3,}\s*\{(?:.*)\}\s*$/,
-         /^(?:[ ]{4})?`{3,}\s*$/,
-         true);
+         /^(?:[ ]{4})?`{3,}\s*$/
+   );
 };
 oop.inherits(Mode, MarkdownMode);
 

@@ -18,46 +18,47 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
    var markerClass = "ace_foreign_line sweave_background_highlight";
    var markerType = "background";
 
-   var SweaveBackgroundHighlighter = function(session, reCode, reText,
-                                              textIsTerminator) {
+   var debuglog = function(/*...*/)
+   {
+      for (var i = 0; i < arguments.length; i++)
+         console.log(arguments[i]);
+   };
+
+   var SweaveBackgroundHighlighter = function(session,
+                                              reChunkStart,
+                                              reChunkEnd)
+   {
       this.$session = session;
       this.$doc = session.getDocument();
-      this.$reCode = reCode;
-      this.$reText = reText;
-      this.$textIsTerminator = textIsTerminator;
+      this.$reChunkStart = reChunkStart;
+      this.$reChunkEnd = reChunkEnd;
 
       var that = this;
 
+      // Listen for document change events from Ace.
       var onDocChange = function(evt) {
          this.$onDocChange(evt);
       }.bind(this);
-
       this.$doc.on('change', onDocChange);
 
       // When the session's mode is changed, a new background
       // highlighter will get attached. In that case, we need
-      // to detach the old highlighter.
+      // to detach this (now the old) highlighter.
+      var $attached = false;
       var onChangeMode = function(data, session) {
-
-         // Ignore this change event if this 'changeMode' event is
-         // actually associated with the attachment of this highlighter.
-         if (session.$mode.$sweaveBackgroundHighlighter === this)
-            return;
-
-         // Clear markers and remove handlers.
-         this.$clearMarkers();
-         this.$doc.off('change', onDocChange);
-         this.$session.off('changeMode', onChangeMode);
-
+         if ($attached)
+         {
+            this.$clearMarkers();
+            this.$doc.off('change', onDocChange);
+            this.$session.off('changeMode', onChangeMode);
+         }
+         $attached = true;
       }.bind(this);
-
       this.$session.on('changeMode', onChangeMode);
 
+      // Initialize other state in the highlighter.
       this.$rowState = new Array(this.$doc.getLength());
-      this.$markers = new Array();
-
-      for (var i = 0; i < this.$doc.getLength(); i++)
-         this.$updateRow(i);
+      this.$markers = [];
       
       // The Sweave background highlighter is destroyed and recreated with the
       // document mode. Look through the markers and see if any were created by
@@ -73,90 +74,93 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
     	  }
       }
 
+      // Update the internal state...
+      this.update(0);
+
+      // ... and synchronize with Ace.
       this.$syncMarkers(0);
    };
 
    (function() {
 
-      var TYPE_TEXT = 'text';
-      var TYPE_BEGIN = 'begin';
-      var TYPE_END = 'end';
-      var TYPE_RCODE = 'r';
+      // The states that the background highlighter needs to understand
+      // and differentiate; e.g.
+      //
+      //    This is an R Markdown document. | TEXT
+      //                                    | TEXT
+      //    ```{r}                          | CHUNK_START
+      //    print(mtcars)                   | CHUNK_BODY
+      //    ```                             | CHUNK_END
+      //                                    | TEXT
+      //    This is some more text.         | TEXT
+      //
+      var STATE_TEXT        = 1;
+      var STATE_CHUNK_START = 2;
+      var STATE_CHUNK_BODY  = 3;
+      var STATE_CHUNK_END   = 4;
 
-      this.$updateRow = function(row) {
-         // classify this row
-         var line = this.$doc.getLine(row);
+      this.update = function(fromRow)
+      {
+         // If this row has no state, then we need to look back until
+         // we find a row with cached state.
+         while (fromRow > 0 && this.$rowState[fromRow - 1] == null)
+            fromRow--;
 
-         var type = TYPE_TEXT;
-         var nextType = TYPE_TEXT;
-         if (line.match(this.$reCode)) {
-            type = TYPE_BEGIN;
-            nextType = TYPE_RCODE;
-         }
-         else if (!this.$textIsTerminator && line.match(this.$reText)) {
-            type = TYPE_END;
-            nextType = TYPE_TEXT;
-         }
-         else if (row > 0) {
-            var prevRowState = this.$rowState[row-1];
-            if (prevRowState === TYPE_BEGIN || prevRowState === TYPE_RCODE) {
-               if (line.match(this.$reText)) {
-                  type = TYPE_END;
-                  nextType = TYPE_TEXT;
-               } else {
-                  type = TYPE_RCODE;
-                  nextType = TYPE_RCODE;
-               }
-            }
-         }
+         var n = this.$doc.getLength();
+         // debuglog("There are " + n + " rows to be updated.");
+         for (var row = fromRow; row < n; row++)
+         {
+            var oldState = this.$rowState[row];
+            var newState = this.$getState(row);
 
-         this.$rowState[row] = type;
-         for (var i = row+1; i < this.$rowState.length; i++) {
-            var thisType = this.$rowState[i];
+            if (oldState === newState)
+               return;
 
-            // If this row begins a code block, we're done. It's not possible
-            // that a change to an earlier row could cause changes to ripple
-            // beyond a TYPE_BEGIN row.
-            if (thisType === TYPE_BEGIN)
-               break;
-
-            // If this row ends a code block, it's more complicated. If
-            // $textIsTerminator is false, then we're done; it's not possible
-            // that a change to an earlier row could cause changes to ripple
-            // beyond this row. However, if $textIsTerminator, and we're now
-            // in text mode, then this row could've been turned into a text
-            // row.
-            if (thisType === TYPE_END) {
-               if (!this.$textIsTerminator) {
-                  break;
-               }
-               else if (nextType === TYPE_TEXT) {
-                  this.$rowState[i] = TYPE_TEXT;
-                  break;
-               }
-               else {
-                  // This row was previously TYPE_END, and is still TYPE_END so
-                  // it's safe to exit.
-                  break;
-               }
-            }
-
-            // Conversely, if $textIsTerminator, it's possible that we removed
-            // a previous reText line that causes a currently-text row to become
-            // a code terminator.
-            if (this.$textIsTerminator &&
-                nextType === TYPE_RCODE &&
-                this.$doc.getLine(i).match(this.$reText))
-            {
-               this.$updateRow(i);
-               break;
-            }
-
-            if (this.$rowState[i] === nextType)
-               break;
-            this.$rowState[i] = nextType;
+            // debuglog("Updating row: " + row + " [" + oldState + " -> " + newState + "]");
+            this.$rowState[row] = newState;
          }
       };
+
+      this.$getState = function(row) {
+
+         var line = this.$doc.getLine(row);
+         var prevRowState = this.$rowState[row - 1] || STATE_TEXT;
+
+         if (prevRowState === STATE_TEXT ||
+             prevRowState === STATE_CHUNK_END)
+         {
+            if (this.$reChunkStart.test(line))
+               return STATE_CHUNK_START;
+            else
+               return STATE_TEXT;
+         }
+         else if (prevRowState === STATE_CHUNK_START ||
+                  prevRowState === STATE_CHUNK_BODY)
+         {
+            if (this.$reChunkEnd.test(line))
+               return STATE_CHUNK_END;
+            else
+               return STATE_CHUNK_BODY;
+         }
+
+         // shouldn't be reached
+         return STATE_TEXT;
+      };
+
+      this.$insertNewRows = function(index, count)
+      {
+         var args = new Array(count + 2);
+         args[0] = index;
+         args[1] = 0;
+         Array.prototype.splice.apply(this.$rowState, args);
+      };
+
+      this.$removeRows = function(index, count)
+      {
+         var markers = this.$rowState.splice(index, count);
+      };
+
+      // Marker-related methods ----
 
       this.$clearMarkers = function() {
          for (var i = 0; i < this.$markers.length; i++)
@@ -164,31 +168,13 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
          this.$markers = [];
       };
 
-      this.$syncMarkers = function(startRow, rowsChanged) {
+      this.$syncMarkers = function(startRow) {
 
-         // Determine how many markers need to be updated. We
-         // attempt to be conservative and only update markers
-         // we know need to be changed.
-         var endRow;
-         if (rowsChanged == null)
-            endRow = this.$doc.getLength() - 1;
-         else
-            endRow = startRow + rowsChanged;
-
-         if (endRow >= this.$doc.getLength())
-            endRow = this.$doc.getLength() - 1;
-
-         // If the initial state is an 'end' state, we need to update
-         // all markers later on in the document, as we may have just
-         // closed a chunk.
-         var state = this.$rowState[startRow];
-         if (state === TYPE_END)
-            endRow = this.$doc.getLength() - 1;
-
+         var endRow = this.$doc.getLength() - 1;
          for (var row = startRow; row <= endRow; row++) {
 
-            state = this.$rowState[row];
-            var isForeign = state !== TYPE_TEXT;
+            var state = this.$rowState[row];
+            var isForeign = state !== STATE_TEXT;
 
             if (this.$markers[row]) {
                this.$session.removeMarker(this.$markers[row]);
@@ -197,7 +183,7 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
 
             if (isForeign) {
 
-               var isChunkStart = state === TYPE_BEGIN;
+               var isChunkStart = state === STATE_CHUNK_START;
 
                var clazz = isChunkStart ?
                   markerClass + " rstudio_chunk_start" :
@@ -214,65 +200,50 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
          }
       };
 
-      this.$insertNewRows = function(index, count) {
-         var args = new Array(count + 2);
-         args[0] = index;
-         args[1] = 0;
-         Array.prototype.splice.apply(this.$rowState, args);
-      };
-
-      this.$removeRows = function(index, count) {
-         var markers = this.$rowState.splice(index, count);
-      };
-
       this.$onDocChange = function(evt)
       {
          var delta = evt.data;
+         var action = delta.action;
+         var range = delta.range;
 
-         if (delta.action === "insertLines")
+         // debuglog("Document change [" + action + "]");
+
+         // First, synchronize the internal $rowState array with the
+         // document change delta. We want to splice in / out rows
+         // based on the number of newlines inserted / removed in the delta.
+         //
+         // Note that on such newline insertions, we want to also invalidate
+         // the start row.
+         if (action === "insertLines")
          {
-            var newLineCount = delta.range.end.row - delta.range.start.row;
-            this.$insertNewRows(delta.range.start.row, newLineCount);
-            for (var i = 0; i < newLineCount; i++)
-               this.$updateRow(delta.range.start.row + i);
-            this.$syncMarkers(delta.range.start.row);
+            this.$rowState[range.start.row] = undefined;
+            var newLineCount = range.end.row - range.start.row;
+            this.$insertNewRows(range.start.row, newLineCount);
          }
-         else if (delta.action === "insertText")
+         else if (action === "insertText" && this.$doc.isNewLine(delta.text))
          {
-            if (this.$doc.isNewLine(delta.text))
-            {
-               this.$insertNewRows(delta.range.end.row, 1);
-               this.$updateRow(delta.range.start.row);
-               this.$updateRow(delta.range.start.row + 1);
-               this.$syncMarkers(delta.range.start.row);
-            }
-            else
-            {
-               this.$updateRow(delta.range.start.row);
-               this.$syncMarkers(delta.range.start.row, 1);
-            }
+            this.$rowState[range.start.row] = undefined;
+            this.$insertNewRows(range.end.row, 1);
          }
-         else if (delta.action === "removeLines")
+         else if (action === "removeLines")
          {
-            this.$removeRows(delta.range.start.row,
-                             delta.range.end.row - delta.range.start.row);
-            this.$updateRow(delta.range.start.row);
-            this.$syncMarkers(delta.range.start.row);
+            this.$rowState[range.start.row] = undefined;
+            this.$removeRows(
+               range.start.row,
+               range.end.row - range.start.row
+            );
          }
-         else if (delta.action === "removeText")
+         else if (action === "removeText" && this.$doc.isNewLine(delta.text))
          {
-            if (this.$doc.isNewLine(delta.text))
-            {
-               this.$removeRows(delta.range.end.row, 1);
-               this.$updateRow(delta.range.start.row);
-               this.$syncMarkers(delta.range.start.row);
-            }
-            else
-            {
-               this.$updateRow(delta.range.start.row);
-               this.$syncMarkers(delta.range.start.row, 1);
-            }
+            this.$rowState[range.start.row] = undefined;
+            this.$removeRows(range.end.row, 1);
          }
+
+         // Synchronize.
+         // debuglog(this.$rowState);
+         var startRow = range.start.row;
+         this.update(startRow);
+         this.$syncMarkers(startRow);
       };
 
    }).call(SweaveBackgroundHighlighter.prototype);
