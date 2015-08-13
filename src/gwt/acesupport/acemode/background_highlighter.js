@@ -16,7 +16,7 @@ define("mode/background_highlighter", function(require, exports, module)
 {
    var Range = require("ace/range").Range;
    var markerClass = "ace_foreign_line background_highlight";
-   var markerType = "background";
+   var markerType = "screenLine";
 
    var debuglog = function(/*...*/)
    {
