@@ -777,6 +777,15 @@
       if (!is.null(method))
          return(method)
    }
+   
+   ## S4 objects might still 'be' data.frames or lists or environments under
+   ## the hood; in such a case their 'formal' class can 'mask' the underlying
+   ## S3 class / type, so explicitly check that as well.
+   if (is.list(object))
+      return(utils:::.DollarNames.list)
+   else if (is.environment(object))
+      return(utils:::.DollarNames.environment)
+   
    NULL
 })
 
