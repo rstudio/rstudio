@@ -401,6 +401,11 @@ public:
       return s_importFromDirectives_;
    }
    
+   void addSourceItem(const RSourceItem& item)
+   {
+      items_.push_back(item);
+   }
+   
    const std::vector<RSourceItem>& items() const
    {
       return items_;

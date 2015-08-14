@@ -17,6 +17,7 @@
 #define SESSION_MODULES_RTOKENCURSOR_HPP
 
 #include <iostream>
+#include <string>
 
 #include <core/Macros.hpp>
 #include <core/r_util/RTokenizer.hpp>
@@ -182,6 +183,16 @@ public:
       return rTokens_.atUnsafe(offset_);
    }
    
+   std::size_t currentRow() const
+   {
+      return currentToken().row();
+   }
+   
+   std::size_t currentColumn() const
+   {
+      return currentToken().column();
+   }
+   
    Position currentPosition(bool endOfToken = false) const
    {
       const RToken& token = currentToken();
@@ -198,14 +209,14 @@ public:
       return currentToken().end();
    }
    
-   const RToken& nextToken() const
+   const RToken& nextToken(std::size_t offset = 1) const
    {
-      return rTokens_.at(offset_ + 1);
+      return rTokens_.at(offset_ + offset);
    }
    
-   const RToken& previousToken() const
+   const RToken& previousToken(std::size_t offset = 1) const
    {
-      return rTokens_.at(offset_ - 1);
+      return rTokens_.at(offset_ - offset);
    }
    
    const RToken& nextSignificantToken(std::size_t times = 1) const
