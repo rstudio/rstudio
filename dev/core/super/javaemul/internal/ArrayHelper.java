@@ -44,6 +44,10 @@ public class ArrayHelper {
     return new Array(length);
   }-*/;
 
+  public static native int getLength(Object array) /*-{
+    return array.length;
+  }-*/;
+
   public static native void setLength(Object array, int length)/*-{
     array.length = length;
   }-*/;

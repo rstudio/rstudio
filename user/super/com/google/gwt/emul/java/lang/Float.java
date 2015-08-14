@@ -31,7 +31,6 @@ public final class Float extends Number implements Comparable<Float> {
   public static final Class<Float> TYPE = float.class;
 
   private static final long POWER_31_INT = 2147483648L;
-  private static final long POWER_32_INT = 4294967296L;
 
   public static int compare(float x, float y) {
     return Double.compare(x, y);
@@ -131,13 +130,13 @@ public final class Float extends Number implements Comparable<Float> {
     return (float) Double.longBitsToDouble(bits64);
   }
 
-  public static native boolean isInfinite(float x) /*-{
-    return !isFinite(x) && !isNaN(x);
-  }-*/;
+  public static boolean isInfinite(float x) {
+    return Double.isInfinite(x);
+  }
 
-  public static native boolean isNaN(float x) /*-{
-    return isNaN(x);
-  }-*/;
+  public static boolean isNaN(float x) {
+    return Double.isNaN(x);
+  }
 
   public static float parseFloat(String s) throws NumberFormatException {
     double doubleValue = __parseAndValidateDouble(s);

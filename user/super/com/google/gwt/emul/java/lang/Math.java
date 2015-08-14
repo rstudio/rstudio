@@ -15,6 +15,8 @@
  */
 package java.lang;
 
+import javaemul.internal.JsUtils;
+
 /**
  * Math utility methods and constants.
  */
@@ -100,9 +102,9 @@ public final class Math {
     return Math.cos(x);
   }-*/;
 
-  public static native double cosh(double x) /*-{
+  public static double cosh(double x) {
     return (Math.exp(x) + Math.exp(-x)) / 2.0;
-  }-*/;
+  }
 
   public static native double exp(double x) /*-{
     return Math.exp(x);
@@ -197,8 +199,13 @@ public final class Math {
     return (long) round0(x);
   }
 
-  public static native int round(float x) /*-{
-    return Math.round(x);
+  public static int round(float x) {
+    double roundedValue = round0(x);
+    return unsafeCastToInt(roundedValue);
+  }
+
+  private static native int unsafeCastToInt(double d) /*-{
+    return d;
   }-*/;
 
   public static double scalb(double d, int scaleFactor) {
@@ -249,9 +256,9 @@ public final class Math {
     return Math.sin(x);
   }-*/;
 
-  public static native double sinh(double x) /*-{
-    return (Math.exp(x) - Math.exp(-x)) / 2.0;
-  }-*/;
+  public static double sinh(double x) {
+    return (Math.exp(x) - Math.exp(-x)) / 2.0d;
+  }
 
   public static native double sqrt(double x) /*-{
     return Math.sqrt(x);
@@ -261,13 +268,16 @@ public final class Math {
     return Math.tan(x);
   }-*/;
 
-  public static native double tanh(double x) /*-{
-    if (x == Infinity) {
-      return 1.0;
+  public static double tanh(double x) {
+    if (x == JsUtils.getInfinity()) {
+      return 1.0d;
+    } else if (x == -JsUtils.getInfinity()) {
+      return -1.0d;
     }
-    var e2x = Math.exp(2.0 * x);
+
+    double e2x = Math.exp(2.0 * x);
     return (e2x - 1) / (e2x + 1);
-  }-*/;
+  }
 
   public static double toDegrees(double x) {
     return x * PI_UNDER_180;

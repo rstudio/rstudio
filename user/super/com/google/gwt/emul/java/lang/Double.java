@@ -15,6 +15,8 @@
  */
 package java.lang;
 
+import javaemul.internal.JsUtils;
+
 /**
  * Wraps a primitive <code>double</code> as an object.
  */
@@ -193,9 +195,9 @@ public final class Double extends Number implements Comparable<Double> {
     return (int) d;
   }
 
-  public static native boolean isInfinite(double x) /*-{
-    return !isFinite(x) && !isNaN(x);
-  }-*/;
+  public static boolean isInfinite(double x) {
+    return x == JsUtils.getInfinity() || x == -JsUtils.getInfinity();
+  }
 
   public static native boolean isNaN(double x) /*-{
     return isNaN(x);

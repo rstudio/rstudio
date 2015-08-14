@@ -21,6 +21,7 @@ package javaemul.internal;
 public class HashCodes {
 
   private static int sNextHashId = 0;
+  private static final String HASH_CODE_PROPERTY = "$H";
 
   public static int hashCodeForString(String s) {
     return StringHashCache.getHashCode(s);
@@ -31,16 +32,11 @@ public class HashCodes {
       return 0;
     }
     return o instanceof String
-        ?  hashCodeForString(unsafeCast(o)) : getObjectIdentityHashCode(o);
+        ?  hashCodeForString(JsUtils.unsafeCastToString(o)) : getObjectIdentityHashCode(o);
   }
 
   public static native int getObjectIdentityHashCode(Object o) /*-{
     return o.$H || (o.$H = @HashCodes::getNextHashId()());
-  }-*/;
-
-  // TODO(goktug): replace unsafeCast with a real cast when the compiler can optimize it.
-  private static native String unsafeCast(Object string) /*-{
-    return string;
   }-*/;
 
   /**

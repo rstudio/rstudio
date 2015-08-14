@@ -249,6 +249,7 @@ public final class Long extends Number implements Comparable<Long> {
     return (byte) value;
   }
 
+  @Override
   public int compareTo(Long b) {
     return compare(value, b.value);
   }

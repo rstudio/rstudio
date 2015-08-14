@@ -23,6 +23,7 @@ import static javaemul.internal.InternalPreconditions.checkArgument;
 import static javaemul.internal.InternalPreconditions.checkElement;
 import static javaemul.internal.InternalPreconditions.checkState;
 
+import javaemul.internal.JsUtils;
 import javaemul.internal.annotations.SpecializeMethod;
 
 /**
@@ -161,7 +162,8 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   @SpecializeMethod(params = {String.class}, target = "hasStringValue")
   @Override
   public boolean containsKey(Object key) {
-    return key instanceof String ? hasStringValue(unsafeCast(key)) : hasHashValue(key);
+    return key instanceof String
+        ? hasStringValue(JsUtils.unsafeCastToString(key)) : hasHashValue(key);
   }
 
   @Override
@@ -186,19 +188,22 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   @SpecializeMethod(params = {String.class}, target = "getStringValue")
   @Override
   public V get(Object key) {
-    return key instanceof String ? getStringValue(unsafeCast(key)) : getHashValue(key);
+    return key instanceof String
+        ? getStringValue(JsUtils.unsafeCastToString(key)) : getHashValue(key);
   }
 
   @SpecializeMethod(params = {String.class, Object.class}, target = "putStringValue")
   @Override
   public V put(K key, V value) {
-    return key instanceof String ? putStringValue(unsafeCast(key), value) : putHashValue(key, value);
+    return key instanceof String
+        ? putStringValue(JsUtils.unsafeCastToString(key), value) : putHashValue(key, value);
   }
 
   @SpecializeMethod(params = {String.class}, target = "removeStringValue")
   @Override
   public V remove(Object key) {
-    return key instanceof String ? removeStringValue(unsafeCast(key)) : removeHashValue(key);
+    return key instanceof String
+        ? removeStringValue(JsUtils.unsafeCastToString(key)) : removeHashValue(key);
   }
 
   @Override
@@ -288,9 +293,4 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   private V removeStringValue(String key) {
     return key == null ? removeHashValue(null) : stringMap.remove(key);
   }
-
-  // TODO(goktug): replace unsafeCast with a real cast when the compiler can optimize it.
-  private static native String unsafeCast(Object string) /*-{
-    return string;
-  }-*/;
 }

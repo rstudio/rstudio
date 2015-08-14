@@ -265,6 +265,7 @@ public final class Integer extends Number implements Comparable<Integer> {
     return (byte) value;
   }
 
+  @Override
   public int compareTo(Integer b) {
     return compare(value, b.value);
   }

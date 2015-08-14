@@ -56,8 +56,8 @@ public final class System {
     Class<?> destComp = destType.getComponentType();
     checkArrayType(arrayTypeMatch(srcComp, destComp), "Array types don't match");
 
-    int srclen = getArrayLength(src);
-    int destlen = getArrayLength(dest);
+    int srclen = ArrayHelper.getLength(src);
+    int destlen = ArrayHelper.getLength(dest);
     if (srcOfs < 0 || destOfs < 0 || len < 0 || srcOfs + len > srclen || destOfs + len > destlen) {
       throw new IndexOutOfBoundsException();
     }
@@ -134,11 +134,4 @@ public final class System {
       return !destComp.isPrimitive();
     }
   }
-
-  /**
-   * Returns the length of an array via Javascript.
-   */
-  private static native int getArrayLength(Object array) /*-{
-    return array.length;
-  }-*/;
 }

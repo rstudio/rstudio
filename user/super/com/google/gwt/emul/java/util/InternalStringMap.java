@@ -25,6 +25,8 @@ import java.util.InternalJsMapFactory.InternalJsIteratorEntry;
 import java.util.InternalJsMapFactory.InternalJsMap;
 import java.util.Map.Entry;
 
+import javaemul.internal.JsUtils;
+
 /**
  * A simple wrapper around JavaScript Map for key type is string.
  */
@@ -47,7 +49,7 @@ class InternalStringMap<K, V> implements Iterable<Entry<K, V>> {
   }
 
   public boolean contains(String key) {
-    return !isUndefined(backingMap.get(key));
+    return !JsUtils.isUndefined(backingMap.get(key));
   }
 
   public V get(String key) {
@@ -58,7 +60,7 @@ class InternalStringMap<K, V> implements Iterable<Entry<K, V>> {
     V oldValue = backingMap.get(key);
     backingMap.set(key, toNullIfUndefined(value));
 
-    if (isUndefined(oldValue)) {
+    if (JsUtils.isUndefined(oldValue)) {
       size++;
       structureChanged(host);
     } else {
@@ -69,7 +71,7 @@ class InternalStringMap<K, V> implements Iterable<Entry<K, V>> {
 
   public V remove(String key) {
     V value = backingMap.get(key);
-    if (!isUndefined(value)) {
+    if (!JsUtils.isUndefined(value)) {
       backingMap.delete(key);
       size--;
       structureChanged(host);
@@ -136,10 +138,6 @@ class InternalStringMap<K, V> implements Iterable<Entry<K, V>> {
   }
 
   private static <T> T toNullIfUndefined(T value) {
-    return isUndefined(value) ? null : value;
+    return JsUtils.isUndefined(value) ? null : value;
   }
-
-  private static native boolean isUndefined(Object value) /*-{
-    return value === undefined;
-  }-*/;
 }
