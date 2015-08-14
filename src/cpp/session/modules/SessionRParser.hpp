@@ -32,6 +32,7 @@
 
 #include <core/Algorithm.hpp>
 #include <core/r_util/RTokenizer.hpp>
+#include <core/r_util/RTokenCursor.hpp>
 #include <core/collection/Position.hpp>
 #include <core/collection/Stack.hpp>
 
@@ -317,6 +318,16 @@ public:
       addLintItem(token,
                   LintTypeError,
                   "unexpected end of document");
+   }
+   
+   void noSymbolNamed(const core::r_util::token_cursor::RTokenCursor& cursor,
+                      const std::string& candidate = std::string())
+   {
+      ParseItem item(
+               cursor.contentAsUtf8(),
+               cursor.currentPosition(),
+               NULL);
+      noSymbolNamed(item, candidate);
    }
    
    void noSymbolNamed(const ParseItem& item,

@@ -18,21 +18,17 @@
 
 #include <iostream>
 
+#include <core/Macros.hpp>
 #include <core/r_util/RTokenizer.hpp>
-#include "SessionRParser.hpp"
+#include <core/collection/Position.hpp>
 
 #include <boost/function.hpp>
 
-#include <core/collection/Position.hpp>
-
-#include <core/Macros.hpp>
-
 namespace rstudio {
-namespace session {
-namespace modules {
+namespace core {
+namespace r_util {
 namespace token_cursor {
 
-using namespace rparser;
 using namespace core::collection;
 using namespace core::r_util;
 using namespace core::r_util::token_utils;
@@ -245,13 +241,6 @@ public:
    operator const RToken&() const
    {
       return rTokens_.at(offset_);
-   }
-   
-   operator ParseItem() const
-   {
-      return ParseItem(contentAsUtf8(),
-                       currentPosition(),
-                       NULL);
    }
    
    std::wstring content() const
@@ -561,11 +550,6 @@ public:
   {
      return isValidAsIdentifier(*this) &&
             nextSignificantToken().contentEquals(L"=");
-  }
-  
-  bool isAtEndOfStatement(const ParseStatus& status)
-  {
-     return isAtEndOfStatement(status.isInParentheticalScope());
   }
   
   bool appearsToBeBinaryOperator() const
@@ -988,8 +972,8 @@ PIPE_START:
      if (isPipeOperator(cursor.previousSignificantToken()))
         goto PIPE_START;
 
-     return string_utils::wideToUtf8(std::wstring(
-                                        cursor.begin(), endCursor.end()));
+     return core::string_utils::wideToUtf8(
+              std::wstring(cursor.begin(), endCursor.end()));
      
      return onFailure;
      
@@ -1004,7 +988,7 @@ private:
    std::size_t n_;
 };
 
-} // namespace token_utils
+} // namespace token_cursor
 } // namespace r_util
 } // namespace core
 } // namespace rstudio

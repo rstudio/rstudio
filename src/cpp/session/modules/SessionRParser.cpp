@@ -27,8 +27,9 @@
 #include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
 
+#include <core/r_util/RTokenCursor.hpp>
+
 #include "SessionRParser.hpp"
-#include "SessionRTokenCursor.hpp"
 #include "SessionCodeSearch.hpp"
 #include "SessionAsyncPackageInformation.hpp"
 
@@ -795,7 +796,7 @@ void handleIdentifier(RTokenCursor& cursor,
          RTokenCursor clone = cursor.clone();
          if (clone.moveToNextSignificantToken() &&
              clone.moveToNextSignificantToken() &&
-             !clone.isAtEndOfStatement(status))
+             !clone.isAtEndOfStatement(status.isInParentheticalScope()))
          {
             lookAheadAndWarnOnUsagesOfSymbol(cursor, clone, status);
          }
@@ -2006,7 +2007,7 @@ START:
             
             // Check to see if this paren closes the current statement.
             // If so, it effectively closes any parent conditional statements.
-            if (cursor.isAtEndOfStatement(status))
+            if (cursor.isAtEndOfStatement(status.isInParentheticalScope()))
                while (status.isInControlFlowStatement())
                   status.popState();
             
@@ -2327,7 +2328,7 @@ ARGUMENT_LIST_END:
          goto START;
       
       // Pop out of control flow statements if this ends the statement.
-      if (cursor.isAtEndOfStatement(status))
+      if (cursor.isAtEndOfStatement(status.isInParentheticalScope()))
          while (status.isInControlFlowStatement())
             status.popState();
       
