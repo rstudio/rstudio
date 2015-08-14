@@ -168,7 +168,22 @@ var Range = require("ace/range").Range;
             this.$rowTokens = tokens;
             return this.getCurrentToken();
          }
-      }      
+      }
+   };
+
+   /**
+    * Eagerly tokenize up to the specified row, using the tokenizer
+    * attached to the associated session.
+    */
+   this.tokenizeUpToRow = function(maxRow)
+   {
+      var tokenizer = this.$session.bgTokenizer;
+      var lastTokenizedRow = tokenizer.currentLine;
+      maxRow = Math.max(maxRow, this.$session.getLength() - 1);
+      for (var i = lastTokenizedRow; i <= maxRow; i++)
+         tokenizer.$tokenizeRow(i);
+
+      tokenizer.fireUpdateEvent(lastTokenizedRow, maxRow);
    };
 
    /**
@@ -178,6 +193,8 @@ var Range = require("ace/range").Range;
     */
    this.moveToPosition = function(position, seekForward)
    {
+      this.tokenizeUpToRow(position.row);
+
       // Try to get a token at the position supplied. Note that the
       // default behaviour of 'session.getTokenAt' is to return the first
       // token prior to the position supplied; for 'seekForward' behaviour
@@ -281,7 +298,7 @@ var Range = require("ace/range").Range;
       if (token)
          token.row = this.$row;
       return token;
-   }
+   };
 
    /**
     * Get the value of the token at the TokenIterator's
