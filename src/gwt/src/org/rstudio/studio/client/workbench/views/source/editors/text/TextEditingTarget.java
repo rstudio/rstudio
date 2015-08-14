@@ -2166,7 +2166,14 @@ public class TextEditingTarget implements
          Pattern pattern = Pattern.create("[ \t]+$");
          String strippedCode = pattern.replaceAll(code, "");
          if (!strippedCode.equals(code))
+         {
+            // Calling 'setCode' can remove folds in the document; cache the folds
+            // and reapply them after document mutation.
+            JsArray<AceFold> folds = docDisplay_.getFolds();
             docDisplay_.setCode(strippedCode, true);
+            for (AceFold fold : JsUtil.asIterable(folds))
+               docDisplay_.addFold(fold.getRange());
+         }
       }
       
       if (prefs_.autoAppendNewline().getValue() || fileType_.isPython())
@@ -2175,6 +2182,7 @@ public class TextEditingTarget implements
          if (lastLine.length() != 0)
             docDisplay_.insertCode(docDisplay_.getEnd().getEnd(), "\n");
       }
+      
    }
    
    private FileSystemItem getSaveFileDefaultDir()
