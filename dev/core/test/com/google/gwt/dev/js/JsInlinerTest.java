@@ -22,8 +22,11 @@ import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.dev.js.ast.JsVisitor;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
-import java.util.Arrays;
+import java.util.List;
 
 /**
  * Safety checks for JsInliner.
@@ -70,6 +73,64 @@ public class JsInlinerTest extends OptimizerTestBase {
     verifyNoChange(input);
   }
 
+  public void testInlineSmallFunctions() throws Exception {
+    String input, expected;
+    // Always make more than one call, because there are special heuristics for functions that
+    // are called only once.
+
+    // Inline empty function
+    input = Joiner.on('\n').join(
+        "function setP(t, p) {}",
+        "function b1(o) {  setP(o, 1); setP(o, 2);  } b1({});");
+    expected = Joiner.on('\n').join(
+        "function b1(o){}",
+        "b1({});");
+    verifyOptimized(expected, input);
+
+    // Inline a array assignment.
+    input = Joiner.on('\n').join(
+        "function set(arr, p,  v) { arr[p] = v; }",
+        "function b1(arr) {  set(arr, \"X\", 1); set(arr, \"Y\", 1);  } b1({});");
+    expected = Joiner.on('\n').join(
+        "function b1(arr){arr['X']=1;arr['Y']=1}",
+        "b1({});");
+    verifyOptimized(expected, input);
+
+    // Inline a devirtualized setter
+    input = Joiner.on('\n').join(
+        "function setP(t, p) {t.a=p; }",
+        "function b1(o) {  setP(o, 1); setP(o, 2);  } b1({});");
+    expected = Joiner.on('\n').join(
+        "function b1(o){o.a=1; o.a=2;}",
+        "b1({});");
+    verifyOptimized(expected, input);
+
+    // Inline a devirtualized getter
+    input = Joiner.on('\n').join(
+        "function getP(t) {return t.a; }",
+        "function b1(o) {  getP(o) == getP(o);  } b1({});");
+    expected = Joiner.on('\n').join(
+        "function b1(o){o.a==o.a;}",
+        "b1({});");
+    verifyOptimized(expected, input);
+  }
+
+  public void testWithVardeclaration() throws Exception {
+    String input, expected;
+    // Always make more than one call, because there are special heuristics for functions that
+    // are called only once.
+
+    // Inline a devirtualized getter
+    input = Joiner.on('\n').join(
+        "function a(o) { $wnd.blah(o); }",
+        "function f(t,u,b,d) {var a = t;  return a.u;}",
+        "function b1(o) { a(f(o,1,2,3)); a(f(o,1,2,5));  } b1({});");
+    expected = Joiner.on('\n').join(
+        "function d(a){$wnd.blah(a)}",
+        "function e(a){var b,c;d((b=a,b.u));d((c=a,c.u))}",
+        "e({})");
+    verifyOptimizedObfuscated(expected, input);
+  }
   /**
    * A test for mutually-recursive functions. Setup:
    *
@@ -295,7 +356,14 @@ public class JsInlinerTest extends OptimizerTestBase {
      * Static entry point used by JavaToJavaScriptCompiler.
      */
     public static OptimizerStats exec(JsProgram program) {
-      return JsInliner.exec(program, Arrays.asList(new JsNode[]{program}));
+      final List<JsNode> inlineableFunctions = Lists.newArrayList();
+      new JsVisitor() {
+        @Override
+        public void endVisit(JsFunction x, JsContext ctx) {
+          inlineableFunctions.add(x);
+        }
+      }.accept(program);
+      return JsInliner.exec(program, inlineableFunctions);
     }
   }
 

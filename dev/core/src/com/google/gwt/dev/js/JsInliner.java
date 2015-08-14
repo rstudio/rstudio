@@ -1549,7 +1549,7 @@ public class JsInliner {
    * code to be inlined, but at a cost of larger JS output.
    */
   private static final double MAX_COMPLEXITY_INCREASE = Double.parseDouble(System.getProperty(
-      "gwt.jsinlinerRatio", "1.2"));
+      "gwt.jsinlinerRatio", "1.5"));
 
   /**
    * Static entry point used by JavaToJavaScriptCompiler.
