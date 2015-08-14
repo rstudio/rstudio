@@ -104,8 +104,8 @@ void lintRFilesInSubdirectory(const FilePath& path)
       if (!isRFile(info))
          continue;
       
-      std::string content = file_utils::readFile(core::toFilePath(info));
-      ParseResults results = parse(content);
+      FilePath filePath = core::toFilePath(info);
+      ParseResults results = parse(filePath);
       
       if (results.lint().hasErrors())
       {

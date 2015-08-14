@@ -942,8 +942,7 @@ void RSourceIndexes::initialize()
        boost::bind(&RSourceIndexes::removeAll, this));
 }
 
-void RSourceIndexes::update(
-    boost::shared_ptr<session::source_database::SourceDocument> pDoc)
+void RSourceIndexes::update(const boost::shared_ptr<SourceDocument>& pDoc)
 {
    // is this indexable? if not then bail
    if (!pDoc->canContainRCode())
@@ -972,7 +971,11 @@ void RSourceIndexes::update(
    }
    
    // insert it
-   indexes_[pDoc->id()] = pIndex;
+   idMap_[pDoc->id()] = pIndex;
+   
+   // create aliases
+   filePathMap_[filePath.absolutePath()] = pIndex;
+   idToFilePathMap_[pDoc->id()] = filePath;
    
    // kick off an update if necessary
    r_packages::AsyncPackageInformationProcess::update();
@@ -980,12 +983,18 @@ void RSourceIndexes::update(
 
 void RSourceIndexes::remove(const std::string& id)
 {
-   indexes_.erase(id);
+   FilePath filePath = idToFilePathMap_[id];
+   
+   idMap_.erase(id);
+   filePathMap_.erase(filePath.absolutePath());
+   idToFilePathMap_.erase(id);
 }
 
 void RSourceIndexes::removeAll()
 {
-   indexes_.clear();
+   idMap_.clear();
+   filePathMap_.clear();
+   idToFilePathMap_.clear();
 }
 
 RSourceIndexes& rSourceIndex()
