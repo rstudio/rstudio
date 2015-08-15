@@ -90,7 +90,7 @@ public class WebServer {
 
   private static final MimeTypes MIME_TYPES = new MimeTypes();
 
-  private static final String TIME_IN_THE_PAST = "Fri, 01 Jan 1990 00:00:00 GMT";
+  private static final String TIME_IN_THE_PAST = "Mon, 01 Jan 1990 00:00:00 GMT";
 
   private final SourceHandler sourceHandler;
   private final SymbolMapHandler symbolMapHandler;
