@@ -17,22 +17,19 @@
 #define SESSION_MODULES_RTOKENCURSOR_HPP
 
 #include <iostream>
+#include <string>
 
+#include <core/Macros.hpp>
 #include <core/r_util/RTokenizer.hpp>
-#include "SessionRParser.hpp"
+#include <core/collection/Position.hpp>
 
 #include <boost/function.hpp>
 
-#include <core/collection/Position.hpp>
-
-#include <core/Macros.hpp>
-
 namespace rstudio {
-namespace session {
-namespace modules {
+namespace core {
+namespace r_util {
 namespace token_cursor {
 
-using namespace rparser;
 using namespace core::collection;
 using namespace core::r_util;
 using namespace core::r_util::token_utils;
@@ -186,6 +183,16 @@ public:
       return rTokens_.atUnsafe(offset_);
    }
    
+   std::size_t currentRow() const
+   {
+      return currentToken().row();
+   }
+   
+   std::size_t currentColumn() const
+   {
+      return currentToken().column();
+   }
+   
    Position currentPosition(bool endOfToken = false) const
    {
       const RToken& token = currentToken();
@@ -202,14 +209,14 @@ public:
       return currentToken().end();
    }
    
-   const RToken& nextToken() const
+   const RToken& nextToken(std::size_t offset = 1) const
    {
-      return rTokens_.at(offset_ + 1);
+      return rTokens_.at(offset_ + offset);
    }
    
-   const RToken& previousToken() const
+   const RToken& previousToken(std::size_t offset = 1) const
    {
-      return rTokens_.at(offset_ - 1);
+      return rTokens_.at(offset_ - offset);
    }
    
    const RToken& nextSignificantToken(std::size_t times = 1) const
@@ -245,13 +252,6 @@ public:
    operator const RToken&() const
    {
       return rTokens_.at(offset_);
-   }
-   
-   operator ParseItem() const
-   {
-      return ParseItem(contentAsUtf8(),
-                       currentPosition(),
-                       NULL);
    }
    
    std::wstring content() const
@@ -561,11 +561,6 @@ public:
   {
      return isValidAsIdentifier(*this) &&
             nextSignificantToken().contentEquals(L"=");
-  }
-  
-  bool isAtEndOfStatement(const ParseStatus& status)
-  {
-     return isAtEndOfStatement(status.isInParentheticalScope());
   }
   
   bool appearsToBeBinaryOperator() const
@@ -988,8 +983,8 @@ PIPE_START:
      if (isPipeOperator(cursor.previousSignificantToken()))
         goto PIPE_START;
 
-     return string_utils::wideToUtf8(std::wstring(
-                                        cursor.begin(), endCursor.end()));
+     return core::string_utils::wideToUtf8(
+              std::wstring(cursor.begin(), endCursor.end()));
      
      return onFailure;
      
@@ -1004,7 +999,7 @@ private:
    std::size_t n_;
 };
 
-} // namespace token_utils
+} // namespace token_cursor
 } // namespace r_util
 } // namespace core
 } // namespace rstudio

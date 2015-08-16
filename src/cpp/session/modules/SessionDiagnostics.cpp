@@ -611,7 +611,7 @@ ParseResults parse(const std::wstring& rCode,
    if (noLint)
       return ParseResults();
    
-   results = rparser::parse(rCode, options);
+   results = rparser::parse(origin, rCode, options);
    
    ParseNode* pRoot = results.parseTree();
    if (!pRoot)

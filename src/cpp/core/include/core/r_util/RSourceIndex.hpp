@@ -291,7 +291,7 @@ public:
       return s_allInferredPkgNames_;
    }
 
-   const std::set<std::string>& getInferredPackages()
+   const std::vector<std::string>& getInferredPackages()
    {
       return inferredPkgNames_;
    }
@@ -333,15 +333,20 @@ public:
    
    static const FunctionInformation& getFunctionInformationAnywhere(
          const std::string& func,
+         const std::vector<std::string>& inferredPkgs,
          bool* pLookupFailed)
    {
-      for (PackageInformationDatabase::const_iterator it = s_packageInformation_.begin();
-           it != s_packageInformation_.end();
+      for (std::vector<std::string>::const_reverse_iterator it = inferredPkgs.rbegin();
+           it != inferredPkgs.rend();
            ++it)
       {
-         const PackageInformation& pkgInfo = it->second;
-         if (pkgInfo.functionInfo.count(func))
-            return const_cast<FunctionInformationMap&>(pkgInfo.functionInfo)[func];
+         const std::string& pkg = *it;
+         if (s_packageInformation_.count(pkg))
+         {
+            const PackageInformation& pkgInfo = s_packageInformation_[pkg];
+            if (pkgInfo.functionInfo.count(func))
+               return const_cast<FunctionInformationMap&>(pkgInfo.functionInfo)[func];
+         }
       }
       
       *pLookupFailed = true;
@@ -364,7 +369,7 @@ public:
 
    void addInferredPackage(const std::string& packageName)
    {
-      inferredPkgNames_.insert(packageName);
+      inferredPkgNames_.push_back(packageName);
       s_allInferredPkgNames_.insert(packageName);
    }
    
@@ -401,6 +406,11 @@ public:
       return s_importFromDirectives_;
    }
    
+   void addSourceItem(const RSourceItem& item)
+   {
+      items_.push_back(item);
+   }
+   
    const std::vector<RSourceItem>& items() const
    {
       return items_;
@@ -414,7 +424,7 @@ private:
    // NOTE: each index tracks the 'library' calls encountered within,
    // but we share that state in a static variable (so that we can
    // cache and share across all indexes)
-   std::set<std::string> inferredPkgNames_;
+   std::vector<std::string> inferredPkgNames_;
    static std::set<std::string> s_importedPackages_;
    static ImportFromMap s_importFromDirectives_;
    static std::set<std::string> s_allInferredPkgNames_;

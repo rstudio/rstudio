@@ -360,7 +360,7 @@ SEXP rs_getNAMESPACEImportedSymbols(SEXP documentIdSEXP)
       
       // If the inferred package is listed _only_ in the NAMESPACE 'importFrom',
       // then we want to selectively return symbols.
-      if ((index && index->getInferredPackages().count(pkg) == 0) &&
+      if ((index && core::algorithm::contains(index->getInferredPackages(), pkg)) &&
           RSourceIndex::getImportedPackages().count(pkg) == 0 &&
           RSourceIndex::getImportFromDirectives().count(pkg) != 0)
       {
@@ -440,9 +440,11 @@ SEXP rs_listInferredPackages(SEXP documentIdSEXP)
    if (index == NULL)
       return R_NilValue;
    
-   std::set<std::string> pkgs = index->getInferredPackages();
-   pkgs.insert(index->getImportedPackages().begin(),
-               index->getImportedPackages().end());
+   std::vector<std::string> pkgs = index->getInferredPackages();
+   pkgs.insert(
+            pkgs.end(),
+            index->getImportedPackages().begin(),
+            index->getImportedPackages().end());
    
    r::sexp::Protect protect;
    return r::sexp::create(pkgs, &protect);
