@@ -2788,7 +2788,25 @@ public class TextEditingTarget implements
    void onPopoutDoc()
    {
       if (docUpdateSentinel_ != null)
+      {
+         // sync doc contents before popping it out
+         SourceWindowManager manager = 
+               RStudioGinjector.INSTANCE.getSourceWindowManager();
+         JsArray<SourceDocument> docs = manager.getSourceDocs();
+         for (int i = 0; i < docs.length(); i++)
+         {
+            if (docs.get(i).getId() == getId())
+            {
+               docs.get(i).setContents(docUpdateSentinel_.getContents());
+               docs.get(i).setDirty(dirtyState_.getValue());
+               break;
+            }
+         }
+         
+         // fire popout event (this triggers a close in the current window
+         // and the creation of a new window with the doc)
          events_.fireEvent(new PopoutDocEvent(getId(), currentPosition()));
+      }
    }
    
    @Handler
@@ -2799,7 +2817,7 @@ public class TextEditingTarget implements
       {
          events_.fireEventToMainWindow(new DocWindowChangedEvent(
                getId(), SourceWindowManager.getSourceWindowId(), "",
-               null, 0));
+               DocTabDragParams.create(getId(), currentPosition()), 0));
       }
    }
 

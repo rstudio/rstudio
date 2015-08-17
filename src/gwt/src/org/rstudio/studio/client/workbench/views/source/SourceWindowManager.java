@@ -710,7 +710,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       return "";
    }
    
-   private final native JsArray<SourceDocument> getMainWindowSourceDocs() /*-{
+   private final native static JsArray<SourceDocument> getMainWindowSourceDocs() /*-{
       return $wnd.opener.rstudioSourceDocs;
    }-*/;
    
