@@ -1066,6 +1066,16 @@ assign(x = ".rs.acCompletionTypes",
             }, error = function(e) NULL)
          }
          
+         # Objects for which 'names' returns non-NULL. This branch is used
+         # to provide completions for S4 objects, essentially adhering to
+         # the `.DollarNames.default` behaviour. (It looks like if an S4
+         # object is able to supply names through the `names` method, then
+         # those names are also valid for `$` completions.)
+         else if (isS4(object) && length(names(object)))
+         {
+            allNames <- names(object)
+         }
+         
          # Other objects
          else
          {
