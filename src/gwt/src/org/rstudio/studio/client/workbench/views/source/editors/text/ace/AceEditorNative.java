@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Command;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.js.JsMap;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import java.util.LinkedList;
@@ -109,6 +110,10 @@ public class AceEditorNative extends JavaScriptObject {
 
    public native final void setKeyboardHandler(KeyboardHandler keyboardHandler) /*-{
       this.setKeyboardHandler(keyboardHandler);
+   }-*/;
+   
+   public native final KeyboardHandler getKeyboardHandler() /*-{
+      return this.getKeyboardHandler();
    }-*/;
    
    public native final void addKeyboardHandler(KeyboardHandler keyboardHandler) /*-{
@@ -398,6 +403,52 @@ public class AceEditorNative extends JavaScriptObject {
    public final native void setCommandManager(AceCommandManager commands)
    /*-{
       this.commands = commands;
+   }-*/;
+   
+   public final native JsMap<Position> getMarks() /*-{
+      
+      var marks = {};
+      if (this.state &&
+          this.state.cm &&
+          this.state.cm.state &&
+          this.state.cm.state.vim &&
+          this.state.cm.state.vim.marks)
+       {
+          marks = this.state.cm.state.vim.marks;
+       }
+       
+      var result = {};
+      for (var key in marks) {
+         var mark = marks[key];
+         result[key] = {
+            row: mark.row,
+            column: mark.column
+         };
+      }
+      
+      return result;
+   
+   }-*/;
+   
+   public final native void setMarks(JsMap<Position> marks) /*-{
+      
+      if (this.state &&
+          this.state.cm &&
+          this.state.cm.state &&
+          this.state.cm.state.vim)
+      {
+         var cm = this.state.cm;
+         var vim = this.state.cm.state.vim;
+         
+         if (!vim.marks)
+            vim.marks = {};
+            
+         for (var key in marks) {
+            var mark = marks[key];
+            vim.marks[key] = cm.setBookmark({line: mark.row, ch: mark.column});
+         }
+      }
+   
    }-*/;
    
    public final static void syncUiPrefs(UIPrefs uiPrefs)

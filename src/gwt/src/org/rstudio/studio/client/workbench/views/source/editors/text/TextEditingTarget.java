@@ -33,6 +33,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.UIObject;
@@ -53,6 +54,7 @@ import org.rstudio.core.client.events.HasEnsureHeightHandlers;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
@@ -135,6 +137,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.VimMarks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
@@ -742,7 +745,6 @@ public class TextEditingTarget implements
                         DocTabDragStateChangedEvent.STATE_NONE);
                }
             });
-
    }
    
    public void onExecuteUserCommand(final ExecuteUserCommandEvent event)
@@ -1068,6 +1070,7 @@ public class TextEditingTarget implements
          view_.initWidgetSize();
       docDisplay_.setCode(contents, false);
       
+      // Load and apply folds.
       final ArrayList<Fold> folds = Fold.decode(document.getFoldSpec());
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
@@ -1078,6 +1081,24 @@ public class TextEditingTarget implements
                docDisplay_.addFold(fold.getRange());
          }
       });
+      
+      // Load and apply Vim marks (if they exist).
+      if (document.getProperties().hasKey("marks"))
+      {
+         final String marksSpec = document.getProperties().getString("marks");
+         final JsMap<Position> marks = VimMarks.decode(marksSpec);
+         
+         // Time out the marks setting just to avoid conflict with other
+         // mutations of the editor.
+         new Timer()
+         {
+            @Override
+            public void run()
+            {
+                docDisplay_.setMarks(marks);
+            }
+         }.schedule(100);
+      }
 
       registerPrefs(releaseOnDismiss_, prefs_, docDisplay_, document);
       
