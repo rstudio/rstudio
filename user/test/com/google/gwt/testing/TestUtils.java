@@ -15,15 +15,10 @@
  */
 package com.google.gwt.testing;
 
-import com.google.gwt.regexp.shared.MatchResult;
-import com.google.gwt.regexp.shared.RegExp;
-
 /**
  * Utility functions needed by various tests.
  */
 public class TestUtils {
-
-  private static final String VERSION_REGEXP = "1\\.([0-9]+)(\\..*)?";
 
   public static int getJdkVersion() {
     String versionString = System.getProperty("java.version", "none");
@@ -34,9 +29,13 @@ public class TestUtils {
     return getMajorVersion(versionString);
   }
 
+  public static boolean isJvm() {
+    return getJdkVersion() != -1;
+  }
+
   private static int getMajorVersion(String versionString) {
-    MatchResult matchResult = RegExp.compile(VERSION_REGEXP).exec(versionString);
-    assert matchResult.getGroup(0).equals(versionString);
-    return Integer.parseInt(matchResult.getGroup(1));
+    String[] split = versionString.split("\\.");
+    assert split.length >= 1;
+    return Integer.parseInt(split[1]);
   }
 }

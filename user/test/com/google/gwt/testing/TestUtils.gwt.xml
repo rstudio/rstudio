@@ -13,6 +13,5 @@
 <!-- limitations under the License.                                         -->
 
 <module>
-  <inherits name="com.google.gwt.regexp.RegExp"/>
   <source path='' />
 </module>

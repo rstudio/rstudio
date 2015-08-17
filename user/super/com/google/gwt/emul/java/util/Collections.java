@@ -18,6 +18,7 @@ package java.util;
 import static javaemul.internal.Coercions.ensureInt;
 import static javaemul.internal.InternalPreconditions.checkArgument;
 import static javaemul.internal.InternalPreconditions.checkElementIndex;
+import static javaemul.internal.InternalPreconditions.checkNotNull;
 
 import java.io.Serializable;
 
@@ -1186,6 +1187,7 @@ public class Collections {
    */
   @SuppressWarnings("unchecked")
   public static void rotate(List<?> lst, int dist) {
+    checkNotNull(lst);
     int size = lst.size();
 
     // Rotating an empty collection results in the same empty collection

@@ -15,8 +15,6 @@
  */
 package com.google.gwt.emultest.java.util;
 
-import com.google.gwt.core.client.JavaScriptException;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -290,7 +288,7 @@ public class CollectionsTest extends EmulTestBase {
     try {
       Collections.rotate(null, 0);
       fail("Collections.rotate(null, distance) should throw NullPointerException");
-    } catch (NullPointerException | JavaScriptException expected) {
+    } catch (NullPointerException expected) {
       // Expected
     }
     // Test optimized RandomAccess code path

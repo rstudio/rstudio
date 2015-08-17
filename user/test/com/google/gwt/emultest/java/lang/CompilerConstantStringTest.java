@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,7 +15,6 @@
  */
 package com.google.gwt.emultest.java.lang;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.testing.TestUtils;
 
@@ -24,10 +23,10 @@ import java.util.Locale;
 /**
  * This test verifies that the static evaluation performed by the compiler
  * on constant string expressions is correct.
- * 
+ *
  * TODO: this is just copied from the old StringTest before it was improved,
  *     but we need to go through and remove tests that do not actually
- *     test the compiler. 
+ *     test the compiler.
  */
 public class CompilerConstantStringTest extends GWTTestCase {
 
@@ -115,12 +114,12 @@ public class CompilerConstantStringTest extends GWTTestCase {
 
   /**
    * Tests hashing with strings.
-   * 
+   *
    * The specific strings used in this test used to trigger failures because we
    * use a JavaScript object as a hash map to cache the computed hash codes.
    * This conflicts with built-in properties defined on objects -- see issue
    * #631.
-   * 
+   *
    */
   public void testHashCode() {
     String[] testStrings = {
@@ -251,7 +250,7 @@ public class CompilerConstantStringTest extends GWTTestCase {
   public void testSplit_emptyExpr() {
     // TODO(rluble):  implement JDK8 string.split semantics and fix test.
     // See issue 8913.
-    String[] expected = (!GWT.isScript() && TestUtils.getJdkVersion() > 7) ?
+    String[] expected = (TestUtils.getJdkVersion() > 7) ?
         new String[] {"a", "b", "c", "x", "x", "d", "e", "x", "f", "x"} :
         new String[] {"", "a", "b", "c", "x", "x", "d", "e", "x", "f", "x"};
     compareList("emptyRegexSplit", expected, "abcxxdexfx".split(""));

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,7 +15,7 @@
  */
 package com.google.gwt.emultest.java.util;
 
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.testing.TestUtils;
 
 import org.apache.commons.collections.TestSet;
 
@@ -34,9 +34,9 @@ import java.util.TreeSet;
 
 /**
  * Tests <code>TreeSet</code>.
- * 
+ *
  * @param <E> The key type for the underlying TreeSet
- * 
+ *
  * TODO(jat): this whole structure needs work. Ideally we would port a new
  * Apache collections test to GWT, but that is not an insignificant amount of
  * work.
@@ -45,7 +45,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Verify a Set is explicitly and implicitly empty.
-   * 
+   *
    * @param set
    */
   private static <E> void _assertEmpty(Set<E> set) {
@@ -58,7 +58,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
    * Verify that two Collections are deeply equivalent. Some of the Sets that
    * need to be verified do not implement a sensible equals method
    * (TreeSet.values for example).
-   * 
+   *
    * @param expected
    * @param actual
    */
@@ -79,7 +79,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Verify that two SortedMaps are deeply equivalent.
-   * 
+   *
    * @param expected
    * @param actual
    */
@@ -127,7 +127,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.add(Object)'.
-   * 
+   *
    * @see java.util.Set#put(Object)
    */
   public void testAdd() {
@@ -143,7 +143,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.add(Object)'.
-   * 
+   *
    * @see java.util.Set#add(Object)
    */
   public void testAdd_entries3() {
@@ -169,7 +169,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.add(Object)'.
-   * 
+   *
    * @see java.util.Set#add(Object)
    */
   public void testAdd_replace() {
@@ -188,7 +188,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.add(Object)'.
-   * 
+   *
    * @see java.util.Set#add(Object)
    */
   @SuppressWarnings("unchecked")
@@ -201,7 +201,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
       try {
         Set untypedSet = set;
         untypedSet.add(getConflictingKey());
-        assertTrue("CCE expected in Development Mode", GWT.isScript());
+        assertTrue("CCE expected in Development Mode", !TestUtils.isJvm());
       } catch (ClassCastException e) {
         // expected outcome
       }
@@ -210,7 +210,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.add(Object)'.
-   * 
+   *
    * @see java.util.Set#add(Object)
    */
   @SuppressWarnings("unchecked")
@@ -231,7 +231,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.add(Object)'.
-   * 
+   *
    * @see java.util.Set#add(Object)
    */
   public void testAdd_throwsUnsupportedOperationException() {
@@ -248,7 +248,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.addAll(Map)'.
-   * 
+   *
    * @see java.util.Set#addAll(Map)
    */
   public void testAddAll() {
@@ -269,7 +269,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.addAll(Map)'.
-   * 
+   *
    * @see java.util.Set#addAll(Map)
    */
   public void testAddAll_addEntries() {
@@ -290,7 +290,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.addAll(Map)'.
-   * 
+   *
    * @see java.util.Set#addAll(Map)
    */
   public void testAddAll_emptyMap() {
@@ -310,7 +310,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.addAll(Map)'.
-   * 
+   *
    * @see java.util.Set#addAll(Map)
    */
   public void testAddAll_overwrite() {
@@ -331,7 +331,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.addAll(Map)'.
-   * 
+   *
    * @see java.util.Set#addAll(Map)
    */
   @SuppressWarnings("ModifyingCollectionWithItself")
@@ -350,7 +350,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.addAll(Map)'.
-   * 
+   *
    * @see java.util.Set#addAll(Map)
    */
   @SuppressWarnings("unchecked")
@@ -367,7 +367,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
         // This throws in dev mode because we're putting a second entry in
         // the set and TreeSet calls the compare method to order them.
         destSet.addAll(sourceSet);
-        assertTrue("CCE expected in Development Mode", GWT.isScript());
+        assertTrue("CCE expected in Development Mode", !TestUtils.isJvm());
       } catch (ClassCastException e) {
         // expected outcome
       }
@@ -376,7 +376,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.addAll(Map)'.
-   * 
+   *
    * @see java.util.Set#addAll(Map)
    */
   public void testAddAll_throwsNullPointerException() {
@@ -395,7 +395,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.addAll(Map)'.
-   * 
+   *
    * @see java.util.Set#addAll(Map)
    */
   public void testAddAll_throwsUnsupportedOperationException() {
@@ -427,7 +427,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.clear()'.
-   * 
+   *
    * @see java.util.Set#clear()
    */
   public void testClear() {
@@ -445,7 +445,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.clear()'.
-   * 
+   *
    * @see java.util.Set#clear()
    */
   public void testClear_throwsUnsupportedOperationException() {
@@ -462,7 +462,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.SortedSet.comparator()'.
-   * 
+   *
    * @see java.util.SortedSet#comparator()
    */
   public void testComparator() {
@@ -476,7 +476,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for default constructor.
-   * 
+   *
    * @see java.util.TreeSet#TreeSet()
    */
   public void testConstructor() {
@@ -486,7 +486,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.TreeSet.TreeSet(Comparator)'.
-   * 
+   *
    * @see java.util.TreeSet#TreeSet(Comparator)
    */
   public void testConstructor_comparator() {
@@ -501,7 +501,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.TreeSet.TreeSet(Set)'.
-   * 
+   *
    * @see java.util.TreeSet#TreeSet(Set)
    */
   public void testConstructor_Set() {
@@ -519,7 +519,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.TreeSet.TreeSet(Set)'.
-   * 
+   *
    * @see java.util.TreeSet#TreeSet(Set)
    */
   @SuppressWarnings("unchecked")
@@ -534,7 +534,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.TreeSet.TreeSet(Set)'.
-   * 
+   *
    * @see java.util.TreeSet#TreeSet(Set)
    */
   public void testConstructor_Set_throwsNullPointerException() {
@@ -548,7 +548,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.TreeSet.TreeSet(SortedSet).
-   * 
+   *
    * @see java.util.TreeSet#TreeSet(SortedSet)
    */
   public void testConstructor_SortedMap_throwsNullPointerException() {
@@ -562,7 +562,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.TreeSet.TreeSet(SortedSet)'.
-   * 
+   *
    * @see java.util.TreeSet#TreeSet(SortedSet)
    */
   public void testConstructor_SortedSet() {
@@ -580,7 +580,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.contains(Object)'. *
-   * 
+   *
    * @see java.util.Set#contains(Object)
    */
   public void testContains() {
@@ -594,7 +594,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.contains(Object)'.
-   * 
+   *
    * @see java.util.Set#contains(Object)
    */
   public void testContains_throwsClassCastException() {
@@ -602,7 +602,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
     set.add(getKeys()[0]);
     try {
       set.contains(getConflictingKey());
-      assertTrue("CCE expected in Development Mode", GWT.isScript());
+      assertTrue("CCE expected in Development Mode", !TestUtils.isJvm());
     } catch (ClassCastException e) {
       // expected outcome
     }
@@ -610,7 +610,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.contains(Object)'.
-   * 
+   *
    * @see java.util.Set#contains(Object)
    */
   public void testContains_throwsNullPointerException() {
@@ -674,7 +674,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Object.equals(Object)'.
-   * 
+   *
    * @see java.util.Set#equals(Object)
    */
   public void testEquals() {
@@ -691,7 +691,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.SortedSet.first()'.
-   * 
+   *
    * @see java.util.SortedSet#first()
    */
   public void testFirst() {
@@ -716,7 +716,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.SortedSet.first()'.
-   * 
+   *
    * @see java.util.SortedSet#first()
    */
   public void testFirstKey_throwsNoSuchElementException() {
@@ -749,7 +749,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.lang.Object.hashCode()'.
-   * 
+   *
    * @see java.util.Set#hashCode()
    */
   public void testHashCode() {
@@ -776,7 +776,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.SortedSet.headSet(Object, Object)'.
-   * 
+   *
    * @see java.util.SortedSet#headSet(Object)
    */
   @SuppressWarnings("unchecked")
@@ -789,7 +789,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
     } else {
       try {
         SortedSet.headSet(getConflictingKey());
-        assertTrue("CCE expected in Development Mode", GWT.isScript());
+        assertTrue("CCE expected in Development Mode", !TestUtils.isJvm());
       } catch (ClassCastException e) {
         // expected outcome
       }
@@ -799,7 +799,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
   /**
    * Test method for 'java.util.SortedSet.headSet(Object)' and
    * 'java.util.NavigableSet.headSet(Object, boolean)'.
-   * 
+   *
    * @see java.util.SortedSet#headSet(Object)
    * @see java.util.NavigableSet#headSet(Object, boolean)
    */
@@ -814,7 +814,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
   /**
    * Test method for 'java.util.SortedSet.headSet(Object)' and
    * 'java.util.NavigableSet.headSet(Object, boolean)'.
-   * 
+   *
    * @see java.util.SortedSet#headSet(Object)
    * @see java.util.NavigableSet#headSet(Object, boolean)
    */
@@ -829,7 +829,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
   /**
    * Test method for 'java.util.SortedSet.headSet(Object)' and
    * 'java.util.NavigableSet.headSet(Object, boolean)'.
-   * 
+   *
    * @see java.util.SortedSet#headSet(Object)
    * @see java.util.NavigableSet#headSet(Object, boolean)
    */
@@ -846,7 +846,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
   /**
    * Test method for 'java.util.SortedSet.headSet(Object)' and
    * 'java.util.NavigableSet.headSet(Object, boolean)'.
-   * 
+   *
    * @see java.util.SortedSet#headSet(Object)
    * @see java.util.NavigableSet#headSet(Object, boolean)
    */
@@ -889,9 +889,9 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.isEmpty()'. *
-   * 
+   *
    * @see java.util.Set#isEmpty()
-   * 
+   *
    */
   public void testIsEmpty() {
     Set<E> sourceSet = createSet();
@@ -910,7 +910,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.SortedSet.last()'.
-   * 
+   *
    * @see java.util.SortedSet#last()
    */
   public void testLastKey() {
@@ -936,7 +936,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.SortedSet.last()'.
-   * 
+   *
    * @see java.util.SortedSet#last()
    */
   public void testLastKey_throwsNoSuchElementException() {
@@ -1007,7 +1007,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.remove(Object)'.
-   * 
+   *
    * @see java.util.Set#remove(Object)
    */
   public void testRemove() {
@@ -1025,7 +1025,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.remove(Object)'.
-   * 
+   *
    * @see java.util.Set#remove(Object)
    */
   public void testRemove_throwsClassCastException() {
@@ -1036,7 +1036,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
       set.add(getKeys()[0]);
       try {
         set.remove(getConflictingKey());
-        assertTrue("CCE expected in Development Mode", GWT.isScript());
+        assertTrue("CCE expected in Development Mode", !TestUtils.isJvm());
       } catch (ClassCastException e) {
         // expected outcome
       }
@@ -1045,7 +1045,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.remove(Object)'.
-   * 
+   *
    * @see java.util.Set#remove(Object)
    */
   public void testRemove_throwsUnsupportedOperationException() {
@@ -1062,7 +1062,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.Set.size()'.
-   * 
+   *
    * @see java.util.Set#size()
    */
   public void testSize() {
@@ -1097,7 +1097,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.SortedSet.subSet(Object, Object)'.
-   * 
+   *
    * @see java.util.SortedSet#subSet(Object, Object)
    */
   @SuppressWarnings("unchecked")
@@ -1106,19 +1106,19 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
     SortedSet.add(getKeys()[0]);
     try {
       SortedSet.subSet(getConflictingKey(), getKeys()[0]);
-      assertTrue("CCE expected in Development Mode", GWT.isScript());
+      assertTrue("CCE expected in Development Mode", !TestUtils.isJvm());
     } catch (IllegalArgumentException e) {
       // since we can't ensure CCEs in Production Mode, we may get IAE
-      assertTrue("IllegalArgumentException in Development Mode", GWT.isScript());
+      assertTrue("IllegalArgumentException in Development Mode", !TestUtils.isJvm());
     } catch (ClassCastException e) {
       // expected outcome
     }
     try {
       SortedSet.subSet(getKeys()[0], getConflictingKey());
-      assertTrue("CCE expected in Development Mode", GWT.isScript());
+      assertTrue("CCE expected in Development Mode", !TestUtils.isJvm());
     } catch (IllegalArgumentException e) {
       // since we can't ensure CCEs in Production Mode, we may get IAE
-      assertTrue("IllegalArgumentException in Development Mode", GWT.isScript());
+      assertTrue("IllegalArgumentException in Development Mode", !TestUtils.isJvm());
     } catch (ClassCastException e) {
       // expected outcome
     }
@@ -1126,7 +1126,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.SortedSet.subSet(Object, Object)'.
-   * 
+   *
    * @see java.util.SortedSet#subSet(Object, Object)
    */
   public void testSubMap_throwsIllegalArgumentException() {
@@ -1143,7 +1143,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
   /**
    * Test method for 'java.util.SortedSet.subSet(Object, Object)' and
    * 'java.util.NavigableSet.subSet(Object, boolean, Object, boolean)'.
-   * 
+   *
    * @see java.util.SortedSet#subSet(Object, Object)
    * @see java.util.NavigableSet#subSet(Object, boolean, Object, boolean)
    */
@@ -1219,7 +1219,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
   /**
    * Test method for 'java.util.SortedSet.tailSet(Object)' and
    * '@see java.util.NavigableSet.tailSet(Object, boolean)'.
-   * 
+   *
    * @see java.util.SortedSet#tailSet(Object)
    * @see java.util.NavigableSet#tailSet(Object, boolean)
    */
@@ -1235,7 +1235,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
   /**
    * Test method for 'java.util.SortedSet.tailSet(Object)' and
    * '@see java.util.NavigableSet.tailSet(Object, boolean)'.
-   * 
+   *
    * @see java.util.SortedSet#tailSet(Object)
    * @see java.util.NavigableSet#tailSet(Object, boolean)
    */
@@ -1259,7 +1259,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
   /**
    * Test method for 'java.util.SortedSet.tailSet(Object)' and
    * '@see java.util.NavigableSet.tailSet(Object, boolean)'.
-   * 
+   *
    * @see java.util.SortedSet#tailSet(Object)
    * @see java.util.NavigableSet#tailSet(Object, boolean)
    */
@@ -1284,7 +1284,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
   /**
    * Test method for 'java.util.SortedSet.tailSet(Object)' and
    * '@see java.util.NavigableSet.tailSet(Object, boolean)'.
-   * 
+   *
    * @see java.util.SortedSet#tailSet(Object)
    * @see java.util.NavigableSet#tailSet(Object, boolean)
    */
@@ -1328,7 +1328,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.SortedSet.tailSet(Object, Object)'.
-   * 
+   *
    * @see java.util.SortedSet#tailSet(Object)
    */
   @SuppressWarnings("unchecked")
@@ -1341,7 +1341,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
     } else {
       try {
         SortedSet.tailSet(getConflictingKey());
-        assertTrue("CCE expected in Development Mode", GWT.isScript());
+        assertTrue("CCE expected in Development Mode", !TestUtils.isJvm());
       } catch (ClassCastException e) {
         // expected outcome
       }
@@ -1350,7 +1350,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
   /**
    * Test method for 'java.util.SortedSet.tailSet(Object, Object)'.
-   * 
+   *
    * @see java.util.SortedSet#tailSet(Object)
    */
   public void testTailSet_throwsIllegalArgumentException() {

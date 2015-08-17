@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,7 +15,6 @@
  */
 package com.google.gwt.emultest.java.util;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.testing.TestUtils;
 
 import org.apache.commons.collections.TestMap;
@@ -39,10 +38,10 @@ import java.util.TreeMap;
 
 /**
  * Tests <code>TreeMap</code>.
- * 
+ *
  * @param <K> The key type for the underlying TreeMap
  * @param <V> The value type for the underlying TreeMap
- * 
+ *
  * TODO(jat): this whole structure needs work. Ideally we would port a new
  * Apache collections test to GWT, but that is not an insignificant amount of
  * work.
@@ -64,7 +63,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Verify a Collection is explicitly and implicitly empty.
-   * 
+   *
    * @param collection
    */
   @SuppressWarnings("unchecked")
@@ -78,7 +77,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Verify a Map is explicitly and implicitly empty.
-   * 
+   *
    * @param map
    */
   private static <K, V> void _assertEmpty(Map<K, V> map) {
@@ -95,7 +94,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
    * Verify that two Collections are deeply equivalent. Some of the Sets that
    * need to be verified do not implement a sensible equals method
    * (TreeMap.values for example).
-   * 
+   *
    * @param expected
    * @param actual
    */
@@ -116,7 +115,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Verify that two Maps are deeply equivalent.
-   * 
+   *
    * @param expected
    * @param actual
    */
@@ -134,7 +133,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Verify that two SortedMaps are deeply equivalent.
-   * 
+   *
    * @param expected
    * @param actual
    */
@@ -257,7 +256,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.clear()'.
-   * 
+   *
    * @see java.util.Map#clear()
    */
   public void testClear() {
@@ -275,7 +274,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.clear()'.
-   * 
+   *
    * @see java.util.Map#clear()
    */
   public void testClear_throwsUnsupportedOperationException() {
@@ -313,7 +312,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.SortedMap.comparator()'.
-   * 
+   *
    * @see java.util.SortedMap#comparator()
    */
   public void testComparator() {
@@ -327,7 +326,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for default constructor.
-   * 
+   *
    * @see java.util.TreeMap#TreeMap()
    */
   public void testConstructor() {
@@ -337,7 +336,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.TreeMap.TreeMap(Comparator)'.
-   * 
+   *
    * @see java.util.TreeMap#TreeMap(Comparator)
    */
   public void testConstructor_comparator() {
@@ -352,7 +351,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.TreeMap.TreeMap(Map)'.
-   * 
+   *
    * @see java.util.TreeMap#TreeMap(Map)
    */
   public void testConstructor_Map() {
@@ -372,7 +371,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.TreeMap.TreeMap(Map)'.
-   * 
+   *
    * @see java.util.TreeMap#TreeMap(Map)
    */
   @SuppressWarnings("unchecked")
@@ -388,7 +387,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.TreeMap.TreeMap(Map)'.
-   * 
+   *
    * @see java.util.TreeMap#TreeMap(Map)
    */
   public void testConstructor_Map_throwsNullPointerException() {
@@ -402,7 +401,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.TreeMap.TreeMap(SortedMap)'.
-   * 
+   *
    * @see java.util.TreeMap#TreeMap(SortedMap)
    */
   public void testConstructor_SortedMap() {
@@ -431,7 +430,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.TreeMap.TreeMap(SortedMap).
-   * 
+   *
    * @see java.util.TreeMap#TreeMap(SortedMap)
    */
   public void testConstructor_SortedMap_throwsNullPointerException() {
@@ -445,7 +444,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.containsKey(Object)'. *
-   * 
+   *
    * @see java.util.Map#containsKey(Object)
    */
   public void testContainsKey() {
@@ -472,7 +471,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.containsKey(Object)'.
-   * 
+   *
    * @see java.util.Map#containsKey(Object)
    */
   public void testContainsKey_throwsClassCastException() {
@@ -491,7 +490,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.containsKey(Object)'.
-   * 
+   *
    * @see java.util.Map#containsKey(Object)
    */
   public void testContainsKey_throwsNullPointerException() {
@@ -508,7 +507,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.containsValue(Object)'.
-   * 
+   *
    * @see java.util.Map#containsValue(Object)
    */
   @SuppressWarnings("SuspiciousMethodCalls")
@@ -533,7 +532,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.containsValue(Object)'.
-   * 
+   *
    * @see java.util.Map#containsValue(Object)
    */
   public void testContainsValue_throwsClassCastException() {
@@ -557,7 +556,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.containsValue(Object)'.
-   * 
+   *
    * @see java.util.Map#containsValue(Object)
    */
   public void testContainsValue_throwsNullPointerException() {
@@ -648,7 +647,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     }
 
     // JDK < 7 does not handle null keys correctly.
-    if (useNullKey() && !GWT.isScript() && TestUtils.getJdkVersion() < 7) {
+    if (useNullKey() && TestUtils.isJvm() && TestUtils.getJdkVersion() < 7) {
       map.remove(null);
       keys.remove(null);
     }
@@ -715,7 +714,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.entrySet().remove(Object)'.
-   * 
+   *
    * @see java.util.Map#entrySet()
    */
   public void testEntrySet_add_throwsUnsupportedOperationException() {
@@ -815,7 +814,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.entrySet()'.
-   * 
+   *
    * @see java.util.Map#entrySet()
    */
   public void testEntrySet_entries() {
@@ -847,7 +846,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.entrySet()'.
-   * 
+   *
    * @see java.util.Map#entrySet()
    */
   public void testEntrySet_entries_view() {
@@ -888,7 +887,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.entrySet().remove(Object)'.
-   * 
+   *
    * @see java.util.Map#entrySet()
    */
   public void testEntrySet_remove() {
@@ -906,7 +905,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.entrySet().remove(Object)'.
-   * 
+   *
    * @see java.util.Map#entrySet()
    */
   public void testEntrySet_remove_equivalentEntry() {
@@ -929,7 +928,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Object.equals(Object)'.
-   * 
+   *
    * @see java.util.Map#equals(Object)
    */
   public void testEquals() {
@@ -976,7 +975,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.SortedMap.firstKey()'.
-   * 
+   *
    * @see java.util.SortedMap#firstKey()
    */
   public void testFirstKey() {
@@ -1008,7 +1007,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.SortedMap.firstKey()'.
-   * 
+   *
    * @see java.util.SortedMap#firstKey()
    */
   public void testFirstKey_throwsNoSuchElementException() {
@@ -1094,7 +1093,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.get(Object)'.
-   * 
+   *
    * @see java.util.Map#get(Object)
    */
   public void testGet() {
@@ -1125,7 +1124,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.get(Object)'.
-   * 
+   *
    * @see java.util.Map#get(Object)
    */
   public void testGet_throwsClassCastException() {
@@ -1144,7 +1143,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.get(Object)'.
-   * 
+   *
    * @see java.util.Map#get(Object)
    */
   public void testGet_throwsNullPointerException() {
@@ -1155,7 +1154,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     try {
       map.get(null);
       // JDK < 7 does not conform to the specification if the map is empty.
-      if (!GWT.isScript() && TestUtils.getJdkVersion() > 6) {
+      if (TestUtils.getJdkVersion() > 6) {
         assertTrue(useNullKey());
       }
     } catch (NullPointerException e) {
@@ -1174,7 +1173,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.lang.Object.hashCode()'.
-   * 
+   *
    * @see java.util.Map#hashCode()
    */
   public void testHashCode() {
@@ -1214,7 +1213,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
   /**
    * Test method for 'java.util.SortedMap.headMap(Object)' and
    * 'java.util.NavigableMap.headMap(Object, boolean)'.
-   * 
+   *
    * @see java.util.SortedMap#headMap(Object)
    * @see java.util.NavigableMap#headMap(Object, boolean)
    */
@@ -1389,7 +1388,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
   /**
    * Test method for 'java.util.SortedMap.headMap(Object)' and
    * 'java.util.NavigableMap.headMap(Object, boolean)'.
-   * 
+   *
    * @see java.util.SortedMap#headMap(Object)
    * @see java.util.NavigableMap#headMap(Object, boolean)
    */
@@ -1436,7 +1435,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
   /**
    * Test method for 'java.util.SortedMap.headMap(Object)' and
    * 'java.util.NavigableMap.headMap(Object, boolean)'.
-   * 
+   *
    * @see java.util.SortedMap#headMap(Object)
    * @see java.util.NavigableMap#headMap(Object, boolean)
    */
@@ -1473,7 +1472,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.SortedMap.headMap(Object, Object)'.
-   * 
+   *
    * @see java.util.SortedMap#headMap(Object)
    */
   @SuppressWarnings("unchecked")
@@ -1507,7 +1506,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.SortedMap.headMap(Object, Object)'.
-   * 
+   *
    * @see java.util.SortedMap#headMap(Object)
    */
   public void testHeadMap_throwsNullPointerException() {
@@ -1622,9 +1621,9 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.isEmpty()'.
-   * 
+   *
    * @see java.util.Map#isEmpty()
-   * 
+   *
    */
   public void testIsEmpty() {
     K[] keys = getKeys();
@@ -1645,7 +1644,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.keySet()'.
-   * 
+   *
    * @see java.util.Map#clear()
    */
   public void testKeySet() {
@@ -1666,7 +1665,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.keySet()'.
-   * 
+   *
    * @see java.util.Map#clear()
    */
   public void testKeySet_viewPut() {
@@ -1682,7 +1681,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.keySet()'.
-   * 
+   *
    * @see java.util.Map#clear()
    */
   public void testKeySet_viewRemove() {
@@ -1757,7 +1756,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.SortedMap.lastKey()'.
-   * 
+   *
    * @see java.util.SortedMap#lastKey()
    */
   public void testLastKey() {
@@ -1807,7 +1806,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.SortedMap.lastKey()'.
-   * 
+   *
    * @see java.util.SortedMap#lastKey()
    */
   public void testLastKey_throwsNoSuchElementException() {
@@ -2070,7 +2069,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.put(Object, Object)'.
-   * 
+   *
    * @see java.util.Map#put(Object, Object)
    */
   public void testPut() {
@@ -2096,7 +2095,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.put(Object, Object)'.
-   * 
+   *
    * @see java.util.Map#put(Object, Object)
    */
   public void testPut_entries3() {
@@ -2130,13 +2129,13 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
    * Test method for 'java.util.Map.put(Object, Object)'. This test shows some
    * bad behavior of the TreeMap class before JDK 7. A mapping with null key can
    * be put in but several methods are are unusable afterward.
-   * 
+   *
    * A SortedMap with natural ordering (no comparator) is supposed to throw a
    * null pointer exception if a null keys are "not supported". For a natural
    * ordered TreeMap before JDK 7, a null pointer exception is not thrown. But,
    * the map is left in a state where any other key based methods result in a
    * null pointer exception.
-   * 
+   *
    * @see java.util.Map#put(Object, Object)
    */
   public void testPut_nullKey() {
@@ -2167,7 +2166,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
       sortedMap.subMap(getLessThanMinimumKey(), getGreaterThanMaximumKey());
       sortedMap.headMap(getLessThanMinimumKey());
       sortedMap.tailMap(getLessThanMinimumKey());
-    } else if (!GWT.isScript() && TestUtils.getJdkVersion() > 6) {
+    } else if (TestUtils.getJdkVersion() > 6) {
       // nulls are rejected immediately and don't poison the map anymore
       try {
         assertNull(sortedMap.put(null, values[0]));
@@ -2257,7 +2256,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.put(Object, Object)'.
-   * 
+   *
    * @see java.util.Map#put(Object, Object)
    */
   public void testPut_replace() {
@@ -2277,7 +2276,8 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
   }
 
   public void testPut_ComparableKey() {
-    final boolean java6CompatibleSources = GWT.isScript() || TestUtils.getJdkVersion() < 7;
+    final boolean java6CompatibleSources =
+        !TestUtils.isJvm() || TestUtils.getJdkVersion() < 7;
     TreeMap<String, Object> map = new TreeMap<String, Object>();
     ConflictingKey conflictingKey = new ConflictingKey("conflictingKey");
     try {
@@ -2297,7 +2297,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.put(Object, Object)'.
-   * 
+   *
    * @see java.util.Map#put(Object, Object)
    */
   @SuppressWarnings("unchecked")
@@ -2320,7 +2320,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.put(Object, Object)'.
-   * 
+   *
    * @see java.util.Map#put(Object, Object)
    */
   @SuppressWarnings("unchecked")
@@ -2343,7 +2343,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.put(Object, Object)'.
-   * 
+   *
    * @see java.util.Map#put(Object, Object)
    */
   public void testPut_throwsNullPointerException() {
@@ -2357,7 +2357,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
       try {
         map.put(null, values[0]);
         // JDK < 7 does not conform to the specification if the map is empty.
-        if (!GWT.isScript() && TestUtils.getJdkVersion() > 6) {
+        if (TestUtils.getJdkVersion() > 6) {
           assertTrue(useNullKey());
         }
       } catch (NullPointerException e) {
@@ -2384,7 +2384,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.put(Object, Object)'.
-   * 
+   *
    * @see java.util.Map#put(Object, Object)
    */
   public void testPut_throwsUnsupportedOperationException() {
@@ -2403,7 +2403,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.putAll(Map)'.
-   * 
+   *
    * @see java.util.Map#putAll(Map)
    */
   public void testPutAll() {
@@ -2443,7 +2443,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.putAll(Map)'.
-   * 
+   *
    * @see java.util.Map#putAll(Map)
    */
   public void testPutAll_addEntries() {
@@ -2466,7 +2466,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.putAll(Map)'.
-   * 
+   *
    * @see java.util.Map#putAll(Map)
    */
   public void testPutAll_emptyMap() {
@@ -2488,7 +2488,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.putAll(Map)'.
-   * 
+   *
    * @see java.util.Map#putAll(Map)
    */
   public void testPutAll_overwrite() {
@@ -2511,7 +2511,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.putAll(Map)'.
-   * 
+   *
    * @see java.util.Map#putAll(Map)
    */
   public void testPutAll_self() {
@@ -2532,7 +2532,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.putAll(Map)'.
-   * 
+   *
    * @see java.util.Map#putAll(Map)
    */
   @SuppressWarnings("unchecked")
@@ -2559,7 +2559,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.putAll(Map)'.
-   * 
+   *
    * @see java.util.Map#putAll(Map)
    */
   public void testPutAll_throwsIllegalOperationException() {
@@ -2572,7 +2572,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.putAll(Map)'.
-   * 
+   *
    * @see java.util.Map#putAll(Map)
    */
   public void testPutAll_throwsNullPointerException() {
@@ -2591,7 +2591,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.putAll(Map)'.
-   * 
+   *
    * @see java.util.Map#putAll(Map)
    */
   public void testPutAll_throwsUnsupportedOperationException() {
@@ -2608,7 +2608,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.remove(Object)'.
-   * 
+   *
    * @see java.util.Map#remove(Object)
    */
   public void testRemove() {
@@ -2653,7 +2653,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.remove(Object)'.
-   * 
+   *
    * @see java.util.Map#remove(Object)
    */
   public void testRemove_throwsClassCastException() {
@@ -2676,7 +2676,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.remove(Object)'.
-   * 
+   *
    * @see java.util.Map#remove(Object)
    */
   @SuppressWarnings("unchecked")
@@ -2691,7 +2691,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
       try {
         map.remove(null);
         // JDK < 7 does not conform to the specification if the map is empty.
-        if (!GWT.isScript() && TestUtils.getJdkVersion() > 6) {
+        if (TestUtils.getJdkVersion() > 6) {
           assertTrue(useNullKey());
         }
       } catch (NullPointerException e) {
@@ -2711,7 +2711,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.remove(Object)'.
-   * 
+   *
    * @see java.util.Map#remove(Object)
    */
   public void testRemove_throwsUnsupportedOperationException() {
@@ -2729,7 +2729,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.size()'.
-   * 
+   *
    * @see java.util.Map#size()
    */
   public void testSize() {
@@ -2790,7 +2790,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
   /**
    * Test method for 'java.util.SortedMap.subMap(Object, Object)' and
    * 'java.util.NavigableMap.subMap(Object, boolean, Object, boolean)'.
-   * 
+   *
    * @see java.util.SortedMap#subMap(Object, Object)
    * @see java.util.NavigableMap#subMap(Object, boolean, Object, boolean)
    */
@@ -2977,7 +2977,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     }
 
     // JDK < 7 does not handle null keys correctly.
-    if (!GWT.isScript() && TestUtils.getJdkVersion() < 7) {
+    if (TestUtils.isJvm() && TestUtils.getJdkVersion() < 7) {
       return;
     }
 
@@ -3000,7 +3000,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.SortedMap.subMap(Object, Object)'.
-   * 
+   *
    * @see java.util.SortedMap#subMap(Object, Object)
    */
   @SuppressWarnings("unchecked")
@@ -3034,7 +3034,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.SortedMap.subMap(Object, Object)'.
-   * 
+   *
    * @see java.util.SortedMap#subMap(Object, Object)
    */
   public void testSubMap_throwsIllegalArgumentException() {
@@ -3050,7 +3050,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.SortedMap.subMap(Object, Object)'.
-   * 
+   *
    * @see java.util.SortedMap#subMap(Object, Object)
    */
   public void testSubMap_throwsNullPointerException() {
@@ -3110,7 +3110,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
   /**
    * Test method for 'java.util.SortedMap.tailMap(Object)' and
    * 'java.util.NavigableMap.tailMap(Object, boolean)'.
-   * 
+   *
    * @see java.util.SortedMap#tailMap(Object)
    * @see java.util.NavigableMap#tailMap(Object, boolean)
    */
@@ -3127,7 +3127,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
   /**
    * Test method for 'java.util.SortedMap.tailMap(Object)' and
    * 'java.util.NavigableMap.tailMap(Object, boolean)'.
-   * 
+   *
    * @see java.util.SortedMap#tailMap(Object)
    * @see java.util.NavigableMap#tailMap(Object, boolean)
    */
@@ -3152,7 +3152,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
   /**
    * Test method for 'java.util.SortedMap.tailMap(Object)' and
    * 'java.util.NavigableMap.tailMap(Object, boolean)'.
-   * 
+   *
    * @see java.util.SortedMap#tailMap(Object)
    * @see java.util.NavigableMap#tailMap(Object, boolean)
    */
@@ -3205,7 +3205,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.SortedMap.tailMap(Object, Object)'.
-   * 
+   *
    * @see java.util.SortedMap#tailMap(Object)
    */
   @SuppressWarnings("unchecked")
@@ -3239,7 +3239,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.SortedMap.tailMap(Object, Object)'.
-   * 
+   *
    * @see java.util.SortedMap#tailMap(Object)
    */
   public void testTailMap_throwsNullPointerException() {
@@ -3303,7 +3303,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.values()'.
-   * 
+   *
    * @see java.util.Map#values()
    */
   public void testValues() {
@@ -3367,7 +3367,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.values()'.
-   * 
+   *
    * @see java.util.Map#values()
    */
   public void testValues_nullKey() {
@@ -3390,7 +3390,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.values()'.
-   * 
+   *
    * @see java.util.Map#values()
    */
   public void testValues_viewPut() {
@@ -3412,7 +3412,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.values()'.
-   * 
+   *
    * @see java.util.Map#values()
    */
   public void testValues_viewRemove() {
@@ -3471,7 +3471,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   @Override
   protected void verifyMap() {
-    if (GWT.isScript()) {
+    if (!TestUtils.isJvm()) {
       // Verify red-black correctness in our implementation
       TreeMapViolator.callAssertCorrectness(map);
     }
