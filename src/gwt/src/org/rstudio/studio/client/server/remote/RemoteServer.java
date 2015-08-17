@@ -4241,6 +4241,12 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void getSnippets(ServerRequestCallback<JsArray<SnippetData>> callback)
+   {
+      sendRequest(RPC_SCOPE, GET_SNIPPETS, callback);
+   }
+   
+   @Override
    public void getProjectSharedUsers(
          ServerRequestCallback<JsArrayString> callback)
    {
@@ -4595,4 +4601,5 @@ public class RemoteServer implements Server
    private static final String GET_SET_METHOD_CALL = "get_set_method_call";
    private static final String GET_SET_REF_CLASS_CALL = "get_set_ref_class_call";
    private static final String TRANSFORM_SNIPPET = "transform_snippet";
+   private static final String GET_SNIPPETS = "get_snippets";
 }
