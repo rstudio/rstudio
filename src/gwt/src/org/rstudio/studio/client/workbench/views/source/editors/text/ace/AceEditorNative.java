@@ -419,11 +419,13 @@ public class AceEditorNative extends JavaScriptObject {
        
       var result = {};
       for (var key in marks) {
-         var mark = marks[key];
-         result[key] = {
-            row: mark.row,
-            column: mark.column
-         };
+         if (marks.hasOwnProperty(key)) {
+            var mark = marks[key];
+            result[key] = {
+               row: mark.row,
+               column: mark.column
+            };
+         }
       }
       
       return result;

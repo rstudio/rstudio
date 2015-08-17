@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -295,17 +297,23 @@ public class DocUpdateSentinel
       }
       
       // Update marks after document save
-      if (docDisplay_.isVimModeOn())
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
-         String oldMarksSpec = "";
-         if (hasProperty("marks"))
-            oldMarksSpec = getProperty("marks");
+         @Override
+         public void execute()
+         {
+            if (docDisplay_.isVimModeOn())
+            {
+               String oldMarksSpec = "";
+               if (hasProperty("marks"))
+                  oldMarksSpec = getProperty("marks");
 
-         String newMarksSpec = VimMarks.encode(docDisplay_.getMarks());
-         if (!oldMarksSpec.equals(newMarksSpec))
-            setProperty("marks", newMarksSpec);
-      }
-      
+               String newMarksSpec = VimMarks.encode(docDisplay_.getMarks());
+               if (!oldMarksSpec.equals(newMarksSpec))
+                  setProperty("marks", newMarksSpec);
+            }
+         }
+      });
       return didSave;
    }
 
