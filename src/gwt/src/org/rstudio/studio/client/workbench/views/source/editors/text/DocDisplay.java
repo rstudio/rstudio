@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
+import org.rstudio.core.client.js.JsMap;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
@@ -170,6 +171,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void unfold(AceFold fold);
    void unfold(int row);
    void unfold(Range range);
+   
+   JsMap<Position> getMarks();
+   void setMarks(JsMap<Position> marks);
    
    void toggleCommentLines();
    

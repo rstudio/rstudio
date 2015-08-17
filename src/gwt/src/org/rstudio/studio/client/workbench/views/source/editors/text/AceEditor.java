@@ -47,6 +47,7 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Match;
@@ -628,6 +629,14 @@ public class AceEditor implements DocDisplay,
 
    private void updateKeyboardHandlers()
    {
+      // save and restore Vim marks as they can be lost when refreshing
+      // the keyboard handlers. this is necessary as keyboard handlers are
+      // regenerated on each document save, and clearing the Vim handler will
+      // clear any local Vim state.
+      JsMap<Position> marks = JsMap.create().cast();
+      if (useVimMode_)
+         marks = widget_.getEditor().getMarks();
+      
       // create a keyboard previewer for our special hooks
       AceKeyboardPreviewer previewer = new AceKeyboardPreviewer(completionManager_);
 
@@ -641,6 +650,9 @@ public class AceEditor implements DocDisplay,
       
       // add the previewer
       widget_.getEditor().addKeyboardHandler(previewer.getKeyboardHandler());
+      
+      if (useVimMode_)
+         widget_.getEditor().setMarks(marks);
    }
 
    public String getCode()
@@ -1898,6 +1910,18 @@ public class AceEditor implements DocDisplay,
    public void toggleFold()
    {
       getSession().toggleFold();
+   }
+   
+   @Override
+   public JsMap<Position> getMarks()
+   {
+      return widget_.getEditor().getMarks();
+   }
+   
+   @Override
+   public void setMarks(JsMap<Position> marks)
+   {
+      widget_.getEditor().setMarks(marks);
    }
 
    @Override
