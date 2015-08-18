@@ -33,7 +33,7 @@ function makeDateRegex()
                  "July", "August", "September", "October", "November", "December"];
 
    var reString =
-          "((?:" + months.join("|") + ")\\s+\\d+(?:st|nd|rd|s|n|r)?(?:\\s*,(?:\\s*\\d+)?)?)";
+          "((?:" + months.join("|") + ")\\s+\\d+(?:st|nd|rd|s|n|r)?(?:\\s*(?:,)?(?:\\s*\\d+)?)?)";
 
    return new RegExp(reString);
 }
