@@ -20,10 +20,12 @@ import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.TextDecoration;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -48,6 +50,7 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
@@ -1053,9 +1056,9 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             if (hasConflict)
             {
                if (t1 == CommandBinding.TYPE_EDITOR_COMMAND && t1 != t2)
-                  addMaskedCommandStyles(i, cb2);
+                  addMaskedCommandStyles(i, j, cb2);
                else if (t1 == t2)
-                  addConflictCommandStyles(i, cb2);
+                  addConflictCommandStyles(i, j, cb2);
             }
          }
       }
@@ -1070,7 +1073,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       return builder.toString();
    }
    
-   private void addMaskedCommandStyles(int index, CommandBinding maskedBy)
+   private void addMaskedCommandStyles(int index, int maskedIndex, CommandBinding maskedBy)
    {
       Element shortcutCell =
             table_.getRowElement(index).getChild(1).cast();
@@ -1078,12 +1081,13 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       embedIcon(
             shortcutCell,
             ThemeResources.INSTANCE.syntaxInfo(),
-            "Masked by RStudio command: " + describeCommand(maskedBy));
+            "Masked by RStudio command: ",
+            maskedIndex);
       
       shortcutCell.addClassName(RES.dataGridStyle().maskedEditorCommandCell());
    }
    
-   private void addConflictCommandStyles(int index, CommandBinding conflictsWith)
+   private void addConflictCommandStyles(int index, int maskedIndex, CommandBinding conflictsWith)
    {
       Element shortcutCell =
             table_.getRowElement(index).getChild(1).cast();
@@ -1091,39 +1095,84 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       embedIcon(
             shortcutCell,
             ThemeResources.INSTANCE.syntaxWarning(),
-            "Conflicts with command: " + describeCommand(conflictsWith));
+            "Conflicts with command: ",
+            maskedIndex);
       
       shortcutCell.addClassName(RES.dataGridStyle().conflictRow());
    }
    
-   private void embedIcon(Element el, ImageResource res, String toolTipText)
+   private void embedIcon(Element el, ImageResource res, String toolTipText, int maskedIndex)
    {
       Image icon = new Image(res);
       icon.addStyleName(RES.dataGridStyle().icon());
       icon.setTitle(toolTipText);
+      icon.getElement().setAttribute("__rstudio_masked_index", String.valueOf(maskedIndex));
       bindNativeClickToShowToolTip(icon.getElement(), toolTipText);
       el.appendChild(icon.getElement());
    }
    
-   private static native final void bindNativeClickToShowToolTip(Element icon, String text)
+   private native final void bindNativeClickToShowToolTip(Element icon, String text)
    /*-{
+      var self = this;
       icon.addEventListener("click", $entry(function(evt) {
          
          // Prevent click from reaching shortcut cell
          evt.stopPropagation();
          evt.preventDefault();
          
-         @org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget::showToolTip(Ljava/lang/Object;Ljava/lang/String;)(icon, text);
+         self.@org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget::showToolTip(Ljava/lang/Object;Ljava/lang/String;)(icon, text);
       }));
    }-*/;
    
-   private static void showToolTip(Object object, String text)
+   private native final void bindNativeClickToSelectRow(Element el, Element parent, int index) /*-{
+      var self = this;
+      el.addEventListener("click", $entry(function(evt) {
+         
+         evt.stopPropagation();
+         evt.preventDefault();
+         
+         parent.parentNode.removeChild(parent);
+         
+         self.@org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget::selectRow(I)(index);
+      }));
+   }-*/;
+   
+   private void selectRow(int index)
+   {
+      table_.setKeyboardSelectedRow(index);
+      table_.setKeyboardSelectedColumn(0);
+   }
+   
+   private void showToolTip(Object object, String text)
    {
       assert object instanceof Element;
       Element el = (Element) object;
       
+      int index = StringUtil.parseInt(el.getAttribute("__rstudio_masked_index"), -1);
+      CommandBinding conflictBinding = dataProvider_.getList().get(index);
+      
+      FlowPanel panel = new FlowPanel();
+      panel.add(new Label(text));
+      
+      String conflictDescription = describeCommand(conflictBinding);
+      
+      // We use an anchor element here just to get browser default styling for
+      // anchor links; we take over the click behaviour to ensure that the normal
+      // 'href' navigation doesn't actually occur.
+      FlowPanel conflictLabel = new FlowPanel(AnchorElement.TAG);
+      conflictLabel.getElement().setAttribute("href", "#");
+      conflictLabel.getElement().setInnerHTML(conflictDescription);
+      
+      panel.add(conflictLabel);
+      
       MiniPopupPanel tooltip = new MiniPopupPanel(true);
-      tooltip.add(new Label(text));
+      
+      bindNativeClickToSelectRow(
+            conflictLabel.getElement(),
+            tooltip.getElement(),
+            index);
+      
+      tooltip.add(panel);
       tooltip.show();
       PopupPositioner.setPopupPosition(
             tooltip,
