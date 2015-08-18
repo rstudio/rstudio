@@ -4263,6 +4263,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "set_shared_users", params, callback);
    }
 
+   @Override
+   public void getAllServerUsers(ServerRequestCallback<JsArrayString> callback)
+   {
+      sendRequest(RPC_SCOPE, "get_all_users", callback);
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
