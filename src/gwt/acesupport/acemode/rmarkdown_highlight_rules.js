@@ -27,6 +27,17 @@ var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightR
 var YamlHighlightRules = require("ace/mode/yaml_highlight_rules").YamlHighlightRules;
 var Utils = require("mode/utils");
 
+function makeDateRegex()
+{
+   var months = ["January", "February", "March", "April", "May", "June",
+                 "July", "August", "September", "October", "November", "December"];
+
+   var reString =
+          "((?:" + months.join("|") + ")\\s+\\d+(?:st|nd|rd|s|n|r)?(?:\\s*,(?:\\s*\\d+)?)?)";
+
+   return new RegExp(reString);
+}
+
 var RMarkdownHighlightRules = function() {
 
    // Base rule set (markdown)
@@ -74,6 +85,11 @@ var RMarkdownHighlightRules = function() {
       "---",
       "(?:---|\\.\\.\\.)"
    );
+
+   this.$rules["yaml-start"].unshift({
+      token: ["string"],
+      regex: makeDateRegex()
+   });
 
 };
 oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
