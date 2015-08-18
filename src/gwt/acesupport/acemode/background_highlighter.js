@@ -16,7 +16,7 @@ define("mode/background_highlighter", function(require, exports, module)
 {
    var Range = require("ace/range").Range;
    var markerClass = "ace_foreign_line background_highlight";
-   var markerType = "screenLine";
+   var markerType = "fullLine";
 
    var debuglog = function(/*...*/)
    {
@@ -25,18 +25,17 @@ define("mode/background_highlighter", function(require, exports, module)
    };
 
    var BackgroundHighlighter = function(session,
-                                              reChunkStart,
-                                              reChunkEnd)
+                                        reChunkStart,
+                                        reChunkEnd)
    {
       this.$session = session;
       this.$doc = session.getDocument();
       this.$reChunkStart = reChunkStart;
       this.$reChunkEnd = reChunkEnd;
 
-      var that = this;
-
       // Listen for document change events from Ace.
-      var onDocChange = function(evt) {
+      var onDocChange = function(evt)
+      {
          this.$onDocChange(evt);
       }.bind(this);
       this.$doc.on('change', onDocChange);
@@ -45,7 +44,8 @@ define("mode/background_highlighter", function(require, exports, module)
       // highlighter will get attached. In that case, we need
       // to detach this (now the old) highlighter.
       var $attached = false;
-      var onChangeMode = function(data, session) {
+      var onChangeMode = function()
+      {
          if ($attached)
          {
             this.$clearMarkers();
@@ -59,7 +59,7 @@ define("mode/background_highlighter", function(require, exports, module)
       // Initialize other state in the highlighter.
       this.$rowState = new Array(this.$doc.getLength());
       this.$markers = [];
-      
+
       // The Sweave background highlighter is destroyed and recreated with the
       // document mode. Look through the markers and see if any were created by
       // a previous instance of this highlighter; if so, take ownership of them
@@ -74,11 +74,7 @@ define("mode/background_highlighter", function(require, exports, module)
     	  }
       }
 
-      // Update the internal state...
-      this.update(0);
-
-      // ... and synchronize with Ace.
-      this.$syncMarkers(0);
+      this.$synchronize(0);
    };
 
    (function() {
@@ -99,7 +95,13 @@ define("mode/background_highlighter", function(require, exports, module)
       var STATE_CHUNK_BODY  = 3;
       var STATE_CHUNK_END   = 4;
 
-      this.update = function(fromRow)
+      this.$synchronize = function(fromRow)
+      {
+         this.$update(fromRow);
+         this.$syncMarkers(fromRow);
+      };
+
+      this.$update = function(fromRow)
       {
          // If this row has no state, then we need to look back until
          // we find a row with cached state.
@@ -121,7 +123,8 @@ define("mode/background_highlighter", function(require, exports, module)
          }
       };
 
-      this.$getState = function(row) {
+      this.$getState = function(row)
+      {
 
          var line = this.$doc.getLine(row);
          var prevRowState = this.$rowState[row - 1] || STATE_TEXT;
@@ -157,19 +160,20 @@ define("mode/background_highlighter", function(require, exports, module)
 
       this.$removeRows = function(index, count)
       {
-         var markers = this.$rowState.splice(index, count);
+         this.$rowState.splice(index, count);
       };
 
       // Marker-related methods ----
 
-      this.$clearMarkers = function() {
+      this.$clearMarkers = function()
+      {
          for (var i = 0; i < this.$markers.length; i++)
             this.$session.removeMarker(this.$markers[i]);
          this.$markers = [];
       };
 
-      this.$syncMarkers = function(startRow) {
-
+      this.$syncMarkers = function(startRow)
+      {
          var endRow = this.$doc.getLength() - 1;
          for (var row = startRow; row <= endRow; row++) {
 
@@ -189,12 +193,12 @@ define("mode/background_highlighter", function(require, exports, module)
                   markerClass + " rstudio_chunk_start" :
                   markerClass;
 
-               this.$markers[row] =
-                  this.$session.addMarker(
-                        new Range(row, 0, row + 1, 0),
-                        clazz,
-                        markerType,
-                        false);
+               this.$markers[row] = this.$session.addMarker(
+                  new Range(row, 0, row, Infinity),
+                  clazz,
+                  markerType,
+                  false
+               );
             }
 
          }
@@ -239,11 +243,7 @@ define("mode/background_highlighter", function(require, exports, module)
             this.$removeRows(range.end.row, 1);
          }
 
-         // Synchronize.
-         // debuglog(this.$rowState);
-         var startRow = range.start.row;
-         this.update(startRow);
-         this.$syncMarkers(startRow);
+         this.$synchronize(range.start.row);
       };
 
    }).call(BackgroundHighlighter.prototype);
