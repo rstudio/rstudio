@@ -830,6 +830,10 @@ public class Source implements InsertSourceHandler,
    
    public void onShowContent(ShowContentEvent event)
    {
+      // ignore if we're a satellite
+      if (!SourceWindowManager.isMainSourceWindow())
+         return;
+      
       ensureVisible(true);
       ContentItem content = event.getContent();
       server_.newDocument(
