@@ -267,7 +267,40 @@ void addRcppExportedSymbols(const FilePath& filePath,
                             const std::string& documentId,
                             std::set<std::string>* pSymbols)
 {
-   // TODO
+   if (!(filePath.hasExtensionLowerCase(".cpp") || filePath.hasExtensionLowerCase(".cc")))
+      return;
+   
+   static boost::regex reRcppExport("^\\s*//\\s*\\[\\[\\s*Rcpp::export\\s*\\]\\]\\s*$");
+   
+   std::vector<std::string> contents;
+   Error error = readStringVectorFromFile(filePath, &contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   
+   std::size_t n = contents.size();
+   
+   for (std::size_t i = 0; i < n - 1; ++i)
+   {
+      const std::string& line = contents[i];
+      if (boost::regex_match(line, reRcppExport))
+      {
+         const std::string& next = contents[i + 1];
+         std::size_t leftParenIndex = next.find('(');
+         if (leftParenIndex == std::string::npos)
+            continue;
+         
+         std::string start = string_utils::substring(next, 0, leftParenIndex);
+         std::size_t lastSpace = start.find_last_of(" \t");
+         if (lastSpace == std::string::npos)
+            continue;
+         
+         std::string fnName = string_utils::substring(start, lastSpace + 1);
+         pSymbols->insert(fnName);
+      }
+   }
 }
 
 // For an R package, symbols are looked up in this order:
@@ -320,6 +353,9 @@ Error getAvailableSymbolsForProject(const FilePath& filePath,
    Error error = r::exec::RFunction(".rs.availableRSymbols").call(pSymbols);
    if (error)
       return error;
+   
+   // Add in symbols that would be made available by `// [[Rcpp::export]]`
+   addRcppExportedSymbols(filePath, documentId, pSymbols);
    
    // Get all of the symbols made available by `library()` calls
    // within this document.

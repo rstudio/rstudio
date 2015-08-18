@@ -21,6 +21,7 @@
 #include <algorithm>
 
 #include <boost/type_traits.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <core/type_traits/TypeTraits.hpp>
 
@@ -194,6 +195,13 @@ void append(ContainerType* pContainer, const ContainerType& other)
             pContainer->end(),
             other.begin(),
             other.end());
+}
+
+inline std::vector<std::string> split(const std::string& string, const std::string& delim)
+{
+   std::vector<std::string> result;
+   boost::algorithm::split(result, string, boost::is_any_of(delim));
+   return result;
 }
 
 } // namespace algorithm

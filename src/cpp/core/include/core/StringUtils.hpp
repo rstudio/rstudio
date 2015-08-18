@@ -222,6 +222,13 @@ bool isPrefixOf(const std::string& self, const std::string& prefix);
 
 template <typename StringType>
 inline StringType substring(const StringType& string,
+                            std::size_t startPos)
+{
+   return string.substr(startPos);
+}
+
+template <typename StringType>
+inline StringType substring(const StringType& string,
                             std::size_t startPos,
                             std::size_t endPos)
 {
