@@ -20,12 +20,9 @@ import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.TextDecoration;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -45,12 +42,12 @@ import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
@@ -728,7 +725,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    private Element shortcutInput()
    {
-      Element el = new FlowPanel(InputElement.TAG).getElement();
+      Element el = DOM.createInputText();
       el.addClassName(RES.dataGridStyle().shortcutInput());
       return el;
    }
@@ -1151,28 +1148,29 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       int index = StringUtil.parseInt(el.getAttribute("__rstudio_masked_index"), -1);
       CommandBinding conflictBinding = dataProvider_.getList().get(index);
       
-      FlowPanel panel = new FlowPanel();
-      panel.add(new Label(text));
+      Element divEl = DOM.createDiv();
+      Element spanEl = DOM.createSpan();
+      spanEl.setInnerHTML(text);
+      divEl.appendChild(spanEl);
       
       String conflictDescription = describeCommand(conflictBinding);
       
       // We use an anchor element here just to get browser default styling for
       // anchor links; we take over the click behaviour to ensure that the normal
       // 'href' navigation doesn't actually occur.
-      FlowPanel conflictLabel = new FlowPanel(AnchorElement.TAG);
-      conflictLabel.getElement().setAttribute("href", "#");
-      conflictLabel.getElement().setInnerHTML(conflictDescription);
-      
-      panel.add(conflictLabel);
+      Element conflictEl = DOM.createAnchor();
+      conflictEl.setAttribute("href", "#");
+      conflictEl.setInnerHTML(conflictDescription);
+      divEl.appendChild(conflictEl);
       
       MiniPopupPanel tooltip = new MiniPopupPanel(true);
       
       bindNativeClickToSelectRow(
-            conflictLabel.getElement(),
+            conflictEl,
             tooltip.getElement(),
             index);
       
-      tooltip.add(panel);
+      tooltip.getElement().appendChild(divEl);
       tooltip.show();
       PopupPositioner.setPopupPosition(
             tooltip,
