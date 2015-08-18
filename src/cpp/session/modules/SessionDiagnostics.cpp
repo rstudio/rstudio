@@ -272,14 +272,12 @@ void addRcppExportedSymbols(const FilePath& filePath,
    
    static boost::regex reRcppExport("^\\s*//\\s*\\[\\[\\s*Rcpp::export\\s*\\]\\]\\s*$");
    
-   std::vector<std::string> contents;
-   Error error = readStringVectorFromFile(filePath, &contents);
+   boost::shared_ptr<source_database::SourceDocument> pDoc(new source_database::SourceDocument());
+   Error error = source_database::get(documentId, pDoc);
    if (error)
-   {
-      LOG_ERROR(error);
       return;
-   }
    
+   std::vector<std::string> contents = core::algorithm::split(pDoc->contents(), "\n");
    std::size_t n = contents.size();
    
    for (std::size_t i = 0; i < n - 1; ++i)
