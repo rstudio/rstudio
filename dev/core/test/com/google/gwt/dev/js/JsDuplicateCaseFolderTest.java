@@ -84,12 +84,12 @@ public class JsDuplicateCaseFolderTest extends OptimizerTestBase {
 
   private void check(String expected, String input) throws Exception {
     // Pass the expected code through the parser to normalize it
-    expected = super.optimize(expected, new Class[0]);
+    expected = super.optimizeToSource(expected, new Class[0]);
     String output = optimize(input);
     assertEquals(expected, output);
   }
 
   private String optimize(String js) throws Exception {
-    return optimize(js, JsDuplicateCaseFolder.class);
+    return optimizeToSource(js, JsDuplicateCaseFolder.class);
   }
 }

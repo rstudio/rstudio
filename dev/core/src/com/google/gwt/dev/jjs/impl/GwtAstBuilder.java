@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.CompilerContext;
+import com.google.gwt.dev.common.InliningMode;
 import com.google.gwt.dev.javac.JSORestrictionsChecker;
 import com.google.gwt.dev.javac.JdtUtil;
 import com.google.gwt.dev.javac.JsInteropUtil;
@@ -233,6 +234,9 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import javaemul.internal.annotations.DoNotInline;
+import javaemul.internal.annotations.ForceInline;
 
 /**
  * Constructs a GWT Java AST from a single isolated compilation unit. The AST is
@@ -2811,7 +2815,7 @@ public class GwtAstBuilder {
       JNewArray valuesArrayCopy = JNewArray.createInitializers(info, enumArrayType, initializers);
       if (type.getEnumList().size() > MAX_INLINEABLE_ENUM_SIZE) {
         // Only inline values() if it is small.
-        method.setInliningAllowed(false);
+        method.setInliningMode(InliningMode.DO_NOT_INLINE);
       }
       JjsUtils.replaceMethodBody(method, valuesArrayCopy);
     }
@@ -4088,17 +4092,19 @@ public class GwtAstBuilder {
   private void processAnnotations(AbstractMethodDeclaration x,
       JMethod method) {
     maybeAddMethodSpecialization(x, method);
-    maybeSetDoNotInline(x, method);
+    maybeSetInliningMode(x, method);
     maybeSetHasNoSideEffects(x, method);
     if (isJsInteropEnabled) {
       JsInteropUtil.maybeSetJsInteropProperties(method, x.annotations);
     }
   }
 
-  private void maybeSetDoNotInline(AbstractMethodDeclaration x,
+  private void maybeSetInliningMode(AbstractMethodDeclaration x,
       JMethod method) {
-    if (JdtUtil.getAnnotation(x.binding, "javaemul.internal.annotations.DoNotInline") != null) {
-      method.setInliningAllowed(false);
+    if (JdtUtil.getAnnotation(x.binding, DoNotInline.class.getCanonicalName()) != null) {
+      method.setInliningMode(InliningMode.DO_NOT_INLINE);
+    } else if (JdtUtil.getAnnotation(x.binding, ForceInline.class.getCanonicalName()) != null) {
+      method.setInliningMode(InliningMode.FORCE_INLINE);
     }
   }
 

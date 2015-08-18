@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.MinimalRebuildCache;
+import com.google.gwt.dev.common.InliningMode;
 import com.google.gwt.dev.jjs.Correlation.Literal;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -291,30 +292,11 @@ public class JProgram extends JNode implements ArrayTypeCreator {
   private FragmentPartitioningResult fragmentPartitioningResult;
 
   /**
-   * Set of method that are pinned and should be skipped by optimizations such as
-   * inlining, statification and prunned.
-   */
-  private Set<JMethod> pinnedMethods = Sets.newHashSet();
-
-  /**
-   * Returns true if the inliner should try to inline {@code method}.
-   */
-  public boolean isInliningAllowed(JMethod method) {
-    return !pinnedMethods.contains(method) && method.isInliningAllowed();
-  }
-
-  /**
-   * Returns true if {@link MakeCallsStatic} should try to statify {@code method}.
-   */
-  public boolean isDevitualizationAllowed(JMethod method) {
-    return !pinnedMethods.contains(method);
-  }
-
-  /**
    * Add a pinned method.
    */
   public void addPinnedMethod(JMethod method) {
-    pinnedMethods.add(method);
+    method.setInliningMode(InliningMode.DO_NOT_INLINE);
+    method.disallowDevirtualization();
   }
 
   public JProgram(MinimalRebuildCache minimalRebuildCache) {

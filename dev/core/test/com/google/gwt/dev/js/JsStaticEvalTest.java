@@ -171,6 +171,6 @@ public class JsStaticEvalTest extends OptimizerTestBase {
   }
 
   private String optimize(String js) throws Exception {
-    return optimize(js, JsStaticEval.class);
+    return optimizeToSource(js, JsStaticEval.class);
   }
 }

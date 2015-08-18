@@ -136,7 +136,7 @@ public class MethodInliner {
         return InlineResult.BLACKLIST;
       }
 
-      if (!program.isInliningAllowed(method)) {
+      if (!method.isInliningAllowed()) {
         return InlineResult.BLACKLIST;
       }
 

@@ -17,6 +17,8 @@ package com.google.gwt.lang;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
+import javaemul.internal.annotations.ForceInline;
+
 /**
  * Utility class for defining class prototyes to setup an equivalent to the Java class hierarchy in
  * JavaScript.
@@ -209,6 +211,7 @@ public class JavaClassHierarchySetupUtil {
   static native void emptyMethod() /*-{
   }-*/;
 
+  @ForceInline
   static native JavaScriptObject uniqueId(String id) /*-{
     return jsinterop.closure.getUniqueId(id);
   }-*/;

@@ -207,7 +207,7 @@ public class JsDuplicateFunctionRemoverTest extends OptimizerTestBase {
   }
 
   private String optimize(String js) throws Exception {
-    return optimize(js, JsSymbolResolver.class,
+    return optimizeToSource(js, JsSymbolResolver.class,
         JsDuplicateFunctionRemoverProxy.class);
   }
 

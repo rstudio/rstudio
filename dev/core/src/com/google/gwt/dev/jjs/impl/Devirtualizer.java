@@ -267,7 +267,7 @@ public class Devirtualizer {
     JMethod devirtualMethod = new JMethod(sourceInfo, prefix + "__devirtual$",
         inClass, method.getType(), false, true, true, AccessModifier.PUBLIC);
     // TODO(rluble): DoNotInline should be carried over if 'any' of the targets is marked so.
-    devirtualMethod.setInliningAllowed(method.isInliningAllowed());
+    devirtualMethod.setInliningMode(method.getInliningMode());
     devirtualMethod.setBody(new JMethodBody(sourceInfo));
     devirtualMethod.setSynthetic();
     inClass.addMethod(devirtualMethod);

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.dev.common.InliningMode;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -776,7 +777,7 @@ public class JsInliner {
         return;
       }
 
-      if (!program.isInliningAllowed(invokedFunction) || blacklist.contains(invokedFunction)) {
+      if (!invokedFunction.isInliningAllowed() || blacklist.contains(invokedFunction)) {
         return;
       }
 
@@ -1056,7 +1057,8 @@ public class JsInliner {
       int originalComplexity = complexity(x);
       int inlinedComplexity = complexity(op);
       double ratio = ((double) inlinedComplexity) / originalComplexity;
-      if (ratio > MAX_COMPLEXITY_INCREASE
+      if (invokedFunction.getInliningMode() != InliningMode.FORCE_INLINE
+          && ratio > MAX_COMPLEXITY_INCREASE
           && isInvokedMoreThanOnce(invokedFunction)) {
         return x;
       }

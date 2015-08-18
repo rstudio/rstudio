@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.common.InliningMode;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
@@ -45,7 +46,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
    * patterns, then it will marked as {@code UNDEFINED} to be later signaled as error in
    * {@link com.google.gwt.dev.jjs.impl.JsInteropRestrictionChecker}.
    */
-  public static enum JsPropertyAccessorType {
+  public enum JsPropertyAccessorType {
     GETTER, SETTER, UNDEFINED;
   }
 
@@ -61,7 +62,8 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
   private String exportNamespace;
   private JsPropertyAccessorType jsPropertyType;
   private Specialization specialization;
-  private boolean inliningAllowed = true;
+  private InliningMode inliningMode = InliningMode.NORMAL;
+  private boolean preventDevirtualization = false;
   private boolean hasSideEffects = true;
   private boolean defaultMethod = false;
 
@@ -211,11 +213,15 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
   }
 
   public boolean isInliningAllowed() {
-    return inliningAllowed;
+    return inliningMode != InliningMode.DO_NOT_INLINE;
   }
 
-  public void setInliningAllowed(boolean inliningAllowed) {
-    this.inliningAllowed = inliningAllowed;
+  public InliningMode getInliningMode() {
+    return inliningMode;
+  }
+
+  public void setInliningMode(InliningMode inliningMode) {
+    this.inliningMode = inliningMode;
   }
 
   public boolean hasSideEffects() {
@@ -232,6 +238,14 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
 
   public boolean isDefaultMethod() {
     return defaultMethod;
+  }
+
+  public boolean isDevirtualizationAllowed() {
+    return !preventDevirtualization;
+  }
+
+  public void disallowDevirtualization() {
+    this.preventDevirtualization = true;
   }
 
   /**

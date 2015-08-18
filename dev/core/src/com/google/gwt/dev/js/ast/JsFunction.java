@@ -13,6 +13,7 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.common.InliningMode;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 
@@ -32,6 +33,7 @@ public final class JsFunction extends JsLiteral implements HasName {
   private boolean fromJava;
   private JsFunction impliedExecute;
   private JsName name;
+  private InliningMode inliningMode = InliningMode.NORMAL;
 
   /**
    * Creates an anonymous function.
@@ -93,6 +95,10 @@ public final class JsFunction extends JsLiteral implements HasName {
     return impliedExecute;
   }
 
+  public InliningMode getInliningMode() {
+    return inliningMode;
+  }
+
   @Override
   public NodeKind getKind() {
     return NodeKind.FUNCTION;
@@ -145,6 +151,10 @@ public final class JsFunction extends JsLiteral implements HasName {
     return fromJava;
   }
 
+  public boolean isInliningAllowed() {
+    return inliningMode != InliningMode.DO_NOT_INLINE;
+  }
+
   public void setArtificiallyRescued(boolean rescued) {
     this.artificiallyRescued = rescued;
   }
@@ -163,6 +173,10 @@ public final class JsFunction extends JsLiteral implements HasName {
 
   public void setImpliedExecute(JsFunction impliedExecute) {
     this.impliedExecute = impliedExecute;
+  }
+
+  public void setInliningMode(InliningMode inliningMode) {
+    this.inliningMode = inliningMode;
   }
 
   public void setName(JsName name) {

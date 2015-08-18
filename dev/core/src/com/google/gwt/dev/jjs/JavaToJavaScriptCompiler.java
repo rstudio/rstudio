@@ -133,6 +133,7 @@ import com.google.gwt.dev.js.FreshNameGenerator;
 import com.google.gwt.dev.js.JsBreakUpLargeVarStatements;
 import com.google.gwt.dev.js.JsDuplicateCaseFolder;
 import com.google.gwt.dev.js.JsDuplicateFunctionRemover;
+import com.google.gwt.dev.js.JsForceInliningChecker;
 import com.google.gwt.dev.js.JsIncrementalNamer;
 import com.google.gwt.dev.js.JsInliner;
 import com.google.gwt.dev.js.JsLiteralInterner;
@@ -392,6 +393,9 @@ public final class JavaToJavaScriptCompiler {
       // (7) Optimize the JS AST.
       final Set<JsNode> inlinableJsFunctions = jjsMapAndInlineableFunctions.getRight();
       optimizeJs(inlinableJsFunctions);
+      if (options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
+        JsForceInliningChecker.check(logger, jjsmap, jsProgram);
+      }
 
       // TODO(stalcup): move to normalization
       // Must run before code splitter and namer.
@@ -497,7 +501,8 @@ public final class JavaToJavaScriptCompiler {
     }
   }
 
-  private void optimizeJs(Set<JsNode> inlinableJsFunctions) throws InterruptedException {
+  private void optimizeJs(Set<JsNode> inlinableJsFunctions)
+      throws InterruptedException, UnableToCompleteException {
     if (shouldOptimize()) {
       optimizeJsLoop(inlinableJsFunctions);
       JsDuplicateCaseFolder.exec(jsProgram);
@@ -994,7 +999,8 @@ public final class JavaToJavaScriptCompiler {
     return new BufferedInputStream(new GZIPInputStream(artifact.getContents(TreeLogger.NULL)));
   }
 
-  private void optimizeJsLoop(Collection<JsNode> toInline) throws InterruptedException {
+  private void optimizeJsLoop(Collection<JsNode> toInline)
+      throws InterruptedException, UnableToCompleteException {
     int optimizationLevel = options.getOptimizationLevel();
     List<OptimizerStats> allOptimizerStats = Lists.newArrayList();
     int counter = 0;

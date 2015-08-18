@@ -15,6 +15,10 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.common.InliningMode;
+import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.OptimizerStats;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsFunction;
@@ -23,6 +27,7 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsVisitor;
+import com.google.gwt.dev.util.UnitTestTreeLogger;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
@@ -120,7 +125,6 @@ public class JsInlinerTest extends OptimizerTestBase {
     // Always make more than one call, because there are special heuristics for functions that
     // are called only once.
 
-    // Inline a devirtualized getter
     input = Joiner.on('\n').join(
         "function a(o) { $wnd.blah(o); }",
         "function f(t,u,b,d) {var a = t;  return a.u;}",
@@ -131,6 +135,40 @@ public class JsInlinerTest extends OptimizerTestBase {
         "e({})");
     verifyOptimizedObfuscated(expected, input);
   }
+
+  public void testInliningAnnotations() throws Exception {
+    String input, expected;
+    // Always make more than one call, because there are special heuristics for functions that
+    // are called only once.
+
+    // Test FORCE_INLINE
+    input = Joiner.on('\n').join(
+        "function uniqueId_forceInline(id) {return jsinterop.closure.getUniqueId(id);}",
+        "function b1() { uniqueId_forceInline('a'); uniqueId_forceInline('b');  } b1();");
+    expected = Joiner.on('\n').join(
+        "function a(){jsinterop.closure.getUniqueId('a');jsinterop.closure.getUniqueId('b')}",
+        "a();");
+    verifyOptimizedObfuscated(expected, input);
+
+    // Test DO_NOT_INLINE
+    input = Joiner.on('\n').join(
+        "function uniqueId_doNotInline(id) {return jsinterop.closure.getUniqueId(id);}",
+        "function b1() { uniqueId_doNotInline('a'); uniqueId_doNotInline('b');  } b1();");
+    expected = Joiner.on('\n').join(
+        "function b(a){return jsinterop.closure.getUniqueId(a)}",
+        "function c(){b('a');b('b')}",
+        "c();");
+    verifyOptimizedObfuscated(expected, input);
+  }
+
+  public void testCheckerError() throws Exception {
+    String input = Joiner.on('\n').join(
+        "function m_forceInline(a,b,c) {a[c]=b;}",
+        "function b1(a) { m_forceInline(a++,a++,a++);} b1();");
+    assertCheckerError(input,
+        "Function m_forceInline is marked as @ForceInline but it could not be inlined");
+  }
+
   /**
    * A test for mutually-recursive functions. Setup:
    *
@@ -335,17 +373,32 @@ public class JsInlinerTest extends OptimizerTestBase {
   }
 
   private void verifyOptimized(String expected, String input) throws Exception {
-    String actual = optimize(input, JsSymbolResolver.class, FixStaticRefsVisitor.class,
+    String actual = optimizeToSource(input, JsSymbolResolver.class, FixStaticRefsVisitor.class,
         JsInlinerProxy.class, JsUnusedFunctionRemover.class);
-    String expectedAfterParse = optimize(expected);
+    String expectedAfterParse = optimizeToSource(expected);
     assertEquals(expectedAfterParse, actual);
   }
 
   private void verifyOptimizedObfuscated(String expected, String input) throws Exception {
-    String actual = optimize(input, JsSymbolResolver.class, FixStaticRefsVisitor.class,
+    String actual = optimizeToSource(input, JsSymbolResolver.class, FixStaticRefsVisitor.class,
         JsInlinerProxy.class, JsUnusedFunctionRemover.class, JsObfuscateNamer.class);
-    String expectedAfterParse = optimize(expected);
+    String expectedAfterParse = optimizeToSource(expected);
     assertEquals(expectedAfterParse, actual);
+  }
+
+  private void assertCheckerError(String input, String error) throws Exception {
+    JsProgram optimizedProgram = optimize(input, JsSymbolResolver.class, FixStaticRefsVisitor.class,
+        JsInlinerProxy.class, JsUnusedFunctionRemover.class);
+    UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
+    builder.setLowestLogLevel(TreeLogger.ERROR);
+    builder.expectError(error, null);
+    UnitTestTreeLogger testLogger = builder.createLogger();
+    try {
+      JsForceInliningChecker.check(testLogger, JavaToJavaScriptMap.EMPTY, optimizedProgram);
+      fail("JsForceInliningChecker should have thrown an exception");
+    } catch (UnableToCompleteException expected) {
+    }
+    testLogger.assertCorrectLogEntries();
   }
 
   /**
@@ -361,6 +414,15 @@ public class JsInlinerTest extends OptimizerTestBase {
         @Override
         public void endVisit(JsFunction x, JsContext ctx) {
           inlineableFunctions.add(x);
+          JsName functionName = x.getName();
+          if (functionName == null) {
+            return;
+          }
+          if (functionName.getIdent().endsWith("_forceInline")) {
+            x.setInliningMode(InliningMode.FORCE_INLINE);
+          } else if (functionName.getIdent().endsWith("_doNotInline")) {
+            x.setInliningMode(InliningMode.DO_NOT_INLINE);
+          }
         }
       }.accept(program);
       return JsInliner.exec(program, inlineableFunctions);

@@ -39,9 +39,27 @@ public abstract class OptimizerTestBase extends TestCase {
    * @param js the source program
    * @param toExec a list of classes that implement
    *          <code>static void exec(JsProgram)</code>
-   * @return optimized JS
+   * @return optimized JS source
    */
-  protected String optimize(String js, Class<?>... toExec) throws Exception {
+  protected String optimizeToSource(String js, Class<?>... toExec) throws Exception {
+    JsProgram program = optimize(js, toExec);
+
+    TextOutput text = new DefaultTextOutput(true);
+    JsVisitor generator = new JsSourceGenerationVisitor(text);
+
+    generator.accept(program);
+    return text.toString();
+  }
+
+  /**
+   * Optimize a JS program.
+   *
+   * @param js the source program
+   * @param toExec a list of classes that implement
+   *          <code>static void exec(JsProgram)</code>
+   * @return optimized JS program
+   */
+  protected JsProgram optimize(String js, Class<?>... toExec) throws Exception {
     JsProgram program = new JsProgram();
     List<JsStatement> expected = JsParser.parse(SourceOrigin.UNKNOWN,
         program.getScope(), new StringReader(js));
@@ -53,10 +71,7 @@ public abstract class OptimizerTestBase extends TestCase {
       m.invoke(null, program);
     }
 
-    TextOutput text = new DefaultTextOutput(true);
-    JsVisitor generator = new JsSourceGenerationVisitor(text);
-
-    generator.accept(program);
-    return text.toString();
+    return program;
   }
+
 }

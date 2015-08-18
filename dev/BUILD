@@ -185,6 +185,7 @@ java_library(
             "core/src/com/google/gwt/dev/PrecompilationResult.java",
             "core/src/com/google/gwt/dev/StringAnalyzableTypeEnvironment.java",
             "core/src/com/google/gwt/dev/cfg/**/*.java",
+            "core/src/com/google/gwt/dev/common/**/*.java",
             "core/src/com/google/gwt/dev/javac/**/*.java",
             "core/src/com/google/gwt/dev/jdt/**/*.java",
             "core/src/com/google/gwt/dev/jjs/**/*.java",
