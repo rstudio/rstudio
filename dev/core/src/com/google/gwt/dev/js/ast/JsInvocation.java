@@ -37,7 +37,7 @@ public final class JsInvocation extends JsExpression implements HasArguments {
     this(sourceInfo, function.getName().makeRef(sourceInfo), args);
   }
 
-  public JsInvocation(SourceInfo sourceInfo, JsNameRef function, JsExpression... args) {
+  public JsInvocation(SourceInfo sourceInfo, JsExpression function, JsExpression... args) {
     super(sourceInfo);
     setQualifier(function);
     Collections.addAll(this.args, args);
@@ -47,7 +47,7 @@ public final class JsInvocation extends JsExpression implements HasArguments {
     this(sourceInfo, function.getName().makeRef(sourceInfo), args);
   }
 
-  public JsInvocation(SourceInfo sourceInfo, JsNameRef function, Collection<JsExpression> args) {
+  public JsInvocation(SourceInfo sourceInfo, JsExpression function, Collection<JsExpression> args) {
     super(sourceInfo);
     setQualifier(function);
     this.args.addAll(args);

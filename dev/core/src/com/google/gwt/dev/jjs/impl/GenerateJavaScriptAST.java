@@ -64,6 +64,7 @@ import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMember;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JMethod.JsPropertyAccessorType;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNameOf;
@@ -1317,8 +1318,7 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
-      JsInvocation jsInvocation = new JsInvocation(x.getSourceInfo());
-      popList(jsInvocation.getArguments(), x.getArgs().size()); // args
+      List<JsExpression> args = popList(x.getArgs().size());
 
       if (JProgram.isClinit(method)) {
         /*
@@ -1345,20 +1345,43 @@ public class GenerateJavaScriptAST {
         }
       }
 
-      JsNameRef qualifier = null;
-      JsExpression unnecessaryQualifier = null;
-      JsExpression result = null;
-      boolean isJsPropertyAccessor = false;
-      boolean isJsFunction = false;
-      result = jsInvocation;
-
+      JsExpression result;
       if (method.isStatic()) {
-        if (x.getInstance() != null) {
-          unnecessaryQualifier = pop(); // instance
-        }
-        qualifier = names.get(method).makeRef(x.getSourceInfo());
-      } else if (x.isStaticDispatchOnly() && method.isConstructor()) {
-         /*
+        result = dispatchToStatic(x, method, args);
+      } else if (x.isStaticDispatchOnly()) {
+        result = dispatchToSuper(x, method, args);
+      } else if (method.isOrOverridesJsPropertyAccessor()) {
+        result = dispatchToPropertyAccessor(x, method, args);
+      } else if (method.isOrOverridesJsFunctionMethod()) {
+        result = dispatchToFunction(x, args);
+      } else if (typeOracle.needsJsInteropBridgeMethod(method)) {
+        result = dispatchViaTrampolineToBridgeMethod(x, method, args);
+      } else {
+        // Dispatch polymorphically (normal case).
+        JsNameRef methodName = polymorphicNames.get(method).makeRef(x.getSourceInfo());
+        methodName.setQualifier((JsExpression) pop()); // instance
+        result = new JsInvocation(x.getSourceInfo(), methodName, args);
+      }
+
+      push(result);
+    }
+
+    private JsExpression dispatchToStatic(JMethodCall x, JMethod method, List<JsExpression> args) {
+      JsNameRef methodName = names.get(method).makeRef(x.getSourceInfo());
+      JsExpression result = new JsInvocation(x.getSourceInfo(), methodName, args);
+      if (x.getInstance() != null) {
+        JsExpression unnecessaryQualifier = pop();
+        result = createCommaExpression(unnecessaryQualifier, result);
+      }
+      return result;
+    }
+
+    private JsExpression dispatchToSuper(JMethodCall x, JMethod method, List<JsExpression> args) {
+      JsName callName = objectScope.declareName("call");
+      callName.setObfuscatable(false);
+      JsNameRef qualifiedMethodName = callName.makeRef(x.getSourceInfo());
+      if (method.isConstructor()) {
+        /*
          * Constructor calls through {@code this} and {@code super} are always dispatched statically
          * using the constructor function name (constructors are always defined as top level
          * functions).
@@ -1366,16 +1389,8 @@ public class GenerateJavaScriptAST {
          * Because constructors are modeled like instance methods they have an implicit {@code this}
          * parameter, hence they are invoked like: "constructor.call(this, ...)".
          */
-        JsName callName = objectScope.declareName("call");
-        callName.setObfuscatable(false);
-        qualifier = callName.makeRef(x.getSourceInfo());
-        JsNameRef methodRef = names.get(method).makeRef(x.getSourceInfo());
-        qualifier.setQualifier(methodRef);
-        jsInvocation.getArguments().add(0, (JsExpression) pop()); // instance
-        if (program.isJsTypePrototype(method.getEnclosingType())) {
-          result = dispatchToSuperPrototype(x, method, qualifier, methodRef, jsInvocation);
-        }
-      } else if (x.isStaticDispatchOnly() && !method.isConstructor()) {
+        qualifiedMethodName.setQualifier(names.get(method).makeRef(x.getSourceInfo()));
+      } else {
         // Regular super call. This calls are always static and optimizations normally statify them.
         // They can appear in completely unoptimized code, hence need to be handled here.
 
@@ -1388,68 +1403,48 @@ public class GenerateJavaScriptAST {
         JsInvocation getPrototypeCall = constructInvocation(x.getSourceInfo(),
             "JavaClassHierarchySetupUtil.getClassPrototype",
             convertJavaLiteral(typeMapper.get(superMethodTargetType)));
+        // getClassPrototype is a JSNI call, so we are enabling inlining
+        methodsForJsInlining.add(currentMethod);
 
         JsNameRef methodNameRef = polymorphicNames.get(method).makeRef(x.getSourceInfo());
         methodNameRef.setQualifier(getPrototypeCall);
+        qualifiedMethodName.setQualifier(methodNameRef);
+      }
 
-        // Construct JCHSU.getPrototypeFor(type).polyname.call(this,...)
-        JsName callName = objectScope.declareName("call");
-        callName.setObfuscatable(false);
-        qualifier = callName.makeRef(x.getSourceInfo());
-        qualifier.setQualifier(methodNameRef);
-        jsInvocation.getArguments().add(0, (JsExpression) pop()); // instance
-        // Is this method targeting a Foo_Prototype class?
-        if (program.isJsTypePrototype(method.getEnclosingType())) {
-          result = dispatchToSuperPrototype(x, method, qualifier, methodNameRef, jsInvocation);
-        }
-        // getClassPrototype is a native method call, so we enabling inlining
-        methodsForJsInlining.add(currentMethod);
+      // <method_qualifier>.call(instance, args);
+      JsInvocation jsInvocation = new JsInvocation(x.getSourceInfo(), qualifiedMethodName);
+      jsInvocation.getArguments().add((JsExpression) pop()); // instance
+      jsInvocation.getArguments().addAll(args);
+
+      // Is this method targeting a Foo_Prototype class?
+      if (program.isJsTypePrototype(method.getEnclosingType())) {
+        // TODO(goktug): inline following for further simplifications.
+        return dispatchToSuperPrototype(x, method, qualifiedMethodName, jsInvocation);
       } else {
-        JsName polyName = polymorphicNames.get(method);
-        // potentially replace method call with property access
-        isJsPropertyAccessor = method.isOrOverridesJsPropertyAccessor();
-        isJsFunction = method.isOrOverridesJsFunctionMethod();
-
-        if (isJsPropertyAccessor) {
-          JsExpression qualExpr = pop();
-          switch (method.getJsPropertyAccessorType()) {
-            case GETTER:
-              result = createGetterDispatch(x, unnecessaryQualifier, method, qualExpr);
-              break;
-            case SETTER:
-              result = createSetterDispatch(x, jsInvocation, method, qualExpr);
-              break;
-            default:
-              throw new InternalCompilerException("JsProperty not a setter or getter.");
-          }
-        } else if (isJsFunction) {
-          JsExpression qualExpr = pop();
-          result = createSAMcallDispatch(x, jsInvocation, qualExpr);
-        } else {
-          // insert trampoline (_ = instance, trampoline(_, _.jsBridgeMethRef,
-          // _.javaMethRef)).bind(_)(args)
-          if (typeOracle.needsJsInteropBridgeMethod(method)) {
-            maybeDispatchViaTrampolineToBridgeMethod(x, method, jsInvocation, unnecessaryQualifier,
-                result, polyName);
-
-            return;
-          } else {
-            // Dispatch polymorphically (normal case).
-            qualifier = polyName.makeRef(x.getSourceInfo());
-            qualifier.setQualifier((JsExpression) pop()); // instance
-          }
-        }
+        return jsInvocation;
       }
-      if (!isJsPropertyAccessor && !isJsFunction) {
-        jsInvocation.setQualifier(qualifier);
-      }
-      push(createCommaExpression(unnecessaryQualifier, result));
     }
 
-    private void maybeDispatchViaTrampolineToBridgeMethod(JMethodCall x,
-        JMethod method, JsInvocation jsInvocation,
-        JsExpression unnecessaryQualifier, JsExpression result,
-        JsName polyName) {
+    private JsExpression dispatchToPropertyAccessor(
+        JMethodCall x, JMethod method, List<JsExpression> args) {
+      JsNameRef propertyReference = new JsNameRef(x.getSourceInfo(), method.getJsName());
+      propertyReference.setQualifier((JsExpression) pop()); // instance
+      if (method.getJsPropertyAccessorType() == JsPropertyAccessorType.SETTER) {
+        return createAssignment(propertyReference, args.get(0));
+      }
+      return propertyReference;
+    }
+
+    private JsExpression dispatchToFunction(JMethodCall x, List<JsExpression> args) {
+      return new JsInvocation(x.getSourceInfo(), (JsExpression) pop(), args);
+    }
+
+    private JsExpression dispatchViaTrampolineToBridgeMethod(
+        JMethodCall x, JMethod method, List<JsExpression> args) {
+      // insert trampoline (_ = instance, trampoline(_, _.jsBridgeMethRef,
+      // _.javaMethRef)).bind(_)(args)
+
+      JsName polyName = polymorphicNames.get(method);
 
       JsName tempLocal = createTmpLocal();
 
@@ -1481,9 +1476,9 @@ public class GenerateJavaScriptAST {
       callBind.getArguments().add(tempLocal.makeRef(x.getSourceInfo()));
       // (tempLocal = instance, tramp(tempLocal, tempLocal.bridgeRef, tempLocal.javaRef)).bind(tempLocal)
       bind.setQualifier(callTramp);
-      jsInvocation.setQualifier(callBind);
-      result = createCommaExpression(tmp, jsInvocation);
-      push(createCommaExpression(unnecessaryQualifier, result));
+
+      JsInvocation jsInvocation = new JsInvocation(x.getSourceInfo(), callBind, args);
+      return createCommaExpression(tmp, jsInvocation);
     }
 
     private JsName createTmpLocal() {
@@ -1505,38 +1500,32 @@ public class GenerateJavaScriptAST {
       return tmpName;
     }
 
-    private JsExpression createSAMcallDispatch(JMethodCall x, JsInvocation jsInvocation,
-        JsExpression qualExpr) {
-      JsInvocation result = new JsInvocation(x.getSourceInfo());
-      result.setQualifier(qualExpr);
-      result.getArguments().addAll(jsInvocation.getArguments());
-      return result;
-    }
-
-    private JsExpression createSetterDispatch(JMethodCall x, JsInvocation jsInvocation,
-        JMethod targetMethod, JsExpression qualExpr) {
-      String propertyName = targetMethod.getJsName();
-      JsNameRef propertyReference = new JsNameRef(x.getSourceInfo(), propertyName);
-      propertyReference.setQualifier(qualExpr);
-      return createAssignment(propertyReference, jsInvocation.getArguments().get(0));
-    }
-
-    private JsExpression createGetterDispatch(JMethodCall x, JsExpression unnecessaryQualifier,
-        JMethod targetMethod, JsExpression qualExpr) {
-      String propertyName = targetMethod.getJsName();
-      JsNameRef propertyReference = new JsNameRef(x.getSourceInfo(), propertyName);
-      propertyReference.setQualifier(qualExpr);
-      return createCommaExpression(unnecessaryQualifier, propertyReference);
-    }
-
     /**
      * Setup qualifier and methodRef to dispatch to super-ctor or super-method.
      */
-    private JsExpression dispatchToSuperPrototype(JMethodCall x, JMethod method, JsNameRef qualifier,
-                                                  JsNameRef methodRef, JsInvocation jsInvocation) {
+    private JsExpression dispatchToSuperPrototype(JMethodCall x, JMethod method,
+        JsNameRef qualifier, JsInvocation jsInvocation) {
+
+      // in JsType case, super.foo() call requires SuperCtor.prototype.foo.call(this, args)
+      // the method target should be on a class that ends with $Prototype and implements a JsType
+      if (!(method instanceof JConstructor) && method.isOrOverridesJsMethod()) {
+        JsNameRef protoRef = prototype.makeRef(x.getSourceInfo());
+        JsNameRef methodName = new JsNameRef(x.getSourceInfo(), method.getName());
+        // add qualifier so we have jsPrototype.prototype.methodName.call(this, args)
+        String jsPrototype = getJsPrototype(method.getEnclosingType());
+        protoRef.setQualifier(createJsQualifier(jsPrototype, x.getSourceInfo()));
+        methodName.setQualifier(protoRef);
+        qualifier.setQualifier(methodName);
+        return jsInvocation;
+      }
+
+      return JsNullLiteral.INSTANCE;
+    }
+
+    private String getJsPrototype(JDeclaredType type) {
       String jsPrototype = null;
       // find JsType of Prototype method being invoked.
-      for (JInterfaceType intf : method.getEnclosingType().getImplements()) {
+      for (JInterfaceType intf : type.getImplements()) {
         JDeclaredType jsIntf = typeOracle.getNearestJsType(intf, true);
         assert jsIntf instanceof JInterfaceType;
 
@@ -1546,20 +1535,7 @@ public class GenerateJavaScriptAST {
         }
       }
       assert jsPrototype != null : "Unable to find JsType with prototype";
-
-      // in JsType case, super.foo() call requires SuperCtor.prototype.foo.call(this, args)
-      // the method target should be on a class that ends with $Prototype and implements a JsType
-      if (!(method instanceof JConstructor) && method.isOrOverridesJsMethod()) {
-        JsNameRef protoRef = prototype.makeRef(x.getSourceInfo());
-        methodRef = new JsNameRef(methodRef.getSourceInfo(), method.getName());
-        // add qualifier so we have jsPrototype.prototype.methodName.call(this, args)
-        protoRef.setQualifier(createJsQualifier(jsPrototype, x.getSourceInfo()));
-        methodRef.setQualifier(protoRef);
-        qualifier.setQualifier(methodRef);
-        return jsInvocation;
-      }
-
-      return JsNullLiteral.INSTANCE;
+      return jsPrototype;
     }
 
     @Override
