@@ -82,7 +82,7 @@ var Mode = function(suppressHighlighting, session) {
    this.$sweaveBackgroundHighlighter = new BackgroundHighlighter(
       session,
       /^\s*\/\*{3,}\s*[Rr]\s*$/,
-      /^\s*\*\/$/
+      /^\s*\*\//
    );
 
    if (!window.NodeWebkit)     
