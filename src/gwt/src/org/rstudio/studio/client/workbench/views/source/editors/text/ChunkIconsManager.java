@@ -129,8 +129,7 @@ public class ChunkIconsManager
       if (!shouldDisplayIcons(editor))
          return;
       
-      Element[] chunkStarts = DomUtils.getElementsByClassName(
-            "rstudio_chunk_start ace_start");
+      Element[] chunkStarts = DomUtils.getElementsByClassName("rstudio_chunk_start");
       
       for (int i = 0; i < chunkStarts.length; i++)
       {

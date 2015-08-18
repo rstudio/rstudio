@@ -43,7 +43,7 @@ if (!window.NodeWebkit) {
    CppStyleFoldMode = require("mode/c_cpp_fold_mode").FoldMode;
 }
 
-var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").SweaveBackgroundHighlighter;
+var BackgroundHighlighter = require("mode/background_highlighter").BackgroundHighlighter;
 var RCodeModel = require("mode/r_code_model").RCodeModel;
 var RMatchingBraceOutdent = require("mode/r_matching_brace_outdent").RMatchingBraceOutdent;
 
@@ -79,11 +79,10 @@ var Mode = function(suppressHighlighting, session) {
    this.$behaviour = new CStyleBehaviour(this.codeModel);
    this.$cpp_outdent = new CppMatchingBraceOutdent(this.codeModel);
    
-   this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
+   this.$sweaveBackgroundHighlighter = new BackgroundHighlighter(
       session,
-         /^\s*\/\*{3,}\s*[Rr]\s*$/,
-         /^\s*\*\/$/,
-      true
+      /^\s*\/\*{3,}\s*[Rr]\s*$/,
+      /^\s*\*\/$/
    );
 
    if (!window.NodeWebkit)     
