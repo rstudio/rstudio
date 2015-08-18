@@ -165,4 +165,22 @@ public class JsUtil
       return new Array(length);
    }-*/;
    
+   public native static String getObjectType(JavaScriptObject obj) /*-{
+     var s = typeof obj;
+     if (s === "object") 
+     {
+        if (obj) 
+        {
+           // this ugly check for array types is necessary because 
+           // "instanceof Array" and friends don't work for arrays created in
+           // other windows:
+           // http://javascript.crockford.com/remedial.html
+           if (Object.prototype.toString.call(obj) == "[object Array]") 
+               s = "array";
+        } 
+        else 
+           s = "null";
+     }
+     return s;
+  }-*/;
 }

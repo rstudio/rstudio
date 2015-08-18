@@ -25,6 +25,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.UserCommandManager.UserCommandResult;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.jsonrpc.RpcError;
@@ -169,7 +170,6 @@ import com.google.gwt.json.client.JSONBoolean;
 import com.google.gwt.json.client.JSONNull;
 import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.Random;
 import com.google.inject.Inject;
@@ -2699,7 +2699,7 @@ public class RemoteServer implements Server
       var server = this;     
       $wnd.sendRemoteServerRequest = $entry(
          function(sourceWindow, scope, method, params, redactLog, responseCallback) {
-            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(Lcom/google/gwt/core/client/JavaScriptObject;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLcom/google/gwt/core/client/JavaScriptObject;)(sourceWindow, scope, method, params, redactLog, responseCallback);
+            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(Lcom/google/gwt/core/client/JavaScriptObject;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;ZLcom/google/gwt/core/client/JavaScriptObject;)(sourceWindow, scope, method, params, redactLog, responseCallback);
          }
       ); 
    }-*/;
@@ -2709,16 +2709,17 @@ public class RemoteServer implements Server
    private void sendRemoteServerRequest(final JavaScriptObject sourceWindow,
                                         final String scope,
                                         final String method,
-                                        final String params,
+                                        final JavaScriptObject params,
                                         final boolean redactLog,
                                         final JavaScriptObject responseCallback)
    {  
       // get the WindowEx from the sourceWindow
       final WindowEx srcWnd = sourceWindow.<WindowEx>cast();
       
-      // get the json array from the string
-      final JSONArray jsonParams = JSONParser.parseStrict(params).isArray();
-           
+      // unwrap the parameter array
+      JsArrayEx array = params.cast();
+      final JSONArray jsonParams = array.toJSONArray();
+
       // setup an rpc response handler that proxies back to the js object
       class ResponseHandler extends RpcResponseHandler
       {
@@ -2793,7 +2794,7 @@ public class RemoteServer implements Server
       sendRequestViaMainWorkbench(
             scope, 
             method, 
-            params.toString(),
+            params.getJavaScriptObject(),
             redactLog, 
             new RpcResponseHandler() {
                @Override
@@ -2819,7 +2820,7 @@ public class RemoteServer implements Server
    private native void sendRequestViaMainWorkbench(
                                     String scope,
                                     String method,
-                                    String params,
+                                    JavaScriptObject params,
                                     boolean redactLog,
                                     RpcResponseHandler handler) /*-{
       
