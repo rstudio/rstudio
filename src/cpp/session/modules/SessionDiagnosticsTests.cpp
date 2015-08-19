@@ -261,6 +261,8 @@ context("Diagnostics")
       EXPECT_NO_ERRORS("1:10 %>% {} %>% print");
       
       EXPECT_NO_ERRORS("y ~ s(x, bs = 'cs')");
+      
+      EXPECT_NO_ERRORS("y ~ (1)");
    }
    
    lintRStudioRFiles();

@@ -1722,6 +1722,13 @@ bool skipFormulas(RTokenCursor& origin, ParseStatus& status)
       while (cursor.fwdToMatchingToken())
          if (!cursor.moveToNextSignificantToken())
             break;
+      
+      if (!cursor.moveToNextSignificantToken())
+         break;
+      
+      while (cursor.fwdToMatchingToken())
+         if (!cursor.moveToNextSignificantToken())
+            break;
 
       if (!isBinaryOp(cursor))
          break;
