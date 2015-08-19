@@ -752,7 +752,15 @@ var RCodeModel = function(session, tokenizer,
 
          return null;
       }
-       
+
+      // Nudge the maxRow ahead a bit -- some functions may request
+      // the tree to be built up to a particular row, but we want to
+      // build a bit further ahead in case some lookahead is required.
+      maxRow = Math.min(
+         maxRow + 30,
+         this.$doc.getLength() - 1
+      );
+
       // Check if the scope tree has already been built up to this row.
       var scopeRow = this.$scopes.parsePos.row;
       if (scopeRow >= maxRow)
@@ -1172,6 +1180,7 @@ var RCodeModel = function(session, tokenizer,
 
       if (!position)
          return "";
+
       this.$buildScopeTreeUpToRow(position.row);
 
       var scopePath = this.$scopes.getActiveScopes(position);
