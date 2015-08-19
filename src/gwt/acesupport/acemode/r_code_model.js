@@ -798,15 +798,6 @@ var RCodeModel = function(session, tokenizer,
          if (iterator.$row > maxRow)
             break;
 
-         // Skip over comments.
-         while (token != null && /\bcomment\b/.test(token.type))
-            token = iterator.moveToStartOfNextRowWithTokens();
-
-         // Bail if the current token is null (can occur if the document
-         // ends with tokens)
-         if (token == null)
-            break;
-
          // Cache access to the current token + cursor.
          value = token.value;
          type = token.type;
