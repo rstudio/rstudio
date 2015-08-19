@@ -117,6 +117,8 @@ public class RSConnectPublishInput
    
    public boolean isStaticDocInput()
    {
+      if (getContentType() == RSConnect.CONTENT_TYPE_PLOT)
+         return true;
       if (getContentType() != RSConnect.CONTENT_TYPE_DOCUMENT)
          return false;
       if (getSourceRmd() == null)
