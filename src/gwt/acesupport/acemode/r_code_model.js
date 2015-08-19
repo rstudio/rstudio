@@ -973,19 +973,15 @@ var RCodeModel = function(session, tokenizer,
                if (localCursor.isFirstSignificantTokenOnLine())
                   startPos.column = 0;
 
-               var functionArgsString = this.$doc.getTextRange(new Range(
-                  argsStartPos.row, argsStartPos.column,
-                  bracePos.row, bracePos.column
-               ));
+               // Obtain the function arguments by walking through the tokens
+               var functionArgs = $getFunctionArgs(argsCursor);
+               var functionArgsString = "(" + functionArgs.join(", ") + ")";
 
                var functionLabel;
                if (functionName == null)
                   functionLabel = $normalizeWhitespace("<function>" + functionArgsString);
                else
                   functionLabel = $normalizeWhitespace(functionName + functionArgsString);
-
-               // Obtain the function arguments by walking through the tokens
-               var functionArgs = $getFunctionArgs(argsCursor);
 
                this.$scopes.onFunctionScopeStart(functionLabel,
                                                  startPos,
