@@ -222,4 +222,6 @@ public interface ThemeResources extends ClientBundle
    ImageResource checkboxTri();
    
    ImageResource menuCheck();
+   
+   ImageResource user();
 }
