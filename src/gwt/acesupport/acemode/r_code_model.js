@@ -898,15 +898,15 @@ var RCodeModel = function(session, tokenizer,
                   ))
          {
             // Infer the depth of the label.
-            var depth = 0;
+            var depth = 1;
             if (value === "\\chapter")
-               depth = 1;
-            else if (value === "\\section")
                depth = 2;
-            else if (value === "\\subsection")
+            else if (value === "\\section")
                depth = 3;
-            else if (value === "\\subsubsection")
+            else if (value === "\\subsection")
                depth = 4;
+            else if (value === "\\subsubsection")
+               depth = 5;
 
             var line = this.$doc.getLine(position.row);
             var reSection = /{([^}]*)}/;
