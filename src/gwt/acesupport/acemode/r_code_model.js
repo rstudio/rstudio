@@ -898,6 +898,7 @@ var RCodeModel = function(session, tokenizer,
 
          else if (/\bcodeend\b/.test(type) && value === "---")
          {
+            position.column = Infinity;
             this.$scopes.onSectionEnd(position);
          }
 
