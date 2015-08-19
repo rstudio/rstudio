@@ -885,6 +885,40 @@ var RCodeModel = function(session, tokenizer,
             this.$scopes.onSectionHead(label, position);
          }
 
+         // Sweave
+         //
+         // Handle Sweave sections.
+         // TODO: Maybe handle '\begin{}' and '\end{}' pairs?
+         else if (type === "keyword" &&
+                  value.indexOf("\\") === 0 && (
+                     value === "\\chapter" ||
+                     value === "\\section" ||
+                     value === "\\subsection" ||
+                     value === "\\subsubsection"
+                  ))
+         {
+            // Infer the depth of the label.
+            var depth = 0;
+            if (value === "\\chapter")
+               depth = 1;
+            else if (value === "\\section")
+               depth = 2;
+            else if (value === "\\subsection")
+               depth = 3;
+            else if (value === "\\subsubsection")
+               depth = 4;
+
+            var line = this.$doc.getLine(position.row);
+            var reSection = /{([^}]*)}/;
+            var match = reSection.exec(line);
+            var label = match[1];
+
+            var labelStartPos = {row: position.row, column: 0};
+            var labelEndPos = {row: position.row, column: Infinity};
+
+            this.$scopes.onMarkdownHead(label, labelStartPos, labelEndPos, depth);
+         }
+
          // Check specifically for YAML header boundaries ('---')
          //
          // TODO: We should encode the state we're transitioning into
