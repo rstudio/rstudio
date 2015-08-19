@@ -22,6 +22,8 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -78,7 +80,7 @@ public class TextEditingTargetWidget
                                   Commands commands,
                                   UIPrefs uiPrefs,
                                   FileTypeRegistry fileTypeRegistry,
-                                  DocDisplay editor,
+                                  final DocDisplay editor,
                                   TextFileType fileType,
                                   String extendedType,
                                   EventBus events,
@@ -189,6 +191,16 @@ public class TextEditingTargetWidget
             statusBar_);
       
       adaptToFileType(fileType);
+      
+      editor.addFocusHandler(new FocusHandler()
+      {
+         @Override
+         public void onFocus(FocusEvent event)
+         {
+            toggleDocOutlineButton_.setLatched(
+                  docOutlineWidget_.getOffsetWidth() > 0);
+         }
+      });
 
       initWidget(panel_);
    }
