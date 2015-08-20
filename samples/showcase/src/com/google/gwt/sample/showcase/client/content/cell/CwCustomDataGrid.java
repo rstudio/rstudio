@@ -661,6 +661,7 @@ public class CwCustomDataGrid extends ContentWidget {
         return dataGrid.getSelectionModel().isSelected(object);
       }
     };
+    dataGrid.addColumn(checkboxColumn);
     dataGrid.setColumnWidth(0, 40, Unit.PX);
 
     // View friends.
@@ -696,6 +697,7 @@ public class CwCustomDataGrid extends ContentWidget {
         dataGrid.redrawRow(index);
       }
     });
+    dataGrid.addColumn(viewFriendsColumn);
     dataGrid.setColumnWidth(1, 10, Unit.EM);
 
     // First name.
@@ -720,6 +722,7 @@ public class CwCustomDataGrid extends ContentWidget {
         ContactDatabase.get().refreshDisplays();
       }
     });
+    dataGrid.addColumn(firstNameColumn);
     dataGrid.setColumnWidth(2, 20, Unit.PCT);
 
     // Last name.
@@ -744,6 +747,7 @@ public class CwCustomDataGrid extends ContentWidget {
         ContactDatabase.get().refreshDisplays();
       }
     });
+    dataGrid.addColumn(lastNameColumn);
     dataGrid.setColumnWidth(3, 20, Unit.PCT);
 
     // Age.
@@ -760,6 +764,7 @@ public class CwCustomDataGrid extends ContentWidget {
         return o1.getAge() - o2.getAge();
       }
     });
+    dataGrid.addColumn(ageColumn);
     dataGrid.setColumnWidth(4, 7, Unit.EM);
 
     // Category.
@@ -786,6 +791,7 @@ public class CwCustomDataGrid extends ContentWidget {
         ContactDatabase.get().refreshDisplays();
       }
     });
+    dataGrid.addColumn(categoryColumn);
     dataGrid.setColumnWidth(5, 130, Unit.PX);
 
     // Address.
@@ -802,6 +808,7 @@ public class CwCustomDataGrid extends ContentWidget {
         return o1.getAddress().compareTo(o2.getAddress());
       }
     });
+    dataGrid.addColumn(addressColumn);
     dataGrid.setColumnWidth(6, 60, Unit.PCT);
   }
 }
