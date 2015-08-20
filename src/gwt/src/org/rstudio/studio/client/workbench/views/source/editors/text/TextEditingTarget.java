@@ -131,7 +131,6 @@ import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList.ContainsFoldPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper.RmdSelectedTemplate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
@@ -4545,22 +4544,18 @@ public class TextEditingTarget implements
          if (range.isEmpty())
          {
             // If no selection, fold the innermost non-anonymous scope
+            Scope scope = docDisplay_.getCurrentScope();
+            while (scope != null && scope.isAnon())
+               scope = scope.getParentScope();
    
-            ScopeList scopeList = new ScopeList(docDisplay_);
-            scopeList.removeAll(ScopeList.ANON_BRACE);
-            Scope scope = scopeList.findLast(new ContainsFoldPredicate(
-                  Range.fromPoints(docDisplay_.getSelectionStart(),
-                                   docDisplay_.getSelectionEnd())));
-   
-            if (scope == null)
+            if (scope == null || scope.isTopLevel())
                return;
-   
+            
             docDisplay_.addFoldFromRow(scope.getFoldStart().getRow());
          }
          else
          {
             // If selection, fold the selection
-   
             docDisplay_.addFold(range);
          }
       }
@@ -4596,14 +4591,15 @@ public class TextEditingTarget implements
                   startCandidate = f;
                }
    
-               if (f.getEnd().getRow() == pos.getRow()
-                   && f.getEnd().getColumn() <= pos.getColumn())
+               if (startCandidate == null &&
+                   f.getEnd().getRow() == pos.getRow() &&
+                   f.getEnd().getColumn() <= pos.getColumn())
                {
                   endCandidate = f;
                }
             }
    
-            if (startCandidate == null ^ endCandidate == null)
+            if (startCandidate == null || endCandidate == null)
             {
                docDisplay_.unfold(startCandidate != null ? startCandidate
                                                           : endCandidate);
@@ -4672,7 +4668,7 @@ public class TextEditingTarget implements
    
    boolean useScopeTreeFolding()
    {
-      return docDisplay_.hasScopeTree() && !fileType_.isRmd();
+      return docDisplay_.hasScopeTree();
    }
 
    void handlePdfCommand(final String completedAction,
