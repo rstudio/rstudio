@@ -884,25 +884,6 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
-   * Returns the method definition where {@code method} is first defined in a class.
-   */
-  public JMethod getTopMostDefinition(JMethod method) {
-    if (method.getEnclosingType() instanceof JInterfaceType) {
-      return null;
-    }
-    JMethod currentMethod = method;
-    for (JMethod overriddenMethod : method.getOverriddenMethods()) {
-      if (overriddenMethod.getEnclosingType() instanceof JInterfaceType) {
-        continue;
-      }
-      if (isSuperClass(currentMethod.getEnclosingType(), overriddenMethod.getEnclosingType())) {
-        currentMethod = overriddenMethod;
-      }
-    }
-    return currentMethod;
-  }
-
-  /**
    * True if either a JSO, or is an interface that is ONLY implemented by a JSO.
    */
   public boolean isEffectivelyJavaScriptObject(JType type) {

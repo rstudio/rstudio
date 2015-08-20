@@ -501,8 +501,7 @@ public final class JavaToJavaScriptCompiler {
     }
   }
 
-  private void optimizeJs(Set<JsNode> inlinableJsFunctions)
-      throws InterruptedException, UnableToCompleteException {
+  private void optimizeJs(Set<JsNode> inlinableJsFunctions) throws InterruptedException {
     if (shouldOptimize()) {
       optimizeJsLoop(inlinableJsFunctions);
       JsDuplicateCaseFolder.exec(jsProgram);
@@ -999,8 +998,7 @@ public final class JavaToJavaScriptCompiler {
     return new BufferedInputStream(new GZIPInputStream(artifact.getContents(TreeLogger.NULL)));
   }
 
-  private void optimizeJsLoop(Collection<JsNode> toInline)
-      throws InterruptedException, UnableToCompleteException {
+  private void optimizeJsLoop(Collection<JsNode> toInline) throws InterruptedException {
     int optimizationLevel = options.getOptimizationLevel();
     List<OptimizerStats> allOptimizerStats = Lists.newArrayList();
     int counter = 0;
