@@ -2809,35 +2809,55 @@ public class TextEditingTarget implements
    {
       if (docUpdateSentinel_ != null)
       {
-         // sync doc contents before popping it out
-         SourceWindowManager manager = 
-               RStudioGinjector.INSTANCE.getSourceWindowManager();
-         JsArray<SourceDocument> docs = manager.getSourceDocs();
-         for (int i = 0; i < docs.length(); i++)
+         // ensure doc is synchronized with source database before popping it
+         // out
+         docUpdateSentinel_.withSavedDoc(new Command()
          {
-            if (docs.get(i).getId() == getId())
+            @Override
+            public void execute()
             {
-               docs.get(i).setContents(docUpdateSentinel_.getContents());
-               docs.get(i).setDirty(dirtyState_.getValue());
-               break;
+               // push the new doc state into the source database that the 
+               // new window will inherit
+               SourceWindowManager manager =
+                     RStudioGinjector.INSTANCE.getSourceWindowManager();
+               JsArray<SourceDocument> docs = manager.getSourceDocs();
+               for (int i = 0; i < docs.length(); i++)
+               {
+                  if (docs.get(i).getId() == getId())
+                  {
+                     docs.get(i).setContents(docDisplay_.getCode());
+                     docs.get(i).setDirty(dirtyState_.getValue());
+                     break;
+                  }
+               }
+               
+               // fire popout event (this triggers a close in the current window
+               // and the creation of a new window with the doc)
+               events_.fireEvent(new PopoutDocEvent(getId(), 
+                     currentPosition()));
             }
-         }
-         
-         // fire popout event (this triggers a close in the current window
-         // and the creation of a new window with the doc)
-         events_.fireEvent(new PopoutDocEvent(getId(), currentPosition()));
+         });
       }
    }
+
    
    @Handler
    void onReturnDocToMain()
    {
+      // ensure doc is synchronized with source database before returning it
       if (!SourceWindowManager.isMainSourceWindow() && 
           docUpdateSentinel_ != null)
       {
-         events_.fireEventToMainWindow(new DocWindowChangedEvent(
-               getId(), SourceWindowManager.getSourceWindowId(), "",
-               DocTabDragParams.create(getId(), currentPosition()), 0));
+         docUpdateSentinel_.withSavedDoc(new Command()
+         {
+            @Override
+            public void execute()
+            {
+               events_.fireEventToMainWindow(new DocWindowChangedEvent(
+                     getId(), SourceWindowManager.getSourceWindowId(), "",
+                     DocTabDragParams.create(getId(), currentPosition()), 0));
+            }
+         });
       }
    }
 

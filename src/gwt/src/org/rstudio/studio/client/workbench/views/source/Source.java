@@ -1618,8 +1618,26 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute(EditingTarget editor)
          {
-            events_.fireEvent(new PopoutDocEvent(event, 
-                  editor.currentPosition()));
+            // if this is a text editor, ensure that its content is 
+            // synchronized with the server before we pop it out
+            if (editor instanceof TextEditingTarget)
+            {
+               final TextEditingTarget textEditor = (TextEditingTarget)editor;
+               textEditor.withSavedDoc(new Command()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     events_.fireEvent(new PopoutDocEvent(event, 
+                           textEditor.currentPosition()));
+                  }
+               });
+            }
+            else
+            {
+               events_.fireEvent(new PopoutDocEvent(event, 
+                     editor.currentPosition()));
+            }
          }
       });
    }
