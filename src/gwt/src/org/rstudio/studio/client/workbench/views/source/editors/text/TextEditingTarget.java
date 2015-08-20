@@ -4575,15 +4575,28 @@ public class TextEditingTarget implements
                                         docDisplay_.getSelectionEnd());
          if (range.isEmpty())
          {
-            // If no selection, unfold the closest fold on the current row
+            // If no selection, either:
+            //
+            // 1) Unfold a fold containing the cursor, or
+            // 2) Unfold the closest fold on the current row.
+            Position pos = docDisplay_.getCursorPosition();
    
-            Position pos = range.getStart();
-   
+            AceFold containingCandidate = null;
             AceFold startCandidate = null;
             AceFold endCandidate = null;
    
             for (AceFold f : JsUtil.asIterable(docDisplay_.getFolds()))
             {
+               // Check to see whether this fold contains the cursor position.
+               if (f.getRange().contains(pos))
+               {
+                  if (containingCandidate == null ||
+                      containingCandidate.getRange().contains(f.getRange()))
+                  {
+                     containingCandidate = f;
+                  }
+               }
+               
                if (startCandidate == null
                    && f.getStart().getRow() == pos.getRow()
                    && f.getStart().getColumn() >= pos.getColumn())
@@ -4598,13 +4611,17 @@ public class TextEditingTarget implements
                   endCandidate = f;
                }
             }
-   
-            if (startCandidate == null || endCandidate == null)
+            
+            if (containingCandidate != null)
+            {
+               docDisplay_.unfold(containingCandidate);
+            }
+            else if (startCandidate == null ^ endCandidate == null)
             {
                docDisplay_.unfold(startCandidate != null ? startCandidate
                                                           : endCandidate);
             }
-            else if (startCandidate != null)
+            else if (startCandidate != null && endCandidate != null)
             {
                // Both are candidates; see which is closer
                int startDelta = startCandidate.getStart().getColumn() - pos.getColumn();

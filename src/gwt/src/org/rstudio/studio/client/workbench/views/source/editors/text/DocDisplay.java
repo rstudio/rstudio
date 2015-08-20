@@ -191,6 +191,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    Position getCursorPosition();
    void setCursorPosition(Position position);
+   
+   Position getCursorPositionScreen();
+   
    void moveCursorNearTop();
    void moveCursorNearTop(int rowOffset);
    void ensureCursorVisible();
