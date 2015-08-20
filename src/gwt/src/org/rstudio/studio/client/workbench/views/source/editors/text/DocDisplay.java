@@ -201,6 +201,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void scrollCursorIntoViewIfNecessary(int rowsAround);
    boolean isCursorInSingleLineString();
    
+   void gotoPageDown();
+   void gotoPageUp();
+   
    void ensureRowVisible(int row);
    
    InputEditorSelection search(String needle,

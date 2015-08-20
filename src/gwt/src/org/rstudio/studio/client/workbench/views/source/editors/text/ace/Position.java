@@ -81,5 +81,10 @@ public class Position extends JavaScriptObject
       this.row = position.row;
       this.column = position.column;
    }-*/;
+   
+   public final String asString()
+   {
+      return "[" + getRow() + ", " + getColumn() + "]";
+   }
       
 }

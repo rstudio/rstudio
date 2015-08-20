@@ -239,7 +239,16 @@ public class AceEditorNative extends JavaScriptObject {
    private static native void invokeFunctor(JavaScriptObject functor) /*-{
       functor();
    }-*/;
+   
+   public final native void scrollPageUp() /*-{ this.scrollPageUp(); }-*/;
+   public final native void scrollPageDown() /*-{ this.scrollPageDown(); }-*/;
 
+   public final native void gotoPageUp() /*-{ this.gotoPageUp(); }-*/;
+   public final native void gotoPageDown() /*-{ this.gotoPageDown(); }-*/;
+   
+   public final native void selectPageUp() /*-{ this.selectPageUp(); }-*/;
+   public final native void selectPageDown() /*-{ this.selectPageDown(); }-*/;
+   
    public final native void scrollToRow(int row) /*-{
       this.scrollToRow(row);
    }-*/;

@@ -1854,6 +1854,16 @@ public class AceEditor implements DocDisplay,
    {
       return StringUtil.isEndOfLineInRStringState(getCurrentLineUpToCursor());
    }
+   
+   public void gotoPageUp()
+   {
+      widget_.getEditor().gotoPageUp();
+   }
+   
+   public void gotoPageDown()
+   {
+      widget_.getEditor().gotoPageDown();
+   }
 
    public void scrollToBottom()
    {

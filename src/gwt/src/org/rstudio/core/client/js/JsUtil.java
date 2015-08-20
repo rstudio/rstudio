@@ -90,6 +90,39 @@ public class JsUtil
          }
       };
    }
+   
+   public static <T extends JavaScriptObject> Iterable<T> asReverseIterable(final JsArray<T> array)
+   {
+      return new Iterable<T>()
+      {
+         @Override
+         public Iterator<T> iterator()
+         {
+            return new Iterator<T>()
+            {
+               int index_ = array.length() - 1;
+
+               @Override
+               public boolean hasNext()
+               {
+                  return index_ > 0;
+               }
+
+               @Override
+               public T next()
+               {
+                  return array.get(index_--);
+               }
+
+               @Override
+               public void remove()
+               {
+                  throw new UnsupportedOperationException();
+               }
+            };
+         }
+      };
+   }
 
    public static boolean areEqual(JsArrayString a, JsArrayString b)
    {

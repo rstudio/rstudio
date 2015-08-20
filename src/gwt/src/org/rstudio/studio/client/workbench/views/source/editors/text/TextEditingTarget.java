@@ -746,6 +746,90 @@ public class TextEditingTarget implements
             });
    }
    
+   private boolean moveCursorToNextSectionOrChunk()
+   {
+      Scope current = docDisplay_.getCurrentScope();
+      ScopeList scopes = new ScopeList(docDisplay_);
+      Position cursorPos = docDisplay_.getCursorPosition();
+      
+      int n = scopes.size();
+      for (int i = 0; i < n; i++)
+      {
+         Scope scope = scopes.get(i);
+         if (!(scope.isChunk() || scope.isSection()))
+            continue;
+         
+         if (scope.equals(current))
+            continue;
+         
+         if (scope.getPreamble().isAfter(cursorPos))
+         {
+            if (scope.getPreamble().getRow() - cursorPos.getRow() < 50)
+            {
+               docDisplay_.setCursorPosition(scope.getPreamble());
+               return true;
+            }
+            return false;
+         }
+      }
+      
+      return false;
+   }
+   
+   private boolean moveCursorToPreviousSectionOrChunk()
+   {
+      ScopeList scopes = new ScopeList(docDisplay_);
+      Position cursorPos = docDisplay_.getCursorPosition();
+      
+      int n = scopes.size();
+      for (int i = n - 1; i >= 0; i--)
+      {
+         Scope scope = scopes.get(i);
+         if (!(scope.isChunk() || scope.isSection()))
+            continue;
+         
+         if (scope.getPreamble().isBefore(cursorPos))
+         {
+            if (cursorPos.getRow() - scope.getPreamble().getRow() < 50)
+            {
+               docDisplay_.setCursorPosition(scope.getPreamble());
+               return true;
+            }
+            return false;
+         }
+      }
+      
+      return false;
+   }
+   
+   @Handler
+   void onGoToNextSection()
+   {
+      if (docDisplay_.getFileType().isRmd() || docDisplay_.getFileType().isRpres())
+      {
+         if (!moveCursorToNextSectionOrChunk())
+            docDisplay_.gotoPageDown();
+      }
+      else
+      {
+         docDisplay_.gotoPageDown();
+      }
+   }
+   
+   @Handler
+   void onGoToPrevSection()
+   {
+      if (docDisplay_.getFileType().isRmd() || docDisplay_.getFileType().isRpres())
+      {
+         if (!moveCursorToPreviousSectionOrChunk())
+            docDisplay_.gotoPageUp();
+      }
+      else
+      {
+         docDisplay_.gotoPageUp();
+      }
+   }
+   
    public void onExecuteUserCommand(final ExecuteUserCommandEvent event)
    {
       withSavedDoc(new Command()
