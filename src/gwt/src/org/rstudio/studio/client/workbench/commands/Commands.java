@@ -415,6 +415,7 @@ public abstract class
 
    // Other
    public abstract AppCommand checkSpelling();   
+   public abstract AppCommand zoomCurrentPane();
    public abstract AppCommand maximizeConsole();
    
    public static final String KEYBINDINGS_PATH =

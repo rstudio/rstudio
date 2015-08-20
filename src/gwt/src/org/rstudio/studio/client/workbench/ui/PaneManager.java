@@ -14,8 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
+import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -30,6 +32,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Triad;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.layout.DualWindowLayoutPanel;
 import org.rstudio.core.client.layout.LogicalWindow;
@@ -201,6 +204,100 @@ public class PaneManager
                              tabSet2TabPanel_, tabSet2MinPanel_);
          }
       });
+   }
+   
+   @Handler
+   public void onZoomCurrentPane()
+   {
+      if (isAnimating_)
+         return;
+      
+      Element activeEl = DomUtils.getActiveElement();
+      
+      Element sourcePaneEl = sourceLogicalWindow_.getActiveWidget().getElement();
+      Element consolePaneEl = consolePane_.getElement();
+      
+      LogicalWindow activeWindow = null;
+      
+      while (activeEl != null)
+      {
+         activeEl = activeEl.getParentElement();
+         if (activeEl.equals(sourcePaneEl))
+         {
+            activeWindow = sourceLogicalWindow_;
+            break;
+         }
+         else if (activeEl.equals(consolePaneEl))
+         {
+            activeWindow = panesByName_.get("Console");
+            break;
+         }
+      }
+      
+      if (activeWindow == null)
+         return;
+      
+      if (activeWindow.getState() == WindowState.MAXIMIZE)
+         restorePaneLayout();
+      else
+         fullyMaximizeWindow(activeWindow);
+   }
+   
+   private void fullyMaximizeWindow(final LogicalWindow window)
+   {
+      maximizedWindow_ = window;
+      widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
+      boolean isLeftWidget =
+            DomUtils.contains(left_.getElement(), window.getActiveWidget().getElement());
+      
+      window.onWindowStateChange(new WindowStateChangeEvent(WindowState.MAXIMIZE));
+      
+      final double initialSize = panel_.getWidgetSize(right_);
+      final double targetSize = isLeftWidget ?
+            0 :
+            panel_.getOffsetWidth();
+      
+      horizontalResizeAnimation(initialSize, targetSize).run(300);
+   }
+   
+   private Animation horizontalResizeAnimation(final double start,
+                                               final double end)
+   {
+      return new Animation()
+      {
+         @Override
+         protected void onUpdate(double progress)
+         {
+            double size =
+                  (1 - progress) * start +
+                  progress * end;
+            
+            panel_.setWidgetSize(right_, size);
+         }
+
+         @Override
+         protected void onStart()
+         {
+            isAnimating_ = true;
+            super.onStart();
+         }
+
+         @Override
+         protected void onComplete()
+         {
+            isAnimating_ = false;
+            super.onComplete();
+         }
+      };
+   }
+   
+   private void restorePaneLayout()
+   {
+      if (maximizedWindow_ == null)
+         return;
+
+      maximizedWindow_.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
+      horizontalResizeAnimation(panel_.getWidgetSize(right_), widgetSizePriorToZoom_).run(300);
    }
    
    @Handler
@@ -535,4 +632,9 @@ public class PaneManager
    private MinimizedModuleTabLayoutPanel tabSet1MinPanel_;
    private WorkbenchTabPanel tabSet2TabPanel_;
    private MinimizedModuleTabLayoutPanel tabSet2MinPanel_;
+   
+   // Zoom-related members ----
+   private LogicalWindow maximizedWindow_;
+   private double widgetSizePriorToZoom_;
+   private boolean isAnimating_;
 }

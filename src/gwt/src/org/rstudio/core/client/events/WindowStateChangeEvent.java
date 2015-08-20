@@ -25,11 +25,24 @@ public class WindowStateChangeEvent extends GwtEvent<WindowStateChangeHandler>
    public WindowStateChangeEvent(WindowState newState)
    {
       newState_ = newState;
+      keepFocus_ = false;
    }
 
+   public WindowStateChangeEvent(WindowState newState,
+                                 boolean keepFocus)
+   {
+      newState_ = newState;
+      keepFocus_ = keepFocus;
+   }
+   
    public WindowState getNewState()
    {
       return newState_;
+   }
+   
+   public boolean getKeepFocus()
+   {
+      return keepFocus_;
    }
 
    @Override
@@ -45,4 +58,5 @@ public class WindowStateChangeEvent extends GwtEvent<WindowStateChangeHandler>
    }
 
    private final WindowState newState_;
+   private final boolean keepFocus_;
 }

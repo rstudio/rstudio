@@ -16,6 +16,7 @@ package org.rstudio.core.client.layout;
 
 import com.google.gwt.layout.client.Layout;
 import com.google.gwt.user.client.ui.Widget;
+
 import org.rstudio.core.client.theme.WindowFrame;
 
 import static org.rstudio.core.client.layout.WindowState.*;
@@ -27,10 +28,15 @@ class AnimationHelper
                                         LogicalWindow bottom,
                                         int normal,
                                         int splitterHeight,
-                                        boolean animate)
+                                        boolean animate,
+                                        boolean keepFocus)
    {
-      boolean focusGoesOnTop = animate && focusGoesOnTop(top, bottom);
-
+      boolean focusGoesOnTop = false;
+      if (keepFocus)
+         focusGoesOnTop = true;
+      else
+         focusGoesOnTop = animate && focusGoesOnTop(top, bottom);
+      
       int splitterPos;
       boolean splitterPosFromTop;
       if (bottom.getState() == WindowState.NORMAL)
@@ -171,6 +177,14 @@ class AnimationHelper
    {
       // If one window is maximized and the other is minimized, focus the
       // maximized one.
+      WindowState topState = top.getState();
+      WindowState bottomState = bottom.getState();
+      
+      if (topState == WindowState.MAXIMIZE && bottomState == WindowState.MINIMIZE)
+         return true;
+      else if (topState == WindowState.MINIMIZE && bottomState == WindowState.MAXIMIZE)
+         return false;
+      
       // If both windows are "normal", focus the one that was previously
       // minimized.
 
