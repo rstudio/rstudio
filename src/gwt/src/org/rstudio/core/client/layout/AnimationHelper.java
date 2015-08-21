@@ -29,13 +29,9 @@ class AnimationHelper
                                         int normal,
                                         int splitterHeight,
                                         boolean animate,
-                                        boolean keepFocus)
+                                        boolean skipFocusChange)
    {
-      boolean focusGoesOnTop = false;
-      if (keepFocus)
-         focusGoesOnTop = true;
-      else
-         focusGoesOnTop = animate && focusGoesOnTop(top, bottom);
+      boolean focusGoesOnTop = animate && focusGoesOnTop(top, bottom);
       
       int splitterPos;
       boolean splitterPosFromTop;
@@ -80,7 +76,8 @@ class AnimationHelper
                                  splitterPosFromTop,
                                  bottom.getState() == WindowState.NORMAL,
                                  animate,
-                                 focusGoesOnTop);
+                                 focusGoesOnTop,
+                                 skipFocusChange);
    }
 
    private static Widget getVisible(LogicalWindow window)
@@ -101,7 +98,8 @@ class AnimationHelper
                           boolean splitterPosFromTop,
                           boolean splitterVisible,
                           boolean animate,
-                          boolean focusGoesOnTop)
+                          boolean focusGoesOnTop,
+                          boolean skipFocusChange)
    {
       panel_ = panel;
       startWidgetTop_ = startWidgetTop;
@@ -115,6 +113,7 @@ class AnimationHelper
       splitterVisible_ = splitterVisible;
       animate_ = animate;
       focusGoesOnTop_ = focusGoesOnTop;
+      skipFocusChange_ = skipFocusChange;
    }
 
    public void animate()
@@ -137,6 +136,9 @@ class AnimationHelper
             public void onAnimationComplete()
             {
                finish();
+               if (skipFocusChange_)
+                  return;
+               
                ((WindowFrame)(focusGoesOnTop_
                               ? endWidgetTop_
                               : endWidgetBottom_)).focus();
@@ -225,4 +227,5 @@ class AnimationHelper
    boolean splitterVisible_;
    private final boolean animate_;
    private final boolean focusGoesOnTop_;
+   private final boolean skipFocusChange_;
 }
