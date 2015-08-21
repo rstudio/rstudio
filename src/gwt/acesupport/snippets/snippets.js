@@ -13,7 +13,7 @@
  *
  */
 
-define("rstudio/snippets", function(require, exports, module) {
+define("rstudio/snippets", ["require", "exports", "module"], function(require, exports, module) {
 
 exports.toSnippetText = function(snippets)
 {

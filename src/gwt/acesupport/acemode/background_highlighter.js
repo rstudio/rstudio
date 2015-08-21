@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-define("mode/background_highlighter", function(require, exports, module)
+define("mode/background_highlighter", ["require", "exports", "module"], function(require, exports, module)
 {
    var Range = require("ace/range").Range;
    var markerClass = "ace_foreign_line background_highlight";

@@ -18,7 +18,7 @@
  *
  */
 
-define("mode/rmarkdown", function(require, exports, module) {
+define("mode/rmarkdown", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var MarkdownMode = require("mode/markdown").Mode;

@@ -13,7 +13,7 @@
  *
  */
 
-define("mode/token_cursor", function(require, exports, module) {
+define("mode/token_cursor", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var Utils = require("mode/utils");

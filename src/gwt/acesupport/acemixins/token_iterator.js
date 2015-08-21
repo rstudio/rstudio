@@ -14,7 +14,7 @@
  */
 
 // Mixins for the Ace TokenIterator 'class'.
-define("mixins/token_iterator", function(require, exports, module) {
+define("mixins/token_iterator", ["require", "exports", "module"], function(require, exports, module) {
 
 var TokenIterator = require("ace/token_iterator").TokenIterator;
 var Range = require("ace/range").Range;

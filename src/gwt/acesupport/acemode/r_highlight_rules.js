@@ -20,7 +20,7 @@
 
 var $colorFunctionCalls = false;
 
-define("mode/r_highlight_rules", function(require, exports, module)
+define("mode/r_highlight_rules", ["require", "exports", "module"], function(require, exports, module)
 {
    function include(/*...*/) {
       var result = new Array(arguments.length);

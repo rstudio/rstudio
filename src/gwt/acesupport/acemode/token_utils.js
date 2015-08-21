@@ -13,7 +13,7 @@
  *
  */
 
-define("mode/token_utils", function(require, exports, module) {
+define("mode/token_utils", ["require", "exports", "module"], function(require, exports, module) {
 
 var TokenUtils = function(doc, tokenizer, tokens,
                           statePattern, codeBeginPattern, codeEndPattern) {

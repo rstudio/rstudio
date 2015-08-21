@@ -20,7 +20,7 @@
          };
       }
 
-define("rstudio/loader", function(require, exports, module) {
+define("rstudio/loader", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var event = require("ace/lib/event");

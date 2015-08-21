@@ -24,7 +24,7 @@
  *
  */
 
-define("mode/xml_highlight_rules", function(require, exports, module) {
+define("mode/xml_highlight_rules", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var xmlUtil = require("mode/xml_util");

@@ -26,7 +26,7 @@
  *
  */
 
-define("mode/c_cpp", function(require, exports, module) {
+define("mode/c_cpp", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var TextMode = require("ace/mode/text").Mode;

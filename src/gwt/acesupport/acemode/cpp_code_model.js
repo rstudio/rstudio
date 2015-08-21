@@ -13,7 +13,7 @@
  *
  */
 
-define("mode/cpp_code_model", function(require, exports, module) {
+define("mode/cpp_code_model", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var Range = require("ace/range").Range;

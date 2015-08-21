@@ -17,7 +17,7 @@
  *
  */
 
-define("mode/stan_highlight_rules", function(require, exports, module) {
+define("mode/stan_highlight_rules", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var lang = require("ace/lib/lang");

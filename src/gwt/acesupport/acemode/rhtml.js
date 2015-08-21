@@ -18,7 +18,7 @@
  *
  */
 
-define("mode/rhtml", function(require, exports, module) {
+define("mode/rhtml", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var HtmlMode = require("ace/mode/html").Mode;

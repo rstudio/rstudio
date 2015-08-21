@@ -13,7 +13,7 @@
  *
  */
 
-define("mode/r_code_model", function(require, exports, module) {
+define("mode/r_code_model", ["require", "exports", "module"], function(require, exports, module) {
 
 var Range = require("ace/range").Range;
 var TokenIterator = require("ace/token_iterator").TokenIterator;

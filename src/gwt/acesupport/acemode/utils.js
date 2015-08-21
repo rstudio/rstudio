@@ -13,7 +13,7 @@
  *
  */
 
-define("mode/utils", function(require, exports, module) {
+define("mode/utils", ["require", "exports", "module"], function(require, exports, module) {
 
 var Range = require("ace/range").Range;
 var TokenIterator = require("ace/token_iterator").TokenIterator;
