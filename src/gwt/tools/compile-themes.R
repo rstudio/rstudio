@@ -174,12 +174,12 @@ applyFixups.cobalt <- function(content, parsed) {
 }
 
 applyFixups.clouds_midnight <- function(content, parsed) {
-   content <- setPrintMarginColor(content, "#135")
+   content <- setPrintMarginColor(content, "#333")
    content
 }
 
 applyFixups.idle_fingers <- function(content, parsed) {
-   content <- setPrintMarginColor(content, "#257")
+   content <- setPrintMarginColor(content, "#555")
    content
 }
 
