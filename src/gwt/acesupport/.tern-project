@@ -4,13 +4,13 @@
         "browser"
     ],
 
-    "loadEagerly": [
-        "**/*.js"
-    ],
-
     "plugins": {
         "complete_strings": {},
-        "requirejs": {}
+        "requirejs": {
+            "paths": {
+                "ace": "../tools/ace/lib/ace/"
+            }
+        }
     }
 
 
