@@ -214,23 +214,18 @@ public class PaneManager
       
       Element activeEl = DomUtils.getActiveElement();
       
-      Element sourcePaneEl = sourceLogicalWindow_.getActiveWidget().getElement();
-      Element consolePaneEl = consolePane_.getElement();
-      
       LogicalWindow activeWindow = null;
       
       while (activeEl != null)
       {
          activeEl = activeEl.getParentElement();
-         if (activeEl.equals(sourcePaneEl))
+         for (LogicalWindow window : panes_)
          {
-            activeWindow = sourceLogicalWindow_;
-            break;
-         }
-         else if (activeEl.equals(consolePaneEl))
-         {
-            activeWindow = panesByName_.get("Console");
-            break;
+            if (activeEl.equals(window.getActiveWidget().getElement()))
+            {
+               activeWindow = window;
+               break;
+            }
          }
       }
       
@@ -343,7 +338,7 @@ public class PaneManager
       tabSet2TabPanel_ = ts2.second;
       tabSet2MinPanel_ = ts2.third;
    }
-
+   
    private ArrayList<Tab> tabNamesToTabs(JsArrayString tabNames)
    {
       ArrayList<Tab> tabList = new ArrayList<Tab>();
