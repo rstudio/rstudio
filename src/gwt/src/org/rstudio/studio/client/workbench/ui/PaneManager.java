@@ -23,6 +23,7 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.SplitterResizedEvent;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -281,6 +282,7 @@ public class PaneManager
          protected void onComplete()
          {
             isAnimating_ = false;
+            panel_.onSplitterResized(new SplitterResizedEvent());
             super.onComplete();
          }
       };
