@@ -142,9 +142,11 @@ public class AceCommandManager extends JavaScriptObject
    /*-{
       var command = this.byName[id];
       
-      if (command == null) {
-         throw new Error("No command with id '" + id + "'");
-      }
+      // The command can be null if it's an excluded command, or
+      // the user has manually editted their keybinding file and
+      // selected the ID of a non-existent command.
+      if (command == null)
+         return;
       
       // Clone the command (we don't want to modify the default
       // commands because we might want to reset in the future)
