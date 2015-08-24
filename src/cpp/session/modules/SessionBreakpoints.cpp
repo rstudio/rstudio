@@ -516,13 +516,20 @@ Error initBreakpoints()
        json::isType<core::json::Object>(breakpointStateValue))
    {
       json::Object breakpointState = breakpointStateValue.get_obj();
-      json::Array breakpointArray = breakpointState["breakpoints"].get_array();
-      s_breakpoints.clear();
-      BOOST_FOREACH(json::Value bp, breakpointArray)
+      
+      // Protect against the breakpoint array being serialized as an
+      // empty object
+      json::Value jsonBreakpointArray = breakpointState["breakpoints"];
+      if (json::isType<core::json::Array>(jsonBreakpointArray))
       {
-         if (json::isType<core::json::Object>(bp))
+         json::Array breakpointArray = jsonBreakpointArray.get_array();
+         s_breakpoints.clear();
+         BOOST_FOREACH(json::Value bp, breakpointArray)
          {
-            s_breakpoints.push_back(breakpointFromJson(bp.get_obj()));
+            if (json::isType<core::json::Object>(bp))
+            {
+               s_breakpoints.push_back(breakpointFromJson(bp.get_obj()));
+            }
          }
       }
    }
