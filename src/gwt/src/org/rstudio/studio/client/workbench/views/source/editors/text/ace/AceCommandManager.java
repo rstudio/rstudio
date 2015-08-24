@@ -170,17 +170,17 @@ public class AceCommandManager extends JavaScriptObject
    private static final native JsObject makeExcludedCommandsMap()
    /*-{
       
-      var bad = [
+      var excludedCommands = [
          "showSettingsMenu", "goToNextError", "goToPreviousError",
          "togglerecording", "replaymacro", "passKeysToBrowser",
          "copy", "cut", "cut_or_delete", "paste", "replace",
          "insertstring", "inserttext", "gotoline", "jumptomatching",
-         "backspace", "delete"
+         "backspace", "delete", "togglecomment"
       ];
       
       var map = {};
-      for (var i = 0; i < bad.length; i++) {
-         map[bad[i]] = true;
+      for (var i = 0; i < excludedCommands.length; i++) {
+         map[excludedCommands[i]] = true;
       }
       
       return map;
