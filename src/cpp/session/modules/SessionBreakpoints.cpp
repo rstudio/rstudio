@@ -520,7 +520,15 @@ Error initBreakpoints()
       // Protect against the breakpoint array being serialized as an
       // empty object
       json::Value jsonBreakpointArray = breakpointState["breakpoints"];
-      if (json::isType<core::json::Array>(jsonBreakpointArray))
+      if (!json::isType<core::json::Array>(jsonBreakpointArray))
+      {
+         Error error = json::errors::typeMismatch(
+                  jsonBreakpointArray,
+                  json::ArrayType,
+                  ERROR_LOCATION);
+         LOG_ERROR(error);
+      }
+      else
       {
          json::Array breakpointArray = jsonBreakpointArray.get_array();
          s_breakpoints.clear();
