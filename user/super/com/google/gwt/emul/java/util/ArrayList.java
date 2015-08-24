@@ -62,7 +62,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
 
   public ArrayList(Collection<? extends E> c) {
     // Avoid calling overridable methods from constructors
-    ArrayHelper.insertTo(array, 0, c.toArray());
+    array = (E[]) c.toArray();
   }
 
   public ArrayList(int initialCapacity) {

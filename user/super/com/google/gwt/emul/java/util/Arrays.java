@@ -19,7 +19,9 @@ package java.util;
 import static javaemul.internal.Coercions.ensureInt;
 import static javaemul.internal.InternalPreconditions.checkArgument;
 import static javaemul.internal.InternalPreconditions.checkArraySize;
+import static javaemul.internal.InternalPreconditions.checkCriticalPositionIndexes;
 import static javaemul.internal.InternalPreconditions.checkElementIndex;
+import static javaemul.internal.InternalPreconditions.checkNotNull;
 import static javaemul.internal.InternalPreconditions.checkPositionIndexes;
 
 import java.io.Serializable;
@@ -430,80 +432,72 @@ public class Arrays {
 
   public static <T> T[] copyOf(T[] original, int newLength) {
     checkArraySize(newLength);
+    checkNotNull(original, "original");
     T[] clone = ArrayHelper.clone(original, 0, newLength);
     ArrayHelper.setLength(clone, newLength);
     return clone;
   }
 
   public static boolean[] copyOfRange(boolean[] original, int from, int to) {
-    int newLength = getLengthFromRange(from, to);
-    boolean[] copy = new boolean[newLength];
-    System.arraycopy(original, from, copy, 0,
-        Math.min(original.length - from, newLength));
+    int len = getCopyLength(original, from, to);
+    boolean[] copy = new boolean[to - from];
+    ArrayHelper.copy(original, from, copy, 0, len);
     return copy;
   }
 
   public static byte[] copyOfRange(byte[] original, int from, int to) {
-    int newLength = getLengthFromRange(from, to);
-    byte[] copy = new byte[newLength];
-    System.arraycopy(original, from, copy, 0,
-        Math.min(original.length - from, newLength));
+    int len = getCopyLength(original, from, to);
+    byte[] copy = new byte[to - from];
+    ArrayHelper.copy(original, from, copy, 0, len);
     return copy;
   }
 
   public static char[] copyOfRange(char[] original, int from, int to) {
-    int newLength = getLengthFromRange(from, to);
-    char[] copy = new char[newLength];
-    System.arraycopy(original, from, copy, 0,
-        Math.min(original.length - from, newLength));
+    int len = getCopyLength(original, from, to);
+    char[] copy = new char[to - from];
+    ArrayHelper.copy(original, from, copy, 0, len);
     return copy;
   }
 
   public static double[] copyOfRange(double[] original, int from, int to) {
-    int newLength = getLengthFromRange(from, to);
-    double[] copy = new double[newLength];
-    System.arraycopy(original, from, copy, 0,
-        Math.min(original.length - from, newLength));
+    int len = getCopyLength(original, from, to);
+    double[] copy = new double[to - from];
+    ArrayHelper.copy(original, from, copy, 0, len);
     return copy;
   }
 
   public static float[] copyOfRange(float[] original, int from, int to) {
-    int newLength = getLengthFromRange(from, to);
-    float[] copy = new float[newLength];
-    System.arraycopy(original, from, copy, 0,
-        Math.min(original.length - from, newLength));
+    int len = getCopyLength(original, from, to);
+    float[] copy = new float[to - from];
+    ArrayHelper.copy(original, from, copy, 0, len);
     return copy;
   }
 
   public static int[] copyOfRange(int[] original, int from, int to) {
-    int newLength = getLengthFromRange(from, to);
-    int[] copy = new int[newLength];
-    System.arraycopy(original, from, copy, 0,
-        Math.min(original.length - from, newLength));
+    int len = getCopyLength(original, from, to);
+    int[] copy = new int[to - from];
+    ArrayHelper.copy(original, from, copy, 0, len);
     return copy;
   }
 
   public static long[] copyOfRange(long[] original, int from, int to) {
-    int newLength = getLengthFromRange(from, to);
-    long[] copy = new long[newLength];
-    System.arraycopy(original, from, copy, 0,
-        Math.min(original.length - from, newLength));
+    int len = getCopyLength(original, from, to);
+    long[] copy = new long[to - from];
+    ArrayHelper.copy(original, from, copy, 0, len);
     return copy;
   }
 
   public static short[] copyOfRange(short[] original, int from, int to) {
-    int newLength = getLengthFromRange(from, to);
-    short[] copy = new short[newLength];
-    System.arraycopy(original, from, copy, 0,
-        Math.min(original.length - from, newLength));
+    int len = getCopyLength(original, from, to);
+    short[] copy = new short[to - from];
+    ArrayHelper.copy(original, from, copy, 0, len);
     return copy;
   }
 
   public static <T> T[] copyOfRange(T[] original, int from, int to) {
-    int newLength = getLengthFromRange(from, to);
-    T[] copy = ArrayHelper.createFrom(original, newLength);
-    System.arraycopy(original, from, copy, 0,
-        Math.min(original.length - from, newLength));
+    int len = getCopyLength(original, from, to);
+    T[] copy = ArrayHelper.createFrom(original, to - from);
+    ArrayHelper.copy(original, from, copy, 0, len);
     return copy;
   }
 
@@ -1245,10 +1239,12 @@ public class Arrays {
     return b.toString();
   }
 
-  private static int getLengthFromRange(int from, int to) {
-    int length = to - from;
-    checkArgument(length >= 0, "%s > %s", from, to);
-    return length;
+  private static int getCopyLength(Object array, int from, int to) {
+    checkArgument(from <= to, "%s > %s", from, to);
+    int len = ArrayHelper.getLength(array);
+    to = Math.min(to, len);
+    checkCriticalPositionIndexes(from, to, len);
+    return to - from;
   }
 
   /**
