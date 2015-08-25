@@ -10,6 +10,8 @@
 # pragma once
 #endif
 
+#include <core/Backtrace.hpp>
+
 #include <vector>
 #include <map>
 #include <string>
@@ -342,6 +344,10 @@ namespace json_spirit
             std::ostringstream os;
 
             os << "value type is " << type() << " not " << vtype;
+            os << std::endl << std::endl << "Backtrace (most recent calls first):" <<
+                  std::endl << std::endl;
+            
+            rstudio::core::backtrace::printBacktrace(os);
 
             throw std::runtime_error( os.str() );
         }
