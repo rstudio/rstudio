@@ -27,6 +27,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.events.*;
+import org.rstudio.core.client.layout.LogicalWindow;
 import org.rstudio.core.client.theme.ModuleTabLayoutPanel;
 import org.rstudio.core.client.theme.WindowFrame;
 import org.rstudio.core.client.widget.model.ProvidesBusy;
@@ -41,8 +42,9 @@ class WorkbenchTabPanel
                  HasEnsureVisibleHandlers,
                  HasEnsureHeightHandlers
 {
-   public WorkbenchTabPanel(WindowFrame owner)
+   public WorkbenchTabPanel(WindowFrame owner, LogicalWindow parentWindow)
    {
+      parentWindow_ = parentWindow;
       tabPanel_ = new ModuleTabLayoutPanel(owner);
       tabPanel_.setSize("100%", "100%");
       tabPanel_.addStyleDependentName("Workbench");
@@ -262,9 +264,15 @@ class WorkbenchTabPanel
       tabs_.clear();
       clearing_ = false;
    }
+   
+   public LogicalWindow getParentWindow()
+   {
+      return parentWindow_;
+   }
 
    private ModuleTabLayoutPanel tabPanel_;
    private ArrayList<WorkbenchTab> tabs_ = new ArrayList<WorkbenchTab>();
+   private final LogicalWindow parentWindow_;
    private final HandlerRegistrations releaseOnUnload_ = new HandlerRegistrations();
    private boolean clearing_ = false;
    

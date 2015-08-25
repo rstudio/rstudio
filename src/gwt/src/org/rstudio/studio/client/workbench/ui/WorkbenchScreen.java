@@ -317,6 +317,29 @@ public class WorkbenchScreen extends Composite
    void onActivateBuild() { paneManager_.activateTab(Tab.Build); }
    @Handler
    void onActivatePresentation() { paneManager_.activateTab(Tab.Presentation);}
+   
+   @Handler
+   void onZoomEnvironment() { paneManager_.zoomTab(Tab.Environment); }
+   @Handler
+   void onZoomHistory() { paneManager_.zoomTab(Tab.History); }
+   @Handler
+   void onZoomFiles() { paneManager_.zoomTab(Tab.Files); }
+   @Handler
+   void onZoomPlots() { paneManager_.zoomTab(Tab.Plots); }
+   @Handler
+   void onZoomPackages() { paneManager_.zoomTab(Tab.Packages); }
+   @Handler
+   void onZoomHelp() 
+   { 
+      paneManager_.zoomTab(Tab.Help); 
+      eventBus_.fireEvent(new ActivateHelpEvent());
+   }
+   @Handler
+   void onZoomVcs() { paneManager_.zoomTab(Tab.VCS); }
+   @Handler
+   void onZoomBuild() { paneManager_.zoomTab(Tab.Build); }
+   @Handler
+   void onZoomPresentation() { paneManager_.zoomTab(Tab.Presentation);}
 
    @Handler
    void onMacPreferences()

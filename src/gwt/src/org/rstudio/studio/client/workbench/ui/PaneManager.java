@@ -207,6 +207,25 @@ public class PaneManager
       });
    }
    
+   LogicalWindow getParentLogicalWindow(Element el)
+   {
+      LogicalWindow targetWindow = null;
+      
+      while (el != null && targetWindow == null)
+      {
+         el = el.getParentElement();
+         for (LogicalWindow window : panes_)
+         {
+            if (el.equals(window.getActiveWidget().getElement()))
+            {
+               targetWindow = window;
+               break;
+            }
+         }
+      }
+      return targetWindow;
+   }
+   
    @Handler
    public void onZoomCurrentPane()
    {
@@ -214,29 +233,19 @@ public class PaneManager
          return;
       
       Element activeEl = DomUtils.getActiveElement();
-      
-      LogicalWindow activeWindow = null;
-      
-      while (activeEl != null)
-      {
-         activeEl = activeEl.getParentElement();
-         for (LogicalWindow window : panes_)
-         {
-            if (activeEl.equals(window.getActiveWidget().getElement()))
-            {
-               activeWindow = window;
-               break;
-            }
-         }
-      }
-      
+      LogicalWindow activeWindow = getParentLogicalWindow(activeEl);
       if (activeWindow == null)
          return;
+      toggleWindowZoom(activeWindow);
+   }
+   
+   private void toggleWindowZoom(LogicalWindow window)
+   {
       
-      if (activeWindow.getState() == WindowState.MAXIMIZE)
+      if (window.getState() == WindowState.MAXIMIZE)
          restorePaneLayout();
       else
-         fullyMaximizeWindow(activeWindow);
+         fullyMaximizeWindow(window);
    }
    
    private void fullyMaximizeWindow(final LogicalWindow window)
@@ -404,7 +413,16 @@ public class PaneManager
 
    public void activateTab(Tab tab)
    {
-      tabToPanel_.get(tab).selectTab(tabToIndex_.get(tab));
+      WorkbenchTabPanel panel = getOwnerTabPanel(tab);
+      LogicalWindow parent = panel.getParentWindow();
+      if (parent.getState() == WindowState.MINIMIZE ||
+          parent.getState() == WindowState.HIDE)
+      {
+         parent.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL));
+      }
+      
+      int index = tabToIndex_.get(tab);
+      panel.selectTab(index);
    }
    
    public void activateTab(String tabName)
@@ -412,6 +430,16 @@ public class PaneManager
       Tab tab = tabForName(tabName);
       if (tab != null)
          activateTab(tab);
+   }
+   
+   public void zoomTab(Tab tab)
+   {
+      activateTab(tab);
+      LogicalWindow parentWindow = getParentLogicalWindow(getOwnerTabPanel(tab).getElement());
+      if (parentWindow == null)
+         return;
+      
+      toggleWindowZoom(parentWindow);
    }
 
    public ConsolePane getConsole()
@@ -452,9 +480,13 @@ public class PaneManager
             commands_.goToWorkingDir().createToolbarButton();
       goToWorkingDirButton.addStyleName(
             ThemeResources.INSTANCE.themeStyles().windowFrameToolbarButton());
+      
+      LogicalWindow logicalWindow =
+            new LogicalWindow(frame, new MinimizedWindowFrame("Console"));
 
       @SuppressWarnings("unused")
       ConsoleTabPanel consoleTabPanel = new ConsoleTabPanel(frame,
+                                                            logicalWindow,
                                                             consolePane_,
                                                             compilePdfTab_,
                                                             findOutputTab_,
@@ -465,8 +497,8 @@ public class PaneManager
                                                             eventBus_,
                                                             consoleInterrupt_,
                                                             goToWorkingDirButton);
-
-      return new LogicalWindow(frame, new MinimizedWindowFrame("Console"));
+      
+      return logicalWindow;
    }
 
    private LogicalWindow createSource()
@@ -484,8 +516,10 @@ public class PaneManager
          createTabSet(String persisterName, ArrayList<Tab> tabs)
    {
       final WindowFrame frame = new WindowFrame();
-      final WorkbenchTabPanel tabPanel = new WorkbenchTabPanel(frame);
-      MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel();
+      final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel();
+      final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
+
+      final WorkbenchTabPanel tabPanel = new WorkbenchTabPanel(frame, logicalWindow);
 
       populateTabPanel(tabs, tabPanel, minimized);
 
@@ -511,7 +545,7 @@ public class PaneManager
       new SelectedTabStateValue(persisterName, tabPanel);
 
       return new Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel>(
-            new LogicalWindow(frame, minimized),
+            logicalWindow,
             tabPanel,
             minimized);
    }

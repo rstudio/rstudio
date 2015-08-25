@@ -82,6 +82,7 @@ public abstract class
    public abstract AppCommand compileNotebook();
    public abstract AppCommand synctexSearch();
    public abstract AppCommand activateSource();
+   public abstract AppCommand zoomSource();
    public abstract AppCommand printSourceDoc();
    public abstract AppCommand vcsFileLog();
    public abstract AppCommand vcsFileDiff();
@@ -156,6 +157,7 @@ public abstract class
    public abstract AppCommand restartR();
    public abstract AppCommand terminateR();
    public abstract AppCommand activateConsole();
+   public abstract AppCommand zoomConsole();
 
    // Files
    public abstract AppCommand newFolder();
@@ -167,6 +169,7 @@ public abstract class
    public abstract AppCommand deleteFiles();
    public abstract AppCommand refreshFiles();
    public abstract AppCommand activateFiles();
+   public abstract AppCommand zoomFiles();
    public abstract AppCommand goToWorkingDir();
    public abstract AppCommand setAsWorkingDir();
    public abstract AppCommand setWorkingDirToFilesPane();
@@ -189,6 +192,7 @@ public abstract class
    public abstract AppCommand vcsAddFiles();
    public abstract AppCommand vcsRemoveFiles();
    public abstract AppCommand activateVcs();
+   public abstract AppCommand zoomVcs();
    public abstract AppCommand vcsResolve();
    
    // PDF
@@ -211,6 +215,7 @@ public abstract class
    public abstract AppCommand presentationViewInBrowser();
    public abstract AppCommand presentationSaveAsStandalone();
    public abstract AppCommand activatePresentation();
+   public abstract AppCommand zoomPresentation();
    public abstract AppCommand tutorialFeedback();
    public abstract AppCommand clearPresentationCache();
    
@@ -247,6 +252,7 @@ public abstract class
    public abstract AppCommand historyShowContext();
    public abstract AppCommand historyDismissContext();
    public abstract AppCommand activateHistory();
+   public abstract AppCommand zoomHistory();
 
    // Workspace
    public abstract AppCommand clearWorkspace();
@@ -258,6 +264,7 @@ public abstract class
 
    // Environment
    public abstract AppCommand activateEnvironment();
+   public abstract AppCommand zoomEnvironment();
    public abstract AppCommand refreshEnvironment();
  
    // Plots
@@ -271,6 +278,7 @@ public abstract class
    public abstract AppCommand clearPlots();
    public abstract AppCommand refreshPlot();
    public abstract AppCommand activatePlots();
+   public abstract AppCommand zoomPlots();
    public abstract AppCommand showManipulator();
 
    // Packages
@@ -278,6 +286,7 @@ public abstract class
    public abstract AppCommand updatePackages();
    public abstract AppCommand refreshPackages();
    public abstract AppCommand activatePackages();
+   public abstract AppCommand zoomPackages();
    
    // // packrat
    public abstract AppCommand packratBootstrap();
@@ -313,6 +322,7 @@ public abstract class
    public abstract AppCommand raiseException();
    public abstract AppCommand raiseException2();
    public abstract AppCommand activateHelp();
+   public abstract AppCommand zoomHelp();
    public abstract AppCommand showAboutDialog();
    public abstract AppCommand checkForUpdates();
    public abstract AppCommand helpUsingRStudio();
@@ -362,6 +372,7 @@ public abstract class
    public abstract AppCommand stopBuild();
    public abstract AppCommand buildToolsProjectSetup();
    public abstract AppCommand activateBuild();
+   public abstract AppCommand zoomBuild();
    
    // Clipboard placeholders
    public abstract AppCommand undoDummy();
