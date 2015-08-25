@@ -20,6 +20,7 @@
 # include <iostream>
 # include <boost/regex.hpp>
 # include <execinfo.h>
+# include <cxxabi.h>
 #endif
 
 namespace rstudio {
