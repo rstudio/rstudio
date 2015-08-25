@@ -32,10 +32,10 @@ std::string demangle(const std::string& name)
    
 #ifndef _WIN32
    int status = -1;
-   char* demangled = ::abi::__cxa_demangle(name.c_str(), 0, 0, &status);
+   char* demangled = ::abi::__cxa_demangle(name.c_str(), NULL, NULL, &status);
    if (status == 0) {
       result = demangled;
-      free(demangled);
+      ::free(demangled);
    }
 #endif
   
@@ -45,6 +45,8 @@ std::string demangle(const std::string& name)
 void printBacktrace(std::ostream& os)
 {
 #ifndef _WIN32
+   
+   os << "Backtrace (most recent calls first):" << std::endl << std::endl;
    
    std::size_t maxDepth = 100;
    std::size_t stackDepth;

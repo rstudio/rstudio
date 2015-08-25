@@ -343,10 +343,7 @@ namespace json_spirit
         {
             std::ostringstream os;
 
-            os << "value type is " << type() << " not " << vtype;
-            os << std::endl << std::endl << "Backtrace (most recent calls first):" <<
-                  std::endl << std::endl;
-            
+            os << "value type is " << type() << " not " << vtype << std::endl;
             rstudio::core::backtrace::printBacktrace(os);
 
             throw std::runtime_error( os.str() );

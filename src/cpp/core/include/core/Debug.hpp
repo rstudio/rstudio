@@ -21,8 +21,6 @@
 #include <vector>
 #include <map>
 
-#include <boost/regex.hpp>
-
 namespace rstudio {
 namespace core {
 namespace debug {
