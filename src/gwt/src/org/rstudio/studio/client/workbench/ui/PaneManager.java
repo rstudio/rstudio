@@ -46,6 +46,7 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
@@ -205,6 +206,20 @@ public class PaneManager
                              tabSet2TabPanel_, tabSet2MinPanel_);
          }
       });
+      
+      eventBus_.addHandler(ZoomPaneEvent.TYPE, new ZoomPaneEvent.Handler()
+      {
+         @Override
+         public void onZoomPane(ZoomPaneEvent event)
+         {
+            String pane = event.getPane();
+            LogicalWindow window = panesByName_.get(pane);
+            assert window != null :
+               "No pane with name '" + pane + "'";
+            
+            toggleWindowZoom(window);
+         }
+      });
    }
    
    LogicalWindow getParentLogicalWindow(Element el)
@@ -239,9 +254,8 @@ public class PaneManager
       toggleWindowZoom(activeWindow);
    }
    
-   private void toggleWindowZoom(LogicalWindow window)
+   public void toggleWindowZoom(LogicalWindow window)
    {
-      
       if (window.getState() == WindowState.MAXIMIZE)
          restorePaneLayout();
       else
