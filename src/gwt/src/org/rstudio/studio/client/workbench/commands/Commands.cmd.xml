@@ -227,18 +227,21 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="firstTab"/>
          <cmd refid="lastTab"/>
          <separator/>
-         <cmd refid="activateSource"/>
-         <cmd refid="activateConsole"/>
-         <cmd refid="activateHelp"/>
-         <separator/>
-         <cmd refid="activateHistory"/>
-         <cmd refid="activateFiles"/>
-         <cmd refid="activatePlots"/>
-         <cmd refid="activatePackages"/>
-         <cmd refid="activateEnvironment"/>
-         <cmd refid="activateVcs"/>
-         <cmd refid="activateBuild"/>
-         <separator/>
+         
+         <menu label="_Show">
+            <cmd refid="activateSource"/>
+            <cmd refid="activateConsole"/>
+            <cmd refid="activateHelp"/>
+            <separator/>
+            <cmd refid="activateHistory"/>
+            <cmd refid="activateFiles"/>
+            <cmd refid="activatePlots"/>
+            <cmd refid="activatePackages"/>
+            <cmd refid="activateEnvironment"/>
+            <cmd refid="activateVcs"/>
+            <cmd refid="activateBuild"/>
+         </menu>
+         
          <menu label="_Zoom">
             <cmd refid="zoomSource"/>
             <cmd refid="zoomConsole"/>
@@ -254,6 +257,7 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="endZoom"/>
          </menu>
+         
          <separator/>
          <cmd refid="synctexSearch"/>
       </menu>
