@@ -168,6 +168,32 @@ public class GlobalToolbar extends Toolbar
          addLeftWidget(vcsButton);
       }
       
+      // zoom button
+      addLeftSeparator();
+      
+      ToolbarPopupMenu zoomMenu = new ToolbarPopupMenu();
+      zoomMenu.addItem(commands_.zoomSource().createMenuItem(false));
+      zoomMenu.addItem(commands_.zoomConsole().createMenuItem(false));
+      zoomMenu.addItem(commands_.zoomHelp().createMenuItem(false));
+      zoomMenu.addSeparator();
+      zoomMenu.addItem(commands_.zoomHistory().createMenuItem(false));
+      zoomMenu.addItem(commands_.zoomFiles().createMenuItem(false));
+      zoomMenu.addItem(commands_.zoomPlots().createMenuItem(false));
+      zoomMenu.addItem(commands_.zoomPackages().createMenuItem(false));
+      zoomMenu.addItem(commands_.zoomEnvironment().createMenuItem(false));
+      zoomMenu.addItem(commands_.zoomVcs().createMenuItem(false));
+      zoomMenu.addItem(commands_.zoomBuild().createMenuItem(false));
+      zoomMenu.addSeparator();
+      zoomMenu.addItem(commands_.endZoom().createMenuItem(false));
+      
+      ImageResource zoomIcon = ThemeResources.INSTANCE.smallMagGlassIcon();
+      ToolbarButton zoomButton = new ToolbarButton(
+            null,
+            zoomIcon,
+            zoomMenu);
+      zoomButton.setTitle("Zoom");
+      
+      addLeftWidget(zoomButton);
       // project popup menu
       ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
                                                           commands_);

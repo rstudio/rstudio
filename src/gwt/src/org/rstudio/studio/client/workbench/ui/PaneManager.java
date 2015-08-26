@@ -251,6 +251,12 @@ public class PaneManager
       toggleWindowZoom(activeWindow);
    }
    
+   @Handler
+   public void onEndZoom()
+   {
+      restorePaneLayout();
+   }
+   
    public void toggleWindowZoom(LogicalWindow window)
    {
       if (isAnimating_)

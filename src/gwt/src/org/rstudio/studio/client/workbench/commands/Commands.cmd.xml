@@ -251,6 +251,8 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="zoomEnvironment"/>
             <cmd refid="zoomVcs"/>
             <cmd refid="zoomBuild"/>
+            <separator/>
+            <cmd refid="endZoom"/>
          </menu>
          <separator/>
          <cmd refid="synctexSearch"/>
@@ -1055,6 +1057,9 @@ well as menu structures (for main menu and popup menus).
         label="Zoom Presentation Pane"
         menuLabel="Zoom Presentation"
         windowMode="main"/>
+        
+   <cmd id="endZoom"
+        label="End Zoom"/>
         
         
    <cmd id="jumpTo"
