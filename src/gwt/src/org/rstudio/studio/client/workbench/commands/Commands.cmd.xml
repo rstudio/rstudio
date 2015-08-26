@@ -239,6 +239,20 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activateVcs"/>
          <cmd refid="activateBuild"/>
          <separator/>
+         <menu label="_Zoom">
+            <cmd refid="zoomSource"/>
+            <cmd refid="zoomConsole"/>
+            <cmd refid="zoomHelp"/>
+            <separator/>
+            <cmd refid="zoomHistory"/>
+            <cmd refid="zoomFiles"/>
+            <cmd refid="zoomPlots"/>
+            <cmd refid="zoomPackages"/>
+            <cmd refid="zoomEnvironment"/>
+            <cmd refid="zoomVcs"/>
+            <cmd refid="zoomBuild"/>
+         </menu>
+         <separator/>
          <cmd refid="synctexSearch"/>
       </menu>
 
@@ -981,6 +995,67 @@ well as menu structures (for main menu and popup menus).
         label="Show Presentation Pane"
         menuLabel="Show Presentation"
         windowMode="main"/>
+        
+        
+   <cmd id="zoomSource"
+        label="Zoom Source"
+        menuLabel="Zoom Source"/>
+        
+   <cmd id="zoomConsole"
+        label="Zoom Console"
+        menuLabel="Zoom Console"
+        windowMode="main"/>
+        
+   <cmd id="zoomEnvironment"
+        label="Zoom Environment Pane"
+        menuLabel="Zoom Environment"
+        windowMode="main"/>
+        
+   <cmd id="zoomData"
+        label="Zoom Data Pane"
+        menuLabel="Zoom Data"
+        windowMode="main"/>
+        
+   <cmd id="zoomHistory"
+        label="Zoom History Pane"
+        menuLabel="Zoom History"
+        windowMode="main"/>
+        
+   <cmd id="zoomFiles"
+        label="Zoom Files Pane"
+        menuLabel="Zoom Files"
+        windowMode="main"/>
+        
+   <cmd id="zoomPlots"
+        label="Zoom Plots Pane"
+        menuLabel="Zoom Plots"
+        windowMode="main"/>
+        
+   <cmd id="zoomPackages"
+        label="Zoom Packages Pane"
+        menuLabel="Zoom Packages"
+        windowMode="main"/>
+        
+   <cmd id="zoomHelp"
+        label="Zoom Help Pane"
+        menuLabel="Zoom Help"
+        windowMode="main"/>
+        
+   <cmd id="zoomVcs"
+        label="Zoom VCS Pane"
+        menuLabel="Zoom Vcs"
+        windowMode="main"/>
+        
+   <cmd id="zoomBuild"
+        label="Zoom Build Pane"
+        menuLabel="Zoom Build"
+        windowMode="main"/>
+        
+   <cmd id="zoomPresentation"
+        label="Zoom Presentation Pane"
+        menuLabel="Zoom Presentation"
+        windowMode="main"/>
+        
         
    <cmd id="jumpTo"
         label="Jump To..."
