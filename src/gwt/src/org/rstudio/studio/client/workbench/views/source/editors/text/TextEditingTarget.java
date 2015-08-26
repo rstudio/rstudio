@@ -2812,7 +2812,7 @@ public class TextEditingTarget implements
                                  + indentation
                                  + input.trim()
                                  + " <- "
-                                 + "function (" + args + ") {\n"
+                                 + "function(" + args + ") {\n"
                                  + StringUtil.indent(code, "  ")
                                  + "\n"
                                  + indentation
