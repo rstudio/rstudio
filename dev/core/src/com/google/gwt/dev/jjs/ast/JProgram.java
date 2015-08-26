@@ -76,8 +76,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
   }
 
   public static final Set<String> CODEGEN_TYPES_SET = Sets.newLinkedHashSet(Arrays.asList(
-      "com.google.gwt.lang.Array", "com.google.gwt.lang.Cast",
-      "com.google.gwt.lang.RuntimePropertyRegistry", "com.google.gwt.lang.Exceptions",
+      "com.google.gwt.lang.Array", "com.google.gwt.lang.Cast", "com.google.gwt.lang.Exceptions",
       "com.google.gwt.lang.LongLib", "com.google.gwt.lang.Stats", "com.google.gwt.lang.Util",
       "java.lang.Object"));
 

@@ -18,7 +18,6 @@ package com.google.gwt.core;
 import com.google.gwt.core.client.impl.AsyncFragmentLoaderTest;
 import com.google.gwt.core.client.testing.StubSchedulerTest;
 import com.google.gwt.dev.StrictModeTest;
-import com.google.gwt.lang.RuntimePropertyRegistryTest;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -30,7 +29,6 @@ public class CoreJreSuite {
   public static Test suite() {
     TestSuite suite = new TestSuite("All core tests");
     suite.addTestSuite(AsyncFragmentLoaderTest.class);
-    suite.addTestSuite(RuntimePropertyRegistryTest.class);
     suite.addTestSuite(StrictModeTest.class);
     suite.addTestSuite(StubSchedulerTest.class);
     return suite;
