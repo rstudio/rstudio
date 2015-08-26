@@ -973,6 +973,11 @@ public class StringUtil
              result.substring(1);
    }
    
+   public static native final String escapeRegex(String regexString) /*-{
+      var utils = $wnd.require("mode/utils");
+      return utils.escapeRegExp(regexString);
+   }-*/;
+   
    public static final HashMap<String, String> COMPLEMENTS =
          makeComplementsMap();
    

@@ -2881,11 +2881,15 @@ public class TextEditingTarget implements
    void onCommentUncomment()
    {
       if (isCursorInTexMode())
-         doCommentUncomment("%");
+         doCommentUncomment("%", null);
       else if (isCursorInRMode() || isCursorInYamlMode())
-         doCommentUncomment("#");
+         doCommentUncomment("#", null);
       else if (fileType_.isCpp() || fileType_.isStan())
-         doCommentUncomment("//"); 
+         doCommentUncomment("//", null); 
+      else if (fileType_.isPlainMarkdown())
+         doCommentUncomment("<!--", "-->");
+      else if (DocumentMode.isSelectionInMarkdownMode(docDisplay_))
+         doCommentUncomment("<!--", "-->");
    }
    
    @Handler
@@ -2945,111 +2949,134 @@ public class TextEditingTarget implements
       }
    }
 
-   private void doCommentUncomment(String c)
+   private void doCommentUncomment(String commentStart,
+                                   String commentEnd)
    {
-      InputEditorSelection initialSelection = docDisplay_.getSelection();
-      String indent = "";
-      boolean singleLineAction = initialSelection.isEmpty() ||
-            initialSelection.getStart().getLine().equals(
-                  initialSelection.getEnd().getLine());
-            
-      if (singleLineAction)
+      Range initialRange = docDisplay_.getSelectionRange();
+      
+      int rowStart = initialRange.getStart().getRow();
+      int rowEnd = initialRange.getEnd().getRow();
+      
+      boolean isSingleLineAction = rowStart == rowEnd;
+      boolean commentWhitespace = commentEnd == null;
+      
+      int lastLineLength = docDisplay_.getLine(rowEnd).length();
+      Range expanded = Range.create(rowStart, 0, rowEnd, lastLineLength);
+      docDisplay_.setSelectionRange(expanded);
+      
+      // First, figure out whether we're commenting or uncommenting.
+      boolean isCommentAction = false;
+      for (int row = rowStart; row <= rowEnd; row++)
       {
-         String currentLine = docDisplay_.getCurrentLine();
-         Match firstCharMatch = Pattern.create("([^\\s])").match(currentLine, 0);
-         if (firstCharMatch != null)
+         String line = docDisplay_.getLine(row);
+         String trimmed = line.trim();
+         
+         // Ignore lines that are just whitespace.
+         if (!commentWhitespace && trimmed.isEmpty())
+            continue;
+         
+         if (!trimmed.startsWith(commentStart))
          {
-            indent = currentLine.substring(0, firstCharMatch.getIndex());
+            isCommentAction = true;
+            break;
          }
-         else
+         
+         if (commentEnd != null && !trimmed.endsWith(commentEnd))
          {
-            indent = currentLine;
+            isCommentAction = true;
+            break;
          }
       }
       
-      boolean selectionCollapsed = docDisplay_.isSelectionCollapsed();
-      docDisplay_.fitSelectionToLines(true);
-      String selection = docDisplay_.getSelectionValue();
-
-      // If any line's first non-whitespace character is not #, then the whole
-      // selection should be commented. Exception: If the whole selection is
-      // whitespace, then we comment out the whitespace.
-      Match match = Pattern.create("^\\s*[^" + c + "\\s]").match(selection, 0);
-      boolean uncomment = match == null && selection.trim().length() != 0;
-      if (uncomment)
+      // Now, construct a new, commented selection to replace with.
+      StringBuilder builder = new StringBuilder();
+      if (isCommentAction)
       {
-         String prefix = c + "'?";
-         selection = selection.replaceAll("((^|\\n)\\s*)" + prefix + " ?", "$1");
+         for (int row = rowStart; row <= rowEnd; row++)
+         {
+            String line = docDisplay_.getLine(row);
+            String trimmed = line.trim();
+            
+            if (!commentWhitespace && trimmed.isEmpty())
+            {
+               if (row != rowEnd)
+                  builder.append("\n");
+               continue;
+            }
+            
+            builder.append(commentStart);
+            builder.append(" ");
+            builder.append(line);
+            if (commentEnd != null)
+            {
+               builder.append(" ");
+               builder.append(commentEnd);
+            }
+            
+            if (row != rowEnd)
+               builder.append("\n");
+         }
       }
       else
       {
-         // Check to see if we're commenting something that looks like Roxygen
-         Pattern pattern = Pattern.create("(^\\s*@)|(\\n\\s*@)");
-         boolean isRoxygen = pattern.match(selection, 0) != null;
-         
-         if (isRoxygen)
-            c = c + "'";
-         
-         if (singleLineAction)
-            selection = indent + c + " " + selection.replaceAll("^\\s*", "");
-         else
+         for (int row = rowStart; row <= rowEnd; row++)
          {
-            selection = c + " " + selection.replaceAll("\\n", "\n" + c + " ");
-
-            // If the selection ends at the very start of a line, we don't want
-            // to comment out that line. This enables Shift+DownArrow to select
-            // one line at a time.
-            if (selection.endsWith("\n" + c + " "))
-               selection = selection.substring(0, selection.length() - 1 - c.length());
+            String line = docDisplay_.getLine(row);
+            String trimmed = line.trim();
+            
+            if (trimmed.isEmpty())
+            {
+               if (row != rowEnd)
+                  builder.append("\n");
+               continue;
+            }
+            
+            boolean isCommentedLine = true;
+            int commentStartIdx = line.indexOf(commentStart);
+            if (commentStartIdx == -1)
+               isCommentedLine = false;
+            
+            int commentEndIdx = line.length();
+            if (commentEnd != null)
+            {
+               commentEndIdx = line.lastIndexOf(commentEnd);
+               if (commentEndIdx == -1)
+                  isCommentedLine = false;
+            }
+            
+            if (!isCommentedLine)
+               builder.append(line);
+            else
+            {
+               int startIdx = commentStartIdx + commentStart.length() + 1;
+               int endIdx = commentEndIdx;
+               String newLine = line.substring(startIdx, endIdx);
+               builder.append(StringUtil.trimRight(newLine));
+            }
+            
+            if (row != rowEnd)
+               builder.append("\n");
          }
       }
-
-      docDisplay_.replaceSelection(selection);
       
-      if (selectionCollapsed)
-         docDisplay_.collapseSelection(true);
+      docDisplay_.replaceSelection(builder.toString());
       
-      if (singleLineAction)
+      // Nudge the selection to match the commented action.
+      if (isSingleLineAction)
       {
-         int offset = c.length() + 1;
-         String line = docDisplay_.getCurrentLine();
-         Match matchPos = Pattern.create("([^\\s])").match(line, 0);
+         int diff = commentStart.length() + 1;
+         if (!isCommentAction)
+            diff = -diff;
          
-         InputEditorSelection newSelection;
-         if (uncomment)
-         {
-            if (initialSelection.isEmpty())
-            {
-               newSelection = new InputEditorSelection(
-                     initialSelection.getStart().movePosition(-offset, true),
-                     initialSelection.getStart().movePosition(-offset, true));
-            }
-            else
-            {
-               newSelection = new InputEditorSelection(
-                     initialSelection.getStart().movePosition(matchPos.getIndex(), false),
-                     initialSelection.getEnd().movePosition(-offset, true));
-            }
-         }
-         else
-         {
-            if (initialSelection.isEmpty())
-            {
-               newSelection = new InputEditorSelection(
-                     initialSelection.getStart().movePosition(offset, true),
-                     initialSelection.getStart().movePosition(offset, true));
-            }
-            else
-            {
-               newSelection = new InputEditorSelection(
-                     initialSelection.getStart().movePosition(matchPos.getIndex() + offset, false),
-                     initialSelection.getEnd().movePosition(offset, true));
-            }
-         }
-         docDisplay_.setSelection(newSelection);
+         int colStart = initialRange.getStart().getColumn();
+         int colEnd = initialRange.getEnd().getColumn();
+         Range newRange = Range.create(
+               rowStart,
+               colStart + diff,
+               rowStart,
+               colEnd + diff);
+         docDisplay_.setSelectionRange(newRange);
       }
-      
-      docDisplay_.focus();
    }
 
    @Handler
