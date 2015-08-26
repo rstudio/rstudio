@@ -262,7 +262,7 @@ public class PaneManager
       if (isAnimating_)
          return;
       
-      if (window.getState() == WindowState.MAXIMIZE)
+      if (window.getState() == WindowState.EXCLUSIVE)
          restorePaneLayout();
       else
          fullyMaximizeWindow(window);
@@ -277,12 +277,18 @@ public class PaneManager
       boolean isLeftWidget =
             DomUtils.contains(left_.getElement(), window.getActiveWidget().getElement());
       
-      window.onWindowStateChange(new WindowStateChangeEvent(WindowState.MAXIMIZE));
+      window.onWindowStateChange(new WindowStateChangeEvent(WindowState.EXCLUSIVE));
       
       final double initialSize = panel_.getWidgetSize(right_);
-      final double targetSize = isLeftWidget ?
+      
+      // Ensure that a couple pixels are left after zoom so that the pane
+      // can be manually pulled out (with the mouse).
+      double targetSize = isLeftWidget ?
             0 :
-            panel_.getOffsetWidth();
+            panel_.getOffsetWidth() - 3;
+      
+      if (targetSize < 0)
+         targetSize = 0;
       
       horizontalResizeAnimation(initialSize, targetSize).run(300);
    }
