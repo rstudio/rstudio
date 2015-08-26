@@ -29,6 +29,7 @@ public final class SafeHtmlUtils {
    */
   public static final SafeHtml EMPTY_SAFE_HTML = new SafeHtmlString("");
 
+  private static final RegExp HTML_CHARS_RE = RegExp.compile("[&<>'\"]");
   private static final RegExp AMP_RE = RegExp.compile("&", "g");
   private static final RegExp GT_RE = RegExp.compile(">", "g");
   private static final RegExp LT_RE = RegExp.compile("<", "g");
@@ -104,7 +105,7 @@ public final class SafeHtmlUtils {
 
   /**
    * HTML-escapes a character. HTML meta characters will be escaped as follows:
-   * 
+   *
    * <pre>
    * &amp; - &amp;amp;
    * &lt; - &amp;lt;
@@ -137,22 +138,30 @@ public final class SafeHtmlUtils {
   /**
    * HTML-escapes a string.
    *
-   * Note: The following variants of this function were profiled on FF36,
-   * Chrome6, IE8:
+   * <p>Note: The following variants of this function were profiled on FF40,
+   * Chrome44, Safari 8 and IE11:
    * <ol>
-   * <li>For each case, check indexOf, then use s.replace(regex, string)</li>
-   * <li>For each case, check indexOf, then use s.replaceAll()</li>
-   * <li>Check if any metachar is present using a regex, then use #1</li>
-   * <li>For each case, use s.replace(regex, string)</li>
+   * <li>For each metachar, check indexOf, then use s.replace(regex, string)
+   * <li>For each metachar use s.replace(regex, string)
+   * <li>Manual replace each metachar by looping through characters in a loop.
+   * <li>Check if any metachar is present using a regex, then use #1.
+   * <li>Check if any metachar is present using a regex, then use #2.
+   * <li>Check if any metachar is present using a regex, then use #3.
    * </ol>
    *
-   * #1 was found to be the fastest, and is used below.
+   * <p>For all browsers #4 was found to be the fastest, and is used below.
+   *
+   * <p>The only out-lier was firefox with #6 being the optimal option, but #6
+   * performs considerably worse in all other browsers.
    *
    * @param s the string to be escaped
    * @return the input string, with all occurrences of HTML meta-characters
    *         replaced with their corresponding HTML Entity References
    */
   public static String htmlEscape(String s) {
+    if (!HTML_CHARS_RE.test(s)) {
+      return s;
+    }
     if (s.indexOf("&") != -1) {
       s = AMP_RE.replace(s, "&amp;");
     }
