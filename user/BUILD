@@ -643,3 +643,13 @@ filegroup(
         exclude = ANT_EXCLUDES,
     ),
 )
+
+filegroup(
+    name = "emul",
+    srcs = glob(
+        [
+            "super/com/google/gwt/emul/java/**/*.java",
+        ],
+    ),
+    visibility = ["//third_party/java_src/j2cl:__subpackages__"],
+)
