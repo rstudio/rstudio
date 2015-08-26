@@ -244,9 +244,6 @@ public class PaneManager
    @Handler
    public void onZoomCurrentPane()
    {
-      if (isAnimating_)
-         return;
-      
       Element activeEl = DomUtils.getActiveElement();
       LogicalWindow activeWindow = getParentLogicalWindow(activeEl);
       if (activeWindow == null)
@@ -256,6 +253,9 @@ public class PaneManager
    
    public void toggleWindowZoom(LogicalWindow window)
    {
+      if (isAnimating_)
+         return;
+      
       if (window.getState() == WindowState.MAXIMIZE)
          restorePaneLayout();
       else
@@ -265,7 +265,9 @@ public class PaneManager
    private void fullyMaximizeWindow(final LogicalWindow window)
    {
       maximizedWindow_ = window;
-      widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
+      if (widgetSizePriorToZoom_ < 0)
+         widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
+      
       boolean isLeftWidget =
             DomUtils.contains(left_.getElement(), window.getActiveWidget().getElement());
       
@@ -315,9 +317,10 @@ public class PaneManager
    {
       if (maximizedWindow_ == null)
          return;
-
+      
       maximizedWindow_.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
       horizontalResizeAnimation(panel_.getWidgetSize(right_), widgetSizePriorToZoom_).run(300);
+      widgetSizePriorToZoom_ = -1;
    }
    
    @Handler
@@ -428,6 +431,8 @@ public class PaneManager
    public void activateTab(Tab tab)
    {
       WorkbenchTabPanel panel = getOwnerTabPanel(tab);
+      
+      // Ensure that the pane is visible (otherwise tab selection will fail)
       LogicalWindow parent = panel.getParentWindow();
       if (parent.getState() == WindowState.MINIMIZE ||
           parent.getState() == WindowState.HIDE)
@@ -449,7 +454,8 @@ public class PaneManager
    public void zoomTab(Tab tab)
    {
       activateTab(tab);
-      LogicalWindow parentWindow = getParentLogicalWindow(getOwnerTabPanel(tab).getElement());
+      WorkbenchTabPanel tabPanel = getOwnerTabPanel(tab);
+      LogicalWindow parentWindow = tabPanel.getParentWindow();
       if (parentWindow == null)
          return;
       
@@ -680,6 +686,6 @@ public class PaneManager
    
    // Zoom-related members ----
    private LogicalWindow maximizedWindow_;
-   private double widgetSizePriorToZoom_;
+   private double widgetSizePriorToZoom_ = -1;
    private boolean isAnimating_;
 }
