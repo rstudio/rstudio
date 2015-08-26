@@ -2960,74 +2960,97 @@ public class TextEditingTarget implements
       boolean isSingleLineAction = rowStart == rowEnd;
       boolean commentWhitespace = commentEnd == null;
       
-      int lastLineLength = docDisplay_.getLine(rowEnd).length();
-      Range expanded = Range.create(rowStart, 0, rowEnd, lastLineLength);
+      // Also figure out if we're commenting an Roxygen block.
+      boolean looksLikeRoxygen = false;
+      
+      Range expanded = Range.create(
+            rowStart,
+            0,
+            rowEnd,
+            docDisplay_.getLine(rowEnd).length());
       docDisplay_.setSelectionRange(expanded);
       
-      // First, figure out whether we're commenting or uncommenting.
-      boolean isCommentAction = false;
-      for (int row = rowStart; row <= rowEnd; row++)
+      boolean keepFinalNewline = false;
+      if (rowStart != rowEnd && initialRange.getEnd().getColumn() == 0)
       {
-         String line = docDisplay_.getLine(row);
+         rowEnd--;
+         keepFinalNewline = true;
+      }
+      
+      String[] lines = JsUtil.toStringArray(docDisplay_.getLines(rowStart, rowEnd));
+      String commonPrefix = StringUtil.getCommonPrefix(
+            lines,
+            true,
+            true);
+      
+      String commonIndent = StringUtil.getIndent(commonPrefix);
+      
+      // First, figure out whether we're commenting or uncommenting.
+      // If we discover any line that doesn't start with the comment sequence,
+      // then we'll comment the whole selection.
+      boolean isCommentAction = false;
+      for (String line : lines)
+      {
          String trimmed = line.trim();
          
          // Ignore lines that are just whitespace.
          if (!commentWhitespace && trimmed.isEmpty())
             continue;
          
-         if (!trimmed.startsWith(commentStart))
+         if (!isCommentAction)
          {
-            isCommentAction = true;
-            break;
+            if (!trimmed.startsWith(commentStart))
+               isCommentAction = true;
          }
          
-         if (commentEnd != null && !trimmed.endsWith(commentEnd))
+         if (!looksLikeRoxygen)
          {
-            isCommentAction = true;
-            break;
+            if (trimmed.startsWith("@"))
+               looksLikeRoxygen = true;
+            else if (trimmed.startsWith("#'"))
+               looksLikeRoxygen = true;
          }
       }
+      
+      if (looksLikeRoxygen)
+         commentStart += "'";
       
       // Now, construct a new, commented selection to replace with.
       StringBuilder builder = new StringBuilder();
       if (isCommentAction)
       {
-         for (int row = rowStart; row <= rowEnd; row++)
+         for (String line : lines)
          {
-            String line = docDisplay_.getLine(row);
             String trimmed = line.trim();
             
             if (!commentWhitespace && trimmed.isEmpty())
             {
-               if (row != rowEnd)
-                  builder.append("\n");
+               builder.append("\n");
                continue;
             }
             
+            builder.append(commonIndent);
             builder.append(commentStart);
             builder.append(" ");
-            builder.append(line);
+            builder.append(line.substring(commonIndent.length()));
             if (commentEnd != null)
             {
                builder.append(" ");
                builder.append(commentEnd);
             }
             
-            if (row != rowEnd)
-               builder.append("\n");
+            builder.append("\n");
          }
       }
       else
       {
-         for (int row = rowStart; row <= rowEnd; row++)
+         for (String line : lines)
          {
-            String line = docDisplay_.getLine(row);
             String trimmed = line.trim();
             
             if (trimmed.isEmpty())
             {
-               if (row != rowEnd)
-                  builder.append("\n");
+               builder.append("\n");
                continue;
             }
             
@@ -3045,29 +3068,35 @@ public class TextEditingTarget implements
             }
             
             if (!isCommentedLine)
-               builder.append(line);
-            else
             {
-               int startIdx = commentStartIdx + commentStart.length() + 1;
-               int endIdx = commentEndIdx;
-               String newLine = line.substring(startIdx, endIdx);
-               builder.append(StringUtil.trimRight(newLine));
+               builder.append(line);
+               continue;
             }
             
-            if (row != rowEnd)
-               builder.append("\n");
+            // We want to strip out the leading comment prefix,
+            // but preserve the indent.
+            int startIdx = commentStartIdx + commentStart.length();
+            if (Character.isSpace(line.charAt(startIdx)))
+               startIdx++;
+            
+            int endIdx = commentEndIdx;
+            String afterComment = line.substring(startIdx, endIdx);
+            builder.append(StringUtil.trimRight(commonIndent + afterComment));
+            
+            builder.append("\n");
          }
       }
       
-      docDisplay_.replaceSelection(builder.toString());
+      String newSelection = keepFinalNewline ?
+            builder.toString() :
+            builder.substring(0, builder.length() - 1);
+            
+      docDisplay_.replaceSelection(newSelection);
       
       // Nudge the selection to match the commented action.
       if (isSingleLineAction)
       {
-         int diff = commentStart.length() + 1;
-         if (!isCommentAction)
-            diff = -diff;
-         
+         int diff = newSelection.length() - lines[0].length();
          int colStart = initialRange.getStart().getColumn();
          int colEnd = initialRange.getEnd().getColumn();
          Range newRange = Range.create(
@@ -3419,7 +3448,7 @@ public class TextEditingTarget implements
    {
       String code = docDisplay_.getCode(selection);
       String[] lines = code.split("\n");
-      String prefix = StringUtil.getCommonPrefix(lines, true);
+      String prefix = StringUtil.getCommonPrefix(lines, true, false);
       Pattern pattern = Pattern.create("^\\s*" + commentPrefix + "+('?)\\s*");
       Match match = pattern.match(prefix, 0);
       // Selection includes non-comments? Abort.

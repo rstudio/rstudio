@@ -19,8 +19,8 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.AttachDetachException;
-
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.server.ServerError;
 
@@ -144,7 +144,8 @@ public class Debug
          return;
       
       Element textEl = Document.get().createSpanElement();
-      textEl.setInnerHTML("* " + message);
+      String safe = SafeHtmlUtils.fromString(message).asString();
+      textEl.setInnerHTML("* " + safe);
       consoleEl.appendChild(textEl);
       consoleEl.appendChild(Document.get().createBRElement());
       consoleEl.setScrollTop(Integer.MAX_VALUE);
