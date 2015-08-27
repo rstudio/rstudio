@@ -250,6 +250,14 @@ public:
       }
    }
    
+   bool isAtTopLevel() const
+   {
+      return braceLevel_ == 0 &&
+             parenLevel_ == 0 &&
+             bracketLevel_ == 0 &&
+             doubleBracketLevel_ == 0;
+   }
+   
    int braceLevel() const { return braceLevel_; }
    int parenLevel() const { return parenLevel_; }
    int bracketLevel() const { return bracketLevel_; }
@@ -411,7 +419,7 @@ void s4MethodIndexer(const RTokenCursor& cursor, const IndexStatus& status, RSou
 
 void variableAssignmentIndexer(const RTokenCursor& cursor, const IndexStatus& status, RSourceIndex* pIndex)
 {
-   if (status.braceLevel() == 0 && isLeftAssign(cursor) && cursor.offset() >= 2)
+   if (status.isAtTopLevel() && isLeftAssign(cursor) && cursor.offset() >= 2)
    {
       const RToken& prevToken = cursor.previousToken();
       if (prevToken.isType(RToken::ID) || prevToken.isType(RToken::STRING))
