@@ -1073,7 +1073,7 @@ assign(x = ".rs.acCompletionTypes",
          # those names are also valid for `$` completions.)
          else if (isS4(object) && length(names(object)))
          {
-            allNames <- names(object)
+            allNames <- .rs.getNames(object)
          }
          
          # Other objects

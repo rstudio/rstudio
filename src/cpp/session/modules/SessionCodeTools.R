@@ -516,6 +516,11 @@
          ls(object, all.names = TRUE)
       else if (inherits(object, "tbl") && "dplyr" %in% loadedNamespaces())
          dplyr::tbl_vars(object)
+      # For some reason, `jobjRef` objects (from rJava) return names containing
+      # parentheses after the associated function call, which confuses our completion
+      # system.
+      else if (inherits(object, "jobjRef"))
+         gsub("[\\(\\)]", "", names(object))
       else
          names(object)
    }, error = function(e) NULL)
