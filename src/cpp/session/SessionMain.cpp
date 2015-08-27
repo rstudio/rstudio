@@ -1821,12 +1821,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
                                  userSettings().removeHistoryDuplicates());
 
 
-   // register function editor on windows
-#ifdef _WIN32
    error = rstudio::r::exec::RFunction(".rs.registerFunctionEditor").call();
    if (error)
       LOG_ERROR(error);
-#endif
 
    // set flag indicating we had an abnormal end (if this doesn't get
    // unset by the time we launch again then we didn't terminate normally
