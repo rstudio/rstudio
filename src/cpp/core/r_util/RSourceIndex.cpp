@@ -408,11 +408,14 @@ void variableAssignmentIndexer(const RTokenCursor& cursor, const IndexStatus& st
             prevToken.isType(RToken::ID) ||
             prevToken.isType(RToken::STRING);
       
-      if (isExpectedType && cursor.offset() >= 2)
+      if (isExpectedType)
       {
-         const RToken& prevPrevToken = cursor.previousToken(2);
-         if (isBinaryOp(prevPrevToken))
-            return;
+         if (cursor.offset() >= 2)
+         {
+            const RToken& prevPrevToken = cursor.previousToken(2);
+            if (isBinaryOp(prevPrevToken))
+               return;
+         }
          
          addSourceItem(type,
                        prevToken,
