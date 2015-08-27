@@ -336,30 +336,6 @@ void libraryCallIndexer(const RTokenCursor& cursor, const IndexStatus& status, R
    }
 }
 
-void functionIndexer(const RTokenCursor& cursor, const IndexStatus& status, RSourceIndex* pIndex)
-{
-   if (cursor.isType(RToken::ID) && cursor.contentEquals(L"function"))
-   {
-      RTokenCursor clone = cursor.clone();
-      if (!clone.moveToPreviousToken())
-         return;
-      
-      if (!isLeftAssign(clone))
-         return;
-      
-      if (!clone.moveToPreviousToken())
-         return;
-      
-      if (clone.isType(RToken::ID) || clone.isType(RToken::STRING))
-      {
-         addSourceItem(RSourceItem::Function,
-                       clone,
-                       status,
-                       pIndex);
-      }
-   }
-}
-
 void s4MethodIndexer(const RTokenCursor& cursor, const IndexStatus& status, RSourceIndex* pIndex)
 {
    if (isMethodOrClassDefinition(cursor))
@@ -421,6 +397,12 @@ void variableAssignmentIndexer(const RTokenCursor& cursor, const IndexStatus& st
 {
    if (status.isAtTopLevel() && isLeftAssign(cursor) && cursor.offset() >= 2)
    {
+      const RToken& nextToken = cursor.nextToken();
+      RSourceItem::Type type =
+            nextToken.contentEquals(L"function") ?
+            RSourceItem::Function :
+            RSourceItem::Variable;
+      
       const RToken& prevToken = cursor.previousToken();
       if (prevToken.isType(RToken::ID) || prevToken.isType(RToken::STRING))
       {
@@ -428,7 +410,7 @@ void variableAssignmentIndexer(const RTokenCursor& cursor, const IndexStatus& st
          if (isBinaryOp(prevPrevToken))
             return;
          
-         addSourceItem(RSourceItem::Variable,
+         addSourceItem(type,
                        prevToken,
                        status,
                        pIndex);
@@ -441,7 +423,6 @@ std::vector<Indexer> makeIndexers()
    std::vector<Indexer> indexers;
    
    indexers.push_back(libraryCallIndexer);
-   indexers.push_back(functionIndexer);
    indexers.push_back(s4MethodIndexer);
    indexers.push_back(variableAssignmentIndexer);
    
