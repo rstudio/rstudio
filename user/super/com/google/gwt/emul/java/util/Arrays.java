@@ -27,6 +27,7 @@ import static javaemul.internal.InternalPreconditions.checkPositionIndexes;
 import java.io.Serializable;
 
 import javaemul.internal.ArrayHelper;
+import javaemul.internal.LongCompareHolder;
 
 /**
  * Utility methods related to native arrays. <a
@@ -1010,7 +1011,7 @@ public class Arrays {
   }
 
   public static void sort(long[] array) {
-    nativeLongSort(array);
+    nativeLongSort(array, LongCompareHolder.getLongComparator());
   }
 
   public static void sort(long[] array, int fromIndex, int toIndex) {
@@ -1356,8 +1357,8 @@ public class Arrays {
   /**
    * Sort an entire array of number primitives.
    */
-  private static native void nativeLongSort(Object array) /*-{
-    array.sort(@com.google.gwt.lang.LongLib::compare(*));
+  private static native void nativeLongSort(Object array, Object compareFunction) /*-{
+    array.sort(compareFunction);
   }-*/;
 
   /**
@@ -1365,7 +1366,7 @@ public class Arrays {
    */
   private static void nativeLongSort(Object array, int fromIndex, int toIndex) {
     Object temp = ArrayHelper.unsafeClone(array, fromIndex, toIndex);
-    nativeLongSort(temp);
+    nativeLongSort(temp, LongCompareHolder.getLongComparator());
     ArrayHelper.copy(temp, 0, array, fromIndex, toIndex - fromIndex);
   }
 
