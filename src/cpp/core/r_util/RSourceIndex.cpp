@@ -395,7 +395,7 @@ void s4MethodIndexer(const RTokenCursor& cursor, const IndexStatus& status, RSou
 
 void variableAssignmentIndexer(const RTokenCursor& cursor, const IndexStatus& status, RSourceIndex* pIndex)
 {
-   if (status.isAtTopLevel() && isLeftAssign(cursor) && cursor.offset() >= 2)
+   if (status.isAtTopLevel() && isLeftAssign(cursor) && cursor.offset() >= 1)
    {
       const RToken& nextToken = cursor.nextToken();
       RSourceItem::Type type =
@@ -404,7 +404,11 @@ void variableAssignmentIndexer(const RTokenCursor& cursor, const IndexStatus& st
             RSourceItem::Variable;
       
       const RToken& prevToken = cursor.previousToken();
-      if (prevToken.isType(RToken::ID) || prevToken.isType(RToken::STRING))
+      bool isExpectedType =
+            prevToken.isType(RToken::ID) ||
+            prevToken.isType(RToken::STRING);
+      
+      if (isExpectedType && cursor.offset() >= 2)
       {
          const RToken& prevPrevToken = cursor.previousToken(2);
          if (isBinaryOp(prevPrevToken))
