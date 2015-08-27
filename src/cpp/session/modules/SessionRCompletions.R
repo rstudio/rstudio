@@ -1608,6 +1608,17 @@ assign(x = ".rs.acCompletionTypes",
    }
 })
 
+.rs.addFunction("getCompletionsEnvironmentVariables", function(token)
+{
+   candidates <- names(Sys.getenv())
+   results <- .rs.selectFuzzyMatches(candidates, token)
+   
+   .rs.makeCompletions(token = token,
+                       results = results,
+                       quote = TRUE,
+                       type = .rs.acCompletionTypes$STRING)
+})
+
 .rs.addJsonRpcHandler("get_completions", function(token,
                                                   string,
                                                   type,
@@ -1741,6 +1752,12 @@ assign(x = ".rs.acCompletionTypes",
       return(.rs.getCompletionsPackages(token = token,
                                         appendColons = TRUE,
                                         excludeOtherCompletions = TRUE))
+   
+   # environment variables
+   if (length(string) &&
+       string[[1]] %in% c("Sys.getenv", "Sys.setenv") &&
+       numCommas[[1]] == 0)
+      return(.rs.getCompletionsEnvironmentVariables(token))
    
    # No information on completions other than token
    if (!length(string))
