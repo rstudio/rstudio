@@ -17,6 +17,7 @@
 * Option to enable highlighting of R function calls
 * F2 now navigates into files (e.g. within calls to source)
 * PageUp and PageDown navigate between sections within Rmd, Rpres
+* Enabled comment/uncomment (Cmd+Shift+C) for Markdown documents
 
 ### R Markdown
 
