@@ -97,11 +97,11 @@ public class JavaClassHierarchySetupUtil {
     return @JavaClassHierarchySetupUtil::portableObjCreate(*)(superPrototype);
   }-*/;
 
-  public static native void copyObjectMethods(JavaScriptObject objectPrototypeId) /*-{
-    var prototype = @JavaClassHierarchySetupUtil::prototypesByTypeId[objectPrototypeId];
-    for (var property in prototype) {
-      if (_[property] === undefined) {
-        _[property] = prototype[property];
+  public static native void copyObjectProperties(JavaScriptObject from,
+      JavaScriptObject to) /*-{
+    for (var property in from) {
+      if (to[property] === undefined) {
+        to[property] = from[property];
       }
     }
   }-*/;

@@ -257,8 +257,11 @@ public class FragmentExtractor {
         }
         JClassType vtableType = vtableTypeNeeded(statement);
         if (vtableType != null && vtableType != currentVtableType) {
-          assert pendingVtableType == vtableType;
-          extractedStats.add(pendingDefineClass);
+          // there is no defineClass() call in -XclosureFormattedOutput
+          assert pendingVtableType == vtableType || pendingDefineClass == null;
+          if (pendingDefineClass != null) {
+            extractedStats.add(pendingDefineClass);
+          }
           currentVtableType = pendingVtableType;
           pendingDefineClass = null;
           pendingVtableType = null;
@@ -486,7 +489,7 @@ public class FragmentExtractor {
   private JClassType vtableTypeNeeded(JsStatement stat) {
     JMethod meth = map.vtableInitToMethod(stat);
     if (meth != null) {
-      if (meth.needsVtable()) {
+      if (meth.needsVtable() && !meth.isAbstract()) {
         return (JClassType) meth.getEnclosingType();
       }
     }

@@ -82,7 +82,6 @@ import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JProgram.DispatchType;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStatement;
@@ -713,6 +712,8 @@ public class GenerateJavaScriptAST {
 
   private class GenerateJavaScriptVisitor extends JVisitor {
 
+    public static final String GOOG_INHERITS = "goog.inherits";
+    public static final String GOOG_ABSTRACT_METHOD = "goog.abstractMethod";
     private final Set<JDeclaredType> alreadyRan = Sets.newLinkedHashSet();
 
     private final Map<String, Object> exportedMembersByExportName = new TreeMap<String, Object>();
@@ -886,10 +887,7 @@ public class GenerateJavaScriptAST {
         }
       }
 
-      if (typeOracle.isInstantiatedType(x) && !x.isJsoType() &&
-          x !=  program.getTypeJavaLangString()) {
-        generateClassSetup(x, globalStmts);
-      }
+      generateClassSetup(x, globalStmts);
 
       // setup fields
       JsVars vars = new JsVars(x.getSourceInfo());
@@ -1151,17 +1149,46 @@ public class GenerateJavaScriptAST {
         globalStmts.add(vars);
       }
 
-      /*
-       * If a @JsType is exported, but no constructors are, @JsDoc type declarations added by the
-       * linker will fail in uncompiled mode, as they will try to access the 'Foo.prototype' which
-       * is undefined even though the goog.provide('Foo') statement exists. Here we synthesize a
-       * simple constructor to aid the linker.
-       */
-      if (closureCompilerFormatEnabled && x.isJsType()) {
-        declareSynthesizedClosureConstructor(x, globalStmts);
+      if (closureCompilerFormatEnabled && !x.isJsNative()) {
+        declareClosureInterface(x, globalStmts);
       }
 
       collectExports(x);
+    }
+
+    /*
+     * Declare an interface that is referenced by an @implements clause in JsDoc
+     * generation. This is only done for interfaces that are not defined externally
+     * (native types) in external JS libraries or externs.
+     *
+     * This appears to be needed when two disjoint GWT concrete types related only by an
+     * interface (e.g. Runnable), are accessed via an exported Runnable method (run()).
+     * The disambiguate properties pass in Closure does not know how to map which run()
+     * methods could possibly be invoked (there could be classes that don't implement Runnable
+     * but which have a method called 'run'). This generated interface will be referenced
+     * in @param/@return statements and @implements clauses added by later passes or linkers.
+     *
+     * Closure compiler dead-strips it.
+     */
+    private void declareClosureInterface(JInterfaceType x, List<JsStatement> globalStmts) {
+      declareSynthesizedClosureConstructor(x, globalStmts);
+      SourceInfo sourceInfo = x.getSourceInfo();
+      // TODO(cromwellian): in a later cl, generate goog.mixin() for interface type inheritance
+      for (JMethod method : x.getMethods()) {
+        if (method.isAbstract()) {
+          JsName polyName = polymorphicNames.get(method);
+          generateVTableAssignment(globalStmts, method, polyName,
+            JsUtils.createQualifiedNameRef(GOOG_ABSTRACT_METHOD, sourceInfo));
+
+          // aliased methods are part of the interface too since they can be called
+          // from JS into the impl.
+          if (method.isOrOverridesJsMethod()) {
+            String jsName = method.getJsName();
+            JsName exportedName = polyName.getEnclosing().declareUnobfuscatableName(jsName);
+            generateVTableAlias(globalStmts, method, exportedName);
+          }
+        }
+      }
     }
 
     @Override
@@ -1354,14 +1381,7 @@ public class GenerateJavaScriptAST {
           // Construct jsPrototype.prototype.jsname
           methodNameRef = createJsQualifier(method.getQualifiedJsName(), sourceInfo);
         } else {
-          // Construct JCHSU.getPrototypeFor(type).polyname
-
-          // TODO(rluble): Ideally we would want to construct the inheritance chain the JS way and
-          // then we could do Type.prototype.polyname.call(this, ...). Currently prototypes do not
-          // have global names instead they are stuck into the prototypesByTypeId array.
-          JsInvocation protoRef =
-              constructInvocation(sourceInfo, "JavaClassHierarchySetupUtil.getClassPrototype",
-                  convertJavaLiteral(typeMapper.get(superClass)));
+          JsExpression protoRef = getPrototypeQualifierViaLookup(superClass, sourceInfo);
           methodNameRef = polymorphicNames.get(method).makeRef(sourceInfo);
           methodNameRef.setQualifier(protoRef);
         }
@@ -1374,6 +1394,19 @@ public class GenerateJavaScriptAST {
       jsInvocation.getArguments().add(instance);
       jsInvocation.getArguments().addAll(args);
       return jsInvocation;
+    }
+
+    private JsExpression getPrototypeQualifierViaLookup(JDeclaredType type, SourceInfo sourceInfo) {
+      if (closureCompilerFormatEnabled) {
+        return getPrototypeQualifierOf(type, type.getSourceInfo());
+      } else {
+        // Construct JCHSU.getPrototypeFor(type).polyname
+        // TODO(rluble): Ideally we would want to construct the inheritance chain the JS way and
+        // then we could do Type.prototype.polyname.call(this, ...). Currently prototypes do not
+        // have global names instead they are stuck into the prototypesByTypeId array.
+        return constructInvocation(sourceInfo, "JavaClassHierarchySetupUtil.getClassPrototype",
+            convertJavaLiteral(typeMapper.get(type)));
+      }
     }
 
     private JsExpression dispatchToJsFunction(
@@ -1689,11 +1722,8 @@ public class GenerateJavaScriptAST {
       for (JDeclaredType type : topologicallySortedBodyTypes) {
         markPosition(globalStmts, type.getName(), Type.CLASS_START);
         accept(type);
-        JsVars classLiteralVars = new JsVars(jsProgram.getSourceInfo());
-        maybeGenerateClassLiteral(type, classLiteralVars);
-        if (!classLiteralVars.isEmpty()) {
-          globalStmts.add(classLiteralVars);
-        }
+        maybeGenerateClassLiteral(type, globalStmts);
+        installClassLiterals(globalStmts, Arrays.asList(type));
         markPosition(globalStmts, type.getName(), Type.CLASS_END);
       }
       markPosition(globalStmts, "Program", Type.PROGRAM_END);
@@ -1727,10 +1757,46 @@ public class GenerateJavaScriptAST {
         accept(type);
       }
       generateClassLiterals(globalStmts, classLiteralSupportClasses);
+      installClassLiterals(globalStmts, classLiteralSupportClasses);
 
       Set<JDeclaredType> preambleTypes = Sets.newLinkedHashSet(alreadyProcessed);
       preambleTypes.addAll(classLiteralSupportClasses);
       return preambleTypes;
+    }
+
+    private void installClassLiterals(List<JsStatement> globalStmts,
+        List<JDeclaredType> classLiteralTypesToInstall) {
+      if (!closureCompilerFormatEnabled) {
+        // let createForClass() install them until a follow on CL
+        // TODO(cromwellian) remove after approval from rluble in follow up CL
+        return;
+      }
+
+      for (JDeclaredType type : classLiteralTypesToInstall) {
+        if (hasNoVTable(type)) {
+          continue;
+        }
+
+        JsNameRef classLiteralRef = createClassLiteralReference(type);
+        if (classLiteralRef == null) {
+          continue;
+        }
+
+        JsExpression protoRef = getPrototypeQualifierOf(type, type.getSourceInfo());
+        JsNameRef clazzField = indexedFields.get("Object.___clazz").makeRef(type.getSourceInfo());
+        clazzField.setQualifier(protoRef);
+        JsExprStmt stmt = createAssignment(clazzField, classLiteralRef).makeStmt();
+        globalStmts.add(stmt);
+        typeForStatMap.put(stmt, (JClassType) type);
+      }
+    }
+
+    private boolean hasNoVTable(JDeclaredType type) {
+      // Interfaces, Unboxed Types, JSOs, Native Types, JsFunction, and uninstantiated types
+      // Do not have vtables/prototype setup
+      return type instanceof JInterfaceType || program.isRepresentedAsNativeJsPrimitive(type) ||
+          type.isJsoType() || !program.typeOracle.isInstantiatedType(type) || type.isJsNative()
+          || type.isJsFunction();
     }
 
     private List<JDeclaredType> computeClassLiteralsSupportClasses(JProgram program,
@@ -1873,12 +1939,8 @@ public class GenerateJavaScriptAST {
 
     private void generateClassLiterals(List<JsStatement> globalStmts,
         Iterable<? extends JType> orderedTypes) {
-      JsVars vars = new JsVars(jsProgram.getSourceInfo());
       for (JType type : orderedTypes) {
-        maybeGenerateClassLiteral(type, vars);
-      }
-      if (!vars.isEmpty()) {
-        globalStmts.add(vars);
+        maybeGenerateClassLiteral(type, globalStmts);
       }
     }
 
@@ -2126,12 +2188,7 @@ public class GenerateJavaScriptAST {
        * goog.object.createSet('foo', 'bar', 'baz') is optimized by closure compiler into
        * {'foo': !0, 'bar': !0, baz: !0}
        */
-      JsNameRef createSet = new JsNameRef(sourceInfo, "createSet");
-      JsNameRef googObject = new JsNameRef(sourceInfo, "object");
-      JsNameRef goog = new JsNameRef(sourceInfo, "goog");
-      createSet.setQualifier(googObject);
-      googObject.setQualifier(goog);
-
+      JsNameRef createSet = new JsNameRef(sourceInfo, "goog.object.createSet");
       JsInvocation jsInvocation = new JsInvocation(sourceInfo, createSet);
 
       for (JsExpression expr : runtimeTypeIdLiterals) {
@@ -2187,13 +2244,21 @@ public class GenerateJavaScriptAST {
       return new JsObjectLiteral(SourceOrigin.UNKNOWN);
     }
 
-    private void maybeGenerateClassLiteral(JType type, JsVars vars) {
+    private JField getClassLiteralField(JType type) {
       JDeclarationStatement decl = classLiteralDeclarationsByType.get(type);
       if (decl == null) {
-        return;
+        return null;
       }
 
-      JField field = (JField) decl.getVariableRef().getTarget();
+      return (JField) decl.getVariableRef().getTarget();
+    }
+
+    private void maybeGenerateClassLiteral(JType type, List<JsStatement> globalStmts) {
+
+      JField field = getClassLiteralField(type);
+      if (field == null) {
+        return;
+      }
 
       // TODO(rluble): refactor so that all output related to a class is decided together.
       if (type != null && type instanceof JDeclaredType
@@ -2206,15 +2271,37 @@ public class GenerateJavaScriptAST {
         return;
       }
 
+      JsVars vars = new JsVars(jsProgram.getSourceInfo());
       JsName jsName = names.get(field);
-      this.accept(decl.getInitializer());
+      this.accept(field.getInitializer());
       JsExpression classObjectAlloc = pop();
-      JsVar var = new JsVar(decl.getSourceInfo(), jsName);
+      SourceInfo info = field.getSourceInfo();
+      JsVar var = new JsVar(info, jsName);
       var.setInitExpr(classObjectAlloc);
       vars.add(var);
+      globalStmts.add(vars);
+    }
+
+    private JsNameRef createClassLiteralReference(JType type) {
+      JField field = getClassLiteralField(type);
+      if (field == null) {
+        return null;
+      }
+      JsName jsName = names.get(field);
+      return jsName.makeRef(type.getSourceInfo());
     }
 
     private void generateClassSetup(JClassType x, List<JsStatement> globalStmts) {
+      if (program.isRepresentedAsNativeJsPrimitive(x) && program.typeOracle.isInstantiatedType(x)) {
+        setupCastMapForUnboxedType(x, globalStmts,
+            program.getRepresentedAsNativeTypesDispatchMap().get(x).getCastMapField());
+        return;
+      }
+
+      if (hasNoVTable(x)) {
+        return;
+      }
+
       generateClassDefinition(x, globalStmts);
       generateVTables(x, globalStmts);
 
@@ -2222,14 +2309,7 @@ public class GenerateJavaScriptAST {
         // special: setup a "toString" alias for java.lang.Object.toString()
         generateToStringAlias(x, globalStmts);
 
-        // Set up the artificial castmap for string, double, and boolean
-        for (Map.Entry<JClassType, DispatchType> nativeRepresentedType :
-            program.getRepresentedAsNativeTypesDispatchMap().entrySet()) {
-          setupCastMapForUnboxedType(nativeRepresentedType.getKey(), globalStmts,
-              nativeRepresentedType.getValue().getCastMapField());
-        }
-
-        //  Perform necessary polyfills.
+        // Perform necessary polyfills.
         globalStmts.add(constructInvocation(x.getSourceInfo(),
             "JavaClassHierarchySetupUtil.modernizeBrowser").makeStmt());
       }
@@ -2437,10 +2517,12 @@ public class GenerateJavaScriptAST {
       typeForStatMap.put(defineClassStatement, x);
 
       if (jsPrototype != null) {
-        JExpression objectTypeId = getRuntimeTypeReference(program.getTypeJavaLangObject());
         JsStatement statement =
-            constructInvocation(x.getSourceInfo(), "JavaClassHierarchySetupUtil.copyObjectMethods",
-                convertJavaLiteral(objectTypeId)).makeStmt();
+            constructInvocation(x.getSourceInfo(),
+                "JavaClassHierarchySetupUtil.copyObjectProperties",
+                getPrototypeQualifierViaLookup(program.getTypeJavaLangObject(), x.getSourceInfo()),
+                globalTemp.makeRef(x.getSourceInfo()))
+                .makeStmt();
         globalStmts.add(statement);
         typeForStatMap.put(statement, x);
       }
@@ -2458,7 +2540,7 @@ public class GenerateJavaScriptAST {
     }
 
     private void generateClassDefinition(JClassType x, List<JsStatement> globalStmts) {
-      assert x != program.getTypeJavaLangString();
+      assert !program.isRepresentedAsNativeJsPrimitive(x);
 
       if (closureCompilerFormatEnabled) {
         generateClosureClassDefinition(x, globalStmts);
@@ -2488,36 +2570,116 @@ public class GenerateJavaScriptAST {
     /*
      * Class definition for closure output looks like:
      *
-     * defineClass(jsinterop.getUniqueId('FQTypeName'),
-     *     jsinterop.getUniqueId('FQSuperTypeName'), ctm);
-     * var ClassName = defineHiddenClosureConstructor();
+     * function ClassName() {}
      * ClassName.prototype.method1 = function() { ... };
      * ClassName.prototype.method2 = function() { ... };
-     * ctor1.prototype = ClassName.prototype;
-     * ctor2.prototype = ClassName.prototype;
-     * ctor3.prototype = ClassName.prototype;
+     * ClassName.prototype.castableTypeMap = {...}
+     * ClassName.prototype.___clazz = classLit;
+     * function Ctor1() {}
+     * function Ctor2() {}
+     *
+     * goog$inherits(Ctor1, ClassName);
+     * goog$inherits(Ctor2, ClassName);
      *
      * The primary change is to make the prototype assignment look like regular closure code to help
-     * the compiler disambiguate which methods belong to which type.
+     * the compiler disambiguate which methods belong to which type. Elimination of defineClass()
+     * makes the setup more transparent and eliminates a global table holding a reference to
+     * every prototype.
      */
     private void generateClosureClassDefinition(JClassType x, List<JsStatement> globalStmts) {
       // function ClassName(){}
       JsName classVar = declareSynthesizedClosureConstructor(x, globalStmts);
+      generateInlinedDefineClass(x, globalStmts, classVar);
 
-      // defineClass(..., ClassName)
-      generateCallToDefineClass(x, globalStmts, Arrays.asList(classVar.makeRef(x.getSourceInfo())));
-
-      // Ctor1.prototype = ClassName.prototype
-      // Ctor2.prototype = ClassName.prototype
-      // etc.
+       /*
+       * Closure style prefers 1 single ctor per type. To model this without radical changes,
+       * we simply model each concrete ctor as a subtype. This works because GWT doesn't use the
+       * native instanceof operator. So for example, class A() { A(int x){}, A(String s){} }
+       * becomes (pseudo code):
+       *
+       * function A() {}
+       * A.prototype.method = ...
+       *
+       * function A_int(x) {}
+       * function A_String(s) {}
+       * goog$inherits(A_int, A);
+       * goog$inherits(A_string, A);
+       *
+       */
       for (JMethod method : getPotentiallyAliveConstructors(x)) {
-        JsNameRef lhs = prototype.makeRef(method.getSourceInfo());
-        lhs.setQualifier(names.get(method).makeRef(method.getSourceInfo()));
-        JsNameRef rhsProtoRef = getPrototypeQualifierOf(method);
-        JsExprStmt stmt = createAssignment(lhs, rhsProtoRef).makeStmt();
-        globalStmts.add(stmt);
-        vtableInitForMethodMap.put(stmt, method);
+        JsNameRef googInherits = JsUtils.createQualifiedNameRef(GOOG_INHERITS, x.getSourceInfo());
+
+        JsExprStmt callGoogInherits = new JsInvocation(x.getSourceInfo(), googInherits,
+            names.get(method).makeRef(method.getSourceInfo()),
+            names.get(method.getEnclosingType()).makeRef(method.getSourceInfo())).makeStmt();
+        globalStmts.add(callGoogInherits);
+        vtableInitForMethodMap.put(callGoogInherits, method);
       }
+    }
+
+    /**
+     * Does everything JCHSU.defineClass does, but inlined into global statements. Roughly
+     * parallels argument order of generateCallToDefineClass.
+     */
+    private void generateInlinedDefineClass(JClassType x, List<JsStatement> globalStmts,
+        JsName classVar) {
+      JClassType superClass = x.getSuperClass();
+      // check if there's an overriding prototype
+      String jsPrototype = getSuperPrototype(x);
+      JsNameRef parentCtor = jsPrototype != null ?
+          createJsQualifier(jsPrototype, x.getSourceInfo()) :
+            superClass != null ?
+              names.get(superClass).makeRef(x.getSourceInfo()) :
+              null;
+
+      if (parentCtor != null) {
+        JsNameRef googInherits = JsUtils.createQualifiedNameRef(GOOG_INHERITS, x.getSourceInfo());
+        // Use goog$inherits(ChildCtor, ParentCtor) to setup inheritance
+        JsExprStmt callGoogInherits = new JsInvocation(x.getSourceInfo(), googInherits,
+            classVar.makeRef(x.getSourceInfo()), parentCtor).makeStmt();
+        globalStmts.add(callGoogInherits);
+        typeForStatMap.put(callGoogInherits, x);
+      }
+
+      if (x == program.getTypeJavaLangObject()) {
+        setupTypeMarkerOnJavaLangObjectPrototype(x, globalStmts);
+      }
+
+      // inline assignment of castableTypeMap field instead of using defineClass()
+      setupCastMapOnPrototype(x, globalStmts);
+      if (jsPrototype != null) {
+        JsStatement statement =
+            constructInvocation(x.getSourceInfo(),
+                "JavaClassHierarchySetupUtil.copyObjectProperties",
+                getPrototypeQualifierOf(program.getTypeJavaLangObject(), x.getSourceInfo()),
+                getPrototypeQualifierOf(x, x.getSourceInfo()))
+                .makeStmt();
+        globalStmts.add(statement);
+        typeForStatMap.put(statement, x);
+      }
+    }
+
+    private void setupCastMapOnPrototype(JClassType x, List<JsStatement> globalStmts) {
+      JsExpression castMap = generateCastableTypeMap(x);
+      generateVTableAssignmentToJavaField(globalStmts, x, "Object.castableTypeMap", castMap);
+    }
+
+    private void setupTypeMarkerOnJavaLangObjectPrototype(JClassType x,
+        List<JsStatement> globalStmts) {
+      JsFunction typeMarkerMethod = indexedFunctions.get(
+          "JavaClassHierarchySetupUtil.typeMarkerFn");
+      generateVTableAssignmentToJavaField(globalStmts, x, "Object.typeMarker",
+          typeMarkerMethod.getName().makeRef(x.getSourceInfo()));
+    }
+
+    private void generateVTableAssignmentToJavaField(List<JsStatement> globalStmts,
+        JClassType x, String javaField, JsExpression rhs) {
+      JsNameRef protoRef = getPrototypeQualifierOf(x, x.getSourceInfo());
+      JsNameRef jsFieldRef = indexedFields.get(javaField).makeRef(x.getSourceInfo());
+      jsFieldRef.setQualifier(protoRef);
+      JsStatement stmt = createAssignment(jsFieldRef, rhs).makeStmt();
+      globalStmts.add(stmt);
+      typeForStatMap.put(stmt, x);
     }
 
     /*
@@ -2626,7 +2788,8 @@ public class GenerateJavaScriptAST {
      * variable _ points the JavaScript prototype for {@code x}.
      */
     private void generateVTables(JClassType x, List<JsStatement> globalStmts) {
-      assert x != program.getTypeJavaLangString();
+      assert !program.isRepresentedAsNativeJsPrimitive(x);
+
       for (JMethod method : x.getMethods()) {
         if (!method.needsVtable()) {
           continue;
@@ -2635,6 +2798,10 @@ public class GenerateJavaScriptAST {
         if (!method.isAbstract()) {
           JsExpression rhs = getJsFunctionFor(method);
           generateVTableAssignment(globalStmts, method, polymorphicNames.get(method), rhs);
+        } else if (closureCompilerFormatEnabled) {
+          // in closure mode, we add add a goog.abstractMethod for subtypes to @override
+          generateVTableAssignment(globalStmts, method, polymorphicNames.get(method),
+              JsUtils.createQualifiedNameRef(GOOG_ABSTRACT_METHOD, x.getSourceInfo()));
         }
 
         if (method.exposesNonJsMethod()) {
@@ -2669,7 +2836,7 @@ public class GenerateJavaScriptAST {
 
     public JsNameRef createJsQualifier(String qualifier, SourceInfo sourceInfo) {
       assert !qualifier.isEmpty();
-      return JsUtils.createQualifier("$wnd." + qualifier, sourceInfo);
+      return JsUtils.createQualifiedNameRef("$wnd." + qualifier, sourceInfo);
     }
 
     /**

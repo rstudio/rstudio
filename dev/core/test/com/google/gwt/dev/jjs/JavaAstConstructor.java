@@ -271,6 +271,7 @@ public class JavaAstConstructor {
               "  public static void modernizeBrowser() {}",
               "  public static void emptyMethod() {}",
               "  public static void getClassPrototype() {}",
+              "  static native void typeMarkerFn() /*-{}-*/;",
               "}"
           );
         }

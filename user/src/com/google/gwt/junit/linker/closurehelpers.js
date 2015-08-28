@@ -6,8 +6,7 @@ var jsinterop = {};
 goog.global = this;
 goog.implicitNamespaces_ = {};
 
-goog.object = {};
-goog.object.createSet = function () {
+goog.object.createSet = function goog$object$createSet() {
   var result = {};
   for (var i = 0; i < arguments.length; i++) {
     result[arguments[i]] = true;
@@ -35,6 +34,9 @@ goog.getObjectByName = function (name, opt_obj) {
 // no-op
 goog.require = function () {
 };
+
+goog.abstractMethod = function() {
+}
 
 goog.provide = function (name) {
   // Ensure that the same namespace isn't provided twice. This is intended
@@ -87,6 +89,68 @@ goog.exportPath_ = function (name, opt_object, opt_objectToExportTo) {
   }
 };
 
+/**
+ * Inherit the prototype methods from one constructor into another.
+ *
+ * Usage:
+ * <pre>
+ * function ParentClass(a, b) { }
+ * ParentClass.prototype.foo = function(a) { };
+ *
+ * function ChildClass(a, b, c) {
+ *   ChildClass.base(this, 'constructor', a, b);
+ * }
+ * goog.inherits(ChildClass, ParentClass);
+ *
+ * var child = new ChildClass('a', 'b', 'see');
+ * child.foo(); // This works.
+ * </pre>
+ *
+ * @param {Function} childCtor Child class.
+ * @param {Function} parentCtor Parent class.
+ */
+goog.inherits = function(childCtor, parentCtor) {
+  // Workaround MyJsInterfaceWithPrototype test since the parentCtor doesn't exist
+  // until after ScriptInjector, but this test back-patches the ctor
+  if (!parentCtor) {
+    return;
+  }
+  /** @constructor */
+  function tempCtor() {};
+  tempCtor.prototype = parentCtor.prototype;
+  childCtor.superClass_ = parentCtor.prototype;
+  childCtor.prototype = new tempCtor();
+  /** @override */
+  childCtor.prototype.constructor = childCtor;
+
+  /**
+   * Calls superclass constructor/method.
+   *
+   * This function is only available if you use goog.inherits to
+   * express inheritance relationships between classes.
+   *
+   * NOTE: This is a replacement for goog.base and for superClass_
+   * property defined in childCtor.
+   *
+   * @param {!Object} me Should always be "this".
+   * @param {string} methodName The method name to call. Calling
+   *     superclass constructor can be done with the special string
+   *     'constructor'.
+   * @param {...*} var_args The arguments to pass to superclass
+   *     method/constructor.
+   * @return {*} The return value of the superclass method/constructor.
+   */
+  childCtor.base = function(me, methodName, var_args) {
+    // Copying using loop to avoid deop due to passing arguments object to
+    // function. This is faster in many JS engines as of late 2014.
+    var args = new Array(arguments.length - 2);
+    for (var i = 2; i < arguments.length; i++) {
+      args[i - 2] = arguments[i];
+    }
+    return parentCtor.prototype[methodName].apply(me, args);
+  };
+};
+
 jsinterop.closure = {};
 jsinterop.closure.uniqueIds_ = {};
 jsinterop.closure.uniqueIdCounter_ = 0;
@@ -98,3 +162,8 @@ jsinterop.closure.getUniqueId = function (identifier) {
   }
   return jsinterop.closure.uniqueIds_[identifier];
 };
+
+$wnd.MyJsInterface = function() {};
+$wnd.MyJsInterface.staticX = 33;
+$wnd.MyJsInterface.answerToLife = function() { return 42;};
+$wnd.MyJsInterface.prototype.sum = function sum(bias) { return this.x + bias; };

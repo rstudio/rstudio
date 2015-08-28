@@ -128,7 +128,7 @@ public class JsUtils {
    * Given a string qualifier such as 'foo.bar.Baz', returns a chain of JsNameRef's representing
    * this qualifier.
    */
-  public static JsNameRef createQualifier(String namespace, SourceInfo sourceInfo) {
+  public static JsNameRef createQualifiedNameRef(String namespace, SourceInfo sourceInfo) {
     assert !namespace.isEmpty();
     JsNameRef ref = null;
     for (String part : namespace.split("\\.")) {

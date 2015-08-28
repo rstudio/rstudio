@@ -68,9 +68,11 @@ class ClosureJsInteropExportsGenerator implements JsInteropExportsGenerator {
    */
   @Override
   public void exportType(JDeclaredType x) {
-    // Note that synthesized constructors use the name of the declared types.
-    generateExport(x.getQualifiedJsName(), x.getQualifiedJsName(),
-        names.get(x).makeRef(x.getSourceInfo()), x.getSourceInfo());
+    if (!x.isJsNative() && !x.isJsFunction()) {
+      // Note that synthesized constructors use the name of the declared types.
+      generateExport(x.getQualifiedJsName(), x.getQualifiedJsName(),
+          names.get(x).makeRef(x.getSourceInfo()), x.getSourceInfo());
+    }
   }
 
   /*
@@ -100,7 +102,7 @@ class ClosureJsInteropExportsGenerator implements JsInteropExportsGenerator {
       return;
     }
 
-    JsNameRef provideFuncRef = JsUtils.createQualifier("goog.provide", info);
+    JsNameRef provideFuncRef = JsUtils.createQualifiedNameRef("goog.provide", info);
     JsInvocation provideCall = new JsInvocation(info);
     provideCall.setQualifier(provideFuncRef);
     provideCall.getArguments().add(new JsStringLiteral(info, namespace));
@@ -113,6 +115,6 @@ class ClosureJsInteropExportsGenerator implements JsInteropExportsGenerator {
   }
 
   private static JsExpression createExportQualifier(String namespace, SourceInfo sourceInfo) {
-    return JsUtils.createQualifier(namespace.isEmpty() ? "window" : namespace, sourceInfo);
+    return JsUtils.createQualifiedNameRef(namespace.isEmpty() ? "window" : namespace, sourceInfo);
   }
 }
