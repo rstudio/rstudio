@@ -431,9 +431,6 @@ public class LongLib extends LongLibBase {
   }
 
   public static double toDouble(LongEmul a) {
-    if (LongLib.eq(a, Const.MIN_VALUE)) {
-      return -9223372036854775808.0;
-    }
     if (LongLib.lt(a, Const.ZERO)) {
       return -toDoubleHelper(LongLib.neg(a));
     }

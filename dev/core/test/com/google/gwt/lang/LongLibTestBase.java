@@ -165,6 +165,15 @@ public class LongLibTestBase extends TestCase {
     assertEquals(-10, LongLib.toInt(longFromBits(0, -10)));
     assertEquals(-10, LongLib.toInt(longFromBits(100, -10)));
     assertEquals(-10, LongLib.toInt(longFromBits(-100000, -10)));
+
+    assertEquals(0d, LongLib.toDouble(LongLib.fromInt(0)));
+    assertEquals(1d, LongLib.toDouble(LongLib.fromInt(1)));
+    assertEquals(10d, LongLib.toDouble(LongLib.fromInt(10)));
+    assertEquals(-1d, LongLib.toDouble(LongLib.fromInt(-1)));
+    assertEquals(-10d, LongLib.toDouble(LongLib.fromInt(-10)));
+
+    assertEquals(-9.223372036854776E18, LongLib.toDouble(Const.MIN_VALUE));
+    assertEquals(9.223372036854776E18, LongLib.toDouble(Const.MAX_VALUE));
   }
 
   public void testDiv() {
