@@ -25,9 +25,9 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.util.Comparator;
 import java.util.Locale;
 
+import javaemul.internal.ArrayHelper;
 import javaemul.internal.EmulatedCharset;
 import javaemul.internal.HashCodes;
-import javaemul.internal.StringHelper;
 import javaemul.internal.annotations.DoNotInline;
 
 /**
@@ -114,11 +114,25 @@ public final class String implements Comparable<String>, CharSequence,
   public static String valueOf(char x[], int offset, int count) {
     int end = offset + count;
     checkStringBounds(offset, end, x.length);
-    return StringHelper.valueOf(x, offset, end);
+    // Work around function.prototype.apply call stack size limits:
+    // https://code.google.com/p/v8/issues/detail?id=2896
+    // Performance: http://jsperf.com/string-fromcharcode-test/13
+    int batchSize = ArrayHelper.ARRAY_PROCESS_BATCH_SIZE;
+    String s = "";
+    for (int batchStart = offset; batchStart < end;) {
+      int batchEnd = Math.min(batchStart + batchSize, end);
+      s += fromCharCode(ArrayHelper.unsafeClone(x, batchStart, batchEnd));
+      batchStart = batchEnd;
+    }
+    return s;
   }
 
+  private static native String fromCharCode(Object array) /*-{
+    return String.fromCharCode.apply(null, array);
+  }-*/;
+
   public static String valueOf(char[] x) {
-    return StringHelper.valueOf(x, 0, x.length);
+    return valueOf(x, 0, x.length);
   }
 
   public static String valueOf(double x) {
