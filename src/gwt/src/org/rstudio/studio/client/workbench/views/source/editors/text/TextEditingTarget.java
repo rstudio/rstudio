@@ -2970,13 +2970,6 @@ public class TextEditingTarget implements
             docDisplay_.getLine(rowEnd).length());
       docDisplay_.setSelectionRange(expanded);
       
-      boolean keepFinalNewline = false;
-      if (rowStart != rowEnd && initialRange.getEnd().getColumn() == 0)
-      {
-         rowEnd--;
-         keepFinalNewline = true;
-      }
-      
       String[] lines = JsUtil.toStringArray(docDisplay_.getLines(rowStart, rowEnd));
       String commonPrefix = StringUtil.getCommonPrefix(
             lines,
@@ -3087,8 +3080,7 @@ public class TextEditingTarget implements
          }
       }
       
-      String newSelection = keepFinalNewline ?
-            builder.toString() :
+      String newSelection =
             builder.substring(0, builder.length() - 1);
             
       docDisplay_.replaceSelection(newSelection);
@@ -3097,6 +3089,11 @@ public class TextEditingTarget implements
       if (isSingleLineAction)
       {
          int diff = newSelection.length() - lines[0].length();
+         if (commentEnd != null)
+            diff = diff < 0 ?
+                  diff + commentEnd.length() + 1 :
+                  diff - commentEnd.length() - 1;
+         
          int colStart = initialRange.getStart().getColumn();
          int colEnd = initialRange.getEnd().getColumn();
          Range newRange = Range.create(
