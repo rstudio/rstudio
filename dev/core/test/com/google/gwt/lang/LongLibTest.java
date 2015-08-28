@@ -424,41 +424,6 @@ public class LongLibTest extends TestCase {
     doTestBinary(OP_AND);
   }
 
-  public static void testBase64() {
-    assertEquals("A", LongLib.toBase64(0x0L));
-    assertEquals(0x0L, LongLib.longFromBase64("A"));
-
-    assertEquals("B", LongLib.toBase64(0x1L));
-    assertEquals(0x1L, LongLib.longFromBase64("B"));
-
-    assertEquals("BA", LongLib.toBase64(0x40L));
-    assertEquals(0x40L, LongLib.longFromBase64("BA"));
-
-    assertEquals("P_________A", LongLib.toBase64(-0x40L));
-    assertEquals(-0x40L, LongLib.longFromBase64("P_________A"));
-
-    assertEquals("P__________", LongLib.toBase64(-1L));
-    assertEquals(-1L, LongLib.longFromBase64("P__________"));
-
-    // Use all types of base 64 chars
-    long value = 0L;
-    value |= 15L << 60; // 'P'
-    value |= 35L << 54; // 'j'
-    value |= 44L << 48; // 's'
-    value |= 62L << 42; // '$'
-    value |= 26L << 36; // 'a'
-    value |=  9L << 30; // 'J'
-    value |= 18L << 24; // 'S'
-    value |= 25L << 18; // 'Z'
-    value |= 52L << 12; // '0'
-    value |= 57L << 6;  // '5'
-    value |= 63L;       // '_'
-
-    String s = "Pjs$aJSZ05_";
-    assertEquals(s, LongLib.toBase64(value));
-    assertEquals(value, LongLib.longFromBase64(s));
-  }
-
   public static void testCompare() {
     doTestCompare(OP_COMPARE);
   }
