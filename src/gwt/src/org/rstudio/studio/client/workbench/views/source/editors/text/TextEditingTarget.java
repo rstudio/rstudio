@@ -2963,14 +2963,22 @@ public class TextEditingTarget implements
       // Also figure out if we're commenting an Roxygen block.
       boolean looksLikeRoxygen = false;
       
+      // Skip commenting the last line if the selection is
+      // multiline and ends on the first column of the end row.
+      boolean dontCommentLastLine = false;
+      if (rowStart != rowEnd && initialRange.getEnd().getColumn() == 0)
+         dontCommentLastLine = true;
+      
       Range expanded = Range.create(
             rowStart,
             0,
             rowEnd,
-            docDisplay_.getLine(rowEnd).length());
+            dontCommentLastLine ? 0 : docDisplay_.getLine(rowEnd).length());
       docDisplay_.setSelectionRange(expanded);
       
-      String[] lines = JsUtil.toStringArray(docDisplay_.getLines(rowStart, rowEnd));
+      String[] lines = JsUtil.toStringArray(
+            docDisplay_.getLines(rowStart, rowEnd - (dontCommentLastLine ? 1 : 0)));
+      
       String commonPrefix = StringUtil.getCommonPrefix(
             lines,
             true,
@@ -3080,7 +3088,8 @@ public class TextEditingTarget implements
          }
       }
       
-      String newSelection =
+      String newSelection = dontCommentLastLine ?
+            builder.toString() :
             builder.substring(0, builder.length() - 1);
             
       docDisplay_.replaceSelection(newSelection);
