@@ -16,7 +16,6 @@
 package com.google.gwt.user.client.rpc.impl;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.lang.LongLib;
 import com.google.gwt.user.client.rpc.SerializationException;
 
 import java.util.List;
@@ -154,7 +153,7 @@ public final class ClientSerializationStreamWriter extends
 
   @Override
   public void writeLong(long value) {
-    append(LongLib.toBase64(value));
+    append(longToBase64(value));
   }
 
   /**
