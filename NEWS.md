@@ -51,6 +51,7 @@
 * Added Makefile mode (used for Makefile, Makevars)
 * Always use LF for line endings in Unix Makefiles
 * Return environment variables as completions within Sys.getenv(), Sys.setenv() calls
+* Add 'R Scripts' preset filter to Find in Files dialog
 
 ### Server
 
