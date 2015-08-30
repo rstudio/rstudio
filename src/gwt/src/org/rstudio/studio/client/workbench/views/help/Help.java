@@ -258,13 +258,11 @@ public class Help extends BasePresenter implements ShowHelpHandler
       events_.fireEvent(new ShowHelpEvent("help/doc/roxygen_help.html"));
    }
    
-   @Handler
    void onDebugHelp()
    {
       globalDisplay_.openRStudioLink("visual_debugger");
    }
    
-   @Handler
    void onMarkdownHelp()
    {
       events_.fireEvent(new ShowHelpEvent("help/doc/markdown_help.html")) ;
