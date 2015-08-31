@@ -52,6 +52,7 @@
 * Always use LF for line endings in Unix Makefiles
 * Return environment variables as completions within Sys.getenv(), Sys.setenv() calls
 * Add 'R Scripts' preset filter to Find in Files dialog
+* OS X: Enable creation of directories in folder picker dialog
 
 ### Server
 
