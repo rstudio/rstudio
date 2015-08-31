@@ -1971,11 +1971,14 @@ int rEditFile(const std::string& file)
    // read file contents
    FilePath filePath(file);
    std::string fileContents;
-   Error readError = core::readStringFromFile(filePath, &fileContents);
-   if (readError)
+   if (filePath.exists())
    {
-      LOG_ERROR(readError);
-      return 1; // r will raise/report an error indicating edit failed
+      Error readError = core::readStringFromFile(filePath, &fileContents);
+      if (readError)
+      {
+         LOG_ERROR(readError);
+         return 1; // r will raise/report an error indicating edit failed
+      }
    }
    
    // fire edit event
