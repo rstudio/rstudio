@@ -2949,6 +2949,7 @@ public class TextEditingTarget implements
       }
    }
 
+   @SuppressWarnings("deprecation") // GWT emulation only provides isSpace
    private void doCommentUncomment(String commentStart,
                                    String commentEnd)
    {
