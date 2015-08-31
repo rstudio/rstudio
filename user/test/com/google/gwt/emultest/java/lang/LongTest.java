@@ -281,6 +281,7 @@ public class LongTest extends GWTTestCase {
     assertEquals("9223372036854775807", Long.toString(Long.MAX_VALUE));
 
     assertEquals("100000000", Long.toString(100000000L, 10));
+    assertEquals("575360400", Long.toString(100000000L, 8));
     assertEquals("77777777777", Long.toString(8589934591L, 8));
     assertEquals("fffffffff", Long.toString(68719476735L, 16));
     assertEquals("1111111111111111111111111111111111111111111", Long.toString(8796093022207L, 2));
