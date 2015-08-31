@@ -43,6 +43,8 @@ case "$1" in
     restart)
         testConfig || return $?
         daemonCmd "restart"
+        killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rsession
+        killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
         ;;
 
     test-config)
