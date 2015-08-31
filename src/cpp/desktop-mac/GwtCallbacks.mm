@@ -249,6 +249,7 @@ private:
                            [dir stringByStandardizingPath]]];
    [open setCanChooseFiles: false];
    [open setCanChooseDirectories: true];
+   [open setCanCreateDirectories: true];
    return [self runFileDialog: open];
 }
 
