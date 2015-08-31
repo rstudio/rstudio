@@ -332,6 +332,8 @@ public class PaneManager
       
       maximizedWindow_.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
       horizontalResizeAnimation(panel_.getWidgetSize(right_), widgetSizePriorToZoom_).run(300);
+      
+      maximizedWindow_ = null;
       widgetSizePriorToZoom_ = -1;
    }
    
