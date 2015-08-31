@@ -127,6 +127,25 @@ private:
    return createAliasedPath(path);
 }
 
+- (NSString*) runFileDialog: (NSSavePanel*) panel
+{
+    NSString* path = @"";
+    long int result = [panel runModal];
+    @try
+    {
+        if (result == NSOKButton)
+        {
+            path = [[panel URL] path];
+        }
+    }
+    @catch (NSException* e)
+    {
+        throw e;
+    }
+    return createAliasedPath(path);
+}
+
+
 - (NSString*) getOpenFileName: (NSString*) caption
               dir: (NSString*) dir
               filter: (NSString*) filter
@@ -157,7 +176,7 @@ private:
       
       [open setAllowedFileTypes: [NSArray arrayWithObject: fromExt]];
    }
-   return [self runSheetFileDialog: open];
+   return [self runFileDialog: open];
 }
 
 - (NSString*) getSaveFileName: (NSString*) caption
@@ -216,7 +235,7 @@ private:
 
    [save setTitle: caption];
    [save setDirectoryURL: path];
-   return [self runSheetFileDialog: save];
+   return [self runFileDialog: save];
 }
 
 - (NSString*) getExistingDirectory: (NSString*) caption dir: (NSString*) dir
@@ -228,7 +247,7 @@ private:
                            [dir stringByStandardizingPath]]];
    [open setCanChooseFiles: false];
    [open setCanChooseDirectories: true];
-   return [self runSheetFileDialog: open];
+   return [self runFileDialog: open];
 }
 
 - (void) undo: (bool) forAce
