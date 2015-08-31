@@ -16,6 +16,8 @@
 * More context-sensitive highlighting of R keywords
 * Option to enable highlighting of R function calls
 * F2 now navigates into files (e.g. within calls to source)
+* PageUp and PageDown navigate between sections within Rmd, Rpres
+* Enabled comment/uncomment (Cmd+Shift+C) for Markdown documents
 
 ### R Markdown
 
@@ -48,6 +50,8 @@
 * Automatically create ~/.ssh directory if necessary on Windows
 * Added Makefile mode (used for Makefile, Makevars)
 * Always use LF for line endings in Unix Makefiles
+* Return environment variables as completions within Sys.getenv(), Sys.setenv() calls
+* Add 'R Scripts' preset filter to Find in Files dialog
 
 ### Server
 
@@ -67,6 +71,7 @@
 * Diagnostics: Avoid linting symbols in R formulas
 * Diagnostics: Resolve functions in correct namespace 
 * Diagnostics: Fix invalid diagnostics within formulas
+* Diagnostics: Respect // [[Rcpp::export]] functions used in R code
 * Fix grid metrics issues (e.g. text too small) by using res of 96 rather than 72
 * Rcpp: Parse attributes when generating diagnostics for header files
 * Enable outdenting in Rhtml documents
@@ -77,5 +82,5 @@
 * Allow completions in statements following infix operators
 * Completions in Install Packages are now correct for the case of multiple active repositories.
 * Vim mode: prevent paste operation from entering visual mode via Ctrl+V cross-talk
-
+* Fixed chunk highlighter issues that occurred when editing chunk label
 

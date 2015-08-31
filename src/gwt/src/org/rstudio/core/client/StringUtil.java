@@ -354,7 +354,8 @@ public class StringUtil
     * @return
     */
    public static String getCommonPrefix(String[] lines,
-                                        boolean allowPhantomWhitespace)
+                                        boolean allowPhantomWhitespace,
+                                        boolean skipWhitespaceOnlyLines)
    {
       if (lines.length == 0)
          return "";
@@ -390,6 +391,9 @@ public class StringUtil
       for (int i = 1; i < lines.length && prefix.length() > 0; i++)
       {
          String line = notNull(lines[i]);
+         if (line.trim().isEmpty() && skipWhitespaceOnlyLines)
+            continue;
+         
          int len = whitespaceExpansionAllowed ? Math.max(prefix.length(), line.length()) :
                    allowPhantomWhitespace ? prefix.length() :
                    Math.min(prefix.length(), line.length());
@@ -973,6 +977,16 @@ public class StringUtil
              result.substring(1);
    }
    
+   public static native final String escapeRegex(String regexString) /*-{
+      var utils = $wnd.require("mode/utils");
+      return utils.escapeRegExp(regexString);
+   }-*/;
+   
+   public static final String getIndent(String line)
+   {
+      return RE_INDENT.match(line, 0).getGroup(0);
+   }
+   
    public static final HashMap<String, String> COMPLEMENTS =
          makeComplementsMap();
    
@@ -980,5 +994,6 @@ public class StringUtil
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");
    private static final DateTimeFormat DATE_FORMAT
                           = DateTimeFormat.getFormat("MMM d, yyyy, h:mm a");
+   private static final Pattern RE_INDENT = Pattern.create("^\\s*", "");
 
 }

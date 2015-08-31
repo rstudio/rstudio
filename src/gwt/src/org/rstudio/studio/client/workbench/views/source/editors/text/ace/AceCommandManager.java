@@ -142,9 +142,11 @@ public class AceCommandManager extends JavaScriptObject
    /*-{
       var command = this.byName[id];
       
-      if (command == null) {
-         throw new Error("No command with id '" + id + "'");
-      }
+      // The command can be null if it's an excluded command, or
+      // the user has manually editted their keybinding file and
+      // selected the ID of a non-existent command.
+      if (command == null)
+         return;
       
       // Clone the command (we don't want to modify the default
       // commands because we might want to reset in the future)
@@ -170,17 +172,17 @@ public class AceCommandManager extends JavaScriptObject
    private static final native JsObject makeExcludedCommandsMap()
    /*-{
       
-      var bad = [
+      var excludedCommands = [
          "showSettingsMenu", "goToNextError", "goToPreviousError",
          "togglerecording", "replaymacro", "passKeysToBrowser",
          "copy", "cut", "cut_or_delete", "paste", "replace",
          "insertstring", "inserttext", "gotoline", "jumptomatching",
-         "backspace", "delete"
+         "backspace", "delete", "togglecomment"
       ];
       
       var map = {};
-      for (var i = 0; i < bad.length; i++) {
-         map[bad[i]] = true;
+      for (var i = 0; i < excludedCommands.length; i++) {
+         map[excludedCommands[i]] = true;
       }
       
       return map;

@@ -507,7 +507,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Boolean> showDocumentOutlineRmd()
    {
-      return bool("show_document_outline_rmd", true);
+      return bool("show_doc_outline_rmd", false);
    }
    
    public PrefValue<Boolean> showUnnamedEntriesInDocumentOutline()

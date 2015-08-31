@@ -204,6 +204,11 @@ inline std::vector<std::string> split(const std::string& string, const std::stri
    return result;
 }
 
+inline std::string join(const std::vector<std::string>& container, const std::string& delim)
+{
+   return boost::algorithm::join(container, delim);
+}
+
 } // namespace algorithm
 } // namespace core
 } // namespace rstudio

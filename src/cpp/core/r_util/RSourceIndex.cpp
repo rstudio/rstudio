@@ -250,6 +250,14 @@ public:
       }
    }
    
+   bool isAtTopLevel() const
+   {
+      return braceLevel_ == 0 &&
+             parenLevel_ == 0 &&
+             bracketLevel_ == 0 &&
+             doubleBracketLevel_ == 0;
+   }
+   
    int braceLevel() const { return braceLevel_; }
    int parenLevel() const { return parenLevel_; }
    int bracketLevel() const { return bracketLevel_; }
@@ -328,30 +336,6 @@ void libraryCallIndexer(const RTokenCursor& cursor, const IndexStatus& status, R
    }
 }
 
-void functionIndexer(const RTokenCursor& cursor, const IndexStatus& status, RSourceIndex* pIndex)
-{
-   if (cursor.isType(RToken::ID) && cursor.contentEquals(L"function"))
-   {
-      RTokenCursor clone = cursor.clone();
-      if (!clone.moveToPreviousToken())
-         return;
-      
-      if (!isLeftAssign(clone))
-         return;
-      
-      if (!clone.moveToPreviousToken())
-         return;
-      
-      if (clone.isType(RToken::ID) || clone.isType(RToken::STRING))
-      {
-         addSourceItem(RSourceItem::Function,
-                       clone,
-                       status,
-                       pIndex);
-      }
-   }
-}
-
 void s4MethodIndexer(const RTokenCursor& cursor, const IndexStatus& status, RSourceIndex* pIndex)
 {
    if (isMethodOrClassDefinition(cursor))
@@ -411,16 +395,29 @@ void s4MethodIndexer(const RTokenCursor& cursor, const IndexStatus& status, RSou
 
 void variableAssignmentIndexer(const RTokenCursor& cursor, const IndexStatus& status, RSourceIndex* pIndex)
 {
-   if (status.braceLevel() == 0 && isLeftAssign(cursor) && cursor.offset() >= 2)
+   if (status.isAtTopLevel() && isLeftAssign(cursor) && cursor.offset() >= 1)
    {
+      const RToken& nextToken = cursor.nextToken();
+      RSourceItem::Type type =
+            nextToken.contentEquals(L"function") ?
+            RSourceItem::Function :
+            RSourceItem::Variable;
+      
       const RToken& prevToken = cursor.previousToken();
-      if (prevToken.isType(RToken::ID) || prevToken.isType(RToken::STRING))
+      bool isExpectedType =
+            prevToken.isType(RToken::ID) ||
+            prevToken.isType(RToken::STRING);
+      
+      if (isExpectedType)
       {
-         const RToken& prevPrevToken = cursor.previousToken(2);
-         if (isBinaryOp(prevPrevToken))
-            return;
+         if (cursor.offset() >= 2)
+         {
+            const RToken& prevPrevToken = cursor.previousToken(2);
+            if (isBinaryOp(prevPrevToken))
+               return;
+         }
          
-         addSourceItem(RSourceItem::Variable,
+         addSourceItem(type,
                        prevToken,
                        status,
                        pIndex);
@@ -433,7 +430,6 @@ std::vector<Indexer> makeIndexers()
    std::vector<Indexer> indexers;
    
    indexers.push_back(libraryCallIndexer);
-   indexers.push_back(functionIndexer);
    indexers.push_back(s4MethodIndexer);
    indexers.push_back(variableAssignmentIndexer);
    

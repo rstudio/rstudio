@@ -518,6 +518,7 @@ var Utils = require("mode/utils");
       // No more history means we don't need to track
       // document changed any more.
       ensureOnChangeHandlerDetached();
+      return this.getSelectionRange();
 
    };
 

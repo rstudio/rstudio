@@ -17,8 +17,6 @@
 #ifndef CORE_TYPETRAITS_HPP
 #define CORE_TYPETRAITS_HPP
 
-#include <core/json/Json.hpp>
-
 #include <boost/type_traits.hpp>
 
 namespace rstudio {
