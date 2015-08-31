@@ -319,27 +319,27 @@ public class WorkbenchScreen extends Composite
    void onActivatePresentation() { paneManager_.activateTab(Tab.Presentation);}
    
    @Handler
-   void onZoomEnvironment() { paneManager_.zoomTab(Tab.Environment); }
+   void onLayoutZoomEnvironment() { paneManager_.zoomTab(Tab.Environment); }
    @Handler
-   void onZoomHistory() { paneManager_.zoomTab(Tab.History); }
+   void onLayoutZoomHistory() { paneManager_.zoomTab(Tab.History); }
    @Handler
-   void onZoomFiles() { paneManager_.zoomTab(Tab.Files); }
+   void onLayoutZoomFiles() { paneManager_.zoomTab(Tab.Files); }
    @Handler
-   void onZoomPlots() { paneManager_.zoomTab(Tab.Plots); }
+   void onLayoutZoomPlots() { paneManager_.zoomTab(Tab.Plots); }
    @Handler
-   void onZoomPackages() { paneManager_.zoomTab(Tab.Packages); }
+   void onLayoutZoomPackages() { paneManager_.zoomTab(Tab.Packages); }
    @Handler
-   void onZoomHelp() 
+   void onLayoutZoomHelp() 
    { 
       paneManager_.zoomTab(Tab.Help); 
       eventBus_.fireEvent(new ActivateHelpEvent());
    }
    @Handler
-   void onZoomVcs() { paneManager_.zoomTab(Tab.VCS); }
+   void onLayoutZoomVcs() { paneManager_.zoomTab(Tab.VCS); }
    @Handler
-   void onZoomBuild() { paneManager_.zoomTab(Tab.Build); }
+   void onLayoutZoomBuild() { paneManager_.zoomTab(Tab.Build); }
    @Handler
-   void onZoomPresentation() { paneManager_.zoomTab(Tab.Presentation);}
+   void onLayoutZoomPresentation() { paneManager_.zoomTab(Tab.Presentation);}
 
    @Handler
    void onMacPreferences()

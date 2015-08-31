@@ -122,7 +122,7 @@ public class Console
    }
    
    @Handler
-   public void onZoomConsole()
+   public void onLayoutZoomConsole()
    {
       onActivateConsole();
       events_.fireEvent(new ZoomPaneEvent("Console"));

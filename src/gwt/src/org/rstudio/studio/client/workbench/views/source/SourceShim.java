@@ -96,7 +96,7 @@ public class SourceShim extends Composite
       @Handler
       public abstract void onActivateSource();
       @Handler
-      public abstract void onZoomSource();
+      public abstract void onLayoutZoomSource();
       @Handler
       public abstract void onPreviousTab();
       @Handler

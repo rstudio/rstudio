@@ -242,7 +242,7 @@ public class PaneManager
    }
    
    @Handler
-   public void onZoomCurrentPane()
+   public void onLayoutZoomCurrentPane()
    {
       Element activeEl = DomUtils.getActiveElement();
       LogicalWindow activeWindow = getParentLogicalWindow(activeEl);
@@ -252,7 +252,7 @@ public class PaneManager
    }
    
    @Handler
-   public void onEndZoom()
+   public void onLayoutEndZoom()
    {
       restorePaneLayout();
    }

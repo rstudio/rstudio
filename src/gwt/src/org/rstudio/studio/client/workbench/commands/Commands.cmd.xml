@@ -228,35 +228,17 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="lastTab"/>
          <separator/>
          
-         <menu label="_Show">
-            <cmd refid="activateSource"/>
-            <cmd refid="activateConsole"/>
-            <cmd refid="activateHelp"/>
-            <separator/>
-            <cmd refid="activateHistory"/>
-            <cmd refid="activateFiles"/>
-            <cmd refid="activatePlots"/>
-            <cmd refid="activatePackages"/>
-            <cmd refid="activateEnvironment"/>
-            <cmd refid="activateVcs"/>
-            <cmd refid="activateBuild"/>
-         </menu>
-         
-         <menu label="_Zoom">
-            <cmd refid="zoomSource"/>
-            <cmd refid="zoomConsole"/>
-            <cmd refid="zoomHelp"/>
-            <separator/>
-            <cmd refid="zoomHistory"/>
-            <cmd refid="zoomFiles"/>
-            <cmd refid="zoomPlots"/>
-            <cmd refid="zoomPackages"/>
-            <cmd refid="zoomEnvironment"/>
-            <cmd refid="zoomVcs"/>
-            <cmd refid="zoomBuild"/>
-            <separator/>
-            <cmd refid="endZoom"/>
-         </menu>
+         <cmd refid="activateSource"/>
+         <cmd refid="activateConsole"/>
+         <cmd refid="activateHelp"/>
+         <separator/>
+         <cmd refid="activateHistory"/>
+         <cmd refid="activateFiles"/>
+         <cmd refid="activatePlots"/>
+         <cmd refid="activatePackages"/>
+         <cmd refid="activateEnvironment"/>
+         <cmd refid="activateVcs"/>
+         <cmd refid="activateBuild"/>
          
          <separator/>
          <cmd refid="synctexSearch"/>
@@ -527,16 +509,16 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="activateVcs" value="Ctrl+9"/>
          <shortcut refid="activateBuild" value="Ctrl+0"/>
          
-         <shortcut refid="zoomSource" value="Ctrl+Shift+1"/>
-         <shortcut refid="zoomConsole" value="Ctrl+Shift+2"/>
-         <shortcut refid="zoomHelp" value="Ctrl+Shift+3"/>
-         <shortcut refid="zoomHistory" value="Ctrl+Shift+4"/>
-         <shortcut refid="zoomFiles" value="Ctrl+Shift+5"/>
-         <shortcut refid="zoomPlots" value="Ctrl+Shift+6"/>
-         <shortcut refid="zoomPackages" value="Ctrl+Shift+7"/>
-         <shortcut refid="zoomEnvironment" value="Ctrl+Shift+8"/>
-         <shortcut refid="zoomVcs" value="Ctrl+Shift+9"/>
-         <shortcut refid="zoomBuild" value="Ctrl+Shift+0"/>
+         <shortcut refid="layoutZoomSource" value="Ctrl+Shift+1"/>
+         <shortcut refid="layoutZoomConsole" value="Ctrl+Shift+2"/>
+         <shortcut refid="layoutZoomHelp" value="Ctrl+Shift+3"/>
+         <shortcut refid="layoutZoomHistory" value="Ctrl+Shift+4"/>
+         <shortcut refid="layoutZoomFiles" value="Ctrl+Shift+5"/>
+         <shortcut refid="layoutZoomPlots" value="Ctrl+Shift+6"/>
+         <shortcut refid="layoutZoomPackages" value="Ctrl+Shift+7"/>
+         <shortcut refid="layoutZoomEnvironment" value="Ctrl+Shift+8"/>
+         <shortcut refid="layoutZoomVcs" value="Ctrl+Shift+9"/>
+         <shortcut refid="layoutZoomBuild" value="Ctrl+Shift+0"/>
          
          <shortcut refid="switchToTab" value="Ctrl+Shift+."/>
          <shortcut refid="previousTab" value="Ctrl+Alt+Left" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
@@ -1003,68 +985,70 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
         
         
-   <cmd id="zoomSource"
+   <cmd id="layoutZoomSource"
         label="Zoom Source"
-        menuLabel="Zoom Source"/>
+        menuLabel="Source"/>
         
-   <cmd id="zoomConsole"
+   <cmd id="layoutZoomConsole"
         label="Zoom Console"
-        menuLabel="Zoom Console"
+        menuLabel="Console"
         windowMode="main"/>
         
-   <cmd id="zoomEnvironment"
+   <cmd id="layoutZoomEnvironment"
         label="Zoom Environment Pane"
-        menuLabel="Zoom Environment"
+        menuLabel="Environment"
         windowMode="main"/>
         
-   <cmd id="zoomData"
+   <cmd id="layoutZoomData"
         label="Zoom Data Pane"
-        menuLabel="Zoom Data"
+        menuLabel="Data"
         windowMode="main"/>
         
-   <cmd id="zoomHistory"
+   <cmd id="layoutZoomHistory"
         label="Zoom History Pane"
-        menuLabel="Zoom History"
+        menuLabel="History"
         windowMode="main"/>
         
-   <cmd id="zoomFiles"
+   <cmd id="layoutZoomFiles"
         label="Zoom Files Pane"
-        menuLabel="Zoom Files"
+        menuLabel="Files"
         windowMode="main"/>
         
-   <cmd id="zoomPlots"
+   <cmd id="layoutZoomPlots"
         label="Zoom Plots Pane"
-        menuLabel="Zoom Plots"
+        menuLabel="Plots"
         windowMode="main"/>
         
-   <cmd id="zoomPackages"
+   <cmd id="layoutZoomPackages"
         label="Zoom Packages Pane"
-        menuLabel="Zoom Packages"
+        menuLabel="Packages"
         windowMode="main"/>
         
-   <cmd id="zoomHelp"
+   <cmd id="layoutZoomHelp"
         label="Zoom Help Pane"
-        menuLabel="Zoom Help"
+        menuLabel="Help"
         windowMode="main"/>
         
-   <cmd id="zoomVcs"
+   <cmd id="layoutZoomVcs"
         label="Zoom VCS Pane"
-        menuLabel="Zoom Vcs"
+        menuLabel="Version Control"
         windowMode="main"/>
         
-   <cmd id="zoomBuild"
+   <cmd id="layoutZoomBuild"
         label="Zoom Build Pane"
-        menuLabel="Zoom Build"
+        menuLabel="Build"
         windowMode="main"/>
         
-   <cmd id="zoomPresentation"
+   <cmd id="layoutZoomPresentation"
         label="Zoom Presentation Pane"
-        menuLabel="Zoom Presentation"
+        menuLabel="Presentation"
         windowMode="main"/>
         
-   <cmd id="endZoom"
-        label="End Zoom"/>
-        
+   <cmd id="layoutZoomCurrentPane"
+        label="Toggle Zoom for Current Pane"/>
+
+   <cmd id="layoutEndZoom"
+        label="Show All Panes"/>
         
    <cmd id="jumpTo"
         label="Jump To..."
@@ -2286,9 +2270,6 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Paste"
         rebindable="false"/>
         
-   <cmd id="zoomCurrentPane"
-        label="Toggle Zoom for Current Pane"/>
-
    <cmd id="maximizeConsole"
         menuLabel="Maximize Console"/>
 

@@ -171,26 +171,26 @@ public class GlobalToolbar extends Toolbar
       // zoom button
       addLeftSeparator();
       
-      ToolbarPopupMenu zoomMenu = new ToolbarPopupMenu();
-      zoomMenu.addItem(commands_.zoomSource().createMenuItem(false));
-      zoomMenu.addItem(commands_.zoomConsole().createMenuItem(false));
-      zoomMenu.addItem(commands_.zoomHelp().createMenuItem(false));
-      zoomMenu.addSeparator();
-      zoomMenu.addItem(commands_.zoomHistory().createMenuItem(false));
-      zoomMenu.addItem(commands_.zoomFiles().createMenuItem(false));
-      zoomMenu.addItem(commands_.zoomPlots().createMenuItem(false));
-      zoomMenu.addItem(commands_.zoomPackages().createMenuItem(false));
-      zoomMenu.addItem(commands_.zoomEnvironment().createMenuItem(false));
-      zoomMenu.addItem(commands_.zoomVcs().createMenuItem(false));
-      zoomMenu.addItem(commands_.zoomBuild().createMenuItem(false));
-      zoomMenu.addSeparator();
-      zoomMenu.addItem(commands_.endZoom().createMenuItem(false));
+      ToolbarPopupMenu paneLayoutMenu = new ToolbarPopupMenu();
+      paneLayoutMenu.addItem(commands_.layoutEndZoom().createMenuItem(false));
+      paneLayoutMenu.addSeparator();
+      paneLayoutMenu.addItem(commands_.layoutZoomSource().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomConsole().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomHelp().createMenuItem(false));
+      paneLayoutMenu.addSeparator();
+      paneLayoutMenu.addItem(commands_.layoutZoomHistory().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomFiles().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomPlots().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomPackages().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomEnvironment().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomVcs().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomBuild().createMenuItem(false));
       
       ImageResource zoomIcon = ThemeResources.INSTANCE.smallMagGlassIcon();
       ToolbarButton zoomButton = new ToolbarButton(
             null,
             zoomIcon,
-            zoomMenu);
+            paneLayoutMenu);
       zoomButton.setTitle("Zoom");
       
       addLeftWidget(zoomButton);

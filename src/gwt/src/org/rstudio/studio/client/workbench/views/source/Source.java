@@ -1437,7 +1437,7 @@ public class Source implements InsertSourceHandler,
    }
    
    @Handler
-   public void onZoomSource()
+   public void onLayoutZoomSource()
    {
       onActivateSource(new Command()
       {
