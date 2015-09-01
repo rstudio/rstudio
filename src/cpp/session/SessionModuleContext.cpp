@@ -1687,6 +1687,16 @@ std::string CRANDownloadOptions()
    std::string method = module_context::downloadFileMethod();
    if (!method.empty())
       options += ", download.file.method = '" + method + "'";
+   if (method == "curl")
+   {
+      std::string extraArgs;
+      Error error = r::exec::RFunction(".rs.downloadFileExtraWithCurlArgs")
+                                                            .call(&extraArgs);
+      if (error)
+         LOG_ERROR(error);
+      options += ", download.file.extra = '" + extraArgs + "'";
+   }
+
    options += ")";
    return options;
 }
