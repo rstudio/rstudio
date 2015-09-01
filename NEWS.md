@@ -1,4 +1,3 @@
-
 ## v0.99b - Release Notes
 
 ### Source Editor
@@ -86,5 +85,4 @@
 * Vim mode: prevent paste operation from entering visual mode via Ctrl+V cross-talk
 * Fixed chunk highlighter issues that occurred when editing chunk label
 * Correctly handle call to edit() with no arguments
-
 
