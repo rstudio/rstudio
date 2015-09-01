@@ -320,7 +320,7 @@ public class PaneManager
    @Handler
    public void onLayoutEndZoom()
    {
-      restorePaneLayout();
+      restoreFourPaneLayout();
    }
    
    public void toggleWindowZoom(LogicalWindow window)
@@ -329,7 +329,7 @@ public class PaneManager
          return;
       
       if (window.getState() == WindowState.EXCLUSIVE)
-         restorePaneLayout();
+         restoreFourPaneLayout();
       else
          fullyMaximizeWindow(window);
    }
@@ -400,10 +400,16 @@ public class PaneManager
       };
    }
    
-   private void restorePaneLayout()
+   private void restoreFourPaneLayout()
    {
       if (maximizedWindow_ == null)
          return;
+      
+      // Ensure any hidden windows become 'normal'. This is necessary as
+      // transitions between various zoom events can cause panes to become
+      for (LogicalWindow window : panes_)
+         if (window.getState() == WindowState.HIDE)
+            window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
       
       maximizedWindow_.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
       horizontalResizeAnimation(panel_.getWidgetSize(right_), widgetSizePriorToZoom_).run(300);
