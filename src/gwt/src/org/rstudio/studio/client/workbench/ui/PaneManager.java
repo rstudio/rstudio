@@ -257,22 +257,17 @@ public class PaneManager
                }
             };
             
-            int newWidth = computeAppropriateWidth(window);
+            int newWidth = computeAppropriateWidth();
             horizontalResizeAnimation(0, newWidth, afterAnimation).run(300);
          }
       });
    }
    
-   int computeAppropriateWidth(LogicalWindow window)
+   int computeAppropriateWidth()
    {
-      int windowWidth = Window.getClientWidth();
-      
-      if (windowWidth > 800)
-         return 400;
-      else if (windowWidth > 500)
-         return 300;
-      else
-         return Math.min(200, windowWidth);
+      double windowWidth = Window.getClientWidth();
+      double candidateWidth = 2.0 * windowWidth / 5.0;
+      return (int) candidateWidth;
    }
    
    LogicalWindow getLogicalWindow(WindowFrame frame)
@@ -321,7 +316,7 @@ public class PaneManager
    @Handler
    public void onLayoutEndZoom()
    {
-      restoreFourPaneLayout();
+      restoreLayout();
    }
    
    public void toggleWindowZoom(LogicalWindow window)
@@ -330,7 +325,7 @@ public class PaneManager
          return;
       
       if (window.equals(maximizedWindow_))
-         restoreFourPaneLayout();
+         restoreLayout();
       else
          fullyMaximizeWindow(window);
    }
@@ -401,20 +396,44 @@ public class PaneManager
       };
    }
    
+   private void restoreLayout()
+   {
+      // If we're currently zoomed, then use that to provide the previous
+      // 'non-zoom' state.
+      if (maximizedWindow_ != null)
+         restoreSavedLayout();
+      else
+         restoreFourPaneLayout();
+   }
+   
    private void restoreFourPaneLayout()
    {
-      if (maximizedWindow_ == null)
+      // Ensure that all windows are in the 'normal' state. This allows
+      // hidden windows to display themselves, and so on. This also forces
+      // widgets to size themselves vertically.
+      for (LogicalWindow window : panes_)
+         window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
+      
+      double rightWidth = panel_.getWidgetSize(right_);
+      
+      // If the right pane is already visible horizontally, bail.
+      if (rightWidth >= 10)
          return;
       
-      // Ensure any hidden windows become 'normal'. This is necessary as
-      // transitions between various zoom events can cause panes to become
+      horizontalResizeAnimation(rightWidth, computeAppropriateWidth()).run(300);
+   }
+   
+   private void restoreSavedLayout()
+   {
+      // Ensure that all windows are in the 'normal' state. This allows
+      // hidden windows to display themselves, and so on.
       for (LogicalWindow window : panes_)
-         if (window.getState() == WindowState.HIDE)
-            window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
+         window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
       
       maximizedWindow_.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
       horizontalResizeAnimation(panel_.getWidgetSize(right_), widgetSizePriorToZoom_).run(300);
       
+      // Invalidate the saved state.
       maximizedWindow_ = null;
       widgetSizePriorToZoom_ = -1;
    }
