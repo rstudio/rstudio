@@ -334,8 +334,6 @@ public class WindowFrame extends Composite
    {
       if (!isVisible())
          fireEvent(new WindowStateChangeEvent(WindowState.NORMAL));
-      
-      events_.fireEvent(new WindowEnsureVisibleEvent(this));
    }
    
    @Override

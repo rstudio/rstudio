@@ -331,8 +331,15 @@ public class WorkbenchScreen extends Composite
    @Handler
    void onLayoutZoomHelp() 
    { 
-      paneManager_.zoomTab(Tab.Help); 
-      eventBus_.fireEvent(new ActivateHelpEvent());
+      paneManager_.zoomTab(Tab.Help);
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            eventBus_.fireEvent(new ActivateHelpEvent());
+         }
+      });
    }
    @Handler
    void onLayoutZoomVcs() { paneManager_.zoomTab(Tab.VCS); }

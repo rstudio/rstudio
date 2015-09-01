@@ -329,7 +329,7 @@ public class PaneManager
       if (isAnimating_)
          return;
       
-      if (window.getState() == WindowState.EXCLUSIVE)
+      if (window.equals(maximizedWindow_))
          restoreFourPaneLayout();
       else
          fullyMaximizeWindow(window);
