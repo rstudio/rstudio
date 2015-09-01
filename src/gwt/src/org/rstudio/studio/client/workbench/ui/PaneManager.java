@@ -232,9 +232,10 @@ public class PaneManager
             if (window == null)
                return;
             
-            // If a separate window is maximized, then maximize the
-            // requested window.
-            if (maximizedWindow_ != null)
+            // If we're currently zooming a pane, and we're now ensuring
+            // a separate window is visible (e.g. a pane raising itself),
+            // then transfer zoom to that window.
+            if (maximizedWindow_ != null && !maximizedWindow_.equals(window))
             {
                fullyMaximizeWindow(window);
                return;
