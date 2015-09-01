@@ -52,7 +52,6 @@
 #include <server/ServerProcessSupervisor.hpp>
 
 #include "ServerAddins.hpp"
-#include "ServerAppArmor.hpp"
 #include "ServerBrowser.hpp"
 #include "ServerEval.hpp"
 #include "ServerInit.hpp"
@@ -490,20 +489,6 @@ int main(int argc, char * const argv[])
             if (error)
                return core::system::exitFailure(error, ERROR_LOCATION);
          }
-      }
-
-      // enforce restricted mode if we are running under app armor
-      // note that failure to do this (for whatever unanticipated reason)
-      // is not considered fatal however it is logged as an error
-      // so the sys-admin is informed
-      if (options.serverAppArmorEnabled())
-      {
-         error = app_armor::enforceRestricted();
-
-         // log error unless it's path not found (which indicates that
-         // libapparmor isn't installed on this system)
-         if (error && !isPathNotFoundError(error))
-            LOG_ERROR(error);
       }
 
       // give up root privilige if requested

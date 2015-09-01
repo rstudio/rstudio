@@ -39,12 +39,8 @@ sudo rstudio-server force-suspend-all
 LSB_RELEASE=`lsb_release --id --short`
 INIT_SYSTEM=`cat /proc/1/comm 2>/dev/null`
 
-# add apparmor profile (but don't for systemd as this borks up process management)
-if test $LSB_RELEASE = "Ubuntu" && test -d /etc/apparmor.d/ && ! test $INIT_SYSTEM = "systemd"
-then
-   sudo cp ${CMAKE_INSTALL_PREFIX}/extras/apparmor/rstudio-server /etc/apparmor.d/
-   sudo apparmor_parser -r /etc/apparmor.d/rstudio-server 2>/dev/null
-elif test -e /etc/apparmor.d/rstudio-server
+# remove any previously installed apparmor profile
+if test -e /etc/apparmor.d/rstudio-server
 then
    sudo rm -f /etc/apparmor.d/rstudio-server
    sudo invoke-rc.d apparmor reload 2>/dev/null

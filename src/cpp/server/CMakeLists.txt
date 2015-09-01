@@ -22,7 +22,6 @@ file(GLOB_RECURSE SERVER_HEADER_FILES "*.h*")
 
 # source files
 set(SERVER_SOURCE_FILES
-   ServerAppArmor.cpp
    ServerBrowser.cpp
    ServerErrorCategory.cpp
    ServerEval.cpp
@@ -100,7 +99,7 @@ endforeach()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/server-config.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/server-config.h)
 
-# required on Fedora for AppArmor-related code to compile
+# required on Fedora for dynamic library loading
 if(NOT APPLE)
    find_library(DL_LIBRARIES dl)
 endif()
@@ -177,16 +176,6 @@ if (UNIX AND NOT APPLE)
    set(RSERVER_PAM_PROFILE "${RSERVER_PAM_DIR}/rstudio")
    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_PAM_PROFILE}
            DESTINATION ${RSERVER_PAM_DIR})
-
-   # install configured apparmor profile
-   set(RSERVER_APPARMOR_DIR "extras/apparmor")
-   set(RSERVER_APPARMOR_PROFILE "${RSERVER_APPARMOR_DIR}/rstudio-server")
-   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_APPARMOR_PROFILE}.in
-                  ${CMAKE_CURRENT_BINARY_DIR}/${RSERVER_APPARMOR_PROFILE})
-   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${RSERVER_APPARMOR_PROFILE}
-           DESTINATION ${RSERVER_APPARMOR_DIR})
-   install(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_APPARMOR_DIR}/apparmor-profile-load
-           DESTINATION ${RSERVER_APPARMOR_DIR})
 
    # install configured upstart profile
    set(RSERVER_UPSTART_DIR "extras/upstart")

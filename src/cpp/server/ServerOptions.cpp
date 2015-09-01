@@ -24,8 +24,6 @@
 
 #include <monitor/MonitorConstants.hpp>
 
-#include "ServerAppArmor.hpp"
-
 using namespace rstudio::core ;
 
 namespace rstudio {
@@ -41,7 +39,8 @@ struct Deprecated
       : memoryLimitMb(0),
         stackLimitMb(0),
         userProcessLimit(0),
-        authPamRequiresPriv(true)
+        authPamRequiresPriv(true),
+        serverAppArmorEnabled(false)
    {
    }
 
@@ -49,6 +48,7 @@ struct Deprecated
    int stackLimitMb;
    int userProcessLimit;
    bool authPamRequiresPriv;
+   bool serverAppArmorEnabled;
 };
 
 void reportDeprecationWarning(const std::string& option, std::ostream& os)
@@ -73,6 +73,9 @@ void reportDeprecationWarnings(const Deprecated& userOptions,
 
    if (userOptions.authPamRequiresPriv != defaultOptions.authPamRequiresPriv)
       reportDeprecationWarning("auth-pam-requires-priv", os);
+
+   if (userOptions.serverAppArmorEnabled != defaultOptions.serverAppArmorEnabled)
+      reportDeprecationWarning("server-app-armor-enabled", os);
 }
 
 } // anonymous namespace
@@ -126,6 +129,7 @@ ProgramStatus Options::read(int argc,
    monitorSharedSecret_ = core::system::generateUuid();
 
    // program - name and execution
+   Deprecated dep;
    options_description server("server");
    server.add_options()
       ("server-working-dir",
@@ -139,8 +143,8 @@ ProgramStatus Options::read(int argc,
                                       core::system::effectiveUserIsRoot()),
          "run program as daemon")
       ("server-app-armor-enabled",
-         value<bool>(&serverAppArmorEnabled_)->default_value(1),
-         "is app armor enabled for this session")
+         value<bool>(&dep.serverAppArmorEnabled)->default_value(dep.serverAppArmorEnabled),
+         "is app armor enabled - DEPRECATED")
       ("server-set-umask",
          value<bool>(&serverSetUmask_)->default_value(1),
          "set the umask to 022 on startup");
@@ -175,7 +179,6 @@ ProgramStatus Options::read(int argc,
          "verify that the user agent is compatible");
 
    // rsession
-   Deprecated dep;
    options_description rsession("rsession");
    rsession.add_options()
       ("rsession-which-r",
@@ -308,14 +311,6 @@ ProgramStatus Options::read(int argc,
             return ProgramStatus::exitFailure();
          }
       }
-   }
-
-   // if app armor is enabled do a further check to see whether
-   // the profile exists. if it doesn't then disable it
-   if (serverAppArmorEnabled_)
-   {
-      if (!FilePath("/etc/apparmor.d/rstudio-server").exists())
-         serverAppArmorEnabled_ = false;
    }
 
    // convert relative paths by completing from the system installation
