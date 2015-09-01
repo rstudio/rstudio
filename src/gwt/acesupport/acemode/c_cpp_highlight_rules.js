@@ -85,7 +85,7 @@ var c_cppHighlightRules = function() {
    }).join("|");
 
    var reOperator =
-      [",", "()", "[]", "->*", "->"]
+      ["<", ">", ",", "()", "[]", "->*", "->"]
       .concat(operatorTokens)
       .map(function(x) {
          return escapeRegExp(x);
