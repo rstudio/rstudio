@@ -984,9 +984,14 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("secureDownloadMethod", function()
 {
+   # Function to determine whether R checks for 404 in libcurl calls
+   libcurlHandles404 <- function() {
+      getRversion() >= "3.3" && .rs.haveRequiredRSvnRev(69197)
+   }
+
    # Check whether we are running R 3.2 and whether we have libcurl
    isR32 <- getRversion() >= "3.2"
-   haveLibcurl <- isR32 && capabilities("libcurl")
+   haveLibcurl <- isR32 && capabilities("libcurl") && libcurlHandles404()
    
    # Utility function to bind to libcurl or a fallback utility (e.g. wget)
    posixMethod <- function(utility) {
@@ -1121,6 +1126,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       secureMethod <- .rs.secureDownloadMethod()
       if (nzchar(secureMethod)) {
          options(download.file.method = secureMethod) 
+         if (secureMethod == "curl")
+            options(download.file.extra = .rs.downloadFileExtraWithCurlArgs())
       }
       else {
          .rs.insecureDownloadWarning(
@@ -1131,3 +1138,11 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    }
 })
    
+
+.rs.addFunction("downloadFileExtraWithCurlArgs", function() {
+   curlArgs <- "-L -f"
+   existingArgs <- getOption("download.file.extra")
+   if (!is.null(existingArgs))
+      curlArgs <- paste(existingArgs, curlArgs)
+   curlArgs
+})
