@@ -22,6 +22,7 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.SplitterResizedEvent;
 import com.google.gwt.user.client.ui.Widget;
@@ -34,6 +35,7 @@ import org.rstudio.core.client.Triad;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.events.WindowEnsureVisibleEvent;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.layout.DualWindowLayoutPanel;
 import org.rstudio.core.client.layout.LogicalWindow;
@@ -220,6 +222,57 @@ public class PaneManager
             toggleWindowZoom(window);
          }
       });
+      
+      eventBus_.addHandler(WindowEnsureVisibleEvent.TYPE, new WindowEnsureVisibleEvent.Handler()
+      {
+         @Override
+         public void onWindowEnsureVisible(WindowEnsureVisibleEvent event)
+         {
+            final LogicalWindow window = getLogicalWindow(event.getWindowFrame());
+            if (window == null)
+               return;
+            
+            int width = window.getActiveWidget().getOffsetWidth();
+            
+            // If the widget is already visible horizontally, then bail
+            // (other logic handles vertical visibility)
+            if (width > 0)
+               return;
+            
+            final Command afterAnimation = new Command()
+            {
+               @Override
+               public void execute()
+               {
+                  window.getNormal().onResize();
+               }
+            };
+            
+            int newWidth = computeAppropriateWidth(window);
+            horizontalResizeAnimation(0, newWidth, afterAnimation).run(300);
+         }
+      });
+   }
+   
+   int computeAppropriateWidth(LogicalWindow window)
+   {
+      int windowWidth = Window.getClientWidth();
+      
+      if (windowWidth > 800)
+         return 400;
+      else if (windowWidth > 500)
+         return 300;
+      else
+         return Math.min(200, windowWidth);
+   }
+   
+   LogicalWindow getLogicalWindow(WindowFrame frame)
+   {
+      for (LogicalWindow window : panes_)
+         if (window.getNormal() == frame)
+            return window;
+      
+      return null;
    }
    
    LogicalWindow getParentLogicalWindow(Element el)
@@ -241,11 +294,16 @@ public class PaneManager
       return targetWindow;
    }
    
+   public LogicalWindow getActiveLogicalWindow()
+   {
+      Element activeEl = DomUtils.getActiveElement();
+      return getParentLogicalWindow(activeEl);
+   }
+   
    @Handler
    public void onLayoutZoomCurrentPane()
    {
-      Element activeEl = DomUtils.getActiveElement();
-      LogicalWindow activeWindow = getParentLogicalWindow(activeEl);
+      LogicalWindow activeWindow = getActiveLogicalWindow();
       if (activeWindow == null)
          return;
       toggleWindowZoom(activeWindow);
@@ -296,6 +354,13 @@ public class PaneManager
    private Animation horizontalResizeAnimation(final double start,
                                                final double end)
    {
+      return horizontalResizeAnimation(start, end, null);
+   }
+   
+   private Animation horizontalResizeAnimation(final double start,
+                                               final double end,
+                                               final Command afterComplete)
+   {
       return new Animation()
       {
          @Override
@@ -321,6 +386,8 @@ public class PaneManager
             isAnimating_ = false;
             panel_.onSplitterResized(new SplitterResizedEvent());
             super.onComplete();
+            if (afterComplete != null)
+               afterComplete.execute();
          }
       };
    }
