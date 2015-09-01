@@ -232,6 +232,14 @@ public class PaneManager
             if (window == null)
                return;
             
+            // If a separate window is maximized, then maximize the
+            // requested window.
+            if (maximizedWindow_ != null)
+            {
+               fullyMaximizeWindow(window);
+               return;
+            }
+            
             int width = window.getActiveWidget().getOffsetWidth();
             
             // If the widget is already visible horizontally, then bail
