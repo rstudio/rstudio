@@ -215,7 +215,7 @@ public abstract class InputStream extends Object implements Closeable {
      * @throws IOException
      *             if this stream is closed or another IOException occurs.
      */
-    public synchronized void reset() throws IOException {
+    public void reset() throws IOException {
         throw new IOException();
     }
 

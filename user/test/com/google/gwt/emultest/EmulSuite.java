@@ -18,6 +18,8 @@ package com.google.gwt.emultest;
 import com.google.gwt.emultest.java.internal.CoercionsTest;
 import com.google.gwt.emultest.java.io.ByteArrayInputStreamTest;
 import com.google.gwt.emultest.java.io.ByteArrayOutputStreamTest;
+import com.google.gwt.emultest.java.io.FilterInputStreamTest;
+import com.google.gwt.emultest.java.io.FilterOutputStreamTest;
 import com.google.gwt.emultest.java.io.InputStreamTest;
 import com.google.gwt.emultest.java.io.OutputStreamTest;
 import com.google.gwt.emultest.java.lang.BooleanTest;
@@ -64,6 +66,8 @@ public class EmulSuite {
     //-- java.io
     suite.addTestSuite(ByteArrayInputStreamTest.class);
     suite.addTestSuite(ByteArrayOutputStreamTest.class);
+    suite.addTestSuite(FilterInputStreamTest.class);
+    suite.addTestSuite(FilterOutputStreamTest.class);
     suite.addTestSuite(InputStreamTest.class);
     suite.addTestSuite(OutputStreamTest.class);
     //-- java.lang

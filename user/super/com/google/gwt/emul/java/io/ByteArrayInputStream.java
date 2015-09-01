@@ -85,7 +85,7 @@ public class ByteArrayInputStream extends InputStream {
      * @return {@code count - pos}
      */
     @Override
-    public synchronized int available() {
+    public int available() {
         return count - pos;
     }
 
@@ -111,7 +111,7 @@ public class ByteArrayInputStream extends InputStream {
      * @see #reset()
      */
     @Override
-    public synchronized void mark(int readlimit) {
+    public void mark(int readlimit) {
         mark = pos;
     }
 
@@ -137,11 +137,11 @@ public class ByteArrayInputStream extends InputStream {
      * @return the byte read or -1 if the end of this stream has been reached.
      */
     @Override
-    public synchronized int read() {
+    public int read() {
         return pos < count ? buf[pos++] & 0xFF : -1;
     }
 
-    @Override public synchronized int read(byte[] buffer, int byteOffset, int byteCount) {
+    @Override public int read(byte[] buffer, int byteOffset, int byteCount) {
         IOUtils.checkOffsetAndCount(buffer, byteOffset, byteCount);
 
         // Are there any bytes available?
@@ -166,7 +166,7 @@ public class ByteArrayInputStream extends InputStream {
      * @see #mark(int)
      */
     @Override
-    public synchronized void reset() {
+    public void reset() {
         pos = mark;
     }
 
@@ -179,7 +179,7 @@ public class ByteArrayInputStream extends InputStream {
      * @return the number of bytes actually skipped.
      */
     @Override
-    public synchronized long skip(long byteCount) {
+    public long skip(long byteCount) {
         if (byteCount <= 0) {
             return 0;
         }
