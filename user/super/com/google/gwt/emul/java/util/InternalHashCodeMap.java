@@ -143,13 +143,11 @@ class InternalHashCodeMap<K, V> implements Iterable<Entry<K, V>> {
       public void remove() {
         checkState(lastEntry != null);
 
+        boolean isLastChain = itemIndex == lastChain.length;
         InternalHashCodeMap.this.remove(lastEntry.getKey());
 
-        // If we are sill in the same chain, our itemIndex just jumped an item. We can fix that
-        // by decrementing the itemIndex. However there is an exception: if there is only one
-        // item, the whole chain is simply dropped not the item. If we decrement in that case, as
-        // the item is not drop from the chain, we will end up returning the same item twice.
-        if (chain == lastChain && chain.length != 1) {
+        // If this was not the last item in the chain, our itemIndex just jumped an item.
+        if (!isLastChain) {
           itemIndex--;
         }
 

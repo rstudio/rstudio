@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -102,7 +102,7 @@ public class HashMapTest extends TestMap {
 
   /**
    * Check the state of a newly constructed, empty HashMap.
-   * 
+   *
    * @param hashMap
    */
   private static void checkEmptyHashMapAssumptions(HashMap<?, ?> hashMap) {
@@ -755,6 +755,81 @@ public class HashMapTest extends TestMap {
   @Override
   protected Map makeEmptyMap() {
     return new HashMap();
+  }
+
+  // see: https://github.com/gwtproject/gwt/issues/9184
+  public void testIterationWithCollidingHashCodes() {
+
+    Object firstKey = createObjectWithHashCode(1);
+    Object secondKey = createObjectWithHashCode(1);
+
+    // make sure we actually have a hash collision for this test
+    assertEquals(firstKey.hashCode(), secondKey.hashCode());
+
+    HashMap<Object, String> testMap = new HashMap<>();
+    testMap.put(firstKey, "one");
+    testMap.put(secondKey, "two");
+
+    Iterator<Object> it = testMap.keySet().iterator();
+
+    assertTrue("new iterator should have next", it.hasNext());
+    Object keyFromMap1 = it.next();
+
+    it.remove();
+
+    assertTrue("iterator should have next after first removal", it.hasNext());
+    Object keyFromMap2 = it.next();
+
+    it.remove();
+    assertFalse(it.hasNext());
+
+    // since iteration order is not defined for HashMap we need to make this test work with
+    // both outcomes of the iteration
+    if ((firstKey == keyFromMap1 && secondKey == keyFromMap2)
+        || (firstKey == keyFromMap2 && secondKey == keyFromMap1)) {
+      return;
+    }
+    fail("Wrong keys returned in iteration");
+  }
+
+  // see: https://github.com/gwtproject/gwt/issues/9184
+  public void testIterationWithCollidingHashCodes_FullIteration() {
+
+    List<Object> keys = new ArrayList<>();
+    HashMap<Object, String> testMap = new HashMap<>();
+    for (int i = 0; i < 100; i++) {
+      Object key = createObjectWithHashCode((i + 10) / 10);
+      keys.add(key);
+      testMap.put(key, "" + i);
+    }
+
+    int expectedSize = keys.size();
+
+    for (Iterator<Object> it = testMap.keySet().iterator(); it.hasNext(); expectedSize--) {
+      Object key = it.next();
+      assertTrue("Unexpected key was returned", keys.contains(key));
+      keys.remove(key);
+      it.remove();
+      assertEquals("Map size", expectedSize - 1, testMap.size());
+    }
+
+    assertEquals("expected size", 0, expectedSize);
+    assertTrue(testMap.isEmpty());
+    assertTrue(keys.isEmpty());
+  }
+
+  private Object createObjectWithHashCode(final int hashCode) {
+    return new Object() {
+      @Override
+      public int hashCode() {
+        return hashCode;
+      }
+
+      @Override
+      public String toString() {
+        return "" + hashCode;
+      }
+    };
   }
 
   private void iterateThrough(final HashMap<?, ?> expected) {
