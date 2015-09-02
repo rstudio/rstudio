@@ -1617,13 +1617,6 @@ public class AceEditor implements DocDisplay,
    }
 
    @Override
-   public void ensureRowVisible(int row)
-   {
-      if (!widget_.getEditor().isRowFullyVisible(row))
-         setCursorPosition(Position.create(row, 0));
-   }
-   
-   @Override
    public void scrollCursorIntoViewIfNecessary(int rowsAround)
    {
       Position cursorPos = getCursorPosition();
