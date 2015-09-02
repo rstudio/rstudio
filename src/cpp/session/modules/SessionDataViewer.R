@@ -41,9 +41,9 @@
    # NA for character cols)
    vals <- format(col, trim = TRUE, justify = "none", ...)
 
-   # restore NAs if there were any
+   # restore NA values if there were any
    if (any(naVals)) {
-     vals[naVals] <- NA
+     vals[naVals] <- col[naVals]
    } 
 
    vals
