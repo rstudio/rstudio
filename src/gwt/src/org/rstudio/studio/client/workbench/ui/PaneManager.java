@@ -336,6 +336,12 @@ public class PaneManager
       if (widgetSizePriorToZoom_ < 0)
          widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
       
+      // Put all of the panes in NORMAL mode, just to ensure an appropriate
+      // transfer to EXCLUSIVE mode works. (It seems that 'exclusive' -> 'exclusive'
+      // transfers don't always propagate as expected)
+      for (LogicalWindow pane : panes_)
+         pane.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL));
+      
       boolean isLeftWidget =
             DomUtils.contains(left_.getElement(), window.getActiveWidget().getElement());
       

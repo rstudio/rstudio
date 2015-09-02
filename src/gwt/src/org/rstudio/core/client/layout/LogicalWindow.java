@@ -95,6 +95,10 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
    public void onWindowStateChange(WindowStateChangeEvent event)
    {
       WindowState newState = event.getNewState();
+      if (state_ == EXCLUSIVE && newState == MAXIMIZE)
+         newState = NORMAL;
+      if (newState == state_)
+         newState = NORMAL;
       events_.fireEvent(new WindowStateChangeEvent(newState, event.skipFocusChange()));
    }
 
