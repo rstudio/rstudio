@@ -186,19 +186,9 @@ FilePath viewInBrowserPath()
 {
    if (s_presentationState.viewInBrowserPath.empty())
    {
-      FilePath viewDir = module_context::tempFile("view", "dir");
-      Error error = viewDir.ensureDirectory();
-      if (!error)
-      {
-         s_presentationState.viewInBrowserPath =
-                                    viewDir.childPath("presentation.html");
-      }
-      else
-      {
-         LOG_ERROR(error);
-      }
+      s_presentationState.viewInBrowserPath =
+            filePath().parent().childPath(filePath().stem() + ".html");
    }
-
    return s_presentationState.viewInBrowserPath;
 }
 
