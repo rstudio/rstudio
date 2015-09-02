@@ -64,8 +64,32 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
       // create the main menu
       menu_ = [[MainFrameMenu alloc] init];
       
-      // auto-save window position
-      [self setWindowFrameAutosaveName: @"RStudio"];
+      // determine whether we're the only instance of RStudio running
+      bool isFirst = true;
+      NSArray* apps = [[NSWorkspace sharedWorkspace] runningApplications];
+      NSRunningApplication* currentApp =
+         [NSRunningApplication currentApplication];
+      for (NSUInteger i = 0; i < [apps count]; i++)
+      {
+         NSRunningApplication *app = [apps objectAtIndex: i];
+
+         // look for a running app that has the same bundle identifier but a
+         // different process ID
+         if ([[app bundleIdentifier] isEqualToString: [currentApp bundleIdentifier]] &&
+             [app processIdentifier] != [currentApp processIdentifier])
+         {
+            isFirst = false;
+            break;
+         }
+      }
+      
+      // if there aren't any other instances running, restore size/position for
+      // this instance (doing this with multiple instances causes us to exactly
+      // obscure existing instances)
+      if (isFirst)
+      {
+         [self setWindowFrameAutosaveName: @"RStudio"];
+      }
       
       // set title
       [[self window] setTitle: @"RStudio"];
