@@ -18,7 +18,7 @@ package elemental.js.json;
 import elemental.json.JsonBoolean;
 
 /**
- * Client-side 'zero overhead' JSO implementation using extension method
+ * Client-side 'low overhead' JSO implementation using extension method
  * technique.
  */
 final public class JsJsonBoolean extends JsJsonValue
@@ -32,8 +32,7 @@ final public class JsJsonBoolean extends JsJsonValue
    * MAGIC: primitive boolean cast to object interface.
    */
   private static native JsJsonBoolean createProd(boolean bool) /*-{
-    // box for DevMode, not ProdMode
-    return @com.google.gwt.core.client.GWT::isScript()() ? bool : Object(bool);
+    return Object(bool);
   }-*/;
 
   protected JsJsonBoolean() {
@@ -44,6 +43,6 @@ final public class JsJsonBoolean extends JsJsonValue
   }
 
   private native boolean valueProd() /*-{
-    return @elemental.js.json.JsJsonValue::debox(Lelemental/json/JsonValue;)(this);
+    return this && this.valueOf();
   }-*/;
 }

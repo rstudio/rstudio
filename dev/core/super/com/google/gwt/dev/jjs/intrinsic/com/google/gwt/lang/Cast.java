@@ -161,7 +161,7 @@ final class Cast {
 
   @HasNoSideEffects
   static boolean isJavaScriptObject(Object src) {
-    return !isJavaString(src) && !Util.hasTypeMarker(src);
+    return isJsObjectOrFunction(src) && !Util.hasTypeMarker(src);
   }
 
   /**
@@ -277,6 +277,11 @@ final class Cast {
     checkType(o == null);
     return o;
   }
+
+  @HasNoSideEffects
+  static native boolean isJsObjectOrFunction(Object src) /*-{
+    return typeof(src) === "object" || typeof(src) === "function";
+  }-*/;
 
   // NOTE: if any of these three are edited, update JProgram.DispatchType's constructor
   /**

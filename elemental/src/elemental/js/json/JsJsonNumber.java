@@ -18,7 +18,7 @@ package elemental.js.json;
 import elemental.json.JsonNumber;
 
 /**
- * Client-side 'zero overhead' JSO implementation using extension method
+ * Client-side 'low overhead' JSO implementation using extension method
  * technique.
  */
 final public class JsJsonNumber extends JsJsonValue
@@ -32,8 +32,7 @@ final public class JsJsonNumber extends JsJsonValue
    * MAGIC: primitive number cast to object interface.
    */
   private static native JsJsonNumber createProd(double number) /*-{
-    // box for DevMode, not ProdMode
-    return @com.google.gwt.core.client.GWT::isScript()() ? number : Object(number);
+    return Object(number);
   }-*/;
 
   protected JsJsonNumber() {
@@ -44,6 +43,6 @@ final public class JsJsonNumber extends JsJsonValue
   }
 
   private native double valueProd() /*-{
-    return @elemental.js.json.JsJsonValue::debox(Lelemental/json/JsonValue;)(this);
+    return this && this.valueOf();
   }-*/;
 }

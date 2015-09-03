@@ -585,6 +585,23 @@ public class SingleJsoImplTest extends GWTTestCase {
     return {};
   }-*/;
 
+  interface JsFunction {
+    int call();
+  }
+
+  final static class JsFunctionImpl extends JavaScriptObject implements JsFunction {
+    protected JsFunctionImpl() {
+    }
+
+    static native JsFunction makeFunc() /*-{
+      return function() { return 42; };
+    }-*/;
+
+    public native int call() /*-{
+      return this();
+    }-*/;
+  }
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
@@ -982,5 +999,17 @@ public class SingleJsoImplTest extends GWTTestCase {
     JsoInterfaceWithUnreferencedImpl o = (JsoInterfaceWithUnreferencedImpl) JavaScriptObject.createObject();
     assertNotNull(o);
     assertTrue(o.isOk());
+  }
+
+  public void testJsFunctionCastsAsJso() {
+    JsFunction func = JsFunctionImpl.makeFunc();
+    assertTrue(func instanceof JavaScriptObject);
+    JavaScriptObject jso = (JavaScriptObject) func;
+    JsFunction func2 = (JsFunction) jso;
+    if (func2 instanceof JavaScriptObject) {
+      assertEquals(42, func2.call());
+    } else {
+      fail("Function should return true for instanceof JSO");
+    }
   }
 }
