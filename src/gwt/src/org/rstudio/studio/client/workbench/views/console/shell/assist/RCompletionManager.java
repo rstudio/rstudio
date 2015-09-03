@@ -74,6 +74,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DplyrJo
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RInfixData;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
@@ -1900,6 +1901,13 @@ public class RCompletionManager implements CompletionManager
 
       private void applyValue(final QualifiedName qualifiedName)
       {
+         String completionToken = getCurrentCompletionToken();
+         
+         // Strip off the quotes for string completions.
+         if (completionToken.startsWith("'") || completionToken.startsWith("\""))
+            completionToken = completionToken.substring(1);
+         
+         
          if (qualifiedName.source.equals("`chunk-option`"))
          {
             applyValueRmdOption(qualifiedName.name);
@@ -1908,7 +1916,7 @@ public class RCompletionManager implements CompletionManager
          
          if (qualifiedName.type == RCompletionType.SNIPPET)
          {
-            snippets_.applySnippet(token_, qualifiedName.name);
+            snippets_.applySnippet(completionToken, qualifiedName.name);
             return;
          }
          
@@ -2023,7 +2031,7 @@ public class RCompletionManager implements CompletionManager
             Position replaceEnd = range.getEnd();
             Position replaceStart = Position.create(
                   replaceEnd.getRow(),
-                  replaceEnd.getColumn() - token_.length());
+                  replaceEnd.getColumn() - completionToken.length());
             
             editor.replaceRange(
                   Range.fromPoints(replaceStart, replaceEnd),
@@ -2122,6 +2130,25 @@ public class RCompletionManager implements CompletionManager
          }
       };
       helpRequest_.schedule(milliseconds);
+   }
+   
+   String getCurrentCompletionToken()
+   {
+      AceEditor editor = (AceEditor) docDisplay_;
+      if (editor == null)
+         return "";
+      
+      Position cursorPos = editor.getCursorPosition();
+      Token currentToken = editor.getSession().getTokenAt(cursorPos);
+      
+      // Exclude non-string and non-identifier tokens.
+      if (currentToken.hasType("operator", "comment", "numeric"))
+         return "";
+      
+      String tokenValue = currentToken.getValue();
+      String subsetted = tokenValue.substring(0, cursorPos.getColumn() - currentToken.getColumn());
+      
+      return subsetted;
    }
    
    private GlobalDisplay globalDisplay_;

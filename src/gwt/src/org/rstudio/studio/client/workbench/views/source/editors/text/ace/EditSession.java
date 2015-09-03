@@ -229,5 +229,14 @@ public class EditSession extends JavaScriptObject
       if (worker && worker.setTimeout)
          worker.setTimeout(delayMs);
    }-*/;
+   
+   public final Token getTokenAt(Position position)
+   {
+      return getTokenAt(position.getRow(), position.getColumn());
+   }
+   
+   public native final Token getTokenAt(int row, int column) /*-{
+      return this.getTokenAt(row, column);
+   }-*/;
 
 }
