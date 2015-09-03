@@ -833,6 +833,10 @@ bool createStandalonePresentation(const FilePath& targetFile,
    if (!result)
       return false;
 
+   // close the output stream
+   pOfs->flush();
+   pOfs.reset();
+
    // if we have rmarkdown then use it to do base64 encoding
    if (haveRequiredRMarkdown())
    {
