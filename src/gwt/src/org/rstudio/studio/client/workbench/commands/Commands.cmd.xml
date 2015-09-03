@@ -227,6 +227,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="firstTab"/>
          <cmd refid="lastTab"/>
          <separator/>
+         
          <cmd refid="activateSource"/>
          <cmd refid="activateConsole"/>
          <cmd refid="activateHelp"/>
@@ -238,6 +239,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activateEnvironment"/>
          <cmd refid="activateVcs"/>
          <cmd refid="activateBuild"/>
+         
          <separator/>
          <cmd refid="synctexSearch"/>
       </menu>
@@ -495,6 +497,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut value="Ctrl+Alt+Shift+Down" title="Move active cursor down"/>
       </shortcutgroup>
       <shortcutgroup name="Tabs/Panes">
+      
          <shortcut refid="activateSource" value="Ctrl+1"/>
          <shortcut refid="activateConsole" value="Ctrl+2"/>
          <shortcut refid="activateHelp" value="Ctrl+3"/>
@@ -505,6 +508,18 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="activateEnvironment" value="Ctrl+8"/>
          <shortcut refid="activateVcs" value="Ctrl+9"/>
          <shortcut refid="activateBuild" value="Ctrl+0"/>
+         
+         <shortcut refid="layoutZoomSource" value="Ctrl+Shift+1"/>
+         <shortcut refid="layoutZoomConsole" value="Ctrl+Shift+2"/>
+         <shortcut refid="layoutZoomHelp" value="Ctrl+Shift+3"/>
+         <shortcut refid="layoutZoomHistory" value="Ctrl+Shift+4"/>
+         <shortcut refid="layoutZoomFiles" value="Ctrl+Shift+5"/>
+         <shortcut refid="layoutZoomPlots" value="Ctrl+Shift+6"/>
+         <shortcut refid="layoutZoomPackages" value="Ctrl+Shift+7"/>
+         <shortcut refid="layoutZoomEnvironment" value="Ctrl+Shift+8"/>
+         <shortcut refid="layoutZoomVcs" value="Ctrl+Shift+9"/>
+         <shortcut refid="layoutZoomBuild" value="Ctrl+Shift+0"/>
+         
          <shortcut refid="switchToTab" value="Ctrl+Shift+."/>
          <shortcut refid="previousTab" value="Ctrl+Alt+Left" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
          <shortcut refid="nextTab" value="Ctrl+Alt+Right" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
@@ -968,6 +983,72 @@ well as menu structures (for main menu and popup menus).
         label="Show Presentation Pane"
         menuLabel="Show Presentation"
         windowMode="main"/>
+        
+        
+   <cmd id="layoutZoomSource"
+        label="Zoom Source"
+        menuLabel="Source"/>
+        
+   <cmd id="layoutZoomConsole"
+        label="Zoom Console"
+        menuLabel="Console"
+        windowMode="main"/>
+        
+   <cmd id="layoutZoomEnvironment"
+        label="Zoom Environment Pane"
+        menuLabel="Environment"
+        windowMode="main"/>
+        
+   <cmd id="layoutZoomData"
+        label="Zoom Data Pane"
+        menuLabel="Data"
+        windowMode="main"/>
+        
+   <cmd id="layoutZoomHistory"
+        label="Zoom History Pane"
+        menuLabel="History"
+        windowMode="main"/>
+        
+   <cmd id="layoutZoomFiles"
+        label="Zoom Files Pane"
+        menuLabel="Files"
+        windowMode="main"/>
+        
+   <cmd id="layoutZoomPlots"
+        label="Zoom Plots Pane"
+        menuLabel="Plots"
+        windowMode="main"/>
+        
+   <cmd id="layoutZoomPackages"
+        label="Zoom Packages Pane"
+        menuLabel="Packages"
+        windowMode="main"/>
+        
+   <cmd id="layoutZoomHelp"
+        label="Zoom Help Pane"
+        menuLabel="Help"
+        windowMode="main"/>
+        
+   <cmd id="layoutZoomVcs"
+        label="Zoom VCS Pane"
+        menuLabel="Version Control"
+        windowMode="main"/>
+        
+   <cmd id="layoutZoomBuild"
+        label="Zoom Build Pane"
+        menuLabel="Build"
+        windowMode="main"/>
+        
+   <cmd id="layoutZoomPresentation"
+        label="Zoom Presentation Pane"
+        menuLabel="Presentation"
+        windowMode="main"/>
+        
+   <cmd id="layoutZoomCurrentPane"
+        label="Toggle Zoom for Current Pane"/>
+
+   <cmd id="layoutEndZoom"
+        label="Show All Panes"/>
         
    <cmd id="jumpTo"
         label="Jump To..."
@@ -2188,7 +2269,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="pasteDummy"
         menuLabel="_Paste"
         rebindable="false"/>
-
+        
    <cmd id="maximizeConsole"
         menuLabel="Maximize Console"/>
 

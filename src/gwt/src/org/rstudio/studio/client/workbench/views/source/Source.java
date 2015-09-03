@@ -83,6 +83,7 @@ import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -1407,6 +1408,11 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onActivateSource()
    {
+      onActivateSource(null);
+   }
+   
+   public void onActivateSource(final Command afterActivation)
+   {
       // give the window manager a chance to activate the last source pane
       if (windowManager_.activateLastFocusedSource())
          return;
@@ -1419,18 +1425,31 @@ public class Source implements InsertSourceHandler,
             public void onSuccess(EditingTarget target)
             {
                activeEditor_ = target;
-               doActivateSource();
+               doActivateSource(afterActivation);
             }
             
          });
       }
       else
       {
-         doActivateSource();
+         doActivateSource(afterActivation);
       }
    }
    
-   private void doActivateSource()
+   @Handler
+   public void onLayoutZoomSource()
+   {
+      onActivateSource(new Command()
+      {
+         @Override
+         public void execute()
+         {
+            events_.fireEvent(new ZoomPaneEvent("Source"));
+         }
+      });
+   }
+   
+   private void doActivateSource(final Command afterActivation)
    {
       ensureVisible(false);
       if (activeEditor_ != null)
@@ -1438,6 +1457,9 @@ public class Source implements InsertSourceHandler,
          activeEditor_.focus();
          activeEditor_.ensureCursorVisible();
       }
+      
+      if (afterActivation != null)
+         afterActivation.execute();
    }
 
    @Handler

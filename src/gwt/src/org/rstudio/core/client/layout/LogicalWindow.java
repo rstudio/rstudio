@@ -99,7 +99,7 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
          newState = NORMAL;
       if (newState == state_)
          newState = NORMAL;
-      events_.fireEvent(new WindowStateChangeEvent(newState));
+      events_.fireEvent(new WindowStateChangeEvent(newState, event.skipFocusChange()));
    }
 
    public void transitionToState(WindowState newState)

@@ -14,13 +14,17 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
+import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.SplitterResizedEvent;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -30,6 +34,8 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Triad;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.events.WindowEnsureVisibleEvent;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.layout.DualWindowLayoutPanel;
 import org.rstudio.core.client.layout.LogicalWindow;
@@ -42,6 +48,7 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
@@ -201,6 +208,240 @@ public class PaneManager
                              tabSet2TabPanel_, tabSet2MinPanel_);
          }
       });
+      
+      eventBus_.addHandler(ZoomPaneEvent.TYPE, new ZoomPaneEvent.Handler()
+      {
+         @Override
+         public void onZoomPane(ZoomPaneEvent event)
+         {
+            String pane = event.getPane();
+            LogicalWindow window = panesByName_.get(pane);
+            assert window != null :
+               "No pane with name '" + pane + "'";
+            
+            toggleWindowZoom(window);
+         }
+      });
+      
+      eventBus_.addHandler(WindowEnsureVisibleEvent.TYPE, new WindowEnsureVisibleEvent.Handler()
+      {
+         @Override
+         public void onWindowEnsureVisible(WindowEnsureVisibleEvent event)
+         {
+            final LogicalWindow window = getLogicalWindow(event.getWindowFrame());
+            if (window == null)
+               return;
+            
+            // If we're currently zooming a pane, and we're now ensuring
+            // a separate window is visible (e.g. a pane raising itself),
+            // then transfer zoom to that window.
+            if (maximizedWindow_ != null && !maximizedWindow_.equals(window))
+            {
+               fullyMaximizeWindow(window);
+               return;
+            }
+            
+            int width = window.getActiveWidget().getOffsetWidth();
+            
+            // If the widget is already visible horizontally, then bail
+            // (other logic handles vertical visibility)
+            if (width > 0)
+               return;
+            
+            final Command afterAnimation = new Command()
+            {
+               @Override
+               public void execute()
+               {
+                  window.getNormal().onResize();
+               }
+            };
+            
+            int newWidth = computeAppropriateWidth();
+            horizontalResizeAnimation(0, newWidth, afterAnimation).run(300);
+         }
+      });
+   }
+   
+   int computeAppropriateWidth()
+   {
+      double windowWidth = Window.getClientWidth();
+      double candidateWidth = 2.0 * windowWidth / 5.0;
+      return (int) candidateWidth;
+   }
+   
+   LogicalWindow getLogicalWindow(WindowFrame frame)
+   {
+      for (LogicalWindow window : panes_)
+         if (window.getNormal() == frame)
+            return window;
+      
+      return null;
+   }
+   
+   LogicalWindow getParentLogicalWindow(Element el)
+   {
+      LogicalWindow targetWindow = null;
+      
+      while (el != null && targetWindow == null)
+      {
+         el = el.getParentElement();
+         for (LogicalWindow window : panes_)
+         {
+            if (el.equals(window.getActiveWidget().getElement()))
+            {
+               targetWindow = window;
+               break;
+            }
+         }
+      }
+      return targetWindow;
+   }
+   
+   public LogicalWindow getActiveLogicalWindow()
+   {
+      Element activeEl = DomUtils.getActiveElement();
+      return getParentLogicalWindow(activeEl);
+   }
+   
+   @Handler
+   public void onLayoutZoomCurrentPane()
+   {
+      LogicalWindow activeWindow = getActiveLogicalWindow();
+      if (activeWindow == null)
+         return;
+      toggleWindowZoom(activeWindow);
+   }
+   
+   @Handler
+   public void onLayoutEndZoom()
+   {
+      restoreLayout();
+   }
+   
+   public void toggleWindowZoom(LogicalWindow window)
+   {
+      if (isAnimating_)
+         return;
+      
+      if (window.equals(maximizedWindow_))
+         restoreLayout();
+      else
+         fullyMaximizeWindow(window);
+   }
+   
+   private void fullyMaximizeWindow(final LogicalWindow window)
+   {
+      maximizedWindow_ = window;
+      if (widgetSizePriorToZoom_ < 0)
+         widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
+      
+      // Put all of the panes in NORMAL mode, just to ensure an appropriate
+      // transfer to EXCLUSIVE mode works. (It seems that 'exclusive' -> 'exclusive'
+      // transfers don't always propagate as expected)
+      for (LogicalWindow pane : panes_)
+         pane.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL));
+      
+      boolean isLeftWidget =
+            DomUtils.contains(left_.getElement(), window.getActiveWidget().getElement());
+      
+      window.onWindowStateChange(new WindowStateChangeEvent(WindowState.EXCLUSIVE));
+      
+      final double initialSize = panel_.getWidgetSize(right_);
+      
+      // Ensure that a couple pixels are left after zoom so that the pane
+      // can be manually pulled out (with the mouse).
+      double targetSize = isLeftWidget ?
+            0 :
+            panel_.getOffsetWidth() - 3;
+      
+      if (targetSize < 0)
+         targetSize = 0;
+      
+      horizontalResizeAnimation(initialSize, targetSize).run(300);
+   }
+   
+   private Animation horizontalResizeAnimation(final double start,
+                                               final double end)
+   {
+      return horizontalResizeAnimation(start, end, null);
+   }
+   
+   private Animation horizontalResizeAnimation(final double start,
+                                               final double end,
+                                               final Command afterComplete)
+   {
+      return new Animation()
+      {
+         @Override
+         protected void onUpdate(double progress)
+         {
+            double size =
+                  (1 - progress) * start +
+                  progress * end;
+            
+            panel_.setWidgetSize(right_, size);
+         }
+
+         @Override
+         protected void onStart()
+         {
+            isAnimating_ = true;
+            super.onStart();
+         }
+
+         @Override
+         protected void onComplete()
+         {
+            isAnimating_ = false;
+            panel_.onSplitterResized(new SplitterResizedEvent());
+            super.onComplete();
+            if (afterComplete != null)
+               afterComplete.execute();
+         }
+      };
+   }
+   
+   private void restoreLayout()
+   {
+      // If we're currently zoomed, then use that to provide the previous
+      // 'non-zoom' state.
+      if (maximizedWindow_ != null)
+         restoreSavedLayout();
+      else
+         restoreFourPaneLayout();
+   }
+   
+   private void restoreFourPaneLayout()
+   {
+      // Ensure that all windows are in the 'normal' state. This allows
+      // hidden windows to display themselves, and so on. This also forces
+      // widgets to size themselves vertically.
+      for (LogicalWindow window : panes_)
+         window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
+      
+      double rightWidth = panel_.getWidgetSize(right_);
+      
+      // If the right pane is already visible horizontally, bail.
+      if (rightWidth >= 10)
+         return;
+      
+      horizontalResizeAnimation(rightWidth, computeAppropriateWidth()).run(300);
+   }
+   
+   private void restoreSavedLayout()
+   {
+      // Ensure that all windows are in the 'normal' state. This allows
+      // hidden windows to display themselves, and so on.
+      for (LogicalWindow window : panes_)
+         window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
+      
+      maximizedWindow_.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
+      horizontalResizeAnimation(panel_.getWidgetSize(right_), widgetSizePriorToZoom_).run(300);
+      
+      // Invalidate the saved state.
+      maximizedWindow_ = null;
+      widgetSizePriorToZoom_ = -1;
    }
    
    @Handler
@@ -246,7 +487,7 @@ public class PaneManager
       tabSet2TabPanel_ = ts2.second;
       tabSet2MinPanel_ = ts2.third;
    }
-
+   
    private ArrayList<Tab> tabNamesToTabs(JsArrayString tabNames)
    {
       ArrayList<Tab> tabList = new ArrayList<Tab>();
@@ -310,7 +551,18 @@ public class PaneManager
 
    public void activateTab(Tab tab)
    {
-      tabToPanel_.get(tab).selectTab(tabToIndex_.get(tab));
+      WorkbenchTabPanel panel = getOwnerTabPanel(tab);
+      
+      // Ensure that the pane is visible (otherwise tab selection will fail)
+      LogicalWindow parent = panel.getParentWindow();
+      if (parent.getState() == WindowState.MINIMIZE ||
+          parent.getState() == WindowState.HIDE)
+      {
+         parent.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL));
+      }
+      
+      int index = tabToIndex_.get(tab);
+      panel.selectTab(index);
    }
    
    public void activateTab(String tabName)
@@ -318,6 +570,17 @@ public class PaneManager
       Tab tab = tabForName(tabName);
       if (tab != null)
          activateTab(tab);
+   }
+   
+   public void zoomTab(Tab tab)
+   {
+      activateTab(tab);
+      WorkbenchTabPanel tabPanel = getOwnerTabPanel(tab);
+      LogicalWindow parentWindow = tabPanel.getParentWindow();
+      if (parentWindow == null)
+         return;
+      
+      toggleWindowZoom(parentWindow);
    }
 
    public ConsolePane getConsole()
@@ -358,9 +621,13 @@ public class PaneManager
             commands_.goToWorkingDir().createToolbarButton();
       goToWorkingDirButton.addStyleName(
             ThemeResources.INSTANCE.themeStyles().windowFrameToolbarButton());
+      
+      LogicalWindow logicalWindow =
+            new LogicalWindow(frame, new MinimizedWindowFrame("Console"));
 
       @SuppressWarnings("unused")
       ConsoleTabPanel consoleTabPanel = new ConsoleTabPanel(frame,
+                                                            logicalWindow,
                                                             consolePane_,
                                                             compilePdfTab_,
                                                             findOutputTab_,
@@ -371,8 +638,8 @@ public class PaneManager
                                                             eventBus_,
                                                             consoleInterrupt_,
                                                             goToWorkingDirButton);
-
-      return new LogicalWindow(frame, new MinimizedWindowFrame("Console"));
+      
+      return logicalWindow;
    }
 
    private LogicalWindow createSource()
@@ -390,8 +657,10 @@ public class PaneManager
          createTabSet(String persisterName, ArrayList<Tab> tabs)
    {
       final WindowFrame frame = new WindowFrame();
-      final WorkbenchTabPanel tabPanel = new WorkbenchTabPanel(frame);
-      MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel();
+      final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel();
+      final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
+
+      final WorkbenchTabPanel tabPanel = new WorkbenchTabPanel(frame, logicalWindow);
 
       populateTabPanel(tabs, tabPanel, minimized);
 
@@ -417,7 +686,7 @@ public class PaneManager
       new SelectedTabStateValue(persisterName, tabPanel);
 
       return new Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel>(
-            new LogicalWindow(frame, minimized),
+            logicalWindow,
             tabPanel,
             minimized);
    }
@@ -535,4 +804,9 @@ public class PaneManager
    private MinimizedModuleTabLayoutPanel tabSet1MinPanel_;
    private WorkbenchTabPanel tabSet2TabPanel_;
    private MinimizedModuleTabLayoutPanel tabSet2MinPanel_;
+   
+   // Zoom-related members ----
+   private LogicalWindow maximizedWindow_;
+   private double widgetSizePriorToZoom_ = -1;
+   private boolean isAnimating_;
 }

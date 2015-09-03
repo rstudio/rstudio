@@ -25,11 +25,24 @@ public class WindowStateChangeEvent extends GwtEvent<WindowStateChangeHandler>
    public WindowStateChangeEvent(WindowState newState)
    {
       newState_ = newState;
+      skipFocusChange_ = false;
    }
 
+   public WindowStateChangeEvent(WindowState newState,
+                                 boolean keepFocus)
+   {
+      newState_ = newState;
+      skipFocusChange_ = keepFocus;
+   }
+   
    public WindowState getNewState()
    {
       return newState_;
+   }
+   
+   public boolean skipFocusChange()
+   {
+      return skipFocusChange_;
    }
 
    @Override
@@ -45,4 +58,5 @@ public class WindowStateChangeEvent extends GwtEvent<WindowStateChangeHandler>
    }
 
    private final WindowState newState_;
+   private final boolean skipFocusChange_;
 }

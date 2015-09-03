@@ -168,6 +168,32 @@ public class GlobalToolbar extends Toolbar
          addLeftWidget(vcsButton);
       }
       
+      // zoom button
+      addLeftSeparator();
+      
+      ToolbarPopupMenu paneLayoutMenu = new ToolbarPopupMenu();
+      paneLayoutMenu.addItem(commands_.layoutEndZoom().createMenuItem(false));
+      paneLayoutMenu.addSeparator();
+      paneLayoutMenu.addItem(commands_.layoutZoomSource().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomConsole().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomHelp().createMenuItem(false));
+      paneLayoutMenu.addSeparator();
+      paneLayoutMenu.addItem(commands_.layoutZoomHistory().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomFiles().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomPlots().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomPackages().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomEnvironment().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomVcs().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomBuild().createMenuItem(false));
+      
+      ImageResource paneLayoutIcon = ThemeResources.INSTANCE.paneLayoutIcon();
+      ToolbarButton paneLayoutButton = new ToolbarButton(
+            null,
+            paneLayoutIcon,
+            paneLayoutMenu);
+      paneLayoutButton.setTitle("Pane Layout");
+      
+      addLeftWidget(paneLayoutButton);
       // project popup menu
       ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
                                                           commands_);

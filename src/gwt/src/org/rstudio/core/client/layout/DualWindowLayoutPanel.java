@@ -109,27 +109,27 @@ public class DualWindowLayoutPanel extends SimplePanel
             case EXCLUSIVE:
                windowA_.transitionToState(EXCLUSIVE);
                windowB_.transitionToState(HIDE);
-               layout(windowA_, windowB_);
+               layout(windowA_, windowB_, event.skipFocusChange());
                break;
             case MAXIMIZE:
                windowA_.transitionToState(MAXIMIZE);
                windowB_.transitionToState(MINIMIZE);
-               layout(windowA_, windowB_);
+               layout(windowA_, windowB_, event.skipFocusChange());
                break;
             case MINIMIZE:
                windowA_.transitionToState(MINIMIZE);
                windowB_.transitionToState(MAXIMIZE);
-               layout(windowA_, windowB_);
+               layout(windowA_, windowB_, event.skipFocusChange());
                break;
             case NORMAL:
                windowA_.transitionToState(NORMAL);
                windowB_.transitionToState(NORMAL);
-               layout(windowA_, windowB_);
+               layout(windowA_, windowB_, event.skipFocusChange());
                break;
             case HIDE:
                windowA_.transitionToState(HIDE);
                windowB_.transitionToState(EXCLUSIVE);
-               layout(windowA_, windowB_);
+               layout(windowA_, windowB_, event.skipFocusChange());
                break;
          }
 
@@ -535,16 +535,18 @@ public class DualWindowLayoutPanel extends SimplePanel
          layout_.onResize();
       }
    }
-
+   
    private void layout(final LogicalWindow top,
-                       final LogicalWindow bottom)
+                       final LogicalWindow bottom,
+                       boolean keepFocus)
    {
       AnimationHelper.create(layout_,
                              top,
                              bottom,
                              normalHeight_.getHeightScaledTo(getOffsetHeight()),
                              layout_.getSplitterHeight(),
-                             isVisible() && isAttached()).animate();
+                             isVisible() && isAttached(),
+                             keepFocus).animate();
    }
 
    public void setTopWindowState(WindowState state)
