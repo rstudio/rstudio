@@ -389,15 +389,16 @@ Error createStandalonePresentation(const json::JsonRpcRequest& request,
       return error;
    FilePath targetPath = module_context::resolveAliasedPath(pathParam);
 
+   FilePath htmlFilePath = presentation::state::htmlFilePath();
    ErrorResponse errorResponse;
-   if (!savePresentationAsStandalone(targetPath, &errorResponse))
+   if (!savePresentationAsStandalone(htmlFilePath, &errorResponse))
    {
       pResponse->setError(systemError(boost::system::errc::io_error,
                                       ERROR_LOCATION),
                           json::toJsonString(errorResponse.message));
    }
 
-   return Success();
+   return htmlFilePath.move(targetPath);
 }
 
 Error createDesktopViewInBrowserPresentation(
@@ -405,7 +406,7 @@ Error createDesktopViewInBrowserPresentation(
                                    json::JsonRpcResponse* pResponse)
 {
    // save to view in browser path
-   FilePath targetPath = presentation::state::viewInBrowserPath();
+   FilePath targetPath = presentation::state::htmlFilePath();
    ErrorResponse errorResponse;
    if (savePresentationAsStandalone(targetPath, &errorResponse))
    {

@@ -156,7 +156,7 @@ std::string localMathjax()
    return alternateMathjax("mathjax-23");
 }
 
-std::string copiedMathjax(const FilePath& targetFile)
+FilePath getTargetFilesDir(const FilePath& targetFile)
 {
    // determine target files dir and create it if necessary
    std::string presFilesDir = targetFile.stem() + "_files";
@@ -165,8 +165,20 @@ std::string copiedMathjax(const FilePath& targetFile)
    if (error)
    {
       LOG_ERROR(error);
-      return remoteMathjax();
+      return FilePath();
    }
+   else
+   {
+      return filesTargetDir;
+   }
+}
+
+std::string copiedMathjax(const FilePath& targetFile)
+{
+   // determine target files dir and create it if necessary
+   FilePath filesTargetDir = getTargetFilesDir(targetFile);
+   if (filesTargetDir.empty())
+      return remoteMathjax();
 
    // copy the mathjax directory
    r::exec::RFunction fileCopy("file.copy");
@@ -175,7 +187,7 @@ std::string copiedMathjax(const FilePath& targetFile)
    fileCopy.addParam("to", string_utils::utf8ToSystem(
                          filesTargetDir.absolutePath()));
    fileCopy.addParam("recursive", true);
-   error = fileCopy.call();
+   Error error = fileCopy.call();
    if (error)
    {
       LOG_ERROR(error);
@@ -183,7 +195,7 @@ std::string copiedMathjax(const FilePath& targetFile)
    }
 
    // return fixed up html
-   return alternateMathjax(presFilesDir + "/mathjax-23");
+   return alternateMathjax(filesTargetDir.filename() + "/mathjax-23");
 }
 
 std::string localWebFonts()
@@ -235,8 +247,14 @@ std::string embeddedWebFonts()
 
 std::string readHtmlDepsFile(const FilePath& rootFile)
 {
+   std::string filesDirPrefix;
+   FilePath filesDirPath = getTargetFilesDir(rootFile);
+   if (!filesDirPath.empty())
+      filesDirPrefix = filesDirPath.filename() + "/";
+
    std::string htmlDeps;
-   FilePath depsFile = rootFile.parent().childPath(rootFile.stem() +
+   FilePath depsFile = rootFile.parent().childPath(filesDirPrefix +
+                                                   rootFile.stem() +
                                                    "-libs/deps.html");
    if (depsFile.exists())
    {
@@ -281,6 +299,12 @@ bool performKnit(const FilePath& rmdPath,
 {
    // calculate the target md path
    FilePath mdPath = rmdPath.parent().childPath(rmdPath.stem() + ".md");
+
+   // calculate the _files dir prefix
+   std::string filesDirPrefix;
+   FilePath filesTargetDir = getTargetFilesDir(rmdPath);
+   if (!filesTargetDir.empty())
+      filesDirPrefix = filesTargetDir.filename() + "/";
 
    // remove the md if we are clearing the cache
    if (clearCache)
@@ -337,7 +361,7 @@ bool performKnit(const FilePath& rmdPath,
    args.push_back("-e");
    std::string fmStr("library(knitr); "
                      "opts_chunk$set(cache.path='%1%-cache/', "
-                                    "fig.path='%1%-figure/', "
+                                    "fig.path='%6%%1%-figure/', "
                                     "tidy=FALSE, "
                                     "warning=FALSE, "
                                     "error=FALSE, "
@@ -354,8 +378,8 @@ bool performKnit(const FilePath& rmdPath,
                      "  deps <- rmarkdown:::flatten_html_dependencies(deps); "
                      "  deps <- rmarkdown:::html_dependency_resolver(deps); "
                      "  deps <- rmarkdown:::html_dependencies_as_string( "
-                          "deps, '%1%-libs', '%5%'); "
-                     "  writeLines(deps, '%1%-libs/deps.html');"
+                          "deps, '%6%%1%-libs', '%5%'); "
+                     "  writeLines(deps, '%6%%1%-libs/deps.html');"
                      "};";
    }
 
@@ -366,7 +390,8 @@ bool performKnit(const FilePath& rmdPath,
           % string_utils::utf8ToSystem(rmdPath.filename())
           % string_utils::utf8ToSystem(mdPath.filename())
           % encoding
-          % string_utils::utf8ToSystem(rmdPath.parent().absolutePath()));
+          % string_utils::utf8ToSystem(rmdPath.parent().absolutePath())
+          % filesDirPrefix);
    args.push_back(cmd);
 
    // options
@@ -975,7 +1000,7 @@ void handlePresentationRootRequest(const std::string& path,
 
       // also save a view in browser version if that path already exists
       // (allows the user to do a simple browser refresh to see changes)
-      FilePath viewInBrowserPath = presentation::state::viewInBrowserPath();
+      FilePath viewInBrowserPath = presentation::state::htmlFilePath();
       if (viewInBrowserPath.exists())
       {
          ErrorResponse errorResponse;

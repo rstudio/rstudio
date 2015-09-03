@@ -46,7 +46,7 @@ struct PresentationState
    bool isTutorial;
    FilePath filePath;
    int slideIndex;
-   FilePath viewInBrowserPath; // not saved, is created on demand
+   FilePath htmlFilePath; // not saved, is created on demand
 };
 
 // write-through cache of presentation state
@@ -182,14 +182,14 @@ FilePath directory()
    return s_presentationState.filePath.parent();
 }
 
-FilePath viewInBrowserPath()
+FilePath htmlFilePath()
 {
-   if (s_presentationState.viewInBrowserPath.empty())
+   if (s_presentationState.htmlFilePath.empty())
    {
-      s_presentationState.viewInBrowserPath =
+      s_presentationState.htmlFilePath =
             filePath().parent().childPath(filePath().stem() + ".html");
    }
-   return s_presentationState.viewInBrowserPath;
+   return s_presentationState.htmlFilePath;
 }
 
 void clear()
