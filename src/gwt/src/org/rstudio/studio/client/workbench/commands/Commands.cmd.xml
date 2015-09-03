@@ -214,7 +214,25 @@ well as menu structures (for main menu and popup menus).
       <menu label="_View">
          <cmd refid="showToolbar"/>
          <cmd refid="hideToolbar"/>
+         
          <separator/>
+         
+         <menu label="Layout">
+            <cmd refid="layoutZoomSource"/>
+            <cmd refid="layoutZoomConsole"/>
+            <cmd refid="layoutZoomHelp"/>
+            <separator/>
+            <cmd refid="layoutZoomHistory"/>
+            <cmd refid="layoutZoomFiles"/>
+            <cmd refid="layoutZoomPlots"/>
+            <cmd refid="layoutZoomPackages"/>
+            <cmd refid="layoutZoomEnvironment"/>
+            <cmd refid="layoutZoomVcs"/>
+            <cmd refid="layoutZoomBuild"/>
+         </menu>
+         
+         <separator/>
+         
          <cmd refid="zoomActualSize"/>
          <cmd refid="zoomIn"/>
          <cmd refid="zoomOut"/>
@@ -987,61 +1005,61 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="layoutZoomSource"
         label="Zoom Source"
-        menuLabel="Source"/>
+        menuLabel="Source Only"/>
         
    <cmd id="layoutZoomConsole"
         label="Zoom Console"
-        menuLabel="Console"
+        menuLabel="Console Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomEnvironment"
         label="Zoom Environment Pane"
-        menuLabel="Environment"
+        menuLabel="Environment Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomData"
         label="Zoom Data Pane"
-        menuLabel="Data"
+        menuLabel="Data Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomHistory"
         label="Zoom History Pane"
-        menuLabel="History"
+        menuLabel="History Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomFiles"
         label="Zoom Files Pane"
-        menuLabel="Files"
+        menuLabel="Files Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomPlots"
         label="Zoom Plots Pane"
-        menuLabel="Plots"
+        menuLabel="Plots Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomPackages"
         label="Zoom Packages Pane"
-        menuLabel="Packages"
+        menuLabel="Packages Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomHelp"
         label="Zoom Help Pane"
-        menuLabel="Help"
+        menuLabel="Help Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomVcs"
         label="Zoom VCS Pane"
-        menuLabel="Version Control"
+        menuLabel="Version Control Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomBuild"
         label="Zoom Build Pane"
-        menuLabel="Build"
+        menuLabel="Build Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomPresentation"
         label="Zoom Presentation Pane"
-        menuLabel="Presentation"
+        menuLabel="Presentation Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomCurrentPane"

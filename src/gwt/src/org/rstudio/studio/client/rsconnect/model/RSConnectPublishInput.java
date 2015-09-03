@@ -117,7 +117,9 @@ public class RSConnectPublishInput
    
    public boolean isStaticDocInput()
    {
-      if (getContentType() == RSConnect.CONTENT_TYPE_PLOT)
+      // plots and presentations are always static
+      if (getContentType() == RSConnect.CONTENT_TYPE_PLOT ||
+          getContentType() == RSConnect.CONTENT_TYPE_PRES)
          return true;
       if (getContentType() != RSConnect.CONTENT_TYPE_DOCUMENT)
          return false;
