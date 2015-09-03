@@ -730,7 +730,7 @@ std::string rLibraryPath(const FilePath& rHomePath,
    libraryPath.append(ldLibraryPath);
    if (!libraryPath.empty())
       libraryPath.append(":");
-   libraryPath.append(rLibPath.absolutePath());
+   libraryPath = rLibPath.absolutePath() + ":" + libraryPath;
    std::string extraPaths = extraLibraryPaths(ldPathsScript,
                                               rHomePath.absolutePath());
    if (!extraPaths.empty())
