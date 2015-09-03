@@ -86,4 +86,6 @@
 * Vim mode: prevent paste operation from entering visual mode via Ctrl+V cross-talk
 * Fixed chunk highlighter issues that occurred when editing chunk label
 * Correctly handle call to edit() with no arguments
+* Fix inability to start up on OS X when multiple conflicting R versions are on the library search path.
+
 
