@@ -21,6 +21,8 @@
 #include <QMainWindow>
 #include <QFileDialog>
 
+#include <core/system/Process.hpp>
+
 namespace rstudio {
 namespace core {
    class FilePath;
@@ -64,7 +66,7 @@ void showFileError(const QString& action,
                    const QString& file,
                    const QString& error);
 
-void launchProjectInNewInstance(QString projectFilename);
+void launchRStudio(const std::vector<std::string>& args = std::vector<std::string>());
 
 bool isFixedWidthFont(const QFont& font);
 

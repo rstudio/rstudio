@@ -131,6 +131,10 @@ public:
          }
       }
 
+      // bail if we aren't waiting for results
+      if (pResult == NULL)
+         return Success();
+
       // read standard out if we didn't have a previous problem
       if (!error)
          error = readStdOut(&(pResult->stdOut));

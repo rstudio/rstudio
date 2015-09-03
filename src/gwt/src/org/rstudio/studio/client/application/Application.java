@@ -677,8 +677,7 @@ public class Application implements ApplicationEventHandlers
       }
       
       // show new session when appropriate
-      if ((!Desktop.isDesktop() && !sessionInfo.getMultiSession()) ||
-           BrowseCap.isWindowsDesktop())
+      if (!Desktop.isDesktop() && !sessionInfo.getMultiSession())
       {
          commands_.newSession().remove();
       }

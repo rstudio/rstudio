@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.projects;
 
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
@@ -177,11 +176,8 @@ public class Projects implements OpenProjectFileHandler,
             }
             
             // disable the open project in new window if necessary
-            if ((!Desktop.isDesktop() && !sessionInfo.getMultiSession()) ||
-                  BrowseCap.isWindowsDesktop())
-            {
+            if (!sessionInfo.getMultiSession())
                commands.openProjectInNewWindow().remove();
-            }
             
             // maintain mru
             if (hasProject)
