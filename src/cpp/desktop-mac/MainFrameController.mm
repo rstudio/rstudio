@@ -38,6 +38,30 @@ static MainFrameController* instance_;
 // context for tracking all running applications
 const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
 
+namespace
+{
+
+bool setWindowGeometry(NSWindow* window, NSString* geometry)
+{
+   // split geometry into individual values
+   NSArray* geom = [geometry componentsSeparatedByString:@","];
+   if ([geom count] < 4)
+      return false;
+   
+   // parse into individual values
+   NSRect frame;
+   frame.origin.x    = [[geom objectAtIndex: 0] intValue];
+   frame.origin.y    = [[geom objectAtIndex: 1] intValue];
+   frame.size.height = [[geom objectAtIndex: 2] intValue];
+   frame.size.width  = [[geom objectAtIndex: 3] intValue];
+   
+   // apply parsed geometry
+   [window setFrame: frame display: TRUE];
+   return true;
+}
+
+} // anonymous namespace
+
 + (MainFrameController*) instance
 {
    return instance_;
@@ -64,8 +88,24 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
       // create the main menu
       menu_ = [[MainFrameMenu alloc] init];
       
-      // auto-save window position
-      [self setWindowFrameAutosaveName: @"RStudio"];
+      bool hasInitialGeometry = false;
+      NSArray* args = [[NSProcessInfo processInfo] arguments];
+      for (NSUInteger i = 0; i < [args count]; i++)
+      {
+         NSString* str = [args objectAtIndex: i];
+         if ([str isEqualToString: kInitialGeometryArg] &&
+             (i + 1) < [args count])
+         {
+            hasInitialGeometry = setWindowGeometry(
+               [self window], [args objectAtIndex: i+1]);
+         }
+      }
+      
+      // auto-save window position unless we're using manually supplied geometry
+      if (!hasInitialGeometry)
+      {
+         [self setWindowFrameAutosaveName: @"RStudio"];
+      }
       
       // set title
       [[self window] setTitle: @"RStudio"];

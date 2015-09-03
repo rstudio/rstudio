@@ -18,6 +18,8 @@
 #import "MainFrameMenu.h"
 #import "DockTileView.h"
 
+#define kInitialGeometryArg @"--initialGeometry"
+
 @interface MainFrameController : WebViewController {
    BOOL quitConfirmed_;
    BOOL firstWorkbenchInitialized_;

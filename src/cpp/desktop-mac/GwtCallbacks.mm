@@ -49,6 +49,13 @@ NSString* createAliasedPath(NSString* path)
    return [NSString stringWithUTF8String: aliased.c_str()];
 }
 
+NSString* getNewWindowGeometry()
+{
+   NSRect frame = [[NSApp mainWindow] frame];
+   frame.origin = [[NSApp mainWindow] cascadeTopLeftFromPoint: frame.origin];
+   return [NSString stringWithFormat: @"%d,%d,%d,%d", (int)frame.origin.x,
+           (int)frame.origin.y, (int)frame.size.height, (int)frame.size.width];
+}
 
 NSString* resolveAliasedPath(NSString* path)
 {
@@ -818,7 +825,9 @@ private:
    
    NSString* exePath = [NSString stringWithUTF8String:
                desktop::options().executablePath().absolutePath().c_str()];
-   NSArray* args = [NSArray arrayWithObject: projectFilePath];
+   NSArray* args = [NSArray arrayWithObjects: projectFilePath,
+                                              kInitialGeometryArg,
+                                              getNewWindowGeometry(), nil];
    
    [NSTask launchedTaskWithLaunchPath: exePath arguments: args];
 }
@@ -831,7 +840,9 @@ private:
                                               desktop::options().executablePath().absolutePath().c_str()];
    
    core::system::setenv(kRStudioInitialWorkingDir, [workingDirectoryPath UTF8String]);
-   [NSTask launchedTaskWithLaunchPath: exePath arguments: [NSArray array]];
+   NSArray* args = [NSArray arrayWithObjects: kInitialGeometryArg,
+                   getNewWindowGeometry(), nil];
+   [NSTask launchedTaskWithLaunchPath: exePath arguments: args];
 }
 
 
