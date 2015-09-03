@@ -374,9 +374,9 @@ public abstract class JJSTestBase extends CheckerTestCase {
    */
   protected SourceLevel sourceLevel = SourceLevel.DEFAULT_SOURCE_LEVEL;
 
-  protected static void assertContainsAll(Iterable<String> expectedMethodSnippets,
-      Set<String> actualMethodSnippets) {
-    List<String> missing = FluentIterable.from(expectedMethodSnippets)
+  protected static <T> void assertContainsAll(Iterable<T> expectedMethodSnippets,
+      Set<T> actualMethodSnippets) {
+    List<T> missing = FluentIterable.from(expectedMethodSnippets)
         .filter(Predicates.not(Predicates.in(actualMethodSnippets)))
         .toList();
     assertTrue(missing + " not contained in " + actualMethodSnippets, missing.size() == 0);

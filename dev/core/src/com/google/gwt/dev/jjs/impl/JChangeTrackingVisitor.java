@@ -18,6 +18,7 @@ import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
+import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JVariable;
 
 import java.util.Collection;
@@ -81,10 +82,24 @@ public abstract class JChangeTrackingVisitor extends JModVisitor {
   @Override
   public final void endVisit(JMethod x, Context ctx) {
     exit(x, ctx);
-    if (methodModified) {
-      optimizerCtx.markModified(x);
-    }
     currentMethod = null;
+
+    if (!methodModified) {
+      return;
+    }
+
+    optimizerCtx.markModified(x);
+    if (JProgram.isClinit(x) || JProgram.isInit(x)) {
+      // Mark all class static fields as modified when a class clinit is modified to reflect
+      // that when inline declaration statements are modified the corresponding field must
+      // be considered modified.
+      for (JField potentiallyModifiedField: x.getEnclosingType().getFields()) {
+        if (potentiallyModifiedField.isStatic() && JProgram.isClinit(x)
+            || !potentiallyModifiedField.isStatic() && !JProgram.isClinit(x)) {
+          optimizerCtx.markModified(potentiallyModifiedField);
+        }
+      }
+    }
   }
 
   @Override

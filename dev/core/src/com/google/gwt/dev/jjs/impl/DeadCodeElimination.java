@@ -2031,9 +2031,11 @@ public class DeadCodeElimination {
    * context).
    */
   public static OptimizerStats exec(JProgram program, OptimizerContext optimizerCtx) {
-    Iterable<JMethod> modifiedMethods =
+    Set<JMethod> affectedMethods =
         optimizerCtx.getModifiedMethodsSince(optimizerCtx.getLastStepFor(NAME));
-    OptimizerStats stats = new DeadCodeElimination(program).execImpl(modifiedMethods, optimizerCtx);
+    affectedMethods.addAll(optimizerCtx.getMethodsByReferencedFields(
+        optimizerCtx.getModifiedFieldsSince(optimizerCtx.getLastStepFor(NAME))));
+    OptimizerStats stats = new DeadCodeElimination(program).execImpl(affectedMethods, optimizerCtx);
     optimizerCtx.setLastStepFor(NAME, optimizerCtx.getOptimizationStep());
     optimizerCtx.incOptimizationStep();
     JavaAstVerifier.assertProgramIsConsistent(program);

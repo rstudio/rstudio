@@ -26,6 +26,13 @@ import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JVariable;
+import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
+
+import java.util.Arrays;
+import java.util.Set;
 
 /**
  * Test for {@link JChangeTrackingVisitor}.
@@ -467,6 +474,8 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
   public void testModificationTracking() throws Exception {
     addSnippetClassDecl("static class A {",
         "  public double field;",
+        "  public static int staticField = 1 < 2 ? 1 : 0;",
+        "  public int instanceField = 1 + 1;",
         "  public A(double f) { field = f; }",
         "  public void fun1 () { for(int i = 3; i < 4; i++) i = 8; }",
         "  public int fun2 (int a) { return a > 1 ? 1 : 0; }",
@@ -488,89 +497,103 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
         new ReplaceConditionalExprWithItsThenExprVisitor(optimizerCtx);
     repalceConditionalExprVisitor.accept(program.getFromTypeMap("test.EntryPoint$A"));
     optimizerCtx.incOptimizationStep();
-    assertEquals(0, optimizerCtx.getModifiedFieldsSince(first).size());
 
-    assertEquals(3, optimizerCtx.getModifiedMethodsSince(first).size());
-    assertTrue(optimizerCtx.getModifiedMethodsSince(first).contains(
-        JJSTestBase.findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun2")));
-    assertTrue(optimizerCtx.getModifiedMethodsSince(first).contains(
-        JJSTestBase.findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun3")));
-    assertTrue(optimizerCtx.getModifiedMethodsSince(first).contains(
-        JJSTestBase.findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun5")));
+    Set<JMethod> modifiedMethodsInIteration1 =
+        ImmutableSet.copyOf(getMethods(program, "test.EntryPoint$A",
+            "fun2", "fun3", "fun5", GwtAstBuilder.CLINIT_NAME));
+    Set<JField> modifiedFieldsInIteration1 =
+        ImmutableSet.copyOf(getFields(program, "test.EntryPoint$A",
+            "staticField"));
+
+    assertEquals(modifiedFieldsInIteration1, optimizerCtx.getModifiedFieldsSince(first));
+    assertEquals(modifiedMethodsInIteration1, optimizerCtx.getModifiedMethodsSince(first));
 
     int second = optimizerCtx.getOptimizationStep();
     ReplaceAddOperationWithItsFirstOperandVisitor replaceAddOperationVisitor =
         new ReplaceAddOperationWithItsFirstOperandVisitor(optimizerCtx);
     replaceAddOperationVisitor.accept(program.getFromTypeMap("test.EntryPoint$A"));
     optimizerCtx.incOptimizationStep();
-    assertEquals(0, optimizerCtx.getModifiedFieldsSince(second).size());
 
-    assertEquals(2, optimizerCtx.getModifiedMethodsSince(second).size());
-    assertTrue(optimizerCtx.getModifiedMethodsSince(second).contains(
-        JJSTestBase.findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun4")));
-    assertTrue(optimizerCtx.getModifiedMethodsSince(second).contains(
-        JJSTestBase.findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun5")));
+    Set<JMethod> modifiedMethodsInIteration2 =
+        ImmutableSet.copyOf(getMethods(program, "test.EntryPoint$A",
+                "fun4", "fun5", GwtAstBuilder.INIT_NAME));
+    Set<JField> modifiedFieldsInIteration2 =
+        ImmutableSet.copyOf(getFields(program, "test.EntryPoint$A",
+            "instanceField", "field"));
 
-    assertEquals(0, optimizerCtx.getModifiedFieldsSince(first).size());
+    assertEquals(modifiedFieldsInIteration2, optimizerCtx.getModifiedFieldsSince(second));
+    assertEquals(modifiedMethodsInIteration2, optimizerCtx.getModifiedMethodsSince(second));
 
-    assertEquals(4, optimizerCtx.getModifiedMethodsSince(first).size());
-    assertTrue(optimizerCtx.getModifiedMethodsSince(first).contains(
-        JJSTestBase.findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun2")));
-    assertTrue(optimizerCtx.getModifiedMethodsSince(first).contains(
-        JJSTestBase.findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun3")));
-    assertTrue(optimizerCtx.getModifiedMethodsSince(first).contains(
-        JJSTestBase.findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun4")));
-    assertTrue(optimizerCtx.getModifiedMethodsSince(first).contains(
-        JJSTestBase.findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun5")));
+    assertEquals(Sets.union(modifiedFieldsInIteration1, modifiedFieldsInIteration2),
+        optimizerCtx.getModifiedFieldsSince(first));
+    assertEquals(Sets.union(modifiedMethodsInIteration1, modifiedMethodsInIteration2),
+        optimizerCtx.getModifiedMethodsSince(first));
 
     int third = optimizerCtx.getOptimizationStep();
     SetFieldOfIntToLongVisitor setFieldOfIntToLongVisitor =
         new SetFieldOfIntToLongVisitor(optimizerCtx);
     setFieldOfIntToLongVisitor.accept(program.getFromTypeMap("test.EntryPoint$B"));
     optimizerCtx.incOptimizationStep();
-    assertEquals(1, optimizerCtx.getModifiedFieldsSince(third).size());
-    assertTrue(optimizerCtx.getModifiedFieldsSince(third).contains(
-        JJSTestBase.findField(program.getFromTypeMap("test.EntryPoint$B"), "field1")));
 
-    assertEquals(0, optimizerCtx.getModifiedMethodsSince(third).size());
+    Set<JMethod> modifiedMethodsInIteration3 = ImmutableSet.of();
+    Set<JField> modifiedFieldsInIteration3 =
+        ImmutableSet.copyOf(getFields(program, "test.EntryPoint$B",
+            "field1"));
 
-    assertEquals(1, optimizerCtx.getModifiedFieldsSince(second).size());
-    assertTrue(optimizerCtx.getModifiedFieldsSince(second).contains(
-        JJSTestBase.findField(program.getFromTypeMap("test.EntryPoint$B"), "field1")));
+    assertEquals(modifiedFieldsInIteration3, optimizerCtx.getModifiedFieldsSince(third));
+    assertEquals(modifiedMethodsInIteration3, optimizerCtx.getModifiedMethodsSince(third));
 
-    assertEquals(2, optimizerCtx.getModifiedMethodsSince(second).size());
-    assertTrue(optimizerCtx.getModifiedMethodsSince(second).contains(
-        JJSTestBase.findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun4")));
-    assertTrue(optimizerCtx.getModifiedMethodsSince(second).contains(
-        JJSTestBase.findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun5")));
+    assertEquals(Sets.union(modifiedFieldsInIteration2, modifiedFieldsInIteration3),
+        optimizerCtx.getModifiedFieldsSince(second));
+    assertEquals(Sets.union(modifiedMethodsInIteration2, modifiedMethodsInIteration3),
+        optimizerCtx.getModifiedMethodsSince(second));
 
-    assertEquals(1, optimizerCtx.getModifiedFieldsSince(first).size());
-    assertTrue(optimizerCtx.getModifiedFieldsSince(first).contains(
-        JJSTestBase.findField(program.getFromTypeMap("test.EntryPoint$B"), "field1")));
+    assertEquals(Sets.union(Sets.union(
+            modifiedFieldsInIteration1, modifiedFieldsInIteration2), modifiedFieldsInIteration3),
+        optimizerCtx.getModifiedFieldsSince(first));
+    assertEquals(Sets.union(Sets.union(
+            modifiedMethodsInIteration1, modifiedMethodsInIteration2), modifiedMethodsInIteration3),
+        optimizerCtx.getModifiedMethodsSince(first));
 
-    assertEquals(4, optimizerCtx.getModifiedMethodsSince(first).size());
-    assertTrue(optimizerCtx.getModifiedMethodsSince(first).contains(
-        JJSTestBase.findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun2")));
-    assertTrue(optimizerCtx.getModifiedMethodsSince(first).contains(
-        JJSTestBase.findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun3")));
-    assertTrue(optimizerCtx.getModifiedMethodsSince(first).contains(
-        JJSTestBase.findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun4")));
-    assertTrue(optimizerCtx.getModifiedMethodsSince(first).contains(
-        JJSTestBase.findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun5")));
+    Set<JMethod> methodsDeletedInIteration4 = getMethods(program, "test.EntryPoint$A", "fun5");
 
     RemoveMethodsWithThreeParamsVisitor removeMethodsWithThreeParamsVisitor =
         new RemoveMethodsWithThreeParamsVisitor(optimizerCtx);
     removeMethodsWithThreeParamsVisitor.accept(program.getFromTypeMap("test.EntryPoint$A"));
-    assertEquals(3, optimizerCtx.getModifiedMethodsSince(first).size());
-    assertTrue(optimizerCtx.getModifiedMethodsSince(first).contains(
-        JJSTestBase.findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun2")));
-    assertTrue(optimizerCtx.getModifiedMethodsSince(first).contains(
-        JJSTestBase.findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun3")));
-    assertTrue(optimizerCtx.getModifiedMethodsSince(first).contains(
-        JJSTestBase.findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun4")));
 
+    assertEquals(Sets.difference(Sets.union(Sets.union(
+                modifiedMethodsInIteration1, modifiedMethodsInIteration2),
+                modifiedMethodsInIteration3),methodsDeletedInIteration4),
+        optimizerCtx.getModifiedMethodsSince(first));
+
+    Set<JField> fieldsDeletedInIteration4 = getFields(program, "test.EntryPoint$B", "field1");
     RemoveFieldsOfLongType removeFieldsOfLongType = new RemoveFieldsOfLongType(optimizerCtx);
     removeFieldsOfLongType.accept(program.getFromTypeMap("test.EntryPoint$B"));
-    assertEquals(0, optimizerCtx.getModifiedFieldsSince(first).size());
+
+    assertEquals(Sets.difference(Sets.union(Sets.union(
+                modifiedFieldsInIteration1, modifiedFieldsInIteration2),
+            modifiedFieldsInIteration3),fieldsDeletedInIteration4),
+        optimizerCtx.getModifiedFieldsSince(first));
+  }
+
+  private Set<JMethod> getMethods(
+      final JProgram program, final String clazz, String... methodNames) {
+    return FluentIterable.from(Arrays.asList(methodNames)).transform(
+        new Function<String, JMethod>() {
+          @Override
+          public JMethod apply(String methodName) {
+            return JJSTestBase.findMethod(program.getFromTypeMap(clazz), methodName);
+          }
+        }).toSet();
+  }
+
+  private Set<JField> getFields(final JProgram program, final String clazz, String... fieldNames) {
+    return FluentIterable.from(Arrays.asList(fieldNames)).transform(
+        new Function<String, JField>() {
+          @Override
+          public JField apply(String fieldName) {
+            return JJSTestBase.findField(program.getFromTypeMap(clazz), fieldName);
+          }
+        }).toSet();
   }
 }

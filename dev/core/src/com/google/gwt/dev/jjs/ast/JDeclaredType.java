@@ -319,18 +319,10 @@ public abstract class JDeclaredType extends JReferenceType {
 
   /**
    * Returns the instance initializer ($init) method.
-   * Can only be called after making sure the class has an instance initializer method.
    *
    * @return The instance initializer method.
    */
-  public final JMethod getInitMethod() {
-    assert getMethods().size() > 1;
-    JMethod init = this.getMethods().get(1);
-
-    assert init != null;
-    assert init.getName().equals(GwtAstBuilder.INIT_NAME);
-    return init;
-  }
+  public abstract JMethod getInitMethod();
 
   @Override
   public String getJavahSignatureName() {

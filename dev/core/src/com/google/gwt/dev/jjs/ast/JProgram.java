@@ -276,6 +276,19 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     return isClinit;
   }
 
+  public static boolean isInit(JMethod method) {
+    JDeclaredType enclosingType = method.getEnclosingType();
+
+    if (method.isStatic()) {
+      // Hack, check the name.
+      return method.getName().equals(GwtAstBuilder.STATIC_INIT_NAME);
+    }
+
+    boolean isInit = enclosingType != null && method == enclosingType.getInitMethod();
+    assert !isInit || method.getName().equals(GwtAstBuilder.INIT_NAME);
+    return isInit;
+  }
+
   public static void serializeTypes(List<JDeclaredType> types, ObjectOutputStream stream)
       throws IOException {
     stream.writeObject(types);

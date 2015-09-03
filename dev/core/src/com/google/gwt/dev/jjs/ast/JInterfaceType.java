@@ -55,6 +55,11 @@ public class JInterfaceType extends JDeclaredType {
   }
 
   @Override
+  public final JMethod getInitMethod() {
+    return null;
+  }
+
+  @Override
   public JClassType getSuperClass() {
     return null;
   }
