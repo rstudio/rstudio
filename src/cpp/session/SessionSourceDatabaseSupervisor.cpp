@@ -412,11 +412,8 @@ Error attachToSourceDatabase(FilePath* pSessionDir)
    if (needToMigrate)
       return createSessionDirFromOldSourceDatabase(pSessionDir);
 
-   // if there is an orphan (crash) then reclaim it. don't do this if
-   // we are load balanced since we can't ensure that lock files work
-   // across the load balanced nodes
-   else if (!module_context::isLoadBalanced() &&
-            reclaimOrphanedSession(pSessionDir))
+   // if there is an orphan (crash) then reclaim it.
+   else if (reclaimOrphanedSession(pSessionDir))
       return Success();
 
    // attempt to create from persistent
