@@ -34,8 +34,8 @@
 ### Miscellaneous
 
 * Editor and IDE keyboard shortcuts can now be customized
-* New Session command (create new R session with same project or working directory)
-* Open project in a new window from the projects recently used menu
+* Command to create new R session with same project or working directory (OS X and Linux)
+* Open project in a new window from the projects recently used menu (OS X and Linux)
 * Increase the number of items on file and project recently used menus to 15
 * Raise limit on shinyapps uploads to 1GB from 100MB
 * 'Edit -> Replace and Find' opens Find toolbar if not already open (e.g. with Cmd+Shift+J)

@@ -16,6 +16,7 @@ package org.rstudio.studio.client.projects;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -75,7 +76,8 @@ public class ProjectMRUList extends MRUList
             });
       
       // set right image for project MRU commands
-      if (Desktop.isDesktop() || session.getSessionInfo().getMultiSession())
+      if ((Desktop.isDesktop() && !BrowseCap.isWindowsDesktop())
+          || session.getSessionInfo().getMultiSession())
       {
          ImageResource image = commands.openHtmlExternal().getImageResource();
          String desc = "Open project in a new R session";

@@ -16,6 +16,7 @@ package org.rstudio.studio.client.projects.ui.newproject;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardNavigationPage;
@@ -54,6 +55,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
                      boolean okButtonVisible)
    {
       openInNewWindow_.setVisible(sessionInfo_.getMultiSession() && 
+                                  !BrowseCap.isWindowsDesktop() &&
                                   okButtonVisible);
    }
    
