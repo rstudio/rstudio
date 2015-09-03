@@ -76,8 +76,8 @@ public class ProjectMRUList extends MRUList
             });
       
       // set right image for project MRU commands
-      if ((Desktop.isDesktop() && !BrowseCap.isWindowsDesktop())
-          || session.getSessionInfo().getMultiSession())
+      if ((Desktop.isDesktop() || session.getSessionInfo().getMultiSession()) &&
+            !BrowseCap.isWindowsDesktop())
       {
          ImageResource image = commands.openHtmlExternal().getImageResource();
          String desc = "Open project in a new R session";
