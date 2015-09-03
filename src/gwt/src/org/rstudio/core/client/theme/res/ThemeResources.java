@@ -165,6 +165,7 @@ public interface ThemeResources extends ClientBundle
    @Source("inlineDeleteIcon.png")
    DataResource inlineDeleteIcon();
 
+   ImageResource paneLayoutIcon();
    ImageResource smallMagGlassIcon();
    ImageResource dropDownArrow();
    ImageResource mediumDropDownArrow();

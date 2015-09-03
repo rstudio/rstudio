@@ -186,14 +186,14 @@ public class GlobalToolbar extends Toolbar
       paneLayoutMenu.addItem(commands_.layoutZoomVcs().createMenuItem(false));
       paneLayoutMenu.addItem(commands_.layoutZoomBuild().createMenuItem(false));
       
-      ImageResource zoomIcon = ThemeResources.INSTANCE.smallMagGlassIcon();
-      ToolbarButton zoomButton = new ToolbarButton(
+      ImageResource paneLayoutIcon = ThemeResources.INSTANCE.paneLayoutIcon();
+      ToolbarButton paneLayoutButton = new ToolbarButton(
             null,
-            zoomIcon,
+            paneLayoutIcon,
             paneLayoutMenu);
-      zoomButton.setTitle("Zoom");
+      paneLayoutButton.setTitle("Pane Layout");
       
-      addLeftWidget(zoomButton);
+      addLeftWidget(paneLayoutButton);
       // project popup menu
       ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
                                                           commands_);
