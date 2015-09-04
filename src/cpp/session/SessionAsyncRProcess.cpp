@@ -13,6 +13,7 @@
  *
  */
 
+#include <session/SessionUserSettings.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionModuleContext.hpp>
 
@@ -75,6 +76,13 @@ void AsyncRProcess::start(const char* rCommand,
       args.push_back("--no-save");
       args.push_back("--no-restore");
    }
+
+   // for windows we need to forward setInternet2
+#ifdef _WIN32
+   if (userSettings().useInternet2())
+      args.push_back("--internet2");
+#endif
+
    args.push_back("-e");
    
    bool needsQuote = false;
