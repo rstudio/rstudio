@@ -28,6 +28,7 @@
 #include <r/RExec.hpp>
 #include <r/session/RSessionUtils.hpp>
 
+#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/projects/SessionProjects.hpp>
@@ -343,15 +344,12 @@ Error installDependencies(const json::JsonRpcRequest& request,
    }
 
    // build install command
-   std::string cmd = "{";
+   std::string cmd("{ " + module_context::CRANDownloadOptions() + "; ");
    if (!cranPackages.empty())
    {
       std::string pkgList = boost::algorithm::join(cranPackages, ",");
       cmd += "utils::install.packages(c(" + pkgList + "), " +
              "repos = '"+ module_context::CRANReposURL() + "'";
-      std::string method = module_context::downloadFileMethod();
-      if (!method.empty())
-         cmd += ", method = '" + module_context::downloadFileMethod() + "'";
       cmd += ");";
    }
    if (!cranSourcePackages.empty())
@@ -359,9 +357,6 @@ Error installDependencies(const json::JsonRpcRequest& request,
       std::string pkgList = boost::algorithm::join(cranSourcePackages, ",");
       cmd += "utils::install.packages(c(" + pkgList + "), " +
              "repos = '"+ module_context::CRANReposURL() + "', ";
-      std::string method = module_context::downloadFileMethod();
-      if (!method.empty())
-         cmd += "method = '" + module_context::downloadFileMethod() + "', ";
       cmd += "type = 'source');";
    }
    BOOST_FOREACH(const std::string& pkg, embeddedPackages)
@@ -392,6 +387,12 @@ Error installDependencies(const json::JsonRpcRequest& request,
          core::system::setenv(&childEnv, "R_LIBS", libPaths);
       options.environment = childEnv;
    }
+
+   // for windows we need to forward setInternet2
+#ifdef _WIN32
+   if (userSettings().useInternet2())
+      args.push_back("--internet2");
+#endif
 
    args.push_back("-e");
    args.push_back(cmd);
