@@ -486,13 +486,13 @@ public class PaneManager
       double rightWidth = panel_.getWidgetSize(right_);
       double panelWidth = panel_.getOffsetWidth();
       
-      double leftThreshold = (2.0 / 5.0) * panelWidth;
-      double rightThreshold = (3.0 / 5.0) * panelWidth;
+      double minThreshold = (2.0 / 5.0) * panelWidth;
+      double maxThreshold = (3.0 / 5.0) * panelWidth;
       
-      if (rightWidth <= leftThreshold)
-         resizeHorizontally(rightWidth, leftThreshold);
-      else if (panelWidth - rightWidth <= rightThreshold)
-         resizeHorizontally(rightWidth, rightThreshold);
+      if (rightWidth <= minThreshold)
+         resizeHorizontally(rightWidth, minThreshold);
+      else if (rightWidth >= maxThreshold)
+         resizeHorizontally(rightWidth, maxThreshold);
    }
    
    private void restoreSavedLayout()
