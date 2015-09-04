@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.application.ui;
 
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.events.RequestCurrentlyZoomedTabEvent;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.CheckableMenuItem;
@@ -23,15 +24,19 @@ import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 
@@ -42,6 +47,9 @@ public class GlobalToolbar extends Toolbar
                         Provider<CodeSearch> pCodeSearch)
    {
       super();
+      
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      
       commands_ = commands;
       pCodeSearch_ = pCodeSearch;
       ThemeResources res = ThemeResources.INSTANCE;
@@ -130,9 +138,17 @@ public class GlobalToolbar extends Toolbar
       addLeftWidget(searchWidget_); 
    }
    
-   public CheckableMenuItem createCheckableMenuItem(final AppCommand command)
+   @Inject
+   private void initialize(EventBus events)
    {
-      return new CheckableMenuItem()
+      events_ = events;
+   }
+   
+   public CheckableMenuItem createCheckableMenuItem(final AppCommand command,
+                                                    final String name,
+                                                    final ToolbarPopupMenu menu)
+   {
+      final CheckableMenuItem item = new CheckableMenuItem()
       {
          @Override
          public void onInvoked()
@@ -143,8 +159,14 @@ public class GlobalToolbar extends Toolbar
          @Override
          public boolean isChecked()
          {
-            // TODO
-            return false;
+            RequestCurrentlyZoomedTabEvent event = new RequestCurrentlyZoomedTabEvent();
+            events_.fireEvent(event);
+            
+            PaneManager.Tab tab = event.getZoomedTab();
+            if (tab == null)
+               return name.equalsIgnoreCase("None");
+            
+            return tab.toString().equalsIgnoreCase(name);
          }
          
          @Override
@@ -153,6 +175,18 @@ public class GlobalToolbar extends Toolbar
             return command.getLabel();
          }
       };
+      
+      menu.addAttachHandler(new AttachEvent.Handler()
+      {
+         @Override
+         public void onAttachOrDetach(AttachEvent event)
+         {
+            if (event.isAttached())
+               item.onStateChanged();
+         }
+      });
+      
+      return item;
    }
    
    public void completeInitialization(SessionInfo sessionInfo)
@@ -199,19 +233,19 @@ public class GlobalToolbar extends Toolbar
       addLeftSeparator();
       
       ToolbarPopupMenu paneLayoutMenu = new ToolbarPopupMenu();
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutEndZoom()));
+      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutEndZoom(), "None", paneLayoutMenu));
       paneLayoutMenu.addSeparator();
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomSource()));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomConsole()));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomHelp()));
+      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomSource(), "Source", paneLayoutMenu));
+      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomConsole(), "Console", paneLayoutMenu));
+      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomHelp(), "Help", paneLayoutMenu));
       paneLayoutMenu.addSeparator();
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomHistory()));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomFiles()));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomPlots()));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomPackages()));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomEnvironment()));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomVcs()));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomBuild()));
+      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomHistory(), "History", paneLayoutMenu));
+      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomFiles(), "Files", paneLayoutMenu));
+      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomPlots(), "Plots", paneLayoutMenu));
+      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomPackages(), "Packages", paneLayoutMenu));
+      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomEnvironment(), "Environment", paneLayoutMenu));
+      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomVcs(), "Vcs", paneLayoutMenu));
+      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomBuild(), "Build", paneLayoutMenu));
       
       ImageResource paneLayoutIcon = ThemeResources.INSTANCE.paneLayoutIcon();
       ToolbarButton paneLayoutButton = new ToolbarButton(
@@ -248,5 +282,8 @@ public class GlobalToolbar extends Toolbar
    private final Provider<CodeSearch> pCodeSearch_;
    private final Widget searchWidget_;
    private final FocusContext codeSearchFocusContext_ = new FocusContext();
+   
+   // Injected ----
+   private EventBus events_;
 
 }

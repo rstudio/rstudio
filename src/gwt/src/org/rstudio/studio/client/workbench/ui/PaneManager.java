@@ -35,6 +35,7 @@ import org.rstudio.core.client.Triad;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.events.RequestCurrentlyZoomedTabEvent;
 import org.rstudio.core.client.events.WindowEnsureVisibleEvent;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.layout.DualWindowLayoutPanel;
@@ -75,9 +76,9 @@ public class PaneManager
    
    public enum Tab {
       History, Files, Plots, Packages, Help, VCS, Build,
-      Presentation, Environment, Viewer
+      Presentation, Environment, Viewer, Source, Console
    }
-
+   
    class SelectedTabStateValue extends IntStateValue
    {
       SelectedTabStateValue(String name,
@@ -219,7 +220,7 @@ public class PaneManager
             assert window != null :
                "No pane with name '" + pane + "'";
             
-            toggleWindowZoom(window);
+            toggleWindowZoom(window, null);
          }
       });
       
@@ -237,7 +238,7 @@ public class PaneManager
             // then transfer zoom to that window.
             if (maximizedWindow_ != null && !maximizedWindow_.equals(window))
             {
-               fullyMaximizeWindow(window);
+               fullyMaximizeWindow(window, null);
                return;
             }
             
@@ -261,6 +262,17 @@ public class PaneManager
             horizontalResizeAnimation(0, newWidth, afterAnimation).run(300);
          }
       });
+      
+      eventBus_.addHandler(
+            RequestCurrentlyZoomedTabEvent.TYPE,
+            new RequestCurrentlyZoomedTabEvent.Handler()
+            {
+               @Override
+               public void onRequestCurrentlyZoomedTab(RequestCurrentlyZoomedTabEvent event)
+               {
+                  event.setZoomedTab(maximizedTab_);
+               }
+            });
    }
    
    int computeAppropriateWidth()
@@ -310,7 +322,7 @@ public class PaneManager
       LogicalWindow activeWindow = getActiveLogicalWindow();
       if (activeWindow == null)
          return;
-      toggleWindowZoom(activeWindow);
+      toggleWindowZoom(activeWindow, null);
    }
    
    @Handler
@@ -319,7 +331,7 @@ public class PaneManager
       restoreLayout();
    }
    
-   public void toggleWindowZoom(LogicalWindow window)
+   public void toggleWindowZoom(LogicalWindow window, Tab tab)
    {
       if (isAnimating_)
          return;
@@ -327,11 +339,18 @@ public class PaneManager
       if (window.equals(maximizedWindow_))
          restoreLayout();
       else
-         fullyMaximizeWindow(window);
+         fullyMaximizeWindow(window, tab);
    }
    
-   private void fullyMaximizeWindow(final LogicalWindow window)
+   private void fullyMaximizeWindow(final LogicalWindow window, final Tab tab)
    {
+      if (window.equals(getSourceLogicalWindow()))
+         maximizedTab_ = Tab.Source;
+      else if (window.equals(getConsoleLogicalWindow()))
+         maximizedTab_ = Tab.Console;
+      else
+         maximizedTab_ = tab;
+         
       maximizedWindow_ = window;
       if (widgetSizePriorToZoom_ < 0)
          widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
@@ -441,6 +460,7 @@ public class PaneManager
       
       // Invalidate the saved state.
       maximizedWindow_ = null;
+      maximizedTab_ = null;
       widgetSizePriorToZoom_ = -1;
    }
    
@@ -537,6 +557,9 @@ public class PaneManager
             return environmentTab_;
          case Viewer:
             return viewerTab_;
+         case Source:
+         case Console:
+            // not 'real' tabs so should be an error to ask for their tabs
       }
       throw new IllegalArgumentException("Unknown tab");
    }
@@ -580,7 +603,7 @@ public class PaneManager
       if (parentWindow == null)
          return;
       
-      toggleWindowZoom(parentWindow);
+      toggleWindowZoom(parentWindow, tab);
    }
 
    public ConsolePane getConsole()
@@ -596,6 +619,11 @@ public class PaneManager
    public LogicalWindow getSourceLogicalWindow()
    {
       return sourceLogicalWindow_;
+   }
+   
+   public LogicalWindow getConsoleLogicalWindow()
+   {
+      return panesByName_.get("Console");
    }
 
    private DualWindowLayoutPanel createSplitWindow(LogicalWindow top,
@@ -718,28 +746,13 @@ public class PaneManager
    {
       switch (tab)
       {
-         case History:
-            return "History";
-         case Files:
-            return "Files";
-         case Plots:
-            return "Plots";
-         case Packages:
-            return "Packages";
-         case Help:
-            return "Help";
          case VCS:
             return getTab(tab).getTitle();
-         case Build:
-            return "Build";
          case Presentation:
             return getTab(tab).getTitle();
-         case Environment:
-            return "Environment";
-         case Viewer:
-            return "Viewer";
+         default:
+            return tab.toString();
       }
-      return "??";
    }
    
    private Tab tabForName(String name)
@@ -764,6 +777,10 @@ public class PaneManager
          return Tab.Environment;
       if (name.equalsIgnoreCase("viewer"))
          return Tab.Viewer;
+      if (name.equalsIgnoreCase("source"))
+         return Tab.Source;
+      if (name.equalsIgnoreCase("console"))
+         return Tab.Console;
       
       return null;
    }
@@ -807,6 +824,7 @@ public class PaneManager
    
    // Zoom-related members ----
    private LogicalWindow maximizedWindow_;
+   private Tab maximizedTab_;
    private double widgetSizePriorToZoom_ = -1;
    private boolean isAnimating_;
 }
