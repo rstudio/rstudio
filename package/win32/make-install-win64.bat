@@ -5,6 +5,7 @@ IF "%CMAKE_BUILD_TYPE%" == "" set CMAKE_BUILD_TYPE=Release
 IF "%CMAKE_BUILD_TYPE%" == "Debug" set WIN64_BUILD_PATH=build64-debug
 set MINGW64_PATH=%CD%\..\..\dependencies\windows\mingw64-x86_64-posix-sjlj-4.9.1\bin
 set INSTALL_PATH=%1%
+IF "%INSTALL_PATH%" == "" set INSTALL_PATH=..\..\..\src\qtcreator-build\session
 
 REM perform 64-bit build 
 if "%2" == "clean" rmdir /s /q %WIN64_BUILD_PATH%
