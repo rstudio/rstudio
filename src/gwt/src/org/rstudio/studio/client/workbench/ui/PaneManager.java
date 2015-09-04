@@ -220,7 +220,7 @@ public class PaneManager
             assert window != null :
                "No pane with name '" + pane + "'";
             
-            toggleWindowZoom(window, null);
+            toggleWindowZoom(window, tabForName(event.getTab()));
          }
       });
       
@@ -331,15 +331,52 @@ public class PaneManager
       restoreLayout();
    }
    
+   private <T> boolean equals(T lhs, T rhs)
+   {
+      if (lhs == null)
+         return rhs == null;
+      
+      return lhs.equals(rhs);
+   }
+   
    public void toggleWindowZoom(LogicalWindow window, Tab tab)
    {
       if (isAnimating_)
          return;
       
-      if (window.equals(maximizedWindow_))
-         restoreLayout();
+      boolean hasZoom = maximizedWindow_ != null;
+      
+      if (hasZoom)
+      {
+         if (equals(window, maximizedWindow_))
+         {
+            // If we're zooming a different tab in the same window,
+            // just activate that tab.
+            if (!equals(tab, maximizedTab_))
+            {
+               maximizedTab_ = tab;
+               activateTab(tab);
+            }
+            
+            // Otherwise, we're trying to maximize the same tab
+            // and the same window. Interpret this as a toggle off.
+            else
+            {
+               restoreLayout();
+            }
+         }
+         else
+         {
+            // We're transferring zoom from one window to another --
+            // maximize the new window.
+            fullyMaximizeWindow(window, tab);
+         }
+      }
       else
+      {
+         // No zoom currently on -- just zoom the selected window + tab.
          fullyMaximizeWindow(window, tab);
+      }
    }
    
    private void fullyMaximizeWindow(final LogicalWindow window, final Tab tab)
