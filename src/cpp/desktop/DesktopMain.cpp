@@ -311,7 +311,7 @@ int main(int argc, char* argv[])
          scriptsPath = currentPath.complete("desktop");
 #ifdef _WIN32
          if (version.architecture() == ArchX64)
-            sessionPath = installPath.complete("x64/rsession");
+            sessionPath = installPath.complete("session/x64/rsession");
 #endif
       }
 #endif
