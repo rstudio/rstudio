@@ -484,12 +484,15 @@ public class PaneManager
          window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
       
       double rightWidth = panel_.getWidgetSize(right_);
+      double panelWidth = panel_.getOffsetWidth();
       
-      // If the right pane is already visible horizontally, bail.
-      if (rightWidth >= 10)
-         return;
+      double leftThreshold = (2.0 / 5.0) * panelWidth;
+      double rightThreshold = (3.0 / 5.0) * panelWidth;
       
-      resizeHorizontally(rightWidth, computeAppropriateWidth());
+      if (rightWidth <= leftThreshold)
+         resizeHorizontally(rightWidth, leftThreshold);
+      else if (panelWidth - rightWidth <= rightThreshold)
+         resizeHorizontally(rightWidth, rightThreshold);
    }
    
    private void restoreSavedLayout()
