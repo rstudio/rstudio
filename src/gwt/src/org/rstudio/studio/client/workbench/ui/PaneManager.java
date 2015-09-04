@@ -259,7 +259,7 @@ public class PaneManager
             };
             
             int newWidth = computeAppropriateWidth();
-            horizontalResizeAnimation(0, newWidth, afterAnimation).run(300);
+            resizeHorizontally(0, newWidth, afterAnimation);
          }
       });
       
@@ -377,13 +377,20 @@ public class PaneManager
       if (targetSize < 0)
          targetSize = 0;
       
-      horizontalResizeAnimation(initialSize, targetSize).run(300);
+      resizeHorizontally(initialSize, targetSize);
    }
    
-   private Animation horizontalResizeAnimation(final double start,
-                                               final double end)
+   private void resizeHorizontally(final double start,
+                                   final double end)
    {
-      return horizontalResizeAnimation(start, end, null);
+      resizeHorizontally(start, end, null);
+   }
+   
+   private void resizeHorizontally(final double start,
+                                   final double end,
+                                   final Command afterComplete)
+   {
+      horizontalResizeAnimation(start, end, afterComplete).run(300);
    }
    
    private Animation horizontalResizeAnimation(final double start,
@@ -445,7 +452,7 @@ public class PaneManager
       if (rightWidth >= 10)
          return;
       
-      horizontalResizeAnimation(rightWidth, computeAppropriateWidth()).run(300);
+      resizeHorizontally(rightWidth, computeAppropriateWidth());
    }
    
    private void restoreSavedLayout()
@@ -456,7 +463,7 @@ public class PaneManager
          window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
       
       maximizedWindow_.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
-      horizontalResizeAnimation(panel_.getWidgetSize(right_), widgetSizePriorToZoom_).run(300);
+      resizeHorizontally(panel_.getWidgetSize(right_), widgetSizePriorToZoom_);
       
       // Invalidate the saved state.
       maximizedWindow_ = null;
