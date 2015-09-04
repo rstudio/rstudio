@@ -810,7 +810,7 @@ public class JUnitShell extends DevMode {
   /**
    * True if we are running the test in development mode.
    */
-  private boolean developmentMode = true;
+  private boolean developmentMode = false;
 
   /**
    * Used to make sure we don't start the runStyle more than once.

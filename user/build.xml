@@ -45,7 +45,7 @@
     Test args can be specified per test target type.
   -->
   <property name="test.args.dev.selenium"
-            value='${test.args} -out www -runStyle "Selenium:${gwt.hosts.dev.selenium}"'/>
+            value='${test.args} -devMode -out www -runStyle "Selenium:${gwt.hosts.dev.selenium}"'/>
   <property name="test.args.web.selenium"
             value='${test.args} -prod -out www -generateJsInteropExports -runStyle "Selenium:${gwt.hosts.web.selenium}"'/>
   <property name="test.args.web.htmlunit"
@@ -315,7 +315,7 @@
              includes="${gwt.junit.testcase.dev.includes}"
              excludes="${gwt.junit.testcase.dev.excludes}"/>
     <gwt.junit test.name="test.emma.htmlunit"
-               test.args="${test.args} "
+               test.args="${test.args} -devMode"
                test.jvmargs="${test.jvmargs}"
                test.out="${junit.out}/emma-htmlunit"
                test.cases="test.emma.htmlunit.tests">
@@ -334,7 +334,7 @@
              includes="${gwt.junit.testcase.dev.includes}"
              excludes="${gwt.junit.testcase.dev.excludes}"/>
     <gwt.junit test.name="test.dev.htmlunit"
-               test.args="${test.args} "
+               test.args="${test.args} -devMode"
                test.jvmargs="${test.jvmargs}"
                test.out="${junit.out}/dev-htmlunit"
                test.cases="test.dev.htmlunit.tests">
@@ -670,7 +670,7 @@
              includes="${gwt.tck.testcase.dev.includes}"
              excludes="${gwt.tck.testcase.dev.excludes}"/>
     <gwt.junit test.name="test.dev.htmlunit"
-               test.args="${test.args} "
+               test.args="${test.args} -devMode"
                test.jvmargs="-ea -Dcom.google.gwt.sample.validationtck.util.Failing.include=true"
                test.out="${junit.out}/tck-dev-htmlunit"
                test.cases="tck.dev.htmlunit.tests"

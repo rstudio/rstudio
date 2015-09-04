@@ -77,7 +77,7 @@
 
   <target name="test.dev.htmlunit" if="generated" depends="compile.tests"
           description="Run tests with HtmlUnit in dev mode">
-    <run-tests output="${junit.out}/dev" args="${test.args}" classes="**/AllTests.class"/>
+    <run-tests output="${junit.out}/dev" args="${test.args} -devMode" classes="**/AllTests.class"/>
   </target>
 
   <target name="test.web.htmlunit" if="generated" depends="compile.tests"

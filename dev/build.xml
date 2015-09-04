@@ -289,7 +289,7 @@
              includes="${gwt.junit.testcase.dev.core.includes}"
              excludes="${gwt.junit.testcase.dev.core.excludes}"/>
     <gwt.junit test.name="dev" test.out="${junit.out}"
-               test.args="${test.args}"
+               test.args="${test.args} -devMode"
                test.jvmargs="${test.jvmargs}"
                test.cases="tests.dev.core">
       <extraclasspaths>
