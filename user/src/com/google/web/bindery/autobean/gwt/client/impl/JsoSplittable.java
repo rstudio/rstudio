@@ -63,11 +63,11 @@ public final class JsoSplittable extends JavaScriptObject implements Splittable,
   }
 
   private static native Splittable create0(boolean object) /*-{
-    return Boolean(object);
+    return Object(object);
   }-*/;
 
   private static native Splittable create0(double object) /*-{
-    return Number(object);
+    return Object(object);
   }-*/;
 
   private static native Splittable create0(String object) /*-{
@@ -104,11 +104,11 @@ public final class JsoSplittable extends JavaScriptObject implements Splittable,
   };
 
   public native boolean asBoolean() /*-{
-    return this == true;
+    return this && this.valueOf();
   }-*/;
 
   public native double asNumber() /*-{
-    return Number(this);
+    return this && this.valueOf();
   }-*/;
 
   public void assign(Splittable parent, int index) {
@@ -168,7 +168,7 @@ public final class JsoSplittable extends JavaScriptObject implements Splittable,
   }
 
   public native boolean isBoolean() /*-{
-    return Object.prototype.toString.call(this) == '[object Boolean]';
+    return this && typeof(this.valueOf()) === 'boolean';
   }-*/;
 
   public native boolean isFunction() /*-{
@@ -192,7 +192,7 @@ public final class JsoSplittable extends JavaScriptObject implements Splittable,
   }-*/;
 
   public native boolean isNumber() /*-{
-    return Object.prototype.toString.call(this) == '[object Number]';
+    return this && typeof(this.valueOf()) === 'number';
   }-*/;
 
   public native boolean isReified(String key) /*-{
