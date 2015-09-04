@@ -1,7 +1,7 @@
 /*
  * RVersionSettings.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -75,11 +75,12 @@ public:
       // get a project id
       core::r_util::FilePathToProjectId filePathToProjectId =
                            session::filePathToProjectId(userScratchPath_);
-      std::string projectId = filePathToProjectId(projectDir);
+      core::r_util::ProjectId projectId = filePathToProjectId(projectDir);
 
       // save the version
-      writeProjectSetting(projectId, kRVersionSuffix, version);
-      writeProjectSetting(projectId, kRVersionHomeSuffix, versionHome);
+      writeProjectSetting(projectId.asString(), kRVersionSuffix, version);
+      writeProjectSetting(projectId.asString(), kRVersionHomeSuffix,
+                          versionHome);
    }
 
    void readProjectLastRVersion(const std::string& projectDir,
@@ -89,10 +90,12 @@ public:
       // get a project id
       core::r_util::FilePathToProjectId filePathToProjectId =
                            session::filePathToProjectId(userScratchPath_);
-      std::string projectId = filePathToProjectId(projectDir);
+      core::r_util::ProjectId projectId = filePathToProjectId(projectDir);
 
-      *pVersion = readProjectSetting(projectId, kRVersionSuffix);
-      *pVersionHome = readProjectSetting(projectId, kRVersionHomeSuffix);
+      *pVersion = readProjectSetting(projectId.asString(),
+                                     kRVersionSuffix);
+      *pVersionHome = readProjectSetting(projectId.asString(),
+                                         kRVersionHomeSuffix);
    }
 
 private:
@@ -132,4 +135,3 @@ private:
 } // namespace rstudio
 
 #endif // SESSION_SESSION_RVERSION_SETTINGS_HPP
-

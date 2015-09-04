@@ -1,5 +1,5 @@
 /*
- * SessionProjectSharing.hpp
+ * UserObfuscation.hpp
  *
  * Copyright (C) 2009-15 by RStudio, Inc.
  *
@@ -13,20 +13,6 @@
  *
  */
 
-#ifndef SESSION_PROJECTS_SHARING_HPP
-#define SESSION_PROJECTS_SHARING_HPP
+#define OBFUSCATE_USER_ID(x)    (x)
+#define DEOBFUSCATE_USER_ID(x)  (x)
 
-#define kProjectSharingSessionOption "enable-project-sharing"
-#define kProjectEntryExt ".proj"
-#define kProjectSharedDir "shared-projects"
-
-namespace rstudio {
-namespace session {
-namespace projects {
-
-
-} // namespace projects
-} // namesapce session
-} // namespace rstudio
-
-#endif // SESSION_PROJECTS_SHARING_HPP

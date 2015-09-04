@@ -348,6 +348,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    optionsDesc.commandLine.add(limits);
    optionsDesc.commandLine.add(external);
    optionsDesc.commandLine.add(user);
+   optionsDesc.commandLine.add(overlay);
 
    // define groups included in config-file processing
    optionsDesc.configFile.add(program);
@@ -510,7 +511,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
                        scope,
                        userHomePath(),
                        userScratchPath(),
-                       session::projectIdToFilePath(userScratchPath()),
+                       session::projectIdToFilePath(userScratchPath(), 
+                                 FilePath(
+                                   getOverlayOption("shared-storage-path"))),
                        &initialProjectPath_))
       {
          invalidScope_ = true;
