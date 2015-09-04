@@ -1118,7 +1118,15 @@ SA_TYPE saveAsk()
    {
       // end user prompt
       std::string wsPath = createAliasedPath(rSaveGlobalEnvironmentFilePath());
-      std::string prompt = "Save workspace image to " + wsPath + "? [y/n/c]: ";
+      std::string prompt = "Save workspace image to " + wsPath + "? [y/n";
+      // The Rf_jump_to_top_level doesn't work (freezes the process) with
+      // 64-bit mingw due to the way it does stack unwinding. Since this is
+      // a farily obscure gesture (quit from command line then cancel the quit)
+      // we just eliminate the possiblity of it on windows
+#ifndef _WIN32
+      prompt += "/c";
+#endif
+      prompt += "]: ";
 
       // input buffer
       std::vector<CONSOLE_BUFFER_CHAR> inputBuffer(512, 0);
@@ -1135,8 +1143,10 @@ SA_TYPE saveAsk()
             return SA_SAVE;
          else if (input == "n")
             return SA_NOSAVE;
+#ifndef _WIN32
          else if (input == "c")
             throw JumpToTopException();
+#endif
       }
    }
    catch(JumpToTopException)
