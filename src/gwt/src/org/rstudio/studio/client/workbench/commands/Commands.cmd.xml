@@ -217,7 +217,7 @@ well as menu structures (for main menu and popup menus).
          
          <separator/>
          
-         <menu label="Layout">
+         <menu label="Pane Layout">
             <cmd refid="layoutZoomSource"/>
             <cmd refid="layoutZoomConsole"/>
             <cmd refid="layoutZoomHelp"/>
@@ -1004,62 +1004,50 @@ well as menu structures (for main menu and popup menus).
         
         
    <cmd id="layoutZoomSource"
-        label="Zoom Source"
-        menuLabel="Source Only"/>
+        label="Zoom Source"/>
         
    <cmd id="layoutZoomConsole"
         label="Zoom Console"
-        menuLabel="Console Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomEnvironment"
         label="Zoom Environment Pane"
-        menuLabel="Environment Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomData"
         label="Zoom Data Pane"
-        menuLabel="Data Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomHistory"
         label="Zoom History Pane"
-        menuLabel="History Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomFiles"
         label="Zoom Files Pane"
-        menuLabel="Files Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomPlots"
         label="Zoom Plots Pane"
-        menuLabel="Plots Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomPackages"
         label="Zoom Packages Pane"
-        menuLabel="Packages Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomHelp"
         label="Zoom Help Pane"
-        menuLabel="Help Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomVcs"
         label="Zoom VCS Pane"
-        menuLabel="Version Control Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomBuild"
         label="Zoom Build Pane"
-        menuLabel="Build Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomPresentation"
         label="Zoom Presentation Pane"
-        menuLabel="Presentation Only"
         windowMode="main"/>
         
    <cmd id="layoutZoomCurrentPane"
