@@ -15,8 +15,7 @@
  */
 package com.google.gwt.lang;
 
-import com.google.gwt.lang.LongLib.Const;
-import com.google.gwt.lang.LongLibBase.LongEmul;
+import com.google.gwt.lang.LongLib.LongEmul;
 
 import junit.framework.TestCase;
 
@@ -25,9 +24,12 @@ import junit.framework.TestCase;
  * by using a Java println on normal Java longs.
  */
 public class LongLibTestBase extends TestCase {
-
-  static {
-    LongLibBase.RUN_IN_JVM = true;
+  private static class Const {
+    static final LongEmul MAX_VALUE = LongLib.fromDouble(Double.POSITIVE_INFINITY);
+    static final LongEmul MIN_VALUE = LongLib.fromDouble(Double.NEGATIVE_INFINITY);
+    static final LongEmul ONE = LongLib.fromInt(1);
+    static final LongEmul TWO = LongLib.fromInt(2);
+    static final LongEmul ZERO = LongLib.fromInt(0);
   }
 
   static void assertEquals(LongEmul expected, LongEmul actual) {
@@ -196,6 +198,12 @@ public class LongLibTestBase extends TestCase {
     assertEquals(LongLib.fromInt(-122055), LongLib.div(LongLib.fromInt(-1000000000), LongLib.fromInt(8193)));
     assertEquals(LongLib.fromInt(122070), LongLib.div(LongLib.fromInt(1000000000), LongLib.fromInt(8192)));
     assertEquals(LongLib.fromInt(122055), LongLib.div(LongLib.fromInt(1000000000), LongLib.fromInt(8193)));
+    assertEquals(LongLib.fromInt(1), LongLib.div(LongLib.fromInt(5), LongLib.fromInt(5)));
+    assertEquals(LongLib.fromInt(333), LongLib.div(LongLib.fromInt(1000), LongLib.fromInt(3)));
+    assertEquals(LongLib.fromInt(-333), LongLib.div(LongLib.fromInt(1000), LongLib.fromInt(-3)));
+    assertEquals(LongLib.fromInt(-333), LongLib.div(LongLib.fromInt(-1000), LongLib.fromInt(3)));
+    assertEquals(LongLib.fromInt(333), LongLib.div(LongLib.fromInt(-1000), LongLib.fromInt(-3)));
+    assertEquals(LongLib.fromInt(0), LongLib.div(LongLib.fromInt(3), LongLib.fromInt(1000)));
 
     assertEquals(longFromBits(0x1fffff, 0xffffffff), LongLib.div(Const.MAX_VALUE, longFromBits(0x00000000, 0x00000400)));
     assertEquals(longFromBits(0x1fff, 0xffffffff), LongLib.div(Const.MAX_VALUE, longFromBits(0x00000000, 0x00040000)));
@@ -205,6 +213,15 @@ public class LongLibTestBase extends TestCase {
     assertEquals(LongLib.fromInt(8191), LongLib.div(Const.MAX_VALUE, longFromBits(0x00040000, 0x00000000)));
     assertEquals(LongLib.fromInt(31), LongLib.div(Const.MAX_VALUE, longFromBits(0x04000000, 0x00000000)));
 
+    assertEquals(longFromBits(0x1003d0, 0xe84f5ae8), LongLib.div(longFromBits(0x12345678, 0x12345678), longFromBits(0x0, 0x123)));
+    assertEquals(longFromBits(0x0, 0x10003), LongLib.div(longFromBits(0x12345678, 0x12345678), longFromBits(0x1234, 0x12345678)));
+    assertEquals(longFromBits(0xffffffff, 0xffff3dfe), LongLib.div(longFromBits(0xf2345678, 0x12345678), longFromBits(0x1234, 0x12345678)));
+    assertEquals(longFromBits(0x0, 0xeda),LongLib.div(longFromBits(0xf2345678, 0x12345678), longFromBits(0xffff1234, 0x12345678)));
+
+    assertEquals(longFromBits(0xc0000000, 0x00000000), LongLib.div(Const.MIN_VALUE, LongLib.fromInt(2)));
+    assertEquals(Const.MIN_VALUE, LongLib.div(Const.MIN_VALUE, LongLib.fromInt(1)));
+    assertEquals(Const.MIN_VALUE, LongLib.div(Const.MIN_VALUE, LongLib.fromInt(-1)));
+
     LongLib.div(Const.MAX_VALUE, longFromBits(0x00000000, 0x00000300));
     LongLib.div(Const.MAX_VALUE, longFromBits(0x00000000, 0x30000000));
     LongLib.div(Const.MAX_VALUE, longFromBits(0x00300000, 0x00000000));
@@ -212,6 +229,18 @@ public class LongLibTestBase extends TestCase {
     LongLib.div(Const.MAX_VALUE, longFromBits(0x00300000, 0x30000000));
     LongLib.div(Const.MAX_VALUE, longFromBits(0x00000000, 0x30000300));
     LongLib.div(Const.MAX_VALUE, longFromBits(0x00300000, 0x30000300));
+
+    try {
+      LongLib.div(LongLib.fromInt(1), LongLib.fromInt(0));
+      fail("Expected an ArithmeticException");
+    } catch (ArithmeticException e) {
+    }
+
+    try {
+      LongLib.div(Const.MAX_VALUE, LongLib.fromInt(0));
+      fail("Expected an ArithmeticException");
+    } catch (ArithmeticException e) {
+    }
   }
 
   public void testFactorial() {
@@ -278,6 +307,18 @@ public class LongLibTestBase extends TestCase {
     assertEquals(longFromBits(0x3ff, 0xffffffff), LongLib.mod(Const.MAX_VALUE, longFromBits(0x00000400, 0x00000000)));
     assertEquals(longFromBits(0x3ffff, 0xffffffff), LongLib.mod(Const.MAX_VALUE, longFromBits(0x00040000, 0x00000000)));
     assertEquals(longFromBits(0x3ffffff, 0xffffffff), LongLib.mod(Const.MAX_VALUE, longFromBits(0x04000000, 0x00000000)));
+
+    try {
+      LongLib.mod(LongLib.fromInt(1), LongLib.fromInt(0));
+      fail("Expected an ArithmeticException");
+    } catch (ArithmeticException e) {
+    }
+
+    try {
+      LongLib.mod(Const.MAX_VALUE, LongLib.fromInt(0));
+      fail("Expected an ArithmeticException");
+    } catch (ArithmeticException e) {
+    }
   }
 
   public void testMultiplicative() {
@@ -306,40 +347,6 @@ public class LongLibTestBase extends TestCase {
         LongLib.fromInt(1)));
     assertEquals(Const.MIN_VALUE, LongLib.mul(Const.MIN_VALUE,
         LongLib.fromInt(-1)));
-
-    assertEquals(LongLib.fromInt(1), LongLib.div(LongLib.fromInt(5),
-        LongLib.fromInt(5)));
-    assertEquals(LongLib.fromInt(333), LongLib.div(LongLib.fromInt(1000),
-        LongLib.fromInt(3)));
-    assertEquals(LongLib.fromInt(-333), LongLib.div(LongLib.fromInt(1000),
-        LongLib.fromInt(-3)));
-    assertEquals(LongLib.fromInt(-333), LongLib.div(LongLib.fromInt(-1000),
-        LongLib.fromInt(3)));
-    assertEquals(LongLib.fromInt(333), LongLib.div(LongLib.fromInt(-1000),
-        LongLib.fromInt(-3)));
-    assertEquals(LongLib.fromInt(0), LongLib.div(LongLib.fromInt(3),
-        LongLib.fromInt(1000)));
-    assertEquals(longFromBits(0x1003d0, 0xe84f5ae8), LongLib.div(longFromBits(
-        0x12345678, 0x12345678), longFromBits(0x0, 0x123)));
-    assertEquals(longFromBits(0x0, 0x10003), LongLib.div(longFromBits(
-        0x12345678, 0x12345678), longFromBits(0x1234, 0x12345678)));
-    assertEquals(longFromBits(0xffffffff, 0xffff3dfe), LongLib.div(
-        longFromBits(0xf2345678, 0x12345678), longFromBits(0x1234, 0x12345678)));
-    assertEquals(longFromBits(0x0, 0xeda), LongLib.div(longFromBits(0xf2345678,
-        0x12345678), longFromBits(0xffff1234, 0x12345678)));
-
-    try {
-      LongLib.div(LongLib.fromInt(1), LongLib.fromInt(0));
-      fail("Expected an ArithmeticException");
-    } catch (ArithmeticException e) {
-    }
-
-    assertEquals(longFromBits(0xc0000000, 0x00000000), LongLib.div(
-        Const.MIN_VALUE, LongLib.fromInt(2)));
-    assertEquals(Const.MIN_VALUE, LongLib.div(Const.MIN_VALUE,
-        LongLib.fromInt(1)));
-    assertEquals(Const.MIN_VALUE, LongLib.div(Const.MIN_VALUE,
-        LongLib.fromInt(-1))); // JLS3 section 15.17.2
   }
 
   public void testNegate() {
@@ -348,6 +355,12 @@ public class LongLibTestBase extends TestCase {
 
     // JLS3 15.15.4
     assertEquals(Const.MIN_VALUE, LongLib.neg(Const.MIN_VALUE));
+  }
+
+  public void testNegativeZeroSeal() {
+    LongEmul shouldBePositiveZero = LongLib.mul(LongLib.fromDouble(0), LongLib.fromDouble(-1));
+    assertEquals(Double.POSITIVE_INFINITY, 1d / LongLib.toDouble(shouldBePositiveZero));
+    assertEquals(Double.POSITIVE_INFINITY, 1d / LongLib.toInt(shouldBePositiveZero));
   }
 
   public void testShift() {
@@ -473,6 +486,7 @@ public class LongLibTestBase extends TestCase {
     assertEquals("-1", LongLib.toString(LongLib.fromInt(-1)));
     assertEquals("-10", LongLib.toString(LongLib.fromInt(-10)));
     assertEquals("-9223372036854775808", LongLib.toString(Const.MIN_VALUE));
+    assertEquals("0", LongLib.toString(LongLib.fromDouble(-0d)));
 
     int top = 922337201;
     int bottom = 967490662;
@@ -491,7 +505,7 @@ public class LongLibTestBase extends TestCase {
     }
   }
 
-  private LongEmul longFromBits(int top, int bottom) {
+  static LongEmul longFromBits(int top, int bottom) {
     LongEmul topHalf = LongLib.shl(LongLib.fromInt(top), 32);
     LongEmul bottomHalf = LongLib.fromInt(bottom);
     if (LongLib.lt(bottomHalf, Const.ZERO)) {

@@ -406,7 +406,10 @@ public class JjsUtils {
       @Override
       JsLiteral translate(JExpression literal) {
         SourceInfo sourceInfo = literal.getSourceInfo();
-        int[] values = LongLib.getAsIntArray(((JLongLiteral) literal).getValue());
+        long[] values = LongLib.getAsLongArray(((JLongLiteral) literal).getValue());
+        if (values.length == 1) {
+          return new JsNumberLiteral(literal.getSourceInfo(), ((JLongLiteral) literal).getValue());
+        }
         JsObjectLiteral objectLiteral = new JsObjectLiteral(sourceInfo);
         objectLiteral.setInternable();
 
@@ -449,7 +452,7 @@ public class JjsUtils {
   }
 
   private static void addPropertyToObject(SourceInfo sourceInfo, JsName propertyName,
-      int propertyValue, JsObjectLiteral objectLiteral) {
+      long propertyValue, JsObjectLiteral objectLiteral) {
     JsExpression label = propertyName.makeRef(sourceInfo);
     JsExpression value = new JsNumberLiteral(sourceInfo, propertyValue);
     objectLiteral.addProperty(sourceInfo, label, value);

@@ -23,7 +23,7 @@ import junit.framework.TestCase;
 public class LongLibJreTest extends TestCase {
 
   static {
-    LongLibBase.RUN_IN_JVM = true;
+    LongLib.RUN_IN_JVM = true;
   }
 
   private LongLibTestBase impl = new LongLibTestBase();
@@ -70,6 +70,10 @@ public class LongLibJreTest extends TestCase {
 
   public void testNegate() {
     impl.testNegate();
+  }
+
+  public void testNegativeZeroSeal() {
+    impl.testNegativeZeroSeal();
   }
 
   public void testShift() {

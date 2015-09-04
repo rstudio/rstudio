@@ -15,7 +15,8 @@
  */
 package com.google.gwt.lang;
 
-import com.google.gwt.lang.LongLibBase.LongEmul;
+import com.google.gwt.lang.BigLongLibBase.BigLong;
+import com.google.gwt.lang.LongLib.LongEmul;
 
 import junit.framework.TestCase;
 
@@ -130,7 +131,7 @@ public class LongLibTest extends TestCase {
 
     @Override
     public int test(LongEmul longVal0, LongEmul longVal1) {
-      return LongLib.compare(longVal0, longVal1);
+      return (int) Math.signum(LongLib.compare(longVal0, longVal1));
     }
   };
 
@@ -345,7 +346,7 @@ public class LongLibTest extends TestCase {
   private static long[] TEST_VALUES;
 
   static {
-    LongLibBase.RUN_IN_JVM = true;
+    LongLib.RUN_IN_JVM = true;
   }
 
   static {
@@ -357,11 +358,11 @@ public class LongLibTest extends TestCase {
       testSet.add(Long.MIN_VALUE + i);
       testSet.add(Long.MAX_VALUE - i);
 
-      testSet.add(i << LongLibBase.BITS / 2);
-      testSet.add(i << LongLibBase.BITS);
-      testSet.add(i << (3 * LongLibBase.BITS) / 2);
-      testSet.add(i << 2 * LongLibBase.BITS);
-      testSet.add(i << (5 * LongLibBase.BITS) / 2);
+      testSet.add(i << BigLongLib.BITS / 2);
+      testSet.add(i << BigLongLib.BITS);
+      testSet.add(i << (3 * BigLongLib.BITS) / 2);
+      testSet.add(i << 2 * BigLongLib.BITS);
+      testSet.add(i << (5 * BigLongLib.BITS) / 2);
     }
 
     for (int i = 0; i < 16; i++) {
@@ -436,15 +437,30 @@ public class LongLibTest extends TestCase {
     doTestBoolean(OP_EQ);
   }
 
-  public static void testGetAsIntArray() {
-    long longVal = 0x123456789abcdef0L;
-    int[] array = LongLib.getAsIntArray(longVal);
+  public static void testGetAsLongArray() {
+    long longVal = 0L;
+    long[] array = LongLib.getAsLongArray(longVal);
+    assertEquals(1, array.length);
+    assertEquals(0, array[0]);
+
+    longVal = 10L;
+    array = LongLib.getAsLongArray(longVal);
+    assertEquals(1, array.length);
+    assertEquals(10, array[0]);
+
+    longVal = -10L;
+    array = LongLib.getAsLongArray(longVal);
+    assertEquals(1, array.length);
+    assertEquals(-10, array[0]);
+
+    longVal = 0x123456789abcdef0L;
+    array = LongLib.getAsLongArray(longVal);
     assertEquals(0x12345, array[2]);
     assertEquals(0x19e26a, array[1]);
     assertEquals(0x3cdef0, array[0]);
 
-    longVal = -longVal;
-    array = LongLib.getAsIntArray(longVal);
+    longVal = -0x123456789abcdef0L;
+    array = LongLib.getAsLongArray(longVal);
     assertEquals(0xedcba, array[2]);
     assertEquals(0x261d95, array[1]);
     assertEquals(0x32110, array[0]);
@@ -487,10 +503,10 @@ public class LongLibTest extends TestCase {
   }
 
   public static void testNumberOfLeadingZeros() {
-    LongEmul longVal0 = fromLong(0xfedcba9876543210L);
+    BigLong longVal0 = LongLib.asBigLong(fromLong(0xfedcba9876543210L));
     for (int i = 0; i <= 64; i++) {
-      assertEquals(i, LongLibBase.numberOfLeadingZeros(longVal0));
-      longVal0 = LongLib.shru(longVal0, 1);
+      assertEquals(i, BigLongLibBase.numberOfLeadingZeros(longVal0));
+      longVal0 = BigLongLib.shru(longVal0, 1);
     }
   }
 
@@ -598,11 +614,7 @@ public class LongLibTest extends TestCase {
   }
 
   private static LongEmul copy(LongEmul longVal) {
-    LongEmul result = new LongEmul();
-    result.l = longVal.l;
-    result.m = longVal.m;
-    result.h = longVal.h;
-    return result;
+    return LongLib.copy(longVal);
   }
 
   private static void doTestBinary(BinaryOp op) {
@@ -791,21 +803,11 @@ public class LongLibTest extends TestCase {
   }
 
   private static LongEmul fromLong(long longVal) {
-    LongEmul result = new LongEmul();
-    result.l = (int) (longVal & LongLibBase.MASK);
-    result.m = (int) ((longVal >> LongLibBase.BITS) & LongLibBase.MASK);
-    result.h = (int) ((longVal >> (2 * LongLibBase.BITS)) & LongLibBase.MASK_2);
-    return result;
+    return LongLibTestBase.longFromBits((int) (longVal >> 32), (int) longVal);
   }
 
   private static int getBit(LongEmul longVal, int bit) {
-    if (bit < LongLibBase.BITS) {
-      return (longVal.l >> bit) & 0x1;
-    }
-    if (bit < 2 * LongLibBase.BITS) {
-      return (longVal.m >> (bit - LongLibBase.BITS)) & 0x1;
-    }
-    return (longVal.h >> (bit - (2 * LongLibBase.BITS))) & 0x1;
+    return LongLib.toInt(LongLib.shr(longVal, bit)) & 0x1;
   }
 
   private static String toHex(long longVal) {
@@ -834,9 +836,7 @@ public class LongLibTest extends TestCase {
   }
 
   private static long toLong(LongEmul longVal) {
-    long b2 = ((long) longVal.h) << (2 * LongLibBase.BITS);
-    long b1 = ((long) longVal.m) << LongLibBase.BITS;
-    return b2 | b1 | longVal.l;
+    return Long.parseLong(LongLib.toString(longVal));
   }
 
   public LongLibTest() {

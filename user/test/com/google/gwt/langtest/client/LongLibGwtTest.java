@@ -15,12 +15,15 @@
  */
 package com.google.gwt.langtest.client;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.lang.LongLibTestBase;
 
 /**
  * Test the LongLib class as a GWTTestCase.
  */
+@DoNotRunWith(Platform.Devel)
 public class LongLibGwtTest extends GWTTestCase {
 
   private LongLibTestBase impl = new LongLibTestBase();
@@ -72,6 +75,10 @@ public class LongLibGwtTest extends GWTTestCase {
 
   public void testNegate() {
     impl.testNegate();
+  }
+
+  public void testNegativeZeroSeal() {
+    impl.testNegativeZeroSeal();
   }
 
   public void testShift() {

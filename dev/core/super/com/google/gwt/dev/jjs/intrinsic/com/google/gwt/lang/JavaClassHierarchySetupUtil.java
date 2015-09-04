@@ -230,6 +230,6 @@ public class JavaClassHierarchySetupUtil {
    * Convert a double to a long.
    */
   public static native Object coerceFromLong(Object o) /*-{
-    return @com.google.gwt.lang.LongLib::toDouble(Lcom/google/gwt/lang/LongLibBase$LongEmul;)(o);
+    return @com.google.gwt.lang.LongLib::toDouble(*)(o);
   }-*/;
 }

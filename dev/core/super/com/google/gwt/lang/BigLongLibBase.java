@@ -19,20 +19,9 @@ import com.google.gwt.core.client.UnsafeNativeLong;
 
 /**
  * Implements a Java <code>long</code> in a way that can be translated to
- * JavaScript. Methods that are meant to be called from outside this package are
- * located in {@link LongLib}.
+ * JavaScript.
  */
-class LongLibBase {
-  static final class LongEmul {
-    public static LongEmul getInstance() {
-      return new LongEmul();
-    }
-
-    int l, m, h; // Used only when RUN_IN_JVM is true
-  }
-
-  // Force the class to exist
-  public static LongEmul instance = new LongEmul();
+class BigLongLibBase {
 
   /*
    * Implementation: A LongEmul containing three values {l, m, h} (low, middle,
@@ -46,8 +35,12 @@ class LongLibBase {
    * Note that this class must be careful using type "long". Being the
    * implementation of the long type for Production Mode, any place it uses a
    * long is not usable in Production Mode. There is currently one such method:
-   * {@link LongLib#getAsIntArray}.
+   * {@link LongLib#getAsLongArray}.
    */
+  static class BigLong {
+    int l, m, h;
+  }
+
 
   // Note that the {@link LonghLib#mul} method implicitly depends on the
   // specific value BITS == 22
@@ -56,13 +49,7 @@ class LongLibBase {
   protected static final int BITS2 = 64 - BITS01;
   protected static final int MASK = (1 << BITS) - 1;
   protected static final int MASK_2 = (1 << BITS2) - 1;
-  protected static LongEmul remainder;
-
-  /**
-   * Allow standalone Java tests such as LongLibTest/LongLibJreTest to run this
-   * code.
-   */
-  protected static boolean RUN_IN_JVM = false;
+  protected static BigLong remainder;
 
   protected static final int SIGN_BIT = BITS2 - 1;
   protected static final int SIGN_BIT_VALUE = 1 << SIGN_BIT;
@@ -82,17 +69,17 @@ class LongLibBase {
    * Production Mode implementation; the int array is already the right object.
    */
   @UnsafeNativeLong
-  protected static native long asLong(LongEmul value) /*-{
+  protected static native long asLong(BigLong value) /*-{
     return value;
   }-*/;
 
-  protected static LongEmul create(int value) {
+  protected static BigLong create(int value) {
     int a0 = value & MASK;
     int a1 = (value >> BITS) & MASK;
     int a2 = (value < 0) ? MASK_2 : 0;
 
-    if (RUN_IN_JVM) {
-      LongEmul a = new LongEmul();
+    if (LongLib.RUN_IN_JVM) {
+      BigLong a = new BigLong();
       a.l = a0;
       a.m = a1;
       a.h = a2;
@@ -101,9 +88,9 @@ class LongLibBase {
     return create0(a0, a1, a2);
   }
 
-  protected static LongEmul create(int a0, int a1, int a2) {
-    if (RUN_IN_JVM) {
-      LongEmul a = new LongEmul();
+  protected static BigLong create(int a0, int a1, int a2) {
+    if (LongLib.RUN_IN_JVM) {
+      BigLong a = new BigLong();
       a.l = a0;
       a.m = a1;
       a.h = a2;
@@ -112,7 +99,7 @@ class LongLibBase {
     return create0(a0, a1, a2);
   }
 
-  protected static LongEmul divMod(LongEmul a, LongEmul b,
+  protected static BigLong divMod(BigLong a, BigLong b,
       boolean computeRemainder) {
     if (isZero(b)) {
       throw new ArithmeticException("divide by zero");
@@ -133,7 +120,7 @@ class LongLibBase {
     // We can do this because we have already ensured that b != MIN_VALUE.
     boolean negative = false;
     if (isNegative(b)) {
-      b = LongLib.neg(b);
+      b = BigLongLib.neg(b);
       negative = !negative;
     }
 
@@ -169,12 +156,12 @@ class LongLibBase {
       // If b is not a power of two, treat -a as MAX_VALUE (instead of the
       // actual value (MAX_VALUE + 1)).
       if (bpower == -1) {
-        a = create(LongLib.Const.MAX_VALUE);
+        a = create(BigLongLib.Const.MAX_VALUE);
         aIsCopy = true;
         negative = !negative;
       } else {
         // Signed shift of MIN_VALUE produces the right answer
-        LongEmul c = LongLib.shr(a, bpower);
+        BigLong c = BigLongLib.shr(a, bpower);
         if (negative) {
           negate(c);
         }
@@ -185,7 +172,7 @@ class LongLibBase {
       }
     } else if (isNegative(a)) {
       aIsNegative = true;
-      a = LongLib.neg(a);
+      a = BigLongLib.neg(a);
       aIsCopy = true;
       negative = !negative;
     }
@@ -198,10 +185,10 @@ class LongLibBase {
     }
 
     // if a < b, the quotient is 0 and the remainder is a
-    if (LongLib.lt(a, b)) {
+    if (BigLongLib.compare(a, b) < 0) {
       if (computeRemainder) {
         if (aIsNegative) {
-          remainder = LongLib.neg(a);
+          remainder = BigLongLib.neg(a);
         } else {
           remainder = create(a);
         }
@@ -214,48 +201,48 @@ class LongLibBase {
         aIsMinValue, computeRemainder);
   }
 
-  protected static int getH(LongEmul a) {
-    if (RUN_IN_JVM) {
+  protected static int getH(BigLong a) {
+    if (LongLib.RUN_IN_JVM) {
       return a.h;
     }
     return getHNative(a);
   }
 
-  protected static int getL(LongEmul a) {
-    if (RUN_IN_JVM) {
+  protected static int getL(BigLong a) {
+    if (LongLib.RUN_IN_JVM) {
       return a.l;
     }
     return getLNative(a);
   }
 
-  protected static int getM(LongEmul a) {
-    if (RUN_IN_JVM) {
+  protected static int getM(BigLong a) {
+    if (LongLib.RUN_IN_JVM) {
       return a.m;
     }
     return getMNative(a);
   }
 
-  protected static boolean isMinValue(LongEmul a) {
+  protected static boolean isMinValue(BigLong a) {
     return getH(a) == SIGN_BIT_VALUE && getM(a) == 0 && getL(a) == 0;
   }
 
-  protected static boolean isNegative(LongEmul a) {
+  protected static boolean isNegative(BigLong a) {
     return sign(a) != 0;
   }
 
-  protected static boolean isZero(LongEmul a) {
+  protected static boolean isZero(BigLong a) {
     return getL(a) == 0 && getM(a) == 0 && getH(a) == 0;
   }
 
   /**
    * a = -a
    */
-  protected static void negate(LongEmul a) {
+  protected static void negate(BigLong a) {
     int neg0 = (~getL(a) + 1) & MASK;
     int neg1 = (~getM(a) + (neg0 == 0 ? 1 : 0)) & MASK;
     int neg2 = (~getH(a) + ((neg0 == 0 && neg1 == 0) ? 1 : 0)) & MASK_2;
 
-    if (RUN_IN_JVM) {
+    if (LongLib.RUN_IN_JVM) {
       a.l = neg0;
       a.m = neg1;
       a.h = neg2;
@@ -269,12 +256,12 @@ class LongLibBase {
   /**
    * @return 0 if a is >= 0, 1 if a < 0.
    */
-  protected static int sign(LongEmul a) {
+  protected static int sign(BigLong a) {
     return getH(a) >> (BITS2 - 1);
   }
 
   // Assumes a is non-negative
-  protected static double toDoubleHelper(LongEmul a) {
+  protected static double toDoubleHelper(BigLong a) {
     return getL(a) + (getM(a) * TWO_PWR_22_DBL) + (getH(a) * TWO_PWR_44_DBL);
   }
 
@@ -282,7 +269,7 @@ class LongLibBase {
    * Return the number of leading zeros of a long value.
    */
   // package-private for testing
-  static int numberOfLeadingZeros(LongEmul a) {
+  static int numberOfLeadingZeros(BigLong a) {
     int b2 = Integer.numberOfLeadingZeros(getH(a));
     if (b2 == 32) {
       int b1 = Integer.numberOfLeadingZeros(getM(a));
@@ -299,9 +286,9 @@ class LongLibBase {
   /**
    * Creates a long instance equal to 0.
    */
-  private static LongEmul create() {
-    if (RUN_IN_JVM) {
-      return new LongEmul();
+  private static BigLong create() {
+    if (LongLib.RUN_IN_JVM) {
+      return new BigLong();
     }
     return create0(0, 0, 0);
   }
@@ -309,9 +296,9 @@ class LongLibBase {
   /**
    * Creates a long instance equal to a given long.
    */
-  private static LongEmul create(LongEmul a) {
-    if (RUN_IN_JVM) {
-      LongEmul b = new LongEmul();
+  static BigLong create(BigLong a) {
+    if (LongLib.RUN_IN_JVM) {
+      BigLong b = new BigLong();
       b.l = getL(a);
       b.m = getM(a);
       b.h = getH(a);
@@ -320,18 +307,18 @@ class LongLibBase {
     return create0(getL(a), getM(a), getH(a));
   }
 
-  private static native LongEmul create0(int l, int m, int h) /*-{
+  private static native BigLong create0(int l, int m, int h) /*-{
     return {l:l,m:m,h:h};
   }-*/;
 
-  private static LongEmul divModByMinValue(LongEmul a, boolean computeRemainder) {
+  private static BigLong divModByMinValue(BigLong a, boolean computeRemainder) {
     // MIN_VALUE / MIN_VALUE == 1, remainder = 0
     // (a != MIN_VALUE) / MIN_VALUE == 0, remainder == a
     if (isMinValue(a)) {
       if (computeRemainder) {
         remainder = create(); // zero
       }
-      return create(LongLib.Const.ONE);
+      return create(BigLongLib.Const.ONE);
     }
     if (computeRemainder) {
       remainder = create(a);
@@ -339,9 +326,9 @@ class LongLibBase {
     return create(); // zero
   }
 
-  private static LongEmul divModByShift(LongEmul a, int bpower,
+  private static BigLong divModByShift(BigLong a, int bpower,
       boolean negative, boolean aIsNegative, boolean computeRemainder) {
-    LongEmul c = LongLib.shr(a, bpower);
+    BigLong c = BigLongLib.shr(a, bpower);
     if (negative) {
       negate(c);
     }
@@ -349,7 +336,7 @@ class LongLibBase {
     if (computeRemainder) {
       a = maskRight(a, bpower);
       if (aIsNegative) {
-        remainder = LongLib.neg(a);
+        remainder = BigLongLib.neg(a);
       } else {
         remainder = create(a);
       }
@@ -357,14 +344,14 @@ class LongLibBase {
     return c;
   }
 
-  private static LongEmul divModHelper(LongEmul a, LongEmul b,
+  private static BigLong divModHelper(BigLong a, BigLong b,
       boolean negative, boolean aIsNegative, boolean aIsMinValue,
       boolean computeRemainder) {
     // Align the leading one bits of a and b by shifting b left
     int shift = numberOfLeadingZeros(b) - numberOfLeadingZeros(a);
-    LongEmul bshift = LongLib.shl(b, shift);
+    BigLong bshift = BigLongLib.shl(b, shift);
 
-    LongEmul quotient = create();
+    BigLong quotient = create();
     while (shift >= 0) {
       boolean gte = trialSubtract(a, bshift);
       if (gte) {
@@ -384,9 +371,9 @@ class LongLibBase {
 
     if (computeRemainder) {
       if (aIsNegative) {
-        remainder = LongLib.neg(a);
+        remainder = BigLongLib.neg(a);
         if (aIsMinValue) {
-          remainder = LongLib.sub(remainder, LongLib.Const.ONE);
+          remainder = BigLongLib.sub(remainder, BigLongLib.Const.ONE);
         }
       } else {
         remainder = create(a);
@@ -396,22 +383,22 @@ class LongLibBase {
     return quotient;
   }
 
-  private static native int getHNative(LongEmul a) /*-{
+  private static native int getHNative(BigLong a) /*-{
     return a.h;
   }-*/;
 
-  private static native int getLNative(LongEmul a) /*-{
+  private static native int getLNative(BigLong a) /*-{
     return a.l;
   }-*/;
 
-  private static native int getMNative(LongEmul a) /*-{
+  private static native int getMNative(BigLong a) /*-{
     return a.m;
   }-*/;
 
   /**
    * a &= ((1L << bits) - 1)
    */
-  private static LongEmul maskRight(LongEmul a, int bits) {
+  private static BigLong maskRight(BigLong a, int bits) {
     int b0, b1, b2;
     if (bits <= BITS) {
       b0 = getL(a) & ((1 << bits) - 1);
@@ -440,7 +427,7 @@ class LongLibBase {
    * }
    * </pre>
    */
-  private static int powerOfTwo(LongEmul a) {
+  private static int powerOfTwo(BigLong a) {
     // Power of two or 0
     int l = getL(a);
     if ((l & (l - 1)) != 0) {
@@ -470,8 +457,8 @@ class LongLibBase {
     return -1;
   }
 
-  private static void setBit(LongEmul a, int bit) {
-    if (RUN_IN_JVM) {
+  private static void setBit(BigLong a, int bit) {
+    if (LongLib.RUN_IN_JVM) {
       if (bit < BITS) {
         a.l |= 0x1 << bit;
       } else if (bit < BITS01) {
@@ -490,39 +477,39 @@ class LongLibBase {
     }
   }
 
-  private static native void setBitH(LongEmul a, int bit) /*-{
+  private static native void setBitH(BigLong a, int bit) /*-{
     a.h |= 1 << bit;
   }-*/;
 
-  private static native void setBitL(LongEmul a, int bit) /*-{
+  private static native void setBitL(BigLong a, int bit) /*-{
     a.l |= 1 << bit;
   }-*/;
 
-  private static native void setBitM(LongEmul a, int bit) /*-{
+  private static native void setBitM(BigLong a, int bit) /*-{
     a.m |= 1 << bit;
   }-*/;
 
-  private static native void setH(LongEmul a, int x) /*-{
+  private static native void setH(BigLong a, int x) /*-{
     a.h = x;
   }-*/;
 
-  private static native void setL(LongEmul a, int x) /*-{
+  private static native void setL(BigLong a, int x) /*-{
     a.l = x;
   }-*/;
 
-  private static native void setM(LongEmul a, int x) /*-{
+  private static native void setM(BigLong a, int x) /*-{
     a.m = x;
   }-*/;
 
   /**
    * a >>= 1. Assumes a >= 0.
    */
-  private static void toShru1(LongEmul a) {
+  private static void toShru1(BigLong a) {
     int a1 = getM(a);
     int a2 = getH(a);
     int a0 = getL(a);
 
-    if (RUN_IN_JVM) {
+    if (LongLib.RUN_IN_JVM) {
       a.h = a2 >>> 1;
       a.m = (a1 >>> 1) | ((a2 & 0x1) << (BITS - 1));
       a.l = (a0 >>> 1) | ((a1 & 0x1) << (BITS - 1));
@@ -545,7 +532,7 @@ class LongLibBase {
    * }
    * </pre>
    */
-  private static boolean trialSubtract(LongEmul a, LongEmul b) {
+  private static boolean trialSubtract(BigLong a, BigLong b) {
     // Early exit
     int sum2 = getH(a) - getH(b);
     if (sum2 < 0) {
@@ -560,7 +547,7 @@ class LongLibBase {
       return false;
     }
 
-    if (RUN_IN_JVM) {
+    if (LongLib.RUN_IN_JVM) {
       a.l = sum0 & MASK;
       a.m = sum1 & MASK;
       a.h = sum2 & MASK_2;
@@ -576,6 +563,6 @@ class LongLibBase {
   /**
    * Not instantiable outside this package.
    */
-  LongLibBase() {
+  BigLongLibBase() {
   }
 }
