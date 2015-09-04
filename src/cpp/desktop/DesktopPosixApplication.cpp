@@ -15,6 +15,8 @@
 
 #include "DesktopPosixApplication.hpp"
 
+#include <vector>
+
 #include <core/FilePath.hpp>
 
 #include <QProcess>
@@ -59,7 +61,9 @@ bool PosixApplication::event(QEvent* pEvent)
          FilePath filePath(filename.toUtf8().constData());
          if (filePath.exists() && filePath.extensionLowerCase() == ".rproj")
          {
-            launchProjectInNewInstance(filename);
+            std::vector<std::string> args;
+            args.push_back(filePath.absolutePath());
+            launchRStudio(args);
          }
          else
          {
