@@ -2662,6 +2662,18 @@ public class AceEditor implements DocDisplay,
       return snippets_.onInsertSnippet();
    }
    
+   public AceEditor clone()
+   {
+      AceEditor cloned = new AceEditor();
+      cloned.getWidget().getEditor().attachTo(this.getWidget().getEditor());
+      return cloned;
+   }
+   
+   public void destroy()
+   {
+      widget_.getEditor().destroy();
+   }
+   
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
