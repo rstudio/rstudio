@@ -66,6 +66,20 @@ public class JsExportTest extends GWTTestCase {
     assertTrue(MyClassExportsMethod.calledFromCallMe1);
   }
 
+  public void testMethodExportWithLong() {
+    assertEquals(42.0, callLongMethod(40.0, 2.0));
+    assertEquals(82.0, callStaticLongMethod(80.0, 2.0));
+  }
+
+  private native double callLongMethod(double a, double b) /*-{
+    var obj = new $global.woo.MyJsTypeThatUsesLongType();
+    return obj.addLong(a,b);
+  }-*/;
+
+  private native double callStaticLongMethod(double a, double b) /*-{
+    return $global.woo.MyJsTypeThatUsesLongType.addLongStatic(a,b);
+  }-*/;
+
   public void testMethodExport_noTypeTightenParams() {
 
     // If we type-tighten, java side will see no calls and think that parameter could only be null.

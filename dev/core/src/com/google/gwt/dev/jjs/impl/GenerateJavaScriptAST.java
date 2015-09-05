@@ -2024,8 +2024,7 @@ public class GenerateJavaScriptAST {
         } else {
           JMember member = (JMember) exportedEntity;
           maybeHoistClinit(globalStmts, generatedClinits, member);
-          exportGenerator.exportMember(member, createBridgeMethodOrReturnAlias(member,
-              names.get(member)));
+          exportGenerator.exportMember(member, createAlias(member, names.get(member)));
         }
       }
     }
@@ -2777,7 +2776,7 @@ public class GenerateJavaScriptAST {
             // _.exportedName = [obfuscatedMethodReference | function() { bridge code }]
             exportedName.setObfuscatable(false);
             generateVTableAssignment(globalStmts, method, exportedName,
-                createBridgeMethodOrReturnAlias(method, polyJsName));
+                createAlias(method, polyJsName));
           }
           if (method.exposesOverriddenPackagePrivateMethod()) {
             // This method exposes a package private method that is actually live, hence it needs
@@ -2874,52 +2873,20 @@ public class GenerateJavaScriptAST {
      * function is generated which invokes the method and coerces each argument or return type
      * as needed.
      */
-    JsExpression createBridgeMethodOrReturnAlias(JMember member, JsName aliasedMethodName) {
+    JsExpression createAlias(JMember member, JsName aliasedMethodName) {
       SourceInfo info = member.getSourceInfo();
       if (member instanceof JConstructor || member instanceof JField) {
         return aliasedMethodName.makeRef(info);
       } else {
         JMethod method = (JMethod) member;
-        boolean needsLongConversions = method.getType() == JPrimitiveType.LONG ||
-            Iterables.any(method.getParams(), new Predicate<JParameter>() {
-              @Override
-              public boolean apply(JParameter jParameter) {
-                return jParameter.getType() == JPrimitiveType.LONG;
-              }
-            });
 
         JsNameRef aliasedMethodRef = aliasedMethodName.makeRef(info);
 
-        if (!needsLongConversions) {
-          if (!method.isStatic()) {
-            // simply return Foo.prototype.aliasedMethod or _.aliasedMethod
-            aliasedMethodRef.setQualifier(getPrototypeQualifierOf(method));
-          }
-          return aliasedMethodRef;
-        }
-
-        // Construct function($arg1, $arg2, ...){ return this.meth($arg1, $arg2); }
-        JsFunction bridgeMethod = JsUtils.createEmptyFunctionLiteral(info, topScope, null);
-
-        // Bridge requires conversions.
-        // return coerceFromLong([this.]?aliasedMethodRef(coerceToLong(arg1), arg2, ...))
         if (!method.isStatic()) {
-          aliasedMethodRef.setQualifier(new JsThisRef(info));
+          // simply return Foo.prototype.aliasedMethod or _.aliasedMethod
+          aliasedMethodRef.setQualifier(getPrototypeQualifierOf(method));
         }
-        JsInvocation aliasedMethodInvocation = new JsInvocation(info, aliasedMethodRef);
-        for (JParameter param : method.getParams()) {
-          JsName argJsName = bridgeMethod.getScope().declareName("$arg_" + param.getName());
-          bridgeMethod.getParameters().add(new JsParameter(info, argJsName));
-          aliasedMethodInvocation.getArguments().add(param.getType() == JPrimitiveType.LONG ?
-              constructInvocation(info, "JavaClassHierarchySetupUtil.coerceToLong",
-                  argJsName.makeRef(info)) : argJsName.makeRef(info));
-        }
-
-        bridgeMethod.getBody().getStatements().add(new JsReturn(info,
-            method.getType() == JPrimitiveType.LONG ? constructInvocation(info,
-                "JavaClassHierarchySetupUtil.coerceFromLong", aliasedMethodInvocation) :
-                aliasedMethodInvocation));
-        return bridgeMethod;
+        return aliasedMethodRef;
       }
     }
 

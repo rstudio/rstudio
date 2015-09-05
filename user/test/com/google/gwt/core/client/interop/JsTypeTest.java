@@ -348,22 +348,6 @@ public class JsTypeTest extends GWTTestCase {
     assertEquals(1, callPublicMethodFromEnumerationSubclass(MyEnumWithSubclassGen.C));
   }
 
-  public void testBridgeMethodLongCoercion() {
-    assertEquals(42.0, callLongMethod(40.0, 2.0));
-    assertEquals(82.0, callStaticLongMethod(80.0, 2.0));
-  }
-
-  private native double callLongMethod(double a, double b) /*-{
-    var global = window.goog && window.goog.global || $wnd;
-    var bridgeMethodClass = global.createLongCoercionBridgeMethod();
-    return bridgeMethodClass.addLong(a,b);
-  }-*/;
-
-  private native double callStaticLongMethod(double a, double b) /*-{
-    var global = window.goog && window.goog.global || $wnd;
-    return global.addLongStatic(a,b);
-  }-*/;
-
   private static native boolean alwaysTrue() /*-{
     return !!$wnd;
   }-*/;

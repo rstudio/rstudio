@@ -215,21 +215,4 @@ public class JavaClassHierarchySetupUtil {
   static native JavaScriptObject uniqueId(String id) /*-{
     return jsinterop.closure.getUniqueId(id);
   }-*/;
-
-  /**
-   * Converts an input object (LongEmul) to a double, otherwise return the value.
-   */
-  public static native Object coerceToLong(Object o) /*-{
-    if (typeof(o) == 'number') {
-      return @com.google.gwt.lang.LongLib::fromDouble(D)(o);
-    }
-    return o;
-  }-*/;
-
-  /**
-   * Convert a double to a long.
-   */
-  public static native Object coerceFromLong(Object o) /*-{
-    return @com.google.gwt.lang.LongLib::toDouble(*)(o);
-  }-*/;
 }

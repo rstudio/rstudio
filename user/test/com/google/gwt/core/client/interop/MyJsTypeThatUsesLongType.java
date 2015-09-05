@@ -16,26 +16,19 @@
 package com.google.gwt.core.client.interop;
 
 import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsNamespace;
 import com.google.gwt.core.client.js.JsType;
 
 /**
  * A class with a method that takes and returns longs.
  */
 @JsType
-public class ClassWithLongCoercionBridgeMethod {
-  @JsNamespace(JsNamespace.GLOBAL)
-  @JsExport("createLongCoercionBridgeMethod")
-  public static ClassWithLongCoercionBridgeMethod create() {
-    return new ClassWithLongCoercionBridgeMethod();
-  }
+@JsExport
+public class MyJsTypeThatUsesLongType {
 
   public long addLong(long a, long b) {
     return a + b;
   }
 
-  @JsNamespace(JsNamespace.GLOBAL)
-  @JsExport("addLongStatic")
   public static long addLongStatic(long a, long b) {
     return a + b;
   }

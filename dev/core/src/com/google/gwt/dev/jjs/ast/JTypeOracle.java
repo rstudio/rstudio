@@ -133,10 +133,8 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
-   * A method needs a JsInterop bridge if any of the following are true:
-   * 1) the method name conflicts with a method name of a non-JsType/JsExport method in a superclass
-   * 2) the method returns or accepts Single-Abstract-Method types
-   * 3) the method returns or accepts JsAware/JsConvert types.
+   * A method needs a JsInterop bridge if the method name conflicts with a method name of a
+   * non-JsType/JsExport method in a superclass.
    */
   public boolean needsJsInteropBridgeMethod(JMethod x) {
     /*
@@ -209,18 +207,6 @@ public class JTypeOracle implements Serializable {
       }
     }
 
-    // implicit builtin @JsConvert, longs are converted
-    if (x.isOrOverridesJsMethod()) {
-      if (x.getOriginalReturnType() == JPrimitiveType.LONG) {
-        return true;
-      }
-      for (JParameter p : xParams) {
-        if (p.getType() == JPrimitiveType.LONG) {
-          return true;
-        }
-      }
-    }
-    // TODO (cromwellian): add SAM and JsAware/Convert cases in follow up
     return false;
   }
 
