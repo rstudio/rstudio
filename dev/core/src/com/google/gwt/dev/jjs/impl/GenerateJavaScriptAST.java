@@ -562,16 +562,6 @@ public class GenerateJavaScriptAST {
             polyName = interfaceScope.declareName(mangleNameForPrivatePoly(x), name);
           } else if (x.isPackagePrivate()) {
             polyName = interfaceScope.declareName(mangleNameForPackagePrivatePoly(x), name);
-          } else if (x.isOrOverridesJsMethod() && !typeOracle.needsJsInteropBridgeMethod(x)) {
-            if (x.isOrOverridesJsPropertyAccessor()) {
-              // Prevent JsProperty functions like x() from colliding with intended JS native
-              // properties like .x;
-              polyName = interfaceScope.declareName(mangleNameForJsProperty(x), name);
-            } else {
-              // Leave simple JsType dispatches clean and unobfuscated.
-              polyName = interfaceScope.declareName(name, name);
-              polyName.setObfuscatable(false);
-            }
           } else {
             polyName = interfaceScope.declareName(mangleNameForPoly(x), name);
           }
@@ -732,8 +722,6 @@ public class GenerateJavaScriptAST {
 
     private final Map<JClassType, JsFunction> clinitMap = Maps.newHashMap();
 
-    public static final String LOCAL_TEMP_PREFIX = "$tmp$";
-
     private JMethod currentMethod = null;
 
     private final JsName globalTemp = topScope.declareName("_");
@@ -751,11 +739,6 @@ public class GenerateJavaScriptAST {
      * body under construction.
      */
     private JsVars pendingLocals;
-
-    /**
-     * Counter for assigning locals.
-     */
-    int tmpNumber = 0;
 
     @Override
     public void endVisit(JAbsentArrayDimension x, Context ctx) {
@@ -1337,11 +1320,11 @@ public class GenerateJavaScriptAST {
       } else if (x.isStaticDispatchOnly()) {
         result = dispatchToSuper(x, method, args);
       } else if (method.isOrOverridesJsPropertyAccessor()) {
-        result = dispatchToPropertyAccessor(x, method, args);
+        result = dispatchToJsProperty(x, method, args);
+      } else if (method.isOrOverridesJsMethod()) {
+        result = dispatchToJsMethod(x, method, args);
       } else if (method.isOrOverridesJsFunctionMethod()) {
-        result = dispatchToFunction(x, args);
-      } else if (typeOracle.needsJsInteropBridgeMethod(method)) {
-        result = dispatchViaTrampolineToBridgeMethod(x, method, args);
+        result = dispatchToJsFunction(x, args);
       } else {
         // Dispatch polymorphically (normal case).
         JsNameRef methodName = polymorphicNames.get(method).makeRef(x.getSourceInfo());
@@ -1412,7 +1395,7 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    private JsExpression dispatchToPropertyAccessor(
+    private JsExpression dispatchToJsProperty(
         JMethodCall x, JMethod method, List<JsExpression> args) {
       JsNameRef propertyReference = new JsNameRef(x.getSourceInfo(), method.getJsName());
       propertyReference.setQualifier((JsExpression) pop()); // instance
@@ -1422,69 +1405,14 @@ public class GenerateJavaScriptAST {
       return propertyReference;
     }
 
-    private JsExpression dispatchToFunction(JMethodCall x, List<JsExpression> args) {
+    private JsExpression dispatchToJsMethod(JMethodCall x, JMethod method, List<JsExpression> args) {
+      JsNameRef methodName = new JsNameRef(x.getSourceInfo(), method.getJsName());
+      methodName.setQualifier((JsExpression) pop()); // instance
+      return new JsInvocation(x.getSourceInfo(), methodName, args);
+    }
+
+    private JsExpression dispatchToJsFunction(JMethodCall x, List<JsExpression> args) {
       return new JsInvocation(x.getSourceInfo(), (JsExpression) pop(), args);
-    }
-
-    private JsExpression dispatchViaTrampolineToBridgeMethod(
-        JMethodCall x, JMethod method, List<JsExpression> args) {
-      // insert trampoline (_ = instance, trampoline(_, _.jsBridgeMethRef,
-      // _.javaMethRef)).bind(_)(args)
-
-      JsName polyName = polymorphicNames.get(method);
-
-      JsName tempLocal = createTmpLocal();
-
-      // tempLocal = instance value
-      JsExpression tmp = createAssignment(tempLocal.makeRef(
-          x.getSourceInfo()), ((JsExpression) pop()));
-      JsName trampMethName = indexedFunctions.get(
-          "JavaClassHierarchySetupUtil.trampolineBridgeMethod").getName();
-
-      // tempLocal.jsBridgeMethRef
-      JsName bridgejsName = polyName.getEnclosing().findExistingName(method.getName());
-      JsNameRef bridgeRef = bridgejsName != null ? bridgejsName.makeRef(x.getSourceInfo())
-          : new JsNameRef(x.getSourceInfo(), method.getName());
-      bridgeRef.setQualifier(tempLocal.makeRef(x.getSourceInfo()));
-
-      // tempLocal.javaMethRef
-      JsNameRef javaMethRef = polyName.makeRef(x.getSourceInfo());
-      javaMethRef.setQualifier(tempLocal.makeRef(x.getSourceInfo()));
-
-      JsInvocation callTramp = new JsInvocation(x.getSourceInfo(),
-          trampMethName.makeRef(x.getSourceInfo()),
-          tempLocal.makeRef(x.getSourceInfo()),
-          bridgeRef,
-          javaMethRef);
-
-      JsNameRef bind = new JsNameRef(x.getSourceInfo(), "bind");
-      JsInvocation callBind = new JsInvocation(x.getSourceInfo());
-      callBind.setQualifier(bind);
-      callBind.getArguments().add(tempLocal.makeRef(x.getSourceInfo()));
-      // (tempLocal = instance, tramp(tempLocal, tempLocal.bridgeRef, tempLocal.javaRef)).bind(tempLocal)
-      bind.setQualifier(callTramp);
-
-      JsInvocation jsInvocation = new JsInvocation(x.getSourceInfo(), callBind, args);
-      return createCommaExpression(tmp, jsInvocation);
-    }
-
-    private JsName createTmpLocal() {
-      SourceInfo sourceInfo = currentMethod.getSourceInfo();
-      JsFunction func = getJsFunctionFor(currentMethod);
-      JsScope funcScope = func.getScope();
-      JsName tmpName;
-      String tmpIdent = LOCAL_TEMP_PREFIX + tmpNumber;
-
-      while (funcScope.findExistingName(tmpIdent) != null) {
-        tmpNumber++;
-        tmpIdent = LOCAL_TEMP_PREFIX + tmpNumber;
-      }
-
-      tmpName = funcScope.declareName(tmpIdent);
-
-      JsVar var = new JsVar(sourceInfo, tmpName);
-      pendingLocals.add(var);
-      return tmpName;
     }
 
     /**
@@ -2024,7 +1952,7 @@ public class GenerateJavaScriptAST {
         } else {
           JMember member = (JMember) exportedEntity;
           maybeHoistClinit(globalStmts, generatedClinits, member);
-          exportGenerator.exportMember(member, createAlias(member, names.get(member)));
+          exportGenerator.exportMember(member, names.get(member).makeRef(member.getSourceInfo()));
         }
       }
     }
@@ -2728,6 +2656,12 @@ public class GenerateJavaScriptAST {
       }
     }
 
+    private void generateVTableAlias(List<JsStatement> globalStmts, JMethod method, JsName alias) {
+      JsNameRef polyname = polymorphicNames.get(method).makeRef(method.getSourceInfo());
+      polyname.setQualifier(getPrototypeQualifierOf(method));
+      generateVTableAssignment(globalStmts, method, alias, polyname);
+    }
+
     private JsExprStmt outputDisplayName(JsNameRef function, JMethod method) {
       JsNameRef displayName = new JsNameRef(function.getSourceInfo(), "displayName");
       displayName.setQualifier(function);
@@ -2761,23 +2695,21 @@ public class GenerateJavaScriptAST {
     private void generateVTables(JClassType x, List<JsStatement> globalStmts) {
       assert x != program.getTypeJavaLangString();
       for (JMethod method : x.getMethods()) {
-        SourceInfo sourceInfo = method.getSourceInfo();
         if (method.needsVtable() && !method.isAbstract()) {
           /*
            * Inline JsFunction rather than reference, e.g. _.vtableName =
            * function functionName() { ... }
            */
           JsExpression rhs = getJsFunctionFor(method);
-          JsName polyJsName = polymorphicNames.get(method);
-          generateVTableAssignment(globalStmts, method, polyJsName, rhs);
-          if (typeOracle.needsJsInteropBridgeMethod(method)) {
-            JsName exportedName = polyJsName.getEnclosing().declareName(method.getName(),
-                method.getName());
-            // _.exportedName = [obfuscatedMethodReference | function() { bridge code }]
+          generateVTableAssignment(globalStmts, method, polymorphicNames.get(method), rhs);
+
+          if (method.isOrOverridesJsMethod()) {
+            String jsName = method.getJsName();
+            JsName exportedName = interfaceScope.declareName(jsName, jsName);
             exportedName.setObfuscatable(false);
-            generateVTableAssignment(globalStmts, method, exportedName,
-                createAlias(method, polyJsName));
+            generateVTableAlias(globalStmts, method, exportedName);
           }
+
           if (method.exposesOverriddenPackagePrivateMethod()) {
             // This method exposes a package private method that is actually live, hence it needs
             // to make the package private name and the public name to be the same implementation at
@@ -2806,11 +2738,7 @@ public class GenerateJavaScriptAST {
             // It should be noted that all subclasses of a.D will have the two methods collapsed,
             // and hence this assignment will be present in the vtable setup for all subclasses.
 
-            JsNameRef polyname = polyJsName.makeRef(sourceInfo);
-            polyname.setQualifier(getPrototypeQualifierOf(method));
-            generateVTableAssignment(globalStmts, method,
-                getPackagePrivateName(method),
-                polyname);
+            generateVTableAlias(globalStmts, method, getPackagePrivateName(method));
           }
         }
       }
@@ -2862,31 +2790,6 @@ public class GenerateJavaScriptAST {
           }
           exportedMembersByExportName.put(f.getQualifiedExportName(), f);
         }
-      }
-    }
-
-    /*
-     * If a method needs a bridge, there are two cases:
-     * 1) the method merely needs an alias (one or more names), e.g. return Foo.prototype.methodRef
-     * 2) the method needs to coerce parameters somehow. For now, this means long <-> JS number,
-     * but in the future, this will be how @JsConvert/@JsAware are implemented. A synthetic
-     * function is generated which invokes the method and coerces each argument or return type
-     * as needed.
-     */
-    JsExpression createAlias(JMember member, JsName aliasedMethodName) {
-      SourceInfo info = member.getSourceInfo();
-      if (member instanceof JConstructor || member instanceof JField) {
-        return aliasedMethodName.makeRef(info);
-      } else {
-        JMethod method = (JMethod) member;
-
-        JsNameRef aliasedMethodRef = aliasedMethodName.makeRef(info);
-
-        if (!method.isStatic()) {
-          // simply return Foo.prototype.aliasedMethod or _.aliasedMethod
-          aliasedMethodRef.setQualifier(getPrototypeQualifierOf(method));
-        }
-        return aliasedMethodRef;
       }
     }
 
@@ -3432,11 +3335,11 @@ public class GenerateJavaScriptAST {
     return program.getLiteral(typeId);
   }
 
-  String mangleName(JField x) {
+  private String mangleName(JField x) {
     return JjsUtils.mangleMemberName(x.getEnclosingType().getName(), x.getName());
   }
 
-  String mangleNameForGlobal(JMethod x) {
+  private String mangleNameForGlobal(JMethod x) {
     String s = JjsUtils.mangleMemberName(x.getEnclosingType().getName(), x.getName()) + "__";
     for (int i = 0; i < x.getOriginalParamTypes().size(); ++i) {
       JType type = x.getOriginalParamTypes().get(i);
@@ -3446,7 +3349,7 @@ public class GenerateJavaScriptAST {
     return StringInterner.get().intern(s);
   }
 
-  String mangleNameForPackagePrivatePoly(JMethod x) {
+  private String mangleNameForPackagePrivatePoly(JMethod x) {
     assert x.isPackagePrivate() && !x.isStatic();
     /*
      * Package private instance methods in different package should not override each
@@ -3460,14 +3363,14 @@ public class GenerateJavaScriptAST {
     return StringInterner.get().intern(JjsUtils.constructManglingSignature(x, mangledName));
   }
 
-  String mangleNameForPoly(JMethod x) {
+  private String mangleNameForPoly(JMethod x) {
     assert !x.isPrivate() && !x.isStatic();
 
     return StringInterner.get().intern(
         JjsUtils.constructManglingSignature(x, JjsUtils.mangledNameString(x)));
   }
 
-  String mangleNameForPrivatePoly(JMethod x) {
+  private String mangleNameForPrivatePoly(JMethod x) {
     assert x.isPrivate() && !x.isStatic();
     /*
      * Private instance methods in different classes should not override each
@@ -3477,14 +3380,6 @@ public class GenerateJavaScriptAST {
     String mangledName = Joiner.on("$").join(
         "private",
         JjsUtils.mangledNameString(x.getEnclosingType()),
-        JjsUtils.mangledNameString(x));
-
-    return StringInterner.get().intern(JjsUtils.constructManglingSignature(x, mangledName));
-  }
-
-  String mangleNameForJsProperty(JMethod x) {
-    String mangledName = Joiner.on("$").join(
-        "jsproperty$",
         JjsUtils.mangledNameString(x));
 
     return StringInterner.get().intern(JjsUtils.constructManglingSignature(x, mangledName));
