@@ -492,5 +492,25 @@ public class AceEditorNative extends JavaScriptObject {
       uiPrefsSynced_ = true;
    }
    
+   public final native void attachTo(AceEditorNative editor) /*-{
+      
+      var EditSession = $wnd.require("ace/edit_session").EditSession;
+      
+      var session = new EditSession(editor.session.getDocument(), editor.session.getMode());
+      session.setTabSize(this.session.getTabSize());
+      session.setUseSoftTabs(this.session.getUseSoftTabs());
+      session.setOverwrite(this.session.getOverwrite());
+      session.setBreakpoints(this.session.getBreakpoints());
+      session.setUseWrapMode(this.session.getUseWrapMode());
+      session.setUseWorker(this.session.getUseWorker());
+      session.setWrapLimitRange(this.session.$wrapLimitRange.min,
+                                this.session.$wrapLimitRange.max);
+      
+      this.setSession(session);
+      
+   }-*/;
+   
+   public final native void destroy() /*-{ this.destroy(); }-*/;
+   
    private static boolean uiPrefsSynced_ = false;
 }

@@ -124,6 +124,7 @@ public abstract class
    public abstract AppCommand renameInFile();
    public abstract AppCommand insertRoxygenSkeleton();
    public abstract AppCommand insertSnippet();
+   public abstract AppCommand splitEditor();
  
    // Projects
    public abstract AppCommand newProject();

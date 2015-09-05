@@ -19,6 +19,7 @@ import java.util.List;
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -68,6 +69,8 @@ import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorSplitEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorSplitEvent.EditorSplitType;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidget;
@@ -99,6 +102,7 @@ public class TextEditingTargetWidget
       statusBar_ = new StatusBarWidget();
       shinyViewerMenu_ = RStudioGinjector.INSTANCE.getShinyViewerTypePopupMenu();
       handlerManager_ = new HandlerManager(this);
+      events_ = events;
       
       findReplace_ = new TextEditingTargetFindReplace(
          new TextEditingTargetFindReplace.Container()
@@ -128,11 +132,14 @@ public class TextEditingTargetWidget
             } 
          });
       
+      editorContainer_ = new FlowPanel();
+      editorContainer_.add(editor_.asWidget());
+      
       editorPanel_ = new DockLayoutPanel(Unit.PX);
       docOutlineWidget_ = new DocumentOutlineWidget(target);
       
       editorPanel_.addEast(docOutlineWidget_, 0);
-      editorPanel_.add(editor.asWidget());
+      editorPanel_.add(editorContainer_);
       
       MouseDragHandler.addHandler(
             docOutlineWidget_.getLeftSeparator(),
@@ -201,8 +208,67 @@ public class TextEditingTargetWidget
                   docOutlineWidget_.getOffsetWidth() > 0);
          }
       });
+      
+      events.addHandler(
+            EditorSplitEvent.TYPE,
+            new EditorSplitEvent.Handler()
+            {
+               @Override
+               public void onEditorSplit(EditorSplitEvent event)
+               {
+                  manageEditorSplits(event.getSplitType());
+               }
+            });
 
       initWidget(panel_);
+   }
+   
+   private void manageEditorSplits(EditorSplitType type)
+   {
+      Style mainEditorStyle = editor_.asWidget().getElement().getStyle();
+         
+      if (type == EditorSplitType.None)
+      {
+         if (splitEditor_ != null)
+         {
+            editorContainer_.remove(splitEditor_.asWidget());
+            splitEditor_.destroy();
+            splitEditor_ = null;
+            
+            mainEditorStyle.setWidth(100, Unit.PCT);
+            mainEditorStyle.setHeight(100, Unit.PCT);
+            mainEditorStyle.clearFloat();
+         }
+      }
+      else
+      {
+         if (splitEditor_ == null)
+         {
+            splitEditor_ = editor_.clone();
+            editorContainer_.add(splitEditor_.asWidget());
+         }
+         
+         Style splitEditorStyle = splitEditor_.asWidget().getElement().getStyle();
+         
+         if (type == EditorSplitType.Horizontal)
+         {
+            mainEditorStyle.setWidth(50, Unit.PCT);
+            mainEditorStyle.setHeight(100, Unit.PCT);
+            mainEditorStyle.setFloat(Style.Float.LEFT);
+            splitEditorStyle.setWidth(50, Unit.PCT);
+            splitEditorStyle.setHeight(100, Unit.PCT);
+            splitEditorStyle.setFloat(Style.Float.LEFT);
+         }
+         else if (type == EditorSplitType.Vertical)
+         {
+            mainEditorStyle.setWidth(100, Unit.PCT);
+            mainEditorStyle.setHeight(50, Unit.PCT);
+            mainEditorStyle.clearFloat();
+            splitEditorStyle.setWidth(100, Unit.PCT);
+            splitEditorStyle.setHeight(50, Unit.PCT);
+            splitEditorStyle.clearFloat();
+         }
+      }
    }
    
    public void initWidgetSize()
@@ -357,6 +423,8 @@ public class TextEditingTargetWidget
          toolbar.addRightWidget(publishButton_);
       }
       
+      addSplitMenu(toolbar);
+      
       toggleDocOutlineButton_ = new LatchingToolbarButton(
          "",
             StandardIcons.INSTANCE.outline(),
@@ -425,6 +493,29 @@ public class TextEditingTargetWidget
       toolbar.addRightWidget(toggleDocOutlineButton_);
       
       return toolbar;
+   }
+   
+   private void addSplitMenu(Toolbar toolbar)
+   {
+      ToolbarPopupMenu menu = new ToolbarPopupMenu();
+      for (EditorSplitType type : EditorSplitType.values())
+         addSplitButton(menu, type);
+      
+      ToolbarButton button = new ToolbarButton("", ThemeResources.INSTANCE.codeTransform(), menu);
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(button);
+   }
+   
+   private void addSplitButton(final ToolbarPopupMenu menu, final EditorSplitType type)
+   {
+      menu.addItem(new MenuItem(type.toString(), new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            events_.fireEvent(new EditorSplitEvent(type));
+         }
+      }));
    }
    
    private ToolbarButton createLatexFormatButton()
@@ -990,11 +1081,13 @@ public class TextEditingTargetWidget
    private final Session session_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final DocDisplay editor_;
+   private DocDisplay splitEditor_;
    private final ShinyViewerTypePopupMenu shinyViewerMenu_;
    private String extendedType_;
    private String publishPath_;
    private CheckBox sourceOnSave_;
    private DockLayoutPanel editorPanel_;
+   private ComplexPanel editorContainer_;
    private DocumentOutlineWidget docOutlineWidget_;
    private PanelWithToolbars panel_;
    private Toolbar toolbar_;
@@ -1017,6 +1110,7 @@ public class TextEditingTargetWidget
    private MenuItem rmdViewerPaneMenuItem_;
    private MenuItem rmdViewerWindowMenuItem_;
    private HandlerManager handlerManager_;
+   private EventBus events_;
    
    private Widget texSeparatorWidget_;
    private ToolbarButton texToolbarButton_;
