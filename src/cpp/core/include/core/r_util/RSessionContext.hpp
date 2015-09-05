@@ -32,6 +32,14 @@
 #define kProjectNoneId "cfc78a31"
 #define kWorkspacesId  "3c286bd3"
 
+#ifdef _WIN32
+typedef unsigned int uid_t;
+inline uid_t getuid()
+{
+   return 0;
+}
+#endif
+
 namespace rstudio {
 namespace core {
 
