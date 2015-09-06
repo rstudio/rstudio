@@ -2140,6 +2140,8 @@ public class RCompletionManager implements CompletionManager
       
       Position cursorPos = editor.getCursorPosition();
       Token currentToken = editor.getSession().getTokenAt(cursorPos);
+      if (currentToken == null)
+         return "";
       
       // Exclude non-string and non-identifier tokens.
       if (currentToken.hasType("operator", "comment", "numeric"))
