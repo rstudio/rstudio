@@ -156,7 +156,7 @@ std::string localMathjax()
    return alternateMathjax("mathjax-23");
 }
 
-FilePath getTargetFilesDir(const FilePath& targetFile)
+std::string copiedMathjax(const FilePath& targetFile)
 {
    // determine target files dir and create it if necessary
    std::string presFilesDir = targetFile.stem() + "_files";
@@ -165,20 +165,8 @@ FilePath getTargetFilesDir(const FilePath& targetFile)
    if (error)
    {
       LOG_ERROR(error);
-      return FilePath();
-   }
-   else
-   {
-      return filesTargetDir;
-   }
-}
-
-std::string copiedMathjax(const FilePath& targetFile)
-{
-   // determine target files dir and create it if necessary
-   FilePath filesTargetDir = getTargetFilesDir(targetFile);
-   if (filesTargetDir.empty())
       return remoteMathjax();
+   }
 
    // copy the mathjax directory
    r::exec::RFunction fileCopy("file.copy");
@@ -187,7 +175,7 @@ std::string copiedMathjax(const FilePath& targetFile)
    fileCopy.addParam("to", string_utils::utf8ToSystem(
                          filesTargetDir.absolutePath()));
    fileCopy.addParam("recursive", true);
-   Error error = fileCopy.call();
+   error = fileCopy.call();
    if (error)
    {
       LOG_ERROR(error);
@@ -195,7 +183,7 @@ std::string copiedMathjax(const FilePath& targetFile)
    }
 
    // return fixed up html
-   return alternateMathjax(filesTargetDir.filename() + "/mathjax-23");
+   return alternateMathjax(presFilesDir + "/mathjax-23");
 }
 
 std::string localWebFonts()
@@ -245,34 +233,9 @@ std::string embeddedWebFonts()
 
 }
 
-std::string readHtmlDepsFile(const FilePath& rootFile)
-{
-   std::string filesDirPrefix;
-   FilePath filesDirPath = getTargetFilesDir(rootFile);
-   if (!filesDirPath.empty())
-      filesDirPrefix = filesDirPath.filename() + "/";
-
-   std::string htmlDeps;
-   FilePath depsFile = rootFile.parent().childPath(filesDirPrefix +
-                                                   rootFile.stem() +
-                                                   "-libs/deps.html");
-   if (depsFile.exists())
-   {
-      Error error = core::readStringFromFile(depsFile, &htmlDeps);
-      if (error)
-         LOG_ERROR(error);
-   }
-   return htmlDeps;
-}
-
 bool hasKnitrVersion_1_2()
 {
    return module_context::isPackageVersionInstalled("knitr", "1.2");
-}
-
-bool haveRequiredRMarkdown()
-{
-   return module_context::isPackageVersionInstalled("rmarkdown", "0.6");
 }
 
 std::string extractKnitrError(const std::string& stdError)
@@ -299,12 +262,6 @@ bool performKnit(const FilePath& rmdPath,
 {
    // calculate the target md path
    FilePath mdPath = rmdPath.parent().childPath(rmdPath.stem() + ".md");
-
-   // calculate the _files dir prefix
-   std::string filesDirPrefix;
-   FilePath filesTargetDir = getTargetFilesDir(rmdPath);
-   if (!filesTargetDir.empty())
-      filesDirPrefix = filesTargetDir.filename() + "/";
 
    // remove the md if we are clearing the cache
    if (clearCache)
@@ -359,39 +316,22 @@ bool performKnit(const FilePath& rmdPath,
    args.push_back("--no-save");
    args.push_back("--no-restore");
    args.push_back("-e");
-   std::string fmStr("library(knitr); "
+   boost::format fmt("library(knitr); "
                      "opts_chunk$set(cache.path='%1%-cache/', "
-                                    "fig.path='%6%%1%-figure/', "
+                                    "fig.path='%1%-figure/', "
                                     "tidy=FALSE, "
                                     "warning=FALSE, "
                                     "error=FALSE, "
                                     "message=FALSE, "
                                     "comment=NA); "
                      "render_markdown(); "
-                     "knit('%2%', output = '%3%', encoding='%4%'); ");
-
-   // if we have rmarkdown installed then use it to resolve dependencies
-   if (haveRequiredRMarkdown())
-   {
-      fmStr +=       "deps <- knit_meta(); "
-                     "if (length(deps) > 0) { "
-                     "  deps <- rmarkdown:::flatten_html_dependencies(deps); "
-                     "  deps <- rmarkdown:::html_dependency_resolver(deps); "
-                     "  deps <- rmarkdown:::html_dependencies_as_string( "
-                          "deps, '%6%%1%-libs', '%5%'); "
-                     "  writeLines(deps, '%6%%1%-libs/deps.html');"
-                     "};";
-   }
-
-   boost::format fmt(fmStr);
+                     "knit('%2%', output = '%3%', encoding='%4%');");
    std::string encoding = projects::projectContext().defaultEncoding();
    std::string cmd = boost::str(
       fmt % string_utils::utf8ToSystem(rmdPath.stem())
           % string_utils::utf8ToSystem(rmdPath.filename())
           % string_utils::utf8ToSystem(mdPath.filename())
-          % encoding
-          % string_utils::utf8ToSystem(rmdPath.parent().absolutePath())
-          % filesDirPrefix);
+          % encoding);
    args.push_back(cmd);
 
    // options
@@ -411,8 +351,7 @@ bool performKnit(const FilePath& rmdPath,
       *pErrorResponse = ErrorResponse(error.summary());
       return false;
    }
-
-   if (result.exitStatus != EXIT_SUCCESS)
+   else if (result.exitStatus != EXIT_SUCCESS)
    {
       // if the markdown file doesn't exist then create one to
       // play the error text back into
@@ -618,7 +557,6 @@ bool readPresentation(SlideDeck* pSlideDeck,
    vars["r_highlight"] = resourceFiles().get("r_highlight.html");
    vars["reveal_config"] = revealConfig;
    vars["preamble"] = pSlideDeck->preamble();
-   vars["html_dependencies"] = readHtmlDepsFile(rmdFile);
 
    return true;
 }
@@ -844,38 +782,13 @@ bool createStandalonePresentation(const FilePath& targetFile,
       return false;
    }
 
-   // if we don't have rmarkdown available then we need to manually
-   // base64 encode images using a custom filter
+   // create image filter
+   FilePath dirPath = presentation::state::directory();
    std::vector<boost::iostreams::regex_filter> filters;
-   if (!haveRequiredRMarkdown())
-   {
-      FilePath dirPath = presentation::state::directory();
-      filters.push_back(html_utils::Base64ImageFilter(dirPath));
-   }
+   filters.push_back(html_utils::Base64ImageFilter(dirPath));
 
    // render presentation
-   bool result = renderPresentation(vars, filters, *pOfs, pErrorResponse);
-   if (!result)
-      return false;
-
-   // close the output stream
-   pOfs->flush();
-   pOfs.reset();
-
-   // if we have rmarkdown then use it to do base64 encoding
-   if (haveRequiredRMarkdown())
-   {
-      Error error = module_context::createSelfContainedHtml(targetFile,
-                                                            targetFile);
-      if (error)
-      {
-         LOG_ERROR(error);
-         *pErrorResponse = ErrorResponse(error.summary());
-         return false;
-      }
-   }
-
-   return true;
+   return renderPresentation(vars, filters, *pOfs, pErrorResponse);
 }
 
 
@@ -1000,7 +913,7 @@ void handlePresentationRootRequest(const std::string& path,
 
       // also save a view in browser version if that path already exists
       // (allows the user to do a simple browser refresh to see changes)
-      FilePath viewInBrowserPath = presentation::state::htmlFilePath();
+      FilePath viewInBrowserPath = presentation::state::viewInBrowserPath();
       if (viewInBrowserPath.exists())
       {
          ErrorResponse errorResponse;
@@ -1051,10 +964,8 @@ void handlePresentationHelpMarkdownRequest(const FilePath& filePath,
 
    // read in the file (process markdown)
    std::string helpDoc;
-   markdown::Extensions extensions;
-   extensions.htmlPreserve = true;
    Error error = markdown::markdownToHTML(mdFilePath,
-                                          extensions,
+                                          markdown::Extensions(),
                                           markdown::HTMLOptions(),
                                           &helpDoc);
    if (error)
@@ -1074,7 +985,6 @@ void handlePresentationHelpMarkdownRequest(const FilePath& filePath,
       vars["mathjax"] = "";
    vars["content"] = helpDoc;
    vars["js_callbacks"] = jsCallbacks;
-   vars["html_dependencies"] = readHtmlDepsFile(mdFilePath);
    pResponse->setNoCacheHeaders();
    pResponse->setContentType("text/html");
    pResponse->setBody(resourceFiles().get("presentation/helpdoc.html"),

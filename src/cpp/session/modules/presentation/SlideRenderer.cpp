@@ -62,7 +62,6 @@ std::string commandsAsJsonArray(const Slide& slide)
 Error renderMarkdown(const std::string& content, std::string* pHTML)
 {
    markdown::Extensions extensions;
-   extensions.htmlPreserve = true;
    markdown::HTMLOptions htmlOptions;
    return markdown::markdownToHTML(content,
                                    extensions,

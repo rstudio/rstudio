@@ -1931,7 +1931,7 @@ json::Object plotExportFormat(const std::string& name,
 Error createSelfContainedHtml(const FilePath& sourceFilePath,
                               const FilePath& targetFilePath)
 {
-   r::exec::RFunction func(".rs.pandocSelfContainedHtml");
+   r::exec::RFunction func("rmarkdown:::pandoc_self_contained_html");
    func.addParam(string_utils::utf8ToSystem(sourceFilePath.absolutePath()));
    func.addParam(string_utils::utf8ToSystem(targetFilePath.absolutePath()));
    return func.call();

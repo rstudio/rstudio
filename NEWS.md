@@ -23,7 +23,6 @@
 * New run chunk and options buttons overlaid at the top right of chunks
 * New shortcut for run current chunk (Cmd+Shift+Enter)
 * Outline view for quick navigation between sections/code chunks
-* Support for htmlwidgets in R Presentations
 * Added Run Setup Chunk command
 * Knit with Parameters command for previewing with varying parameters
 
