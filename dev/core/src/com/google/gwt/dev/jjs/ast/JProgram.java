@@ -499,6 +499,10 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     }
 
     for (JDeclaredType potentialNativeDispatchType : getRepresentedAsNativeTypes()) {
+      if (potentialNativeDispatchType == type) {
+        continue;
+      }
+
       if (typeOracle.isInstantiatedType(potentialNativeDispatchType) &&
           typeOracle.castSucceedsTrivially(potentialNativeDispatchType, type)) {
         dispatchSet.add(getRepresentedAsNativeTypesDispatchMap().get(potentialNativeDispatchType));
