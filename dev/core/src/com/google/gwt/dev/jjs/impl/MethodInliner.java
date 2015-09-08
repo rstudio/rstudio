@@ -334,6 +334,19 @@ public class MethodInliner {
         return InlineResult.DO_NOT_BLACKLIST;
       }
 
+      // Propagate side effect information to the inlined body due to @HasNoSideEffects annotation
+      // in the method.
+      boolean hasSideEffects = x.hasSideEffects();
+      if (!hasSideEffects) {
+        new JModVisitor() {
+          @Override
+          public void endVisit(JMethodCall x, Context ctx) {
+            x.markSideEffectFree();
+          }
+
+        }.accept(bodyAsExpressionList);
+      }
+
       // Run the order check. This verifies that all the parameters are
       // referenced once and only once, not within a conditionally-executing
       // expression and before any tricky target expressions, such as:
@@ -382,18 +395,6 @@ public class MethodInliner {
         }
       }
 
-      // We're safe to inline.
-      boolean hasSideEffects = x.hasSideEffects();
-      if (!hasSideEffects) {
-        new JModVisitor() {
-          @Override
-          public void endVisit(JMethodCall x, Context ctx) {
-            x.markSideEffectFree();
-          }
-
-        }.accept(bodyAsExpressionList);
-      }
-
       // Replace all params in the target expression with the actual arguments.
       ParameterReplacer replacer = new ParameterReplacer(x);
       replacer.accept(bodyAsExpressionList);
@@ -414,11 +415,12 @@ public class MethodInliner {
      *
      * TODO: add an expression complexity analyzer.
      */
-    if (ignoringReturn) {
-      return bodyAsExpressionList.size() > 2;
+    if (bodyAsExpressionList.size() > 3) {
+      return true;
     }
 
-    if (bodyAsExpressionList.size() == 3 && bodyAsExpressionList.get(2).hasSideEffects()) {
+    if (bodyAsExpressionList.size() == 3
+        && (!ignoringReturn || bodyAsExpressionList.get(2).hasSideEffects())) {
       return true;
     }
 
