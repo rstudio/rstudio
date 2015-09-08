@@ -1,7 +1,7 @@
 /*
  * ProjectsServerOperations.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -52,7 +52,10 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
    void getProjectSharedUsers(ServerRequestCallback<JsArrayString> callback);
    
    void setProjectSharedUsers(JsArrayString users, 
-                              ServerRequestCallback<Void> callback);
+                              ServerRequestCallback<SharingResult> callback);
+   
+   void validateSharingConfig(
+         ServerRequestCallback<SharingConfigResult> callback);
    
    void getAllServerUsers(ServerRequestCallback<JsArrayString> callback);
 }
