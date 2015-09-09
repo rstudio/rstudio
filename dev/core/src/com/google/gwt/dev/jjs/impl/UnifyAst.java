@@ -175,7 +175,7 @@ public class UnifyAst {
     @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
       // Concat ops need to resolve string type.
-      x.setType(translate(x.getType()));
+      x.setType(translate(x.getType().getUnderlyingType()));
     }
 
     @Override
@@ -1604,7 +1604,7 @@ public class UnifyAst {
       JArrayType arrayType = (JArrayType) type;
       result = program.getTypeArray(translate(arrayType.getElementType()));
     } else  if (type.isExternal()) {
-      assert type instanceof JDeclaredType : "Unknown external type" + type.getName();
+      assert type instanceof JDeclaredType : "Unknown external type " + type.getName();
       result = translate((JDeclaredType) type);
     }
     assert !result.isExternal();
