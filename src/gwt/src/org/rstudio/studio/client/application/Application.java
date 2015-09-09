@@ -508,7 +508,7 @@ public class Application implements ApplicationEventHandlers
 
       if (info.getScopeState() == InvalidSessionInfo.ScopeInvalidProject)
       {
-         baseURL += "projectnotfound.html";
+         baseURL += "projectnotfound.htm";
       }
       else
       {
