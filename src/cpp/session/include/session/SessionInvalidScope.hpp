@@ -45,10 +45,12 @@ inline core::FilePath invalidSessionContextFile(
 } // anonymous namespace
 
 
-inline void writeInvalidScope(const core::r_util::SessionContext& context)
+inline void writeInvalidScope(const core::r_util::SessionContext& context,
+                              core::r_util::SessionScopeState scopeState)
 {
    core::FilePath filePath = invalidSessionContextFile(context);
-   core::Error error = core::writeStringToFile(filePath, "");
+   core::Error error = core::writeStringToFile(filePath,
+         boost::lexical_cast<std::string>(scopeState));
    if (!error)
    {
       // chmod on the file so the server can read it
@@ -63,19 +65,28 @@ inline void writeInvalidScope(const core::r_util::SessionContext& context)
    }
 }
 
-inline bool collectInvalidScope(const core::r_util::SessionContext& context)
+inline core::r_util::SessionScopeState collectInvalidScope(
+      const core::r_util::SessionContext& context)
 {
    core::FilePath filePath = invalidSessionContextFile(context);
    if (filePath.exists())
    {
-      core::Error error = filePath.remove();
+      std::string scopeState;
+      core::Error error = core::readStringFromFile(filePath, &scopeState);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return core::r_util::ScopeInvalidSession;
+      }
+      error = filePath.remove();
       if (error)
          LOG_ERROR(error);
-      return true;
+      return static_cast<core::r_util::SessionScopeState>(
+               boost::lexical_cast<unsigned>(scopeState));
    }
    else
    {
-      return false;
+      return core::r_util::ScopeValid;
    }
 }
 
