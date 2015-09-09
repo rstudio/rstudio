@@ -95,7 +95,7 @@ public class JsInlinerTest extends OptimizerTestBase {
     // Inline a array assignment.
     input = Joiner.on('\n').join(
         "function set(arr, p,  v) { arr[p] = v; }",
-        "function b1(arr) {  set(arr, \"X\", 1); set(arr, \"Y\", 1);  } b1({});");
+        "function b1(arr) { set(arr, \"X\", 1); set(arr, \"Y\", 1); } b1({});");
     expected = Joiner.on('\n').join(
         "function b1(arr){arr['X']=1;arr['Y']=1}",
         "b1({});");
@@ -103,8 +103,8 @@ public class JsInlinerTest extends OptimizerTestBase {
 
     // Inline a devirtualized setter
     input = Joiner.on('\n').join(
-        "function setP(t, p) {t.a=p; }",
-        "function b1(o) {  setP(o, 1); setP(o, 2);  } b1({});");
+        "function setP(t, p) { t.a=p; }",
+        "function b1(o) { setP(o, 1); setP(o, 2); } b1({});");
     expected = Joiner.on('\n').join(
         "function b1(o){o.a=1; o.a=2;}",
         "b1({});");
@@ -112,10 +112,19 @@ public class JsInlinerTest extends OptimizerTestBase {
 
     // Inline a devirtualized getter
     input = Joiner.on('\n').join(
-        "function getP(t) {return t.a; }",
-        "function b1(o) {  getP(o) == getP(o);  } b1({});");
+        "function getP(t) { return t.a; }",
+        "function b1(o) { getP(o) == getP(o); } b1({});");
     expected = Joiner.on('\n').join(
         "function b1(o){o.a==o.a;}",
+        "b1({});");
+    verifyOptimized(expected, input);
+
+    // Inline a devirtualized getter
+    input = Joiner.on('\n').join(
+        "function arrayFieldAssignment(o) { return o.arr[10] = 20; }",
+        "function b1(o) { arrayFieldAssignment(o); arrayFieldAssignment(o); } b1({});");
+    expected = Joiner.on('\n').join(
+        "function b1(o){o.arr[10] = 20;o.arr[10] = 20;}",
         "b1({});");
     verifyOptimized(expected, input);
   }
