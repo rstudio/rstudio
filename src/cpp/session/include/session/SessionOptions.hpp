@@ -339,9 +339,9 @@ public:
       return scope_;
    }
 
-   bool invalidScope() const
+   core::r_util::SessionScopeState scopeState() const
    {
-      return invalidScope_;
+      return scopeState_;
    }
 
    core::r_util::SessionContext sessionContext() const
@@ -542,7 +542,7 @@ private:
    bool showUserIdentity_;
    std::string userIdentity_;
    core::r_util::SessionScope scope_;
-   bool invalidScope_;
+   core::r_util::SessionScopeState scopeState_;
    bool multiSession_;
    std::string userHomePath_;
    std::string userScratchPath_;   

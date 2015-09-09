@@ -47,6 +47,14 @@ class FilePath;
 
 namespace r_util {
 
+enum SessionScopeState
+{
+   ScopeValid, 
+   ScopeInvalidSession,
+   ScopeInvalidProject,
+   ScopeMissingProject,
+};
+
 inline std::string obfuscatedUserId(uid_t uid)
 {
    std::ostringstream ustr;
@@ -194,7 +202,7 @@ private:
    std::string id_;
 };
 
-bool validateSessionScope(const SessionScope& scope,
+SessionScopeState validateSessionScope(const SessionScope& scope,
                           const core::FilePath& userHomePath,
                           const core::FilePath& userScratchPath,
                           core::r_util::ProjectIdToFilePath projectIdToFilePath,

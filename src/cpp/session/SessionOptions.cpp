@@ -379,7 +379,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 
    // resolve scope
    scope_ = r_util::SessionScope::fromProjectId(project, scopeId);
-   invalidScope_ = false;
+   scopeState_ = core::r_util::ScopeValid;
 
    // call overlay hooks
    resolveOverlayOptions();
@@ -507,17 +507,14 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    r_util::SessionScope scope = sessionScope();
    if (!scope.empty())
    {
-      if (!r_util::validateSessionScope(
+      scopeState_ = r_util::validateSessionScope(
                        scope,
                        userHomePath(),
                        userScratchPath(),
                        session::projectIdToFilePath(userScratchPath(), 
                                  FilePath(
                                    getOverlayOption("shared-storage-path"))),
-                       &initialProjectPath_))
-      {
-         invalidScope_ = true;
-      }
+                       &initialProjectPath_);
    }
    else
    {
