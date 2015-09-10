@@ -25,6 +25,7 @@
 * Outline view for quick navigation between sections/code chunks
 * Knit with Parameters command for previewing with varying parameters
 * Run All now executes chunks in console (rather than calling e.g. knitr::purl)
+* Reorganize toolbar commands/menu for improved discoverability
 * Added Run Setup Chunk command
 
 ### Data Viewer
