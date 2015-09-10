@@ -32,10 +32,11 @@ import com.google.inject.name.Named;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Triad;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.events.RequestCurrentlyZoomedTabEvent;
+import org.rstudio.core.client.events.ManageLayoutCommandsEvent;
 import org.rstudio.core.client.events.WindowEnsureVisibleEvent;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.layout.DualWindowLayoutPanel;
@@ -65,6 +66,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /*
  * TODO: Push client state when selected tab or layout changes
@@ -264,15 +266,17 @@ public class PaneManager
       });
       
       eventBus_.addHandler(
-            RequestCurrentlyZoomedTabEvent.TYPE,
-            new RequestCurrentlyZoomedTabEvent.Handler()
+            ManageLayoutCommandsEvent.TYPE,
+            new ManageLayoutCommandsEvent.Handler()
             {
                @Override
-               public void onRequestCurrentlyZoomedTab(RequestCurrentlyZoomedTabEvent event)
+               public void onManageLayoutCommands(ManageLayoutCommandsEvent event)
                {
-                  event.setZoomedTab(maximizedTab_);
+                  manageLayoutCommands();
                }
             });
+      
+      manageLayoutCommands();
    }
    
    int computeAppropriateWidth()
@@ -355,6 +359,7 @@ public class PaneManager
             if (!equals(tab, maximizedTab_))
             {
                maximizedTab_ = tab;
+               manageLayoutCommands();
                activateTab(tab);
             }
             
@@ -387,6 +392,8 @@ public class PaneManager
          maximizedTab_ = Tab.Console;
       else
          maximizedTab_ = tab;
+      
+      manageLayoutCommands();
          
       maximizedWindow_ = window;
       if (widgetSizePriorToZoom_ < 0)
@@ -509,6 +516,7 @@ public class PaneManager
       maximizedWindow_ = null;
       maximizedTab_ = null;
       widgetSizePriorToZoom_ = -1;
+      manageLayoutCommands();
    }
    
    @Handler
@@ -830,6 +838,58 @@ public class PaneManager
          return Tab.Console;
       
       return null;
+   }
+   
+   private AppCommand getLayoutCommandForTab(Tab tab)
+   {
+      if (tab == null)
+         return commands_.layoutEndZoom();
+      
+      switch (tab)
+      {
+      case Build:        return commands_.layoutZoomBuild();
+      case Console:      return commands_.layoutZoomConsole();
+      case Environment:  return commands_.layoutZoomEnvironment();
+      case Files:        return commands_.layoutZoomFiles();
+      case Help:         return commands_.layoutZoomHelp();
+      case History:      return commands_.layoutZoomHistory();
+      case Packages:     return commands_.layoutZoomPackages();
+      case Plots:        return commands_.layoutZoomPlots();
+      case Presentation: return commands_.layoutZoomPresentation();
+      case Source:       return commands_.layoutZoomSource();
+      case VCS:          return commands_.layoutZoomVcs();
+      default:
+         throw new IllegalArgumentException("Unexpected tab '" + tab.toString() + "'");
+      }
+   }
+   
+   private void manageLayoutCommands()
+   {
+      List<AppCommand> layoutCommands = getLayoutCommands();
+      AppCommand activeCommand = getLayoutCommandForTab(maximizedTab_);
+      
+      for (AppCommand command : layoutCommands)
+         command.setChecked(activeCommand.equals(command));
+   }
+   
+   private List<AppCommand> getLayoutCommands()
+   {
+      List<AppCommand> commands = new ArrayList<AppCommand>();
+      
+      commands.add(commands_.layoutEndZoom());
+      commands.add(commands_.layoutZoomBuild());
+      commands.add(commands_.layoutZoomConsole());
+      commands.add(commands_.layoutZoomEnvironment());
+      commands.add(commands_.layoutZoomFiles());
+      commands.add(commands_.layoutZoomHelp());
+      commands.add(commands_.layoutZoomHistory());
+      commands.add(commands_.layoutZoomPackages());
+      commands.add(commands_.layoutZoomPlots());
+      commands.add(commands_.layoutZoomPresentation());
+      commands.add(commands_.layoutZoomSource());
+      commands.add(commands_.layoutZoomVcs());
+      
+      return commands;
    }
 
    private final EventBus eventBus_;

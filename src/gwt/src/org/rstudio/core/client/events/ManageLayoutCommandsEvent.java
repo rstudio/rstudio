@@ -1,5 +1,5 @@
 /*
- * RequestCurrentZoomEvent.java
+ * ManageLayoutCommands.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -14,30 +14,16 @@
  */
 package org.rstudio.core.client.events;
 
-import org.rstudio.studio.client.workbench.ui.PaneManager.Tab;
-
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class RequestCurrentlyZoomedTabEvent extends GwtEvent<RequestCurrentlyZoomedTabEvent.Handler>
+public class ManageLayoutCommandsEvent extends GwtEvent<ManageLayoutCommandsEvent.Handler>
 {
-   public void setZoomedTab(Tab tab)
-   {
-      tab_ = tab;
-   }
-   
-   public Tab getZoomedTab()
-   {
-      return tab_;
-   }
-   
-   private Tab tab_;
-   
    // Boilerplate ----
    
    public interface Handler extends EventHandler
    {
-      void onRequestCurrentlyZoomedTab(RequestCurrentlyZoomedTabEvent event);
+      void onManageLayoutCommands(ManageLayoutCommandsEvent event);
    }
    
    @Override
@@ -49,7 +35,7 @@ public class RequestCurrentlyZoomedTabEvent extends GwtEvent<RequestCurrentlyZoo
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onRequestCurrentlyZoomedTab(this);
+      handler.onManageLayoutCommands(this);
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();

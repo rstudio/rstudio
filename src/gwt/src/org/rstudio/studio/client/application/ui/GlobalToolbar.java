@@ -14,11 +14,8 @@
  */
 package org.rstudio.studio.client.application.ui;
 
-import org.rstudio.core.client.command.AppCommand;
-import org.rstudio.core.client.events.RequestCurrentlyZoomedTabEvent;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
-import org.rstudio.core.client.widget.CheckableMenuItem;
 import org.rstudio.core.client.widget.FocusContext;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.Toolbar;
@@ -31,9 +28,7 @@ import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.ui.PaneManager;
 
-import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -144,51 +139,6 @@ public class GlobalToolbar extends Toolbar
       events_ = events;
    }
    
-   public CheckableMenuItem createCheckableMenuItem(final AppCommand command,
-                                                    final String name,
-                                                    final ToolbarPopupMenu menu)
-   {
-      final CheckableMenuItem item = new CheckableMenuItem()
-      {
-         @Override
-         public void onInvoked()
-         {
-            command.execute();
-         }
-         
-         @Override
-         public boolean isChecked()
-         {
-            RequestCurrentlyZoomedTabEvent event = new RequestCurrentlyZoomedTabEvent();
-            events_.fireEvent(event);
-            
-            PaneManager.Tab tab = event.getZoomedTab();
-            if (tab == null)
-               return name.equalsIgnoreCase("None");
-            
-            return tab.toString().equalsIgnoreCase(name);
-         }
-         
-         @Override
-         public String getLabel()
-         {
-            return command.getLabel();
-         }
-      };
-      
-      menu.addAttachHandler(new AttachEvent.Handler()
-      {
-         @Override
-         public void onAttachOrDetach(AttachEvent event)
-         {
-            if (event.isAttached())
-               item.onStateChanged();
-         }
-      });
-      
-      return item;
-   }
-   
    public void completeInitialization(SessionInfo sessionInfo)
    { 
       StandardIcons icons = StandardIcons.INSTANCE;
@@ -233,19 +183,20 @@ public class GlobalToolbar extends Toolbar
       addLeftSeparator();
       
       ToolbarPopupMenu paneLayoutMenu = new ToolbarPopupMenu();
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutEndZoom(), "None", paneLayoutMenu));
+      
+      paneLayoutMenu.addItem(commands_.layoutEndZoom().createMenuItem(false));
       paneLayoutMenu.addSeparator();
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomSource(), "Source", paneLayoutMenu));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomConsole(), "Console", paneLayoutMenu));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomHelp(), "Help", paneLayoutMenu));
+      paneLayoutMenu.addItem(commands_.layoutZoomSource().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomConsole().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomHelp().createMenuItem(false));
       paneLayoutMenu.addSeparator();
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomHistory(), "History", paneLayoutMenu));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomFiles(), "Files", paneLayoutMenu));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomPlots(), "Plots", paneLayoutMenu));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomPackages(), "Packages", paneLayoutMenu));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomEnvironment(), "Environment", paneLayoutMenu));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomVcs(), "Vcs", paneLayoutMenu));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomBuild(), "Build", paneLayoutMenu));
+      paneLayoutMenu.addItem(commands_.layoutZoomHistory().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomFiles().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomPlots().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomPackages().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomEnvironment().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomVcs().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomBuild().createMenuItem(false));
       
       ImageResource paneLayoutIcon = ThemeResources.INSTANCE.paneLayoutIcon();
       ToolbarButton paneLayoutButton = new ToolbarButton(
