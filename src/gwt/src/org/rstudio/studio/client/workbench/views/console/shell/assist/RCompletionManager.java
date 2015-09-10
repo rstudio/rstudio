@@ -19,6 +19,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -207,6 +208,32 @@ public class RCompletionManager implements CompletionManager
                   docDisplay_.setPopupVisible(false);
                }
             });
+         }
+      });
+      
+      popup_.addAttachHandler(new AttachEvent.Handler()
+      {
+         private boolean wasSigtipShowing_ = false;
+         @Override
+         public void onAttachOrDetach(AttachEvent event)
+         {
+            if (event.isAttached())
+            {
+               if (sigTip_ != null && sigTip_.isShowing())
+               {
+                  wasSigtipShowing_ = true;
+                  sigTip_.hide();
+               }
+               else
+               {
+                  wasSigtipShowing_ = false;
+               }
+            }
+            else
+            {
+               if (sigTip_ != null && wasSigtipShowing_)
+                  sigTip_.show();
+            }
          }
       });
       
