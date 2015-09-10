@@ -394,6 +394,7 @@ public class PaneManager
          maximizedTab_ = tab;
       
       manageLayoutCommands();
+      panel_.setSplitterEnabled(false);
          
       maximizedWindow_ = window;
       if (widgetSizePriorToZoom_ < 0)
@@ -412,11 +413,7 @@ public class PaneManager
       
       final double initialSize = panel_.getWidgetSize(right_);
       
-      // Ensure that a couple pixels are left after zoom so that the pane
-      // can be manually pulled out (with the mouse).
-      double targetSize = isLeftWidget ?
-            0 :
-            panel_.getOffsetWidth() - 3;
+      double targetSize = isLeftWidget ? 0 : panel_.getOffsetWidth();
       
       if (targetSize < 0)
          targetSize = 0;
@@ -482,6 +479,15 @@ public class PaneManager
          restoreFourPaneLayout();
    }
    
+   private void invalidateSavedLayoutState(boolean enableSplitter)
+   {
+      maximizedWindow_ = null;
+      maximizedTab_ = null;
+      widgetSizePriorToZoom_ = -1;
+      panel_.setSplitterEnabled(enableSplitter);
+      manageLayoutCommands();
+   }
+   
    private void restoreFourPaneLayout()
    {
       // Ensure that all windows are in the 'normal' state. This allows
@@ -500,6 +506,8 @@ public class PaneManager
          resizeHorizontally(rightWidth, minThreshold);
       else if (rightWidth >= maxThreshold)
          resizeHorizontally(rightWidth, maxThreshold);
+      
+      invalidateSavedLayoutState(true);
    }
    
    private void restoreSavedLayout()
@@ -511,12 +519,7 @@ public class PaneManager
       
       maximizedWindow_.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
       resizeHorizontally(panel_.getWidgetSize(right_), widgetSizePriorToZoom_);
-      
-      // Invalidate the saved state.
-      maximizedWindow_ = null;
-      maximizedTab_ = null;
-      widgetSizePriorToZoom_ = -1;
-      manageLayoutCommands();
+      invalidateSavedLayoutState(true);
    }
    
    @Handler
