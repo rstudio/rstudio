@@ -17,10 +17,14 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JBinaryOperation;
+import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
+import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
+import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
@@ -42,9 +46,11 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -61,12 +67,6 @@ public class MethodInliner {
    * Clones an expression, ensuring no local or this refs.
    */
   private static class CloneCalleeExpressionVisitor extends CloneExpressionVisitor {
-    @Override
-    public boolean visit(JLocalRef x, Context ctx) {
-      throw new InternalCompilerException(
-          "Unable to clone a local reference in a function being inlined");
-    }
-
     @Override
     public boolean visit(JThisRef x, Context ctx) {
       throw new InternalCompilerException("Should not encounter a JThisRef "
@@ -146,11 +146,6 @@ public class MethodInliner {
       if (method.getEnclosingType() != null
          && method.getEnclosingType().getClinitMethod() == method && !stmts.isEmpty()) {
           // clinit() calls cannot be inlined unless they are empty
-        return InlineResult.BLACKLIST;
-      }
-
-      if (!body.getLocals().isEmpty()) {
-          // methods with local variables cannot be inlined
         return InlineResult.BLACKLIST;
       }
 
@@ -244,7 +239,22 @@ public class MethodInliner {
       CloneCalleeExpressionVisitor cloner = new CloneCalleeExpressionVisitor();
 
       for (JStatement stmt : body.getStatements()) {
-        if (stmt instanceof JExpressionStatement) {
+        if (stmt instanceof JDeclarationStatement) {
+          JDeclarationStatement declStatement = (JDeclarationStatement) stmt;
+          if (!(declStatement.getVariableRef() instanceof JLocalRef)) {
+            return null;
+          }
+          JExpression initializer = declStatement.getInitializer();
+          if (initializer == null) {
+            continue;
+          }
+          JLocal local = (JLocal) declStatement.getVariableRef().getTarget();
+          JExpression clone = new JBinaryOperation(stmt.getSourceInfo(), local.getType(),
+              JBinaryOperator.ASG,
+              new JLocalRef(declStatement.getVariableRef().getSourceInfo(), local),
+              cloner.cloneExpression(initializer));
+          expressions.add(clone);
+        } else if (stmt instanceof JExpressionStatement) {
           JExpressionStatement exprStmt = (JExpressionStatement) stmt;
           JExpression expr = exprStmt.getExpr();
           JExpression clone = cloner.cloneExpression(expr);
@@ -334,19 +344,6 @@ public class MethodInliner {
         return InlineResult.DO_NOT_BLACKLIST;
       }
 
-      // Propagate side effect information to the inlined body due to @HasNoSideEffects annotation
-      // in the method.
-      boolean hasSideEffects = x.hasSideEffects();
-      if (!hasSideEffects) {
-        new JModVisitor() {
-          @Override
-          public void endVisit(JMethodCall x, Context ctx) {
-            x.markSideEffectFree();
-          }
-
-        }.accept(bodyAsExpressionList);
-      }
-
       // Run the order check. This verifies that all the parameters are
       // referenced once and only once, not within a conditionally-executing
       // expression and before any tricky target expressions, such as:
@@ -361,49 +358,70 @@ public class MethodInliner {
       OrderVisitor orderVisitor = new OrderVisitor(x.getTarget().getParams());
       orderVisitor.accept(bodyAsExpressionList);
 
-      /*
-       * A method that doesn't touch any parameters is trivially inlinable (this
-       * covers the empty method case)
-       */
-      if (orderVisitor.checkResults() == SideEffectCheck.NO_REFERENCES) {
-        List<JExpression> expressions = expressionsIncludingArgs(x);
-        expressions.addAll(bodyAsExpressionList);
-        ctx.replaceMe(JjsUtils.createOptimizedMultiExpression(ignoringReturn, expressions));
-        return InlineResult.DO_NOT_BLACKLIST;
-      }
-
-      /*
-       * We can still inline in the case where all of the actual arguments are
-       * "safe". They must have no side effects, and also have values which
-       * could not be affected by the execution of any code within the callee.
-       */
-      if (orderVisitor.checkResults() == SideEffectCheck.FAILS) {
-        for (JExpression arg : x.getArgs()) {
-          ExpressionAnalyzer argAnalyzer = new ExpressionAnalyzer();
-          argAnalyzer.accept(arg);
-
-          if (argAnalyzer.hasAssignment() || argAnalyzer.accessesField()
-              || argAnalyzer.createsObject() || argAnalyzer.canThrowException()) {
-
-            /*
-             * This argument evaluation could affect or be affected by the
-             * callee so we cannot inline here.
-             */
-            // Could not inline this call but the method is potentially inlineable.
-            return InlineResult.DO_NOT_BLACKLIST;
+      switch (orderVisitor.checkResults()) {
+        case NO_REFERENCES:
+          /*
+           * A method that doesn't touch any parameters is trivially inlinable (this
+           * covers the empty method case)
+           */
+          if (!x.hasSideEffects()) {
+            markCallsAsSideEffectFree(bodyAsExpressionList);
           }
-        }
+          new LocalVariableExtruder(getCurrentMethod()).accept(bodyAsExpressionList);
+          List<JExpression> expressions = expressionsIncludingArgs(x);
+          expressions.addAll(bodyAsExpressionList);
+          ctx.replaceMe(JjsUtils.createOptimizedMultiExpression(ignoringReturn, expressions));
+          return InlineResult.DO_NOT_BLACKLIST;
+        case FAILS:
+          /*
+           * We can still inline in the case where all of the actual arguments are
+           * "safe". They must have no side effects, and also have values which
+           * could not be affected by the execution of any code within the callee.
+           */
+          for (JExpression arg : x.getArgs()) {
+            ExpressionAnalyzer argAnalyzer = new ExpressionAnalyzer();
+            argAnalyzer.accept(arg);
+
+            if (argAnalyzer.hasAssignment() || argAnalyzer.accessesField()
+                || argAnalyzer.createsObject() || argAnalyzer.canThrowException()) {
+
+              /*
+               * This argument evaluation could affect or be affected by the
+               * callee so we cannot inline here.
+               */
+              // Could not inline this call but the method is potentially inlineable.
+              return InlineResult.DO_NOT_BLACKLIST;
+            }
+          }
+          // Fall through!
+        case CORRECT_ORDER:
+        default:
+          if (!x.hasSideEffects()) {
+            markCallsAsSideEffectFree(bodyAsExpressionList);
+          }
+          new LocalVariableExtruder(getCurrentMethod()).accept(bodyAsExpressionList);
+          // Replace all params in the target expression with the actual arguments.
+          ParameterReplacer replacer = new ParameterReplacer(x);
+          replacer.accept(bodyAsExpressionList);
+          bodyAsExpressionList.add(0, x.getInstance());
+          bodyAsExpressionList.add(1, createClinitCall(x));
+          ctx.replaceMe(JjsUtils.createOptimizedMultiExpression(ignoringReturn,
+              bodyAsExpressionList));
+          return InlineResult.DO_NOT_BLACKLIST;
+      }
+    }
+  }
+
+  private static void markCallsAsSideEffectFree(List<JExpression> expressions) {
+    // Propagate side effect information to the inlined body due to @HasNoSideEffects annotation
+    // in the method.
+    new JModVisitor() {
+      @Override
+      public void endVisit(JMethodCall x, Context ctx) {
+        x.markSideEffectFree();
       }
 
-      // Replace all params in the target expression with the actual arguments.
-      ParameterReplacer replacer = new ParameterReplacer(x);
-      replacer.accept(bodyAsExpressionList);
-      bodyAsExpressionList.add(0, x.getInstance());
-      bodyAsExpressionList.add(1, createClinitCall(x));
-      ctx.replaceMe(JjsUtils.createOptimizedMultiExpression(ignoringReturn,
-          bodyAsExpressionList));
-      return InlineResult.DO_NOT_BLACKLIST;
-    }
+    }.accept(expressions);
   }
 
   private static boolean isTooComplexToInline(List<JExpression> bodyAsExpressionList,
@@ -509,6 +527,30 @@ public class MethodInliner {
 
       clone = maybeCast(clone, x.getType());
       ctx.replaceMe(clone);
+    }
+  }
+
+  /**
+   * Extrudes local variables from the body into the currect method.
+   */
+  private class LocalVariableExtruder extends JModVisitor {
+    private final Map<JLocal, JLocal> newLocalsByOriginalLocal = Maps.newLinkedHashMap();
+    private final JMethodBody methodBody;
+
+    public LocalVariableExtruder(JMethod method) {
+      methodBody = (JMethodBody) method.getBody();
+    }
+
+    @Override
+    public void endVisit(JLocalRef x, Context ctx) {
+      JLocal originalLocal = x.getLocal();
+      JLocal newLocal = newLocalsByOriginalLocal.get(originalLocal);
+      if (newLocal == null) {
+        newLocal = JProgram.createLocal(originalLocal.getSourceInfo(), originalLocal.getName(), originalLocal.getType(), originalLocal.isFinal(), methodBody);
+        newLocalsByOriginalLocal.put(originalLocal, newLocal);
+      }
+
+      ctx.replaceMe(new JLocalRef(x.getSourceInfo(), newLocal));
     }
   }
 

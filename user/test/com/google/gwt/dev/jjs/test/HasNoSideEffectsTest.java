@@ -26,7 +26,7 @@ import javaemul.internal.annotations.HasNoSideEffects;
  * Tests for {@link HasNoSideEffects}.
  */
 @DoNotRunWith(Platform.Devel)
-public class HasNoSideEffecstTest extends GWTTestCase {
+public class HasNoSideEffectsTest extends GWTTestCase {
 
   @Override
   public String getModuleName() {
@@ -35,7 +35,7 @@ public class HasNoSideEffecstTest extends GWTTestCase {
 
   @DoNotInline
   private static void execute() {
-    throw new RuntimeException("I lied, I have a side efect but compiler should have trusted me!");
+    throw new RuntimeException("I lied, I have a side effect but compiler should have trusted me!");
   }
 
   @HasNoSideEffects

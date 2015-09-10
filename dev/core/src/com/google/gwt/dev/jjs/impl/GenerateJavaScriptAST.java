@@ -348,7 +348,7 @@ public class GenerateJavaScriptAST {
           continue;
         }
 
-        JLocal[] locals = localSet.toArray(new JLocal[localSet.size()]);
+        JVariable[] locals = localSet.toArray(new JVariable[localSet.size()]);
         // TODO(rluble): remove n^2 behaviour in conflict checking.
         // In practice each method has only a handful of locals so this process is not expected
         // to be a performance problem.

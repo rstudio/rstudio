@@ -394,8 +394,17 @@ public abstract class OptimizerTestBase extends JJSTestBase {
   }
 
   protected final Result optimize(final String returnType,
-      final String... codeSnippet) throws UnableToCompleteException {
-    return optimize(TreeLogger.NULL, returnType, codeSnippet);
+      final String... codeSnippet) {
+
+    UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
+    builder.setLowestLogLevel(TreeLogger.WARN);
+
+    try {
+      return optimize(null, returnType, codeSnippet);
+    } catch (UnableToCompleteException e) {
+      fail();
+      return null;
+    }
   }
 
   /**
