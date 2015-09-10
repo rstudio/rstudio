@@ -3619,7 +3619,18 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteAllCode()
    {
-      sourceActiveDocument(true);
+      boolean executeChunks = fileType_.canCompilePDF() || 
+                              fileType_.canKnitToHTML() ||
+                              fileType_.isRpres();
+      
+      if (executeChunks)
+      {
+         executePreviousChunks(docDisplay_.getDocumentEnd());
+      }
+      else
+      {
+         sourceActiveDocument(true);
+      }
    }
 
    @Handler

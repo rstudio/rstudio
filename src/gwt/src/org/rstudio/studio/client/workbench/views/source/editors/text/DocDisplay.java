@@ -335,4 +335,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setDragEnabled(boolean enabled);
    
    boolean onInsertSnippet();
+   
+   Position getDocumentEnd();
 }

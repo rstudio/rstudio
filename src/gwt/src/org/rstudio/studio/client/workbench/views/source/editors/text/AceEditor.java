@@ -963,6 +963,13 @@ public class AceEditor implements DocDisplay,
    {
       return getSession().getLine(row);
    }
+   
+   @Override
+   public Position getDocumentEnd()
+   {
+      int lastRow = getRowCount() - 1;
+      return Position.create(lastRow, getLength(lastRow));
+   }
 
    @Override
    public InputEditorSelection createSelection(Position pos1, Position pos2)
