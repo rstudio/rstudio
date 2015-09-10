@@ -87,7 +87,7 @@ public class PopupPositioner implements PositionCallback
       
       int top = positionBottom ?
             pageY + fudgeFactor :
-            pageY - height - fudgeFactor;
+            pageY - height - fudgeFactor - 10;
       
       return new Coordinates(left, top);
    }
