@@ -26,6 +26,7 @@ public class JsMap<T> extends JavaScriptObject
 {
    protected JsMap() {}
    
+   @SuppressWarnings("rawtypes")
    public static native final JsMap create() /*-{ return {}; }-*/;
    
    public native final T get(String key) /*-{
