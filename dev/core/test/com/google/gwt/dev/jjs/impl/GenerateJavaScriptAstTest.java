@@ -49,34 +49,54 @@ public class GenerateJavaScriptAstTest extends FullCompileTestBase {
   }
 
   public void testInlineJSNIMethod() throws UnableToCompleteException {
-    StringBuilder code = new StringBuilder();
-    code.append("package test;\n");
-    code.append("import com.google.gwt.core.client.GWT;\n");
-    code.append("import com.google.gwt.core.client.RunAsyncCallback;\n");
-    code.append("public class EntryPoint {\n");
-    code.append("  public static native void inlinableJSNI() /*-{ $wnd; }-*/; ");
-    code.append("  public static void functionA() { onModuleLoad(); }\n");
-    code.append("  public static void onModuleLoad() {\n");
-    code.append("    inlinableJSNI();");
-    code.append("  }\n");
-    code.append("}\n");
+    String code = Joiner.on('\n').join(
+        "package test;",
+        "import com.google.gwt.core.client.GWT;",
+        "import com.google.gwt.core.client.RunAsyncCallback;",
+        "public class EntryPoint {",
+        "  public static native void inlinableJSNI() /*-{ $wnd; }-*/; ",
+        "  public static void functionA() { onModuleLoad(); }",
+        "  public static void onModuleLoad() {",
+        "    inlinableJSNI();",
+        "  }",
+        "}");
 
-    Set<JsNode> functionForJsInlining = compileSnippetToJS(code.toString()).getRight();
+    Set<JsNode> functionForJsInlining = compileSnippetToJS(code).getRight();
     assertContainsAll(functionForJsInlining, "onModuleLoad", "inlinableJSNI");
     assertDoesNotContainsAny(functionForJsInlining, "functionA");
   }
 
+  public void testInlineFunctionDefinedInJSNI() throws UnableToCompleteException {
+    String code = Joiner.on('\n').join(
+        "package test;",
+        "import com.google.gwt.core.client.GWT;",
+        "import com.google.gwt.core.client.RunAsyncCallback;",
+        "public class EntryPoint {",
+        "  public static native void inlinableJSNI() /*-{ (function () { return $wnd;})(); }-*/;",
+        "  public static void functionA() { onModuleLoad(); }",
+        "  public static void onModuleLoad() {",
+        "    inlinableJSNI();",
+        "  }",
+        "}");
+
+    Set<JsNode> functionForJsInlining = compileSnippetToJS(code.toString()).getRight();
+    assertContainsAll(functionForJsInlining, "onModuleLoad", "inlinableJSNI",
+        "function(){ return $wnd; }");
+    assertDoesNotContainsAny(functionForJsInlining, "functionA");
+  }
+
   private void assertContainsAll(Set<JsNode> functionsForJsInlining,
-      String... functionNames) {
-    Set<String> remainingFunctions = Sets.newHashSet(functionNames);
+      String... functionNamesorContents) {
+    Set<String> remainingFunctions = Sets.newHashSet(functionNamesorContents);
     for (JsFunction function : Iterables.filter(functionsForJsInlining, JsFunction.class)) {
       JsName name = function.getName();
       if (name == null) {
+        remainingFunctions.remove(function.toString().replaceAll("\\s+"," ").trim());
         continue;
       }
       remainingFunctions.remove(name.getShortIdent());
     }
-    assertTrue("{" + (Joiner.on(",").join(remainingFunctions)) + "} marked for consideration in "
+    assertTrue("{" + (Joiner.on(",").join(remainingFunctions)) + "} not marked for consideration in "
         + "JsInliner", remainingFunctions.isEmpty());
   }
 

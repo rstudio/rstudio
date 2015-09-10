@@ -3117,6 +3117,14 @@ public class GenerateJavaScriptAST {
         if (function != null && function.getBody() != null) {
           functionsForJsInlining.add(function);
         }
+        // Add all functions declared inside JSNI blocks as well.
+        assert function != null;
+        new JsModVisitor() {
+          @Override
+          public void endVisit(JsFunction x, JsContext ctx) {
+            functionsForJsInlining.add(x);
+          }
+        }.accept(function);
       }
 
       currentMethod = null;
