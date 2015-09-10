@@ -26,6 +26,8 @@
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
+#include <core/json/Json.hpp>
+#include <core/json/JsonRpc.hpp>
 
 #ifndef _WIN32
 #include <core/system/FileMode.hpp>
@@ -100,10 +102,45 @@ inline std::string toFilePath(const core::r_util::ProjectId& projectId,
       if (projectEntryPath.exists())
       {
          // get the path from shared storage
-         std::string path;
-         core::Error error = core::readStringFromFile(projectEntryPath, &path);
+         std::string entryContents;
+         core::Error error = core::readStringFromFile(projectEntryPath,
+                                                      &entryContents);
          if (error)
          {
+            LOG_ERROR(error);
+            return "";
+         }
+
+         // read the contents
+         core::json::Value projectEntryVal;
+         if (!core::json::parse(entryContents, &projectEntryVal))
+         {
+            error = core::Error(core::json::errc::ParseError,
+                                      ERROR_LOCATION);
+            error.addProperty("path", projectEntryPath.absolutePath());
+            LOG_ERROR(error);
+            return "";
+         }
+
+         // extract the path
+         std::string projectPath;
+         if (projectEntryVal.type() == core::json::ObjectType)
+         {
+            core::json::Object obj = projectEntryVal.get_obj();
+            core::json::Object::iterator it = obj.find(kProjectEntryDir);
+            if (it != obj.end() && it->second.type() == core::json::StringType)
+            {
+               projectPath = it->second.get_str();
+            }
+         }
+
+         // ensure we got a path from the shared project data
+         if (projectPath.empty())
+         {
+            error = core::systemError(boost::system::errc::invalid_argument,
+                             "No project directory found in " kProjectEntryDir,
+                             ERROR_LOCATION);
+            error.addProperty("path", projectEntryPath.absolutePath());
             LOG_ERROR(error);
             return "";
          }
@@ -111,13 +148,13 @@ inline std::string toFilePath(const core::r_util::ProjectId& projectId,
          // save the path to our own mapping so we can reverse lookup later
          core::FilePath projectIdsPath = projectIdsFilePath(userScratchPath);
          std::map<std::string,std::string> idMap = projectIdsMap(projectIdsPath);
-         idMap[projectId.asString()] = path;
+         idMap[projectId.asString()] = projectPath;
          error = core::writeStringMapToFile(projectIdsPath, idMap);
          if (error)
             LOG_ERROR(error);
 
          // return the path
-         return path;
+         return projectPath;
       }
    }
    return "";
@@ -200,3 +237,4 @@ inline core::r_util::ProjectId projectToProjectId(
 } // namespace rstudio
 
 #endif /* SESSION_SCOPES_HPP */
+
