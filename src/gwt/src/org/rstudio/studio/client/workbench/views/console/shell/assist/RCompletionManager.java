@@ -2144,7 +2144,7 @@ public class RCompletionManager implements CompletionManager
          return "";
       
       // Exclude non-string and non-identifier tokens.
-      if (currentToken.hasType("operator", "comment", "numeric"))
+      if (currentToken.hasType("operator", "comment", "numeric", "text"))
          return "";
       
       String tokenValue = currentToken.getValue();
