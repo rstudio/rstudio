@@ -335,6 +335,8 @@ public abstract class
    public abstract AppCommand viewShortcuts();
    
    // Viewer
+   public abstract AppCommand activateViewer();
+   public abstract AppCommand layoutZoomViewer();
    public abstract AppCommand viewerPopout();
    public abstract AppCommand viewerBack(); 
    public abstract AppCommand viewerForward();
