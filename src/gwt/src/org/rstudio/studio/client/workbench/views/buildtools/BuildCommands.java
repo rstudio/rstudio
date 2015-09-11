@@ -66,6 +66,7 @@ public class BuildCommands
          commands.cleanAll().remove();
          commands.stopBuild().remove();
          commands.activateBuild().remove();
+         commands.layoutZoomBuild().remove();
       }
    }
 }

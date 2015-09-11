@@ -149,6 +149,7 @@ public class Projects implements OpenProjectFileHandler,
             if (!sessionInfo.isVcsEnabled())
             {
                commands.activateVcs().remove();
+               commands.layoutZoomVcs().remove();
                commands.vcsCommit().remove();
                commands.vcsShowHistory().remove();
                commands.vcsPull().remove();

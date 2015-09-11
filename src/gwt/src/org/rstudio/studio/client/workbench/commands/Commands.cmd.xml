@@ -229,8 +229,8 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="layoutZoomPlots"/>
             <cmd refid="layoutZoomPackages"/>
             <cmd refid="layoutZoomEnvironment"/>
-            <cmd refid="layoutZoomVcs"/>
             <cmd refid="layoutZoomViewer"/>
+            <cmd refid="layoutZoomVcs"/>
             <cmd refid="layoutZoomBuild"/>
          </menu>
          
@@ -528,9 +528,9 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="activatePlots" value="Ctrl+6"/>
          <shortcut refid="activatePackages" value="Ctrl+7"/>
          <shortcut refid="activateEnvironment" value="Ctrl+8"/>
-         <shortcut refid="activateVcs" value="Ctrl+9"/>
-         <shortcut refid="activateViewer" value="Ctrl+0"/>
-         <shortcut refid="activateBuild" value="Ctrl+F1"/>
+         <shortcut refid="activateViewer" value="Ctrl+9"/>
+         <shortcut refid="activateVcs" value="Ctrl+F1"/>
+         <shortcut refid="activateBuild" value="Ctrl+F2"/>
          
          <shortcut refid="layoutZoomSource" value="Ctrl+Shift+1"/>
          <shortcut refid="layoutZoomConsole" value="Ctrl+Shift+2"/>
@@ -540,10 +540,10 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="layoutZoomPlots" value="Ctrl+Shift+6"/>
          <shortcut refid="layoutZoomPackages" value="Ctrl+Shift+7"/>
          <shortcut refid="layoutZoomEnvironment" value="Ctrl+Shift+8"/>
-         <shortcut refid="layoutZoomVcs" value="Ctrl+Shift+9"/>
-         <shortcut refid="layoutZoomViewer" value="Ctrl+Shift+0"/>
-         <shortcut refid="layoutZoomBuild" value="Ctrl+Shift+F1"/>
-         <shortcut refid="layoutEndZoom" value="Ctrl+Shift+F10"/>
+         <shortcut refid="layoutZoomViewer" value="Ctrl+Shift+9"/>
+         <shortcut refid="layoutZoomVcs" value="Ctrl+Shift+F1"/>
+         <shortcut refid="layoutZoomBuild" value="Ctrl+Shift+F2"/>
+         <shortcut refid="layoutEndZoom" value="Ctrl+Shift+0"/>
          
          <shortcut refid="switchToTab" value="Ctrl+Shift+."/>
          <shortcut refid="previousTab" value="Ctrl+Alt+Left" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
