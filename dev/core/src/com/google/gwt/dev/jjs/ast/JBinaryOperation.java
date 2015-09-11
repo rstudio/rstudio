@@ -56,7 +56,9 @@ public class JBinaryOperation extends JExpression {
       resultType = getLhs().getType();
     }
 
-    if (op != JBinaryOperator.ASG && resultType instanceof JReferenceType) {
+    if (op != JBinaryOperator.ASG
+         && !resultType.isNullType()
+         && resultType instanceof JReferenceType) {
       // Except the = operation all other binary operations return a non-nullable exact type.
       resultType = ((JReferenceType) resultType).strengthenToNonNull().strengthenToExact();
     }

@@ -14,10 +14,8 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 
 /**
  * Test for {@link TypeTightener}.
@@ -28,6 +26,25 @@ public class TypeTightenerTest extends OptimizerTestBase {
     super.setUp();
   }
 
+  public void testTightenToNullType() throws Exception {
+    Result result = optimize("void", "String s = null;");
+    result.intoString("null s = null;");
+  }
+
+  public void testBinaryOperation() throws Exception {
+    Result result = optimize("void", "String s = null; String x = s + s;");
+    result.intoString("null s = null;", "String x = s + s;");
+  }
+
+  public void testBinaryOperation_nullField() throws Exception {
+    addSnippetClassDecl(
+        "static class A {",
+        "  String name;",
+        "}");
+    Result result = optimize("void", "A a = null; a.name += null;");
+    result.intoString("null a = null;", "null.nullField += null;");
+  }
+
   public void testCastOperation() throws Exception {
     addSnippetClassDecl("static class A { " + "String name; public void set() { name = \"A\";} }");
     addSnippetClassDecl("static class B extends A {" + "public void set() { name = \"B\";} }");
@@ -35,8 +52,8 @@ public class TypeTightenerTest extends OptimizerTestBase {
 
     Result result =
         optimize("void", "A b = new B();", "((A)b).set();", "((B)b).set();", "((C)b).set();");
-    result.intoString("EntryPoint$B b = new EntryPoint$B();\n" + "b.set();\n" + "b.set();\n"
-        + "((null) b).nullMethod();");
+    result.intoString("EntryPoint$B b = new EntryPoint$B();", "b.set();", "b.set();",
+        "((null) b).nullMethod();");
   }
 
   public void testConditional() throws Exception {
@@ -47,10 +64,10 @@ public class TypeTightenerTest extends OptimizerTestBase {
     Result result = optimize("void", "int x = 0;", "A a1 = new A();", "A a2 = new A();",
         "B b = new B();", "C c = new C();", "C c1 = (x > 0) ? a1 : b;", "C c2 = (x > 0) ? a1 : a2;",
         "D d = (x > 0) ? b : c;");
-    result.intoString("int x = 0;\n" + "EntryPoint$A a1 = new EntryPoint$A();\n"
-        + "EntryPoint$A a2 = new EntryPoint$A();\n" + "EntryPoint$B b = new EntryPoint$B();\n"
-        + "EntryPoint$C c = new EntryPoint$C();\n" + "EntryPoint$C c1 = x > 0 ? a1 : b;\n"
-        + "EntryPoint$A c2 = x > 0 ? a1 : a2;\n" + "EntryPoint$C d = x > 0 ? b : c;");
+    result.intoString("int x = 0;", "EntryPoint$A a1 = new EntryPoint$A();",
+        "EntryPoint$A a2 = new EntryPoint$A();", "EntryPoint$B b = new EntryPoint$B();",
+        "EntryPoint$C c = new EntryPoint$C();", "EntryPoint$C c1 = x > 0 ? a1 : b;",
+        "EntryPoint$A c2 = x > 0 ? a1 : a2;", "EntryPoint$C d = x > 0 ? b : c;");
   }
 
   public void testTightenLocalVariable() throws Exception {
@@ -61,8 +78,8 @@ public class TypeTightenerTest extends OptimizerTestBase {
     Result result = optimize("void",
         "B b;",
         "b = new C();", "b = new D();", "b = new E();");
-    result.intoString("EntryPoint$C b;\n" + "b = new EntryPoint$C();\n"
-        + "b = new EntryPoint$D();\n" + "b = new EntryPoint$E();");
+    result.intoString("EntryPoint$C b;", "b = new EntryPoint$C();",
+        "b = new EntryPoint$D();", "b = new EntryPoint$E();");
   }
 
   public void testTightenField() throws Exception {
@@ -177,11 +194,8 @@ public class TypeTightenerTest extends OptimizerTestBase {
     addSnippetClassDecl("abstract static class A { public void m() {} }");
     addSnippetClassDecl("static class B extends A { public void m() { super.m(); }}");
 
-    JMethod mainMethod = optimize("void"," A a= new B(); if (a instanceof B) { a.m(); }")
-        .findMethod("onModuleLoad()V");
-    JInstanceOf expression  =
-        FluentIterable.from(getNodes(JInstanceOf.class, mainMethod, true)).first().get();
-    assertEquals("test.EntryPoint$B", expression.getTestType().getName());
+    optimize("void"," A a= new B(); if (a instanceof B) { a.m(); }")
+        .intoString("EntryPoint$B a = new EntryPoint$B();", "a.m();");
   }
 
   @Override
@@ -189,6 +203,7 @@ public class TypeTightenerTest extends OptimizerTestBase {
     program.addEntryMethod(findMainMethod(program));
     boolean didChange = false;
     while (TypeTightener.exec(program).didChange()) {
+      DeadCodeElimination.exec(program);
       didChange = true;
     }
     return didChange;
