@@ -758,7 +758,7 @@ public class HashMapTest extends TestMap {
   }
 
   // see: https://github.com/gwtproject/gwt/issues/9184
-  public void testIterationWithCollidingHashCodes() {
+  public void testIteration_withCollidingHashCodes() {
 
     Object firstKey = createObjectWithHashCode(1);
     Object secondKey = createObjectWithHashCode(1);
@@ -793,7 +793,7 @@ public class HashMapTest extends TestMap {
   }
 
   // see: https://github.com/gwtproject/gwt/issues/9184
-  public void testIterationWithCollidingHashCodes_FullIteration() {
+  public void testIteration_withCollidingHashCodesAndFullIteration() {
 
     List<Object> keys = new ArrayList<>();
     HashMap<Object, String> testMap = new HashMap<>();
@@ -816,6 +816,22 @@ public class HashMapTest extends TestMap {
     assertEquals("expected size", 0, expectedSize);
     assertTrue(testMap.isEmpty());
     assertTrue(keys.isEmpty());
+  }
+
+  public void testIteration_hasNextThenRemove() {
+    HashMap<Object, String> testMap = new HashMap<>();
+    testMap.put(createObjectWithHashCode(1), "one");
+    testMap.put(createObjectWithHashCode(2), "two");
+
+    Iterator<Object> it = testMap.keySet().iterator();
+    it.next();
+    assertTrue("iterator should have next after first", it.hasNext());
+    it.remove();
+    assertTrue("iterator should have next after removal", it.hasNext());
+
+    it.next();
+    it.remove();
+    assertFalse(it.hasNext());
   }
 
   private Object createObjectWithHashCode(final int hashCode) {
