@@ -1,7 +1,7 @@
 /*
  * FileDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,11 +44,11 @@ public abstract class FileDialog extends FileSystemDialog
    @Override
    protected FileSystemItem getSelectedItem()
    {
-      return context_.itemForName(filename_.getText(), false, false);
+      return context_.itemForName(browser_.getFilename(), false, false);
    }
 
    @Override
-   protected String getFilenameLabel()
+   public String getFilenameLabel()
    {
       return "File name";
    }
@@ -60,9 +60,9 @@ public abstract class FileDialog extends FileSystemDialog
     */
    protected boolean shouldAccept()
    {
-      filename_.setText(filename_.getText().trim());
+      browser_.setFilename(browser_.getFilename().trim());
 
-      String filename = filename_.getText();
+      String filename = browser_.getFilename();
 
       if (filename.length() == 0)
          return false;
@@ -84,8 +84,8 @@ public abstract class FileDialog extends FileSystemDialog
             return false;
          }
 
-         filename_.setText(file);
-         filename_.setEnabled(false);
+         browser_.setFilename(file);
+         browser_.setFilenameEnabled(false);
          attemptAcceptOnNextNavigate_ = true;
          cd(dir);
          return false;
@@ -94,7 +94,7 @@ public abstract class FileDialog extends FileSystemDialog
       String filenameValidationError = context_.validatePathElement(filename, true);
       if (filenameValidationError != null)
       {
-         filename_.selectAll();
+         browser_.selectFilename();
          showError(filenameValidationError);
          return false;
       }
@@ -102,13 +102,12 @@ public abstract class FileDialog extends FileSystemDialog
       if (navigateIfDirectory())
          return false;
 
-      boolean useExactFilename = directory_.getSelectedValue() != null
-            && directory_.getSelectedValue().equals(filename);
+      boolean useExactFilename = browser_.getSelectedValue() != null
+            && browser_.getSelectedValue().equals(filename);
       
       if (!useExactFilename || getAlwaysMungeFilename())
       {
-         filename = mungeFilename(filename);
-         filename_.setText(filename);
+         browser_.setFilename(mungeFilename(filename));
       }
 
       if (navigateIfDirectory())
@@ -145,12 +144,12 @@ public abstract class FileDialog extends FileSystemDialog
 
    private boolean navigateIfDirectory()
    {
-      FileSystemItem item = context_.itemForName(filename_.getText(),
+      FileSystemItem item = context_.itemForName(browser_.getFilename(),
                                                  true,
                                                  false);
       if (item != null && item.isDirectory())
       {
-         filename_.setText("");
+         browser_.setFilename("");
          cd(item.getName());
          return true;
       }
@@ -172,11 +171,10 @@ public abstract class FileDialog extends FileSystemDialog
       return false;
    }
 
-   @Override
    protected void cd(String path)
    {
-      filename_.setEnabled(false);
-      super.cd(path);
+      browser_.setFilenameEnabled(false);
+      browser_.cd(path);
    }
 
    @Override
@@ -184,7 +182,7 @@ public abstract class FileDialog extends FileSystemDialog
    {
       super.onNavigated();
 
-      filename_.setEnabled(true);
+      browser_.setFilenameEnabled(true);
       if (attemptAcceptOnNextNavigate_)
       {
          attemptAcceptOnNextNavigate_ = false;
@@ -195,8 +193,8 @@ public abstract class FileDialog extends FileSystemDialog
    @Override
    protected void onDialogShown()
    {
-      filename_.setFocus(true);
-      filename_.selectAll();
+      browser_.setFilenameFocus(true);
+      browser_.selectFilename();
    }
 
    @Override
@@ -206,7 +204,7 @@ public abstract class FileDialog extends FileSystemDialog
       
       FileSystemItem item = event.getSelectedItem();
       if (item != null && !item.isDirectory())
-         filename_.setText(item.getName());
+         browser_.setFilename(item.getName());
    }
 
    @Override
