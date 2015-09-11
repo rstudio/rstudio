@@ -1,7 +1,7 @@
 /*
  * Projects.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,7 +30,6 @@ import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
-import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
@@ -87,7 +86,6 @@ public class Projects implements OpenProjectFileHandler,
                    final Session session,
                    Provider<ProjectMRUList> pMRUList,
                    SharedProject sharedProject,
-                   FileDialogs fileDialogs,
                    RemoteFileSystemContext fsContext,
                    ApplicationQuit applicationQuit,
                    ProjectsServerOperations projServer,
@@ -97,6 +95,7 @@ public class Projects implements OpenProjectFileHandler,
                    EventBus eventBus,
                    Binder binder,
                    final Commands commands,
+                   ProjectOpener opener,
                    Provider<ProjectPreferencesDialog> pPrefDialog,
                    Provider<UIPrefs> pUIPrefs)
    {
@@ -108,12 +107,12 @@ public class Projects implements OpenProjectFileHandler,
       packratServer_ = packratServer;
       appServer_ = appServer;
       gitServer_ = gitServer;
-      fileDialogs_ = fileDialogs;
       fsContext_ = fsContext;
       session_ = session;
       pPrefDialog_ = pPrefDialog;
       pUIPrefs_ = pUIPrefs;
-      
+      opener_ = opener;
+
       binder.bind(commands, this);
        
       eventBus.addHandler(OpenProjectErrorEvent.TYPE, this);
@@ -791,14 +790,9 @@ public class Projects implements OpenProjectFileHandler,
    private void showOpenProjectDialog(
                   ProgressOperationWithInput<FileSystemItem> onCompleted)
    {
-      // choose project file
-      fileDialogs_.openFile(
-         "Open Project", 
-         fsContext_, 
-         FileSystemItem.createDir(
-               pUIPrefs_.get().defaultProjectLocation().getValue()),
-         "R Projects (*.Rproj)",
-         onCompleted);  
+      opener_.showOpenProjectDialog(fsContext_, 
+            pUIPrefs_.get().defaultProjectLocation().getValue(),
+            onCompleted);
    }
    
    @Handler
@@ -849,13 +843,13 @@ public class Projects implements OpenProjectFileHandler,
    private final PackratServerOperations packratServer_;
    private final ApplicationServerOperations appServer_;
    private final GitServerOperations gitServer_;
-   private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fsContext_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
    private final Session session_;
    private final Provider<ProjectPreferencesDialog> pPrefDialog_;
    private final Provider<UIPrefs> pUIPrefs_;
+   private final ProjectOpener opener_;
    
    public static final String NONE = "none";
    public static final Pattern PACKAGE_NAME_PATTERN =
