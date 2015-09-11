@@ -1,5 +1,5 @@
 /*
- * ZoomPaneEvent.java
+ * ManageLayoutCommands.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,41 +12,19 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.events;
+package org.rstudio.core.client.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ZoomPaneEvent extends GwtEvent<ZoomPaneEvent.Handler>
+public class ManageLayoutCommandsEvent extends GwtEvent<ManageLayoutCommandsEvent.Handler>
 {
+   // Boilerplate ----
+   
    public interface Handler extends EventHandler
    {
-      void onZoomPane(ZoomPaneEvent event);
+      void onManageLayoutCommands(ManageLayoutCommandsEvent event);
    }
-   
-   public ZoomPaneEvent(String pane, String tab)
-   {
-      pane_ = pane;
-      tab_ = tab;
-   }
-
-   public ZoomPaneEvent(String pane)
-   {
-      this(pane, pane);
-   }
-   
-   public String getPane()
-   {
-      return pane_;
-   }
-   
-   public String getTab()
-   {
-      return tab_;
-   }
-   
-   private final String pane_;
-   private final String tab_;
    
    @Override
    public Type<Handler> getAssociatedType()
@@ -57,7 +35,7 @@ public class ZoomPaneEvent extends GwtEvent<ZoomPaneEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onZoomPane(this);
+      handler.onManageLayoutCommands(this);
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();

@@ -253,7 +253,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          }
       }
    }
-
+   
    private Double splitPercent_ = null;
    private Integer previousOffsetWidth_ = null;
 

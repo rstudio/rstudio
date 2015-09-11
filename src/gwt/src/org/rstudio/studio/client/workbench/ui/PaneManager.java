@@ -32,9 +32,11 @@ import com.google.inject.name.Named;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Triad;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.events.ManageLayoutCommandsEvent;
 import org.rstudio.core.client.events.WindowEnsureVisibleEvent;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.layout.DualWindowLayoutPanel;
@@ -64,6 +66,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /*
  * TODO: Push client state when selected tab or layout changes
@@ -75,9 +78,9 @@ public class PaneManager
    
    public enum Tab {
       History, Files, Plots, Packages, Help, VCS, Build,
-      Presentation, Environment, Viewer
+      Presentation, Environment, Viewer, Source, Console
    }
-
+   
    class SelectedTabStateValue extends IntStateValue
    {
       SelectedTabStateValue(String name,
@@ -219,7 +222,7 @@ public class PaneManager
             assert window != null :
                "No pane with name '" + pane + "'";
             
-            toggleWindowZoom(window);
+            toggleWindowZoom(window, tabForName(event.getTab()));
          }
       });
       
@@ -237,7 +240,7 @@ public class PaneManager
             // then transfer zoom to that window.
             if (maximizedWindow_ != null && !maximizedWindow_.equals(window))
             {
-               fullyMaximizeWindow(window);
+               fullyMaximizeWindow(window, null);
                return;
             }
             
@@ -258,9 +261,22 @@ public class PaneManager
             };
             
             int newWidth = computeAppropriateWidth();
-            horizontalResizeAnimation(0, newWidth, afterAnimation).run(300);
+            resizeHorizontally(0, newWidth, afterAnimation);
          }
       });
+      
+      eventBus_.addHandler(
+            ManageLayoutCommandsEvent.TYPE,
+            new ManageLayoutCommandsEvent.Handler()
+            {
+               @Override
+               public void onManageLayoutCommands(ManageLayoutCommandsEvent event)
+               {
+                  manageLayoutCommands();
+               }
+            });
+      
+      manageLayoutCommands();
    }
    
    int computeAppropriateWidth()
@@ -310,7 +326,7 @@ public class PaneManager
       LogicalWindow activeWindow = getActiveLogicalWindow();
       if (activeWindow == null)
          return;
-      toggleWindowZoom(activeWindow);
+      toggleWindowZoom(activeWindow, null);
    }
    
    @Handler
@@ -319,19 +335,67 @@ public class PaneManager
       restoreLayout();
    }
    
-   public void toggleWindowZoom(LogicalWindow window)
+   private <T> boolean equals(T lhs, T rhs)
+   {
+      if (lhs == null)
+         return rhs == null;
+      
+      return lhs.equals(rhs);
+   }
+   
+   public void toggleWindowZoom(LogicalWindow window, Tab tab)
    {
       if (isAnimating_)
          return;
       
-      if (window.equals(maximizedWindow_))
-         restoreLayout();
+      boolean hasZoom = maximizedWindow_ != null;
+      
+      if (hasZoom)
+      {
+         if (equals(window, maximizedWindow_))
+         {
+            // If we're zooming a different tab in the same window,
+            // just activate that tab.
+            if (!equals(tab, maximizedTab_))
+            {
+               maximizedTab_ = tab;
+               manageLayoutCommands();
+               activateTab(tab);
+            }
+            
+            // Otherwise, we're trying to maximize the same tab
+            // and the same window. Interpret this as a toggle off.
+            else
+            {
+               restoreLayout();
+            }
+         }
+         else
+         {
+            // We're transferring zoom from one window to another --
+            // maximize the new window.
+            fullyMaximizeWindow(window, tab);
+         }
+      }
       else
-         fullyMaximizeWindow(window);
+      {
+         // No zoom currently on -- just zoom the selected window + tab.
+         fullyMaximizeWindow(window, tab);
+      }
    }
    
-   private void fullyMaximizeWindow(final LogicalWindow window)
+   private void fullyMaximizeWindow(final LogicalWindow window, final Tab tab)
    {
+      if (window.equals(getSourceLogicalWindow()))
+         maximizedTab_ = Tab.Source;
+      else if (window.equals(getConsoleLogicalWindow()))
+         maximizedTab_ = Tab.Console;
+      else
+         maximizedTab_ = tab;
+      
+      manageLayoutCommands();
+      panel_.setSplitterEnabled(false);
+         
       maximizedWindow_ = window;
       if (widgetSizePriorToZoom_ < 0)
          widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
@@ -349,22 +413,25 @@ public class PaneManager
       
       final double initialSize = panel_.getWidgetSize(right_);
       
-      // Ensure that a couple pixels are left after zoom so that the pane
-      // can be manually pulled out (with the mouse).
-      double targetSize = isLeftWidget ?
-            0 :
-            panel_.getOffsetWidth() - 3;
+      double targetSize = isLeftWidget ? 0 : panel_.getOffsetWidth();
       
       if (targetSize < 0)
          targetSize = 0;
       
-      horizontalResizeAnimation(initialSize, targetSize).run(300);
+      resizeHorizontally(initialSize, targetSize);
    }
    
-   private Animation horizontalResizeAnimation(final double start,
-                                               final double end)
+   private void resizeHorizontally(final double start,
+                                   final double end)
    {
-      return horizontalResizeAnimation(start, end, null);
+      resizeHorizontally(start, end, null);
+   }
+   
+   private void resizeHorizontally(final double start,
+                                   final double end,
+                                   final Command afterComplete)
+   {
+      horizontalResizeAnimation(start, end, afterComplete).run(300);
    }
    
    private Animation horizontalResizeAnimation(final double start,
@@ -412,6 +479,15 @@ public class PaneManager
          restoreFourPaneLayout();
    }
    
+   private void invalidateSavedLayoutState(boolean enableSplitter)
+   {
+      maximizedWindow_ = null;
+      maximizedTab_ = null;
+      widgetSizePriorToZoom_ = -1;
+      panel_.setSplitterEnabled(enableSplitter);
+      manageLayoutCommands();
+   }
+   
    private void restoreFourPaneLayout()
    {
       // Ensure that all windows are in the 'normal' state. This allows
@@ -421,12 +497,17 @@ public class PaneManager
          window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
       
       double rightWidth = panel_.getWidgetSize(right_);
+      double panelWidth = panel_.getOffsetWidth();
       
-      // If the right pane is already visible horizontally, bail.
-      if (rightWidth >= 10)
-         return;
+      double minThreshold = (2.0 / 5.0) * panelWidth;
+      double maxThreshold = (3.0 / 5.0) * panelWidth;
       
-      horizontalResizeAnimation(rightWidth, computeAppropriateWidth()).run(300);
+      if (rightWidth <= minThreshold)
+         resizeHorizontally(rightWidth, minThreshold);
+      else if (rightWidth >= maxThreshold)
+         resizeHorizontally(rightWidth, maxThreshold);
+      
+      invalidateSavedLayoutState(true);
    }
    
    private void restoreSavedLayout()
@@ -437,11 +518,8 @@ public class PaneManager
          window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
       
       maximizedWindow_.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
-      horizontalResizeAnimation(panel_.getWidgetSize(right_), widgetSizePriorToZoom_).run(300);
-      
-      // Invalidate the saved state.
-      maximizedWindow_ = null;
-      widgetSizePriorToZoom_ = -1;
+      resizeHorizontally(panel_.getWidgetSize(right_), widgetSizePriorToZoom_);
+      invalidateSavedLayoutState(true);
    }
    
    @Handler
@@ -537,6 +615,9 @@ public class PaneManager
             return environmentTab_;
          case Viewer:
             return viewerTab_;
+         case Source:
+         case Console:
+            // not 'real' tabs so should be an error to ask for their tabs
       }
       throw new IllegalArgumentException("Unknown tab");
    }
@@ -580,7 +661,7 @@ public class PaneManager
       if (parentWindow == null)
          return;
       
-      toggleWindowZoom(parentWindow);
+      toggleWindowZoom(parentWindow, tab);
    }
 
    public ConsolePane getConsole()
@@ -596,6 +677,11 @@ public class PaneManager
    public LogicalWindow getSourceLogicalWindow()
    {
       return sourceLogicalWindow_;
+   }
+   
+   public LogicalWindow getConsoleLogicalWindow()
+   {
+      return panesByName_.get("Console");
    }
 
    private DualWindowLayoutPanel createSplitWindow(LogicalWindow top,
@@ -718,28 +804,13 @@ public class PaneManager
    {
       switch (tab)
       {
-         case History:
-            return "History";
-         case Files:
-            return "Files";
-         case Plots:
-            return "Plots";
-         case Packages:
-            return "Packages";
-         case Help:
-            return "Help";
          case VCS:
             return getTab(tab).getTitle();
-         case Build:
-            return "Build";
          case Presentation:
             return getTab(tab).getTitle();
-         case Environment:
-            return "Environment";
-         case Viewer:
-            return "Viewer";
+         default:
+            return tab.toString();
       }
-      return "??";
    }
    
    private Tab tabForName(String name)
@@ -764,8 +835,64 @@ public class PaneManager
          return Tab.Environment;
       if (name.equalsIgnoreCase("viewer"))
          return Tab.Viewer;
+      if (name.equalsIgnoreCase("source"))
+         return Tab.Source;
+      if (name.equalsIgnoreCase("console"))
+         return Tab.Console;
       
       return null;
+   }
+   
+   private AppCommand getLayoutCommandForTab(Tab tab)
+   {
+      if (tab == null)
+         return commands_.layoutEndZoom();
+      
+      switch (tab)
+      {
+      case Build:        return commands_.layoutZoomBuild();
+      case Console:      return commands_.layoutZoomConsole();
+      case Environment:  return commands_.layoutZoomEnvironment();
+      case Files:        return commands_.layoutZoomFiles();
+      case Help:         return commands_.layoutZoomHelp();
+      case History:      return commands_.layoutZoomHistory();
+      case Packages:     return commands_.layoutZoomPackages();
+      case Plots:        return commands_.layoutZoomPlots();
+      case Presentation: return commands_.layoutZoomPresentation();
+      case Source:       return commands_.layoutZoomSource();
+      case VCS:          return commands_.layoutZoomVcs();
+      default:
+         throw new IllegalArgumentException("Unexpected tab '" + tab.toString() + "'");
+      }
+   }
+   
+   private void manageLayoutCommands()
+   {
+      List<AppCommand> layoutCommands = getLayoutCommands();
+      AppCommand activeCommand = getLayoutCommandForTab(maximizedTab_);
+      
+      for (AppCommand command : layoutCommands)
+         command.setChecked(activeCommand.equals(command));
+   }
+   
+   private List<AppCommand> getLayoutCommands()
+   {
+      List<AppCommand> commands = new ArrayList<AppCommand>();
+      
+      commands.add(commands_.layoutEndZoom());
+      commands.add(commands_.layoutZoomBuild());
+      commands.add(commands_.layoutZoomConsole());
+      commands.add(commands_.layoutZoomEnvironment());
+      commands.add(commands_.layoutZoomFiles());
+      commands.add(commands_.layoutZoomHelp());
+      commands.add(commands_.layoutZoomHistory());
+      commands.add(commands_.layoutZoomPackages());
+      commands.add(commands_.layoutZoomPlots());
+      commands.add(commands_.layoutZoomPresentation());
+      commands.add(commands_.layoutZoomSource());
+      commands.add(commands_.layoutZoomVcs());
+      
+      return commands;
    }
 
    private final EventBus eventBus_;
@@ -807,6 +934,7 @@ public class PaneManager
    
    // Zoom-related members ----
    private LogicalWindow maximizedWindow_;
+   private Tab maximizedTab_;
    private double widgetSizePriorToZoom_ = -1;
    private boolean isAnimating_;
 }
