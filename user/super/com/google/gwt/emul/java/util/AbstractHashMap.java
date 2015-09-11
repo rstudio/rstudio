@@ -79,6 +79,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
     private Iterator<Entry<K, V>> stringMapEntries = stringMap.iterator();
     private Iterator<Entry<K, V>> current = stringMapEntries;
     private Iterator<Entry<K, V>> last;
+    private boolean hasNext = computeHasNext();
 
     public EntrySetIterator() {
       recordLastKnownStructure(AbstractHashMap.this, this);
@@ -86,6 +87,10 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
 
     @Override
     public boolean hasNext() {
+      return hasNext;
+    }
+
+    private boolean computeHasNext() {
       if (current.hasNext()) {
         return true;
       }
@@ -102,7 +107,10 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
       checkElement(hasNext());
 
       last = current;
-      return current.next();
+      Entry<K, V> rv = current.next();
+      hasNext = computeHasNext();
+
+      return rv;
     }
 
     @Override
@@ -112,6 +120,8 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
 
       last.remove();
       last = null;
+      hasNext = computeHasNext();
+
       recordLastKnownStructure(AbstractHashMap.this, this);
     }
   }

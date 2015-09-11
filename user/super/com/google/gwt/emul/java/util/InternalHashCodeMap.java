@@ -17,9 +17,6 @@ package java.util;
 
 import static java.util.ConcurrentModificationDetector.structureChanged;
 
-import static javaemul.internal.InternalPreconditions.checkElement;
-import static javaemul.internal.InternalPreconditions.checkState;
-
 import java.util.AbstractMap.SimpleEntry;
 import java.util.InternalJsMapFactory.InternalJsIterator;
 import java.util.InternalJsMapFactory.InternalJsIteratorEntry;
@@ -132,22 +129,17 @@ class InternalHashCodeMap<K, V> implements Iterable<Entry<K, V>> {
 
       @Override
       public Entry<K, V> next() {
-        checkElement(hasNext());
-
         lastEntry = chain[itemIndex++];
         return lastEntry;
       }
 
       @Override
       public void remove() {
-        checkState(lastEntry != null);
-
         InternalHashCodeMap.this.remove(lastEntry.getKey());
         // Unless we are in a new chain, all items have shifted so our itemIndex should as well...
         if (itemIndex != 0) {
           itemIndex--;
         }
-        lastEntry = null;
       }
     };
   }

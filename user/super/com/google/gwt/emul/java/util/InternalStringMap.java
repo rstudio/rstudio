@@ -17,9 +17,6 @@ package java.util;
 
 import static java.util.ConcurrentModificationDetector.structureChanged;
 
-import static javaemul.internal.InternalPreconditions.checkElement;
-import static javaemul.internal.InternalPreconditions.checkState;
-
 import java.util.InternalJsMapFactory.InternalJsIterator;
 import java.util.InternalJsMapFactory.InternalJsIteratorEntry;
 import java.util.InternalJsMapFactory.InternalJsMap;
@@ -99,18 +96,13 @@ class InternalStringMap<K, V> implements Iterable<Entry<K, V>> {
       }
       @Override
       public Entry<K, V> next() {
-        checkElement(hasNext());
-
         last = current;
         current = entries.next();
         return newMapEntry(last, valueMod);
       }
       @Override
       public void remove() {
-        checkState(last != null);
-
         InternalStringMap.this.remove(last.getKey());
-        last = null;
       }
     };
   }
