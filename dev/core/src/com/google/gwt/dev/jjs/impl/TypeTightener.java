@@ -21,6 +21,7 @@ import com.google.gwt.dev.jjs.ast.CanBeStatic;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
+import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
@@ -223,7 +224,8 @@ public class TypeTightener {
       if (x.isAssignment() && (x.getType() instanceof JReferenceType)) {
         JExpression lhs = x.getLhs();
         if (lhs instanceof JVariableRef) {
-          addAssignment(((JVariableRef) lhs).getTarget(), x.getRhs());
+          addAssignment(((JVariableRef) lhs).getTarget(),
+              x.getOp() == JBinaryOperator.ASG ? x.getRhs() : x);
         } else {
           assert lhs instanceof JArrayRef;
         }

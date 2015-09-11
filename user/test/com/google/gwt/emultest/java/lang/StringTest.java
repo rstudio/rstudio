@@ -519,13 +519,26 @@ public class StringTest extends GWTTestCase {
     assertTrue("12t", hideFromCompiler("none").matches("^|none$"));
   }
 
-  /*
-   * TODO: needs rewriting to avoid compiler optimizations.
-   */
   public void testNull() {
-    assertNull(returnNull());
-    String a = returnNull() + returnNull();
-    assertEquals("nullnull", a);
+    {
+      assertNull(returnNull());
+      String a = returnNull() + returnNull();
+      assertEquals("nullnull", a);
+
+      String s = returnNull();
+      s += returnNull();
+      assertEquals("nullnull", s);
+    }
+
+    // Same tests allowing the compiler to propagate constants.
+    {
+      String a = null + (String) null;
+      assertEquals("nullnull", a);
+
+      String s = null;
+      s += null;
+      assertEquals("nullnull", s);
+    }
   }
 
   public void testRegionMatches() {
@@ -804,6 +817,11 @@ public class StringTest extends GWTTestCase {
   }-*/;
 
   private String returnNull() {
+    if (Math.random() < -1) {
+      // Can never happen, but fools the compiler enough not to optimize this call.
+      fail();
+      return "";
+    }
     return null;
   }
 

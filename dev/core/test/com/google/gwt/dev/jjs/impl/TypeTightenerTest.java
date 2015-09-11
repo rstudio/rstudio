@@ -45,6 +45,16 @@ public class TypeTightenerTest extends OptimizerTestBase {
     result.intoString("null a = null;", "null.nullField += null;");
   }
 
+  public void testBinaryOperation_notNullable() throws Exception {
+    optimize("void", "String other; String s = \"\"; s += null; if (s == null) { other = \"\"; } ")
+        .intoString("null other;", "String s = \"\";", "s += null;");
+  }
+
+  public void testBinaryOperation_nullableButNotNull() throws Exception {
+    optimize("void", "String s = null; s += null;")
+        .intoString("String s = null;", "s += null;");
+  }
+
   public void testCastOperation() throws Exception {
     addSnippetClassDecl("static class A { " + "String name; public void set() { name = \"A\";} }");
     addSnippetClassDecl("static class B extends A {" + "public void set() { name = \"B\";} }");
