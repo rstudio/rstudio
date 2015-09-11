@@ -225,6 +225,11 @@ class WorkbenchTabPanel
          }
       }
    }
+   
+   public WorkbenchTab getTab(int index)
+   {
+      return tabs_.get(index);
+   }
 
    public int getSelectedIndex()
    {

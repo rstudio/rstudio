@@ -240,7 +240,7 @@ public class PaneManager
             // then transfer zoom to that window.
             if (maximizedWindow_ != null && !maximizedWindow_.equals(window))
             {
-               fullyMaximizeWindow(window, null);
+               fullyMaximizeWindow(window, lastSelectedTab_);
                return;
             }
             
@@ -590,7 +590,7 @@ public class PaneManager
    {
       return panel_;
    }
-
+   
    public WorkbenchTab getTab(Tab tab)
    {
       switch (tab)
@@ -632,6 +632,7 @@ public class PaneManager
 
    public void activateTab(Tab tab)
    {
+      lastSelectedTab_ = tab;
       WorkbenchTabPanel panel = getOwnerTabPanel(tab);
       
       // Ensure that the pane is visible (otherwise tab selection will fail)
@@ -765,6 +766,9 @@ public class PaneManager
       {
          public void onSelection(SelectionEvent<Integer> integerSelectionEvent)
          {
+            int index = integerSelectionEvent.getSelectedItem();
+            WorkbenchTab selected = tabPanel.getTab(index);
+            lastSelectedTab_ = workbenchTabToTab(selected);
             session_.persistClientState();
          }
       });
@@ -776,6 +780,11 @@ public class PaneManager
             tabPanel,
             minimized);
    }
+   
+   private Tab workbenchTabToTab(WorkbenchTab tab)
+   {
+      return wbTabToTab_.get(tab);
+   }
 
    private void populateTabPanel(ArrayList<Tab> tabs,
                                  WorkbenchTabPanel tabPanel,
@@ -785,9 +794,13 @@ public class PaneManager
       for (int i = 0; i < tabs.size(); i++)
       {
          Tab tab = tabs.get(i);
-         tabList.add(getTab(tab));
+         WorkbenchTab wbTab = getTab(tab);
+         
+         wbTabToTab_.put(wbTab, tab);
          tabToPanel_.put(tab, tabPanel);
          tabToIndex_.put(tab, i);
+         
+         tabList.add(wbTab);
       }
       tabPanel.setTabs(tabList);
 
@@ -923,6 +936,8 @@ public class PaneManager
          new HashMap<Tab, WorkbenchTabPanel>();
    private final HashMap<Tab, Integer> tabToIndex_ =
          new HashMap<Tab, Integer>();
+   private final HashMap<WorkbenchTab, Tab> wbTabToTab_ =
+         new HashMap<WorkbenchTab, Tab>();
    private HashMap<String, LogicalWindow> panesByName_;
    private DualWindowLayoutPanel left_;
    private DualWindowLayoutPanel right_;
@@ -933,8 +948,9 @@ public class PaneManager
    private MinimizedModuleTabLayoutPanel tabSet2MinPanel_;
    
    // Zoom-related members ----
-   private LogicalWindow maximizedWindow_;
-   private Tab maximizedTab_;
+   private Tab lastSelectedTab_ = null;
+   private LogicalWindow maximizedWindow_ = null;
+   private Tab maximizedTab_ = null;
    private double widgetSizePriorToZoom_ = -1;
-   private boolean isAnimating_;
+   private boolean isAnimating_ = false;
 }
