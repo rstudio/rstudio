@@ -21,7 +21,6 @@ import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
@@ -31,7 +30,6 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 
@@ -42,8 +40,6 @@ public class GlobalToolbar extends Toolbar
                         Provider<CodeSearch> pCodeSearch)
    {
       super();
-      
-      RStudioGinjector.INSTANCE.injectMembers(this);
       
       commands_ = commands;
       pCodeSearch_ = pCodeSearch;
@@ -131,12 +127,6 @@ public class GlobalToolbar extends Toolbar
       
       searchWidget_ = codeSearch.getSearchWidget();
       addLeftWidget(searchWidget_); 
-   }
-   
-   @Inject
-   private void initialize(EventBus events)
-   {
-      events_ = events;
    }
    
    public void completeInitialization(SessionInfo sessionInfo)
@@ -234,8 +224,4 @@ public class GlobalToolbar extends Toolbar
    private final Provider<CodeSearch> pCodeSearch_;
    private final Widget searchWidget_;
    private final FocusContext codeSearchFocusContext_ = new FocusContext();
-   
-   // Injected ----
-   private EventBus events_;
-
 }
