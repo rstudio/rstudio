@@ -397,6 +397,7 @@ java_library(
     name = "gwt-jsinterop-annotations",
     srcs = [
         "src/com/google/gwt/core/client/js/JsExport.java",
+        "src/com/google/gwt/core/client/js/JsFunction.java",
         "src/com/google/gwt/core/client/js/JsNamespace.java",
         "src/com/google/gwt/core/client/js/JsNoExport.java",
         "src/com/google/gwt/core/client/js/JsProperty.java",
