@@ -151,7 +151,7 @@ public class MakeCallsStatic {
     @Override
     public boolean visit(JMethod x, Context ctx) {
       // Let's do it!
-      JDeclaredType enclosingType = (JDeclaredType) x.getEnclosingType();
+      JDeclaredType enclosingType = x.getEnclosingType();
       JType returnType = x.getType();
       SourceInfo sourceInfo = x.getSourceInfo().makeChild();
       int myIndexInClass = enclosingType.getMethods().indexOf(x);
@@ -299,6 +299,9 @@ public class MakeCallsStatic {
       if (method.isAbstract()) {
         return false;
       }
+      if (method.isJsNative()) {
+        return false;
+      }
       if (method == program.getNullMethod()) {
         // Special case: we don't make calls to this method static.
         return false;
@@ -306,10 +309,6 @@ public class MakeCallsStatic {
 
       if (!method.getEnclosingType().getMethods().contains(method)) {
         // The target method was already pruned (TypeTightener will fix this).
-        return false;
-      }
-
-      if (program.isJsTypePrototype(method.getEnclosingType())) {
         return false;
       }
 
@@ -378,11 +377,9 @@ public class MakeCallsStatic {
    * Optionally adds a null check on the former "this" parameter.
    */
   static class StaticCallConverter {
-    private final JProgram program;
     private final JMethod checkNotNull;
 
     StaticCallConverter(JProgram program, boolean addNullChecksForThis) {
-      this.program = program;
       if (addNullChecksForThis) {
         checkNotNull = program.getIndexedMethod("Exceptions.checkNotNull");
       } else {

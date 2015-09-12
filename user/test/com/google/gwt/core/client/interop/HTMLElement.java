@@ -16,11 +16,7 @@
 package com.google.gwt.core.client.interop;
 
 import com.google.gwt.core.client.js.JsType;
-import com.google.gwt.core.client.js.impl.PrototypeOfJsType;
 
 @JsType(prototype = "HTMLElement")
-interface HTMLElement {
-  @PrototypeOfJsType
-  static class Prototype implements HTMLElement {
-  }
+class HTMLElement {
 }

@@ -21,9 +21,9 @@ import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
-import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
@@ -263,7 +263,7 @@ public class ImplementCastsAndTypeChecks {
 
      assert targetTypeCategory == TypeCategory.TYPE_JS_PROTOTYPE;
      call.addArg(program.getStringLiteral(sourceInfo,
-         ((JInterfaceType) targetType).getJsPrototype()));
+         ((JDeclaredType) targetType).getJsPrototype()));
     }
     return call;
   }

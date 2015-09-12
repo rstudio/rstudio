@@ -17,7 +17,7 @@ package com.google.gwt.core.client.interop;
 
 import java.util.Iterator;
 
-class MyCustomHtmlButtonWithIterator extends HTMLButtonElement.Prototype implements Iterable {
+class MyCustomHtmlButtonWithIterator extends HTMLButtonElement implements Iterable {
   @Override
   public Iterator iterator() {
     return null;

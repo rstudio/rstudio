@@ -91,7 +91,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
   }
 
   public boolean canBeImplementedExternally() {
-    return isJsFunctionMethod() || isJsInterfaceMethod();
+    return isJsNative() || isJsFunctionMethod() || isJsInterfaceMethod();
   }
 
   private boolean isJsInterfaceMethod() {
@@ -224,6 +224,10 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
       }
     }
     return false;
+  }
+
+  public boolean isJsNative() {
+    return enclosingType != null && enclosingType.isJsNative();
   }
 
   public void setSpecialization(List<JType> paramTypes, JType returnsType, String targetMethod) {

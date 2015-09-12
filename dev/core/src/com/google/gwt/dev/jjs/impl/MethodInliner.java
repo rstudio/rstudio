@@ -123,15 +123,8 @@ public class MethodInliner {
 
     private InlineResult tryInlineMethodCall(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
-      if (program.isJsTypePrototype(method.getEnclosingType())) {
-         /*
-          * Don't inline calls to JsType Prototype methods, since these are merely stubs to
-          * preserve super calls to JS prototype methods.
-          */
-        return InlineResult.BLACKLIST;
-      }
 
-      if (!method.isStatic() || method.isNative()) {
+      if (!method.isStatic() || method.isNative() || method.canBeImplementedExternally()) {
         // Only inline static methods that are not native.
         return InlineResult.BLACKLIST;
       }

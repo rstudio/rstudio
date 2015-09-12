@@ -187,10 +187,6 @@ public class JsniMethodCollector {
     int startPos = jsniCode.indexOf("/*-{");
     int endPos = jsniCode.lastIndexOf("}-*/");
     if (startPos < 0 && endPos < 0) {
-      reportJsniError(
-          info,
-          method,
-          "Native methods require a JavaScript implementation enclosed with /*-{ and }-*/");
       return null;
     }
     if (startPos < 0) {

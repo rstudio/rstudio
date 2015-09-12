@@ -518,7 +518,7 @@ public class GenerateJavaScriptAST {
       recordSymbol(x, jsName);
 
       // My class scope
-      if (x.getSuperClass() == null || x.getSuperClass().isJsPrototypeStub()) {
+      if (x.getSuperClass() == null) {
         myScope = objectScope;
       } else {
         JsScope parentScope = classScopes.get(x.getSuperClass());
@@ -610,7 +610,7 @@ public class GenerateJavaScriptAST {
          * 1:1 mapping to obfuscated symbols. Leaving them in global scope
          * causes no harm.
          */
-        jsFunction = new JsFunction(x.getSourceInfo(), topScope, globalName, true);
+        jsFunction = new JsFunction(x.getSourceInfo(), topScope, globalName, !x.isJsNative());
       }
       if (polymorphicNames.containsKey(x)) {
         polymorphicJsFunctions.add(jsFunction);
@@ -848,8 +848,8 @@ public class GenerateJavaScriptAST {
 
       alreadyRan.add(x);
 
-      if (program.isJsTypePrototype(x)) {
-        // Don't generate JS for magic @PrototypeOfJsType stubs classes, strip them from output
+      if (x.isJsNative()) {
+        // Don't generate JS for native JsType.
         return;
       }
 
@@ -857,7 +857,6 @@ public class GenerateJavaScriptAST {
       assert !program.immortalCodeGenTypes.contains(x);
       // Super classes should be emitted before the actual class.
       assert x.getSuperClass() == null || program.isReferenceOnly(x.getSuperClass()) ||
-          program.isJsTypePrototype(x.getSuperClass()) ||
           alreadyRan.contains(x.getSuperClass());
 
       List<JsFunction> jsFuncs = popList(x.getMethods().size()); // methods
@@ -1142,7 +1141,7 @@ public class GenerateJavaScriptAST {
         globalStmts.add(clinitFunc.makeStmt());
       }
 
-      assert jsFuncs.get(0).getName().getShortIdent().startsWith(GwtAstBuilder.CLINIT_NAME + "_");
+      assert jsFuncs.get(0) == methodBodyMap.get(x.getClinitMethod().getBody());
       jsFuncs.remove(0);
 
       // declare all static methods (Java8) into the global scope
@@ -1301,7 +1300,7 @@ public class GenerateJavaScriptAST {
          */
         JDeclaredType type = method.getEnclosingType();
         JDeclaredType clinitTarget = type.getClinitTarget();
-        if (clinitTarget == null || program.isJsTypePrototype(clinitTarget)) {
+        if (clinitTarget == null) {
           if (x.getInstance() != null) {
             pop(); // instance
           }
@@ -1387,7 +1386,7 @@ public class GenerateJavaScriptAST {
       jsInvocation.getArguments().addAll(args);
 
       // Is this method targeting a Foo_Prototype class?
-      if (program.isJsTypePrototype(method.getEnclosingType())) {
+      if (method.getEnclosingType().isJsNative()) {
         // TODO(goktug): inline following for further simplifications.
         return dispatchToSuperPrototype(x, method, qualifiedMethodName, jsInvocation);
       } else {
@@ -1417,17 +1416,19 @@ public class GenerateJavaScriptAST {
 
     /**
      * Setup qualifier and methodRef to dispatch to super-ctor or super-method.
+     * TODO: review this code
      */
     private JsExpression dispatchToSuperPrototype(JMethodCall x, JMethod method,
         JsNameRef qualifier, JsInvocation jsInvocation) {
 
       // in JsType case, super.foo() call requires SuperCtor.prototype.foo.call(this, args)
       // the method target should be on a class that ends with $Prototype and implements a JsType
+      // TODO: if should be an assert instead
       if (!(method instanceof JConstructor) && method.isOrOverridesJsMethod()) {
         JsNameRef protoRef = prototype.makeRef(x.getSourceInfo());
         JsNameRef methodName = new JsNameRef(x.getSourceInfo(), method.getName());
         // add qualifier so we have jsPrototype.prototype.methodName.call(this, args)
-        String jsPrototype = getJsPrototype(method.getEnclosingType());
+        String jsPrototype = method.getEnclosingType().getJsPrototype();
         protoRef.setQualifier(createJsQualifier(jsPrototype, x.getSourceInfo()));
         methodName.setQualifier(protoRef);
         qualifier.setQualifier(methodName);
@@ -1435,22 +1436,6 @@ public class GenerateJavaScriptAST {
       }
 
       return JsNullLiteral.INSTANCE;
-    }
-
-    private String getJsPrototype(JDeclaredType type) {
-      String jsPrototype = null;
-      // find JsType of Prototype method being invoked.
-      for (JInterfaceType intf : type.getImplements()) {
-        JDeclaredType jsIntf = typeOracle.getNearestJsType(intf, true);
-        assert jsIntf instanceof JInterfaceType;
-
-        if (jsIntf != null) {
-          jsPrototype = jsIntf.getJsPrototype();
-          break;
-        }
-      }
-      assert jsPrototype != null : "Unable to find JsType with prototype";
-      return jsPrototype;
     }
 
     @Override
@@ -1485,20 +1470,27 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JNewInstance x, Context ctx) {
-      JsName ctorName = names.get(x.getTarget());
-      JsNew newOp = new JsNew(x.getSourceInfo(), ctorName.makeRef(x.getSourceInfo()));
+      SourceInfo sourceInfo = x.getSourceInfo();
+      JConstructor ctor = x.getTarget();
+      JsName ctorName = names.get(ctor);
+      JsNew newOp = new JsNew(sourceInfo, ctorName.makeRef(sourceInfo));
       popList(newOp.getArguments(), x.getArgs().size()); // args
       JsExpression newExpr = newOp;
-      if (x.getClassType().isJsFunctionImplementation()) {
+      if (ctor.isJsNative()) {
+        String nativeName = ctor.getEnclosingType().getJsPrototype();
+        newExpr = new JsNew(sourceInfo, createJsQualifier(nativeName, sourceInfo));
+      } else if (x.getClassType().isJsFunctionImplementation()) {
+        // Foo.prototype.samMethod
+        JMethod jsFunctionMethod = getJsFunctionMethod(x.getClassType());
+        JsNameRef funcNameRef = polymorphicNames.get(jsFunctionMethod).makeRef(sourceInfo);
+        JsNameRef protoRef = prototype.makeRef(sourceInfo);
+        funcNameRef.setQualifier(protoRef);
+        protoRef.setQualifier(ctorName.makeRef(sourceInfo));
+
+        // makeLambdaFunction(Foo.prototype.samMethod, new Foo(...))
         JsFunction makeLambdaFunc =
             indexedFunctions.get("JavaClassHierarchySetupUtil.makeLambdaFunction");
-        JMethod jsFunctionMethod = getJsFunctionMethod(x.getClassType());
-        JsNameRef funcNameRef = polymorphicNames.get(jsFunctionMethod).makeRef(x.getSourceInfo());
-        JsNameRef protoRef = prototype.makeRef(x.getSourceInfo());
-        funcNameRef.setQualifier(protoRef);
-        protoRef.setQualifier(ctorName.makeRef(x.getSourceInfo()));
-        // makeLambdaFunction(Foo.prototype.samMethod, new Foo(...))
-        newExpr = new JsInvocation(x.getSourceInfo(), makeLambdaFunc, funcNameRef, newOp);
+        newExpr = new JsInvocation(sourceInfo, makeLambdaFunc, funcNameRef, newOp);
       }
       push(newExpr);
     }
@@ -1663,8 +1655,7 @@ public class GenerateJavaScriptAST {
         return false;
       }
 
-      // Don't generate JS for magic @PrototypeOfJsType classes
-      if (program.isJsTypePrototype(x)) {
+      if (x.isJsNative()) {
         return false;
       }
 
@@ -2473,36 +2464,42 @@ public class GenerateJavaScriptAST {
       JExpression typeId = getRuntimeTypeReference(x);
       JClassType superClass = x.getSuperClass();
       JExpression superTypeId = (superClass == null) ? JNullLiteral.INSTANCE :
-          getRuntimeTypeReference(x.getSuperClass());
-      // check if there's an overriding prototype
-      JInterfaceType jsPrototypeIntf = JProgram.maybeGetJsTypeFromPrototype(superClass);
-      String jsPrototype = jsPrototypeIntf != null ? jsPrototypeIntf.getJsPrototype() : null;
-      if (x.isJsFunctionImplementation()) {
-        jsPrototype = "Function";
-      }
+          getRuntimeTypeReference(superClass);
+      String jsPrototype = getSuperPrototype(x);
 
       List<JsExpression> defineClassArguments = Lists.newArrayList();
 
       defineClassArguments.add(convertJavaLiteral(typeId));
-      // setup superclass normally
-      if (jsPrototype == null) {
-        defineClassArguments.add(convertJavaLiteral(superTypeId));
-      } else {
-        // setup extension of native JS object
-        // TODO(goktug): need to stash Object methods to the prototype as they are not inhertied.
-        defineClassArguments.add(createJsQualifier(jsPrototype, x.getSourceInfo()));
-      }
-      JsExpression castMap = generateCastableTypeMap(x);
-      defineClassArguments.add(castMap);
-
+      defineClassArguments.add(jsPrototype == null ? convertJavaLiteral(superTypeId) :
+          createJsQualifier(jsPrototype, x.getSourceInfo()));
+      defineClassArguments.add(generateCastableTypeMap(x));
       defineClassArguments.addAll(constructorArgs);
 
-      // choose appropriate setup function
       // JavaClassHierarchySetupUtil.defineClass(typeId, superTypeId, castableMap, constructors)
       JsStatement defineClassStatement = constructInvocation(x.getSourceInfo(),
           "JavaClassHierarchySetupUtil.defineClass", defineClassArguments).makeStmt();
       globalStmts.add(defineClassStatement);
       typeForStatMap.put(defineClassStatement, x);
+
+      if (jsPrototype != null) {
+        JExpression objectTypeId = getRuntimeTypeReference(program.getTypeJavaLangObject());
+        JsStatement statement =
+            constructInvocation(x.getSourceInfo(), "JavaClassHierarchySetupUtil.copyObjectMethods",
+                convertJavaLiteral(objectTypeId)).makeStmt();
+        globalStmts.add(statement);
+        typeForStatMap.put(statement, x);
+      }
+    }
+
+    private String getSuperPrototype(JClassType x) {
+      if (x.isJsFunctionImplementation()) {
+        return "Function";
+      }
+      JClassType superClass = x.getSuperClass();
+      if (superClass != null && superClass.isJsNative()) {
+        return superClass.getJsPrototype();
+      }
+      return null;
     }
 
     private void generateClassDefinition(JClassType x, List<JsStatement> globalStmts) {

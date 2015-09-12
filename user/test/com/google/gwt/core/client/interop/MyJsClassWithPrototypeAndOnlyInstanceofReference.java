@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Google Inc.
+ * Copyright 2015 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,9 @@ package com.google.gwt.core.client.interop;
 
 import com.google.gwt.core.client.js.JsType;
 
-@JsType(prototype = "HTMLElement")
-class HTMLAnotherElement {
+/**
+ * A test class marked with JsType but isn't referenced from any Java code except instanceof.
+ */
+@JsType(prototype = "HTMLButtonElement")
+public class MyJsClassWithPrototypeAndOnlyInstanceofReference {
 }

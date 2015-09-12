@@ -50,12 +50,12 @@ import java.util.List;
  */
 public abstract class JDeclaredType extends JReferenceType {
 
-  private String jsPrototype;
   private boolean isJsFunction;
   private boolean isJsType;
   private boolean isClassWideExport;
   private String jsNamespace = null;
   private String jsName = null;
+  private String jsPrototype;
 
   /**
    * The types of nested classes, https://docs.oracle.com/javase/tutorial/java/javaOO/nested.html
@@ -378,6 +378,11 @@ public abstract class JDeclaredType extends JReferenceType {
 
   public String getJsPrototype() {
     return jsPrototype;
+  }
+
+  @Override
+  public boolean isJsNative() {
+    return jsPrototype != null;
   }
 
   /**

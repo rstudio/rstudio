@@ -618,7 +618,7 @@ public class ControlFlowAnalyzer {
           // Returning from this method passes a value from JavaScript into Java.
           maybeRescueJavaScriptObjectPassingIntoJava(method.getType());
         }
-        if (method.canBeCalledExternally()) {
+        if (method.canBeCalledExternally() || method.canBeImplementedExternally()) {
           for (JParameter param : method.getParams()) {
             // Parameters in JsExport, JsType, JsFunction methods should not be pruned in order to
             // keep the API intact.
@@ -630,13 +630,6 @@ public class ControlFlowAnalyzer {
           rescueClassLiteralsIfGetClassIsLive();
         }
 
-        if (program.isJsTypePrototype(method.getEnclosingType())) {
-          // for JsInterface Prototype methods, rescue all parameters
-          // because these are stub methods and the parameters would get pruned ordinarily
-          for (JParameter param : method.getParams()) {
-            rescue(param);
-          }
-        }
         if (method.getSpecialization() != null) {
           rescue(method.getSpecialization().getTargetMethod());
         }
@@ -774,9 +767,7 @@ public class ControlFlowAnalyzer {
       for (int c = params.size(); i < c; ++i) {
         JExpression arg = args.get(i);
         JParameter param = params.get(i);
-        if (arg.hasSideEffects() || liveFieldsAndMethods.contains(param)
-            // rescue any args of JsInterface Prototype methods
-            || program.isJsTypePrototype(method.getEnclosingType())) {
+        if (arg.hasSideEffects() || liveFieldsAndMethods.contains(param)) {
           this.accept(arg);
           continue;
         }

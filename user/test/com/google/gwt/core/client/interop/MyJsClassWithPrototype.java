@@ -15,11 +15,19 @@
  */
 package com.google.gwt.core.client.interop;
 
+import com.google.gwt.core.client.js.JsProperty;
 import com.google.gwt.core.client.js.JsType;
 
 /**
- * A test class marked with JsType but isn't referenced from any Java code except instanceof.
+ * A class that represents an existing native type.
  */
-@JsType(prototype = "HTMLButtonElement")
-public interface MyJsPrototypeWithOnlyInstanceofReference {
+@JsType(prototype = "MyJsInterface")
+public class MyJsClassWithPrototype {
+  @JsProperty
+  public native int getX();
+
+  @JsProperty
+  public native void setX(int x);
+
+  public native int sum(int bias);
 }

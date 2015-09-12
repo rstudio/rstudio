@@ -3089,7 +3089,9 @@ public class GwtAstBuilder {
     private void processNativeMethod(MethodDeclaration x) {
       JMethod method = curMethod.method;
       JsniMethod jsniMethod = jsniMethods.get(x);
-      assert jsniMethod != null;
+      if (jsniMethod == null) {
+        return;
+      }
       SourceInfo info = method.getSourceInfo();
       JsFunction jsFunction = jsniMethod.function();
       JsniMethodBody body = new JsniMethodBody(info);
@@ -4191,9 +4193,6 @@ public class GwtAstBuilder {
       JDeclaredType type;
       if (binding.isClass()) {
         type = new JClassType(info, name, binding.isAbstract(), binding.isFinal());
-        if (isJsInteropEnabled) {
-          ((JClassType) type).setJsPrototypeStub(JsInteropUtil.isJsPrototypeFlag(x));
-        }
       } else if (binding.isInterface() || binding.isAnnotationType()) {
         type = new JInterfaceType(info, name);
       } else if (binding.isEnum()) {

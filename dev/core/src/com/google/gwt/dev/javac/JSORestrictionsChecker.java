@@ -18,7 +18,6 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.util.InstalledHelpInfo;
 import com.google.gwt.dev.util.collect.Stack;
-import com.google.gwt.thirdparty.guava.common.base.Strings;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.ASTNode;
@@ -29,7 +28,6 @@ import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
-import org.eclipse.jdt.internal.compiler.lookup.AnnotationBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
@@ -67,18 +65,17 @@ public class JSORestrictionsChecker {
       "@JsExport and @JsNoExport is not allowed at the same time.";
   public static final String ERR_JSEXPORT_ON_ENUMERATION =
       "@JsExport is not allowed on individual enumerations";
-  public static final String ERR_MUST_EXTEND_MAGIC_PROTOTYPE_CLASS =
-      "Classes implementing @JsType with a prototype must extend that interface's Prototype class";
-  public static final String ERR_CLASS_EXTENDS_MAGIC_PROTOTYPE_BUT_NO_PROTOTYPE_ATTRIBUTE =
-      "Classes implementing a @JsType without a prototype should not extend the Prototype class";
   public static final String ERR_CONSTRUCTOR_WITH_PARAMETERS =
       "Constructors must not have parameters in subclasses of JavaScriptObject";
-  public static final String ERR_INSTANCE_FIELD = "Instance fields cannot be used in subclasses of JavaScriptObject";
+  public static final String ERR_INSTANCE_FIELD =
+      "Instance fields cannot be used in subclasses of JavaScriptObject";
   public static final String ERR_INSTANCE_METHOD_NONFINAL =
       "Instance methods must be 'final' in non-final subclasses of JavaScriptObject";
-  public static final String ERR_IS_NONSTATIC_NESTED = "Nested classes must be 'static' if they extend JavaScriptObject";
+  public static final String ERR_IS_NONSTATIC_NESTED =
+      "Nested classes must be 'static' if they extend JavaScriptObject";
   public static final String ERR_NEW_JSO =
-      "'new' cannot be used to create instances of JavaScriptObject subclasses; instances must originate in JavaScript";
+      "'new' cannot be used to create instances of JavaScriptObject subclasses; "
+      + "instances must originate in JavaScript";
   public static final String ERR_NONEMPTY_CONSTRUCTOR =
       "Constructors must be totally empty in subclasses of JavaScriptObject";
   public static final String ERR_NONPROTECTED_CONSTRUCTOR =
@@ -86,13 +83,10 @@ public class JSORestrictionsChecker {
   public static final String ERR_OVERRIDDEN_METHOD =
       "Methods cannot be overridden in JavaScriptObject subclasses";
   public static final String JSO_CLASS = "com/google/gwt/core/client/JavaScriptObject";
-  public static final String ERR_FORGOT_TO_MAKE_PROTOTYPE_IMPL_JSTYPE = "@JsType subtype extends magic _Prototype class, but _Prototype class doesn't implement JsType";
-  public static final String ERR_JS_TYPE_WITH_PROTOTYPE_SET_NOT_ALLOWED_ON_CLASS_TYPES = "@JsType with prototype set not allowed on class types";
   public static final String ERR_JS_FUNCTION_ONLY_ALLOWED_ON_FUNCTIONAL_INTERFACE =
       "@JsFunction is only allowed on functional interface";
   public static final String ERR_JS_FUNCTION_CANNOT_HAVE_DEFAULT_METHODS =
       "JsFunction cannot have default methods";
-  static boolean LINT_MODE = false;
 
   private enum ClassState {
     NORMAL, JSO
@@ -247,18 +241,6 @@ public class JSORestrictionsChecker {
       }
     }
 
-    private void checkJsType(TypeDeclaration type, TypeBinding typeBinding) {
-      ReferenceBinding binding = (ReferenceBinding) typeBinding;
-      if (binding.isClass()) {
-        AnnotationBinding jsinterfaceAnn = JdtUtil.getAnnotation(typeBinding,
-          JsInteropUtil.JSTYPE_CLASS);
-        String jsPrototype = JdtUtil.getAnnotationParameterString(jsinterfaceAnn, "prototype");
-        if (jsPrototype != null && !"".equals(jsPrototype)) {
-          errorOn(type, ERR_JS_TYPE_WITH_PROTOTYPE_SET_NOT_ALLOWED_ON_CLASS_TYPES);
-        }
-      }
-    }
-
     private void checkJsExport(MethodBinding mb) {
       if (JdtUtil.getAnnotation(mb, JsInteropUtil.JSEXPORT_CLASS) != null) {
         boolean isStatic = mb.isConstructor() || mb.isStatic();
@@ -294,14 +276,6 @@ public class JSORestrictionsChecker {
     private ClassState checkType(TypeDeclaration type) {
       SourceTypeBinding binding = type.binding;
       checkJsFunction(type, binding);
-      if (isJsType(type.binding)) {
-        checkJsType(type, type.binding);
-        return ClassState.NORMAL;
-      }
-
-      if (checkClassImplementingJsType(type)) {
-        return ClassState.NORMAL;
-      }
 
       if (!isJsoSubclass(binding)) {
         return ClassState.NORMAL;
@@ -330,91 +304,6 @@ public class JSORestrictionsChecker {
       }
 
       return ClassState.JSO;
-    }
-
-    private boolean checkClassImplementingJsType(TypeDeclaration type) {
-      ReferenceBinding jsInterface = findNearestJsTypeRecursive(type.binding);
-      if (jsInterface == null) {
-        return false;
-      }
-
-      AnnotationBinding jsinterfaceAnn = JdtUtil.getAnnotation(jsInterface,
-          JsInteropUtil.JSTYPE_CLASS);
-      String jsPrototype = JdtUtil.getAnnotationParameterString(jsinterfaceAnn, "prototype");
-      boolean shouldExtend = !Strings.isNullOrEmpty(jsPrototype);
-      checkClassExtendsMagicPrototype(type, jsInterface, shouldExtend);
-
-      // TODO(cromwellian) add multiple-inheritance checks when ambiguity in spec is resolved
-      return true;
-    }
-
-    private void checkClassExtendsMagicPrototype(TypeDeclaration type, ReferenceBinding jsInterface,
-        boolean shouldExtend) {
-      ReferenceBinding superClass = type.binding.superclass();
-      // if type is the _Prototype stub (implements JsType) exit
-      if (isMagicPrototype(type.binding, jsInterface)) {
-        return;
-      } else if (isMagicPrototypeStub(type)) {
-        errorOn(type, ERR_FORGOT_TO_MAKE_PROTOTYPE_IMPL_JSTYPE);
-      }
-
-      if (shouldExtend) {
-        // super class should be SomeInterface.Prototype, so enclosing type should match the jsInterface
-        if (LINT_MODE && (superClass == null || !isMagicPrototype(superClass, jsInterface))) {
-          errorOn(type, ERR_MUST_EXTEND_MAGIC_PROTOTYPE_CLASS);
-        }
-      } else {
-        if (superClass != null && isMagicPrototype(superClass, jsInterface)) {
-          errorOn(type, ERR_CLASS_EXTENDS_MAGIC_PROTOTYPE_BUT_NO_PROTOTYPE_ATTRIBUTE);
-        }
-      }
-    }
-
-    // Roughly parallels JProgram.isJsTypePrototype()
-    private boolean isMagicPrototype(ReferenceBinding type, ReferenceBinding jsInterface) {
-      if (isMagicPrototypeStub(type)) {
-        for (ReferenceBinding intf : type.superInterfaces()) {
-          if (intf == jsInterface) {
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-
-    private boolean isMagicPrototypeStub(TypeDeclaration type) {
-      return isMagicPrototypeStub(type.binding);
-    }
-
-    private boolean isMagicPrototypeStub(ReferenceBinding binding) {
-      return JdtUtil.getAnnotation(binding, JsInteropUtil.JSTYPEPROTOTYPE_CLASS) != null;
-    }
-
-    /**
-     * Walks up chain of interfaces and superinterfaces to find the first one marked with @JsType.
-     */
-    private ReferenceBinding findNearestJsType(ReferenceBinding binding) {
-      if (isJsType(binding)) {
-        return binding;
-      }
-
-      for (ReferenceBinding intb : binding.superInterfaces()) {
-        ReferenceBinding checkSuperInt = findNearestJsType(intb);
-        if (checkSuperInt != null) {
-          return checkSuperInt;
-        }
-      }
-      return null;
-    }
-
-    private ReferenceBinding findNearestJsTypeRecursive(ReferenceBinding binding) {
-      ReferenceBinding nearest = findNearestJsType(binding);
-      if (nearest != null) {
-        return nearest;
-      } else if (binding.superclass() != null) {
-        return findNearestJsTypeRecursive(binding.superclass());
-      }
-      return null;
     }
 
     private boolean areAllEnclosingClassesPublic() {
@@ -467,19 +356,6 @@ public class JSORestrictionsChecker {
       binding = binding.superclass();
     }
     return false;
-  }
-
-  /**
-   * Returns the first JsType annotation encountered traversing the type hierarchy upwards from the type.
-   */
-  private boolean isJsType(TypeBinding typeBinding) {
-
-    if (!(typeBinding instanceof ReferenceBinding) || !(typeBinding instanceof SourceTypeBinding)) {
-      return false;
-    }
-
-    AnnotationBinding jsInterface = JdtUtil.getAnnotation(typeBinding, JsInteropUtil.JSTYPE_CLASS);
-    return jsInterface != null;
   }
 
   /**

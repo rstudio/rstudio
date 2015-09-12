@@ -76,29 +76,24 @@ public class PrunerTest extends OptimizerTestBase {
     addSnippetClassDecl("interface UnusedInterface { void foo(); }");
     addSnippetImport("com.google.gwt.core.client.js.JsType");
     addSnippetImport("com.google.gwt.core.client.js.JsExport");
-    addSnippetImport("com.google.gwt.core.client.js.impl"
-        + ".PrototypeOfJsType");
     addSnippetClassDecl("interface Callback { void go(); }");
     addSnippetImport("com.google.gwt.core.client.js.JsType");
     addSnippetImport("com.google.gwt.core.client.js.JsExport");
 
     addSnippetClassDecl("@JsType interface Js { void doIt(Callback cb); }");
-    addSnippetClassDecl("@JsType(prototype=\"Foo\") interface JsProto { " +
-        "@PrototypeOfJsType static class Prototype implements JsProto {" +
-        "public Prototype(int arg) {}" +
-        "}" +
+    addSnippetClassDecl("@JsType(prototype=\"Foo\") static class JsProto { ",
+        "public JsProto(int arg) {}",
         "}");
-    addSnippetClassDecl("static class JsProtoImpl "
-        + "extends JsProto.Prototype {" +
-        "public JsProtoImpl() { super(10); }" +
+    addSnippetClassDecl("static class JsProtoImpl extends JsProto {",
+        "public JsProtoImpl() { super(10); }",
         "}");
 
-    addSnippetClassDecl("static class JsProtoImpl2 extends JsProto.Prototype {" +
-        "@JsExport(\"foo\") public JsProtoImpl2() { super(10); }" +
+    addSnippetClassDecl("static class JsProtoImpl2 extends JsProto {",
+        "@JsExport(\"foo\") public JsProtoImpl2() { super(10); }",
         "}");
 
-    addSnippetClassDecl("static class JsProtoImpl3 extends JsProto.Prototype {" +
-        "public JsProtoImpl3() { super(10); }" +
+    addSnippetClassDecl("static class JsProtoImpl3 extends JsProto {",
+        "public JsProtoImpl3() { super(10); }",
         "}");
 
     Result result;

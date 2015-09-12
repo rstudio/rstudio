@@ -21,7 +21,6 @@ import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Objects;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
-import com.google.gwt.thirdparty.guava.common.base.Strings;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSetMultimap;
@@ -655,31 +654,6 @@ public class JTypeOracle implements Serializable {
     for (JReferenceType type : types) {
       referenceTypesByName.put(type.getName(), type);
     }
-  }
-
-  /**
-   * Get the nearest JS type.
-   */
-  public JDeclaredType getNearestJsType(JType type, boolean mustHavePrototype) {
-    type = type.getUnderlyingType();
-
-    if (!(type instanceof JDeclaredType)) {
-      return null;
-    }
-
-    JDeclaredType dtype = (JDeclaredType) type;
-    if (dtype.isJsType() && (!mustHavePrototype || !Strings.isNullOrEmpty(dtype.getJsPrototype()))) {
-      return dtype;
-    }
-
-    for (JInterfaceType superIntf : dtype.getImplements()) {
-      JDeclaredType jsIntf = getNearestJsType(superIntf, mustHavePrototype);
-      if (jsIntf != null) {
-        return jsIntf;
-      }
-    }
-
-    return null;
   }
 
   public JMethod getInstanceMethodBySignature(JClassType type, String signature) {

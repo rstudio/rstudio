@@ -67,7 +67,7 @@ public enum TypeCategory {
     } else if (program.typeOracle.isDualJsoInterface(type)
         || program.typeOracle.isJsTypeInterfaceWithoutPrototype(type)) {
       return TypeCategory.TYPE_JAVA_OBJECT_OR_JSO;
-    } else if (program.typeOracle.isJsTypeInterfaceWithPrototype(type)) {
+    } else if (type.isJsNative()) {
       return TypeCategory.TYPE_JS_PROTOTYPE;
     } else if (type.isJsFunction()) {
       return TypeCategory.TYPE_JS_FUNCTION;

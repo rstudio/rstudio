@@ -24,7 +24,6 @@ import com.google.gwt.dev.jjs.ast.JMethod.JsPropertyAccessorType;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
 
 import org.eclipse.jdt.internal.compiler.ast.Annotation;
-import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.lookup.AnnotationBinding;
 
 import java.beans.Introspector;
@@ -40,8 +39,6 @@ public final class JsInteropUtil {
   public static final String JSNOEXPORT_CLASS = "com.google.gwt.core.client.js.JsNoExport";
   public static final String JSPROPERTY_CLASS = "com.google.gwt.core.client.js.JsProperty";
   public static final String JSTYPE_CLASS = "com.google.gwt.core.client.js.JsType";
-  public static final String JSTYPEPROTOTYPE_CLASS =
-      "com.google.gwt.core.client.js.impl.PrototypeOfJsType";
 
   public static void maybeSetJsInteropProperties(JDeclaredType type, Annotation... annotations) {
     AnnotationBinding jsType = JdtUtil.getAnnotation(annotations, JSTYPE_CLASS);
@@ -104,10 +101,6 @@ public final class JsInteropUtil {
 
   private static String computeName(JMember member) {
     return member instanceof JConstructor ? "" : member.getName();
-  }
-
-  public static boolean isJsPrototypeFlag(TypeDeclaration x) {
-    return JdtUtil.getAnnotation(x.annotations, JSTYPEPROTOTYPE_CLASS) != null;
   }
 
   private static String maybeGetJsNamespace(Annotation[] annotations) {

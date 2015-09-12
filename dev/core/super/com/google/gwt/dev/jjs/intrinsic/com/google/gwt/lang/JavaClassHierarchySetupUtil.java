@@ -97,6 +97,15 @@ public class JavaClassHierarchySetupUtil {
     return @JavaClassHierarchySetupUtil::portableObjCreate(*)(superPrototype);
   }-*/;
 
+  public static native void copyObjectMethods(JavaScriptObject objectPrototypeId) /*-{
+    var prototype = @JavaClassHierarchySetupUtil::prototypesByTypeId[objectPrototypeId];
+    for (var property in prototype) {
+      if (_[property] === undefined) {
+        _[property] = prototype[property];
+      }
+    }
+  }-*/;
+
   /**
    * Retrieves the class literal if stored in a place holder, {@code null} otherwise.
    */

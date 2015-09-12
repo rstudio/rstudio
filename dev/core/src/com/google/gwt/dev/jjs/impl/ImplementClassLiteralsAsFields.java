@@ -22,7 +22,6 @@ import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
-import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JEnumType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -350,18 +349,7 @@ public class ImplementClassLiteralsAsFields {
     if (!(type instanceof JClassType) ||  ((JClassType) type).getSuperClass() == null) {
       return JNullLiteral.INSTANCE;
     }
-    JClassType classType = (JClassType) type;
-    if (program.isJsTypePrototype(classType)) {
-        /*
-         * When a Java type extends a JS prototype stub, we make the superclass literal
-         * equal to the Js interface.
-         */
-      JDeclaredType jsInterface = program.typeOracle.getNearestJsType(type, true);
-      assert jsInterface != null;
-      return createDependentClassLiteral(info, jsInterface);
-    }
-
-    return createDependentClassLiteral(info, classType.getSuperClass());
+    return createDependentClassLiteral(info, ((JClassType) type).getSuperClass());
   }
 
   private JClassLiteral createDependentClassLiteral(SourceInfo info, JType type) {
