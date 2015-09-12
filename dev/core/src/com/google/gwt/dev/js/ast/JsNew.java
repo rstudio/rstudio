@@ -52,13 +52,6 @@ public final class JsNew extends JsExpression implements HasArguments {
   }
 
   @Override
-  public boolean isDefinitelyNotNull() {
-    // Sadly, in JS it can be!
-    // TODO: analysis could probably determine most instances cannot be null.
-    return false;
-  }
-
-  @Override
   public boolean isDefinitelyNull() {
     return false;
   }

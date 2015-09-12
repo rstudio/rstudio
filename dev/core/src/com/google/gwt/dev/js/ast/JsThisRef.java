@@ -40,15 +40,6 @@ public final class JsThisRef extends JsValueLiteral {
   }
 
   @Override
-  public boolean isDefinitelyNotNull() {
-    /*
-     * You'd think that you could get a null this via function.call/apply, but in fact you can't:
-     * they just make this be the window object instead. So it really can't ever be null.
-     */
-    return true;
-  }
-
-  @Override
   public boolean isDefinitelyNull() {
     return false;
   }

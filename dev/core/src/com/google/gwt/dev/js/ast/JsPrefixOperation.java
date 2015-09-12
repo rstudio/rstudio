@@ -58,14 +58,6 @@ public final class JsPrefixOperation extends JsUnaryOperation implements CanBool
   }
 
   @Override
-  public boolean isDefinitelyNotNull() {
-    if (getOperator() == JsUnaryOperator.TYPEOF) {
-      return true;
-    }
-    return getOperator() != JsUnaryOperator.VOID;
-  }
-
-  @Override
   public boolean isDefinitelyNull() {
     return getOperator() == JsUnaryOperator.VOID;
   }

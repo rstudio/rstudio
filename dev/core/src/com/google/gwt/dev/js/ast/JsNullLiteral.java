@@ -43,11 +43,6 @@ public final class JsNullLiteral extends JsValueLiteral {
   }
 
   @Override
-  public boolean isDefinitelyNotNull() {
-    return false;
-  }
-
-  @Override
   public boolean isDefinitelyNull() {
     return true;
   }

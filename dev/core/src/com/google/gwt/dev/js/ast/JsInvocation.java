@@ -73,11 +73,6 @@ public final class JsInvocation extends JsExpression implements HasArguments {
   }
 
   @Override
-  public boolean isDefinitelyNotNull() {
-    return false;
-  }
-
-  @Override
   public boolean isDefinitelyNull() {
     return false;
   }

@@ -49,11 +49,6 @@ public final class JsNumericEntry extends JsExpression {
   }
 
   @Override
-  public boolean isDefinitelyNotNull() {
-    return true;
-  }
-
-  @Override
   public boolean isDefinitelyNull() {
     return false;
   }

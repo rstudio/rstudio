@@ -41,12 +41,6 @@ public class JsNameOf extends JsExpression {
   }
 
   @Override
-  public boolean isDefinitelyNotNull() {
-    // GenerateJsAST would have already replaced unnamed references with null
-    return true;
-  }
-
-  @Override
   public boolean isDefinitelyNull() {
     return false;
   }

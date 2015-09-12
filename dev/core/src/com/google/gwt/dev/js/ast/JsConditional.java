@@ -61,11 +61,6 @@ public final class JsConditional extends JsExpression {
   }
 
   @Override
-  public boolean isDefinitelyNotNull() {
-    return thenExpr.isDefinitelyNotNull() && elseExpr.isDefinitelyNotNull();
-  }
-
-  @Override
   public boolean isDefinitelyNull() {
     return thenExpr.isDefinitelyNull() && elseExpr.isDefinitelyNull();
   }

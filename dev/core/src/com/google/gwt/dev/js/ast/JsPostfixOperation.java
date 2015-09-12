@@ -34,11 +34,6 @@ public final class JsPostfixOperation extends JsUnaryOperation {
   }
 
   @Override
-  public boolean isDefinitelyNotNull() {
-    return true;
-  }
-
-  @Override
   public boolean isDefinitelyNull() {
     return false;
   }

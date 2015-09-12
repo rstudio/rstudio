@@ -641,12 +641,9 @@ public class JsInliner {
      */
     private JsFunction programFunction;
 
-    private JsProgram program;
-
     private final Set<JsName> safeToInlineAtTopLevel;
 
     public InliningVisitor(JsProgram program, Set<JsNode> whitelist) {
-      this.program = program;
       this.whitelist = whitelist;
       invocationCountingVisitor.accept(program);
       JsName defineClass = getFunctionName(program, "JavaClassHierarchySetupUtil.defineClass");

@@ -53,11 +53,6 @@ public final class JsArrayAccess extends JsExpression {
   }
 
   @Override
-  public boolean isDefinitelyNotNull() {
-    return false;
-  }
-
-  @Override
   public boolean isDefinitelyNull() {
     return false;
   }

@@ -91,11 +91,7 @@ public class JFieldRef extends JVariableRef implements HasEnclosingType {
     if (hasClinit()) {
       return true;
     }
-    JExpression expr = instance;
-    if (expr == null) {
-      return false;
-    }
-    return expr.hasSideEffects();
+    return instance != null && instance.hasSideEffects();
   }
 
   /**

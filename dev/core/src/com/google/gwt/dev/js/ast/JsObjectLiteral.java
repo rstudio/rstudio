@@ -84,11 +84,6 @@ public final class JsObjectLiteral extends JsLiteral {
   }
 
   @Override
-  public boolean isDefinitelyNotNull() {
-    return true;
-  }
-
-  @Override
   public boolean isDefinitelyNull() {
     return false;
   }

@@ -30,11 +30,6 @@ public abstract class JsExpression extends JsNode {
   public abstract boolean hasSideEffects();
 
   /**
-   * True if the target expression is definitely not null.
-   */
-  public abstract boolean isDefinitelyNotNull();
-
-  /**
    * True if the target expression is definitely null.
    */
   public abstract boolean isDefinitelyNull();

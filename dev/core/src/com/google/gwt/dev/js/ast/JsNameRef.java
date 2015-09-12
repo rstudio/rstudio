@@ -59,14 +59,7 @@ public final class JsNameRef extends JsExpression implements CanBooleanEval, Has
 
   @Override
   public boolean hasSideEffects() {
-    if (qualifier == null) {
-      return false;
-    }
-    if (!qualifier.isDefinitelyNotNull()) {
-      // Could trigger NPE.
-      return true;
-    }
-    return qualifier.hasSideEffects();
+    return qualifier != null && qualifier.hasSideEffects();
   }
 
   @Override
@@ -76,12 +69,6 @@ public final class JsNameRef extends JsExpression implements CanBooleanEval, Has
 
   @Override
   public boolean isBooleanTrue() {
-    return false;
-  }
-
-  @Override
-  public boolean isDefinitelyNotNull() {
-    // TODO: look for single-assignment of stuff from Java?
     return false;
   }
 
