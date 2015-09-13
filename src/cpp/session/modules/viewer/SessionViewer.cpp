@@ -278,6 +278,14 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
          FilePath tempDir = module_context::tempDir();
          FilePath filePath = module_context::resolveAliasedPath(url);
 
+         // canoncialize paths for comparison
+         Error error = core::system::realPath(tempDir, &tempDir);
+         if (error)
+            LOG_ERROR(error);
+         error = core::system::realPath(filePath, &filePath);
+         if (error)
+            LOG_ERROR(error);
+
          // if it's in the temp dir and we're running R >= 2.14 then
          // we can serve it via the help server, otherwise we need
          // to show it in an external browser
