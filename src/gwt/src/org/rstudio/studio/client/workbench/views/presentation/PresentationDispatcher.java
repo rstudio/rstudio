@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.presentation;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
@@ -101,7 +102,7 @@ public class PresentationDispatcher
       
       if (cmdName.equals("source"))
          performSourceCommand(param1, param2);
-      else
+      else if (!Desktop.isDesktop()) // support other commands in server mode
          performOtherCommand(cmdName, params, param1, param2);
    }
    

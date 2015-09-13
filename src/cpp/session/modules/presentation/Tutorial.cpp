@@ -145,6 +145,10 @@ void initializeTutorial(const FilePath& tutorialPath)
 
 Error initializeTutorial()
 {
+   // bail if we aren't in server mode
+   if (session::options().programMode() != kSessionProgramModeServer)
+      return Success();
+
    // bail if there is no project
    if (!projects::projectContext().hasProject())
       return Success();
