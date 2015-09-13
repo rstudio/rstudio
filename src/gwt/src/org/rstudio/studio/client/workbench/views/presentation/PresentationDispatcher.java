@@ -159,8 +159,6 @@ public class PresentationDispatcher
          performExecuteCommand(params);
       else if (cmdName.equals("pause"))
          performPauseCommand();
-      else if (cmdName.equals("tutorial"))
-         performTutorialCommand(params);
       else 
       {
          globalDisplay_.showErrorMessage(
@@ -221,13 +219,6 @@ public class PresentationDispatcher
    private void performPauseCommand()
    {
       context_.pauseMedia();
-   }
-
-   private void performTutorialCommand(String params)
-   {
-      String projectParam = URL.encodeQueryString(params);
-      String url = GWT.getHostPageBaseURL() + "?project=" + projectParam;
-      Window.Location.assign(url);
    }
 
    private void performConsoleInputCommand(String params)
