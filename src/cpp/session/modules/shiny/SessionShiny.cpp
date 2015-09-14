@@ -140,6 +140,22 @@ bool isShinyDocument(const FilePath& filePath,
    return false;
 }
 
+bool isShinyRMarkdownDocument(const FilePath& filePath)
+{
+   std::string contents;
+   Error error = readStringFromFile(filePath, &contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+   
+   static const boost::regex reRuntimeShiny("runtime:\\s*shiny");
+   
+   std::string yamlHeader = r_utils::extractYamlHeader(contents);
+   return boost::regex_search(yamlHeader.begin(), yamlHeader.end(), reRuntimeShiny);
+}
+
 bool isShinyDocument(const FilePath& filePath)
 {
    std::string contents;
