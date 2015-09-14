@@ -764,12 +764,8 @@ public class TextEditingTarget implements
          
          if (scope.getPreamble().isAfter(cursorPos))
          {
-            if (scope.getPreamble().getRow() - cursorPos.getRow() < 50)
-            {
-               docDisplay_.setCursorPosition(scope.getPreamble());
-               return true;
-            }
-            return false;
+            moveCursorToNextPrevSection(scope.getPreamble());
+            return true;
          }
       }
       
@@ -790,22 +786,24 @@ public class TextEditingTarget implements
          
          if (scope.getPreamble().isBefore(cursorPos))
          {
-            if (cursorPos.getRow() - scope.getPreamble().getRow() < 50)
-            {
-               docDisplay_.setCursorPosition(scope.getPreamble());
-               return true;
-            }
-            return false;
+            moveCursorToNextPrevSection(scope.getPreamble());
+            return true;
          }
       }
       
       return false;
    }
    
+   private void moveCursorToNextPrevSection(Position pos)
+   {
+      docDisplay_.setCursorPosition(pos);
+      docDisplay_.moveCursorNearTop(5);
+   }
+   
    @Handler
    void onGoToNextSection()
    {
-      if (docDisplay_.getFileType().isRmd() || docDisplay_.getFileType().isRpres())
+      if (docDisplay_.getFileType().canGoNextPrevSection())
       {
          if (!moveCursorToNextSectionOrChunk())
             docDisplay_.gotoPageDown();
@@ -819,7 +817,7 @@ public class TextEditingTarget implements
    @Handler
    void onGoToPrevSection()
    {
-      if (docDisplay_.getFileType().isRmd() || docDisplay_.getFileType().isRpres())
+      if (docDisplay_.getFileType().canGoNextPrevSection())
       {
          if (!moveCursorToPreviousSectionOrChunk())
             docDisplay_.gotoPageUp();

@@ -284,6 +284,8 @@ public class TextEditingTargetWidget
       toolbar.addRightWidget(runButton_ = commands_.executeCode().createToolbarButton(false));
       toolbar.addRightSeparator();
       toolbar.addRightWidget(runLastButton_ = commands_.executeLastCode().createToolbarButton(false));
+      toolbar.addRightWidget(goToPrevButton_ = commands_.goToPrevSection().createToolbarButton(false));
+      toolbar.addRightWidget(goToNextButton_ = commands_.goToNextSection().createToolbarButton(false));
       toolbar.addRightSeparator();
       final String SOURCE_BUTTON_TITLE = "Source the active document"; 
       
@@ -497,8 +499,10 @@ public class TextEditingTargetWidget
       runButton_.setVisible(canExecuteCode && !canExecuteChunks && !isCpp && !isShinyFile());
       runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks);
       
-      // show insert chunk button
+      // chunk oriented buttons     
       insertChunkButton_.setVisible(canExecuteChunks);
+      goToPrevButton_.setVisible(fileType.canGoNextPrevSection());
+      goToNextButton_.setVisible(fileType.canGoNextPrevSection());
       
       sourceOnSave_.setVisible(canSourceOnSave);
       srcOnSaveLabel_.setVisible(canSourceOnSave);
@@ -1005,6 +1009,8 @@ public class TextEditingTargetWidget
    private ToolbarButton previewHTMLButton_;
    private ToolbarButton knitDocumentButton_;
    private ToolbarButton insertChunkButton_;
+   private ToolbarButton goToPrevButton_;
+   private ToolbarButton goToNextButton_;
    private ToolbarButton runButton_;
    private ToolbarButton runLastButton_;
    private ToolbarButton sourceButton_;

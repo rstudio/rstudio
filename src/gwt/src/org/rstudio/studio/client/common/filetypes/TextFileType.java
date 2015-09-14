@@ -174,6 +174,11 @@ public class TextFileType extends EditableFileType
    {
       return canShowScopeTree_;
    }
+   
+   public boolean canGoNextPrevSection()
+   {
+      return isRmd() || isRpres();
+   }
   
    public boolean canPreviewFromR()
    {
