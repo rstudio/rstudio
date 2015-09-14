@@ -36,11 +36,9 @@ import org.rstudio.studio.client.workbench.views.presentation.model.Presentation
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.http.client.URL;
-import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 
 public class PresentationDispatcher 

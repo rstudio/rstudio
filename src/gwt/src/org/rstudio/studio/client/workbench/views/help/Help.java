@@ -91,7 +91,6 @@ public class Help extends BasePresenter implements ShowHelpHandler
       view_ = view;
       globalDisplay_ = globalDisplay;
       events_ = events;
-      commands_ = commands;
 
       binder.bind(commands, this);
 
@@ -276,5 +275,4 @@ public class Help extends BasePresenter implements ShowHelpHandler
    private boolean historyInitialized_ ;
    private GlobalDisplay globalDisplay_;
    private EventBus events_;
-   private Commands commands_;
 }
