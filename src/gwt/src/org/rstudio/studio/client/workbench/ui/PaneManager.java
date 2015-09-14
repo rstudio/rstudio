@@ -147,6 +147,9 @@ public class PaneManager
       @Override
       protected boolean hasChanged()
       {
+         if (lastValue_ == null)
+            return true;
+         
          JsObject oldValue = lastValue_;
          JsObject newValue = getValue();
          
@@ -176,7 +179,7 @@ public class PaneManager
       private static final String MAXIMIZED_TAB_KEY = "MaximizedTab";
       private static final String WIDGET_SIZE_KEY = "WidgetSize";
       
-      private JsObject lastValue_;
+      private JsObject lastValue_ = null;
       
    }
    
