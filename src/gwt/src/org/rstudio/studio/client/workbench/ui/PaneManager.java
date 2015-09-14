@@ -145,6 +145,21 @@ public class PaneManager
       }
       
       @Override
+      protected boolean hasChanged()
+      {
+         JsObject oldValue = lastValue_;
+         JsObject newValue = getValue();
+         
+         boolean oldHasKey = oldValue.hasKey(MAXIMIZED_TAB_KEY);
+         boolean newHasKey = newValue.hasKey(MAXIMIZED_TAB_KEY);
+         
+         if (oldHasKey && newHasKey)
+            return !oldValue.getString(MAXIMIZED_TAB_KEY).equals(newValue.getString(MAXIMIZED_TAB_KEY));
+         
+         return oldHasKey != newHasKey;
+      }
+      
+      @Override
       protected JsObject getValue()
       {
          final JsObject object = JsObject.createJsObject();
@@ -154,11 +169,14 @@ public class PaneManager
          if (widgetSizePriorToZoom_ >= 0)
             object.setDouble(WIDGET_SIZE_KEY, widgetSizePriorToZoom_);
          
+         lastValue_ = object;
          return object;
       }
       
       private static final String MAXIMIZED_TAB_KEY = "MaximizedTab";
       private static final String WIDGET_SIZE_KEY = "WidgetSize";
+      
+      private JsObject lastValue_;
       
    }
    
