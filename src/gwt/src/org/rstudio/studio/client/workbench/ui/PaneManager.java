@@ -874,6 +874,7 @@ public class PaneManager
       case Presentation: return commands_.layoutZoomPresentation();
       case Source:       return commands_.layoutZoomSource();
       case VCS:          return commands_.layoutZoomVcs();
+      case Viewer:       return commands_.layoutZoomViewer();
       default:
          throw new IllegalArgumentException("Unexpected tab '" + tab.toString() + "'");
       }
@@ -904,6 +905,7 @@ public class PaneManager
       commands.add(commands_.layoutZoomPresentation());
       commands.add(commands_.layoutZoomSource());
       commands.add(commands_.layoutZoomVcs());
+      commands.add(commands_.layoutZoomViewer());
       
       return commands;
    }
