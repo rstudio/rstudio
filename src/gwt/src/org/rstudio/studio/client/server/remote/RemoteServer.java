@@ -90,6 +90,7 @@ import org.rstudio.studio.client.projects.model.NewProjectContext;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
+import org.rstudio.studio.client.projects.model.SharedProjectDetails;
 import org.rstudio.studio.client.projects.model.SharingConfigResult;
 import org.rstudio.studio.client.projects.model.SharingResult;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
@@ -4276,6 +4277,13 @@ public class RemoteServer implements Server
          ServerRequestCallback<SharingConfigResult> callback)
    {
       sendRequest(RPC_SCOPE, "validate_sharing_config", callback);
+   }
+
+   @Override
+   public void getSharedProjects(
+         ServerRequestCallback<JsArray<SharedProjectDetails>> callback)
+   {
+      sendRequest(RPC_SCOPE, "get_shared_projects", callback);
    }
 
    private String clientId_;

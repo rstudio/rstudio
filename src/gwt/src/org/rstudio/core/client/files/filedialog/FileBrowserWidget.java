@@ -117,6 +117,12 @@ public class FileBrowserWidget extends Composite
       directory_.showProgress(true);
       context_.cd(path);
    }
+
+   public void cd(FileSystemItem dir)
+   {
+      assert dir.isDirectory();
+      cd(dir.getPath());
+   }
    
    public void addKeyUpHandler(KeyUpHandler handler)
    {
@@ -185,12 +191,6 @@ public class FileBrowserWidget extends Composite
       filenamePanel.setCellWidth(filename_, "100%");
 
       return filenamePanel;
-   }
-   
-   protected void cd(FileSystemItem dir)
-   {
-      assert dir.isDirectory();
-      cd(dir.getPath());
    }
    
    private PathBreadcrumbWidget breadcrumb_;

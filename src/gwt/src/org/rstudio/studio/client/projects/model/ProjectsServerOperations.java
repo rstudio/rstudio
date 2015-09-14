@@ -21,6 +21,7 @@ import org.rstudio.studio.client.server.remote.RResult;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
 public interface ProjectsServerOperations extends PrefsServerOperations,
@@ -58,4 +59,7 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
          ServerRequestCallback<SharingConfigResult> callback);
    
    void getAllServerUsers(ServerRequestCallback<JsArrayString> callback);
+   
+   void getSharedProjects(
+         ServerRequestCallback<JsArray<SharedProjectDetails>> callback);
 }

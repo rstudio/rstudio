@@ -18,11 +18,13 @@ import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 
 public class ProjectOpener
 {
    public void showOpenProjectDialog(
                   FileSystemContext fsContext,
+                  ProjectsServerOperations server,
                   String defaultLocation,
                   ProgressOperationWithInput<FileSystemItem> onCompleted)
    {

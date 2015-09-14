@@ -790,7 +790,7 @@ public class Projects implements OpenProjectFileHandler,
    private void showOpenProjectDialog(
                   ProgressOperationWithInput<FileSystemItem> onCompleted)
    {
-      opener_.showOpenProjectDialog(fsContext_, 
+      opener_.showOpenProjectDialog(fsContext_, projServer_,
             pUIPrefs_.get().defaultProjectLocation().getValue(),
             onCompleted);
    }
