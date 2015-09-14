@@ -19,7 +19,7 @@ import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 
 import java.util.Collection;
@@ -60,8 +60,8 @@ public class FieldReferencesGraph {
     }
   }
 
-  private Multimap<JField, JMethod> methodsByReferencedField = HashMultimap.create();
-  private Multimap<JMethod, JField> referencedFieldsByMethod = HashMultimap.create();
+  private Multimap<JField, JMethod> methodsByReferencedField = LinkedHashMultimap.create();
+  private Multimap<JMethod, JField> referencedFieldsByMethod = LinkedHashMultimap.create();
 
   /**
    * Build the field references graph of a JProgram.

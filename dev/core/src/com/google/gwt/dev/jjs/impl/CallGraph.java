@@ -18,7 +18,7 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Collection;
@@ -61,8 +61,8 @@ public class CallGraph {
     }
   }
 
-  private HashMultimap<JMethod, JMethod> calleeCallersPairs = HashMultimap.create();
-  private HashMultimap<JMethod, JMethod> callerCalleesPairs = HashMultimap.create();
+  private LinkedHashMultimap<JMethod, JMethod> calleeCallersPairs = LinkedHashMultimap.create();
+  private LinkedHashMultimap<JMethod, JMethod> callerCalleesPairs = LinkedHashMultimap.create();
 
   /**
    * Add a caller method and its callee methods to the call graph.
