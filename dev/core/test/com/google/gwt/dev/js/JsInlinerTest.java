@@ -57,6 +57,32 @@ public class JsInlinerTest extends OptimizerTestBase {
     }
   }
 
+  public void testVarInling() throws Exception {
+    String code = Joiner.on('\n').join(
+        "function a1(arg) {var a = arg.f();}",
+        "function caller_doNotInline() { a1(o); }",
+        "caller_doNotInline();");
+
+    String expected = Joiner.on('\n').join(
+        "function caller_doNotInline(){var a;a=o.f()}",
+        "caller_doNotInline();");
+
+    verifyOptimized(expected, code);
+  }
+
+  public void testInlineIntoGlobalScope() throws Exception {
+    verifyOptimized(
+        "o.f();",
+        "function a1(arg) {return arg; } a1(o).f();");
+    verifyOptimized(
+        "o();",
+        "function a1(arg) {return arg()} a1(o);");
+    verifyOptimized(
+        "f(o);",
+        "function a1(arg) {return arg;} f(a1(o));");
+    verifyNoChange("function a1(arg) {var a;  return a = arg; }; a1(o);");
+  }
+
   public void testInlineArrayLiterals() throws Exception {
     String input = "function a1(arg, x) { arg.x = x; return arg; }"
         + "function b1() { var x=a1([], 10); } b1();";
@@ -155,8 +181,7 @@ public class JsInlinerTest extends OptimizerTestBase {
         "function uniqueId_forceInline(id) {return jsinterop.closure.getUniqueId(id);}",
         "function b1() { uniqueId_forceInline('a'); uniqueId_forceInline('b');  } b1();");
     expected = Joiner.on('\n').join(
-        "function a(){jsinterop.closure.getUniqueId('a');jsinterop.closure.getUniqueId('b')}",
-        "a();");
+        "jsinterop.closure.getUniqueId('a');", "jsinterop.closure.getUniqueId('b')");
     verifyOptimizedObfuscated(expected, input);
 
     // Test DO_NOT_INLINE
@@ -165,8 +190,7 @@ public class JsInlinerTest extends OptimizerTestBase {
         "function b1() { uniqueId_doNotInline('a'); uniqueId_doNotInline('b');  } b1();");
     expected = Joiner.on('\n').join(
         "function b(a){return jsinterop.closure.getUniqueId(a)}",
-        "function c(){b('a');b('b')}",
-        "c();");
+        "b('a');b('b')");
     verifyOptimizedObfuscated(expected, input);
   }
 
@@ -200,145 +224,141 @@ public class JsInlinerTest extends OptimizerTestBase {
    * Test that a global array reference breaks argument ordering.
    */
   public void testOrderingArrayGlobal() throws Exception {
-    StringBuilder code = new StringBuilder();
+    String code = Joiner.on('\n').join(
+        "var array; ",
+        "function clinit() { clinit = null; }",
 
-    code.append("var array; ");
-    code.append("function clinit() { clinit = null; }");
+        // callee references array[0] before evaluating argument
+        "function callee(arg) { return array[0] + arg; }",
 
-    // callee references array[0] before evaluating argument
-    code.append("function callee(arg) { return array[0] + arg; }");
+        // non inlineable caller invokes callee with a multi that runs clinit()
+        "function caller_doNotInline() { callee((clinit(),2)); }",
 
-    // caller invokes callee with a multi that runs clinit()
-    code.append("function caller() { callee((clinit(),2)); }");
+        // bootstrap the program
+        "caller_doNotInline();");
 
-    // bootstrap the program
-    code.append("caller();");
-
-    verifyNoChange(code.toString());
+    verifyNoChange(code);
   }
 
   /**
    * Test that a local reference does not break argument ordering.
    */
   public void testOrderingArrayLocal() throws Exception {
-    StringBuilder code = new StringBuilder();
+    String code = Joiner.on('\n').join(
+        "function clinit() { clinit = null; }",
 
-    code.append("function clinit() { clinit = null; }");
+         // callee references array[0] before evaluating argument
+        "function callee(arg) { var array; return array[0] + arg; }",
 
-    // callee references array[0] before evaluating argument
-    code.append("function callee(arg) { var array; return array[0] + arg; }");
+        // caller invokes callee with a multi that runs clinit()
+        "function caller() { callee((clinit(),2)); }",
 
-    // caller invokes callee with a multi that runs clinit()
-    code.append("function caller() { callee((clinit(),2)); }");
+        // bootstrap the program
+        "caller();");
 
-    // bootstrap the program
-    code.append("caller();");
+    String expected = Joiner.on('\n').join(
+        "function clinit() { clinit = null; }",
+        "function caller() { var array; array[0] + (clinit(), 2); }",
+        "caller();");
 
-    StringBuilder expected = new StringBuilder();
-    expected.append("function clinit() { clinit = null; }");
-    expected.append("function caller() { var array; array[0] + (clinit(), 2); }");
-    expected.append("caller();");
-
-    verifyOptimized(expected.toString(), code.toString());
+    verifyOptimized(expected, code);
   }
 
   /**
    * Test that a field reference breaks argument ordering.
    */
   public void testOrderingField() throws Exception {
-    StringBuilder code = new StringBuilder();
+    String code = Joiner.on('\n').join(
+        "function clinit() {  clinit = null; }",
 
-    code.append("function clinit() {  clinit = null; }");
+        // callee references field.x before evaluating argument
+        "function callee(arg) { var field; return field.x + arg; }",
 
-    // callee references field.x before evaluating argument
-    code.append("function callee(arg) { var field; return field.x + arg; }");
+        // caller invokes callee with a multi that runs clinit()
+        "function caller_doNotInline() { callee((clinit(),2)); }",
 
-    // caller invokes callee with a multi that runs clinit()
-    code.append("function caller() { callee((clinit(),2)); }");
+        // bootstrap the program
+        "caller_doNotInline();");
 
-    // bootstrap the program
-    code.append("caller();");
-
-    verifyNoChange(code.toString());
+    verifyNoChange(code);
   }
 
   /**
    * Test that a global variable breaks argument ordering.
    */
   public void testOrderingGlobal() throws Exception {
-    StringBuilder code = new StringBuilder();
-    // A global variable x
-    code.append("var x;");
+    String code = Joiner.on('\n').join(
+        // A global variable x
+        "var x;",
 
-    // clinit() sets up x
-    code.append("function clinit() { x = 1; clinit = null; }");
+        // clinit() sets up x
+        "function clinit() { x = 1; clinit = null; }",
 
-    // callee references x before evaluating argument
-    code.append("function callee(arg) { alert(x); return arg; }");
+        // callee references x before evaluating argument
+        "function callee(arg) { alert(x); return arg; }",
 
-    // caller invokes callee with a multi that runs clinit()
-    code.append("function caller() { callee((clinit(),2)); }");
+        // caller invokes callee with a multi that runs clinit()
+        "function caller_doNotInline() { callee((clinit(),2)); }",
 
-    // bootstrap the program
-    code.append("caller();");
+        // bootstrap the program
+        "caller_doNotInline();");
 
-    verifyNoChange(code.toString());
+    verifyNoChange(code);
   }
 
   /**
    * Test that a local variable does not break argument ordering.
    */
   public void testOrderingLocal() throws Exception {
-    StringBuilder code = new StringBuilder();
+    String code = Joiner.on('\n').join(
+        "function clinit() { clinit = null; }",
 
-    code.append("function clinit() { clinit = null; }");
+        // callee references y before evaluating argument
+        "function callee(arg) { var y; y=2; return arg; }",
 
-    // callee references y before evaluating argument
-    code.append("function callee(arg) { var y; y=2; return arg; }");
+        // caller invokes callee with a multi that runs clinit()
+        "function caller_doNotInline() { return callee((clinit(),3)); }",
 
-    // caller invokes callee with a multi that runs clinit()
-    code.append("function caller() { return callee((clinit(),3)); }");
+        // bootstrap the program
+        "caller_doNotInline();");
 
-    // bootstrap the program
-    code.append("caller();");
+    String expected = Joiner.on('\n').join(
+        "function clinit() { clinit = null; }",
+        "function caller_doNotInline() {var y; return y=2,clinit(),3;}",
+        "caller_doNotInline();");
 
-    StringBuilder expected = new StringBuilder();
-
-    expected.append("function clinit() { clinit = null; }");
-    expected.append("function caller() {var y; return y=2,clinit(),3;}");
-    expected.append("caller();");
-    verifyOptimized(expected.toString(), code.toString());
+    verifyOptimized(expected, code);
   }
 
   /**
    * Test that a new expression breaks argument ordering.
    */
   public void testOrderingNew() throws Exception {
-    StringBuilder code = new StringBuilder();
-    // A static variable x
-    code.append("var x;");
+    String code = Joiner.on('\n').join(
+        // A static variable x
+        "var x;",
 
-    // foo() uses x
-    code.append("function foo() { alert('x = ' + x); }");
+        // foo() uses x
+        "function foo() { alert('x = ' + x); }",
 
-    // callee does "new foo" before evaluating its argument
-    code.append("function callee(arg) { new foo(); return arg; }");
+        // callee does "new foo" before evaluating its argument
+        "function callee(arg) { new foo(); return arg; }",
 
-    // caller invokes callee with a multi that initializes x
-    code.append("function caller() { callee((x=1,2)); }");
+        // caller invokes callee with a multi that initializes x
+        "function caller_doNotInline() { callee((x=1,2)); }",
 
-    // bootstrap the program
-    code.append("caller();");
+        // bootstrap the program
+        "caller_doNotInline();");
 
-    verifyNoChange(code.toString());
+    verifyNoChange(code);
   }
 
   public void testSelfRecursion() throws Exception {
     String input = "function a1() { return blah && b1() }"
-        + "function b1() { return bar && a1()}" + "function c() { a1() } c()";
+        + "function b1() { return bar && a1()}" + "function c_doNotInline() { a1() } c_doNotInline()";
 
     String expected = "function a1() { return blah && bar && a1() }"
-        + "function c() { a1() } c()";
+        + "function c_doNotInline() { a1() } c_doNotInline()";
 
     verifyOptimized(expected, input);
   }
@@ -348,33 +368,32 @@ public class JsInlinerTest extends OptimizerTestBase {
    * @see http://code.google.com/p/google-web-toolkit/issues/detail?id=5936
    */
   public void testPreserveNameScopeWithDoubleInliningAndObfuscation() throws Exception {
-    StringBuilder code = new StringBuilder();
+    String code = Joiner.on('\n').join(
+        "function getA(){",
+        "  var s;",
+        "  s = getB();",
+        "  return s;",
+        "}",
 
-    code.append("function getA(){"
-                + "var s;"
-                + "s = getB();"
-                + "return s;"
-                + "}");
+        "function getB(){",
+        "  var t;",
+        "  t = 't';",
+        "  t = t + '';",
+        "  return t;",
+        "  }",
 
-    code.append("function getB(){"
-                + "var t;"
-                + "t = 't';"
-                + "t = t + '';"
-                + "return t;"
-                + "}");
+        "function start(y){",
+        "  getA();",
+        "  if (y != 10) {$wnd.alert('y != 10');}",
+        "  }",
 
-    code.append("function start(y){"
-                + "getA();"
-                + "if (y != 10) {$wnd.alert('y != 10');}"
-                + "}");
+        "var x = 10; start(x);");
 
-    code.append("var x = 10; start(x);");
+    String expected = Joiner.on('\n').join(
+        "function c(a){var b;b='t';if(a!=10){$wnd.alert('y != 10')}}",
+        "var d=10;c(d);");
 
-    StringBuilder expected = new StringBuilder();
-    expected.append("function c(a){var b;b='t';if(a!=10){$wnd.alert('y != 10')}}");
-    expected.append("var d=10;c(d);");
-
-    verifyOptimizedObfuscated(expected.toString(), code.toString());
+    verifyOptimizedObfuscated(expected, code);
   }
 
   private void verifyNoChange(String input) throws Exception {

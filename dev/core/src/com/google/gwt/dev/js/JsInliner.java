@@ -62,7 +62,6 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultiset;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multiset;
@@ -641,20 +640,9 @@ public class JsInliner {
      */
     private JsFunction programFunction;
 
-    private final Set<JsName> safeToInlineAtTopLevel;
-
     public InliningVisitor(JsProgram program, Set<JsNode> whitelist) {
       this.whitelist = whitelist;
       invocationCountingVisitor.accept(program);
-      JsName defineClass = getFunctionName(program, "JavaClassHierarchySetupUtil.defineClass");
-      // JsInlinerTest doesn't have these functions, but doesn't need them
-      safeToInlineAtTopLevel = defineClass != null ? ImmutableSet.of(defineClass)
-          : ImmutableSet.<JsName>of();
-    }
-
-    private static JsName getFunctionName(JsProgram program, String name) {
-      JsFunction func = program.getIndexedFunction(name);
-      return func != null ? func.getName() : null;
     }
 
     /**
@@ -720,7 +708,6 @@ public class JsInliner {
         } else {
           ctx.replaceMe(new JsEmpty(x.getSourceInfo()));
         }
-
       } else if (x.getExpression() != statements.get(0).getExpression()) {
         // Something has changed
 
@@ -735,7 +722,6 @@ public class JsInliner {
           b.getStatements().addAll(statements);
           ctx.replaceMe(b);
           return;
-
         } else {
           // Insert the new statements into the original context
           for (JsStatement s : statements) {
@@ -836,18 +822,6 @@ public class JsInliner {
 
       List<JsName> newLocalVariables = newLocalVariableStack.pop();
       assert newLocalVariables.size() == 0 : "Should not have tried to create variables in program";
-    }
-
-    @Override
-    public boolean visit(JsExprStmt x, JsContext ctx) {
-      if (functionStack.peek() == programFunction) {
-        /* Don't inline most top-level invocations. */
-        if (x.getExpression() instanceof JsInvocation) {
-          return safeToInlineAtTopLevel.contains(
-              JsUtils.maybeGetFunctionName(x.getExpression()));
-        }
-      }
-      return true;
     }
 
     @Override
@@ -962,7 +936,7 @@ public class JsInliner {
          * Visit the statement to find names that will be moved to the caller's
          * scope from the invoked function.
          */
-        hoistedNameVisitor.accept(statement);
+        hoistedNameVisitor.accept(h);
 
         if (isReturnStatement(statement)) {
           sawReturnStatement = true;
@@ -976,6 +950,11 @@ public class JsInliner {
        * Get the referenced names that need to be copied to the caller's scope.
        */
       List<JsName> hoistedNames = hoistedNameVisitor.getHoistedNames();
+
+      if (hoistedNames.size() != 0 && callerFunction == programFunction) {
+        // Don't hoist variables into the global scope.
+        return x;
+      }
 
       /*
        * If the inlined method has no return statement, synthesize an undefined
@@ -1015,7 +994,8 @@ public class JsInliner {
       // Perform the name replacement
       NameRefReplacerVisitor v = new NameRefReplacerVisitor(thisExpr,
           x.getArguments(), invokedFunction.getParameters());
-      for (ListIterator<JsName> nameIterator = hoistedNames.listIterator(); nameIterator.hasNext();) {
+      for (ListIterator<JsName> nameIterator = hoistedNames.listIterator();
+          nameIterator.hasNext();) {
         JsName name = nameIterator.next();
 
         /*
@@ -1276,10 +1256,8 @@ public class JsInliner {
          * always flexible, then it would be necessary to clone the expression.
          */
         return paramsToArgsMap.get(name);
-
       } else if (nameReplacements.containsKey(name)) {
         return nameReplacements.get(name).makeRef(sourceInfo);
-
       } else {
         return null;
       }
@@ -1431,7 +1409,6 @@ public class JsInliner {
       if (name == null) {
         // Ignore anonymous functions
         return;
-
       } else if (nameMap.containsKey(name)) {
         /*
          * We have to add the current function as well as the original
@@ -1568,7 +1545,7 @@ public class JsInliner {
    * is inlined even if it slightly increases code size because by doing so it creates more
    * opportunities for the static evaluator.
    */
-  private static final int INLINING_BIAS =  Integer.parseInt(System.getProperty(
+  private static final int INLINING_BIAS = Integer.parseInt(System.getProperty(
       "gwt.jsinlinerInliningBias", "5"));
 
   /**
@@ -1619,7 +1596,6 @@ public class JsInliner {
     v.accept(func.getBody());
     return v.containsNestedFunctions();
   }
-
 
   private static OptimizerStats execImpl(JsProgram program, Collection<JsNode> toInline) {
     OptimizerStats stats = new OptimizerStats(NAME);
