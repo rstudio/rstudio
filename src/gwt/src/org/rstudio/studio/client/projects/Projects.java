@@ -159,6 +159,8 @@ public class Projects implements OpenProjectFileHandler,
             {
                commands.activateVcs().setMenuLabel(
                                     "Show _" + sessionInfo.getVcsName());
+               commands.layoutZoomVcs().setMenuLabel(
+                                    "Zoom _" + sessionInfo.getVcsName());
                
                // customize for svn if necessary
                if (sessionInfo.getVcsName().equals(VCSConstants.SVN_ID))

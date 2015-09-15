@@ -217,8 +217,10 @@ well as menu structures (for main menu and popup menus).
          
          <separator/>
          
-         <menu label="Pane Layout">
+         <menu label="P_anes">
             <cmd refid="layoutEndZoom"/>
+            <separator/>
+            <cmd refid="paneLayout"/>
             <separator/>
             <cmd refid="layoutZoomSource"/>
             <cmd refid="layoutZoomConsole"/>
@@ -258,8 +260,8 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activatePlots"/>
          <cmd refid="activatePackages"/>
          <cmd refid="activateEnvironment"/>
-         <cmd refid="activateVcs"/>
          <cmd refid="activateViewer"/>
+         <cmd refid="activateVcs"/>
          <cmd refid="activateBuild"/>
          
          <separator/>
@@ -986,7 +988,7 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="activatePackages"
         label="Show Packages Pane"
-        menuLabel="Show P_ackages"
+        menuLabel="Show Pac_kages"
         windowMode="main"/>
         
    <cmd id="activateHelp"
@@ -1005,7 +1007,9 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
         
    <cmd id="activateViewer"
-        label="Show Viewer"/>
+        label="Show Viewer Pane"
+        menuLabel="Show Vie_wer"
+        windowMode="main"/>
         
    <cmd id="activatePresentation"
         label="Show Presentation Pane"
@@ -1015,66 +1019,68 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="layoutZoomSource"
         checkable="true"
-        label="Zoom Source"/>
+        label="Zoom Source"
+        menuLabel="Zoom Sou_rce"/>
         
    <cmd id="layoutZoomConsole"
         checkable="true"
         label="Zoom Console"
+        menuLabel="Zoom _Console"
         windowMode="main"/>
         
    <cmd id="layoutZoomEnvironment"
         checkable="true"
         label="Zoom Environment"
-        windowMode="main"/>
-        
-   <cmd id="layoutZoomData"
-        checkable="true"
-        label="Zoom Data"
+        menuLabel="Zoom _Environment"
         windowMode="main"/>
         
    <cmd id="layoutZoomHistory"
         checkable="true"
         label="Zoom History"
+        menuLabel="Zoom Histor_y"
         windowMode="main"/>
         
    <cmd id="layoutZoomFiles"
         checkable="true"
         label="Zoom Files"
+        menuLabel="Zoom F_iles"
         windowMode="main"/>
         
    <cmd id="layoutZoomPlots"
         checkable="true"
         label="Zoom Plots"
+        menuLabel="Zoom Pl_ots"
         windowMode="main"/>
         
    <cmd id="layoutZoomPackages"
         checkable="true"
         label="Zoom Packages"
+        menuLabel="Zoom P_ackages"
         windowMode="main"/>
         
    <cmd id="layoutZoomHelp"
         checkable="true"
         label="Zoom Help"
+        menuLabel="Zoom _Help"
         windowMode="main"/>
         
    <cmd id="layoutZoomVcs"
         checkable="true"
         label="Zoom VCS"
+        menuLabel="Zoom VCS"
         windowMode="main"/>
         
    <cmd id="layoutZoomBuild"
         checkable="true"
         label="Zoom Build"
+        menuLabel="Zoom _Build"
         windowMode="main"/>
-        
-   <cmd id="layoutZoomPresentation"
-        checkable="true"
-        label="Zoom Presentation"
-        windowMode="main"/>
-        
+               
    <cmd id="layoutZoomViewer"
         checkable="true"
-        label="Zoom Viewer"/>
+        label="Zoom Viewer"
+        menuLabel="Zoom Vie_wer"
+        windowMode="main"/>
         
    <cmd id="layoutZoomCurrentPane"
         checkable="true"
@@ -1082,7 +1088,13 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="layoutEndZoom"
         checkable="true"
-        label="Show All Panes"/>
+        label="Show All Panes"
+        menuLabel="_Show All Panes"
+        windowMode="main"/>
+        
+   <cmd id="paneLayout"
+        menuLabel="Pane Layo_ut..."
+        windowMode="main"/>     
         
    <cmd id="jumpTo"
         label="Jump To..."
