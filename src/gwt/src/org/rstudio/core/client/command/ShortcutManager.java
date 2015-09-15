@@ -111,11 +111,14 @@ public class ShortcutManager implements NativePreviewHandler,
       
       ArrayList<AppCommand> commands = customBindings_.get(shortcut);
       commands.add(command);
+      
+      maskedCommands_.put(command, true);
    }
    
    public void clearCustomBindings()
    {
       customBindings_.clear();
+      maskedCommands_.clear();
    }
    
    public void register(int modifiers, 
@@ -385,7 +388,7 @@ public class ShortcutManager implements NativePreviewHandler,
          return true;
       
       // Check for RStudio AppCommands.
-      if (dispatch(shortcut, commands_, e))
+      if (dispatch(shortcut, commands_, e, maskedCommands_))
          return true;
       
       return false;
@@ -395,6 +398,14 @@ public class ShortcutManager implements NativePreviewHandler,
    private boolean dispatch(KeyboardShortcut shortcut,
                             Map<KeyboardShortcut, ArrayList<AppCommand>> bindings,
                             NativeEvent event)
+   {
+      return dispatch(shortcut, bindings, event, null);
+   }
+   
+   private boolean dispatch(KeyboardShortcut shortcut,
+                            Map<KeyboardShortcut, ArrayList<AppCommand>> bindings,
+                            NativeEvent event,
+                            Map<AppCommand, Boolean> maskedCommandsMap)
    {
       if (!bindings.containsKey(shortcut) || bindings.get(shortcut) == null) 
          return false;
@@ -411,6 +422,14 @@ public class ShortcutManager implements NativePreviewHandler,
             // to the browser when they are disabled (e.g. Cmd+W)
             if (!enabled && !command.preventShortcutWhenDisabled())
                return false;
+            
+            // if we've remapped an AppCommand to a new binding, it's
+            // implicitly disabled
+            if (maskedCommandsMap != null && maskedCommandsMap.containsKey(command))
+            {
+               command = null;
+               continue;
+            }
             
             event.preventDefault();
 
@@ -437,6 +456,9 @@ public class ShortcutManager implements NativePreviewHandler,
    
    private final Map<KeyboardShortcut, ArrayList<AppCommand>> customBindings_ =
          new HashMap<KeyboardShortcut, ArrayList<AppCommand>>();
+   
+   private final Map<AppCommand, Boolean> maskedCommands_ =
+         new HashMap<AppCommand, Boolean>();
    
    private List<KeyboardShortcut> unboundShortcuts_ =
          new ArrayList<KeyboardShortcut>();

@@ -192,6 +192,7 @@ public class AceEditorNative extends JavaScriptObject {
    }-*/;
    
    public final native void manageDefaultKeybindings() /*-{
+      
       // We bind 'Ctrl + Shift + M' to insert a magrittr shortcut on Windows
       delete this.commands.commandKeyBinding["ctrl-shift-m"];
       
@@ -201,6 +202,16 @@ public class AceEditorNative extends JavaScriptObject {
       // We bind 'Ctrl + Alt + A' to 'split into lines'
       if (this.commands.platform !== "mac")
          delete this.commands.commandKeyBinding["ctrl-alt-a"];
+         
+      // We don't use the internal Ace binding for 'jump to matching',
+      // and the binding conflicts with 'Ctrl-P' for moving cursor up
+      // when desired by the user (ie, when the RStudio 'jump to matching'
+      // is moved out of the way)
+      var binding = this.commands.commandKeyBinding["ctrl-p"];
+      if (binding[1] && binding[1].name && binding[1].name === "jumptomatching") {
+         this.commands.commandKeyBinding["ctrl-p"] = binding[0];
+      }
+      
    }-*/;
 
    public static <T> HandlerRegistration addEventListener(
