@@ -16,9 +16,11 @@
 package java.util;
 
 import static javaemul.internal.InternalPreconditions.checkArgument;
+import static javaemul.internal.InternalPreconditions.checkElement;
 import static javaemul.internal.InternalPreconditions.checkElementIndex;
 import static javaemul.internal.InternalPreconditions.checkPositionIndex;
 import static javaemul.internal.InternalPreconditions.checkPositionIndexes;
+import static javaemul.internal.InternalPreconditions.checkState;
 
 import java.io.Serializable;
 
@@ -132,6 +134,34 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   @Override
   public int indexOf(Object o) {
     return indexOf(o, 0);
+  }
+
+  @Override
+  public Iterator<E> iterator() {
+    return new Iterator<E>() {
+      int i = 0, last = -1;
+
+      @Override
+      public boolean hasNext() {
+        return i < array.length;
+      }
+
+      @Override
+      public E next() {
+        checkElement(hasNext());
+
+        last = i++;
+        return array[last];
+      }
+
+      @Override
+      public void remove() {
+        checkState(last != -1);
+
+        ArrayList.this.remove(i = last);
+        last = -1;
+      }
+    };
   }
 
   @Override
