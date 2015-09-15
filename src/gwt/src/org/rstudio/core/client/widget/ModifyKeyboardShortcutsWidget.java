@@ -1146,7 +1146,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       Element el = (Element) object;
       
       int index = StringUtil.parseInt(el.getAttribute("__rstudio_masked_index"), -1);
-      CommandBinding conflictBinding = dataProvider_.getList().get(index);
+      CommandBinding conflictBinding = originalBindings_.get(index);
       
       Element divEl = DOM.createDiv();
       Element spanEl = DOM.createSpan();
