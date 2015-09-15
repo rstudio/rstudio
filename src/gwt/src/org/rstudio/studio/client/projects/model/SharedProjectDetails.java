@@ -26,6 +26,10 @@ public class SharedProjectDetails extends JavaScriptObject
    public final native String getProjectDir() /*-{
       return this.project_dir;
    }-*/;
+   
+   public final native String getProjectFile() /*-{
+      return this.project_file;
+   }-*/;
 
    public final native String getProjectOwner() /*-{
       return this.project_owner;
