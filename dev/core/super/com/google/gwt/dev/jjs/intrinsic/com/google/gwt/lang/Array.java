@@ -191,10 +191,7 @@ public final class Array {
     var initValue;
     switch (elementTypeCategory) {
       case @com.google.gwt.lang.Array::TYPE_PRIMITIVE_LONG:
-        // Fill array with the type used by LongLib
-        // TODO(rluble): This should refer to the zero long value defined in LongLib
-        initValue = {l: 0, m: 0, h:0};
-        break;
+        // Fill array with fast long version of 0, which is just the number 0; so fall through.
       case @com.google.gwt.lang.Array::TYPE_PRIMITIVE_NUMBER:
           initValue = 0;
         break;
