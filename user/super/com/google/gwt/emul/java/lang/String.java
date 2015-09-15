@@ -26,6 +26,7 @@ import java.util.Comparator;
 import java.util.Locale;
 
 import javaemul.internal.ArrayHelper;
+import javaemul.internal.ArrayStamper;
 import javaemul.internal.EmulatedCharset;
 import javaemul.internal.HashCodes;
 import javaemul.internal.annotations.DoNotInline;
@@ -157,13 +158,6 @@ public final class String implements Comparable<String>, CharSequence,
 
   // CHECKSTYLE_OFF: This class has special needs.
 
-  /**
-   * @skip
-   */
-  static String[] __createArray(int numElements) {
-    return new String[numElements];
-  }
-
   static native String __substr(String str, int beginIndex, int len) /*-{
     return str.substr(beginIndex, len);
   }-*/;
@@ -175,7 +169,7 @@ public final class String implements Comparable<String>, CharSequence,
    *
    * @skip
    */
-  static String __translateReplaceString(String replaceStr) {
+  private static String translateReplaceString(String replaceStr) {
     int pos = 0;
     while (0 <= (pos = replaceStr.indexOf("\\", pos))) {
       if (replaceStr.charAt(pos + 1) == '$') {
@@ -187,8 +181,6 @@ public final class String implements Comparable<String>, CharSequence,
     }
     return replaceStr;
   }
-
- 
 
   // CHECKSTYLE_ON
 
@@ -532,13 +524,19 @@ public final class String implements Comparable<String>, CharSequence,
     return regionMatches(false, toffset, other, ooffset, len);
   }
 
-  public native String replace(char from, char to) /*-{
+  public String replace(char from, char to) {
     // Translate 'from' into unicode escape sequence (\\u and a four-digit hexadecimal number).
     // Escape sequence replacement is used instead of a string literal replacement
     // in order to escape regexp special characters (e.g. '.').
-    var hex = @java.lang.Integer::toHexString(I)(from);
-    var regex = "\\u" + "0000".substring(hex.length) + hex;
-    return this.replace(RegExp(regex, "g"), String.fromCharCode(to));
+    String hex = Integer.toHexString(from);
+    String regex = "\\u" + "0000".substring(hex.length()) + hex;
+    Object jsRegEx = createRegEx(regex, "g");
+    String replace = fromCharCode(to);
+    return replace(jsRegEx, replace);
+  }
+
+  private native String fromCharCode(char to) /*-{
+    return String.fromCharCode(to);
   }-*/;
 
   public String replace(CharSequence from, CharSequence to) {
@@ -565,10 +563,11 @@ public final class String implements Comparable<String>, CharSequence,
    *
    * TODO(jat): properly handle Java regex syntax
    */
-  public native String replaceAll(String regex, String replace) /*-{
-    replace = @java.lang.String::__translateReplaceString(Ljava/lang/String;)(replace);
-    return this.replace(RegExp(regex, "g"), replace);
-  }-*/;
+  public String replaceAll(String regex, String replace) {
+    replace = translateReplaceString(replace);
+    Object jsRegEx = createRegEx(regex, "g");
+    return replace(jsRegEx, replace);
+  }
 
   /**
    * Regular expressions vary from the standard implementation. The
@@ -578,9 +577,18 @@ public final class String implements Comparable<String>, CharSequence,
    *
    * TODO(jat): properly handle Java regex syntax
    */
-  public native String replaceFirst(String regex, String replace) /*-{
-    replace = @java.lang.String::__translateReplaceString(Ljava/lang/String;)(replace);
-    return this.replace(RegExp(regex), replace);
+  public String replaceFirst(String regex, String replace) {
+    replace = translateReplaceString(replace);
+    Object jsRegEx = createRegEx(regex, "");
+    return replace(jsRegEx, replace);
+  }
+
+  private native Object createRegEx(String regex, String mode) /*-{
+    return RegExp(regex, mode);
+  }-*/;
+
+  private native String replace(Object regex, String replace) /*-{
+    return this.replace(regex, replace);
   }-*/;
 
   /**
@@ -601,7 +609,13 @@ public final class String implements Comparable<String>, CharSequence,
    *
    * TODO(jat): properly handle Java regex syntax
    */
-  public native String[] split(String regex, int maxMatch) /*-{
+  public String[] split(String regex, int maxMatch) {
+    String[] jsArrayString = split0(regex, maxMatch);
+    ArrayStamper.stampJavaTypeInfo(jsArrayString, new String[0]);
+    return jsArrayString;
+  }
+
+  public native String[] split0(String regex, int maxMatch) /*-{
     // The compiled regular expression created from the string
     var compiled = new RegExp(regex, "g");
     // the Javascipt array to hold the matches prior to conversion
@@ -648,11 +662,7 @@ public final class String implements Comparable<String>, CharSequence,
         out.splice(lastNonEmpty, out.length - lastNonEmpty);
       }
     }
-    var jr = @java.lang.String::__createArray(I)(out.length);
-    for ( var i = 0; i < out.length; ++i) {
-      jr[i] = out[i];
-    }
-    return jr;
+    return out;
   }-*/;
 
   public boolean startsWith(String prefix) {

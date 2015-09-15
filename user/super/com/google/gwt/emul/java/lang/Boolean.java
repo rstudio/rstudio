@@ -15,6 +15,8 @@
  */
 package java.lang;
 
+import static javaemul.internal.InternalPreconditions.checkNotNull;
+
 import java.io.Serializable;
 
 /**
@@ -88,19 +90,23 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
     $createBoolean(s);
   }
 
-  public native boolean booleanValue() /*-{
-    return @javaemul.internal.InternalPreconditions::checkNotNull(Ljava/lang/Object;)(this);
+  public boolean booleanValue() {
+    return unsafeCast(checkNotNull(this));
+  }
+
+  private native boolean unsafeCast(Object value) /*-{
+    return value;
   }-*/;
 
   @Override
   public int compareTo(Boolean b) {
     return compare(booleanValue(), b.booleanValue());
-  };
+  }
 
   @Override
-  public native boolean equals(Object o) /*-{
-    return this === o;
-  }-*/;
+  public boolean equals(Object o) {
+    return checkNotNull(this) == o;
+  }
 
   @Override
   public int hashCode() {
