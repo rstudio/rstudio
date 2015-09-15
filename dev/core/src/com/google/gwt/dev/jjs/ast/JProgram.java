@@ -29,8 +29,10 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.base.Predicates;
 import com.google.gwt.thirdparty.guava.common.collect.BiMap;
 import com.google.gwt.thirdparty.guava.common.collect.Collections2;
+import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 import com.google.gwt.thirdparty.guava.common.collect.HashBiMap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
@@ -65,9 +67,11 @@ public class JProgram extends JNode implements ArrayTypeCreator {
   public enum DispatchType {
     // These this list can be extended by creating the appropriate fields/methods on Cast,
     // as well as extending the TypeCategory enum and updating EqualityNormalizer.
-    STRING(true),
-    DOUBLE(true),
+    // The order in which these native types appear is the inverse as the way they are
+    // checked by devirtualized method.
     BOOLEAN(true),
+    DOUBLE(true),
+    STRING(true),
 
     // non-native represented type values.
     HAS_JAVA_VIRTUAL_DISPATCH(false), JAVA_ARRAY(false), JSO(false);
@@ -76,6 +80,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     private final String castMapField;
     private final TypeCategory typeCategory;
     private final String dynamicCastMethod;
+    private final String className;
 
     DispatchType(boolean nativeType) {
       if (nativeType) {
@@ -90,11 +95,13 @@ public class JProgram extends JNode implements ArrayTypeCreator {
         this.castMapField = "Cast." + name().toLowerCase() + "CastMap";
         this.dynamicCastMethod = "Cast.dynamicCastTo" + camelCase(name());
         this.typeCategory = TypeCategory.valueOf("TYPE_JAVA_LANG_" + name());
+        this.className = "java.lang." + camelCase(name());
       } else {
-        instanceOfMethod = null;
-        castMapField = null;
-        typeCategory = null;
-        dynamicCastMethod = null;
+        this.instanceOfMethod = null;
+        this.castMapField = null;
+        this.typeCategory = null;
+        this.dynamicCastMethod = null;
+        this.className = null;
       }
     }
 
@@ -116,6 +123,10 @@ public class JProgram extends JNode implements ArrayTypeCreator {
 
     public String getDynamicCastMethod() {
       return dynamicCastMethod;
+    }
+
+    public String getclassName() {
+      return className;
     }
   }
 
@@ -372,7 +383,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
 
   private FragmentPartitioningResult fragmentPartitioningResult;
 
-  private Map<JClassType, DispatchType> nativeType2DispatchType;
+  private Map<JClassType, DispatchType> dispatchTypeByNativeType;
 
   /**
    * Add a pinned method.
@@ -455,6 +466,16 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     }
   }
 
+  public static boolean isRepresentedAsNative(String className) {
+    return FluentIterable.from(Arrays.asList(DispatchType.values())).transform(
+        new Function<DispatchType, String>() {
+          @Override
+          public String apply(DispatchType dispatchType) {
+            return dispatchType.getclassName();
+          }
+        }).filter(Predicates.notNull()).toSet().contains(className);
+  }
+
   public boolean isRepresentedAsNativeJsPrimitive(JType type) {
     return getRepresentedAsNativeTypes().contains(type);
   }
@@ -464,15 +485,19 @@ public class JProgram extends JNode implements ArrayTypeCreator {
   }
 
   public Map<JClassType, DispatchType> getRepresentedAsNativeTypesDispatchMap() {
-     if (nativeType2DispatchType == null) {
-       // these are returned in the reverse order in which they are checked
-       // because devirtualizer constructs the nested expressions from the inside out.
-       nativeType2DispatchType = ImmutableMap.of(
-           typeBoolean, DispatchType.BOOLEAN,
-           typeDouble, DispatchType.DOUBLE,
-           typeString, DispatchType.STRING);
+     if (dispatchTypeByNativeType == null) {
+       ImmutableMap.Builder builder = new ImmutableMap.Builder();
+       for (DispatchType dispatchType : DispatchType.values()) {
+         if (dispatchType.getclassName() == null) {
+           continue;
+         }
+         JClassType classType = (JClassType) getFromTypeMap(dispatchType.getclassName());
+         assert classType != null : "Class " + dispatchType.getclassName() + " has not been loaded";
+         builder.put(classType, dispatchType);
+       }
+       dispatchTypeByNativeType = builder.build();
      }
-    return nativeType2DispatchType;
+    return dispatchTypeByNativeType;
   }
 
   public EnumSet<DispatchType> getDispatchType(JReferenceType type) {

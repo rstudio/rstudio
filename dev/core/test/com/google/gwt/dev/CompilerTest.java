@@ -1262,6 +1262,14 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkIncrementalRecompile_devirtualizeString(JsOutputOption.DETAILED);
   }
 
+  public void testIncrementalRecompile_devirtualizeComparable()
+      throws UnableToCompleteException, IOException, InterruptedException {
+    // Tests that Doublecalls through interfaces are correctly devirtualized when compiling per
+    // file and neither String nor CharSequence interface are stale.
+    checkIncrementalRecompile_devirtualizeComparable(JsOutputOption.OBFUSCATED);
+    checkIncrementalRecompile_devirtualizeComparable(JsOutputOption.DETAILED);
+  }
+
   public void testIncrementalRecompile_multipleClassGenerator()
       throws UnableToCompleteException, IOException, InterruptedException {
     // Tests that a Generated type that is not directly referenced from the rebound GWT.create()
@@ -1625,15 +1633,15 @@ public class CompilerTest extends ArgProcessorTestBase {
     MinimalRebuildCache relinkMinimalRebuildCache = new MinimalRebuildCache();
     File relinkApplicationDir = Files.createTempDir();
 
-    String originalJs = compileToJs(relinkApplicationDir, "com.foo.SimpleModule", Lists
-        .newArrayList(simpleModuleResource, simpleModelEntryPointResource, simpleModelResource,
+    String originalJs = compileToJs(relinkApplicationDir, "com.foo.SimpleModule",
+        Lists.newArrayList(simpleModuleResource, simpleModelEntryPointResource, simpleModelResource,
             constantsModelResource),
         relinkMinimalRebuildCache, emptySet, output);
 
     // Compile again with the same source but a new date stamp on SimpleModel and reusing the
     // minimalRebuildCache.
     String relinkedJs = compileToJs(relinkApplicationDir, "com.foo.SimpleModule",
-        Lists.<MockResource> newArrayList(simpleModelResource), relinkMinimalRebuildCache,
+        Lists.<MockResource>newArrayList(simpleModelResource), relinkMinimalRebuildCache,
         stringSet("com.foo.TestEntryPoint", "com.foo.SimpleModel"), output);
 
     assertTrue(originalJs.equals(relinkedJs));
@@ -1807,6 +1815,39 @@ public class CompilerTest extends ArgProcessorTestBase {
         devirtualizeStringEntryPointResource, devirtualizeStringEntryPointResource,
         stringSet("com.foo.DevirtualizeStringEntryPoint",
             getEntryMethodHolderTypeName("com.foo.DevirtualizeStringModule")),
+        output);
+  }
+
+  private void checkIncrementalRecompile_devirtualizeComparable(JsOutputOption output)
+      throws UnableToCompleteException, IOException, InterruptedException {
+
+    final MockResource devirtualizeComparableModuleResource =
+        JavaResourceBase.createMockResource("com/foo/DevirtualizeComparableModule.gwt.xml",
+            "<module>",
+            "<source path=''/>",
+            "<entry-point class='com.foo.DevirtualizeComparableEntryPoint'/>",
+            "</module>");
+
+    final MockJavaResource devirtualizeComparableEntryPointResource =
+        JavaResourceBase.createMockJavaResource("com.foo.DevirtualizeComparableEntryPoint",
+            "package com.foo;",
+            "import com.google.gwt.core.client.EntryPoint;",
+            "public class DevirtualizeComparableEntryPoint implements EntryPoint {",
+            "  @Override",
+            "  public void onModuleLoad() {",
+            "    Comparable c = (Double) 0.1;",
+            "    c.compareTo(c);",
+            "  }",
+            "}");
+
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    compilerOptions.setUseDetailedTypeIds(true);
+
+    checkRecompiledModifiedApp(compilerOptions, "com.foo.DevirtualizeComparableModule",
+        Lists.newArrayList(devirtualizeComparableModuleResource),
+        devirtualizeComparableEntryPointResource, devirtualizeComparableEntryPointResource,
+        stringSet("com.foo.DevirtualizeComparableEntryPoint",
+            getEntryMethodHolderTypeName("com.foo.DevirtualizeComparableModule")),
         output);
   }
 
