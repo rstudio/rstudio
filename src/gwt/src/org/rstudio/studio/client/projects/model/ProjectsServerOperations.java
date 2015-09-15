@@ -61,5 +61,6 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
    void getAllServerUsers(ServerRequestCallback<JsArrayString> callback);
    
    void getSharedProjects(
+         int maxProjects,
          ServerRequestCallback<JsArray<SharedProjectDetails>> callback);
 }

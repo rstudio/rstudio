@@ -4280,10 +4280,12 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void getSharedProjects(
+   public void getSharedProjects(int maxProjects,
          ServerRequestCallback<JsArray<SharedProjectDetails>> callback)
    {
-      sendRequest(RPC_SCOPE, "get_shared_projects", callback);
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONNumber(maxProjects));
+      sendRequest(RPC_SCOPE, "get_shared_projects", params, callback);
    }
 
    private String clientId_;
