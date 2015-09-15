@@ -23,6 +23,7 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.SplitterResizedEvent;
 import com.google.gwt.user.client.ui.Widget;
@@ -39,6 +40,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.ManageLayoutCommandsEvent;
 import org.rstudio.core.client.events.WindowEnsureVisibleEvent;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.layout.DualWindowLayoutPanel;
 import org.rstudio.core.client.layout.LogicalWindow;
 import org.rstudio.core.client.layout.WindowState;
@@ -55,6 +57,7 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
+import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
@@ -103,6 +106,91 @@ public class PaneManager
       protected Integer getValue() { return tabPanel_.getSelectedIndex(); }
 
       private final WorkbenchTabPanel tabPanel_;
+   }
+   
+   private class ZoomedTabStateValue extends JSObjectStateValue
+   {
+      public ZoomedTabStateValue()
+      {
+         super("workbench-pane", "TabZoom", ClientState.PROJECT_PERSISTENT,
+               session_.getSessionInfo().getClientState(), true);
+         finishInit(session_.getSessionInfo().getClientState());
+      }
+      
+      @Override
+      protected void onInit(final JsObject value)
+      {
+         if (value == null)
+            return;
+         
+         if (!value.hasKey(MAXIMIZED_TAB_KEY) || !value.hasKey(WIDGET_SIZE_KEY))
+            return;
+         
+         // Time-out action just to ensure all client state is ready
+         new Timer()
+         {
+            @Override
+            public void run()
+            {
+               String tabString = value.getString(MAXIMIZED_TAB_KEY);
+               double widgetSize = value.getDouble(WIDGET_SIZE_KEY);
+               
+               maximizedTab_ = Tab.valueOf(tabString);
+               maximizedWindow_ = getWindowForTab(maximizedTab_);
+               widgetSizePriorToZoom_ = widgetSize;
+               fullyMaximizeWindow(maximizedWindow_, maximizedTab_);
+               manageLayoutCommands();
+            }
+         }.schedule(200);
+      }
+      
+      @Override
+      protected boolean hasChanged()
+      {
+         if (lastValue_ == null)
+            return true;
+         
+         JsObject oldValue = lastValue_;
+         JsObject newValue = getValue();
+         
+         boolean oldHasKey = oldValue.hasKey(MAXIMIZED_TAB_KEY);
+         boolean newHasKey = newValue.hasKey(MAXIMIZED_TAB_KEY);
+         
+         if (oldHasKey && newHasKey)
+            return !oldValue.getString(MAXIMIZED_TAB_KEY).equals(newValue.getString(MAXIMIZED_TAB_KEY));
+         
+         return oldHasKey != newHasKey;
+      }
+      
+      @Override
+      protected JsObject getValue()
+      {
+         final JsObject object = JsObject.createJsObject();
+         if (maximizedTab_ != null)
+            object.setString(MAXIMIZED_TAB_KEY, maximizedTab_.toString());
+         
+         if (widgetSizePriorToZoom_ >= 0)
+            object.setDouble(WIDGET_SIZE_KEY, widgetSizePriorToZoom_);
+         
+         lastValue_ = object;
+         return object;
+      }
+      
+      private static final String MAXIMIZED_TAB_KEY = "MaximizedTab";
+      private static final String WIDGET_SIZE_KEY = "WidgetSize";
+      
+      private JsObject lastValue_ = null;
+      
+   }
+   
+   private LogicalWindow getWindowForTab(Tab tab)
+   {
+      switch (tab)
+      {
+      case Console: return getConsoleLogicalWindow();
+      case Source:  return getSourceLogicalWindow();
+      default:      return getOwnerTabPanel(tab).getParentWindow();
+      }
    }
 
    @Inject
@@ -277,6 +365,7 @@ public class PaneManager
             });
       
       manageLayoutCommands();
+      new ZoomedTabStateValue();
    }
    
    int computeAppropriateWidth()
@@ -392,11 +481,11 @@ public class PaneManager
          maximizedTab_ = Tab.Console;
       else
          maximizedTab_ = tab;
+      maximizedWindow_ = window;
       
       manageLayoutCommands();
       panel_.setSplitterEnabled(false);
          
-      maximizedWindow_ = window;
       if (widgetSizePriorToZoom_ < 0)
          widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
       
