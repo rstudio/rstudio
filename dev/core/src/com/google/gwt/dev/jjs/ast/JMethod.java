@@ -95,7 +95,11 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
   }
 
   private boolean isJsInterfaceMethod() {
-    return enclosingType instanceof JInterfaceType && enclosingType.isJsType();
+    return isInterFaceMethod() && enclosingType.isJsType();
+  }
+
+  private boolean isInterFaceMethod() {
+    return enclosingType instanceof JInterfaceType;
   }
 
   @Override
@@ -136,6 +140,29 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
 
   public boolean isJsConstructor() {
     return isConstructor() && jsName != null;
+  }
+
+  /**
+   * Returns {@code true} if this method is the first method in the method hierarchy that exposes a
+   * JsMethod inside a class.
+   */
+  public boolean exposesJsMethod() {
+    if (isInterFaceMethod()) {
+      return false;
+    }
+
+    boolean isJsMethod = jsName != null;
+    for (JMethod override : getOverriddenMethods()) {
+      if (override.jsName == null) {
+        continue;
+      }
+      isJsMethod = true;
+      if (!override.isInterFaceMethod()) {
+        return false; // some other method already exposed this method.
+      }
+    }
+
+    return isJsMethod;
   }
 
   public boolean isOrOverridesJsMethod() {
@@ -441,24 +468,26 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
   }
 
   /**
-   * Returns true if this method overrides a package private method and increases its
-   * visibility.
+   * Returns {@code true} if this method is the first method in the method hierarchy that increases
+   * the visibility of a package private method.
    */
-  public boolean exposesOverriddenPackagePrivateMethod() {
+  public boolean exposesPackagePrivateMethod() {
     if (isPrivate() || isPackagePrivate()) {
       return false;
     }
 
+    boolean hasPackageVisibleParent = false;
     for (JMethod overriddenMethod : overriddenMethods) {
-      if (overriddenMethod.getEnclosingType() instanceof JInterfaceType) {
+      if (overriddenMethod.isInterFaceMethod()) {
         continue;
       }
-      if (overriddenMethod.isPackagePrivate()) {
-        return true;
+      if (!overriddenMethod.isPackagePrivate()) {
+        return false; // some other method already exposed this method.
       }
+      hasPackageVisibleParent = true;
     }
 
-    return false;
+    return hasPackageVisibleParent;
   }
 
   public AccessModifier getAccess() {

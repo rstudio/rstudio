@@ -166,20 +166,6 @@ public class JavaClassHierarchySetupUtil {
   }-*/;
 
   /**
-   * If the parameter o is a Javascript object, return the bridge method reference,
-   * otherwise return the nonbridge reference.
-   * @param o an instance object we want to invoke a method on
-   * @param bridgeRef a reference to an exported, bridgereference or jstype method
-   * @param nonbridgeRef the internal reference to Java obfuscated method
-   * @return
-   */
-  public static native boolean trampolineBridgeMethod(Object o, Object bridgeRef,
-      Object nonbridgeRef) /*-{
-    return @com.google.gwt.lang.Cast::isJavaScriptObject(Ljava/lang/Object;)(o)
-        ? bridgeRef : nonbridgeRef;
-  }-*/;
-
-  /**
    * Do polyfills for all methods expected in a modern browser.
    */
   public static native void modernizeBrowser() /*-{

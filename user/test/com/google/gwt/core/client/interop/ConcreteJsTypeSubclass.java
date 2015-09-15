@@ -32,7 +32,8 @@ class ConcreteJsTypeSubclass extends ConcreteJsType {
    * do not override already exported members.
    */
 
-  public void publicSubclassMethod() {
+  public int publicSubclassMethod() {
+    return super.publicMethod();
   }
 
   public static void publicStaticSubclassMethod() {

@@ -81,10 +81,24 @@ public class JsTypeTest extends GWTTestCase {
     assertJsTypeDoesntHaveFields(concreteJsType, "publicStaticMethod", "privateMethod",
         "protectedMethod", "packageMethod", "publicStaticField", "privateField", "protectedField",
         "packageField");
+
+    assertEquals(10, callIntFunction(concreteJsType, "publicMethod"));
+  }
+
+  public void testAbstractJsTypeAccess() {
+    AbstractJsType jsType = new AbstractJsType() {
+      @Override
+      public int publicMethod() {
+        return 32;
+      }
+    };
+
+    assertJsTypeHasFields(jsType, "publicMethod");
+    assertEquals(32, callIntFunction(jsType, "publicMethod"));
+    assertEquals(32, jsType.publicMethod());
   }
 
   public void testConcreteJsTypeSubclassAccess() {
-    ConcreteJsType concreteJsType = new ConcreteJsType();
     ConcreteJsTypeSubclass concreteJsTypeSubclass = new ConcreteJsTypeSubclass();
 
     // A subclass of a JsType is not itself a JsType.
@@ -94,12 +108,10 @@ public class JsTypeTest extends GWTTestCase {
         "privateSubclassField", "protectedSubclassField", "packageSubclassField");
 
     // But if it overrides an exported method then the overriding method will be exported.
-    assertJsTypeHasFields(concreteJsType, "publicMethod");
     assertJsTypeHasFields(concreteJsTypeSubclass, "publicMethod");
-    assertFalse(
-        areSameFunction(concreteJsType, "publicMethod", concreteJsTypeSubclass, "publicMethod"));
-    assertFalse(callIntFunction(concreteJsType, "publicMethod")
-        == callIntFunction(concreteJsTypeSubclass, "publicMethod"));
+
+    assertEquals(20, callIntFunction(concreteJsTypeSubclass, "publicMethod"));
+    assertEquals(10, concreteJsTypeSubclass.publicSubclassMethod());
   }
 
   public void testConcreteJsTypeNoTypeTightenField() {
@@ -350,11 +362,6 @@ public class JsTypeTest extends GWTTestCase {
 
   private static native boolean alwaysTrue() /*-{
     return !!$wnd;
-  }-*/;
-
-  private static native boolean areSameFunction(
-      Object thisObject, String thisFunctionName, Object thatObject, String thatFunctionName) /*-{
-    return thisObject[thisFunctionName] === thatObject[thatFunctionName];
   }-*/;
 
   private static native int callIntFunction(Object object, String functionName) /*-{

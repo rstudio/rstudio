@@ -2657,9 +2657,9 @@ public class GenerateJavaScriptAST {
     }
 
     private void generateVTableAlias(List<JsStatement> globalStmts, JMethod method, JsName alias) {
-      JsNameRef polyname = polymorphicNames.get(method).makeRef(method.getSourceInfo());
-      polyname.setQualifier(getPrototypeQualifierOf(method));
-      generateVTableAssignment(globalStmts, method, alias, polyname);
+      JsName polyName = polymorphicNames.get(method);
+      JsExpression bridge = JsUtils.createBridge(method, polyName, topScope);
+      generateVTableAssignment(globalStmts, method, alias, bridge);
     }
 
     private JsExprStmt outputDisplayName(JsNameRef function, JMethod method) {
@@ -2695,51 +2695,42 @@ public class GenerateJavaScriptAST {
     private void generateVTables(JClassType x, List<JsStatement> globalStmts) {
       assert x != program.getTypeJavaLangString();
       for (JMethod method : x.getMethods()) {
-        if (method.needsVtable() && !method.isAbstract()) {
-          /*
-           * Inline JsFunction rather than reference, e.g. _.vtableName =
-           * function functionName() { ... }
-           */
+        if (!method.needsVtable()) {
+          continue;
+        }
+
+        if (!method.isAbstract()) {
           JsExpression rhs = getJsFunctionFor(method);
           generateVTableAssignment(globalStmts, method, polymorphicNames.get(method), rhs);
+        }
 
-          if (method.isOrOverridesJsMethod()) {
-            String jsName = method.getJsName();
-            JsName exportedName = interfaceScope.declareName(jsName, jsName);
-            exportedName.setObfuscatable(false);
-            generateVTableAlias(globalStmts, method, exportedName);
-          }
+        if (method.exposesJsMethod()) {
+          String jsName = method.getJsName();
+          JsName exportedName = interfaceScope.declareName(jsName, jsName);
+          exportedName.setObfuscatable(false);
+          generateVTableAlias(globalStmts, method, exportedName);
+        }
 
-          if (method.exposesOverriddenPackagePrivateMethod()) {
-            // This method exposes a package private method that is actually live, hence it needs
-            // to make the package private name and the public name to be the same implementation at
-            // runtime. This is done by an assignment of the form.
-            // _.package_private_name = _.exposed_name
-
-            // Here is the situation where this is needed:
-            //
-            // class a.A { m() {} }
-            // class b.B extends a.A { m() {} }
-            // interface I { m(); }
-            // class a.C {
-            //  { A a = new b.B();  a.m() // calls A::m()} }
-            //  { I i = new b.B();  a.m() // calls B::m()} }
-            // }
-            //
-            // Up to this point it is clear that package private names need to be different than
-            // public names.
-            //
-            // Add class a.D extends a.A implements I { public m() }
-            //
-            // a.D collapses A::m and I::m into the same function and it was clear that two
-            // two different names were already needed, hence when creating the vtable for a.D
-            // both names have to point to the same function.
-            //
-            // It should be noted that all subclasses of a.D will have the two methods collapsed,
-            // and hence this assignment will be present in the vtable setup for all subclasses.
-
-            generateVTableAlias(globalStmts, method, getPackagePrivateName(method));
-          }
+        if (method.exposesPackagePrivateMethod()) {
+          // Here is the situation where this is needed:
+          //
+          // class a.A { m() {} }
+          // class b.B extends a.A { m() {} }
+          // interface I { m(); }
+          // class a.C {
+          //  { A a = new b.B();  a.m() // calls A::m()} }
+          //  { I i = new b.B();  a.m() // calls B::m()} }
+          // }
+          //
+          // Up to this point it is clear that package private names need to be different than
+          // public names.
+          //
+          // Add class a.D extends a.A implements I { public m() }
+          //
+          // a.D collapses A::m and I::m into the same function and it was clear that two
+          // two different names were already needed, hence when creating the vtable for a.D
+          // both names have to point to the same function.
+          generateVTableAlias(globalStmts, method, getPackagePrivateName(method));
         }
       }
     }

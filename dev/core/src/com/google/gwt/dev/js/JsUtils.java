@@ -16,6 +16,9 @@
 package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JParameter;
+import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
 import com.google.gwt.dev.js.ast.JsBlock;
@@ -25,7 +28,10 @@ import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNode;
+import com.google.gwt.dev.js.ast.JsParameter;
+import com.google.gwt.dev.js.ast.JsReturn;
 import com.google.gwt.dev.js.ast.JsScope;
+import com.google.gwt.dev.js.ast.JsThisRef;
 import com.google.gwt.dev.util.StringInterner;
 
 /**
@@ -86,6 +92,30 @@ public class JsUtils {
 
   public static JsExpression createAssignment(JsExpression lhs, JsExpression rhs) {
     return new JsBinaryOperation(lhs.getSourceInfo(), JsBinaryOperator.ASG, lhs, rhs);
+  }
+
+  public static JsFunction createBridge(JMethod method, JsName polyName, JsScope scope) {
+    SourceInfo sourceInfo = method.getSourceInfo();
+    JsFunction bridge = new JsFunction(sourceInfo, scope);
+    for (JParameter p : method.getParams()) {
+      JsName name = bridge.getScope().declareName(p.getName());
+      bridge.getParameters().add(new JsParameter(sourceInfo, name));
+    }
+    JsNameRef ref = polyName.makeRef(sourceInfo);
+    ref.setQualifier(new JsThisRef(sourceInfo));
+    JsInvocation invocation = new JsInvocation(sourceInfo, ref);
+    for (JsParameter p : bridge.getParameters()) {
+      invocation.getArguments().add(p.getName().makeRef(sourceInfo));
+    }
+
+    JsBlock block = new JsBlock(sourceInfo);
+    if (method.getType() == JPrimitiveType.VOID) {
+      block.getStatements().add(invocation.makeStmt());
+    } else {
+      block.getStatements().add(new JsReturn(sourceInfo, invocation));
+    }
+    bridge.setBody(block);
+    return bridge;
   }
 
   public static JsFunction createEmptyFunctionLiteral(SourceInfo info, JsScope scope, JsName name) {
