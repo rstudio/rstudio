@@ -26,7 +26,6 @@ import java.util.Comparator;
 import java.util.Locale;
 
 import javaemul.internal.ArrayHelper;
-import javaemul.internal.ArrayStamper;
 import javaemul.internal.EmulatedCharset;
 import javaemul.internal.HashCodes;
 import javaemul.internal.annotations.DoNotInline;
@@ -531,7 +530,7 @@ public final class String implements Comparable<String>, CharSequence,
     // in order to escape regexp special characters (e.g. '.').
     String hex = Integer.toHexString(from);
     String regex = "\\u" + "0000".substring(hex.length()) + hex;
-    Object jsRegEx = createRegEx(regex, "g");
+    Object jsRegEx = createRegExp(regex, "g");
     String replace = fromCharCode(to);
     return replace(jsRegEx, replace);
   }
@@ -566,7 +565,7 @@ public final class String implements Comparable<String>, CharSequence,
    */
   public String replaceAll(String regex, String replace) {
     replace = translateReplaceString(replace);
-    Object jsRegEx = createRegEx(regex, "g");
+    Object jsRegEx = createRegExp(regex, "g");
     return replace(jsRegEx, replace);
   }
 
@@ -580,16 +579,32 @@ public final class String implements Comparable<String>, CharSequence,
    */
   public String replaceFirst(String regex, String replace) {
     replace = translateReplaceString(replace);
-    Object jsRegEx = createRegEx(regex, "");
+    Object jsRegEx = createRegExp(regex, "");
     return replace(jsRegEx, replace);
   }
 
-  private native Object createRegEx(String regex, String mode) /*-{
+  private static native Object createRegExp(String regex, String mode) /*-{
     return RegExp(regex, mode);
+  }-*/;
+
+  private static native Object execRegExp(Object regex, String value) /*-{
+    return regex.exec(value);
+  }-*/;
+
+  private static native int resetRegExpLastIndex(Object compiledRegEx) /*-{
+    compiledRegEx.lastIndex = 0;
   }-*/;
 
   private native String replace(Object regex, String replace) /*-{
     return this.replace(regex, replace);
+  }-*/;
+
+  private static native int getMatchIndex(Object matchObject) /*-{
+    return matchObject.index;
+  }-*/;
+
+  private static native int getMatchLength(Object matchObject, int index) /*-{
+    return matchObject[index].length;
   }-*/;
 
   /**
@@ -611,37 +626,32 @@ public final class String implements Comparable<String>, CharSequence,
    * TODO(jat): properly handle Java regex syntax
    */
   public String[] split(String regex, int maxMatch) {
-    String[] jsArrayString = split0(regex, maxMatch);
-    ArrayStamper.stampJavaTypeInfo(jsArrayString, new String[0]);
-    return jsArrayString;
-  }
-
-  private native String[] split0(String regex, int maxMatch) /*-{
     // The compiled regular expression created from the string
-    var compiled = new RegExp(regex, "g");
+    Object compiled = createRegExp(regex, "g");
     // the Javascipt array to hold the matches prior to conversion
-    var out = [];
+    String[] out = new String[0];
     // how many matches performed so far
-    var count = 0;
+    int count = 0;
     // The current string that is being matched; trimmed as each piece matches
-    var trail = this;
+    String trail = this;
     // used to detect repeated zero length matches
     // Must be null to start with because the first match of "" makes no
     // progress by intention
-    var lastTrail = null;
+    String lastTrail = null;
     // We do the split manually to avoid Javascript incompatibility
     while (true) {
       // None of the information in the match returned are useful as we have no
       // subgroup handling
-      var matchObj = compiled.exec(trail);
+      Object matchObj = execRegExp(compiled, trail);
       if (matchObj == null || trail == "" || (count == (maxMatch - 1) && maxMatch > 0)) {
         out[count] = trail;
         break;
       } else {
-        out[count] = trail.substring(0, matchObj.index);
-        trail = trail.substring(matchObj.index + matchObj[0].length, trail.length);
+        out[count] = trail.substring(0, getMatchIndex(matchObj));
+        trail = trail.substring(
+            getMatchIndex(matchObj) + getMatchLength(matchObj, 0), trail.length());
         // Force the compiled pattern to reset internal state
-        compiled.lastIndex = 0;
+        resetRegExpLastIndex(compiled);
         // Only one zero length match per character to ensure termination
         if (lastTrail == trail) {
           out[count] = trail.substring(0, 1);
@@ -654,17 +664,17 @@ public final class String implements Comparable<String>, CharSequence,
     // all blank delimiters at the end are supposed to disappear if maxMatch == 0;
     // however, if the input string is empty, the output should consist of a
     // single empty string
-    if (maxMatch == 0 && this.length > 0) {
-      var lastNonEmpty = out.length;
+    if (maxMatch == 0 && this.length() > 0) {
+      int lastNonEmpty = out.length;
       while (lastNonEmpty > 0 && out[lastNonEmpty - 1] == "") {
         --lastNonEmpty;
       }
       if (lastNonEmpty < out.length) {
-        out.splice(lastNonEmpty, out.length - lastNonEmpty);
+        ArrayHelper.setLength(out, lastNonEmpty);
       }
     }
     return out;
-  }-*/;
+  }
 
   public boolean startsWith(String prefix) {
     return startsWith(prefix, 0);

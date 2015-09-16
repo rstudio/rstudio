@@ -18,7 +18,7 @@ package javaemul.internal;
 /**
  * A utility to provide array stamping. Provided as a separate class to simplify super-source.
  */
-public class ArrayStamper {
+class ArrayStamper {
   public static native <T> T[] stampJavaTypeInfo(Object array, T[] referenceType) /*-{
     return @com.google.gwt.lang.Array::stampJavaTypeInfo(*)(array, referenceType);
   }-*/;
