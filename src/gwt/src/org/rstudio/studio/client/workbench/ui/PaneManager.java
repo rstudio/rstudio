@@ -59,6 +59,7 @@ import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.views.PaneLayoutPreferencesPane;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
@@ -219,7 +220,8 @@ public class PaneManager
                       @Named("R Markdown") final WorkbenchTab renderRmdTab,
                       @Named("Deploy") final WorkbenchTab deployContentTab,
                       final MarkersOutputTab markersTab,
-                      final FindOutputTab findOutputTab)
+                      final FindOutputTab findOutputTab,
+                      OptionsLoader.Shim optionsLoader)
    {
       eventBus_ = eventBus;
       session_ = session;
@@ -243,6 +245,7 @@ public class PaneManager
       renderRmdTab_ = renderRmdTab;
       deployContentTab_ = deployContentTab;
       markersTab_ = markersTab;
+      optionsLoader_ = optionsLoader;
       
       binder.bind(commands, this);
       
@@ -422,6 +425,12 @@ public class PaneManager
    public void onLayoutEndZoom()
    {
       restoreLayout();
+   }
+   
+   @Handler
+   public void onPaneLayout()
+   {
+      optionsLoader_.showOptions(PaneLayoutPreferencesPane.class);
    }
    
    private <T> boolean equals(T lhs, T rhs)
@@ -960,7 +969,6 @@ public class PaneManager
       case History:      return commands_.layoutZoomHistory();
       case Packages:     return commands_.layoutZoomPackages();
       case Plots:        return commands_.layoutZoomPlots();
-      case Presentation: return commands_.layoutZoomPresentation();
       case Source:       return commands_.layoutZoomSource();
       case VCS:          return commands_.layoutZoomVcs();
       case Viewer:       return commands_.layoutZoomViewer();
@@ -991,7 +999,6 @@ public class PaneManager
       commands.add(commands_.layoutZoomHistory());
       commands.add(commands_.layoutZoomPackages());
       commands.add(commands_.layoutZoomPlots());
-      commands.add(commands_.layoutZoomPresentation());
       commands.add(commands_.layoutZoomSource());
       commands.add(commands_.layoutZoomVcs());
       commands.add(commands_.layoutZoomViewer());
@@ -1021,6 +1028,7 @@ public class PaneManager
    private final WorkbenchTab renderRmdTab_;
    private final WorkbenchTab deployContentTab_;
    private final MarkersOutputTab markersTab_;
+   private final OptionsLoader.Shim optionsLoader_;
    private MainSplitPanel panel_;
    private LogicalWindow sourceLogicalWindow_;
    private final HashMap<Tab, WorkbenchTabPanel> tabToPanel_ =

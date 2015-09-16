@@ -176,6 +176,8 @@ public class GlobalToolbar extends Toolbar
       
       paneLayoutMenu.addItem(commands_.layoutEndZoom().createMenuItem(false));
       paneLayoutMenu.addSeparator();
+      paneLayoutMenu.addItem(commands_.paneLayout().createMenuItem(false));
+      paneLayoutMenu.addSeparator();
       paneLayoutMenu.addItem(commands_.layoutZoomSource().createMenuItem(false));
       paneLayoutMenu.addItem(commands_.layoutZoomConsole().createMenuItem(false));
       paneLayoutMenu.addItem(commands_.layoutZoomHelp().createMenuItem(false));
@@ -194,7 +196,7 @@ public class GlobalToolbar extends Toolbar
             null,
             paneLayoutIcon,
             paneLayoutMenu);
-      paneLayoutButton.setTitle("Pane Layout");
+      paneLayoutButton.setTitle("Workspace Panes");
       
       addLeftWidget(paneLayoutButton);
       // project popup menu

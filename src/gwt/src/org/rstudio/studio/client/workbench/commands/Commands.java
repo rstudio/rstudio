@@ -216,7 +216,6 @@ public abstract class
    public abstract AppCommand presentationViewInBrowser();
    public abstract AppCommand presentationSaveAsStandalone();
    public abstract AppCommand activatePresentation();
-   public abstract AppCommand layoutZoomPresentation();
    public abstract AppCommand tutorialFeedback();
    public abstract AppCommand clearPresentationCache();
    
@@ -431,6 +430,7 @@ public abstract class
    public abstract AppCommand checkSpelling();   
    public abstract AppCommand layoutZoomCurrentPane();
    public abstract AppCommand layoutEndZoom();
+   public abstract AppCommand paneLayout();
    public abstract AppCommand maximizeConsole();
    
    public static final String KEYBINDINGS_PATH =
