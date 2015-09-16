@@ -402,7 +402,6 @@ java_library(
         "src/com/google/gwt/core/client/js/JsNoExport.java",
         "src/com/google/gwt/core/client/js/JsProperty.java",
         "src/com/google/gwt/core/client/js/JsType.java",
-        "src/com/google/gwt/core/client/js/impl/PrototypeOfJsType.java",
     ],
     constraints = [
         "android",
