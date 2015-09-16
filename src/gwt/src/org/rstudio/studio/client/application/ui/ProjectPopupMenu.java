@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -218,15 +219,19 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
          for (int i = 0; i < sharedProjects.length(); i ++)
          {
             final SharedProjectDetails details = sharedProjects.get(i);
-            addItem(new MenuItem(details.getName(), 
+
+            String menuHtml = AppCommand.formatMenuLabel(
+                  null, details.getName(), false, null, 
+                  commands_.openHtmlExternal().getImageResource(), 
+                  ProjectMRUList.NEW_SESSION_DESC);
+            addItem(new MenuItem(menuHtml, true,
                   new Scheduler.ScheduledCommand()
                   {
                      @Override
                      public void execute()
                      {
-                        events_.fireEvent(new OpenProjectFileEvent(
-                              FileSystemItem.createFile(
-                                    details.getProjectFile())));
+                        ProjectMRUList.openProjectFromMru(events_, 
+                              details.getProjectFile());
                      }
                   }));
          }
