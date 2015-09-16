@@ -1,0 +1,121 @@
+<!--                                                                        -->
+<!-- Copyright 2014 Google Inc.                                             -->
+<!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
+<!-- may not use this file except in compliance with the License. You may   -->
+<!-- may obtain a copy of the License at                                    -->
+<!--                                                                        -->
+<!-- http://www.apache.org/licenses/LICENSE-2.0                             -->
+<!--                                                                        -->
+<!-- Unless required by applicable law or agreed to in writing, software    -->
+<!-- distributed under the License is distributed on an "AS IS" BASIS,      -->
+<!-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or        -->
+<!-- implied. License for the specific language governing permissions and   -->
+<!-- limitations under the License.                                         -->
+
+<!-- Defines support configurable preconditions -->
+<module type="fileset">
+
+  <!--
+ ┌────────┬─────────────────────────────────────────────────────┬───────────────────────────────┐
+ │Group   │Description                                          │Common Exception Types         │
+ ├────────┼─────────────────────────────────────────────────────┼───────────────────────────────┤
+ │JSNI    │Checks related to arguments and return types of      │ClassCastException             │
+ │        │JSNI methods. (Not implemented yet)                  │                               │
+ ├────────┼─────────────────────────────────────────────────────┼───────────────────────────────┤
+ │BOUNDS  │Checks related to the bound checking in collections. │IndexOutBoundsException        │
+ │        │                                                     │ArrayIndexOutOfBoundsException │
+ ├────────┼─────────────────────────────────────────────────────┼───────────────────────────────┤
+ │API     │Checks related to the correct usage of APIs.         │IllegalStateException          │
+ │        │                                                     │NoSuchElementException         │
+ │        │                                                     │NullPointerException           │
+ │        │                                                     │IllegalArgumentException       │
+ │        │                                                     │ConcurrentModificationException│
+ ├────────┼─────────────────────────────────────────────────────┼───────────────────────────────┤
+ │TYPE    │Checks related to java type system.                  │ClassCastException             │
+ │        │                                                     │ArrayStoreException            │
+ ├────────┼─────────────────────────────────────────────────────┼───────────────────────────────┤
+ │CRITICAL│Checks for cases where not failing-fast will keep    │IllegalArgumentException       │
+ │        │the object in an inconsistent state and/or degrade   │                               │
+ │        │debugging significantly. Currently disabling these   │                               │
+ │        │checks is not supported.                             │                               │
+ └────────┴─────────────────────────────────────────────────────┴───────────────────────────────┘
+  -->
+  <define-property name="checks.jsni" values="ENABLED,DISABLED" />
+  <define-property name="checks.bounds" values="ENABLED,DISABLED" />
+  <define-property name="checks.api" values="ENABLED,DISABLED" />
+  <define-property name="checks.type" values="ENABLED,DISABLED" />
+  <define-property name="checks.critical" values="ENABLED" />
+
+
+  <!--
+ ┌────────────────┬─────────┬──────────┬─────────┬─────────┬─────────┐
+ │Check level     │  JSNI   │  BOUNDS  │   API   │  TYPE   │CRITICAL │
+ ├────────────────┼─────────┼──────────┼─────────┼─────────┼─────────┤
+ │Full            │    X    │    X     │    X    │    X    │    X    │
+ ├────────────────┼─────────┼──────────┼─────────┼─────────┼─────────┤
+ │Normal (default)│         │    X     │    X    │    X    │    X    │
+ ├────────────────┼─────────┼──────────┼─────────┼─────────┼─────────┤
+ │Optimized       │         │          │         │    X    │    X    │
+ ├────────────────┼─────────┼──────────┼─────────┼─────────┼─────────┤
+ │Minimal         │         │          │         │         │    X    │
+ ├────────────────┼─────────┼──────────┼─────────┼─────────┼─────────┤
+ │None (N/A yet)  │         │          │         │         │         │
+ └────────────────┴─────────┴──────────┴─────────┴─────────┴─────────┘
+  -->
+  <define-property name="checks.checkLevel" values="FULL,NORMAL,OPTIMIZED,MINIMAL" />
+
+
+  <!-- Associate individual checks with levels -->
+
+  <set-property name="checks.jsni" value="DISABLED" />
+  <set-property name="checks.jsni" value="ENABLED">
+    <any>
+      <when-property-is name="checks.checkLevel" value="FULL" />
+    </any>
+  </set-property>
+
+  <set-property name="checks.bounds" value="DISABLED" />
+  <set-property name="checks.bounds" value="ENABLED">
+    <any>
+      <when-property-is name="checks.checkLevel" value="FULL" />
+      <when-property-is name="checks.checkLevel" value="NORMAL" />
+    </any>
+  </set-property>
+
+  <set-property name="checks.api" value="DISABLED" />
+  <set-property name="checks.api" value="ENABLED">
+    <any>
+      <when-property-is name="checks.checkLevel" value="FULL" />
+      <when-property-is name="checks.checkLevel" value="NORMAL" />
+    </any>
+  </set-property>
+
+
+  <set-property name="checks.type" value="DISABLED" />
+  <set-property name="checks.type" value="ENABLED">
+    <any>
+      <when-property-is name="checks.checkLevel" value="FULL" />
+      <when-property-is name="checks.checkLevel" value="NORMAL" />
+      <when-property-is name="checks.checkLevel" value="OPTIMIZED" />
+    </any>
+  </set-property>
+
+  <!-- CRITICAL checking cannot be disabled for now.
+  <set-property name="checks.critical" value="DISABLED" />
+  <set-property name="checks.critical" value="ENABLED">
+    <any>
+      <when-property-is name="checks.checkLevel" value="FULL" />
+      <when-property-is name="checks.checkLevel" value="NORMAL" />
+      <when-property-is name="checks.checkLevel" value="OPTIMIZED" />
+      <when-property-is name="checks.checkLevel" value="MINIMAL" />
+    </any>
+  </set-property>
+  -->
+
+  <!-- End of associations -->
+
+
+  <!-- Default checkLevel is NORMAL -->
+  <set-property name="checks.checkLevel" value="NORMAL" />
+
+</module>

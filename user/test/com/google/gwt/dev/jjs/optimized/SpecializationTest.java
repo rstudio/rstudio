@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.jjs.test;
+package com.google.gwt.dev.jjs.optimized;
 
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
@@ -57,7 +57,7 @@ public class SpecializationTest extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.dev.jjs.CompilerSuite";
+    return "com.google.gwt.dev.jjs.CompilerSuiteOptimized";
   }
 
   public void testSpecialization() {

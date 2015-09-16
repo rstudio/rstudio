@@ -23,20 +23,31 @@ import javaemul.internal.JsUtils;
  */
 class ConcurrentModificationDetector {
 
+private static final boolean API_CHECK = System.getProperty("checks.api").equals("ENABLED");
+
   private static final String MOD_COUNT_PROPERTY = "_gwt_modCount";
 
   public static void structureChanged(Object map) {
+    if (!API_CHECK) {
+      return;
+    }
     // Ensure that modCount is initialized if it is not already.
     int modCount = JsUtils.getIntProperty(map, MOD_COUNT_PROPERTY) | 0;
     JsUtils.setIntProperty(map, MOD_COUNT_PROPERTY, modCount + 1);
   }
 
   public static void recordLastKnownStructure(Object host, Iterator<?> iterator) {
+    if (!API_CHECK) {
+      return;
+    }
     int modCount = JsUtils.getIntProperty(host, MOD_COUNT_PROPERTY);
     JsUtils.setIntProperty(iterator, MOD_COUNT_PROPERTY, modCount);
   }
 
   public static void checkStructuralChange(Object host, Iterator<?> iterator) {
+    if (!API_CHECK) {
+      return;
+    }
     if (JsUtils.getIntProperty(iterator, MOD_COUNT_PROPERTY)
         != JsUtils.getIntProperty(host, MOD_COUNT_PROPERTY)) {
       throw new ConcurrentModificationException();
