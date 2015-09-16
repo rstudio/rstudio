@@ -25,6 +25,7 @@ public class OpenFileDialog extends FileDialog
                          String filter,
                          ProgressOperationWithInput<FileSystemItem> operation)
    {
-      super(title, null, "Open", false, false, context, filter, operation);
+      super(title, null, "Open", false, false, false, context, filter, 
+            operation);
    }
 }

@@ -94,6 +94,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
                            String buttonName,
                            FileSystemContext context,
                            String filter,
+                           boolean allowFolderCreation,
                            ProgressOperationWithInput<FileSystemItem> operation)
    {
       context_ = context;
@@ -104,7 +105,10 @@ public abstract class FileSystemDialog extends ModalDialogBase
       setTitle(caption);
       setText(title);
 
-      addLeftButton(new ThemedButton("New Folder", new NewFolderHandler()));
+      if (allowFolderCreation)
+      {
+         addLeftButton(new ThemedButton("New Folder", new NewFolderHandler()));
+      }
 
       addOkButton(new ThemedButton(buttonName, new ClickHandler()
       {

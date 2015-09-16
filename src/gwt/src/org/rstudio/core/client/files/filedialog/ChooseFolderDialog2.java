@@ -26,9 +26,10 @@ public class ChooseFolderDialog2 extends FileSystemDialog
 {
    public ChooseFolderDialog2(String title,
                               FileSystemContext context,
+                              boolean allowFolderCreation,
                               ProgressOperationWithInput<FileSystemItem> operation)
    {
-      super(title, null, "Choose", context, "", operation);
+      super(title, null, "Choose", context, "", allowFolderCreation, operation);
    }
 
    @Override
