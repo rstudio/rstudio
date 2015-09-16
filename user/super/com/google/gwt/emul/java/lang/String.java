@@ -615,7 +615,7 @@ public final class String implements Comparable<String>, CharSequence,
     return jsArrayString;
   }
 
-  public native String[] split0(String regex, int maxMatch) /*-{
+  private native String[] split0(String regex, int maxMatch) /*-{
     // The compiled regular expression created from the string
     var compiled = new RegExp(regex, "g");
     // the Javascipt array to hold the matches prior to conversion
