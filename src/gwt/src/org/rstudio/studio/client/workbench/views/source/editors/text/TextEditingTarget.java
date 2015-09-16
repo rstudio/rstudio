@@ -801,6 +801,15 @@ public class TextEditingTarget implements
    }
    
    @Handler
+   void onSwitchFocusSourceConsole()
+   {
+      if (docDisplay_.isFocused())
+         commands_.activateConsole().execute();
+      else
+         commands_.activateSource().execute();
+   }
+   
+   @Handler
    void onGoToNextSection()
    {
       if (docDisplay_.getFileType().canGoNextPrevSection())

@@ -25,6 +25,7 @@ public abstract class
 
    // Workbench
    public abstract AppCommand setWorkingDir();
+   public abstract AppCommand switchFocusSourceConsole();
    
    // Source
    public abstract AppCommand reformatCode();
