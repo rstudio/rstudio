@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.projects.model;
 
+import org.rstudio.core.client.files.FileSystemItem;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 
@@ -38,4 +40,9 @@ public class SharedProjectDetails extends JavaScriptObject
    public final native JsArrayString getSharedWith() /*-{
       return this.shared_with;
    }-*/;
+   
+   public final String getName()
+   {
+      return FileSystemItem.getNameFromPath(getProjectDir());
+   }
 }
