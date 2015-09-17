@@ -26,7 +26,6 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
-import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 
 public class ProfilerEditingTargetWidget extends Composite
                                          implements ProfilerPresenter.Display
@@ -53,7 +52,7 @@ public class ProfilerEditingTargetWidget extends Composite
 
    private Toolbar createToolbar(Commands commands)
    {
-      Toolbar toolbar = new EditingTargetToolbar(commands);
+      Toolbar toolbar = new Toolbar();
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands.startProfiler().createToolbarButton());
       toolbar.addLeftWidget(commands.stopProfiler().createToolbarButton());
