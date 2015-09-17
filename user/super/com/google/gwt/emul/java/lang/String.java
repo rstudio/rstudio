@@ -34,7 +34,8 @@ import javaemul.internal.annotations.DoNotInline;
 /**
  * Intrinsic string class.
  */
-
+// Needed to have constructors not fail compilation internally at Google
+@SuppressWarnings("ReturnValueIgnored")
 public final class String implements Comparable<String>, CharSequence,
     Serializable {
   /* TODO(jat): consider whether we want to support the following methods;
