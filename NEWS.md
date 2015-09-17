@@ -89,7 +89,8 @@
 * Correctly handle call to edit() with no arguments
 * Fix inability to start up on OS X when multiple conflicting R versions are on the library search path.
 * Prevent crash when cancelling out of q() prompt on Windows
-* OSX: Viewer now correctly recognizes session temp dir even when prefixed by /private 
+* OSX: Viewer now correctly recognizes session temp dir even when prefixed by /private
+* Fix issue with rstudioapi previewRd function when path included spaces
 
 
 

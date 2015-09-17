@@ -875,7 +875,7 @@ SEXP rs_previewRd(SEXP rdFileSEXP)
 {
    std::string rdFile = r::sexp::safeAsString(rdFileSEXP);
    boost::format fmt("help/preview?file=%1%");
-   std::string url = boost::str(fmt % http::util::urlEncode(rdFile));
+   std::string url = boost::str(fmt % http::util::urlEncode(rdFile, true));
    ClientEvent event(client_events::kShowHelp, url);
    module_context::enqueClientEvent(event);
    return R_NilValue;
