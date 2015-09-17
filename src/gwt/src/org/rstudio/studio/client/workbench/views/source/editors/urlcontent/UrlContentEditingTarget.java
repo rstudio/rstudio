@@ -43,11 +43,14 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
+import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
+import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -135,7 +138,10 @@ public class UrlContentEditingTarget implements EditingTarget
    {
       HashSet<AppCommand> commands = new HashSet<AppCommand>();
       commands.add(commands_.printSourceDoc());
-      commands.add(commands_.popoutDoc());
+      if (SourceWindowManager.isMainSourceWindow())
+         commands.add(commands_.popoutDoc());
+      else
+         commands.add(commands_.returnDocToMain());
       return commands;
    }
    
@@ -183,6 +189,15 @@ public class UrlContentEditingTarget implements EditingTarget
    public void popoutDoc()
    {
       globalDisplay_.openWindow(getContentUrl());
+   }
+   
+   
+   @Handler
+   void onReturnDocToMain()
+   {
+      events_.fireEventToMainWindow(new DocWindowChangedEvent(
+            getId(), SourceWindowManager.getSourceWindowId(), "",
+            DocTabDragParams.create(getId(), currentPosition()), 0));
    }
    
    public void focus()
