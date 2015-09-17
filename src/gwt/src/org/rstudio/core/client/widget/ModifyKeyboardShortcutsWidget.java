@@ -1207,7 +1207,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             @Override
             public Object getKey(CommandBinding item)
             {
-               return item.getName();
+               return item.hashCode();
             }
    };
    
