@@ -403,20 +403,25 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       for (Map.Entry<CommandBinding, CommandBinding> entry : changes_.entrySet())
       {
          CommandBinding newBinding = entry.getValue();
+         String id = newBinding.getId();
          
+         // Get all commands with this ID.
+         List<CommandBinding> bindingsWithId = new ArrayList<CommandBinding>();
+         for (CommandBinding binding : originalBindings_)
+            if (binding.getId().equals(id))
+               bindingsWithId.add(binding);
+         
+         // Collect all shortcuts.
+         List<KeySequence> keys = new ArrayList<KeySequence>();
+         for (CommandBinding binding : bindingsWithId)
+            keys.add(binding.getKeySequence());
+            
          int commandType = newBinding.getCommandType();
+         
          if (commandType == CommandBinding.TYPE_RSTUDIO_COMMAND)
-         {
-            appBindings.setBinding(
-                  newBinding.getId(),
-                  newBinding.getKeySequence());
-         }
+            appBindings.setBindings(id, keys);
          else if (commandType == CommandBinding.TYPE_EDITOR_COMMAND)
-         {
-            editorBindings.setBinding(
-                  newBinding.getId(),
-                  newBinding.getKeySequence());
-         }
+            editorBindings.setBindings(id, keys);
       }
       
       appCommands_.addBindingsAndSave(appBindings);

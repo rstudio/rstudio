@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.files.FileBacked;
 import org.rstudio.core.client.js.JsObject;
@@ -56,9 +57,13 @@ public class EditorCommandManager
          return getObject(key).cast();
       }
       
-      public final void setBinding(String key, KeySequence binding)
+      public final void setBindings(String key, List<KeySequence> ksList)
       {
-         setString(key,  binding.toString());
+         List<String> bindings = new ArrayList<String>();
+         for (KeySequence ks : ksList)
+            bindings.add(ks.toString());
+         
+         setString(key, StringUtil.join(bindings, "|"));
       }
       
       protected EditorKeyBindings() {}
