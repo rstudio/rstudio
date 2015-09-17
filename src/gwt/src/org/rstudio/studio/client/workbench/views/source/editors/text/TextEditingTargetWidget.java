@@ -66,6 +66,7 @@ import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
@@ -222,7 +223,7 @@ public class TextEditingTargetWidget
 
    private Toolbar createToolbar(TextFileType fileType)
    {
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new EditingTargetToolbar(commands_);
        
       toolbar.addLeftSeparator();
       if (SourceWindowManager.isMainSourceWindow())

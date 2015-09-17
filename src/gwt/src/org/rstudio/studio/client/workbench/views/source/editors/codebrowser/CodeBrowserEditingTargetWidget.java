@@ -51,6 +51,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorLineWithCursorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetFindReplace;
@@ -352,7 +353,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    
    private Toolbar createToolbar()
    {
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new EditingTargetToolbar(commands_);
       
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
