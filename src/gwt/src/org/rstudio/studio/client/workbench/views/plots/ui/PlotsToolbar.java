@@ -76,8 +76,7 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
       
       // publish
       addRightWidget(publishButton_);
-      publishButton_.getElement().getStyle().setMarginRight(5, Unit.PX);
-      
+    
       // refresh
       addRightSeparator();
       addRightWidget(commands_.refreshPlot().createToolbarButton());
