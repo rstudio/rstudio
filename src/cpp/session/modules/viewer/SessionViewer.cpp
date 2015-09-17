@@ -248,11 +248,19 @@ Error viewerCreateRPubsHtml(const json::JsonRpcRequest& request,
 
 bool isHTMLWidgetPath(const FilePath& filePath)
 {
+   // get the session temp dir real path; needed since the file path above is
+   // also a real path--e.g. on OS X, it refers to /private/tmp rather than
+   // /tmp 
+   FilePath tempDir;
+   Error error = core::system::realPath(module_context::tempDir(), &tempDir);
+   if (error)
+      LOG_ERROR(error);
+
    // parent of parent must be session temp dir
    // (this is required because of the way we copy/restore
    // widget directories during suspend/resume)
    FilePath parentDir = filePath.parent();
-   if (parentDir.parent() != module_context::tempDir())
+   if (parentDir.parent() != tempDir)
       return false;
 
    // it is a widget!
