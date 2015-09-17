@@ -188,7 +188,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       addItem(commands_.shareProject().createMenuItem(false));
       addItem(commands_.closeProject().createMenuItem(false));
       if (hasSharedProjects)
-         addSeparator("My Projects"); 
+         addSeparator("Recently Opened"); 
       else
          addSeparator();
 
@@ -220,7 +220,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       // show shared projects if enabled
       if (hasSharedProjects)
       {
-         addSeparator("Shared with Me"); 
+         addSeparator("Recently Shared"); 
          for (int i = 0; i < sharedProjects.length(); i ++)
          {
             final SharedProjectDetails details = sharedProjects.get(i);

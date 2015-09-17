@@ -1434,6 +1434,7 @@ body.ubuntu_mono .searchBox {
    text-transform: uppercase;
    font-size: 11px;
    color: #909090;
-   padding-left: 12px;
+   padding-left: 28px;
    padding-top: 2px;
+   padding-bottom: 2px;
 }
