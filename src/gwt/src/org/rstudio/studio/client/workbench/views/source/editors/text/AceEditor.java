@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.List;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -419,7 +421,7 @@ public class AceEditor implements DocDisplay,
       return getWidget().getEditor().getCommandManager();
    }
    
-   public void addEditorCommandBinding(String id, KeySequence keys, boolean replace)
+   public void addEditorCommandBinding(String id, List<KeySequence> keys, boolean replace)
    {
       getWidget().getEditor().getCommandManager().rebindCommand(id, keys);
    }

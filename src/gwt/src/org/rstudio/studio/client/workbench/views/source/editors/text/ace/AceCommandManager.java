@@ -1,5 +1,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
+import java.util.List;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -133,12 +135,15 @@ public class AceCommandManager extends JavaScriptObject
       return binding != null && binding === "chainKeys";
    }-*/;
    
-   public final void rebindCommand(String id, KeySequence keys)
+   public final void rebindCommand(String id, List<KeySequence> keys)
    {
-      rebindCommand(id, toAceStyleShortcutString(keys));
+      JsArrayString shortcuts = JavaScriptObject.createArray().cast();
+      for (KeySequence ks : keys)
+         shortcuts.push(toAceStyleShortcutString(ks));
+      rebindCommand(id, shortcuts);
    }
    
-   private final native void rebindCommand(String id, String keys)
+   private final native void rebindCommand(String id, JsArrayString keys)
    /*-{
       var command = this.byName[id];
       
@@ -157,9 +162,28 @@ public class AceCommandManager extends JavaScriptObject
          }
       }
       
-      newCommand.bindKey = keys;
+      newCommand.bindKey = keys.join("|");
       newCommand.isCustom = true;
+      
       this.addCommand(newCommand);
+      
+      // Refresh the 'chainKeys' fields. This is necessary
+      // to ensure that Ace can dispatch to commands requiring
+      // multiple key combinations.
+      for (var i = 0; i < keys.length; i++) {
+         var keySequence = keys[i];
+         var splat = keySequence.split(" ");
+         if (splat.length <= 1)
+            continue;
+         
+         var field = splat[0];
+         this.commandKeyBinding[field] = "chainKeys";
+         for (var j = 1; j < splat.length - 1; j++) {
+            field += " " + splat[i];
+            this.commandKeyBinding[field] = "chainKeys";
+         }
+      }
+      
    }-*/;
    
    public final native void addCommand(AceCommand command) /*-{

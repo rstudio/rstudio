@@ -971,15 +971,21 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
 
                String id = command.getId();
                String name = getAppCommandName(command);
-               
-               KeySequence keySequence = customBindings.hasKey(id) ?
-                     customBindings.get(id).getKeyBinding() :
-                     command.getKeySequence();
-                     
                int type = CommandBinding.TYPE_RSTUDIO_COMMAND;
                boolean isCustom = customBindings.hasKey(id);
-               bindings.add(new CommandBinding(id, name, keySequence, type, isCustom,
-                     command.getContext()));
+               
+               List<KeySequence> keySequences = new ArrayList<KeySequence>();
+               if (isCustom)
+                  keySequences = customBindings.get(id).getKeyBindings();
+               else
+                  keySequences.add(command.getKeySequence());
+                     
+               for (KeySequence keys : keySequences)
+               {
+                  CommandBinding binding = new CommandBinding(
+                        id, name, keys, type, isCustom, command.getContext());
+                  bindings.add(binding);
+               }
             }
             
             Collections.sort(bindings, new Comparator<CommandBinding>()

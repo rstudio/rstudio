@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.command;
 
+import java.util.List;
+
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
@@ -102,8 +104,9 @@ public class ApplicationCommandManager
                   continue;
                }
                
-               KeySequence keys = bindings.get(commandId).getKeyBinding();
-               shortcuts_.addCustomBinding(keys, command);
+               List<KeySequence> keyList = bindings.get(commandId).getKeyBindings();
+               for (KeySequence keys : keyList)
+                  shortcuts_.addCustomBinding(keys, command);
             }
             
             if (afterLoad != null)
