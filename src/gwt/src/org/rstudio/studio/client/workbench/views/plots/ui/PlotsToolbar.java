@@ -22,6 +22,8 @@ import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
+import com.google.gwt.dom.client.Style.Unit;
+
 public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
 {    
    public PlotsToolbar(Commands commands, RSConnectPublishButton publishButton)
@@ -70,14 +72,15 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
       addLeftSeparator();
       
       // clear all plots
-      addLeftWidget(commands_.clearPlots().createToolbarButton());
-      
-      // refresh
-      addLeftSeparator();
-      addLeftWidget(commands_.refreshPlot().createToolbarButton());
+      addLeftWidget(commands_.clearPlots().createToolbarButton());  
       
       // publish
       addRightWidget(publishButton_);
+      publishButton_.getElement().getStyle().setMarginRight(5, Unit.PX);
+      
+      // refresh
+      addRightSeparator();
+      addRightWidget(commands_.refreshPlot().createToolbarButton());
    }
    
    private final Commands commands_;   

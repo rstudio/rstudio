@@ -53,6 +53,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
@@ -117,6 +118,9 @@ public class RSConnectPublishButton extends Composite
       applyVisiblity();
       applyCaption("Publish");
       setPreviousDeployments(null);
+      
+      // give ourselves some breathing room on the right
+      getElement().getStyle().setMarginRight(4, Unit.PX);    
    }
    
    private void onPublishButtonClick()

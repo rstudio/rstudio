@@ -120,15 +120,15 @@ public class HistoryPanel extends Composite implements Display
       topToolbar_.addRightWidget(searchText_);
       topToolbar_.addRightSeparator();
 
+      topToolbar_.addRightWidget(commands.vcsPull().createToolbarButton());
+      
+      topToolbar_.addRightSeparator();
+      
       refreshButton_ = new ToolbarButton(
-                                 "Refresh", 
+                                 null, 
                                  commands.vcsRefresh().getImageResource(),
                                  (ClickHandler) null);
-      topToolbar_.addRightWidget(refreshButton_);
-
-      topToolbar_.addRightSeparator();
-
-      topToolbar_.addRightWidget(commands.vcsPull().createToolbarButton());
+      topToolbar_.addRightWidget(refreshButton_); 
      
       pager_.setDisplay(commitTable_);
    }

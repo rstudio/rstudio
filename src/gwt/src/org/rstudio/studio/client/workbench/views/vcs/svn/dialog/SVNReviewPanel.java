@@ -233,6 +233,12 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       topToolbar_.addLeftWidget(commands.vcsCommit().createToolbarButton());
       
       
+      commands.vcsPull().setButtonLabel("Update");
+      commands.vcsPull().setMenuLabel("Update");
+      topToolbar_.addRightWidget(commands.vcsPull().createToolbarButton());
+
+      topToolbar_.addRightSeparator();
+      
       topToolbar_.addRightWidget(new ToolbarButton(
             "Refresh", commands.vcsRefresh().getImageResource(),
             new ClickHandler() {
@@ -244,10 +250,6 @@ public class SVNReviewPanel extends ResizeComposite implements Display
                }
             }));
       
-      commands.vcsPull().setButtonLabel("Update");
-      commands.vcsPull().setMenuLabel("Update");
-      topToolbar_.addRightWidget(commands.vcsPull().createToolbarButton());
-
       diffToolbar_.addStyleName(RES.styles().toolbar());
       diffToolbar_.addStyleName(RES.styles().diffToolbar());
 
