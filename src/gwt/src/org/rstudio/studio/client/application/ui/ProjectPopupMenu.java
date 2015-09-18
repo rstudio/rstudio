@@ -183,12 +183,14 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
          maxMruEntries -= sharedProjects.length();
       
       addItem(commands_.newProject().createMenuItem(false));
-      addSeparator();
+
+      // ensure the menu doesn't get too narrow
+      addSeparator(225);
+
       addItem(commands_.openProject().createMenuItem(false));
-      addItem(commands_.shareProject().createMenuItem(false));
       addItem(commands_.closeProject().createMenuItem(false));
       if (hasSharedProjects)
-         addSeparator("Recently Opened"); 
+         addSeparator("Recent Projects"); 
       else
          addSeparator();
 
@@ -220,7 +222,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       // show shared projects if enabled
       if (hasSharedProjects)
       {
-         addSeparator("Recently Shared"); 
+         addSeparator("Shared with Me"); 
          for (int i = 0; i < sharedProjects.length(); i ++)
          {
             final SharedProjectDetails details = sharedProjects.get(i);
@@ -245,6 +247,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       addSeparator();
       addItem(commands_.clearRecentProjects().createMenuItem(false));
       addSeparator();
+      addItem(commands_.shareProject().createMenuItem(false));
       addItem(commands_.projectOptions().createMenuItem(false));
       
       callback.onPopupMenu(this);
