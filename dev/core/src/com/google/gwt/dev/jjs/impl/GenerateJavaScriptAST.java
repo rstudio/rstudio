@@ -67,7 +67,6 @@ import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMember;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JMethod.JsPropertyAccessorType;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNameOf;
@@ -1323,24 +1322,20 @@ public class GenerateJavaScriptAST {
         result = dispatchToStatic(x, method, args);
       } else if (x.isStaticDispatchOnly()) {
         result = dispatchToSuper(x, method, args);
-      } else if (method.isOrOverridesJsPropertyAccessor()) {
-        result = dispatchToJsProperty(x, method, args);
-      } else if (method.isOrOverridesJsMethod()) {
-        result = dispatchToJsMethod(x, method, args);
       } else if (method.isOrOverridesJsFunctionMethod()) {
-        result = dispatchToJsFunction(x, args);
+        result = dispatchToJsFunction(args, x.getSourceInfo());
       } else {
-        // Dispatch polymorphically (normal case).
-        JsNameRef methodName = polymorphicNames.get(method).makeRef(x.getSourceInfo());
-        methodName.setQualifier((JsExpression) pop()); // instance
-        result = new JsInvocation(x.getSourceInfo(), methodName, args);
+        result = dispatchToInstanceMethod(method, args, x.getSourceInfo());
       }
 
       push(result);
     }
 
     private JsExpression dispatchToStatic(JMethodCall x, JMethod method, List<JsExpression> args) {
-      JsNameRef methodName = names.get(method).makeRef(x.getSourceInfo());
+      JsNameRef methodName =
+          method.isJsNative()
+              ? createJsQualifier(method.getQualifiedJsName(), x.getSourceInfo())
+              : names.get(method).makeRef(x.getSourceInfo());
       JsExpression result = new JsInvocation(x.getSourceInfo(), methodName, args);
       if (x.getInstance() != null) {
         JsExpression unnecessaryQualifier = pop();
@@ -1400,24 +1395,26 @@ public class GenerateJavaScriptAST {
       return jsInvocation;
     }
 
-    private JsExpression dispatchToJsProperty(
-        JMethodCall x, JMethod method, List<JsExpression> args) {
-      JsNameRef propertyReference = new JsNameRef(x.getSourceInfo(), method.getJsName());
-      propertyReference.setQualifier((JsExpression) pop()); // instance
-      if (method.getJsPropertyAccessorType() == JsPropertyAccessorType.SETTER) {
-        return createAssignment(propertyReference, args.get(0));
+    private JsExpression dispatchToJsFunction(List<JsExpression> args, SourceInfo sourceInfo) {
+      return new JsInvocation(sourceInfo, (JsExpression) pop(), args);
+    }
+
+    private JsExpression dispatchToInstanceMethod(
+        JMethod method, List<JsExpression> args, SourceInfo sourceInfo) {
+      JsNameRef reference =
+          method.isOrOverridesJsMethod()
+              ? new JsNameRef(sourceInfo, method.getJsName())
+              : polymorphicNames.get(method).makeRef(sourceInfo);
+      reference.setQualifier((JsExpression) pop()); // instance
+
+      switch (method.getJsPropertyAccessorType()) {
+        case SETTER:
+          return createAssignment(reference, args.get(0));
+        case GETTER:
+          return reference;
+        default:
+          return new JsInvocation(sourceInfo, reference, args);
       }
-      return propertyReference;
-    }
-
-    private JsExpression dispatchToJsMethod(JMethodCall x, JMethod method, List<JsExpression> args) {
-      JsNameRef methodName = new JsNameRef(x.getSourceInfo(), method.getJsName());
-      methodName.setQualifier((JsExpression) pop()); // instance
-      return new JsInvocation(x.getSourceInfo(), methodName, args);
-    }
-
-    private JsExpression dispatchToJsFunction(JMethodCall x, List<JsExpression> args) {
-      return new JsInvocation(x.getSourceInfo(), (JsExpression) pop(), args);
     }
 
     @Override

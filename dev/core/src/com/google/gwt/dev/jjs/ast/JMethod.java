@@ -41,13 +41,25 @@ import java.util.Set;
 public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNative {
 
   /**
-   * Indicates whether a JsProperty method is a getter or setter. Getters come with names like isX()
-   * and getX() while setters have signatures like setX(int a). If the property doesn't match these
-   * patterns, then it will marked as {@code UNDEFINED} to be later signaled as error in
-   * {@link com.google.gwt.dev.jjs.impl.JsInteropRestrictionChecker}.
+   * Indicates whether a method is a JsProperty accessor.
    */
   public enum JsPropertyAccessorType {
-    GETTER, SETTER, UNDEFINED;
+    /**
+     * Not a property accessor.
+     */
+    NONE,
+    /**
+     * A getter property accessor. Usually in the form of getX()/isX().
+     */
+    GETTER,
+    /**
+     * A setter property accessor. Usually in the form of setX(x).
+     */
+    SETTER,
+    /**
+     * A property accessor but doesn't match setter/getter patterns.
+     */
+    UNDEFINED,
   }
 
   public static final Comparator<JMethod> BY_SIGNATURE_COMPARATOR = new Comparator<JMethod>() {
@@ -60,7 +72,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
   private String jsName;
   private boolean exported;
   private String jsNamespace;
-  private JsPropertyAccessorType jsPropertyType;
+  private JsPropertyAccessorType jsPropertyType = JsPropertyAccessorType.NONE;
   private Specialization specialization;
   private InliningMode inliningMode = InliningMode.NORMAL;
   private boolean preventDevirtualization = false;
@@ -193,23 +205,11 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
         return overriddenMethod.jsPropertyType;
       }
     }
-    return null;
+    return JsPropertyAccessorType.NONE;
   }
 
   public boolean isJsPropertyAccessor() {
-    return jsPropertyType != null;
-  }
-
-  public boolean isOrOverridesJsPropertyAccessor() {
-    if (isJsPropertyAccessor()) {
-      return true;
-    }
-    for (JMethod overriddenMethod : getOverriddenMethods()) {
-      if (overriddenMethod.isJsPropertyAccessor()) {
-        return true;
-      }
-    }
-    return false;
+    return jsPropertyType != JsPropertyAccessorType.NONE;
   }
 
   private boolean isJsFunctionMethod() {
