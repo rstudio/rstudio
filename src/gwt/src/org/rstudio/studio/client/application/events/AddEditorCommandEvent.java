@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import java.util.List;
+
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -26,7 +28,7 @@ public class AddEditorCommandEvent extends GwtEvent<AddEditorCommandEvent.Handle
       void onAddEditorCommand(AddEditorCommandEvent event);
    }
 
-   public AddEditorCommandEvent(String id, KeySequence keys, boolean replace)
+   public AddEditorCommandEvent(String id, List<KeySequence> keys, boolean replace)
    {
       id_ = id;
       keys_ = keys;
@@ -34,11 +36,11 @@ public class AddEditorCommandEvent extends GwtEvent<AddEditorCommandEvent.Handle
    }
    
    public String getId() { return id_; }
-   public KeySequence getKeySequence() { return keys_; }
+   public List<KeySequence> getKeySequences() { return keys_; }
    public boolean replaceOldBindings() { return replace_; }
    
    private final String id_;
-   private final KeySequence keys_;
+   private final List<KeySequence> keys_;
    private final boolean replace_;
    
    @Override

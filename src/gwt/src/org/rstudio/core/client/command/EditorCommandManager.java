@@ -14,10 +14,17 @@
  */
 package org.rstudio.core.client.command;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.files.FileBacked;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AddEditorCommandEvent;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -30,6 +37,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Edit
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -49,9 +57,13 @@ public class EditorCommandManager
          return getObject(key).cast();
       }
       
-      public final void setBinding(String key, KeySequence binding)
+      public final void setBindings(String key, List<KeySequence> ksList)
       {
-         setString(key,  binding.toString());
+         List<String> bindings = new ArrayList<String>();
+         for (KeySequence ks : ksList)
+            bindings.add(ks.toString());
+         
+         setString(key, StringUtil.join(bindings, "|"));
       }
       
       protected EditorKeyBindings() {}
@@ -61,14 +73,30 @@ public class EditorCommandManager
    {
       protected EditorKeyBinding() {}
       
-      public final KeySequence getKeyBinding()
+      public final List<KeySequence> getKeyBindings()
       {
-         return KeySequence.fromShortcutString(getBindingString());
+         JsArrayString bindings = getBindingsInternal();
+         Set<KeySequence> keys = new HashSet<KeySequence>();
+         for (String binding : JsUtil.asIterable(bindings))
+         {
+            String[] splat = binding.split("\\|");
+            for (String item : splat)
+            {
+               keys.add(KeySequence.fromShortcutString(item));
+            }
+         }
+         
+         List<KeySequence> keyList = new ArrayList<KeySequence>();
+         keyList.addAll(keys);
+         return keyList;
       }
       
-      private final native String getBindingString()
+      private final native JsArrayString getBindingsInternal()
       /*-{
-         return this;
+         var result = this;
+         if (typeof result === "string")
+            result = [result];
+         return result;
       }-*/;
    }
    
@@ -117,10 +145,10 @@ public class EditorCommandManager
       return manager_.hasPrefix(keys);
    }
    
-   public void rebindCommand(String id, KeySequence keySequence)
+   public void rebindCommand(String id, List<KeySequence> keys)
    {
-      manager_.rebindCommand(id, keySequence);
-      events_.fireEvent(new AddEditorCommandEvent(id, keySequence, true));
+      manager_.rebindCommand(id, keys);
+      events_.fireEvent(new AddEditorCommandEvent(id, keys, true));
    }
    
    public void addBindingsAndSave(final EditorKeyBindings newBindings)
@@ -158,9 +186,10 @@ public class EditorCommandManager
             for (String commandName : bindings.iterableKeys())
             {
                EditorKeyBinding binding = bindings.get(commandName);
+               
                rebindCommand(
                      commandName,
-                     binding.getKeyBinding());
+                     binding.getKeyBindings());
                
                if (afterLoad != null)
                   afterLoad.execute();

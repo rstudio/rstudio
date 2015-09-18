@@ -716,7 +716,7 @@ public class TextEditingTarget implements
                {
                   getDocDisplay().addEditorCommandBinding(
                         event.getId(),
-                        event.getKeySequence(),
+                        event.getKeySequences(),
                         event.replaceOldBindings());
                }
             });
