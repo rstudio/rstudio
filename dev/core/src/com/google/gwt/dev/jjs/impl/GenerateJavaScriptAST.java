@@ -730,9 +730,12 @@ public class GenerateJavaScriptAST {
 
     private final JsName prototype = objectScope.declareName("prototype");
 
+    private final JsName call = objectScope.declareName("call");
+
     {
       globalTemp.setObfuscatable(false);
       prototype.setObfuscatable(false);
+      call.setObfuscatable(false);
       arrayLength.setObfuscatable(false);
     }
 
@@ -1347,10 +1350,15 @@ public class GenerateJavaScriptAST {
     }
 
     private JsExpression dispatchToSuper(JMethodCall x, JMethod method, List<JsExpression> args) {
-      JsName callName = objectScope.declareName("call");
-      callName.setObfuscatable(false);
-      JsNameRef qualifiedMethodName = callName.makeRef(x.getSourceInfo());
+      SourceInfo sourceInfo = x.getSourceInfo();
+      JsExpression instance = (JsExpression) pop();
+
+      JsNameRef methodNameRef;
       if (method.isConstructor()) {
+        // We don't generate calls to super native constructors (yet).
+        if (method.isJsNative()) {
+          return JsNullLiteral.INSTANCE;
+        }
         /*
          * Constructor calls through {@code this} and {@code super} are always dispatched statically
          * using the constructor function name (constructors are always defined as top level
@@ -1359,41 +1367,37 @@ public class GenerateJavaScriptAST {
          * Because constructors are modeled like instance methods they have an implicit {@code this}
          * parameter, hence they are invoked like: "constructor.call(this, ...)".
          */
-        qualifiedMethodName.setQualifier(names.get(method).makeRef(x.getSourceInfo()));
+        methodNameRef = names.get(method).makeRef(sourceInfo);
       } else {
         // These are regular super method call. These calls are always dispatched statically and
         // optimizations will statify them (except in a few cases, like being target of
-        // {@link Impl.getNameOf}.
-        // For the most part these calls only appear in completely unoptimized code, hence need to
-        // be handled here.
+        // {@link Impl.getNameOf} or calls to the native classes.
 
-        // Construct JCHSU.getPrototypeFor(type).polyname
-        // TODO(rluble): Ideally we would want to construct the inheritance chain the JS way and
-        // then we could do Type.prototype.polyname.call(this, ...). Currently prototypes do not
-        // have global names instead they are stuck into the prototypesByTypeId array.
-        final JDeclaredType superMethodTargetType = method.getEnclosingType();
+        JDeclaredType superClass = method.getEnclosingType();
+        if (method.isJsNative()) {
+          // Construct jsPrototype.prototype.jsname
+          methodNameRef = createJsQualifier(method.getQualifiedJsName(), x.getSourceInfo());
+        } else {
+          // Construct JCHSU.getPrototypeFor(type).polyname
 
-        JsInvocation getPrototypeCall = constructInvocation(x.getSourceInfo(),
-            "JavaClassHierarchySetupUtil.getClassPrototype",
-            convertJavaLiteral(typeMapper.get(superMethodTargetType)));
-
-        JsNameRef methodNameRef = polymorphicNames.get(method).makeRef(x.getSourceInfo());
-        methodNameRef.setQualifier(getPrototypeCall);
-        qualifiedMethodName.setQualifier(methodNameRef);
+          // TODO(rluble): Ideally we would want to construct the inheritance chain the JS way and
+          // then we could do Type.prototype.polyname.call(this, ...). Currently prototypes do not
+          // have global names instead they are stuck into the prototypesByTypeId array.
+          JsInvocation protoRef =
+              constructInvocation(sourceInfo, "JavaClassHierarchySetupUtil.getClassPrototype",
+                  convertJavaLiteral(typeMapper.get(superClass)));
+          methodNameRef = polymorphicNames.get(method).makeRef(sourceInfo);
+          methodNameRef.setQualifier(protoRef);
+        }
       }
 
       // <method_qualifier>.call(instance, args);
-      JsInvocation jsInvocation = new JsInvocation(x.getSourceInfo(), qualifiedMethodName);
-      jsInvocation.getArguments().add((JsExpression) pop()); // instance
+      JsNameRef qualifiedMethodName = call.makeRef(sourceInfo);
+      qualifiedMethodName.setQualifier(methodNameRef);
+      JsInvocation jsInvocation = new JsInvocation(sourceInfo, qualifiedMethodName);
+      jsInvocation.getArguments().add(instance);
       jsInvocation.getArguments().addAll(args);
-
-      // Is this method targeting a Foo_Prototype class?
-      if (method.getEnclosingType().isJsNative()) {
-        // TODO(goktug): inline following for further simplifications.
-        return dispatchToSuperPrototype(x, method, qualifiedMethodName, jsInvocation);
-      } else {
-        return jsInvocation;
-      }
+      return jsInvocation;
     }
 
     private JsExpression dispatchToJsProperty(
@@ -1414,25 +1418,6 @@ public class GenerateJavaScriptAST {
 
     private JsExpression dispatchToJsFunction(JMethodCall x, List<JsExpression> args) {
       return new JsInvocation(x.getSourceInfo(), (JsExpression) pop(), args);
-    }
-
-    /**
-     * Setup qualifier and methodRef to dispatch to super-ctor or super-method.
-     * TODO: review this code
-     */
-    private JsExpression dispatchToSuperPrototype(JMethodCall x, JMethod method,
-        JsNameRef qualifier, JsInvocation jsInvocation) {
-
-      // in JsType case, super.foo() call requires SuperCtor.prototype.foo.call(this, args)
-      // the method target should be on a class that ends with $Prototype and implements a JsType
-      // TODO: if should be an assert instead
-      if (!(method instanceof JConstructor) && method.isOrOverridesJsMethod()) {
-        // add qualifier so we have jsPrototype.prototype.methodName.call(this, args)
-        qualifier.setQualifier(createJsQualifier(method.getQualifiedJsName(), x.getSourceInfo()));
-        return jsInvocation;
-      }
-
-      return JsNullLiteral.INSTANCE;
     }
 
     @Override
@@ -1485,9 +1470,8 @@ public class GenerateJavaScriptAST {
         protoRef.setQualifier(ctorName.makeRef(sourceInfo));
 
         // makeLambdaFunction(Foo.prototype.samMethod, new Foo(...))
-        JsFunction makeLambdaFunc =
-            indexedFunctions.get("JavaClassHierarchySetupUtil.makeLambdaFunction");
-        newExpr = new JsInvocation(sourceInfo, makeLambdaFunc, funcNameRef, newOp);
+        newExpr = constructInvocation(
+            sourceInfo, "JavaClassHierarchySetupUtil.makeLambdaFunction", funcNameRef, newOp);
       }
       push(newExpr);
     }
