@@ -65,7 +65,7 @@ public enum TypeCategory {
     } else if (program.typeOracle.isEffectivelyJavaScriptObject(type)) {
       return TypeCategory.TYPE_JSO;
     } else if (program.typeOracle.isDualJsoInterface(type)
-        || program.typeOracle.isJsTypeInterfaceWithoutPrototype(type)) {
+        || program.typeOracle.isNonNativeJsTypeInterface(type)) {
       return TypeCategory.TYPE_JAVA_OBJECT_OR_JSO;
     } else if (type.isJsNative()) {
       return TypeCategory.TYPE_JS_PROTOTYPE;

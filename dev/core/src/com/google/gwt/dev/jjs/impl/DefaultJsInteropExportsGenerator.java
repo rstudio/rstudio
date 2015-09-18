@@ -86,7 +86,7 @@ class DefaultJsInteropExportsGenerator implements JsInteropExportsGenerator {
   }
 
   private void ensureProvideNamespace(JMember member, JsExpression ctor) {
-    String namespace = member.getExportNamespace();
+    String namespace = member.getJsNamespace();
     if (namespace.equals(lastExportedNamespace)) {
       return;
     }

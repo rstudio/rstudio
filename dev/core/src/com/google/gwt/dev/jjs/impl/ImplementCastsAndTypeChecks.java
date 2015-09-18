@@ -263,7 +263,7 @@ public class ImplementCastsAndTypeChecks {
 
      assert targetTypeCategory == TypeCategory.TYPE_JS_PROTOTYPE;
      call.addArg(program.getStringLiteral(sourceInfo,
-         ((JDeclaredType) targetType).getJsPrototype()));
+         ((JDeclaredType) targetType).getQualifiedJsName()));
     }
     return call;
   }

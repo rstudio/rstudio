@@ -227,7 +227,7 @@ public class JsTypeTest extends GWTTestCase {
     assertTrue(object instanceof ElementLikeJsInterface);
     assertFalse(object instanceof ElementLikeJsInterfaceImpl);
     assertTrue(object instanceof MyJsInterfaceWithOnlyInstanceofReference);
-    assertFalse(object instanceof MyJsInterfaceWithPrototypeAndOnlyInstanceofReference);
+    assertTrue(object instanceof MyJsInterfaceWithPrototypeAndOnlyInstanceofReference);
     assertFalse(object instanceof MyJsClassWithPrototypeAndOnlyInstanceofReference);
     assertFalse(object instanceof ConcreteJsType);
   }
@@ -263,7 +263,7 @@ public class JsTypeTest extends GWTTestCase {
     assertTrue(object instanceof ElementLikeJsInterface);
     assertFalse(object instanceof ElementLikeJsInterfaceImpl);
     assertTrue(object instanceof MyJsInterfaceWithOnlyInstanceofReference);
-    assertTrue(object instanceof MyJsInterfaceWithPrototypeAndOnlyInstanceofReference);
+    assertFalse(object instanceof MyJsInterfaceWithPrototypeAndOnlyInstanceofReference);
     assertTrue(object instanceof MyJsClassWithPrototypeAndOnlyInstanceofReference);
     assertFalse(object instanceof ConcreteJsType);
   }
@@ -339,7 +339,7 @@ public class JsTypeTest extends GWTTestCase {
     assertFalse(object instanceof ElementLikeJsInterface);
     assertFalse(object instanceof ElementLikeJsInterfaceImpl);
     assertFalse(object instanceof MyJsInterfaceWithOnlyInstanceofReference);
-    assertTrue(object instanceof MyJsInterfaceWithPrototypeAndOnlyInstanceofReference);
+    assertFalse(object instanceof MyJsInterfaceWithPrototypeAndOnlyInstanceofReference);
     assertTrue(object instanceof MyJsClassWithPrototypeAndOnlyInstanceofReference);
     assertFalse(object instanceof ConcreteJsType);
   }

@@ -59,7 +59,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
 
   private String jsName;
   private boolean exported;
-  private String exportNamespace;
+  private String jsNamespace;
   private JsPropertyAccessorType jsPropertyType;
   private Specialization specialization;
   private InliningMode inliningMode = InliningMode.NORMAL;
@@ -70,7 +70,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
   @Override
   public void setJsMemberInfo(String namespace, String name, boolean exported) {
     this.jsName = name;
-    this.exportNamespace = namespace;
+    this.jsNamespace = namespace;
     this.exported = exported;
   }
 
@@ -103,22 +103,24 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
   }
 
   @Override
-  public String getExportNamespace() {
-    if (exportNamespace == null) {
-      exportNamespace = enclosingType.getQualifiedExportName();
+  public String getJsNamespace() {
+    if (jsNamespace == null) {
+      jsNamespace = enclosingType.getQualifiedJsName();
     }
-    return exportNamespace;
+    return jsNamespace;
   }
 
   @Override
-  public String getQualifiedExportName() {
-    String namespace = getExportNamespace();
+  public String getQualifiedJsName() {
+    String namespace = getJsNamespace();
     if (jsName.isEmpty()) {
+      assert !needsVtable();
       return namespace;
     } else if (namespace.isEmpty()) {
+      assert !needsVtable();
       return jsName;
     } else {
-      return namespace + "." + jsName;
+      return namespace + (isStatic() ? "." : ".prototype.") + jsName;
     }
   }
 

@@ -20,6 +20,6 @@ import com.google.gwt.core.client.js.JsType;
 /**
  * A test class marked with JsType but isn't referenced from any Java code except instanceof.
  */
-@JsType(prototype = "HTMLButtonElement")
+@JsType(prototype = "MyJsInterface")
 public interface MyJsInterfaceWithPrototypeAndOnlyInstanceofReference {
 }

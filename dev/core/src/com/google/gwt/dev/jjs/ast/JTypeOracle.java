@@ -416,23 +416,11 @@ public class JTypeOracle implements Serializable {
    * True if the type is a JSO or interface implemented by JSO or a JsType without prototype.
    */
   public boolean canCrossCastLikeJso(JType type) {
-    return canBeJavaScriptObject(type) || isJsTypeInterfaceWithoutPrototype(type);
+    return canBeJavaScriptObject(type) || isNonNativeJsTypeInterface(type);
   }
 
-  public boolean isJsTypeInterfaceWithoutPrototype(JType type) {
-    return isJsTypeInterface(type, false);
-  }
-
-  public boolean isJsTypeInterfaceWithPrototype(JType type) {
-    return isJsTypeInterface(type, true);
-  }
-
-  private boolean isJsTypeInterface(JType type, boolean hasPrototype) {
-    if (!type.isJsType() || !(type instanceof JInterfaceType)) {
-      return false;
-    }
-    String prototype = ((JInterfaceType) type).getJsPrototype();
-    return hasPrototype ? prototype != null : prototype == null;
+  public boolean isNonNativeJsTypeInterface(JType type) {
+    return type.isJsType() && type instanceof JInterfaceType && !type.isJsNative();
   }
 
   public boolean castFailsTrivially(JReferenceType fromType, JReferenceType toType) {

@@ -1427,13 +1427,8 @@ public class GenerateJavaScriptAST {
       // the method target should be on a class that ends with $Prototype and implements a JsType
       // TODO: if should be an assert instead
       if (!(method instanceof JConstructor) && method.isOrOverridesJsMethod()) {
-        JsNameRef protoRef = prototype.makeRef(x.getSourceInfo());
-        JsNameRef methodName = new JsNameRef(x.getSourceInfo(), method.getName());
         // add qualifier so we have jsPrototype.prototype.methodName.call(this, args)
-        String jsPrototype = method.getEnclosingType().getJsPrototype();
-        protoRef.setQualifier(createJsQualifier(jsPrototype, x.getSourceInfo()));
-        methodName.setQualifier(protoRef);
-        qualifier.setQualifier(methodName);
+        qualifier.setQualifier(createJsQualifier(method.getQualifiedJsName(), x.getSourceInfo()));
         return jsInvocation;
       }
 
@@ -1479,7 +1474,7 @@ public class GenerateJavaScriptAST {
       popList(newOp.getArguments(), x.getArgs().size()); // args
       JsExpression newExpr = newOp;
       if (ctor.isJsNative()) {
-        String nativeName = ctor.getEnclosingType().getJsPrototype();
+        String nativeName = ctor.getQualifiedJsName();
         newExpr = new JsNew(sourceInfo, createJsQualifier(nativeName, sourceInfo));
       } else if (x.getClassType().isJsFunctionImplementation()) {
         // Foo.prototype.samMethod
@@ -2487,7 +2482,7 @@ public class GenerateJavaScriptAST {
       }
       JClassType superClass = x.getSuperClass();
       if (superClass != null && superClass.isJsNative()) {
-        return superClass.getJsPrototype();
+        return superClass.getQualifiedJsName();
       }
       return null;
     }
@@ -2732,12 +2727,12 @@ public class GenerateJavaScriptAST {
     private void collectExports(JDeclaredType x) {
       if (x.isJsType() && !x.getClassDisposition().isLocalType()) {
         // only types with explicit source names in Java may have an exported prototype
-        exportedMembersByExportName.put(x.getQualifiedExportName(), x);
+        exportedMembersByExportName.put(x.getQualifiedJsName(), x);
       }
 
       for (JMethod m : x.getMethods()) {
         if (m.isJsInteropEntryPoint()) {
-          exportedMembersByExportName.put(m.getQualifiedExportName(), m);
+          exportedMembersByExportName.put(m.getQualifiedJsName(), m);
         }
       }
 
@@ -2748,7 +2743,7 @@ public class GenerateJavaScriptAST {
                 + f.getQualifiedName() + ". Due to the way exporting works, the value of the"
                 + " exported field will not be reflected across Java/JavaScript border.");
           }
-          exportedMembersByExportName.put(f.getQualifiedExportName(), f);
+          exportedMembersByExportName.put(f.getQualifiedJsName(), f);
         }
       }
     }

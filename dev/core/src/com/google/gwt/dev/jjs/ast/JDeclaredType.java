@@ -53,9 +53,9 @@ public abstract class JDeclaredType extends JReferenceType {
   private boolean isJsFunction;
   private boolean isJsType;
   private boolean isClassWideExport;
+  private boolean isJsNative;
   private String jsNamespace = null;
   private String jsName = null;
-  private String jsPrototype;
 
   /**
    * The types of nested classes, https://docs.oracle.com/javase/tutorial/java/javaOO/nested.html
@@ -376,13 +376,9 @@ public abstract class JDeclaredType extends JReferenceType {
     return false;
   }
 
-  public String getJsPrototype() {
-    return jsPrototype;
-  }
-
   @Override
   public boolean isJsNative() {
-    return jsPrototype != null;
+    return isJsNative;
   }
 
   /**
@@ -442,16 +438,15 @@ public abstract class JDeclaredType extends JReferenceType {
     assert JType.replaces(resolvedInterfaces, superInterfaces);
     superInterfaces = Lists.normalize(resolvedInterfaces);
     if (jsNamespace == null) {
-      jsNamespace = computeExportNamespace(pkgInfo);
+      jsNamespace = computeJsNamespace(pkgInfo);
     }
   }
 
-  private String computeExportNamespace(JDeclaredType pkgInfo) {
+  private String computeJsNamespace(JDeclaredType pkgInfo) {
     if (enclosingType != null) {
-      return enclosingType.getQualifiedExportName();
+      return enclosingType.getQualifiedJsName();
     }
-    return pkgInfo != null && pkgInfo.jsNamespace != null ? pkgInfo.jsNamespace
-        : getPackageName();
+    return pkgInfo != null && pkgInfo.jsNamespace != null ? pkgInfo.jsNamespace : getPackageName();
   }
 
   /**
@@ -467,13 +462,13 @@ public abstract class JDeclaredType extends JReferenceType {
     this.isExternal = isExternal;
   }
 
-  public void setJsTypeInfo(boolean isJsType, String jsNamespace, String jsName,
-      boolean isClassWideExport, String jsPrototype) {
+  public void setJsTypeInfo(boolean isJsType, boolean isJsNative, String jsNamespace,
+      String jsName, boolean isClassWideExport) {
     this.isJsType = isJsType;
+    this.isJsNative = isJsNative;
     this.jsNamespace = jsNamespace;
     this.jsName = jsName;
     this.isClassWideExport = isClassWideExport;
-    this.jsPrototype = jsPrototype;
   }
 
   public void setJsFunctionInfo(boolean isJsFunction) {
@@ -587,9 +582,9 @@ public abstract class JDeclaredType extends JReferenceType {
     return null;
   }
 
-  public String getQualifiedExportName() {
-    String simpleExportName = Strings.isNullOrEmpty(jsName) ? getSimpleName() : jsName;
-    return jsNamespace.isEmpty() ? simpleExportName : jsNamespace + "." + simpleExportName;
+  public String getQualifiedJsName() {
+    String simpleJsName = Strings.isNullOrEmpty(jsName) ? getSimpleName() : jsName;
+    return jsNamespace.isEmpty() ? simpleJsName : jsNamespace + "." + simpleJsName;
   }
 
   public NestedClassDisposition getClassDisposition() {

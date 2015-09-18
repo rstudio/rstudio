@@ -69,7 +69,7 @@ class ClosureJsInteropExportsGenerator implements JsInteropExportsGenerator {
   @Override
   public void exportType(JDeclaredType x) {
     // Note that synthesized constructors use the name of the declared types.
-    generateExport(x.getQualifiedExportName(), x.getQualifiedExportName(),
+    generateExport(x.getQualifiedJsName(), x.getQualifiedJsName(),
         names.get(x).makeRef(x.getSourceInfo()), x.getSourceInfo());
   }
 
@@ -83,7 +83,7 @@ class ClosureJsInteropExportsGenerator implements JsInteropExportsGenerator {
    */
   @Override
   public void exportMember(JMember member, JsExpression bridgeMethodOrAlias) {
-    generateExport(member.getExportNamespace(), member.getQualifiedExportName(),
+    generateExport(member.getJsNamespace(), member.getQualifiedJsName(),
         bridgeMethodOrAlias, member.getSourceInfo());
   }
 

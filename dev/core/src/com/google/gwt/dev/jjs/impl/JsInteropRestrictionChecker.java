@@ -210,11 +210,11 @@ public class JsInteropRestrictionChecker extends JVisitor {
   }
 
   private void checkExportName(JMember x) {
-    boolean success = minimalRebuildCache.addExportedGlobalName(x.getQualifiedExportName(),
+    boolean success = minimalRebuildCache.addExportedGlobalName(x.getQualifiedJsName(),
         currentType.getName());
     if (!success) {
       logError("Member '%s' can't be exported because the global name '%s' is already taken.",
-          x.getQualifiedName(), x.getQualifiedExportName());
+          x.getQualifiedName(), x.getQualifiedJsName());
     }
   }
 

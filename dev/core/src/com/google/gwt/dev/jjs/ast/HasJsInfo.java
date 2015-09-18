@@ -24,7 +24,7 @@ public interface HasJsInfo {
 
   String getJsName();
 
-  String getExportNamespace();
+  String getJsNamespace();
 
-  String getQualifiedExportName();
+  String getQualifiedJsName();
 }

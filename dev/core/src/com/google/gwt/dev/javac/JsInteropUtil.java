@@ -42,10 +42,16 @@ public final class JsInteropUtil {
 
   public static void maybeSetJsInteropProperties(JDeclaredType type, Annotation... annotations) {
     AnnotationBinding jsType = JdtUtil.getAnnotation(annotations, JSTYPE_CLASS);
-    String jsPrototype = JdtUtil.getAnnotationParameterString(jsType, "prototype");
     String namespace = maybeGetJsNamespace(annotations);
     String exportName = maybeGetJsExportName(annotations, "");
-    type.setJsTypeInfo(jsType != null, namespace, exportName, exportName != null, jsPrototype);
+    String jsPrototype = JdtUtil.getAnnotationParameterString(jsType, "prototype");
+    boolean isJsNative = jsPrototype != null;
+    if (isJsNative) {
+      int indexOf = jsPrototype.lastIndexOf(".");
+      namespace = indexOf == -1 ? "" : jsPrototype.substring(0, indexOf);
+      exportName = jsPrototype.substring(indexOf + 1);
+    }
+    type.setJsTypeInfo(jsType != null, isJsNative, namespace, exportName, exportName != null);
 
     type.setJsFunctionInfo(JdtUtil.getAnnotation(annotations, JSFUNCTION_CLASS) != null);
   }

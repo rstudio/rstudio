@@ -81,7 +81,7 @@ public class JField extends JVariable implements JMember {
       JReferenceType.NULL_TYPE, false, Disposition.FINAL);
 
   private String jsName;
-  private String exportNamespace;
+  private String jsNamespace;
   private boolean exported;
   private final JDeclaredType enclosingType;
   private final boolean isCompileTimeConstant;
@@ -133,7 +133,7 @@ public class JField extends JVariable implements JMember {
   @Override
   public void setJsMemberInfo(String namespace, String name, boolean exported) {
     this.jsName = name;
-    this.exportNamespace = namespace;
+    this.jsNamespace = namespace;
     this.exported = exported;
   }
 
@@ -146,13 +146,13 @@ public class JField extends JVariable implements JMember {
   }
 
   @Override
-  public String getExportNamespace() {
-    return exportNamespace == null ? enclosingType.getQualifiedExportName() : exportNamespace;
+  public String getJsNamespace() {
+    return jsNamespace == null ? enclosingType.getQualifiedJsName() : jsNamespace;
   }
 
   @Override
-  public String getQualifiedExportName() {
-    String namespace = getExportNamespace();
+  public String getQualifiedJsName() {
+    String namespace = getJsNamespace();
     return namespace.isEmpty() ? jsName : namespace + "." + jsName;
   }
 
