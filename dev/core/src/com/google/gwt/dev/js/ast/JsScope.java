@@ -82,6 +82,18 @@ public abstract class JsScope implements Serializable {
   }
 
   /**
+   * Gets a name object associated with the specified ident in this scope, creating it if necessary,
+   * and makes it non obfuscatable.
+   *
+   * @param ident An identifier that is unique within this scope.
+   */
+  public final JsName declareUnobfuscatableName(String ident) {
+    JsName name = declareName(ident);
+    name.setUnobfuscatable();
+    return name;
+  }
+
+  /**
    * Attempts to find the name object for the specified ident, searching in this scope, and if not
    * found, in the parent scopes.
    *

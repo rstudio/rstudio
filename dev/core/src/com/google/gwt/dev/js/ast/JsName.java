@@ -76,8 +76,8 @@ public class JsName implements Serializable {
     return ref;
   }
 
-  public void setObfuscatable(boolean isObfuscatable) {
-    this.isObfuscatable = isObfuscatable;
+  public void setUnobfuscatable() {
+    this.isObfuscatable = false;
   }
 
   public void setShortIdent(String shortIdent) {

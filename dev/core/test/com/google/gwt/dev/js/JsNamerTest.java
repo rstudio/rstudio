@@ -146,7 +146,7 @@ public class JsNamerTest extends TestCase {
       String functionName = "foo" + JsIncrementalNamer.RESERVED_IDENT_SUFFIX;
       JsProgram jsProgram = parseJs(
           "function " + functionName + "() { return 42; }");
-      jsProgram.getScope().findExistingName(functionName).setObfuscatable(false);
+      jsProgram.getScope().findExistingName(functionName).setUnobfuscatable();
       rename(jsProgram, JsOutputOption.OBFUSCATED, true);
       fail("Naming an unobfuscatable identifier containing the reserved suffix should have "
           + "thrown an exception in JsIncrementalNamer.");

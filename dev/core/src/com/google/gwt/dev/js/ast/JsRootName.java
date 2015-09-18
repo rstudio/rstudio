@@ -34,11 +34,11 @@ public class JsRootName extends JsName {
 
   JsRootName(JsRootScope rootScope, String ident) {
     super(rootScope, ident, ident);
-    super.setObfuscatable(false);
+    super.setUnobfuscatable();
   }
 
   @Override
-  public void setObfuscatable(boolean isObfuscatable) {
+  public void setUnobfuscatable() {
     throw new UnsupportedOperationException("Root names are immutable");
   }
 

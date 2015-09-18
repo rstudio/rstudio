@@ -444,7 +444,7 @@ public class JjsUtils {
       names = new JsName[stringNames.length];
       for (int i = 0; i < stringNames.length; i++) {
         names[i] = new JsName(null, stringNames[i], stringNames[i]);
-        names[i].setObfuscatable(false);
+        names[i].setUnobfuscatable();
       }
     }
 

@@ -440,8 +440,7 @@ public class GenerateJavaScriptAST {
       } else {
         JsName jsName;
         if (x.isJsProperty()) {
-          jsName = scopeStack.peek().declareName(name, name);
-          jsName.setObfuscatable(false);
+          jsName = scopeStack.peek().declareUnobfuscatableName(name);
         } else {
           jsName = scopeStack.peek().declareName(mangleName, name);
         }
@@ -719,24 +718,17 @@ public class GenerateJavaScriptAST {
 
     private final Map<String, Object> exportedMembersByExportName = new TreeMap<String, Object>();
 
-    private final JsName arrayLength = objectScope.declareName("length");
-
     private final Map<JClassType, JsFunction> clinitMap = Maps.newHashMap();
 
     private JMethod currentMethod = null;
 
-    private final JsName globalTemp = topScope.declareName("_");
+    private final JsName arrayLength = objectScope.declareUnobfuscatableName("length");
 
-    private final JsName prototype = objectScope.declareName("prototype");
+    private final JsName globalTemp = topScope.declareUnobfuscatableName("_");
 
-    private final JsName call = objectScope.declareName("call");
+    private final JsName prototype = objectScope.declareUnobfuscatableName("prototype");
 
-    {
-      globalTemp.setObfuscatable(false);
-      prototype.setObfuscatable(false);
-      call.setObfuscatable(false);
-      arrayLength.setObfuscatable(false);
-    }
+    private final JsName call = objectScope.declareUnobfuscatableName("call");
 
     /**
      * Holds any local variable declarations which must be inserted into the current JS function
@@ -2575,8 +2567,7 @@ public class GenerateJavaScriptAST {
     private void generateToStringAlias(JClassType x, List<JsStatement> globalStmts) {
       JMethod toStringMethod = program.getIndexedMethod("Object.toString");
       if (x.getMethods().contains(toStringMethod)) {
-        JsName toStringName = objectScope.declareName("toString");
-        toStringName.setObfuscatable(false);
+        JsName toStringName = objectScope.declareUnobfuscatableName("toString");
         generateVTableAlias(globalStmts, toStringMethod, toStringName);
       }
     }
@@ -2651,8 +2642,7 @@ public class GenerateJavaScriptAST {
 
         if (method.exposesJsMethod()) {
           String jsName = method.getJsName();
-          JsName exportedName = interfaceScope.declareName(jsName, jsName);
-          exportedName.setObfuscatable(false);
+          JsName exportedName = interfaceScope.declareUnobfuscatableName(jsName);
           generateVTableAlias(globalStmts, method, exportedName);
         }
 

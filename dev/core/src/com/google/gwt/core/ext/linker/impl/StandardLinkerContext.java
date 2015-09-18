@@ -47,7 +47,6 @@ import com.google.gwt.dev.js.JsVerboseNamer;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsModVisitor;
-import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.resource.ResourceOracle;
@@ -436,8 +435,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     Reader r = new StringReader(program);
     JsProgram jsProgram = new JsProgram();
     JsScope topScope = jsProgram.getScope();
-    JsName funcName = topScope.declareName(getModuleFunctionName());
-    funcName.setObfuscatable(false);
+    topScope.declareUnobfuscatableName(getModuleFunctionName());
 
     try {
       SourceInfo sourceInfo = jsProgram.createSourceInfo(1,
