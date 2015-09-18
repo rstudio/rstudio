@@ -337,6 +337,7 @@ public class RSConnectPublishButton extends Composite
       }
       publishAfterRmdRender_ = null;
       rmdRenderPending_ = false;
+      anyRmdRenderPending_ = false;
    }
 
    public void setShowCaption(boolean show)
@@ -355,6 +356,11 @@ public class RSConnectPublishButton extends Composite
          manuallyHidden_ = hide;
          applyVisiblity();
       }
+   }
+   
+   public static boolean isAnyRmdRenderPending()
+   {
+      return anyRmdRenderPending_;
    }
 
    // Private methods --------------------------------------------------------
@@ -427,6 +433,7 @@ public class RSConnectPublishButton extends Composite
             // we're finished
             publishAfterRmdRender_ = previous;
             rmdRenderPending_ = true;
+            anyRmdRenderPending_ = true;
             commands_.knitDocument().execute();
          }
          else
@@ -759,4 +766,6 @@ public class RSConnectPublishButton extends Composite
    private final AppCommand boundCommand_;
 
    private RSConnectDeploymentRecord defaultRec_;
+   
+   private static boolean anyRmdRenderPending_ = false;
 }

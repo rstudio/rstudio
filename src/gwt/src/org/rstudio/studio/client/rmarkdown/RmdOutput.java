@@ -46,6 +46,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.rmarkdown.model.RmdShinyDocInfo;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFrame;
 import org.rstudio.studio.client.rmarkdown.ui.ShinyDocumentWarningDialog;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -439,6 +440,15 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             prefs_.rmdViewerType().getValue() == RMD_VIEWER_TYPE_PANE ?
                     RMD_VIEWER_TYPE_WINDOW : 
                     prefs_.rmdViewerType().getValue();
+      
+      // if we're about to pop open a window but one of the publish buttons
+      // is waiting for a render to complete, skip the preview entirely so 
+      // we don't disturb the publish flow with a window popping up
+      if (newViewerType == RMD_VIEWER_TYPE_WINDOW &&
+            RSConnectPublishButton.isAnyRmdRenderPending())
+      {
+         return;
+      }
       
       // get the window object if available
       WindowEx win = null;
