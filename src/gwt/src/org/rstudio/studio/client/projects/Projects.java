@@ -179,7 +179,7 @@ public class Projects implements OpenProjectFileHandler,
             }
             
             // disable the open project in new window if necessary
-            if (!sessionInfo.getMultiSession())
+            if (!Desktop.isDesktop() || !sessionInfo.getMultiSession())
                commands.openProjectInNewWindow().remove();
             
             // maintain mru
