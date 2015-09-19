@@ -151,9 +151,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
    
    private void setPaneVisibility(PreferencesDialogPaneBase<T> pane, boolean visible)
    {
-      pane.getElement().getStyle().setDisplay(visible
-                                              ? Display.BLOCK
-                                              : Display.NONE);
+      pane.setPaneVisible(visible);
    }
 
    @Override
