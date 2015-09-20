@@ -229,14 +229,16 @@ void ProjectContext::augmentRbuildignore()
       // constants
       const char * const kIgnoreRproj = "^.*\\.Rproj$";
       const char * const kIgnoreRprojUser = "^\\.Rproj\\.user$";
-
+      const char * const kIgnoreSrcFile = "^.*\.o$";
+      const std::string newLine = "\n";
+      
       // create the file if it doesn't exists
       FilePath rbuildIgnorePath = directory().childPath(".Rbuildignore");
       if (!rbuildIgnorePath.exists())
       {
          Error error = writeStringToFile(rbuildIgnorePath,
-                                         kIgnoreRproj + std::string("\n") +
-                                         kIgnoreRprojUser + std::string("\n"),
+                                         kIgnoreRproj + newLine +
+                                         kIgnoreRprojUser + newLine,
                                          string_utils::LineEndingNative);
          if (error)
             LOG_ERROR(error);
@@ -261,19 +263,22 @@ void ProjectContext::augmentRbuildignore()
          // for previous less precisely specified .Rproj entries
          bool hasRProj = strIgnore.find("\\.Rproj$") != std::string::npos;
          bool hasRProjUser = strIgnore.find(kIgnoreRprojUser) != std::string::npos;
+         bool ignoresSrcFiles = strIgnore.find(kIgnoreSrcFile) != std::string::npos;
 
-         if (hasRProj && hasRProjUser)
+         if (hasRProj && hasRProjUser && ignoresSrcFiles)
             return;
 
          bool addExtraNewline = strIgnore.size() > 0
                                 && strIgnore[strIgnore.size() - 1] != '\n';
 
          if (addExtraNewline)
-            strIgnore += "\n";
+            strIgnore += newLine;
          if (!hasRProj)
-            strIgnore += kIgnoreRproj + std::string("\n");
+            strIgnore += kIgnoreRproj + newLine;
          if (!hasRProjUser)
-            strIgnore += kIgnoreRprojUser + std::string("\n");
+            strIgnore += kIgnoreRprojUser + newLine;
+         if(!ignoresSrcFiles)
+            strIgnore += kIgnoreSrcFile + newLine;
          error = core::writeStringToFile(rbuildIgnorePath,
                                          strIgnore,
                                          string_utils::LineEndingNative);
