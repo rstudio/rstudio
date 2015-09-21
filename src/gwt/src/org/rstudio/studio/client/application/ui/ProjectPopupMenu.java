@@ -175,14 +175,12 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       boolean hasSharedProjects = sharedProjects != null && 
                                   sharedProjects.length() > 0;
 
-      // truncate the MRU list size for smaller client heights
       int maxMruEntries = MAX_MRU_ENTRIES;
-      if (Window.getClientHeight() < 700)
-         maxMruEntries -= 5;
-      
+
       // shared projects are always shown, and count against the MRU limit
       if (hasSharedProjects)
-         maxMruEntries -= sharedProjects.length();
+         maxMruEntries -= Math.min(sharedProjects.length(), 
+               MAX_SHARED_PROJECTS);
       
       addItem(commands_.newProject().createMenuItem(false));
 
@@ -266,7 +264,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    private static final Resources RESOURCES =  
                               (Resources) GWT.create(Resources.class);
    private static final int MAX_SHARED_PROJECTS = 5;
-   private static final int MAX_MRU_ENTRIES = 15;
+   private static final int MAX_MRU_ENTRIES = 10;
    private final String activeProjectFile_;
    private ToolbarButton toolbarButton_ = null;
 
