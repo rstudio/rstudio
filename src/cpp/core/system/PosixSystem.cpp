@@ -1363,6 +1363,7 @@ Error launchChildProcess(std::string path,
       copyEnvironmentVar("PATH", &env);
       copyEnvironmentVar("MANPATH", &env);
       copyEnvironmentVar("LANG", &env);
+      copyEnvironmentVar("TMPDIR", &env);
       core::system::setenv(&env, "USER", user.username);
       core::system::setenv(&env, "LOGNAME", user.username);
       core::system::setenv(&env, "HOME", user.homeDirectory);
