@@ -720,7 +720,7 @@ public class Projects implements OpenProjectFileHandler,
       showProjectOptions(ProjectPreferencesDialog.PACKRAT);
    }
    
-   private void showProjectOptions(final int initialPane)
+   public void showProjectOptions(final int initialPane)
    {
       final ProgressIndicator indicator = globalDisplay_.getProgressIndicator(
                                                       "Error Reading Options");
