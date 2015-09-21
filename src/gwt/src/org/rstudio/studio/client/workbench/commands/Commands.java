@@ -131,6 +131,7 @@ public abstract class
    public abstract AppCommand openProject();
    public abstract AppCommand openProjectInNewWindow();
    public abstract AppCommand shareProject();
+   public abstract AppCommand openSharedProject();
    public abstract AppCommand projectMru0();
    public abstract AppCommand projectMru1();
    public abstract AppCommand projectMru2();

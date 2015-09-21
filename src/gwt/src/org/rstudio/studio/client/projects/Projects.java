@@ -566,48 +566,13 @@ public class Projects implements OpenProjectFileHandler,
    @Handler
    public void onOpenProject()
    {
-      // first resolve the quit context (potentially saving edited documents
-      // and determining whether to save the R environment on exit)
-      applicationQuit_.prepareForQuit("Switch Projects",
-                                      new ApplicationQuit.QuitContext() {
-         public void onReadyToQuit(final boolean saveChanges)
-         {
-            showOpenProjectDialog(
-               new ProgressOperationWithInput<OpenProjectParams>() 
-               {
-                  @Override
-                  public void execute(final OpenProjectParams input,
-                                      ProgressIndicator indicator)
-                  {
-                     indicator.onCompleted();
-                     
-                     if (input == null)
-                        return;
-                     
-                     if (input.inNewSession())
-                     {
-                        // open new window if requested
-                        eventBus_.fireEvent(
-                            new OpenProjectNewWindowEvent(
-                                  input.getProjectFile().getPath()));
-                     }
-                     else
-                     {
-                        // perform quit
-                        applicationQuit_.performQuit(saveChanges,
-                              input.getProjectFile().getPath());
-                     }
-                  }   
-               });
-            
-         }
-      }); 
+      showOpenProjectDialog(ProjectOpener.PROJECT_TYPE_FILE);
    }
    
    @Handler
    public void onOpenProjectInNewWindow()
    {
-      showOpenProjectDialog(
+      showOpenProjectDialog(ProjectOpener.PROJECT_TYPE_FILE,
          new ProgressOperationWithInput<OpenProjectParams>() 
          {
             @Override
@@ -624,6 +589,12 @@ public class Projects implements OpenProjectFileHandler,
                          input.getProjectFile().getPath()));
             }
          });
+   }
+   
+   @Handler
+   public void onOpenSharedProject()
+   {
+      showOpenProjectDialog(ProjectOpener.PROJECT_TYPE_SHARED);
    }
    
    @Override
@@ -803,10 +774,11 @@ public class Projects implements OpenProjectFileHandler,
    }
    
    private void showOpenProjectDialog(
+                  int defaultType,
                   ProgressOperationWithInput<OpenProjectParams> onCompleted)
    {
       opener_.showOpenProjectDialog(fsContext_, projServer_,
-            pUIPrefs_.get().defaultProjectLocation().getValue(),
+            pUIPrefs_.get().defaultProjectLocation().getValue(), defaultType,
             onCompleted);
    }
    
@@ -850,6 +822,46 @@ public class Projects implements OpenProjectFileHandler,
             globalDisplay_.openWindow(url);
          }
       });
+   }
+   
+   private void showOpenProjectDialog(final int projectType)
+   {
+      // first resolve the quit context (potentially saving edited documents
+      // and determining whether to save the R environment on exit)
+      applicationQuit_.prepareForQuit("Switch Projects",
+                                      new ApplicationQuit.QuitContext() {
+         public void onReadyToQuit(final boolean saveChanges)
+         {
+            showOpenProjectDialog(projectType,
+               new ProgressOperationWithInput<OpenProjectParams>() 
+               {
+                  @Override
+                  public void execute(final OpenProjectParams input,
+                                      ProgressIndicator indicator)
+                  {
+                     indicator.onCompleted();
+                     
+                     if (input == null || input.getProjectFile() == null)
+                        return;
+                     
+                     if (input.inNewSession())
+                     {
+                        // open new window if requested
+                        eventBus_.fireEvent(
+                            new OpenProjectNewWindowEvent(
+                                  input.getProjectFile().getPath()));
+                     }
+                     else
+                     {
+                        // perform quit
+                        applicationQuit_.performQuit(saveChanges,
+                              input.getProjectFile().getPath());
+                     }
+                  }   
+               });
+            
+         }
+      }); 
    }
 
    private final Provider<ProjectMRUList> pMRUList_;

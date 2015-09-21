@@ -27,6 +27,7 @@ import com.google.gwt.user.client.ui.CheckBox;
 public class OpenProjectDialog extends FileDialog
 {
    public OpenProjectDialog(FileSystemContext context,
+                int defaultType,
                 final ProgressOperationWithInput<OpenProjectParams> operation)
    {
       super("Open Project", null, "Open", false, false, false, context, 

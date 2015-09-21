@@ -134,8 +134,10 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       if (allowSharedProjects_)
       {
          // if shared projects are on, check for them every time the user drops
-         // the menu 
-         server_.getSharedProjects(MAX_SHARED_PROJECTS, 
+         // the menu; we request one more than the maximum we can display so 
+         // we can let the user know whether there are more projects than those
+         // that can be displayed in the menu
+         server_.getSharedProjects(MAX_SHARED_PROJECTS + 1, 
                new ServerRequestCallback<JsArray<SharedProjectDetails>>()
          {
             @Override
@@ -223,7 +225,8 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       if (hasSharedProjects)
       {
          addSeparator("Shared with Me"); 
-         for (int i = 0; i < sharedProjects.length(); i ++)
+         for (int i = 0; i < Math.min(sharedProjects.length(),
+               MAX_SHARED_PROJECTS); i ++)
          {
             final SharedProjectDetails details = sharedProjects.get(i);
 
@@ -241,6 +244,13 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
                               details.getProjectFile());
                      }
                   }));
+         }
+         
+         // if there are more shared projects on the server than those we 
+         // displayed, offer a link
+         if (sharedProjects.length() > MAX_SHARED_PROJECTS)
+         {
+            addItem(commands_.openSharedProject().createMenuItem(false));
          }
       }
 

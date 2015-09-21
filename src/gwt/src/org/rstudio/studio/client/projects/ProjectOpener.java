@@ -27,10 +27,14 @@ import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 
 public class ProjectOpener
 {
+   public final static int PROJECT_TYPE_FILE   = 0;
+   public final static int PROJECT_TYPE_SHARED = 1;
+
    public void showOpenProjectDialog(
                   FileSystemContext fsContext,
                   ProjectsServerOperations server,
                   String defaultLocation,
+                  int defaultType,
                   final ProgressOperationWithInput<OpenProjectParams> onCompleted)
    {
       // use the default dialog on desktop mode or single-session mode
@@ -60,7 +64,8 @@ public class ProjectOpener
          // in multi-session mode, we have a special dialog for opening projects
          WebFileDialogs webDialogs = (WebFileDialogs)dialogs;
          webDialogs.openProject(fsContext, 
-               FileSystemItem.createDir(defaultLocation), onCompleted);
+               FileSystemItem.createDir(defaultLocation), 
+               defaultType, onCompleted);
       }
    }
 }
