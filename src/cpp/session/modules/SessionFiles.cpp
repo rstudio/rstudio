@@ -915,9 +915,13 @@ Error readJSON(const core::json::JsonRpcRequest& request,
    FilePath filePath = module_context::resolveAliasedPath(path);
    if (!filePath.exists())
    {
-      Error error = fileNotFoundError(ERROR_LOCATION);
-      if (logErrorIfNotFound)
+      Error error = logErrorIfNotFound ?
+               fileNotFoundError(ERROR_LOCATION) :
+               Success();
+      
+      if (error)
          LOG_ERROR(error);
+      
       return error;
    }
    
