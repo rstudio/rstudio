@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.application.ui;
 
 import org.rstudio.core.client.command.AppCommand;
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -24,7 +23,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.projects.ProjectMRUList;
-import org.rstudio.studio.client.projects.events.OpenProjectFileEvent;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.SharedProjectDetails;
 import org.rstudio.studio.client.server.ServerError;
@@ -132,16 +130,6 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    @Override
    public void getDynamicPopupMenu(final DynamicPopupMenuCallback callback)
    {
-      // truncate the MRU list size for smaller client heights
-      if (Window.getClientHeight() < 700)
-      {
-         commands_.projectMru10().setVisible(false);
-         commands_.projectMru11().setVisible(false);
-         commands_.projectMru12().setVisible(false);
-         commands_.projectMru13().setVisible(false);
-         commands_.projectMru14().setVisible(false);
-      }
-      
       ProjectMRUList.setOpenInNewWindow(false);
       if (allowSharedProjects_)
       {
@@ -160,19 +148,14 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
             public void onError(ServerError error)
             {
                // if we can't get the shared projects, we can at least show
-               // the rest of the menu
+               // the menu without them
                rebuildMenu(null, callback);
             }
          });
       }
       else
       {
-         // shared projects are off; build the menu only if it isn't built
-         // already
-         if (getItemCount() == 0)
-            rebuildMenu(null, callback);
-         else
-            callback.onPopupMenu(this);
+         rebuildMenu(null, callback);
       }
    }
 
@@ -184,35 +167,59 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    private void rebuildMenu(final JsArray<SharedProjectDetails> sharedProjects,
          DynamicPopupMenuCallback callback)
    {
+      // clean out existing entries
       clearItems();
+
       boolean hasSharedProjects = sharedProjects != null && 
                                   sharedProjects.length() > 0;
 
+      // truncate the MRU list size for smaller client heights
+      int maxMruEntries = MAX_MRU_ENTRIES;
+      if (Window.getClientHeight() < 700)
+         maxMruEntries -= 5;
+      
+      // shared projects are always shown, and count against the MRU limit
+      if (hasSharedProjects)
+         maxMruEntries -= sharedProjects.length();
+      
       addItem(commands_.newProject().createMenuItem(false));
-      addSeparator();
+
+      // ensure the menu doesn't get too narrow
+      addSeparator(225);
+
       addItem(commands_.openProject().createMenuItem(false));
-      addItem(commands_.openProjectInNewWindow().createMenuItem(false));
-      addItem(commands_.shareProject().createMenuItem(false));
       addItem(commands_.closeProject().createMenuItem(false));
       if (hasSharedProjects)
-         addSeparator("My Projects"); 
+         addSeparator("Recent Projects"); 
       else
          addSeparator();
-      addItem(commands_.projectMru0().createMenuItem(false));
-      addItem(commands_.projectMru1().createMenuItem(false));
-      addItem(commands_.projectMru2().createMenuItem(false));
-      addItem(commands_.projectMru3().createMenuItem(false));
-      addItem(commands_.projectMru4().createMenuItem(false));
-      addItem(commands_.projectMru5().createMenuItem(false));
-      addItem(commands_.projectMru6().createMenuItem(false));
-      addItem(commands_.projectMru7().createMenuItem(false));
-      addItem(commands_.projectMru8().createMenuItem(false));
-      addItem(commands_.projectMru9().createMenuItem(false));
-      addItem(commands_.projectMru10().createMenuItem(false));
-      addItem(commands_.projectMru11().createMenuItem(false));
-      addItem(commands_.projectMru12().createMenuItem(false));
-      addItem(commands_.projectMru13().createMenuItem(false));
-      addItem(commands_.projectMru14().createMenuItem(false));
+
+      // add as many MRU items as is appropriate for our screen size and number
+      // of shared projects
+      AppCommand[] mruCommands = new AppCommand[] {
+         commands_.projectMru0(),
+         commands_.projectMru1(),
+         commands_.projectMru2(),
+         commands_.projectMru3(),
+         commands_.projectMru4(),
+         commands_.projectMru5(),
+         commands_.projectMru6(),
+         commands_.projectMru7(),
+         commands_.projectMru8(),
+         commands_.projectMru9(),
+         commands_.projectMru10(),
+         commands_.projectMru11(),
+         commands_.projectMru12(),
+         commands_.projectMru13(),
+         commands_.projectMru14()
+      };
+      
+      for (int i = 0; i < Math.min(maxMruEntries, mruCommands.length); i++)
+      {
+         addItem(mruCommands[i].createMenuItem(false));
+      }
+      
+      // show shared projects if enabled
       if (hasSharedProjects)
       {
          addSeparator("Shared with Me"); 
@@ -240,6 +247,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       addSeparator();
       addItem(commands_.clearRecentProjects().createMenuItem(false));
       addSeparator();
+      addItem(commands_.shareProject().createMenuItem(false));
       addItem(commands_.projectOptions().createMenuItem(false));
       
       callback.onPopupMenu(this);
@@ -248,6 +256,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    private static final Resources RESOURCES =  
                               (Resources) GWT.create(Resources.class);
    private static final int MAX_SHARED_PROJECTS = 5;
+   private static final int MAX_MRU_ENTRIES = 15;
    private final String activeProjectFile_;
    private ToolbarButton toolbarButton_ = null;
 

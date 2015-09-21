@@ -47,6 +47,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    public static final int BUILD = 3;
    public static final int VCS = 4;
    public static final int PACKRAT = 5;
+   public static final int SHARING = 6;
    
    @Inject
    public ProjectPreferencesDialog(ProjectsServerOperations server,
@@ -59,13 +60,14 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                    ProjectCompilePdfPreferencesPane compilePdf,
                                    ProjectSourceControlPreferencesPane source,
                                    ProjectBuildToolsPreferencesPane build,
-                                   ProjectPackratPreferencesPane packrat)
+                                   ProjectPackratPreferencesPane packrat,
+                                   ProjectSharingPreferencesPane sharing)
    {      
       super("Project Options",
             RES.styles().panelContainer(),
             false,
             new ProjectPreferencesPane[] {general, editing, compilePdf, build, 
-                                          source, packrat});
+                                          source, packrat, sharing});
            
       session_ = session;
       server_ = server;
@@ -86,6 +88,9 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       
       if (!options.getPackratContext().isAvailable())
          hidePane(PACKRAT);
+      
+      if (!session_.get().getSessionInfo().projectSupportsSharing())
+         hidePane(SHARING);
    }
    
    @Override

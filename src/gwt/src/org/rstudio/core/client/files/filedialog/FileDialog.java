@@ -26,11 +26,13 @@ public abstract class FileDialog extends FileSystemDialog
                         String buttonName,
                         boolean promptOnOverwrite,
                         boolean allowNonexistentFile,
+                        boolean allowFolderCreation,
                         FileSystemContext context,
                         String filter,
                         ProgressOperationWithInput<FileSystemItem> operation)
    {
-      super(title, caption, buttonName, context, filter, operation);
+      super(title, caption, buttonName, context, filter, allowFolderCreation,
+            operation);
 
       promptOnOverwrite_ = promptOnOverwrite;
       allowNonexistentFile_ = allowNonexistentFile;

@@ -119,7 +119,8 @@ public class RSConnectPublishInput
    {
       // plots and presentations are always static
       if (getContentType() == RSConnect.CONTENT_TYPE_PLOT ||
-          getContentType() == RSConnect.CONTENT_TYPE_PRES)
+          getContentType() == RSConnect.CONTENT_TYPE_PRES ||
+          getContentType() == RSConnect.CONTENT_TYPE_HTML)
          return true;
       if (getContentType() != RSConnect.CONTENT_TYPE_DOCUMENT)
          return false;

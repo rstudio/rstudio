@@ -49,6 +49,7 @@ import org.rstudio.studio.client.projects.events.SwitchToProjectHandler;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
+import org.rstudio.studio.client.projects.model.OpenProjectParams;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectWizard;
@@ -178,7 +179,7 @@ public class Projects implements OpenProjectFileHandler,
             }
             
             // disable the open project in new window if necessary
-            if (!sessionInfo.getMultiSession())
+            if (!Desktop.isDesktop() || !sessionInfo.getMultiSession())
                commands.openProjectInNewWindow().remove();
             
             // maintain mru
@@ -572,10 +573,10 @@ public class Projects implements OpenProjectFileHandler,
          public void onReadyToQuit(final boolean saveChanges)
          {
             showOpenProjectDialog(
-               new ProgressOperationWithInput<FileSystemItem>() 
+               new ProgressOperationWithInput<OpenProjectParams>() 
                {
                   @Override
-                  public void execute(final FileSystemItem input,
+                  public void execute(final OpenProjectParams input,
                                       ProgressIndicator indicator)
                   {
                      indicator.onCompleted();
@@ -583,8 +584,19 @@ public class Projects implements OpenProjectFileHandler,
                      if (input == null)
                         return;
                      
-                     // perform quit
-                     applicationQuit_.performQuit(saveChanges, input.getPath());
+                     if (input.inNewSession())
+                     {
+                        // open new window if requested
+                        eventBus_.fireEvent(
+                            new OpenProjectNewWindowEvent(
+                                  input.getProjectFile().getPath()));
+                     }
+                     else
+                     {
+                        // perform quit
+                        applicationQuit_.performQuit(saveChanges,
+                              input.getProjectFile().getPath());
+                     }
                   }   
                });
             
@@ -596,10 +608,10 @@ public class Projects implements OpenProjectFileHandler,
    public void onOpenProjectInNewWindow()
    {
       showOpenProjectDialog(
-         new ProgressOperationWithInput<FileSystemItem>() 
+         new ProgressOperationWithInput<OpenProjectParams>() 
          {
             @Override
-            public void execute(final FileSystemItem input,
+            public void execute(final OpenProjectParams input,
                                 ProgressIndicator indicator)
             {
                indicator.onCompleted();
@@ -608,7 +620,8 @@ public class Projects implements OpenProjectFileHandler,
                   return;
                
                eventBus_.fireEvent(
-                   new OpenProjectNewWindowEvent(input.getPath()));
+                   new OpenProjectNewWindowEvent(
+                         input.getProjectFile().getPath()));
             }
          });
    }
@@ -742,8 +755,8 @@ public class Projects implements OpenProjectFileHandler,
       // prompt to confirm
       String projectPath = projFile.getParentPathString();
       globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,  
-         "Confirm Open Project",                             
-         "Do you want to open the project " + projectPath + "?",                         
+         "Confirm Open Project",
+         "Do you want to open the project " + projectPath + "?",
           new Operation() 
           { 
              public void execute()
@@ -790,7 +803,7 @@ public class Projects implements OpenProjectFileHandler,
    }
    
    private void showOpenProjectDialog(
-                  ProgressOperationWithInput<FileSystemItem> onCompleted)
+                  ProgressOperationWithInput<OpenProjectParams> onCompleted)
    {
       opener_.showOpenProjectDialog(fsContext_, projServer_,
             pUIPrefs_.get().defaultProjectLocation().getValue(),
@@ -856,5 +869,4 @@ public class Projects implements OpenProjectFileHandler,
    public static final String NONE = "none";
    public static final Pattern PACKAGE_NAME_PATTERN =
          Pattern.create("^[a-zA-Z][a-zA-Z0-9.]*$", "");
-   
 }

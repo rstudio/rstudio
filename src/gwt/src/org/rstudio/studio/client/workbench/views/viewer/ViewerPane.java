@@ -83,10 +83,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       toolbar_.addLeftWidget(commands_.viewerClear().createToolbarButton());
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.viewerClearAll().createToolbarButton());
-      
-      toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(commands_.viewerRefresh().createToolbarButton());
-     
+        
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.viewerPopout().createToolbarButton());
      
@@ -97,6 +94,10 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       publishButton_ = new RSConnectPublishButton(
             RSConnect.CONTENT_TYPE_DOCUMENT, true, null);
       toolbar_.addRightWidget(publishButton_);
+      
+      toolbar_.addRightSeparator();
+      toolbar_.addRightWidget(commands_.viewerRefresh().createToolbarButton());
+   
 
       // create an HTML generator 
       publishButton_.setPublishHtmlSource(new PublishHtmlSource()

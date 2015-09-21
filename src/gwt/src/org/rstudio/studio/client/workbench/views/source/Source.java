@@ -2953,7 +2953,8 @@ public class Source implements InsertSourceHandler,
       // special case--these editing targets always support popout, but it's
       // nonsensical to show it if it's the only tab in a satellite; hide it in
       // this case
-      if (activeEditor_ != null &&
+      if (commands_.popoutDoc().isEnabled() &&
+          activeEditor_ != null &&
           (activeEditor_ instanceof TextEditingTarget ||
            activeEditor_ instanceof CodeBrowserEditingTarget) &&
           !SourceWindowManager.isMainSourceWindow())

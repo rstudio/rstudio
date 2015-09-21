@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rsconnect.model;
 
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
+import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 
 public class RenderedDocPreview
 {
@@ -32,6 +33,13 @@ public class RenderedDocPreview
       sourceFile_ = result.getSourceFile();
       outputFile_ = result.getHtmlFile();
       isStatic_ = true;
+   }
+   
+   public RenderedDocPreview(RmdRenderResult result)
+   {
+      sourceFile_ = result.getTargetFile();
+      outputFile_ = result.getOutputFile();
+      isStatic_ = !result.isShinyDocument();
    }
    
    public RenderedDocPreview(String sourceFile, String outputFile, 

@@ -106,9 +106,7 @@ public class EnvironmentPane extends WorkbenchPane
       toolbar.addLeftWidget(createImportMenu());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.refreshEnvironment().createToolbarButton());
-      
+       
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_LIST_VIEW));
       menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_GRID_VIEW));
@@ -117,6 +115,10 @@ public class EnvironmentPane extends WorkbenchPane
             imageOfViewType(EnvironmentObjects.OBJECT_LIST_VIEW),
             menu);
       toolbar.addRightWidget(viewButton_);
+      
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(commands_.refreshEnvironment().createToolbarButton());
+      
 
       return toolbar;
    }
