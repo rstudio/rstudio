@@ -3632,7 +3632,9 @@ public class TextEditingTarget implements
       
       if (executeChunks)
       {
-         executePreviousChunks(docDisplay_.getDocumentEnd());
+         executePreviousChunks(Position.create(
+               docDisplay_.getDocumentEnd().getRow() + 1,
+               0));
       }
       else
       {
