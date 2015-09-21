@@ -17,6 +17,7 @@
 #define SESSION_SESSION_LOCAL_STREAMS_HPP
 
 #include <string>
+#include <stdlib.h>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -24,21 +25,30 @@
 
 #include <core/http/LocalStreamSocketUtils.hpp>
 
-#define kSessionLocalStreamsDir "/tmp/rstudio-rsession"
-
 namespace rstudio {
 namespace session {
 namespace local_streams {
 
+inline const std::string getTmpDir()
+{
+    std::string dir;
+    if (getenv("TMPDIR")) {
+        dir = std::string(getenv("TMPDIR")) + "/rstudio-rsession";
+    } else {
+        dir = std::string("/tmp/rstudio-rsession");
+    }
+    return dir;
+}
+
 inline core::Error ensureStreamsDir()
 {
-   core::FilePath sessionStreamsPath(kSessionLocalStreamsDir);
+   core::FilePath sessionStreamsPath(getTmpDir());
    return core::http::initializeStreamDir(sessionStreamsPath);
 }
    
 inline core::FilePath streamPath(const std::string& file)
 {
-   core::FilePath path = core::FilePath(kSessionLocalStreamsDir).complete(file);
+   core::FilePath path = core::FilePath(getTmpDir()).complete(file);
    core::Error error = core::http::initializeStreamDir(path.parent());
    if (error)
       LOG_ERROR(error);

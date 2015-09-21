@@ -84,6 +84,12 @@ const char * const kFormAction = "formAction";
 
 const char * const kStaySignedInDisplay = "staySignedInDisplay";
 
+std::string cookieName()
+{
+    std::string name = std::string(kUserId) + "-" + server::options().wwwPort();
+    return name;
+}
+
 
 std::string applicationURL(const http::Request& request,
                            const std::string& path = std::string())
@@ -121,7 +127,7 @@ std::string getUserIdentifier(const core::http::Request& request)
    if (server::options().authNone())
       return core::system::username();
    else
-      return auth::secure_cookie::readSecureCookie(request, kUserId);
+      return auth::secure_cookie::readSecureCookie(request, cookieName());
 }
 
 std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
@@ -167,7 +173,7 @@ void signIn(const http::Request& request,
             http::Response* pResponse)
 {
    auth::secure_cookie::remove(request,
-                               kUserId,
+                               cookieName(),
                                "/",
                                pResponse);
 
@@ -221,7 +227,7 @@ void setSignInCookies(const core::http::Request& request,
    else
       expiry = boost::none;
 
-   auth::secure_cookie::set(kUserId,
+   auth::secure_cookie::set(cookieName(),
                             username,
                             request,
                             boost::posix_time::time_duration(24*staySignedInDays,
@@ -338,7 +344,7 @@ void signOut(const http::Request& request,
    }
 
    auth::secure_cookie::remove(request,
-                               kUserId,
+                               cookieName(),
                                "/",
                                pResponse);
 
