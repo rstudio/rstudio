@@ -420,6 +420,12 @@ public class WebApplicationHeader extends Composite
    }
    
    @Override
+   public void addLeftCommand(Widget widget)
+   {
+      headerBarCommandsPanel_.insert(widget, 0);
+   }
+
+   @Override
    public void addRightCommand(Widget widget)
    {
       headerBarPanel_.add(widget);
