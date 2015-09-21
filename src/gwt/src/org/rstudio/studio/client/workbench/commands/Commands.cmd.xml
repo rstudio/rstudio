@@ -386,6 +386,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="helpKeyboardShortcuts"/>
          <cmd refid="modifyKeyboardShortcuts"/>
          <separator/>
+         <cmd refid="shareProject"/>
          <cmd refid="projectOptions"/>
          <separator/>
          <cmd refid="showOptions"/>
