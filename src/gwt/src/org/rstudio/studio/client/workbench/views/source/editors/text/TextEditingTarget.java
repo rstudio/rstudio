@@ -3848,9 +3848,44 @@ public class TextEditingTarget implements
       
       // execute the previous chunks
       Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks(position);
+      
+      StringBuilder builder = new StringBuilder();
       for (Scope scope : previousScopes)
+      {
          if (isRChunk(scope) && isExecutableChunk(scope))
-            executeSweaveChunk(scope, false);
+         {
+            builder.append("# " + scope.getLabel() + "\n");
+            builder.append(scopeHelper_.getSweaveChunkText(scope));
+            builder.append("\n\n");
+         }
+      }
+      
+      final String code = builder.toString().trim();
+      if (fileType_.isRmd())
+      {
+         docUpdateSentinel_.withSavedDoc(new Command()
+         {
+            @Override
+            public void execute()
+            {
+               rmarkdownHelper_.prepareForRmdChunkExecution(
+                     docUpdateSentinel_.getId(),
+                     docUpdateSentinel_.getContents(),
+                     new Command()
+                     {
+                        @Override
+                        public void execute()
+                        {
+                           events_.fireEvent(new SendToConsoleEvent(code, true));
+                        }
+                     });
+            }
+         });
+      }
+      else
+      {
+         events_.fireEvent(new SendToConsoleEvent(code, true));
+      }
    }
    
    @Handler
