@@ -92,6 +92,19 @@ public class JsArrayUtil
       return out;
    }
    
+   public static boolean jsArrayStringEqual(JsArrayString first, 
+         JsArrayString second)
+   {
+      if (first.length() != second.length())
+         return false;
+      for (int i = 0; i < first.length(); i++)
+      {
+         if (!first.get(i).equals(second.get(i)))
+            return false;
+      }
+      return true;
+   }
+   
    public final static native void remove(JsArray<?> array, int index) /*-{
       array.splice(index, 1);
    }-*/;
