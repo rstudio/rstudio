@@ -516,7 +516,22 @@ public class PaneManager
       if (targetSize < 0)
          targetSize = 0;
       
-      resizeHorizontally(initialSize, targetSize);
+      // Ensure focus is sent to Help iframe on activation.
+      Command onActivation = null;
+      if (maximizedTab_.equals(Tab.Help))
+      {
+         onActivation = new Command()
+         {
+            @Override
+            public void execute()
+            {
+               commands_.activateHelp().execute();
+            }
+         };
+      }
+      
+      resizeHorizontally(initialSize, targetSize, onActivation);
+      
    }
    
    private void resizeHorizontally(final double start,
