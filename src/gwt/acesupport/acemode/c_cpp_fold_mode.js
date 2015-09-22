@@ -94,6 +94,35 @@ oop.inherits(FoldMode, BaseFoldMode);
         return range;
     }
 
+    function findChunkRange(session, startRow, startColumn, targetType, delta)
+    {
+        var row = startRow + delta;
+        var lines = session.doc.$lines;
+
+        var range;
+        while (row >= 0 && row < session.getLength())
+        {
+            var tokens = session.getTokens(row);
+            var line = lines[row];
+
+            if (tokens.length === 1)
+            {
+                var token = tokens[0];
+                if (token.type === targetType)
+                {
+                    range = delta > 0 ?
+                        new Range(startRow, startColumn, row, 0) :
+                        new Range(row, line.length, startRow, startColumn);
+                    break;
+                }
+            }
+
+            row += delta;
+        }
+
+        return range;
+    }
+
     this.getFoldWidgetRange = function(session, foldStyle, row) {
 
         var line = session.getLine(row);
@@ -107,6 +136,18 @@ oop.inherits(FoldMode, BaseFoldMode);
         match = foldStyle === "markbeginend" && line.match(reBracketEnd);
         if (match)
             return this.closingBracketBlock(session, match[1], row, match.index + match[0].length);
+
+        // Check for chunk headers / footers.
+        var tokens = session.getTokens(row);
+        if (tokens.length === 1)
+        {
+            var line = session.getLine(row);
+            var token = tokens[0];
+            if (token.type === "support.function.codebegin")
+                return findChunkRange(session, row, line.length, "support.function.codeend", 1);
+            else if (token.type === "support.function.codeend")
+                return findChunkRange(session, row, 0, "support.function.codebegin", -1);
+        }
 
         // Next, check for block comment folds.
         var idx;
