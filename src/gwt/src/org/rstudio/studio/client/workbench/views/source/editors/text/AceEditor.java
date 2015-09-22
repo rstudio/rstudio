@@ -288,7 +288,7 @@ public class AceEditor implements DocDisplay,
          @Override
          public void onKeyDown(KeyDownEvent event)
          {
-            if (isVimModeOn())
+            if (isVimModeOn() || isEmacsModeOn())
                return;
 
             int mod = KeyboardShortcut.getModifierValue(event.getNativeEvent());
