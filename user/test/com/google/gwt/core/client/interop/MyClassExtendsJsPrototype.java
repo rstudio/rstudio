@@ -18,7 +18,8 @@ package com.google.gwt.core.client.interop;
 class MyClassExtendsJsPrototype extends MyJsClassWithPrototype {
 
   MyClassExtendsJsPrototype() {
-    setX(42);
+    this.x = 42;
+    setY(52);
   }
 
   @Override

@@ -39,6 +39,8 @@ public class JsTypeTest extends GWTTestCase {
   @Override
   protected void gwtSetUp() throws Exception {
     ScriptInjector.fromString("function MyJsInterface() {}\n"
+        + "MyJsInterface.staticX = 33;"
+        + "MyJsInterface.answerToLife = function() { return 42;};"
         + "MyJsInterface.prototype.sum = function sum(bias) { return this.x + bias; };")
         .setWindow(TOP_WINDOW).inject();
     patchPrototype(MyClassExtendsJsPrototype.class);
@@ -138,20 +140,30 @@ public class JsTypeTest extends GWTTestCase {
   }
 
   public void testConcreteNativeType() {
+    assertEquals(33, MyJsClassWithPrototype.staticX);
+    MyJsClassWithPrototype.staticX = 34;
+    assertEquals(34, MyJsClassWithPrototype.staticX);
+    assertEquals(42, MyJsClassWithPrototype.answerToLife());
+
     MyJsClassWithPrototype obj = new MyJsClassWithPrototype();
-    assertTrue(isUndefined(obj.getX()));
-    obj.setX(72);
-    assertEquals(72, obj.getX());
+    assertTrue(isUndefined(obj.x));
+    obj.x = 72;
+    assertEquals(72, obj.x);
     assertEquals(74, obj.sum(2));
+
+    assertTrue(isUndefined(obj.getY()));
+    obj.setY(91);
+    assertEquals(91, obj.getY());
   }
 
   public void testConcreteNativeType_sublasss() {
     MyClassExtendsJsPrototype mc = new MyClassExtendsJsPrototype();
     assertEquals(143, mc.sum(1));
 
-    // Also test with setting properties
-    mc.setX(-mc.getX());
+    mc.x = -mc.x;
     assertEquals(58, mc.sum(0));
+
+    assertEquals(52, mc.getY());
   }
 
   public void testJsPropertyIsX() {

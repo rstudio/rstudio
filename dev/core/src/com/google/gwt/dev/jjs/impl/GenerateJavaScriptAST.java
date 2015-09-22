@@ -1039,7 +1039,7 @@ public class GenerateJavaScriptAST {
        * in endVisit(JBinaryOperation) rectifies the situation.
        */
 
-      JsExpression result = names.get(x.getField()).makeRef(x.getSourceInfo());
+      JsExpression result = createStaticReference(x.getField(), x.getSourceInfo());
 
       // Add clinit (if needed).
       result = createCommaExpression(maybeCreateClinitCall(x.getField(), false), result);
@@ -1317,10 +1317,7 @@ public class GenerateJavaScriptAST {
 
     private JsExpression dispatchToStatic(JsExpression unnecessaryQualifier, JMethod method,
         List<JsExpression> args, SourceInfo sourceInfo) {
-      JsNameRef methodName =
-          method.isJsNative()
-              ? createJsQualifier(method.getQualifiedJsName(), sourceInfo)
-              : names.get(method).makeRef(sourceInfo);
+      JsNameRef methodName = createStaticReference(method, sourceInfo);
       JsExpression result = new JsInvocation(sourceInfo, methodName, args);
 
       return createCommaExpression(unnecessaryQualifier, result);
@@ -2161,6 +2158,13 @@ public class GenerateJavaScriptAST {
         return lhs;
       }
       return new JsBinaryOperation(lhs.getSourceInfo(), JsBinaryOperator.COMMA, lhs, rhs);
+    }
+
+    private JsNameRef createStaticReference(JMember member, SourceInfo sourceInfo) {
+      assert member.isStatic();
+      return member.isJsNative()
+          ? createJsQualifier(member.getQualifiedJsName(), sourceInfo)
+          : names.get(member).makeRef(sourceInfo);
     }
 
     private JsExpression generateCastableTypeMap(JClassType x) {

@@ -160,6 +160,10 @@ public class JField extends JVariable implements JMember {
     return jsName != null;
   }
 
+  public boolean isJsNative() {
+    return enclosingType.isJsNative();
+  }
+
   @Override
   public String getJsName() {
     return jsName;

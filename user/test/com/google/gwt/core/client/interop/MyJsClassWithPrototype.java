@@ -23,11 +23,18 @@ import com.google.gwt.core.client.js.JsType;
  */
 @JsType(prototype = "MyJsInterface")
 public class MyJsClassWithPrototype {
-  @JsProperty
-  public native int getX();
+
+  public static int staticX;
+
+  public static native int answerToLife();
+
+  public int x;
 
   @JsProperty
-  public native void setX(int x);
+  public native int getY();
+
+  @JsProperty
+  public native void setY(int x);
 
   public native int sum(int bias);
 }

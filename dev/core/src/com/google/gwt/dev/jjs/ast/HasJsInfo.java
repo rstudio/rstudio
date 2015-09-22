@@ -27,4 +27,6 @@ public interface HasJsInfo {
   String getJsNamespace();
 
   String getQualifiedJsName();
+
+  boolean isJsNative();
 }
