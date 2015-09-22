@@ -61,11 +61,11 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.events.AddEditorCommandEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ResetEditorCommandsEvent;
+import org.rstudio.studio.client.application.events.SetEditorCommandBindingsEvent;
 import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.debugging.BreakpointManager;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
@@ -708,16 +708,15 @@ public class TextEditingTarget implements
             });
       
       events_.addHandler(
-            AddEditorCommandEvent.TYPE,
-            new AddEditorCommandEvent.Handler()
+            SetEditorCommandBindingsEvent.TYPE,
+            new SetEditorCommandBindingsEvent.Handler()
             {
                @Override
-               public void onAddEditorCommand(AddEditorCommandEvent event)
+               public void onSetEditorCommandBindings(SetEditorCommandBindingsEvent event)
                {
-                  getDocDisplay().addEditorCommandBinding(
+                  getDocDisplay().setEditorCommandBinding(
                         event.getId(),
-                        event.getKeySequences(),
-                        event.replaceOldBindings());
+                        event.getKeySequences());
                }
             });
       

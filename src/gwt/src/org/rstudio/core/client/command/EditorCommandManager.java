@@ -26,9 +26,9 @@ import org.rstudio.core.client.files.FileBacked;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.events.AddEditorCommandEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ResetEditorCommandsEvent;
+import org.rstudio.studio.client.application.events.SetEditorCommandBindingsEvent;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
@@ -148,7 +148,7 @@ public class EditorCommandManager
    public void rebindCommand(String id, List<KeySequence> keys)
    {
       manager_.rebindCommand(id, keys);
-      events_.fireEvent(new AddEditorCommandEvent(id, keys, true));
+      events_.fireEvent(new SetEditorCommandBindingsEvent(id, keys));
    }
    
    public void addBindingsAndSave(final EditorKeyBindings newBindings)

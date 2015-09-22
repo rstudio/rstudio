@@ -1,5 +1,5 @@
 /*
- * AddEditorCommandEvent.java
+ * SetEditorCommandBindingsEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -21,27 +21,24 @@ import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class AddEditorCommandEvent extends GwtEvent<AddEditorCommandEvent.Handler>
+public class SetEditorCommandBindingsEvent extends GwtEvent<SetEditorCommandBindingsEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onAddEditorCommand(AddEditorCommandEvent event);
+      void onSetEditorCommandBindings(SetEditorCommandBindingsEvent event);
    }
 
-   public AddEditorCommandEvent(String id, List<KeySequence> keys, boolean replace)
+   public SetEditorCommandBindingsEvent(String id, List<KeySequence> keys)
    {
       id_ = id;
       keys_ = keys;
-      replace_ = replace;
    }
    
    public String getId() { return id_; }
    public List<KeySequence> getKeySequences() { return keys_; }
-   public boolean replaceOldBindings() { return replace_; }
    
    private final String id_;
    private final List<KeySequence> keys_;
-   private final boolean replace_;
    
    @Override
    public Type<Handler> getAssociatedType()
@@ -52,7 +49,7 @@ public class AddEditorCommandEvent extends GwtEvent<AddEditorCommandEvent.Handle
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onAddEditorCommand(this);
+      handler.onSetEditorCommandBindings(this);
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();

@@ -180,7 +180,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void toggleCommentLines();
    
    AceCommandManager getCommandManager();
-   void addEditorCommandBinding(String id, List<KeySequence> keys, boolean replace);
+   void setEditorCommandBinding(String id, List<KeySequence> keys);
    void resetCommands();
 
    HandlerRegistration addEditorFocusHandler(FocusHandler handler);
