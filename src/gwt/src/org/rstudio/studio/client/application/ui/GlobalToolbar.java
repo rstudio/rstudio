@@ -28,7 +28,6 @@ import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
@@ -103,12 +102,6 @@ public class GlobalToolbar extends Toolbar
       addLeftSeparator();
       
       addLeftWidget(commands.printSourceDoc().createToolbarButton());
-      
-      addLeftSeparator();
-      addLeftWidget(commands.sourceNavigateBack().createToolbarButton());
-      Widget forwardButton = commands.sourceNavigateForward().createToolbarButton();
-      forwardButton.getElement().getStyle().setMarginLeft(-6, Unit.PX);
-      addLeftWidget(forwardButton);
       
       addLeftSeparator();
       CodeSearch codeSearch = pCodeSearch_.get();
