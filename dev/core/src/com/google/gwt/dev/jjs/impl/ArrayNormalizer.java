@@ -49,8 +49,7 @@ public class ArrayNormalizer {
 
     @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
-      if (disableCastChecking || x.getOp() != JBinaryOperator.ASG ||
-          !(x.getLhs() instanceof JArrayRef)) {
+      if (x.getOp() != JBinaryOperator.ASG || !(x.getLhs() instanceof JArrayRef)) {
         return;
       }
       JArrayRef arrayRef = (JArrayRef) x.getLhs();
@@ -202,22 +201,19 @@ public class ArrayNormalizer {
     }
   }
 
-  public static void exec(JProgram program, boolean disableCastChecking) {
-    new ArrayNormalizer(program, disableCastChecking).execImpl();
+  public static void exec(JProgram program) {
+    new ArrayNormalizer(program).execImpl();
   }
 
-  private final boolean disableCastChecking;
   private final JMethod initDim;
   private final JMethod initDims;
   private final JMethod initValues;
   private final JProgram program;
   private final JMethod setCheckMethod;
 
-  private ArrayNormalizer(JProgram program, boolean disableCastChecking) {
+  private ArrayNormalizer(JProgram program) {
     this.program = program;
-    this.disableCastChecking = disableCastChecking;
     setCheckMethod = program.getIndexedMethod("Array.setCheck");
-
     initDim = program.getIndexedMethod("Array.initDim");
     initDims = program.getIndexedMethod("Array.initDims");
     initValues = program.getIndexedMethod("Array.initValues");

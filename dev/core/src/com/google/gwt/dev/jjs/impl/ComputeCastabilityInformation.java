@@ -151,7 +151,7 @@ public class ComputeCastabilityInformation {
 
     @Override
     public void endVisit(JCastOperation x, Context ctx) {
-      if (disableCastChecking || x.getCastType().isNullType()) {
+      if (x.getCastType().isNullType()) {
         return;
       }
       recordCast(x.getCastType(), x.getExpr());
@@ -288,16 +288,13 @@ public class ComputeCastabilityInformation {
     }
   }
 
-  public static void exec(JProgram program, boolean disableCastChecking,
-      boolean recordTrivialCasts) {
-    new ComputeCastabilityInformation(program, disableCastChecking, recordTrivialCasts).execImpl();
+  public static void exec(JProgram program, boolean recordTrivialCasts) {
+    new ComputeCastabilityInformation(program, recordTrivialCasts).execImpl();
   }
 
-  public static void exec(JProgram program, boolean disableCastChecking) {
-    new ComputeCastabilityInformation(program, disableCastChecking, false).execImpl();
+  public static void exec(JProgram program) {
+    new ComputeCastabilityInformation(program, false).execImpl();
   }
-
-  private final boolean disableCastChecking;
 
   private final boolean recordTrivialCasts;
 
@@ -305,11 +302,9 @@ public class ComputeCastabilityInformation {
 
   private final JTypeOracle typeOracle;
 
-  private ComputeCastabilityInformation(JProgram program, boolean disableCastChecking,
-      boolean recordTrivialCasts) {
+  private ComputeCastabilityInformation(JProgram program, boolean recordTrivialCasts) {
     this.program = program;
     this.typeOracle = program.typeOracle;
-    this.disableCastChecking = disableCastChecking;
     this.recordTrivialCasts = recordTrivialCasts;
   }
 

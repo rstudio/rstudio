@@ -46,11 +46,6 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
-  public final void setCastCheckingDisabled(boolean disabled) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public final void setClassMetadataDisabled(boolean disabled) {
     throw new UnsupportedOperationException();
   }

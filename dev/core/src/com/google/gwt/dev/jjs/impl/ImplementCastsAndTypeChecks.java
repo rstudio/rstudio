@@ -57,11 +57,6 @@ public class ImplementCastsAndTypeChecks {
       JType toType = x.getCastType();
       JExpression expr = x.getExpr();
 
-      // Even if disableCastChecking is enabled, we need to rescue JSOs
-      if (disableCastChecking && toType instanceof JReferenceType) {
-        // Just leave the cast in, GenerateJavaScriptAST will ignore it.
-        return;
-      }
       SourceInfo info = x.getSourceInfo();
       if (pruneTrivialCasts && toType.isNullType()) {
         /**
@@ -268,16 +263,14 @@ public class ImplementCastsAndTypeChecks {
     return call;
   }
 
-  public static void exec(JProgram program, boolean disableCastChecking,
-      boolean pruneTrivialCasts) {
-    new ImplementCastsAndTypeChecks(program, disableCastChecking, pruneTrivialCasts).execImpl();
+  public static void exec(JProgram program, boolean pruneTrivialCasts) {
+    new ImplementCastsAndTypeChecks(program, pruneTrivialCasts).execImpl();
   }
 
-  public static void exec(JProgram program, boolean disableCastChecking) {
-    new ImplementCastsAndTypeChecks(program, disableCastChecking, true).execImpl();
+  public static void exec(JProgram program) {
+    new ImplementCastsAndTypeChecks(program, true).execImpl();
   }
 
-  private final boolean disableCastChecking;
   private final boolean pruneTrivialCasts;
   private final JProgram program;
 
@@ -287,10 +280,8 @@ public class ImplementCastsAndTypeChecks {
   private Map<TypeCategory, JMethod> dynamicCastMethodsByTargetTypeCategory =
       Maps.newEnumMap(TypeCategory.class);
 
-  private ImplementCastsAndTypeChecks(JProgram program, boolean disableCastChecking,
-      boolean pruneTrivialCasts) {
+  private ImplementCastsAndTypeChecks(JProgram program, boolean pruneTrivialCasts) {
     this.program = program;
-    this.disableCastChecking = disableCastChecking;
     this.pruneTrivialCasts = pruneTrivialCasts;
 
     // Populate the necessary instanceOf methods.

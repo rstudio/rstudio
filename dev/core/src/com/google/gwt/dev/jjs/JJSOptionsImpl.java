@@ -33,7 +33,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean clusterSimilarFunctions = true;
   private boolean incrementalCompile = false;
   private boolean compilerMetricsEnabled = false;
-  private boolean disableCastChecking = false;
   private boolean disableClassMetadata = false;
   private boolean enableAssertions;
   private int fragmentCount = -1;
@@ -63,7 +62,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   public void copyFrom(JJSOptions other) {
     setAddRuntimeChecks(other.shouldAddRuntimeChecks());
-    setCastCheckingDisabled(other.isCastCheckingDisabled());
     setClassMetadataDisabled(other.isClassMetadataDisabled());
     setClosureCompilerEnabled(other.isClosureCompilerEnabled());
     setClusterSimilarFunctions(other.shouldClusterSimilarFunctions());
@@ -127,11 +125,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   }
 
   @Override
-  public boolean isCastCheckingDisabled() {
-    return disableCastChecking;
-  }
-
-  @Override
   public boolean isClassMetadataDisabled() {
     return disableClassMetadata;
   }
@@ -188,11 +181,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   @Override
   public void setAddRuntimeChecks(boolean enabled) {
     addRuntimeChecks = enabled;
-  }
-
-  @Override
-  public void setCastCheckingDisabled(boolean disabled) {
-    disableCastChecking = disabled;
   }
 
   @Override

@@ -130,11 +130,6 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   }
 
   @Override
-  public boolean isCastCheckingDisabled() {
-    return jjsOptions.isCastCheckingDisabled();
-  }
-
-  @Override
   public boolean isClassMetadataDisabled() {
     return jjsOptions.isClassMetadataDisabled();
   }
@@ -211,11 +206,6 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   @Override
   public void setAddRuntimeChecks(boolean enabled) {
     jjsOptions.setAddRuntimeChecks(enabled);
-  }
-
-  @Override
-  public void setCastCheckingDisabled(boolean disabled) {
-    jjsOptions.setCastCheckingDisabled(disabled);
   }
 
   @Override
@@ -401,6 +391,7 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   public boolean shouldOptimizeDataflow() {
     return jjsOptions.shouldOptimizeDataflow();
   }
+
   @Override
   public boolean shouldOrdinalizeEnums() {
     return jjsOptions.shouldOrdinalizeEnums();

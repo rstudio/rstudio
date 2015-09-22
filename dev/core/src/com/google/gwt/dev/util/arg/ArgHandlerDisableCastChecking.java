@@ -17,22 +17,24 @@ package com.google.gwt.dev.util.arg;
 
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Enables run-time cast checking.
  */
 public class ArgHandlerDisableCastChecking extends ArgHandlerFlag {
 
-  private final OptionDisableCastChecking option;
+  private OptionSetProperties setProperties;
 
-  public ArgHandlerDisableCastChecking(OptionDisableCastChecking option) {
-    this.option = option;
-
+  public ArgHandlerDisableCastChecking(OptionSetProperties setProperties) {
+    this.setProperties = setProperties;
     addTagValue("-XdisableCastChecking", false);
   }
 
   @Override
   public String getPurposeSnippet() {
-    return "Insert run-time checking of cast operations.";
+    return "DEPRECATED: use checks.checkLevel instead.";
   }
 
   @Override
@@ -42,7 +44,8 @@ public class ArgHandlerDisableCastChecking extends ArgHandlerFlag {
 
   @Override
   public boolean setFlag(boolean value) {
-    option.setCastCheckingDisabled(!value);
+    List<String> propertyValue = Arrays.asList(value ? "ENABLED" : "DISABLED");
+    setProperties.setPropertyValues("checks.type", propertyValue);
     return true;
   }
 
@@ -53,6 +56,6 @@ public class ArgHandlerDisableCastChecking extends ArgHandlerFlag {
 
   @Override
   public boolean getDefaultValue() {
-    return !option.isCastCheckingDisabled();
+    return false;
   }
 }

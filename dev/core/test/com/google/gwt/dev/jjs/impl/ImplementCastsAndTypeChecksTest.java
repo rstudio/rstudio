@@ -21,7 +21,6 @@ import com.google.gwt.dev.jjs.ast.JProgram;
  * Test for {@link ImplementCastsAndTypeChecksTest}.
  */
 public class ImplementCastsAndTypeChecksTest extends OptimizerTestBase {
-  private boolean disableCastCheck  = false;
   // TODO(rluble): add unit test for the rest of the functionality.
 
   public void testCastCheckIntoNullCheck() throws Exception {
@@ -56,7 +55,7 @@ public class ImplementCastsAndTypeChecksTest extends OptimizerTestBase {
       didChange &= TypeTightener.exec(program).didChange();
       didChange &= MethodCallTightener.exec(program).didChange();
     } while (didChange);
-    ImplementCastsAndTypeChecks.exec(program, disableCastCheck);
+    ImplementCastsAndTypeChecks.exec(program);
     return true;
   }
 }

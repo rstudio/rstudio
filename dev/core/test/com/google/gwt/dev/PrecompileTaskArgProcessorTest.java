@@ -38,7 +38,7 @@ public class PrecompileTaskArgProcessorTest extends TestCase {
   public void testFlagBackwardCompatibility() {
     // Set a bunch of boolean flags using old-style tags.
     precompileTaskArgProcessor.processArgs("-workDir", "/tmp", "-XcompilerMetrics",
-        "-XdisableCastChecking", "-XdisableClassMetadata", "-XdisableClusterSimilarFunctions",
+        "-XdisableClassMetadata", "-XdisableClusterSimilarFunctions",
         "-XdisableInlineLiteralParameters", "-XdisableOptimizeDataflow", "-XdisableOrdinalizeEnums",
         "-XdisableRemoveDuplicateFunctions", "-XdisableRunAsync", "-XdisableSoycHtml",
         "-XdisableUpdateCheck", "-ea", "-XenableClosureCompiler", "-soyc", "-XsoycDetailed",
@@ -47,8 +47,6 @@ public class PrecompileTaskArgProcessorTest extends TestCase {
     // Show that the flags were recognized and ended up modifying options.
     assertNotEquals(
         defaultOptions.isCompilerMetricsEnabled(), handledOptions.isCompilerMetricsEnabled());
-    assertNotEquals(
-        defaultOptions.isCastCheckingDisabled(), handledOptions.isCastCheckingDisabled());
     assertNotEquals(
         defaultOptions.isClassMetadataDisabled(), handledOptions.isClassMetadataDisabled());
     assertNotEquals(defaultOptions.shouldClusterSimilarFunctions(),

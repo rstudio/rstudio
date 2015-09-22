@@ -44,7 +44,7 @@ public class ArgHandlerNoopDeprecatedFlag extends ArgHandler {
 
   @Override
   public String getPurpose() {
-    return "Deprecated. Has no effect and will be removed in a future release";
+    return "DEPRECATED: Has no effect and will be removed in a future release";
   }
 
   @Override
