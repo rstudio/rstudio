@@ -5384,6 +5384,13 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.forceImmediateRender();
                }}));
+      releaseOnDismiss.add(prefs.foldStyle().bind(new CommandWithArg<String>() {
+         @Override
+         public void execute(String style)
+         {
+            docDisplay.setFoldStyle(style);
+         }
+      }));
       
    }
    

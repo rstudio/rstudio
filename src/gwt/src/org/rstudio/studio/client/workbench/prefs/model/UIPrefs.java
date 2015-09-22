@@ -256,6 +256,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          focusConsoleAfterExec().setGlobalValue(
                          newUiPrefs.focusConsoleAfterExec().getGlobalValue());
          
+         // fold style
+         foldStyle().setGlobalValue(
+               newUiPrefs.foldStyle().getGlobalValue());
+         
          // save before sourcing
          saveBeforeSourcing().setGlobalValue(
                          newUiPrefs.saveBeforeSourcing().getGlobalValue());

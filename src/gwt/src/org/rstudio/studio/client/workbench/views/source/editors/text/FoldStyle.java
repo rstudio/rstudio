@@ -14,7 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-public enum FoldStyle
+public class FoldStyle
 {
-   BEGIN_ONLY, BEGIN_END
+   public static final String FOLD_MARK_BEGIN_ONLY    = "markbegin";
+   public static final String FOLD_MARK_BEGIN_AND_END = "markbeginend";
 }

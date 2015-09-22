@@ -89,7 +89,6 @@ public class AceEditorWidget extends Composite
       editor_.manageDefaultKeybindings();
       editor_.getRenderer().setHScrollBarAlwaysVisible(false);
       editor_.setShowPrintMargin(false);
-      editor_.getSession().setFoldStyle("markbeginend");
       editor_.setPrintMarginColumn(0);
       editor_.setHighlightActiveLine(false);
       editor_.setHighlightGutterLine(false);

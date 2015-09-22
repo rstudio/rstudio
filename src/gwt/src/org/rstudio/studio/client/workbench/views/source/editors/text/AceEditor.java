@@ -1937,13 +1937,9 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
-   public void setFoldStyle(FoldStyle style)
+   public void setFoldStyle(String style)
    {
-      switch (style)
-      {
-      case BEGIN_ONLY: getSession().setFoldStyle("markbegin");
-      case BEGIN_END: getSession().setFoldStyle("markbeginend");
-      }
+      getSession().setFoldStyle(style);
    }
    
    @Override
