@@ -99,28 +99,23 @@ oop.inherits(FoldMode, BaseFoldMode);
         var row = startRow + delta;
         var lines = session.doc.$lines;
 
-        var range;
         while (row >= 0 && row < session.getLength())
         {
             var tokens = session.getTokens(row);
             var line = lines[row];
-
-            if (tokens.length === 1)
+            for (var i = 0; i < tokens.length; i++)
             {
-                var token = tokens[0];
+                var token = tokens[i];
                 if (token.type === targetType)
                 {
-                    range = delta > 0 ?
+                    return delta > 0 ?
                         new Range(startRow, startColumn, row, 0) :
                         new Range(row, line.length, startRow, startColumn);
-                    break;
                 }
             }
 
             row += delta;
         }
-
-        return range;
     }
 
     this.getFoldWidgetRange = function(session, foldStyle, row) {
@@ -139,10 +134,9 @@ oop.inherits(FoldMode, BaseFoldMode);
 
         // Check for chunk headers / footers.
         var tokens = session.getTokens(row);
-        if (tokens.length === 1)
+        for (var i = 0; i < tokens.length; i++)
         {
-            var line = session.getLine(row);
-            var token = tokens[0];
+            var token = tokens[i];
             if (token.type === "support.function.codebegin")
                 return findChunkRange(session, row, line.length, "support.function.codeend", 1);
             else if (token.type === "support.function.codeend")
