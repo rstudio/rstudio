@@ -370,10 +370,6 @@ public class JProgram extends JNode implements ArrayTypeCreator {
 
   private JClassType typeString;
 
-  private JClassType typeDouble;
-
-  private JClassType typeBoolean;
-
   private FragmentPartitioningResult fragmentPartitioningResult;
 
   private Map<JClassType, DispatchType> dispatchTypeByNativeType;
@@ -441,12 +437,6 @@ public class JProgram extends JNode implements ArrayTypeCreator {
       case "java.lang.String":
         typeString = (JClassType) type;
         break;
-      case "java.lang.Double":
-        typeDouble = (JClassType) type;
-        break;
-      case "java.lang.Boolean":
-        typeBoolean = (JClassType) type;
-        break;
       case "java.lang.Class":
         typeClass = (JClassType) type;
         break;
@@ -479,7 +469,8 @@ public class JProgram extends JNode implements ArrayTypeCreator {
 
   public Map<JClassType, DispatchType> getRepresentedAsNativeTypesDispatchMap() {
      if (dispatchTypeByNativeType == null) {
-       ImmutableMap.Builder builder = new ImmutableMap.Builder();
+       ImmutableMap.Builder<JClassType, DispatchType> builder =
+           new ImmutableMap.Builder<JClassType, DispatchType>();
        for (DispatchType dispatchType : DispatchType.values()) {
          if (dispatchType.getclassName() == null) {
            continue;
@@ -521,8 +512,8 @@ public class JProgram extends JNode implements ArrayTypeCreator {
         continue;
       }
 
-      if (typeOracle.isInstantiatedType(potentialNativeDispatchType) &&
-          typeOracle.castSucceedsTrivially(potentialNativeDispatchType, type)) {
+      if (typeOracle.isInstantiatedType(potentialNativeDispatchType)
+          && typeOracle.isSuperClassOrInterface(potentialNativeDispatchType, type)) {
         dispatchSet.add(getRepresentedAsNativeTypesDispatchMap().get(potentialNativeDispatchType));
         dispatchSet.add(DispatchType.HAS_JAVA_VIRTUAL_DISPATCH);
       }
@@ -806,8 +797,8 @@ public class JProgram extends JNode implements ArrayTypeCreator {
   /**
    * Returns an expression that evaluates to an array class literal at runtime.
    * <p>
-   * Note: This version can only be called after {@link ImplementClassLiteralsAsFields} has been
-   * run.
+   * Note: This version can only be called after {@link
+   * com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields} has been run.
    */
   public JExpression createArrayClassLiteralExpression(SourceInfo sourceInfo,
       JClassLiteral leafTypeClassLiteral, int dimensions) {

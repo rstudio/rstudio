@@ -542,25 +542,8 @@ public class JTypeOracle implements Serializable {
       return castSucceedsTrivially((JArrayType) fromType, toType);
     }
 
-    if (fromType instanceof JClassType) {
-      return castSucceedsTrivially((JClassType) fromType, toType);
-    }
 
-    if (fromType instanceof JInterfaceType && toType instanceof JInterfaceType) {
-       return extendsInterface((JInterfaceType) fromType, (JInterfaceType) toType);
-    }
-
-    return false;
-  }
-
-  private boolean castSucceedsTrivially(JClassType fromType, JReferenceType toType) {
-    if (toType instanceof JClassType) {
-      return isSuperClass(fromType, toType);
-    }
-    if (toType instanceof JInterfaceType) {
-      return implementsInterface(fromType, toType);
-    }
-    return false;
+    return isSuperClassOrInterface(fromType, toType);
   }
 
   private boolean castSucceedsTrivially(JArrayType fromArrayType, JReferenceType toType) {
@@ -853,6 +836,11 @@ public class JTypeOracle implements Serializable {
     return isSuperClass(type.getName(), possibleSuperClass.getName());
   }
 
+  public boolean isSuperClassOrInterface(JReferenceType fromType, JReferenceType toType) {
+    return isSuperClass(fromType, toType) || implementsInterface(fromType, toType)
+        || extendsInterface(fromType, toType);
+  }
+
   /**
    * This method should be called after altering the types that are live in the
    * associated JProgram.
@@ -1128,14 +1116,6 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
-   * Returns true if type extends the interface represented by qType, either
-   * directly or indirectly.
-   */
-  private boolean extendsInterface(JInterfaceType type, JInterfaceType qType) {
-    return superInterfacesByInterface.containsEntry(type.getName(), qType.getName());
-  }
-
-  /**
    * Returns an iterable set of types for the given iterable set of type names.
    * <p>
    * Incremental builds will not have all type instances available, so users of this function should
@@ -1253,6 +1233,14 @@ public class JTypeOracle implements Serializable {
     Multimap<V, K> inverse = HashMultimap.create();
     Multimaps.invertFrom(relation, inverse);
     return inverse;
+  }
+
+  /**
+   * Returns true if type extends the interface represented by qType, either
+   * directly or indirectly.
+   */
+  private boolean extendsInterface(JReferenceType type, JReferenceType qType) {
+    return superInterfacesByInterface.containsEntry(type.getName(), qType.getName());
   }
 
   /**

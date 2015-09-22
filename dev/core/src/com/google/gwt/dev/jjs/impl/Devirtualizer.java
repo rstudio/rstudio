@@ -18,7 +18,6 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.AccessModifier;
 import com.google.gwt.dev.jjs.ast.Context;
-import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
@@ -107,25 +106,18 @@ public class Devirtualizer {
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
-      if (!mightNeedDevirtualization(method)) {
+      if (!method.needsVtable()) {
         return;
       }
-      JType instanceType = x.getInstance().getType().getUnderlyingType();
 
-      // If the instance can't possibly be a JSO, String, Number, or an interface implemented by
-      // either, do not devirtualize.
-      if (instanceType != program.getTypeJavaLangObject()
-          && !program.typeOracle.canBeJavaScriptObject(instanceType)
-          // not a string
-          && !(program.isRepresentedAsNativeJsPrimitive(instanceType))
-          // not an array
-          && !(instanceType instanceof JArrayType)
-          // not an interface of String, e.g. CharSequence or Comparable
-          && !isSuperOfRepresentedAsNativeType(instanceType)
-          // it is a super.m() call and the superclass is not a JSO. (this case is NOT reached if
-          // MakeCallsStatic was called).
-          || x.isStaticDispatchOnly()
-          && !method.getEnclosingType().isJsoType()) {
+      JReferenceType instanceType = (JReferenceType) x.getInstance().getType().getUnderlyingType();
+      if (!mightNeedDevirtualization(method, instanceType)) {
+        return;
+      }
+
+      // it is a super.m() call and the superclass is not a JSO. (this case is NOT reached if
+      // MakeCallsStatic was called).
+      if (x.isStaticDispatchOnly() && !method.getEnclosingType().isJsoType()) {
         return;
       }
 
@@ -197,29 +189,20 @@ public class Devirtualizer {
     }
 
     private boolean mightNeedDevirtualization(JMethod method) {
-      JDeclaredType targetType = method.getEnclosingType();
-
-      if (targetType == null || !method.needsVtable()) {
-        return false;
-      } else if (devirtualMethodByMethod.containsKey(method)
-          || targetType.isJsoType()
-          || program.typeOracle.isSingleJsoImpl(targetType)
-          || program.typeOracle.isDualJsoInterface(targetType)
-          || targetType == program.getTypeJavaLangObject()
-          || isSuperOfRepresentedAsNativeType(targetType)) {
-        return true;
-      }
-      return false;
+      return mightNeedDevirtualization(method, method.getEnclosingType());
     }
 
-    private boolean isSuperOfRepresentedAsNativeType(JType targetType) {
-      for (JClassType type : program.getRepresentedAsNativeTypes()) {
-        if (program.typeOracle.isInstantiatedType(type) &&
-            program.typeOracle.castSucceedsTrivially(type, targetType)) {
-          return true;
-        }
+    private boolean mightNeedDevirtualization(JMethod method, JReferenceType instanceType) {
+      // todo remove instance check
+      if (instanceType == null || !method.needsVtable()) {
+        return false;
       }
-      return false;
+      if (devirtualMethodByMethod.containsKey(method)) {
+        return true;
+      }
+      EnumSet<DispatchType> dispatchType = program.getDispatchType(instanceType);
+      dispatchType.remove(DispatchType.HAS_JAVA_VIRTUAL_DISPATCH);
+      return !dispatchType.isEmpty();
     }
   }
 

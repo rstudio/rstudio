@@ -150,7 +150,7 @@ public class EqualityNormalizer {
       } else {
         for (Map.Entry<JClassType, DispatchType> nativeDispatchType :
             program.getRepresentedAsNativeTypesDispatchMap().entrySet()) {
-          if (program.typeOracle.castSucceedsTrivially(type, nativeDispatchType.getKey())) {
+          if (type.getUnderlyingType() == nativeDispatchType.getKey()) {
             switch (nativeDispatchType.getValue()) {
               case DOUBLE:
                 return UnboxedTypeStatus.DOUBLE;
@@ -159,7 +159,7 @@ public class EqualityNormalizer {
               case STRING:
                 return UnboxedTypeStatus.STRING;
               default:
-                throw new IllegalStateException("Shouldn't happen");
+                throw new AssertionError("Shouldn't happen");
             }
           } else if (!program.typeOracle.castFailsTrivially(type, nativeDispatchType.getKey())) {
             return UnboxedTypeStatus.UNKNOWN;
