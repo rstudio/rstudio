@@ -431,22 +431,17 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JField x, Context ctx) {
-      String name = x.getName();
-      String mangleName = mangleName(x);
+      JsName jsName;
       if (x.isStatic()) {
-        JsName jsName = topScope.declareName(mangleName, name);
-        names.put(x, jsName);
-        recordSymbol(x, jsName);
+        jsName = topScope.declareName(mangleName(x), x.getName());
       } else {
-        JsName jsName;
-        if (x.isJsProperty()) {
-          jsName = scopeStack.peek().declareUnobfuscatableName(name);
-        } else {
-          jsName = scopeStack.peek().declareName(mangleName, name);
-        }
-        names.put(x, jsName);
-        recordSymbol(x, jsName);
+        jsName =
+            x.isJsProperty()
+                ? scopeStack.peek().declareUnobfuscatableName(x.getJsName())
+                : scopeStack.peek().declareName(mangleName(x), x.getName());
       }
+      names.put(x, jsName);
+      recordSymbol(x, jsName);
     }
 
     @Override
@@ -1032,35 +1027,30 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JFieldRef x, Context ctx) {
-      JField field = x.getField();
-      JsName jsFieldName = names.get(field);
-      JsNameRef nameRef = jsFieldName.makeRef(x.getSourceInfo());
-      JsExpression curExpr = nameRef;
+      JsExpression qualifier = (JsExpression) (x.getInstance() != null ? pop() : null);
+      boolean isStatic = x.getField().isStatic();
+      push(isStatic ? dispatchToStaticField(x, qualifier) : dispatchToInstanceField(x, qualifier));
+    }
 
+    private JsExpression dispatchToStaticField(JFieldRef x, JsExpression unnecessaryQualifier) {
       /*
        * Note: the comma expressions here would cause an illegal tree state if
        * the result expression ended up on the lhs of an assignment. A hack in
        * in endVisit(JBinaryOperation) rectifies the situation.
        */
 
-      // See if we need a clinit
-      JsInvocation jsInvocation = maybeCreateClinitCall(field, false);
-      if (jsInvocation != null) {
-        curExpr = createCommaExpression(jsInvocation, curExpr);
-      }
+      JsExpression result = names.get(x.getField()).makeRef(x.getSourceInfo());
 
-      if (x.getInstance() != null) {
-        JsExpression qualifier = pop();
-        if (field.isStatic()) {
-          // unnecessary qualifier, create a comma expression
-          curExpr = createCommaExpression(qualifier, curExpr);
-        } else {
-          // necessary qualifier, qualify the name ref
-          nameRef.setQualifier(qualifier);
-        }
-      }
+      // Add clinit (if needed).
+      result = createCommaExpression(maybeCreateClinitCall(x.getField(), false), result);
 
-      push(curExpr);
+      return createCommaExpression(unnecessaryQualifier, result);
+    }
+
+    private JsExpression dispatchToInstanceField(JFieldRef x, JsExpression instance) {
+      JsNameRef reference = names.get(x.getField()).makeRef(x.getSourceInfo());
+      reference.setQualifier(instance);
+      return reference;
     }
 
     @Override
@@ -1309,37 +1299,35 @@ public class GenerateJavaScriptAST {
         }
       }
 
+      JsExpression qualifier = (JsExpression) (x.getInstance() != null ? pop() : null);
+
       JsExpression result;
       if (method.isStatic()) {
-        result = dispatchToStatic(x, method, args);
+        result = dispatchToStatic(qualifier, method, args, x.getSourceInfo());
       } else if (x.isStaticDispatchOnly()) {
-        result = dispatchToSuper(x, method, args);
+        result = dispatchToSuper(qualifier, method, args, x.getSourceInfo());
       } else if (method.isOrOverridesJsFunctionMethod()) {
-        result = dispatchToJsFunction(args, x.getSourceInfo());
+        result = dispatchToJsFunction(qualifier, args, x.getSourceInfo());
       } else {
-        result = dispatchToInstanceMethod(method, args, x.getSourceInfo());
+        result = dispatchToInstanceMethod(qualifier, method, args, x.getSourceInfo());
       }
 
       push(result);
     }
 
-    private JsExpression dispatchToStatic(JMethodCall x, JMethod method, List<JsExpression> args) {
+    private JsExpression dispatchToStatic(JsExpression unnecessaryQualifier, JMethod method,
+        List<JsExpression> args, SourceInfo sourceInfo) {
       JsNameRef methodName =
           method.isJsNative()
-              ? createJsQualifier(method.getQualifiedJsName(), x.getSourceInfo())
-              : names.get(method).makeRef(x.getSourceInfo());
-      JsExpression result = new JsInvocation(x.getSourceInfo(), methodName, args);
-      if (x.getInstance() != null) {
-        JsExpression unnecessaryQualifier = pop();
-        result = createCommaExpression(unnecessaryQualifier, result);
-      }
-      return result;
+              ? createJsQualifier(method.getQualifiedJsName(), sourceInfo)
+              : names.get(method).makeRef(sourceInfo);
+      JsExpression result = new JsInvocation(sourceInfo, methodName, args);
+
+      return createCommaExpression(unnecessaryQualifier, result);
     }
 
-    private JsExpression dispatchToSuper(JMethodCall x, JMethod method, List<JsExpression> args) {
-      SourceInfo sourceInfo = x.getSourceInfo();
-      JsExpression instance = (JsExpression) pop();
-
+    private JsExpression dispatchToSuper(
+        JsExpression instance, JMethod method, List<JsExpression> args, SourceInfo sourceInfo) {
       JsNameRef methodNameRef;
       if (method.isConstructor()) {
         // We don't generate calls to super native constructors (yet).
@@ -1363,7 +1351,7 @@ public class GenerateJavaScriptAST {
         JDeclaredType superClass = method.getEnclosingType();
         if (method.isJsNative()) {
           // Construct jsPrototype.prototype.jsname
-          methodNameRef = createJsQualifier(method.getQualifiedJsName(), x.getSourceInfo());
+          methodNameRef = createJsQualifier(method.getQualifiedJsName(), sourceInfo);
         } else {
           // Construct JCHSU.getPrototypeFor(type).polyname
 
@@ -1387,17 +1375,18 @@ public class GenerateJavaScriptAST {
       return jsInvocation;
     }
 
-    private JsExpression dispatchToJsFunction(List<JsExpression> args, SourceInfo sourceInfo) {
-      return new JsInvocation(sourceInfo, (JsExpression) pop(), args);
+    private JsExpression dispatchToJsFunction(
+        JsExpression instance, List<JsExpression> args, SourceInfo sourceInfo) {
+      return new JsInvocation(sourceInfo, instance, args);
     }
 
     private JsExpression dispatchToInstanceMethod(
-        JMethod method, List<JsExpression> args, SourceInfo sourceInfo) {
+        JsExpression instance, JMethod method, List<JsExpression> args, SourceInfo sourceInfo) {
       JsNameRef reference =
           method.isOrOverridesJsMethod()
               ? new JsNameRef(sourceInfo, method.getJsName())
               : polymorphicNames.get(method).makeRef(sourceInfo);
-      reference.setQualifier((JsExpression) pop()); // instance
+      reference.setQualifier(instance);
 
       switch (method.getJsPropertyAccessorType()) {
         case SETTER:
@@ -2641,9 +2630,8 @@ public class GenerateJavaScriptAST {
         }
 
         if (method.exposesJsMethod()) {
-          String jsName = method.getJsName();
-          JsName exportedName = interfaceScope.declareUnobfuscatableName(jsName);
-          generateVTableAlias(globalStmts, method, exportedName);
+          JsName jsName = interfaceScope.declareUnobfuscatableName(method.getJsName());
+          generateVTableAlias(globalStmts, method, jsName);
         }
 
         if (method.exposesPackagePrivateMethod()) {

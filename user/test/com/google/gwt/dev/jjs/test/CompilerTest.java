@@ -539,6 +539,25 @@ public class CompilerTest extends GWTTestCase {
     assertEquals(null, checkRescued);
   }
 
+  private static boolean testClassInitialized = false;
+
+  private static class TestClass {
+    static {
+      testClassInitialized = true;
+    }
+    public static int staticField = 32;
+  }
+
+  public void testClinitOverInstance() {
+    assertEquals(32, getTest().staticField);
+    assertTrue(testClassInitialized);
+  }
+
+  private TestClass getTest() {
+    assertFalse(testClassInitialized);
+    return null;
+  }
+
   public void testConditionals() {
     assertTrue(TRUE ? TRUE : FALSE);
     assertFalse(FALSE ? TRUE : FALSE);
