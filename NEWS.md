@@ -54,6 +54,7 @@
 * Add 'R Scripts' preset filter to Find in Files dialog
 * OS X: Enable creation of directories in folder picker dialog
 * Added ability to zoom panes (e.g. Ctrl+Shift+1 to zoom source pane)
+* Add Console on Left/Right commands for quick relocation of Console
 
 ### Server
 
