@@ -32,6 +32,7 @@ import com.google.inject.Provider;
 import com.google.inject.name.Named;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.Triad;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
@@ -226,6 +227,7 @@ public class PaneManager
       eventBus_ = eventBus;
       session_ = session;
       commands_ = commands;
+      uiPrefs_ = uiPrefs;
       consolePane_ = (ConsolePane)consolePane;
       consoleInterrupt_ = consoleInterrupt;
       source_ = source;
@@ -300,6 +302,8 @@ public class PaneManager
                              tabSet1TabPanel_, tabSet1MinPanel_);
             populateTabPanel(tabNamesToTabs(evt.getValue().getTabSet2()),
                              tabSet2TabPanel_, tabSet2MinPanel_);
+            
+            manageLayoutCommands();
          }
       });
       
@@ -425,6 +429,57 @@ public class PaneManager
    public void onLayoutEndZoom()
    {
       restoreLayout();
+   }
+   
+   @Handler
+   public void onLayoutConsoleOnLeft()
+   {
+      if (commands_.layoutConsoleOnLeft().isChecked())
+      {
+         commands_.layoutConsoleOnLeft().setChecked(false);
+         onLayoutConsoleOnRight();
+      }
+      else
+      {
+         PaneConfig paneConfig = uiPrefs_.paneConfig().getValue();
+         int consoleTargetIndex = paneConfig.getConsoleLeftOnTop() ? 0 : 1;
+         swapConsolePane(paneConfig, consoleTargetIndex);
+      }
+   }
+   
+   @Handler
+   public void onLayoutConsoleOnRight()
+   {
+      if (commands_.layoutConsoleOnRight().isChecked())
+      {
+         commands_.layoutConsoleOnRight().setChecked(false);
+         onLayoutConsoleOnLeft();
+      }
+      else
+      {
+         PaneConfig paneConfig = uiPrefs_.paneConfig().getValue();
+         int consoleTargetIndex = paneConfig.getConsoleRightOnTop() ? 2 : 3;
+         swapConsolePane(paneConfig, consoleTargetIndex);
+      }
+   }
+   
+   
+   private void swapConsolePane(PaneConfig paneConfig, int consoleTargetIndex)
+   {
+      int consoleCurrentIndex = paneConfig.getConsoleIndex();
+      if (consoleCurrentIndex != consoleTargetIndex)
+      {
+         JsArrayString panes = JsArrayUtil.copy(paneConfig.getPanes());
+         panes.set(consoleCurrentIndex, panes.get(consoleTargetIndex));
+         panes.set(consoleTargetIndex, "Console");
+         uiPrefs_.paneConfig().setGlobalValue(PaneConfig.create(
+            panes, 
+            paneConfig.getTabSet1(), 
+            paneConfig.getTabSet2(),
+            paneConfig.getConsoleLeftOnTop(),
+            paneConfig.getConsoleRightOnTop()));
+         uiPrefs_.writeUIPrefs();
+      }
    }
    
    @Handler
@@ -999,6 +1054,22 @@ public class PaneManager
       
       for (AppCommand command : layoutCommands)
          command.setChecked(activeCommand.equals(command));
+      
+      // manage console left/right commands
+      boolean maximized = maximizedTab_ != null;
+      commands_.layoutConsoleOnLeft().setVisible(!maximized);
+      commands_.layoutConsoleOnRight().setVisible(!maximized); 
+      if (!maximized)
+      {
+         PaneConfig config = uiPrefs_.paneConfig().getValue();
+         commands_.layoutConsoleOnLeft().setChecked(config.getConsoleLeft());
+         commands_.layoutConsoleOnRight().setChecked(config.getConsoleRight());
+      }
+      else
+      {
+         commands_.layoutConsoleOnLeft().setVisible(false);
+         commands_.layoutConsoleOnRight().setVisible(false);
+      } 
    }
    
    private List<AppCommand> getLayoutCommands()
@@ -1024,6 +1095,7 @@ public class PaneManager
    private final EventBus eventBus_;
    private final Session session_;
    private final Commands commands_;
+   private final UIPrefs uiPrefs_;
    private final FindOutputTab findOutputTab_;
    private final WorkbenchTab compilePdfTab_;
    private final WorkbenchTab sourceCppTab_;
