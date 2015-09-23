@@ -398,6 +398,10 @@ public class Source implements InsertSourceHandler,
          {
             ensureVisible(false);
             setPhysicalTabIndex(event.getSelectedIndex());
+            
+            // Fire an activation event just to ensure the activated
+            // tab gets focus
+            commands_.activateSource().execute();
          }
       });
 
