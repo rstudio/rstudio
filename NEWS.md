@@ -17,6 +17,8 @@
 * F2 now navigates into files (e.g. within calls to source)
 * PageUp and PageDown navigate between sections within Rmd, Rpres
 * Enabled comment/uncomment (Cmd+Shift+C) for Markdown documents
+* Yank before/after (Ctrl+K, Ctrl+U) now use system clipboard on RStudio Desktop
+* Yank after cursor (Ctrl+K) no longer eats end of line character
 
 ### R Markdown
 
