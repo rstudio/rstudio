@@ -63,4 +63,10 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
    void getSharedProjects(
          int maxProjects,
          ServerRequestCallback<JsArray<SharedProjectDetails>> callback);
+   
+   void setCurrentlyEditing(String path,
+         ServerRequestCallback<Void> callback);
+   
+   void getProjectUser(String sessionId, 
+         ServerRequestCallback<ProjectUser> callback);
 }

@@ -88,6 +88,7 @@ import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
+import org.rstudio.studio.client.projects.model.ProjectUser;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.projects.model.SharedProjectDetails;
@@ -4285,6 +4286,24 @@ public class RemoteServer implements Server
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONNumber(maxProjects));
+      sendRequest(RPC_SCOPE, "get_shared_projects", params, callback);
+   }
+
+   @Override
+   public void setCurrentlyEditing(String path,
+         ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      sendRequest(RPC_SCOPE, "get_shared_projects", params, callback);
+   }
+
+   @Override
+   public void getProjectUser(String sessionId,
+         ServerRequestCallback<ProjectUser> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(sessionId));
       sendRequest(RPC_SCOPE, "get_shared_projects", params, callback);
    }
 
