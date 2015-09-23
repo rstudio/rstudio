@@ -434,12 +434,7 @@ public class PaneManager
    @Handler
    public void onLayoutConsoleOnLeft()
    {
-      if (commands_.layoutConsoleOnLeft().isChecked())
-      {
-         commands_.layoutConsoleOnLeft().setChecked(false);
-         onLayoutConsoleOnRight();
-      }
-      else
+      if (!commands_.layoutConsoleOnLeft().isChecked())
       {
          PaneConfig paneConfig = uiPrefs_.paneConfig().getValue();
          int consoleTargetIndex = paneConfig.getConsoleLeftOnTop() ? 0 : 1;
@@ -450,12 +445,7 @@ public class PaneManager
    @Handler
    public void onLayoutConsoleOnRight()
    {
-      if (commands_.layoutConsoleOnRight().isChecked())
-      {
-         commands_.layoutConsoleOnRight().setChecked(false);
-         onLayoutConsoleOnLeft();
-      }
-      else
+      if (!commands_.layoutConsoleOnRight().isChecked())
       {
          PaneConfig paneConfig = uiPrefs_.paneConfig().getValue();
          int consoleTargetIndex = paneConfig.getConsoleRightOnTop() ? 2 : 3;
