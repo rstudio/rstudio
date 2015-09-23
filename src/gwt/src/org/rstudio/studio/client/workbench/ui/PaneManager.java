@@ -436,7 +436,7 @@ public class PaneManager
    {
       if (!commands_.layoutConsoleOnLeft().isChecked())
       {
-         PaneConfig paneConfig = uiPrefs_.paneConfig().getValue();
+         PaneConfig paneConfig = getCurrentConfig();
          int consoleTargetIndex = paneConfig.getConsoleLeftOnTop() ? 0 : 1;
          swapConsolePane(paneConfig, consoleTargetIndex);
       }
@@ -447,7 +447,7 @@ public class PaneManager
    {
       if (!commands_.layoutConsoleOnRight().isChecked())
       {
-         PaneConfig paneConfig = uiPrefs_.paneConfig().getValue();
+         PaneConfig paneConfig = getCurrentConfig();
          int consoleTargetIndex = paneConfig.getConsoleRightOnTop() ? 2 : 3;
          swapConsolePane(paneConfig, consoleTargetIndex);
       }
@@ -1051,7 +1051,7 @@ public class PaneManager
       commands_.layoutConsoleOnRight().setVisible(!maximized); 
       if (!maximized)
       {
-         PaneConfig config = uiPrefs_.paneConfig().getValue();
+         PaneConfig config = getCurrentConfig();
          commands_.layoutConsoleOnLeft().setChecked(config.getConsoleLeft());
          commands_.layoutConsoleOnRight().setChecked(config.getConsoleRight());
       }
@@ -1080,6 +1080,17 @@ public class PaneManager
       commands.add(commands_.layoutZoomViewer());
       
       return commands;
+   }
+   
+   private PaneConfig getCurrentConfig()
+   {
+      PaneConfig config = uiPrefs_.paneConfig().getValue();
+
+      // use default config if pref isn't set yet
+      if (config == null)
+         return PaneConfig.createDefault();
+
+      return config;
    }
 
    private final EventBus eventBus_;
