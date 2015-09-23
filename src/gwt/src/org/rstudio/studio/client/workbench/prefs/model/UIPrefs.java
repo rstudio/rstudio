@@ -189,6 +189,9 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          allowTabMultilineCompletion().setGlobalValue(
                                  newUiPrefs.allowTabMultilineCompletion().getGlobalValue());
          
+         surroundSelection().setGlobalValue(
+                                 newUiPrefs.surroundSelection().getGlobalValue());
+         
          enableSnippets().setGlobalValue(
                                  newUiPrefs.enableSnippets().getGlobalValue());
          

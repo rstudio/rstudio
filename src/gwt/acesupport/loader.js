@@ -45,13 +45,24 @@ oop.inherits(RStudioEditor, Editor);
    // Custom insert to handle enclosing of selection
    this.insert = function(text, pasted)
    {
-      var hasSelection = !this.session.selection.isEmpty();
-      if (hasSelection && (text === "'" || text === "\""))
+      if (!this.session.selection.isEmpty())
       {
-         return this.session.replace(
-            this.session.selection.getRange(),
-            text + this.session.getTextRange() + text
-         );
+         // Read UI pref to determine what are eligible for surrounding
+         var candidates = [];
+         if (this.$surroundSelection === "quotes")
+            candidates = ["'", "\""];
+         else if (this.$surroundSelection === "quotes_and_brackets")
+            candidates = ["'", "\"", "(", "{", "["];
+
+         if (Utils.contains(candidates, text))
+         {
+            var lhs = text;
+            var rhs = Utils.getComplement(text);
+            return this.session.replace(
+               this.session.selection.getRange(),
+               lhs + this.session.getTextRange() + rhs
+            );
+         }
       }
 
       // Delegate to default insert implementation otherwise
