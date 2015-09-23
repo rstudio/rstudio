@@ -76,7 +76,7 @@ public class EditingPreferencesPane extends PreferencesPane
             "When enabled, pressing enter will continue comments on new lines. Press Shift + Enter to exit a comment."));
       
       delimiterSurroundWidget_ = new SelectWidget(
-            "Surround selection on text insertion?",
+            "Surround selection on text insertion:",
             new String[] {
                   "Never",
                   "Quotes",
