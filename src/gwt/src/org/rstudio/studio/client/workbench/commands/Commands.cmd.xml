@@ -220,6 +220,9 @@ well as menu structures (for main menu and popup menus).
          <menu label="P_anes">
             <cmd refid="layoutEndZoom"/>
             <separator/>
+            <cmd refid="layoutConsoleOnLeft"/>
+            <cmd refid="layoutConsoleOnRight"/>
+            <separator/>
             <cmd refid="paneLayout"/>
             <separator/>
             <cmd refid="layoutZoomSource"/>
@@ -1100,6 +1103,18 @@ well as menu structures (for main menu and popup menus).
         checkable="true"
         label="Show All Panes"
         menuLabel="_Show All Panes"
+        windowMode="main"/>
+        
+   <cmd id="layoutConsoleOnLeft"
+        checkable="true"
+        label="Console on Left"
+        menuLabel="Console on _Left"
+        windowMode="main"/>
+        
+   <cmd id="layoutConsoleOnRight"
+        checkable="true"
+        label="Console on Right"
+        menuLabel="Console on _Right"
         windowMode="main"/>
         
    <cmd id="paneLayout"

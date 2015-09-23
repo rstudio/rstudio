@@ -176,6 +176,9 @@ public class GlobalToolbar extends Toolbar
       
       paneLayoutMenu.addItem(commands_.layoutEndZoom().createMenuItem(false));
       paneLayoutMenu.addSeparator();
+      paneLayoutMenu.addItem(commands_.layoutConsoleOnLeft().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutConsoleOnRight().createMenuItem(false));
+      paneLayoutMenu.addSeparator();
       paneLayoutMenu.addItem(commands_.paneLayout().createMenuItem(false));
       paneLayoutMenu.addSeparator();
       paneLayoutMenu.addItem(commands_.layoutZoomSource().createMenuItem(false));

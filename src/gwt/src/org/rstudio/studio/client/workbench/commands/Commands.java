@@ -431,6 +431,8 @@ public abstract class
    public abstract AppCommand checkSpelling();   
    public abstract AppCommand layoutZoomCurrentPane();
    public abstract AppCommand layoutEndZoom();
+   public abstract AppCommand layoutConsoleOnLeft();
+   public abstract AppCommand layoutConsoleOnRight();
    public abstract AppCommand paneLayout();
    public abstract AppCommand maximizeConsole();
    
