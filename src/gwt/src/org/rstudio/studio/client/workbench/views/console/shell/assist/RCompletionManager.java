@@ -1934,7 +1934,6 @@ public class RCompletionManager implements CompletionManager
          if (completionToken.startsWith("'") || completionToken.startsWith("\""))
             completionToken = completionToken.substring(1);
          
-         
          if (qualifiedName.source.equals("`chunk-option`"))
          {
             applyValueRmdOption(qualifiedName.name);
@@ -2165,6 +2164,11 @@ public class RCompletionManager implements CompletionManager
       if (editor == null)
          return "";
       
+      // TODO: Better handling of completions within markdown mode, e.g.
+      // `r foo`
+      if (DocumentMode.isCursorInMarkdownMode(docDisplay_))
+         return token_;
+      
       Position cursorPos = editor.getCursorPosition();
       Token currentToken = editor.getSession().getTokenAt(cursorPos);
       if (currentToken == null)
@@ -2175,6 +2179,7 @@ public class RCompletionManager implements CompletionManager
          return "";
       
       String tokenValue = currentToken.getValue();
+      
       String subsetted = tokenValue.substring(0, cursorPos.getColumn() - currentToken.getColumn());
       
       return subsetted;
