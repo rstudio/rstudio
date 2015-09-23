@@ -45,7 +45,6 @@ import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
@@ -75,7 +74,6 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletio
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
-import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
 import org.rstudio.studio.client.workbench.views.output.lint.DiagnosticsBackgroundPopup;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
@@ -280,40 +278,6 @@ public class AceEditor implements DocDisplay,
          public void onFoldChange(FoldChangeEvent event)
          {
             AceEditor.this.fireEvent(new FoldChangeEvent());
-         }
-      });
-
-      addCapturingKeyDownHandler(new KeyDownHandler()
-      {
-         @Override
-         public void onKeyDown(KeyDownEvent event)
-         {
-            if (isVimModeOn() || isEmacsModeOn())
-               return;
-
-            int mod = KeyboardShortcut.getModifierValue(event.getNativeEvent());
-            if (mod == KeyboardShortcut.CTRL)
-            {
-               switch (event.getNativeKeyCode())
-               {
-                  case 'U':
-                     event.preventDefault();
-                     InputEditorUtil.yankBeforeCursor(AceEditor.this, true);
-                     break;
-                  case 'K':
-                     event.preventDefault();
-                     InputEditorUtil.yankAfterCursor(AceEditor.this, true);
-                     break;
-                  case 'Y':
-                     event.preventDefault();
-                     Position start = getSelectionStart();
-                     InputEditorUtil.pasteYanked(AceEditor.this);
-                     indentPastedRange(Range.fromPoints(start,
-                                                        getSelectionEnd()));
-                     break;
-               }
-            }
-
          }
       });
 

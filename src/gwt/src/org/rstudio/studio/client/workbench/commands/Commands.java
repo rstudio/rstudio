@@ -125,6 +125,9 @@ public abstract class
    public abstract AppCommand renameInFile();
    public abstract AppCommand insertRoxygenSkeleton();
    public abstract AppCommand insertSnippet();
+   public abstract AppCommand yankBeforeCursor();
+   public abstract AppCommand yankAfterCursor();
+   public abstract AppCommand pasteLastYank();
  
    // Projects
    public abstract AppCommand newProject();
