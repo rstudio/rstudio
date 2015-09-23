@@ -41,6 +41,23 @@ var RStudioEditor = function(renderer, session) {
 oop.inherits(RStudioEditor, Editor);
 
 (function() {
+
+   // Custom insert to handle enclosing of selection
+   this.insert = function(text, pasted)
+   {
+      var hasSelection = !this.session.selection.isEmpty();
+      if (hasSelection && (text === "'" || text === "\""))
+      {
+         return this.session.replace(
+            this.session.selection.getRange(),
+            text + this.session.getTextRange() + text
+         );
+      }
+
+      // Delegate to default insert implementation otherwise
+      return Editor.prototype.insert.call(this, text, pasted);
+   };
+
    this.remove = function(dir) {
       if (this.session.getMode().wrapRemove) {
          return this.session.getMode().wrapRemove(this, Editor.prototype.remove, dir);
