@@ -415,13 +415,17 @@ public class AceEditorNative extends JavaScriptObject {
    
    public final void retokenizeDocument()
    {
-      retokenizeDocument(0);
+      tokenizeUpToRow(getSession().getLength() - 1);
    }
    
-   public final native void retokenizeDocument(int fromRow) /*-{
-      this.session.bgTokenizer &&
-         this.session.bgTokenizer.start &&
-         this.session.bgTokenizer.start(fromRow);
+   public final native void tokenizeUpToRow(int row) /*-{
+      var session = this.getSession();
+      var tokenizer = session.bgTokenizer;
+      var lastTokenizedRow = tokenizer.currentLine;
+      var maxRow = Math.max(row, session.getLength() - 1);
+      for (var i = lastTokenizedRow; i <= maxRow; i++)
+         tokenizer.$tokenizeRow(i);
+      tokenizer.fireUpdateEvent(lastTokenizedRow, maxRow);
    }-*/;
    
    public final native void setCommandManager(AceCommandManager commands)

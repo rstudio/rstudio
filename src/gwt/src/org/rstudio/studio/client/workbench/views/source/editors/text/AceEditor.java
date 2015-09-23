@@ -2702,7 +2702,7 @@ public class AceEditor implements DocDisplay,
             @Override
             public void run()
             {
-              widget_.getEditor().retokenizeDocument(row_);
+              widget_.getEditor().tokenizeUpToRow(row_);
             }
          };
       }
