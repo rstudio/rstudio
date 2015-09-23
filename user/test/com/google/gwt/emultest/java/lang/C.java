@@ -15,6 +15,8 @@
  */
 package com.google.gwt.emultest.java.lang;
 
+import com.google.gwt.testing.TestUtils;
+
 import javaemul.internal.ArrayHelper;
 
 /**
@@ -40,7 +42,19 @@ public class C {
   public static final int INT_VALUE = 123456789;
   public static final long LONG_VALUE = 1234567890123456L;
 
-  public static native String getLargeCharArrayString() /*-{
+  public static String getLargeCharArrayString() {
+    if (TestUtils.isJvm()) {
+      StringBuffer buffer = new StringBuffer();
+      int len = numberOfCopies();
+      for (int i = 0; i < len; ++i) {
+        buffer.append(CHAR_ARRAY_STRING);
+      }
+      return buffer.toString();
+    }
+    return getLargeCharArrayString0();
+  }
+
+  private static native String getLargeCharArrayString0() /*-{
     var value = ""
     var len = @C::numberOfCopies()();
     for (var i = 0; i < len; ++i) {

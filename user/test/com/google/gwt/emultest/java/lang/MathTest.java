@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,25 +20,24 @@ import com.google.gwt.junit.client.GWTTestCase;
 
 /**
  * Tests for JRE emulation of java.lang.Math.
- * 
+ *
  * TODO: more tests
  */
 public class MathTest extends GWTTestCase {
 
-  private static native boolean isNegativeZero(double x) /*-{
-    var v = 1 / x;
-    return v == Number.NEGATIVE_INFINITY;
-  }-*/;
-  
-  private static native double makeNegativeZero() /*-{
-    return 1 / Number.NEGATIVE_INFINITY;
-  }-*/;
-  
+  private static boolean isNegativeZero(double x) {
+    return Double.doubleToLongBits(-0.0) == Double.doubleToLongBits(x);
+  }
+
+  private static double makeNegativeZero() {
+    return -0.0;
+  }
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
-  
+
   public void testAbs() {
     double v = Math.abs(-1.0);
     double negativeZero = makeNegativeZero();
@@ -58,12 +57,12 @@ public class MathTest extends GWTTestCase {
     v = Math.abs(Double.NaN);
     assertTrue(Double.isNaN(v));
   }
-  
+
   public void testCbrt() {
     double v = Math.cbrt(1000.0);
     assertEquals(10.0, v, 1e-7);
   }
-  
+
   public void testCos() {
     double v = Math.cos(0.0);
     assertEquals(1.0, v, 1e-7);
@@ -82,7 +81,7 @@ public class MathTest extends GWTTestCase {
     v = Math.cos(Double.POSITIVE_INFINITY);
     assertTrue(Double.isNaN(v));
   }
-  
+
   public void testCosh() {
     double v = Math.cosh(0.0);
     assertEquals(1.0, v, 1e-7);
@@ -102,12 +101,12 @@ public class MathTest extends GWTTestCase {
     double v = Math.log(Math.E);
     assertEquals(1.0, v, 1e-15);
   }
-  
+
   public void testLog10() {
     double v = Math.log10(1000.0);
     assertEquals(3.0, v, 1e-15);
   }
-  
+
   public void testSin() {
     double v = Math.sin(0.0);
     assertEquals(0.0, v, 1e-7);
@@ -126,7 +125,7 @@ public class MathTest extends GWTTestCase {
     v = Math.sin(Double.POSITIVE_INFINITY);
     assertTrue(Double.isNaN(v));
   }
-  
+
   public void testSinh() {
     double v = Math.sinh(0.0);
     assertEquals(0.0, v);
@@ -143,7 +142,7 @@ public class MathTest extends GWTTestCase {
     v = Math.sinh(-0.0);
     assertEquals(-0.0, v);
   }
-  
+
   public void testTan() {
     double v = Math.tan(0.0);
     assertEquals(0.0, v, 1e-7);
@@ -156,7 +155,7 @@ public class MathTest extends GWTTestCase {
     v = Math.tan(Double.POSITIVE_INFINITY);
     assertTrue(Double.isNaN(v));
   }
-  
+
   public void testTanh() {
     double v = Math.tanh(0.0);
     assertEquals(0.0, v);

@@ -713,7 +713,6 @@ public class StringTest extends GWTTestCase {
 
     // issue 4301
     Object s = TRUE ? "abc" : createJavaScriptObject();
-    assertTrue("issue4301", isJsStringValue(s.toString()));
     assertSame("s same as s.toString()", s, s.toString());
   }
 
@@ -812,10 +811,6 @@ public class StringTest extends GWTTestCase {
     }
   }
 
-  private native boolean isJsStringValue(String s) /*-{
-    return typeof s == 'string';
-  }-*/;
-
   private String returnNull() {
     if (Math.random() < -1) {
       // Can never happen, but fools the compiler enough not to optimize this call.
@@ -829,7 +824,14 @@ public class StringTest extends GWTTestCase {
     return Character.toString(from);
   }
 
-  private static native Object createJavaScriptObject() /*-{
+  private static Object createJavaScriptObject() {
+    if (TestUtils.isJvm()) {
+      return new Object();
+    }
+    return createJavaScriptObject0();
+  }
+
+  private static native Object createJavaScriptObject0() /*-{
     return {};
   }-*/;
 

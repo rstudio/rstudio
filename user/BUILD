@@ -653,3 +653,16 @@ filegroup(
     ),
     visibility = ["//third_party/java_src/j2cl:__subpackages__"],
 )
+
+filegroup(
+    name = "emul_test",
+    srcs = glob(
+        [
+            "test/com/google/gwt/emultest/**/*.java",
+            "test/com/google/gwt/testing/TestUtils.java",
+            "test/org/apache/commons/**/*.java",
+        ],
+        exclude = ["**/package-info.java"],
+    ),
+    visibility = ["//third_party/java_src/j2cl:__subpackages__"],
+)
