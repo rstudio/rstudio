@@ -552,8 +552,10 @@ public class Devirtualizer {
       EnumMap<DispatchType, JMethod> dispatchToMethodByTargetType, JClassType targetDevirtualType) {
     if (possibleTargetTypes.contains(target)) {
       JMethod overridingMethod = findOverridingMethod(method, targetDevirtualType);
-      assert overridingMethod != null : method.getEnclosingType().getName() + "::" +
-          method.getName() + " not overridden by " + targetDevirtualType.getSimpleName();
+      if (overridingMethod == null) {
+        throw new AssertionError(method.getEnclosingType().getName() + "::" + method.getName()
+            + " not overridden by " + targetDevirtualType.getSimpleName());
+      }
       dispatchToMethodByTargetType.put(target,
           staticImplCreator.getOrCreateStaticImpl(program, overridingMethod));
     }
