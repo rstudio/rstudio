@@ -4295,7 +4295,7 @@ public class RemoteServer implements Server
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
-      sendRequest(RPC_SCOPE, "get_shared_projects", params, callback);
+      sendRequest(RPC_SCOPE, "set_currently_editing", params, callback);
    }
 
    @Override
@@ -4304,7 +4304,7 @@ public class RemoteServer implements Server
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(sessionId));
-      sendRequest(RPC_SCOPE, "get_shared_projects", params, callback);
+      sendRequest(RPC_SCOPE, "get_project_user", params, callback);
    }
 
    private String clientId_;
