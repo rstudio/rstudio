@@ -158,6 +158,16 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
                            event.stopPropagation();
                            event.preventDefault();
                            hide(false);
+                           
+                           Scheduler.get().scheduleDeferred(new ScheduledCommand()
+                           {
+                              @Override
+                              public void execute()
+                              {
+                                 if (lastFocusedElement_ != null)
+                                    lastFocusedElement_.focus();
+                              }
+                           });
                         }
                      }
                   }
@@ -169,11 +179,6 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
                {
                   nativePreviewHandler_.removeHandler();
                   nativePreviewHandler_ = null;
-               }
-               
-               if (lastFocusedElement_ != null)
-               {
-                  lastFocusedElement_.focus();
                }
             }
          }
