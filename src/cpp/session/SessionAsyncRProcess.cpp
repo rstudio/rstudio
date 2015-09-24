@@ -20,6 +20,8 @@
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 
+#include <r/session/RSessionUtils.hpp>
+
 #include <session/SessionAsyncRProcess.hpp>
 
 namespace rstudio {
@@ -79,7 +81,7 @@ void AsyncRProcess::start(const char* rCommand,
 
    // for windows we need to forward setInternet2
 #ifdef _WIN32
-   if (userSettings().useInternet2())
+   if (!r::session::utils::isR3_3() && userSettings().useInternet2())
       args.push_back("--internet2");
 #endif
 

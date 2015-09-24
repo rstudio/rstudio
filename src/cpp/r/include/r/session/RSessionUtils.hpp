@@ -33,6 +33,9 @@ namespace utils {
 // check for R 3.0
 bool isR3();
 
+// check for R 3.3
+bool isR3_3();
+
 bool isPackratModeOn();
 
 bool isDevtoolsDevModeOn();
