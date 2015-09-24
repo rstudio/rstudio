@@ -641,6 +641,7 @@ public class Source implements InsertSourceHandler,
    private void initVimCommands()
    {
       vimCommands_.save(this);
+      vimCommands_.selectTabIndex(this);
       vimCommands_.selectNextTab(this);
       vimCommands_.selectPreviousTab(this);
       vimCommands_.closeActiveTab(this);
@@ -656,6 +657,14 @@ public class Source implements InsertSourceHandler,
       vimCommands_.reindent(this);
       vimCommands_.expandShrinkSelection(this);
       vimCommands_.addStarRegister();
+   }
+   
+   private void vimSetTabIndex(int index)
+   {
+      int tabCount = view_.getTabCount();
+      if (index >= tabCount)
+         return;
+      setPhysicalTabIndex(index);
    }
    
    private void closeAllTabs(boolean interactive)
