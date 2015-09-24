@@ -524,11 +524,6 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_unnamed_chunks_in_document_outline", true);
    }
    
-   public PrefValue<Boolean> enableSharedProjectUi()
-   {
-      return bool("enable_shared_project_ui", false);
-   }
-   
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())
