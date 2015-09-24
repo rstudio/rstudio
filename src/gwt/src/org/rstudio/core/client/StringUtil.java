@@ -72,6 +72,17 @@ public class StringUtil
       return formatFileSize(new Long(size).intValue());
    }
    
+   // return a friendly (not precise) elapsed time
+   public static String formatElapsedTime(int seconds)
+   {
+      if (seconds < 60)
+         return seconds + " second" + (seconds == 1 ? "" : "s");
+      else if (seconds < 3600)
+         return (seconds / 60) + " minute" + ((seconds / 60) == 1 ? "" : "s");
+      else 
+         return (seconds / 3600) + " hour" + ((seconds / 3600) == 1 ? "" : "s");
+   }
+   
    // Given a raw size, convert it to a human-readable value 
    // (e.g. 11580 -> "11.3 KB"). Note that this routine must generally avoid
    // implicit casts and use only ints; GWT's JavaScript compiler will truncate
