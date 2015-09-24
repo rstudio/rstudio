@@ -94,6 +94,8 @@
 * Prevent crash when cancelling out of q() prompt on Windows
 * OSX: Viewer now correctly recognizes session temp dir even when prefixed by /private
 * Fix issue with rstudioapi previewRd function when path included spaces
+* R 3.3: Don't call setInternet2 or use --internet2 flag for child R processes
+
 
 
 
