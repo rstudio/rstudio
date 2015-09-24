@@ -136,14 +136,9 @@ RToolsInfo::RToolsInfo(const std::string& name,
          // set environment variables
          // TODO: work out which ones to actually set
          // TODO: figure out how these propagate into libclang compliation db
-         FilePath gcc32Path = installPath_.childPath("mingw_32/bin");
+         FilePath gccPath = installPath_.childPath("mingw_$(WIN)/bin");
          environmentVars.push_back(
-               std::make_pair("BINPREF", asRBuildPath(gcc32Path)));
-         FilePath gcc64Path = installPath_.childPath("mingw_64/bin");
-         environmentVars.push_back(
-               std::make_pair("BINPREF64", asRBuildPath(gcc64Path)));
-         environmentVars.push_back(
-               std::make_pair("RTOOLS", asRBuildPath(installPath_)));
+               std::make_pair("BINPREF", asRBuildPath(gccPath)));
       }
       else
       {
