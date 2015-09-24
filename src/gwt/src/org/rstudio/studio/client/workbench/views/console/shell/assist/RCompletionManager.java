@@ -1589,10 +1589,8 @@ public class RCompletionManager implements CompletionManager
          
          // Bail if we find a closing paren (we should walk over matched
          // pairs properly, so finding one implies that we have a parse error).
-         if (value.equals("]") || value.equals("]]") || value.equals("}"))
-         {
+         if (value.equals("]") || value.equals("}"))
             break;
-         }
          
          if (clone.fwdToMatchingToken())
             continue;
@@ -1625,7 +1623,10 @@ public class RCompletionManager implements CompletionManager
              argsValue.equals("$") ||
              argsValue.equals("@") ||
              argsValue.equals("::") ||
-             argsValue.equals(":::"))
+             argsValue.equals(":::") ||
+             argsValue.equals("]") ||
+             argsValue.equals(")") ||
+             argsValue.equals("}"))
          {
             break;
          }
