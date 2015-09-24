@@ -80,7 +80,7 @@ public class EditingPreferencesPane extends PreferencesPane
             new String[] {
                   "Never",
                   "Quotes",
-                  "Quotes + Brackets"
+                  "Quotes & Brackets"
             },
             new String[] {
                   UIPrefsAccessor.EDITOR_SURROUND_SELECTION_NEVER,

@@ -132,7 +132,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<String> surroundSelection()
    {
-      return string("surround_selection", EDITOR_SURROUND_SELECTION_QUOTES);
+      return string("surround_selection", EDITOR_SURROUND_SELECTION_QUOTES_AND_BRACKETS);
    }
    
    public PrefValue<Boolean> enableSnippets()
