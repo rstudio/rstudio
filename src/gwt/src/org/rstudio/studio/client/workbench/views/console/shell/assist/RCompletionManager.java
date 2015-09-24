@@ -758,9 +758,9 @@ public class RCompletionManager implements CompletionManager
          if (docDisplay_.isCursorInSingleLineString())
             return false;
          
-         // if there's a selection, let the encloser handle it
+         // if there's a selection, bail
          if (input_.hasSelection()) 
-            return CompletionUtils.handleEncloseSelection(input_, c);
+            return false;
          
          // Bail if there is an alpha-numeric character
          // following the cursor

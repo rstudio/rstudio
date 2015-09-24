@@ -339,4 +339,5 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    boolean onInsertSnippet();
    
    Position getDocumentEnd();
+   void setSurroundSelectionPref(String value);
 }

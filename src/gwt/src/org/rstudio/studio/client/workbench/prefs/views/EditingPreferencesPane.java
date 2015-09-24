@@ -75,6 +75,23 @@ public class EditingPreferencesPane extends PreferencesPane
             prefs_.continueCommentsOnNewline(),
             "When enabled, pressing enter will continue comments on new lines. Press Shift + Enter to exit a comment."));
       
+      delimiterSurroundWidget_ = new SelectWidget(
+            "Surround selection on text insertion:",
+            new String[] {
+                  "Never",
+                  "Quotes",
+                  "Quotes & Brackets"
+            },
+            new String[] {
+                  UIPrefsAccessor.EDITOR_SURROUND_SELECTION_NEVER,
+                  UIPrefsAccessor.EDITOR_SURROUND_SELECTION_QUOTES,
+                  UIPrefsAccessor.EDITOR_SURROUND_SELECTION_QUOTES_AND_BRACKETS
+            },
+            false,
+            true,
+            false);
+      editingPanel.add(delimiterSurroundWidget_);
+      
       HorizontalPanel keyboardPanel = new HorizontalPanel();
       editorMode_ = new SelectWidget(
             "Keybindings:",
@@ -434,6 +451,7 @@ public class EditingPreferencesPane extends PreferencesPane
          editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS);
       else
          editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_DEFAULT);
+      delimiterSurroundWidget_.setValue(prefs_.surroundSelection().getValue());
       rmdViewerMode_.setValue(prefs_.rmdViewerType().getValue().toString());
    }
    
@@ -458,6 +476,8 @@ public class EditingPreferencesPane extends PreferencesPane
       prefs_.enableEmacsKeybindings().setGlobalValue(isEmacs);
       prefs_.rmdViewerType().setGlobalValue(Integer.decode(
             rmdViewerMode_.getValue()));
+      
+      prefs_.surroundSelection().setGlobalValue(delimiterSurroundWidget_.getValue());
       
       return reload;
    }
@@ -507,6 +527,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final SelectWidget showCompletionsOther_;
    private final SelectWidget editorMode_;
    private final SelectWidget rmdViewerMode_;
+   private final SelectWidget delimiterSurroundWidget_;
    private final TextBoxWithButton encoding_;
    private String encodingValue_;
    

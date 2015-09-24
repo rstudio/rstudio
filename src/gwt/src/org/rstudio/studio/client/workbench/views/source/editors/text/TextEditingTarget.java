@@ -5469,6 +5469,13 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.forceImmediateRender();
                }}));
+      releaseOnDismiss.add(prefs.surroundSelection().bind(
+            new CommandWithArg<String>() {
+               @Override
+               public void execute(String string)
+               {
+                  docDisplay.setSurroundSelectionPref(string);
+               }}));
       
    }
    

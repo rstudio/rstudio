@@ -19,6 +19,7 @@
 * Enabled comment/uncomment (Cmd+Shift+C) for Markdown documents
 * Yank before/after (Ctrl+K, Ctrl+U) now use system clipboard on RStudio Desktop
 * Yank after cursor (Ctrl+K) no longer eats end of line character
+* Added option controlling 'surround on text insertion' behaviour
 
 ### R Markdown
 

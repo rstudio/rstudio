@@ -936,6 +936,12 @@ public class AceEditor implements DocDisplay,
       int lastRow = getRowCount() - 1;
       return Position.create(lastRow, getLength(lastRow));
    }
+   
+   @Override
+   public void setSurroundSelectionPref(String value)
+   {
+      widget_.getEditor().setSurroundSelectionPref(value);
+   }
 
    @Override
    public InputEditorSelection createSelection(Position pos1, Position pos2)

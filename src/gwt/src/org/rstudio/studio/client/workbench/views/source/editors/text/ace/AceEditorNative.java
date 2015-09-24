@@ -507,5 +507,9 @@ public class AceEditorNative extends JavaScriptObject {
       uiPrefsSynced_ = true;
    }
    
+   public final native void setSurroundSelectionPref(String value) /*-{
+      this.$surroundSelection = value;
+   }-*/;
+   
    private static boolean uiPrefsSynced_ = false;
 }
