@@ -187,6 +187,8 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       addSeparator(225);
 
       addItem(commands_.openProject().createMenuItem(false));
+      if (Desktop.isDesktop())
+         addItem(commands_.openProjectInNewWindow().createMenuItem(false));
       addItem(commands_.closeProject().createMenuItem(false));
       if (hasSharedProjects)
          addSeparator("Recent Projects"); 
