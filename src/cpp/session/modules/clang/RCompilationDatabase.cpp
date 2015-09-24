@@ -845,8 +845,9 @@ std::vector<std::string> RCompilationDatabase::rToolsArgs() const
    if (rToolsArgs_.empty())
    {
       // scan for Rtools
+      bool usingMingwGcc49 = module_context::usingMingwGcc49();
       std::vector<core::r_util::RToolsInfo> rTools;
-      Error error = core::r_util::scanRegistryForRTools(&rTools);
+      Error error = core::r_util::scanRegistryForRTools(usingMingwGcc49, &rTools);
       if (error)
          LOG_ERROR(error);
 

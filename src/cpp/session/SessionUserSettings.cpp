@@ -849,5 +849,16 @@ void UserSettings::setLintRFunctionCalls(bool enable)
    settings_.set("lintRFunctionCalls", enable);
 }
 
+bool  UserSettings::usingMingwGcc49() const
+{
+   return settings_.getBool("usingMingwGcc49", false);
+}
+
+void  UserSettings::setUsingMingwGcc49(bool usingMingwGcc49)
+{
+   settings_.set("usingMingwGcc49", usingMingwGcc49);
+}
+
+
 } // namespace session
 } // namespace rstudio

@@ -34,7 +34,8 @@ class RToolsInfo
 public:
    RToolsInfo() {}
    RToolsInfo(const std::string& name,
-              const FilePath& installPath);
+              const FilePath& installPath,
+              bool usingMingwGcc49);
 
    bool empty() const { return name_.empty(); }
 
@@ -62,7 +63,7 @@ private:
 
 std::ostream& operator<<(std::ostream& os, const RToolsInfo& info);
 
-Error scanRegistryForRTools(std::vector<RToolsInfo>* pRTools);
+Error scanRegistryForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools);
 
 template <typename T>
 void prependToSystemPath(const RToolsInfo& toolsInfo, T* pTarget)

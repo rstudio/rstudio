@@ -36,10 +36,21 @@ namespace r_util {
 
 namespace {
 
+std::string asRBuildPath(const FilePath& filePath)
+{
+   std::string path = filePath.absolutePath();
+   boost::algorithm::replace_all(path, "\\", "/");
+   if (!boost::algorithm::ends_with(path, "/"))
+      path += "/";
+   return path;
+}
+
 } // anonymous namespace
 
 
-RToolsInfo::RToolsInfo(const std::string& name, const FilePath& installPath)
+RToolsInfo::RToolsInfo(const std::string& name,
+                       const FilePath& installPath,
+                       bool usingMingwGcc49)
    : name_(name), installPath_(installPath)
 {
    std::string versionMin, versionMax;
@@ -106,12 +117,41 @@ RToolsInfo::RToolsInfo(const std::string& name, const FilePath& installPath)
       relativePathEntries.push_back("bin");
       relativePathEntries.push_back("gcc-4.6.3/bin");
    }
-   else if (name == "3.3")
+   else if (name == "3.3" && !usingMingwGcc49)
    {
       versionMin = "3.2.0";
-      versionMax = "3.3.99";
+      versionMax = "3.3.0";
       relativePathEntries.push_back("bin");
       relativePathEntries.push_back("gcc-4.6.3/bin");
+   }
+   else if (name == "3.3" && usingMingwGcc49)
+   {
+      // confirm that this Rtools has the new gcc 4.9 toolchain
+      if (installPath_.childPath("mingw_32").exists())
+      {
+         versionMin = "3.3.0";
+         versionMax = "3.3.99";
+         relativePathEntries.push_back("bin");
+
+         // set environment variables
+         // TODO: work out which ones to actually set
+         // TODO: figure out how these propagate into libclang compliation db
+         FilePath gcc32Path = installPath_.childPath("mingw_32/bin");
+         environmentVars.push_back(
+               std::make_pair("BINPREF", asRBuildPath(gcc32Path)));
+         FilePath gcc64Path = installPath_.childPath("mingw_64/bin");
+         environmentVars.push_back(
+               std::make_pair("BINPREF64", asRBuildPath(gcc64Path)));
+         environmentVars.push_back(
+               std::make_pair("RTOOLS", asRBuildPath(installPath_)));
+      }
+      else
+      {
+         // use versions that will never be satisfied (so this
+         // Rtools is never used with this version of R)
+         versionMin = "1.0.0";
+         versionMax = "1.0.0";
+      }
    }
 
    // build version predicate and path list if we can
@@ -154,7 +194,9 @@ std::ostream& operator<<(std::ostream& os, const RToolsInfo& info)
    return os;
 }
 
-Error scanRegistryForRTools(std::vector<RToolsInfo>* pRTools, HKEY key)
+Error scanRegistryForRTools(HKEY key,
+                            bool usingMingwGcc49,
+                            std::vector<RToolsInfo>* pRTools)
 {
    core::system::RegistryKey regKey;
    Error error = regKey.open(key,
@@ -186,7 +228,7 @@ Error scanRegistryForRTools(std::vector<RToolsInfo>* pRTools, HKEY key)
       if (!installPath.empty())
       {
          std::string utf8InstallPath = string_utils::systemToUtf8(installPath);
-         RToolsInfo toolsInfo(name, FilePath(utf8InstallPath));
+         RToolsInfo toolsInfo(name, FilePath(utf8InstallPath), usingMingwGcc49);
          if (toolsInfo.isStillInstalled())
          {
             if (toolsInfo.isRecognized())
@@ -200,16 +242,21 @@ Error scanRegistryForRTools(std::vector<RToolsInfo>* pRTools, HKEY key)
    return Success();
 }
 
-Error scanRegistryForRTools(std::vector<RToolsInfo>* pRTools)
+Error scanRegistryForRTools(bool usingMingwGcc49,
+                            std::vector<RToolsInfo>* pRTools)
 {
    // try HKLM first (backwards compatible with previous code)
-   Error error = scanRegistryForRTools(pRTools, HKEY_LOCAL_MACHINE);
+   Error error = scanRegistryForRTools(HKEY_LOCAL_MACHINE,
+                                       usingMingwGcc49,
+                                       pRTools);
    if (error)
       return error;
 
    // try HKCU as a fallback
    if (pRTools->empty())
-      return scanRegistryForRTools(pRTools, HKEY_CURRENT_USER);
+      return scanRegistryForRTools(HKEY_CURRENT_USER,
+                                   usingMingwGcc49,
+                                   pRTools);
    else
       return Success();
 }
