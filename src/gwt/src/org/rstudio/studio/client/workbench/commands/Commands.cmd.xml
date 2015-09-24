@@ -554,6 +554,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="layoutZoomBuild" value="Ctrl+Shift+F2"/>
          <shortcut refid="layoutEndZoom" value="Ctrl+Shift+0"/>
          
+         <shortcut refid="switchToTab" value="Ctrl+X B" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="switchToTab" value="Ctrl+Shift+."/>
          <shortcut refid="previousTab" value="Ctrl+Alt+Left" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
          <shortcut refid="nextTab" value="Ctrl+Alt+Right" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
