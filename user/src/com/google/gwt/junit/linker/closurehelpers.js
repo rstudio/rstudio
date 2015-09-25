@@ -5,8 +5,9 @@ var jsinterop = {};
 
 goog.global = this;
 goog.implicitNamespaces_ = {};
+goog.object = {};
 
-goog.object.createSet = function goog$object$createSet() {
+goog.object.createSet = function() {
   var result = {};
   for (var i = 0; i < arguments.length; i++) {
     result[arguments[i]] = true;
