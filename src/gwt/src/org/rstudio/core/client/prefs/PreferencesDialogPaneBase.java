@@ -140,6 +140,11 @@ implements HasEnsureVisibleHandlers
       dialog_.forceClosed(onClosed);
    }
    
+   protected void setEnterDisabled(boolean enterDisabled)
+   {
+      dialog_.setEnterDisabled(enterDisabled);
+   }
+   
    protected PreferencesDialogBaseResources res() 
    {
       return res_;
