@@ -67,10 +67,7 @@ public class ProjectMRUList extends MRUList
                @Override
                public void execute(String file)
                {
-                  if (openInNewWindow_)
-                     eventBus.fireEvent(new OpenProjectNewWindowEvent(file));
-                  else
-                     eventBus.fireEvent(new SwitchToProjectEvent(file));
+                  openProjectFromMru(eventBus, file);
                }
             });
       
@@ -78,28 +75,35 @@ public class ProjectMRUList extends MRUList
       if (Desktop.isDesktop() || session.getSessionInfo().getMultiSession())
       {
          ImageResource image = commands.openHtmlExternal().getImageResource();
-         String desc = "Open project in a new R session";
-         commands.projectMru0().setRightImage(image, desc);
-         commands.projectMru1().setRightImage(image, desc);
-         commands.projectMru2().setRightImage(image, desc);
-         commands.projectMru3().setRightImage(image, desc);
-         commands.projectMru4().setRightImage(image, desc);
-         commands.projectMru5().setRightImage(image, desc);
-         commands.projectMru6().setRightImage(image, desc);
-         commands.projectMru7().setRightImage(image, desc);
-         commands.projectMru8().setRightImage(image, desc);
-         commands.projectMru9().setRightImage(image, desc);
-         commands.projectMru10().setRightImage(image, desc);
-         commands.projectMru11().setRightImage(image, desc);
-         commands.projectMru12().setRightImage(image, desc);
-         commands.projectMru13().setRightImage(image, desc);
-         commands.projectMru14().setRightImage(image, desc);
+         commands.projectMru0().setRightImage(image, NEW_SESSION_DESC);
+         commands.projectMru1().setRightImage(image, NEW_SESSION_DESC);
+         commands.projectMru2().setRightImage(image, NEW_SESSION_DESC);
+         commands.projectMru3().setRightImage(image, NEW_SESSION_DESC);
+         commands.projectMru4().setRightImage(image, NEW_SESSION_DESC);
+         commands.projectMru5().setRightImage(image, NEW_SESSION_DESC);
+         commands.projectMru6().setRightImage(image, NEW_SESSION_DESC);
+         commands.projectMru7().setRightImage(image, NEW_SESSION_DESC);
+         commands.projectMru8().setRightImage(image, NEW_SESSION_DESC);
+         commands.projectMru9().setRightImage(image, NEW_SESSION_DESC);
+         commands.projectMru10().setRightImage(image, NEW_SESSION_DESC);
+         commands.projectMru11().setRightImage(image, NEW_SESSION_DESC);
+         commands.projectMru12().setRightImage(image, NEW_SESSION_DESC);
+         commands.projectMru13().setRightImage(image, NEW_SESSION_DESC);
+         commands.projectMru14().setRightImage(image, NEW_SESSION_DESC);
       }
    }
    
    public static void setOpenInNewWindow(boolean openInNewWindow)
    {
       openInNewWindow_ = openInNewWindow;
+   }
+   
+   public static void openProjectFromMru(EventBus eventBus, String file)
+   {
+      if (openInNewWindow_)
+         eventBus.fireEvent(new OpenProjectNewWindowEvent(file));
+      else
+         eventBus.fireEvent(new SwitchToProjectEvent(file));
    }
    
    @Override
@@ -117,4 +121,6 @@ public class ProjectMRUList extends MRUList
    
    private static boolean openInNewWindow_ = false;
    
+   public final static String NEW_SESSION_DESC = 
+         "Open project in a new R session";
 }

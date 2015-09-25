@@ -126,6 +126,15 @@ public class UIPrefsAccessor extends Prefs
       return bool("tab_multiline_completion", false);
    }
    
+   public static final String EDITOR_SURROUND_SELECTION_NEVER               = "never";
+   public static final String EDITOR_SURROUND_SELECTION_QUOTES              = "quotes";
+   public static final String EDITOR_SURROUND_SELECTION_QUOTES_AND_BRACKETS = "quotes_and_brackets";
+   
+   public PrefValue<String> surroundSelection()
+   {
+      return string("surround_selection", EDITOR_SURROUND_SELECTION_QUOTES_AND_BRACKETS);
+   }
+   
    public PrefValue<Boolean> enableSnippets()
    {
       return bool("enable_snippets", true);
@@ -513,11 +522,6 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> showUnnamedEntriesInDocumentOutline()
    {
       return bool("show_unnamed_chunks_in_document_outline", true);
-   }
-   
-   public PrefValue<Boolean> enableSharedProjectUi()
-   {
-      return bool("enable_shared_project_ui", false);
    }
    
    private String getDefaultPdfPreview()

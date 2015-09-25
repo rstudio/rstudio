@@ -626,6 +626,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
       core::system::getenv("RSTUDIO_DISABLE_EXTERNAL_PUBLISH").empty() &&
       allowPublish;
 
+   sessionInfo["allow_open_shared_projects"] = options.getBoolOverlayOption(
+         kProjectSharingSessionOption);
+
    sessionInfo["environment_state"] = modules::environment::environmentStateAsJson();
    sessionInfo["error_state"] = modules::errors::errorStateAsJson();
 

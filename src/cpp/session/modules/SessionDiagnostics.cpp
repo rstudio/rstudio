@@ -37,6 +37,8 @@
 #include <session/SessionSourceDatabase.hpp>
 #include <session/projects/SessionProjects.hpp>
 
+#include "shiny/SessionShiny.hpp"
+
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
@@ -135,31 +137,44 @@ void addInferredSymbols(const FilePath& filePath,
    using namespace code_search;
    using namespace source_database;
    
-   boost::shared_ptr<RSourceIndex> index = rSourceIndex().get(documentId);
+   boost::shared_ptr<RSourceIndex> pIndex = rSourceIndex().get(documentId);
    
    // If that failed, try getting the index from the project index.
-   if (!index)
-      index = code_search::getIndexedProjectFile(filePath);
+   if (!pIndex)
+      pIndex = code_search::getIndexedProjectFile(filePath);
    
    // If we still don't have an index, bail
-   if (!index)
+   if (!pIndex)
       return;
    
    // We have the index -- now list the packages discovered in
    // 'library' calls, and add those here.
-   BOOST_FOREACH(const std::string& package,
-                 index->getInferredPackages())
+   BOOST_FOREACH(const std::string& package, pIndex->getInferredPackages())
    {
       const PackageInformation& completions =
-            index->getPackageInformation(package);
+            pIndex->getPackageInformation(package);
       
       pSymbols->insert(completions.exports.begin(),
                        completions.exports.end());
    }
    
+   // make 'shiny' implicitly available in shiny documents
+   if (modules::shiny::isShinyDocument(filePath))
+   {
+      const PackageInformation& completions = pIndex->getPackageInformation("shiny");
+      pSymbols->insert(completions.exports.begin(), completions.exports.end());
+   }
+   
    // make 'params' implicitly available if we have a YAML header
    if (r_utils::hasYamlHeader(filePath))
       pSymbols->insert("params");
+   
+   // make 'input', 'output' implicitly available in Shiny documents
+   if (modules::shiny::isShinyRMarkdownDocument(filePath))
+   {
+      pSymbols->insert("input");
+      pSymbols->insert("output");
+   }
 }
 
 void addNamespaceSymbols(std::set<std::string>* pSymbols)

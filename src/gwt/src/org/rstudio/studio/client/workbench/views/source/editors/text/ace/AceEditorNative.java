@@ -192,6 +192,7 @@ public class AceEditorNative extends JavaScriptObject {
    }-*/;
    
    public final native void manageDefaultKeybindings() /*-{
+      
       // We bind 'Ctrl + Shift + M' to insert a magrittr shortcut on Windows
       delete this.commands.commandKeyBinding["ctrl-shift-m"];
       
@@ -201,6 +202,16 @@ public class AceEditorNative extends JavaScriptObject {
       // We bind 'Ctrl + Alt + A' to 'split into lines'
       if (this.commands.platform !== "mac")
          delete this.commands.commandKeyBinding["ctrl-alt-a"];
+         
+      // We don't use the internal Ace binding for 'jump to matching',
+      // and the binding conflicts with 'Ctrl-P' for moving cursor up
+      // when desired by the user (ie, when the RStudio 'jump to matching'
+      // is moved out of the way)
+      var binding = this.commands.commandKeyBinding["ctrl-p"];
+      if (binding[1] && binding[1].name && binding[1].name === "jumptomatching") {
+         this.commands.commandKeyBinding["ctrl-p"] = binding[0];
+      }
+      
    }-*/;
 
    public static <T> HandlerRegistration addEventListener(
@@ -404,13 +415,17 @@ public class AceEditorNative extends JavaScriptObject {
    
    public final void retokenizeDocument()
    {
-      retokenizeDocument(0);
+      tokenizeUpToRow(getSession().getLength() - 1);
    }
    
-   public final native void retokenizeDocument(int fromRow) /*-{
-      this.session.bgTokenizer &&
-         this.session.bgTokenizer.start &&
-         this.session.bgTokenizer.start(fromRow);
+   public final native void tokenizeUpToRow(int row) /*-{
+      var session = this.getSession();
+      var tokenizer = session.bgTokenizer;
+      var lastTokenizedRow = tokenizer.currentLine;
+      var maxRow = Math.max(row, session.getLength() - 1);
+      for (var i = lastTokenizedRow; i <= maxRow; i++)
+         tokenizer.$tokenizeRow(i);
+      tokenizer.fireUpdateEvent(lastTokenizedRow, maxRow);
    }-*/;
    
    public final native void setCommandManager(AceCommandManager commands)
@@ -491,6 +506,10 @@ public class AceEditorNative extends JavaScriptObject {
 
       uiPrefsSynced_ = true;
    }
+   
+   public final native void setSurroundSelectionPref(String value) /*-{
+      this.$surroundSelection = value;
+   }-*/;
    
    private static boolean uiPrefsSynced_ = false;
 }

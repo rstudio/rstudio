@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.List;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -43,7 +45,6 @@ import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
@@ -73,7 +74,6 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletio
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
-import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
 import org.rstudio.studio.client.workbench.views.output.lint.DiagnosticsBackgroundPopup;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
@@ -281,40 +281,6 @@ public class AceEditor implements DocDisplay,
          }
       });
 
-      addCapturingKeyDownHandler(new KeyDownHandler()
-      {
-         @Override
-         public void onKeyDown(KeyDownEvent event)
-         {
-            if (isVimModeOn())
-               return;
-
-            int mod = KeyboardShortcut.getModifierValue(event.getNativeEvent());
-            if (mod == KeyboardShortcut.CTRL)
-            {
-               switch (event.getNativeKeyCode())
-               {
-                  case 'U':
-                     event.preventDefault();
-                     InputEditorUtil.yankBeforeCursor(AceEditor.this, true);
-                     break;
-                  case 'K':
-                     event.preventDefault();
-                     InputEditorUtil.yankAfterCursor(AceEditor.this, true);
-                     break;
-                  case 'Y':
-                     event.preventDefault();
-                     Position start = getSelectionStart();
-                     InputEditorUtil.pasteYanked(AceEditor.this);
-                     indentPastedRange(Range.fromPoints(start,
-                                                        getSelectionEnd()));
-                     break;
-               }
-            }
-
-         }
-      });
-
       addPasteHandler(new PasteEvent.Handler()
       {
          @Override
@@ -419,7 +385,7 @@ public class AceEditor implements DocDisplay,
       return getWidget().getEditor().getCommandManager();
    }
    
-   public void addEditorCommandBinding(String id, KeySequence keys, boolean replace)
+   public void setEditorCommandBinding(String id, List<KeySequence> keys)
    {
       getWidget().getEditor().getCommandManager().rebindCommand(id, keys);
    }
@@ -962,6 +928,19 @@ public class AceEditor implements DocDisplay,
    public String getLine(int row)
    {
       return getSession().getLine(row);
+   }
+   
+   @Override
+   public Position getDocumentEnd()
+   {
+      int lastRow = getRowCount() - 1;
+      return Position.create(lastRow, getLength(lastRow));
+   }
+   
+   @Override
+   public void setSurroundSelectionPref(String value)
+   {
+      widget_.getEditor().setSurroundSelectionPref(value);
    }
 
    @Override
@@ -2693,7 +2672,7 @@ public class AceEditor implements DocDisplay,
             @Override
             public void run()
             {
-              widget_.getEditor().retokenizeDocument(row_);
+              widget_.getEditor().tokenizeUpToRow(row_);
             }
          };
       }

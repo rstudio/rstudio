@@ -1830,7 +1830,7 @@ json::Object createErrorFunctionDefinition(const std::string& name,
    funDef["name"] = name;
    funDef["namespace"] = namespaceName;
    funDef["methods"] = json::Array();
-   boost::format fmt("\n# ERROR: Defintion of function '%1%' not found\n"
+   boost::format fmt("\n# ERROR: Definition of function '%1%' not found\n"
                      "# in namespace '%2%'");
    funDef["code"] = boost::str(fmt % name % namespaceName);
    funDef["from_src_attrib"] = false;

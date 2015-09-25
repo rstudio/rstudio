@@ -14,10 +14,8 @@
  */
 package org.rstudio.studio.client.application.ui;
 
-import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
-import org.rstudio.core.client.widget.CheckableMenuItem;
 import org.rstudio.core.client.widget.FocusContext;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.Toolbar;
@@ -42,6 +40,7 @@ public class GlobalToolbar extends Toolbar
                         Provider<CodeSearch> pCodeSearch)
    {
       super();
+      
       commands_ = commands;
       pCodeSearch_ = pCodeSearch;
       ThemeResources res = ThemeResources.INSTANCE;
@@ -130,31 +129,6 @@ public class GlobalToolbar extends Toolbar
       addLeftWidget(searchWidget_); 
    }
    
-   public CheckableMenuItem createCheckableMenuItem(final AppCommand command)
-   {
-      return new CheckableMenuItem()
-      {
-         @Override
-         public void onInvoked()
-         {
-            command.execute();
-         }
-         
-         @Override
-         public boolean isChecked()
-         {
-            // TODO
-            return false;
-         }
-         
-         @Override
-         public String getLabel()
-         {
-            return command.getLabel();
-         }
-      };
-   }
-   
    public void completeInitialization(SessionInfo sessionInfo)
    { 
       StandardIcons icons = StandardIcons.INSTANCE;
@@ -199,26 +173,33 @@ public class GlobalToolbar extends Toolbar
       addLeftSeparator();
       
       ToolbarPopupMenu paneLayoutMenu = new ToolbarPopupMenu();
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutEndZoom()));
+      
+      paneLayoutMenu.addItem(commands_.layoutEndZoom().createMenuItem(false));
       paneLayoutMenu.addSeparator();
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomSource()));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomConsole()));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomHelp()));
+      paneLayoutMenu.addItem(commands_.layoutConsoleOnLeft().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutConsoleOnRight().createMenuItem(false));
       paneLayoutMenu.addSeparator();
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomHistory()));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomFiles()));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomPlots()));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomPackages()));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomEnvironment()));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomVcs()));
-      paneLayoutMenu.addItem(createCheckableMenuItem(commands_.layoutZoomBuild()));
+      paneLayoutMenu.addItem(commands_.paneLayout().createMenuItem(false));
+      paneLayoutMenu.addSeparator();
+      paneLayoutMenu.addItem(commands_.layoutZoomSource().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomConsole().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomHelp().createMenuItem(false));
+      paneLayoutMenu.addSeparator();
+      paneLayoutMenu.addItem(commands_.layoutZoomHistory().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomFiles().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomPlots().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomPackages().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomEnvironment().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomViewer().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomVcs().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomBuild().createMenuItem(false));
       
       ImageResource paneLayoutIcon = ThemeResources.INSTANCE.paneLayoutIcon();
       ToolbarButton paneLayoutButton = new ToolbarButton(
             null,
             paneLayoutIcon,
             paneLayoutMenu);
-      paneLayoutButton.setTitle("Pane Layout");
+      paneLayoutButton.setTitle("Workspace Panes");
       
       addLeftWidget(paneLayoutButton);
       // project popup menu
@@ -248,5 +229,4 @@ public class GlobalToolbar extends Toolbar
    private final Provider<CodeSearch> pCodeSearch_;
    private final Widget searchWidget_;
    private final FocusContext codeSearchFocusContext_ = new FocusContext();
-
 }

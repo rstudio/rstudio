@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.presentation;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
@@ -35,11 +36,9 @@ import org.rstudio.studio.client.workbench.views.presentation.model.Presentation
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.http.client.URL;
-import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 
 public class PresentationDispatcher 
@@ -101,7 +100,7 @@ public class PresentationDispatcher
       
       if (cmdName.equals("source"))
          performSourceCommand(param1, param2);
-      else
+      else if (!Desktop.isDesktop()) // support other commands in server mode
          performOtherCommand(cmdName, params, param1, param2);
    }
    
@@ -158,8 +157,6 @@ public class PresentationDispatcher
          performExecuteCommand(params);
       else if (cmdName.equals("pause"))
          performPauseCommand();
-      else if (cmdName.equals("tutorial"))
-         performTutorialCommand(params);
       else 
       {
          globalDisplay_.showErrorMessage(
@@ -220,13 +217,6 @@ public class PresentationDispatcher
    private void performPauseCommand()
    {
       context_.pauseMedia();
-   }
-
-   private void performTutorialCommand(String params)
-   {
-      String projectParam = URL.encodeQueryString(params);
-      String url = GWT.getHostPageBaseURL() + "?project=" + projectParam;
-      Window.Location.assign(url);
    }
 
    private void performConsoleInputCommand(String params)

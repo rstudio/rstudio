@@ -89,7 +89,7 @@ bool SessionScope::isWorkspaces() const
    return project_.id() == kWorkspacesId;
 }
 
-bool validateSessionScope(const SessionScope& scope,
+SessionScopeState validateSessionScope(const SessionScope& scope,
                           const core::FilePath& userHomePath,
                           const core::FilePath& userScratchPath,
                           core::r_util::ProjectIdToFilePath projectIdToFilePath,
@@ -100,7 +100,7 @@ bool validateSessionScope(const SessionScope& scope,
    boost::shared_ptr<r_util::ActiveSession> pSession
                                           = activeSessions.get(scope.id());
    if (pSession->empty() || !pSession->validate(userHomePath))
-      return false;
+      return ScopeInvalidSession;
 
    // if this isn't project none then check if the project exists
    if (!scope.isProjectNone())
@@ -110,36 +110,36 @@ bool validateSessionScope(const SessionScope& scope,
                scope,
                projectIdToFilePath);
       if (project.empty())
-         return false;
+         return ScopeInvalidProject;
 
       // if session points to another project then the scope is invalid
       if (project != pSession->project())
-         return false;
+         return ScopeInvalidProject;
 
       // get the path to the project directory
       FilePath projectDir = FilePath::resolveAliasedPath(project, userHomePath);
       if (!projectDir.exists())
-         return false;
+         return ScopeMissingProject;
 
       // get the path to the project file
       FilePath projectPath = r_util::projectFromDirectory(projectDir);
       if (!projectPath.exists())
-         return false;
+         return ScopeMissingProject;
 
       // record path to project file
       *pProjectFilePath = projectPath.absolutePath();
 
       // success!
-      return true;
+      return ScopeValid;
    }
    else
    {
       // if the session project isn't project none then it's invalid
       if (pSession->project() != kProjectNone)
-         return false;
+         return ScopeInvalidProject;
 
       // success!
-      return true;
+      return ScopeValid;
    }
 }
 

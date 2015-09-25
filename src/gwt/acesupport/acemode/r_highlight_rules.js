@@ -215,7 +215,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
             token : "keyword.operator",
             regex : "\\$|@",
             merge : false,
-            next  : "after-dollar"
+            next  : "afterDollar"
          },
          {
             token : "keyword.operator",
@@ -284,7 +284,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
          "#operator", "#text"
       );
 
-      rules["after-dollar"] = include(
+      rules["afterDollar"] = include(
          "#comment", "#string", "#number",
          "#quoted-identifier",
          "#function-call", "#keyword-or-identifier",

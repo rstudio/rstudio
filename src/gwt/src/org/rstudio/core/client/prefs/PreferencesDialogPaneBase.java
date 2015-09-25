@@ -20,6 +20,7 @@ import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.widget.ProgressIndicator;
 
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
@@ -147,6 +148,14 @@ implements HasEnsureVisibleHandlers
    void setDialog(PreferencesDialogBase<T> dialog)
    {
       dialog_ = dialog;
+   }
+   
+   void setPaneVisible(boolean visible)
+   {
+      getElement().getStyle().setDisplay(visible
+                                              ? Display.BLOCK
+                                              : Display.NONE);
+
    }
    
    private ProgressIndicator progressIndicator_;

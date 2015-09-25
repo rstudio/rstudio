@@ -20,6 +20,11 @@
 #define kProjectEntryExt ".proj"
 #define kProjectSharedDir "shared-projects"
 
+#define kProjectEntryDir        "project_dir"
+#define kProjectEntryFile       "project_file"
+#define kProjectEntryOwner      "project_owner"
+#define kProjectEntrySharedWith "shared_with"
+
 namespace rstudio {
 namespace session {
 namespace projects {

@@ -54,6 +54,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -63,8 +64,10 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.WarningBarD
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
+import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.model.CodeBrowserContents;
+import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -302,6 +305,14 @@ public class CodeBrowserEditingTarget implements EditingTarget
       events_.fireEvent(new PopoutDocEvent(getId(), currentPosition()));
    }
 
+   @Handler
+   void onReturnDocToMain()
+   {
+      events_.fireEventToMainWindow(new DocWindowChangedEvent(
+            getId(), SourceWindowManager.getSourceWindowId(), "",
+            DocTabDragParams.create(getId(), currentPosition()), 0));
+   }
+   
    @Override
    public Position search(String regex)
    {
@@ -418,7 +429,10 @@ public class CodeBrowserEditingTarget implements EditingTarget
       commands.add(commands_.executeCode());
       commands.add(commands_.executeCodeWithoutFocus());
       commands.add(commands_.executeLastCode());
-      commands.add(commands_.popoutDoc());
+      if (SourceWindowManager.isMainSourceWindow())
+         commands.add(commands_.popoutDoc());
+      else
+         commands.add(commands_.returnDocToMain());
       return commands;
    }
 

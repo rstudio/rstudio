@@ -17,6 +17,9 @@ package org.rstudio.core.client.widget;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.events.HasSelectionCommitHandlers;
+import org.rstudio.core.client.events.SelectionCommitEvent;
+import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.core.shared.GWT;
@@ -27,6 +30,8 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DomEvent;
+import com.google.gwt.event.dom.client.DoubleClickEvent;
+import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.HasChangeHandlers;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -45,7 +50,8 @@ import com.google.gwt.user.client.ui.Widget;
 // A list box that can contain arbitrary GWT widgets as options.
 public class WidgetListBox<T extends Widget> 
    extends FocusPanel 
-   implements HasChangeHandlers
+   implements HasChangeHandlers,
+              HasSelectionCommitHandlers<T>
 {
    private class ClickableHTMLPanel extends HTMLPanel
       implements HasClickHandlers
@@ -120,6 +126,14 @@ public class WidgetListBox<T extends Widget>
       return handlerManager_.addHandler(ChangeEvent.getType(), handler);    
    }
    
+
+   @Override
+   public HandlerRegistration addSelectionCommitHandler(
+         SelectionCommitHandler<T> handler)
+   {
+      return addHandler(handler, SelectionCommitEvent.getType());
+   }
+   
    public void addItem(T item)
    {
       addItem(item, true);
@@ -138,6 +152,15 @@ public class WidgetListBox<T extends Widget>
             setSelectedIndex(panel_.getWidgetIndex(panel), true);
          }
       });
+      
+      panel.addDomHandler(new DoubleClickHandler()
+      {
+         @Override
+         public void onDoubleClick(DoubleClickEvent event)
+         {
+            SelectionCommitEvent.fire(WidgetListBox.this, item);
+         }
+      }, DoubleClickEvent.getType());
       
       panel.add(item);
 

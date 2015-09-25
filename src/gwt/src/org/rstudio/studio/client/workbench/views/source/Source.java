@@ -398,6 +398,10 @@ public class Source implements InsertSourceHandler,
          {
             ensureVisible(false);
             setPhysicalTabIndex(event.getSelectedIndex());
+            
+            // Fire an activation event just to ensure the activated
+            // tab gets focus
+            commands_.activateSource().execute();
          }
       });
 
@@ -637,6 +641,7 @@ public class Source implements InsertSourceHandler,
    private void initVimCommands()
    {
       vimCommands_.save(this);
+      vimCommands_.selectTabIndex(this);
       vimCommands_.selectNextTab(this);
       vimCommands_.selectPreviousTab(this);
       vimCommands_.closeActiveTab(this);
@@ -652,6 +657,14 @@ public class Source implements InsertSourceHandler,
       vimCommands_.reindent(this);
       vimCommands_.expandShrinkSelection(this);
       vimCommands_.addStarRegister();
+   }
+   
+   private void vimSetTabIndex(int index)
+   {
+      int tabCount = view_.getTabCount();
+      if (index >= tabCount)
+         return;
+      setPhysicalTabIndex(index);
    }
    
    private void closeAllTabs(boolean interactive)
@@ -2953,7 +2966,8 @@ public class Source implements InsertSourceHandler,
       // special case--these editing targets always support popout, but it's
       // nonsensical to show it if it's the only tab in a satellite; hide it in
       // this case
-      if (activeEditor_ != null &&
+      if (commands_.popoutDoc().isEnabled() &&
+          activeEditor_ != null &&
           (activeEditor_ instanceof TextEditingTarget ||
            activeEditor_ instanceof CodeBrowserEditingTarget) &&
           !SourceWindowManager.isMainSourceWindow())

@@ -19,6 +19,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -207,6 +208,32 @@ public class RCompletionManager implements CompletionManager
                   docDisplay_.setPopupVisible(false);
                }
             });
+         }
+      });
+      
+      popup_.addAttachHandler(new AttachEvent.Handler()
+      {
+         private boolean wasSigtipShowing_ = false;
+         @Override
+         public void onAttachOrDetach(AttachEvent event)
+         {
+            if (event.isAttached())
+            {
+               if (sigTip_ != null && sigTip_.isShowing())
+               {
+                  wasSigtipShowing_ = true;
+                  sigTip_.hide();
+               }
+               else
+               {
+                  wasSigtipShowing_ = false;
+               }
+            }
+            else
+            {
+               if (sigTip_ != null && wasSigtipShowing_)
+                  sigTip_.show();
+            }
          }
       });
       
@@ -731,9 +758,9 @@ public class RCompletionManager implements CompletionManager
          if (docDisplay_.isCursorInSingleLineString())
             return false;
          
-         // if there's a selection, let the encloser handle it
+         // if there's a selection, bail
          if (input_.hasSelection()) 
-            return CompletionUtils.handleEncloseSelection(input_, c);
+            return false;
          
          // Bail if there is an alpha-numeric character
          // following the cursor
@@ -1562,10 +1589,8 @@ public class RCompletionManager implements CompletionManager
          
          // Bail if we find a closing paren (we should walk over matched
          // pairs properly, so finding one implies that we have a parse error).
-         if (value.equals("]") || value.equals("]]") || value.equals("}"))
-         {
+         if (value.equals("]") || value.equals("}"))
             break;
-         }
          
          if (clone.fwdToMatchingToken())
             continue;
@@ -1598,7 +1623,10 @@ public class RCompletionManager implements CompletionManager
              argsValue.equals("$") ||
              argsValue.equals("@") ||
              argsValue.equals("::") ||
-             argsValue.equals(":::"))
+             argsValue.equals(":::") ||
+             argsValue.equals("]") ||
+             argsValue.equals(")") ||
+             argsValue.equals("}"))
          {
             break;
          }
@@ -1907,7 +1935,6 @@ public class RCompletionManager implements CompletionManager
          if (completionToken.startsWith("'") || completionToken.startsWith("\""))
             completionToken = completionToken.substring(1);
          
-         
          if (qualifiedName.source.equals("`chunk-option`"))
          {
             applyValueRmdOption(qualifiedName.name);
@@ -2138,16 +2165,22 @@ public class RCompletionManager implements CompletionManager
       if (editor == null)
          return "";
       
+      // TODO: Better handling of completions within markdown mode, e.g.
+      // `r foo`
+      if (DocumentMode.isCursorInMarkdownMode(docDisplay_))
+         return token_;
+      
       Position cursorPos = editor.getCursorPosition();
       Token currentToken = editor.getSession().getTokenAt(cursorPos);
       if (currentToken == null)
          return "";
       
       // Exclude non-string and non-identifier tokens.
-      if (currentToken.hasType("operator", "comment", "numeric"))
+      if (currentToken.hasType("operator", "comment", "numeric", "text", "punctuation"))
          return "";
       
       String tokenValue = currentToken.getValue();
+      
       String subsetted = tokenValue.substring(0, cursorPos.getColumn() - currentToken.getColumn());
       
       return subsetted;

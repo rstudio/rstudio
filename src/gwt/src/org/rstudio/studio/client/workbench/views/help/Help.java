@@ -29,6 +29,7 @@ import org.rstudio.studio.client.workbench.WorkbenchList;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 import org.rstudio.studio.client.workbench.events.ListChangedEvent;
 import org.rstudio.studio.client.workbench.events.ListChangedHandler;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -166,7 +167,7 @@ public class Help extends BasePresenter implements ShowHelpHandler
    }
 
    // Home handled by Shim for activation from main menu context
-   public void onHelpHome() { view_.bringToFront(); home(); }
+   public void onHelpHome() { bringToFront(); home(); }
    
    @Handler public void onHelpBack() { view_.back(); }
    @Handler public void onHelpForward() { view_.forward(); }
@@ -185,18 +186,18 @@ public class Help extends BasePresenter implements ShowHelpHandler
    public void onShowHelp(ShowHelpEvent event)
    {
       showHelp(event.getTopicUrl());
-      view_.bringToFront();
+      bringToFront();
    }
    
    public void onActivateHelp(ActivateHelpEvent event)
    {
-      view_.bringToFront();
+      bringToFront();
       view_.focus();
    }
    
    public void bringToFront()
    {
-      view_.bringToFront();
+      events_.fireEvent(new ActivatePaneEvent("Help"));
    }
    
    private void home()

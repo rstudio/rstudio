@@ -1,7 +1,7 @@
 /*
  * ChooseFolderDialog2.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,28 +26,29 @@ public class ChooseFolderDialog2 extends FileSystemDialog
 {
    public ChooseFolderDialog2(String title,
                               FileSystemContext context,
+                              boolean allowFolderCreation,
                               ProgressOperationWithInput<FileSystemItem> operation)
    {
-      super(title, null, "Choose", context, "", operation);
+      super(title, null, "Choose", context, "", allowFolderCreation, operation);
    }
 
    @Override
-   protected String getFilenameLabel()
+   public String getFilenameLabel()
    {
       return "Folder";
    }
 
    @Override
-   protected Widget createTopWidget()
+   public Widget createMainWidget()
    {
-      Widget topWidget = super.createTopWidget();
-      filename_.setEnabled(false);
-      filename_.getElement().getStyle().setBackgroundColor("transparent");
-      return topWidget;
+      Widget widget = super.createMainWidget();
+      browser_.setFilenameEnabled(false);
+      browser_.getFilenameStyle().setBackgroundColor("transparent");
+      return widget;
    }
 
    @Override
-   protected FileSystemItem[] ls()
+   public FileSystemItem[] ls()
    {
       FileSystemItem[] items = super.ls();
       ArrayList<FileSystemItem> dirs = new ArrayList<FileSystemItem>();
@@ -61,7 +62,7 @@ public class ChooseFolderDialog2 extends FileSystemDialog
    public void onNavigated()
    {
       super.onNavigated();
-      filename_.setText(context_.pwd());
+      browser_.setFilename(context_.pwd());
    }
 
    @Override
@@ -70,14 +71,14 @@ public class ChooseFolderDialog2 extends FileSystemDialog
       super.onSelection(event);
       FileSystemItem item = event.getSelectedItem();
       if (item != null)
-         filename_.setText(item.getPath());
+         browser_.setFilename(item.getPath());
       else
-         filename_.setText("");
+         browser_.setFilename("");
    }
 
    @Override
    protected FileSystemItem getSelectedItem()
    {
-      return FileSystemItem.createDir(filename_.getText());
+      return FileSystemItem.createDir(browser_.getFilename());
    }
 }

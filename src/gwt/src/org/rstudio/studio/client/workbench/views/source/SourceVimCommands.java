@@ -26,6 +26,19 @@ public class SourceVimCommands
       );
    }-*/;
    
+   public native final void selectTabIndex(Source source) /*-{
+      
+      var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
+      for (var i = 1; i <= 100; i++) {
+         (function(i) {
+            Vim.defineEx("b" + i, "b" + i, $entry(function(cm, params) {
+               source.@org.rstudio.studio.client.workbench.views.source.Source::vimSetTabIndex(I)(i - 1);
+            }));
+         })(i);
+      }
+      
+   }-*/;
+   
    public native final void selectNextTab(Source source) /*-{
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bnext", "bn",
          $entry(function(cm, params) {

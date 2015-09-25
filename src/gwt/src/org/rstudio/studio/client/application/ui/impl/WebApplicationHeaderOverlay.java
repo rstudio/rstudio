@@ -27,6 +27,7 @@ public class WebApplicationHeaderOverlay
    {
       void addCommand(Widget widget);
       Widget addCommandSeparator();
+      void addLeftCommand(Widget widget);
       void addRightCommand(Widget widget);
       Widget addRightCommandSeparator();
       void addProjectCommand(Widget widget);

@@ -61,11 +61,11 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.events.AddEditorCommandEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ResetEditorCommandsEvent;
+import org.rstudio.studio.client.application.events.SetEditorCommandBindingsEvent;
 import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.debugging.BreakpointManager;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
@@ -708,16 +708,15 @@ public class TextEditingTarget implements
             });
       
       events_.addHandler(
-            AddEditorCommandEvent.TYPE,
-            new AddEditorCommandEvent.Handler()
+            SetEditorCommandBindingsEvent.TYPE,
+            new SetEditorCommandBindingsEvent.Handler()
             {
                @Override
-               public void onAddEditorCommand(AddEditorCommandEvent event)
+               public void onSetEditorCommandBindings(SetEditorCommandBindingsEvent event)
                {
-                  getDocDisplay().addEditorCommandBinding(
+                  getDocDisplay().setEditorCommandBinding(
                         event.getId(),
-                        event.getKeySequence(),
-                        event.replaceOldBindings());
+                        event.getKeySequences());
                }
             });
       
@@ -764,12 +763,8 @@ public class TextEditingTarget implements
          
          if (scope.getPreamble().isAfter(cursorPos))
          {
-            if (scope.getPreamble().getRow() - cursorPos.getRow() < 50)
-            {
-               docDisplay_.setCursorPosition(scope.getPreamble());
-               return true;
-            }
-            return false;
+            moveCursorToNextPrevSection(scope.getPreamble());
+            return true;
          }
       }
       
@@ -790,22 +785,33 @@ public class TextEditingTarget implements
          
          if (scope.getPreamble().isBefore(cursorPos))
          {
-            if (cursorPos.getRow() - scope.getPreamble().getRow() < 50)
-            {
-               docDisplay_.setCursorPosition(scope.getPreamble());
-               return true;
-            }
-            return false;
+            moveCursorToNextPrevSection(scope.getPreamble());
+            return true;
          }
       }
       
       return false;
    }
    
+   private void moveCursorToNextPrevSection(Position pos)
+   {
+      docDisplay_.setCursorPosition(pos);
+      docDisplay_.moveCursorNearTop(5);
+   }
+   
+   @Handler
+   void onSwitchFocusSourceConsole()
+   {
+      if (docDisplay_.isFocused())
+         commands_.activateConsole().execute();
+      else
+         commands_.activateSource().execute();
+   }
+   
    @Handler
    void onGoToNextSection()
    {
-      if (docDisplay_.getFileType().isRmd() || docDisplay_.getFileType().isRpres())
+      if (docDisplay_.getFileType().canGoNextPrevSection())
       {
          if (!moveCursorToNextSectionOrChunk())
             docDisplay_.gotoPageDown();
@@ -819,7 +825,7 @@ public class TextEditingTarget implements
    @Handler
    void onGoToPrevSection()
    {
-      if (docDisplay_.getFileType().isRmd() || docDisplay_.getFileType().isRpres())
+      if (docDisplay_.getFileType().canGoNextPrevSection())
       {
          if (!moveCursorToPreviousSectionOrChunk())
             docDisplay_.gotoPageUp();
@@ -3619,7 +3625,20 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteAllCode()
    {
-      sourceActiveDocument(true);
+      boolean executeChunks = fileType_.canCompilePDF() || 
+                              fileType_.canKnitToHTML() ||
+                              fileType_.isRpres();
+      
+      if (executeChunks)
+      {
+         executePreviousChunks(Position.create(
+               docDisplay_.getDocumentEnd().getRow() + 1,
+               0));
+      }
+      else
+      {
+         sourceActiveDocument(true);
+      }
    }
 
    @Handler
@@ -3828,9 +3847,44 @@ public class TextEditingTarget implements
       
       // execute the previous chunks
       Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks(position);
+      
+      StringBuilder builder = new StringBuilder();
       for (Scope scope : previousScopes)
+      {
          if (isRChunk(scope) && isExecutableChunk(scope))
-            executeSweaveChunk(scope, false);
+         {
+            builder.append("# " + scope.getLabel() + "\n");
+            builder.append(scopeHelper_.getSweaveChunkText(scope));
+            builder.append("\n\n");
+         }
+      }
+      
+      final String code = builder.toString().trim();
+      if (fileType_.isRmd())
+      {
+         docUpdateSentinel_.withSavedDoc(new Command()
+         {
+            @Override
+            public void execute()
+            {
+               rmarkdownHelper_.prepareForRmdChunkExecution(
+                     docUpdateSentinel_.getId(),
+                     docUpdateSentinel_.getContents(),
+                     new Command()
+                     {
+                        @Override
+                        public void execute()
+                        {
+                           events_.fireEvent(new SendToConsoleEvent(code, true));
+                        }
+                     });
+            }
+         });
+      }
+      else
+      {
+         events_.fireEvent(new SendToConsoleEvent(code, true));
+      }
    }
    
    @Handler
@@ -4850,6 +4904,56 @@ public class TextEditingTarget implements
       }
    }
    
+   @Handler
+   void onYankBeforeCursor()
+   {
+      Position cursorPos = docDisplay_.getCursorPosition();
+      docDisplay_.setSelectionRange(Range.fromPoints(
+            Position.create(cursorPos.getRow(), 0),
+            cursorPos));
+      
+      if (Desktop.isDesktop())
+         commands_.cutDummy().execute();
+      else
+      {
+         yankedText_ = docDisplay_.getSelectionValue();
+         docDisplay_.replaceSelection("");
+      }
+   }
+   
+   @Handler
+   void onYankAfterCursor()
+   {
+      Position cursorPos = docDisplay_.getCursorPosition();
+      int lineLength = docDisplay_.getLine(cursorPos.getRow()).length();
+      docDisplay_.setSelectionRange(Range.fromPoints(
+            cursorPos,
+            Position.create(cursorPos.getRow(), lineLength)));
+      
+      if (Desktop.isDesktop())
+         commands_.cutDummy().execute();
+      else
+      {
+         yankedText_ = docDisplay_.getSelectionValue();
+         docDisplay_.replaceSelection("");
+      }
+   }
+   
+   @Handler
+   void onPasteLastYank()
+   {
+      if (Desktop.isDesktop())
+         commands_.pasteDummy().execute();
+      else
+      {
+         if (yankedText_ == null)
+            return;
+         
+         docDisplay_.replaceSelection(yankedText_);
+         docDisplay_.setCursorPosition(docDisplay_.getSelectionEnd());
+      }
+   }
+   
    boolean useScopeTreeFolding()
    {
       return docDisplay_.hasScopeTree();
@@ -5365,6 +5469,13 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.forceImmediateRender();
                }}));
+      releaseOnDismiss.add(prefs.surroundSelection().bind(
+            new CommandWithArg<String>() {
+               @Override
+               public void execute(String string)
+               {
+                  docDisplay.setSurroundSelectionPref(string);
+               }}));
       
    }
    
@@ -5568,6 +5679,7 @@ public class TextEditingTarget implements
    private boolean isDebugWarningVisible_ = false;
    private boolean isBreakpointWarningVisible_ = false;
    private String extendedType_;
+   private String yankedText_ = null;
 
    private abstract class RefactorServerRequestCallback
            extends ServerRequestCallback<JsArrayString>

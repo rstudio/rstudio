@@ -18,6 +18,7 @@ package org.rstudio.studio.client.projects.events;
 import org.rstudio.studio.client.projects.model.ProjectUser;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -34,8 +35,8 @@ public class ProjectUserChangedEvent
          return this.change_type;
       }-*/;
       
-      public final native ProjectUser getUser() /*-{
-         return this.user;
+      public final native JsArray<ProjectUser> getUsers() /*-{
+         return this.users;
       }-*/;
    }
 
@@ -54,9 +55,9 @@ public class ProjectUserChangedEvent
       return data_.getChangeType();
    }
 
-   public ProjectUser getUser()
+   public JsArray<ProjectUser> getUsers()
    {
-      return data_.getUser();
+      return data_.getUsers();
    }
 
    @Override
@@ -73,8 +74,9 @@ public class ProjectUserChangedEvent
    
    private final Data data_;
    
-   public static final String JOINED = "joined";
-   public static final String LEFT = "left";
+   public static final String JOINED   = "joined";
+   public static final String LEFT     = "left";
+   public static final String REPLACED = "replaced";
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

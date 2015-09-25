@@ -17,14 +17,19 @@
 * F2 now navigates into files (e.g. within calls to source)
 * PageUp and PageDown navigate between sections within Rmd, Rpres
 * Enabled comment/uncomment (Cmd+Shift+C) for Markdown documents
+* Yank before/after (Ctrl+K, Ctrl+U) now use system clipboard on RStudio Desktop
+* Yank after cursor (Ctrl+K) no longer eats end of line character
+* Added option controlling 'surround on text insertion' behaviour
 
 ### R Markdown
 
 * New run chunk and options buttons overlaid at the top right of chunks
 * New shortcut for run current chunk (Cmd+Shift+Enter)
 * Outline view for quick navigation between sections/code chunks
-* Added Run Setup Chunk command
 * Knit with Parameters command for previewing with varying parameters
+* Run All now executes chunks in console (rather than calling e.g. knitr::purl)
+* Reorganize toolbar commands/menu for improved discoverability
+* Added Run Setup Chunk command
 
 ### Data Viewer
 
@@ -51,7 +56,8 @@
 * Return environment variables as completions within Sys.getenv(), Sys.setenv() calls
 * Add 'R Scripts' preset filter to Find in Files dialog
 * OS X: Enable creation of directories in folder picker dialog
-* Added ability to zoom panes (e.g. Cmd+Shift+1 to zoom source pane)
+* Added ability to zoom panes (e.g. Ctrl+Shift+1 to zoom source pane)
+* Add Console on Left/Right commands for quick relocation of Console
 
 ### Server
 
@@ -87,6 +93,10 @@
 * Correctly handle call to edit() with no arguments
 * Fix inability to start up on OS X when multiple conflicting R versions are on the library search path.
 * Prevent crash when cancelling out of q() prompt on Windows
+* OSX: Viewer now correctly recognizes session temp dir even when prefixed by /private
+* Fix issue with rstudioapi previewRd function when path included spaces
+* R 3.3: Don't call setInternet2 or use --internet2 flag for child R processes
+
 
 
 

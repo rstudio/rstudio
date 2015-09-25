@@ -14,8 +14,13 @@
  */
 package org.rstudio.studio.client.common;
 
+import com.google.gwt.core.shared.GWT;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 
@@ -44,6 +49,29 @@ public class NotifyingSplitLayoutPanel extends SplitLayoutPanel
          }
       });
    }
+   
+   public void setSplitterEnabled(boolean enabled)
+   {
+      DomUtils.toggleClass(getElement(), RES.styles().disableSplitter(), !enabled);
+   }
 
    private final EventBus events_;
+   
+   // Styles, Resources etc. ----
+   public interface Styles extends CssResource
+   {
+      String disableSplitter();
+   }
+   
+   public interface Resources extends ClientBundle
+   {
+      @Source("NotifyingSplitPanel.css")
+      Styles styles();
+   }
+   
+   private static Resources RES = GWT.create(Resources.class);
+   static {
+      RES.styles().ensureInjected();
+   }
+   
 }

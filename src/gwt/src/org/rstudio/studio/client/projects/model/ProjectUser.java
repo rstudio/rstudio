@@ -33,4 +33,16 @@ public class ProjectUser extends JavaScriptObject
    public final native String getColor() /*-{
       return this.color;
    }-*/;
+   
+   public final native String getCurrentlyEditing() /*-{
+      return this.currently_editing;
+   }-*/;
+   
+   public final native int getLastSeen() /*-{
+      return this.last_seen;
+   }-*/;
+
+   public final native int getTimeSinceLastSeen() /*-{
+      return this.time_since_last_seen;
+   }-*/;
 }

@@ -174,6 +174,11 @@ public class TextFileType extends EditableFileType
    {
       return canShowScopeTree_;
    }
+   
+   public boolean canGoNextPrevSection()
+   {
+      return isRmd() || isRpres();
+   }
   
    public boolean canPreviewFromR()
    {
@@ -289,12 +294,20 @@ public class TextFileType extends EditableFileType
       results.add(commands.goToLine());
       results.add(commands.expandSelection());
       results.add(commands.shrinkSelection());
+      
       if (canExecuteCode() || isC())
       {
          results.add(commands.reindent());
          results.add(commands.showDiagnosticsActiveDocument());
       }
-      if (canExecuteCode()) {
+      
+      if (canExecuteCode() && !isC())
+      {
+         results.add(commands.executeCurrentFunction());
+      }
+      
+      if (canExecuteCode())
+      {
          results.add(commands.executeCode());
          results.add(commands.executeCodeWithoutFocus());
          results.add(commands.executeLastCode());
@@ -305,6 +318,7 @@ public class TextFileType extends EditableFileType
          results.add(commands.reformatCode());
          results.add(commands.renameInFile());
       }
+      
       if (canExecuteAllCode())
       {
          results.add(commands.executeAllCode());
@@ -314,11 +328,11 @@ public class TextFileType extends EditableFileType
          if (!canExecuteChunks())
             results.add(commands.sourceActiveDocumentWithEcho());
       }
+      
       if (canExecuteToCurrentLine())
       {
          results.add(commands.executeToCurrentLine());
          results.add(commands.executeFromCurrentLine());
-         results.add(commands.executeCurrentFunction());
          results.add(commands.executeCurrentSection());
       }
       if (canKnitToHTML())

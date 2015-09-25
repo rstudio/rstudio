@@ -1,7 +1,7 @@
 /*
  * ProjectsServerOperations.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@ import org.rstudio.studio.client.server.remote.RResult;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
 public interface ProjectsServerOperations extends PrefsServerOperations,
@@ -52,7 +53,20 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
    void getProjectSharedUsers(ServerRequestCallback<JsArrayString> callback);
    
    void setProjectSharedUsers(JsArrayString users, 
-                              ServerRequestCallback<Void> callback);
+                              ServerRequestCallback<SharingResult> callback);
+   
+   void validateSharingConfig(
+         ServerRequestCallback<SharingConfigResult> callback);
    
    void getAllServerUsers(ServerRequestCallback<JsArrayString> callback);
+   
+   void getSharedProjects(
+         int maxProjects,
+         ServerRequestCallback<JsArray<SharedProjectDetails>> callback);
+   
+   void setCurrentlyEditing(String path,
+         ServerRequestCallback<Void> callback);
+   
+   void getProjectUser(String sessionId, 
+         ServerRequestCallback<ProjectUser> callback);
 }

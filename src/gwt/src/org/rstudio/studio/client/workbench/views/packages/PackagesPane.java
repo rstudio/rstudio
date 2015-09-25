@@ -115,10 +115,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       // show the toolbar button if Packrat mode is on
       packratMenuButton_.setVisible(packratContext_.isModeOn());
       
-      // show the separator if either of the above are visible
-      packratSeparator_.setVisible(packratBootstrapButton_.isVisible() ||
-                                   packratMenuButton_.isVisible());
-
       // always show the separator before the packrat commands
       prePackratSeparator_.setVisible(true);
    }
@@ -265,11 +261,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
        );
       toolbar.addLeftWidget(packratMenuButton_);
       packratMenuButton_.setVisible(false);
-      packratSeparator_ = toolbar.addLeftSeparator();
-      packratSeparator_.setVisible(false);
-          
-      toolbar.addLeftWidget(commands_.refreshPackages().createToolbarButton());
-      
+            
       searchWidget_ = new SearchWidget(new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
@@ -288,6 +280,10 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          }
       });
       toolbar.addRightWidget(searchWidget_);
+      
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(commands_.refreshPackages().createToolbarButton());
+      
       
       return toolbar;
    }
@@ -684,7 +680,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    
    private ToolbarButton packratBootstrapButton_;
    private ToolbarButton packratMenuButton_;
-   private Widget packratSeparator_;
    private Widget prePackratSeparator_;
    private LayoutPanel packagesTableContainer_;
    private ActionCenter actionCenter_ = null;

@@ -229,14 +229,15 @@ void ProjectContext::augmentRbuildignore()
       // constants
       const char * const kIgnoreRproj = "^.*\\.Rproj$";
       const char * const kIgnoreRprojUser = "^\\.Rproj\\.user$";
-
+      const std::string newLine = "\n";
+      
       // create the file if it doesn't exists
       FilePath rbuildIgnorePath = directory().childPath(".Rbuildignore");
       if (!rbuildIgnorePath.exists())
       {
          Error error = writeStringToFile(rbuildIgnorePath,
-                                         kIgnoreRproj + std::string("\n") +
-                                         kIgnoreRprojUser + std::string("\n"),
+                                         kIgnoreRproj + newLine +
+                                         kIgnoreRprojUser + newLine,
                                          string_utils::LineEndingNative);
          if (error)
             LOG_ERROR(error);
@@ -269,11 +270,11 @@ void ProjectContext::augmentRbuildignore()
                                 && strIgnore[strIgnore.size() - 1] != '\n';
 
          if (addExtraNewline)
-            strIgnore += "\n";
+            strIgnore += newLine;
          if (!hasRProj)
-            strIgnore += kIgnoreRproj + std::string("\n");
+            strIgnore += kIgnoreRproj + newLine;
          if (!hasRProjUser)
-            strIgnore += kIgnoreRprojUser + std::string("\n");
+            strIgnore += kIgnoreRprojUser + newLine;
          error = core::writeStringToFile(rbuildIgnorePath,
                                          strIgnore,
                                          string_utils::LineEndingNative);

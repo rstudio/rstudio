@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.List;
+
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.js.JsMap;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
@@ -178,7 +180,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void toggleCommentLines();
    
    AceCommandManager getCommandManager();
-   void addEditorCommandBinding(String id, KeySequence keys, boolean replace);
+   void setEditorCommandBinding(String id, List<KeySequence> keys);
    void resetCommands();
 
    HandlerRegistration addEditorFocusHandler(FocusHandler handler);
@@ -335,4 +337,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setDragEnabled(boolean enabled);
    
    boolean onInsertSnippet();
+   
+   Position getDocumentEnd();
+   void setSurroundSelectionPref(String value);
 }

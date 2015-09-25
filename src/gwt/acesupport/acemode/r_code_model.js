@@ -753,6 +753,8 @@ var RCodeModel = function(session, tokenizer,
          return null;
       }
 
+      var modeId = this.$session.getMode().$id;
+
       // Nudge the maxRow ahead a bit -- some functions may request
       // the tree to be built up to a particular row, but we want to
       // build a bit further ahead in case some lookahead is required.
@@ -889,7 +891,9 @@ var RCodeModel = function(session, tokenizer,
          //
          // Handle Sweave sections.
          // TODO: Maybe handle '\begin{}' and '\end{}' pairs?
-         else if (type === "keyword" &&
+         else if (!isInRMode &&
+                  modeId === "mode/sweave" &&
+                  type === "keyword" &&
                   value.indexOf("\\") === 0 && (
                      value === "\\chapter" ||
                      value === "\\section" ||
@@ -909,9 +913,13 @@ var RCodeModel = function(session, tokenizer,
                depth = 5;
 
             var line = this.$doc.getLine(position.row);
+
             var reSection = /{([^}]*)}/;
             var match = reSection.exec(line);
-            var label = match[1];
+
+            var label = "";
+            if (match != null)
+               label = match[1];
 
             var labelStartPos = {row: position.row, column: 0};
             var labelEndPos = {row: position.row, column: Infinity};

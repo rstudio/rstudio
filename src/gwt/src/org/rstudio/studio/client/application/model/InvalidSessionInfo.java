@@ -25,6 +25,10 @@ public class InvalidSessionInfo extends JavaScriptObject
       return this.scope_path; 
    }-*/;
    
+   public native final int getScopeState() /*-{
+      return this.scope_state;
+   }-*/;
+
    public native final String getSessionProject() /*-{ 
       return this.project; 
    }-*/;
@@ -32,4 +36,10 @@ public class InvalidSessionInfo extends JavaScriptObject
    public native final String getSessionProjectId() /*-{ 
       return this.id; 
    }-*/;
+   
+   // these values are mirrored in an enum on the server
+   public final static int ScopeValid = 0; 
+   public final static int ScopeInvalidSession = 1;
+   public final static int ScopeInvalidProject = 2;
+   public final static int ScopeMissingProject = 3;
  }

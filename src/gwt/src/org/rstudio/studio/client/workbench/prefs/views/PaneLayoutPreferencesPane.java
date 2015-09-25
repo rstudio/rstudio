@@ -314,8 +314,26 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          JsArrayString tabSet2 = JsArrayString.createArray().cast();
          for (String tab : tabSet2ModuleList_.getValue())
             tabSet2.push(tab);
-
-         uiPrefs_.paneConfig().setGlobalValue(PaneConfig.create(panes, tabSet1, tabSet2));
+         
+         // Determine implicit preference for console top/bottom location
+         // This needs to be saved so that when the user executes the 
+         // Console on Left/Right commands we know whether to position 
+         // the Console on the Top or Bottom
+         PaneConfig prevConfig = uiPrefs_.paneConfig().getGlobalValue();
+         boolean consoleLeftOnTop = prevConfig.getConsoleLeftOnTop();
+         boolean consoleRightOnTop = prevConfig.getConsoleRightOnTop();
+         final String kConsole = "Console";
+         if (panes.get(0).equals(kConsole))
+            consoleLeftOnTop = true;
+         else if (panes.get(1).equals(kConsole))
+            consoleLeftOnTop = false;
+         else if (panes.get(2).equals(kConsole))
+            consoleRightOnTop = true;
+         else if (panes.get(3).equals(kConsole))
+            consoleRightOnTop = false;
+         
+         uiPrefs_.paneConfig().setGlobalValue(PaneConfig.create(
+               panes, tabSet1, tabSet2, consoleLeftOnTop, consoleRightOnTop));
 
          dirty_ = false;
       }

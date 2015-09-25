@@ -128,6 +128,10 @@ void renderMedia(const std::string& type,
                  std::vector<std::string>* pInitActions,
                  std::vector<std::string>* pSlideActions)
 {
+   // only do this in server mode
+   if (session::options().programMode() != kSessionProgramModeServer)
+      return;
+
    // discover media sources
    std::vector<MediaSource> mediaSources = discoverMediaSources(type,
                                                                 baseDir,

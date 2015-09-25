@@ -108,6 +108,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       pSatellite_ = pSatellite;
       pWorkbenchContext_ = pWorkbenchContext;
       display_ = display;
+      sourceShim_ = sourceShim;
       
       events_.addHandler(DocWindowChangedEvent.TYPE, this);
       
@@ -419,12 +420,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       
       // if the last window focused was the main one, or there's no longer an
       // addressable window, there's nothing to do
-      if (StringUtil.isNullOrEmpty(lastFocusedSourceWindow_) ||
-          !isSourceWindowOpen(lastFocusedSourceWindow_))
-         return false;
-      
-      WindowEx window = getSourceWindowObject(lastFocusedSourceWindow_);
-      if (window != null && !window.isClosed())
+      WindowEx lastFocusedWindow = getLastFocusedSourceWindow();
+      if (lastFocusedWindow != null)
       {
          // we found the window that last had focus--refocus it
          pSatelliteManager_.get().activateSatelliteWindow(
@@ -433,6 +430,17 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
       
       return false;
+   }
+   
+   public String getCurrentDocPath()
+   {
+      // return the document that most recently had focus, whether it was in a
+      // source window or the main window
+      WindowEx lastFocusedWindow = getLastFocusedSourceWindow();
+      if (lastFocusedWindow == null)
+         return sourceShim_.getCurrentDocPath();
+      else
+         return getCurrentDocPath(lastFocusedWindow);
    }
 
    // Event handlers ----------------------------------------------------------
@@ -730,6 +738,10 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private final native JsArray<UnsavedChangesItem> getUnsavedChanges(
          WindowEx satellite) /*-{
       return satellite.rstudioGetUnsavedChanges();
+   }-*/;
+   
+   private final native String getCurrentDocPath(WindowEx satellite) /*-{
+      return satellite.rstudioGetCurrentDocPath();
    }-*/;
    
    private final native void handleUnsavedChangesBeforeExit(WindowEx satellite, 
@@ -1049,6 +1061,23 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          }
       }
    }
+   
+   private WindowEx getLastFocusedSourceWindow()
+   {
+      // if the last window focused was the main one, or there's no longer an
+      // addressable window, there's nothing to do
+      if (StringUtil.isNullOrEmpty(lastFocusedSourceWindow_) ||
+          !isSourceWindowOpen(lastFocusedSourceWindow_))
+         return null;
+      
+      WindowEx window = getSourceWindowObject(lastFocusedSourceWindow_);
+      if (window != null && !window.isClosed())
+      {
+         return window;
+      }
+
+      return null;
+   }
 
    // Private types -----------------------------------------------------------
    
@@ -1066,6 +1095,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private final Provider<WorkbenchContext> pWorkbenchContext_;
    private final SourceServerOperations server_;
    private final GlobalDisplay display_;
+   private final SourceShim sourceShim_;
 
    private HashMap<String, Integer> sourceWindows_ = 
          new HashMap<String,Integer>();

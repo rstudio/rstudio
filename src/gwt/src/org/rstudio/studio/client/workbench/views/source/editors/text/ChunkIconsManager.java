@@ -99,6 +99,28 @@ public class ChunkIconsManager
       Position pos = toDocumentPosition(el, editor);
       String text = editor.getSession().getLine(pos.getRow());
       
+      // Check for R Markdown chunks, and verify that the engine is 'r' or 'rscript'.
+      // First, check for chunk headers of the form:
+      //
+      //     ```{r ...}
+      //
+      // as opposed to
+      //
+      //     ```{sh ...}
+      String lower = text.toLowerCase().trim();
+      if (lower.startsWith("```{"))
+      {
+         Pattern reREngine = Pattern.create("```{r(?:script)?[ ,}]", "");
+         if (!reREngine.test(lower))
+            return false;
+      }
+      
+      // If this is an 'R' chunk, it's possible that an alternate engine
+      // has been specified, e.g.
+      //
+      //     ```{r, engine = 'awk'}
+      //
+      // which is the 'old-fashioned' way of specifying non-R chunks.
       Pattern pattern = Pattern.create("engine\\s*=\\s*['\"]([^'\"]*)['\"]", "");
       Match match = pattern.match(text, 0);
       

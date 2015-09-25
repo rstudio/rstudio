@@ -25,6 +25,7 @@ public abstract class
 
    // Workbench
    public abstract AppCommand setWorkingDir();
+   public abstract AppCommand switchFocusSourceConsole();
    
    // Source
    public abstract AppCommand reformatCode();
@@ -124,12 +125,16 @@ public abstract class
    public abstract AppCommand renameInFile();
    public abstract AppCommand insertRoxygenSkeleton();
    public abstract AppCommand insertSnippet();
+   public abstract AppCommand yankBeforeCursor();
+   public abstract AppCommand yankAfterCursor();
+   public abstract AppCommand pasteLastYank();
  
    // Projects
    public abstract AppCommand newProject();
    public abstract AppCommand openProject();
    public abstract AppCommand openProjectInNewWindow();
    public abstract AppCommand shareProject();
+   public abstract AppCommand openSharedProject();
    public abstract AppCommand projectMru0();
    public abstract AppCommand projectMru1();
    public abstract AppCommand projectMru2();
@@ -215,7 +220,6 @@ public abstract class
    public abstract AppCommand presentationViewInBrowser();
    public abstract AppCommand presentationSaveAsStandalone();
    public abstract AppCommand activatePresentation();
-   public abstract AppCommand layoutZoomPresentation();
    public abstract AppCommand tutorialFeedback();
    public abstract AppCommand clearPresentationCache();
    
@@ -335,6 +339,8 @@ public abstract class
    public abstract AppCommand viewShortcuts();
    
    // Viewer
+   public abstract AppCommand activateViewer();
+   public abstract AppCommand layoutZoomViewer();
    public abstract AppCommand viewerPopout();
    public abstract AppCommand viewerBack(); 
    public abstract AppCommand viewerForward();
@@ -428,6 +434,9 @@ public abstract class
    public abstract AppCommand checkSpelling();   
    public abstract AppCommand layoutZoomCurrentPane();
    public abstract AppCommand layoutEndZoom();
+   public abstract AppCommand layoutConsoleOnLeft();
+   public abstract AppCommand layoutConsoleOnRight();
+   public abstract AppCommand paneLayout();
    public abstract AppCommand maximizeConsole();
    
    public static final String KEYBINDINGS_PATH =

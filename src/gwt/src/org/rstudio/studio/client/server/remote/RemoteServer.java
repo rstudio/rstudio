@@ -88,8 +88,12 @@ import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
+import org.rstudio.studio.client.projects.model.ProjectUser;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
+import org.rstudio.studio.client.projects.model.SharedProjectDetails;
+import org.rstudio.studio.client.projects.model.SharingConfigResult;
+import org.rstudio.studio.client.projects.model.SharingResult;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdCreatedTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateContent;
@@ -4256,7 +4260,7 @@ public class RemoteServer implements Server
 
    @Override
    public void setProjectSharedUsers(JsArrayString users,
-         ServerRequestCallback<Void> callback)
+         ServerRequestCallback<SharingResult> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONArray(users));
@@ -4267,6 +4271,40 @@ public class RemoteServer implements Server
    public void getAllServerUsers(ServerRequestCallback<JsArrayString> callback)
    {
       sendRequest(RPC_SCOPE, "get_all_users", callback);
+   }
+
+   @Override
+   public void validateSharingConfig(
+         ServerRequestCallback<SharingConfigResult> callback)
+   {
+      sendRequest(RPC_SCOPE, "validate_sharing_config", callback);
+   }
+
+   @Override
+   public void getSharedProjects(int maxProjects,
+         ServerRequestCallback<JsArray<SharedProjectDetails>> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONNumber(maxProjects));
+      sendRequest(RPC_SCOPE, "get_shared_projects", params, callback);
+   }
+
+   @Override
+   public void setCurrentlyEditing(String path,
+         ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      sendRequest(RPC_SCOPE, "set_currently_editing", params, callback);
+   }
+
+   @Override
+   public void getProjectUser(String sessionId,
+         ServerRequestCallback<ProjectUser> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(sessionId));
+      sendRequest(RPC_SCOPE, "get_project_user", params, callback);
    }
 
    private String clientId_;

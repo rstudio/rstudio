@@ -310,6 +310,13 @@ public class SourceShim extends Composite
       }
    }
    
+   public String getCurrentDocPath()
+   {
+      if (source_ == null || source_.getActiveEditor() == null)
+         return null;
+      return source_.getActiveEditor().getPath();
+   }
+   
    void setSource(Source source)
    {
       source_ = source;

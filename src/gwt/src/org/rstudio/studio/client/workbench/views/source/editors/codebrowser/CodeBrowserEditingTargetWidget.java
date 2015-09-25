@@ -357,6 +357,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
+      toolbar.addLeftWidget(commands_.returnDocToMain().createToolbarButton());
       toolbar.addLeftSeparator();
 
       toolbar.addLeftWidget(commands_.printSourceDoc().createToolbarButton()); 

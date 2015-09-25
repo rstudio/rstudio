@@ -1,7 +1,7 @@
 /*
  * FileSystemDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,7 +22,10 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.*;
 
-import org.rstudio.core.client.Point;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
@@ -35,15 +38,12 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-
 public abstract class FileSystemDialog extends ModalDialogBase
-      implements SelectionCommitHandler<FileSystemItem>, FileSystemContext.Callbacks,
+      implements SelectionCommitHandler<FileSystemItem>, 
                  SelectionHandler<FileSystemItem>,
-                 ProgressIndicator
+                 ProgressIndicator,
+                 FileSystemContext.Callbacks,
+                 FileBrowserWidget.Host
 {
    private class NewFolderHandler implements ClickHandler,
                                              ProgressOperationWithInput<String>
@@ -94,17 +94,21 @@ public abstract class FileSystemDialog extends ModalDialogBase
                            String buttonName,
                            FileSystemContext context,
                            String filter,
+                           boolean allowFolderCreation,
                            ProgressOperationWithInput<FileSystemItem> operation)
    {
       context_ = context;
+      operation_ = operation;
       context_.setCallbacks(this);
       filterExtension_ = extractFilterExtension(filter);
-      operation_ = operation;
 
       setTitle(caption);
       setText(title);
 
-      addLeftButton(new ThemedButton("New Folder", new NewFolderHandler()));
+      if (allowFolderCreation)
+      {
+         addLeftButton(new ThemedButton("New Folder", new NewFolderHandler()));
+      }
 
       addOkButton(new ThemedButton(buttonName, new ClickHandler()
       {
@@ -151,10 +155,20 @@ public abstract class FileSystemDialog extends ModalDialogBase
             "if promptOnOverwrite is true";
    }
 
+   public void onSelectionCommit(SelectionCommitEvent<FileSystemItem> event)
+   {
+      FileSystemItem item = event.getSelectedItem();
+      if (item != null && item.isDirectory())
+         browser_.cd(item);
+      else
+         maybeAccept();
+   }
+
    /**
     * Accept if validation passes
     */
-   protected final void maybeAccept()
+   @Override
+   public final void maybeAccept()
    {
       if (shouldAccept())
          accept();
@@ -185,69 +199,36 @@ public abstract class FileSystemDialog extends ModalDialogBase
       });
    }
 
-   @Override
-   protected Widget createMainWidget()
-   {
-      breadcrumb_ = new PathBreadcrumbWidget(context_);
-      breadcrumb_.addSelectionCommitHandler(this);
-
-      directory_ = new DirectoryContentsWidget(context_);
-      directory_.addSelectionHandler(this);
-      directory_.addSelectionCommitHandler(this);
-      directory_.showProgress(true);
-
-      DockPanel dockPanel = new DockPanel();
-      Widget topWidget = createTopWidget();
-      if (topWidget != null)
-         dockPanel.add(topWidget, DockPanel.NORTH);
-      dockPanel.add(breadcrumb_, DockPanel.NORTH);
-      dockPanel.add(directory_, DockPanel.CENTER);
-
-      return dockPanel;
-   }
-
-   protected Widget createTopWidget()
-   {
-      String nameLabel = getFilenameLabel();
-      if (nameLabel == null)
-         return null;
-
-      HorizontalPanel filenamePanel = new HorizontalPanel();
-      FileDialogStyles styles = FileDialogResources.INSTANCE.styles();
-      filenamePanel.setStylePrimaryName(styles.filenamePanel());
-      filenamePanel.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
-
-      Label filenameLabel = new Label(nameLabel + ":", false);
-      filenameLabel.setStylePrimaryName(styles.filenameLabel());
-      filenamePanel.add(filenameLabel);
-
-      filename_ = new TextBox();
-      if (initialFilename_ != null)
-         filename_.setText(initialFilename_);
-      filename_.setStylePrimaryName(styles.filename());
-      filenamePanel.add(filename_);
-      filenamePanel.setCellWidth(filename_, "100%");
-
-      return filenamePanel;
-   }
-
    /**
     * If non-null, the filename textbox will be inserted at the top
     * of the dialog with the given label shown next to it.
     *
     * If null, the filename textbox will not be created.
     */
-   protected abstract String getFilenameLabel();
+   @Override
+   public abstract String getFilenameLabel();
 
    /**
     * Set the contents of the filename box
     */
    public void setFilename(String filename)
    {
-      if (filename_ != null)
-         filename_.setText(filename);
+      if (browser_ != null)
+         browser_.setFilename(filename);
       else
          initialFilename_ = filename;
+   }
+   
+   @Override
+   public void onNavigated()
+   {
+      browser_.onNavigated();
+   }
+   
+   @Override
+   public void onDirectoryCreated(FileSystemItem directory)
+   {
+      browser_.onDirectoryCreated(directory);
    }
 
    @Override
@@ -267,57 +248,57 @@ public abstract class FileSystemDialog extends ModalDialogBase
       super.onPreviewNativeEvent(event);    //To change body of overridden methods use File | Settings | File Templates.
    }
 
-   public void onSelectionCommit(SelectionCommitEvent<FileSystemItem> event)
-   {
-      FileSystemItem item = event.getSelectedItem();
-      if (item != null && item.isDirectory())
-         cd(item);
-      else
-         maybeAccept();
-   }
-
-   protected void cd(String path)
-   {
-      if (REMEMBER_SCROLL_POSITION)
-      {
-         if (currentDir_ != null)
-            scrollPositions_.put(currentDir_, directory_.getScrollPosition());
-      }
-
-      directory_.clearContents();
-      directory_.showProgress(true);
-      context_.cd(path);
-   }
-
-   protected void cd(FileSystemItem dir)
-   {
-      assert dir.isDirectory();
-      cd(dir.getPath());
-   }
-
    public void onSelection(SelectionEvent<FileSystemItem> event)
    {
    }
 
-   public void onNavigated()
+   public void onProgress(String message)
    {
-      String dir = context_.pwd();
-
-      final FileSystemItem[] parsedDir = context_.parseDir(dir);
-      breadcrumb_.setDirectory(parsedDir);
-      directory_.setContents(
-            ls(),
-            parsedDir.length > 1 ? parsedDir[parsedDir.length-2] : null);
-      
-      if (REMEMBER_SCROLL_POSITION)
-      {
-         if (scrollPositions_.containsKey(dir))
-            directory_.setScrollPosition(scrollPositions_.get(dir));
-      }
-      currentDir_ = dir;
+      progress_.onProgress(message);
+   }
+   
+   public void clearProgress()
+   {
+      progress_.clearProgress();
    }
 
-   protected FileSystemItem[] ls()
+   public void onCompleted()
+   {
+      progress_.onCompleted();
+   }
+
+   @Override
+   public void onError(String errorMessage)
+   {
+      progress_.onError(errorMessage);
+   }
+
+   protected void showError(String errorMessage)
+   {
+      context_.messageDisplay().showErrorMessage("Error", errorMessage);
+   }
+
+   /**
+    * If true, hitting the Cancel button will result in the action operation
+    * (passed in the constructor) to be invoked with a null value, rather
+    * than having the dialog just close.
+    */
+   public void setInvokeOperationEvenOnCancel(boolean invoke)
+   {
+      invokeOperationEvenOnCancel_ = invoke;
+   }
+   
+   @Override
+   public Widget createMainWidget()
+   {
+      browser_ = new FileBrowserWidget(context_, this);
+      if (initialFilename_ != null)
+         browser_.setFilename(initialFilename_);
+      return browser_;
+   }
+
+   @Override
+   public FileSystemItem[] ls()
    {
       FileSystemItem[] items = context_.ls();
       if (items == null)
@@ -342,49 +323,6 @@ public abstract class FileSystemDialog extends ModalDialogBase
        });
       FileSystemItem[] clone = new FileSystemItem[filtered.size()];
       return filtered.toArray(clone);
-      
-      
-   }
-
-   public void onProgress(String message)
-   {
-      progress_.onProgress(message);
-   }
-   
-   public void clearProgress()
-   {
-      progress_.clearProgress();
-   }
-
-   public void onCompleted()
-   {
-      progress_.onCompleted();
-   }
-
-   public void onError(String errorMessage)
-   {
-      progress_.onError(errorMessage);
-      onNavigated();
-   }
-
-   protected void showError(String errorMessage)
-   {
-      context_.messageDisplay().showErrorMessage("Error", errorMessage);
-   }
-
-   public void onDirectoryCreated(FileSystemItem directory)
-   {
-      directory_.addDirectory(directory);
-   }
-
-   /**
-    * If true, hitting the Cancel button will result in the action operation
-    * (passed in the constructor) to be invoked with a null value, rather
-    * than having the dialog just close.
-    */
-   public void setInvokeOperationEvenOnCancel(boolean invoke)
-   {
-      invokeOperationEvenOnCancel_ = invoke;
    }
 
    // NOTE: web mode only supports a single one-extension filter (whereas
@@ -407,19 +345,12 @@ public abstract class FileSystemDialog extends ModalDialogBase
             return m.getGroup(1);
       }
    }
-   
 
-   private final HashMap<String, Point> scrollPositions_ =
-                                                   new HashMap<String, Point>();
-   private final String filterExtension_;
-   private String currentDir_; 
    protected final FileSystemContext context_;
    private final ProgressOperationWithInput<FileSystemItem> operation_;
-   private PathBreadcrumbWidget breadcrumb_;
-   protected DirectoryContentsWidget directory_;
-   private static final boolean REMEMBER_SCROLL_POSITION = false;
-   protected TextBox filename_;
-   private String initialFilename_;
+   private String filterExtension_;
    private boolean invokeOperationEvenOnCancel_;
    private final ProgressIndicator progress_;
+   protected FileBrowserWidget browser_;
+   private String initialFilename_;
 }
