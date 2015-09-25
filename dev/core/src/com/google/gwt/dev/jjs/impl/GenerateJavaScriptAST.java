@@ -562,7 +562,7 @@ public class GenerateJavaScriptAST {
             polyName =
                 isJsMethod
                     ? interfaceScope.declareUnobfuscatableName(x.getJsName())
-                    : interfaceScope.declareName(mangleNameForPoly(x));
+                    : interfaceScope.declareName(mangleNameForPoly(x), name);
           }
           polymorphicNames.put(x, polyName);
         }
@@ -2638,7 +2638,8 @@ public class GenerateJavaScriptAST {
         }
 
         if (method.exposesNonJsMethod()) {
-          JsName internalMangledName = interfaceScope.declareName(mangleNameForPoly(method));
+          JsName internalMangledName = interfaceScope.declareName(mangleNameForPoly(method),
+              method.getName());
           generateVTableAlias(globalStmts, method, internalMangledName);
         }
 
