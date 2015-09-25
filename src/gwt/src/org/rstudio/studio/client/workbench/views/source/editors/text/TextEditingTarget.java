@@ -1250,6 +1250,21 @@ public class TextEditingTarget implements
                RStudioGinjector.INSTANCE.getSourceWindowManager()
                                         .setLastFocusedSourceWindowId("");
             }
+            
+            // only enable 'go to section' commands when docDisplay has focus
+            commands_.goToNextSection().setEnabled(true);
+            commands_.goToPrevSection().setEnabled(true);
+         }
+      });
+      
+      docDisplay_.addBlurHandler(new BlurHandler()
+      {
+         @Override
+         public void onBlur(BlurEvent event)
+         {
+            // only enable 'go to section' commands when docDisplay has focus
+            commands_.goToNextSection().setEnabled(false);
+            commands_.goToPrevSection().setEnabled(false);
          }
       });
 
