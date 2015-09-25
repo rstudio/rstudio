@@ -229,7 +229,7 @@ void ProjectContext::augmentRbuildignore()
       // constants
       const char * const kIgnoreRproj = "^.*\\.Rproj$";
       const char * const kIgnoreRprojUser = "^\\.Rproj\\.user$";
-      const char * const kIgnoreSrcFile = "^.*\\.o$";
+      const char * const kIgnoreSrcFile = "^src/.*\\.o$";
       const std::string newLine = "\n";
       
       // create the file if it doesn't exists
