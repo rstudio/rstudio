@@ -44,7 +44,7 @@ public class ProgressDelayer
       
       if (indicator_ != null)
       {
-         indicator_.onCompleted();
+         indicator_.clearProgress();
       }
    }
 
