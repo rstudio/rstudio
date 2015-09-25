@@ -69,9 +69,17 @@ public class JsName implements Serializable {
   }
 
   public JsNameRef makeRef(SourceInfo sourceInfo) {
+    return makeQualifiedRef(sourceInfo, null);
+  }
+
+  public JsNameRef makeQualifiedRef(SourceInfo sourceInfo, JsExpression qualifier) {
     JsNameRef ref = new JsNameRef(sourceInfo, this);
-    if (namespace != null) {
-      ref.setQualifier(new JsNameRef(sourceInfo, namespace));
+    assert namespace == null || qualifier == null;
+    if (qualifier == null && namespace != null) {
+      qualifier = namespace.makeRef(sourceInfo);
+    }
+    if (qualifier != null) {
+      ref.setQualifier(qualifier);
     }
     return ref;
   }

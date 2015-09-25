@@ -112,7 +112,7 @@ public class JsStaticEval {
 
     @Override
     public void endVisit(JsExprStmt x, JsContext ctx) {
-      JsFunction func = isFunctionDecl(x);
+      JsFunction func = JsUtils.isFunctionDeclaration(x);
       if (func != null) {
         mustExec.add(x);
       }
@@ -361,10 +361,10 @@ public class JsStaticEval {
 
       JsStatement thenStmt = x.getThenStmt();
       JsStatement elseStmt = x.getElseStmt();
-      boolean thenIsEmpty = isEmpty(thenStmt);
-      boolean elseIsEmpty = isEmpty(elseStmt);
-      JsExpression thenExpr = extractExpression(thenStmt);
-      JsExpression elseExpr = extractExpression(elseStmt);
+      boolean thenIsEmpty = JsUtils.isEmpty(thenStmt);
+      boolean elseIsEmpty = JsUtils.isEmpty(elseStmt);
+      JsExpression thenExpr = JsUtils.extractExpression(thenStmt);
+      JsExpression elseExpr = JsUtils.extractExpression(elseStmt);
 
       if (thenIsEmpty && elseIsEmpty) {
         // Convert "if (a()) {}" => "a()".
@@ -607,51 +607,6 @@ public class JsStaticEval {
     OptimizerStats stats = new JsStaticEval(program).execImpl();
     optimizeJsEvent.end("didChange", "" + stats.didChange());
     return stats;
-  }
-
-  /**
-   * Attempts to extract a single expression from a given statement and returns
-   * it. If no such expression exists, returns <code>null</code>.
-   */
-  protected static JsExpression extractExpression(JsStatement stmt) {
-    if (stmt == null) {
-      return null;
-    }
-
-    if (stmt instanceof JsExprStmt) {
-      return ((JsExprStmt) stmt).getExpression();
-    }
-
-    if (stmt instanceof JsBlock && ((JsBlock) stmt).getStatements().size() == 1) {
-      return extractExpression(((JsBlock) stmt).getStatements().get(0));
-    }
-
-    return null;
-  }
-
-  protected static boolean isEmpty(JsStatement stmt) {
-    if (stmt == null) {
-      return true;
-    }
-    return (stmt instanceof JsBlock && ((JsBlock) stmt).getStatements().isEmpty());
-  }
-
-  /**
-   * If the statement is a JsExprStmt that declares a function with no other
-   * side effects, returns that function; otherwise <code>null</code>.
-   */
-  protected static JsFunction isFunctionDecl(JsStatement stmt) {
-    if (stmt instanceof JsExprStmt) {
-      JsExprStmt exprStmt = (JsExprStmt) stmt;
-      JsExpression expr = exprStmt.getExpression();
-      if (expr instanceof JsFunction) {
-        JsFunction func = (JsFunction) expr;
-        if (func.getName() != null) {
-          return func;
-        }
-      }
-    }
-    return null;
   }
 
   /**

@@ -20,6 +20,8 @@ import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.js.ast.JsExprStmt;
+import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
@@ -37,46 +39,46 @@ public class JavaToJavaScriptMapImpl implements JavaToJavaScriptMap {
   private final Map<JsName, JMethod> methodForName;
   private final Map<JsName, JClassType> typeForConstructorName;
 
-  private final Map<JsStatement, JClassType> typeForStatement;
-  private final Map<JsStatement, JMethod> methodForVTableInit;
+  private final Map<JsStatement, JDeclaredType> typeForStatement;
+  private final Map<JsStatement, JMethod> methodForStatement;
 
   public JavaToJavaScriptMapImpl(List<JDeclaredType> types,
       Map<HasName, JsName> names,
-      Map<JsStatement, JClassType> typeForStatement,
-      Map<JsStatement, JMethod> vtableInitForMethod) {
+      Map<JsStatement, JDeclaredType> typeForStatement,
+      Map<JsStatement, JMethod> methodForStatement) {
 
     // Generate reverse indexes for names.
-    Map<JsName, JMethod> nameToMethodMap = Maps.newHashMap();
-    Map<JsName, JField> nameToFieldMap = Maps.newHashMap();
-    Map<JsName, JClassType> constructorNameToTypeMap = Maps.newHashMap();
+    Map<JsName, JMethod> methodsByJsName = Maps.newHashMap();
+    Map<JsName, JField> staticFieldsByJsName = Maps.newHashMap();
+    Map<JsName, JClassType> typesByContructorJsName = Maps.newHashMap();
     for (JDeclaredType type : types) {
       JsName typeName = names.get(type);
       if (type instanceof JClassType && typeName != null) {
-        constructorNameToTypeMap.put(typeName, (JClassType) type);
+        typesByContructorJsName.put(typeName, (JClassType) type);
       }
       for (JField field : type.getFields()) {
         if (field.isStatic()) {
           JsName fieldName = names.get(field);
           if (fieldName != null) {
-            nameToFieldMap.put(fieldName, field);
+            staticFieldsByJsName.put(fieldName, field);
           }
         }
       }
       for (JMethod method : type.getMethods()) {
         JsName methodName = names.get(method);
         if (methodName != null) {
-          nameToMethodMap.put(methodName, method);
+          methodsByJsName.put(methodName, method);
         }
       }
     }
 
     this.names = names;
-    this.fieldForName = nameToFieldMap;
-    this.methodForName = nameToMethodMap;
-    this.typeForConstructorName = constructorNameToTypeMap;
+    this.fieldForName = staticFieldsByJsName;
+    this.methodForName = methodsByJsName;
+    this.typeForConstructorName = typesByContructorJsName;
 
     this.typeForStatement = typeForStatement;
-    this.methodForVTableInit = vtableInitForMethod;
+    this.methodForStatement = methodForStatement;
   }
 
   @Override
@@ -90,7 +92,7 @@ public class JavaToJavaScriptMapImpl implements JavaToJavaScriptMap {
   }
 
   @Override
-  public JsName nameForType(JClassType type) {
+  public JsName nameForType(JDeclaredType type) {
     return names.get(type);
   }
 
@@ -110,12 +112,19 @@ public class JavaToJavaScriptMapImpl implements JavaToJavaScriptMap {
   }
 
   @Override
-  public JClassType typeForStatement(JsStatement stat) {
-    return typeForStatement.get(stat);
+  public JDeclaredType typeForStatement(JsStatement statement) {
+    return typeForStatement.get(statement);
   }
 
   @Override
-  public JMethod vtableInitToMethod(JsStatement stat) {
-    return methodForVTableInit.get(stat);
+  public JMethod methodForStatement(JsStatement statement) {
+    JMethod method = methodForStatement.get(statement);
+    if (JavaToJavaScriptMapImpl.class.desiredAssertionStatus()
+        && method == null && statement instanceof JsExprStmt
+        && ((JsExprStmt) statement).getExpression() instanceof JsFunction) {
+      JsFunction function = (JsFunction) ((JsExprStmt) statement).getExpression();
+      assert nameToMethod(function.getName()) == null;
+    }
+    return method;
   }
 }

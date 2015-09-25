@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl.codesplitter;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConstructor;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -71,7 +72,7 @@ public class FragmentExtractor {
    * A logger for statements that the fragment extractor encounters. Install one using
    * {@link FragmentExtractor#setStatementLogger(StatementLogger)} .
    */
-  public static interface StatementLogger {
+  public interface StatementLogger {
     void log(JsStatement statement, boolean include);
   }
 
@@ -139,35 +140,6 @@ public class FragmentExtractor {
     }
   }
 
-  private static class NullStatementLogger implements StatementLogger {
-    @Override
-    public void log(JsStatement statement, boolean include) {
-    }
-  }
-
-  /**
-   * Return the Java method corresponding to <code>stat</code>, or
-   * <code>null</code> if there isn't one. It recognizes JavaScript of the form
-   * <code>function foo(...) { ...}</code>, where <code>foo</code> is the name
-   * of the JavaScript translation of a Java method.
-   */
-  public static JMethod methodFor(JsStatement stat, JavaToJavaScriptMap map) {
-    if (stat instanceof JsExprStmt) {
-      JsExpression exp = ((JsExprStmt) stat).getExpression();
-      if (exp instanceof JsFunction) {
-        JsFunction func = (JsFunction) exp;
-        if (func.getName() != null) {
-          JMethod method = map.nameToMethod(func.getName());
-          if (method != null) {
-            return method;
-          }
-        }
-      }
-    }
-
-    return map.vtableInitToMethod(stat);
-  }
-
   private static JsExprStmt createDefineClassClone(JsExprStmt defineClassStatement) {
     Cloner cloner = new Cloner();
     cloner.accept(defineClassStatement.getExpression());
@@ -181,7 +153,11 @@ public class FragmentExtractor {
 
   private final JavaToJavaScriptMap map;
 
-  private StatementLogger statementLogger = new NullStatementLogger();
+  private StatementLogger statementLogger = new StatementLogger() {
+    @Override
+    public void log(JsStatement statement, boolean include) {
+    }
+  };
 
   public FragmentExtractor(JProgram jprogram, JsProgram jsprogram, JavaToJavaScriptMap map) {
     this.jprogram = jprogram;
@@ -217,15 +193,15 @@ public class FragmentExtractor {
     /**
      * The type whose vtables can currently be installed.
      */
-    JClassType currentVtableType = null;
-    JClassType pendingVtableType = null;
+    JDeclaredType currentVtableType = null;
+    JDeclaredType pendingVtableType = null;
     JsExprStmt pendingDefineClass = null;
 
     List<JsStatement> statements = jsprogram.getGlobalBlock().getStatements();
     for (JsStatement statement : statements) {
 
       boolean keep;
-      JClassType vtableTypeAssigned = vtableTypeAssigned(statement);
+      JDeclaredType vtableTypeAssigned = vtableTypeAssigned(statement);
       if (vtableTypeAssigned != null) {
         // Keeps defineClass statements of live types or types with a live constructor.
         MinimalDefineClassResult minimalDefineClassResult = createMinimalDefineClass(
@@ -255,7 +231,7 @@ public class FragmentExtractor {
         if (vtableTypeAssigned != null) {
           currentVtableType = vtableTypeAssigned;
         }
-        JClassType vtableType = vtableTypeNeeded(statement);
+        JDeclaredType vtableType = vtableTypeNeeded(statement);
         if (vtableType != null && vtableType != currentVtableType) {
           // there is no defineClass() call in -XclosureFormattedOutput
           assert pendingVtableType == vtableType || pendingDefineClass == null;
@@ -279,10 +255,9 @@ public class FragmentExtractor {
    */
   public Set<JMethod> findAllMethodsInJavaScript() {
     Set<JMethod> methodsInJs = new HashSet<JMethod>();
-    for (int frag = 0; frag < jsprogram.getFragmentCount(); frag++) {
-      List<JsStatement> stats = jsprogram.getFragmentBlock(frag).getStatements();
-      for (JsStatement stat : stats) {
-        JMethod method = methodFor(stat);
+    for (int fragment = 0; fragment < jsprogram.getFragmentCount(); fragment++) {
+      for (JsStatement statement : jsprogram.getFragmentBlock(fragment).getStatements()) {
+        JMethod method = map.methodForStatement(statement);
         if (method != null) {
           methodsInJs.add(method);
         }
@@ -301,9 +276,9 @@ public class FragmentExtractor {
    * is sensible for this statement and should be used instead of
    * {@link #isLive(JsStatement, LivenessPredicate)} .
    */
-  private boolean containsRemovableVars(JsStatement stat) {
-    if (stat instanceof JsVars) {
-      for (JsVar var : (JsVars) stat) {
+  private boolean containsRemovableVars(JsStatement statement) {
+    if (statement instanceof JsVars) {
+      for (JsVar var : (JsVars) statement) {
 
         JField field = map.nameToField(var.getName());
         if (field != null) {
@@ -335,26 +310,26 @@ public class FragmentExtractor {
         minimalDefineClassStatement, defineClassMinimizerVisitor.liveConstructorCount);
   }
 
-  private boolean isLive(JsStatement stat, LivenessPredicate livenessPredicate) {
-    JClassType type = map.typeForStatement(stat);
+  private boolean isLive(JsStatement statement, LivenessPredicate livenessPredicate) {
+    JDeclaredType type = map.typeForStatement(statement);
     if (type != null) {
       // This is part of the code only needed once a type is instantiable
       return livenessPredicate.isLive(type);
     }
 
-    JMethod meth = methodFor(stat);
+    JMethod method = map.methodForStatement(statement);
 
-    if (meth != null) {
+    if (method != null) {
       /*
        * This statement either defines a method or installs it in a vtable.
        */
-      if (!livenessPredicate.isLive(meth)) {
+      if (!livenessPredicate.isLive(method)) {
         // The method is not live. Skip it.
         return false;
       }
       // The method is live. Check that its enclosing type is instantiable.
       // TODO(spoon): this check should not be needed once the CFA is updated
-      return !meth.needsVtable() || livenessPredicate.isLive(meth.getEnclosingType());
+      return !method.needsVtable() || livenessPredicate.isLive(method.getEnclosingType());
     }
 
     return livenessPredicate.miscellaneousStatementsAreLive();
@@ -378,16 +353,6 @@ public class FragmentExtractor {
 
     // It's not an intern variable at all
     return livenessPredicate.miscellaneousStatementsAreLive();
-  }
-
-  /**
-   * Return the Java method corresponding to <code>stat</code>, or
-   * <code>null</code> if there isn't one. It recognizes JavaScript of the form
-   * <code>function foo(...) { ...}</code>, where <code>foo</code> is the name
-   * of the JavaScript translation of a Java method.
-   */
-  private JMethod methodFor(JsStatement stat) {
-    return methodFor(stat, map);
   }
 
   /**
@@ -431,11 +396,11 @@ public class FragmentExtractor {
    * <code>defineClass(id, superId, cTM, ctor1, ctor2, ...)</code> return the type
    * corresponding to that id. Otherwise return <code>null</code>.
    */
-  private JClassType vtableTypeAssigned(JsStatement stat) {
-    if (!(stat instanceof JsExprStmt)) {
+  private JDeclaredType vtableTypeAssigned(JsStatement statement) {
+    if (!(statement instanceof JsExprStmt)) {
       return null;
     }
-    JsExprStmt expr = (JsExprStmt) stat;
+    JsExprStmt expr = (JsExprStmt) statement;
     if (expr.getExpression() instanceof JsInvocation) {
       // Handle a defineClass call.
       JsInvocation call = (JsInvocation) expr.getExpression();
@@ -448,7 +413,7 @@ public class FragmentExtractor {
       if (func.getName() != defineClassJsFunc.getName()) {
         return null;
       }
-      return map.typeForStatement(stat);
+      return map.typeForStatement(statement);
     }
 
     // Handle String.
@@ -483,14 +448,14 @@ public class FragmentExtractor {
     if (!rhsRef.getName().getShortIdent().equals("prototype")) {
       return null;
     }
-    return map.typeForStatement(stat);
+    return map.typeForStatement(statement);
   }
 
-  private JClassType vtableTypeNeeded(JsStatement stat) {
-    JMethod meth = map.vtableInitToMethod(stat);
-    if (meth != null) {
-      if (meth.needsVtable() && !meth.isAbstract()) {
-        return (JClassType) meth.getEnclosingType();
+  private JDeclaredType vtableTypeNeeded(JsStatement statement) {
+    JMethod method = map.methodForStatement(statement);
+    if (method != null) {
+      if (method.needsVtable()) {
+        return method.getEnclosingType();
       }
     }
     return null;
@@ -499,10 +464,10 @@ public class FragmentExtractor {
   /**
    * Wrap an expression with a call to $entry.
    */
-  private JsInvocation wrapWithEntry(JsExpression exp) {
-    SourceInfo sourceInfo = exp.getSourceInfo();
+  private JsInvocation wrapWithEntry(JsExpression expression) {
+    SourceInfo sourceInfo = expression.getSourceInfo();
     JsInvocation call = new JsInvocation(sourceInfo,
-        jsprogram.getScope().findExistingName("$entry").makeRef(sourceInfo), exp);
+        jsprogram.getScope().findExistingName("$entry").makeRef(sourceInfo), expression);
     return call;
   }
 }

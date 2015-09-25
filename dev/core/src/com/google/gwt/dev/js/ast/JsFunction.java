@@ -29,9 +29,9 @@ public final class JsFunction extends JsLiteral implements HasName {
   protected final List<JsParameter> params = new ArrayList<JsParameter>();
   protected final JsScope scope;
   private boolean artificiallyRescued;
-  private boolean executeOnce;
+  private boolean isClinit;
   private boolean fromJava;
-  private JsFunction impliedExecute;
+  private JsFunction superClinit;
   private JsName name;
   private InliningMode inliningMode = InliningMode.NORMAL;
 
@@ -84,15 +84,15 @@ public final class JsFunction extends JsLiteral implements HasName {
   }
 
   /**
-   * If true, this indicates that only the first invocation of the function will have any effects.
-   * Subsequent invocations may be considered to be no-op calls whose return value is ignored.
+   * Returns whether this function is the implementation of a class initiliazer. Class initializers
+   * need only be executed once, hence the optimizers can remove subsequent calls.
    */
-  public boolean getExecuteOnce() {
-    return executeOnce;
+  public boolean isClinit() {
+    return isClinit;
   }
 
-  public JsFunction getImpliedExecute() {
-    return impliedExecute;
+  public JsFunction getSuperClinit() {
+    return superClinit;
   }
 
   public InliningMode getInliningMode() {
@@ -150,6 +150,10 @@ public final class JsFunction extends JsLiteral implements HasName {
     return inliningMode != InliningMode.DO_NOT_INLINE;
   }
 
+  public void markAsClinit() {
+    this.isClinit = true;
+  }
+
   public void setArtificiallyRescued(boolean rescued) {
     this.artificiallyRescued = rescued;
   }
@@ -158,16 +162,12 @@ public final class JsFunction extends JsLiteral implements HasName {
     this.body = body;
   }
 
-  public void setExecuteOnce(boolean executeOnce) {
-    this.executeOnce = executeOnce;
-  }
-
   public void setFromJava(boolean fromJava) {
     this.fromJava = fromJava;
   }
 
-  public void setImpliedExecute(JsFunction impliedExecute) {
-    this.impliedExecute = impliedExecute;
+  public void setSuperClinit(JsFunction superClinit) {
+    this.superClinit = superClinit;
   }
 
   public void setInliningMode(InliningMode inliningMode) {

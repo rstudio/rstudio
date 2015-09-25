@@ -53,7 +53,7 @@ public class JsUnusedFunctionRemover {
       }
 
       // Removing a static initializer indicates a problem in JsInliner.
-      if (f.getExecuteOnce()) {
+      if (f.isClinit()) {
         throw new InternalCompilerException("Tried to remove clinit "
             + name.getStaticRef().toSource());
       }

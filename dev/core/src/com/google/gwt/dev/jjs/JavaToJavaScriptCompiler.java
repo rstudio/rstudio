@@ -97,6 +97,7 @@ import com.google.gwt.dev.jjs.impl.MakeCallsStatic;
 import com.google.gwt.dev.jjs.impl.MethodCallSpecializer;
 import com.google.gwt.dev.jjs.impl.MethodCallTightener;
 import com.google.gwt.dev.jjs.impl.MethodInliner;
+import com.google.gwt.dev.jjs.impl.NameClashesFixer;
 import com.google.gwt.dev.jjs.impl.OptimizerContext;
 import com.google.gwt.dev.jjs.impl.OptimizerStats;
 import com.google.gwt.dev.jjs.impl.PostOptimizationCompoundAssignmentNormalizer;
@@ -128,7 +129,7 @@ import com.google.gwt.dev.jjs.impl.gflow.DataflowOptimizer;
 import com.google.gwt.dev.js.BaselineCoverageGatherer;
 import com.google.gwt.dev.js.ClosureJsRunner;
 import com.google.gwt.dev.js.CoverageInstrumentor;
-import com.google.gwt.dev.js.DuplicateExecuteOnceRemover;
+import com.google.gwt.dev.js.DuplicateClinitRemover;
 import com.google.gwt.dev.js.EvalFunctionsAtTopScope;
 import com.google.gwt.dev.js.FreshNameGenerator;
 import com.google.gwt.dev.js.JsBreakUpLargeVarStatements;
@@ -151,6 +152,7 @@ import com.google.gwt.dev.js.JsSymbolResolver;
 import com.google.gwt.dev.js.JsUnusedFunctionRemover;
 import com.google.gwt.dev.js.JsVerboseNamer;
 import com.google.gwt.dev.js.SizeBreakdown;
+import com.google.gwt.dev.js.ast.JavaScriptVerifier;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsForIn;
 import com.google.gwt.dev.js.ast.JsFunction;
@@ -415,6 +417,12 @@ public final class JavaToJavaScriptCompiler {
       // TODO(stalcup): move to normalization
       JsBreakUpLargeVarStatements.exec(jsProgram, properties.getConfigurationProperties());
 
+      if (!options.isIncrementalCompileEnabled()) {
+        // Verifies consistency between jsProgram and jjsmap if assertions are enabled.
+        // TODO(rluble): make it work for incremental compiles.
+        JavaScriptVerifier.verify(jsProgram, jjsmap);
+      }
+
       // (8) Generate Js source
       List<JsSourceMap> sourceInfoMaps = new ArrayList<JsSourceMap>();
       boolean isSourceMapsEnabled = properties.isTrueInAnyPermutation("compiler.useSourceMaps");
@@ -490,6 +498,8 @@ public final class JavaToJavaScriptCompiler {
 
       TypeMapper<?> typeMapper = getTypeMapper();
       ResolveRuntimeTypeReferences.exec(jprogram, typeMapper, getTypeOrder());
+
+      NameClashesFixer.exec(jprogram);
       return typeMapper;
     } finally {
       event.end();
@@ -1031,7 +1041,7 @@ public final class JavaToJavaScriptCompiler {
     }
 
     if (optimizationLevel > OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
-      DuplicateExecuteOnceRemover.exec(jsProgram);
+      DuplicateClinitRemover.exec(jsProgram);
     }
   }
 

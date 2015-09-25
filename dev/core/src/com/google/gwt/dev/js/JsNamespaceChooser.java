@@ -75,23 +75,25 @@ public class JsNamespaceChooser {
     List<JsStatement> globalStatements = program.getGlobalBlock().getStatements();
     List<JsStatement> after = Lists.newArrayList();
     for (JsStatement before : globalStatements) {
-      if (before instanceof JsExprStmt) {
-        JsExpression exp = ((JsExprStmt) before).getExpression();
-        if (exp instanceof JsFunction) {
-          after.add(visitGlobalFunction((JsFunction) exp));
-        } else {
-          after.add(before);
-        }
-      } else if (before instanceof JsVars) {
+      if (before instanceof JsVars) {
         for (JsVar var : ((JsVars) before)) {
           JsStatement replacement = visitGlobalVar(var);
           if (replacement != null) {
             after.add(replacement);
           }
         }
-      } else {
-        after.add(before);
+        continue;
       }
+
+      if (before instanceof JsExprStmt) {
+        JsExprStmt expressionStatement = (JsExprStmt) before;
+        if (expressionStatement.getExpression() instanceof JsFunction) {
+          JsExpression transformedFunction =
+              visitGlobalFunction((JsFunction) expressionStatement.getExpression());
+          expressionStatement.setExpression(transformedFunction);
+        }
+      }
+      after.add(before);
     }
 
     after.addAll(0, createNamespaceInitializers(packageToNamespace.values()));
@@ -136,10 +138,10 @@ public class JsNamespaceChooser {
    * (References must still be fixed up.)
    * @return the new function definition.
    */
-  private JsStatement visitGlobalFunction(JsFunction func) {
+  private JsExpression visitGlobalFunction(JsFunction func) {
     JsName name = func.getName();
     if (name == null || !moveName(name)) {
-      return func.makeStmt(); // no change
+      return func; // no change
     }
 
     // Convert the function statement into an assignment taking a named function expression:
@@ -152,7 +154,7 @@ public class JsNamespaceChooser {
     JsNameRef newName = name.makeRef(func.getSourceInfo());
     JsBinaryOperation assign =
         new JsBinaryOperation(func.getSourceInfo(), JsBinaryOperator.ASG, newName, func);
-    return assign.makeStmt();
+    return assign;
   }
 
   /**

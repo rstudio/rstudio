@@ -16,10 +16,9 @@
 package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.jjs.JsSourceMap;
-import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
-import com.google.gwt.dev.jjs.impl.codesplitter.FragmentExtractor;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
@@ -33,8 +32,7 @@ import java.util.Map;
  * A version of {@link JsSourceGenerationVisitor} that records a
  * {@link SizeBreakdown} as it goes.
  */
-public class JsSourceGenerationVisitorWithSizeBreakdown extends
-    JsSourceGenerationVisitor {
+public class JsSourceGenerationVisitorWithSizeBreakdown extends JsSourceGenerationVisitor {
 
   private JavaToJavaScriptMap map;
   private JsName billedAncestor; // non-null when an ancestor is also being billed
@@ -69,17 +67,17 @@ public class JsSourceGenerationVisitorWithSizeBreakdown extends
   protected <T extends JsVisitable> T generateAndBill(T node, JsName nameToBillTo) {
     if (nameToBillTo == null) {
       return super.doAccept(node);
-    } else {
-      int start = out.getPosition();
-
-      JsName savedAncestor = billedAncestor;
-      billedAncestor = nameToBillTo;
-      T retValue = super.doAccept(node);
-      billedAncestor = savedAncestor;
-
-      billChars(nameToBillTo, out.getPosition() - start);
-      return retValue;
     }
+
+    int start = out.getPosition();
+
+    JsName savedAncestor = billedAncestor;
+    billedAncestor = nameToBillTo;
+    T retValue = super.doAccept(node);
+    billedAncestor = savedAncestor;
+
+    billChars(nameToBillTo, out.getPosition() - start);
+    return retValue;
   }
 
   private void billChars(JsName nameToBillTo, int chars) {
@@ -96,20 +94,21 @@ public class JsSourceGenerationVisitorWithSizeBreakdown extends
    */
   private JsName nameToBillTo(JsVisitable node, boolean isAncestorBilled) {
     if (node instanceof JsStatement) {
-      JsStatement stat = (JsStatement) node;
-      JClassType type = map.typeForStatement(stat);
+      JsStatement statement = (JsStatement) node;
+      JDeclaredType type = map.typeForStatement(statement);
       if (type != null) {
         return map.nameForType(type);
       }
 
-      JMethod method = FragmentExtractor.methodFor(stat, map);
+      JMethod method = map.methodForStatement(statement);
       if (method != null) {
         return map.nameForMethod(method);
       }
 
       return null;
+    }
 
-    } else if (node instanceof JsVar) {
+    if (node instanceof JsVar) {
       return isAncestorBilled ? null : ((JsVar) node).getName(); // handle top-level vars
     }
 

@@ -115,7 +115,7 @@ public class FragmentExtractorTest extends JJSTestBase {
     }
 
     @Override
-    public JsName nameForType(JClassType type) {
+    public JsName nameForType(JDeclaredType type) {
       return null;
     }
 
@@ -140,7 +140,7 @@ public class FragmentExtractorTest extends JJSTestBase {
     }
 
     @Override
-    public JMethod vtableInitToMethod(JsStatement stat) {
+    public JMethod methodForStatement(JsStatement stat) {
       return null;
     }
   }

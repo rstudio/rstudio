@@ -32,7 +32,7 @@ public interface JavaToJavaScriptMap {
 
   JavaToJavaScriptMap EMPTY = new JavaToJavaScriptMapImpl(
       ImmutableList.<JDeclaredType>of(), ImmutableMap.<HasName, JsName>of(),
-      ImmutableMap.<JsStatement, JClassType>of(), ImmutableMap.<JsStatement, JMethod>of());
+      ImmutableMap.<JsStatement, JDeclaredType>of(), ImmutableMap.<JsStatement, JMethod>of());
 
   /**
    * Return the JavaScript name corresponding to a Java field.
@@ -46,7 +46,7 @@ public interface JavaToJavaScriptMap {
   /**
    * Return the JavaScript name corresponding to a Java type.
    */
-  JsName nameForType(JClassType type);
+  JsName nameForType(JDeclaredType type);
 
   /**
    * If <code>name</code> is the name of a
@@ -68,14 +68,14 @@ public interface JavaToJavaScriptMap {
   JClassType nameToType(JsName name);
 
   /**
-   * If <code>stat</code> is used to set up the definition of some class, return
+   * If <code>statement</code> is used to set up the definition of some type, return
    * that class. Otherwise, return null.
    */
-  JClassType typeForStatement(JsStatement stat);
+  JDeclaredType typeForStatement(JsStatement statement);
 
   /**
-   * If <code>stat</code> is used to set up a vtable entry for a method, then
+   * If <code>stat</code> is used to set up the definion for some method implementation, then
    * return that method. Otherwise return null.
    */
-  JMethod vtableInitToMethod(JsStatement stat);
+  JMethod methodForStatement(JsStatement statement);
 }

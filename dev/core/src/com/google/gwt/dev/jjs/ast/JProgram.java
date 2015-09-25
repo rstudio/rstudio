@@ -22,6 +22,7 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
+import com.google.gwt.dev.jjs.impl.JjsUtils;
 import com.google.gwt.dev.jjs.impl.TypeCategory;
 import com.google.gwt.dev.jjs.impl.codesplitter.FragmentPartitioningResult;
 import com.google.gwt.dev.util.StringInterner;
@@ -424,11 +425,11 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     indexedTypes.put(type.getShortName(), type);
     for (JMethod method : type.getMethods()) {
       if (!method.isPrivate()) {
-        indexedMethods.put(type.getShortName() + '.' + method.getName(), method);
+        indexedMethods.put(JjsUtils.getIndexedName(method), method);
       }
     }
     for (JField field : type.getFields()) {
-      indexedFields.put(type.getShortName() + '.' + field.getName(), field);
+      indexedFields.put(JjsUtils.getIndexedName(field), field);
     }
     switch (name) {
       case "java.lang.Object":

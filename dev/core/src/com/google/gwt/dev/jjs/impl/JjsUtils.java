@@ -35,6 +35,7 @@ import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
+import com.google.gwt.dev.jjs.ast.JMember;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
@@ -279,6 +280,10 @@ public class JjsUtils {
 
     return new JBinaryOperation(info, program.getTypePrimitiveBoolean(),
         JBinaryOperator.NEQ, expression, program.getLiteralNull());
+  }
+
+  public static String getIndexedName(JMember member) {
+    return member.getEnclosingType().getShortName() + '.' + member.getName();
   }
 
   /**

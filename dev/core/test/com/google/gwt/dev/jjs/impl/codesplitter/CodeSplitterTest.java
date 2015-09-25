@@ -656,25 +656,26 @@ public class CodeSplitterTest extends FullCompileTestBase {
    */
   private boolean findPrototypeChainStatementIn(final String functionName, JsBlock fragment,
       final JType... args) {
-    final boolean[] found = {false};
-    JsVisitor visitor = new JsVisitor() {
+    class PrototypeChainFinderVisitor extends JsVisitor {
+      boolean found = false;
       @Override
       public boolean visit(JsExprStmt x, JsContext ctx) {
-        JMethod meth = currentJjsMap.vtableInitToMethod(x);
-        JsName jsName = currentJjsMap.nameForMethod(meth);
-        if (meth != null && jsName != null && jsName.getShortIdent().equals(functionName)) {
-          found[0] = checkArguments(meth, args);
+        JMethod method = currentJjsMap.methodForStatement(x);
+        JsName jsName = currentJjsMap.nameForMethod(method);
+        if (method != null && jsName != null && jsName.getShortIdent().equals(functionName)) {
+          found = checkArguments(method, args);
         }
         return false;
       }
     };
+    PrototypeChainFinderVisitor visitor = new PrototypeChainFinderVisitor();
     visitor.accept(fragment);
-    return found[0];
+    return visitor.found;
   }
 
-  private boolean checkArguments(JMethod meth, JType[] args) {
+  private boolean checkArguments(JMethod method, JType[] args) {
     for (int i = 0; i < args.length; i++) {
-      if (meth.getParams().get(i).getType().getUnderlyingType() != args[i]) {
+      if (method.getParams().get(i).getType().getUnderlyingType() != args[i]) {
         return false;
       }
     }

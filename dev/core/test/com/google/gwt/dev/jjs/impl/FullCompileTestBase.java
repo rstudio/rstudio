@@ -99,6 +99,7 @@ public abstract class FullCompileTestBase extends JJSTestBase {
     ArrayNormalizer.exec(jProgram);
     TypeTightener.exec(jProgram);
     MethodCallTightener.exec(jProgram);
+    NameClashesFixer.exec(jProgram);
 
     TypeMapper<Integer> typeMapper = new IntTypeMapper();
     ResolveRuntimeTypeReferences.exec(jProgram, typeMapper, TypeOrder.FREQUENCY);

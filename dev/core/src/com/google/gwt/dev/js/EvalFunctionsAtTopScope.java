@@ -86,7 +86,7 @@ public class EvalFunctionsAtTopScope extends JsModVisitor {
       itrStack.push(itr);
       while (itr.hasNext()) {
         JsStatement stmt = itr.next();
-        JsFunction func = JsStaticEval.isFunctionDecl(stmt);
+        JsFunction func = JsUtils.isFunctionDeclaration(stmt);
         // Already at the top level.
         if (func != null) {
           dontMove.add(func);
@@ -113,15 +113,13 @@ public class EvalFunctionsAtTopScope extends JsModVisitor {
 
   @Override
   public boolean visit(JsFunction x, JsContext ctx) {
-    JsStaticEval.isFunctionDecl(currentStatement);
-
     /*
      * We do this during visit() to preserve first-to-last evaluation order. We
      * check if this function is a vtable declaration and don't move functions
      * used in other expressions or are in vtable assignments.
      */
     if (x.getName() != null && x.getName().getNamespace() == null && !dontMove.contains(x)
-        && !isVtableDeclaration(currentStatement)) {
+        && !isMethodDefinition(currentStatement)) {
       /*
        * Reinsert this function into the statement immediately before the
        * current statement. The current statement will have already been
@@ -152,7 +150,7 @@ public class EvalFunctionsAtTopScope extends JsModVisitor {
     return true;
   }
 
-  private boolean isVtableDeclaration(JsStatement currentStatement) {
-    return java2jsMap.vtableInitToMethod(currentStatement) != null;
+  private boolean isMethodDefinition(JsStatement currentStatement) {
+    return java2jsMap.methodForStatement(currentStatement) != null;
   }
 }

@@ -3193,13 +3193,13 @@ public class GwtAstBuilder {
     }
 
     private void pushInitializerMethodInfo(FieldDeclaration x, MethodScope scope) {
-      JMethod initMeth;
+      JMethod initMethod;
       if (x.isStatic()) {
-        initMeth = curClass.type.getClinitMethod();
+        initMethod = curClass.type.getClinitMethod();
       } else {
-        initMeth = curClass.type.getInitMethod();
+        initMethod = curClass.type.getInitMethod();
       }
-      pushMethodInfo(new MethodInfo(initMeth, (JMethodBody) initMeth.getBody(), scope));
+      pushMethodInfo(new MethodInfo(initMethod, (JMethodBody) initMethod.getBody(), scope));
     }
 
     private void pushMethodInfo(MethodInfo newInfo) {

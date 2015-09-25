@@ -46,8 +46,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * This is used to clean up duplication invocations of functions that should
- * only be executed once, such as clinit functions. Whenever there is a
+ * This is used to clean up duplication invocations of clinit function. Whenever there is a
  * possible branch in program flow, the remover will create a new instance of
  * itself to handle the possible branches.
  *
@@ -55,7 +54,7 @@ import java.util.Set;
  * efficient elimination of duplicated calls, but it handles the general case
  * and is simple to verify.
  */
-public class DuplicateExecuteOnceRemover extends JsModVisitor {
+public class DuplicateClinitRemover extends JsModVisitor {
   private static final String NAME = JsInliner.class.getSimpleName();
 
   /*
@@ -69,12 +68,12 @@ public class DuplicateExecuteOnceRemover extends JsModVisitor {
   private final Set<JsFunction> called;
   private final JsProgram program;
 
-  public DuplicateExecuteOnceRemover(JsProgram program) {
+  public DuplicateClinitRemover(JsProgram program) {
     this.program = program;
     called = new HashSet<JsFunction>();
   }
 
-  public DuplicateExecuteOnceRemover(JsProgram program, Set<JsFunction> alreadyCalled) {
+  public DuplicateClinitRemover(JsProgram program, Set<JsFunction> alreadyCalled) {
     this.program = program;
     called = new HashSet<JsFunction>(alreadyCalled);
   }
@@ -234,7 +233,7 @@ public class DuplicateExecuteOnceRemover extends JsModVisitor {
     JsFunction func = JsUtils.isExecuteOnce(x);
     while (func != null) {
       called.add(func);
-      func = func.getImpliedExecute();
+      func = func.getSuperClinit();
     }
     return true;
   }
@@ -262,7 +261,7 @@ public class DuplicateExecuteOnceRemover extends JsModVisitor {
 
   private static OptimizerStats execImpl(JsProgram program) {
     OptimizerStats stats = new OptimizerStats(NAME);
-    DuplicateExecuteOnceRemover r = new DuplicateExecuteOnceRemover(program);
+    DuplicateClinitRemover r = new DuplicateClinitRemover(program);
     r.accept(program);
     if (r.didChange()) {
       stats.recordModified();
@@ -271,13 +270,13 @@ public class DuplicateExecuteOnceRemover extends JsModVisitor {
   }
 
   private <T extends JsNode> void branch(List<T> x) {
-    DuplicateExecuteOnceRemover dup = new DuplicateExecuteOnceRemover(program, called);
+    DuplicateClinitRemover dup = new DuplicateClinitRemover(program, called);
     dup.acceptWithInsertRemove(x);
     didChange |= dup.didChange();
   }
 
   private <T extends JsNode> T branch(T x) {
-    DuplicateExecuteOnceRemover dup = new DuplicateExecuteOnceRemover(program, called);
+    DuplicateClinitRemover dup = new DuplicateClinitRemover(program, called);
     T toReturn = dup.accept(x);
 
     if ((toReturn != x) && !dup.didChange()) {

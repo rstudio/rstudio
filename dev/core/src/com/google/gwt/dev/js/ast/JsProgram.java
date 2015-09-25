@@ -18,6 +18,8 @@ import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -83,6 +85,10 @@ public final class JsProgram extends JsNode {
 
   public int getFragmentCount() {
     return this.fragments.length;
+  }
+
+  public Collection<JsProgramFragment> getFragments() {
+    return Arrays.asList(fragments);
   }
 
   /**

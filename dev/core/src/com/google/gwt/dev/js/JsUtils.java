@@ -22,6 +22,7 @@ import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
 import com.google.gwt.dev.js.ast.JsBlock;
+import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsInvocation;
@@ -31,6 +32,7 @@ import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsReturn;
 import com.google.gwt.dev.js.ast.JsScope;
+import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsThisRef;
 import com.google.gwt.dev.util.StringInterner;
 
@@ -44,7 +46,7 @@ public class JsUtils {
    */
   public static JsFunction isExecuteOnce(JsInvocation invocation) {
     JsFunction f = isFunction(invocation.getQualifier());
-    if (f != null && f.getExecuteOnce()) {
+    if (f != null && f.isClinit()) {
       return f;
     }
     return null;
@@ -75,23 +77,12 @@ public class JsUtils {
     return null;
   }
 
-  /**
-   * Similar to {@link #isFunction(com.google.gwt.dev.js.ast.JsExpression)} but
-   * retrieves the JsName of an invocation if the qualifier is a name ref.
-   */
-  public static JsName maybeGetFunctionName(JsExpression expression) {
-    if (expression instanceof JsInvocation) {
-      JsInvocation jsInvoke = (JsInvocation) expression;
-      if (jsInvoke.getQualifier() instanceof JsNameRef) {
-        JsNameRef nameRef = (JsNameRef) jsInvoke.getQualifier();
-        return nameRef.getName();
-      }
-    }
-    return null;
+  public static JsExpression createAssignment(JsExpression lhs, JsExpression rhs) {
+    return createAssignment(lhs.getSourceInfo(), lhs, rhs);
   }
 
-  public static JsExpression createAssignment(JsExpression lhs, JsExpression rhs) {
-    return new JsBinaryOperation(lhs.getSourceInfo(), JsBinaryOperator.ASG, lhs, rhs);
+  public static JsExpression createAssignment(SourceInfo info, JsExpression lhs, JsExpression rhs) {
+    return new JsBinaryOperation(info, JsBinaryOperator.ASG, lhs, rhs);
   }
 
   public static JsFunction createBridge(JMethod method, JsName polyName, JsScope scope) {
@@ -118,10 +109,26 @@ public class JsUtils {
     return bridge;
   }
 
+  public static JsExpression createCommaExpression(JsExpression... expressions) {
+    return createCommaExpressionHelper(0, expressions);
+  }
+
   public static JsFunction createEmptyFunctionLiteral(SourceInfo info, JsScope scope, JsName name) {
     JsFunction func = new JsFunction(info, scope, name);
     func.setBody(new JsBlock(info));
     return func;
+  }
+
+  public static JsNameRef createQualifiedNameRef(SourceInfo info,  JsName... names) {
+    JsNameRef result = null;
+    for (JsName name : names) {
+      if (result == null) {
+        result = name.makeRef(info);
+        continue;
+      }
+      result = name.makeQualifiedRef(info, result);
+    }
+    return result;
   }
 
   /**
@@ -139,6 +146,70 @@ public class JsUtils {
       ref = newRef;
     }
     return ref;
+  }
+
+  /**
+   * Attempts to extract a single expression from a given statement and returns
+   * it. If no such expression exists, returns <code>null</code>.
+   */
+  public static JsExpression extractExpression(JsStatement stmt) {
+    if (stmt == null) {
+      return null;
+    }
+
+    if (stmt instanceof JsExprStmt) {
+      return ((JsExprStmt) stmt).getExpression();
+    }
+
+    if (stmt instanceof JsBlock && ((JsBlock) stmt).getStatements().size() == 1) {
+      return extractExpression(((JsBlock) stmt).getStatements().get(0));
+    }
+
+    return null;
+  }
+
+  public static boolean isEmpty(JsStatement stmt) {
+    if (stmt == null) {
+      return true;
+    }
+    return (stmt instanceof JsBlock && ((JsBlock) stmt).getStatements().isEmpty());
+  }
+
+  /**
+   * If the statement is a JsExprStmt that declares a function with no other
+   * side effects, returns that function; otherwise <code>null</code>.
+   */
+  public static JsFunction isFunctionDeclaration(JsStatement stmt) {
+    if (stmt instanceof JsExprStmt) {
+      JsExprStmt exprStmt = (JsExprStmt) stmt;
+      JsExpression expr = exprStmt.getExpression();
+      if (expr instanceof JsFunction) {
+        JsFunction func = (JsFunction) expr;
+        if (func.getName() != null) {
+          return func;
+        }
+      }
+    }
+    return null;
+  }
+
+  private static JsExpression createCommaExpressionHelper(int index, JsExpression... expressions) {
+    int remainingExpressions = expressions.length - index;
+    assert remainingExpressions >= 2;
+
+    JsExpression lhs = expressions[index];
+    JsExpression rhs = expressions[index + 1];
+    if (remainingExpressions > 2) {
+      rhs = createCommaExpressionHelper(index + 1, expressions);
+    }
+
+    // Construct the binary expression
+    if (rhs == null) {
+      return lhs;
+    } else if (lhs == null) {
+      return rhs;
+    }
+    return new JsBinaryOperation(lhs.getSourceInfo(), JsBinaryOperator.COMMA, lhs, rhs);
   }
 
   private static final String CALL_STRING = StringInterner.get().intern("call");

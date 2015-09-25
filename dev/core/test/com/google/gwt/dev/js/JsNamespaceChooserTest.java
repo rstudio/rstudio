@@ -156,7 +156,7 @@ public class JsNamespaceChooserTest extends TestCase {
     // Build the jjsmap.
     List<JDeclaredType> types = ImmutableList.<JDeclaredType>of(comExampleFooClass,
         defaultPackageBarClass);
-    Map<JsStatement, JClassType> typeForStatement = ImmutableMap.of();
+    Map<JsStatement, JDeclaredType> typeForStatement = ImmutableMap.of();
     Map<JsStatement, JMethod> vtableInitForMethod = ImmutableMap.of();
     JavaToJavaScriptMapImpl jjsmap = new JavaToJavaScriptMapImpl(types, javaToName,
         typeForStatement, vtableInitForMethod);

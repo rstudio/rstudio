@@ -43,4 +43,8 @@ public final class JsExprStmt extends JsStatement {
     }
     v.endVisit(this, ctx);
   }
+
+  public void setExpression(JsExpression expression) {
+    this.expr = expression;
+  }
 }
