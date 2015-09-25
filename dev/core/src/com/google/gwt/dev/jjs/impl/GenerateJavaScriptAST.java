@@ -558,7 +558,11 @@ public class GenerateJavaScriptAST {
           } else if (x.isPackagePrivate()) {
             polyName = interfaceScope.declareName(mangleNameForPackagePrivatePoly(x), name);
           } else {
-            polyName = interfaceScope.declareName(mangleNameForPoly(x), name);
+            boolean isJsMethod = x.isOrOverridesJsMethod() && !x.isJsPropertyAccessor();
+            polyName =
+                isJsMethod
+                    ? interfaceScope.declareUnobfuscatableName(x.getJsName())
+                    : interfaceScope.declareName(mangleNameForPoly(x));
           }
           polymorphicNames.put(x, polyName);
         }
@@ -1380,7 +1384,7 @@ public class GenerateJavaScriptAST {
     private JsExpression dispatchToInstanceMethod(
         JsExpression instance, JMethod method, List<JsExpression> args, SourceInfo sourceInfo) {
       JsNameRef reference =
-          method.isOrOverridesJsMethod()
+          method.isJsPropertyAccessor()
               ? new JsNameRef(sourceInfo, method.getJsName())
               : polymorphicNames.get(method).makeRef(sourceInfo);
       reference.setQualifier(instance);
@@ -2633,9 +2637,9 @@ public class GenerateJavaScriptAST {
           generateVTableAssignment(globalStmts, method, polymorphicNames.get(method), rhs);
         }
 
-        if (method.exposesJsMethod()) {
-          JsName jsName = interfaceScope.declareUnobfuscatableName(method.getJsName());
-          generateVTableAlias(globalStmts, method, jsName);
+        if (method.exposesNonJsMethod()) {
+          JsName internalMangledName = interfaceScope.declareName(mangleNameForPoly(method));
+          generateVTableAlias(globalStmts, method, internalMangledName);
         }
 
         if (method.exposesPackagePrivateMethod()) {

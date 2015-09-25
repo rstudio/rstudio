@@ -26,6 +26,10 @@ class ConcreteJsType {
     return 10;
   }
 
+  public int publicMethodAlsoExposedAsNonJsMethod() {
+    return 100;
+  }
+
   public static void publicStaticMethod() {
   }
 

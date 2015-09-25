@@ -137,6 +137,16 @@ public class JsTypeTest extends GWTTestCase {
     // RevealedOverrideSubType defines no functions itself, it only inherits them, but it still
     // exports run() because it implements the @JsType interface JsTypeRunnable.
     assertTrue(hasField(revealedOverrideSubType, "run"));
+
+    ConcreteJsTypeJsSubclass subclass = new ConcreteJsTypeJsSubclass();
+    assertEquals(100, subclass.publicMethodAlsoExposedAsNonJsMethod());
+    SubclassInterface subclassInterface = alwaysTrue() ? subclass : new SubclassInterface() {
+      @Override
+      public int publicMethodAlsoExposedAsNonJsMethod() {
+        return 0;
+      }
+    };
+    assertEquals(100, subclassInterface.publicMethodAlsoExposedAsNonJsMethod());
   }
 
   public void testConcreteNativeType() {

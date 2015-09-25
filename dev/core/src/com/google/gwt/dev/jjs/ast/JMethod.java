@@ -107,10 +107,10 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
   }
 
   private boolean isJsInterfaceMethod() {
-    return isInterFaceMethod() && enclosingType.isJsType();
+    return isInterfaceMethod() && enclosingType.isJsType();
   }
 
-  private boolean isInterFaceMethod() {
+  private boolean isInterfaceMethod() {
     return enclosingType instanceof JInterfaceType;
   }
 
@@ -157,26 +157,25 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
   }
 
   /**
-   * Returns {@code true} if this method is the first method in the method hierarchy that exposes a
-   * JsMethod inside a class.
+   * Returns {@code true} if this method is the first JsMethod in the method hierarchy that exposes
+   * an existing non-JsMethod inside a class.
    */
-  public boolean exposesJsMethod() {
-    if (isInterFaceMethod()) {
+  public boolean exposesNonJsMethod() {
+    if (isInterfaceMethod() || !isOrOverridesJsMethod()) {
       return false;
     }
 
-    boolean isJsMethod = jsName != null;
-    for (JMethod override : getOverriddenMethods()) {
-      if (override.jsName == null) {
-        continue;
+    boolean hasNonJsMethodParent = false;
+    for (JMethod overriddenMethod : overriddenMethods) {
+      if (!overriddenMethod.isOrOverridesJsMethod()) {
+        hasNonJsMethodParent = true;
       }
-      isJsMethod = true;
-      if (!override.isInterFaceMethod()) {
+      if (overriddenMethod.exposesNonJsMethod()) {
         return false; // some other method already exposed this method.
       }
     }
 
-    return isJsMethod;
+    return hasNonJsMethodParent;
   }
 
   public boolean isOrOverridesJsMethod() {
@@ -484,7 +483,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
 
     boolean hasPackageVisibleParent = false;
     for (JMethod overriddenMethod : overriddenMethods) {
-      if (overriddenMethod.isInterFaceMethod()) {
+      if (overriddenMethod.isInterfaceMethod()) {
         continue;
       }
       if (!overriddenMethod.isPackagePrivate()) {
