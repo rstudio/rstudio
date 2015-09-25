@@ -520,8 +520,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="shrinkSelection" value="Ctrl+Shift+Down" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="expandSelection" value="Cmd+Alt+Shift+Up" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="shrinkSelection" value="Cmd+Alt+Shift+Down" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="goToNextSection" value="PageDown"/>
-         <shortcut refid="goToPrevSection" value="PageUp"/>
+         <shortcut refid="goToNextSection" value="Cmd+PageDown"/>
+         <shortcut refid="goToPrevSection" value="Cmd+PageUp"/>
          <shortcut value="Cmd+Alt+Up" title="Add cursor above current cursor"/>
          <shortcut value="Cmd+Alt+Down" title="Add cursor below current cursor"/>
          <shortcut value="Ctrl+Alt+Shift+Up" title="Move active cursor up"/>
