@@ -16,11 +16,6 @@ package org.rstudio.core.client.js;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.json.client.JSONArray;
-import com.google.gwt.json.client.JSONBoolean;
-import com.google.gwt.json.client.JSONNull;
-import com.google.gwt.json.client.JSONNumber;
-import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.json.client.JSONString;
 
 /*
  * Similar to JsArray, but doesn't presume that all elements in the array have
@@ -60,26 +55,37 @@ public class JsArrayEx extends JavaScriptObject
       return this.length;
    }-*/;
    
-   // recursively creates a JSONArray from this array 
+   // re-generate Arrays and Objects within a JavaScript object,
+   // ensuring that the Array / Object prototypes belong to the
+   // currently active window.
+   private static final native JavaScriptObject ensureWindowOwnership(JavaScriptObject object) /*-{
+      
+      var isArray = Object.prototype.toString.call(object) === "[object Array]";
+      var isNonNullObject = (object != null) && (!isArray) && (typeof(object) === "object");
+      
+      var result = object;
+      
+      if (isArray) {
+         result = new Array(object.length);
+         for (var i = 0; i < object.length; i++)
+            result[i] = @org.rstudio.core.client.js.JsArrayEx::ensureWindowOwnership(Lcom/google/gwt/core/client/JavaScriptObject;)(object[i]);
+      }
+      
+      else if (isNonNullObject) {
+         result = {};
+         var keys = Object.keys(object);
+         for (var i = 0; i < keys.length; i++) {
+            var key = keys[i];
+            result[key] = @org.rstudio.core.client.js.JsArrayEx::ensureWindowOwnership(Lcom/google/gwt/core/client/JavaScriptObject;)(object[key]);
+         }
+      }
+      
+      return result;
+      
+   }-*/;
+   
    public final JSONArray toJSONArray()
    {
-      JSONArray array = new JSONArray();
-      for (int i = 0; i < length(); i++)
-      {
-         String t = JsUtil.getObjectType(getObject(i));
-         if (t == "array")
-            array.set(i, getArrayEx(i).toJSONArray());
-         else if (t == "number")
-            array.set(i, new JSONNumber(getDouble(i)));
-         else if (t == "string")
-            array.set(i, new JSONString(getString(i)));
-         else if (t == "boolean")
-            array.set(i, JSONBoolean.getInstance(getBoolean(i)));
-         else if (t == "null")
-            array.set(i, JSONNull.getInstance());
-         else if (t == "object")
-            array.set(i, new JSONObject(getObject(i)));
-      }
-      return array;
+      return new JSONArray(ensureWindowOwnership(this));
    }
 }
