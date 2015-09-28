@@ -124,11 +124,11 @@ public class FilePathToolbar extends Composite
       layout.setWidgetLeftRight(pathBreadcrumbWidget_, 21, Unit.PX, 0, Unit.PX);
    }
    
-   public void setPath(String path, boolean browseable)
+   public void setPath(String path, String lastBrowseable)
    {
       assert fileSystemContext_.isAbsolute(path);
       pathBreadcrumbWidget_.setDirectory(fileSystemContext_.parseDir(path),
-            browseable);
+            lastBrowseable);
    }
 
    public int getHeight()

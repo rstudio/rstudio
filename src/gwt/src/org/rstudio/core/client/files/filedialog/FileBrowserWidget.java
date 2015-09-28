@@ -105,7 +105,7 @@ public class FileBrowserWidget extends Composite
       String dir = context_.pwd();
 
       final FileSystemItem[] parsedDir = context_.parseDir(dir);
-      breadcrumb_.setDirectory(parsedDir, true);
+      breadcrumb_.setDirectory(parsedDir, null);
       directory_.setContents(
             host_.ls(),
             parsedDir.length > 1 ? parsedDir[parsedDir.length-2] : null);

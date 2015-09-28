@@ -166,7 +166,8 @@ public class PathBreadcrumbWidget
       }
    }
 
-   public void setDirectory(FileSystemItem[] pathElements, boolean browseable)
+   public void setDirectory(FileSystemItem[] pathElements, 
+         String lastBrowseable)
    {
       pathPanel_.clear();
       maybeAddProjectIcon();
@@ -176,7 +177,13 @@ public class PathBreadcrumbWidget
 
       Widget lastAnchor = null;
       for (FileSystemItem item : pathElements)
+      {
+         boolean browseable = true;
+         if (lastBrowseable != null) 
+            browseable = item.getPath().startsWith(lastBrowseable);
+         
          lastAnchor = addAnchor(item, browseable);
+      }
 
       if (lastAnchor != null)
          lastAnchor.addStyleName(RES.styles().last());
