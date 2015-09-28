@@ -517,6 +517,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["project_open_docs"] = projects::projectContext().openDocs();
       sessionInfo["project_supports_sharing"] = 
          projects::projectContext().supportsSharing();
+      sessionInfo["project_owned_by_user"] = 
+         projects::projectContext().ownedByUser();
    }
    else
    {
@@ -524,6 +526,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["project_ui_prefs"] = json::Value();
       sessionInfo["project_open_docs"] = json::Value();
       sessionInfo["project_supports_sharing"] = false;
+      sessionInfo["project_owned_by_user"] = false;
    }
 
    sessionInfo["system_encoding"] = std::string(::locale2charset(NULL));

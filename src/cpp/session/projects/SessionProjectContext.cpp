@@ -35,6 +35,8 @@
 #include <session/projects/ProjectsSettings.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
 
+#include <sys/stat.h>
+
 #include "SessionProjectFirstRun.hpp"
 
 using namespace rstudio::core;
@@ -696,6 +698,29 @@ bool ProjectContext::supportsSharing()
    return options().getBoolOverlayOption(kProjectSharingSessionOption);
 }
 
+// attempts to determine whether we're the owner of the project; currently
+// this is inferred from ownership on the project directory
+bool ProjectContext::ownedByUser()
+{
+#ifdef _WIN32
+   // we don't need to know this on Windows, and we'd need to compute it very
+   // differently
+   return true;
+#else
+   struct stat st; 
+   if (::stat(directory().absolutePath().c_str(), &st) == -1) 
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", directory().absolutePath());
+      LOG_ERROR(error);
+
+      // if we can't figure it out, presume we're the owner (this preserves
+      // existing behavior) 
+      return true;
+   }
+   return st.st_uid == ::getuid();
+#endif
+}
 
 } // namespace projects
 } // namespace session
