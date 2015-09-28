@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.files.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.files.FileSystemItem;
@@ -39,7 +38,7 @@ public interface FilesServerOperations
    // get a file listing
    void listFiles(FileSystemItem directory,
                   boolean monitor,
-                  ServerRequestCallback<JsArray<FileSystemItem>> requestCallback);
+                  ServerRequestCallback<DirectoryListing> requestCallback);
 
    void listAllFiles(String path,
                      String pattern,

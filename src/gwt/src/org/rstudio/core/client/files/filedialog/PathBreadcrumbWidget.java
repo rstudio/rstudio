@@ -166,7 +166,7 @@ public class PathBreadcrumbWidget
       }
    }
 
-   public void setDirectory(FileSystemItem[] pathElements)
+   public void setDirectory(FileSystemItem[] pathElements, boolean browseable)
    {
       pathPanel_.clear();
       maybeAddProjectIcon();
@@ -174,9 +174,9 @@ public class PathBreadcrumbWidget
       if (linkUp_ != null)
          linkUp_.setVisible(pathElements.length > 1);
 
-      Anchor lastAnchor = null;
+      Widget lastAnchor = null;
       for (FileSystemItem item : pathElements)
-         lastAnchor = addAnchor(item);
+         lastAnchor = addAnchor(item, browseable);
 
       if (lastAnchor != null)
          lastAnchor.addStyleName(RES.styles().last());
@@ -202,25 +202,33 @@ public class PathBreadcrumbWidget
       }
    }
 
-   private Anchor addAnchor(final FileSystemItem item)
+   private Widget addAnchor(final FileSystemItem item, boolean browseable)
    {
       boolean isHome = context_.isRoot(item);
-      Anchor link = new Anchor(isHome ? "Home"
-                                      : item.getName(),
-                               false);
+      String text = isHome ? "Home" : item.getName();
+      Widget link = null;
+       
+      if (browseable || isHome)
+      {
+         Anchor anchor = new Anchor(text, false);
+         anchor.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
+         
+         anchor.addClickHandler(new ClickHandler()
+         {
+            public void onClick(ClickEvent event)
+            {
+               SelectionCommitEvent.fire(PathBreadcrumbWidget.this, item);
+            }
+         });
+         link = anchor;
+      }
+      else
+      {
+         link = new InlineLabel(text);
+      }
       link.setTitle(item.getPath());
       if (isHome)
          link.addStyleName(RES.styles().home());
-
-      link.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
-      
-      link.addClickHandler(new ClickHandler()
-      {
-         public void onClick(ClickEvent event)
-         {
-            SelectionCommitEvent.fire(PathBreadcrumbWidget.this, item);
-         }
-      });
 
       pathPanel_.add(link);
       return link;

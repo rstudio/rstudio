@@ -22,6 +22,7 @@
 #endif
 
 #include <sys/stat.h>
+#include <sys/unistd.h>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -145,6 +146,26 @@ inline Error getFileMode(const FilePath& filePath, FileMode* pFileMode)
    return Success();
 }
 
+inline Error isFileReadable(const FilePath& filePath, bool* pReadable)
+{
+   int result = ::access(filePath.absolutePath().c_str(), R_OK);
+   if (result == 0) 
+   {
+      // user has access
+      *pReadable = true;
+   }
+   else if (errno == EACCES)
+   {
+      // this error is expected when the user doesn't have access to the path
+      *pReadable = false;
+   }
+   else 
+   {
+      // some other error (unexpected)
+      return systemError(errno, ERROR_LOCATION);
+   }
+   return Success();
+}
 
 
 } // namespace system

@@ -140,6 +140,7 @@ import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentCo
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.ObjectContents;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
+import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
@@ -1020,7 +1021,7 @@ public class RemoteServer implements Server
    public void listFiles(
                   FileSystemItem directory,
                   boolean monitor,
-                  ServerRequestCallback<JsArray<FileSystemItem>> requestCallback)
+                  ServerRequestCallback<DirectoryListing> requestCallback)
    {
       JSONArray paramArray = new JSONArray();
       paramArray.set(0, new JSONString(directory.getPath()));

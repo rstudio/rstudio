@@ -40,6 +40,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
 import org.rstudio.studio.client.workbench.views.files.ui.*;
@@ -105,16 +106,17 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    }
     
    public void listDirectory(final FileSystemItem directory, 
-                             ServerDataSource<JsArray<FileSystemItem>> dataSource)
+                             ServerDataSource<DirectoryListing> dataSource)
    {
       setProgress(true);
         
-      dataSource.requestData(new ServerRequestCallback<JsArray<FileSystemItem>>(){
-         public void onResponseReceived(JsArray<FileSystemItem> response)
+      dataSource.requestData(new ServerRequestCallback<DirectoryListing>(){
+         public void onResponseReceived(DirectoryListing response)
          {
             setProgress(false);
-            filePathToolbar_.setPath(directory.getPath());
-            filesList_.displayFiles(directory, response); 
+            filePathToolbar_.setPath(directory.getPath(),
+                  response.isParentBrowseable());
+            filesList_.displayFiles(directory, response.getFiles()); 
          }
          public void onError(ServerError error)
          {
