@@ -14,7 +14,6 @@
 package com.google.gwt.dev.js.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
-import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.List;
@@ -24,8 +23,8 @@ import java.util.List;
  */
 public final class JsObjectLiteral extends JsLiteral {
 
-  public static Builder builder() {
-    return new Builder();
+  public static Builder builder(SourceInfo info) {
+    return new Builder(info);
   }
 
   /**
@@ -33,10 +32,12 @@ public final class JsObjectLiteral extends JsLiteral {
    */
   public static class Builder {
 
-    private Builder() { }
+    private Builder(SourceInfo info) {
+      this.sourceInfo = info;
+    }
 
     private List<JsPropertyInitializer> propertyInitializers = Lists.newArrayList();
-    private SourceInfo sourceInfo = SourceOrigin.UNKNOWN;
+    private final SourceInfo sourceInfo;
     private boolean internable = false;
 
     public Builder add(String property, JsExpression value) {
@@ -51,11 +52,6 @@ public final class JsObjectLiteral extends JsLiteral {
 
     public Builder add(SourceInfo sourceInfo, JsExpression property, JsExpression value) {
       propertyInitializers.add(new JsPropertyInitializer(sourceInfo, property, value));
-      return this;
-    }
-
-    public Builder setSourceInfo(SourceInfo info) {
-      sourceInfo = info;
       return this;
     }
 

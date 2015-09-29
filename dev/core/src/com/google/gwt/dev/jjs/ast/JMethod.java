@@ -51,15 +51,28 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
     /**
      * A getter property accessor. Usually in the form of getX()/isX().
      */
-    GETTER,
+    GETTER("get"),
     /**
      * A setter property accessor. Usually in the form of setX(x).
      */
-    SETTER,
+    SETTER("set"),
     /**
      * A property accessor but doesn't match setter/getter patterns.
      */
-    UNDEFINED,
+    UNDEFINED;
+
+    private String key;
+
+    JsPropertyAccessorType() {
+    }
+
+    JsPropertyAccessorType(String key) {
+      this.key = key;
+    }
+
+    public String getKey() {
+      return key;
+    }
   }
 
   public static final Comparator<JMethod> BY_SIGNATURE_COMPARATOR = new Comparator<JMethod>() {

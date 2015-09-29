@@ -17,6 +17,7 @@ package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JMethod.JsPropertyAccessorType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
@@ -35,6 +36,9 @@ import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsThisRef;
 import com.google.gwt.dev.util.StringInterner;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
+
+import java.util.List;
 
 /**
  * Utils for JS AST.
@@ -94,10 +98,13 @@ public class JsUtils {
     }
     JsNameRef ref = polyName.makeRef(sourceInfo);
     ref.setQualifier(new JsThisRef(sourceInfo));
-    JsInvocation invocation = new JsInvocation(sourceInfo, ref);
+    List<JsExpression> args = Lists.newArrayList();
     for (JsParameter p : bridge.getParameters()) {
-      invocation.getArguments().add(p.getName().makeRef(sourceInfo));
+      args.add(p.getName().makeRef(sourceInfo));
     }
+
+    JsExpression invocation =
+        createInvocationOrPropertyAccess(sourceInfo, method.getJsPropertyAccessorType(), ref, args);
 
     JsBlock block = new JsBlock(sourceInfo);
     if (method.getType() == JPrimitiveType.VOID) {
@@ -148,6 +155,20 @@ public class JsUtils {
       result = name.makeQualifiedRef(info, result);
     }
     return result;
+  }
+
+  public static JsExpression createInvocationOrPropertyAccess(SourceInfo sourceInfo,
+      JsPropertyAccessorType propertyAccessorType, JsNameRef reference, List<JsExpression> args) {
+    switch (propertyAccessorType) {
+      case SETTER:
+        assert args.size() == 1;
+        return createAssignment(reference, args.get(0));
+      case GETTER:
+        assert args.size() == 0;
+        return reference;
+      default:
+        return new JsInvocation(sourceInfo, reference, args);
+    }
   }
 
   /**

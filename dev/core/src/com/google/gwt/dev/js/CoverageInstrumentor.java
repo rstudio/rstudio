@@ -74,9 +74,9 @@ public class CoverageInstrumentor {
   @VisibleForTesting
   static JsObjectLiteral baselineCoverage(SourceInfo info,
       Multimap<String, Integer> instrumentableLines) {
-    JsObjectLiteral.Builder baselineBuilder = JsObjectLiteral.builder().setSourceInfo(info);
+    JsObjectLiteral.Builder baselineBuilder = JsObjectLiteral.builder(info);
     for (String filename : instrumentableLines.keySet()) {
-      JsObjectLiteral.Builder linesBuilder = JsObjectLiteral.builder().setSourceInfo(info);
+      JsObjectLiteral.Builder linesBuilder = JsObjectLiteral.builder(info);
       for (int line : instrumentableLines.get(filename)) {
         linesBuilder.add(new JsNumberLiteral(info, line), new JsNumberLiteral(info, 0));
       }

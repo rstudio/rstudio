@@ -844,8 +844,8 @@ public class JsParser {
   }
 
   private JsExpression mapObjectLit(Node objLitNode) throws JsParserException {
-    JsObjectLiteral.Builder objectLiteralBuilder = JsObjectLiteral.builder()
-        .setSourceInfo(makeSourceInfo(objLitNode));
+    JsObjectLiteral.Builder objectLiteralBuilder =
+        JsObjectLiteral.builder(makeSourceInfo(objLitNode));
     Node fromPropInit = objLitNode.getFirstChild();
     while (fromPropInit != null) {
 
