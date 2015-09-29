@@ -285,9 +285,7 @@ public class TextEditingTargetWidget
       toolbar.addRightSeparator();
       toolbar.addRightWidget(runLastButton_ = commands_.executeLastCode().createToolbarButton(false));
       toolbar.addRightWidget(goToPrevButton_ = commands_.goToPrevSection().createToolbarButton(false));
-      goToPrevButton_.setTitle("Go to previous section/chunk (PageUp)");
       toolbar.addRightWidget(goToNextButton_ = commands_.goToNextSection().createToolbarButton(false));
-      goToNextButton_.setTitle("Go to next section/chunk (PageDown)");
       toolbar.addRightSeparator();
       final String SOURCE_BUTTON_TITLE = "Source the active document"; 
       
