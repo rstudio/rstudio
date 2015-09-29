@@ -51,7 +51,6 @@ import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
-import com.google.gwt.dev.js.ast.JsPropertyInitializer;
 import com.google.gwt.dev.js.ast.JsRegExp;
 import com.google.gwt.dev.js.ast.JsReturn;
 import com.google.gwt.dev.js.ast.JsRootScope;
@@ -845,7 +844,8 @@ public class JsParser {
   }
 
   private JsExpression mapObjectLit(Node objLitNode) throws JsParserException {
-    JsObjectLiteral toLit = new JsObjectLiteral(makeSourceInfo(objLitNode));
+    JsObjectLiteral.Builder objectLiteralBuilder = JsObjectLiteral.builder()
+        .setSourceInfo(makeSourceInfo(objLitNode));
     Node fromPropInit = objLitNode.getFirstChild();
     while (fromPropInit != null) {
 
@@ -861,17 +861,14 @@ public class JsParser {
             + toLabelExpr, objLitNode);
       }
       JsExpression toValueExpr = mapExpression(fromValueExpr);
-
-      JsPropertyInitializer toPropInit = new JsPropertyInitializer(
-          makeSourceInfo(fromLabelExpr), toLabelExpr, toValueExpr);
-      toLit.getPropertyInitializers().add(toPropInit);
+      objectLiteralBuilder.add(makeSourceInfo(fromLabelExpr), toLabelExpr, toValueExpr);
 
       // Begin the next property initializer, if there is one.
       //
       fromPropInit = fromPropInit.getNext();
     }
 
-    return toLit;
+    return objectLiteralBuilder.build();
   }
 
   private JsExpression mapOptionalExpression(Node exprNode)

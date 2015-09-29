@@ -27,12 +27,9 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.js.ast.JsPropertyInitializer;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
-
-import java.util.List;
 
 /**
  * Instruments the generated JavaScript to record code coverage information
@@ -77,21 +74,15 @@ public class CoverageInstrumentor {
   @VisibleForTesting
   static JsObjectLiteral baselineCoverage(SourceInfo info,
       Multimap<String, Integer> instrumentableLines) {
-    JsObjectLiteral baseline = new JsObjectLiteral(info);
-    List<JsPropertyInitializer> properties = baseline.getPropertyInitializers();
+    JsObjectLiteral.Builder baselineBuilder = JsObjectLiteral.builder().setSourceInfo(info);
     for (String filename : instrumentableLines.keySet()) {
-      JsPropertyInitializer pair = new JsPropertyInitializer(info);
-      pair.setLabelExpr(new JsStringLiteral(info, filename));
-      JsObjectLiteral lines = new JsObjectLiteral(info);
-      List<JsPropertyInitializer> coverage = lines.getPropertyInitializers();
+      JsObjectLiteral.Builder linesBuilder = JsObjectLiteral.builder().setSourceInfo(info);
       for (int line : instrumentableLines.get(filename)) {
-        coverage.add(new JsPropertyInitializer(info,
-            new JsNumberLiteral(info, line), new JsNumberLiteral(info, 0)));
+        linesBuilder.add(new JsNumberLiteral(info, line), new JsNumberLiteral(info, 0));
       }
-      pair.setValueExpr(lines);
-      properties.add(pair);
+      baselineBuilder.add(new JsStringLiteral(info, filename), linesBuilder.build());
     }
-    return baseline;
+    return baselineBuilder.build();
   }
 
   private Multimap<String, Integer> instrumentableLines;

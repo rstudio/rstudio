@@ -14,8 +14,9 @@
 package com.google.gwt.dev.js.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -23,7 +24,57 @@ import java.util.List;
  */
 public final class JsObjectLiteral extends JsLiteral {
 
-  private final List<JsPropertyInitializer> properties = new ArrayList<JsPropertyInitializer>();
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  /**
+   * Builder class for JsObjectLiterals.
+   */
+  public static class Builder {
+
+    private Builder() { }
+
+    private List<JsPropertyInitializer> propertyInitializers = Lists.newArrayList();
+    private SourceInfo sourceInfo = SourceOrigin.UNKNOWN;
+    private boolean internable = false;
+
+    public Builder add(String property, JsExpression value) {
+      add(new JsNameRef(sourceInfo, property), value);
+      return this;
+    }
+
+    public Builder add(JsExpression property, JsExpression value) {
+      add(sourceInfo, property, value);
+      return this;
+    }
+
+    public Builder add(SourceInfo sourceInfo, JsExpression property, JsExpression value) {
+      propertyInitializers.add(new JsPropertyInitializer(sourceInfo, property, value));
+      return this;
+    }
+
+    public Builder setSourceInfo(SourceInfo info) {
+      sourceInfo = info;
+      return this;
+    }
+
+    public Builder setInternable() {
+      internable = true;
+      return this;
+    }
+
+    public JsObjectLiteral build() {
+      JsObjectLiteral objectLiteral = new JsObjectLiteral(sourceInfo);
+      objectLiteral.getPropertyInitializers().addAll(propertyInitializers);
+      if (internable) {
+        objectLiteral.setInternable();
+      }
+      return objectLiteral;
+    }
+  }
+
+  private final List<JsPropertyInitializer> properties = Lists.newArrayList();
 
   private boolean internable = false;
 
@@ -38,6 +89,15 @@ public final class JsObjectLiteral extends JsLiteral {
    */
   public void addProperty(SourceInfo sourceInfo, JsExpression label, JsExpression value) {
     properties.add(new JsPropertyInitializer(sourceInfo, label, value));
+  }
+
+  /**
+   * Adds a property and its initial value to the object literal.
+   * <p>
+   * NOTE: Does not check for duplicate names.
+   */
+  public void addProperty(SourceInfo sourceInfo, String label, JsExpression value) {
+    addProperty(sourceInfo, new JsStringLiteral(sourceInfo, label), value);
   }
 
   @Override
