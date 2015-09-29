@@ -360,7 +360,9 @@ public class KeyboardShortcut
          String[] disableModeList = disableModes.split(",");
          for (String disableMode: disableModeList)
          {
-            if (disableMode.equals("vim"))
+            if (disableMode.equals("default"))
+               disableModes_ |= MODE_DEFAULT;
+            else if (disableMode.equals("vim"))
                disableModes_ |= MODE_VIM;
             else if (disableMode.equals("emacs"))
                disableModes_ |= MODE_EMACS;
@@ -435,7 +437,7 @@ public class KeyboardShortcut
    
    public boolean isModalShortcut()
    {
-      return disableModes_ != MODE_NONE;
+      return disableModes_ != MODE_DEFAULT;
    }
 
    public static int getModifierValue(NativeEvent e)
@@ -457,7 +459,7 @@ public class KeyboardShortcut
    private String groupName_;
    private int order_ = 0;
    private String title_ = "";
-   private int disableModes_ = MODE_NONE;
+   private int disableModes_ = MODE_DEFAULT;
 
    private static int ORDER = 0;
    
@@ -467,7 +469,7 @@ public class KeyboardShortcut
    public static final int META = 4;
    public static final int SHIFT = 8;
    
-   public static final int MODE_NONE = 0;
+   public static final int MODE_DEFAULT = 0;
    public static final int MODE_VIM = 1;
    public static final int MODE_EMACS = 2;
 }

@@ -605,7 +605,7 @@ public class Source implements InsertSourceHandler,
          {
             ShortcutManager.INSTANCE.setEditorMode(arg ? 
                   KeyboardShortcut.MODE_VIM :
-                  KeyboardShortcut.MODE_NONE);
+                  KeyboardShortcut.MODE_DEFAULT);
          }
       });
       
@@ -616,7 +616,7 @@ public class Source implements InsertSourceHandler,
          {
             ShortcutManager.INSTANCE.setEditorMode(arg ?
                   KeyboardShortcut.MODE_EMACS :
-                  KeyboardShortcut.MODE_NONE);
+                  KeyboardShortcut.MODE_DEFAULT);
          }
       });
 

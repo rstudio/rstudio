@@ -20,7 +20,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
@@ -203,10 +202,8 @@ public class ShortcutManager implements NativePreviewHandler,
          command.setShortcut(shortcut);
       }
       
-      if (shortcut.isModalShortcut())
-      {
-         modalShortcuts_.add(shortcut);
-      }
+      shortcuts_.put(shortcut, shortcut);
+      
    }
    
    private void resetKeyBuffer()
@@ -365,19 +362,9 @@ public class ShortcutManager implements NativePreviewHandler,
       
       keyBuffer_.add(e);
       KeyboardShortcut shortcut = new KeyboardShortcut(keyBuffer_);
-
-      // Check for disabled modal shortcuts if we're modal
-      if (editorMode_ > 0)
-      {
-         for (KeyboardShortcut modalShortcut: modalShortcuts_)
-         {
-            if (modalShortcut.equals(shortcut) &&
-                modalShortcut.isModeDisabled(editorMode_))
-            {
-               return false;
-            }
-         }
-      }
+      
+      if (shortcuts_.containsKey(shortcut) && shortcuts_.get(shortcut).isModeDisabled(editorMode_))
+         return false;
       
       // Check for user-defined commands.
       if (userCommands_.dispatch(shortcut))
@@ -446,7 +433,7 @@ public class ShortcutManager implements NativePreviewHandler,
    }
    
    private int disableCount_ = 0;
-   private int editorMode_ = KeyboardShortcut.MODE_NONE;
+   private int editorMode_ = KeyboardShortcut.MODE_DEFAULT;
    
    private final KeySequence keyBuffer_;
    private final Timer keyTimer_;
@@ -463,8 +450,8 @@ public class ShortcutManager implements NativePreviewHandler,
    private List<KeyboardShortcut> unboundShortcuts_ =
          new ArrayList<KeyboardShortcut>();
    
-   private List<KeyboardShortcut> modalShortcuts_ =
-         new ArrayList<KeyboardShortcut>();
+   private Map<KeyboardShortcut, KeyboardShortcut> shortcuts_ =
+         new HashMap<KeyboardShortcut, KeyboardShortcut>();
    
    // Injected ----
    private UserCommandManager userCommands_;
