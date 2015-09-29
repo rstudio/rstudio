@@ -1759,12 +1759,9 @@ public class GenerateJavaScriptAST {
         }
 
         if (JProgram.isClinit(method)) {
-          if (type.getClinitTarget() == type) {
-            handleClinit(type, function);
-          } else {
-            continue;
-          }
+          handleClinit(type, function);
         }
+
         emitMethodImplementation(method,
             function.getName().makeRef(function.getSourceInfo()), function.makeStmt());
       }
@@ -1962,22 +1959,8 @@ public class GenerateJavaScriptAST {
               || doesNotHaveConcreteImplementation(method)) {
             continue;
           }
-          JsFunction function = null;
-          if (JProgram.isClinit(method)) {
-            /**
-             * Emit empty clinits that will be pruned. If a type B extends A, then even if
-             * B and A have no fields to initialize, there will be a call inserted in B's clinit
-             * to invoke A's clinit. Likewise, if you have a static field initialized to
-             * JavaScriptObject.createObject(), the clinit() will include this initializer code,
-             * which we don't want.
-             */
-            function = new JsFunction(x.getSourceInfo(), topScope,
-                topScope.declareName(mangleNameForGlobal(method)), true);
-            function.setBody(new JsBlock(method.getBody().getSourceInfo()));
-          } else {
-            function = transform(method);
-          }
           // add after var declaration, but before everything else
+          JsFunction function = transform(method);
           assert function.getName() != null;
           addMethodDefinitionStatement(1, method, function.makeStmt());
         }
@@ -2439,7 +2422,7 @@ public class GenerateJavaScriptAST {
       clinitFunctionForType.put(type, clinitFunction);
       JDeclaredType superClass = type.getSuperClass();
       JsFunction superClinitFunction = superClass == null
-          ? null : clinitFunctionForType.get(superClass);
+          ? null : clinitFunctionForType.get(superClass.getClinitTarget());
 
       clinitFunction.setSuperClinit(superClinitFunction);
       List<JsStatement> statements = clinitFunction.getBody().getStatements();
@@ -2577,11 +2560,13 @@ public class GenerateJavaScriptAST {
   }
 
   /**
-   * Return false if the methods need to be generated. Some methods do not need any output,
+   * Return false if the method needs to be generated. Some methods do not need any output,
    * in particular abstract methods and static intializers that are never called.
    */
   private static boolean doesNotHaveConcreteImplementation(JMethod method) {
-    return method.isAbstract();
+    return method.isAbstract()
+        || JProgram.isClinit(method)
+            && method.getEnclosingType().getClinitTarget() != method.getEnclosingType();
   }
 
   private static class JavaToJsOperatorMap {

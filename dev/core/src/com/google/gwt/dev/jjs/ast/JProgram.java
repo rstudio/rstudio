@@ -415,6 +415,8 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     }
 
     if (IMMORTAL_CODEGEN_TYPES_SET.contains(name)) {
+      // Immortal types by definition won't run clinits.
+      type.setClinitTarget(null);
       immortalCodeGenTypes.add((JClassType) type);
     }
 
