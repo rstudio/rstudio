@@ -426,10 +426,23 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if (substr(cranRep, cranRepLen, cranRepLen) != "/")
       cranRep <- paste(cranRep, "/", sep="")
 
-   newsURL[isFromCRAN] <- paste(cranRep,
+   hasNews <- rep(FALSE, times = length(updates$Package))
+   newsfile <- rep("NEWS", times = length(updates$Package))
+   for (i in 1:length(updates$Package)) {
+      if (isFromCRAN[[i]]) {
+         pkg <- updates$Package[[i]]
+         hasPlainNews <- file.exists(system.file("NEWS", package = pkg))
+         hasRdNews <- file.exists(system.file("NEWS.Rd", package = pkg))
+         if (hasRdNews)
+            newsfile[[i]] <- "news.html"
+         hasNews[[i]] <- hasPlainNews || hasRdNews
+      }
+   }
+   
+   newsURL[hasNews] <- paste(cranRep,
                                 "web/packages/",
                                 updates$Package,
-                                "/NEWS", sep = "")[isFromCRAN]
+                                "/", newsfile, sep = "")[hasNews]
    
    updates <- data.frame(packageName = updates$Package,
                          libPath = updates$LibPath,
