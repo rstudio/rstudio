@@ -28,7 +28,6 @@ public final class JsFunction extends JsLiteral implements HasName {
   protected JsBlock body;
   protected final List<JsParameter> params = new ArrayList<JsParameter>();
   protected final JsScope scope;
-  private boolean artificiallyRescued;
   private boolean isClinit;
   private boolean fromJava;
   private JsFunction superClinit;
@@ -123,10 +122,6 @@ public final class JsFunction extends JsLiteral implements HasName {
     return name != null;
   }
 
-  public boolean isArtificiallyRescued() {
-    return artificiallyRescued;
-  }
-
   @Override
   public boolean isBooleanFalse() {
     return false;
@@ -152,10 +147,6 @@ public final class JsFunction extends JsLiteral implements HasName {
 
   public void markAsClinit() {
     this.isClinit = true;
-  }
-
-  public void setArtificiallyRescued(boolean rescued) {
-    this.artificiallyRescued = rescued;
   }
 
   public void setBody(JsBlock body) {
