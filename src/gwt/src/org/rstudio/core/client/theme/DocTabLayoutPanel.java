@@ -609,7 +609,10 @@ public class DocTabLayoutPanel
                @Override
                public void execute()
                {
-                 dragElement_.getStyle().setDisplay(Display.NONE);
+                  // we may not still be dragging when the event loop comes
+                  // back, so be sure there's an element before hiding it
+                  if (dragElement_ != null)
+                    dragElement_.getStyle().setDisplay(Display.NONE);
                }
             });
          }

@@ -198,9 +198,15 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
          addItem(commands_.openProjectInNewWindow().createMenuItem(false));
       addItem(commands_.closeProject().createMenuItem(false));
       if (hasSharedProjects)
-         addSeparator("Recent Projects"); 
-      else
+      {
          addSeparator();
+         addItem(commands_.shareProject().createMenuItem(false));
+         addSeparator("Recent Projects"); 
+      }
+      else
+      {
+         addSeparator();
+      }
 
       // add as many MRU items as is appropriate for our screen size and number
       // of shared projects
@@ -263,7 +269,6 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       addSeparator();
       addItem(commands_.clearRecentProjects().createMenuItem(false));
       addSeparator();
-      addItem(commands_.shareProject().createMenuItem(false));
       addItem(commands_.projectOptions().createMenuItem(false));
       
       callback.onPopupMenu(this);
