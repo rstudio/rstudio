@@ -46,7 +46,6 @@ import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.MethodInliner;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.StringTypeMapper;
-import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeMapper;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeOrder;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsName;
@@ -283,7 +282,7 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
     ImplementCastsAndTypeChecks.exec(jProgram, false);
     ArrayNormalizer.exec(jProgram);
 
-    TypeMapper<String> typeMapper = new StringTypeMapper();
+    StringTypeMapper typeMapper = new StringTypeMapper(jProgram);
     ResolveRuntimeTypeReferences.exec(jProgram, typeMapper, TypeOrder.FREQUENCY);
     Map<StandardSymbolData, JsName> symbolTable =
         new TreeMap<StandardSymbolData, JsName>(new SymbolData.ClassIdentComparator());

@@ -31,7 +31,6 @@ import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.jjs.JavaAstConstructor;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.IntTypeMapper;
-import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeMapper;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeOrder;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNode;
@@ -101,7 +100,7 @@ public abstract class FullCompileTestBase extends JJSTestBase {
     MethodCallTightener.exec(jProgram);
     NameClashesFixer.exec(jProgram);
 
-    TypeMapper<Integer> typeMapper = new IntTypeMapper();
+    IntTypeMapper typeMapper = new IntTypeMapper();
     ResolveRuntimeTypeReferences.exec(jProgram, typeMapper, TypeOrder.FREQUENCY);
 
     Map<StandardSymbolData, JsName> symbolTable =

@@ -1492,7 +1492,7 @@ public final class JavaToJavaScriptCompiler {
     }
 
     if (this.options.useDetailedTypeIds()) {
-      return new StringTypeMapper();
+      return new StringTypeMapper(jprogram);
     }
     return this.options.isIncrementalCompileEnabled() ?
         compilerContext.getMinimalRebuildCache().getTypeMapper() :

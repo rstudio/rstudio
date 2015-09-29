@@ -19,12 +19,14 @@ import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JCastMap;
 import com.google.gwt.dev.jjs.ast.JExpression;
+import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JRuntimeTypeReference;
+import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
@@ -56,7 +58,7 @@ public class ResolveRuntimeTypeReferences {
   /**
    * Maps a type into a type id literal.
    */
-  public interface TypeMapper<T> {
+  public interface TypeMapper<T extends JExpression> {
     T getOrCreateTypeId(JType type);
 
     void copyFrom(TypeMapper<T> typeMapper);
@@ -67,14 +69,14 @@ public class ResolveRuntimeTypeReferences {
   /**
    * Sequentially creates int type ids for types.
    */
-  public static class IntTypeMapper implements Serializable, TypeMapper<Integer> {
+  public static class IntTypeMapper implements Serializable, TypeMapper<JIntLiteral> {
 
     // NOTE: DO NOT STORE ANY AST REFERENCE. Objects of this type persist across compiles.
     private final Map<String, Integer> typeIdByTypeName = Maps.newHashMap();
     private int nextAvailableId =  0;
 
     @Override
-    public void copyFrom(TypeMapper<Integer> that) {
+    public void copyFrom(TypeMapper<JIntLiteral> that) {
       if (!(that instanceof  IntTypeMapper)) {
         throw new IllegalArgumentException("Can only copy from IntTypeMapper");
       }
@@ -92,43 +94,49 @@ public class ResolveRuntimeTypeReferences {
     }
 
     @Override
-    public Integer get(JType type) {
-      return typeIdByTypeName.get(type.getName());
+    public JIntLiteral get(JType type) {
+      Integer typeId = typeIdByTypeName.get(type.getName());
+      return typeId == null ? null : new JIntLiteral(type.getSourceInfo(), typeId);
     }
 
     @Override
-    public Integer getOrCreateTypeId(JType type) {
+    public JIntLiteral getOrCreateTypeId(JType type) {
       String typeName = type.getName();
-      if (typeIdByTypeName.containsKey(typeName)) {
-        return typeIdByTypeName.get(typeName);
+      if (!typeIdByTypeName.containsKey(typeName)) {
+        int nextId = nextAvailableId++;
+        typeIdByTypeName.put(typeName, nextId);
       }
 
-      int nextId = nextAvailableId++;
-      typeIdByTypeName.put(typeName, nextId);
-      return nextId;
+      return get(type);
     }
   }
 
   /**
    * Predictably creates String type id literals for castable and instantiable types.
    */
-  public static class StringTypeMapper implements TypeMapper<String> {
+  public static class StringTypeMapper implements TypeMapper<JStringLiteral> {
+
+    private JProgram program;
+
+    public StringTypeMapper(JProgram program) {
+      this.program = program;
+    }
 
     @Override
-    public void copyFrom(TypeMapper<String> that) {
+    public void copyFrom(TypeMapper<JStringLiteral> that) {
       if (!(that instanceof  StringTypeMapper)) {
         throw new IllegalArgumentException("Can only copy from StringTypeMapper");
       }
     }
 
     @Override
-    public String getOrCreateTypeId(JType type) {
+    public JStringLiteral getOrCreateTypeId(JType type) {
       return get(type);
     }
 
     @Override
-    public String get(JType type) {
-      return type.getName();
+    public JStringLiteral get(JType type) {
+      return program.getStringLiteral(type.getSourceInfo(), type.getName());
     }
   }
 
@@ -202,7 +210,7 @@ public class ResolveRuntimeTypeReferences {
   private class ReplaceRuntimeTypeReferencesVisitor extends JModVisitor {
     @Override
     public void endVisit(JRuntimeTypeReference x, Context ctx) {
-      ctx.replaceMe(getTypeIdLiteral(x.getReferredType()));
+      ctx.replaceMe(getTypeIdExpression(x.getReferredType()));
     }
   }
 
@@ -272,9 +280,8 @@ public class ResolveRuntimeTypeReferences {
     }
   }
 
-  private JExpression getTypeIdLiteral(JType type) {
-    Object typeId = typeMapper.getOrCreateTypeId(type);
-    return typeId instanceof JMethodCall ? (JExpression) typeId : program.getLiteral(typeId);
+  private JExpression getTypeIdExpression(JType type) {
+    return  typeMapper.getOrCreateTypeId(type);
   }
 
   public static void exec(JProgram program, TypeMapper<?> typeMapper, TypeOrder typeOrder) {
