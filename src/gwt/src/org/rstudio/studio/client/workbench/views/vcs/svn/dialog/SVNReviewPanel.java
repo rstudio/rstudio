@@ -222,6 +222,21 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       switchViewButton_.getElement().getStyle().setMarginRight(8, Unit.PX);
       topToolbar_.addLeftWidget(switchViewButton_);
       
+      topToolbar_.addLeftSeparator();
+      
+      topToolbar_.addLeftWidget(new ToolbarButton(
+            "Refresh", commands.vcsRefresh().getImageResource(),
+            new ClickHandler() {
+               @Override
+               public void onClick(ClickEvent event)
+               {
+                  changelist_.showProgress();
+                  commands_.vcsRefresh().execute();
+               }
+            }));
+      
+      topToolbar_.addLeftSeparator();
+      
       topToolbar_.addLeftWidget(commands.vcsAddFiles().createToolbarButton());
       topToolbar_.addLeftWidget(commands.vcsRemoveFiles().createToolbarButton());
       topToolbar_.addLeftSeparator();
@@ -237,19 +252,6 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       commands.vcsPull().setMenuLabel("Update");
       topToolbar_.addRightWidget(commands.vcsPull().createToolbarButton());
 
-      topToolbar_.addRightSeparator();
-      
-      topToolbar_.addRightWidget(new ToolbarButton(
-            "Refresh", commands.vcsRefresh().getImageResource(),
-            new ClickHandler() {
-               @Override
-               public void onClick(ClickEvent event)
-               {
-                  changelist_.showProgress();
-                  commands_.vcsRefresh().execute();
-               }
-            }));
-      
       diffToolbar_.addStyleName(RES.styles().toolbar());
       diffToolbar_.addStyleName(RES.styles().diffToolbar());
 
