@@ -374,7 +374,7 @@ public class ControlFlowAnalyzer {
     @Override
     public boolean visit(JMethodCall call, Context ctx) {
       JMethod method = call.getTarget();
-      if (call.isVolatile() && method == runAsyncOnsuccess) {
+      if (call.isVolatile() && method == runAsyncOnSuccess) {
         /*
          * Note: In order to preserve code splitting, don't allow code flow from the
          * AsyncFragmentLoader implementation back into the
@@ -891,10 +891,10 @@ public class ControlFlowAnalyzer {
   private Set<JReferenceType> classLiteralsToBeRescuedIfGetClassIsLive = Sets.newHashSet();
 
   private DependencyRecorder dependencyRecorder;
-  private Set<JField> fieldsWritten = Sets.newHashSet();
-  private Set<JReferenceType> instantiatedTypes = Sets.newHashSet();
-  private Set<JNode> liveFieldsAndMethods = Sets.newHashSet();
-  private Set<String> liveStrings = Sets.newHashSet();
+  private Set<JField> fieldsWritten = Sets.newLinkedHashSet();
+  private Set<JReferenceType> instantiatedTypes = Sets.newLinkedHashSet();
+  private Set<JNode> liveFieldsAndMethods = Sets.newLinkedHashSet();
+  private Set<String> liveStrings = Sets.newLinkedHashSet();
 
   /**
    * Schrodinger's members... aka "limbo". :) These are instance methods and
@@ -909,13 +909,13 @@ public class ControlFlowAnalyzer {
   private final JProgram program;
   private Set<JReferenceType> referencedTypes = Sets.newHashSet();
   private final RescueVisitor rescuer;
-  private final JMethod runAsyncOnsuccess;
+  private final JMethod runAsyncOnSuccess;
   private JMethod stringValueOfChar = null;
 
   public ControlFlowAnalyzer(ControlFlowAnalyzer cfa) {
     program = cfa.program;
     asyncFragmentOnLoad = cfa.asyncFragmentOnLoad;
-    runAsyncOnsuccess = cfa.runAsyncOnsuccess;
+    runAsyncOnSuccess = cfa.runAsyncOnSuccess;
     fieldsWritten = Sets.newHashSet(cfa.fieldsWritten);
     instantiatedTypes = Sets.newHashSet(cfa.instantiatedTypes);
     liveFieldsAndMethods = Sets.newHashSet(cfa.liveFieldsAndMethods);
@@ -936,7 +936,7 @@ public class ControlFlowAnalyzer {
   public ControlFlowAnalyzer(JProgram program) {
     this.program = program;
     asyncFragmentOnLoad = program.getIndexedMethod("AsyncFragmentLoader.onLoad");
-    runAsyncOnsuccess = program.getIndexedMethod("RunAsyncCallback.onSuccess");
+    runAsyncOnSuccess = program.getIndexedMethod("RunAsyncCallback.onSuccess");
     getClassField = program.getIndexedField("Object.___clazz");
     getClassMethod = program.getIndexedMethod("Object.getClass");
     rescuer = new RescueVisitor();
@@ -1049,7 +1049,7 @@ public class ControlFlowAnalyzer {
      * Keep callback.onSuccess() from being pruned since we explicitly avoid
      * visiting it.
      */
-    liveFieldsAndMethods.add(runAsyncOnsuccess);
+    liveFieldsAndMethods.add(runAsyncOnSuccess);
   }
 
   /**
