@@ -16,7 +16,6 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.MinimalRebuildCache;
-import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
@@ -30,7 +29,6 @@ import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JType;
-import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
@@ -48,13 +46,14 @@ import java.util.Set;
 // TODO: move JsInterop checks from JSORestrictionsChecker to here.
 // TODO: provide more information in global name collisions as it could be difficult to pinpoint in
 // big projects.
-public class JsInteropRestrictionChecker extends JVisitor {
+public class JsInteropRestrictionChecker {
 
   public static void exec(TreeLogger logger, JProgram jprogram,
       MinimalRebuildCache minimalRebuildCache) throws UnableToCompleteException {
     JsInteropRestrictionChecker jsInteropRestrictionChecker =
         new JsInteropRestrictionChecker(logger, jprogram, minimalRebuildCache);
-    jsInteropRestrictionChecker.accept(jprogram);
+
+    jsInteropRestrictionChecker.checkProgram(jprogram);
     if (jsInteropRestrictionChecker.hasErrors) {
       throw new UnableToCompleteException();
     }
@@ -70,61 +69,21 @@ public class JsInteropRestrictionChecker extends JVisitor {
   private final JProgram jprogram;
   private final TreeLogger logger;
   private final MinimalRebuildCache minimalRebuildCache;
-
-  public JsInteropRestrictionChecker(TreeLogger logger, JProgram jprogram,
+  private JsInteropRestrictionChecker(TreeLogger logger, JProgram jprogram,
       MinimalRebuildCache minimalRebuildCache) {
     this.logger = logger;
     this.jprogram = jprogram;
     this.minimalRebuildCache = minimalRebuildCache;
   }
 
-  @Override
-  public void endVisit(JDeclaredType x, Context ctx) {
-    assert currentType == x;
-    currentType = null;
-  }
-
-  @Override
-  public boolean visit(JDeclaredType x, Context ctx) {
-    assert currentType == null;
-    currentJsTypeProcessedMethods = Sets.newHashSet();
-    currentJsTypePropertyTypeByName = Maps.newHashMap();
-    currentJsTypeMethodNameByMemberNames = Maps.newHashMap();
-    currentJsTypeMethodNameByGetterNames = Maps.newHashMap();
-    currentJsTypeMethodNameBySetterNames = Maps.newHashMap();
-    minimalRebuildCache.removeJsInteropNames(x.getName());
-    currentType = x;
-
-    if (x.isJsFunction()) {
-      checkJsFunction(x);
-    } else if (x.isJsFunctionImplementation()) {
-      checkJsFunctionImplementation(x);
-    } else if (x.isJsType() && x instanceof JInterfaceType) {
-      checkJsInterface(x);
-    } else {
-      checkConstructors(x);
-    }
-
-    // Perform custom class traversal to examine fields and methods of this class and all
-    // superclasses so that name collisions between local and inherited members can be found.
-    do {
-      acceptWithInsertRemoveImmutable(x.getFields());
-      acceptWithInsertRemoveImmutable(x.getMethods());
-      x = x.getSuperClass();
-    } while (x != null);
-
-    // Skip the default class traversal.
-    return false;
-  }
-
   private void checkConstructors(JDeclaredType x) {
     List<JMethod> exportedCtors = FluentIterable
         .from(x.getMethods())
         .filter(new Predicate<JMethod>() {
-           @Override
-           public boolean apply(JMethod m) {
-             return m.isJsConstructor();
-           }
+          @Override
+          public boolean apply(JMethod m) {
+            return m.isJsConstructor();
+          }
         }).toList();
 
     if (exportedCtors.isEmpty()) {
@@ -162,10 +121,9 @@ public class JsInteropRestrictionChecker extends JVisitor {
     return call.getTarget().equals(targetCtor);
   }
 
-  @Override
-  public boolean visit(JField x, Context ctx) {
+  private void checkField(JField x) {
     if (!x.isJsProperty()) {
-      return false;
+      return;
     }
 
     if (x.needsVtable()) {
@@ -173,19 +131,16 @@ public class JsInteropRestrictionChecker extends JVisitor {
     } else if (currentType == x.getEnclosingType()) {
       checkExportName(x);
     }
-
-    return false;
   }
 
-  @Override
-  public boolean visit(JMethod x, Context ctx) {
+  private void checkMethod(JMethod x) {
     if (!currentJsTypeProcessedMethods.add(x)) {
-      return false;
+      return;
     }
     currentJsTypeProcessedMethods.addAll(x.getOverriddenMethods());
 
     if (!x.isOrOverridesJsMethod()) {
-      return false;
+      return;
     }
 
     if (x.needsVtable()) {
@@ -194,19 +149,15 @@ public class JsInteropRestrictionChecker extends JVisitor {
       checkExportName(x);
     }
 
-    if (currentType == x.getEnclosingType()) {
-      if (x.isJsPropertyAccessor() && !currentType.isJsType()) {
-        if (currentType instanceof JInterfaceType) {
-          logError("Method '%s' can't be a JsProperty since interface '%s' is not a JsType.",
-              x.getName(), x.getEnclosingType().getName());
-        } else {
-          logError("Method '%s' can't be a JsProperty since '%s' "
-              + "is not an interface.", x.getName(), x.getEnclosingType().getName());
-        }
+    if (currentType == x.getEnclosingType() && x.isJsPropertyAccessor() && !currentType.isJsType()) {
+      if (currentType instanceof JInterfaceType) {
+        logError("Method '%s' can't be a JsProperty since interface '%s' is not a JsType.",
+            x.getName(), x.getEnclosingType().getName());
+      } else {
+        logError("Method '%s' can't be a JsProperty since '%s' "
+            + "is not an interface.", x.getName(), x.getEnclosingType().getName());
       }
     }
-
-    return false;
   }
 
   private void checkExportName(JMember x) {
@@ -224,16 +175,6 @@ public class JsInteropRestrictionChecker extends JVisitor {
     if (recordedType != null && recordedType != parameterType) {
       logError("The setter and getter for JsProperty '%s' in type '%s' must have consistent types.",
           propertyName, enclosingTypeName);
-    }
-  }
-
-  private void checkJsInterface(JDeclaredType interfaceType) {
-    for (JDeclaredType superInterface : interfaceType.getImplements()) {
-      if (!superInterface.isJsType()) {
-        logWarning(
-            "JsType interface '%s' extends non-JsType interface '%s'. This is not recommended.",
-            interfaceType.getName(), superInterface.getName());
-      }
     }
   }
 
@@ -275,7 +216,7 @@ public class JsInteropRestrictionChecker extends JVisitor {
         return;
       }
       if (method.getType() != JPrimitiveType.BOOLEAN && method.getName().startsWith("is")) {
-        logError("There can't be non-booelean return for the JsProperty 'is' getter '%s'.",
+        logError("There can't be non-boolean return for the JsProperty 'is' getter '%s'.",
             qualifiedMethodName);
         return;
       }
@@ -320,7 +261,7 @@ public class JsInteropRestrictionChecker extends JVisitor {
     if (currentJsTypeMethodNameByGetterNames.containsKey(getterName)
         && currentJsTypeMethodNameByMemberNames.containsKey(getterName)) {
       logError("The JsType member '%s' and JsProperty '%s' can't both be named "
-          + "'%s' in type '%s'.", currentJsTypeMethodNameByMemberNames.get(getterName),
+              + "'%s' in type '%s'.", currentJsTypeMethodNameByMemberNames.get(getterName),
           currentJsTypeMethodNameByGetterNames.get(getterName), getterName, typeName);
     }
   }
@@ -334,7 +275,18 @@ public class JsInteropRestrictionChecker extends JVisitor {
     }
   }
 
+  private void checkJsNative(JDeclaredType type) {
+    // TODO(rluble): add inheritance restrictions.
+    if (!JjsUtils.isClinitEmpty(type)) {
+      logError("Native JsType '%s' cannot have static initializer.", type);
+    }
+  }
+
   private void checkJsFunction(JDeclaredType type) {
+    if (!JjsUtils.isClinitEmpty(type)) {
+      logError("JsFunction '%s' cannot have static initializer.", type);
+    }
+
     if (type.getImplements().size() > 0) {
       logError("JsFunction '%s' cannot extend other interfaces.", type);
     }
@@ -367,6 +319,43 @@ public class JsInteropRestrictionChecker extends JVisitor {
     if (!subTypes.isEmpty()) {
       logError("Implementation of JsFunction '%s' cannot be extended by other classes:%s", type,
           subTypes);
+    }
+  }
+
+  private void checkProgram(JProgram jprogram) {
+    for (JDeclaredType type : jprogram.getModuleDeclaredTypes()) {
+      checkType(type);
+    }
+  }
+
+  private void checkType(JDeclaredType type) {
+    currentJsTypeProcessedMethods = Sets.newHashSet();
+    currentJsTypePropertyTypeByName = Maps.newHashMap();
+    currentJsTypeMethodNameByMemberNames = Maps.newHashMap();
+    currentJsTypeMethodNameByGetterNames = Maps.newHashMap();
+    currentJsTypeMethodNameBySetterNames = Maps.newHashMap();
+    currentType = type;
+    minimalRebuildCache.removeJsInteropNames(type.getName());
+
+    if (type.isJsNative()) {
+      checkJsNative(type);
+    }
+
+    if (type.isJsFunction()) {
+      checkJsFunction(type);
+    } else if (type.isJsFunctionImplementation()) {
+      checkJsFunctionImplementation(type);
+    } else {
+      checkConstructors(type);
+    }
+
+    for (;type != null; type = type.getSuperClass())  {
+      for (JField field : type.getFields()) {
+        checkField(field);
+      }
+      for (JMethod method : type.getMethods()) {
+        checkMethod(method);
+      }
     }
   }
 

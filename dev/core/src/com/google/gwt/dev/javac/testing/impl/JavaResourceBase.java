@@ -392,6 +392,11 @@ public class JavaResourceBase {
           "public @interface JsExport {\n",
           "  String value() default \"\";\n",
           "}");
+  public static final MockJavaResource JSNOEXPORT =
+      createMockJavaResource("com.google.gwt.core.client.js.JsNoExport",
+          "package com.google.gwt.core.client.js;",
+          "public @interface JsNoExport {\n",
+          "}");
   public static final MockJavaResource JSPROPERTY =
       createMockJavaResource("com.google.gwt.core.client.js.JsProperty",
           "package com.google.gwt.core.client.js;",
@@ -411,7 +416,8 @@ public class JavaResourceBase {
         ERROR, FUNCTIONALINTERFACE, FLOAT, INTEGER, IS_SERIALIZABLE, JAVASCRIPTEXCEPTION,
         JAVASCRIPTOBJECT, LIST, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR, NUMBER, OBJECT,
         RUNTIME_EXCEPTION, SERIALIZABLE, SHORT, STRING, STRING_BUILDER, SUPPRESS_WARNINGS, SYSTEM,
-        THROWABLE, SPECIALIZE_METHOD, JSTYPE, JSTYPEPROTOTYPE, JSEXPORT, JSPROPERTY, JSFUNCTION};
+        THROWABLE, SPECIALIZE_METHOD, JSTYPE, JSTYPEPROTOTYPE, JSEXPORT, JSNOEXPORT, JSPROPERTY,
+        JSFUNCTION};
   }
 
   /**
