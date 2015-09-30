@@ -424,7 +424,12 @@ public class AsyncFragmentLoader {
       pendingDownloadErrorHandlers[fragment] = null;
     }
 
-    if (isInitial(fragment)) {
+    /**
+     * It is possible for a fragment to be preloaded by the linker or server before runAsync() has
+     * requested it, in this case the leftovers fragment will be have it's onLoad() called before
+     * remainingInitialFragments has been initialized.
+     */
+    if (isInitial(fragment) && remainingInitialFragments != null) {
       assert (fragment == remainingInitialFragments.peek());
       remainingInitialFragments.remove();
     }
