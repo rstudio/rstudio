@@ -271,13 +271,14 @@ public class CodeSplitter {
 
   /**
    * For each exclusive fragment (those that are not part of the initial load sequence) compute
-   * a CFA that traces every split point not in the fragment.
+   * a CFA that traces every split point not in the fragment; i.e. computes the atoms that are
+   * live in (WholeProgram - Fragment).
    */
-  private Map<Fragment, ControlFlowAnalyzer> computeComplementCfaForFragments(
+  private Map<Fragment, ControlFlowAnalyzer> computeNotExclusiveCfaForFragments(
       Collection<Fragment> exclusiveFragments) {
     String dependencyGraphNameAfterInitialSequence = dependencyGraphNameAfterInitialSequence();
 
-    Map<Fragment, ControlFlowAnalyzer> notLiveCfaByFragment = Maps.newHashMap();
+    Map<Fragment, ControlFlowAnalyzer> notExclusiveCfaByFragment = Maps.newHashMap();
 
     for (Fragment fragment : exclusiveFragments) {
       assert fragment.isExclusive();
@@ -288,7 +289,7 @@ public class CodeSplitter {
       cfa.setDependencyRecorder(dependencyRecorder);
       for (Fragment otherFragment : exclusiveFragments) {
         // don't trace the initial fragments as they have already been traced and their atoms are
-        // already in {@code initialSequenceCfa}
+        // already in {@code initialSequenceCfa}.
         if (otherFragment.isInitial()) {
           continue;
         }
@@ -300,9 +301,9 @@ public class CodeSplitter {
         }
       }
       dependencyRecorder.endDependencyGraph();
-      notLiveCfaByFragment.put(fragment, cfa);
+      notExclusiveCfaByFragment.put(fragment, cfa);
     }
-    return notLiveCfaByFragment;
+    return notExclusiveCfaByFragment;
   }
 
   /**
@@ -336,10 +337,10 @@ public class CodeSplitter {
    */
   private ExclusivityMap computeExclusivityMapWithFixups(Collection<Fragment> exclusiveFragments) {
     ControlFlowAnalyzer completeCfa = computeCompleteCfa();
-    Map<Fragment, ControlFlowAnalyzer> notLiveCfaByFragment =
-        computeComplementCfaForFragments(exclusiveFragments);
+    Map<Fragment, ControlFlowAnalyzer> notExclusiveCfaByFragment =
+        computeNotExclusiveCfaForFragments(exclusiveFragments);
     ExclusivityMap exclusivityMap =  ExclusivityMap.computeExclusivityMap(exclusiveFragments,
-        completeCfa, notLiveCfaByFragment);
+        completeCfa, notExclusiveCfaByFragment);
     exclusivityMap.fixUpLoadOrderDependencies(logger, jprogram, methodsInJavaScript);
     return exclusivityMap;
   }
