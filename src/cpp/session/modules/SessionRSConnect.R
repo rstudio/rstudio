@@ -134,7 +134,11 @@
    # accounts when the rsconnect package is not installed or broken 
    # (vs. raising an error)
    tryCatch({
-     accounts <- .rs.scalarListFromFrame(rsconnect::accounts())
+     accountFrame <- rsconnect::accounts()
+     # if raw characters (older rsconnect), presume shinyapps.io
+     if (is.character(accountFrame))
+       accountFrame <- data.frame(name = accountFrame, server = "shinyapps.io")
+     accounts <- .rs.scalarListFromFrame(accountFrame)
    }, error = function(e) { })
    accounts
 })
