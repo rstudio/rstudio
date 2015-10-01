@@ -4919,56 +4919,6 @@ public class TextEditingTarget implements
       }
    }
    
-   @Handler
-   void onYankBeforeCursor()
-   {
-      Position cursorPos = docDisplay_.getCursorPosition();
-      docDisplay_.setSelectionRange(Range.fromPoints(
-            Position.create(cursorPos.getRow(), 0),
-            cursorPos));
-      
-      if (Desktop.isDesktop())
-         commands_.cutDummy().execute();
-      else
-      {
-         yankedText_ = docDisplay_.getSelectionValue();
-         docDisplay_.replaceSelection("");
-      }
-   }
-   
-   @Handler
-   void onYankAfterCursor()
-   {
-      Position cursorPos = docDisplay_.getCursorPosition();
-      int lineLength = docDisplay_.getLine(cursorPos.getRow()).length();
-      docDisplay_.setSelectionRange(Range.fromPoints(
-            cursorPos,
-            Position.create(cursorPos.getRow(), lineLength)));
-      
-      if (Desktop.isDesktop())
-         commands_.cutDummy().execute();
-      else
-      {
-         yankedText_ = docDisplay_.getSelectionValue();
-         docDisplay_.replaceSelection("");
-      }
-   }
-   
-   @Handler
-   void onPasteLastYank()
-   {
-      if (Desktop.isDesktop())
-         commands_.pasteDummy().execute();
-      else
-      {
-         if (yankedText_ == null)
-            return;
-         
-         docDisplay_.replaceSelection(yankedText_);
-         docDisplay_.setCursorPosition(docDisplay_.getSelectionEnd());
-      }
-   }
-   
    boolean useScopeTreeFolding()
    {
       return docDisplay_.hasScopeTree();

@@ -45,6 +45,7 @@ import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
@@ -55,12 +56,14 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.EventBasedChangeTracker;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -353,6 +356,90 @@ public class AceEditor implements DocDisplay,
             clearDebugLineHighlight();
          }
       });
+      
+      addCapturingKeyDownHandler(new KeyDownHandler()
+      {
+         @Override
+         public void onKeyDown(KeyDownEvent event)
+         {
+            if (isVimModeOn() && !isVimInInsertMode())
+               return;
+            
+            if (isEmacsModeOn())
+               return;
+            
+            int modifier = KeyboardShortcut.getModifierValue(event.getNativeEvent());
+            boolean isCtrl = modifier == KeyboardShortcut.CTRL;
+            if (isCtrl)
+            {
+               switch (event.getNativeKeyCode())
+               {
+               case KeyCodes.KEY_K:
+                  event.stopPropagation();
+                  event.preventDefault();
+                  yankAfterCursor();
+                  break;
+               case KeyCodes.KEY_U:
+                  event.stopPropagation();
+                  event.preventDefault();
+                  yankBeforeCursor();
+                  break;
+               case KeyCodes.KEY_Y:
+                  event.stopPropagation();
+                  event.preventDefault();
+                  pasteLastYank();
+                  break;
+               }
+            }
+         }
+      });
+   }
+   
+   public void yankBeforeCursor()
+   {
+      Position cursorPos = getCursorPosition();
+      setSelectionRange(Range.fromPoints(
+            Position.create(cursorPos.getRow(), 0),
+            cursorPos));
+      
+      if (Desktop.isDesktop())
+         commands_.cutDummy().execute();
+      else
+      {
+         yankedText_ = getSelectionValue();
+         replaceSelection("");
+      }
+   }
+   
+   public void yankAfterCursor()
+   {
+      Position cursorPos = getCursorPosition();
+      int lineLength = getLine(cursorPos.getRow()).length();
+      setSelectionRange(Range.fromPoints(
+            cursorPos,
+            Position.create(cursorPos.getRow(), lineLength)));
+      
+      if (Desktop.isDesktop())
+         commands_.cutDummy().execute();
+      else
+      {
+         yankedText_ = getSelectionValue();
+         replaceSelection("");
+      }
+   }
+   
+   public void pasteLastYank()
+   {
+      if (Desktop.isDesktop())
+         commands_.pasteDummy().execute();
+      else
+      {
+         if (yankedText_ == null)
+            return;
+         
+         replaceSelection(yankedText_);
+         setCursorPosition(getSelectionEnd());
+      }
    }
 
    private void indentPastedRange(Range range)
@@ -404,11 +491,13 @@ public class AceEditor implements DocDisplay,
    @Inject
    void initialize(CodeToolsServerOperations server,
                    UIPrefs uiPrefs,
-                   CollabEditor collab)
+                   CollabEditor collab,
+                   Commands commands)
    {
       server_ = server;
       uiPrefs_ = uiPrefs;
       collab_ = collab;
+      commands_ = commands;
    }
 
    public TextFileType getFileType()
@@ -2649,6 +2738,7 @@ public class AceEditor implements DocDisplay,
    private CodeToolsServerOperations server_;
    private UIPrefs uiPrefs_;
    private CollabEditor collab_;
+   private Commands commands_;
    private TextFileType fileType_;
    private boolean passwordMode_;
    private boolean useEmacsKeybindings_ = false;
@@ -2722,5 +2812,6 @@ public class AceEditor implements DocDisplay,
 
    private long lastCursorChangedTime_;
    private long lastModifiedTime_;
+   private String yankedText_ = null;
 
 }

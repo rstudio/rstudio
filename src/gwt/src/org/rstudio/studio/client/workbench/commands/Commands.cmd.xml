@@ -488,9 +488,6 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="renameInFile" value="Cmd+Alt+Shift+M" />
          <shortcut refid="insertRoxygenSkeleton" value="Cmd+Shift+Alt+R" title="Insert Roxygen Skeleton" />
          <shortcut refid="insertSnippet" value="Shift+Tab" title="Insert Snippet"/>
-         <shortcut refid="yankBeforeCursor" value="Ctrl+U" disableModes="vim"/>
-         <shortcut refid="yankAfterCursor" value="Ctrl+K" disableModes="vim"/>
-         <shortcut refid="pasteLastYank" value="Ctrl+Y" disableModes="vim"/>
       </shortcutgroup>
       <shortcutgroup name="Source Navigation">
          <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>
