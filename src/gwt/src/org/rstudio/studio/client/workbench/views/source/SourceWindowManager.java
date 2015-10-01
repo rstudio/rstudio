@@ -359,19 +359,20 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    public void closeAllSatelliteDocs(final String caption, 
          final Command onCompleted)
    {
-      doForAllSourceWindows(new OperationWithInput<Pair<String,WindowEx>>()
+      doForAllSourceWindows(new SourceWindowCommand()
       {
          @Override
-         public void execute(Pair<String, WindowEx> input)
+         public void execute(String windowId, WindowEx window,
+               Command continuation)
          {
-            // focus the satellite and ask it to close all its docs
-            input.second.focus();
-            closeAllDocs(input.second, caption, onCompleted);
+            window.focus();
+            closeAllDocs(window, caption, continuation);
          }
-      });
+      }, onCompleted);
       
-      // return focus to the main window when done
-      pSatellite_.get().focusMainWindow();
+      // return focus to the main window when finished
+      if (Desktop.isDesktop() || !isMainSourceWindow())
+         pSatellite_.get().focusMainWindow();
    }
    
    public ArrayList<UnsavedChangesTarget> getAllSatelliteUnsavedChanges()
