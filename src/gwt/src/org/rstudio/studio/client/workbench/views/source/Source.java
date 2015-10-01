@@ -96,6 +96,8 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
+import org.rstudio.studio.client.workbench.views.console.shell.Shell;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataHandler;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
@@ -108,6 +110,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.profiler.Profile
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkIconsManager;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
@@ -115,6 +118,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DisplayChunkOptionsEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunksEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
@@ -227,7 +231,8 @@ public class Source implements InsertSourceHandler,
                  RnwWeaveRegistry rnwWeaveRegistry,
                  ChunkIconsManager chunkIconsManager,
                  DependencyManager dependencyManager,
-                 SourceWindowManager windowManager)
+                 SourceWindowManager windowManager,
+                 Shell shell)
    {
       commands_ = commands;
       view_ = view;
@@ -248,6 +253,7 @@ public class Source implements InsertSourceHandler,
       chunkIconsManager_ = chunkIconsManager;
       dependencyManager_ = dependencyManager;
       windowManager_ = windowManager;
+      shell_ = shell;
       
       vimCommands_ = new SourceVimCommands();
       
@@ -3677,9 +3683,96 @@ public class Source implements InsertSourceHandler,
       }
    }
    
+   private DocDisplay getActiveDocDisplay()
+   {
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+      {
+         TextEditingTarget target = (TextEditingTarget) activeEditor_;
+         DocDisplay docDisplay = target.getDocDisplay();
+         if (docDisplay.isFocused())
+            return docDisplay;
+      }
+      else
+      {
+         Shell.Display shellDisplay = shell_.getDisplay();
+         InputEditorDisplay editorDisplay = shellDisplay.getInputEditorDisplay();
+         if (editorDisplay instanceof DocDisplay)
+         {
+            DocDisplay docDisplay = (DocDisplay) editorDisplay;
+            if (docDisplay.isFocused())
+               return docDisplay;
+         }
+      }
+      
+      return null;
+   }
+   
+   @Handler
+   void onYankBeforeCursor()
+   {
+      DocDisplay docDisplay = getActiveDocDisplay();
+      if (docDisplay == null)
+         return;
+      
+      Position cursorPos = docDisplay.getCursorPosition();
+      docDisplay.setSelectionRange(Range.fromPoints(
+            Position.create(cursorPos.getRow(), 0),
+            cursorPos));
+      
+      if (Desktop.isDesktop())
+         commands_.cutDummy().execute();
+      else
+      {
+         yankedText_ = docDisplay.getSelectionValue();
+         docDisplay.replaceSelection("");
+      }
+   }
+   
+   @Handler
+   void onYankAfterCursor()
+   {
+      DocDisplay docDisplay = getActiveDocDisplay();
+      if (docDisplay == null)
+         return;
+      
+      Position cursorPos = docDisplay.getCursorPosition();
+      int lineLength = docDisplay.getLine(cursorPos.getRow()).length();
+      docDisplay.setSelectionRange(Range.fromPoints(
+            cursorPos,
+            Position.create(cursorPos.getRow(), lineLength)));
+      
+      if (Desktop.isDesktop())
+         commands_.cutDummy().execute();
+      else
+      {
+         yankedText_ = docDisplay.getSelectionValue();
+         docDisplay.replaceSelection("");
+      }
+   }
+   
+   @Handler
+   void onPasteLastYank()
+   {
+      if (Desktop.isDesktop())
+         commands_.pasteDummy().execute();
+      else
+      {
+         if (yankedText_ == null)
+            return;
+         
+         DocDisplay docDisplay = getActiveDocDisplay();
+         if (docDisplay == null)
+            return;
+         
+         docDisplay.replaceSelection(yankedText_);
+         docDisplay.setCursorPosition(docDisplay.getSelectionEnd());
+      }
+   }
+   
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();
    ArrayList<Integer> tabOrder_ = new ArrayList<Integer>();
    private EditingTarget activeEditor_;
+   private final Shell shell_;
    private final Commands commands_;
    private final Display view_;
    private final SourceServerOperations server_;
@@ -3717,4 +3810,6 @@ public class Source implements InsertSourceHandler,
    
    private ChunkIconsManager chunkIconsManager_;
    private DependencyManager dependencyManager_;
+   
+   private String yankedText_ = null;
 }
