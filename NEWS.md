@@ -31,6 +31,7 @@
 * Reorganize toolbar commands/menu for improved discoverability
 * Added Run Setup Chunk command
 * Updated embedded pandoc to v1.15.0.6
+* Support additional options for MS Word (table of contents, keep markdown)
 
 ### Data Viewer
 
