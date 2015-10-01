@@ -5644,7 +5644,6 @@ public class TextEditingTarget implements
    private boolean isDebugWarningVisible_ = false;
    private boolean isBreakpointWarningVisible_ = false;
    private String extendedType_;
-   private String yankedText_ = null;
 
    private abstract class RefactorServerRequestCallback
            extends ServerRequestCallback<JsArrayString>
