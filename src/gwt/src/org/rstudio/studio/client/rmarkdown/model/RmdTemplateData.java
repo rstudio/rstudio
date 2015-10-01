@@ -27,7 +27,7 @@ public class RmdTemplateData
             format_name: "html_document",
             format_ui_name: "HTML",
             format_extension: "html",
-            format_options: [ "toc", "highlight", "theme", "css", "fig_width", 
+            format_options: [ "toc", "toc_depth", "highlight", "theme", "css", "fig_width", 
                               "fig_height", "fig_caption", "number_sections",
                               "smart", "self_contained", "keep_md" ],
             format_notes: "Recommended format for authoring (you can switch to PDF or Word output anytime)."
@@ -62,7 +62,8 @@ public class RmdTemplateData
             option_name: "toc_depth",
             option_ui_name: "Depth of headers for table of contents", 
             option_type: "integer", 
-            option_default: "2"
+            option_transferable: true,
+            option_default: "3"
             },
             {
             option_name: "self_contained",
