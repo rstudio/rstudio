@@ -368,11 +368,20 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             window.focus();
             closeAllDocs(window, caption, continuation);
          }
-      }, onCompleted);
-      
-      // return focus to the main window when finished
-      if (Desktop.isDesktop() || !isMainSourceWindow())
-         pSatellite_.get().focusMainWindow();
+      }, 
+      new Command()
+      {
+         @Override
+         public void execute()
+         {
+            // return focus to the main window when finished
+            if (Desktop.isDesktop() || !isMainSourceWindow())
+               pSatellite_.get().focusMainWindow();
+            
+            // complete operation
+            onCompleted.execute();
+         }
+      });
    }
    
    public ArrayList<UnsavedChangesTarget> getAllSatelliteUnsavedChanges()
