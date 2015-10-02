@@ -67,7 +67,9 @@ bool setWindowGeometry(NSWindow* window, NSString* geometry)
    return instance_;
 }
 
-- (id) initWithURL: (NSURL*) url openFile: (NSString*) openFile
+- (id) initWithURL: (NSURL*) url
+          geometry: (NSRect*) frameRect
+          openFile: (NSString*) openFile
 {
    if (self = [super initWithURLRequest: [NSURLRequest requestWithURL: url]
                                    name: nil
@@ -87,18 +89,25 @@ bool setWindowGeometry(NSWindow* window, NSString* geometry)
       
       // create the main menu
       menu_ = [[MainFrameMenu alloc] init];
-      
+
       bool hasInitialGeometry = false;
-      NSArray* args = [[NSProcessInfo processInfo] arguments];
-      for (NSUInteger i = 0; i < [args count]; i++)
+      if (frameRect == nil)
       {
-         NSString* str = [args objectAtIndex: i];
-         if ([str isEqualToString: kInitialGeometryArg] &&
-             (i + 1) < [args count])
+         NSArray* args = [[NSProcessInfo processInfo] arguments];
+         for (NSUInteger i = 0; i < [args count]; i++)
          {
-            hasInitialGeometry = setWindowGeometry(
-               [self window], [args objectAtIndex: i+1]);
+            NSString* str = [args objectAtIndex: i];
+            if ([str isEqualToString: kInitialGeometryArg] &&
+                (i + 1) < [args count])
+            {
+               hasInitialGeometry = setWindowGeometry(
+                  [self window], [args objectAtIndex: i+1]);
+            }
          }
+      }
+      else
+      {
+         [[self window] setFrame: *frameRect display: TRUE];
       }
       
       // auto-save window position unless we're using manually supplied geometry

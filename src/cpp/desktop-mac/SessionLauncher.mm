@@ -148,6 +148,7 @@ Error SessionLauncher::launchFirstSession(const std::string& filename)
       NSString* openFile = [NSString stringWithUTF8String: filename.c_str()];
       NSString* url = [NSString stringWithUTF8String: appUrl.c_str()];
       [[MainFrameController alloc] initWithURL: [NSURL URLWithString: url]
+                                      geometry: nil
                                       openFile: openFile];
 
       // activate the app
@@ -178,7 +179,15 @@ void SessionLauncher::launchNextSession(bool reload)
       {
          NSURL* nsurl = [NSURL URLWithString:
                            [NSString stringWithUTF8String: url.c_str()]];
-         [[MainFrameController instance] loadURL: nsurl];
+         // record the app window size/position, then shut it down
+         NSWindow* mainWindow = [[MainFrameController instance] window];
+         NSRect frameRect = [mainWindow frame];
+         [mainWindow close];
+
+         // create a new window at the same location
+         [[MainFrameController alloc] initWithURL: nsurl
+                                         geometry: &frameRect
+                                         openFile: nil];
       }
    }
    else
