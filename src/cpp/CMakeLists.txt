@@ -42,7 +42,7 @@ if(UNIX)
    add_definitions(-Wall -pthread)
 
    if(APPLE)
-      add_definitions(-Wsign-compare)
+      add_definitions(-Wsign-compare -Wno-unused-local-typedefs)
    endif()
 
    # workaround boost bug (https://svn.boost.org/trac/boost/ticket/4568)
