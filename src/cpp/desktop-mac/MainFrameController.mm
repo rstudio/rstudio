@@ -67,9 +67,12 @@ bool setWindowGeometry(NSWindow* window, NSString* geometry)
    return instance_;
 }
 
-- (id) initWithURL: (NSURL*) url openFile: (NSString*) openFile
+- (id) initWithURL: (NSURL*) url
+        hostWindow: (NSWindow*) window
+          openFile: (NSString*) openFile
 {
    if (self = [super initWithURLRequest: [NSURLRequest requestWithURL: url]
+                             hostWindow: window
                                    name: nil
                              clientName: nil
                   allowExternalNavigate: false])

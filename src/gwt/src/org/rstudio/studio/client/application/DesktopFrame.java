@@ -143,6 +143,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void showKeyboardShortcutHelp();
    
    void reloadZoomWindow();
+   void reloadMainWindow();
    
    void setViewerUrl(String url);
    void reloadViewerZoomWindow(String url);

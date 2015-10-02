@@ -488,6 +488,7 @@ private:
       // self-freeing so don't auto-release
       controller = [[WebViewController alloc] initWithURLRequest:
                   [NSURLRequest requestWithURL: [NSURL URLWithString: url]]
+                                    hostWindow: nil
                                           name: windowName
                                     clientName: name
                          allowExternalNavigate: false];
@@ -975,6 +976,12 @@ private:
    if (controller) {
       [[[controller webView] mainFrame] loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:url]]];
    }
+}
+
+- (void) reloadMainWindow
+{
+   NSLog(@"reloading main window");
+   [[[MainFrameController instance] webView] reload: (id) self];
 }
 
 - (NSString*) getScrollingCompensationType

@@ -15,9 +15,13 @@
 package org.rstudio.studio.client.application;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.BaseExpression;
@@ -172,6 +176,22 @@ public class DesktopHooks
    String getSumatraPdfExePath()
    {
       return session_.getSessionInfo().getSumatraPdfExePath();
+   }
+   
+   void loadUrl(final String url)
+   {
+      Debug.devlog("desktop requested load for " + url);
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            if (url == Window.Location.getHref())
+               Window.Location.reload();
+            else
+               Window.Location.replace(url);
+         }
+      }.schedule(100);
    }
 
    private final Commands commands_;

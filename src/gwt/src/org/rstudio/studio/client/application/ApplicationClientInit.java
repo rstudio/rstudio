@@ -172,7 +172,10 @@ public class ApplicationClientInit
       Timer delayTimer = new Timer() {
          public void run()
          {
-            Window.Location.reload();
+            if (Desktop.isDesktop())
+               Desktop.getFrame().reloadMainWindow();
+            else
+               Window.Location.reload();
          }     
       };
       delayTimer.schedule(delayMs);

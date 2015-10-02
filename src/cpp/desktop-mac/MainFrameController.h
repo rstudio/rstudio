@@ -32,7 +32,9 @@
 + (MainFrameController*) instance;
 
 // designated initializer
-- (id) initWithURL: (NSURL*) url openFile: (NSString*) openFile;
+- (id) initWithURL: (NSURL*) url
+        hostWindow: (NSWindow*) window
+          openFile: (NSString*) openFile;
 
 // noification of workbench initialized
 - (void) onWorkbenchInitialized;

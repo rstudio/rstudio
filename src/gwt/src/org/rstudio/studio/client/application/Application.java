@@ -459,9 +459,19 @@ public class Application implements ApplicationEventHandlers
          public void run()
          { 
             if (baseUrlOnly)
-               Window.Location.replace(GWT.getHostPageBaseURL());
+            {
+               if (Desktop.isDesktop())
+                  Desktop.getFrame().reloadMainWindow();
+               else
+                  Window.Location.replace(GWT.getHostPageBaseURL());
+            }
             else
-               Window.Location.reload();
+            {
+               if (Desktop.isDesktop())
+                  Desktop.getFrame().reloadMainWindow();
+               else
+                  Window.Location.reload();
+            }
          }
       }.schedule(100);
    }

@@ -38,12 +38,16 @@
 
 // The designated initializer
 - (id)initWithURLRequest: (NSURLRequest*) request
+              hostWindow: (NSWindow*) window
                     name: (NSString*) name
               clientName: (NSString*) clientName
    allowExternalNavigate: (bool) allowExternalNavigate;
 
 // load a new url
 - (void) loadURL: (NSURL*) url;
+
+// set the base URL
+- (void) setBaseURL: (NSURL*) url;
 
 // set the current viewer url
 - (void) setViewerURL: (NSString*) url;

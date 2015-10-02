@@ -161,6 +161,7 @@ static PendingWindow pendingWindow_;
 }
 
 - (id)initWithURLRequest: (NSURLRequest*) request
+              hostWindow: (NSWindow*) window
                     name: (NSString*) name
               clientName: (NSString*) clientName
    allowExternalNavigate: (bool) allowExternalNavigate
@@ -173,16 +174,25 @@ static PendingWindow pendingWindow_;
    allowExternalNav_ = allowExternalNavigate;
    
    // create window and become it's delegate
-   NSRect frameRect =  NSMakeRect(20, 20, 1024, 768);
-   NSWindow* window = [[[NSWindow alloc] initWithContentRect: frameRect
-                                          styleMask: NSTitledWindowMask |
-                                                     NSClosableWindowMask |
-                                                     NSResizableWindowMask |
-                                                     NSMiniaturizableWindowMask
-                                          backing: NSBackingStoreBuffered
-                                          defer: NO] autorelease];
+   NSRect frameRect;
+   if (window == nil)
+   {
+      frameRect =  NSMakeRect(20, 20, 1024, 768);
+      window = [[[NSWindow alloc] initWithContentRect: frameRect
+                                             styleMask: NSTitledWindowMask |
+                                                        NSClosableWindowMask |
+                                                        NSResizableWindowMask |
+                                                        NSMiniaturizableWindowMask
+                                             backing: NSBackingStoreBuffered
+                                             defer: NO] autorelease];
+      [window setTitle: @"RStudio"];
+   }
+   else
+   {
+      frameRect = [window frame];
+   }
+   
    [window setDelegate: self];
-   [window setTitle: @"RStudio"];
    
    // initialize superclass then continue
    if (self = [super initWithWindow: window])
@@ -199,7 +209,8 @@ static PendingWindow pendingWindow_;
       [webView_ setResourceLoadDelegate: (id) self];
       [webView_ setPolicyDelegate: (id) self];
       [webView_ setKeyEquivDelegate: (id) self];
-      
+      [webView_ setHostWindow: window];
+
       // respect the current zoom level
       [self syncZoomLevel];
       
@@ -238,6 +249,15 @@ static PendingWindow pendingWindow_;
 
 - (void) loadURL: (NSURL*) url
 {
+   [self setBaseURL: url];
+   
+   // load the webview
+   NSURLRequest* request = [NSURLRequest requestWithURL: baseUrl_];
+   [[[self webView] mainFrame] loadRequest: request];
+}
+
+- (void) setBaseURL: (NSURL*) url
+{
    // record base url
    if(url != baseUrl_)
    {
@@ -245,10 +265,6 @@ static PendingWindow pendingWindow_;
       [baseUrl_ release];
       baseUrl_ = url;
    }
-   
-   // load the webview
-   NSURLRequest* request = [NSURLRequest requestWithURL: baseUrl_];
-   [[[self webView] mainFrame] loadRequest: request];
 }
 
 - (void) syncZoomLevel
@@ -315,7 +331,7 @@ static PendingWindow pendingWindow_;
 - (void) windowDidLoad
 {
    [super windowDidLoad];
-   
+   NSLog(@"web view loaded %@", baseUrl_);
    // more post-load initialization
 }
  
@@ -324,6 +340,7 @@ static PendingWindow pendingWindow_;
         forFrame:(WebFrame *) frame
 {
    // set window title when main frame title is available
+   NSLog(@"web view got title %@ for %@", title, baseUrl_);
    if (frame == [webView_ mainFrame])
       [[self window] setTitle: title];
 }
@@ -396,6 +413,8 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
    [webView_ setResourceLoadDelegate: nil];
    [webView_ setPolicyDelegate: nil];
    [webView_ setKeyEquivDelegate: nil];
+   [webView_ setHostWindow: nil];
+
    
    [self autorelease];
 }
@@ -800,6 +819,8 @@ decidePolicyForMIMEType: (NSDictionary *) actionInformation
       didClearWindowObject: (WebScriptObject *) windowObject
                   forFrame: (WebFrame *) frame
 {
+   NSLog(@"cleared script object for %@", baseUrl_);
+
    // on the desktop, the main frame needs to be notified when a child window
    // is opened in order to communicate with the child window's window object.
    // extract the window object from the child...

@@ -29,6 +29,7 @@
    allowExternalNavigate: (bool) allowExternalNavigate
 {
    if (self = [super initWithURLRequest: request
+                             hostWindow: nil
                                    name: name
                              clientName: clientName
                   allowExternalNavigate: allowExternalNavigate])
