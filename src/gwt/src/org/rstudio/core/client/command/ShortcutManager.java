@@ -22,11 +22,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 import org.rstudio.studio.client.RStudioGinjector;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
@@ -443,6 +445,12 @@ public class ShortcutManager implements NativePreviewHandler,
       }
 
       return command != null;
+   }
+   
+   public void onEditorCommandExecuted(JavaScriptObject object)
+   {
+      Debug.logObject(object);
+      keyBuffer_.clear();
    }
    
    private int disableCount_ = 0;
