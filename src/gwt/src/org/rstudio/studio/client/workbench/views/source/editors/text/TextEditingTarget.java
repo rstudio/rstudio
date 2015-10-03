@@ -757,7 +757,11 @@ public class TextEditingTarget implements
                   if (isIncrementalSearchCommand(data))
                   {
                      String message = getIncrementalSearchMessage();
-                     if (!StringUtil.isNullOrEmpty(message))
+                     if (StringUtil.isNullOrEmpty(message))
+                     {
+                        view_.getStatusBar().hideMessage();
+                     }
+                     else
                      {
                         view_.getStatusBar().showMessage(
                               getIncrementalSearchMessage(),
@@ -778,6 +782,7 @@ public class TextEditingTarget implements
          this.message = function(msg) {
             @org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget::setIncrementalSearchMessage(Ljava/lang/String;)(msg);
          };
+         
       }).call(IncrementalSearch.prototype);
    }-*/;
    
