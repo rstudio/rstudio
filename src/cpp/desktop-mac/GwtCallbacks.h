@@ -26,5 +26,6 @@ enum MessageType
 // designated initializer
 - (id) initWithUIDelegate: (id<GwtCallbacksUIDelegate>) uiDelegate;
 
+- (void) openProjectInNewWindow: (NSString*) projectFilePath;
 
 @end

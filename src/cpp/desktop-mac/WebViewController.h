@@ -14,6 +14,7 @@
    NSURL* baseUrl_;
    NSString* viewerUrl_;
    bool allowExternalNav_;
+   GwtCallbacks* gwtCallbacks_;
 }
 
 + (WebViewController*) windowNamed: (NSString*) name;

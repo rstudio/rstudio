@@ -587,14 +587,27 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                // notify the desktop frame that we are about to quit
                if (Desktop.isDesktop())
                {
-                  Desktop.getFrame().setPendingQuit(switchToProject_ != null ?
-                           DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD :
-                           DesktopFrame.PENDING_QUIT_AND_EXIT);   
+                  if (Desktop.getFrame().isCocoa() && 
+                      switchToProject_ != null &&
+                      switchToProject_ != "none")
+                  {
+                     // on Cocoa there's an ugly intermittent crash that occurs 
+                     // when we reload, so exit this instance and start a new
+                     // one when switching projects
+                     Desktop.getFrame().setPendingProject(switchToProject_);
+                  }
+                  else
+                  {
+                     Desktop.getFrame().setPendingQuit(switchToProject_ != null ?
+                              DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD :
+                              DesktopFrame.PENDING_QUIT_AND_EXIT);
+                  }
                }
                
                server_.quitSession(
                   saveChanges_,
-                  switchToProject_,
+                  Desktop.isDesktop() && Desktop.getFrame().isCocoa() ?
+                     null : switchToProject_,
                   new ServerRequestCallback<Boolean>()
                   {
                      @Override

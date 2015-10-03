@@ -593,9 +593,9 @@ decidePolicyForMIMEType: (NSDictionary *) actionInformation
 - (void) registerDesktopObject
 {
    id win = [webView_ windowScriptObject];
-   GwtCallbacks* gwtCallbacks =
+   gwtCallbacks_ =
             [[[GwtCallbacks alloc] initWithUIDelegate: self] autorelease];
-   [win setValue: gwtCallbacks forKey:@"desktop"];
+   [win setValue: gwtCallbacks_ forKey:@"desktop"];
 }
 
 - (BOOL) performKeyEquivalent: (NSEvent *)theEvent
