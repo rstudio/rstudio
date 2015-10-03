@@ -25,7 +25,7 @@ public class AceAfterCommandExecutedEvent extends GwtEvent<AceAfterCommandExecut
       event_ = event;
    }
    
-   public JavaScriptObject getEvent()
+   public JavaScriptObject getCommandData()
    {
       return event_;
    }
