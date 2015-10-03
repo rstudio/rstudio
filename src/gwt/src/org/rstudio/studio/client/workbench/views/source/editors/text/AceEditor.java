@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -40,6 +41,7 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
@@ -254,6 +256,7 @@ public class AceEditor implements DocDisplay,
    {
       widget_ = new AceEditorWidget();
       snippets_ = new SnippetHelper(this);
+      editorEventListeners_ = new ArrayList<HandlerRegistration>();
       ElementIds.assignElementId(widget_.getElement(),
                                  ElementIds.SOURCE_TEXT_EDITOR);
 
@@ -687,6 +690,12 @@ public class AceEditor implements DocDisplay,
 
    private void updateKeyboardHandlers()
    {
+      // clear out existing Vim handlers (they will be refreshed if necessary)
+      for (HandlerRegistration handler : editorEventListeners_)
+         if (handler != null)
+            handler.removeHandler();
+      editorEventListeners_.clear();
+         
       // save and restore Vim marks as they can be lost when refreshing
       // the keyboard handlers. this is necessary as keyboard handlers are
       // regenerated on each document save, and clearing the Vim handler will
@@ -709,13 +718,60 @@ public class AceEditor implements DocDisplay,
       // add the previewer
       widget_.getEditor().addKeyboardHandler(previewer.getKeyboardHandler());
       
-      // attach 'afterExec' handlers to all command handlers
-      attachAfterExecHandlers(widget_.getEditor());
-      listenForVimEvents(widget_.getEditor());
+      // Listen for 'afterExec' events from keyboard handlers
+      JsArray<JsObject> handlers = getKeyboardHandlers(widget_.getEditor());
+      for (JsObject handler : JsUtil.asIterable(handlers))
+      {
+         if (handler == null || !handler.hasKey("on"))
+            continue;
+         
+         editorEventListeners_.add(AceEditorNative.addEventListener(
+               handler,
+               "afterExec",
+               new CommandWithArg<JavaScriptObject>()
+               {
+                  @Override
+                  public void execute(JavaScriptObject event)
+                  {
+                     events_.fireEvent(new AceAfterCommandExecutedEvent(event));
+                  }
+               }));
+      }
+         
+      if (useVimMode_)
+      {
+         // Signal if the vim mode changes.
+         editorEventListeners_.add(AceEditorNative.addEventListener(
+               getCodeMirrorObject(widget_.getEditor()),
+               "vim-mode-change",
+               new CommandWithArg<Void>()
+               {
+                  @Override
+                  public void execute(Void arg)
+                  {
+                     events_.fireEvent(new AceAfterCommandExecutedEvent(
+                           createVimModeChangedCommand()));
+                  }
+               }));
+      }
       
       if (useVimMode_)
          widget_.getEditor().setMarks(marks);
    }
+   
+   private static final native JavaScriptObject createVimModeChangedCommand() /*-{
+      return {
+         name: "vimModeChanged"
+      };
+   }-*/;
+   
+   private static final native JsArray<JsObject> getKeyboardHandlers(AceEditorNative editor) /*-{
+      return editor.keyBinding.$handlers || [];
+   }-*/;
+   
+   private static final native JavaScriptObject getCodeMirrorObject(AceEditorNative editor) /*-{
+      return editor.state.cm;
+   }-*/;
    
    private final void onAceCommandExecuted(JavaScriptObject event)
    {
@@ -726,76 +782,6 @@ public class AceEditor implements DocDisplay,
    {
       events_.fireEvent(new AceAfterCommandExecutedEvent(event));
    }
-   
-   private final native void listenForVimEvents(AceEditorNative editor) /*-{
-      var self = this;
-      var cm =
-         editor.state &&
-         editor.state.cm;
-      
-      if (cm == null)
-         return;
-      
-      if (cm.$rstudio == null)
-         cm.$rstudio = {};
-      
-      if (cm.$rstudio.$vimCallback != null)
-         return;
-         
-      var callback = $entry(function(e) {
-         var command = {
-            name: "vimModeChange",
-            data: e
-         };
-         self.@org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor::onVimEvent(Lcom/google/gwt/core/client/JavaScriptObject;)(command);
-      });
-      
-      cm.$rstudio.$vimCallback = callback;
-      cm.on("vim-mode-change", callback);
-      
-   }-*/;
-   
-   private final native void attachAfterExecHandlers(AceEditorNative editor) /*-{
-      
-      var self = this;
-      
-      // Grab all attached keyboard handlers
-      var handlers = editor.keyBinding.$handlers;
-      if (handlers == null)
-         return;
-         
-      // Loop through and fire GWT events from Ace events.
-      for (var i = 0; i < handlers.length; i++) {
-         
-         var handler = handlers[i];
-         
-         // Ensure '$rstudio' object injected.
-         if (handler.$rstudio == null)
-            handler.$rstudio = {};
-         
-         // No-op if we already have a handler.
-         var rsHandler = handler.$rstudio.$afterExecHandler;
-         if (rsHandler != null)
-            continue;
-         
-         // NOTE: Not all handlers will be able to emit Ace events (e.g.
-         // our own custom previewer won't)
-         if (handler.on) {
-            
-            // Generate callback, and attach.
-            var callback = $entry(function(e) {
-               self.@org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor::onAceCommandExecuted(Lcom/google/gwt/core/client/JavaScriptObject;)(e);
-            });
-
-            handler.on("afterExec", callback);
-
-            // Cache callback so it can be de-registered when
-            // widget is destroyed.
-            handler.$rstudio.$afterExecHandler = callback;
-         }
-      }
-      
-   }-*/;
 
    public String getCode()
    {
@@ -2901,5 +2887,7 @@ public class AceEditor implements DocDisplay,
    private long lastCursorChangedTime_;
    private long lastModifiedTime_;
    private String yankedText_ = null;
+   
+   private final List<HandlerRegistration> editorEventListeners_;
 
 }

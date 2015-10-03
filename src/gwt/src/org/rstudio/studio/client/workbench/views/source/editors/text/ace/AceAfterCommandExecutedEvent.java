@@ -20,6 +20,11 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class AceAfterCommandExecutedEvent extends GwtEvent<AceAfterCommandExecutedEvent.Handler>
 {
+   public AceAfterCommandExecutedEvent()
+   {
+      event_ = dummyEvent();
+   }
+   
    public AceAfterCommandExecutedEvent(JavaScriptObject event)
    {
       event_ = event;
@@ -31,6 +36,14 @@ public class AceAfterCommandExecutedEvent extends GwtEvent<AceAfterCommandExecut
    }
    
    private final JavaScriptObject event_;
+   
+   private static native final JavaScriptObject dummyEvent() /*-{
+      return {
+         command: {
+            name: "dummy"
+         }
+      };
+   }-*/;
    
    // Boilerplate ----
    
