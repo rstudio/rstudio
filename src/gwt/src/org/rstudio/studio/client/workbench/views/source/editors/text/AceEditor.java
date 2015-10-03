@@ -57,6 +57,7 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
@@ -492,12 +493,14 @@ public class AceEditor implements DocDisplay,
    void initialize(CodeToolsServerOperations server,
                    UIPrefs uiPrefs,
                    CollabEditor collab,
-                   Commands commands)
+                   Commands commands,
+                   EventBus events)
    {
       server_ = server;
       uiPrefs_ = uiPrefs;
       collab_ = collab;
       commands_ = commands;
+      events_ = events;
    }
 
    public TextFileType getFileType()
@@ -706,9 +709,59 @@ public class AceEditor implements DocDisplay,
       // add the previewer
       widget_.getEditor().addKeyboardHandler(previewer.getKeyboardHandler());
       
+      // attach 'afterExec' handlers to all command handlers
+      attachAfterExecHandlers(widget_.getEditor());
+      
       if (useVimMode_)
          widget_.getEditor().setMarks(marks);
    }
+   
+   private final void onAceCommandExecuted(JavaScriptObject event)
+   {
+      events_.fireEvent(new AceAfterCommandExecutedEvent(event));
+   }
+   
+   private final native void attachAfterExecHandlers(AceEditorNative editor) /*-{
+      
+      var self = this;
+      
+      // Grab all attached keyboard handlers
+      var handlers = editor.keyBinding.$handlers;
+      if (handlers == null)
+         return;
+         
+      // Loop through and fire GWT events from Ace events.
+      for (var i = 0; i < handlers.length; i++) {
+         
+         var handler = handlers[i];
+         
+         // Ensure '$rstudio' object injected.
+         if (handler.$rstudio == null)
+            handler.$rstudio = {};
+         
+         // No-op if we already have a handler.
+         var rsHandler = handler.$rstudio.$afterExecHandler;
+         if (rsHandler != null)
+            continue;
+         
+         // NOTE: Not all handlers will be able to emit Ace events (e.g.
+         // our own custom previewer won't)
+         if (handler.on) {
+            
+            // Generate callback, and attach.
+            var callback = $entry(function(e) {
+               self.@org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor::onAceCommandExecuted(Lcom/google/gwt/core/client/JavaScriptObject;)(e);
+            });
+
+            handler.on("afterExec", callback);
+
+            // Cache callback so it can be de-registered when
+            // widget is destroyed.
+            handler.$rstudio.$afterExecHandler = callback;
+         }
+      }
+      
+   }-*/;
 
    public String getCode()
    {
@@ -2739,6 +2792,7 @@ public class AceEditor implements DocDisplay,
    private UIPrefs uiPrefs_;
    private CollabEditor collab_;
    private Commands commands_;
+   private EventBus events_;
    private TextFileType fileType_;
    private boolean passwordMode_;
    private boolean useEmacsKeybindings_ = false;

@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -42,7 +41,6 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -51,6 +49,7 @@ import org.rstudio.studio.client.events.BeginPasteEvent;
 import org.rstudio.studio.client.events.EndPasteEvent;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedEvent;
 import org.rstudio.studio.client.workbench.views.output.lint.LintResources;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
@@ -250,19 +249,6 @@ public class AceEditorWidget extends Composite
                }
             }));
       
-      aceEventHandlers_.add(AceEditorNative.addEventListener(
-            editor_.getCommandManager(),
-            "afterExec",
-            new CommandWithArg<JavaScriptObject>()
-            {
-               @Override
-               public void execute(JavaScriptObject object)
-               {
-                  Debug.logObject(object);
-                  ShortcutManager.INSTANCE.onEditorCommandExecuted(object);
-               }
-            }));
-      
       addAttachHandler(new AttachEvent.Handler()
       {
          @Override
@@ -300,7 +286,28 @@ public class AceEditorWidget extends Composite
                   maybeRemapCtrlV();
                }
             });
+      
+      events_.addHandler(
+            RStudioCommandExecutedEvent.TYPE,
+            new RStudioCommandExecutedEvent.Handler()
+            {
+               @Override
+               public void onRStudioCommandExecuted(RStudioCommandExecutedEvent event)
+               {
+                  clearKeyBuffers(editor_);
+               }
+            });
    }
+   
+   // When the 'keyBinding' field is initialized (the field holding all keyboard
+   // handlers for an Ace editor), an associated '$data' element is used to store
+   // information on keys (to allow for keyboard chaining, and so on). We refresh
+   // that data whenever an RStudio AppCommand is executed (thereby ensuring that
+   // the current keybuffer is cleared as far as Ace is concerned)
+   private static final native void clearKeyBuffers(AceEditorNative editor) /*-{
+      var keyBinding = editor.keyBinding;
+      keyBinding.$data = {editor: editor};
+   }-*/;
    
    private static native final void maybeUnmapCtrlV() /*-{
       var Vim = $wnd.require("ace/keyboard/vim").handler;

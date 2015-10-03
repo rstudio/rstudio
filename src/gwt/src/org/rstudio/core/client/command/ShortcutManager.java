@@ -22,13 +22,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceAfterCommandExecutedEvent;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
@@ -57,30 +58,47 @@ public class ShortcutManager implements NativePreviewHandler,
          @Override
          public void run()
          {
-            resetKeyBuffer();
+            keyBuffer_.clear();
          }
       };
       
+      // Defer injection because the ShortcutManager is constructed
+      // very eagerly (to allow for codegen stuff in ShortcutsEmitter
+      // to work)
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          @Override
          public void execute()
          {
             RStudioGinjector.INSTANCE.injectMembers(ShortcutManager.this);
+            events_.addHandler(
+                  AceAfterCommandExecutedEvent.TYPE,
+                  new AceAfterCommandExecutedEvent.Handler()
+                  {
+                     @Override
+                     public void onAceAfterCommandExecuted(AceAfterCommandExecutedEvent event)
+                     {
+                        keyBuffer_.clear();
+                     }
+                  });
          }
       });
       
+      // NOTE: Because this class is used as a singleton and is never
+      // destroyed it's not necessary to manage lifetime of this event handler
       Event.addNativePreviewHandler(this);
    }
    
    @Inject
    private void initialize(ApplicationCommandManager appCommands,
                            EditorCommandManager editorCommands,
-                           UserCommandManager userCommands)
+                           UserCommandManager userCommands,
+                           EventBus events)
    {
       appCommands_ = appCommands;
       editorCommands_ = editorCommands;
       userCommands_ = userCommands;
+      events_ = events;
    }
 
    public boolean isEnabled()
@@ -211,50 +229,6 @@ public class ShortcutManager implements NativePreviewHandler,
       }
    }
    
-   private void resetKeyBuffer()
-   {
-      keyBuffer_.clear();
-   }
-   
-   private boolean cancel(NativeEvent event, boolean returnValue)
-   {
-      event.stopPropagation();
-      event.preventDefault();
-      return returnValue;
-   }
-   
-   // Returns 'true' if the keyBuffer was reset, or is already empty.
-   private boolean updateKeyBuffer(NativeEvent event)
-   {
-      if (keyBuffer_.isEmpty())
-         return true;
-      
-      if (!isEnabled())
-         return false;
-      
-      // We need to let the Ace editor see prefix matches.
-      if (editorCommands_.hasPrefix(keyBuffer_))
-         return false;
-      
-      // If we have a prefix match, keep the keybuffer alive, but
-      // cancel the event (so nobody else attempts to handle it).
-      for (KeyboardShortcut shortcut : commands_.keySet())
-         if (shortcut.startsWith(keyBuffer_, true))
-            return cancel(event, false);
-      
-      for (KeyboardShortcut shortcut : customBindings_.keySet())
-         if (shortcut.startsWith(keyBuffer_, true))
-            return cancel(event, false);
-      
-      for (KeyboardShortcut shortcut : userCommands_.getKeyboardShortcuts())
-         if (shortcut.startsWith(keyBuffer_, true))
-            return cancel(event, false);
-      
-      // Otherwise, clear the keybuffer.
-      resetKeyBuffer();
-      return true;
-   }
-
    public void onKeyDown(NativeKeyDownEvent evt)
    {
       if (evt.isCanceled())
@@ -264,11 +238,8 @@ public class ShortcutManager implements NativePreviewHandler,
       if (handleKeyDown(evt.getEvent()))
       {
          evt.cancel();
-         resetKeyBuffer();
-      }
-      else
-      {
-         updateKeyBuffer(evt.getEvent());
+         keyBuffer_.clear();
+         events_.fireEvent(new RStudioCommandExecutedEvent());
       }
    }
 
@@ -283,11 +254,8 @@ public class ShortcutManager implements NativePreviewHandler,
          if (handleKeyDown(event.getNativeEvent()))
          {
             event.cancel();
-            resetKeyBuffer();
-         }
-         else
-         {
-            updateKeyBuffer(event.getNativeEvent());
+            keyBuffer_.clear();
+            events_.fireEvent(new RStudioCommandExecutedEvent());
          }
       }
    }
@@ -368,7 +336,7 @@ public class ShortcutManager implements NativePreviewHandler,
       keyBuffer_.add(e);
       KeyboardShortcut shortcut = new KeyboardShortcut(keyBuffer_);
 
-      // Check for disabled modal shortcuts if we're modal
+      // Check for disabled modal shortcuts if we're modal.
       if (editorMode_ > 0)
       {
          for (KeyboardShortcut modalShortcut: modalShortcuts_)
@@ -393,8 +361,8 @@ public class ShortcutManager implements NativePreviewHandler,
       if (dispatch(shortcut, commands_, e, maskedCommands_))
          return true;
       
+      // Did not dispatch to RStudio AppCommand -- return false
       return false;
-      
    }
    
    private boolean dispatch(KeyboardShortcut shortcut,
@@ -447,12 +415,6 @@ public class ShortcutManager implements NativePreviewHandler,
       return command != null;
    }
    
-   public void onEditorCommandExecuted(JavaScriptObject object)
-   {
-      Debug.logObject(object);
-      keyBuffer_.clear();
-   }
-   
    private int disableCount_ = 0;
    private int editorMode_ = KeyboardShortcut.MODE_NONE;
    
@@ -478,5 +440,6 @@ public class ShortcutManager implements NativePreviewHandler,
    private UserCommandManager userCommands_;
    private EditorCommandManager editorCommands_;
    @SuppressWarnings("unused") private ApplicationCommandManager appCommands_;
+   private EventBus events_;
    
 }
