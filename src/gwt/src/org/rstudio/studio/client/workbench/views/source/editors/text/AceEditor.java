@@ -711,6 +711,7 @@ public class AceEditor implements DocDisplay,
       
       // attach 'afterExec' handlers to all command handlers
       attachAfterExecHandlers(widget_.getEditor());
+      listenForVimEvents(widget_.getEditor());
       
       if (useVimMode_)
          widget_.getEditor().setMarks(marks);
@@ -720,6 +721,39 @@ public class AceEditor implements DocDisplay,
    {
       events_.fireEvent(new AceAfterCommandExecutedEvent(event));
    }
+   
+   private final void onVimEvent(JavaScriptObject event)
+   {
+      events_.fireEvent(new AceAfterCommandExecutedEvent(event));
+   }
+   
+   private final native void listenForVimEvents(AceEditorNative editor) /*-{
+      var self = this;
+      var cm =
+         editor.state &&
+         editor.state.cm;
+      
+      if (cm == null)
+         return;
+      
+      if (cm.$rstudio == null)
+         cm.$rstudio = {};
+      
+      if (cm.$rstudio.$vimCallback != null)
+         return;
+         
+      var callback = $entry(function(e) {
+         var command = {
+            name: "vimModeChange",
+            data: e
+         };
+         self.@org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor::onVimEvent(Lcom/google/gwt/core/client/JavaScriptObject;)(command);
+      });
+      
+      cm.$rstudio.$vimCallback = callback;
+      cm.on("vim-mode-change", callback);
+      
+   }-*/;
    
    private final native void attachAfterExecHandlers(AceEditorNative editor) /*-{
       

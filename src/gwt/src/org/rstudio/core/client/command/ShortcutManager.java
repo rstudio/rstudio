@@ -33,6 +33,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceAfte
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
@@ -360,6 +361,10 @@ public class ShortcutManager implements NativePreviewHandler,
       // Check for RStudio AppCommands.
       if (dispatch(shortcut, commands_, e, maskedCommands_))
          return true;
+      
+      // Check for escape -- clear the keybuffer.
+      if (e.getKeyCode() == KeyCodes.KEY_ESCAPE)
+         keyBuffer_.clear();
       
       // Did not dispatch to RStudio AppCommand -- return false
       return false;
