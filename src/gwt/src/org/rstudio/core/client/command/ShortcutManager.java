@@ -187,6 +187,7 @@ public class ShortcutManager implements NativePreviewHandler,
                         String disableModes)
    {
    
+      maxBindingLength_ = Math.max(maxBindingLength_, keys.size());
       KeyboardShortcut shortcut = 
             new KeyboardShortcut(keys, groupName, title, disableModes);
       
@@ -366,6 +367,11 @@ public class ShortcutManager implements NativePreviewHandler,
       if (e.getKeyCode() == KeyCodes.KEY_ESCAPE)
          keyBuffer_.clear();
       
+      // Clear the keybuffer if it's grown beyond the length of
+      // the longest command.
+      if (keyBuffer_.size() >= maxBindingLength_)
+         keyBuffer_.clear();
+      
       // Did not dispatch to RStudio AppCommand -- return false
       return false;
    }
@@ -440,6 +446,10 @@ public class ShortcutManager implements NativePreviewHandler,
    
    private List<KeyboardShortcut> modalShortcuts_ =
          new ArrayList<KeyboardShortcut>();
+   
+   // Assume that there will be bindings (e.g. in Ace)
+   // that accept 2 key strokes
+   private int maxBindingLength_ = 2;
    
    // Injected ----
    private UserCommandManager userCommands_;
