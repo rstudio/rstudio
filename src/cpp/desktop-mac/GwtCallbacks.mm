@@ -819,30 +819,36 @@ private:
    sessionLauncher().setPendingQuit((PendingQuit)pendingQuit);
 }
 
+- (void) openInNewWindow: (NSArray*) args
+{
+   NSString* exePath = [NSString stringWithUTF8String:
+               desktop::options().executablePath().absolutePath().c_str()];
+   [NSTask launchedTaskWithLaunchPath: exePath arguments: args];
+}
+
 - (void) openProjectInNewWindow: (NSString*) projectFilePath
 {
    projectFilePath = resolveAliasedPath(projectFilePath);
-   
-   NSString* exePath = [NSString stringWithUTF8String:
-               desktop::options().executablePath().absolutePath().c_str()];
    NSArray* args = [NSArray arrayWithObjects: projectFilePath,
                                               kInitialGeometryArg,
                                               getNewWindowGeometry(), nil];
-   
-   [NSTask launchedTaskWithLaunchPath: exePath arguments: args];
+   [self openInNewWindow: args];
+}
+
+- (void) openProjectInOverlaidNewWindow: (NSString*) projectFilePath
+{
+   projectFilePath = resolveAliasedPath(projectFilePath);
+   NSArray* args = [NSArray arrayWithObjects: projectFilePath, nil];
+   [self openInNewWindow: args];
 }
 
 - (void) openSessionInNewWindow: (NSString*) workingDirectoryPath
 {
-   workingDirectoryPath = resolveAliasedPath(workingDirectoryPath);
-   
-   NSString* exePath = [NSString stringWithUTF8String:
-                                              desktop::options().executablePath().absolutePath().c_str()];
-   
+   workingDirectoryPath = resolveAliasedPath(workingDirectoryPath);   
    core::system::setenv(kRStudioInitialWorkingDir, [workingDirectoryPath UTF8String]);
    NSArray* args = [NSArray arrayWithObjects: kInitialGeometryArg,
                    getNewWindowGeometry(), nil];
-   [NSTask launchedTaskWithLaunchPath: exePath arguments: args];
+   [self openInNewWindow: args];
 }
 
 
@@ -1038,6 +1044,12 @@ enum RS_NSActivityOptions : uint64_t
 {
    [[MainFrameController instance] setWindowTitle: title];
 }
+
+- (void) setPendingProject: (NSString*) projectPath
+{
+   [self setPendingQuit: 1];
+   [[MainFrameController instance] setPendingProject: projectPath];
+}
  
 - (NSString*) filterText: (NSString*) text
 {
@@ -1198,7 +1210,9 @@ enum RS_NSActivityOptions : uint64_t
       return @"undo";
    else if (sel == @selector(redo:))
       return @"redo";
-   
+   else if (sel == @selector(setPendingProject:))
+      return @"setPendingProject";
+      
    return nil;
 }
 
