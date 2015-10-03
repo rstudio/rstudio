@@ -20,13 +20,13 @@
 
 #include <core/FilePath.hpp>
 #include <core/SafeConvert.hpp>
+#include "Options.hpp"
 
 #import "GwtCallbacks.h"
 #import "MainFrameMenu.h"
 #import "Utils.hpp"
 
 #include "SessionLauncher.hpp"
-
 
 
 using namespace rstudio;
@@ -80,6 +80,7 @@ bool setWindowGeometry(NSWindow* window, NSString* geometry)
       // initialize flags
       quitConfirmed_ = NO;
       firstWorkbenchInitialized_ = NO;
+      pendingProject_ = nil;
       
       // retain openFile request
       if (openFile)
@@ -196,6 +197,11 @@ bool setWindowGeometry(NSWindow* window, NSString* geometry)
    [[self window] setTitle: title];
 }
 
+- (void) setPendingProject: (NSString*) path
+{
+   pendingProject_ = [path retain];
+}
+
 
 // whenever the list of running applications changes then check to see
 // whether we should show project name labels on our dock tile (do it
@@ -263,6 +269,13 @@ bool setWindowGeometry(NSWindow* window, NSString* geometry)
 - (void) quit
 {
    quitConfirmed_ = YES;
+   if (pendingProject_ != nil)
+   {
+      [gwtCallbacks_ openProjectInOverlaidNewWindow: pendingProject_];
+      [pendingProject_ release];
+      pendingProject_ = nil;
+      [NSThread sleepForTimeInterval:1.0f];
+   }
    [[self window] performClose: self];
 }
 
