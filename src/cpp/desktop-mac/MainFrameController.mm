@@ -278,7 +278,8 @@ bool setWindowGeometry(NSWindow* window, NSString* geometry)
    // parse version info out of user agent string
    boost::regex re("^.*?AppleWebKit/(\\d+).*$");
    boost::smatch match;
-   if (boost::regex_match(std::string([userAgent UTF8String]), match, re))
+   std::string userAgentStr([userAgent UTF8String]);
+   if (boost::regex_match(userAgentStr, match, re))
    {
       int version = core::safe_convert::stringTo<int>(match[1], 0);
       if (version < 534)
