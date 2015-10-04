@@ -18,8 +18,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
@@ -180,16 +182,33 @@ public class ShortcutManager implements NativePreviewHandler,
       register(keys, command, "", "", "");
    }
    
+   private void updateKeyPrefixes(KeyboardShortcut shortcut)
+   {
+      KeySequence ks = shortcut.getKeySequence();
+      if (ks.size() <= 1)
+         return;
+      
+      KeySequence keys = new KeySequence();
+      for (int i = 0; i < ks.size() - 1; i++)
+      {
+         keys.add(ks.get(i));
+         prefixes_.add(keys.clone());
+      }
+   }
+   
    public void register(KeySequence keys,
                         AppCommand command,
                         String groupName,
                         String title,
                         String disableModes)
    {
-   
-      maxBindingLength_ = Math.max(maxBindingLength_, keys.size());
       KeyboardShortcut shortcut = 
             new KeyboardShortcut(keys, groupName, title, disableModes);
+      
+      // Update state related to key dispatch.
+      maxBindingLength_ = Math.max(maxBindingLength_, keys.size());
+      updateKeyPrefixes(shortcut);
+         
       
       if (command == null)
       {
@@ -337,7 +356,7 @@ public class ShortcutManager implements NativePreviewHandler,
       
       keyBuffer_.add(e);
       KeyboardShortcut shortcut = new KeyboardShortcut(keyBuffer_);
-
+      
       // Check for disabled modal shortcuts if we're modal.
       if (editorMode_ > 0)
       {
@@ -350,6 +369,10 @@ public class ShortcutManager implements NativePreviewHandler,
             }
          }
       }
+      
+      // If this matches a prefix key, return false early.
+      if (prefixes_.contains(shortcut.getKeySequence()))
+         return false;
       
       // Check for user-defined commands.
       if (userCommands_.dispatch(shortcut))
@@ -446,6 +469,9 @@ public class ShortcutManager implements NativePreviewHandler,
    
    private List<KeyboardShortcut> modalShortcuts_ =
          new ArrayList<KeyboardShortcut>();
+   
+   private Set<KeySequence> prefixes_ =
+         new HashSet<KeySequence>();
    
    // Assume that there will be bindings (e.g. in Ace)
    // that accept 2 key strokes

@@ -42,6 +42,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
@@ -56,6 +57,7 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
@@ -690,7 +692,7 @@ public class AceEditor implements DocDisplay,
 
    private void updateKeyboardHandlers()
    {
-      // clear out existing Vim handlers (they will be refreshed if necessary)
+      // clear out existing editor handlers (they will be refreshed if necessary)
       for (HandlerRegistration handler : editorEventListeners_)
          if (handler != null)
             handler.removeHandler();
@@ -718,7 +720,20 @@ public class AceEditor implements DocDisplay,
       // add the previewer
       widget_.getEditor().addKeyboardHandler(previewer.getKeyboardHandler());
       
-      // Listen for 'afterExec' events from keyboard handlers
+      // Listen for 'afterExec' events from keyboard handlers + editor
+      editorEventListeners_.add(AceEditorNative.addEventListener(
+            widget_.getEditor(),
+            "afterExec",
+            new CommandWithArg<JavaScriptObject>()
+            {
+               @Override
+               public void execute(JavaScriptObject event)
+               {
+                  Debug.logObject(event);
+                  events_.fireEvent(new AceAfterCommandExecutedEvent(event));
+               }
+            }));
+      
       JsArray<JsObject> handlers = getKeyboardHandlers(widget_.getEditor());
       for (JsObject handler : JsUtil.asIterable(handlers))
       {
@@ -737,9 +752,14 @@ public class AceEditor implements DocDisplay,
                   }
                }));
       }
-         
+      
+      // Unfortunately, Vim's commands don't go through the regular
+      // 'CommandManager' front-end, so we need to do a bit of extra
+      // work to figure out if Vim has handled a command.
       if (useVimMode_)
       {
+         // Signal on movement keys.
+         
          // Signal if the vim mode changes.
          editorEventListeners_.add(AceEditorNative.addEventListener(
                getCodeMirrorObject(widget_.getEditor()),
@@ -2850,36 +2870,41 @@ public class AceEditor implements DocDisplay,
       private int row_ = 0;
       private final Timer timer_;
    }
+   
+   private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
+   {
+      return getLoader(release, null);
+   }
+   
+   private static final ExternalJavaScriptLoader getLoader(StaticDataResource release,
+                                                           StaticDataResource debug)
+   {
+      if (debug == null || !SuperDevMode.isActive())
+         return new ExternalJavaScriptLoader(release.getSafeUri().asString());
+      else
+         return new ExternalJavaScriptLoader(debug.getSafeUri().asString());
+   }
+                                                           
     
    private static final ExternalJavaScriptLoader aceLoader_ =
-         getAceLoader();
+         getLoader(AceResources.INSTANCE.acejs(), AceResources.INSTANCE.acejsUncompressed());
    
-   private static final ExternalJavaScriptLoader getAceLoader()
-   {
-      if (SuperDevMode.isActive())
-         return new ExternalJavaScriptLoader(AceResources.INSTANCE.acejsUncompressed().getSafeUri().asString());
-      else
-         return new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());
-   }
    
    private static final ExternalJavaScriptLoader aceSupportLoader_ =
-         new ExternalJavaScriptLoader(AceResources.INSTANCE.acesupportjs().getSafeUri().asString());
+         getLoader(AceResources.INSTANCE.acesupportjs());
+   
    private static final ExternalJavaScriptLoader vimLoader_ =
-         new ExternalJavaScriptLoader(AceResources.INSTANCE.keybindingVimJs().getSafeUri().asString());
+         getLoader(AceResources.INSTANCE.keybindingVimJs(),
+                   AceResources.INSTANCE.keybindingVimUncompressedJs());
+   
    private static final ExternalJavaScriptLoader emacsLoader_ =
-         new ExternalJavaScriptLoader(AceResources.INSTANCE.keybindingEmacsJs().getSafeUri().asString());
+         getLoader(AceResources.INSTANCE.keybindingEmacsJs(),
+                   AceResources.INSTANCE.keybindingEmacsUncompressedJs());
    
    private static final ExternalJavaScriptLoader extLanguageToolsLoader_ =
-         getExtLanguageToolsLoader();
+         getLoader(AceResources.INSTANCE.extLanguageTools(),
+                   AceResources.INSTANCE.extLanguageToolsUncompressed());
    
-   private static final ExternalJavaScriptLoader getExtLanguageToolsLoader()
-   {
-      if (SuperDevMode.isActive())
-         return new ExternalJavaScriptLoader(AceResources.INSTANCE.extLanguageToolsUncompressed().getSafeUri().asString());
-      else
-         return new ExternalJavaScriptLoader(AceResources.INSTANCE.extLanguageTools().getSafeUri().asString());
-   }
-
    private boolean popupVisible_;
 
    private final DiagnosticsBackgroundPopup diagnosticsBgPopup_;
