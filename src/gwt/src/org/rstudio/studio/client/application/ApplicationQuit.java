@@ -632,6 +632,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                // failed). Now do the real quit.
 
                // notify the desktop frame that we are about to quit
+               String switchToProject = new String(switchToProject_);
                if (Desktop.isDesktop())
                {
                   if (Desktop.getFrame().isCocoa() && 
@@ -642,6 +643,10 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                      // when we reload, so exit this instance and start a new
                      // one when switching projects
                      Desktop.getFrame().setPendingProject(switchToProject_);
+                     
+                     // Since we're going to be starting a new process we don't
+                     // want to pass a switchToProject argument to quitSession
+                     switchToProject = null;
                   }
                   else
                   {
@@ -653,8 +658,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                
                server_.quitSession(
                   saveChanges_,
-                  Desktop.isDesktop() && Desktop.getFrame().isCocoa() ?
-                     null : switchToProject_,
+                  switchToProject,
                   switchToRVersion_,
                   GWT.getHostPageBaseURL(),
                   new ServerRequestCallback<Boolean>()
