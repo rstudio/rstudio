@@ -589,8 +589,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                if (Desktop.isDesktop())
                {
                   if (Desktop.getFrame().isCocoa() && 
-                      switchToProject_ != null &&
-                      switchToProject_ != "none")
+                      switchToProject_ != null)
                   {
                      // on Cocoa there's an ugly intermittent crash that occurs 
                      // when we reload, so exit this instance and start a new
@@ -599,7 +598,8 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                      
                      // Since we're going to be starting a new process we don't
                      // want to pass a switchToProject argument to quitSession
-                     switchToProject = null;
+                     if (switchToProject_ != "none")
+                         switchToProject = null;
                   }
                   else
                   {

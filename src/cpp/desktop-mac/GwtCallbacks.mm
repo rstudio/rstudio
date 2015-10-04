@@ -798,12 +798,14 @@ private:
 
 - (void) openProjectInNewWindow: (NSString*) projectFilePath
 {
-   projectFilePath = resolveAliasedPath(projectFilePath);
-   
+   NSArray* args = [NSArray array];
+   if (![projectFilePath isEqualToString: @"none"])
+   {
+      projectFilePath = resolveAliasedPath(projectFilePath);
+      args = [NSArray arrayWithObject: projectFilePath];
+   }
    NSString* exePath = [NSString stringWithUTF8String:
-               desktop::options().executablePath().absolutePath().c_str()];
-   NSArray* args = [NSArray arrayWithObject: projectFilePath];
-   
+                   desktop::options().executablePath().absolutePath().c_str()];
    [NSTask launchedTaskWithLaunchPath: exePath arguments: args];
 }
 
