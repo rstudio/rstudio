@@ -167,12 +167,13 @@ static PendingWindow pendingWindow_;
          [self setWindowFrameAutosaveName: name];
       
       // create web view, save it as a member, and register as it's delegate,
+      
       webView_ = [[WebViewWithKeyEquiv alloc] initWithFrame: frameRect];
-      [webView_ setUIDelegate: self];
-      [webView_ setFrameLoadDelegate: self];
-      [webView_ setResourceLoadDelegate: self];
-      [webView_ setPolicyDelegate: self];
-      [webView_ setKeyEquivDelegate: self];
+      [webView_ setUIDelegate: (id) self];
+      [webView_ setFrameLoadDelegate: (id) self];
+      [webView_ setResourceLoadDelegate: (id) self];
+      [webView_ setPolicyDelegate: (id) self];
+      [webView_ setKeyEquivDelegate: (id) self];
       
       // respect the current zoom level
       [self syncZoomLevel];
@@ -592,9 +593,9 @@ decidePolicyForMIMEType: (NSDictionary *) actionInformation
 - (void) registerDesktopObject
 {
    id win = [webView_ windowScriptObject];
-   GwtCallbacks* gwtCallbacks =
+   gwtCallbacks_ =
             [[[GwtCallbacks alloc] initWithUIDelegate: self] autorelease];
-   [win setValue: gwtCallbacks forKey:@"desktop"];
+   [win setValue: gwtCallbacks_ forKey:@"desktop"];
 }
 
 - (BOOL) performKeyEquivalent: (NSEvent *)theEvent
