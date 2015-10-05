@@ -360,7 +360,7 @@ public class GenerateJavaScriptAST {
     public boolean visit(JMethod x, Context ctx) {
       // my polymorphic name
       String name = x.getName();
-      if (x.needsVtable()) {
+      if (x.needsDynamicDispatch()) {
         if (polymorphicNames.get(x) == null) {
           JsName polyName;
           if (x.isPrivate()) {
@@ -1741,7 +1741,7 @@ public class GenerateJavaScriptAST {
     private void emitStaticMethods(JDeclaredType type) {
       // declare all methods into the global scope
       for (JMethod method : type.getMethods()) {
-        if (method.needsVtable()) {
+        if (method.needsDynamicDispatch()) {
           continue;
         }
 
@@ -1947,7 +1947,7 @@ public class GenerateJavaScriptAST {
            * defined, the compiler will synthesize a default constructor which invokes
            * a synthensized $init() method. We must skip both of these inserted methods.
            */
-          if (method.needsVtable() || method instanceof JConstructor
+          if (method.needsDynamicDispatch() || method instanceof JConstructor
               || doesNotHaveConcreteImplementation(method)) {
             continue;
           }
@@ -2302,7 +2302,7 @@ public class GenerateJavaScriptAST {
     private void generatePrototypeDefinitions(JDeclaredType type) {
         assert !program.isRepresentedAsNativeJsPrimitive(type);
       for (JMethod method : type.getMethods()) {
-        if (!method.needsVtable()) {
+        if (!method.needsDynamicDispatch()) {
           continue;
         }
 

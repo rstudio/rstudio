@@ -81,11 +81,11 @@ public final class JsInteropUtil {
 
     JDeclaredType enclosingType = member.getEnclosingType();
 
-    if (enclosingType.isJsType() && member.needsVtable()) {
+    if (enclosingType.isJsType() && member.needsDynamicDispatch()) {
       member.setJsMemberInfo(namespace, computeName(member), true);
     }
 
-    if (enclosingType.isClassWideExport() && !member.needsVtable()) {
+    if (enclosingType.isClassWideExport() && !member.needsDynamicDispatch()) {
       member.setJsMemberInfo(namespace, computeName(member), true);
     }
   }

@@ -128,7 +128,7 @@ public class JsInteropRestrictionChecker {
       return;
     }
 
-    if (x.needsVtable()) {
+    if (x.needsDynamicDispatch()) {
       checkJsTypeFieldName(x, x.getJsName());
     } else if (currentType == x.getEnclosingType()) {
       checkExportName(x);
@@ -145,7 +145,7 @@ public class JsInteropRestrictionChecker {
       return;
     }
 
-    if (x.needsVtable()) {
+    if (x.needsDynamicDispatch()) {
       checkJsTypeMethod(x);
     } else if (currentType == x.getEnclosingType()) {
       checkExportName(x);

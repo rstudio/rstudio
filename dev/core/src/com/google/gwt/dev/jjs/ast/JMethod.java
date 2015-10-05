@@ -87,7 +87,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
   }
 
   public boolean isJsInteropEntryPoint() {
-    return exported && !needsVtable();
+    return exported && !needsDynamicDispatch();
   }
 
   public boolean canBeCalledExternally() {
@@ -126,10 +126,10 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
   public String getQualifiedJsName() {
     String namespace = getJsNamespace();
     if (jsName.isEmpty()) {
-      assert !needsVtable();
+      assert !needsDynamicDispatch();
       return namespace;
     } else if (namespace.isEmpty()) {
-      assert !needsVtable();
+      assert !needsDynamicDispatch();
       return jsName;
     } else {
       return namespace + (isStatic() ? "." : ".prototype.") + jsName;
@@ -642,7 +642,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
    * dispatch.
    */
   @Override
-  public boolean needsVtable() {
+  public boolean needsDynamicDispatch() {
     return !isStatic();
   }
 

@@ -106,7 +106,7 @@ public class Devirtualizer {
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
-      if (!method.needsVtable()) {
+      if (!method.needsDynamicDispatch()) {
         return;
       }
 
@@ -194,7 +194,7 @@ public class Devirtualizer {
 
     private boolean mightNeedDevirtualization(JMethod method, JReferenceType instanceType) {
       // todo remove instance check
-      if (instanceType == null || !method.needsVtable()) {
+      if (instanceType == null || !method.needsDynamicDispatch()) {
         return false;
       }
       if (devirtualMethodByMethod.containsKey(method)) {

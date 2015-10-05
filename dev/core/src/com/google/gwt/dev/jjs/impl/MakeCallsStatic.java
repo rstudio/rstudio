@@ -293,7 +293,7 @@ public class MakeCallsStatic {
       if (x.canBePolymorphic()) {
         return false;
       }
-      if (!method.needsVtable()) {
+      if (!method.needsDynamicDispatch()) {
         return false;
       }
       if (method.isAbstract()) {

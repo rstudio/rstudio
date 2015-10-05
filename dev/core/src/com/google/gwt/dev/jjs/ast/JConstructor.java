@@ -132,7 +132,7 @@ public class JConstructor extends JMethod {
   }
 
   @Override
-  public boolean needsVtable() {
+  public boolean needsDynamicDispatch() {
     return false;
   }
 

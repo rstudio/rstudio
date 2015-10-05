@@ -25,7 +25,7 @@ public interface JMember extends HasEnclosingType, HasName, HasJsInfo, HasType, 
 
   boolean isPublic();
 
-  boolean needsVtable();
+  boolean needsDynamicDispatch();
 
   String getQualifiedName();
 }

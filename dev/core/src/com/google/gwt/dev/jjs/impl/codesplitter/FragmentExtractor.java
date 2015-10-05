@@ -329,7 +329,7 @@ public class FragmentExtractor {
       }
       // The method is live. Check that its enclosing type is instantiable.
       // TODO(spoon): this check should not be needed once the CFA is updated
-      return !method.needsVtable() || livenessPredicate.isLive(method.getEnclosingType());
+      return !method.needsDynamicDispatch() || livenessPredicate.isLive(method.getEnclosingType());
     }
 
     return livenessPredicate.miscellaneousStatementsAreLive();
@@ -454,7 +454,7 @@ public class FragmentExtractor {
   private JDeclaredType vtableTypeNeeded(JsStatement statement) {
     JMethod method = map.methodForStatement(statement);
     if (method != null) {
-      if (method.needsVtable()) {
+      if (method.needsDynamicDispatch()) {
         return method.getEnclosingType();
       }
     }

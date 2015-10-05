@@ -372,7 +372,7 @@ class ExclusivityMap {
       * must be in the same one.
       */
       for (JMethod method : type.getMethods()) {
-        if (method.needsVtable() && methodsInJavaScript.contains(method)
+        if (method.needsDynamicDispatch() && methodsInJavaScript.contains(method)
             && typeFrag != fragmentForMethod.get(method)) {
           fragmentForType.put(type, NOT_EXCLUSIVE);
           numFixups++;

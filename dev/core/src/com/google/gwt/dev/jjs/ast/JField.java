@@ -194,7 +194,7 @@ public class JField extends JVariable implements JMember {
   }
 
   @Override
-  public boolean needsVtable() {
+  public boolean needsDynamicDispatch() {
     return !isStatic;
   }
 

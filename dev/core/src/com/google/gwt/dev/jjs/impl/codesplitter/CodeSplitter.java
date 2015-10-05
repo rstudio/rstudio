@@ -168,7 +168,7 @@ public class CodeSplitter {
     for (JClassType type : jprogram.immortalCodeGenTypes) {
       cfa.traverseFromInstantiationOf(type);
       for (JMethod method : type.getMethods()) {
-        if (!method.needsVtable()) {
+        if (!method.needsDynamicDispatch()) {
           cfa.traverseFrom(method);
         }
       }
