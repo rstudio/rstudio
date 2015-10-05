@@ -110,7 +110,26 @@ public class JsUtils {
   }
 
   public static JsExpression createCommaExpression(JsExpression... expressions) {
-    return createCommaExpressionHelper(0, expressions);
+    return createCommaExpressionHelper(expressions, 0);
+  }
+
+  private static JsExpression createCommaExpressionHelper(JsExpression[] expressions, int index) {
+    int remainingExpressions = expressions.length - index;
+    assert remainingExpressions >= 2;
+
+    JsExpression lhs = expressions[index];
+    JsExpression rhs = expressions[index + 1];
+    if (remainingExpressions > 2) {
+      rhs = createCommaExpressionHelper(expressions, index + 1);
+    }
+
+    // Construct the binary expression
+    if (rhs == null) {
+      return lhs;
+    } else if (lhs == null) {
+      return rhs;
+    }
+    return new JsBinaryOperation(lhs.getSourceInfo(), JsBinaryOperator.COMMA, lhs, rhs);
   }
 
   public static JsFunction createEmptyFunctionLiteral(SourceInfo info, JsScope scope, JsName name) {
@@ -191,25 +210,6 @@ public class JsUtils {
       }
     }
     return null;
-  }
-
-  private static JsExpression createCommaExpressionHelper(int index, JsExpression... expressions) {
-    int remainingExpressions = expressions.length - index;
-    assert remainingExpressions >= 2;
-
-    JsExpression lhs = expressions[index];
-    JsExpression rhs = expressions[index + 1];
-    if (remainingExpressions > 2) {
-      rhs = createCommaExpressionHelper(index + 1, expressions);
-    }
-
-    // Construct the binary expression
-    if (rhs == null) {
-      return lhs;
-    } else if (lhs == null) {
-      return rhs;
-    }
-    return new JsBinaryOperation(lhs.getSourceInfo(), JsBinaryOperator.COMMA, lhs, rhs);
   }
 
   private static final String CALL_STRING = StringInterner.get().intern("call");

@@ -2462,8 +2462,8 @@ public class GenerateJavaScriptAST {
       if (targetType == null
           || targetType == program.getTypeClassLiteralHolder()
           // When  currentMethod == null, the clinit is being hoisted to the global scope.
-          || currentMethod != null
-             && !currentMethod.getEnclosingType().checkClinitTo(targetType)) {
+          || (currentMethod != null
+             && !currentMethod.getEnclosingType().checkClinitTo(targetType))) {
         return null;
       }
 
