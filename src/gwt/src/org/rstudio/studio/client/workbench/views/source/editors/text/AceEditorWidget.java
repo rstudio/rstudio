@@ -49,7 +49,7 @@ import org.rstudio.studio.client.events.BeginPasteEvent;
 import org.rstudio.studio.client.events.EndPasteEvent;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedEvent;
+import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
 import org.rstudio.studio.client.workbench.views.output.lint.LintResources;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
@@ -288,11 +288,11 @@ public class AceEditorWidget extends Composite
             });
       
       events_.addHandler(
-            RStudioCommandExecutedEvent.TYPE,
-            new RStudioCommandExecutedEvent.Handler()
+            RStudioCommandExecutedFromShortcutEvent.TYPE,
+            new RStudioCommandExecutedFromShortcutEvent.Handler()
             {
                @Override
-               public void onRStudioCommandExecuted(RStudioCommandExecutedEvent event)
+               public void onRStudioCommandExecutedFromShortcut(RStudioCommandExecutedFromShortcutEvent event)
                {
                   clearKeyBuffers(editor_);
                }

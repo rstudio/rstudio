@@ -1,5 +1,5 @@
 /*
- * RStudioCommandExecutedEvent.java
+ * RStudioCommandExecutedFromShortcutEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -17,7 +17,7 @@ package org.rstudio.studio.client.workbench.commands;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class RStudioCommandExecutedEvent extends GwtEvent<RStudioCommandExecutedEvent.Handler>
+public class RStudioCommandExecutedFromShortcutEvent extends GwtEvent<RStudioCommandExecutedFromShortcutEvent.Handler>
 {
    // TODO: Include what command was actually executed.
    
@@ -25,7 +25,7 @@ public class RStudioCommandExecutedEvent extends GwtEvent<RStudioCommandExecuted
    
    public interface Handler extends EventHandler
    {
-      void onRStudioCommandExecuted(RStudioCommandExecutedEvent event);
+      void onRStudioCommandExecutedFromShortcut(RStudioCommandExecutedFromShortcutEvent event);
    }
    
    @Override
@@ -37,7 +37,7 @@ public class RStudioCommandExecutedEvent extends GwtEvent<RStudioCommandExecuted
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onRStudioCommandExecuted(this);
+      handler.onRStudioCommandExecutedFromShortcut(this);
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();

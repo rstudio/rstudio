@@ -29,7 +29,7 @@ import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedEvent;
+import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceAfterCommandExecutedEvent;
 
 import com.google.gwt.core.client.Scheduler;
@@ -260,7 +260,7 @@ public class ShortcutManager implements NativePreviewHandler,
       {
          evt.cancel();
          keyBuffer_.clear();
-         events_.fireEvent(new RStudioCommandExecutedEvent());
+         events_.fireEvent(new RStudioCommandExecutedFromShortcutEvent());
       }
    }
 
@@ -276,7 +276,7 @@ public class ShortcutManager implements NativePreviewHandler,
          {
             event.cancel();
             keyBuffer_.clear();
-            events_.fireEvent(new RStudioCommandExecutedEvent());
+            events_.fireEvent(new RStudioCommandExecutedFromShortcutEvent());
          }
       }
    }
