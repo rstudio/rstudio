@@ -1240,6 +1240,12 @@ public class GenerateJavaScriptAST {
       // Generate immortal types in the preamble.
       generateImmortalTypes(vars);
 
+      //  Perform necessary polyfills.
+      addTypeDefinitionStatement(
+          program.getIndexedType("JavaClassHierarchySetupUtil"),
+          constructInvocation(
+              program.getSourceInfo(), "JavaClassHierarchySetupUtil.modernizeBrowser").makeStmt());
+
       Set<JDeclaredType> alreadyProcessed =
           Sets.<JDeclaredType>newLinkedHashSet(program.immortalCodeGenTypes);
       alreadyProcessed.add(program.getTypeClassLiteralHolder());
@@ -1255,11 +1261,6 @@ public class GenerateJavaScriptAST {
       }
       generateClassLiterals(classLiteralSupportClasses);
       installClassLiterals(classLiteralSupportClasses);
-
-      //  Perform necessary polyfills.
-      addTypeDefinitionStatement(program.getIndexedType("JavaClassHierarchySetupUtil"),
-          constructInvocation(
-              program.getSourceInfo(), "JavaClassHierarchySetupUtil.modernizeBrowser").makeStmt());
 
       Set<JDeclaredType> preambleTypes = Sets.newLinkedHashSet(alreadyProcessed);
       preambleTypes.addAll(classLiteralSupportClasses);
