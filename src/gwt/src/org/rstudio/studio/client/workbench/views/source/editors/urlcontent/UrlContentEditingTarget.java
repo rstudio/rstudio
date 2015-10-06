@@ -311,7 +311,7 @@ public class UrlContentEditingTarget implements EditingTarget
       return true;
    }
 
-   public void onDismiss()
+   public void onDismiss(int dismissType)
    {
       server_.removeContentUrl(getContentUrl(),
                                new ServerRequestCallback<org.rstudio.studio.client.server.Void>()

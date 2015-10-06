@@ -2346,7 +2346,7 @@ public class TextEditingTarget implements
 
 
 
-   public void onDismiss()
+   public void onDismiss(int dismissType)
    {
       docUpdateSentinel_.stop();
       

@@ -2752,7 +2752,8 @@ public class Source implements InsertSourceHandler,
          }
       }
 
-      target.onDismiss();
+      target.onDismiss(closeDocument ? EditingTarget.DISMISS_TYPE_CLOSE :
+         EditingTarget.DISMISS_TYPE_MOVE);
       if (activeEditor_ == target)
       {
          activeEditor_.onDeactivate();

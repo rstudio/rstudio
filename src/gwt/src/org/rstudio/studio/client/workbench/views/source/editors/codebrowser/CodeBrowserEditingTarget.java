@@ -581,7 +581,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
 
    @Override
-   public void onDismiss()
+   public void onDismiss(int dismissType)
    {
       while (releaseOnDismiss_.size() > 0)
          releaseOnDismiss_.remove(0).removeHandler();
