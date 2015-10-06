@@ -71,6 +71,10 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
@@ -169,6 +173,26 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             }
          };
          
+         // keep track of whether the main window has focus (helps us infer the
+         // user's perception of the 'active' doc)
+         WindowEx.addFocusHandler(new FocusHandler()
+         {
+            @Override
+            public void onFocus(FocusEvent arg0)
+            {
+               mainWindowFocused_ = true;
+            }
+         });
+         WindowEx.addBlurHandler(new BlurHandler()
+         {
+            
+            @Override
+            public void onBlur(BlurEvent arg0)
+            {
+               mainWindowFocused_ = false;
+            }
+         });
+         
          // open this session's source windows
          for (int i = 0; i < docs.length(); i++)
          {
@@ -230,6 +254,9 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    
    public void setLastFocusedSourceWindowId(String windowId)
    {
+      // ignore this request if it's the main window but it doesn't have focus
+      if (!mainWindowFocused_ && windowId.isEmpty()) 
+         return;
       lastFocusedSourceWindow_ = windowId;
    }
    
@@ -539,6 +566,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    @Override
    public void onSatelliteFocused(SatelliteFocusedEvent event)
    {
+      mainWindowFocused_ = false;
       if (event.getName().startsWith(SourceSatellite.NAME_PREFIX))
       {
          String windowId = sourceWindowId(event.getName());
@@ -1118,6 +1146,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
 
    private String mostRecentSourceWindow_ = "";
    private String lastFocusedSourceWindow_ = "";
+   private boolean mainWindowFocused_ = true;
    
    public final static String SOURCE_WINDOW_ID = "source_window_id";
 }

@@ -1247,8 +1247,18 @@ public class TextEditingTarget implements
             // manager know (satellite windows are tracked on window activation)
             if (SourceWindowManager.isMainSourceWindow())
             {
-               RStudioGinjector.INSTANCE.getSourceWindowManager()
-                                        .setLastFocusedSourceWindowId("");
+               // we won't sync the focus point to the main window unless it
+               // has focus, and the doc gets focus before the window does, so
+               // defer sync until the window has a chance to acquire focus
+               Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     RStudioGinjector.INSTANCE.getSourceWindowManager()
+                                              .setLastFocusedSourceWindowId("");
+                  }
+               });
             }
             
             // only enable 'go to section' commands when docDisplay has focus
