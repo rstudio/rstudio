@@ -31,6 +31,7 @@ import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
+import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
@@ -53,6 +54,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
@@ -64,7 +66,8 @@ import com.google.inject.Provider;
 
 public class RSConnectPublishButton extends Composite
    implements RSConnectDeploymentCompletedEvent.Handler,
-              RPubsUploadStatusEvent.Handler
+              RPubsUploadStatusEvent.Handler,
+              RmdRenderCompletedEvent.Handler
 {
 
    class DeploymentPopupMenu extends ToolbarPopupMenu
@@ -117,6 +120,9 @@ public class RSConnectPublishButton extends Composite
       applyVisiblity();
       applyCaption("Publish");
       setPreviousDeployments(null);
+      
+      // give ourselves some breathing room on the right
+      getElement().getStyle().setMarginRight(4, Unit.PX);    
    }
    
    private void onPublishButtonClick()
@@ -184,6 +190,7 @@ public class RSConnectPublishButton extends Composite
       
       events_.addHandler(RSConnectDeploymentCompletedEvent.TYPE, this);
       events_.addHandler(RPubsUploadStatusEvent.TYPE, this);
+      events_.addHandler(RmdRenderCompletedEvent.TYPE, this);
    }
    
    @Override
@@ -315,6 +322,23 @@ public class RSConnectPublishButton extends Composite
       }
    }
    
+   @Override
+   public void onRmdRenderCompleted(RmdRenderCompletedEvent event)
+   {
+      // ensure we got a result--note that even a cancelled render generates an
+      // event, but with an empty output file
+      if (rmdRenderPending_ && event.getResult() != null &&
+          !StringUtil.isNullOrEmpty(event.getResult().getOutputFile()))
+      {
+         RenderedDocPreview docPreview = 
+               new RenderedDocPreview(event.getResult());
+         events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
+               docPreview, publishAfterRmdRender_));
+      }
+      publishAfterRmdRender_ = null;
+      rmdRenderPending_ = false;
+      anyRmdRenderPending_ = false;
+   }
 
    public void setShowCaption(boolean show)
    {
@@ -332,6 +356,11 @@ public class RSConnectPublishButton extends Composite
          manuallyHidden_ = hide;
          applyVisiblity();
       }
+   }
+   
+   public static boolean isAnyRmdRenderPending()
+   {
+      return anyRmdRenderPending_;
    }
 
    // Private methods --------------------------------------------------------
@@ -396,16 +425,30 @@ public class RSConnectPublishButton extends Composite
                contentPath_, previous));
          break;
       case RSConnect.CONTENT_TYPE_DOCUMENT:
-         // All R Markdown variants (single/multiple and static/Shiny)
-         if (docPreview_.getSourceFile() == null)
+         if (docPreview_ == null || 
+             (docPreview_.isStatic() && 
+              StringUtil.isNullOrEmpty(docPreview_.getOutputFile())))
          {
-            display_.showErrorMessage("Unsaved Document", 
-                  "Unsaved documents cannot be published. Save the document " +
-                  "before publishing it.");
-            break;
+            // if the doc hasn't been rendered, go render it and come back when
+            // we're finished
+            publishAfterRmdRender_ = previous;
+            rmdRenderPending_ = true;
+            anyRmdRenderPending_ = true;
+            commands_.knitDocument().execute();
          }
-         events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
-               docPreview_, previous));
+         else
+         {
+            // All R Markdown variants (single/multiple and static/Shiny)
+            if (docPreview_.getSourceFile() == null)
+            {
+               display_.showErrorMessage("Unsaved Document", 
+                     "Unsaved documents cannot be published. Save the document " +
+                     "before publishing it.");
+               break;
+            }
+            events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
+                  docPreview_, previous));
+         }
          break;
       default: 
          // should never happen 
@@ -609,20 +652,6 @@ public class RSConnectPublishButton extends Composite
           StringUtil.isNullOrEmpty(contentPath_))
          return false;
 
-      if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT && 
-          docPreview_ == null)
-         return false;
-      
-      // if we don't have static output and RStudio Connect isn't enabled
-      if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT && 
-          StringUtil.isNullOrEmpty(outputPath_) &&
-          !pUiPrefs_.get().enableRStudioConnect().getGlobalValue() &&
-          docPreview_ != null && 
-          docPreview_.isStatic())
-      {
-         return false;
-      }
-      
       if (manuallyHidden_)
          return false;
 
@@ -731,8 +760,12 @@ public class RSConnectPublishButton extends Composite
    private String caption_;
    private boolean manuallyHidden_ = false;
    private boolean visible_ = false;
+   private boolean rmdRenderPending_ = false;
+   private RSConnectDeploymentRecord publishAfterRmdRender_ = null;
    
    private final AppCommand boundCommand_;
 
    private RSConnectDeploymentRecord defaultRec_;
+   
+   private static boolean anyRmdRenderPending_ = false;
 }

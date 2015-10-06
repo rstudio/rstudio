@@ -95,17 +95,23 @@
 .breadcrumb-filepane, .breadcrumb-filepane table, .breadcrumb-filepane td {
    height: 20px;
 }
-.breadcrumb table.path a {
+.breadcrumb table.path a,
+.breadcrumb table.path span
+{
    float: left;
    text-decoration: none;
-   color: #0945bf;
    margin: 0;
    padding: 3px 6px 0 11px;
    height: 18px;
    background: DIRSEPARATOR center left no-repeat;
 }
 
-.breadcrumb table.path a.home {
+.breadcrumb table.path a
+{
+   color: #0945bf;
+}
+
+.breadcrumb table.path .home {
    padding-left: 28px;
    background: HOME 0 1px no-repeat;
 }
@@ -115,7 +121,7 @@
    margin-right: 4px;
 }
 
-.breadcrumb table.path a.last {
+.breadcrumb table.path .last {
    padding-right: 8px;
 }
 

@@ -141,8 +141,19 @@
 
 .rs.addFunction("getFunction", function(name, namespaceName)
 {
+   # resolve "namespace:" environments
+   envir <- if (identical(substring(namespaceName, 1, nchar("namespace:")), 
+                          "namespace:"))
+   {
+     asNamespace(substring(namespaceName, nchar("namespace:") + 1))
+   }
+   else
+   {
+     as.environment(namespaceName);
+   }
+
    tryCatch(eval(parse(text = name),
-                 envir = as.environment(namespaceName),
+                 envir = envir,
                  enclos = NULL),
             error = function(e) NULL)
 })
@@ -153,13 +164,76 @@
    return (!is.null(attr(func, "srcref")))
 })
 
-.rs.addFunction("deparseFunction", function(func, useSource)
+# Returns a function's code as a string. Arguments:
+# useSource -- Whether to use the function's source references (if available)
+# asString -- Whether to return the result as a single string
+#             (otherwise a character vector of lines is returned)
+.rs.addFunction("deparseFunction", function(func, useSource, asString)
 {
    control <- c("keepInteger", "keepNA")
    if (useSource)
      control <- append(control, "useSource")
 
-   deparse(func, width.cutoff = 59, control = control)
+   code <- deparse(func, width.cutoff = 59, control = control)
+   
+   # if we were asked not to use source refs, or we were but there wasn't a
+   # source ref to use, then format the code according to user pref
+   if (!useSource || is.null(attr(func, "srcref", exact = TRUE)))
+   {
+     replaceText <- "\t"
+
+     # determine the replacement text based on the user's current editing
+     # preferences
+     if (isTRUE(.rs.readUiPref("use_spaces_for_tab"))) 
+     {
+       replaceText <- paste(rep(" ", .rs.readUiPref("num_spaces_for_tab")),
+                                collapse = "")
+     }
+
+     # split the code into individual lines -- R's immutable strings make it
+     # quicker to process these small chunks than on the whole code text
+     lines <- unlist(strsplit(code, "\n", fixed = TRUE))
+     for (l in seq_along(lines))
+     {
+       line <- lines[[l]]
+       pos <- 1
+       # convert up to 20 indentation levels per line
+       for (lvl in seq_len(20))
+       {
+         # NOTE: the 4 spaces comes from the implementation of printtab2buff in
+         # deparse.c -- it is hard-coded to use 4 spaces for the first 4 levels
+         # of indentation and then 2 spaces for subsequent levels.
+         indent <- if (lvl <= 4) "    " else "  "
+         if (substring(line, pos, pos + (nchar(indent) - 1)) == indent)
+         {
+           # convert this indent to the user's preferred indentation 
+           line <- paste(substring(line, 0, pos - 1),
+                         replaceText, 
+                         substring(line, pos + nchar(indent)),
+                         sep = "")
+           pos <- pos + nchar(replaceText)
+         }
+         else
+         {
+           # no more indents we want to convert on this line
+           break
+         }
+       }
+       lines[[l]] <- line
+     }
+
+     # if we were asked to return individual lines, we're done now
+     if (!asString)
+       return(lines)
+     else 
+       code <- lines
+   }
+
+   # return (possibly formatted) code
+   if (asString)
+     paste(code, collapse = "\n")
+   else
+     code
 })
 
 .rs.addFunction("isS3Generic", function(object)
@@ -442,6 +516,11 @@
          ls(object, all.names = TRUE)
       else if (inherits(object, "tbl") && "dplyr" %in% loadedNamespaces())
          dplyr::tbl_vars(object)
+      # For some reason, `jobjRef` objects (from rJava) return names containing
+      # parentheses after the associated function call, which confuses our completion
+      # system.
+      else if (inherits(object, "jobjRef"))
+         gsub("[\\(\\)]", "", names(object))
       else
          names(object)
    }, error = function(e) NULL)
@@ -703,6 +782,15 @@
       if (!is.null(method))
          return(method)
    }
+   
+   ## S4 objects might still 'be' data.frames or lists or environments under
+   ## the hood; in such a case their 'formal' class can 'mask' the underlying
+   ## S3 class / type, so explicitly check that as well.
+   if (is.list(object))
+      return(utils:::.DollarNames.list)
+   else if (is.environment(object))
+      return(utils:::.DollarNames.environment)
+   
    NULL
 })
 

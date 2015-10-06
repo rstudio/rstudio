@@ -456,7 +456,7 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          // use this to compute the source location as an offset into the
          // function rather than as an absolute file position (useful when
          // we need to debug a copy of the function rather than the real deal).
-         SEXP srcRef = sourceRefsOfContext(pSrcContext);
+         SEXP srcRef = sourceRefsOfContext(pRContext);
          if (isValidSrcref(srcRef))
          {
             varFrame["function_line_number"] = INTEGER(srcRef)[0];
@@ -632,8 +632,9 @@ bool functionIsOutOfSync(const RCNTXT *pContext,
    SEXP sexpCode = R_NilValue;
 
    // start by extracting the source code from the call site
-   error = r::exec::RFunction(".rs.sourceCodeFromFunction",
-                              getOriginalFunctionCallObject(pContext))
+   error = r::exec::RFunction(".rs.deparseFunction",
+                              getOriginalFunctionCallObject(pContext), 
+                              true, true)
          .call(&sexpCode, &protect);
    if (error)
    {
@@ -719,6 +720,12 @@ json::Object commonEnvironmentStateData(
       if (env != R_GlobalEnv && env == pContext->cloenv)
       {
          varJson["environment_name"] = functionName + "()";
+         std::string envLocation;
+         error = r::exec::RFunction(".rs.environmentName", 
+               ENCLOS(pContext->cloenv)).call(&envLocation);
+         if (error)
+            LOG_ERROR(error);
+         varJson["function_environment_name"] = envLocation;
          varJson["environment_is_local"] = true;
          inFunctionEnvironment = true;
       }

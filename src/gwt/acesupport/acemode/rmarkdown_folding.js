@@ -18,7 +18,7 @@
  *
  */
 
-define("rstudio/folding/rmarkdown", function(require, exports, module) {
+define("rstudio/folding/rmarkdown", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var BaseFoldMode = require("ace/mode/folding/fold_mode").FoldMode;
@@ -132,11 +132,16 @@ oop.inherits(FoldMode, BaseFoldMode);
       return range;
    };
 
-   var $findNextHeader = function(session, row, depth)
+   var $findNextHeader = function(session, state, row, depth)
    {
       var n = session.getLength();
       for (var i = row + 1; i < n; i++)
       {
+         // Check the state and guard against R comments
+         var rowState = session.getState(i);
+         if (rowState !== state)
+            continue;
+
          var line = session.getLine(i);
          if (depth === 1 && /^[=]{3,}\s*/.test(line))
             return i - 2;
@@ -188,7 +193,7 @@ oop.inherits(FoldMode, BaseFoldMode);
       if (depth === null)
          return;
 
-      var endRow = $findNextHeader(session, row, depth);
+      var endRow = $findNextHeader(session, state, row, depth);
       return new Range(row, line.length, endRow, session.getLine(endRow).length);
 
    };
@@ -196,6 +201,10 @@ oop.inherits(FoldMode, BaseFoldMode);
    this.getFoldWidgetRange = function(session, foldStyle, row)
    {
       var range = this.$getFoldWidgetRange(session, foldStyle, row);
+
+      // Protect against null ranges
+      if (range == null)
+         return;
 
       // Ace will throw an error if the range does not span at least
       // two characters.  Returning 'undefined' will instead cause the

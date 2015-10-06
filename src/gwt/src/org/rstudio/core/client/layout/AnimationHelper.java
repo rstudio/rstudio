@@ -16,6 +16,7 @@ package org.rstudio.core.client.layout;
 
 import com.google.gwt.layout.client.Layout;
 import com.google.gwt.user.client.ui.Widget;
+
 import org.rstudio.core.client.theme.WindowFrame;
 
 import static org.rstudio.core.client.layout.WindowState.*;
@@ -27,10 +28,11 @@ class AnimationHelper
                                         LogicalWindow bottom,
                                         int normal,
                                         int splitterHeight,
-                                        boolean animate)
+                                        boolean animate,
+                                        boolean skipFocusChange)
    {
       boolean focusGoesOnTop = animate && focusGoesOnTop(top, bottom);
-
+      
       int splitterPos;
       boolean splitterPosFromTop;
       if (bottom.getState() == WindowState.NORMAL)
@@ -74,7 +76,8 @@ class AnimationHelper
                                  splitterPosFromTop,
                                  bottom.getState() == WindowState.NORMAL,
                                  animate,
-                                 focusGoesOnTop);
+                                 focusGoesOnTop,
+                                 skipFocusChange);
    }
 
    private static Widget getVisible(LogicalWindow window)
@@ -95,7 +98,8 @@ class AnimationHelper
                           boolean splitterPosFromTop,
                           boolean splitterVisible,
                           boolean animate,
-                          boolean focusGoesOnTop)
+                          boolean focusGoesOnTop,
+                          boolean skipFocusChange)
    {
       panel_ = panel;
       startWidgetTop_ = startWidgetTop;
@@ -109,6 +113,7 @@ class AnimationHelper
       splitterVisible_ = splitterVisible;
       animate_ = animate;
       focusGoesOnTop_ = focusGoesOnTop;
+      skipFocusChange_ = skipFocusChange;
    }
 
    public void animate()
@@ -131,6 +136,9 @@ class AnimationHelper
             public void onAnimationComplete()
             {
                finish();
+               if (skipFocusChange_)
+                  return;
+               
                ((WindowFrame)(focusGoesOnTop_
                               ? endWidgetTop_
                               : endWidgetBottom_)).focus();
@@ -171,6 +179,14 @@ class AnimationHelper
    {
       // If one window is maximized and the other is minimized, focus the
       // maximized one.
+      WindowState topState = top.getState();
+      WindowState bottomState = bottom.getState();
+      
+      if (topState == WindowState.MAXIMIZE && bottomState == WindowState.MINIMIZE)
+         return true;
+      else if (topState == WindowState.MINIMIZE && bottomState == WindowState.MAXIMIZE)
+         return false;
+      
       // If both windows are "normal", focus the one that was previously
       // minimized.
 
@@ -211,4 +227,5 @@ class AnimationHelper
    boolean splitterVisible_;
    private final boolean animate_;
    private final boolean focusGoesOnTop_;
+   private final boolean skipFocusChange_;
 }

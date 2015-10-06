@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.Desktop;
@@ -25,8 +26,13 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
+import org.rstudio.studio.client.workbench.snippets.SnippetServerOperations;
+import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
+import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedHandler;
@@ -55,7 +61,8 @@ public class SourceWindow implements LastSourceDocClosedHandler,
          Satellite satellite,
          EventBus events,
          MacZoomHandler zoomHandler,
-         SourceShim shim)
+         SourceShim shim,
+         SnippetServerOperations snippetServer)
    {
       sourceShim_ = shim;
       events_ = events;
@@ -77,6 +84,29 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       
       // export callbacks for main window
       exportFromSatellite();
+      
+      // load custom snippets into this window
+      snippetServer.getSnippets(new ServerRequestCallback<JsArray<SnippetData>>()
+      {
+         @Override
+         public void onResponseReceived(JsArray<SnippetData> snippets)
+         {
+            if (snippets != null && snippets.length() > 0)
+            {
+               events_.fireEvent(new SnippetsChangedEvent(
+                     (SnippetsChangedEvent.Data)snippets));
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            // log this error, but don't bother the user with it--their own
+            // snippets may not work but any real errors should be handled in
+            // the main window
+            Debug.logError(error);
+         }
+      });
       
       // in desktop mode, the frame checks to see if we want to be closed, but
       // in web mode the best we can do is prompt if the user attempts to close
@@ -184,12 +214,20 @@ public class SourceWindow implements LastSourceDocClosedHandler,
          return satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::getUnsavedChanges()();
       });
       
+      $wnd.rstudioGetCurrentDocPath = $entry(function() {
+         return satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::getCurrentDocPath()();
+      });
+      
       $wnd.rstudioHandleUnsavedChangesBeforeExit = $entry(function(targets, onCompleted) {
          satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::handleUnsavedChangesBeforeExit(Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/user/client/Command;)(targets, onCompleted);
       });
       
       $wnd.rstudioSaveWithPrompt = $entry(function(target, onCompleted) {
          satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::saveWithPrompt(Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/user/client/Command;)(target, onCompleted);
+      });
+      
+      $wnd.rstudioSaveAllUnsaved = $entry(function(onCompleted) {
+         satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::saveAllUnsaved(Lcom/google/gwt/user/client/Command;)(onCompleted);
       });
       
       $wnd.rstudioReadyToClose = false;
@@ -202,6 +240,11 @@ public class SourceWindow implements LastSourceDocClosedHandler,
    {
       UnsavedChangesItem item = jsoItem.cast();
       sourceShim_.saveWithPrompt(item, onCompleted, null);
+   }
+   
+   private void saveAllUnsaved(Command onCompleted)
+   {
+      sourceShim_.saveAllUnsaved(onCompleted);
    }
    
    private void handleUnsavedChangesBeforeExit(JavaScriptObject jsoItems, 
@@ -233,6 +276,11 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       return items;
    }
    
+   private String getCurrentDocPath()
+   {
+      return sourceShim_.getCurrentDocPath();
+   }
+
    private void closeSourceWindow()
    {
       ApplicationQuit.QuitContext quitContext = 

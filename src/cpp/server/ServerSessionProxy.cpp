@@ -81,8 +81,14 @@ Error launchSessionRecovery(const http::Request& request,
 
    // if the session scope is marked as invalid then return
    // invalid session scope error
-   if (session::collectInvalidScope(context))
-      return Error(server::errc::InvalidSessionScopeError, ERROR_LOCATION);
+   core::r_util::SessionScopeState state =
+         session::collectInvalidScope(context);
+   if (state != core::r_util::ScopeValid)
+   {
+       Error error(server::errc::InvalidSessionScopeError, ERROR_LOCATION);
+       error.addProperty("state", state);
+       return error;
+   }
 
    // recreate streams dir if necessary
    Error error = session::local_streams::ensureStreamsDir();
@@ -112,10 +118,10 @@ ProxyRequestFilter s_proxyRequestFilter;
 
 bool applyProxyFilter(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
-      const std::string& username)
+      const r_util::SessionContext& context)
 {
    if (s_proxyFilter)
-      return s_proxyFilter(ptrConnection, username);
+      return s_proxyFilter(ptrConnection, context);
    else
       return false;
 }
@@ -315,7 +321,7 @@ void handleContentError(
    if (server::isAuthenticationError(error))
    {
       http::Response& response = ptrConnection->response();
-      response.setStatusCode(http::status::Unauthorized);
+      response.setError(http::status::Unauthorized, "Unauthorized");
       ptrConnection->writeResponse();
       return;
    }
@@ -324,7 +330,19 @@ void handleContentError(
        server::isInvalidSessionScopeError(error))
    {
       http::Response& response = ptrConnection->response();
-      response.setStatusCode(http::status::ServiceUnavailable);
+      if (server::isInvalidSessionScopeError(error))
+      {
+         unsigned state = safe_convert::stringTo(error.getProperty("state"), 0);
+         if (static_cast<r_util::SessionScopeState>(state) ==
+             r_util::ScopeInvalidProject)
+            response.setError(http::status::NotFound, "Project not found");
+         else
+            response.setStatusCode(http::status::ServiceUnavailable);
+      }
+      else
+      {
+         response.setStatusCode(http::status::ServiceUnavailable);
+      }
       ptrConnection->writeResponse();
       return;
    }
@@ -379,6 +397,8 @@ void handleRpcError(
       // prepare client info
       json::Object clJson;
       clJson["scope_path"] = r_util::urlPathForSessionScope(context.scope);
+      clJson["scope_state"] = safe_convert::numberToString(
+               error.getProperty("state"));
       clJson["project"] = context.scope.project();
       clJson["id"] = context.scope.id();
       json::JsonRpcResponse jsonRpcResponse ;
@@ -454,7 +474,7 @@ void proxyRequest(
       const http::ConnectionRetryProfile& connectionRetryProfile)
 {
    // apply optional proxy filter
-   if (applyProxyFilter(ptrConnection, context.username))
+   if (applyProxyFilter(ptrConnection, context))
       return;
 
    // create async client
@@ -606,7 +626,7 @@ void proxyLocalhostRequest(
       return;
 
    // apply optional proxy filter
-   if (applyProxyFilter(ptrConnection, context.username))
+   if (applyProxyFilter(ptrConnection, context))
       return;
 
    // make a copy of the request for forwarding

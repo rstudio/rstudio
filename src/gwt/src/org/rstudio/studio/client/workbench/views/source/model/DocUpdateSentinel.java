@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.workbench.views.source.model;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -39,6 +41,7 @@ import org.rstudio.studio.client.workbench.events.LastChanceSaveHandler;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Fold;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.VimMarks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutput;
@@ -294,6 +297,25 @@ public class DocUpdateSentinel
                              ex.getMessage());
          }
       }
+      
+      // Update marks after document save
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            if (docDisplay_.isVimModeOn())
+            {
+               String oldMarksSpec = "";
+               if (hasProperty("marks"))
+                  oldMarksSpec = getProperty("marks");
+
+               String newMarksSpec = VimMarks.encode(docDisplay_.getMarks());
+               if (!oldMarksSpec.equals(newMarksSpec))
+                  setProperty("marks", newMarksSpec);
+            }
+         }
+      });
       return didSave;
    }
 
@@ -485,6 +507,11 @@ public class DocUpdateSentinel
                }
             });
    }
+   
+   public boolean hasProperty(String propertyName)
+   {
+      return sourceDoc_.getProperties().hasKey(propertyName);
+   }
 
    public String getProperty(String propertyName)
    {
@@ -555,7 +582,7 @@ public class DocUpdateSentinel
             properties.setString(entry.getKey(), entry.getValue());
       }
    }
-
+   
    public void onValueChange(ValueChangeEvent<Void> voidValueChangeEvent)
    {
       changesPending_ = true;

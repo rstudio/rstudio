@@ -1,7 +1,7 @@
 /*
  * RSessionContext.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,12 +18,27 @@
 
 #include <string>
 #include <vector>
+#include <sstream>
+#include <iomanip>
+#include <iostream>
 
 #include <boost/function.hpp>
 
+#include <core/system/UserObfuscation.hpp>
+
 #define kProjectNone   "none"
+#define kUserIdLen      5
+#define kProjectIdLen   8
 #define kProjectNoneId "cfc78a31"
 #define kWorkspacesId  "3c286bd3"
+
+#ifdef _WIN32
+typedef unsigned int uid_t;
+inline uid_t getuid()
+{
+   return 0;
+}
+#endif
 
 namespace rstudio {
 namespace core {
@@ -32,13 +47,107 @@ class FilePath;
 
 namespace r_util {
 
-typedef boost::function<std::string(const std::string&)> ProjectIdToFilePath;
-typedef boost::function<std::string(const std::string&)> FilePathToProjectId;
+enum SessionScopeState
+{
+   ScopeValid, 
+   ScopeInvalidSession,
+   ScopeInvalidProject,
+   ScopeMissingProject,
+};
+
+inline std::string obfuscatedUserId(uid_t uid)
+{
+   std::ostringstream ustr;
+   ustr << std::setw(kUserIdLen) << std::setfill('0') << std::hex
+        << OBFUSCATE_USER_ID(uid);
+   return ustr.str();
+}
+
+inline uid_t deobfuscatedUserId(const std::string& userId)
+{
+   // shortcut if user ID is not known
+   if (userId.empty())
+      return 0;
+
+   // attempt to parse user id
+   long uid = strtol(userId.c_str(), NULL, 16);
+
+   // collapse all error cases
+   if (uid == LONG_MAX || uid == LONG_MIN)
+      uid = 0;
+   else if (uid != 0)
+      uid = DEOBFUSCATE_USER_ID(uid);
+   return uid;
+}
+
+class ProjectId
+{
+public:
+   ProjectId()
+   {}
+
+   ProjectId(const std::string &id)
+   {
+      if (id.length() == kProjectIdLen)
+      {
+         id_ = id;
+         userId_ = obfuscatedUserId(::getuid());
+      }
+      else if (id.length() == (kProjectIdLen + kUserIdLen))
+      {
+         userId_ = id.substr(0, kUserIdLen);
+         id_ = id.substr(kUserIdLen);
+      }
+   }
+
+   ProjectId(const std::string& id, const std::string& userId):
+      id_(id), userId_(userId)
+   {}
+
+   ProjectId(const std::string& id, uid_t userId):
+      id_(id)
+   {
+      userId_ = obfuscatedUserId(userId);
+   }
+
+   std::string asString() const
+   {
+      return userId_ + id_;
+   }
+
+   bool operator==(const ProjectId &other) const
+   {
+      return id_  == other.id_ && userId_ == other.userId_;
+   }
+
+   bool operator<(const ProjectId &other) const
+   {
+       return id_ < other.id_ ||
+              (id_  == other.id_  && userId_  < other.userId_);
+   }
+
+   const std::string& id() const
+   {
+      return id_;
+   }
+
+   const std::string& userId() const
+   {
+      return userId_;
+   }
+
+private:
+   std::string id_;
+   std::string userId_;
+};
+
+typedef boost::function<std::string(const ProjectId&)> ProjectIdToFilePath;
+typedef boost::function<ProjectId(const std::string&)> FilePathToProjectId;
 
 class SessionScope
 {
 private:
-   SessionScope(const std::string& project, const std::string& id)
+   SessionScope(const ProjectId& project, const std::string& id)
       : project_(project), id_(id)
    {
    }
@@ -46,7 +155,7 @@ private:
 public:
 
    static SessionScope fromProject(
-                           std::string project,
+                           const std::string& project,
                            const std::string& id,
                            const FilePathToProjectId& filePathToProjectId);
 
@@ -54,7 +163,7 @@ public:
                            const SessionScope& scope,
                            const ProjectIdToFilePath& projectIdToFilePath);
 
-   static SessionScope fromProjectId(const std::string& project,
+   static SessionScope fromProjectId(const ProjectId& project,
                                      const std::string& id);
 
    static SessionScope projectNone(const std::string& id);
@@ -65,11 +174,15 @@ public:
 
    bool isProjectNone() const;
 
-   const std::string& project() const { return project_; }
+   bool isWorkspaces() const;
+
+   const std::string project() const { return project_.asString(); }
 
    const std::string& id() const { return id_; }
 
-   bool empty() const { return project_.empty(); }
+   const ProjectId& projectId() const { return project_; }
+
+   bool empty() const { return project_.id().empty(); }
 
    bool operator==(const SessionScope &other) const {
       return project_ == other.project_ && id_ == other.id_;
@@ -85,11 +198,11 @@ public:
    }
 
 private:
-   std::string project_;
+   ProjectId project_;
    std::string id_;
 };
 
-bool validateSessionScope(const SessionScope& scope,
+SessionScopeState validateSessionScope(const SessionScope& scope,
                           const core::FilePath& userHomePath,
                           const core::FilePath& userScratchPath,
                           core::r_util::ProjectIdToFilePath projectIdToFilePath,
@@ -154,4 +267,3 @@ std::string generateScopeId(const std::vector<std::string>& reserved);
 
 
 #endif // CORE_R_UTIL_R_SESSION_CONTEXT_HPP
-

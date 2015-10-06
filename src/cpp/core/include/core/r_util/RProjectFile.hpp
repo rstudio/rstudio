@@ -37,6 +37,8 @@ enum YesNoAskValue
    AskValue = 3
 };
 
+extern const int kLineEndingsUseDefault;
+
 extern const char * const kBuildTypeNone;
 extern const char * const kBuildTypePackage;
 extern const char * const kBuildTypeMakefile;
@@ -66,6 +68,7 @@ struct RProjectConfig
         numSpacesForTab(2),
         autoAppendNewline(false),
         stripTrailingWhitespace(false),
+        lineEndings(kLineEndingsUseDefault),
         encoding(),
         defaultSweaveEngine(),
         defaultLatexProgram(),
@@ -94,6 +97,7 @@ struct RProjectConfig
    int numSpacesForTab;
    bool autoAppendNewline;
    bool stripTrailingWhitespace;
+   int lineEndings;
    std::string encoding;
    std::string defaultSweaveEngine;
    std::string defaultLatexProgram;

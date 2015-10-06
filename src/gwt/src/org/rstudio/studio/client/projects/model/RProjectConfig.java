@@ -113,6 +113,14 @@ public class RProjectConfig extends JavaScriptObject
       this.strip_trailing_whitespace = stripTrailingWhitespace;
    }-*/; 
    
+   public native final int getLineEndings() /*-{
+      return this.line_endings;
+   }-*/;  
+   
+   public native final void setLineEndings(int lineEndings) /*-{
+      this.line_endings = lineEndings;
+   }-*/;
+   
    public native final String getEncoding() /*-{
       return this.default_encoding;
    }-*/;

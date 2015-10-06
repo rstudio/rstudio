@@ -25,6 +25,7 @@ import org.rstudio.core.client.command.ShortcutViewer;
 import org.rstudio.core.client.command.UserCommandManager;
 import org.rstudio.core.client.files.FileBacked;
 import org.rstudio.core.client.files.filedialog.PathBreadcrumbWidget;
+import org.rstudio.core.client.theme.WindowFrame;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.LocalRepositoriesWidget;
 import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
@@ -151,6 +152,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(ApplicationCommandManager manager);
    void injectMembers(FileBacked<?> object);
    void injectMembers(TextEditingTargetNotebook notebook);
+   void injectMembers(WindowFrame frame);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

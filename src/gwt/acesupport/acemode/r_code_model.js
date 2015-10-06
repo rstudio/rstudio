@@ -13,7 +13,7 @@
  *
  */
 
-define("mode/r_code_model", function(require, exports, module) {
+define("mode/r_code_model", ["require", "exports", "module"], function(require, exports, module) {
 
 var Range = require("ace/range").Range;
 var TokenIterator = require("ace/token_iterator").TokenIterator;
@@ -53,11 +53,28 @@ var RCodeModel = function(session, tokenizer,
    this.$codeEndPattern = codeEndPattern;
    this.$scopes = new ScopeManager(ScopeNode);
 
+   var $firstChange = true;
+   var onChangeMode = function(data, session)
+   {
+      if ($firstChange)
+      {
+         $firstChange = false;
+         return;
+      }
+
+      this.$doc.off('change', onDocChange);
+      this.$session.off('changeMode', onChangeMode);
+   }.bind(this);
+
+   var onDocChange = function(evt)
+   {
+      this.$onDocChange(evt);
+   }.bind(this);
+
+   this.$session.on('changeMode', onChangeMode);
+   this.$doc.on('change', onDocChange);
+
    var that = this;
-   this.$doc.on('change', function(evt) {
-      that.$onDocChange.apply(that, [evt]);
-   });
-   
 };
 
 (function () {
@@ -735,7 +752,17 @@ var RCodeModel = function(session, tokenizer,
 
          return null;
       }
-       
+
+      var modeId = this.$session.getMode().$id;
+
+      // Nudge the maxRow ahead a bit -- some functions may request
+      // the tree to be built up to a particular row, but we want to
+      // build a bit further ahead in case some lookahead is required.
+      maxRow = Math.min(
+         maxRow + 30,
+         this.$doc.getLength() - 1
+      );
+
       // Check if the scope tree has already been built up to this row.
       var scopeRow = this.$scopes.parsePos.row;
       if (scopeRow >= maxRow)
@@ -771,15 +798,6 @@ var RCodeModel = function(session, tokenizer,
       {
          // Bail if we've stepped past the max row.
          if (iterator.$row > maxRow)
-            break;
-
-         // Skip over comments.
-         while (token != null && /\bcomment\b/.test(token.type))
-            token = iterator.moveToStartOfNextRowWithTokens();
-
-         // Bail if the current token is null (can occur if the document
-         // ends with tokens)
-         if (token == null)
             break;
 
          // Cache access to the current token + cursor.
@@ -869,6 +887,46 @@ var RCodeModel = function(session, tokenizer,
             this.$scopes.onSectionHead(label, position);
          }
 
+         // Sweave
+         //
+         // Handle Sweave sections.
+         // TODO: Maybe handle '\begin{}' and '\end{}' pairs?
+         else if (!isInRMode &&
+                  modeId === "mode/sweave" &&
+                  type === "keyword" &&
+                  value.indexOf("\\") === 0 && (
+                     value === "\\chapter" ||
+                     value === "\\section" ||
+                     value === "\\subsection" ||
+                     value === "\\subsubsection"
+                  ))
+         {
+            // Infer the depth of the label.
+            var depth = 1;
+            if (value === "\\chapter")
+               depth = 2;
+            else if (value === "\\section")
+               depth = 3;
+            else if (value === "\\subsection")
+               depth = 4;
+            else if (value === "\\subsubsection")
+               depth = 5;
+
+            var line = this.$doc.getLine(position.row);
+
+            var reSection = /{([^}]*)}/;
+            var match = reSection.exec(line);
+
+            var label = "";
+            if (match != null)
+               label = match[1];
+
+            var labelStartPos = {row: position.row, column: 0};
+            var labelEndPos = {row: position.row, column: Infinity};
+
+            this.$scopes.onMarkdownHead(label, labelStartPos, labelEndPos, depth);
+         }
+
          // Check specifically for YAML header boundaries ('---')
          //
          // TODO: We should encode the state we're transitioning into
@@ -882,6 +940,7 @@ var RCodeModel = function(session, tokenizer,
 
          else if (/\bcodeend\b/.test(type) && value === "---")
          {
+            position.column = Infinity;
             this.$scopes.onSectionEnd(position);
          }
 
@@ -956,19 +1015,15 @@ var RCodeModel = function(session, tokenizer,
                if (localCursor.isFirstSignificantTokenOnLine())
                   startPos.column = 0;
 
-               var functionArgsString = this.$doc.getTextRange(new Range(
-                  argsStartPos.row, argsStartPos.column,
-                  bracePos.row, bracePos.column
-               ));
+               // Obtain the function arguments by walking through the tokens
+               var functionArgs = $getFunctionArgs(argsCursor);
+               var functionArgsString = "(" + functionArgs.join(", ") + ")";
 
                var functionLabel;
                if (functionName == null)
                   functionLabel = $normalizeWhitespace("<function>" + functionArgsString);
                else
                   functionLabel = $normalizeWhitespace(functionName + functionArgsString);
-
-               // Obtain the function arguments by walking through the tokens
-               var functionArgs = $getFunctionArgs(argsCursor);
 
                this.$scopes.onFunctionScopeStart(functionLabel,
                                                  startPos,
@@ -1159,6 +1214,7 @@ var RCodeModel = function(session, tokenizer,
 
       if (!position)
          return "";
+
       this.$buildScopeTreeUpToRow(position.row);
 
       var scopePath = this.$scopes.getActiveScopes(position);

@@ -82,6 +82,9 @@ namespace {
 // is this R 3.0 or greator
 bool s_isR3 = false;
 
+// is this R 3.3 or greator
+bool s_isR3_3 = false;
+
 // options
 ROptions s_options;
 
@@ -377,10 +380,22 @@ Error initialize()
    if (libError)
       LOG_ERROR(libError);
 
-   // check whether this is R 3.0 or greater
-   Error r3Error = r::exec::evaluateString("getRversion() >= '3.0.0'", &s_isR3);
-   if (r3Error)
-      LOG_ERROR(r3Error);
+   // check whether this is R 3.3 or greater
+   Error r33Error = r::exec::evaluateString("getRversion() >= '3.3.0'", &s_isR3_3);
+   if (r33Error)
+      LOG_ERROR(r33Error);
+
+   if (s_isR3_3)
+   {
+      s_isR3 = true;
+   }
+   else
+   {
+      // check whether this is R 3.0 or greater
+      Error r3Error = r::exec::evaluateString("getRversion() >= '3.0.0'", &s_isR3);
+      if (r3Error)
+         LOG_ERROR(r3Error);
+   }
 
    // initialize console history capacity
    r::session::consoleHistory().setCapacityFromRHistsize();
@@ -1118,7 +1133,15 @@ SA_TYPE saveAsk()
    {
       // end user prompt
       std::string wsPath = createAliasedPath(rSaveGlobalEnvironmentFilePath());
-      std::string prompt = "Save workspace image to " + wsPath + "? [y/n/c]: ";
+      std::string prompt = "Save workspace image to " + wsPath + "? [y/n";
+      // The Rf_jump_to_top_level doesn't work (freezes the process) with
+      // 64-bit mingw due to the way it does stack unwinding. Since this is
+      // a farily obscure gesture (quit from command line then cancel the quit)
+      // we just eliminate the possiblity of it on windows
+#ifndef _WIN32
+      prompt += "/c";
+#endif
+      prompt += "]: ";
 
       // input buffer
       std::vector<CONSOLE_BUFFER_CHAR> inputBuffer(512, 0);
@@ -1135,8 +1158,10 @@ SA_TYPE saveAsk()
             return SA_SAVE;
          else if (input == "n")
             return SA_NOSAVE;
+#ifndef _WIN32
          else if (input == "c")
             throw JumpToTopException();
+#endif
       }
    }
    catch(JumpToTopException)
@@ -1668,6 +1693,11 @@ namespace utils {
 bool isR3()
 {
    return s_isR3;
+}
+
+bool isR3_3()
+{
+   return s_isR3_3;
 }
 
 bool isPackratModeOn()

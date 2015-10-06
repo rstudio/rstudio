@@ -70,6 +70,7 @@ public interface ThemeStyles extends CssResource
    String noLabel();
    String toolbarButtonPushed();
    String emptyProjectMenu();
+   String menuSubheader();
 
    String menuRightImage();
    

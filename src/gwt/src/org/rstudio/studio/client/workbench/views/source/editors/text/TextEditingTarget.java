@@ -33,6 +33,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.UIObject;
@@ -53,17 +54,18 @@ import org.rstudio.core.client.events.HasEnsureHeightHandlers;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.events.AddEditorCommandEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ResetEditorCommandsEvent;
+import org.rstudio.studio.client.application.events.SetEditorCommandBindingsEvent;
 import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.debugging.BreakpointManager;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
@@ -129,12 +131,12 @@ import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList.ContainsFoldPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper.RmdSelectedTemplate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.VimMarks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
@@ -147,6 +149,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEn
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.RMarkdownNoParamsDialog;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStateChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
@@ -706,16 +709,15 @@ public class TextEditingTarget implements
             });
       
       events_.addHandler(
-            AddEditorCommandEvent.TYPE,
-            new AddEditorCommandEvent.Handler()
+            SetEditorCommandBindingsEvent.TYPE,
+            new SetEditorCommandBindingsEvent.Handler()
             {
                @Override
-               public void onAddEditorCommand(AddEditorCommandEvent event)
+               public void onSetEditorCommandBindings(SetEditorCommandBindingsEvent event)
                {
-                  getDocDisplay().addEditorCommandBinding(
+                  getDocDisplay().setEditorCommandBinding(
                         event.getId(),
-                        event.getKeySequence(),
-                        event.replaceOldBindings());
+                        event.getKeySequences());
                }
             });
       
@@ -742,7 +744,97 @@ public class TextEditingTarget implements
                         DocTabDragStateChangedEvent.STATE_NONE);
                }
             });
-
+   }
+   
+   private boolean moveCursorToNextSectionOrChunk()
+   {
+      Scope current = docDisplay_.getCurrentScope();
+      ScopeList scopes = new ScopeList(docDisplay_);
+      Position cursorPos = docDisplay_.getCursorPosition();
+      
+      int n = scopes.size();
+      for (int i = 0; i < n; i++)
+      {
+         Scope scope = scopes.get(i);
+         if (!(scope.isChunk() || scope.isSection()))
+            continue;
+         
+         if (scope.equals(current))
+            continue;
+         
+         if (scope.getPreamble().isAfter(cursorPos))
+         {
+            moveCursorToNextPrevSection(scope.getPreamble());
+            return true;
+         }
+      }
+      
+      return false;
+   }
+   
+   private boolean moveCursorToPreviousSectionOrChunk()
+   {
+      ScopeList scopes = new ScopeList(docDisplay_);
+      Position cursorPos = docDisplay_.getCursorPosition();
+      
+      int n = scopes.size();
+      for (int i = n - 1; i >= 0; i--)
+      {
+         Scope scope = scopes.get(i);
+         if (!(scope.isChunk() || scope.isSection()))
+            continue;
+         
+         if (scope.getPreamble().isBefore(cursorPos))
+         {
+            moveCursorToNextPrevSection(scope.getPreamble());
+            return true;
+         }
+      }
+      
+      return false;
+   }
+   
+   private void moveCursorToNextPrevSection(Position pos)
+   {
+      docDisplay_.setCursorPosition(pos);
+      docDisplay_.moveCursorNearTop(5);
+   }
+   
+   @Handler
+   void onSwitchFocusSourceConsole()
+   {
+      if (docDisplay_.isFocused())
+         commands_.activateConsole().execute();
+      else
+         commands_.activateSource().execute();
+   }
+   
+   @Handler
+   void onGoToNextSection()
+   {
+      if (docDisplay_.getFileType().canGoNextPrevSection())
+      {
+         if (!moveCursorToNextSectionOrChunk())
+            docDisplay_.gotoPageDown();
+      }
+      else
+      {
+         docDisplay_.gotoPageDown();
+      }
+   }
+   
+   @Handler
+   void onGoToPrevSection()
+   {
+      if (docDisplay_.getFileType().canGoNextPrevSection())
+      {
+         if (!moveCursorToPreviousSectionOrChunk())
+            docDisplay_.gotoPageUp();
+      }
+      else
+      {
+         docDisplay_.gotoPageUp();
+      }
    }
    
    public void onExecuteUserCommand(final ExecuteUserCommandEvent event)
@@ -753,9 +845,11 @@ public class TextEditingTarget implements
          public void execute()
          {
             Range range = docDisplay_.getSelectionRange();
+            String filePath = StringUtil.notNull(docUpdateSentinel_.getPath());
             server_.executeUserCommand(
                   event.getCommandName(),
                   docDisplay_.getLines(),
+                  filePath,
                   range.getStart().getRow(),
                   range.getStart().getColumn(),
                   range.getEnd().getRow(),
@@ -1071,6 +1165,7 @@ public class TextEditingTarget implements
          view_.initWidgetSize();
       docDisplay_.setCode(contents, false);
       
+      // Load and apply folds.
       final ArrayList<Fold> folds = Fold.decode(document.getFoldSpec());
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
@@ -1081,6 +1176,24 @@ public class TextEditingTarget implements
                docDisplay_.addFold(fold.getRange());
          }
       });
+      
+      // Load and apply Vim marks (if they exist).
+      if (document.getProperties().hasKey("marks"))
+      {
+         final String marksSpec = document.getProperties().getString("marks");
+         final JsMap<Position> marks = VimMarks.decode(marksSpec);
+         
+         // Time out the marks setting just to avoid conflict with other
+         // mutations of the editor.
+         new Timer()
+         {
+            @Override
+            public void run()
+            {
+                docDisplay_.setMarks(marks);
+            }
+         }.schedule(100);
+      }
 
       registerPrefs(releaseOnDismiss_, prefs_, docDisplay_, document);
       
@@ -1143,6 +1256,21 @@ public class TextEditingTarget implements
                RStudioGinjector.INSTANCE.getSourceWindowManager()
                                         .setLastFocusedSourceWindowId("");
             }
+            
+            // only enable 'go to section' commands when docDisplay has focus
+            commands_.goToNextSection().setEnabled(true);
+            commands_.goToPrevSection().setEnabled(true);
+         }
+      });
+      
+      docDisplay_.addBlurHandler(new BlurHandler()
+      {
+         @Override
+         public void onBlur(BlurEvent event)
+         {
+            // only enable 'go to section' commands when docDisplay has focus
+            commands_.goToNextSection().setEnabled(false);
+            commands_.goToPrevSection().setEnabled(false);
          }
       });
 
@@ -2176,7 +2304,14 @@ public class TextEditingTarget implements
          Pattern pattern = Pattern.create("[ \t]+$");
          String strippedCode = pattern.replaceAll(code, "");
          if (!strippedCode.equals(code))
+         {
+            // Calling 'setCode' can remove folds in the document; cache the folds
+            // and reapply them after document mutation.
+            JsArray<AceFold> folds = docDisplay_.getFolds();
             docDisplay_.setCode(strippedCode, true);
+            for (AceFold fold : JsUtil.asIterable(folds))
+               docDisplay_.addFold(fold.getRange());
+         }
       }
       
       if (prefs_.autoAppendNewline().getValue() || fileType_.isPython())
@@ -2185,6 +2320,7 @@ public class TextEditingTarget implements
          if (lastLine.length() != 0)
             docDisplay_.insertCode(docDisplay_.getEnd().getEnd(), "\n");
       }
+      
    }
    
    private FileSystemItem getSaveFileDefaultDir()
@@ -2710,7 +2846,7 @@ public class TextEditingTarget implements
                                  + indentation
                                  + input.trim()
                                  + " <- "
-                                 + "function (" + args + ") {\n"
+                                 + "function(" + args + ") {\n"
                                  + StringUtil.indent(code, "  ")
                                  + "\n"
                                  + indentation
@@ -2779,125 +2915,238 @@ public class TextEditingTarget implements
    void onCommentUncomment()
    {
       if (isCursorInTexMode())
-         doCommentUncomment("%");
+         doCommentUncomment("%", null);
       else if (isCursorInRMode() || isCursorInYamlMode())
-         doCommentUncomment("#");
-      else if (fileType_.isCpp() || fileType_.isStan())
-         doCommentUncomment("//"); 
+         doCommentUncomment("#", null);
+      else if (fileType_.isCpp() || fileType_.isStan() || fileType_.isC())
+         doCommentUncomment("//", null); 
+      else if (fileType_.isPlainMarkdown())
+         doCommentUncomment("<!--", "-->");
+      else if (DocumentMode.isSelectionInMarkdownMode(docDisplay_))
+         doCommentUncomment("<!--", "-->");
    }
    
    @Handler
    void onPopoutDoc()
    {
       if (docUpdateSentinel_ != null)
-         events_.fireEvent(new PopoutDocEvent(getId(), currentPosition()));
+      {
+         // ensure doc is synchronized with source database before popping it
+         // out
+         docUpdateSentinel_.withSavedDoc(new Command()
+         {
+            @Override
+            public void execute()
+            {
+               // push the new doc state into the source database that the 
+               // new window will inherit
+               SourceWindowManager manager =
+                     RStudioGinjector.INSTANCE.getSourceWindowManager();
+               JsArray<SourceDocument> docs = manager.getSourceDocs();
+               for (int i = 0; i < docs.length(); i++)
+               {
+                  if (docs.get(i).getId() == getId())
+                  {
+                     docs.get(i).setContents(docDisplay_.getCode());
+                     docs.get(i).setDirty(dirtyState_.getValue());
+                     break;
+                  }
+               }
+               
+               // fire popout event (this triggers a close in the current window
+               // and the creation of a new window with the doc)
+               events_.fireEvent(new PopoutDocEvent(getId(), 
+                     currentPosition()));
+            }
+         });
+      }
    }
 
-   private void doCommentUncomment(String c)
+   
+   @Handler
+   void onReturnDocToMain()
    {
-      InputEditorSelection initialSelection = docDisplay_.getSelection();
-      String indent = "";
-      boolean singleLineAction = initialSelection.isEmpty() ||
-            initialSelection.getStart().getLine().equals(
-                  initialSelection.getEnd().getLine());
-            
-      if (singleLineAction)
+      // ensure doc is synchronized with source database before returning it
+      if (!SourceWindowManager.isMainSourceWindow() && 
+          docUpdateSentinel_ != null)
       {
-         String currentLine = docDisplay_.getCurrentLine();
-         Match firstCharMatch = Pattern.create("([^\\s])").match(currentLine, 0);
-         if (firstCharMatch != null)
+         docUpdateSentinel_.withSavedDoc(new Command()
          {
-            indent = currentLine.substring(0, firstCharMatch.getIndex());
+            @Override
+            public void execute()
+            {
+               events_.fireEventToMainWindow(new DocWindowChangedEvent(
+                     getId(), SourceWindowManager.getSourceWindowId(), "",
+                     DocTabDragParams.create(getId(), currentPosition()), 0));
+            }
+         });
+      }
+   }
+
+   @SuppressWarnings("deprecation") // GWT emulation only provides isSpace
+   private void doCommentUncomment(String commentStart,
+                                   String commentEnd)
+   {
+      Range initialRange = docDisplay_.getSelectionRange();
+      
+      int rowStart = initialRange.getStart().getRow();
+      int rowEnd = initialRange.getEnd().getRow();
+      
+      boolean isSingleLineAction = rowStart == rowEnd;
+      boolean commentWhitespace = commentEnd == null;
+      
+      // Also figure out if we're commenting an Roxygen block.
+      boolean looksLikeRoxygen = false;
+      
+      // Skip commenting the last line if the selection is
+      // multiline and ends on the first column of the end row.
+      boolean dontCommentLastLine = false;
+      if (rowStart != rowEnd && initialRange.getEnd().getColumn() == 0)
+         dontCommentLastLine = true;
+      
+      Range expanded = Range.create(
+            rowStart,
+            0,
+            rowEnd,
+            dontCommentLastLine ? 0 : docDisplay_.getLine(rowEnd).length());
+      docDisplay_.setSelectionRange(expanded);
+      
+      String[] lines = JsUtil.toStringArray(
+            docDisplay_.getLines(rowStart, rowEnd - (dontCommentLastLine ? 1 : 0)));
+      
+      String commonPrefix = StringUtil.getCommonPrefix(
+            lines,
+            true,
+            true);
+      
+      String commonIndent = StringUtil.getIndent(commonPrefix);
+      
+      // First, figure out whether we're commenting or uncommenting.
+      // If we discover any line that doesn't start with the comment sequence,
+      // then we'll comment the whole selection.
+      boolean isCommentAction = false;
+      for (String line : lines)
+      {
+         String trimmed = line.trim();
+         
+         // Ignore lines that are just whitespace.
+         if (!commentWhitespace && trimmed.isEmpty())
+            continue;
+         
+         if (!isCommentAction)
+         {
+            if (!trimmed.startsWith(commentStart))
+               isCommentAction = true;
          }
-         else
+         
+         if (!looksLikeRoxygen)
          {
-            indent = currentLine;
+            if (trimmed.startsWith("@"))
+               looksLikeRoxygen = true;
+            else if (trimmed.startsWith("#'"))
+               looksLikeRoxygen = true;
          }
       }
       
-      boolean selectionCollapsed = docDisplay_.isSelectionCollapsed();
-      docDisplay_.fitSelectionToLines(true);
-      String selection = docDisplay_.getSelectionValue();
-
-      // If any line's first non-whitespace character is not #, then the whole
-      // selection should be commented. Exception: If the whole selection is
-      // whitespace, then we comment out the whitespace.
-      Match match = Pattern.create("^\\s*[^" + c + "\\s]").match(selection, 0);
-      boolean uncomment = match == null && selection.trim().length() != 0;
-      if (uncomment)
+      if (looksLikeRoxygen)
+         commentStart += "'";
+      
+      // Now, construct a new, commented selection to replace with.
+      StringBuilder builder = new StringBuilder();
+      if (isCommentAction)
       {
-         String prefix = c + "'?";
-         selection = selection.replaceAll("((^|\\n)\\s*)" + prefix + " ?", "$1");
+         for (String line : lines)
+         {
+            String trimmed = line.trim();
+            
+            if (!commentWhitespace && trimmed.isEmpty())
+            {
+               builder.append("\n");
+               continue;
+            }
+            
+            builder.append(commonIndent);
+            builder.append(commentStart);
+            builder.append(" ");
+            builder.append(line.substring(commonIndent.length()));
+            if (commentEnd != null)
+            {
+               builder.append(" ");
+               builder.append(commentEnd);
+            }
+            
+            builder.append("\n");
+         }
       }
       else
       {
-         // Check to see if we're commenting something that looks like Roxygen
-         Pattern pattern = Pattern.create("(^\\s*@)|(\\n\\s*@)");
-         boolean isRoxygen = pattern.match(selection, 0) != null;
-         
-         if (isRoxygen)
-            c = c + "'";
-         
-         if (singleLineAction)
-            selection = indent + c + " " + selection.replaceAll("^\\s*", "");
-         else
+         for (String line : lines)
          {
-            selection = c + " " + selection.replaceAll("\\n", "\n" + c + " ");
-
-            // If the selection ends at the very start of a line, we don't want
-            // to comment out that line. This enables Shift+DownArrow to select
-            // one line at a time.
-            if (selection.endsWith("\n" + c + " "))
-               selection = selection.substring(0, selection.length() - 1 - c.length());
+            String trimmed = line.trim();
+            
+            if (trimmed.isEmpty())
+            {
+               builder.append("\n");
+               continue;
+            }
+            
+            boolean isCommentedLine = true;
+            int commentStartIdx = line.indexOf(commentStart);
+            if (commentStartIdx == -1)
+               isCommentedLine = false;
+            
+            int commentEndIdx = line.length();
+            if (commentEnd != null)
+            {
+               commentEndIdx = line.lastIndexOf(commentEnd);
+               if (commentEndIdx == -1)
+                  isCommentedLine = false;
+            }
+            
+            if (!isCommentedLine)
+            {
+               builder.append(line);
+               continue;
+            }
+            
+            // We want to strip out the leading comment prefix,
+            // but preserve the indent.
+            int startIdx = commentStartIdx + commentStart.length();
+            if (Character.isSpace(line.charAt(startIdx)))
+               startIdx++;
+            
+            int endIdx = commentEndIdx;
+            String afterComment = line.substring(startIdx, endIdx);
+            builder.append(StringUtil.trimRight(commonIndent + afterComment));
+            
+            builder.append("\n");
          }
       }
-
-      docDisplay_.replaceSelection(selection);
       
-      if (selectionCollapsed)
-         docDisplay_.collapseSelection(true);
+      String newSelection = dontCommentLastLine ?
+            builder.toString() :
+            builder.substring(0, builder.length() - 1);
+            
+      docDisplay_.replaceSelection(newSelection);
       
-      if (singleLineAction)
+      // Nudge the selection to match the commented action.
+      if (isSingleLineAction)
       {
-         int offset = c.length() + 1;
-         String line = docDisplay_.getCurrentLine();
-         Match matchPos = Pattern.create("([^\\s])").match(line, 0);
+         int diff = newSelection.length() - lines[0].length();
+         if (commentEnd != null)
+            diff = diff < 0 ?
+                  diff + commentEnd.length() + 1 :
+                  diff - commentEnd.length() - 1;
          
-         InputEditorSelection newSelection;
-         if (uncomment)
-         {
-            if (initialSelection.isEmpty())
-            {
-               newSelection = new InputEditorSelection(
-                     initialSelection.getStart().movePosition(-offset, true),
-                     initialSelection.getStart().movePosition(-offset, true));
-            }
-            else
-            {
-               newSelection = new InputEditorSelection(
-                     initialSelection.getStart().movePosition(matchPos.getIndex(), false),
-                     initialSelection.getEnd().movePosition(-offset, true));
-            }
-         }
-         else
-         {
-            if (initialSelection.isEmpty())
-            {
-               newSelection = new InputEditorSelection(
-                     initialSelection.getStart().movePosition(offset, true),
-                     initialSelection.getStart().movePosition(offset, true));
-            }
-            else
-            {
-               newSelection = new InputEditorSelection(
-                     initialSelection.getStart().movePosition(matchPos.getIndex() + offset, false),
-                     initialSelection.getEnd().movePosition(offset, true));
-            }
-         }
-         docDisplay_.setSelection(newSelection);
+         int colStart = initialRange.getStart().getColumn();
+         int colEnd = initialRange.getEnd().getColumn();
+         Range newRange = Range.create(
+               rowStart,
+               colStart + diff,
+               rowStart,
+               colEnd + diff);
+         docDisplay_.setSelectionRange(newRange);
       }
-      
-      docDisplay_.focus();
    }
 
    @Handler
@@ -3240,7 +3489,7 @@ public class TextEditingTarget implements
    {
       String code = docDisplay_.getCode(selection);
       String[] lines = code.split("\n");
-      String prefix = StringUtil.getCommonPrefix(lines, true);
+      String prefix = StringUtil.getCommonPrefix(lines, true, false);
       Pattern pattern = Pattern.create("^\\s*" + commentPrefix + "+('?)\\s*");
       Match match = pattern.match(prefix, 0);
       // Selection includes non-comments? Abort.
@@ -3404,7 +3653,20 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteAllCode()
    {
-      sourceActiveDocument(true);
+      boolean executeChunks = fileType_.canCompilePDF() || 
+                              fileType_.canKnitToHTML() ||
+                              fileType_.isRpres();
+      
+      if (executeChunks)
+      {
+         executePreviousChunks(Position.create(
+               docDisplay_.getDocumentEnd().getRow() + 1,
+               0));
+      }
+      else
+      {
+         sourceActiveDocument(true);
+      }
    }
 
    @Handler
@@ -3613,9 +3875,44 @@ public class TextEditingTarget implements
       
       // execute the previous chunks
       Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks(position);
+      
+      StringBuilder builder = new StringBuilder();
       for (Scope scope : previousScopes)
-         if (isRChunk(scope))
-            executeSweaveChunk(scope, false);
+      {
+         if (isRChunk(scope) && isExecutableChunk(scope))
+         {
+            builder.append("# " + scope.getLabel() + "\n");
+            builder.append(scopeHelper_.getSweaveChunkText(scope));
+            builder.append("\n\n");
+         }
+      }
+      
+      final String code = builder.toString().trim();
+      if (fileType_.isRmd())
+      {
+         docUpdateSentinel_.withSavedDoc(new Command()
+         {
+            @Override
+            public void execute()
+            {
+               rmarkdownHelper_.prepareForRmdChunkExecution(
+                     docUpdateSentinel_.getId(),
+                     docUpdateSentinel_.getContents(),
+                     new Command()
+                     {
+                        @Override
+                        public void execute()
+                        {
+                           events_.fireEvent(new SendToConsoleEvent(code, true));
+                        }
+                     });
+            }
+         });
+      }
+      else
+      {
+         events_.fireEvent(new SendToConsoleEvent(code, true));
+      }
    }
    
    @Handler
@@ -3647,6 +3944,19 @@ public class TextEditingTarget implements
       // intended to be run in their own process so it might not make sense to
       // collect those here.
       return engine.equals("r");
+   }
+   
+   private boolean isExecutableChunk(final Scope chunk)
+   {
+      if (!chunk.isChunk())
+         return false;
+      
+      String headerText = docDisplay_.getLine(chunk.getPreamble().getRow());
+      Pattern reEvalFalse = Pattern.create("eval\\s*=\\s*F(?:ALSE)?");
+      if (reEvalFalse.test(headerText))
+         return false;
+      
+      return true;
    }
    
    private void executeSweaveChunk(final Scope chunk, 
@@ -4491,22 +4801,18 @@ public class TextEditingTarget implements
          if (range.isEmpty())
          {
             // If no selection, fold the innermost non-anonymous scope
+            Scope scope = docDisplay_.getCurrentScope();
+            while (scope != null && scope.isAnon())
+               scope = scope.getParentScope();
    
-            ScopeList scopeList = new ScopeList(docDisplay_);
-            scopeList.removeAll(ScopeList.ANON_BRACE);
-            Scope scope = scopeList.findLast(new ContainsFoldPredicate(
-                  Range.fromPoints(docDisplay_.getSelectionStart(),
-                                   docDisplay_.getSelectionEnd())));
-   
-            if (scope == null)
+            if (scope == null || scope.isTopLevel())
                return;
-   
+            
             docDisplay_.addFoldFromRow(scope.getFoldStart().getRow());
          }
          else
          {
             // If selection, fold the selection
-   
             docDisplay_.addFold(range);
          }
       }
@@ -4526,15 +4832,28 @@ public class TextEditingTarget implements
                                         docDisplay_.getSelectionEnd());
          if (range.isEmpty())
          {
-            // If no selection, unfold the closest fold on the current row
+            // If no selection, either:
+            //
+            // 1) Unfold a fold containing the cursor, or
+            // 2) Unfold the closest fold on the current row.
+            Position pos = docDisplay_.getCursorPosition();
    
-            Position pos = range.getStart();
-   
+            AceFold containingCandidate = null;
             AceFold startCandidate = null;
             AceFold endCandidate = null;
    
             for (AceFold f : JsUtil.asIterable(docDisplay_.getFolds()))
             {
+               // Check to see whether this fold contains the cursor position.
+               if (f.getRange().contains(pos))
+               {
+                  if (containingCandidate == null ||
+                      containingCandidate.getRange().contains(f.getRange()))
+                  {
+                     containingCandidate = f;
+                  }
+               }
+               
                if (startCandidate == null
                    && f.getStart().getRow() == pos.getRow()
                    && f.getStart().getColumn() >= pos.getColumn())
@@ -4542,19 +4861,24 @@ public class TextEditingTarget implements
                   startCandidate = f;
                }
    
-               if (f.getEnd().getRow() == pos.getRow()
-                   && f.getEnd().getColumn() <= pos.getColumn())
+               if (startCandidate == null &&
+                   f.getEnd().getRow() == pos.getRow() &&
+                   f.getEnd().getColumn() <= pos.getColumn())
                {
                   endCandidate = f;
                }
             }
-   
-            if (startCandidate == null ^ endCandidate == null)
+            
+            if (containingCandidate != null)
+            {
+               docDisplay_.unfold(containingCandidate);
+            }
+            else if (startCandidate == null ^ endCandidate == null)
             {
                docDisplay_.unfold(startCandidate != null ? startCandidate
                                                           : endCandidate);
             }
-            else if (startCandidate != null)
+            else if (startCandidate != null && endCandidate != null)
             {
                // Both are candidates; see which is closer
                int startDelta = startCandidate.getStart().getColumn() - pos.getColumn();
@@ -4618,7 +4942,7 @@ public class TextEditingTarget implements
    
    boolean useScopeTreeFolding()
    {
-      return docDisplay_.hasScopeTree() && !fileType_.isRmd();
+      return docDisplay_.hasScopeTree();
    }
 
    void handlePdfCommand(final String completedAction,
@@ -5131,6 +5455,13 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.forceImmediateRender();
                }}));
+      releaseOnDismiss.add(prefs.surroundSelection().bind(
+            new CommandWithArg<String>() {
+               @Override
+               public void execute(String string)
+               {
+                  docDisplay.setSurroundSelectionPref(string);
+               }}));
       
    }
    
@@ -5275,7 +5606,7 @@ public class TextEditingTarget implements
    {
       String property = docUpdateSentinel_.getProperty("docOutlineVisible");
       return StringUtil.isNullOrEmpty(property)
-            ? false
+            ? (getTextFileType().isRmd() && prefs_.showDocumentOutlineRmd().getGlobalValue())
             : Integer.parseInt(property) > 0;
    }
    
@@ -5322,7 +5653,7 @@ public class TextEditingTarget implements
    private final LintManager lintManager_;
    private final TextEditingTargetRenameHelper renameHelper_;
    private CollabEditStartParams queuedCollabParams_;
-
+   
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =
          new Invalidation();

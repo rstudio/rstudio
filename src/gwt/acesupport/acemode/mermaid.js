@@ -13,7 +13,7 @@
  *
  */
 
-define("mode/mermaid", function(require, exports, module) {
+define("mode/mermaid", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var TextMode = require("ace/mode/text").Mode;

@@ -14,13 +14,12 @@
  */
 
 #include <tests/TestThat.hpp>
-
-#include "SessionRTokenCursor.hpp"
+#include <core/r_util/RTokenCursor.hpp>
 
 namespace rstudio {
 namespace unit_tests {
 
-using namespace session::modules::token_cursor;
+using namespace core::r_util::token_cursor;
 
 bool isPipeOperator(const std::wstring& string)
 {

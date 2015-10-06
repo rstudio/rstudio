@@ -78,6 +78,8 @@ public class GitPane extends WorkbenchPane implements Display
 
       toolbar.addRightWidget(branchToolbarButton_);
       
+      toolbar.addRightSeparator();
+      
       toolbar.addRightWidget(new ToolbarButton(
             commands_.vcsRefresh().getImageResource(),
             new ClickHandler() {

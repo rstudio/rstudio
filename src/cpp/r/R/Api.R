@@ -6,6 +6,9 @@
   
   info$mode <- .Call(getNativeSymbolInfo("rs_rstudioProgramMode", 
                                          PACKAGE=""))
+
+  info$edition <- .Call(getNativeSymbolInfo("rs_rstudioEdition",
+                                            PACKAGE=""))
   
   info$version <- package_version(
     .Call(getNativeSymbolInfo("rs_rstudioVersion", PACKAGE=""))

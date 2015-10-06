@@ -96,6 +96,8 @@ public class SourceShim extends Composite
       @Handler
       public abstract void onActivateSource();
       @Handler
+      public abstract void onLayoutZoomSource();
+      @Handler
       public abstract void onPreviousTab();
       @Handler
       public abstract void onNextTab();
@@ -313,6 +315,13 @@ public class SourceShim extends Composite
       {
          onCompleted.execute();
       }
+   }
+   
+   public String getCurrentDocPath()
+   {
+      if (source_ == null || source_.getActiveEditor() == null)
+         return null;
+      return source_.getActiveEditor().getPath();
    }
    
    void setSource(Source source)

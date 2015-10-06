@@ -18,6 +18,8 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.StringUtil;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -158,6 +160,9 @@ public class KeyboardShortcut
       public static KeySequence fromShortcutString(String shortcut)
       {
          KeySequence sequence = new KeySequence();
+         if (StringUtil.isNullOrEmpty(shortcut))
+            return sequence;
+         
          String[] splat = shortcut.split("\\s+");
          for (int i = 0; i < splat.length; i++)
          {
@@ -193,6 +198,12 @@ public class KeyboardShortcut
          }
          
          return sequence;
+      }
+      
+      public void set(KeySequence others)
+      {
+         keyCombinations_.clear();
+         keyCombinations_.addAll(others.keyCombinations_);
       }
       
       public void clear()
@@ -243,9 +254,12 @@ public class KeyboardShortcut
          keyCombinations_.add(combination);
       }
       
-      public boolean startsWith(KeySequence other)
+      public boolean startsWith(KeySequence other, boolean strict)
       {
          if (other.keyCombinations_.size() > keyCombinations_.size())
+            return false;
+         
+         if (strict && other.keyCombinations_.size() == keyCombinations_.size())
             return false;
          
          for (int i = 0; i < other.keyCombinations_.size(); i++)
@@ -292,6 +306,12 @@ public class KeyboardShortcut
             return false;
          
          KeySequence other = (KeySequence) object;
+         if (keyCombinations_ == null || other.keyCombinations_ == null)
+            return false;
+         
+         if (keyCombinations_.size() != other.keyCombinations_.size())
+            return false;
+         
          for (int i = 0; i < keyCombinations_.size(); i++)
             if (!keyCombinations_.get(i).equals(other.keyCombinations_.get(i)))
                return false;
@@ -356,14 +376,14 @@ public class KeyboardShortcut
       return keySequence_;
    }
    
-   public boolean startsWith(KeyboardShortcut other)
+   public boolean startsWith(KeyboardShortcut other, boolean strict)
    {
-      return getKeySequence().startsWith(other.getKeySequence());
+      return getKeySequence().startsWith(other.getKeySequence(), strict);
    }
    
-   public boolean startsWith(KeySequence sequence)
+   public boolean startsWith(KeySequence sequence, boolean strict)
    {
-      return getKeySequence().startsWith(sequence);
+      return getKeySequence().startsWith(sequence, strict);
    }
    
    @Override

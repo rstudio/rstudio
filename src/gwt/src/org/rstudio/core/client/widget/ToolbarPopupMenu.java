@@ -108,6 +108,16 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       menuBar_.addSeparator();
    }
    
+   public void addSeparator(String label)
+   {
+      menuBar_.addSeparator(new LabelledMenuSeparator(label));
+   }
+   
+   public void addSeparator(int minPx)
+   {
+      menuBar_.addSeparator(new MinWidthMenuSeparator(minPx));
+   }
+   
    public int getItemCount()
    {
       return menuBar_.getItemCount() ;

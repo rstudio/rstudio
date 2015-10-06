@@ -515,12 +515,18 @@ void handleClientInit(const boost::function<void()>& initFunction,
                               projects::projectContext().file());
       sessionInfo["project_ui_prefs"] = projects::projectContext().uiPrefs();
       sessionInfo["project_open_docs"] = projects::projectContext().openDocs();
+      sessionInfo["project_supports_sharing"] = 
+         projects::projectContext().supportsSharing();
+      sessionInfo["project_owned_by_user"] = 
+         projects::projectContext().ownedByUser();
    }
    else
    {
       sessionInfo["active_project_file"] = json::Value();
       sessionInfo["project_ui_prefs"] = json::Value();
       sessionInfo["project_open_docs"] = json::Value();
+      sessionInfo["project_supports_sharing"] = false;
+      sessionInfo["project_owned_by_user"] = false;
    }
 
    sessionInfo["system_encoding"] = std::string(::locale2charset(NULL));
@@ -622,6 +628,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
       options.allowExternalPublish() &&
       core::system::getenv("RSTUDIO_DISABLE_EXTERNAL_PUBLISH").empty() &&
       allowPublish;
+
+   sessionInfo["allow_open_shared_projects"] = options.getBoolOverlayOption(
+         kProjectSharingSessionOption);
 
    sessionInfo["environment_state"] = modules::environment::environmentStateAsJson();
    sessionInfo["error_state"] = modules::errors::errorStateAsJson();
@@ -1968,11 +1977,14 @@ int rEditFile(const std::string& file)
    // read file contents
    FilePath filePath(file);
    std::string fileContents;
-   Error readError = core::readStringFromFile(filePath, &fileContents);
-   if (readError)
+   if (filePath.exists())
    {
-      LOG_ERROR(readError);
-      return 1; // r will raise/report an error indicating edit failed
+      Error readError = core::readStringFromFile(filePath, &fileContents);
+      if (readError)
+      {
+         LOG_ERROR(readError);
+         return 1; // r will raise/report an error indicating edit failed
+      }
    }
    
    // fire edit event

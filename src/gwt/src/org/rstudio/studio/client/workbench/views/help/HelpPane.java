@@ -297,13 +297,15 @@ public class HelpPane extends WorkbenchPane
       toolbar.addLeftWidget(commands_.helpHome().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.printHelp().createToolbarButton());
-      toolbar.addLeftWidget(commands_.helpPopout().createToolbarButton());
-      
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.refreshHelp().createToolbarButton());
-      
+      toolbar.addLeftWidget(commands_.helpPopout().createToolbarButton());
+        
       toolbar.addRightWidget(searchProvider_.get().getSearchWidget());
 
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(commands_.refreshHelp().createToolbarButton());
+    
+      
       return toolbar;
    }
    

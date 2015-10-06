@@ -1,7 +1,7 @@
 /*
  * SessionUserSettings.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,11 +29,14 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/projects/ProjectsSettings.hpp>
+#include <session/projects/SessionProjects.hpp>
 #include "modules/SessionErrors.hpp"
 #include "modules/SessionShinyViewer.hpp"
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
+#include <r/RRoutines.hpp>
+#include <r/RJson.hpp>
 #include <r/session/RSession.hpp>
 #include <r/session/RConsoleHistory.hpp>
 
@@ -61,6 +64,28 @@ const char * const kBioconductorMirrorName = "bioconductorMirrorName";
 const char * const kBioconductorMirrorUrl = "bioconductorMirrorUrl";
 const char * const kAlwaysSaveHistory = "alwaysSaveHistory";
 const char * const kRemoveHistoryDuplicates = "removeHistoryDuplicates";
+const char * const kLineEndings = "lineEndingConversion";
+const char * const kUseNewlineInMakefiles = "newlineInMakefiles";
+
+template <typename T>
+T readPref(const json::Object& prefs,
+           const std::string& name,
+           const T& defaultValue)
+{
+   T value = defaultValue;
+   Error error = json::readObject(prefs,
+                                  name,
+                                  defaultValue,
+                                  &value);
+   if (error)
+   {
+      value = defaultValue;
+      error.addProperty("pref", name);
+      LOG_ERROR(error);
+   }
+
+   return value;
+}
 
 void setCRANReposOption(const std::string& url)
 {
@@ -84,6 +109,77 @@ void setBioconductorReposOption(const std::string& mirror)
 }
 
 
+SEXP rs_readUiPref(SEXP prefName)
+{
+   r::sexp::Protect protect;
+
+   // extract name of preference to read
+   std::string pref = r::sexp::safeAsString(prefName, "");
+   if (pref.empty())
+      return R_NilValue;
+
+   json::Value prefValue = json::Value();
+
+   // try project overrides first
+   if (projects::projectContext().hasProject())
+   {
+      json::Object uiPrefs = projects::projectContext().uiPrefs();
+      json::Object::iterator it = uiPrefs.find(pref);
+      if (it != uiPrefs.end())
+         prefValue = it->second;
+   }
+
+   // then try global UI prefs
+   if (prefValue.is_null())
+   {
+      json::Object uiPrefs = userSettings().uiPrefs();
+      json::Object::iterator it = uiPrefs.find(pref);
+      if (it != uiPrefs.end())
+         prefValue = it->second;
+   }
+
+   // convert to SEXP and return
+   return r::sexp::create(prefValue, &protect);
+}
+
+SEXP rs_writeUiPref(SEXP prefName, SEXP value)
+{
+   json::Value prefValue = json::Value();
+
+   // extract name of preference to write
+   std::string pref = r::sexp::safeAsString(prefName, "");
+   if (pref.empty())
+      return R_NilValue;
+
+   // extract value to write
+   Error error = r::json::jsonValueFromObject(value, &prefValue);
+   if (error)
+   {
+      r::exec::error("Unexpected value: " + error.summary());
+      return R_NilValue;
+   }
+
+   // if this corresponds to an existing preference, ensure that we're not 
+   // changing its data type
+   json::Object uiPrefs = userSettings().uiPrefs();
+   json::Object::iterator it = uiPrefs.find(pref);
+   if (it != uiPrefs.end())
+   {
+      if (it->second.type() != prefValue.type())
+      {
+         r::exec::error("Type mismatch: expected " + 
+                  json::typeAsString(it->second.type()) + "; got " + 
+                  json::typeAsString(prefValue.type()));
+         return R_NilValue;
+      }
+   }
+   
+   // write new pref value
+   uiPrefs[pref] = prefValue;
+   userSettings().setUiPrefs(uiPrefs);
+
+   return R_NilValue;
+}
 
 } // anonymous namespace
    
@@ -114,6 +210,19 @@ Error UserSettings::initialize()
    Error error = settings_.initialize(settingsFilePath_);
    if (error)
       return error;
+
+   // register routines for reading/writing UI prefs from R code
+   R_CallMethodDef readUiPrefMethodDef ;
+   readUiPrefMethodDef.name = "rs_readUiPref";
+   readUiPrefMethodDef.fun = (DL_FUNC) rs_readUiPref;
+   readUiPrefMethodDef.numArgs = 1;
+   r::routines::addCallMethod(readUiPrefMethodDef);
+
+   R_CallMethodDef writeUiPrefMethodDef ;
+   writeUiPrefMethodDef.name = "rs_writeUiPref";
+   writeUiPrefMethodDef.fun = (DL_FUNC) rs_writeUiPref;
+   writeUiPrefMethodDef.numArgs = 2;
+   r::routines::addCallMethod(writeUiPrefMethodDef);
 
    // make sure we have a context id
    if (contextId().empty())
@@ -215,30 +324,6 @@ void UserSettings::setUiPrefs(const core::json::Object& prefsObject)
 
    updatePrefsCache(prefsObject);
 }
-
-namespace {
-
-template <typename T>
-T readPref(const json::Object& prefs,
-           const std::string& name,
-           const T& defaultValue)
-{
-   T value = defaultValue;
-   Error error = json::readObject(prefs,
-                                  name,
-                                  defaultValue,
-                                  &value);
-   if (error)
-   {
-      value = defaultValue;
-      error.addProperty("pref", name);
-      LOG_ERROR(error);
-   }
-
-   return value;
-}
-
-} // anonymous namespace
 
 void UserSettings::updatePrefsCache(const json::Object& prefs) const
 { 
@@ -678,6 +763,30 @@ void UserSettings::setRemoveHistoryDuplicates(bool removeDuplicates)
    // update in underlying R session
    r::session::consoleHistory().setRemoveDuplicates(removeDuplicates);
 }
+
+string_utils::LineEnding UserSettings::lineEndings() const
+{
+   return (string_utils::LineEnding)settings_.getInt(
+                                     kLineEndings,
+                                     string_utils::LineEndingNative);
+}
+
+void UserSettings::setLineEndings(string_utils::LineEnding lineEndings)
+{
+   settings_.set(kLineEndings, (int)lineEndings);
+}
+
+
+bool UserSettings::useNewlineInMakefiles() const
+{
+   return settings_.getBool(kUseNewlineInMakefiles, true);
+}
+
+void UserSettings::setUseNewlineInMakefiles(bool useNewline)
+{
+   settings_.set(kUseNewlineInMakefiles, useNewline);
+}
+
 
 void UserSettings::setInitialWorkingDirectory(const FilePath& filePath)
 {

@@ -28,9 +28,6 @@ endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc")
   message(FATAL_ERROR "pandoc not found (re-run install-dependencies script to install)")
 endif()
-if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rmarkdown")
-  message(FATAL_ERROR "rmarkdown package not found (re-run install-dependencies script to install)")
-endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect")
   message(FATAL_ERROR "rsconnect package not found (re-run install-dependencies script to install)")
 endif()
@@ -144,13 +141,14 @@ set (SESSION_SOURCE_FILES
    modules/presentation/SessionPresentation.cpp
    modules/presentation/PresentationLog.cpp
    modules/presentation/PresentationState.cpp
-   modules/presentation/PresentationOverlay.cpp
    modules/presentation/SlideMediaRenderer.cpp
    modules/presentation/SlideNavigationList.cpp
    modules/presentation/SlideParser.cpp
    modules/presentation/SlideQuizRenderer.cpp
    modules/presentation/SlideRenderer.cpp
    modules/presentation/SlideRequestHandler.cpp
+   modules/presentation/Tutorial.cpp
+   modules/presentation/TutorialInstaller.cpp
    modules/rmarkdown/SessionRMarkdown.cpp
    modules/rmarkdown/RMarkdownPresentation.cpp
    modules/shiny/SessionShiny.cpp
@@ -406,16 +404,11 @@ if (NOT RSTUDIO_SESSION_WIN64)
       # static Pandoc binaries (see dependencies/common/install-pandoc)
       set(PANDOC_EXTENSION_DIR "/static")
    endif()
-   set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.13.1${PANDOC_EXTENSION_DIR}")
+   set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.15.0.6${PANDOC_EXTENSION_DIR}")
    file(GLOB PANDOC_FILES "${PANDOC_BIN}/pandoc*")
    install(FILES ${PANDOC_FILES}
            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
            DESTINATION  ${RSTUDIO_INSTALL_BIN}/pandoc)
-
-   # install rmarkdown package
-   file(GLOB RMARKDOWN_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rmarkdown*.tar.gz")
-   install(FILES ${RMARKDOWN_PACKAGE}
-           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
    # install rsconnect package
    file(GLOB RSCONNECT_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect*.tar.gz")

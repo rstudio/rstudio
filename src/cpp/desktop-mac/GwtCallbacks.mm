@@ -49,6 +49,13 @@ NSString* createAliasedPath(NSString* path)
    return [NSString stringWithUTF8String: aliased.c_str()];
 }
 
+NSString* getNewWindowGeometry()
+{
+   NSRect frame = [[NSApp mainWindow] frame];
+   frame.origin = [[NSApp mainWindow] cascadeTopLeftFromPoint: frame.origin];
+   return [NSString stringWithFormat: @"%d,%d,%d,%d", (int)frame.origin.x,
+           (int)frame.origin.y, (int)frame.size.height, (int)frame.size.width];
+}
 
 NSString* resolveAliasedPath(NSString* path)
 {
@@ -129,6 +136,25 @@ private:
    return createAliasedPath(path);
 }
 
+- (NSString*) runFileDialog: (NSSavePanel*) panel
+{
+    NSString* path = @"";
+    long int result = [panel runModal];
+    @try
+    {
+        if (result == NSOKButton)
+        {
+            path = [[panel URL] path];
+        }
+    }
+    @catch (NSException* e)
+    {
+        throw e;
+    }
+    return createAliasedPath(path);
+}
+
+
 - (NSString*) getOpenFileName: (NSString*) caption
               dir: (NSString*) dir
               filter: (NSString*) filter
@@ -159,7 +185,7 @@ private:
       
       [open setAllowedFileTypes: [NSArray arrayWithObject: fromExt]];
    }
-   return [self runSheetFileDialog: open];
+   return [self runFileDialog: open];
 }
 
 - (NSString*) getSaveFileName: (NSString*) caption
@@ -218,7 +244,7 @@ private:
 
    [save setTitle: caption];
    [save setDirectoryURL: path];
-   return [self runSheetFileDialog: save];
+   return [self runFileDialog: save];
 }
 
 - (NSString*) getExistingDirectory: (NSString*) caption dir: (NSString*) dir
@@ -230,16 +256,15 @@ private:
                            [dir stringByStandardizingPath]]];
    [open setCanChooseFiles: false];
    [open setCanChooseDirectories: true];
-   return [self runSheetFileDialog: open];
+   [open setCanCreateDirectories: true];
+   return [self runFileDialog: open];
 }
 
-- (void) undo
+- (void) undo: (bool) forAce
 {
-   if ([NSApp mainWindow] == [[MainFrameController instance] window])
+   if (forAce)
    {
-      // It appears that using the webView's undoManager doesn't work (for what we want it to do).
-      // It doesn't do anything in the main window when we use the menu to invoke.
-      // However the native handling of Cmd+Z seems to do the right thing.
+      // in the ACE editor, synthesize a literal Cmd+Z for Ace to handle
       CGEventRef event1, event2, event3, event4;
       event1 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)55, true);
       event2 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)6, true);
@@ -254,20 +279,17 @@ private:
    }
    else
    {
-      // undoManager works just fine on secondary windows, and sending Cmd+Z sends us into an
-      // endless loop of Cmd+Z-ing.
+      // elsewhere, let the webview handle it natively
       WebViewController* webViewController = (WebViewController*)[[NSApp mainWindow] delegate];
       [[[webViewController webView] undoManager] undo];
    }
 }
 
-- (void) redo
+- (void) redo: (bool) forAce
 {
-   if ([NSApp mainWindow] == [[MainFrameController instance] window])
+   if (forAce)
    {
-      // It appears that using the webView's undoManager doesn't work (for what we want it to do).
-      // It doesn't do anything in the main window when we use the menu to invoke.
-      // However the native handling of Cmd+Shift+Z seems to do the right thing.
+      // in the ACE editor, synthesize a literal Cmd+Shift+Z for Ace to handle
       CGEventRef event1, event2, event3, event4, event5, event6;
       event1 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)55, true);
       event2 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)56, true);
@@ -286,8 +308,7 @@ private:
    }
    else
    {
-      // undoManager works just fine on secondary windows, and sending Cmd+Z sends us into an
-      // endless loop of Cmd+Shift+Z-ing.
+      // elsewhere, let the webview handle it natively
       WebViewController* webViewController = (WebViewController*)[[NSApp mainWindow] delegate];
       [[[webViewController webView] undoManager] redo];
    }
@@ -798,26 +819,36 @@ private:
    sessionLauncher().setPendingQuit((PendingQuit)pendingQuit);
 }
 
+- (void) openInNewWindow: (NSArray*) args
+{
+   NSString* exePath = [NSString stringWithUTF8String:
+               desktop::options().executablePath().absolutePath().c_str()];
+   [NSTask launchedTaskWithLaunchPath: exePath arguments: args];
+}
+
 - (void) openProjectInNewWindow: (NSString*) projectFilePath
 {
    projectFilePath = resolveAliasedPath(projectFilePath);
-   
-   NSString* exePath = [NSString stringWithUTF8String:
-               desktop::options().executablePath().absolutePath().c_str()];
-   NSArray* args = [NSArray arrayWithObject: projectFilePath];
-   
-   [NSTask launchedTaskWithLaunchPath: exePath arguments: args];
+   NSArray* args = [NSArray arrayWithObjects: projectFilePath,
+                                              kInitialGeometryArg,
+                                              getNewWindowGeometry(), nil];
+   [self openInNewWindow: args];
+}
+
+- (void) openProjectInOverlaidNewWindow: (NSString*) projectFilePath
+{
+   projectFilePath = resolveAliasedPath(projectFilePath);
+   NSArray* args = [NSArray arrayWithObjects: projectFilePath, nil];
+   [self openInNewWindow: args];
 }
 
 - (void) openSessionInNewWindow: (NSString*) workingDirectoryPath
 {
-   workingDirectoryPath = resolveAliasedPath(workingDirectoryPath);
-   
-   NSString* exePath = [NSString stringWithUTF8String:
-                                              desktop::options().executablePath().absolutePath().c_str()];
-   
+   workingDirectoryPath = resolveAliasedPath(workingDirectoryPath);   
    core::system::setenv(kRStudioInitialWorkingDir, [workingDirectoryPath UTF8String]);
-   [NSTask launchedTaskWithLaunchPath: exePath arguments: [NSArray array]];
+   NSArray* args = [NSArray arrayWithObjects: kInitialGeometryArg,
+                   getNewWindowGeometry(), nil];
+   [self openInNewWindow: args];
 }
 
 
@@ -1013,6 +1044,12 @@ enum RS_NSActivityOptions : uint64_t
 {
    [[MainFrameController instance] setWindowTitle: title];
 }
+
+- (void) setPendingProject: (NSString*) projectPath
+{
+   [self setPendingQuit: 1];
+   [[MainFrameController instance] setPendingProject: projectPath];
+}
  
 - (NSString*) filterText: (NSString*) text
 {
@@ -1169,7 +1206,13 @@ enum RS_NSActivityOptions : uint64_t
       return @"prepareForNamedWindow";
    else if (sel == @selector(closeNamedWindow:))
       return @"closeNamedWindow";
-   
+   else if (sel == @selector(undo:))
+      return @"undo";
+   else if (sel == @selector(redo:))
+      return @"redo";
+   else if (sel == @selector(setPendingProject:))
+      return @"setPendingProject";
+      
    return nil;
 }
 

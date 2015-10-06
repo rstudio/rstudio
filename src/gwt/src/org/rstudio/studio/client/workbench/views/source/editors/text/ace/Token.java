@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
+import org.rstudio.core.client.StringUtil;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class Token extends JavaScriptObject
@@ -58,6 +60,9 @@ public class Token extends JavaScriptObject
    public final boolean hasType(String... types)
    {
       String tokenType = getType();
+      if (StringUtil.isNullOrEmpty(tokenType))
+         return false;
+      
       for (String type : types)
       {
          if (tokenType.equals(type) ||

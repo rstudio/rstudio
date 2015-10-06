@@ -46,6 +46,9 @@
 #include <core/system/ShellUtils.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/RecycleBin.hpp>
+#ifndef _WIN32
+#include <core/system/FileMode.hpp>
+#endif
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -197,6 +200,8 @@ Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pRes
    if (error)
       return error;
    FilePath targetPath = module_context::resolveAliasedPath(path) ;
+
+   json::Object result;
    
    // if this includes a request for monitoring
    core::json::Array jsonFiles;
@@ -226,7 +231,20 @@ Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pRes
          return error;
    }
 
-   pResponse->setResult(jsonFiles);
+   result["files"] = jsonFiles;
+
+   bool browseable = true;
+
+#ifndef _WIN32
+   // on *nix systems, see if browsing above this path is possible
+   error = core::system::isFileReadable(targetPath.parent(), &browseable);
+   if (error)
+      LOG_ERROR(error);
+#endif
+
+   result["is_parent_browseable"] = browseable;
+
+   pResponse->setResult(result);
    return Success();
 }
 
@@ -915,9 +933,13 @@ Error readJSON(const core::json::JsonRpcRequest& request,
    FilePath filePath = module_context::resolveAliasedPath(path);
    if (!filePath.exists())
    {
-      Error error = fileNotFoundError(ERROR_LOCATION);
-      if (logErrorIfNotFound)
+      Error error = logErrorIfNotFound ?
+               fileNotFoundError(ERROR_LOCATION) :
+               Success();
+      
+      if (error)
          LOG_ERROR(error);
+      
       return error;
    }
    

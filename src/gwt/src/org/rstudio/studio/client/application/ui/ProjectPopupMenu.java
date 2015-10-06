@@ -14,24 +14,34 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.projects.ProjectMRUList;
+import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
+import org.rstudio.studio.client.projects.model.SharedProjectDetails;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
 public class ProjectPopupMenu extends ToolbarPopupMenu
@@ -42,42 +52,20 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       
       commands_ = commands;
       
-      addItem(commands.newProject().createMenuItem(false));
-      addSeparator();
-      addItem(commands.openProject().createMenuItem(false));
-      addItem(commands.openProjectInNewWindow().createMenuItem(false));
-      addItem(commands.closeProject().createMenuItem(false));
-      addSeparator();
-      addItem(commands.projectMru0().createMenuItem(false));
-      addItem(commands.projectMru1().createMenuItem(false));
-      addItem(commands.projectMru2().createMenuItem(false));
-      addItem(commands.projectMru3().createMenuItem(false));
-      addItem(commands.projectMru4().createMenuItem(false));
-      addItem(commands.projectMru5().createMenuItem(false));
-      addItem(commands.projectMru6().createMenuItem(false));
-      addItem(commands.projectMru7().createMenuItem(false));
-      addItem(commands.projectMru8().createMenuItem(false));
-      addItem(commands.projectMru9().createMenuItem(false));
-      addItem(commands.projectMru10().createMenuItem(false));
-      addItem(commands.projectMru11().createMenuItem(false));
-      addItem(commands.projectMru12().createMenuItem(false));
-      addItem(commands.projectMru13().createMenuItem(false));
-      addItem(commands.projectMru14().createMenuItem(false));
-      addSeparator();
-      addItem(commands.clearRecentProjects().createMenuItem(false));
-      addSeparator();
-      addItem(commands.projectOptions().createMenuItem(false));
-      
       activeProjectFile_ = sessionInfo.getActiveProjectFile();
-     
-      
-      
    }
    
    @Inject
-   void initialize(ProjectMRUList mruList)
+   void initialize(ProjectMRUList mruList,
+                   ProjectsServerOperations server,
+                   EventBus events,
+                   Session session)
    {
+      server_ = server;
+      events_ = events;
       mruList_ = mruList;
+      allowSharedProjects_ = 
+            session.getSessionInfo().getAllowOpenSharedProjects();
    }
    
    public ToolbarButton getToolbarButton()
@@ -140,33 +128,158 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    }
    
    @Override
-   public void getDynamicPopupMenu(DynamicPopupMenuCallback callback)
+   public void getDynamicPopupMenu(final DynamicPopupMenuCallback callback)
    {
-      // truncate the MRU list size for smaller client heights
-      if (Window.getClientHeight() < 700)
-      {
-         commands_.projectMru10().setVisible(false);
-         commands_.projectMru11().setVisible(false);
-         commands_.projectMru12().setVisible(false);
-         commands_.projectMru13().setVisible(false);
-         commands_.projectMru14().setVisible(false);
-      }
-      
-      
       ProjectMRUList.setOpenInNewWindow(false);
-      callback.onPopupMenu(this);
+      if (allowSharedProjects_)
+      {
+         final GlobalProgressDelayer progress = new GlobalProgressDelayer(
+               RStudioGinjector.INSTANCE.getGlobalDisplay(),
+               250, "Looking for projects...");
+
+         // if shared projects are on, check for them every time the user drops
+         // the menu; we request one more than the maximum we can display so 
+         // we can let the user know whether there are more projects than those
+         // that can be displayed in the menu
+         server_.getSharedProjects(MAX_SHARED_PROJECTS + 1, 
+               new ServerRequestCallback<JsArray<SharedProjectDetails>>()
+         {
+            @Override
+            public void onResponseReceived(JsArray<SharedProjectDetails> result)
+            {
+               rebuildMenu(result, callback);
+               progress.dismiss();
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               // if we can't get the shared projects, we can at least show
+               // the menu without them
+               rebuildMenu(null, callback);
+               progress.dismiss();
+            }
+         });
+      }
+      else
+      {
+         rebuildMenu(null, callback);
+      }
    }
-   
 
    interface Resources extends ClientBundle
    {
       ImageResource projectMenu();
    }
    
+   private void rebuildMenu(final JsArray<SharedProjectDetails> sharedProjects,
+         DynamicPopupMenuCallback callback)
+   {
+      // clean out existing entries
+      clearItems();
+
+      boolean hasSharedProjects = sharedProjects != null && 
+                                  sharedProjects.length() > 0;
+
+      int maxMruEntries = MAX_MRU_ENTRIES;
+
+      // shared projects are always shown, and count against the MRU limit
+      if (hasSharedProjects)
+         maxMruEntries -= Math.min(sharedProjects.length(), 
+               MAX_SHARED_PROJECTS);
+      
+      addItem(commands_.newProject().createMenuItem(false));
+
+      // ensure the menu doesn't get too narrow
+      addSeparator(225);
+
+      addItem(commands_.openProject().createMenuItem(false));
+      if (Desktop.isDesktop())
+         addItem(commands_.openProjectInNewWindow().createMenuItem(false));
+      addItem(commands_.closeProject().createMenuItem(false));
+      addSeparator();
+      addItem(commands_.shareProject().createMenuItem(false));
+      if (hasSharedProjects)
+         addSeparator("Recent Projects"); 
+      else
+         addSeparator();
+
+      // add as many MRU items as is appropriate for our screen size and number
+      // of shared projects
+      AppCommand[] mruCommands = new AppCommand[] {
+         commands_.projectMru0(),
+         commands_.projectMru1(),
+         commands_.projectMru2(),
+         commands_.projectMru3(),
+         commands_.projectMru4(),
+         commands_.projectMru5(),
+         commands_.projectMru6(),
+         commands_.projectMru7(),
+         commands_.projectMru8(),
+         commands_.projectMru9(),
+         commands_.projectMru10(),
+         commands_.projectMru11(),
+         commands_.projectMru12(),
+         commands_.projectMru13(),
+         commands_.projectMru14()
+      };
+      
+      for (int i = 0; i < Math.min(maxMruEntries, mruCommands.length); i++)
+      {
+         addItem(mruCommands[i].createMenuItem(false));
+      }
+      
+      // show shared projects if enabled
+      if (hasSharedProjects)
+      {
+         addSeparator("Shared with Me"); 
+         for (int i = 0; i < Math.min(sharedProjects.length(),
+               MAX_SHARED_PROJECTS); i ++)
+         {
+            final SharedProjectDetails details = sharedProjects.get(i);
+
+            String menuHtml = AppCommand.formatMenuLabel(
+                  null, details.getName(), false, null, 
+                  commands_.openHtmlExternal().getImageResource(), 
+                  ProjectMRUList.NEW_SESSION_DESC);
+            addItem(new MenuItem(menuHtml, true,
+                  new Scheduler.ScheduledCommand()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        ProjectMRUList.openProjectFromMru(events_, 
+                              details.getProjectFile());
+                     }
+                  }));
+         }
+         
+         // if there are more shared projects on the server than those we 
+         // displayed, offer a link
+         if (sharedProjects.length() > MAX_SHARED_PROJECTS)
+         {
+            addItem(commands_.openSharedProject().createMenuItem(false));
+         }
+      }
+
+      addSeparator();
+      addItem(commands_.clearRecentProjects().createMenuItem(false));
+      addSeparator();
+      addItem(commands_.projectOptions().createMenuItem(false));
+      
+      callback.onPopupMenu(this);
+   }
+
    private static final Resources RESOURCES =  
                               (Resources) GWT.create(Resources.class);
+   private static final int MAX_SHARED_PROJECTS = 5;
+   private static final int MAX_MRU_ENTRIES = 10;
    private final String activeProjectFile_;
    private ToolbarButton toolbarButton_ = null;
+
    private ProjectMRUList mruList_;
-   private final Commands commands_;
+   private Commands commands_;
+   private EventBus events_;
+   private ProjectsServerOperations server_;
+   private boolean allowSharedProjects_ = false;
 }

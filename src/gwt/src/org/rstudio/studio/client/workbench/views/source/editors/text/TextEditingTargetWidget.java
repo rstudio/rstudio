@@ -22,6 +22,8 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -63,6 +65,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
@@ -77,7 +80,7 @@ public class TextEditingTargetWidget
                                   Commands commands,
                                   UIPrefs uiPrefs,
                                   FileTypeRegistry fileTypeRegistry,
-                                  DocDisplay editor,
+                                  final DocDisplay editor,
                                   TextFileType fileType,
                                   String extendedType,
                                   EventBus events,
@@ -188,6 +191,16 @@ public class TextEditingTargetWidget
             statusBar_);
       
       adaptToFileType(fileType);
+      
+      editor.addFocusHandler(new FocusHandler()
+      {
+         @Override
+         public void onFocus(FocusEvent event)
+         {
+            toggleDocOutlineButton_.setLatched(
+                  docOutlineWidget_.getOffsetWidth() > 0);
+         }
+      });
 
       initWidget(panel_);
    }
@@ -213,7 +226,9 @@ public class TextEditingTargetWidget
       Toolbar toolbar = new EditingTargetToolbar(commands_);
        
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
+      if (SourceWindowManager.isMainSourceWindow())
+         toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
+      toolbar.addLeftWidget(commands_.returnDocToMain().createToolbarButton());
       toolbar.addLeftSeparator();
 
       toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
@@ -265,9 +280,12 @@ public class TextEditingTargetWidget
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
 
+      toolbar.addRightWidget(insertChunkButton_ = commands_.insertChunk().createToolbarButton());
       toolbar.addRightWidget(runButton_ = commands_.executeCode().createToolbarButton(false));
       toolbar.addRightSeparator();
       toolbar.addRightWidget(runLastButton_ = commands_.executeLastCode().createToolbarButton(false));
+      toolbar.addRightWidget(goToPrevButton_ = commands_.goToPrevSection().createToolbarButton(false));
+      toolbar.addRightWidget(goToNextButton_ = commands_.goToNextSection().createToolbarButton(false));
       toolbar.addRightSeparator();
       final String SOURCE_BUTTON_TITLE = "Source the active document"; 
       
@@ -310,10 +328,9 @@ public class TextEditingTargetWidget
 
       //toolbar.addRightSeparator();
      
+      toolbar.addRightWidget(chunksRunButton_ = commands_.executeCode().createToolbarButton(false));
       ToolbarPopupMenu chunksMenu = new ToolbarPopupMenu();
-      chunksMenu.addItem(commands_.insertChunk().createMenuItem(false));
-      chunksMenu.addSeparator();
-      chunksMenu.addItem(commands_.jumpTo().createMenuItem(false));
+      chunksMenu.addItem(commands_.executeCode().createMenuItem(false));
       chunksMenu.addSeparator();
       chunksMenu.addItem(commands_.executeSetupChunk().createMenuItem(false));
       chunksMenu.addItem(commands_.executePreviousChunks().createMenuItem(false));
@@ -322,8 +339,6 @@ public class TextEditingTargetWidget
       chunksMenu.addSeparator();
       chunksMenu.addItem(commands_.executeAllCode().createMenuItem(false));
       chunksButton_ = new ToolbarButton(
-                       "Chunks",  
-                       StandardIcons.INSTANCE.chunk_menu(), 
                        chunksMenu, 
                        true);
       toolbar.addRightWidget(chunksButton_);
@@ -482,8 +497,13 @@ public class TextEditingTargetWidget
       boolean canPreviewFromR = fileType.canPreviewFromR();
       
       // don't show the run buttons for cpp files, or R files in Shiny
-      runButton_.setVisible(canExecuteCode && !isCpp && !isShinyFile());
+      runButton_.setVisible(canExecuteCode && !canExecuteChunks && !isCpp && !isShinyFile());
       runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks);
+      
+      // chunk oriented buttons     
+      insertChunkButton_.setVisible(canExecuteChunks);
+      goToPrevButton_.setVisible(fileType.canGoNextPrevSection());
+      goToNextButton_.setVisible(fileType.canGoNextPrevSection());
       
       sourceOnSave_.setVisible(canSourceOnSave);
       srcOnSaveLabel_.setVisible(canSourceOnSave);
@@ -505,6 +525,7 @@ public class TextEditingTargetWidget
       texToolbarButton_.setVisible(canCompilePdf);
       compilePdfButton_.setVisible(canCompilePdf);
       chunksButton_.setVisible(canExecuteChunks);
+      chunksRunButton_.setVisible(canExecuteChunks);
       
       notebookSeparatorWidget_.setVisible(canCompileNotebook);
       notebookToolbarButton_.setVisible(canCompileNotebook);
@@ -591,7 +612,7 @@ public class TextEditingTargetWidget
       else
          srcOnSaveLabel_.setText(width < 450 ? "Source" : "Source on Save");
       sourceButton_.setText(width < 400 ? "" : sourceCommandText_);
-      chunksButton_.setText(width < 400 ? "" : "Chunks");
+      chunksRunButton_.setText(width < 400 ? "" : "Run");
    }
    
    
@@ -989,7 +1010,11 @@ public class TextEditingTargetWidget
    private ToolbarButton compilePdfButton_;
    private ToolbarButton previewHTMLButton_;
    private ToolbarButton knitDocumentButton_;
+   private ToolbarButton insertChunkButton_;
+   private ToolbarButton goToPrevButton_;
+   private ToolbarButton goToNextButton_;
    private ToolbarButton runButton_;
+   private ToolbarButton chunksRunButton_;
    private ToolbarButton runLastButton_;
    private ToolbarButton sourceButton_;
    private ToolbarButton sourceMenuButton_;

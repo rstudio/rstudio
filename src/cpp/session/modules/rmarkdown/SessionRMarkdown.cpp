@@ -716,39 +716,29 @@ bool isRenderRunning()
 }
 
 
+// environment variables to initialize
+const char * const kRStudioPandoc = "RSTUDIO_PANDOC";
+const char * const kRmarkdownMathjaxPath = "RMARKDOWN_MATHJAX_PATH";
+
 void initEnvironment()
 {
-   // environment variables to initialize
-   const char * const kRStudioPandoc = "RSTUDIO_PANDOC";
-   const char * const kRmarkdownMathjaxPath = "RMARKDOWN_MATHJAX_PATH";
-
-   // track whether we need to call Sys.setenv (at least one var to set)
-   bool initRequired = false;
-
-   // set RSTUDIO_PANDOC if it doens't already exist
+   // set RSTUDIO_PANDOC (leave existing value alone)
+   std::string rstudioPandoc = core::system::getenv(kRStudioPandoc);
+   if (rstudioPandoc.empty())
+      rstudioPandoc = session::options().pandocPath().absolutePath();
    r::exec::RFunction sysSetenv("Sys.setenv");
-   if (core::system::getenv(kRStudioPandoc).empty())
-   {
-      initRequired = true;
-      sysSetenv.addParam(kRStudioPandoc,
-                         session::options().pandocPath().absolutePath());
-   }
+   sysSetenv.addParam(kRStudioPandoc, rstudioPandoc);
 
-   // set RMARKDOWN_MATHJAX_PATH if it doesn't already exist
-   if (core::system::getenv(kRmarkdownMathjaxPath).empty())
-   {
-      initRequired = true;
-      sysSetenv.addParam(kRmarkdownMathjaxPath,
-                         session::options().mathjaxPath().absolutePath());
-   }
+   // set RMARKDOWN_MATHJAX_PATH (leave existing value alone)
+   std::string rmarkdownMathjaxPath = core::system::getenv(kRmarkdownMathjaxPath);
+   if (rmarkdownMathjaxPath.empty())
+     rmarkdownMathjaxPath = session::options().mathjaxPath().absolutePath();
+   sysSetenv.addParam(kRmarkdownMathjaxPath, rmarkdownMathjaxPath);
 
-   // set environment variables if required
-   if (initRequired)
-   {
-      Error error = sysSetenv.call();
-      if (error)
-         LOG_ERROR(error);
-   }
+   // call Sys.setenv
+   Error error = sysSetenv.call();
+   if (error)
+      LOG_ERROR(error);
 }
 
 bool haveMarkdownToHTMLOption()
@@ -888,7 +878,12 @@ Error terminateRenderRmd(const json::JsonRpcRequest& request,
 // return the path to the local copy of MathJax
 FilePath mathJaxDirectory()
 {
-   return session::options().mathjaxPath();
+   // prefer the environment variable if it exists
+   std::string mathjaxPath = core::system::getenv(kRmarkdownMathjaxPath);
+   if (!mathjaxPath.empty() && FilePath::exists(mathjaxPath))
+      return FilePath(mathjaxPath);
+   else
+      return session::options().mathjaxPath();
 }
 
 // Handles a request for RMarkdown output. This request embeds the name of

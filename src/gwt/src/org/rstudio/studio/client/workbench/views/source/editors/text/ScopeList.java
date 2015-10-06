@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.JsArray;
+
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -103,6 +104,16 @@ public class ScopeList implements Iterable<Scope>
    public Scope[] getScopes()
    {
       return scopes_.toArray(new Scope[scopes_.size()]);
+   }
+   
+   public Scope get(int index)
+   {
+      return scopes_.get(index);
+   }
+   
+   public int size()
+   {
+      return scopes_.size();
    }
 
    public void removeAll(ScopePredicate shouldRemove)

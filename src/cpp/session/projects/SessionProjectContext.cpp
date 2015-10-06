@@ -33,6 +33,9 @@
 #include <session/SessionModuleContext.hpp>
 
 #include <session/projects/ProjectsSettings.hpp>
+#include <session/projects/SessionProjectSharing.hpp>
+
+#include <sys/stat.h>
 
 #include "SessionProjectFirstRun.hpp"
 
@@ -228,14 +231,15 @@ void ProjectContext::augmentRbuildignore()
       // constants
       const char * const kIgnoreRproj = "^.*\\.Rproj$";
       const char * const kIgnoreRprojUser = "^\\.Rproj\\.user$";
-
+      const std::string newLine = "\n";
+      
       // create the file if it doesn't exists
       FilePath rbuildIgnorePath = directory().childPath(".Rbuildignore");
       if (!rbuildIgnorePath.exists())
       {
          Error error = writeStringToFile(rbuildIgnorePath,
-                                         kIgnoreRproj + std::string("\n") +
-                                         kIgnoreRprojUser + std::string("\n"),
+                                         kIgnoreRproj + newLine +
+                                         kIgnoreRprojUser + newLine,
                                          string_utils::LineEndingNative);
          if (error)
             LOG_ERROR(error);
@@ -268,11 +272,11 @@ void ProjectContext::augmentRbuildignore()
                                 && strIgnore[strIgnore.size() - 1] != '\n';
 
          if (addExtraNewline)
-            strIgnore += "\n";
+            strIgnore += newLine;
          if (!hasRProj)
-            strIgnore += kIgnoreRproj + std::string("\n");
+            strIgnore += kIgnoreRproj + newLine;
          if (!hasRProjUser)
-            strIgnore += kIgnoreRprojUser + std::string("\n");
+            strIgnore += kIgnoreRprojUser + newLine;
          error = core::writeStringToFile(rbuildIgnorePath,
                                          strIgnore,
                                          string_utils::LineEndingNative);
@@ -689,6 +693,34 @@ bool ProjectContext::isPackageProject()
    return r_util::isPackageDirectory(directory());
 }
 
+bool ProjectContext::supportsSharing()
+{
+   return options().getBoolOverlayOption(kProjectSharingSessionOption);
+}
+
+// attempts to determine whether we're the owner of the project; currently
+// this is inferred from ownership on the project directory
+bool ProjectContext::ownedByUser()
+{
+#ifdef _WIN32
+   // we don't need to know this on Windows, and we'd need to compute it very
+   // differently
+   return true;
+#else
+   struct stat st; 
+   if (::stat(directory().absolutePath().c_str(), &st) == -1) 
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", directory().absolutePath());
+      LOG_ERROR(error);
+
+      // if we can't figure it out, presume we're the owner (this preserves
+      // existing behavior) 
+      return true;
+   }
+   return st.st_uid == ::getuid();
+#endif
+}
 
 } // namespace projects
 } // namespace session

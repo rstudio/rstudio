@@ -26,6 +26,7 @@ public class AceFold extends JavaScriptObject
 
    protected AceFold() {}
 
+   public native final Range getRange() /*-{ return this.range; }-*/;
    public native final Position getStart() /*-{ return this.start; }-*/;
    public native final Position getEnd() /*-{ return this.end; }-*/;
    public native final String getPlaceholder() /*-{ return this.placeholder; }-*/;

@@ -1,7 +1,7 @@
 /*
  * RSessionContext.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,14 +44,14 @@ namespace core {
 namespace r_util {
 
 SessionScope SessionScope::fromProject(
-                               std::string project,
+                               const std::string& project,
                                const std::string& id,
                                const FilePathToProjectId& filePathToProjectId)
 {
    if (project != kProjectNone)
    {
-      project = filePathToProjectId(project);
-      return SessionScope(project, id);
+      ProjectId projectId = filePathToProjectId(project);
+      return SessionScope(projectId, id);
    }
    else
    {
@@ -64,11 +64,11 @@ std::string SessionScope::projectPathForScope(
                                const SessionScope& scope,
                                const ProjectIdToFilePath& projectIdToFilePath)
 {
-   return projectIdToFilePath(scope.project());
+   return projectIdToFilePath(scope.projectId());
 }
 
 
-SessionScope SessionScope::fromProjectId(const std::string& project,
+SessionScope SessionScope::fromProjectId(const ProjectId& project,
                                          const std::string& id)
 {
    return SessionScope(project, id);
@@ -76,16 +76,20 @@ SessionScope SessionScope::fromProjectId(const std::string& project,
 
 SessionScope SessionScope::projectNone(const std::string& id)
 {
-   return SessionScope(kProjectNoneId, id);
+   return SessionScope(ProjectId(kProjectNoneId), id);
 }
 
 bool SessionScope::isProjectNone() const
 {
-   return project() == kProjectNoneId;
+   return project_.id() == kProjectNoneId;
 }
 
+bool SessionScope::isWorkspaces() const
+{
+   return project_.id() == kWorkspacesId;
+}
 
-bool validateSessionScope(const SessionScope& scope,
+SessionScopeState validateSessionScope(const SessionScope& scope,
                           const core::FilePath& userHomePath,
                           const core::FilePath& userScratchPath,
                           core::r_util::ProjectIdToFilePath projectIdToFilePath,
@@ -96,7 +100,7 @@ bool validateSessionScope(const SessionScope& scope,
    boost::shared_ptr<r_util::ActiveSession> pSession
                                           = activeSessions.get(scope.id());
    if (pSession->empty() || !pSession->validate(userHomePath))
-      return false;
+      return ScopeInvalidSession;
 
    // if this isn't project none then check if the project exists
    if (!scope.isProjectNone())
@@ -106,43 +110,43 @@ bool validateSessionScope(const SessionScope& scope,
                scope,
                projectIdToFilePath);
       if (project.empty())
-         return false;
+         return ScopeInvalidProject;
 
       // if session points to another project then the scope is invalid
       if (project != pSession->project())
-         return false;
+         return ScopeInvalidProject;
 
       // get the path to the project directory
       FilePath projectDir = FilePath::resolveAliasedPath(project, userHomePath);
       if (!projectDir.exists())
-         return false;
+         return ScopeMissingProject;
 
       // get the path to the project file
       FilePath projectPath = r_util::projectFromDirectory(projectDir);
       if (!projectPath.exists())
-         return false;
+         return ScopeMissingProject;
 
       // record path to project file
       *pProjectFilePath = projectPath.absolutePath();
 
       // success!
-      return true;
+      return ScopeValid;
    }
    else
    {
       // if the session project isn't project none then it's invalid
       if (pSession->project() != kProjectNone)
-         return false;
+         return ScopeInvalidProject;
 
       // success!
-      return true;
+      return ScopeValid;
    }
 }
 
 std::string urlPathForSessionScope(const SessionScope& scope)
 {
    // get a URL compatible project path
-   std::string project = http::util::urlEncode(scope.project());
+   std::string project = http::util::urlEncode(scope.projectId().asString());
    boost::algorithm::replace_all(project, "%2F", "/");
 
    // create url
@@ -155,16 +159,18 @@ void parseSessionUrl(const std::string& url,
                      std::string* pUrlPrefix,
                      std::string* pUrlWithoutPrefix)
 {
-   static boost::regex re("/s/([A-Fa-f0-9]{8})([A-Fa-f0-9]{8})/");
+   static boost::regex re("/s/([A-Fa-f0-9]{5})([A-Fa-f0-9]{8})([A-Fa-f0-9]{8})/");
 
    boost::smatch match;
    if (boost::regex_search(url, match, re))
    {
       if (pScope)
       {
-         std::string project = http::util::urlDecode(match[1]);
-         std::string id = match[2];
-         *pScope = r_util::SessionScope::fromProjectId(project, id);
+         std::string user = http::util::urlDecode(match[1]);
+         std::string project = http::util::urlDecode(match[2]);
+         std::string id = match[3];
+         *pScope = r_util::SessionScope::fromProjectId(
+                  ProjectId(project, user), id);
       }
       if (pUrlPrefix)
       {
@@ -218,7 +224,10 @@ std::string sessionScopeFile(std::string prefix,
                              const SessionScope& scope)
 {   
    // resolve project path
-   std::string project = scope.project();
+   ProjectId projectId = scope.projectId();
+   std::string project = scope.isProjectNone() || scope.isWorkspaces() ?
+            projectId.id() : projectId.asString();
+
    if (!project.empty())
    {
       // pluralize in the presence of project context so there
@@ -287,16 +296,15 @@ std::string generateScopeId(const std::vector<std::string>& reserved)
                                  core::system::generateShortenedUuid());
 
    // ensure 8 chracters
-   const size_t kLen = 8;
-   if (id.length() != kLen)
+   if (id.length() != kProjectIdLen)
    {
-      if (id.length() > kLen)
+      if (id.length() > kProjectIdLen)
       {
-         id = id.substr(0, kLen);
+         id = id.substr(0, kProjectIdLen);
       }
       else
       {
-         size_t diff = kLen - id.length();
+         size_t diff = kProjectIdLen - id.length();
          std::string pad(diff, 'f');
          id += pad;
       }
@@ -312,6 +320,5 @@ std::string generateScopeId(const std::vector<std::string>& reserved)
 } // namespace r_util
 } // namespace core 
 } // namespace rstudio
-
 
 

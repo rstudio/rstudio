@@ -18,7 +18,7 @@ set GNUGREP_FILE=gnugrep-2.5.4.zip
 set MSYS_SSH_FILE=msys-ssh-1000-18.zip
 set SUMATRA_PDF_FILE=SumatraPDF-2.4.zip
 
-set PANDOC_VERSION=1.13.1
+set PANDOC_VERSION=1.15.0.6
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%.zip
 

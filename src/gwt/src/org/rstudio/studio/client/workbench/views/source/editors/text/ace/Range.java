@@ -70,6 +70,10 @@ public class Range extends JavaScriptObject
       return this.contains(position.row, position.column);
    }-*/;
    
+   public final native boolean contains(Range range) /*-{
+      return this.contains(range);
+   }-*/;
+   
    public final native boolean containsRightExclusive(Position position)
    /*-{
       

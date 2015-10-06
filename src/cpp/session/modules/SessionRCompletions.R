@@ -1066,6 +1066,16 @@ assign(x = ".rs.acCompletionTypes",
             }, error = function(e) NULL)
          }
          
+         # Objects for which 'names' returns non-NULL. This branch is used
+         # to provide completions for S4 objects, essentially adhering to
+         # the `.DollarNames.default` behaviour. (It looks like if an S4
+         # object is able to supply names through the `names` method, then
+         # those names are also valid for `$` completions.)
+         else if (isS4(object) && length(names(object)))
+         {
+            allNames <- .rs.getNames(object)
+         }
+         
          # Other objects
          else
          {
@@ -1598,6 +1608,17 @@ assign(x = ".rs.acCompletionTypes",
    }
 })
 
+.rs.addFunction("getCompletionsEnvironmentVariables", function(token)
+{
+   candidates <- names(Sys.getenv())
+   results <- .rs.selectFuzzyMatches(candidates, token)
+   
+   .rs.makeCompletions(token = token,
+                       results = results,
+                       quote = TRUE,
+                       type = .rs.acCompletionTypes$STRING)
+})
+
 .rs.addJsonRpcHandler("get_completions", function(token,
                                                   string,
                                                   type,
@@ -1731,6 +1752,12 @@ assign(x = ".rs.acCompletionTypes",
       return(.rs.getCompletionsPackages(token = token,
                                         appendColons = TRUE,
                                         excludeOtherCompletions = TRUE))
+   
+   # environment variables
+   if (length(string) &&
+       string[[1]] %in% c("Sys.getenv", "Sys.setenv") &&
+       numCommas[[1]] == 0)
+      return(.rs.getCompletionsEnvironmentVariables(token))
    
    # No information on completions other than token
    if (!length(string))
@@ -2023,7 +2050,7 @@ assign(x = ".rs.acCompletionTypes",
       if (type[[i]] %in% c(.rs.acContextTypes$FUNCTION, .rs.acContextTypes$UNKNOWN))
       {
          ## Blacklist certain functions
-         if (string[[i]] %in% c("help", "str", "args"))
+         if (string[[i]] %in% c("help", "str", "args", "debug", "debugonce", "trace"))
          {
             completions$overrideInsertParens <- .rs.scalar(TRUE)
          }

@@ -24,7 +24,7 @@
  *
  */
 
-define("mode/xml_behavior", function(require, exports, module) {
+define("mode/xml_behavior", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var Behaviour = require("ace/mode/behaviour").Behaviour;

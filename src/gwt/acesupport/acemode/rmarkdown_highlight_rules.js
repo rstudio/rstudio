@@ -17,7 +17,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-define("mode/rmarkdown_highlight_rules", function(require, exports, module) {
+define("mode/rmarkdown_highlight_rules", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
@@ -26,6 +26,17 @@ var MarkdownHighlightRules = require("mode/markdown_highlight_rules").MarkdownHi
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 var YamlHighlightRules = require("ace/mode/yaml_highlight_rules").YamlHighlightRules;
 var Utils = require("mode/utils");
+
+function makeDateRegex()
+{
+   var months = ["January", "February", "March", "April", "May", "June",
+                 "July", "August", "September", "October", "November", "December"];
+
+   var reString =
+          "((?:" + months.join("|") + ")\\s+\\d+(?:st|nd|rd|s|n|r)?(?:\\s*(?:,)?(?:\\s*\\d+)?)?)";
+
+   return new RegExp(reString);
+}
 
 var RMarkdownHighlightRules = function() {
 
@@ -74,6 +85,11 @@ var RMarkdownHighlightRules = function() {
       "---",
       "(?:---|\\.\\.\\.)"
    );
+
+   this.$rules["yaml-start"].unshift({
+      token: ["string"],
+      regex: makeDateRegex()
+   });
 
 };
 oop.inherits(RMarkdownHighlightRules, TextHighlightRules);

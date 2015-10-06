@@ -16,19 +16,28 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+
 import org.rstudio.core.client.command.BaseMenuBar;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
@@ -94,11 +103,6 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
                      visibleItems.get(0).getScheduledCommand().execute();
                }
                break;
-            case KeyCodes.KEY_ESCAPE:
-               event.preventDefault();
-               event.stopPropagation();
-
-               hide(false);
          }
       }
 
@@ -126,7 +130,60 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
       setStylePrimaryName(ThemeStyles.INSTANCE.tabOverflowPopup());
 
       addDomHandler(new MenuKeyHandler(menu_), KeyDownEvent.getType());
+      
+      addAttachHandler(new AttachEvent.Handler()
+      {
+         @Override
+         public void onAttachOrDetach(AttachEvent event)
+         {
+            if (event.isAttached())
+            {
+               lastFocusedElement_ = DomUtils.getActiveElement();
+               if (nativePreviewHandler_ != null)
+               {
+                  nativePreviewHandler_.removeHandler();
+                  nativePreviewHandler_ = null;
+               }
 
+               nativePreviewHandler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
+               {
+                  @Override
+                  public void onPreviewNativeEvent(NativePreviewEvent preview)
+                  {
+                     if (preview.getTypeInt() == Event.ONKEYDOWN)
+                     {
+                        NativeEvent event = preview.getNativeEvent();
+                        if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
+                        {
+                           event.stopPropagation();
+                           event.preventDefault();
+                           hide(false);
+                           
+                           Scheduler.get().scheduleDeferred(new ScheduledCommand()
+                           {
+                              @Override
+                              public void execute()
+                              {
+                                 if (lastFocusedElement_ != null)
+                                    lastFocusedElement_.focus();
+                              }
+                           });
+                        }
+                     }
+                  }
+               });
+            }
+            else
+            {
+               if (nativePreviewHandler_ != null)
+               {
+                  nativePreviewHandler_.removeHandler();
+                  nativePreviewHandler_ = null;
+               }
+            }
+         }
+      });
+      
       addHandler(new CloseHandler<PopupPanel>() {
 
          public void onClose(CloseEvent<PopupPanel> popupPanelCloseEvent)
@@ -159,4 +216,6 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
 
    private final DocsMenu menu_;
    private final SearchWidget search_;
+   private HandlerRegistration nativePreviewHandler_;
+   private Element lastFocusedElement_;
 }

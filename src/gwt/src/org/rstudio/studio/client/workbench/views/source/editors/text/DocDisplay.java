@@ -14,7 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.List;
+
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
+import org.rstudio.core.client.js.JsMap;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
@@ -57,6 +60,7 @@ import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.IsWidget;
+import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
@@ -128,8 +132,11 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    ChangeTracker getChangeTracker();
 
    String getCode(Position start, Position end);
+   DocDisplay.AnchoredSelection createAnchoredSelection(Widget hostWidget,
+                                                        Position start,
+                                                        Position end);
    DocDisplay.AnchoredSelection createAnchoredSelection(Position start,
-                                             Position end);
+                                                        Position end);
    String getCode(InputEditorSelection selection);
 
    void fitSelectionToLines(boolean expand);
@@ -158,6 +165,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setHighlightRFunctionCalls(boolean highlight);
    
    void setUseEmacsKeybindings(boolean use);
+   boolean isEmacsModeOn();
    
    void setUseVimMode(boolean use);
    boolean isVimModeOn();
@@ -170,10 +178,13 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void unfold(int row);
    void unfold(Range range);
    
+   JsMap<Position> getMarks();
+   void setMarks(JsMap<Position> marks);
+   
    void toggleCommentLines();
    
    AceCommandManager getCommandManager();
-   void addEditorCommandBinding(String id, KeySequence keys, boolean replace);
+   void setEditorCommandBinding(String id, List<KeySequence> keys);
    void resetCommands();
 
    HandlerRegistration addEditorFocusHandler(FocusHandler handler);
@@ -186,12 +197,18 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    Position getCursorPosition();
    void setCursorPosition(Position position);
+   
+   Position getCursorPositionScreen();
+   
    void moveCursorNearTop();
    void moveCursorNearTop(int rowOffset);
    void ensureCursorVisible();
    void scrollCursorIntoViewIfNecessary();
    void scrollCursorIntoViewIfNecessary(int rowsAround);
    boolean isCursorInSingleLineString();
+   
+   void gotoPageDown();
+   void gotoPageUp();
    
    void ensureRowVisible(int row);
    
@@ -324,7 +341,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setDragEnabled(boolean enabled);
    
    boolean onInsertSnippet();
-    
+
    void addLineWidget(LineWidget widget);
    void removeLineWidget(LineWidget widget);
    void onLineWidgetChanged(LineWidget widget); 
@@ -333,4 +350,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    LineWidget getLineWidgetForRow(int row);
    
    JsArray<ChunkOutput> getChunkOutput();
+
+   Position getDocumentEnd();
+   void setSurroundSelectionPref(String value);
 }

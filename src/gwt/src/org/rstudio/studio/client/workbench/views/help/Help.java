@@ -29,6 +29,7 @@ import org.rstudio.studio.client.workbench.WorkbenchList;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 import org.rstudio.studio.client.workbench.events.ListChangedEvent;
 import org.rstudio.studio.client.workbench.events.ListChangedHandler;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -166,9 +167,7 @@ public class Help extends BasePresenter implements ShowHelpHandler
    }
 
    // Home handled by Shim for activation from main menu context
-   public void onHelpHome() { view_.bringToFront(); home(); }
-   
-    
+   public void onHelpHome() { bringToFront(); home(); }
    
    @Handler public void onHelpBack() { view_.back(); }
    @Handler public void onHelpForward() { view_.forward(); }
@@ -187,18 +186,18 @@ public class Help extends BasePresenter implements ShowHelpHandler
    public void onShowHelp(ShowHelpEvent event)
    {
       showHelp(event.getTopicUrl());
-      view_.bringToFront();
+      bringToFront();
    }
    
    public void onActivateHelp(ActivateHelpEvent event)
    {
-      view_.bringToFront();
+      bringToFront();
       view_.focus();
    }
    
    public void bringToFront()
    {
-      view_.bringToFront();
+      events_.fireEvent(new ActivatePaneEvent("Help"));
    }
    
    private void home()
@@ -225,55 +224,46 @@ public class Help extends BasePresenter implements ShowHelpHandler
          return helpUrl;
    }
    
-   @Handler
    void onOpenDataVisualizationCheatSheet()
    {
       globalDisplay_.openRStudioLink("data_visualization_cheat_sheet");
    }
    
-   @Handler
    void onOpenPackageDevelopmentCheatSheet()
    {
       globalDisplay_.openRStudioLink("package_development_cheat_sheet");
    }
    
-   @Handler
    void onOpenDataWranglingCheatSheet()
    {
       globalDisplay_.openRStudioLink("data_wrangling_cheat_sheet");
    }
    
-   @Handler
    void onOpenRMarkdownCheatSheet()
    {
       globalDisplay_.openRStudioLink("r_markdown_cheat_sheet");
    }
    
-   @Handler
    void onOpenRMarkdownReferenceGuide()
    {
       globalDisplay_.openRStudioLink("r_markdown_reference_guide");
    }
    
-   @Handler
    void onOpenShinyCheatSheet()
    {
       globalDisplay_.openRStudioLink("shiny_cheat_sheet");
    }
    
-   @Handler
    void onOpenRoxygenQuickReference()
    {
       events_.fireEvent(new ShowHelpEvent("help/doc/roxygen_help.html"));
    }
    
-   @Handler
    void onDebugHelp()
    {
       globalDisplay_.openRStudioLink("visual_debugger");
    }
    
-   @Handler
    void onMarkdownHelp()
    {
       events_.fireEvent(new ShowHelpEvent("help/doc/markdown_help.html")) ;

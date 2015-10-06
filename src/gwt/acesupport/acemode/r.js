@@ -17,7 +17,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-define("mode/r", function(require, exports, module)
+define("mode/r", ["require", "exports", "module"], function(require, exports, module)
 {
    var Editor = require("ace/editor").Editor;
    var EditSession = require("ace/edit_session").EditSession;

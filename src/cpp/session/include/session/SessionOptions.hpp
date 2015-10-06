@@ -339,9 +339,9 @@ public:
       return scope_;
    }
 
-   bool invalidScope() const
+   core::r_util::SessionScopeState scopeState() const
    {
-      return invalidScope_;
+      return scopeState_;
    }
 
    core::r_util::SessionContext sessionContext() const
@@ -420,13 +420,6 @@ public:
    core::string_utils::LineEnding sourceLineEnding() const
    {
       return core::string_utils::LineEndingPosix;
-   }
-
-   // The line ending we persist to disk with. This could potentially
-   // be a per-user or even per-file option.
-   core::string_utils::LineEnding sourcePersistLineEnding() const
-   {
-      return core::string_utils::LineEndingNative;
    }
 
    std::string monitorSharedSecret() const
@@ -549,7 +542,7 @@ private:
    bool showUserIdentity_;
    std::string userIdentity_;
    core::r_util::SessionScope scope_;
-   bool invalidScope_;
+   core::r_util::SessionScopeState scopeState_;
    bool multiSession_;
    std::string userHomePath_;
    std::string userScratchPath_;   

@@ -126,6 +126,15 @@ public class UIPrefsAccessor extends Prefs
       return bool("tab_multiline_completion", false);
    }
    
+   public static final String EDITOR_SURROUND_SELECTION_NEVER               = "never";
+   public static final String EDITOR_SURROUND_SELECTION_QUOTES              = "quotes";
+   public static final String EDITOR_SURROUND_SELECTION_QUOTES_AND_BRACKETS = "quotes_and_brackets";
+   
+   public PrefValue<String> surroundSelection()
+   {
+      return string("surround_selection", EDITOR_SURROUND_SELECTION_QUOTES_AND_BRACKETS);
+   }
+   
    public PrefValue<Boolean> enableSnippets()
    {
       return bool("enable_snippets", true);
@@ -507,7 +516,12 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Integer> preferredDocumentOutlineWidth()
    {
-      return integer("preferred_document_outline_width", 125);
+      return integer("preferred_document_outline_width", 110);
+   }
+   
+   public PrefValue<Boolean> showDocumentOutlineRmd()
+   {
+      return bool("show_doc_outline_rmd", false);
    }
    
    public PrefValue<Boolean> showUnnamedEntriesInDocumentOutline()

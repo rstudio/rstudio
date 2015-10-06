@@ -148,6 +148,10 @@ public class PackagesPreferencesPane extends PreferencesPane
       
       add(checkboxPref("Use Rcpp template when creating C++ files", uiPrefs.useRcppTemplate()));
       
+      useNewlineInMakefiles_ = new CheckBox("Always use LF line-endings in Unix Makefiles");
+      lessSpaced(useNewlineInMakefiles_);
+      add(useNewlineInMakefiles_);
+      
       HelpLink packagesHelpLink = new PackagesHelpLink();
       packagesHelpLink.getElement().getStyle().setMarginTop(12, Unit.PX);
       nudgeRight(packagesHelpLink); 
@@ -222,6 +226,9 @@ public class PackagesPreferencesPane extends PreferencesPane
       
       useSecurePackageDownload_.setEnabled(true);
       useSecurePackageDownload_.setValue(packagesPrefs.getUseSecureDownload());
+      
+      useNewlineInMakefiles_.setEnabled(true);
+      useNewlineInMakefiles_.setValue(packagesPrefs.getUseNewlineInMakefiles());
    }
 
    @Override
@@ -238,7 +245,8 @@ public class PackagesPreferencesPane extends PreferencesPane
                                               viewDirAfterCheckFailure_.getValue(),
                                               hideObjectFiles_.getValue(),
                                               useDevtools_.getValue(),
-                                              useSecurePackageDownload_.getValue());
+                                              useSecurePackageDownload_.getValue(),
+                                              useNewlineInMakefiles_.getValue());
       rPrefs.setPackagesPrefs(packagesPrefs);
       
       return reload || reloadRequired_;
@@ -256,5 +264,6 @@ public class PackagesPreferencesPane extends PreferencesPane
    private CheckBox hideObjectFiles_;
    private CheckBox useDevtools_;
    private CheckBox useSecurePackageDownload_;
+   private CheckBox useNewlineInMakefiles_;
    private boolean reloadRequired_ = false;
 }

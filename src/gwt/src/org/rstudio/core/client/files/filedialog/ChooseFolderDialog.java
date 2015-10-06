@@ -1,7 +1,7 @@
 /*
  * ChooseFolderDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,19 +31,20 @@ public class ChooseFolderDialog extends FileSystemDialog
 {
    public ChooseFolderDialog(String title,
                              FileSystemContext context,
+                             boolean allowFolderCreation,
                              ProgressOperationWithInput<FileSystemItem> operation)
    {
-      super(title, null, "Choose", context, "", operation);
+      super(title, null, "Choose", context, "", allowFolderCreation, operation);
    }
 
    @Override
-   protected String getFilenameLabel()
+   public String getFilenameLabel()
    {
       return "Folder";
    }
 
    @Override
-   protected FileSystemItem[] ls()
+   public FileSystemItem[] ls()
    {
       FileSystemItem[] items = super.ls();
       ArrayList<FileSystemItem> dirs = new ArrayList<FileSystemItem>();
@@ -54,18 +55,18 @@ public class ChooseFolderDialog extends FileSystemDialog
    }
 
    @Override
-   protected Widget createTopWidget()
+   public Widget createMainWidget()
    {
-      Widget topWidget = super.createTopWidget();
+      Widget mainWidget = super.createMainWidget();
 
-      filename_.addKeyUpHandler(new KeyUpHandler()
+      browser_.addKeyUpHandler(new KeyUpHandler()
       {
          public void onKeyUp(KeyUpEvent event)
          {
             maybeInvalidateSelection();
          }
       });
-      filename_.addKeyPressHandler(new KeyPressHandler()
+      browser_.addKeyPressHandler(new KeyPressHandler()
       {
          public void onKeyPress(KeyPressEvent event)
          {
@@ -73,21 +74,21 @@ public class ChooseFolderDialog extends FileSystemDialog
          }
       });
 
-      return topWidget;
+      return mainWidget;
    }
 
    private void maybeInvalidateSelection()
    {
-      String selectedValue = directory_.getSelectedValue();
-      if (selectedValue != null && !selectedValue.equals(filename_.getText()))
-         directory_.setSelectedRow(null);
+      String selectedValue = browser_.getSelectedValue();
+      if (selectedValue != null && !selectedValue.equals(browser_.getFilename()))
+         browser_.setSelectedRow(null);
    }
 
    @Override
    protected void onDialogShown()
    {
       super.onDialogShown();
-      directory_.setFocus(true);
+      browser_.setDirectoryFocus(true);
    }
 
    @Override
@@ -95,7 +96,7 @@ public class ChooseFolderDialog extends FileSystemDialog
    {
       super.onNavigated();
       FileSystemItem[] dirs = context_.parseDir(context_.pwd());
-      filename_.setText(dirs[dirs.length - 1].getName());
+      browser_.setFilename(dirs[dirs.length - 1].getName());
    }
 
    @Override
@@ -104,7 +105,7 @@ public class ChooseFolderDialog extends FileSystemDialog
       super.onSelection(event);
       FileSystemItem item = event.getSelectedItem();
       if (item != null && item.isDirectory())
-         filename_.setText(item.getName());
+         browser_.setFilename(item.getName());
    }
 
    @Override
@@ -115,8 +116,8 @@ public class ChooseFolderDialog extends FileSystemDialog
 
    private String getEffectiveDirectoryWithValidation()
    {
-      filename_.setText(filename_.getText().trim());
-      String name = filename_.getText();
+      browser_.setFilename(browser_.getFilename().trim());
+      String name = browser_.getFilename();
 
       // This handles the special case of "~"
       if (context_.isAbsolute(name))
@@ -131,7 +132,7 @@ public class ChooseFolderDialog extends FileSystemDialog
       // If an item is selected (highlighted) in the browse control, then
       // only use it IF it is the same as the name in the name textbox. The
       // name textbox takes precedence.
-      FileSystemItem selectedItem = directory_.getSelectedItem();
+      FileSystemItem selectedItem = browser_.getSelectedItem();
       if (selectedItem != null && selectedItem.getName().equals(name))
             return selectedItem.getPath();
 

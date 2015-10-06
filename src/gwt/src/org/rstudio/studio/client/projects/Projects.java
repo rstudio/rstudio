@@ -1,7 +1,7 @@
 /*
  * Projects.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,7 +30,6 @@ import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
-import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
@@ -50,6 +49,7 @@ import org.rstudio.studio.client.projects.events.SwitchToProjectHandler;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
+import org.rstudio.studio.client.projects.model.OpenProjectParams;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectWizard;
@@ -86,7 +86,7 @@ public class Projects implements OpenProjectFileHandler,
    public Projects(GlobalDisplay globalDisplay,
                    final Session session,
                    Provider<ProjectMRUList> pMRUList,
-                   FileDialogs fileDialogs,
+                   SharedProject sharedProject,
                    RemoteFileSystemContext fsContext,
                    ApplicationQuit applicationQuit,
                    ProjectsServerOperations projServer,
@@ -96,6 +96,7 @@ public class Projects implements OpenProjectFileHandler,
                    EventBus eventBus,
                    Binder binder,
                    final Commands commands,
+                   ProjectOpener opener,
                    Provider<ProjectPreferencesDialog> pPrefDialog,
                    Provider<UIPrefs> pUIPrefs)
    {
@@ -107,12 +108,12 @@ public class Projects implements OpenProjectFileHandler,
       packratServer_ = packratServer;
       appServer_ = appServer;
       gitServer_ = gitServer;
-      fileDialogs_ = fileDialogs;
       fsContext_ = fsContext;
       session_ = session;
       pPrefDialog_ = pPrefDialog;
       pUIPrefs_ = pUIPrefs;
-      
+      opener_ = opener;
+
       binder.bind(commands, this);
        
       eventBus.addHandler(OpenProjectErrorEvent.TYPE, this);
@@ -138,11 +139,16 @@ public class Projects implements OpenProjectFileHandler,
                commands.setWorkingDirToProjectDir().remove();
                commands.showDiagnosticsProject().remove();
             }
+            boolean enableProjectSharing = hasProject && 
+                  sessionInfo.projectSupportsSharing();
+            commands.shareProject().setEnabled(enableProjectSharing);
+            commands.shareProject().setVisible(enableProjectSharing);
             
             // remove version control commands if necessary
             if (!sessionInfo.isVcsEnabled())
             {
                commands.activateVcs().remove();
+               commands.layoutZoomVcs().remove();
                commands.vcsCommit().remove();
                commands.vcsShowHistory().remove();
                commands.vcsPull().remove();
@@ -153,6 +159,8 @@ public class Projects implements OpenProjectFileHandler,
             {
                commands.activateVcs().setMenuLabel(
                                     "Show _" + sessionInfo.getVcsName());
+               commands.layoutZoomVcs().setMenuLabel(
+                                    "Zoom _" + sessionInfo.getVcsName());
                
                // customize for svn if necessary
                if (sessionInfo.getVcsName().equals(VCSConstants.SVN_ID))
@@ -170,7 +178,7 @@ public class Projects implements OpenProjectFileHandler,
             }
             
             // disable the open project in new window if necessary
-            if (!sessionInfo.getMultiSession())
+            if (!Desktop.isDesktop() || !sessionInfo.getMultiSession())
                commands.openProjectInNewWindow().remove();
             
             // maintain mru
@@ -557,41 +565,17 @@ public class Projects implements OpenProjectFileHandler,
    @Handler
    public void onOpenProject()
    {
-      // first resolve the quit context (potentially saving edited documents
-      // and determining whether to save the R environment on exit)
-      applicationQuit_.prepareForQuit("Switch Projects",
-                                      new ApplicationQuit.QuitContext() {
-         public void onReadyToQuit(final boolean saveChanges)
-         {
-            showOpenProjectDialog(
-               new ProgressOperationWithInput<FileSystemItem>() 
-               {
-                  @Override
-                  public void execute(final FileSystemItem input,
-                                      ProgressIndicator indicator)
-                  {
-                     indicator.onCompleted();
-                     
-                     if (input == null)
-                        return;
-                     
-                     // perform quit
-                     applicationQuit_.performQuit(saveChanges, input.getPath());
-                  }   
-               });
-            
-         }
-      }); 
+      showOpenProjectDialog(ProjectOpener.PROJECT_TYPE_FILE);
    }
    
    @Handler
    public void onOpenProjectInNewWindow()
    {
-      showOpenProjectDialog(
-         new ProgressOperationWithInput<FileSystemItem>() 
+      showOpenProjectDialog(ProjectOpener.PROJECT_TYPE_FILE,
+         new ProgressOperationWithInput<OpenProjectParams>() 
          {
             @Override
-            public void execute(final FileSystemItem input,
+            public void execute(final OpenProjectParams input,
                                 ProgressIndicator indicator)
             {
                indicator.onCompleted();
@@ -600,9 +584,16 @@ public class Projects implements OpenProjectFileHandler,
                   return;
                
                eventBus_.fireEvent(
-                   new OpenProjectNewWindowEvent(input.getPath()));
+                   new OpenProjectNewWindowEvent(
+                         input.getProjectFile().getPath()));
             }
          });
+   }
+   
+   @Handler
+   public void onOpenSharedProject()
+   {
+      showOpenProjectDialog(ProjectOpener.PROJECT_TYPE_SHARED);
    }
    
    @Override
@@ -699,7 +690,7 @@ public class Projects implements OpenProjectFileHandler,
       showProjectOptions(ProjectPreferencesDialog.PACKRAT);
    }
    
-   private void showProjectOptions(final int initialPane)
+   public void showProjectOptions(final int initialPane)
    {
       final ProgressIndicator indicator = globalDisplay_.getProgressIndicator(
                                                       "Error Reading Options");
@@ -734,8 +725,8 @@ public class Projects implements OpenProjectFileHandler,
       // prompt to confirm
       String projectPath = projFile.getParentPathString();
       globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,  
-         "Confirm Open Project",                             
-         "Do you want to open the project " + projectPath + "?",                         
+         "Confirm Open Project",
+         "Do you want to open the project " + projectPath + "?",
           new Operation() 
           { 
              public void execute()
@@ -782,16 +773,12 @@ public class Projects implements OpenProjectFileHandler,
    }
    
    private void showOpenProjectDialog(
-                  ProgressOperationWithInput<FileSystemItem> onCompleted)
+                  int defaultType,
+                  ProgressOperationWithInput<OpenProjectParams> onCompleted)
    {
-      // choose project file
-      fileDialogs_.openFile(
-         "Open Project", 
-         fsContext_, 
-         FileSystemItem.createDir(
-               pUIPrefs_.get().defaultProjectLocation().getValue()),
-         "R Projects (*.Rproj)",
-         onCompleted);  
+      opener_.showOpenProjectDialog(fsContext_, projServer_,
+            pUIPrefs_.get().defaultProjectLocation().getValue(), defaultType,
+            onCompleted);
    }
    
    @Handler
@@ -835,6 +822,46 @@ public class Projects implements OpenProjectFileHandler,
          }
       });
    }
+   
+   private void showOpenProjectDialog(final int projectType)
+   {
+      // first resolve the quit context (potentially saving edited documents
+      // and determining whether to save the R environment on exit)
+      applicationQuit_.prepareForQuit("Switch Projects",
+                                      new ApplicationQuit.QuitContext() {
+         public void onReadyToQuit(final boolean saveChanges)
+         {
+            showOpenProjectDialog(projectType,
+               new ProgressOperationWithInput<OpenProjectParams>() 
+               {
+                  @Override
+                  public void execute(final OpenProjectParams input,
+                                      ProgressIndicator indicator)
+                  {
+                     indicator.onCompleted();
+                     
+                     if (input == null || input.getProjectFile() == null)
+                        return;
+                     
+                     if (input.inNewSession())
+                     {
+                        // open new window if requested
+                        eventBus_.fireEvent(
+                            new OpenProjectNewWindowEvent(
+                                  input.getProjectFile().getPath()));
+                     }
+                     else
+                     {
+                        // perform quit
+                        applicationQuit_.performQuit(saveChanges,
+                              input.getProjectFile().getPath());
+                     }
+                  }   
+               });
+            
+         }
+      }); 
+   }
 
    private final Provider<ProjectMRUList> pMRUList_;
    private final ApplicationQuit applicationQuit_;
@@ -842,16 +869,15 @@ public class Projects implements OpenProjectFileHandler,
    private final PackratServerOperations packratServer_;
    private final ApplicationServerOperations appServer_;
    private final GitServerOperations gitServer_;
-   private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fsContext_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
    private final Session session_;
    private final Provider<ProjectPreferencesDialog> pPrefDialog_;
    private final Provider<UIPrefs> pUIPrefs_;
+   private final ProjectOpener opener_;
    
    public static final String NONE = "none";
    public static final Pattern PACKAGE_NAME_PATTERN =
          Pattern.create("^[a-zA-Z][a-zA-Z0-9.]*$", "");
-   
 }

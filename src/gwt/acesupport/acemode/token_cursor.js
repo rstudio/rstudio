@@ -13,7 +13,7 @@
  *
  */
 
-define("mode/token_cursor", function(require, exports, module) {
+define("mode/token_cursor", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var Utils = require("mode/utils");
@@ -26,6 +26,15 @@ var TokenCursor = function(tokens, row, offset) {
 };
 
 (function () {
+
+   this.cloneCursor = function()
+   {
+      return new TokenCursor(
+         this.$tokens,
+         this.$row,
+         this.$offset
+      );
+   };
 
    var isArray = Utils.isArray;
    var contains = Utils.contains;
@@ -387,6 +396,9 @@ var TokenCursor = function(tokens, row, offset) {
    this.hasType = function(/*...*/)
    {
       var tokenType = this.currentType();
+      if (tokenType == null)
+         return false;
+
       for (var i = 0; i < arguments.length; i++) {
          var type = arguments[i];
          if (tokenType === type ||
@@ -406,19 +418,6 @@ var TokenCursor = function(tokens, row, offset) {
          return null;
       else
          return {row: this.$row, column: token.column};
-   };
-
-   // Perform a (shallow) copy of a cursor. This is sufficient as
-   // long as the new cursor has its own $row and $offset (which
-   // is ensured by their being primtive types)
-   this.cloneCursor = function()
-   {
-      var args = [];
-      for (var item in this)
-         if (this.hasOwnProperty(item))
-            args.push(this[item]);
-
-      return construct(this.constructor, args);
    };
 
    this.isFirstSignificantTokenOnLine = function()
@@ -613,6 +612,16 @@ var CppTokenCursor = function(tokens, row, offset, codeModel) {
 oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
 
 (function() {
+
+   this.cloneCursor = function()
+   {
+      return new CppTokenCursor(
+         this.$tokens,
+         this.$row,
+         this.$offset,
+         this.$codeModel
+      );
+   };
 
    var contains = Utils.contains;
 
@@ -840,7 +849,7 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
             return this.doBwdOverInitializationList(clonedCursor, tokenCursor);
          } else if (value === ":") {
             var prevValue = clonedCursor.peekBwd().currentValue();
-            if (contains(
+            if (!contains(
                ["public", "private", "protected"],
                prevValue
             ))
@@ -867,6 +876,16 @@ var RTokenCursor = function(tokens, row, offset, codeModel) {
 oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
 
 (function() {
+
+   this.cloneCursor = function()
+   {
+      return new RTokenCursor(
+         this.$tokens,
+         this.$row,
+         this.$offset,
+         this.$codeModel
+      );
+   };
 
    var contains = Utils.contains;
 

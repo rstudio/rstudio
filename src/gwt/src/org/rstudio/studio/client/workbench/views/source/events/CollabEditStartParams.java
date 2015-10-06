@@ -42,4 +42,8 @@ public class CollabEditStartParams extends JavaScriptObject
    public final native boolean isRejoining() /*-{
       return this.rejoining;
    }-*/;
+   
+   public final native String getHostNode() /*-{
+      return this.host_node;
+   }-*/;
 }

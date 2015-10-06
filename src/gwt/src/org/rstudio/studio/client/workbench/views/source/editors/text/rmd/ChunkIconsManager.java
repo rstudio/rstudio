@@ -100,6 +100,28 @@ public class ChunkIconsManager
       Position pos = toDocumentPosition(el, editor);
       String text = editor.getSession().getLine(pos.getRow());
       
+      // Check for R Markdown chunks, and verify that the engine is 'r' or 'rscript'.
+      // First, check for chunk headers of the form:
+      //
+      //     ```{r ...}
+      //
+      // as opposed to
+      //
+      //     ```{sh ...}
+      String lower = text.toLowerCase().trim();
+      if (lower.startsWith("```{"))
+      {
+         Pattern reREngine = Pattern.create("```{r(?:script)?[ ,}]", "");
+         if (!reREngine.test(lower))
+            return false;
+      }
+      
+      // If this is an 'R' chunk, it's possible that an alternate engine
+      // has been specified, e.g.
+      //
+      //     ```{r, engine = 'awk'}
+      //
+      // which is the 'old-fashioned' way of specifying non-R chunks.
       Pattern pattern = Pattern.create("engine\\s*=\\s*['\"]([^'\"]*)['\"]", "");
       Match match = pattern.match(text, 0);
       
@@ -130,8 +152,7 @@ public class ChunkIconsManager
       if (!shouldDisplayIcons(editor))
          return;
       
-      Element[] chunkStarts = DomUtils.getElementsByClassName(
-            "rstudio_chunk_start ace_start");
+      Element[] chunkStarts = DomUtils.getElementsByClassName("rstudio_chunk_start");
       
       for (int i = 0; i < chunkStarts.length; i++)
       {
@@ -155,14 +176,13 @@ public class ChunkIconsManager
    
    private boolean isSetupChunk(Element el, AceEditorNative editor)
    {
-      int pageX = el.getAbsoluteLeft();
-      int pageY = el.getAbsoluteTop();
+      int pageX = el.getAbsoluteLeft() + 5;
+      int pageY = el.getAbsoluteTop() + 5;
       
       Position position =
             editor.getRenderer().screenToTextCoordinates(pageX, pageY);
       
       String line = editor.getSession().getLine(position.getRow());
-      
       return line.contains("r setup");
    }
    

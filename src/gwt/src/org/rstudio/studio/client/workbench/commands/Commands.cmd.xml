@@ -96,6 +96,8 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="clearRecentProjects"/>
          </menu>
          <separator/>
+         <cmd refid="shareProject"/>
+         <separator/>
          <cmd refid="saveSourceDoc"/>
          <cmd refid="saveSourceDocAs"/>
          <cmd refid="saveSourceDocWithEncoding"/>
@@ -122,6 +124,9 @@ well as menu structures (for main menu and popup menus).
       <separator/>
 
       <menu label="_Edit">
+         <cmd refid="sourceNavigateBack"/>
+         <cmd refid="sourceNavigateForward"/>
+         <separator/>
          <cmd refid="undoDummy"/>
          <cmd refid="redoDummy"/>
          <separator/>
@@ -157,9 +162,6 @@ well as menu structures (for main menu and popup menus).
       <separator/>
 
       <menu label="_Code">
-         <cmd refid="sourceNavigateBack"/>
-         <cmd refid="sourceNavigateForward"/>
-         <separator/>
          <cmd refid="insertChunk"/>
          <cmd refid="insertSection"/>
          <separator/>
@@ -167,6 +169,9 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="goToFileFunction"/>
          <separator/>
          <cmd refid="toggleDocumentOutline"/>
+         <separator/>
+         <cmd refid="showDiagnosticsActiveDocument"/>
+         <cmd refid="showDiagnosticsProject"/>
          <separator/>
          <cmd refid="goToHelp"/>
          <cmd refid="goToFunctionDefinition"/>
@@ -211,7 +216,33 @@ well as menu structures (for main menu and popup menus).
       <menu label="_View">
          <cmd refid="showToolbar"/>
          <cmd refid="hideToolbar"/>
+         
          <separator/>
+         
+         <menu label="P_anes">
+            <cmd refid="layoutEndZoom"/>
+            <separator/>
+            <cmd refid="layoutConsoleOnLeft"/>
+            <cmd refid="layoutConsoleOnRight"/>
+            <separator/>
+            <cmd refid="paneLayout"/>
+            <separator/>
+            <cmd refid="layoutZoomSource"/>
+            <cmd refid="layoutZoomConsole"/>
+            <cmd refid="layoutZoomHelp"/>
+            <separator/>
+            <cmd refid="layoutZoomHistory"/>
+            <cmd refid="layoutZoomFiles"/>
+            <cmd refid="layoutZoomPlots"/>
+            <cmd refid="layoutZoomPackages"/>
+            <cmd refid="layoutZoomEnvironment"/>
+            <cmd refid="layoutZoomViewer"/>
+            <cmd refid="layoutZoomVcs"/>
+            <cmd refid="layoutZoomBuild"/>
+         </menu>
+         
+         <separator/>
+         
          <cmd refid="zoomActualSize"/>
          <cmd refid="zoomIn"/>
          <cmd refid="zoomOut"/>
@@ -224,6 +255,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="firstTab"/>
          <cmd refid="lastTab"/>
          <separator/>
+         
          <cmd refid="activateSource"/>
          <cmd refid="activateConsole"/>
          <cmd refid="activateHelp"/>
@@ -233,8 +265,10 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activatePlots"/>
          <cmd refid="activatePackages"/>
          <cmd refid="activateEnvironment"/>
+         <cmd refid="activateViewer"/>
          <cmd refid="activateVcs"/>
          <cmd refid="activateBuild"/>
+         
          <separator/>
          <cmd refid="synctexSearch"/>
       </menu>
@@ -332,9 +366,6 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="installPackage"/>
          <cmd refid="updatePackages"/>
-         <separator/>
-         <cmd refid="showDiagnosticsActiveDocument"/>
-         <cmd refid="showDiagnosticsProject"/>
          <separator/>
          <menu label="_Version Control">
             <cmd refid="vcsFileDiff"/>
@@ -487,12 +518,15 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="shrinkSelection" value="Ctrl+Shift+Down" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="expandSelection" value="Cmd+Alt+Shift+Up" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="shrinkSelection" value="Cmd+Alt+Shift+Down" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="goToNextSection" value="Cmd+PageDown"/>
+         <shortcut refid="goToPrevSection" value="Cmd+PageUp"/>
          <shortcut value="Cmd+Alt+Up" title="Add cursor above current cursor"/>
          <shortcut value="Cmd+Alt+Down" title="Add cursor below current cursor"/>
          <shortcut value="Ctrl+Alt+Shift+Up" title="Move active cursor up"/>
          <shortcut value="Ctrl+Alt+Shift+Down" title="Move active cursor down"/>
       </shortcutgroup>
       <shortcutgroup name="Tabs/Panes">
+      
          <shortcut refid="activateSource" value="Ctrl+1"/>
          <shortcut refid="activateConsole" value="Ctrl+2"/>
          <shortcut refid="activateHelp" value="Ctrl+3"/>
@@ -501,8 +535,24 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="activatePlots" value="Ctrl+6"/>
          <shortcut refid="activatePackages" value="Ctrl+7"/>
          <shortcut refid="activateEnvironment" value="Ctrl+8"/>
-         <shortcut refid="activateVcs" value="Ctrl+9"/>
-         <shortcut refid="activateBuild" value="Ctrl+0"/>
+         <shortcut refid="activateViewer" value="Ctrl+9"/>
+         <shortcut refid="activateVcs" value="Ctrl+F1"/>
+         <shortcut refid="activateBuild" value="Ctrl+F2"/>
+         
+         <shortcut refid="layoutZoomSource" value="Ctrl+Shift+1"/>
+         <shortcut refid="layoutZoomConsole" value="Ctrl+Shift+2"/>
+         <shortcut refid="layoutZoomHelp" value="Ctrl+Shift+3"/>
+         <shortcut refid="layoutZoomHistory" value="Ctrl+Shift+4"/>
+         <shortcut refid="layoutZoomFiles" value="Ctrl+Shift+5"/>
+         <shortcut refid="layoutZoomPlots" value="Ctrl+Shift+6"/>
+         <shortcut refid="layoutZoomPackages" value="Ctrl+Shift+7"/>
+         <shortcut refid="layoutZoomEnvironment" value="Ctrl+Shift+8"/>
+         <shortcut refid="layoutZoomViewer" value="Ctrl+Shift+9"/>
+         <shortcut refid="layoutZoomVcs" value="Ctrl+Shift+F1"/>
+         <shortcut refid="layoutZoomBuild" value="Ctrl+Shift+F2"/>
+         <shortcut refid="layoutEndZoom" value="Ctrl+Shift+0"/>
+         
+         <shortcut refid="switchToTab" value="Ctrl+X B" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="switchToTab" value="Ctrl+Shift+."/>
          <shortcut refid="previousTab" value="Ctrl+Alt+Left" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
          <shortcut refid="nextTab" value="Ctrl+Alt+Right" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
@@ -570,7 +620,7 @@ well as menu structures (for main menu and popup menus).
       </shortcutgroup>
       <shortcutgroup name="Other">
          <shortcut value="F1" title="Show Function Help" />
-         <shortcut value="F2" title="Show Function Code" />
+         <shortcut value="F2" title="Go To Function / File"/>
          <shortcut value="Tab" title="Complete Code" />
          <shortcut refid="quitSession" value="Cmd+Q" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
          <shortcut refid="restartR" value="Cmd+Shift+0" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -789,6 +839,11 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         desc="Show in new window"/>
 
+   <cmd id="returnDocToMain"
+        label="Return Document to Main Window"
+        buttonLabel=""
+        desc="Return to main window"/>
+
    <cmd id="mru0" visible="false" rebindable="false"/>
    <cmd id="mru1" visible="false" rebindable="false"/>
    <cmd id="mru2" visible="false" rebindable="false"/>
@@ -822,14 +877,27 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         desc="Open a project"
         windowMode="main"/>
-        
+   
    <cmd id="openProjectInNewWindow"
         label="Open Project with New R Session"
         menuLabel="Open Project in New _Session..."
         buttonLabel=""
         desc="Open project in a new R session"
         windowMode="main"/>
+   
+   <cmd id="shareProject"
+        label="Share Project..."
+        menuLabel="_Share Project..."
+        buttonLabel=""
+        desc="Share this project with others"
+        windowMode="main"/>
 
+   <cmd id="openSharedProject"
+        label="Open Shared Project"
+        menuLabel="More..."
+        desc="Open a project shared with you"
+        windowMode="main"/>
+        
    <cmd id="projectMru0" visible="false" rebindable="false" windowMode="main"/>
    <cmd id="projectMru1" visible="false" rebindable="false" windowMode="main"/>
    <cmd id="projectMru2" visible="false" rebindable="false" windowMode="main"/>
@@ -896,6 +964,9 @@ well as menu structures (for main menu and popup menus).
         label="Go To File/Function..."
         menuLabel="Go To File/F_unction..."/>
         
+   <cmd id="switchFocusSourceConsole"
+        label="Switch Focus between Source/Console"/>
+        
    <cmd id="activateSource"
         label="Move Focus to Source"
         menuLabel="Move Focus to Sou_rce"/>
@@ -932,7 +1003,7 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="activatePackages"
         label="Show Packages Pane"
-        menuLabel="Show P_ackages"
+        menuLabel="Show Pac_kages"
         windowMode="main"/>
         
    <cmd id="activateHelp"
@@ -950,14 +1021,112 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Show _Build"
         windowMode="main"/>
         
+   <cmd id="activateViewer"
+        label="Show Viewer Pane"
+        menuLabel="Show Vie_wer"
+        windowMode="main"/>
+        
    <cmd id="activatePresentation"
         label="Show Presentation Pane"
         menuLabel="Show Presentation"
         windowMode="main"/>
         
+        
+   <cmd id="layoutZoomSource"
+        checkable="true"
+        label="Zoom Source"
+        menuLabel="Zoom Sou_rce"/>
+        
+   <cmd id="layoutZoomConsole"
+        checkable="true"
+        label="Zoom Console"
+        menuLabel="Zoom _Console"
+        windowMode="main"/>
+        
+   <cmd id="layoutZoomEnvironment"
+        checkable="true"
+        label="Zoom Environment"
+        menuLabel="Zoom _Environment"
+        windowMode="main"/>
+        
+   <cmd id="layoutZoomHistory"
+        checkable="true"
+        label="Zoom History"
+        menuLabel="Zoom Histor_y"
+        windowMode="main"/>
+        
+   <cmd id="layoutZoomFiles"
+        checkable="true"
+        label="Zoom Files"
+        menuLabel="Zoom F_iles"
+        windowMode="main"/>
+        
+   <cmd id="layoutZoomPlots"
+        checkable="true"
+        label="Zoom Plots"
+        menuLabel="Zoom Pl_ots"
+        windowMode="main"/>
+        
+   <cmd id="layoutZoomPackages"
+        checkable="true"
+        label="Zoom Packages"
+        menuLabel="Zoom P_ackages"
+        windowMode="main"/>
+        
+   <cmd id="layoutZoomHelp"
+        checkable="true"
+        label="Zoom Help"
+        menuLabel="Zoom _Help"
+        windowMode="main"/>
+        
+   <cmd id="layoutZoomVcs"
+        checkable="true"
+        label="Zoom VCS"
+        menuLabel="Zoom VCS"
+        windowMode="main"/>
+        
+   <cmd id="layoutZoomBuild"
+        checkable="true"
+        label="Zoom Build"
+        menuLabel="Zoom _Build"
+        windowMode="main"/>
+               
+   <cmd id="layoutZoomViewer"
+        checkable="true"
+        label="Zoom Viewer"
+        menuLabel="Zoom Vie_wer"
+        windowMode="main"/>
+        
+   <cmd id="layoutZoomCurrentPane"
+        checkable="true"
+        label="Toggle Zoom for Current Pane"/>
+
+   <cmd id="layoutEndZoom"
+        checkable="true"
+        label="Show All Panes"
+        menuLabel="_Show All Panes"
+        windowMode="main"/>
+        
+   <cmd id="layoutConsoleOnLeft"
+        checkable="true"
+        label="Console on Left"
+        menuLabel="Console on _Left"
+        windowMode="main"/>
+        
+   <cmd id="layoutConsoleOnRight"
+        checkable="true"
+        label="Console on Right"
+        menuLabel="Console on _Right"
+        windowMode="main"/>
+        
+   <cmd id="paneLayout"
+        menuLabel="Pane Layo_ut..."
+        windowMode="main"/>     
+        
    <cmd id="jumpTo"
         label="Jump To..."
-        menuLabel="_Jump To..."/>
+        menuLabel="_Jump To..."
+        context="editor"/>
         
    <cmd id="switchToTab"
         label="Switch to Tab..."
@@ -1080,7 +1249,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="executeCode"
         label="Run Current Line or Selection"
         buttonLabel="Run"
-        menuLabel="Run _Line(s)"
+        menuLabel="Run Selected _Line(s)"
         desc="Run the current line or selection"
         context="r"/>
         
@@ -1269,6 +1438,18 @@ well as menu structures (for main menu and popup menus).
    <cmd id="shrinkSelection"
         menuLabel="Shrink Selection"
         desc="Shrink selection"
+        context="editor"/>
+        
+   <cmd id="goToNextSection"
+        label="Go to Next Section"
+        buttonLabel=""
+        desc="Go to next section/chunk"
+        context="editor"/>
+   
+   <cmd id="goToPrevSection"
+        label="Go to Previous Section"
+        buttonLabel=""
+        desc="Go to previous section/chunk"
         context="editor"/>
    
    <cmd id="expandRaggedSelection"
@@ -1547,6 +1728,7 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="interruptR"
         label="Interrupt R Session"
+        buttonLabel=""
         menuLabel="_Interrupt R"
         windowMode="main"/>
         
@@ -2164,7 +2346,19 @@ well as menu structures (for main menu and popup menus).
    <cmd id="pasteDummy"
         menuLabel="_Paste"
         rebindable="false"/>
-
+        
+   <cmd id="yankBeforeCursor"
+        label="Yank Before Cursor"
+        context="editor"/>
+   
+   <cmd id="yankAfterCursor"
+        label="Yank After Cursor"
+        context="editor"/>
+        
+   <cmd id="pasteLastYank"
+        label="Paste Last Yank"
+        context="editor"/>
+        
    <cmd id="maximizeConsole"
         menuLabel="Maximize Console"/>
 
@@ -2251,6 +2445,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="reloadShinyApp"
         label="Reload Shiny Application"
         menuLabel="Reload"
+        buttonLabel=""
         desc="Reload the Shiny application"/>
         
    <cmd id="shinyRunInPane"

@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-define('mode/r_scope_tree', function(require, exports, module) {
+define('mode/r_scope_tree', ["require", "exports", "module"], function(require, exports, module) {
 
    var $debuggingEnabled = false;
    function debuglog(str) {
@@ -297,7 +297,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
 
       // The type of this scope (e.g. a braced scope, a section, and so on)
       this.scopeType = scopeType;
-      
+
       // A pointer to the parent scope (if any; only the root scope should
       // have no parent)
       this.parentScope = null;

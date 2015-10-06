@@ -18,7 +18,7 @@
  *
  */
 
-define("util/expand_selection", function(require, exports, module) {
+define("util/expand_selection", ["require", "exports", "module"], function(require, exports, module) {
 
 var Editor = require("ace/editor").Editor;
 var Range = require("ace/range").Range;
@@ -518,6 +518,7 @@ var Utils = require("mode/utils");
       // No more history means we don't need to track
       // document changed any more.
       ensureOnChangeHandlerDetached();
+      return this.getSelectionRange();
 
    };
 

@@ -148,7 +148,11 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // document outline width
          preferredDocumentOutlineWidth().setGlobalValue(
                               newUiPrefs.preferredDocumentOutlineWidth().getGlobalValue());
-              
+         
+         // show document outline by default for Rmd
+         showDocumentOutlineRmd().setGlobalValue(
+                              newUiPrefs.showDocumentOutlineRmd().getGlobalValue());
+         
          // use vim mode
          useVimMode().setGlobalValue(
                               newUiPrefs.useVimMode().getGlobalValue());
@@ -184,6 +188,9 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          
          allowTabMultilineCompletion().setGlobalValue(
                                  newUiPrefs.allowTabMultilineCompletion().getGlobalValue());
+         
+         surroundSelection().setGlobalValue(
+                                 newUiPrefs.surroundSelection().getGlobalValue());
          
          enableSnippets().setGlobalValue(
                                  newUiPrefs.enableSnippets().getGlobalValue());

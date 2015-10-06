@@ -64,6 +64,7 @@
 
 #include <session/projects/SessionProjects.hpp>
 
+#include <session/SessionConstants.hpp>
 #include <session/SessionContentUrls.hpp>
 
 #include "modules/SessionBreakpoints.hpp"
@@ -196,6 +197,12 @@ SEXP rs_rstudioProgramMode()
 {
    r::sexp::Protect rProtect;
    return r::sexp::create(session::options().programMode(), &rProtect);
+}
+
+// get rstudio edition
+SEXP rs_rstudioEdition()
+{
+   return R_NilValue;
 }
 
 // get version
@@ -607,6 +614,34 @@ bool performDelayedWork(const boost::function<void()> &execute,
    return false;
 }
 
+bool isPackagePosixMakefile(const FilePath& srcPath)
+{
+   if (!srcPath.exists())
+      return false;
+
+   using namespace projects;
+   ProjectContext& context = session::projects::projectContext();
+   if (!context.hasProject())
+      return false;
+
+   if (context.config().buildType != r_util::kBuildTypePackage)
+      return false;
+
+   FilePath parentDir = srcPath.parent();
+   if (parentDir.filename() != "src")
+      return false;
+
+   FilePath packagePath = context.buildTargetPath();
+   if (parentDir.parent() != packagePath)
+      return false;
+
+   std::string filename = srcPath.filename();
+   return (filename == "Makevars" ||
+           filename == "Makevars.in" ||
+           filename == "Makefile" ||
+           filename == "Makefile.in");
+}
+
 } // anonymous namespeace
 
 void scheduleDelayedWork(const boost::posix_time::time_duration& period,
@@ -637,6 +672,33 @@ void onBackgroundProcessing(bool isIdle)
    executeScheduledCommands(&s_scheduledCommands);
    if (isIdle)
       executeScheduledCommands(&s_idleScheduledCommands);
+}
+
+core::string_utils::LineEnding lineEndings(const core::FilePath& srcFile)
+{
+   // potential special case for Makevars
+   if (userSettings().useNewlineInMakefiles() && isPackagePosixMakefile(srcFile))
+      return string_utils::LineEndingPosix;
+
+   // get the global default behavior
+   string_utils::LineEnding lineEndings = userSettings().lineEndings();
+
+   // use project-level override if available
+   using namespace session::projects;
+   ProjectContext& context = projectContext();
+   if (context.hasProject())
+   {
+      if (context.config().lineEndings != r_util::kLineEndingsUseDefault)
+         lineEndings = (string_utils::LineEnding)context.config().lineEndings;
+   }
+
+   // if we are doing no conversion (passthrough) and there is an existing file
+   // then we need to peek inside it to see what the existing line endings are
+   if (lineEndings == string_utils::LineEndingPassthrough)
+      string_utils::detectLineEndings(srcFile, &lineEndings);
+
+   // return computed lineEndings
+   return lineEndings;
 }
 
 Error readAndDecodeFile(const FilePath& filePath,
@@ -1754,6 +1816,16 @@ std::string CRANDownloadOptions()
    std::string method = module_context::downloadFileMethod();
    if (!method.empty())
       options += ", download.file.method = '" + method + "'";
+   if (method == "curl")
+   {
+      std::string extraArgs;
+      Error error = r::exec::RFunction(".rs.downloadFileExtraWithCurlArgs")
+                                                            .call(&extraArgs);
+      if (error)
+         LOG_ERROR(error);
+      options += ", download.file.extra = '" + extraArgs + "'";
+   }
+
    options += ")";
    return options;
 }
@@ -1859,7 +1931,7 @@ json::Object plotExportFormat(const std::string& name,
 Error createSelfContainedHtml(const FilePath& sourceFilePath,
                               const FilePath& targetFilePath)
 {
-   r::exec::RFunction func(".rs.pandocSelfContainedHtml");
+   r::exec::RFunction func("rmarkdown:::pandoc_self_contained_html");
    func.addParam(string_utils::utf8ToSystem(sourceFilePath.absolutePath()));
    func.addParam(string_utils::utf8ToSystem(targetFilePath.absolutePath()));
    return func.call();
@@ -1937,6 +2009,11 @@ SourceMarker::Type sourceMarkerTypeFromString(const std::string& type)
 }
 
 core::json::Array sourceMarkersAsJson(const std::vector<SourceMarker>& markers);
+
+bool isLoadBalanced()
+{
+   return !core::system::getenv(kRStudioSessionRoute).empty();
+}
 
 
 Error initialize()
@@ -2038,6 +2115,13 @@ Error initialize()
    methodDef15.fun = (DL_FUNC) rs_rstudioCRANReposUrl;
    methodDef15.numArgs = 0;
    r::routines::addCallMethod(methodDef15);
+
+   // register rs_rstudioEdition with R
+   R_CallMethodDef methodDef16 ;
+   methodDef16.name = "rs_rstudioEdition" ;
+   methodDef16.fun = (DL_FUNC) rs_rstudioEdition ;
+   methodDef16.numArgs = 0;
+   r::routines::addCallMethod(methodDef16);
    
    // register rs_isRScriptInPackageBuildTarget
    r::routines::registerCallMethod(

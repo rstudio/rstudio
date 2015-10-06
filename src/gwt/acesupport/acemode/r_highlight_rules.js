@@ -20,7 +20,7 @@
 
 var $colorFunctionCalls = false;
 
-define("mode/r_highlight_rules", function(require, exports, module)
+define("mode/r_highlight_rules", ["require", "exports", "module"], function(require, exports, module)
 {
    function include(/*...*/) {
       var result = new Array(arguments.length);
@@ -215,7 +215,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
             token : "keyword.operator",
             regex : "\\$|@",
             merge : false,
-            next  : "after-dollar"
+            next  : "afterDollar"
          },
          {
             token : "keyword.operator",
@@ -284,7 +284,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
          "#operator", "#text"
       );
 
-      rules["after-dollar"] = include(
+      rules["afterDollar"] = include(
          "#comment", "#string", "#number",
          "#quoted-identifier",
          "#function-call", "#keyword-or-identifier",

@@ -209,11 +209,14 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       });
       
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands.viewerRefresh().createToolbarButton());
+      
       
       publishButton_ = new RSConnectPublishButton(
             RSConnect.CONTENT_TYPE_DOCUMENT, true, null);
       toolbar.addRightWidget(publishButton_);
+      
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(commands.viewerRefresh().createToolbarButton());
    }
    
    @Override
@@ -327,6 +330,13 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
          shinyFrame_.initialize(url, null);
 
       showUrl(url);
+   }
+
+   
+   @Override
+   public void focusFind()
+   {
+      findTextBox_.focus();
    }
 
    @Override

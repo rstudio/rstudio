@@ -1,7 +1,7 @@
 #
 # ModuleTools.R
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-15 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -117,11 +117,13 @@
   # get the specified CRAN repo
   repo <- NA
   repos <- getOption("repos")
-  if (is.character(repos)) {
+  # the repos option is canonically a named character vector, but could also
+  # be a named list
+  if (is.character(repos) || is.list(repos)) {
     if (is.null(names(repos))) {
       # no indication of which repo is which, presume the first entry to be
-      # CRAN
-      if (length(repos) > 0)
+      # CRAN if it's of character type
+      if (length(repos) > 0 && is.character(repos[[1]]))
         repo <- repos[[1]]
     } else {
       # use repo named CRAN
@@ -257,6 +259,18 @@
    .Call(.rs.routines$rs_restartR, afterRestartCommand)
 })
 
+.rs.addFunction("readUiPref", function(prefName) {
+  if (missing(prefName) || is.null(prefName))
+    stop("No preference name supplied")
+  .Call(.rs.routines$rs_readUiPref, prefName)
+})
 
 
+.rs.addFunction("writeUiPref", function(prefName, value) {
+  if (missing(prefName) || is.null(prefName))
+    stop("No preference name supplied")
+  if (missing(value))
+    stop("No value supplied")
+  invisible(.Call(.rs.routines$rs_writeUiPref, prefName, .rs.scalar(value)))
+})
 

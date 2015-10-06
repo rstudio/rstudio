@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 import java.util.Map;
 
 import com.google.gwt.event.dom.client.HasMouseDownHandlers;
+import com.google.gwt.event.logical.shared.HasAttachHandlers;
 import com.google.gwt.event.logical.shared.HasCloseHandlers;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -31,7 +32,8 @@ public interface CompletionPopupDisplay
                      extends HasSelectionCommitHandlers<QualifiedName>,
                              HasSelectionHandlers<QualifiedName>,
                              HasCloseHandlers<PopupPanel>,
-                             HasMouseDownHandlers
+                             HasMouseDownHandlers,
+                             HasAttachHandlers
 {
    void clearCompletions();
    void showCompletionValues(QualifiedName[] results,

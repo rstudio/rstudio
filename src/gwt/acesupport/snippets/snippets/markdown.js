@@ -13,7 +13,7 @@
  *
  */
 
-define("rstudio/snippets/markdown", function(require, exports, module) {
+define("rstudio/snippets/markdown", ["require", "exports", "module"], function(require, exports, module) {
 
 var utils = require("rstudio/snippets");
 var SnippetManager = require("ace/snippets").snippetManager;

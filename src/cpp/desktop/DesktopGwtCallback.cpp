@@ -260,12 +260,12 @@ void GwtCallback::doAction(QKeySequence::StandardKey key)
    pOwner_->postWebViewEvent(keyEvent);
 }
 
-void GwtCallback::undo()
+void GwtCallback::undo(bool forAce)
 {
    doAction(QKeySequence::Undo);
 }
 
-void GwtCallback::redo()
+void GwtCallback::redo(bool forAce)
 {
    doAction(QKeySequence::Redo);
 }
@@ -859,7 +859,9 @@ int GwtCallback::collectPendingQuitRequest()
 
 void GwtCallback::openProjectInNewWindow(QString projectFilePath)
 {
-   launchProjectInNewInstance(resolveAliasedPath(projectFilePath));
+   std::vector<std::string> args;
+   args.push_back(resolveAliasedPath(projectFilePath).toStdString());
+   launchRStudio(args);
 }
 
 void GwtCallback::openSessionInNewWindow(QString workingDirectoryPath)
@@ -867,9 +869,7 @@ void GwtCallback::openSessionInNewWindow(QString workingDirectoryPath)
    workingDirectoryPath = resolveAliasedPath(workingDirectoryPath);
    core::system::setenv(kRStudioInitialWorkingDir,
                         workingDirectoryPath.toStdString());
-   QString exePath = QString::fromUtf8(
-      desktop::options().executablePath().absolutePath().c_str());
-   QProcess::startDetached(exePath);
+   launchRStudio();
 }
 
 void GwtCallback::openTerminal(QString terminalPath,

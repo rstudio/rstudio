@@ -26,6 +26,7 @@
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/SafeConvert.hpp>
+#include <core/StringUtils.hpp>
 #include <core/text/DcfParser.hpp>
 
 #include <core/r_util/RPackageInfo.hpp>
@@ -34,6 +35,13 @@
 namespace rstudio {
 namespace core {
 namespace r_util {
+
+const int kLineEndingsUseDefault = -1;
+
+const char * const kLineEndingPassthough = "None";
+const char * const kLineEndingNative = "Native";
+const char * const kLineEndingWindows = "Windows";
+const char * const kLineEndingPosix = "Posix";
 
 const char * const kBuildTypeNone = "None";
 const char * const kBuildTypePackage = "Package";
@@ -50,7 +58,9 @@ Error requiredFieldError(const std::string& field,
                          std::string* pUserErrMsg)
 {
    *pUserErrMsg = field + " not correctly specified in project config file";
-   return systemError(boost::system::errc::protocol_error, ERROR_LOCATION);
+   Error error = systemError(boost::system::errc::protocol_error, ERROR_LOCATION);
+   error.addProperty("user-msg", *pUserErrMsg);
+   return error;
 }
 
 std::string yesNoAskValueToString(int value)
@@ -129,6 +139,40 @@ bool interpretBuildTypeValue(const std::string& value, std::string* pValue)
        value == kBuildTypeCustom)
    {
       *pValue = value;
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
+bool interpretLineEndingsValue(std::string value, int* pValue)
+{
+   value = boost::algorithm::trim_copy(value);
+   if (value == "")
+   {
+      *pValue = kLineEndingsUseDefault;
+      return true;
+   }
+   else if (value == kLineEndingPassthough)
+   {
+      *pValue = string_utils::LineEndingPassthrough;
+      return true;
+   }
+   else if (value == kLineEndingNative)
+   {
+      *pValue = string_utils::LineEndingNative;
+      return true;
+   }
+   else if (value == kLineEndingWindows)
+   {
+      *pValue = string_utils::LineEndingWindows;
+      return true;
+   }
+   else if (value == kLineEndingPosix)
+   {
+      *pValue = string_utils::LineEndingPosix;
       return true;
    }
    else
@@ -436,6 +480,18 @@ Error readProjectFile(const FilePath& projectFilePath,
       pConfig->stripTrailingWhitespace = false;
    }
 
+   it = dcfFields.find("LineEndingConversion");
+   if (it != dcfFields.end())
+   {
+      if (!interpretLineEndingsValue(it->second, &(pConfig->lineEndings)))
+         return requiredFieldError("LineEndingConversion", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->lineEndings = kLineEndingsUseDefault;
+   }
+
+
    // extract encoding
    it = dcfFields.find("Encoding");
    if (it != dcfFields.end())
@@ -674,7 +730,8 @@ Error writeProjectFile(const FilePath& projectFilePath,
    }
 
    // additional editor settings
-   if (config.autoAppendNewline || config.stripTrailingWhitespace)
+   if (config.autoAppendNewline || config.stripTrailingWhitespace ||
+       (config.lineEndings != kLineEndingsUseDefault) )
    {
       contents.append("\n");
 
@@ -686,6 +743,28 @@ Error writeProjectFile(const FilePath& projectFilePath,
       if (config.stripTrailingWhitespace)
       {
          contents.append("StripTrailingWhitespace: Yes\n");
+      }
+
+      if (config.lineEndings != kLineEndingsUseDefault)
+      {
+         std::string value;
+         switch(config.lineEndings)
+         {
+            case string_utils::LineEndingPassthrough:
+               value = kLineEndingPassthough;
+               break;
+            case string_utils::LineEndingNative:
+               value = kLineEndingNative;
+               break;
+            case string_utils::LineEndingPosix:
+               value = kLineEndingPosix;
+               break;
+            case string_utils::LineEndingWindows:
+               value = kLineEndingWindows;
+               break;
+         }
+         if (!value.empty())
+            contents.append("LineEndingConversion: " + value + "\n");
       }
    }
 

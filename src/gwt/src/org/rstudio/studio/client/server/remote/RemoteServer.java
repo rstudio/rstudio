@@ -25,6 +25,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.UserCommandManager.UserCommandResult;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.jsonrpc.RpcError;
@@ -87,8 +88,12 @@ import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
+import org.rstudio.studio.client.projects.model.ProjectUser;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
+import org.rstudio.studio.client.projects.model.SharedProjectDetails;
+import org.rstudio.studio.client.projects.model.SharingConfigResult;
+import org.rstudio.studio.client.projects.model.SharingResult;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdCreatedTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateContent;
@@ -135,6 +140,7 @@ import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentCo
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.ObjectContents;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
+import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
@@ -170,7 +176,6 @@ import com.google.gwt.json.client.JSONBoolean;
 import com.google.gwt.json.client.JSONNull;
 import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.Random;
 import com.google.inject.Inject;
@@ -714,6 +719,7 @@ public class RemoteServer implements Server
    
    public void executeUserCommand(String functionName,
                                   JsArrayString content,
+                                  String fileName,
                                   int rowStart,
                                   int columnStart,
                                   int rowEnd,
@@ -724,11 +730,12 @@ public class RemoteServer implements Server
       
       params.set(0, new JSONString(functionName));
       setArrayString(params, 1, content);
+      params.set(2, new JSONString(fileName));
       
-      params.set(2, new JSONNumber(rowStart));
-      params.set(3, new JSONNumber(columnStart));
-      params.set(4, new JSONNumber(rowEnd));
-      params.set(5, new JSONNumber(columnEnd));
+      params.set(3, new JSONNumber(rowStart));
+      params.set(4, new JSONNumber(columnStart));
+      params.set(5, new JSONNumber(rowEnd));
+      params.set(6, new JSONNumber(columnEnd));
       
       sendRequest(RPC_SCOPE,
                   EXECUTE_USER_COMMAND,
@@ -1015,7 +1022,7 @@ public class RemoteServer implements Server
    public void listFiles(
                   FileSystemItem directory,
                   boolean monitor,
-                  ServerRequestCallback<JsArray<FileSystemItem>> requestCallback)
+                  ServerRequestCallback<DirectoryListing> requestCallback)
    {
       JSONArray paramArray = new JSONArray();
       paramArray.set(0, new JSONString(directory.getPath()));
@@ -2702,7 +2709,7 @@ public class RemoteServer implements Server
       var server = this;     
       $wnd.sendRemoteServerRequest = $entry(
          function(sourceWindow, scope, method, params, redactLog, responseCallback) {
-            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(Lcom/google/gwt/core/client/JavaScriptObject;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLcom/google/gwt/core/client/JavaScriptObject;)(sourceWindow, scope, method, params, redactLog, responseCallback);
+            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(Lcom/google/gwt/core/client/JavaScriptObject;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;ZLcom/google/gwt/core/client/JavaScriptObject;)(sourceWindow, scope, method, params, redactLog, responseCallback);
          }
       ); 
    }-*/;
@@ -2712,16 +2719,17 @@ public class RemoteServer implements Server
    private void sendRemoteServerRequest(final JavaScriptObject sourceWindow,
                                         final String scope,
                                         final String method,
-                                        final String params,
+                                        final JavaScriptObject params,
                                         final boolean redactLog,
                                         final JavaScriptObject responseCallback)
    {  
       // get the WindowEx from the sourceWindow
       final WindowEx srcWnd = sourceWindow.<WindowEx>cast();
       
-      // get the json array from the string
-      final JSONArray jsonParams = JSONParser.parseStrict(params).isArray();
-           
+      // unwrap the parameter array
+      JsArrayEx array = params.cast();
+      final JSONArray jsonParams = array.toJSONArray();
+
       // setup an rpc response handler that proxies back to the js object
       class ResponseHandler extends RpcResponseHandler
       {
@@ -2796,7 +2804,7 @@ public class RemoteServer implements Server
       sendRequestViaMainWorkbench(
             scope, 
             method, 
-            params.toString(),
+            params.getJavaScriptObject(),
             redactLog, 
             new RpcResponseHandler() {
                @Override
@@ -2822,7 +2830,7 @@ public class RemoteServer implements Server
    private native void sendRequestViaMainWorkbench(
                                     String scope,
                                     String method,
-                                    String params,
+                                    JavaScriptObject params,
                                     boolean redactLog,
                                     RpcResponseHandler handler) /*-{
       
@@ -3768,6 +3776,20 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void getRSConnectApp(String appId, String accountName, String server,
+         ServerRequestCallback<RSConnectApplicationInfo> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(appId));
+      params.set(1, new JSONString(accountName));
+      params.set(2, new JSONString(server));
+      sendRequest(RPC_SCOPE,
+            GET_RSCONNECT_APP,
+            params,
+            requestCallback);
+   }
+
+   @Override
    public void getRSConnectDeployments(
          String sourcePath,
          String outputPath,
@@ -4229,6 +4251,68 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, TRANSFORM_SNIPPET, params, requestCallback);
    }
    
+   @Override
+   public void getSnippets(ServerRequestCallback<JsArray<SnippetData>> callback)
+   {
+      sendRequest(RPC_SCOPE, GET_SNIPPETS, callback);
+   }
+   
+   @Override
+   public void getProjectSharedUsers(
+         ServerRequestCallback<JsArrayString> callback)
+   {
+      sendRequest(RPC_SCOPE, "get_shared_users", callback);
+   }
+
+   @Override
+   public void setProjectSharedUsers(JsArrayString users,
+         ServerRequestCallback<SharingResult> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONArray(users));
+      sendRequest(RPC_SCOPE, "set_shared_users", params, callback);
+   }
+
+   @Override
+   public void getAllServerUsers(ServerRequestCallback<JsArrayString> callback)
+   {
+      sendRequest(RPC_SCOPE, "get_all_users", callback);
+   }
+
+   @Override
+   public void validateSharingConfig(
+         ServerRequestCallback<SharingConfigResult> callback)
+   {
+      sendRequest(RPC_SCOPE, "validate_sharing_config", callback);
+   }
+
+   @Override
+   public void getSharedProjects(int maxProjects,
+         ServerRequestCallback<JsArray<SharedProjectDetails>> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONNumber(maxProjects));
+      sendRequest(RPC_SCOPE, "get_shared_projects", params, callback);
+   }
+
+   @Override
+   public void setCurrentlyEditing(String path,
+         ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      sendRequest(RPC_SCOPE, "set_currently_editing", params, callback);
+   }
+
+   @Override
+   public void getProjectUser(String sessionId,
+         ServerRequestCallback<ProjectUser> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(sessionId));
+      sendRequest(RPC_SCOPE, "get_project_user", params, callback);
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -4531,6 +4615,7 @@ public class RemoteServer implements Server
    private static final String REMOVE_RSCONNECT_ACCOUNT = "remove_rsconnect_account";
    private static final String CONNECT_RSCONNECT_ACCOUNT = "connect_rsconnect_account";
    private static final String GET_RSCONNECT_APP_LIST = "get_rsconnect_app_list";
+   private static final String GET_RSCONNECT_APP = "get_rsconnect_app";
    private static final String GET_RSCONNECT_DEPLOYMENTS = "get_rsconnect_deployments";
    private static final String RSCONNECT_PUBLISH = "rsconnect_publish";
    private static final String GET_DEPLOYMENT_FILES = "get_deployment_files";
@@ -4567,4 +4652,5 @@ public class RemoteServer implements Server
    private static final String GET_SET_METHOD_CALL = "get_set_method_call";
    private static final String GET_SET_REF_CLASS_CALL = "get_set_ref_class_call";
    private static final String TRANSFORM_SNIPPET = "transform_snippet";
+   private static final String GET_SNIPPETS = "get_snippets";
 }

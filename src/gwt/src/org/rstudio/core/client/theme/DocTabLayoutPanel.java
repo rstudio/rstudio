@@ -15,8 +15,6 @@
  */
 package org.rstudio.core.client.theme;
 
-import java.util.ArrayList;
-
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
@@ -168,7 +166,6 @@ public class DocTabLayoutPanel
                }
             }
          });
-         docTabs_.add(tab);
          if (position == null || position < 0)
             super.add(child, tab);
          else
@@ -359,7 +356,6 @@ public class DocTabLayoutPanel
       if (!super.remove(index))
          return false;
 
-      docTabs_.remove(index);
       fireEvent(new TabClosedEvent(index));
       ensureSelectedTabIsVisible(true);
       return true;
@@ -460,24 +456,24 @@ public class DocTabLayoutPanel
             if (curState_ == STATE_NONE)
                return;
             
-            // Qt occasionally fires a dragleave @ 0, 0 even though the cursor
-            // is elsewhere; ignore this
-            if (event.getClientX() == 0 && event.getClientY() == 0)
-               return;
-
-            // look at where the cursor is now--if it's inside the tab panel,
-            // do nothing, but if it's outside the tab panel, treat that as
-            // a cancel
-            Element ele = DomUtils.elementFromPoint(event.getClientX(), 
-                  event.getClientY());
-            while (ele != null && ele != Document.get().getBody())
+            // when a drag leaves the window entirely, we get a dragleave event
+            // at 0, 0 (which we always want to treat as a cancel)
+            if (!(event.getClientX() == 0 && event.getClientY() == 0))
             {
-               if (ele.getClassName().contains("gwt-TabLayoutPanelTabs"))
+               // look at where the cursor is now--if it's inside the tab panel,
+               // do nothing, but if it's outside the tab panel, treat that as
+               // a cancel
+               Element ele = DomUtils.elementFromPoint(event.getClientX(), 
+                     event.getClientY());
+               while (ele != null && ele != Document.get().getBody())
                {
-                  return;
-               }
-               ele = ele.getParentElement();
-            } 
+                  if (ele.getClassName().contains("gwt-TabLayoutPanelTabs"))
+                  {
+                     return;
+                  }
+                  ele = ele.getParentElement();
+               } 
+            }
             
             if (dragElement_ != null)
             {
@@ -554,8 +550,9 @@ public class DocTabLayoutPanel
          
          // attempt to ascertain whether the element being dragged is one of
          // our own documents
-         for (DocTab tab: docTabs_)
+         for (int i = 0; i < getWidgetCount(); i++)
          {
+            DocTab tab = (DocTab)getTabWidget(i);
             if (tab.getDocId() == docId)
             {
                dragElement_ = 
@@ -612,7 +609,10 @@ public class DocTabLayoutPanel
                @Override
                public void execute()
                {
-                 dragElement_.getStyle().setDisplay(Display.NONE);
+                  // we may not still be dragging when the event loop comes
+                  // back, so be sure there's an element before hiding it
+                  if (dragElement_ != null)
+                    dragElement_.getStyle().setDisplay(Display.NONE);
                }
             });
          }
@@ -898,7 +898,7 @@ public class DocTabLayoutPanel
          {
             // if this is the last tab in satellite, we don't want to tear
             // it out
-            boolean isLastSatelliteTab = docTabs_.size() == 1 && 
+            boolean isLastSatelliteTab = getWidgetCount() == 1 && 
                   Satellite.isCurrentWindowSatellite();
 
             // did the user drag the tab outside this doc?
@@ -1223,5 +1223,4 @@ public class DocTabLayoutPanel
    private final ThemeStyles styles_;
    private Animation currentAnimation_;
    private DragManager dragManager_;
-   private ArrayList<DocTab> docTabs_ = new ArrayList<DocTab>();
 }

@@ -1,5 +1,5 @@
 /*
- * PresentationOverlay.cpp
+ * Backtrace.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,34 +13,22 @@
  *
  */
 
+#ifndef CORE_BACKTRACE_HPP
+#define CORE_BACKTRACE_HPP
 
-#include "PresentationState.hpp"
-
-#include <core/Error.hpp>
-
-#include "SlideParser.hpp"
-
-using namespace rstudio::core;
+#include <string>
+#include <iostream>
 
 namespace rstudio {
-namespace session {
-namespace modules { 
-namespace presentation {
+namespace core {
+namespace backtrace {
 
-void onSlideDeckChangedOverlay(const SlideDeck& slideDeck)
-{
-}
+std::string demangle(const std::string& name);
+void printBacktrace(std::ostream& os = std::cerr);
 
-namespace state {
-
-Error initializeOverlay()
-{
-   return Success();
-}
-
-} // namespace state
-} // namespace presentation
-} // namespace modules
-} // namesapce session
+} // namespace debug
+} // namespace core
 } // namespace rstudio
+
+#endif /* CORE_BACKTRACE_HPP */
 

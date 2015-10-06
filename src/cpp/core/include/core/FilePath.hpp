@@ -235,6 +235,32 @@ private:
    boost::scoped_ptr<Impl> pImpl_;
 };
 
+class RemoveOnExitScope : boost::noncopyable
+{
+public:
+   explicit RemoveOnExitScope(const FilePath& filePath,
+                              const ErrorLocation& errorLocation)
+      : filePath_(filePath), errorLocation_(errorLocation)
+   {
+   }
+   virtual ~RemoveOnExitScope()
+   {
+      try
+      {
+         Error error = filePath_.removeIfExists();
+         if (error)
+            core::log::logError(error, errorLocation_);
+      }
+      catch(...)
+      {
+      }
+   }
+
+private:
+   FilePath filePath_;
+   ErrorLocation errorLocation_;
+};
+
 }
 }
 

@@ -37,6 +37,8 @@ public class HelpTab extends DelayLoadWorkbenchTab<Help>
                                                 ActivateHelpHandler
    {
       @Handler public abstract void onHelpHome();
+      @Handler public abstract void onDebugHelp();
+      @Handler public abstract void onMarkdownHelp();
       @Handler public abstract void onOpenDataVisualizationCheatSheet();
       @Handler public abstract void onOpenPackageDevelopmentCheatSheet();
       @Handler public abstract void onOpenDataWranglingCheatSheet();

@@ -238,6 +238,14 @@ public class SessionInfo extends JavaScriptObject
          this.project_open_docs = {};
       return this.project_open_docs;
    }-*/;
+   
+   public final native boolean projectSupportsSharing() /*-{
+      return !!this.project_supports_sharing;
+   }-*/;
+   
+   public final native boolean isProjectOwner() /*-{
+      return !!this.project_owned_by_user;
+   }-*/;
 
    public final native JsArray<ConsoleProcessInfo> getConsoleProcesses() /*-{
       return this.console_processes;
@@ -331,6 +339,10 @@ public class SessionInfo extends JavaScriptObject
    
    public final native boolean getAllowPublish() /*-{
       return this.allow_publish;
+   }-*/;
+   
+   public final native boolean getAllowOpenSharedProjects() /*-{
+      return this.allow_open_shared_projects;
    }-*/;
    
    public final native EnvironmentContextData getEnvironmentState() /*-{

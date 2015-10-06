@@ -78,6 +78,8 @@ public class HTMLPreviewPresenter implements IsWidget
       String getDocumentTitle();
       
       void showLog(String log);
+      
+      void focusFind();
    }
    
    @Inject
@@ -309,6 +311,12 @@ public class HTMLPreviewPresenter implements IsWidget
    public void onShowHtmlPreviewLog()
    {
       view_.showLog(lastPreviewOutput_.toString());
+   }
+   
+   @Handler
+   public void onFindReplace()
+   {
+      view_.focusFind();
    }
    
    private void terminateRunningPreview()

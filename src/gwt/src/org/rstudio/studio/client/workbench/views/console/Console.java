@@ -26,6 +26,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.events.BusyHandler;
+import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
@@ -50,6 +51,7 @@ public class Console
    public Console(final Display view, EventBus events, Commands commands)
    {    
       view_ = view;
+      events_ = events;
 
       events.addHandler(SendToConsoleEvent.TYPE, new SendToConsoleHandler()
       {
@@ -120,11 +122,19 @@ public class Console
       view_.ensureCursorVisible();
    }
    
+   @Handler
+   public void onLayoutZoomConsole()
+   {
+      onActivateConsole();
+      events_.fireEvent(new ZoomPaneEvent("Console"));
+   }
+   
    public Display getDisplay()
    {
       return view_ ;
    }
 
    private final DelayFadeInHelper fadeInHelper_;
+   private final EventBus events_;
    private final Display view_;
 }

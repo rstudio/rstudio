@@ -1,7 +1,7 @@
 /*
  * Commands.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,7 @@ public abstract class
 
    // Workbench
    public abstract AppCommand setWorkingDir();
+   public abstract AppCommand switchFocusSourceConsole();
    
    // Source
    public abstract AppCommand reformatCode();
@@ -82,11 +83,13 @@ public abstract class
    public abstract AppCommand compileNotebook();
    public abstract AppCommand synctexSearch();
    public abstract AppCommand activateSource();
+   public abstract AppCommand layoutZoomSource();
    public abstract AppCommand printSourceDoc();
    public abstract AppCommand vcsFileLog();
    public abstract AppCommand vcsFileDiff();
    public abstract AppCommand vcsFileRevert();
    public abstract AppCommand popoutDoc();
+   public abstract AppCommand returnDocToMain();
    public abstract AppCommand findReplace();
    public abstract AppCommand findNext();
    public abstract AppCommand findPrevious();
@@ -106,6 +109,8 @@ public abstract class
    public abstract AppCommand toggleDocumentOutline();
    public abstract AppCommand expandSelection();
    public abstract AppCommand shrinkSelection();
+   public abstract AppCommand goToNextSection();
+   public abstract AppCommand goToPrevSection();
    public abstract AppCommand expandRaggedSelection();
    public abstract AppCommand extractFunction();
    public abstract AppCommand extractLocalVariable();
@@ -125,6 +130,8 @@ public abstract class
    public abstract AppCommand newProject();
    public abstract AppCommand openProject();
    public abstract AppCommand openProjectInNewWindow();
+   public abstract AppCommand shareProject();
+   public abstract AppCommand openSharedProject();
    public abstract AppCommand projectMru0();
    public abstract AppCommand projectMru1();
    public abstract AppCommand projectMru2();
@@ -152,6 +159,7 @@ public abstract class
    public abstract AppCommand restartR();
    public abstract AppCommand terminateR();
    public abstract AppCommand activateConsole();
+   public abstract AppCommand layoutZoomConsole();
 
    // Files
    public abstract AppCommand newFolder();
@@ -163,6 +171,7 @@ public abstract class
    public abstract AppCommand deleteFiles();
    public abstract AppCommand refreshFiles();
    public abstract AppCommand activateFiles();
+   public abstract AppCommand layoutZoomFiles();
    public abstract AppCommand goToWorkingDir();
    public abstract AppCommand setAsWorkingDir();
    public abstract AppCommand setWorkingDirToFilesPane();
@@ -185,6 +194,7 @@ public abstract class
    public abstract AppCommand vcsAddFiles();
    public abstract AppCommand vcsRemoveFiles();
    public abstract AppCommand activateVcs();
+   public abstract AppCommand layoutZoomVcs();
    public abstract AppCommand vcsResolve();
    
    // PDF
@@ -243,6 +253,7 @@ public abstract class
    public abstract AppCommand historyShowContext();
    public abstract AppCommand historyDismissContext();
    public abstract AppCommand activateHistory();
+   public abstract AppCommand layoutZoomHistory();
 
    // Workspace
    public abstract AppCommand clearWorkspace();
@@ -254,6 +265,7 @@ public abstract class
 
    // Environment
    public abstract AppCommand activateEnvironment();
+   public abstract AppCommand layoutZoomEnvironment();
    public abstract AppCommand refreshEnvironment();
  
    // Plots
@@ -267,6 +279,7 @@ public abstract class
    public abstract AppCommand clearPlots();
    public abstract AppCommand refreshPlot();
    public abstract AppCommand activatePlots();
+   public abstract AppCommand layoutZoomPlots();
    public abstract AppCommand showManipulator();
 
    // Packages
@@ -274,6 +287,7 @@ public abstract class
    public abstract AppCommand updatePackages();
    public abstract AppCommand refreshPackages();
    public abstract AppCommand activatePackages();
+   public abstract AppCommand layoutZoomPackages();
    
    // // packrat
    public abstract AppCommand packratBootstrap();
@@ -309,6 +323,7 @@ public abstract class
    public abstract AppCommand raiseException();
    public abstract AppCommand raiseException2();
    public abstract AppCommand activateHelp();
+   public abstract AppCommand layoutZoomHelp();
    public abstract AppCommand showAboutDialog();
    public abstract AppCommand checkForUpdates();
    public abstract AppCommand helpUsingRStudio();
@@ -321,6 +336,8 @@ public abstract class
    public abstract AppCommand viewShortcuts();
    
    // Viewer
+   public abstract AppCommand activateViewer();
+   public abstract AppCommand layoutZoomViewer();
    public abstract AppCommand viewerPopout();
    public abstract AppCommand viewerBack(); 
    public abstract AppCommand viewerForward();
@@ -358,6 +375,7 @@ public abstract class
    public abstract AppCommand stopBuild();
    public abstract AppCommand buildToolsProjectSetup();
    public abstract AppCommand activateBuild();
+   public abstract AppCommand layoutZoomBuild();
    
    // Clipboard placeholders
    public abstract AppCommand undoDummy();
@@ -411,6 +429,11 @@ public abstract class
 
    // Other
    public abstract AppCommand checkSpelling();   
+   public abstract AppCommand layoutZoomCurrentPane();
+   public abstract AppCommand layoutEndZoom();
+   public abstract AppCommand layoutConsoleOnLeft();
+   public abstract AppCommand layoutConsoleOnRight();
+   public abstract AppCommand paneLayout();
    public abstract AppCommand maximizeConsole();
    
    public static final String KEYBINDINGS_PATH =

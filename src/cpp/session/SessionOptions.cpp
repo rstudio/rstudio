@@ -240,7 +240,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          value<bool>(&autoReloadSource_)->default_value(false),
          "Reload R source if it changes during the session")
       ("r-compatible-graphics-engine-version",
-         value<int>(&rCompatibleGraphicsEngineVersion_)->default_value(10),
+         value<int>(&rCompatibleGraphicsEngineVersion_)->default_value(11),
          "Maximum graphics engine version we are compatible with")
       ("r-resources-path",
          value<std::string>(&rResourcesPath_)->default_value("resources"),
@@ -348,6 +348,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    optionsDesc.commandLine.add(limits);
    optionsDesc.commandLine.add(external);
    optionsDesc.commandLine.add(user);
+   optionsDesc.commandLine.add(overlay);
 
    // define groups included in config-file processing
    optionsDesc.configFile.add(program);
@@ -378,7 +379,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 
    // resolve scope
    scope_ = r_util::SessionScope::fromProjectId(project, scopeId);
-   invalidScope_ = false;
+   scopeState_ = core::r_util::ScopeValid;
 
    // call overlay hooks
    resolveOverlayOptions();
@@ -506,15 +507,14 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    r_util::SessionScope scope = sessionScope();
    if (!scope.empty())
    {
-      if (!r_util::validateSessionScope(
+      scopeState_ = r_util::validateSessionScope(
                        scope,
                        userHomePath(),
                        userScratchPath(),
-                       session::projectIdToFilePath(userScratchPath()),
-                       &initialProjectPath_))
-      {
-         invalidScope_ = true;
-      }
+                       session::projectIdToFilePath(userScratchPath(), 
+                                 FilePath(
+                                   getOverlayOption("shared-storage-path"))),
+                       &initialProjectPath_);
    }
    else
    {

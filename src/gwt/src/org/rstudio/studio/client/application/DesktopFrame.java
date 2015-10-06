@@ -32,8 +32,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
                           String defaultExtension, 
                           boolean forceDefaultExtension);
    String getExistingDirectory(String caption, String dir);
-   void undo();
-   void redo();
+   void undo(boolean forAce);
+   void redo(boolean forAce);
    void clipboardCut();
    void clipboardCopy();
    void clipboardPaste();
@@ -107,6 +107,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    public static final int PENDING_QUIT_RESTART_AND_RELOAD = 3;
    
    void setPendingQuit(int pendingQuit);
+   void setPendingProject(String projectFilePath);
    void launchSession(boolean reload);
    
    void openProjectInNewWindow(String projectFilePath);

@@ -83,6 +83,7 @@ public class CppCompletionManager implements CompletionManager
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
       uiPrefs_ = uiPrefs;
+      suggestionTimer_ = new SuggestionTimer(this, uiPrefs_);
    }
    
    // close the completion popup (if any)
@@ -412,16 +413,18 @@ public class CppCompletionManager implements CompletionManager
       });
    }
    
-   private class SuggestionTimer
+   private static class SuggestionTimer
    {
-      SuggestionTimer()
+      SuggestionTimer(CppCompletionManager manager, UIPrefs uiPrefs)
       {
+         manager_ = manager;
+         uiPrefs_ = uiPrefs;
          timer_ = new Timer()
          {
             @Override
             public void run()
             {
-               performCompletionRequest(completionPosition_, false);
+               manager_.performCompletionRequest(completionPosition_, false);
             }
          };
       }
@@ -437,10 +440,11 @@ public class CppCompletionManager implements CompletionManager
          timer_.cancel();
       }
       
+      private final CppCompletionManager manager_;
+      private final UIPrefs uiPrefs_;
       private final Timer timer_;
       private CompletionPosition completionPosition_;
    }
-   private SuggestionTimer suggestionTimer_ = new SuggestionTimer();
    
      
    private CppCompletionPopupMenu getCompletionPopup()
@@ -478,6 +482,7 @@ public class CppCompletionManager implements CompletionManager
    private final DocDisplay docDisplay_;
    private final CppCompletionContext completionContext_;
    private CppCompletionRequest request_;
+   private SuggestionTimer suggestionTimer_;
    private final InitCompletionFilter initFilter_ ;
    private final CompletionManager rCompletionManager_;
    private final Invalidation completionRequestInvalidation_ = new Invalidation();

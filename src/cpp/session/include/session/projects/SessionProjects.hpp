@@ -165,6 +165,12 @@ public:
    void subscribeToFileMonitor(const std::string& featureName,
                                const FileMonitorCallbacks& cb);
 
+   // can this project be shared with other users?
+   bool supportsSharing();
+
+   // is the current user this project's owner?
+   bool ownedByUser();
+
 public:
    static core::r_util::RProjectBuildDefaults buildDefaults();
    static core::r_util::RProjectConfig defaultConfig();

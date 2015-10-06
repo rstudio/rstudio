@@ -23,7 +23,9 @@ import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -294,6 +296,18 @@ public class WorkbenchScreen extends Composite
    {
       paneManager_.activateTab(event.getPane());
    }
+   
+   private void fireEventDelayed(final GwtEvent<?> event, int delayMs)
+   {
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            eventBus_.fireEvent(event);
+         }
+      }.schedule(delayMs);
+   }
 
    @Handler
    void onActivateEnvironment() { paneManager_.activateTab(Tab.Environment); }
@@ -309,14 +323,40 @@ public class WorkbenchScreen extends Composite
    void onActivateHelp() 
    { 
       paneManager_.activateTab(Tab.Help); 
-      eventBus_.fireEvent(new ActivateHelpEvent());
+      fireEventDelayed(new ActivateHelpEvent(), 200);
    }
    @Handler
    void onActivateVcs() { paneManager_.activateTab(Tab.VCS); }
    @Handler
    void onActivateBuild() { paneManager_.activateTab(Tab.Build); }
    @Handler
-   void onActivatePresentation() { paneManager_.activateTab(Tab.Presentation);}
+   void onActivatePresentation() { paneManager_.activateTab(Tab.Presentation); }
+   @Handler
+   void onActivateViewer() { paneManager_.activateTab(Tab.Viewer); }
+   
+   
+   @Handler
+   void onLayoutZoomEnvironment() { paneManager_.zoomTab(Tab.Environment); }
+   @Handler
+   void onLayoutZoomHistory() { paneManager_.zoomTab(Tab.History); }
+   @Handler
+   void onLayoutZoomFiles() { paneManager_.zoomTab(Tab.Files); }
+   @Handler
+   void onLayoutZoomPlots() { paneManager_.zoomTab(Tab.Plots); }
+   @Handler
+   void onLayoutZoomPackages() { paneManager_.zoomTab(Tab.Packages); }
+   @Handler
+   void onLayoutZoomHelp() 
+   { 
+      paneManager_.zoomTab(Tab.Help);
+      fireEventDelayed(new ActivateHelpEvent(), 200);
+   }
+   @Handler
+   void onLayoutZoomVcs() { paneManager_.zoomTab(Tab.VCS); }
+   @Handler
+   void onLayoutZoomBuild() { paneManager_.zoomTab(Tab.Build); }
+   @Handler
+   void onLayoutZoomViewer() { paneManager_.zoomTab(Tab.Viewer); }
 
    @Handler
    void onMacPreferences()

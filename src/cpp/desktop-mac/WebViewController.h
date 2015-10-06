@@ -17,6 +17,7 @@
    NSString* viewerUrl_;
    NSString* shinyDialogUrl_;
    bool allowExternalNav_;
+   GwtCallbacks* gwtCallbacks_;
 }
 
 + (WebViewController*) windowNamed: (NSString*) name;

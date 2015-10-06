@@ -231,6 +231,21 @@ public class GitReviewPanel extends ResizeComposite implements Display
       topToolbar_.addLeftWidget(switchViewButton_);
 
       topToolbar_.addLeftWidget(branchToolbarButton);
+      
+      topToolbar_.addLeftSeparator();
+      
+      topToolbar_.addLeftWidget(new ToolbarButton(
+            null, commands.vcsRefresh().getImageResource(),
+            new ClickHandler() {
+               @Override
+               public void onClick(ClickEvent event)
+               {
+                  changelist_.showProgress();
+                  commands.vcsRefresh().execute();
+               }
+            }));
+      
+      topToolbar_.addLeftSeparator();
 
       stageFilesButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
             "Stage",
@@ -247,26 +262,13 @@ public class GitReviewPanel extends ResizeComposite implements Display
       ignoreButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
             "Ignore", RES.ignore(), (ClickHandler) null));
 
-      topToolbar_.addRightWidget(new ToolbarButton(
-            "Refresh", commands.vcsRefresh().getImageResource(),
-            new ClickHandler() {
-               @Override
-               public void onClick(ClickEvent event)
-               {
-                  changelist_.showProgress();
-                  commands.vcsRefresh().execute();
-               }
-            }));
-
-      topToolbar_.addRightSeparator();
-
       
       topToolbar_.addRightWidget(commands.vcsPull().createToolbarButton());
 
       topToolbar_.addRightSeparator();
 
       topToolbar_.addRightWidget(commands.vcsPush().createToolbarButton());
-
+  
       diffToolbar_.addStyleName(RES.styles().toolbar());
       diffToolbar_.addStyleName(RES.styles().diffToolbar());
 

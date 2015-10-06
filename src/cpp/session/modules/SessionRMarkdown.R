@@ -115,36 +115,6 @@
    }
 })
 
-.rs.addFunction("pandocSelfContainedHtml", function(input, output) {
-   
-   # make input file path absolute
-   input <- normalizePath(input)
-   
-   # ensure output file exists and make it's path absolute
-   if (!file.exists(output))
-      file.create(output)
-   output <- normalizePath(output)
-   
-   # create a simple body-only template
-   template <- tempfile(fileext = ".html")
-   writeLines("$body$", template)
-   
-   # call pandoc with from format of "markdown_strict" to
-   # get as close as possible to html -> html conversion
-   rmarkdown::pandoc_convert(
-      input = input,
-      from = "markdown_strict",
-      output = output,
-      options = c(
-         "--self-contained",
-         "--template", template,
-         "+RTS", "-K512m", "-RTS"
-      )
-   )
-   
-   invisible(output)
-})
-
 .rs.addJsonRpcHandler("convert_to_yaml", function(input)
 {
    yaml <- yaml::as.yaml(input)
@@ -198,7 +168,8 @@
    # check for parameters 
    if (length(knitr::knit_params(readLines(file, 
                                            warn = FALSE, 
-                                           encoding = encoding))) > 0) {
+                                           encoding = encoding),
+                                 evaluate = FALSE)) > 0) {
       
       # allocate temp file to hold parameter values
       paramsFile <- .Call("rs_paramsFileForRmd", file)
@@ -235,6 +206,5 @@
 
    invisible(NULL)
 })
-
 
 

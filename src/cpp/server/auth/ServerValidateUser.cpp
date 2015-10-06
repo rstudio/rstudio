@@ -15,6 +15,9 @@
 
 #include <server/auth/ServerValidateUser.hpp>
 
+#include <boost/foreach.hpp>
+#include <boost/tokenizer.hpp>
+
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
@@ -51,33 +54,39 @@ bool validateUser(const std::string& username,
       return false;
    }
 
-   // validate user if necessary
+   // validate group if necessary
    if (!requiredGroup.empty())
    {    
-      // see if they are a member of the required group
-      bool belongsToGroup ;
-      error = core::system::userBelongsToGroup(user,
-                                               requiredGroup,
-                                               &belongsToGroup);
-      if (error)
+      // see if they are a member of one of the required groups
+      bool belongsToGroup = false;
+      using namespace boost ;
+      char_separator<char> comma(",");
+      tokenizer<char_separator<char> > groups(requiredGroup, comma);
+      BOOST_FOREACH(const std::string& group, groups)
       {
-         // log and return false
-         LOG_ERROR(error);
-         return false;
-      }
-      else
-      {
-         // log a warning whenever a user doesn't belong to a required group
-         if (!belongsToGroup && groupFailureWarning)
-         {
-            LOG_WARNING_MESSAGE(
-             "User " + username + " could not be authenticated because they "
-             "do not belong to the required group (" + requiredGroup + ")");
-         }
+         // check group membership
+         Error error = core::system::userBelongsToGroup(user,
+                                                        group,
+                                                        &belongsToGroup);
+         if (error)
+            LOG_ERROR(error);
 
-         // return belongs status
-         return belongsToGroup;
+         // break if we found a match
+         if (belongsToGroup)
+            break;
       }
+
+      // log a warning whenever a user doesn't belong to a required group
+      if (!belongsToGroup && groupFailureWarning)
+      {
+         LOG_WARNING_MESSAGE(
+          "User " + username + " could not be authenticated because they "
+          "do not belong to one of the required groups ("+ requiredGroup +")");
+      }
+
+      // return belongs status
+      return belongsToGroup;
+
    }
    else
    {

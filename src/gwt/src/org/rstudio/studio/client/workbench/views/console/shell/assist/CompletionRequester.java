@@ -55,8 +55,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 public class CompletionRequester
@@ -433,13 +434,24 @@ public class CompletionRequester
       }) ;
    }
    
-   private ArrayList<QualifiedName> resolveDuplicates(ArrayList<QualifiedName> completions)
+   private ArrayList<QualifiedName>
+   resolveDuplicates(ArrayList<QualifiedName> completions)
    {
-      LinkedHashSet<QualifiedName> set = new LinkedHashSet<QualifiedName>();
-      set.addAll(completions);
-      ArrayList<QualifiedName> withoutDupes = new ArrayList<QualifiedName>();
-      withoutDupes.addAll(set);
-      return withoutDupes;
+      ArrayList<QualifiedName> result =
+            new ArrayList<QualifiedName>();
+      
+      Set<String> visitedItems = new HashSet<String>();
+      
+      for (QualifiedName name : completions)
+      {
+         if (visitedItems.contains(name.name))
+            continue;
+         
+         result.add(name);
+         visitedItems.add(name.name);
+      }
+      
+      return result;
    }
    
    private void addScopedArgumentCompletions(

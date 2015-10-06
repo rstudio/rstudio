@@ -214,8 +214,8 @@ public class EditSession extends JavaScriptObject
       return this.getMarkers(true)[id];
    }-*/;
    
-   public final native Range createAnchoredRange(Position start,
-                                                 Position end) /*-{
+   public final native AnchoredRange createAnchoredRange(Position start,
+                                                         Position end) /*-{
       var Range = $wnd.require("ace/range").Range;
       var result = new Range();
       result.start = this.doc.createAnchor(start.row, start.column);
@@ -228,6 +228,15 @@ public class EditSession extends JavaScriptObject
       var worker = this.$worker;
       if (worker && worker.setTimeout)
          worker.setTimeout(delayMs);
+   }-*/;
+   
+   public final Token getTokenAt(Position position)
+   {
+      return getTokenAt(position.getRow(), position.getColumn());
+   }
+   
+   public native final Token getTokenAt(int row, int column) /*-{
+      return this.getTokenAt(row, column);
    }-*/;
 
 }

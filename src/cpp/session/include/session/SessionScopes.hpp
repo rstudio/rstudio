@@ -26,6 +26,8 @@
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
+#include <core/json/Json.hpp>
+#include <core/json/JsonRpc.hpp>
 
 #ifndef _WIN32
 #include <core/system/FileMode.hpp>
@@ -34,6 +36,7 @@
 #include <core/r_util/RSessionContext.hpp>
 
 #include <session/projects/ProjectsSettings.hpp>
+#include <session/projects/SessionProjectSharing.hpp>
 
 namespace rstudio {
 namespace session {
@@ -63,20 +66,102 @@ inline std::map<std::string,std::string> projectIdsMap(
    return idMap;
 }
 
-inline std::string toFilePath(const std::string& projectId,
-                              const core::FilePath& userScratchPath)
+inline std::string toFilePath(const core::r_util::ProjectId& projectId,
+                              const core::FilePath& userScratchPath,
+                              const core::FilePath& sharedStoragePath)
 {
-   // get the id map
+   // try the map first; it contains both our own projects and shared projects
+   // that we've opened
    core::FilePath projectIdsPath = projectIdsFilePath(userScratchPath);
    std::map<std::string,std::string> idMap = projectIdsMap(projectIdsPath);
+   std::map<std::string,std::string>::iterator it;
 
-   // return the file path (empty if not found)
-   return idMap[projectId];
+   // see if the project came from another user
+   bool fromOtherUser = !projectId.userId().empty() &&
+            projectId.userId() != core::r_util::obfuscatedUserId(::getuid());
+
+   // if it did, use the fully qualified name; otherwise, use just the project
+   // ID (our own projects are stored unqualified in the map)
+   if (fromOtherUser)
+      it = idMap.find(projectId.asString());
+   else
+      it = idMap.find(projectId.id());
+
+   if (it != idMap.end())
+   {
+      // we found it!
+      return it->second;
+   }
+   else if (fromOtherUser)
+   {
+      // this project does not belong to us; see if it has an entry in shared
+      // storage
+      core::FilePath projectEntryPath =
+            sharedStoragePath.complete(kProjectSharedDir)
+                             .complete(projectId.asString() + kProjectEntryExt);
+      if (projectEntryPath.exists())
+      {
+         // get the path from shared storage
+         std::string entryContents;
+         core::Error error = core::readStringFromFile(projectEntryPath,
+                                                      &entryContents);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return "";
+         }
+
+         // read the contents
+         core::json::Value projectEntryVal;
+         if (!core::json::parse(entryContents, &projectEntryVal))
+         {
+            error = core::Error(core::json::errc::ParseError,
+                                      ERROR_LOCATION);
+            error.addProperty("path", projectEntryPath.absolutePath());
+            LOG_ERROR(error);
+            return "";
+         }
+
+         // extract the path
+         std::string projectPath;
+         if (projectEntryVal.type() == core::json::ObjectType)
+         {
+            core::json::Object obj = projectEntryVal.get_obj();
+            core::json::Object::iterator it = obj.find(kProjectEntryDir);
+            if (it != obj.end() && it->second.type() == core::json::StringType)
+            {
+               projectPath = it->second.get_str();
+            }
+         }
+
+         // ensure we got a path from the shared project data
+         if (projectPath.empty())
+         {
+            error = core::systemError(boost::system::errc::invalid_argument,
+                             "No project directory found in " kProjectEntryDir,
+                             ERROR_LOCATION);
+            error.addProperty("path", projectEntryPath.absolutePath());
+            LOG_ERROR(error);
+            return "";
+         }
+
+         // save the path to our own mapping so we can reverse lookup later
+         core::FilePath projectIdsPath = projectIdsFilePath(userScratchPath);
+         std::map<std::string,std::string> idMap = projectIdsMap(projectIdsPath);
+         idMap[projectId.asString()] = projectPath;
+         error = core::writeStringMapToFile(projectIdsPath, idMap);
+         if (error)
+            LOG_ERROR(error);
+
+         // return the path
+         return projectPath;
+      }
+   }
+   return "";
 }
 
-
-inline std::string toProjectId(const std::string& projectDir,
-                               const core::FilePath& userScratchPath)
+inline core::r_util::ProjectId toProjectId(const std::string& projectDir,
+                             const core::FilePath& userScratchPath)
 {
    // get the id map
    core::FilePath projectIdsPath = projectIdsFilePath(userScratchPath);
@@ -87,7 +172,9 @@ inline std::string toProjectId(const std::string& projectDir,
    BOOST_FOREACH(ProjId projId, idMap)
    {
       if (projId.second == projectDir)
-         return projId.first;
+      {
+         return core::r_util::ProjectId(projId.first);
+      }
    }
 
    // if we didn't find it then we need to generate a new one (loop until
@@ -115,16 +202,17 @@ inline std::string toProjectId(const std::string& projectDir,
 #endif
 
    // return the id
-   return id;
+   return core::r_util::ProjectId(id);
 }
 
 
 } // anonymous namespace
 
 inline core::r_util::ProjectIdToFilePath projectIdToFilePath(
-                                    const core::FilePath& userScratchPath)
+                                    const core::FilePath& userScratchPath,
+                                    const core::FilePath& sharedProjectPath)
 {
-   return boost::bind(toFilePath, _1, userScratchPath);
+   return boost::bind(toFilePath, _1, userScratchPath, sharedProjectPath);
 }
 
 inline core::r_util::FilePathToProjectId filePathToProjectId(
@@ -133,16 +221,15 @@ inline core::r_util::FilePathToProjectId filePathToProjectId(
    return boost::bind(toProjectId, _1, userScratchPath);
 }
 
-inline std::string projectToProjectId(
+inline core::r_util::ProjectId projectToProjectId(
                             const core::FilePath& userScratchPath,
                             const std::string& project)
 {
    if (project == kProjectNone)
-      return kProjectNoneId;
+      return core::r_util::ProjectId(kProjectNoneId);
    else
       return session::filePathToProjectId(userScratchPath)(project);
 }
-
 
 
 
@@ -150,3 +237,4 @@ inline std::string projectToProjectId(
 } // namespace rstudio
 
 #endif /* SESSION_SCOPES_HPP */
+

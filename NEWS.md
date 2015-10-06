@@ -1,10 +1,9 @@
-
 ## v0.99b - Release Notes
-
 
 ### Source Editor
 
 * Support for multiple source windows (tear editor tabs off main window)
+* New global and per-project options for line feed conversion
 * Snippets: pass parameters to snippet generating R functions
 * Split into lines command for multiple cursors (Ctrl+Alt+A)
 * New keyboard shortcuts for expand/contract selection
@@ -15,15 +14,24 @@
 * New Emacs editing mode
 * More context-sensitive highlighting of R keywords
 * Option to enable highlighting of R function calls
-
+* F2 now navigates into files (e.g. within calls to source)
+* PageUp and PageDown navigate between sections within Rmd, Rpres
+* Enabled comment/uncomment (Cmd+Shift+C) for Markdown documents
+* Yank before/after (Ctrl+K, Ctrl+U) now use system clipboard on RStudio Desktop
+* Yank after cursor (Ctrl+K) no longer eats end of line character
+* Added option controlling 'surround on text insertion' behaviour
 
 ### R Markdown
 
 * New run chunk and options buttons overlaid at the top right of chunks
 * New shortcut for run current chunk (Cmd+Shift+Enter)
 * Outline view for quick navigation between sections/code chunks
-* Support for htmlwidgets in R Presentations
+* Knit with Parameters command for previewing with varying parameters
+* Run All now executes chunks in console (rather than calling e.g. knitr::purl)
+* Reorganize toolbar commands/menu for improved discoverability
 * Added Run Setup Chunk command
+* Updated embedded pandoc to v1.15.0.6
+* Support additional options for MS Word (table of contents, keep markdown)
 
 ### Data Viewer
 
@@ -45,14 +53,22 @@
 * Parse TeX magic comments that start with "%%" (ESS compatibility).
 * Change default Rpres template to specify autosize: true
 * Automatically create ~/.ssh directory if necessary on Windows
-* Added `Makefile` mode (used for `Makefile`, `Makevars`)
-
+* Added Makefile mode (used for Makefile, Makevars)
+* Always use LF for line endings in Unix Makefiles
+* Return environment variables as completions within Sys.getenv(), Sys.setenv() calls
+* Add 'R Scripts' preset filter to Find in Files dialog
+* OS X: Enable creation of directories in folder picker dialog
+* Added ability to zoom panes (e.g. Ctrl+Shift+1 to zoom source pane)
+* Add Console on Left/Right commands for quick relocation of Console
 
 ### Server
 
 * Include active project in document title (caption of browser tab) 
 * Quit session command now accessible from global toolbar
 * Added option to control how many days users stay signed in for
+* Allow specification of multiple groups in auth-required-user-group option
+* Suspend and resume running R sessions when server is restarted
+* Server Pro: Shared Projects (including concurrent multi-user editing)
 * Server Pro: Support for multiple concurrent R sessions per-user
 * Server Pro: Support for running against multiple versions of R
 * Server Pro: Don't close PAM sessions by default (configurable via an option)
@@ -60,12 +76,14 @@
 * Server Pro: Add option to specify client-id for Graphite metrics back end
 * Server Pro: Ability to record user console history for audit purposes
 
-
 ### Bug Fixes
 
 * Diagnostics: Avoid linting symbols in R formulas
 * Diagnostics: Resolve functions in correct namespace 
 * Diagnostics: Fix invalid diagnostics within formulas
+* Diagnostics: Respect // [[Rcpp::export]] functions used in R code
+* Fix grid metrics issues (e.g. text too small) by using res of 96 rather than 72
+* Rcpp: Parse attributes when generating diagnostics for header files
 * Enable outdenting in Rhtml documents
 * Find all now respects active search/replace options
 * Fix issue with cursor disappearing in Rmd chunks for ambiance theme
@@ -74,5 +92,15 @@
 * Allow completions in statements following infix operators
 * Completions in Install Packages are now correct for the case of multiple active repositories.
 * Vim mode: prevent paste operation from entering visual mode via Ctrl+V cross-talk
+* Fixed chunk highlighter issues that occurred when editing chunk label
+* Correctly handle call to edit() with no arguments
+* Fix inability to start up on OS X when multiple conflicting R versions are on the library search path.
+* Prevent crash when cancelling out of q() prompt on Windows
+* OSX: Viewer now correctly recognizes session temp dir even when prefixed by /private
+* Fix issue with rstudioapi previewRd function when path included spaces
+* R 3.3: Don't call setInternet2 or use --internet2 flag for child R processes
+* Linux, Windows: ensure native printer used (don't default to PDF printing)
+
+
 
 

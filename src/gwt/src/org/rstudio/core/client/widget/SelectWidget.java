@@ -90,7 +90,7 @@ public class SelectWidget extends Composite
          panel = flowPanel_;
          panel.add(listBox_);
       }
-
+      
       initWidget(panel);
       addStyleName(ThemeResources.INSTANCE.themeStyles().selectWidget());
    }
@@ -153,6 +153,15 @@ public class SelectWidget extends Composite
       return listBox_.getValue(listBox_.getSelectedIndex());
    }
 
+   public int getIntValue()
+   {
+      return Integer.parseInt(getValue());
+   }
+   
+   public void setIntValue(int value)
+   {
+      setValue(new Integer(value).toString());
+   }
    
    public void addWidget(Widget widget)
    {
@@ -173,7 +182,7 @@ public class SelectWidget extends Composite
    {
       listBox_.insertItem(label, value, index);
    }
-
+   
    private HorizontalPanel horizontalPanel_ = null;
    private FlowPanel flowPanel_ = null;
    private final ListBox listBox_;

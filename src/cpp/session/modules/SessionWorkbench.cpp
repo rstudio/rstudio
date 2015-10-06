@@ -169,11 +169,12 @@ FilePath detectedTerminalPath()
 Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 {
    // read params
-   json::Object generalPrefs, historyPrefs, packagesPrefs, projectsPrefs,
-                sourceControlPrefs, compilePdfPrefs;
+   json::Object generalPrefs, historyPrefs, editingPrefs, packagesPrefs,
+                projectsPrefs, sourceControlPrefs, compilePdfPrefs;
    Error error = json::readObjectParam(request.params, 0,
                               "general_prefs", &generalPrefs,
                               "history_prefs", &historyPrefs,
+                              "editing_prefs", &editingPrefs,
                               "packages_prefs", &packagesPrefs,
                               "projects_prefs", &projectsPrefs,
                               "source_control_prefs", &sourceControlPrefs,
@@ -248,9 +249,19 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().setRemoveHistoryDuplicates(removeDuplicates);
    userSettings().endUpdate();
 
+   // read and set editing prefs
+   int lineEndings;
+   error = json::readObject(editingPrefs,
+                            "line_endings", &lineEndings);
+   if (error)
+      return error;
+   userSettings().beginUpdate();
+   userSettings().setLineEndings((core::string_utils::LineEnding)lineEndings);
+   userSettings().endUpdate();
+
    // read and set packages prefs
    bool useInternet2, cleanupAfterCheckSuccess, viewDirAfterCheckFailure;
-   bool hideObjectFiles, useDevtools, useSecureDownload;
+   bool hideObjectFiles, useDevtools, useSecureDownload, useNewlineInMakefiles;
    json::Object cranMirrorJson;
    error = json::readObject(packagesPrefs,
                             "cran_mirror", &cranMirrorJson,
@@ -262,7 +273,8 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
                             "viewdir_after_check_failure", &viewDirAfterCheckFailure,
                             "hide_object_files", &hideObjectFiles,
                             "use_devtools", &useDevtools,
-                            "use_secure_download", &useSecureDownload);
+                            "use_secure_download", &useSecureDownload,
+                            "use_newline_in_makefiles", &useNewlineInMakefiles);
 
    if (error)
        return error;
@@ -274,6 +286,7 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().setCleanupAfterRCmdCheck(cleanupAfterCheckSuccess);
    userSettings().setHideObjectFiles(hideObjectFiles);
    userSettings().setViewDirAfterRCmdCheck(viewDirAfterCheckFailure);
+   userSettings().setUseNewlineInMakefiles(useNewlineInMakefiles);
 
    // NOTE: currently there is no UI for bioconductor mirror so we
    // don't want to set it (would have side effect of overwriting
@@ -413,6 +426,10 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    historyPrefs["always_save"] = userSettings().alwaysSaveHistory();
    historyPrefs["remove_duplicates"] = userSettings().removeHistoryDuplicates();
 
+   // get editing prefs
+   json::Object editingPrefs;
+   editingPrefs["line_endings"] = (int)userSettings().lineEndings();
+
    // get packages prefs
    json::Object packagesPrefs;
    packagesPrefs["use_devtools"] = userSettings().useDevtools();
@@ -425,6 +442,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    packagesPrefs["viewdir_after_check_failure"] = userSettings().viewDirAfterRCmdCheck();
    packagesPrefs["hide_object_files"] = userSettings().hideObjectFiles();
    packagesPrefs["use_secure_download"] = userSettings().securePackageDownload();
+   packagesPrefs["use_newline_in_makefiles"] = userSettings().useNewlineInMakefiles();
 
    // get projects prefs
    json::Object projectsPrefs;
@@ -466,6 +484,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    json::Object result;
    result["general_prefs"] = generalPrefs;
    result["history_prefs"] = historyPrefs;
+   result["editing_prefs"] = editingPrefs;
    result["packages_prefs"] = packagesPrefs;
    result["projects_prefs"] = projectsPrefs;
    result["source_control_prefs"] = sourceControlPrefs;

@@ -17,7 +17,7 @@
  *
  */
 
-define("rstudio/snippets/stan", function(require, exports, module) {
+define("rstudio/snippets/stan", ["require", "exports", "module"], function(require, exports, module) {
 
 var utils = require("rstudio/snippets");
 var SnippetManager = require("ace/snippets").snippetManager;

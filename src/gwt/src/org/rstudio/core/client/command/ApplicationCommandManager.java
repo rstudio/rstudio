@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.command;
 
+import java.util.List;
+
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
@@ -34,6 +36,7 @@ public class ApplicationCommandManager
    public ApplicationCommandManager()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
+      shortcuts_ = ShortcutManager.INSTANCE;
       
       bindings_ = new FileBacked<EditorKeyBindings>(
             KEYBINDINGS_PATH,
@@ -91,6 +94,7 @@ public class ApplicationCommandManager
          @Override
          public void execute(EditorKeyBindings bindings)
          {
+            shortcuts_.clearCustomBindings();
             for (String commandId : bindings.iterableKeys())
             {
                AppCommand command = commands_.getCommandById(commandId);
@@ -100,8 +104,9 @@ public class ApplicationCommandManager
                   continue;
                }
                
-               KeySequence keys = bindings.get(commandId).getKeyBinding();
-               ShortcutManager.INSTANCE.replaceBinding(keys, command);
+               List<KeySequence> keyList = bindings.get(commandId).getKeyBindings();
+               for (KeySequence keys : keyList)
+                  shortcuts_.addCustomBinding(keys, command);
             }
             
             if (afterLoad != null)
@@ -128,6 +133,8 @@ public class ApplicationCommandManager
    }
    
    private final FileBacked<EditorKeyBindings> bindings_;
+   private final ShortcutManager shortcuts_;
+   
    public static final String KEYBINDINGS_PATH =
          "~/.R/rstudio/keybindings/rstudio_bindings.json";
    

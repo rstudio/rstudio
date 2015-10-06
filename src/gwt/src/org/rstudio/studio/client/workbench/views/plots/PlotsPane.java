@@ -152,6 +152,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    public void showEmptyPlot()
    {
       frame_.setImageUrl(null);
+      plotsToolbar_.invalidateSeparators();
    }
 
    public void showPlot(String plotUrl)
@@ -162,6 +163,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
       // use frame.contentWindow.location.replace to avoid having the plot
       // enter the browser's history
       frame_.setImageUrl(plotUrl);
+      plotsToolbar_.invalidateSeparators();
    }
        
    public String getPlotUrl()

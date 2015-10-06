@@ -26,6 +26,7 @@ import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
@@ -173,6 +174,11 @@ public class TextFileType extends EditableFileType
    {
       return canShowScopeTree_;
    }
+   
+   public boolean canGoNextPrevSection()
+   {
+      return isRmd() || isRpres();
+   }
   
    public boolean canPreviewFromR()
    {
@@ -288,12 +294,20 @@ public class TextFileType extends EditableFileType
       results.add(commands.goToLine());
       results.add(commands.expandSelection());
       results.add(commands.shrinkSelection());
+      
       if (canExecuteCode() || isC())
       {
          results.add(commands.reindent());
          results.add(commands.showDiagnosticsActiveDocument());
       }
-      if (canExecuteCode()) {
+      
+      if (canExecuteCode() && !isC())
+      {
+         results.add(commands.executeCurrentFunction());
+      }
+      
+      if (canExecuteCode())
+      {
          results.add(commands.executeCode());
          results.add(commands.executeCodeWithoutFocus());
          results.add(commands.executeLastCode());
@@ -304,6 +318,7 @@ public class TextFileType extends EditableFileType
          results.add(commands.reformatCode());
          results.add(commands.renameInFile());
       }
+      
       if (canExecuteAllCode())
       {
          results.add(commands.executeAllCode());
@@ -313,11 +328,11 @@ public class TextFileType extends EditableFileType
          if (!canExecuteChunks())
             results.add(commands.sourceActiveDocumentWithEcho());
       }
+      
       if (canExecuteToCurrentLine())
       {
          results.add(commands.executeToCurrentLine());
          results.add(commands.executeFromCurrentLine());
-         results.add(commands.executeCurrentFunction());
          results.add(commands.executeCurrentSection());
       }
       if (canKnitToHTML())
@@ -358,6 +373,9 @@ public class TextFileType extends EditableFileType
       {
          results.add(commands.toggleDocumentOutline());
       }
+      
+      results.add(commands.goToNextSection());
+      results.add(commands.goToPrevSection());
       results.add(commands.findReplace());
       results.add(commands.findNext());
       results.add(commands.findPrevious());
@@ -367,6 +385,8 @@ public class TextFileType extends EditableFileType
       results.add(commands.debugDumpContents());
       results.add(commands.debugImportDump());
       results.add(commands.popoutDoc());
+      if (!SourceWindowManager.isMainSourceWindow())
+         results.add(commands.returnDocToMain());
 
       return results;
    }

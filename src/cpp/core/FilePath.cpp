@@ -328,7 +328,7 @@ uintmax_t FilePath::size() const
 {
    try
    {
-      if (!exists())
+      if (!exists() || !boost::filesystem::is_regular_file(pImpl_->path))
          return 0;
       else
          return boost::filesystem::file_size(pImpl_->path) ;

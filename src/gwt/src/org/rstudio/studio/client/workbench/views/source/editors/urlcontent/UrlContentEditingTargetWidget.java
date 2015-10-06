@@ -43,7 +43,8 @@ public class UrlContentEditingTargetWidget extends Composite
    private Toolbar createToolbar()
    {
       Toolbar toolbar = new EditingTargetToolbar(commands_);
-      toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());  
+      toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
+      toolbar.addLeftWidget(commands_.returnDocToMain().createToolbarButton());
       return toolbar;
    }
 

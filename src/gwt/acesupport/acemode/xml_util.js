@@ -23,7 +23,7 @@
  *
  */
 
-define("mode/xml_util", function(require, exports, module) {
+define("mode/xml_util", ["require", "exports", "module"], function(require, exports, module) {
 
 function string(state) {
     return [{

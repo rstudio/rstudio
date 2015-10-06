@@ -23,6 +23,7 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.HasValue;
+import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
@@ -57,6 +58,7 @@ public class FindReplace
                     boolean inSelection);
       
       void focusFindField(boolean selectAll);
+      Widget getUnderlyingWidget();
    }
 
    public FindReplace(AceEditor editor,
@@ -533,8 +535,10 @@ public class FindReplace
          editor_.fitSelectionToLines(true);
          Position start = editor_.getSelectionStart();
          Position end = editor_.getSelectionEnd();
-         anchoredSelection_ = editor_.createAnchoredSelection(start,end);
-         
+         anchoredSelection_ = editor_.createAnchoredSelection(
+               display_.getUnderlyingWidget(),
+               start,
+               end);
          // collapse the cursor to the beginning or end
          editor_.collapseSelection(defaultForward_);
          
@@ -559,6 +563,9 @@ public class FindReplace
       
       public void clear()
       {
+         if (anchoredSelection_ != null)
+            anchoredSelection_.detach();
+         
          if (markerId_ != null)
             editor_.getSession().removeMarker(markerId_);
       }
@@ -581,7 +588,6 @@ public class FindReplace
       clearTargetSelection();
       targetSelection_ = new TargetSelectionTracker();
    }
-   
    
    private static boolean defaultCaseSensitive_ = false;
    private static boolean defaultWrapSearch_ = true;

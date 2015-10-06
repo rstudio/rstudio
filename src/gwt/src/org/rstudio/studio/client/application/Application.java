@@ -499,21 +499,26 @@ public class Application implements ApplicationEventHandlers
    public void onInvalidSession(InvalidSessionEvent event)
    {
       // calculate the url without the scope
-      String baseURL = GWT.getHostPageBaseURL();
       InvalidSessionInfo info = event.getInfo();
+      String baseURL = GWT.getHostPageBaseURL();
       String scopePath = info.getScopePath();
       int loc = baseURL.indexOf(scopePath);
       if (loc != -1)
          baseURL = baseURL.substring(0, loc) + "/";
-      
-      // add the scope info to the query string
-      baseURL = baseURL + 
-        "?project=" + URL.encodeQueryString(info.getSessionProject()) +
-        "&id=" + URL.encodeQueryString(info.getSessionProjectId());
-      
+
+      if (info.getScopeState() == InvalidSessionInfo.ScopeInvalidProject)
+      {
+         baseURL += "projectnotfound.htm";
+      }
+      else
+      {
+         // add the scope info to the query string
+         baseURL += "?project="
+               + URL.encodeQueryString(info.getSessionProject()) + "&id="
+               + URL.encodeQueryString(info.getSessionProjectId());
+      }
       navigateWindowWithDelay(baseURL);
    }
-   
 
    public void onSessionAbendWarning(SessionAbendWarningEvent event)
    {

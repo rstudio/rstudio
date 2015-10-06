@@ -1,7 +1,7 @@
 /*
  * CodeBrowserNavigationEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,27 +15,38 @@
 package org.rstudio.studio.client.workbench.views.source.events;
 
 import org.rstudio.core.client.DebugFilePosition;
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 
 import com.google.gwt.event.shared.GwtEvent;
 
-public class CodeBrowserNavigationEvent extends GwtEvent<CodeBrowserNavigationHandler>
+@JavaScriptSerializable
+public class CodeBrowserNavigationEvent 
+             extends CrossWindowEvent<CodeBrowserNavigationHandler>
 {
    public static final GwtEvent.Type<CodeBrowserNavigationHandler> TYPE =
       new GwtEvent.Type<CodeBrowserNavigationHandler>();
+
+   public CodeBrowserNavigationEvent()
+   {
+      this(null);
+   }
    
    public CodeBrowserNavigationEvent(SearchPathFunctionDefinition function)
    {
-      this(function, null, false);
+      this(function, null, false, false);
    }
    
    public CodeBrowserNavigationEvent(SearchPathFunctionDefinition function,
                                      DebugFilePosition debugPosition,
-                                     boolean executing)
+                                     boolean executing, 
+                                     boolean serverDispatched)
    {
       function_ = function;
       debugPosition_ = debugPosition;
       executing_ = executing;
+      serverDispatched_ = serverDispatched;
    }
    
    public SearchPathFunctionDefinition getFunction()
@@ -53,6 +64,11 @@ public class CodeBrowserNavigationEvent extends GwtEvent<CodeBrowserNavigationHa
       return executing_; 
    }
    
+   public boolean serverDispatched()
+   {
+      return serverDispatched_;
+   }
+   
    @Override
    protected void dispatch(CodeBrowserNavigationHandler handler)
    {
@@ -64,9 +80,16 @@ public class CodeBrowserNavigationEvent extends GwtEvent<CodeBrowserNavigationHa
    {
       return TYPE;
    }
+   
+   @Override
+   public boolean forward()
+   {
+      return false;
+   }
 
-   final DebugFilePosition debugPosition_;
-   final SearchPathFunctionDefinition function_;
-   final boolean executing_;
+   DebugFilePosition debugPosition_;
+   SearchPathFunctionDefinition function_;
+   boolean executing_;
+   boolean serverDispatched_;
 }
 
