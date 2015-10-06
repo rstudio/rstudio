@@ -415,7 +415,13 @@ public class DocTabLayoutPanel
             }
             if (curState_ == STATE_NONE)
             {
-               beginDrag(event);
+               // if we know what we're dragging, initiate it; otherwise, let 
+               // the event continue unimpeded (so we won't appear as a drag
+               // target)
+               if (initDragParams_ == null)
+                  return;
+               else
+                  beginDrag(event);
             }
             event.preventDefault();
          }
