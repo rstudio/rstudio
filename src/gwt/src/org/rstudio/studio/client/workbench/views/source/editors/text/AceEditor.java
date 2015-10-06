@@ -399,6 +399,20 @@ public class AceEditor implements DocDisplay,
             }
          }
       });
+      
+      widget_.addAttachHandler(new AttachEvent.Handler()
+      {
+         @Override
+         public void onAttachOrDetach(AttachEvent event)
+         {
+            if (!event.isAttached())
+            {
+               for (HandlerRegistration handler : editorEventListeners_)
+                  handler.removeHandler();
+               editorEventListeners_.clear();
+            }
+         }
+      });
    }
    
    public void yankBeforeCursor()
