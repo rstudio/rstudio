@@ -1028,7 +1028,7 @@ assign(x = ".rs.acCompletionTypes",
       {
          # Check to see if an overloaded .DollarNames method has been provided,
          # and use that to resolve names if possible.
-         dollarNamesMethod <- .rs.getDollarNamesMethod(object)
+         dollarNamesMethod <- .rs.getDollarNamesMethod(object, TRUE)
          if (is.function(dollarNamesMethod))
          {
             allNames <- dollarNamesMethod(object)
@@ -1047,7 +1047,7 @@ assign(x = ".rs.acCompletionTypes",
          # Reference class objects
          else if (inherits(object, "refClass"))
          {
-            tryCatch({
+            suppressWarnings(tryCatch({
                refClassDef <- object$.refClassDef
                allNames <- c(
                   ls(refClassDef@fieldPrototypes, all.names = TRUE),
@@ -1063,7 +1063,7 @@ assign(x = ".rs.acCompletionTypes",
                   setdiff(allNames, baseMethods),
                   baseMethods
                )
-            }, error = function(e) NULL)
+            }, error = function(e) NULL))
          }
          
          # Objects for which 'names' returns non-NULL. This branch is used
