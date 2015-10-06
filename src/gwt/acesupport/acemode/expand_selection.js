@@ -40,11 +40,18 @@ var Utils = require("mode/utils");
 
    function isCommentedRow(editor, row)
    {
-      var token = editor.getSession().getTokenAt(row, 0);
-      if (token == null)
-         return false;
+      var tokens = editor.session.getTokens(row);
+      for (var i = 0; i < tokens.length; i++)
+      {
+          var token = tokens[i];
+          if (/^\s*$/.test(token.value))
+             continue;
 
-      return /\bcomment\b/.test(token.type);
+          return /\bcomment\b/.test(token.type);
+      }
+
+      return false;
+
    }
 
    function isExpansionOf(candidate, range)
@@ -342,7 +349,7 @@ var Utils = require("mode/utils");
       // selection to fill both the start and end rows.
       var iterator = new TokenIterator(session);
       var token = iterator.moveToPosition(range.start);
-      while ((token = iterator.stepBackward()))
+      do
       {
          if (token == null)
             break;
@@ -373,6 +380,7 @@ var Utils = require("mode/utils");
 
          }
       }
+      while ((token = iterator.stepBackward()))
 
       return null;
 
