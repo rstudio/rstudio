@@ -383,6 +383,10 @@ public abstract class
    public abstract AppCommand cutDummy();
    public abstract AppCommand copyDummy();
    public abstract AppCommand pasteDummy();
+   
+   public abstract AppCommand cut();
+   public abstract AppCommand copy();
+   public abstract AppCommand paste();
 
    public abstract AppCommand mru0();
    public abstract AppCommand mru1();

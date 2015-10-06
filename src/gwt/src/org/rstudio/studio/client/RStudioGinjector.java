@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;
 
+import org.rstudio.core.client.Clipboard.ClipboardResources;
 import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.command.ShortcutManager;
@@ -151,6 +152,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(ApplicationCommandManager manager);
    void injectMembers(FileBacked<?> object);
    void injectMembers(WindowFrame frame);
+   void injectMembers(ClipboardResources clipboard);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

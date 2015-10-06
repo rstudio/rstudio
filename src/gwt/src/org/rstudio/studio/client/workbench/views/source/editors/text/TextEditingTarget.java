@@ -800,6 +800,24 @@ public class TextEditingTarget implements
    }
    
    @Handler
+   void onCopy()
+   {
+      Clipboard.copy();
+   }
+   
+   @Handler
+   void onCut()
+   {
+      Clipboard.cut();
+   }
+   
+   @Handler
+   void onPaste()
+   {
+      Clipboard.paste();
+   }
+   
+   @Handler
    void onSwitchFocusSourceConsole()
    {
       if (docDisplay_.isFocused())
