@@ -214,26 +214,29 @@ public class JsTypeTest extends GWTTestCase {
   }-*/;
 
   public void testCasts() {
-    MyJsInterfaceWithPrototype myClass;
+    Object myClass;
+    assertNotNull(myClass = (ElementLikeJsInterface) createMyJsInterface());
     assertNotNull(myClass = (MyJsInterfaceWithPrototype) createMyJsInterface());
+    assertNotNull(myClass = (HTMLElement) createNativeButton());
 
     try {
-      assertNotNull(myClass = (MyJsInterfaceWithPrototype) createNativeButton());
+      assertNotNull(myClass = (HTMLElement) createMyJsInterface());
       fail();
     } catch (ClassCastException cce) {
       // Expected.
     }
 
-    ElementLikeJsInterface button;
-    // JsTypes without prototypes can cross-cast like JSOs
-    assertNotNull(button = (ElementLikeJsInterface) createMyJsInterface());
+    // Test cross cast for native types
+    Object nativeButton1 = (HTMLElement) createNativeButton();
+    Object nativeButton2 = (HTMLAnotherElement) nativeButton1;
 
     /*
      * If the optimizations are turned on, it is possible for the compiler to dead-strip the
      * variables since they are not used. Therefore the casts could potentially be stripped.
      */
     assertNotNull(myClass);
-    assertNotNull(button);
+    assertNotNull(nativeButton1);
+    assertNotNull(nativeButton2);
   }
 
   public void testInstanceOf_jsoWithProto() {
