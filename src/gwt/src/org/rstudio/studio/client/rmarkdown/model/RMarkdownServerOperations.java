@@ -59,4 +59,7 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
    
    void prepareForRmdChunkExecution(String id,
                                     ServerRequestCallback<Void> requestCallback);
+
+   void getRmdOutputInfo(String target,
+                ServerRequestCallback<RmdOutputInfo> resultCallback);
 }

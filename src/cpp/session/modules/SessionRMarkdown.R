@@ -76,6 +76,27 @@
     ""
 })
 
+# given an input file, return the associated output file, and attempt to deduce
+# whether it's up to date (e.g. for input.Rmd producing input.html, see whether
+# input.html exists and has been written since input.Rmd)
+.rs.addFunction("getRmdOutputInfo", function(target) {
+  # compute the name of the output file
+  lines <- readLines(target, warn = FALSE)
+  outputFormat <- rmarkdown:::output_format_from_yaml_front_matter(lines)
+  outputFormat <- rmarkdown:::create_output_format(
+                                    outputFormat$name, outputFormat$options)
+  outputFile <- rmarkdown:::pandoc_output_file(target, outputFormat$pandoc)
+  outputPath <- file.path(dirname(target), outputFile) 
+
+  # ensure output file exists
+  current <- file.exists(outputPath) && 
+             file.info(outputPath)$mtime >= file.info(target)$mtime
+  
+  return(list(
+    output_file = .rs.scalar(outputPath),
+    is_current  = .rs.scalar(current)))
+})
+
 # given a path to a folder on disk, return information about the R Markdown
 # template in that folder.
 .rs.addFunction("getTemplateDetails", function(path) {
@@ -207,4 +228,7 @@
    invisible(NULL)
 })
 
+.rs.addJsonRpcHandler("get_rmd_output_info", function(target) {
+  return(.rs.getRmdOutputInfo(target))
+})
 

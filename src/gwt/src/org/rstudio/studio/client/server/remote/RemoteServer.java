@@ -96,6 +96,7 @@ import org.rstudio.studio.client.projects.model.SharingConfigResult;
 import org.rstudio.studio.client.projects.model.SharingResult;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdCreatedTemplate;
+import org.rstudio.studio.client.rmarkdown.model.RmdOutputInfo;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateContent;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
@@ -4072,6 +4073,15 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void getRmdOutputInfo(String input,
+         ServerRequestCallback<RmdOutputInfo> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(input));
+      sendRequest(RPC_SCOPE, GET_RMD_OUTPUT_INFO, params, requestCallback);
+   }
+   
+   @Override
    public void unsatisfiedDependencies(
       JsArray<Dependency> dependencies,
       boolean silentUpdate,
@@ -4631,6 +4641,7 @@ public class RemoteServer implements Server
    private static final String DISCOVER_RMD_TEMPLATES = "discover_rmd_templates";
    private static final String CREATE_RMD_FROM_TEMPLATE = "create_rmd_from_template";
    private static final String GET_RMD_TEMPLATE = "get_rmd_template";
+   private static final String GET_RMD_OUTPUT_INFO = "get_rmd_output_info";
    
    private static final String GET_PACKRAT_PREREQUISITES = "get_packrat_prerequisites";
    private static final String INSTALL_PACKRAT = "install_packrat";

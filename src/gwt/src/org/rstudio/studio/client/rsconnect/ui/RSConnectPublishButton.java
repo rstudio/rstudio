@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.EnabledChangedHandler;
@@ -32,6 +33,8 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
+import org.rstudio.studio.client.rmarkdown.model.RmdOutputInfo;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
@@ -149,6 +152,7 @@ public class RSConnectPublishButton extends Composite
    
    @Inject
    public void initialize(RSConnectServerOperations server,
+         RMarkdownServerOperations rmdServer,
          EventBus events, 
          Commands commands,
          GlobalDisplay display,
@@ -157,6 +161,7 @@ public class RSConnectPublishButton extends Composite
          PlotPublishMRUList plotMru)
    {
       server_ = server;
+      rmdServer_ = rmdServer;
       events_ = events;
       commands_ = commands;
       display_ = display;
@@ -431,10 +436,7 @@ public class RSConnectPublishButton extends Composite
          {
             // if the doc hasn't been rendered, go render it and come back when
             // we're finished
-            publishAfterRmdRender_ = previous;
-            rmdRenderPending_ = true;
-            anyRmdRenderPending_ = true;
-            commands_.knitDocument().execute();
+            renderThenPublish(contentPath_, previous);
          }
          else
          {
@@ -737,11 +739,59 @@ public class RSConnectPublishButton extends Composite
       });
    }
    
+   // for static content only: perform a just-in-time render if necessary and
+   // then publish the content
+   private void renderThenPublish(final String target,
+         final RSConnectDeploymentRecord previous)
+   {
+      final Command renderCommand = new Command() 
+      {
+         @Override
+         public void execute()
+         {
+            publishAfterRmdRender_ = previous;
+            rmdRenderPending_ = true;
+            anyRmdRenderPending_ = true;
+            commands_.knitDocument().execute();
+         }
+      };
+
+      rmdServer_.getRmdOutputInfo(target, 
+            new ServerRequestCallback<RmdOutputInfo>()
+      {
+         @Override
+         public void onResponseReceived(RmdOutputInfo response)
+         {
+            if (response.isCurrent())
+            {
+               RenderedDocPreview preview = new RenderedDocPreview(
+                     target, response.getOutputFile(), true);
+               events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
+                     preview, previous));
+            }
+            else
+            {
+               renderCommand.execute();
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            // if we failed to figure out whether we need to do a re-render, 
+            // assume one is necessary
+            Debug.logError(error);
+            renderCommand.execute();
+         }
+      });
+   }
+
    private final ToolbarButton publishButton_;
    private final DeploymentPopupMenu publishMenu_;
    private ToolbarButton publishMenuButton_;
 
    private RSConnectServerOperations server_;
+   private RMarkdownServerOperations rmdServer_;
    private EventBus events_;
    private Commands commands_;
    private GlobalDisplay display_;
