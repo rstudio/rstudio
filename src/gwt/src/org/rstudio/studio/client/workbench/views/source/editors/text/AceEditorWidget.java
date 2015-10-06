@@ -255,11 +255,11 @@ public class AceEditorWidget extends Composite
          public void onAttachOrDetach(AttachEvent event)
          {
             if (!event.isAttached())
+            {
                for (HandlerRegistration registration : aceEventHandlers_)
-                  if (registration != null)
-                     registration.removeHandler();
-            
-            aceEventHandlers_.clear();
+                  registration.removeHandler();
+               aceEventHandlers_.clear();
+            }
          }
       });
       
