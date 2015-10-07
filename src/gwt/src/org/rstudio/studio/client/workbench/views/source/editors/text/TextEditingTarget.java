@@ -2057,7 +2057,7 @@ public class TextEditingTarget implements
       docUpdateSentinel_.revert(onCompleted);
    }
 
-   private void saveThenExecute(String encodingOverride, final Command command)
+   public void saveThenExecute(String encodingOverride, final Command command)
    {
       checkCompilePdfDependencies();
    
