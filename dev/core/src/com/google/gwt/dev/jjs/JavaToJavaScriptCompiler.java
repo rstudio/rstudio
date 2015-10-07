@@ -390,7 +390,13 @@ public final class JavaToJavaScriptCompiler {
       // TODO(stalcup): move to AST construction
       JsSymbolResolver.exec(jsProgram);
       if (options.getNamespace() == JsNamespaceOption.PACKAGE) {
-        JsNamespaceChooser.exec(jsProgram, jjsmap);
+        if (!jprogram.getRunAsyncs().isEmpty()) {
+          options.setNamespace(JsNamespaceOption.NONE);
+          logger.log(TreeLogger.Type.WARN,
+              "Namespace option is not compatible with CodeSplitter, turning it off.");
+        } else {
+          JsNamespaceChooser.exec(jsProgram, jjsmap);
+        }
       }
 
       // TODO(stalcup): move to normalization
