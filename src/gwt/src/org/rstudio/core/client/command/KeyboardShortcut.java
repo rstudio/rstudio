@@ -355,22 +355,7 @@ public class KeyboardShortcut
       groupName_ = groupName;
       order_ = ORDER++;
       title_ = title;
-      if (disableModes.length() > 0)
-      {
-         String[] disableModeList = disableModes.split(",");
-         for (String disableMode: disableModeList)
-         {
-            if (disableMode.equals("default"))
-               disableModes_ |= MODE_DEFAULT;
-            else if (disableMode.equals("vim"))
-               disableModes_ |= MODE_VIM;
-            else if (disableMode.equals("emacs"))
-               disableModes_ |= MODE_EMACS;
-            else
-               assert false :
-                  "Unexpected 'disableModes' mode (" + disableMode + ")";
-         }
-      }
+      disableModes_ = ShortcutManager.parseDisableModes(disableModes);
    }
    
    public KeySequence getKeySequence()
