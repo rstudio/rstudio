@@ -29,7 +29,6 @@ import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JProgram.DispatchType;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JRuntimeTypeReference;
 import com.google.gwt.dev.jjs.ast.JType;
@@ -220,11 +219,14 @@ public class ImplementCastsAndTypeChecks {
   private TypeCategory determineTypeCategoryForType(JReferenceType type) {
     TypeCategory typeCategory = TypeCategory.typeCategoryForType(type, program);
 
-    assert EnumSet.of(TypeCategory.TYPE_JSO, TypeCategory.TYPE_JAVA_OBJECT_OR_JSO,
-        TypeCategory.TYPE_JAVA_LANG_OBJECT, TypeCategory.TYPE_JAVA_LANG_STRING,
+    assert EnumSet.of(TypeCategory.TYPE_JSO,
+        TypeCategory.TYPE_JAVA_OBJECT_OR_JSO,
+        TypeCategory.TYPE_JAVA_LANG_OBJECT,
+        TypeCategory.TYPE_JAVA_LANG_STRING,
         TypeCategory.TYPE_JAVA_LANG_DOUBLE,
         TypeCategory.TYPE_JAVA_LANG_BOOLEAN,
-        TypeCategory.TYPE_JAVA_OBJECT, TypeCategory.TYPE_JS_PROTOTYPE,
+        TypeCategory.TYPE_JAVA_OBJECT,
+        TypeCategory.TYPE_JS_NATIVE,
         TypeCategory.TYPE_JS_FUNCTION).contains(typeCategory);
 
     return typeCategory;
@@ -250,13 +252,10 @@ public class ImplementCastsAndTypeChecks {
     }
     call.addArg(targetExpression);
     if (method.getParams().size() >= 2) {
-      // checking/casting to JSOs or Strings does not require a second parameter
       call.addArg((new JRuntimeTypeReference(sourceInfo, program.getTypeJavaLangObject(),
           targetType)));
     }
     if (method.getParams().size() == 3) {
-
-     assert targetTypeCategory == TypeCategory.TYPE_JS_PROTOTYPE;
      call.addArg(program.getStringLiteral(sourceInfo,
          ((JDeclaredType) targetType).getQualifiedJsName()));
     }
@@ -284,48 +283,11 @@ public class ImplementCastsAndTypeChecks {
     this.program = program;
     this.pruneTrivialCasts = pruneTrivialCasts;
 
-    // Populate the necessary instanceOf methods.
-    this.instanceOfMethodsByTargetTypeCategory.put(
-        TypeCategory.TYPE_JAVA_OBJECT, program.getIndexedMethod("Cast.instanceOf"));
-    this.instanceOfMethodsByTargetTypeCategory.put(
-        TypeCategory.TYPE_JAVA_LANG_OBJECT, program.getIndexedMethod("Cast.instanceOfOrJso"));
-    this.instanceOfMethodsByTargetTypeCategory.put(
-        TypeCategory.TYPE_JAVA_OBJECT_OR_JSO, program.getIndexedMethod("Cast.instanceOfOrJso"));
-    this.instanceOfMethodsByTargetTypeCategory.put(
-        TypeCategory.TYPE_JSO, program.getIndexedMethod("Cast.instanceOfJso"));
-    this.instanceOfMethodsByTargetTypeCategory.put(
-        TypeCategory.TYPE_JS_PROTOTYPE, program.getIndexedMethod("Cast.instanceOfJsPrototype"));
-    this.instanceOfMethodsByTargetTypeCategory.put(
-        TypeCategory.TYPE_JS_FUNCTION, program.getIndexedMethod("Cast.instanceOfJsFunction"));
-
-    for (DispatchType nativeDispatchType : program.getRepresentedAsNativeTypesDispatchMap().values()) {
-      this.instanceOfMethodsByTargetTypeCategory.put(
-          nativeDispatchType.getTypeCategory(),
-          program.getIndexedMethod(nativeDispatchType.getInstanceOfMethod())
-      );
-    }
-
-    // Populate the necessary dynamicCast methods.
-    this.dynamicCastMethodsByTargetTypeCategory.put(
-        TypeCategory.TYPE_JAVA_OBJECT, program.getIndexedMethod("Cast.dynamicCast"));
-    this.dynamicCastMethodsByTargetTypeCategory.put(
-        TypeCategory.TYPE_JAVA_LANG_OBJECT, program.getIndexedMethod("Cast.dynamicCastAllowJso"));
-    this.dynamicCastMethodsByTargetTypeCategory.put(
-        TypeCategory.TYPE_JAVA_OBJECT_OR_JSO, program.getIndexedMethod("Cast.dynamicCastAllowJso"));
-    this.dynamicCastMethodsByTargetTypeCategory.put(
-        TypeCategory.TYPE_JSO, program.getIndexedMethod("Cast.dynamicCastJso"));
-
-    this.dynamicCastMethodsByTargetTypeCategory.put(
-        TypeCategory.TYPE_JS_PROTOTYPE, program.getIndexedMethod("Cast.dynamicCastWithPrototype"));
-    this.dynamicCastMethodsByTargetTypeCategory.put(
-        TypeCategory.TYPE_JS_FUNCTION, program.getIndexedMethod("Cast.dynamicCastToJsFunction"));
-
-    for (DispatchType nativeDispatchType :
-        program.getRepresentedAsNativeTypesDispatchMap().values()) {
-      this.dynamicCastMethodsByTargetTypeCategory.put(
-          nativeDispatchType.getTypeCategory(),
-          program.getIndexedMethod(nativeDispatchType.getDynamicCastMethod())
-      );
+    for (TypeCategory t : TypeCategory.values()) {
+      String instanceOfMethod = "Cast.instanceOf" + t.castInstanceOfQualifier();
+      instanceOfMethodsByTargetTypeCategory.put(t, program.getIndexedMethod(instanceOfMethod));
+      String castMethod = "Cast.castTo" + t.castInstanceOfQualifier();
+      dynamicCastMethodsByTargetTypeCategory.put(t, program.getIndexedMethod(castMethod));
     }
   }
 

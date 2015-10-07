@@ -26,21 +26,44 @@ import com.google.gwt.dev.jjs.ast.JType;
  * These are used in Cast checking and array implementation.
  */
 public enum TypeCategory {
-  /* Make sure this list is kept in sync with the one in Array.java */
+  /*
+   * Enum list is kept in sync with the one in Array.java.
+   *
+   * TYPE_JAVA_LANG_* is kept in sync with JProgram.DispatchType.
+   *
+   * TypeCategory.castInstanceOfQualifier is kept in sync with Cast.java.
+   *
+   * Also note that we have separate categories for boxed types (e.g. JAVA_LANG_DOUBLE vs.
+   * PRIMITIVE_NUMBER), as we need the separation of the two for array initialization purposes (e.g.
+   * initialize to zero vs. null).
+   */
 
   TYPE_JAVA_OBJECT,
-  TYPE_JAVA_OBJECT_OR_JSO,
-  TYPE_JSO,
-  TYPE_JAVA_LANG_OBJECT,
-  // If the next three are renamed, please update JProgram.DispatchType's constructor
-  TYPE_JAVA_LANG_STRING,
-  TYPE_JAVA_LANG_DOUBLE,
-  TYPE_JAVA_LANG_BOOLEAN,
-  TYPE_JS_PROTOTYPE,
-  TYPE_JS_FUNCTION,
+  TYPE_JAVA_OBJECT_OR_JSO("AllowJso"),
+  TYPE_JSO("Jso"),
+  TYPE_JAVA_LANG_OBJECT("AllowJso"),
+  TYPE_JAVA_LANG_STRING("String"),
+  TYPE_JAVA_LANG_DOUBLE("Double"),
+  TYPE_JAVA_LANG_BOOLEAN("Boolean"),
+  TYPE_JS_NATIVE("Native"),
+  TYPE_JS_FUNCTION("Function"),
   TYPE_PRIMITIVE_LONG,
   TYPE_PRIMITIVE_NUMBER,
   TYPE_PRIMITIVE_BOOLEAN;
+
+  private final String castInstanceOfQualifier;
+
+  private TypeCategory() {
+    this("");
+  }
+
+  private TypeCategory(String castInstanceOfQualifier) {
+    this.castInstanceOfQualifier = castInstanceOfQualifier;
+  }
+
+  public String castInstanceOfQualifier() {
+    return castInstanceOfQualifier;
+  }
 
   /**
    * Determines the type category for a specific type.
@@ -68,7 +91,7 @@ public enum TypeCategory {
         || program.typeOracle.isNonNativeJsTypeInterface(type)) {
       return TypeCategory.TYPE_JAVA_OBJECT_OR_JSO;
     } else if (type.isJsNative()) {
-      return TypeCategory.TYPE_JS_PROTOTYPE;
+      return TypeCategory.TYPE_JS_NATIVE;
     } else if (type.isJsFunction()) {
       return TypeCategory.TYPE_JS_FUNCTION;
     }

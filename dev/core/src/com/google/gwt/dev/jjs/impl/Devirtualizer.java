@@ -514,8 +514,9 @@ public class Devirtualizer {
     for (Map.Entry<JClassType, DispatchType> nativeRepresentedType
         : program.getRepresentedAsNativeTypesDispatchMap().entrySet()) {
       DispatchType dispatchType = nativeRepresentedType.getValue();
+      String castInstanceOfQualifier = dispatchType.getTypeCategory().castInstanceOfQualifier();
       dispatchExpression = constructMinimalCondition(
-          program.getIndexedMethod(dispatchType.getInstanceOfMethod()),
+          program.getIndexedMethod("Cast.instanceOf" + castInstanceOfQualifier),
           new JParameterRef(thisParam.getSourceInfo(), thisParam),
           maybeCreateDispatch(dispatchToMethodByTargetType.get(dispatchType), devirtualMethod),
           dispatchExpression);

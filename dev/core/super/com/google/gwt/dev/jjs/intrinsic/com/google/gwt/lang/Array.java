@@ -36,7 +36,7 @@ public final class Array {
   private static final int TYPE_JAVA_LANG_STRING = 4;
   private static final int TYPE_JAVA_LANG_DOUBLE = 5;
   private static final int TYPE_JAVA_LANG_BOOLEAN = 6;
-  private static final int TYPE_JS_PROTOTYPE = 7;
+  private static final int TYPE_JS_NATIVE = 7;
   private static final int TYPE_JS_FUNCTION = 8;
   private static final int TYPE_PRIMITIVE_LONG = 9;
   private static final int TYPE_PRIMITIVE_NUMBER = 10;
@@ -158,11 +158,11 @@ public final class Array {
   private static boolean canSet(Object array, Object value) {
     switch (Array.getElementTypeCategory(array)) {
       case TYPE_JAVA_LANG_STRING:
-        return Cast.isJavaString(value);
+        return Cast.instanceOfString(value);
       case TYPE_JAVA_LANG_DOUBLE:
-        return Cast.isJavaDouble(value);
+        return Cast.instanceOfDouble(value);
       case TYPE_JAVA_LANG_BOOLEAN:
-        return Cast.isJavaBoolean(value);
+        return Cast.instanceOfBoolean(value);
       case TYPE_JAVA_OBJECT:
         return Cast.canCast(value, Array.getElementTypeId(array));
       case TYPE_JSO:

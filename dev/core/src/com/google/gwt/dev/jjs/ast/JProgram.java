@@ -29,14 +29,15 @@ import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.base.CaseFormat;
 import com.google.gwt.thirdparty.guava.common.base.Function;
-import com.google.gwt.thirdparty.guava.common.base.Predicates;
+import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.collect.BiMap;
 import com.google.gwt.thirdparty.guava.common.collect.Collections2;
-import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 import com.google.gwt.thirdparty.guava.common.collect.HashBiMap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
@@ -77,41 +78,26 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     // non-native represented type values.
     HAS_JAVA_VIRTUAL_DISPATCH(false), JAVA_ARRAY(false), JSO(false);
 
-    private final String instanceOfMethod;
     private final String castMapField;
     private final TypeCategory typeCategory;
-    private final String dynamicCastMethod;
     private final String className;
 
     DispatchType(boolean nativeType) {
       if (nativeType) {
         // These field are initialized to methods that are by-convention
         // The conventions are:
-        // Cast.isJava[BoxedTypeName] for instanceof checks
         // Cast.[boxedTypeName]CastMap for cast map fields
-        // Cast.dynamicCastTo[BoxedTypeName] for cast checks
         // TypedCategory.TYPE_JAVA_LANG_[BoxedTypeName]
-        // If Cast or TypeCategory is edited, update this constructor
-        this.instanceOfMethod = "Cast.isJava" + camelCase(name());
-        this.castMapField = "Cast." + name().toLowerCase() + "CastMap";
-        this.dynamicCastMethod = "Cast.dynamicCastTo" + camelCase(name());
+        String methodName = CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, name());
+        this.castMapField = "Cast." + methodName + "CastMap";
         this.typeCategory = TypeCategory.valueOf("TYPE_JAVA_LANG_" + name());
-        this.className = "java.lang." + camelCase(name());
+        String simpleClassName = CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, name());
+        this.className = "java.lang." + simpleClassName;
       } else {
-        this.instanceOfMethod = null;
         this.castMapField = null;
         this.typeCategory = null;
-        this.dynamicCastMethod = null;
         this.className = null;
       }
-    }
-
-    private static String camelCase(String name) {
-      return Character.toUpperCase(name.charAt(0)) + name.toLowerCase().substring(1);
-    }
-
-    public String getInstanceOfMethod() {
-      return instanceOfMethod;
     }
 
     public String getCastMapField() {
@@ -122,11 +108,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
       return typeCategory;
     }
 
-    public String getDynamicCastMethod() {
-      return dynamicCastMethod;
-    }
-
-    public String getclassName() {
+    public String getClassName() {
       return className;
     }
   }
@@ -452,14 +434,13 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     }
   }
 
-  public static boolean isRepresentedAsNative(String className) {
-    return FluentIterable.from(Arrays.asList(DispatchType.values())).transform(
-        new Function<DispatchType, String>() {
-          @Override
-          public String apply(DispatchType dispatchType) {
-            return dispatchType.getclassName();
-          }
-        }).filter(Predicates.notNull()).toSet().contains(className);
+  public static boolean isRepresentedAsNative(final String className) {
+    return Iterables.any(Arrays.asList(DispatchType.values()), new Predicate<DispatchType>() {
+      @Override
+      public boolean apply(DispatchType dispatchType) {
+        return className.equals(dispatchType.getClassName());
+      }
+    });
   }
 
   public boolean isRepresentedAsNativeJsPrimitive(JType type) {
@@ -475,11 +456,11 @@ public class JProgram extends JNode implements ArrayTypeCreator {
        ImmutableMap.Builder<JClassType, DispatchType> builder =
            new ImmutableMap.Builder<JClassType, DispatchType>();
        for (DispatchType dispatchType : DispatchType.values()) {
-         if (dispatchType.getclassName() == null) {
+         if (dispatchType.getClassName() == null) {
            continue;
          }
-         JClassType classType = (JClassType) getFromTypeMap(dispatchType.getclassName());
-         assert classType != null : "Class " + dispatchType.getclassName() + " has not been loaded";
+         JClassType classType = (JClassType) getFromTypeMap(dispatchType.getClassName());
+         assert classType != null : "Class " + dispatchType.getClassName() + " has not been loaded";
          builder.put(classType, dispatchType);
        }
        dispatchTypeByNativeType = builder.build();

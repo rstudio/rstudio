@@ -35,26 +35,25 @@ final class Cast {
   /**
    * As plain JavaScript Strings (not monkey patched) are used to model Java Strings,
    * {@code  stringCastMap} stores runtime type info for cast purposes for string objects.
+   * Same applies to Double and Boolean.
    *
    * NOTE: it is important that the field is left uninitialized so that Cast does not
    * require a clinit.
    */
   // NOTE: if any of these three are edited, update JProgram.DispatchType's constructor
   private static JavaScriptObject stringCastMap;
-
-  // the next two are implemented exactly as the former
   private static JavaScriptObject doubleCastMap;
   private static JavaScriptObject booleanCastMap;
 
   @HasNoSideEffects
   static native boolean canCast(Object src, JavaScriptObject dstId) /*-{
-    return @com.google.gwt.lang.Cast::isJavaString(*)(src) &&
+    return @com.google.gwt.lang.Cast::instanceOfString(*)(src) &&
         !!@com.google.gwt.lang.Cast::stringCastMap[dstId] ||
         src.@java.lang.Object::castableTypeMap && !!src.@java.lang.Object::castableTypeMap[dstId] ||
-        @com.google.gwt.lang.Cast::isJavaDouble(*)(src) &&
+        @com.google.gwt.lang.Cast::instanceOfDouble(*)(src) &&
         !!@com.google.gwt.lang.Cast::doubleCastMap[dstId] ||
         // this occurs last because it is much rarer and less likely to be in hot code
-        @com.google.gwt.lang.Cast::isJavaBoolean(*)(src) &&
+        @com.google.gwt.lang.Cast::instanceOfBoolean(*)(src) &&
         !!@com.google.gwt.lang.Cast::booleanCastMap[dstId];
   }-*/;
 
@@ -70,31 +69,31 @@ final class Cast {
     return String.fromCharCode(x);
   }-*/;
 
-  static Object dynamicCast(Object src, JavaScriptObject dstId) {
+  static Object castTo(Object src, JavaScriptObject dstId) {
     checkType(src == null || canCast(src, dstId));
     return src;
   }
 
   // NOTE: if any of these three are edited, update JProgram.DispatchType's constructor
-  static Object dynamicCastToString(Object src) {
-    checkType(src == null || isJavaString(src));
+  static Object castToString(Object src) {
+    checkType(src == null || instanceOfString(src));
     return src;
   }
 
-  static Object dynamicCastToDouble(Object src) {
-    checkType(src == null || isJavaDouble(src));
+  static Object castToDouble(Object src) {
+    checkType(src == null || instanceOfDouble(src));
     return src;
   }
 
-  static Object dynamicCastToBoolean(Object src) {
-    checkType(src == null || isJavaBoolean(src));
+  static Object castToBoolean(Object src) {
+    checkType(src == null || instanceOfBoolean(src));
     return src;
   }
 
   /**
    * Allow a dynamic cast to an object, always succeeding if it's a JSO.
    */
-  static Object dynamicCastAllowJso(Object src, JavaScriptObject dstId) {
+  static Object castToAllowJso(Object src, JavaScriptObject dstId) {
     checkType(src == null || isJavaScriptObject(src) || canCast(src, dstId));
     return src;
   }
@@ -102,7 +101,7 @@ final class Cast {
   /**
    * Allow a cast to JSO only if there's no type ID.
    */
-  static Object dynamicCastJso(Object src) {
+  static Object castToJso(Object src) {
     checkType(src == null || isJavaScriptObject(src));
     return src;
   }
@@ -110,7 +109,7 @@ final class Cast {
   /**
    * Allow a dynamic cast to a JsFunction interface only if it is a function.
    */
-  static Object dynamicCastToJsFunction(Object src) {
+  static Object castToFunction(Object src) {
     checkType(src == null || isFunction(src));
     return src;
   }
@@ -118,8 +117,13 @@ final class Cast {
   /**
    * A dynamic cast that optionally checks for JsType prototypes.
    */
-  static Object dynamicCastWithPrototype(Object src, JavaScriptObject dstId, String jsType) {
-    checkType(src == null || canCast(src, dstId) || jsInstanceOf(src, jsType));
+  static Object castToNative(Object src, JavaScriptObject dstId, String jsType) {
+    // TODO(goktug): Remove canCast after new JsInterop semantics.
+    checkType(src == null || canCast(src, dstId) || jsinstanceOf(src, jsType));
+    return src;
+  }
+
+  static Object castToUnknownNative(Object src) {
     return src;
   }
 
@@ -127,8 +131,28 @@ final class Cast {
     return (src != null) && canCast(src, dstId);
   }
 
-  static boolean instanceOfJsPrototype(Object src, JavaScriptObject dstId, String jsType) {
-    return instanceOf(src, dstId) || jsInstanceOf(src, jsType);
+  @HasNoSideEffects
+  static native boolean instanceOfString(Object src) /*-{
+    return typeof(src) === "string";
+  }-*/;
+
+  @HasNoSideEffects
+  static native boolean instanceOfDouble(Object src) /*-{
+    return typeof(src) === "number";
+  }-*/;
+
+  @HasNoSideEffects
+  static native boolean instanceOfBoolean(Object src) /*-{
+    return typeof(src) === "boolean";
+  }-*/;
+
+  static boolean instanceOfNative(Object src, JavaScriptObject dstId, String jsType) {
+    // TODO(goktug): Remove instanceof after new JsInterop semantics.
+    return instanceOf(src, dstId) || jsinstanceOf(src, jsType);
+  }
+
+  static boolean instanceOfUnknownNative(Object src) {
+    return src != null;
   }
 
   static boolean instanceOfJso(Object src) {
@@ -139,15 +163,14 @@ final class Cast {
    * Returns true if the object is a Java object and can be cast, or if it's a
    * non-null JSO.
    */
-  static boolean instanceOfOrJso(Object src, JavaScriptObject dstId) {
-    return (src != null) &&
-        (isJavaScriptObject(src) || canCast(src, dstId));
+  static boolean instanceOfAllowJso(Object src, JavaScriptObject dstId) {
+    return (src != null) && (isJavaScriptObject(src) || canCast(src, dstId));
   }
 
   /**
    * Returns true if the object is a function.
    */
-  static boolean instanceOfJsFunction(Object src) {
+  static boolean instanceOfFunction(Object src) {
     return (src != null) && isFunction(src);
   }
 
@@ -155,7 +178,7 @@ final class Cast {
    * Returns whether the Object is a function.
    */
   @HasNoSideEffects
-  static native boolean isFunction(Object src) /*-{
+  private static native boolean isFunction(Object src)/*-{
     return typeof(src) === "function";
   }-*/;
 
@@ -163,6 +186,11 @@ final class Cast {
   static boolean isJavaScriptObject(Object src) {
     return isJsObjectOrFunction(src) && !Util.hasTypeMarker(src);
   }
+
+  @HasNoSideEffects
+  private static native boolean isJsObjectOrFunction(Object src) /*-{
+    return typeof(src) === "object" || typeof(src) === "function";
+  }-*/;
 
   /**
    * Uses the not operator to perform a null-check; do NOT use on anything that
@@ -189,7 +217,7 @@ final class Cast {
    * Determine if object is an instanceof jsType regardless of window or frame.
    */
   @HasNoSideEffects
-  static native boolean jsInstanceOf(Object obj, String jsTypeStr) /*-{
+  private static native boolean jsinstanceOf(Object obj, String jsTypeStr) /*-{
     if (!obj) {
         return false;
     }
@@ -278,42 +306,6 @@ final class Cast {
     return o;
   }
 
-  @HasNoSideEffects
-  static native boolean isJsObjectOrFunction(Object src) /*-{
-    return typeof(src) === "object" || typeof(src) === "function";
-  }-*/;
-
-  // NOTE: if any of these three are edited, update JProgram.DispatchType's constructor
-  /**
-   * Returns whether the Object is a Java String.
-   *
-   * Java strings are translated to JavaScript strings.
-   */
-  @HasNoSideEffects
-  static native boolean isJavaString(Object src) /*-{
-    return typeof(src) === "string";
-  }-*/;
-
-  /**
-   * Returns whether the Object is a Java Double.
-   *
-   * Java Numbers are translated to JavaScript numbers.
-   */
-  @HasNoSideEffects
-  static native boolean isJavaDouble(Object src) /*-{
-    return typeof(src) === "number";
-  }-*/;
-
-  /**
-   * Returns whether the Object is a Java Boolean. (*)
-   *
-   * Java Booleans are translated to JavaScript booleans.
-   */
-  @HasNoSideEffects
-  static native boolean isJavaBoolean(Object src) /*-{
-    return typeof(src) === "boolean";
-  }-*/;
-
   /**
    * Returns true if Object can dispatch instance methods and does not need a compiler
    * provided trampoline.
@@ -338,7 +330,7 @@ final class Cast {
   /**
    * Returns true if {@code src} is an array (native or not).
    */
-  static native boolean instanceofArray(Object src) /*-{
+  private static native boolean instanceofArray(Object src) /*-{
     return Array.isArray(src);
   }-*/;
 
