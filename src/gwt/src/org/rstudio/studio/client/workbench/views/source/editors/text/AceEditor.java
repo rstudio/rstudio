@@ -42,7 +42,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
@@ -734,6 +733,19 @@ public class AceEditor implements DocDisplay,
       // add the previewer
       widget_.getEditor().addKeyboardHandler(previewer.getKeyboardHandler());
       
+      // Listen for keyboard activity
+      editorEventListeners_.add(AceEditorNative.addEventListener(
+            widget_.getEditor(),
+            "keyboardActivity",
+            new CommandWithArg<JavaScriptObject>()
+            {
+               @Override
+               public void execute(JavaScriptObject event)
+               {
+                  events_.fireEvent(new AceAfterCommandExecutedEvent(event));
+               }
+            }));
+      
       // Listen for 'afterExec' events from keyboard handlers + editor
       editorEventListeners_.add(AceEditorNative.addEventListener(
             widget_.getEditor(),
@@ -743,7 +755,6 @@ public class AceEditor implements DocDisplay,
                @Override
                public void execute(JavaScriptObject event)
                {
-                  Debug.logObject(event);
                   events_.fireEvent(new AceAfterCommandExecutedEvent(event));
                }
             }));

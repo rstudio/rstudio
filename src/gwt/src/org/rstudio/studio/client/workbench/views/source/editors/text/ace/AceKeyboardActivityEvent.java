@@ -18,14 +18,14 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class AceAfterCommandExecutedEvent extends GwtEvent<AceAfterCommandExecutedEvent.Handler>
+public class AceKeyboardActivityEvent extends GwtEvent<AceKeyboardActivityEvent.Handler>
 {
-   public AceAfterCommandExecutedEvent()
+   public AceKeyboardActivityEvent()
    {
-      event_ = dummyEvent();
+      event_ = nullEvent();
    }
    
-   public AceAfterCommandExecutedEvent(JavaScriptObject event)
+   public AceKeyboardActivityEvent(JavaScriptObject event)
    {
       event_ = event;
    }
@@ -35,33 +35,25 @@ public class AceAfterCommandExecutedEvent extends GwtEvent<AceAfterCommandExecut
       return event_;
    }
    
-   public boolean isChainEvent()
-   {
-      return isChainEvent(event_);
-   }
-   
-   private static final native boolean isChainEvent(JavaScriptObject event) /*-{
+   public native final boolean isKeyboardChainEvent() /*-{
       if (event == null)
-         return true;
+         return false;
+      
       var command = event.command;
       return command === "null" || command === "chainKeys";
    }-*/;
    
    private final JavaScriptObject event_;
    
-   private static native final JavaScriptObject dummyEvent() /*-{
-      return {
-         command: {
-            name: "dummy"
-         }
-      };
+   private static native final JavaScriptObject nullEvent() /*-{
+      return {command: "null"};
    }-*/;
    
    // Boilerplate ----
    
    public interface Handler extends EventHandler
    {
-      void onAceAfterCommandExecuted(AceAfterCommandExecutedEvent event);
+      void onAceKeyboardActivity(AceKeyboardActivityEvent event);
    }
    
    @Override
@@ -73,7 +65,7 @@ public class AceAfterCommandExecutedEvent extends GwtEvent<AceAfterCommandExecut
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onAceAfterCommandExecuted(this);
+      handler.onAceKeyboardActivity(this);
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();

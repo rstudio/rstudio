@@ -83,7 +83,8 @@ public class ShortcutManager implements NativePreviewHandler,
                      @Override
                      public void onAceAfterCommandExecuted(AceAfterCommandExecutedEvent event)
                      {
-                        keyBuffer_.clear();
+                        if (!event.isChainEvent())
+                           keyBuffer_.clear();
                      }
                   });
          }
