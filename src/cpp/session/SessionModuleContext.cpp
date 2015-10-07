@@ -236,6 +236,13 @@ SEXP rs_rstudioCitation()
    }
 }
 
+SEXP rs_setUsingMingwGcc49(SEXP usingSEXP)
+{
+   bool usingMingwGcc49 = r::sexp::asLogical(usingSEXP);
+   userSettings().setUsingMingwGcc49(usingMingwGcc49);
+   return R_NilValue;
+}
+
 // ensure file hidden
 SEXP rs_ensureFileHidden(SEXP fileSEXP)
 {
@@ -2015,6 +2022,19 @@ bool isLoadBalanced()
    return !core::system::getenv(kRStudioSessionRoute).empty();
 }
 
+#ifdef _WIN32
+bool usingMingwGcc49()
+{
+   // temporarily determine this using a setting (eventually we'll want to check the
+   // R version and SVN revision number)
+   return userSettings().usingMingwGcc49();
+}
+#else
+bool usingMingwGcc49()
+{
+   return false;
+}
+#endif
 
 Error initialize()
 {
@@ -2146,6 +2166,12 @@ Error initialize()
             "rs_rstudioCitation",
             (DL_FUNC) rs_rstudioCitation,
             0);
+
+   // register rs_setUsingMingwGcc49
+   r::routines::registerCallMethod(
+            "rs_setUsingMingwGcc49",
+            (DL_FUNC)rs_setUsingMingwGcc49,
+            1);
    
    // initialize monitored scratch dir
    initializeMonitoredUserScratchDir();

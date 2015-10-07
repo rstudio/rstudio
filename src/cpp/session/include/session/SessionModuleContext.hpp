@@ -806,6 +806,8 @@ void showSourceMarkers(const SourceMarkerSet& markerSet,
 
 bool isLoadBalanced();
 
+bool usingMingwGcc49();
+
 } // namespace module_context
 } // namespace session
 } // namespace rstudio

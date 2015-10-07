@@ -845,8 +845,9 @@ std::vector<std::string> RCompilationDatabase::rToolsArgs() const
    if (rToolsArgs_.empty())
    {
       // scan for Rtools
+      bool usingMingwGcc49 = module_context::usingMingwGcc49();
       std::vector<core::r_util::RToolsInfo> rTools;
-      Error error = core::r_util::scanRegistryForRTools(&rTools);
+      Error error = core::r_util::scanRegistryForRTools(usingMingwGcc49, &rTools);
       if (error)
          LOG_ERROR(error);
 
@@ -857,21 +858,10 @@ std::vector<std::string> RCompilationDatabase::rToolsArgs() const
       {
          if (module_context::isRtoolsCompatible(*it))
          {
-            FilePath rtoolsPath = it->installPath();
-
-            rToolsArgs_.push_back("-I" + rtoolsPath.childPath(
-               "gcc-4.6.3/i686-w64-mingw32/include").absolutePath());
-
-            rToolsArgs_.push_back("-I" + rtoolsPath.childPath(
-               "gcc-4.6.3/include/c++/4.6.3").absolutePath());
-
-            std::string bits = "-I" + rtoolsPath.childPath(
-               "gcc-4.6.3/include/c++/4.6.3/i686-w64-mingw32").absolutePath();
-#ifdef _WIN64
-            bits += "/64";
-#endif
-            rToolsArgs_.push_back(bits);
-
+            std::vector<std::string> clangArgs = it->clangArgs();
+            std::copy(clangArgs.begin(),
+                      clangArgs.end(),
+                      std::back_inserter(rToolsArgs_));
             break;
          }
       }

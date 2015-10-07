@@ -199,6 +199,9 @@ public:
    bool enableStyleDiagnostics() const;
    void setEnableStyleDiagnostics(bool enable);
 
+   bool usingMingwGcc49() const;
+   void setUsingMingwGcc49(bool usingMingwGcc49);
+
 private:
 
    void onSettingsFileChanged(
