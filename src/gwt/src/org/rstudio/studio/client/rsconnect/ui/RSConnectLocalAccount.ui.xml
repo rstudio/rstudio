@@ -1,7 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
     xmlns:g="urn:import:com.google.gwt.user.client.ui"
-    xmlns:rsw="urn:import:org.rstudio.core.client.widget">
+    xmlns:rsw="urn:import:org.rstudio.core.client.widget"
+    xmlns:rsc="urn:import:org.rstudio.studio.client.common">
     <ui:style>
     .explanatoryText
     {
@@ -21,6 +22,10 @@
     .httpsCheck
     {
       font-size: x-small;
+    }
+    .connectHelpLink
+    {
+       margin-top: 25px;
     }
     </ui:style>
     <g:HTMLPanel>
@@ -43,6 +48,12 @@
          <g:Label styleName="{style.spaced} {style.explanatoryText}"
                   text="Contact your RStudio Connect server administrator if you need its URL.">
          </g:Label>
+         <rsc:HelpLink caption="About RStudio Connect" 
+                       link="rstudio_connect"
+                       withVersionInfo="false"
+                       styleName="{style.connectHelpLink}"
+                       ui:field="connectHelpLink_">
+         </rsc:HelpLink>
        </g:VerticalPanel>
 	</g:HTMLPanel>
 </ui:UiBinder> 

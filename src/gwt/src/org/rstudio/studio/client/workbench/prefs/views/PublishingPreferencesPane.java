@@ -36,6 +36,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
+import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
@@ -176,17 +177,28 @@ public class PublishingPreferencesPane extends PreferencesPane
       missingPkgPanel.getElement().getStyle().setMarginBottom(20, Unit.PX);
       add(missingPkgPanel);
       
+      final CheckBox chkEnableRSConnect = checkboxPref("Enable publishing to RStudio Connect",
+            uiPrefs_.enableRStudioConnect());
+      final HorizontalPanel rsconnectPanel = checkBoxWithHelp(chkEnableRSConnect, 
+                                                        "rstudio_connect");
+      lessSpaced(rsconnectPanel);
+      
       add(headerLabel("Settings"));
-      CheckBox chkEnablePublishing = checkboxPref("Enable publishing apps and documents", 
+      CheckBox chkEnablePublishing = checkboxPref("Enable publishing documents and apps", 
             uiPrefs_.showPublishUi());
       chkEnablePublishing.addValueChangeHandler(new ValueChangeHandler<Boolean>(){
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
             reloadRequired_ = true;
+            rsconnectPanel.setVisible(
+                  RSConnect.showRSConnectUI() && event.getValue());
          }
       });
       add(chkEnablePublishing);
+      
+      if (RSConnect.showRSConnectUI())
+         add(rsconnectPanel);
       
       server_.hasOrphanedAccounts(new ServerRequestCallback<Int>()
       {

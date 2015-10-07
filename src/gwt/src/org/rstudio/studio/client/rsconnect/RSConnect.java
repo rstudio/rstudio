@@ -581,6 +581,12 @@ public class RSConnect implements SessionInitHandler,
                                     asMultiple, asStatic, launch, record);
    }-*/;
    
+   
+   public static boolean showRSConnectUI()
+   {
+      return false;
+   }
+   
    public static String contentTypeDesc(int contentType)
    {
       switch(contentType)

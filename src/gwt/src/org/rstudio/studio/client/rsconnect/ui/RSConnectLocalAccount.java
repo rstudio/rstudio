@@ -16,6 +16,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import org.rstudio.core.client.widget.TextBoxWithCue;
 import org.rstudio.core.client.widget.TextBoxWithPrefix;
+import org.rstudio.studio.client.common.HelpLink;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -69,4 +70,5 @@ public class RSConnectLocalAccount extends Composite
    @UiField CheckBox httpsCheck_;
    @UiField TextBoxWithPrefix serverUrl_;
    @UiField TextBoxWithCue accountName_;
+   @UiField HelpLink connectHelpLink_;
 }
