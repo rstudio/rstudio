@@ -503,6 +503,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="findPrevious" value="Shift+F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/>
          <shortcut refid="replaceAndFind" value="Cmd+Shift+J"/>
          <shortcut refid="goToFileFunction" value="Ctrl+."/>
+         <shortcut refid="goToLine" value="Alt+G" disableModes="default,vim"/>
          <shortcut refid="goToLine" value="Shift+Alt+G" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="goToLine" value="Cmd+Shift+Alt+G" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="jumpTo" value="Shift+Alt+J" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -528,6 +529,7 @@ well as menu structures (for main menu and popup menus).
       <shortcutgroup name="Tabs/Panes">
       
          <shortcut refid="activateSource" value="Ctrl+1"/>
+         <shortcut refid="activateConsole" value="Alt+X" disableModes="default,vim"/>
          <shortcut refid="activateConsole" value="Ctrl+2"/>
          <shortcut refid="activateHelp" value="Ctrl+3"/>
          <shortcut refid="activateHistory" value="Ctrl+4"/>
@@ -568,15 +570,23 @@ well as menu structures (for main menu and popup menus).
       </shortcutgroup>
       <shortcutgroup name="Files">
       
-         <shortcut refid="saveSourceDoc" value="Meta+S"/>
+         <shortcut refid="saveSourceDoc" value="Meta+S" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="saveSourceDoc" value="Ctrl+S" disableModes="emacs"/>
          <shortcut refid="saveSourceDoc" value="Ctrl+X Ctrl+S" disableModes="default,vim"/>
          
          <shortcut refid="saveAllSourceDocs" value="Cmd+Alt+S"/>
+         
+         <shortcut refid="newSourceDoc" value="Ctrl+X Ctrl+N" disableModes="default,vim"/>
          <shortcut refid="newSourceDoc" value="Cmd+Shift+N" if="!org.rstudio.core.client.BrowseCap.isChrome()" title="New R Script"/>
          <shortcut refid="newSourceDoc" value="Cmd+Shift+Alt+N" if="org.rstudio.core.client.BrowseCap.isChrome()" title="New R Script"/>
-         <shortcut refid="openSourceDoc" value="Cmd+O"/>
+         
+         <shortcut refid="openSourceDoc" value="Ctrl+O" disableModes="emacs"/>
+         <shortcut refid="openSourceDoc" value="Ctrl+X Ctrl+F" disableModes="default,vim"/>
+         <shortcut refid="openSourceDoc" value="Meta+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         
          <shortcut refid="closeSourceDoc" value="Cmd+W" disableModes="emacs"/>
+         <shortcut refid="closeSourceDoc" value="Ctrl+X k" disableModes="default,vim"/>
+         
          <shortcut refid="closeOtherSourceDocs" value="Cmd+Shift+Alt+W"/>
          <shortcut refid="closeAllSourceDocs" value="Cmd+Shift+W"/>
          <shortcut refid="findInFiles" value="Cmd+Shift+F"/>
@@ -644,7 +654,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="toggleFullScreen" value="Ctrl+Meta+F" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
       </shortcutgroup>
       <shortcutgroup name="Console">
-         <shortcut refid="consoleClear" value="Ctrl+L"/>
+         <shortcut refid="consoleClear" value="Ctrl+L" disableModes="emacs"/>
          <shortcut value="Cmd+Up" title="Popup Command History"/>
       </shortcutgroup>
    </shortcuts>
