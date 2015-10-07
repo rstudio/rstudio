@@ -35,9 +35,14 @@ public class AceKeyboardActivityEvent extends GwtEvent<AceKeyboardActivityEvent.
       return event_;
    }
    
-   public native final boolean isKeyboardChainEvent() /*-{
+   public boolean isChainEvent()
+   {
+      return isChainEvent(event_);
+   }
+   
+   private static final native boolean isChainEvent(JavaScriptObject event) /*-{
       if (event == null)
-         return false;
+         return true;
       
       var command = event.command;
       return command === "null" || command === "chainKeys";

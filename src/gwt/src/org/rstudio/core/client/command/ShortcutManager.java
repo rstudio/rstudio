@@ -32,7 +32,7 @@ import org.rstudio.core.client.events.NativeKeyDownHandler;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceAfterCommandExecutedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -77,11 +77,11 @@ public class ShortcutManager implements NativePreviewHandler,
          {
             RStudioGinjector.INSTANCE.injectMembers(ShortcutManager.this);
             events_.addHandler(
-                  AceAfterCommandExecutedEvent.TYPE,
-                  new AceAfterCommandExecutedEvent.Handler()
+                  AceKeyboardActivityEvent.TYPE,
+                  new AceKeyboardActivityEvent.Handler()
                   {
                      @Override
-                     public void onAceAfterCommandExecuted(AceAfterCommandExecutedEvent event)
+                     public void onAceKeyboardActivity(AceKeyboardActivityEvent event)
                      {
                         if (!event.isChainEvent())
                            keyBuffer_.clear();

@@ -742,92 +742,14 @@ public class AceEditor implements DocDisplay,
                @Override
                public void execute(JavaScriptObject event)
                {
-                  events_.fireEvent(new AceAfterCommandExecutedEvent(event));
+                  events_.fireEvent(new AceKeyboardActivityEvent(event));
                }
             }));
-      
-      // Listen for 'afterExec' events from keyboard handlers + editor
-      editorEventListeners_.add(AceEditorNative.addEventListener(
-            widget_.getEditor(),
-            "afterExec",
-            new CommandWithArg<JavaScriptObject>()
-            {
-               @Override
-               public void execute(JavaScriptObject event)
-               {
-                  events_.fireEvent(new AceAfterCommandExecutedEvent(event));
-               }
-            }));
-      
-      JsArray<JsObject> handlers = getKeyboardHandlers(widget_.getEditor());
-      for (JsObject handler : JsUtil.asIterable(handlers))
-      {
-         if (handler == null || !handler.hasKey("on"))
-            continue;
-         
-         editorEventListeners_.add(AceEditorNative.addEventListener(
-               handler,
-               "afterExec",
-               new CommandWithArg<JavaScriptObject>()
-               {
-                  @Override
-                  public void execute(JavaScriptObject event)
-                  {
-                     events_.fireEvent(new AceAfterCommandExecutedEvent(event));
-                  }
-               }));
-      }
-      
-      // Unfortunately, Vim's commands don't go through the regular
-      // 'CommandManager' front-end, so we need to do a bit of extra
-      // work to figure out if Vim has handled a command.
-      if (useVimMode_)
-      {
-         // Signal on movement keys.
-         
-         // Signal if the vim mode changes.
-         editorEventListeners_.add(AceEditorNative.addEventListener(
-               getCodeMirrorObject(widget_.getEditor()),
-               "vim-mode-change",
-               new CommandWithArg<Void>()
-               {
-                  @Override
-                  public void execute(Void arg)
-                  {
-                     events_.fireEvent(new AceAfterCommandExecutedEvent(
-                           createVimModeChangedCommand()));
-                  }
-               }));
-      }
       
       if (useVimMode_)
          widget_.getEditor().setMarks(marks);
    }
    
-   private static final native JavaScriptObject createVimModeChangedCommand() /*-{
-      return {
-         name: "vimModeChanged"
-      };
-   }-*/;
-   
-   private static final native JsArray<JsObject> getKeyboardHandlers(AceEditorNative editor) /*-{
-      return editor.keyBinding.$handlers || [];
-   }-*/;
-   
-   private static final native JavaScriptObject getCodeMirrorObject(AceEditorNative editor) /*-{
-      return editor.state.cm;
-   }-*/;
-   
-   private final void onAceCommandExecuted(JavaScriptObject event)
-   {
-      events_.fireEvent(new AceAfterCommandExecutedEvent(event));
-   }
-   
-   private final void onVimEvent(JavaScriptObject event)
-   {
-      events_.fireEvent(new AceAfterCommandExecutedEvent(event));
-   }
-
    public String getCode()
    {
       return getSession().getValue();
