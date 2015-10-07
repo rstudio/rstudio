@@ -22,7 +22,7 @@ public class AceKeyboardActivityEvent extends GwtEvent<AceKeyboardActivityEvent.
 {
    public AceKeyboardActivityEvent()
    {
-      event_ = nullEvent();
+      this(nullEvent());
    }
    
    public AceKeyboardActivityEvent(JavaScriptObject event)

@@ -787,7 +787,6 @@ public class TextEditingTarget implements
    }-*/;
    
    private static final native boolean isIncrementalSearchCommand(JavaScriptObject data) /*-{
-      
       var command = data.command;
       if (command == null)
          return false;
@@ -798,7 +797,6 @@ public class TextEditingTarget implements
          command.isIncrementalSearchCommand === true;
          
       return result;
-      
    }-*/;
    
    private static String sIncrementalSearchMessage_ = null;

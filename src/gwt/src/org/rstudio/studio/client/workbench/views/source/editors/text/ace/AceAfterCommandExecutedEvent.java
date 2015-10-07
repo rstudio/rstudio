@@ -22,7 +22,7 @@ public class AceAfterCommandExecutedEvent extends GwtEvent<AceAfterCommandExecut
 {
    public AceAfterCommandExecutedEvent()
    {
-      event_ = dummyEvent();
+      this(nullEvent());
    }
    
    public AceAfterCommandExecutedEvent(JavaScriptObject event)
@@ -49,12 +49,8 @@ public class AceAfterCommandExecutedEvent extends GwtEvent<AceAfterCommandExecut
    
    private final JavaScriptObject event_;
    
-   private static native final JavaScriptObject dummyEvent() /*-{
-      return {
-         command: {
-            name: "dummy"
-         }
-      };
+   private static native final JavaScriptObject nullEvent() /*-{
+      return {command: "null"};
    }-*/;
    
    // Boilerplate ----

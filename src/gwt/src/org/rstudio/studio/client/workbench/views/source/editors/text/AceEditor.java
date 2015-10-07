@@ -733,6 +733,19 @@ public class AceEditor implements DocDisplay,
       // add the previewer
       widget_.getEditor().addKeyboardHandler(previewer.getKeyboardHandler());
       
+      // Listen for command execution
+      editorEventListeners_.add(AceEditorNative.addEventListener(
+            widget_.getEditor().getCommandManager(),
+            "afterExec",
+            new CommandWithArg<JavaScriptObject>()
+            {
+               @Override
+               public void execute(JavaScriptObject event)
+               {
+                  events_.fireEvent(new AceAfterCommandExecutedEvent(event));
+               }
+            }));
+      
       // Listen for keyboard activity
       editorEventListeners_.add(AceEditorNative.addEventListener(
             widget_.getEditor(),

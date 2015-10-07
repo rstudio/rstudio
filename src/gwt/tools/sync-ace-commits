@@ -94,6 +94,7 @@ git merge \
 git merge --strategy-option theirs \
 	origin/patch/vim-Y-yank \
 	origin/patch/ace-keyboard-activity \
+	origin/patch/incremental-search \
 	-m "merge again"
 
 ## git merge \
