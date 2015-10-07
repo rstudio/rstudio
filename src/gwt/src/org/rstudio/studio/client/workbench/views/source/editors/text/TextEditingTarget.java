@@ -779,9 +779,9 @@ public class TextEditingTarget implements
    private static final native String initializeIncrementalSearch() /*-{
       var IncrementalSearch = $wnd.require("ace/incremental_search").IncrementalSearch;
       (function() {
-         this.message = function(msg) {
+         this.message = $entry(function(msg) {
             @org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget::setIncrementalSearchMessage(Ljava/lang/String;)(msg);
-         };
+         });
          
       }).call(IncrementalSearch.prototype);
    }-*/;
