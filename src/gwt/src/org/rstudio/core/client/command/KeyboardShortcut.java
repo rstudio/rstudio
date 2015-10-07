@@ -360,7 +360,9 @@ public class KeyboardShortcut
          String[] disableModeList = disableModes.split(",");
          for (String disableMode: disableModeList)
          {
-            if (disableMode.equals("vim"))
+            if (disableMode.equals("default"))
+               disableModes_ |= MODE_DEFAULT;
+            else if (disableMode.equals("vim"))
                disableModes_ |= MODE_VIM;
             else if (disableMode.equals("emacs"))
                disableModes_ |= MODE_EMACS;
@@ -468,6 +470,7 @@ public class KeyboardShortcut
    public static final int SHIFT = 8;
    
    public static final int MODE_NONE = 0;
-   public static final int MODE_VIM = 1;
-   public static final int MODE_EMACS = 2;
+   public static final int MODE_DEFAULT = 1;
+   public static final int MODE_VIM = 2;
+   public static final int MODE_EMACS = 4;
 }

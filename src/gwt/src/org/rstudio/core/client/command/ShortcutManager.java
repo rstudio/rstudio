@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Pair;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
@@ -128,13 +130,7 @@ public class ShortcutManager implements NativePreviewHandler,
    
    public void addCustomBinding(KeySequence keys, AppCommand command)
    {
-      KeyboardShortcut shortcut = new KeyboardShortcut(keys);
-      if (!customBindings_.containsKey(shortcut))
-         customBindings_.put(shortcut, new ArrayList<AppCommand>());
-      
-      ArrayList<AppCommand> commands = customBindings_.get(shortcut);
-      commands.add(command);
-      
+      customBindings_.addCommandBinding(keys, command);
       maskedCommands_.put(command, true);
    }
    
@@ -208,7 +204,6 @@ public class ShortcutManager implements NativePreviewHandler,
       // Update state related to key dispatch.
       maxBindingLength_ = Math.max(maxBindingLength_, keys.size());
       updateKeyPrefixes(shortcut);
-         
       
       if (command == null)
       {
@@ -227,27 +222,32 @@ public class ShortcutManager implements NativePreviewHandler,
       }
       else
       {
-         ArrayList<AppCommand> commands;
-         if (commands_.containsKey(shortcut)) 
-         {
-            // already have a command for this shortcut; add this one
-            commands = commands_.get(shortcut);
-         }
-         else 
-         {
-            // no commands yet, make a new list
-            commands = new ArrayList<AppCommand>();
-            commands_.put(shortcut, commands);
-         }
-         commands.add(command);
-
          command.setShortcut(shortcut);
+         commands_.addCommandBinding(keys, command, parseDisableModes(disableModes));
+      }
+   }
+   
+   public static int parseDisableModes(String disableModes)
+   {
+      int mode = KeyboardShortcut.MODE_DEFAULT;
+      
+      if (StringUtil.isNullOrEmpty(disableModes))
+         return mode;
+      
+      String[] splat = disableModes.split(",");
+      for (String item : splat)
+      {
+         if (item.equals("default"))
+            mode |= KeyboardShortcut.MODE_DEFAULT;
+         else if (item.equals("vim"))
+            mode |= KeyboardShortcut.MODE_VIM;
+         else if (item.equals("emacs"))
+            mode |= KeyboardShortcut.MODE_EMACS;
+         else
+            assert false: "Unrecognized 'disableModes' value '" + item + "'";
       }
       
-      if (shortcut.isModalShortcut())
-      {
-         modalShortcuts_.add(shortcut);
-      }
+      return mode;
    }
    
    public void onKeyDown(NativeKeyDownEvent evt)
@@ -297,15 +297,12 @@ public class ShortcutManager implements NativePreviewHandler,
       
       // Create a ShortcutInfo for each unbound shortcut
       for (KeyboardShortcut shortcut: unboundShortcuts_)
-      {
          info.add(new ShortcutInfo(shortcut, null));
-      }
 
       // Sort the shortcuts as they were presented in Commands.cmd.xml
-      for (KeyboardShortcut ks: commands_.keySet())
-      {
-         shortcuts.add(ks);
-      }
+      for (KeySequence keys: commands_.keySet())
+         shortcuts.add(new KeyboardShortcut(keys));
+      
       Collections.sort(shortcuts, new Comparator<KeyboardShortcut>()
       {
          @Override
@@ -319,11 +316,7 @@ public class ShortcutManager implements NativePreviewHandler,
       // shortcut bindings)
       for (KeyboardShortcut shortcut: shortcuts)
       {
-         // skip shortcuts inaccessible due to editor mode
-         if (shortcut.isModeDisabled(editorMode_))
-            continue;
-         
-         AppCommand command = commands_.get(shortcut).get(0);
+         AppCommand command = commands_.getCommand(shortcut.getKeySequence(), editorMode_);
          if (infoMap.containsKey(command))
          {
             infoMap.get(command).addShortcut(shortcut);
@@ -357,19 +350,6 @@ public class ShortcutManager implements NativePreviewHandler,
       keyBuffer_.add(e);
       KeyboardShortcut shortcut = new KeyboardShortcut(keyBuffer_);
       
-      // Check for disabled modal shortcuts if we're modal.
-      if (editorMode_ > 0)
-      {
-         for (KeyboardShortcut modalShortcut: modalShortcuts_)
-         {
-            if (modalShortcut.equals(shortcut) &&
-                modalShortcut.isModeDisabled(editorMode_))
-            {
-               return false;
-            }
-         }
-      }
-      
       // If this matches a prefix key, return false early.
       if (prefixes_.contains(shortcut.getKeySequence()))
          return false;
@@ -400,53 +380,35 @@ public class ShortcutManager implements NativePreviewHandler,
    }
    
    private boolean dispatch(KeyboardShortcut shortcut,
-                            Map<KeyboardShortcut, ArrayList<AppCommand>> bindings,
+                            AppCommandBindings bindings,
                             NativeEvent event)
    {
       return dispatch(shortcut, bindings, event, null);
    }
    
    private boolean dispatch(KeyboardShortcut shortcut,
-                            Map<KeyboardShortcut, ArrayList<AppCommand>> bindings,
+                            AppCommandBindings bindings,
                             NativeEvent event,
                             Map<AppCommand, Boolean> maskedCommandsMap)
    {
-      if (!bindings.containsKey(shortcut) || bindings.get(shortcut) == null) 
+      KeySequence keys = shortcut.getKeySequence();
+      
+      // If the shortcut manager is disabled, bail
+      if (!isEnabled())
          return false;
       
-      AppCommand command = null;
-      for (int i = 0; i < bindings.get(shortcut).size(); i++) 
-      {
-         command = bindings.get(shortcut).get(i);
-         if (command != null)
-         {
-            boolean enabled = isEnabled() && command.isEnabled();
-            
-            // some commands want their keyboard shortcut to pass through 
-            // to the browser when they are disabled (e.g. Cmd+W)
-            if (!enabled && !command.preventShortcutWhenDisabled())
-               return false;
-            
-            // if we've remapped an AppCommand to a new binding, it's
-            // implicitly disabled
-            if (maskedCommandsMap != null && maskedCommandsMap.containsKey(command))
-            {
-               command = null;
-               continue;
-            }
-            
-            event.preventDefault();
-
-            // if this command is enabled, execute it and stop looking  
-            if (enabled) 
-            {
-               command.executeFromShortcut();
-               break;
-            }
-         }
-      }
-
-      return command != null;
+      // If we have no binding, bail
+      if (!bindings.containsKey(keys))
+         return false;
+      
+      AppCommand command = bindings.getCommand(keys, editorMode_);
+      if (command == null)
+         return false;
+      
+      // Found a command -- execute and return
+      event.preventDefault();
+      command.executeFromShortcut();
+      return true;
    }
    
    private int disableCount_ = 0;
@@ -455,19 +417,63 @@ public class ShortcutManager implements NativePreviewHandler,
    private final KeySequence keyBuffer_;
    private final Timer keyTimer_;
    
-   private final Map<KeyboardShortcut, ArrayList<AppCommand>> commands_ =
-         new HashMap<KeyboardShortcut, ArrayList<AppCommand>>();
+   private static class AppCommandBindings
+   {
+      public AppCommandBindings()
+      {
+         bindings_ = new HashMap<KeySequence, List<Pair<Integer, AppCommand>>>();
+      }
+      
+      public void addCommandBinding(KeySequence keys, AppCommand command)
+      {
+         addCommandBinding(keys, command, 0);
+      }
+      
+      public void addCommandBinding(KeySequence keys, AppCommand command, int disableModes)
+      {
+         if (!bindings_.containsKey(keys))
+            bindings_.put(keys, new ArrayList<Pair<Integer, AppCommand>>());
+         
+         List<Pair<Integer, AppCommand>> commands = bindings_.get(keys);
+         commands.add(new Pair<Integer, AppCommand>(disableModes, command));
+      }
+      
+      public AppCommand getCommand(KeySequence keys, int editorMode)
+      {
+         if (!bindings_.containsKey(keys))
+            return null;
+         
+         List<Pair<Integer, AppCommand>> commands = bindings_.get(keys);
+         for (Pair<Integer, AppCommand> pair : commands)
+         {
+            int disableModes = pair.first;
+            AppCommand command = pair.second;
+            
+            boolean enabled = command.isEnabled() && (disableModes & editorMode) == 0;
+            if (enabled)
+               return command;
+         }
+         
+         return null;
+      }
+      
+      public Set<KeySequence> keySet() { return bindings_.keySet(); }
+      public boolean containsKey(KeySequence keys) { return bindings_.containsKey(keys); }
+      public void clear() { bindings_.clear(); }
+      
+      private final Map<KeySequence, List<Pair<Integer, AppCommand>>> bindings_;
+   }
    
-   private final Map<KeyboardShortcut, ArrayList<AppCommand>> customBindings_ =
-         new HashMap<KeyboardShortcut, ArrayList<AppCommand>>();
+   private final AppCommandBindings commands_ =
+         new AppCommandBindings();
+   
+   private final AppCommandBindings customBindings_ =
+         new AppCommandBindings();
    
    private final Map<AppCommand, Boolean> maskedCommands_ =
          new HashMap<AppCommand, Boolean>();
    
    private List<KeyboardShortcut> unboundShortcuts_ =
-         new ArrayList<KeyboardShortcut>();
-   
-   private List<KeyboardShortcut> modalShortcuts_ =
          new ArrayList<KeyboardShortcut>();
    
    private Set<KeySequence> prefixes_ =
