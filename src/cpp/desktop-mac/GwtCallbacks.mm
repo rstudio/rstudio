@@ -837,7 +837,8 @@ private:
 
 - (void) openProjectInOverlaidNewWindow: (NSString*) projectFilePath
 {
-   projectFilePath = resolveAliasedPath(projectFilePath);
+   if (![projectFilePath isEqualToString: @"none"])
+      projectFilePath = resolveAliasedPath(projectFilePath);
    NSArray* args = [NSArray arrayWithObjects: projectFilePath, nil];
    [self openInNewWindow: args];
 }

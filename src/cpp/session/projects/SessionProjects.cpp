@@ -526,7 +526,8 @@ void startup()
    FilePath lastProjectPath = projSettings.lastProjectPath();
 
    // check for explicit project none scope
-   if (session::options().sessionScope().isProjectNone())
+   if (session::options().sessionScope().isProjectNone() || 
+       session::options().initialProjectPath().absolutePath() == kProjectNone)
    {
       projectFilePath = resolveProjectSwitch(kProjectNone);
    }
