@@ -31261,6 +31261,10 @@ var KeyBinding = function(editor) {
             if (success)
                 break;
         }
+
+        if (success)
+            this.$editor._signal("keyboardActivity", toExecute);
+
         return success;
     };
 

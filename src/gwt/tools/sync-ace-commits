@@ -90,8 +90,10 @@ git merge \
     -m "merge branches"
 
 # Need to merge separately to handle merge conflicts
+# note: ace-keyboard-activity will be part of Ace 1.2.1
 git merge --strategy-option theirs \
 	origin/patch/vim-Y-yank \
+	origin/patch/ace-keyboard-activity \
 	-m "merge again"
 
 ## git merge \
