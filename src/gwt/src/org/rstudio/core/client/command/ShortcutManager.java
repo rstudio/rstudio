@@ -432,15 +432,13 @@ public class ShortcutManager implements NativePreviewHandler,
       KeyCombination keys = new KeyCombination(e);
       int keyCode = keys.getKeyCode();
       
-      boolean isSaveQuitKey =
-            keyCode == KeyCodes.KEY_S ||
-            keyCode == KeyCodes.KEY_W;
+      boolean isSaveKey = keyCode == KeyCodes.KEY_S;
       
-      boolean isSaveQuitModifier = BrowseCap.isMacintosh() ?
+      boolean isSaveModifier = BrowseCap.isMacintosh() ?
             keys.getModifier() == KeyboardShortcut.META :
             keys.getModifier() == KeyboardShortcut.CTRL;
       
-      return isSaveQuitKey && isSaveQuitModifier;
+      return isSaveKey && isSaveModifier;
    }
    
    private int disableCount_ = 0;
