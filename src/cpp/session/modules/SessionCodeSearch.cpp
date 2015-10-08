@@ -1591,7 +1591,16 @@ Error searchCode(const json::JsonRpcRequest& request,
    std::vector<PairIntInt> srcItemScores;
    for (std::size_t i = 0; i < srcItems.size(); ++i)
    {
-      srcItemScores.push_back(std::make_pair(i, scoreMatch(srcItems[i].name(), term, false)));
+      const SourceItem& item = srcItems[i];
+      
+      // don't index auto-generated files
+      const std::string& context = item.context();
+      if (boost::algorithm::ends_with(context, "RcppExports.R") ||
+          boost::algorithm::ends_with(context, "RcppExports.cpp"))
+         continue;
+         
+      int score = scoreMatch(item.name(), term, false);
+      srcItemScores.push_back(std::make_pair(i, score));
    }
    std::sort(srcItemScores.begin(), srcItemScores.end(), ScorePairComparator());
 
