@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
@@ -238,7 +237,7 @@ public class ShortcutManager implements NativePreviewHandler,
       else
       {
          command.setShortcut(shortcut);
-         commands_.addCommandBinding(keys, command, parseDisableModes(disableModes));
+         commands_.addCommandBinding(keys, command, shortcut);
       }
    }
    
@@ -313,8 +312,9 @@ public class ShortcutManager implements NativePreviewHandler,
          info.add(new ShortcutInfo(shortcut, null));
 
       // Sort the shortcuts as they were presented in Commands.cmd.xml
-      for (KeySequence keys: commands_.keySet())
-         shortcuts.add(new KeyboardShortcut(keys));
+      for (Map.Entry<KeySequence, List<AppCommandBinding>> entry : commands_.entrySet())
+         for (AppCommandBinding binding : entry.getValue())
+            shortcuts.add(binding.getShortcut());
       
       Collections.sort(shortcuts, new Comparator<KeyboardShortcut>()
       {
@@ -430,25 +430,47 @@ public class ShortcutManager implements NativePreviewHandler,
    private final KeySequence keyBuffer_;
    private final Timer keyTimer_;
    
+   private static class AppCommandBinding
+   {
+      public AppCommandBinding(AppCommand command, KeyboardShortcut shortcut)
+      {
+         command_ = command;
+         shortcut_ = shortcut;
+      }
+      
+      public AppCommand getCommand()
+      {
+         return command_;
+      }
+      
+      public KeyboardShortcut getShortcut()
+      {
+         return shortcut_;
+      }
+
+      private final AppCommand command_;
+      private final KeyboardShortcut shortcut_;
+   }
+   
    private static class AppCommandBindings
    {
       public AppCommandBindings()
       {
-         bindings_ = new HashMap<KeySequence, List<Pair<Integer, AppCommand>>>();
+         bindings_ = new HashMap<KeySequence, List<AppCommandBinding>>();
       }
       
       public void addCommandBinding(KeySequence keys, AppCommand command)
       {
-         addCommandBinding(keys, command, KeyboardShortcut.MODE_NONE);
+         addCommandBinding(keys, command, new KeyboardShortcut(keys));
       }
       
-      public void addCommandBinding(KeySequence keys, AppCommand command, int disableModes)
+      public void addCommandBinding(KeySequence keys, AppCommand command, KeyboardShortcut shortcut)
       {
          if (!bindings_.containsKey(keys))
-            bindings_.put(keys, new ArrayList<Pair<Integer, AppCommand>>());
+            bindings_.put(keys, new ArrayList<AppCommandBinding>());
          
-         List<Pair<Integer, AppCommand>> commands = bindings_.get(keys);
-         commands.add(new Pair<Integer, AppCommand>(disableModes, command));
+         List<AppCommandBinding> commands = bindings_.get(keys);
+         commands.add(new AppCommandBinding(command, shortcut));
       }
       
       public AppCommand getCommand(KeySequence keys,
@@ -464,11 +486,11 @@ public class ShortcutManager implements NativePreviewHandler,
          if (!bindings_.containsKey(keys))
             return null;
          
-         List<Pair<Integer, AppCommand>> commands = bindings_.get(keys);
-         for (Pair<Integer, AppCommand> pair : commands)
+         List<AppCommandBinding> commands = bindings_.get(keys);
+         for (AppCommandBinding binding : commands)
          {
-            int disableModes = pair.first;
-            AppCommand command = pair.second;
+            int disableModes = binding.getShortcut().getDisableModes();
+            AppCommand command = binding.getCommand();
             
             // If this command is masked by another command, skip it.
             if (maskedCommands != null && maskedCommands.containsKey(command))
@@ -494,10 +516,11 @@ public class ShortcutManager implements NativePreviewHandler,
       }
       
       public Set<KeySequence> keySet() { return bindings_.keySet(); }
+      public Set<Map.Entry<KeySequence, List<AppCommandBinding>>> entrySet() { return bindings_.entrySet(); }
       public boolean containsKey(KeySequence keys) { return bindings_.containsKey(keys); }
       public void clear() { bindings_.clear(); }
       
-      private final Map<KeySequence, List<Pair<Integer, AppCommand>>> bindings_;
+      private final Map<KeySequence, List<AppCommandBinding>> bindings_;
    }
    
    private final AppCommandBindings commands_ =

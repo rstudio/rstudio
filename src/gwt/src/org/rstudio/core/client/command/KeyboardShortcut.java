@@ -358,6 +358,11 @@ public class KeyboardShortcut
       disableModes_ = ShortcutManager.parseDisableModes(disableModes);
    }
    
+   public int getDisableModes()
+   {
+      return disableModes_;
+   }
+   
    public KeySequence getKeySequence()
    {
       return keySequence_;
