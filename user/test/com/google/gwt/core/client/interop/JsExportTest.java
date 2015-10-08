@@ -18,6 +18,8 @@ package com.google.gwt.core.client.interop;
 import static com.google.gwt.core.client.ScriptInjector.TOP_WINDOW;
 
 import com.google.gwt.core.client.ScriptInjector;
+import com.google.gwt.core.client.js.JsExport;
+import com.google.gwt.core.client.js.JsNamespace;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -144,8 +146,42 @@ public class JsExportTest extends GWTTestCase {
     return obj.getInstance();
   }-*/;
 
+  @JsExport
+  @JsNamespace("bar.foo.baz")
+  static class MyExportedClassCorrectNamespace {
+    public MyExportedClassCorrectNamespace() { }
+  }
+
+  public void testExportClass_correctNamespace() {
+    assertNull(getGlobalByQualifiedName("bar.MyExportedClassCorrectNamespace"));
+    assertNull(getGlobalByQualifiedName("bar.foo.MyExportedClassCorrectNamespace"));
+    assertTrue(isFunction(getGlobalByQualifiedName("bar.foo.baz.MyExportedClassCorrectNamespace")));
+    Object o = newInstance(getGlobalByQualifiedName("bar.foo.baz.MyExportedClassCorrectNamespace"));
+    assertNotNull(o);
+    assertTrue(o instanceof MyExportedClassCorrectNamespace);
+  }
+
+  private native Object getGlobalByQualifiedName(String qualifiedName) /*-{
+    var components = qualifiedName.split('\.');
+    var scope = $global;
+    for (var i = 0; i < components.length; i++) {
+      scope = scope[components[i]];
+    }
+    return scope;
+  }-*/;
+
+  private native boolean isFunction(Object object) /*-{
+    return typeof object == "function";
+  }-*/;
+
+  private native Object newInstance(Object jsConstructor) /*-{
+    return new jsConstructor;
+  }-*/;
+
   public void testExportClass_implicitConstructor() {
-    assertNotNull(createMyExportedClassWithImplicitConstructor());
+    Object o = createMyExportedClassWithImplicitConstructor();
+    assertNotNull(o);
+    assertTrue(o instanceof MyExportedClassWithImplicitConstructor);
   }
 
   private native Object createMyExportedClassWithImplicitConstructor() /*-{
