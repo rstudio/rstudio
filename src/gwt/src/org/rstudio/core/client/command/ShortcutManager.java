@@ -201,6 +201,8 @@ public class ShortcutManager implements NativePreviewHandler,
       if (keys.size() <= 1)
          return;
       
+      maxBindingLength_ = Math.max(maxBindingLength_, keys.size());
+      
       KeySequence prefixes = new KeySequence();
       for (int i = 0; i < keys.size() - 1; i++)
       {
@@ -219,7 +221,6 @@ public class ShortcutManager implements NativePreviewHandler,
             new KeyboardShortcut(keys, groupName, title, disableModes);
       
       // Update state related to key dispatch.
-      maxBindingLength_ = Math.max(maxBindingLength_, keys.size());
       updateKeyPrefixes(shortcut);
       
       if (command == null)
