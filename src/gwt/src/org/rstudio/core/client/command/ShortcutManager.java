@@ -131,6 +131,7 @@ public class ShortcutManager implements NativePreviewHandler,
    
    public void addCustomBinding(KeySequence keys, AppCommand command)
    {
+      updateKeyPrefixes(keys);
       customBindings_.addCommandBinding(keys, command);
       maskedCommands_.put(command, true);
    }
@@ -139,6 +140,7 @@ public class ShortcutManager implements NativePreviewHandler,
    {
       customBindings_.clear();
       maskedCommands_.clear();
+      refreshKeyPrefixes();
    }
    
    public void register(int modifiers, 
@@ -179,17 +181,31 @@ public class ShortcutManager implements NativePreviewHandler,
       register(keys, command, "", "", "");
    }
    
+   private void refreshKeyPrefixes()
+   {
+      prefixes_.clear();
+      for (KeySequence keys : commands_.keySet())
+         updateKeyPrefixes(keys);
+      
+      for (KeySequence keys : customBindings_.keySet())
+         updateKeyPrefixes(keys);
+   }
+   
    private void updateKeyPrefixes(KeyboardShortcut shortcut)
    {
-      KeySequence ks = shortcut.getKeySequence();
-      if (ks.size() <= 1)
+      updateKeyPrefixes(shortcut.getKeySequence());
+   }
+   
+   private void updateKeyPrefixes(KeySequence keys)
+   {
+      if (keys.size() <= 1)
          return;
       
-      KeySequence keys = new KeySequence();
-      for (int i = 0; i < ks.size() - 1; i++)
+      KeySequence prefixes = new KeySequence();
+      for (int i = 0; i < keys.size() - 1; i++)
       {
-         keys.add(ks.get(i));
-         prefixes_.add(keys.clone());
+         prefixes.add(keys.get(i));
+         prefixes_.add(prefixes.clone());
       }
    }
    
@@ -402,12 +418,17 @@ public class ShortcutManager implements NativePreviewHandler,
       if (!bindings.containsKey(keys))
          return false;
       
-      AppCommand command = bindings.getCommand(keys, editorMode_);
+      AppCommand command = bindings.getCommand(keys, editorMode_, maskedCommandsMap);
       if (command == null)
          return false;
       
-      // Found a command -- execute and return
+      // Found a command -- prevent the default event.
       event.preventDefault();
+      
+      // Some commands want us to swallow the event when disabled.
+      if (!command.isEnabled() && command.preventShortcutWhenDisabled())
+         return true;
+      
       command.executeFromShortcut();
       return true;
    }
@@ -439,7 +460,15 @@ public class ShortcutManager implements NativePreviewHandler,
          commands.add(new Pair<Integer, AppCommand>(disableModes, command));
       }
       
-      public AppCommand getCommand(KeySequence keys, int editorMode)
+      public AppCommand getCommand(KeySequence keys,
+                                   int editorMode)
+      {
+         return getCommand(keys, editorMode, null);
+      }
+      
+      public AppCommand getCommand(KeySequence keys,
+                                   int editorMode,
+                                   Map<AppCommand, Boolean> maskedCommands)
       {
          if (!bindings_.containsKey(keys))
             return null;
@@ -450,8 +479,14 @@ public class ShortcutManager implements NativePreviewHandler,
             int disableModes = pair.first;
             AppCommand command = pair.second;
             
+            // If this command is masked by another command, skip it.
+            if (maskedCommands != null && maskedCommands.containsKey(command))
+               continue;
+            
             boolean enabled = command.isEnabled() && (disableModes & editorMode) == 0;
-            if (enabled)
+            boolean shouldSwallowEvent = !enabled && command.preventShortcutWhenDisabled();
+            
+            if (enabled || shouldSwallowEvent)
                return command;
          }
          
