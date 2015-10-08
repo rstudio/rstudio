@@ -93,7 +93,15 @@ public class ShortcutManager implements NativePreviewHandler,
       // NOTE: Because this class is used as a singleton and is never
       // destroyed it's not necessary to manage lifetime of this event handler
       Event.addNativePreviewHandler(this);
+      addPostViewHandler();
    }
+   
+   private native final void addPostViewHandler() /*-{
+      var self = this;
+      $doc.body.addEventListener("keydown", $entry(function(evt) {
+         self.@org.rstudio.core.client.command.ShortcutManager::swallowEvents(Ljava/lang/Object;)(evt);
+      }));
+   }-*/;
    
    @Inject
    private void initialize(ApplicationCommandManager appCommands,
@@ -385,14 +393,6 @@ public class ShortcutManager implements NativePreviewHandler,
       if (dispatch(shortcut, commands_, e, maskedCommands_))
          return true;
       
-      // Did not dispatch to RStudio AppCommand. Suppress keypresses
-      // that we don't want to reach the browser.
-      if (shouldSwallowEvent(e))
-      {
-         e.stopPropagation();
-         e.preventDefault();
-      }
-      
       return false;
    }
    
@@ -427,18 +427,25 @@ public class ShortcutManager implements NativePreviewHandler,
       return true;
    }
    
-   private boolean shouldSwallowEvent(NativeEvent e)
+   private void swallowEvents(Object object)
    {
-      KeyCombination keys = new KeyCombination(e);
+      NativeEvent event = (NativeEvent) object;
+      
+      // Suppress save / quit events from reaching the browser
+      KeyCombination keys = new KeyCombination(event);
       int keyCode = keys.getKeyCode();
+      int modifiers = keys.getModifier();
       
-      boolean isSaveKey = keyCode == KeyCodes.KEY_S;
+      boolean isSaveQuitKey =
+            keyCode == KeyCodes.KEY_S ||
+            keyCode == KeyCodes.KEY_W;
       
-      boolean isSaveModifier = BrowseCap.isMacintosh() ?
-            keys.getModifier() == KeyboardShortcut.META :
-            keys.getModifier() == KeyboardShortcut.CTRL;
+      boolean isSaveQuitModifier = BrowseCap.isMacintosh() ?
+            modifiers == KeyboardShortcut.META :
+            modifiers == KeyboardShortcut.CTRL;
       
-      return isSaveKey && isSaveModifier;
+      if (isSaveQuitKey && isSaveQuitModifier)
+         event.preventDefault();
    }
    
    private int disableCount_ = 0;
