@@ -37,7 +37,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyb
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
@@ -201,8 +200,6 @@ public class ShortcutManager implements NativePreviewHandler,
       if (keys.size() <= 1)
          return;
       
-      maxBindingLength_ = Math.max(maxBindingLength_, keys.size());
-      
       KeySequence prefixes = new KeySequence();
       for (int i = 0; i < keys.size() - 1; i++)
       {
@@ -277,7 +274,6 @@ public class ShortcutManager implements NativePreviewHandler,
       if (handleKeyDown(evt.getEvent()))
       {
          evt.cancel();
-         keyBuffer_.clear();
          events_.fireEvent(new RStudioCommandExecutedFromShortcutEvent());
       }
    }
@@ -293,7 +289,6 @@ public class ShortcutManager implements NativePreviewHandler,
          if (handleKeyDown(event.getNativeEvent()))
          {
             event.cancel();
-            keyBuffer_.clear();
             events_.fireEvent(new RStudioCommandExecutedFromShortcutEvent());
          }
       }
@@ -366,11 +361,15 @@ public class ShortcutManager implements NativePreviewHandler,
          return false;
       
       keyBuffer_.add(e);
-      KeyboardShortcut shortcut = new KeyboardShortcut(keyBuffer_);
+      KeyboardShortcut shortcut = new KeyboardShortcut(keyBuffer_.clone());
       
       // If this matches a prefix key, return false early.
       if (prefixes_.contains(shortcut.getKeySequence()))
          return false;
+      
+      // Clear the key buffer (we've reached a 'leaf' for the
+      // key sequence chain; there may or may not be a command)
+      keyBuffer_.clear();
       
       // Check for user-defined commands.
       if (userCommands_.dispatch(shortcut))
@@ -383,15 +382,6 @@ public class ShortcutManager implements NativePreviewHandler,
       // Check for RStudio AppCommands.
       if (dispatch(shortcut, commands_, e, maskedCommands_))
          return true;
-      
-      // Check for escape -- clear the keybuffer.
-      if (e.getKeyCode() == KeyCodes.KEY_ESCAPE)
-         keyBuffer_.clear();
-      
-      // Clear the keybuffer if it's grown beyond the length of
-      // the longest command.
-      if (keyBuffer_.size() >= maxBindingLength_)
-         keyBuffer_.clear();
       
       // Did not dispatch to RStudio AppCommand -- return false
       return false;
@@ -524,10 +514,6 @@ public class ShortcutManager implements NativePreviewHandler,
    
    private Set<KeySequence> prefixes_ =
          new HashSet<KeySequence>();
-   
-   // Assume that there will be bindings (e.g. in Ace)
-   // that accept 2 key strokes
-   private int maxBindingLength_ = 2;
    
    // Injected ----
    private UserCommandManager userCommands_;
