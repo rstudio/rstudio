@@ -484,10 +484,14 @@ public class ShortcutManager implements NativePreviewHandler,
             if (maskedCommands != null && maskedCommands.containsKey(command))
                continue;
             
+            // Check to see whether this command is enabled for the current
+            // editor mode.
             boolean enabled =
                   command.isEnabled() &&
                   (disableModes & editorMode) == 0;
             
+            // Check to see if this event should be swallowed (accepted as the
+            // current command, but not executed).
             boolean shouldSwallowEvent =
                   !command.isEnabled() &&
                   command.preventShortcutWhenDisabled();
