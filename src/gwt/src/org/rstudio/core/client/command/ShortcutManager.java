@@ -247,7 +247,7 @@ public class ShortcutManager implements NativePreviewHandler,
    
    public static int parseDisableModes(String disableModes)
    {
-      int mode = KeyboardShortcut.MODE_DEFAULT;
+      int mode = KeyboardShortcut.MODE_NONE;
       
       if (StringUtil.isNullOrEmpty(disableModes))
          return mode;
@@ -435,7 +435,7 @@ public class ShortcutManager implements NativePreviewHandler,
    }
    
    private int disableCount_ = 0;
-   private int editorMode_ = KeyboardShortcut.MODE_NONE;
+   private int editorMode_ = KeyboardShortcut.MODE_DEFAULT;
    
    private final KeySequence keyBuffer_;
    private final Timer keyTimer_;
@@ -449,7 +449,7 @@ public class ShortcutManager implements NativePreviewHandler,
       
       public void addCommandBinding(KeySequence keys, AppCommand command)
       {
-         addCommandBinding(keys, command, 0);
+         addCommandBinding(keys, command, KeyboardShortcut.MODE_NONE);
       }
       
       public void addCommandBinding(KeySequence keys, AppCommand command, int disableModes)
@@ -484,8 +484,13 @@ public class ShortcutManager implements NativePreviewHandler,
             if (maskedCommands != null && maskedCommands.containsKey(command))
                continue;
             
-            boolean enabled = command.isEnabled() && (disableModes & editorMode) == 0;
-            boolean shouldSwallowEvent = !enabled && command.preventShortcutWhenDisabled();
+            boolean enabled =
+                  command.isEnabled() &&
+                  (disableModes & editorMode) == 0;
+            
+            boolean shouldSwallowEvent =
+                  !command.isEnabled() &&
+                  command.preventShortcutWhenDisabled();
             
             if (enabled || shouldSwallowEvent)
                return command;
