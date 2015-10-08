@@ -81,7 +81,7 @@
     <pathelement location="${gwt.tools.lib}/testng/testng-5.14.1-sources.jar"/>
     <pathelement location="${gwt.tools.lib}/testng/testng-5.14.1-nojunit.jar"/>
     <pathelement location="${gwt.dev.jar}"/>
-    <pathelement location="${gwt.tools.lib}/gss/2015-02-18/closure-stylesheets-library-20150218-rebased.jar"/>
+    <pathelement location="${gwt.tools.lib}/gss/2015-10-07/closure-stylesheets-library-20151007-rebased.jar"/>
   </path>
 
   <target name="compile" description="Compile all class files"
@@ -89,7 +89,7 @@
     <mkdir dir="${javac.out}"/>
     <gwt.javac excludes="**/super/**">
       <classpath>
-        <pathelement location="${gwt.tools.lib}/gss/2015-02-18/closure-stylesheets-library-20150218-rebased.jar"/>
+        <pathelement location="${gwt.tools.lib}/gss/2015-10-07/closure-stylesheets-library-20151007-rebased.jar"/>
         <pathelement
             location="${gwt.tools.lib}/jetty/jetty-8.1.12.v20130726/servlet-api-3.0-NoMetaInf.jar"/>
         <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar"/>
@@ -152,7 +152,7 @@
       <zipfileset src="${gwt.tools.lib}/w3c/flute/flute-1.3-gg2.jar"/>
       <zipfileset
           src="${gwt.tools.lib}/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar"/>
-      <zipfileset src="${gwt.tools.lib}/gss/2015-02-18/closure-stylesheets-library-20150218-rebased.jar"/>
+      <zipfileset src="${gwt.tools.lib}/gss/2015-10-07/closure-stylesheets-library-20151007-rebased.jar"/>
     </gwt.jar>
   </target>
 
