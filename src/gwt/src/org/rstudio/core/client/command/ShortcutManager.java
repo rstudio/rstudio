@@ -413,13 +413,7 @@ public class ShortcutManager implements NativePreviewHandler,
       if (command == null)
          return false;
       
-      // Found a command -- prevent the default event.
       event.preventDefault();
-      
-      // Some commands want us to swallow the event when disabled.
-      if (!command.isEnabled() && command.preventShortcutWhenDisabled())
-         return true;
-      
       command.executeFromShortcut();
       return true;
    }
@@ -502,13 +496,7 @@ public class ShortcutManager implements NativePreviewHandler,
                   command.isEnabled() &&
                   (disableModes & editorMode) == 0;
             
-            // Check to see if this event should be swallowed (accepted as the
-            // current command, but not executed).
-            boolean shouldSwallowEvent =
-                  !command.isEnabled() &&
-                  command.preventShortcutWhenDisabled();
-            
-            if (enabled || shouldSwallowEvent)
+            if (enabled)
                return command;
          }
          
