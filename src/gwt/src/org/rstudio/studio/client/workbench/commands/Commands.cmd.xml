@@ -588,7 +588,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="openSourceDoc" value="Ctrl+O" disableModes="emacs"/>
          <shortcut refid="openSourceDoc" value="Meta+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          
-         <shortcut refid="closeSourceDoc" value="Ctrl+X k" disableModes="default,vim"/>
+         <shortcut refid="closeSourceDoc" value="Ctrl+X K" disableModes="default,vim"/>
          <shortcut refid="closeSourceDoc" value="Cmd+W" disableModes="emacs"/>
          
          <shortcut refid="closeOtherSourceDocs" value="Cmd+Shift+Alt+W"/>
