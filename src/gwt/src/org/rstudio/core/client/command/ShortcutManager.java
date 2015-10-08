@@ -25,6 +25,7 @@ import java.util.Set;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.KeyboardShortcut.KeyCombination;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
@@ -36,6 +37,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyb
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
@@ -383,7 +385,14 @@ public class ShortcutManager implements NativePreviewHandler,
       if (dispatch(shortcut, commands_, e, maskedCommands_))
          return true;
       
-      // Did not dispatch to RStudio AppCommand -- return false
+      // Did not dispatch to RStudio AppCommand. Suppress keypresses
+      // that we don't want to reach the browser.
+      if (shouldSwallowEvent(e))
+      {
+         e.stopPropagation();
+         e.preventDefault();
+      }
+      
       return false;
    }
    
@@ -416,6 +425,22 @@ public class ShortcutManager implements NativePreviewHandler,
       event.preventDefault();
       command.executeFromShortcut();
       return true;
+   }
+   
+   private boolean shouldSwallowEvent(NativeEvent e)
+   {
+      KeyCombination keys = new KeyCombination(e);
+      int keyCode = keys.getKeyCode();
+      
+      boolean isSaveQuitKey =
+            keyCode == KeyCodes.KEY_S ||
+            keyCode == KeyCodes.KEY_W;
+      
+      boolean isSaveQuitModifier = BrowseCap.isMacintosh() ?
+            keys.getModifier() == KeyboardShortcut.META :
+            keys.getModifier() == KeyboardShortcut.CTRL;
+      
+      return isSaveQuitKey && isSaveQuitModifier;
    }
    
    private int disableCount_ = 0;

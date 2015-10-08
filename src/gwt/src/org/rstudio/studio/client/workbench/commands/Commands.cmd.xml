@@ -800,8 +800,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="closeSourceDoc"
         label="Close Current Document"
         menuLabel="_Close"
-        enabled="false"
-        preventShortcutWhenDisabled="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
+        enabled="false"/>
         
    <cmd id="closeAllSourceDocs"
         label="Close All Documents"
