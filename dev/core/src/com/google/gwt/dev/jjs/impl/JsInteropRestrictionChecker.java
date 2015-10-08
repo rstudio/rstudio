@@ -499,8 +499,6 @@ public class JsInteropRestrictionChecker {
   }
 
   private boolean checkNativeJsType(JDeclaredType type) {
-    // TODO(rluble): add inheritance restrictions.
-
     if (type.isEnumOrSubclass() != null) {
       logError("Enum '%s' cannot be a native JsType.", type);
       return false;
@@ -509,6 +507,20 @@ public class JsInteropRestrictionChecker {
     if (type.getClassDisposition() == NestedClassDisposition.INNER) {
       logError("Non static inner class '%s' cannot be a native JsType.", type);
       return false;
+    }
+
+    JClassType superClass = type.getSuperClass();
+    if (superClass != null && superClass != jprogram.getTypeJavaLangObject() &&
+        !superClass.isJsNative()) {
+      logError("Native JsType '%s' can only extend native JsType classes.", type);
+    }
+
+    for (JInterfaceType interfaceType : type.getImplements()) {
+      if (!interfaceType.isJsNative()) {
+        logError(type, "Native JsType '%s' can only %s native JsType interfaces.",
+            getDescription(type),
+            type instanceof JInterfaceType ? "extend" : "implement");
+      }
     }
 
     if (!isClinitEmpty(type)) {
