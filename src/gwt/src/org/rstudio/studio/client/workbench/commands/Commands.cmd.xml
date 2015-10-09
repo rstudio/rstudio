@@ -512,7 +512,6 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="jumpToMatching" value="Ctrl+P" disableModes="emacs"/>
          <shortcut refid="expandToMatching" value="Ctrl+Shift+E" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="expandToMatching" value="Ctrl+Shift+Alt+E" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="splitIntoLines" value="Cmd+Alt+A"/>
          <shortcut refid="toggleDocumentOutline" value="Cmd+Shift+O"/>
          <shortcut value="Ctrl+Alt+Up" title="Add cursor above current cursor"/>
          <shortcut value="Ctrl+Alt+Down" title="Add cursor below current cursor"/>
@@ -522,6 +521,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="shrinkSelection" value="Cmd+Alt+Shift+Down" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="goToNextSection" value="Cmd+PageDown"/>
          <shortcut refid="goToPrevSection" value="Cmd+PageUp"/>
+         <shortcut refid="goToStartOfCurrentScope" value="Ctrl+Alt+A"/>
+         <shortcut refid="goToEndOfCurrentScope" value="Ctrl+Alt+E"/>
          <shortcut value="Cmd+Alt+Up" title="Add cursor above current cursor"/>
          <shortcut value="Cmd+Alt+Down" title="Add cursor below current cursor"/>
          <shortcut value="Ctrl+Alt+Shift+Up" title="Move active cursor up"/>
@@ -612,11 +613,13 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="sourceFile" value="Ctrl+Alt+G" title="Source a File..."/>
          <shortcut refid="executeLastCode" value="Cmd+Shift+P"/>
          <shortcut refid="executeCode" value="Cmd+R" if="org.rstudio.core.client.BrowseCap.isWindowsDesktop()" disableModes="vim"/>
+         <shortcut refid="executeCode" value="Ctrl+X Ctrl+N" disableModes="default,vim"/>
          <shortcut refid="executeCode" value="Cmd+Enter"/>
          <shortcut refid="executeCodeWithoutMovingCursor" value="Alt+Enter"/>
          <shortcut refid="executeAllCode" value="Cmd+Alt+R"/>
          <shortcut refid="executeToCurrentLine" value="Cmd+Alt+B"/>
          <shortcut refid="executeFromCurrentLine" value="Cmd+Alt+E"/>
+         <shortcut refid="executeCurrentFunction" value="Ctrl+C Ctrl+F" disableModes="default,vim"/>
          <shortcut refid="executeCurrentFunction" value="Cmd+Alt+F"/>
          <shortcut refid="executeCurrentSection" value="Cmd+Alt+T"/>
          <shortcut refid="executePreviousChunks" value="Cmd+Alt+P"/>
@@ -657,7 +660,9 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="viewerSaveAllAndRefresh" value="Cmd+Shift+F5"/>
          <shortcut refid="helpKeyboardShortcuts" value="Alt+Shift+K"/>
          <shortcut refid="toggleFullScreen" value="Ctrl+Meta+F" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
-         <shortcut refid="showOptions" value="Cmd+," if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="showOptions" value="Meta+," if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="projectOptions" value="Shift+Meta+," if="org.rstudio.core.client.BrowseCap.isMacintosh()"/> 
+         <shortcut refid="goToHelp" value="Ctrl+C Ctrl+V" disableModes="default,vim"/>
       </shortcutgroup>
       <shortcutgroup name="Console">
          <shortcut refid="consoleClear" value="Ctrl+L" disableModes="emacs"/>
@@ -1469,6 +1474,12 @@ well as menu structures (for main menu and popup menus).
         label="Go to Previous Section"
         buttonLabel=""
         desc="Go to previous section/chunk"
+        context="editor"/>
+        
+   <cmd id="goToStartOfCurrentScope"
+        context="editor"/>
+   
+   <cmd id="goToEndOfCurrentScope"
         context="editor"/>
    
    <cmd id="expandRaggedSelection"
