@@ -374,11 +374,21 @@
   # check to see if this is an interactive doc (i.e. needs to be run rather
   # rather than rendered)
   renderFunction <- .rs.getCustomRenderFunction(target)
+
+  # attempt to see whether a Connect account is available to publish this doc
+  hasConnectAccount <- FALSE
+   tryCatch({
+     # rsconnect comes with a cloud server configured by default; presume any
+     # additional servers are Connect
+     hasConnectAccount <- nrow(rsconnect::servers()) > 1
+   }, error = function(e) { })
+
   list(
-    is_multi_rmd      = .rs.scalar(length(rmds) > 1), 
-    is_shiny_rmd      = .rs.scalar(renderFunction == "rmarkdown::run"),
-    is_self_contained = .rs.scalar(selfContained),
-    title             = .rs.scalar(title))
+    is_multi_rmd        = .rs.scalar(length(rmds) > 1), 
+    is_shiny_rmd        = .rs.scalar(renderFunction == "rmarkdown::run"),
+    is_self_contained   = .rs.scalar(selfContained),
+    title               = .rs.scalar(title),
+    has_connect_account = .rs.scalar(hasConnectAccount))
 })
 
 # indicates whether there appear to be accounts registered on the system that
