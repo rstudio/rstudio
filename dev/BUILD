@@ -20,10 +20,8 @@ licenses(["unencumbered"])
 
 package(
     default_visibility = [
-        "//third_party/java_src/gwt:__pkg__",
-        "//third_party/java_src/gwt/legacy:__pkg__",
-        "//third_party/java_src/gwt/svn/trunk/dev/codeserver:__pkg__",
-        "//third_party/java_src/gwt/svn/trunk/user:__pkg__",
+        "//third_party/java/gwt:__subpackages__",
+        "//third_party/java_src/gwt:__subpackages__",
     ],
 )
 
@@ -244,24 +242,27 @@ Zip(
 # CAUTION: Most internal Google code ends up depending on this, via
 #  //j/c/g/common/collect:collect-gwt.  You really don't want it to be big!
 java_library(
-    name = "interop-annotations",
+    name = "gwt-dev-interop-annotations",
     srcs = [
         "core/super/com/google/gwt/core/client/GwtScriptOnly.java",
         "core/super/com/google/gwt/core/client/UnsafeNativeLong.java",
     ],
     constraints = [
         "android",
-        "gwt",
-        "public",
     ],
-    gwtxml = ":interop-annotations-gwtxml",
 )
 
-# (This is a genrule so that it won't be mirrored to svn and git.)
-genrule(
-    name = "interop-annotations-gwtxml",
-    outs = ["Gwt-dev-interop-annotations.gwt.xml"],
-    cmd = "$(ECHO) '<module><source path=\"client\" /></module>' > $(@)",
+# A minimal library for a subset of the internal annotations for the
+# GWT compiler.
+java_library(
+    name = "gwt-dev-internal-annotations",
+    srcs = [
+        "core/super/javaemul/internal/annotations/CompilerHint.java",
+        "core/super/javaemul/internal/annotations/DoNotInline.java",
+    ],
+    constraints = [
+        "android",
+    ],
 )
 
 # All test code in dev.

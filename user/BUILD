@@ -138,18 +138,27 @@ genrule(
            "$(location java/com/google/web/bindery/autobean/AutoBean.gwt.xml)"),
 )
 
+java_import(
+    name = "autobean_import",
+    constraints = [
+        "gwt",
+        "public",
+    ],
+    jars = [":autobean-classes-src.jar"],
+    deps = [
+        "//third_party/java_src/gwt:gwt-dev",
+        "//third_party/java_src/gwt:gwt-user-full",
+    ],
+)
+
 java_library(
     name = "autobean",
-    srcs = [":autobean-classes-src.jar"],
     constraints = [
         "gwt",
         "public",
     ],
     gwtxml = "java/com/google/web/bindery/autobean/AutoBean.gwt.xml",
-    deps = [
-        "//third_party/java_src/gwt:gwt-dev",
-        "//third_party/java_src/gwt:gwt-user-full",
-    ],
+    exports = [":autobean_import"],
 )
 
 # Packages just IncrementalBuilder test resource into a jar with correct java root.
@@ -209,9 +218,9 @@ java_library(
 # this package are distributed in one form (through the class jars, as AugmentedJar does)
 # This prevents them appearing them on classpath as both sources and classes, which confuses javac
 # For example see b/3033925
-java_library(
+java_import(
     name = "gwt-servlet-internal",
-    srcs = [":libgwt-servlet-impl.jar"],
+    jars = [":libgwt-servlet-impl.jar"],
 )
 
 java_library(
@@ -405,17 +414,7 @@ java_library(
     ],
     constraints = [
         "android",
-        "gwt",
-        "public",
     ],
-    gwtxml = "Gwt-jsinterop-annotations.gwt.xml",
-)
-
-# (This is a genrule so that it won't be mirrored to svn and git.)
-genrule(
-    name = "jsinterop-annotations-gwtxml",
-    outs = ["Gwt-jsinterop-annotations.gwt.xml"],
-    cmd = "$(ECHO) '<module><source path=\"client\" /></module>' > $(@)",
 )
 
 # Creates gwt-testing.jar, which contains GWTTestCase and its infrastructure.
@@ -469,11 +468,6 @@ java_library(
     ],
     constraints = [
         "android",
-        "gwt",
-        "public",
-    ],
-    deps = [
-        "//third_party/java/jsr305_annotations",
     ],
 )
 
