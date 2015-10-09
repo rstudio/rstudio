@@ -172,7 +172,7 @@ options(help_type = "html")
          formals[["ignore.environment"]] <- TRUE
       
       result <- tryCatch(
-         .rs.apply(base::identical, formals),
+         do.call(base::identical, formals),
          error = function(e) FALSE
       )
       

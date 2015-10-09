@@ -1664,8 +1664,3 @@
    
    return(result)
 })
-
-# Like 'do.call(expr, args, quote = TRUE)'.
-.rs.addFunction("apply", function(fn, args) {
-   eval(as.call(c(substitute(fn), lapply(args, enquote))), envir = parent.frame())
-})
