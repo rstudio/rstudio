@@ -269,38 +269,6 @@ var Utils = require("mode/utils");
 
    });
 
-   addExpansionRule("expandLines", false, function(editor, session, selection, range) {
-
-      var startLine = session.getLine(range.start.row);
-      var startRowFirstCharIdx = indexOfFirstNonWhitespaceChar(startLine, 0);
-
-      var endLine = session.getLine(range.end.row);
-      var endRowLastCharIdx = indexOfLastNonWhitespaceChar(endLine, endLine.length);
-
-      if (range.start.column > startRowFirstCharIdx ||
-          range.end.column < endRowLastCharIdx)
-      {
-         var candidate = new Range(
-            range.start.row,
-            startRowFirstCharIdx,
-            range.end.row,
-            endRowLastCharIdx
-         );
-
-         // Avoid single-line selections of just whitespace.
-         if (candidate.start.row === candidate.end.row &&
-             session.getLine(candidate.start.row).trim().length === 0)
-         {
-            return null;
-         }
-
-         return candidate;
-      }
-
-      return null;
-
-   });
-
    addExpansionRule("nonBlankLines", false, function(editor, session, selection, range) {
 
       // Only apply in Markdown mode for now.
