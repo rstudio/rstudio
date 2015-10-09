@@ -69,6 +69,7 @@ import com.google.gwt.thirdparty.guava.common.base.Predicates;
 import com.google.gwt.thirdparty.guava.common.collect.Collections2;
 import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.Arrays;
@@ -317,6 +318,30 @@ public class JjsUtils {
             return (JReferenceType) typedNode.getType();
           }
         });
+  }
+
+  /**
+   * Returns true if the method is a synthetic accidental override that trivially dispatches to its
+   * same name super.
+   */
+  public static boolean isUnnecessarySyntheticAccidentalOverride(JMethod method) {
+    // Assumptions on synthethic overrides, if any of these change.
+    assert !method.isSyntheticAccidentalOverride() || !method.exposesPackagePrivateMethod();
+
+    if (!method.isSyntheticAccidentalOverride()) {
+      return false;
+    }
+
+    boolean overridesConcreteMethod = Iterables.any(method.getOverriddenMethods(),
+        new Predicate<JMethod>() {
+          @Override
+          public boolean apply(JMethod method) {
+            return !method.isAbstract();
+          }
+        });
+    // A synthetic accidental  override is unnecessary iff it retains the same property
+    // name (polyname) as the the concrete method it overrides.
+    return overridesConcreteMethod && !method.exposesNonJsMethod();
   }
 
   /**

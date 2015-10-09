@@ -91,6 +91,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
   private boolean preventDevirtualization = false;
   private boolean hasSideEffects = true;
   private boolean defaultMethod = false;
+  private boolean syntheticAccidentalOverride = false;
 
   @Override
   public void setJsMemberInfo(String namespace, String name, boolean exported) {
@@ -242,6 +243,14 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
 
   public boolean isJsNative() {
     return enclosingType != null && enclosingType.isJsNative();
+  }
+
+  public void setSyntheticAccidentalOverride() {
+    this.syntheticAccidentalOverride = true;
+  }
+
+  public boolean isSyntheticAccidentalOverride() {
+    return syntheticAccidentalOverride;
   }
 
   public void setSpecialization(List<JType> paramTypes, JType returnsType, String targetMethod) {

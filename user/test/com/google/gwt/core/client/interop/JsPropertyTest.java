@@ -365,6 +365,48 @@ public class JsPropertyTest extends GWTTestCase {
   }
 
   @JsType(isNative = true)
+  interface AccidentalOverridePropertyJsTypeInterface {
+    @JsProperty
+    int getX();
+  }
+
+  static class AccidentalOverridePropertyBase {
+    public int getX() {
+      return 50;
+    }
+  }
+
+  static class AccidentalOverrideProperty extends AccidentalOverridePropertyBase
+      implements AccidentalOverridePropertyJsTypeInterface {
+  }
+
+  public void testJsPropertyAccidentalOverrideSuperCall() {
+    AccidentalOverrideProperty object = new AccidentalOverrideProperty();
+    assertEquals(50, object.getX());
+    assertEquals(50, getProperty(object, "x"));
+  }
+
+  @JsType
+  static class RemovedAccidentalOverridePropertyBase {
+    @JsProperty
+    public int getX() {
+      return 55;
+    }
+  }
+
+  static class RemovedAccidentalOverrideProperty extends RemovedAccidentalOverridePropertyBase
+      implements AccidentalOverridePropertyJsTypeInterface {
+  }
+
+  public void testJsPropertyRemovedAccidentalOverrideSuperCall() {
+    RemovedAccidentalOverrideProperty object = new RemovedAccidentalOverrideProperty();
+    // If the accidental override here were not removed the access to property x would result in
+    // an infinite loop
+    assertEquals(55, object.getX());
+    assertEquals(55, getProperty(object, "x"));
+  }
+
+  @JsType(isNative = true)
   interface JsTypeGetProperty {
 
     @JsProperty
