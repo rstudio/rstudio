@@ -46,6 +46,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
@@ -77,10 +78,12 @@ import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
 
 import java.util.ArrayList;
@@ -398,7 +401,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       EditorKeyBindings editorBindings = EditorKeyBindings.create();
       EditorKeyBindings appBindings = EditorKeyBindings.create();
       
-      
       // Loop through all changes and apply based on type
       for (Map.Entry<CommandBinding, CommandBinding> entry : changes_.entrySet())
       {
@@ -427,6 +429,16 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       appCommands_.addBindingsAndSave(appBindings);
       editorCommands_.addBindingsAndSave(editorBindings);
       
+      // Tell satellites that they need to update bindings.
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            events_.fireEvent(new KeybindingsChangedEvent());
+         }
+      }.schedule(2000);
+      
       closeDialog();
    }
    
@@ -434,12 +446,16 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    public void initialize(EditorCommandManager editorCommands,
                           ApplicationCommandManager appCommands,
                           Commands commands,
-                          GlobalDisplay globalDisplay)
+                          GlobalDisplay globalDisplay,
+                          EventBus events,
+                          SourceWindowManager sourceWindowManager)
    {
       editorCommands_ = editorCommands;
       appCommands_ = appCommands;
       commands_ = commands;
       globalDisplay_ = globalDisplay;
+      events_ = events;
+      sourceWindowManager_ = sourceWindowManager;
    }
    
    private void addColumns()
@@ -1248,6 +1264,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private ApplicationCommandManager appCommands_;
    private Commands commands_;
    private GlobalDisplay globalDisplay_;
+   private EventBus events_;
+   private SourceWindowManager sourceWindowManager_;
    
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources

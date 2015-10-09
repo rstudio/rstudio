@@ -20,6 +20,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.files.FileBacked;
+import org.rstudio.core.client.widget.KeybindingsChangedEvent;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -49,6 +50,17 @@ public class ApplicationCommandManager
             {
                @Override
                public void onEditorLoaded(EditorLoadedEvent event)
+               {
+                  loadBindings();
+               }
+            });
+      
+      events_.addHandler(
+            KeybindingsChangedEvent.TYPE,
+            new KeybindingsChangedEvent.Handler()
+            {
+               @Override
+               public void onKeybindingsChanged(KeybindingsChangedEvent event)
                {
                   loadBindings();
                }

@@ -632,8 +632,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       fireEventToAllSourceWindows(event);
    }
 
-   // Private methods ---------------------------------------------------------
-   
    public void fireEventToSourceWindow(String windowId, 
          CrossWindowEvent<?> evt,
          boolean focus)
@@ -660,6 +658,16 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
    }
 
+   public void fireEventToAllSourceWindows(CrossWindowEvent<?> event)
+   {
+      for (String sourceWindowId: sourceWindows_.keySet())
+      {
+         fireEventToSourceWindow(sourceWindowId, event, false);
+      }
+   }
+   
+   // Private methods ---------------------------------------------------------
+   
    private void openSourceWindow(String windowId, Point position,
          String docId, SourcePosition sourcePosition)
    {
@@ -840,14 +848,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          windowGeometry_ = newGeometries;
       
       return changedWindows.size() > 0;
-   }
-   
-   private void fireEventToAllSourceWindows(CrossWindowEvent<?> event)
-   {
-      for (String sourceWindowId: sourceWindows_.keySet())
-      {
-         fireEventToSourceWindow(sourceWindowId, event, false);
-      }
    }
    
    // execute a command on all source windows (synchronously)
