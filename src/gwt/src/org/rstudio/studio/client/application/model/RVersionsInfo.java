@@ -31,8 +31,7 @@ public class RVersionsInfo extends JavaScriptObject
    
    public final boolean isMultiVersion()
    {
-      JsArray<RVersionSpec> versions = getAvailableRVersions();
-      return versions != null && versions.length() > 1;
+      return getAvailableRVersions() != null;
    }
    
    public final native JsArray<RVersionSpec> getAvailableRVersions() /*-{
