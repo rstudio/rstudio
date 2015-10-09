@@ -15,7 +15,6 @@
 package org.rstudio.core.client.command;
 
 import org.rstudio.core.client.BrowseCap;
-
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -70,6 +69,7 @@ public class KeyboardHelper
       case KeyCodes.KEY_WIN_KEY_FF_LINUX:
       case KeyCodes.KEY_WIN_KEY_RIGHT:
       case KeyCodes.KEY_WIN_KEY_LEFT_META:
+      case 93: // Right meta key
          return true;
       default:
          return false;
