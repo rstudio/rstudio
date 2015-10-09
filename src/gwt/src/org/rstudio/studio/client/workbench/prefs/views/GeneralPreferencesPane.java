@@ -30,6 +30,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
+import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
@@ -342,6 +343,8 @@ public class GeneralPreferencesPane extends PreferencesPane
                false, 
                true, 
                false);
+         
+         HelpButton.addHelpButton(this, "multiple_r_versions");
       }
       
       public void setRVersion(RVersionSpec version)
