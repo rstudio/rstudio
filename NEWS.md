@@ -68,7 +68,6 @@
 * Added option to control how many days users stay signed in for
 * Allow specification of multiple groups in auth-required-user-group option
 * Suspend and resume running R sessions when server is restarted
-* Add kill-session and kill-all admin commands
 * Server Pro: Shared Projects (including concurrent multi-user editing)
 * Server Pro: Support for multiple concurrent R sessions per-user
 * Server Pro: Support for running against multiple versions of R
