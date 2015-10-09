@@ -246,7 +246,12 @@ public class ShortcutManager implements NativePreviewHandler,
       }
       else
       {
-         command.setShortcut(shortcut);
+         // Setting the shortcut on a command is done purely for UI-related tasks.
+         // We don't want to set modal shortcuts (the binding will be active regardless
+         // of whether we let the command 'know' about the binding).
+         if (disableModes.indexOf("default") != 0)
+            command.setShortcut(shortcut);
+         
          commands_.addCommandBinding(keys, command, shortcut);
       }
    }
