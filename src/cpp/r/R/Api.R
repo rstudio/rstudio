@@ -118,3 +118,34 @@
    
    invisible(.Call("rs_sourceMarkers", name, markers, basePath, autoSelect))
 })
+
+.rs.addApiFunction("navigateToFile", function(filePath, line = 1L, col = 1L) {
+   # validate file argument
+   if (!is.character(filePath)) {
+      stop("filePath must be a character")  
+   }
+   if (!file.exists(filePath)) {
+      stop(filePath, " does not exist.")
+   }
+
+   # validate line/col arguments
+   if (!is.integer(line) || length(line) != 1 ||
+       !is.integer(col)  || length(col) != 1) {
+      stop("line and column must be integer values.")
+   }
+
+   # expand and alias for client
+   filePath <- .rs.normalizePath(filePath, winslash="/", mustWork = TRUE) 
+   homeDir <- path.expand("~")
+   if (identical(substr(filePath, 1, nchar(homeDir)), homeDir)) {
+      filePath <- file.path("~", substring(filePath, nchar(homeDir) + 2))
+   }
+   
+   # send event to client
+   .rs.enqueClientEvent("jump_to_function", list(
+      file_name     = .rs.scalar(filePath),
+      line_number   = .rs.scalar(line), 
+      column_number = .rs.scalar(col)))
+
+   invisible(NULL)
+})
