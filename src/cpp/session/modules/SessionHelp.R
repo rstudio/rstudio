@@ -163,6 +163,9 @@ options(help_type = "html")
    success <- FALSE
    for (i in seq_along(objects))
    {
+      if (!identical(class(object), class(objects[[i]])))
+         next
+      
       # Once again, 'ignore.environment' is not available in older R's
       # identical, so construct and eval a call to 'base::identical'.
       formals <- as.list(formals(base::identical))
