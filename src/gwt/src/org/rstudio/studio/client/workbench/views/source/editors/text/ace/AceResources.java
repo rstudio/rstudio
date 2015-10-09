@@ -36,8 +36,14 @@ public interface AceResources extends ClientBundle
    @Source("keybinding-emacs.js")
    StaticDataResource keybindingEmacsJs();
    
+   @Source("keybinding-emacs-uncompressed.js")
+   StaticDataResource keybindingEmacsUncompressedJs();
+   
    @Source("keybinding-vim.js")
    StaticDataResource keybindingVimJs();
+   
+   @Source("keybinding-vim-uncompressed.js")
+   StaticDataResource keybindingVimUncompressedJs();
    
    @Source("ext-language_tools.js")
    StaticDataResource extLanguageTools();

@@ -199,6 +199,9 @@ public class AceEditorNative extends JavaScriptObject {
       // We bind 'Ctrl + Shift + P' to run previous code on Windows
       delete this.commands.commandKeyBinding["ctrl-shift-p"];
       
+      // Don't bind 'Cmd+,'
+      delete this.commands.commandKeyBinding["cmd-,"];
+      
       // We bind 'Ctrl + Alt + A' to 'split into lines'
       if (this.commands.platform !== "mac")
          delete this.commands.commandKeyBinding["ctrl-alt-a"];

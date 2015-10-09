@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
@@ -132,6 +133,7 @@ import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper.RmdSelectedTemplate;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceAfterCommandExecutedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -743,6 +745,69 @@ public class TextEditingTarget implements
                         DocTabDragStateChangedEvent.STATE_NONE);
                }
             });
+      
+      events_.addHandler(
+            AceAfterCommandExecutedEvent.TYPE,
+            new AceAfterCommandExecutedEvent.Handler()
+            {
+               @Override
+               public void onAceAfterCommandExecuted(AceAfterCommandExecutedEvent event)
+               {
+                  JavaScriptObject data = event.getCommandData();
+                  if (isIncrementalSearchCommand(data))
+                  {
+                     String message = getIncrementalSearchMessage();
+                     if (StringUtil.isNullOrEmpty(message))
+                     {
+                        view_.getStatusBar().hideMessage();
+                     }
+                     else
+                     {
+                        view_.getStatusBar().showMessage(
+                              getIncrementalSearchMessage(),
+                              2000);
+                     }
+                  }
+               }
+            });
+   }
+   
+   static {
+      initializeIncrementalSearch();
+   }
+   
+   private static final native String initializeIncrementalSearch() /*-{
+      var IncrementalSearch = $wnd.require("ace/incremental_search").IncrementalSearch;
+      (function() {
+         this.message = $entry(function(msg) {
+            @org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget::setIncrementalSearchMessage(Ljava/lang/String;)(msg);
+         });
+         
+      }).call(IncrementalSearch.prototype);
+   }-*/;
+   
+   private static final native boolean isIncrementalSearchCommand(JavaScriptObject data) /*-{
+      var command = data.command;
+      if (command == null)
+         return false;
+         
+      var result =
+         command.name === "iSearch" ||
+         command.name === "iSearchBackwards" ||
+         command.isIncrementalSearchCommand === true;
+         
+      return result;
+   }-*/;
+   
+   private static String sIncrementalSearchMessage_ = null;
+   private static final void setIncrementalSearchMessage(String message)
+   {
+      sIncrementalSearchMessage_ = message;
+   }
+   
+   private static final String getIncrementalSearchMessage()
+   {
+      return sIncrementalSearchMessage_;
    }
    
    private boolean moveCursorToNextSectionOrChunk()
@@ -2711,7 +2776,7 @@ public class TextEditingTarget implements
                          new GitHubViewRequest(file, type)));
       }
    }
-
+   
    @Handler
    void onExtractLocalVariable()
    {
@@ -4093,7 +4158,6 @@ public class TextEditingTarget implements
       }
    }
 
-   @SuppressWarnings("unused")
    private String stangle(String sweaveStr)
    {
       ScopeList chunks = new ScopeList(docDisplay_);
