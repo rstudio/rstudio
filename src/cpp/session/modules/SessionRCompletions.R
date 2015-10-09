@@ -298,7 +298,7 @@ assign(x = ".rs.acCompletionTypes",
          formals[["no.."]] <- TRUE
       
       # Generate the call, and evaluate it.
-      result <- .rs.apply(base::list.files, formals)
+      result <- do.call(base::list.files, formals)
       
       # Clean up duplicated '/'.
       absolutePaths <- gsub("/+", "/", result)
@@ -755,18 +755,16 @@ assign(x = ".rs.acCompletionTypes",
          getNamespaceExports(namespace)
       else
       {
-         # Take advantage of 'sorted' argument  to 'base::objects' if
-         # available -- we only want to sort a filtered subset
-         fn <- base::objects
-         
+         # Take advantage of 'sorted' argument if 
+         # available -- we only want to sort a filtered
+         # subset
          arguments <- list()
          arguments[["name"]] <- namespace
          arguments[["all.names"]] <- TRUE
-         
-         if ("sorted" %in% names(formals(fn)))
+         if ("sorted" %in% names(formals(objects)))
             arguments[["sorted"]] <- FALSE
          
-         .rs.apply(fn, arguments)
+         do.call(objects, arguments)
       }
       
       completions <- sort(.rs.selectFuzzyMatches(objectNames, token))

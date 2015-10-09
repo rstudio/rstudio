@@ -874,6 +874,38 @@ public class TextEditingTarget implements
    }
    
    @Handler
+   void onGoToStartOfCurrentScope()
+   {
+      docDisplay_.focus();
+      Scope scope = docDisplay_.getCurrentScope();
+      if (scope != null)
+      {
+         Position position = Position.create(
+               scope.getBodyStart().getRow(),
+               scope.getBodyStart().getColumn() + 1);
+         docDisplay_.setCursorPosition(position);
+      }
+   }
+   
+   @Handler
+   void onGoToEndOfCurrentScope()
+   {
+      docDisplay_.focus();
+      Scope scope = docDisplay_.getCurrentScope();
+      if (scope != null)
+      {
+         Position end = scope.getEnd();
+         if (end != null)
+         {
+            Position position = Position.create(
+                  end.getRow(),
+                  Math.max(0, end.getColumn() - 1));
+            docDisplay_.setCursorPosition(position);
+         }
+      }
+   }
+   
+   @Handler
    void onGoToNextSection()
    {
       if (docDisplay_.getFileType().canGoNextPrevSection())

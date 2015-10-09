@@ -111,6 +111,8 @@ public abstract class
    public abstract AppCommand shrinkSelection();
    public abstract AppCommand goToNextSection();
    public abstract AppCommand goToPrevSection();
+   public abstract AppCommand goToStartOfCurrentScope();
+   public abstract AppCommand goToEndOfCurrentScope();
    public abstract AppCommand expandRaggedSelection();
    public abstract AppCommand extractFunction();
    public abstract AppCommand extractLocalVariable();
