@@ -16,7 +16,6 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -28,7 +27,6 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
@@ -98,15 +96,10 @@ public class PackagesPreferencesPane extends PreferencesPane
          add(chkEnablePackages);
       }
       
-      HorizontalPanel secureDownloadPanel = new HorizontalPanel();
       useSecurePackageDownload_ = new CheckBox(
             "Use secure download method for HTTP");
-      secureDownloadPanel.add(useSecurePackageDownload_);
-      HelpButton helpButton = new HelpButton("secure_download", false);
-      Style helpStyle = helpButton.getElement().getStyle();
-      helpStyle.setMarginTop(1, Unit.PX);
-      helpStyle.setMarginLeft(6, Unit.PX);
-      secureDownloadPanel.add(helpButton);
+      HorizontalPanel secureDownloadPanel = checkBoxWithHelp(
+                        useSecurePackageDownload_, "secure_download");
       lessSpaced(secureDownloadPanel);
       add(secureDownloadPanel);
       

@@ -581,6 +581,12 @@ public class RSConnect implements SessionInitHandler,
                                     asMultiple, asStatic, launch, record);
    }-*/;
    
+   
+   public static boolean showRSConnectUI()
+   {
+      return false;
+   }
+   
    public static String contentTypeDesc(int contentType)
    {
       switch(contentType)
@@ -900,6 +906,7 @@ public class RSConnect implements SessionInitHandler,
                   input.setIsMultiRmd(details.isMultiRmd());
                   input.setIsShiny(details.isShinyRmd());
                   input.setIsSelfContained(details.isSelfContained());
+                  input.setHasConnectAccount(details.hasConnectAccount());
                   if (StringUtil.isNullOrEmpty(input.getDescription()))
                   {
                      if (details.getTitle() != null && 

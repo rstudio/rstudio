@@ -274,3 +274,6 @@
   invisible(.Call(.rs.routines$rs_writeUiPref, prefName, .rs.scalar(value)))
 })
 
+.rs.addFunction("setUsingMingwGcc49", function(usingMingwGcc49) {
+  invisible(.Call("rs_setUsingMingwGcc49", usingMingwGcc49))
+})

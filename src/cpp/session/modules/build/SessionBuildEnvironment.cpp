@@ -82,7 +82,9 @@ r_util::RToolsInfo scanPathForRTools()
    boost::regex pattern("Rtools version (\\d\\.\\d\\d)[\\d\\.]+$");
    boost::smatch match;
    if (boost::regex_search(contents, match, pattern))
-      return r_util::RToolsInfo(match[1], installPath);
+      return r_util::RToolsInfo(match[1],
+                                installPath,
+                                module_context::usingMingwGcc49());
    else
       return noToolsFound;
 }
@@ -134,8 +136,9 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget,
     }
 
     // ok so scan for R tools
+    bool usingGcc49 = module_context::usingMingwGcc49();
     std::vector<r_util::RToolsInfo> rTools;
-    error = core::r_util::scanRegistryForRTools(&rTools);
+    error = core::r_util::scanRegistryForRTools(usingGcc49, &rTools);
     if (error)
     {
        LOG_ERROR(error);

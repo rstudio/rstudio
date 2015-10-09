@@ -40,33 +40,50 @@ public class PublishDocServicePage
                            RSConnectPublishResult>> pages =
                            new ArrayList<WizardPage<RSConnectPublishInput, 
                                                     RSConnectPublishResult>>();
-      pages.add(new PublishRPubsPage("RPubs", "RPubs is a free service from " + 
-         "RStudio for sharing documents on the web."));
       String rscTitle = "RStudio Connect";
       String rscDesc = 
             "A local service running inside your organization. Publish and " +
             "collaborate privately and securely.";
+
+      WizardPage<RSConnectPublishInput, RSConnectPublishResult> connectPage;
       if (input.isMultiRmd())
       {
-         pages.add(new PublishMultiplePage(rscTitle, rscDesc, 
-               RSConnectResources.INSTANCE.localAccountIcon(), input));
+         connectPage = new PublishMultiplePage(rscTitle, rscDesc, 
+               RSConnectResources.INSTANCE.localAccountIcon(), input);
       }
       else 
       {
          if (input.isStaticDocInput())
          {
             // static input implies static output
-            pages.add(new PublishFilesPage(rscTitle, rscDesc,
+            connectPage = new PublishFilesPage(rscTitle, rscDesc,
                   RSConnectResources.INSTANCE.localAccountIcon(), input, 
-                  false, true));
+                  false, true);
          }
          else
          {
-            pages.add(new PublishReportSourcePage(rscTitle, rscDesc, 
+            connectPage = new PublishReportSourcePage(rscTitle, rscDesc, 
                   RSConnectResources.INSTANCE.localAccountIcon(), input, 
-                  false));
+                  false);
          }
       }
+      WizardPage<RSConnectPublishInput, RSConnectPublishResult> rpubsPage  =
+            new PublishRPubsPage("RPubs", "RPubs is a free service from " + 
+         "RStudio for sharing documents on the web.");
+
+      // make the top/default page RStudio Connect if we have an account, 
+      // RPubs otherwise
+      if (input.hasConnectAccount())
+      {
+         pages.add(connectPage);
+         pages.add(rpubsPage);
+      }
+      else
+      {
+         pages.add(rpubsPage);
+         pages.add(connectPage);
+      }
+
       return pages;
    }
 }

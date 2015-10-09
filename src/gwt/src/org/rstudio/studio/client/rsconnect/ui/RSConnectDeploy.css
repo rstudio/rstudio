@@ -156,6 +156,7 @@
 .progressPanel
 {
    margin-top: 15px;
+   width: 250px;
 }
 
 .appDetailsPanel
@@ -164,6 +165,10 @@
    background-color: white;
    padding: 5px;
    margin: 0px;
+   white-space: nowrap;
+   text-overflow: ellipsis;
+   overflow: hidden;
+   width: 238px;
 }
 
 .descriptionPanel
