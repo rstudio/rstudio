@@ -133,6 +133,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kRmdParamsEdit;
       else if (name == "rmd_params_ready")
          type = session::client_events::kRmdParamsReady;
+      else if (name == "jump_to_function")
+         type = session::client_events::kJumpToFunction;
 
       if (type != -1)
       {
