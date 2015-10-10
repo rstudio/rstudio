@@ -3002,6 +3002,7 @@ public class GenerateJavaScriptAST {
   }
 
   private Pair<JavaToJavaScriptMap, Set<JsNode>> execImpl() {
+    NameClashesFixer.exec(program);
     uninitializedValuePotentiallyObservable = optimize
         ? ComputePotentiallyObservableUninitializedValues.analyze(program)
         : Predicates.<JField>alwaysTrue();

@@ -97,7 +97,6 @@ import com.google.gwt.dev.jjs.impl.MakeCallsStatic;
 import com.google.gwt.dev.jjs.impl.MethodCallSpecializer;
 import com.google.gwt.dev.jjs.impl.MethodCallTightener;
 import com.google.gwt.dev.jjs.impl.MethodInliner;
-import com.google.gwt.dev.jjs.impl.NameClashesFixer;
 import com.google.gwt.dev.jjs.impl.OptimizerContext;
 import com.google.gwt.dev.jjs.impl.OptimizerStats;
 import com.google.gwt.dev.jjs.impl.PostOptimizationCompoundAssignmentNormalizer;
@@ -505,7 +504,6 @@ public final class JavaToJavaScriptCompiler {
       TypeMapper<?> typeMapper = getTypeMapper();
       ResolveRuntimeTypeReferences.exec(jprogram, typeMapper, getTypeOrder());
 
-      NameClashesFixer.exec(jprogram);
       return typeMapper;
     } finally {
       event.end();
