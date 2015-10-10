@@ -563,8 +563,8 @@ public class ShortcutManager implements NativePreviewHandler,
    
    // Injected ----
    private UserCommandManager userCommands_;
-   @SuppressWarnings("unused") private EditorCommandManager editorCommands_;
-   @SuppressWarnings("unused") private ApplicationCommandManager appCommands_;
+   private EditorCommandManager editorCommands_;
+   private ApplicationCommandManager appCommands_;
    private EventBus events_;
    
 }
