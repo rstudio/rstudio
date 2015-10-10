@@ -27,5 +27,7 @@ public interface JMember extends HasEnclosingType, HasName, HasJsInfo, HasType, 
 
   boolean needsDynamicDispatch();
 
+  boolean isSynthetic();
+
   String getQualifiedName();
 }

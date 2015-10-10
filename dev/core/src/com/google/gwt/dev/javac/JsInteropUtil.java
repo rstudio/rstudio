@@ -75,7 +75,7 @@ public final class JsInteropUtil {
     /* Apply class wide JsInterop annotations */
 
     boolean ignore = JdtUtil.getAnnotation(annotations, JSNOEXPORT_CLASS) != null;
-    if (ignore || !member.isPublic() || exportName != null) {
+    if (ignore || (!member.isPublic() && !isNativeConstructor(member)) || exportName != null) {
       return;
     }
 
@@ -89,6 +89,11 @@ public final class JsInteropUtil {
       member.setJsMemberInfo(namespace, computeName(member), true);
     }
   }
+
+  private static boolean isNativeConstructor(JMember member) {
+    return member instanceof JConstructor && member.isJsNative();
+  }
+
   private static void setJsPropertyProperties(JMethod method) {
     String methodName = method.getName();
     if (startsWithCamelCase(methodName, "set")) {

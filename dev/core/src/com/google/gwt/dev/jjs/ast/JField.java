@@ -203,6 +203,11 @@ public class JField extends JVariable implements JMember {
     return isStatic;
   }
 
+  @Override
+  public boolean isSynthetic() {
+    return false;
+  }
+
   public boolean isThisRef() {
     return isThisRef;
   }
