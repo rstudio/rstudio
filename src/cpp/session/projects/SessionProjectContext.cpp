@@ -695,7 +695,12 @@ bool ProjectContext::isPackageProject()
 
 bool ProjectContext::supportsSharing()
 {
-   return options().getBoolOverlayOption(kProjectSharingSessionOption);
+   // never supports sharing if disabled explicitly
+   if (!options().getBoolOverlayOption(kProjectSharingSessionOption))
+      return false;
+
+   // otherwise, check to see whether shared storage is configured
+   return !options().getOverlayOption(kSessionSharedStoragePath).empty();
 }
 
 // attempts to determine whether we're the owner of the project; currently

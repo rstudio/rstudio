@@ -39,6 +39,7 @@
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionScopes.hpp>
+#include <session/projects/SessionProjectSharing.hpp>
 
 #include "session-config.h"
 
@@ -512,8 +513,8 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
                        userHomePath(),
                        userScratchPath(),
                        session::projectIdToFilePath(userScratchPath(), 
-                                 FilePath(
-                                   getOverlayOption("shared-storage-path"))),
+                                 FilePath(getOverlayOption(
+                                       kSessionSharedStoragePath))),
                        &initialProjectPath_);
    }
    else

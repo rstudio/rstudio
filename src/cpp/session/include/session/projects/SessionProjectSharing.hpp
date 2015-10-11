@@ -17,6 +17,7 @@
 #define SESSION_PROJECTS_SHARING_HPP
 
 #define kProjectSharingSessionOption "enable-project-sharing"
+#define kSessionSharedStoragePath    "shared-storage-path"
 #define kProjectEntryExt ".proj"
 #define kProjectSharedDir "shared-projects"
 
