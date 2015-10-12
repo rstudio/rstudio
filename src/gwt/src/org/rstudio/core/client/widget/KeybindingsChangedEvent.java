@@ -22,6 +22,9 @@ import com.google.gwt.event.shared.EventHandler;
 @JavaScriptSerializable
 public class KeybindingsChangedEvent extends CrossWindowEvent<KeybindingsChangedEvent.Handler>
 {
+   @Override
+   public boolean forward() { return false; }
+   
    // Boilerplate ----
    
    public interface Handler extends EventHandler

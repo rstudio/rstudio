@@ -83,7 +83,6 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
-import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
 
 import java.util.ArrayList;
@@ -435,7 +434,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          @Override
          public void run()
          {
-            events_.fireEvent(new KeybindingsChangedEvent());
+            events_.fireEventToAllSatellites(new KeybindingsChangedEvent());
          }
       }.schedule(2000);
       
@@ -447,15 +446,13 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                           ApplicationCommandManager appCommands,
                           Commands commands,
                           GlobalDisplay globalDisplay,
-                          EventBus events,
-                          SourceWindowManager sourceWindowManager)
+                          EventBus events)
    {
       editorCommands_ = editorCommands;
       appCommands_ = appCommands;
       commands_ = commands;
       globalDisplay_ = globalDisplay;
       events_ = events;
-      sourceWindowManager_ = sourceWindowManager;
    }
    
    private void addColumns()
@@ -1265,7 +1262,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private Commands commands_;
    private GlobalDisplay globalDisplay_;
    private EventBus events_;
-   private SourceWindowManager sourceWindowManager_;
    
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources
