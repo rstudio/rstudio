@@ -73,10 +73,13 @@ import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.ShortcutManager.Handle;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
+import org.rstudio.core.client.events.EditorKeybindingsChangedEvent;
+import org.rstudio.core.client.events.RStudioKeybindingsChangedEvent;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -398,7 +401,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       EditorKeyBindings editorBindings = EditorKeyBindings.create();
       EditorKeyBindings appBindings = EditorKeyBindings.create();
       
-      
       // Loop through all changes and apply based on type
       for (Map.Entry<CommandBinding, CommandBinding> entry : changes_.entrySet())
       {
@@ -424,8 +426,24 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             editorBindings.setBindings(id, keys);
       }
       
-      appCommands_.addBindingsAndSave(appBindings);
-      editorCommands_.addBindingsAndSave(editorBindings);
+      // Tell satellites that they need to update bindings.
+      appCommands_.addBindingsAndSave(appBindings, new CommandWithArg<EditorKeyBindings>()
+      {
+         @Override
+         public void execute(EditorKeyBindings bindings)
+         {
+            events_.fireEventToAllSatellites(new RStudioKeybindingsChangedEvent(bindings));
+         }
+      });
+      
+      editorCommands_.addBindingsAndSave(editorBindings, new CommandWithArg<EditorKeyBindings>()
+      {
+         @Override
+         public void execute(EditorKeyBindings bindings)
+         {
+            events_.fireEventToAllSatellites(new EditorKeybindingsChangedEvent(bindings));
+         }
+      });
       
       closeDialog();
    }
@@ -434,12 +452,14 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    public void initialize(EditorCommandManager editorCommands,
                           ApplicationCommandManager appCommands,
                           Commands commands,
-                          GlobalDisplay globalDisplay)
+                          GlobalDisplay globalDisplay,
+                          EventBus events)
    {
       editorCommands_ = editorCommands;
       appCommands_ = appCommands;
       commands_ = commands;
       globalDisplay_ = globalDisplay;
+      events_ = events;
    }
    
    private void addColumns()
@@ -1248,6 +1268,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private ApplicationCommandManager appCommands_;
    private Commands commands_;
    private GlobalDisplay globalDisplay_;
+   private EventBus events_;
    
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources

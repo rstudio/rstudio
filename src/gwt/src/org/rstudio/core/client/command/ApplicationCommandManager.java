@@ -20,6 +20,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.files.FileBacked;
+import org.rstudio.core.client.events.RStudioKeybindingsChangedEvent;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -53,6 +54,18 @@ public class ApplicationCommandManager
                   loadBindings();
                }
             });
+      
+      // This event should only be received by satellites.
+      events_.addHandler(
+            RStudioKeybindingsChangedEvent.TYPE,
+            new RStudioKeybindingsChangedEvent.Handler()
+            {
+               @Override
+               public void onRStudioKeybindingsChanged(RStudioKeybindingsChangedEvent event)
+               {
+                  loadBindings(event.getBindings(), null);
+               }
+            });
    }
    
    @Inject
@@ -62,7 +75,8 @@ public class ApplicationCommandManager
       commands_ = commands;
    }
    
-   public void addBindingsAndSave(final EditorKeyBindings newBindings)
+   public void addBindingsAndSave(final EditorKeyBindings newBindings,
+                                  final CommandWithArg<EditorKeyBindings> onLoad)
    {
       bindings_.execute(new CommandWithArg<EditorKeyBindings>()
       {
@@ -75,7 +89,7 @@ public class ApplicationCommandManager
                @Override
                public void execute()
                {
-                  loadBindings();
+                  loadBindings(onLoad);
                }
             });
          }
@@ -94,25 +108,31 @@ public class ApplicationCommandManager
          @Override
          public void execute(EditorKeyBindings bindings)
          {
-            shortcuts_.clearCustomBindings();
-            for (String commandId : bindings.iterableKeys())
-            {
-               AppCommand command = commands_.getCommandById(commandId);
-               if (command == null)
-               {
-                  // TODO: How should mis-named commands be reported?
-                  continue;
-               }
-               
-               List<KeySequence> keyList = bindings.get(commandId).getKeyBindings();
-               for (KeySequence keys : keyList)
-                  shortcuts_.addCustomBinding(keys, command);
-            }
-            
-            if (afterLoad != null)
-               afterLoad.execute(bindings);
+            loadBindings(bindings, afterLoad);
          }
       });
+   }
+   
+   private void loadBindings(EditorKeyBindings bindings,
+                             final CommandWithArg<EditorKeyBindings> afterLoad)
+   {
+      shortcuts_.clearCustomBindings();
+      for (String commandId : bindings.iterableKeys())
+      {
+         AppCommand command = commands_.getCommandById(commandId);
+         if (command == null)
+         {
+            // TODO: How should mis-named commands be reported?
+            continue;
+         }
+
+         List<KeySequence> keyList = bindings.get(commandId).getKeyBindings();
+         for (KeySequence keys : keyList)
+            shortcuts_.addCustomBinding(keys, command);
+      }
+
+      if (afterLoad != null)
+         afterLoad.execute(bindings);
    }
    
    public void resetBindings()

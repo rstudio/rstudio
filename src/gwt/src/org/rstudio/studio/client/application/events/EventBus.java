@@ -18,6 +18,7 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JavaScriptSerializer;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.common.satellite.SatelliteManager;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.shared.GWT;
@@ -37,11 +38,13 @@ import com.google.inject.Singleton;
 public class EventBus extends HandlerManager
 {
    @Inject
-   public EventBus(Provider<Satellite> pSatellite)
+   public EventBus(Provider<Satellite> pSatellite,
+                   Provider<SatelliteManager> pManager)
    {
       super(null);
       serializer_ = GWT.create(JavaScriptSerializer.class);
       pSatellite_ = pSatellite;
+      pManager_ = pManager;
       exportNativeCallbacks();
    }
    
@@ -84,6 +87,11 @@ public class EventBus extends HandlerManager
          super.fireEvent(event);
       }
       
+   }
+   
+   public void fireEventToAllSatellites(CrossWindowEvent<?> event)
+   {
+      pManager_.get().dispatchCrossWindowEvent(event);
    }
    
    public void fireEventToSatellite(CrossWindowEvent<?> event, 
@@ -150,5 +158,6 @@ public class EventBus extends HandlerManager
    }-*/;
    
    private Provider<Satellite> pSatellite_;
+   private Provider<SatelliteManager> pManager_;
    private JavaScriptSerializer serializer_;
 }
