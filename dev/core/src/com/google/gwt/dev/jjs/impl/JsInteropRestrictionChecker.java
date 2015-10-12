@@ -17,14 +17,18 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConstructor;
+import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
+import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMember;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethod.JsPropertyAccessorType;
+import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -71,11 +75,101 @@ public class JsInteropRestrictionChecker {
   private final JProgram jprogram;
   private final TreeLogger logger;
   private final MinimalRebuildCache minimalRebuildCache;
+
   private JsInteropRestrictionChecker(TreeLogger logger, JProgram jprogram,
       MinimalRebuildCache minimalRebuildCache) {
     this.logger = logger;
     this.jprogram = jprogram;
     this.minimalRebuildCache = minimalRebuildCache;
+  }
+
+  /**
+   * Returns true if the constructor method is locally empty (allows calls to empty init and super
+   * constructor).
+   */
+  private static boolean isConstructorEmpty(final JConstructor constructor) {
+    List<JStatement> statements = FluentIterable
+        .from(((JMethodBody) constructor.getBody()).getStatements())
+        .filter(new Predicate<JStatement>() {
+          @Override
+          public boolean apply(JStatement statement) {
+            JClassType type = constructor.getEnclosingType();
+            if (isImplicitSuperCall(statement, type.getSuperClass())) {
+              return false;
+            }
+            if (isEmptyInitCall(statement, type)) {
+              return false;
+            }
+            if (statement instanceof JDeclarationStatement) {
+              return ((JDeclarationStatement) statement).getInitializer() != null;
+            }
+            return true;
+          }
+        }).toList();
+    return statements.isEmpty();
+  }
+
+  private static JMethodCall isMethodCall(JStatement statement) {
+    if (!(statement instanceof JExpressionStatement)) {
+      return null;
+    }
+    JExpression expression = ((JExpressionStatement) statement).getExpr();
+
+    return expression instanceof JMethodCall ? (JMethodCall) expression : null;
+  }
+
+  private static boolean isEmptyInitCall(JStatement statement, JDeclaredType type) {
+    JMethodCall methodCall = isMethodCall(statement);
+
+    return methodCall != null
+        && methodCall.getTarget() == type.getInitMethod()
+        && ((JMethodBody) methodCall.getTarget().getBody()).getStatements().isEmpty();
+  }
+
+  private static boolean isImplicitSuperCall(JStatement statement, JDeclaredType superType) {
+    JMethodCall methodCall = isMethodCall(statement);
+
+    return methodCall != null
+        && methodCall.isStaticDispatchOnly()
+        && methodCall.getTarget().isConstructor()
+        && methodCall.getTarget().getEnclosingType() == superType;
+  }
+
+  /**
+   * Returns true if the clinit for a type is locally empty (except for the call to its super
+   * clinit).
+   */
+  private static boolean isClinitEmpty(JDeclaredType type) {
+    JMethod clinit = type.getClinitMethod();
+    List<JStatement> statements = FluentIterable
+        .from(((JMethodBody) clinit.getBody()).getStatements())
+        .filter(new Predicate<JStatement>() {
+          @Override
+          public boolean apply(JStatement statement) {
+            if (!(statement instanceof JDeclarationStatement)) {
+              return true;
+            }
+            JDeclarationStatement declarationStatement = (JDeclarationStatement) statement;
+            JField field = (JField) declarationStatement.getVariableRef().getTarget();
+            return !field.isCompileTimeConstant();
+          }
+        }).toList();
+    if (statements.isEmpty()) {
+      return true;
+    }
+    return statements.size() == 1 && isClinitCall(statements.get(0), type.getSuperClass());
+  }
+
+  private static boolean isClinitCall(JStatement statement, JClassType superClass) {
+    if (superClass == null || !(statement instanceof JExpressionStatement)) {
+      return false;
+    }
+
+    JExpression expression = ((JExpressionStatement) statement).getExpr();
+    if (!(expression instanceof JMethodCall)) {
+      return false;
+    }
+    return ((JMethodCall) expression).getTarget() == superClass.getClinitMethod();
   }
 
   private void checkConstructors(JDeclaredType x) {
@@ -159,7 +253,8 @@ public class JsInteropRestrictionChecker {
       checkExportName(x);
     }
 
-    if (currentType == x.getEnclosingType() && x.isJsPropertyAccessor() && !currentType.isJsType()) {
+    if (currentType == x.getEnclosingType() && x.isJsPropertyAccessor() &&
+        !currentType.isJsType()) {
       if (currentType instanceof JInterfaceType) {
         logError("Method '%s' can't be a JsProperty since interface '%s' is not a JsType.",
             x.getName(), x.getEnclosingType().getName());
@@ -292,7 +387,7 @@ public class JsInteropRestrictionChecker {
     if (currentJsTypeMethodNameBySetterNames.containsKey(setterName)
         && currentJsTypeMethodNameByMemberNames.containsKey(setterName)) {
       logError("The JsType member '%s' and JsProperty '%s' can't both be named "
-          + "'%s' in type '%s'.", currentJsTypeMethodNameByMemberNames.get(setterName),
+              + "'%s' in type '%s'.", currentJsTypeMethodNameByMemberNames.get(setterName),
           currentJsTypeMethodNameBySetterNames.get(setterName), setterName, typeName);
     }
   }
@@ -314,13 +409,20 @@ public class JsInteropRestrictionChecker {
 
   private void checkNativeJsType(JDeclaredType type) {
     // TODO(rluble): add inheritance restrictions.
-    if (!JjsUtils.isClinitEmpty(type)) {
+    if (!isClinitEmpty(type)) {
       logError("Native JsType '%s' cannot have static initializer.", type);
+    }
+
+    for (JConstructor constructor : type.getConstructors()) {
+      if (!isConstructorEmpty(constructor)) {
+        logError("Native JsType constructor '%s' cannot have non-empty method body.",
+            constructor.getQualifiedName());
+      }
     }
   }
 
   private void checkJsFunction(JDeclaredType type) {
-    if (!JjsUtils.isClinitEmpty(type)) {
+    if (!isClinitEmpty(type)) {
       logError("JsFunction '%s' cannot have static initializer.", type);
     }
 

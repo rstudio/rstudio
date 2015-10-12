@@ -109,7 +109,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
     assertBuggyFails(
         "Member 'test.EntryPoint$Buggy.display' can't be exported because the "
-        + "global name 'test.EntryPoint.Buggy.show' is already taken.");
+            + "global name 'test.EntryPoint.Buggy.show' is already taken.");
   }
 
   public void testJsPropertyGetterStyleSucceeds() throws Exception {
@@ -941,6 +941,81 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
     assertBuggyFails(
         "Native JsType 'test.EntryPoint$Buggy' cannot have static initializer.");
+  }
+
+  public void testNativeJsTypeNonEmptyConstructorFails() {
+    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetClassDecl(
+        "@JsType(prototype = \"x\") public static class Buggy {",
+        "  public Buggy(int n) {",
+        "    n++;",
+        "  }",
+        "}");
+
+    assertBuggyFails(
+        "Native JsType constructor 'test.EntryPoint$Buggy.EntryPoint$Buggy(I) <init>' "
+            + "cannot have non-empty method body.");
+  }
+
+  public void testNativeJsTypeInstanceInitializerFails() {
+    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetClassDecl(
+        "@JsType(prototype = \"x\") public static class Buggy {",
+        "  public int x = 1;",
+        "  public Buggy(int n) {",
+        "  }",
+        "}");
+
+    assertBuggyFails(
+        "Native JsType constructor 'test.EntryPoint$Buggy.EntryPoint$Buggy(I) <init>' "
+            + "cannot have non-empty method body.");
+  }
+
+  public void testNativeJsTypeImplicitSuperSucceeds() throws UnableToCompleteException {
+    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetClassDecl(
+        "@JsType(prototype = \"S\") public static class Super {",
+        "  public Super() {",
+        "  }",
+        "}",
+        "@JsType(prototype = \"x\") public static class Buggy extends Super {",
+        "  public Buggy(int n) {",
+        "  }",
+        "}");
+
+    assertBuggySucceeds();
+  }
+
+  public void testNativeJsTypeExplicitSuperSucceeds() throws UnableToCompleteException {
+    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetClassDecl(
+        "@JsType(prototype = \"S\") public static class Super {",
+        "  public Super(int x) {",
+        "  }",
+        "}",
+        "@JsType(prototype = \"x\") public static class Buggy extends Super {",
+        "  public Buggy(int n) {",
+        "    super(n);",
+        "  }",
+        "}");
+
+    assertBuggySucceeds();
+  }
+
+  public void testNativeJsTypeExplicitSuperWithEffectSucceeds() throws UnableToCompleteException {
+    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetClassDecl(
+        "@JsType(prototype = \"S\") public static class Super {",
+        "  public Super(int x) {",
+        "  }",
+        "}",
+        "@JsType(prototype = \"x\") public static class Buggy extends Super {",
+        "  public Buggy(int n) {",
+        "    super(n++);",
+        "  }",
+        "}");
+
+    assertBuggySucceeds();
   }
 
   public void testNativeJsTypeInlineStaticInitializerFails() {

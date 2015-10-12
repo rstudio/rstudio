@@ -21,12 +21,13 @@ import com.google.gwt.dev.jjs.impl.JjsUtils;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
+import com.google.gwt.thirdparty.guava.common.base.Predicates;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -293,6 +294,13 @@ public abstract class JDeclaredType extends JReferenceType {
   public String getSimpleName() {
     String[] compoundName = getCompoundName();
     return compoundName[compoundName.length - 1];
+  }
+
+  /**
+   * Returns the constructors for this type.
+   */
+  public Iterable<JConstructor> getConstructors() {
+    return (Iterable) Iterables.filter(methods, Predicates.instanceOf(JConstructor.class));
   }
 
   /**
@@ -565,19 +573,8 @@ public abstract class JDeclaredType extends JReferenceType {
     }
   }
 
-  private List<JMethod> getConstructors() {
-    List<JMethod> constructors = new ArrayList<JMethod>();
-    for (JMethod method : methods) {
-      if (method instanceof JConstructor) {
-        constructors.add(method);
-      }
-    }
-    return constructors;
-  }
-
   private JMethod getDefaultConstructor() {
-    List<JMethod> constructors = getConstructors();
-    for (JMethod constructor : constructors) {
+    for (JMethod constructor : getConstructors()) {
       if (constructor.getOriginalParamTypes().size() == 0) {
         return constructor;
       }
