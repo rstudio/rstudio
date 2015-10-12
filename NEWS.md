@@ -60,6 +60,7 @@
 * OS X: Enable creation of directories in folder picker dialog
 * Added ability to zoom panes (e.g. Ctrl+Shift+1 to zoom source pane)
 * Add Console on Left/Right commands for quick relocation of Console
+* Add product and version metadata to Windows installer
 
 ### Server
 
