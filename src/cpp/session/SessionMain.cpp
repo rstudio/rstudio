@@ -629,8 +629,11 @@ void handleClientInit(const boost::function<void()>& initFunction,
       core::system::getenv("RSTUDIO_DISABLE_EXTERNAL_PUBLISH").empty() &&
       allowPublish;
 
-   sessionInfo["allow_open_shared_projects"] = options.getBoolOverlayOption(
-         kProjectSharingSessionOption);
+   // allow opening shared projects if it's enabled, and if there's shared
+   // storage from which we can discover the shared projects
+   sessionInfo["allow_open_shared_projects"] = 
+         options.getBoolOverlayOption(kProjectSharingSessionOption) &&
+         !options.getOverlayOption(kSessionSharedStoragePath).empty();
 
    sessionInfo["environment_state"] = modules::environment::environmentStateAsJson();
    sessionInfo["error_state"] = modules::errors::errorStateAsJson();
