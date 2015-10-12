@@ -17,7 +17,6 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.CanBeAbstract;
 import com.google.gwt.dev.jjs.ast.CanBeFinal;
-import com.google.gwt.dev.jjs.ast.CanBeNative;
 import com.google.gwt.dev.jjs.ast.CanBeStatic;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasName;
@@ -1082,8 +1081,8 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     print(x.getName());
   }
 
-  protected void printNativeFlag(CanBeNative x) {
-    if (x.isNative()) {
+  protected void printNativeFlag(JMethod x) {
+    if (x.isJsniMethod()) {
       print(CHARS_NATIVE);
     }
   }

@@ -38,7 +38,7 @@ import java.util.Set;
 /**
  * A Java method implementation.
  */
-public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNative {
+public class JMethod extends JNode implements JMember, CanBeAbstract {
 
   /**
    * Indicates whether a method is a JsProperty accessor.
@@ -610,12 +610,11 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
     return isForwarding;
   }
 
-  @Override
-  public boolean isNative() {
+  public boolean isJsniMethod() {
     if (body == null) {
       return false;
     } else {
-      return body.isNative();
+      return body.isJsniMethodBody();
     }
   }
 
@@ -651,7 +650,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
    */
   public void removeParam(int index) {
     params = Lists.remove(params, index);
-    if (isNative()) {
+    if (isJsniMethod()) {
       ((JsniMethodBody) getBody()).getFunc().getParameters().remove(index);
     }
   }

@@ -377,7 +377,7 @@ public class EnumOrdinalizer {
         maybeBlackListDueToStaticCall(x.getSourceInfo(), target);
       }
 
-      if (x.getTarget().isNative()) {
+      if (x.getTarget().isJsniMethod()) {
         // Black list enum types declared in parameters of native functions.
         for (JParameter parameter :x.getTarget().getParams()) {
           blackListIfEnum(parameter.getType(), x.getSourceInfo());

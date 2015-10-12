@@ -2452,7 +2452,7 @@ public class GwtAstBuilder {
         JMethod method = typeMap.get(x.binding);
         assert !method.isExternal();
         JMethodBody body = null;
-        if (!method.isNative()) {
+        if (!method.isJsniMethod()) {
           body = new JMethodBody(method.getSourceInfo());
           method.setBody(body);
         }

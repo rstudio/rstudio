@@ -395,14 +395,14 @@ public class GenerateJavaScriptAST {
        * Only allocate a name for a function if it is native, not polymorphic,
        * is a JNameOf target or stack-stripping is disabled.
        */
-      if (!stripStack || !polymorphicNames.containsKey(x) || x.isNative()
+      if (!stripStack || !polymorphicNames.containsKey(x) || x.isJsniMethod()
           || nameOfTargets.contains(x)) {
         globalName = topScope.declareName(mangleName, name);
         names.put(x, globalName);
         recordSymbol(x, globalName);
       }
       JsFunction function;
-      if (x.isNative()) {
+      if (x.isJsniMethod()) {
         // set the global name of the JSNI peer
         JsniMethodBody body = (JsniMethodBody) x.getBody();
         function = body.getFunc();
@@ -796,7 +796,7 @@ public class GenerateJavaScriptAST {
       JsFunction function = transform(method.getBody());
       function.setInliningMode(method.getInliningMode());
 
-      if (!method.isNative()) {
+      if (!method.isJsniMethod()) {
         // Setup params on the generated function. A native method already got
         // its jsParams set when parsed from JSNI.
         transformInto(method.getParams(), function.getParameters());
@@ -2615,7 +2615,7 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JMethod x, Context ctx) {
-      if (x.isNative()) {
+      if (x.isJsniMethod()) {
         // These are methods whose bodies where not traversed by the Java method inliner.
         JsFunction function = jsFunctionsByJavaMethodBody.get(x.getBody());
         if (function != null && function.getBody() != null) {
@@ -2637,7 +2637,7 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod target = x.getTarget();
-      if (target.isInliningAllowed() && (target.isNative()
+      if (target.isInliningAllowed() && (target.isJsniMethod()
           || program.getIndexedTypes().contains(target.getEnclosingType())
           || target.getInliningMode() == InliningMode.FORCE_INLINE)) {
         // These are either: 1) callsites to JSNI functions, in which case MethodInliner did not

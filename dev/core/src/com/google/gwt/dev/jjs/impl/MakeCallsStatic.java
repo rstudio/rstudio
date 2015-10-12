@@ -210,7 +210,7 @@ public class MakeCallsStatic {
        * Rewrite the method body. Update all thisRefs to paramRefs. Update
        * paramRefs and localRefs to target the params/locals in the new method.
        */
-      if (newMethod.isNative()) {
+      if (newMethod.isJsniMethod()) {
         // For natives, we also need to create the JsParameter for this$static,
         // because the jsFunc already has parameters.
         // TODO: Do we really need to do that in BuildTypeMap?

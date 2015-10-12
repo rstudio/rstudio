@@ -110,7 +110,7 @@ public class JsniMethodBody extends JAbstractMethodBody {
   }
 
   @Override
-  public boolean isNative() {
+  public boolean isJsniMethodBody() {
     return true;
   }
 

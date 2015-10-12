@@ -346,7 +346,7 @@ public class ControlFlowAnalyzer {
         rescue(enclosingType, false);
       }
 
-      if (x.isNative()) {
+      if (x.isJsniMethod()) {
         // Manually rescue native parameter references
         final JsniMethodBody body = (JsniMethodBody) x.getBody();
         final JsFunction func = body.getFunc();
@@ -614,7 +614,7 @@ public class ControlFlowAnalyzer {
         if (dependencyRecorder != null) {
           curMethodStack.remove(curMethodStack.size() - 1);
         }
-        if (method.isNative()) {
+        if (method.isJsniMethod()) {
           // Returning from this method passes a value from JavaScript into Java.
           maybeRescueJavaScriptObjectPassingIntoJava(method.getType());
         }

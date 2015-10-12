@@ -62,7 +62,7 @@ public abstract class JModVisitorWithTemporaryVariableCreation extends JChangeTr
   }
 
   protected JLocal createTempLocal(SourceInfo info, JType type) {
-    assert !getCurrentMethod().isNative();
+    assert !getCurrentMethod().isJsniMethod();
     JMethodBody currentMethodBody = (JMethodBody) getCurrentMethod().getBody();
     String temporaryLocalName = newTemporaryLocalName(info, type, currentMethodBody);
     JLocal local = JProgram.createLocal(info, temporaryLocalName, type, false, currentMethodBody);

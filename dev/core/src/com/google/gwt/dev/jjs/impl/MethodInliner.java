@@ -124,7 +124,7 @@ public class MethodInliner {
     private InlineResult tryInlineMethodCall(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
 
-      if (!method.isStatic() || method.isNative() || method.canBeImplementedExternally()) {
+      if (!method.isStatic() || method.isJsniMethod() || method.canBeImplementedExternally()) {
         // Only inline static methods that are not native.
         return InlineResult.BLACKLIST;
       }
@@ -210,7 +210,7 @@ public class MethodInliner {
       JMethod clinit = targetType.getClinitMethod();
 
       // If the clinit is a non-native, empty body we can optimize it out here
-      if (!clinit.isNative() && (((JMethodBody) clinit.getBody())).getStatements().size() == 0) {
+      if (!clinit.isJsniMethod() && (((JMethodBody) clinit.getBody())).getStatements().size() == 0) {
         return null;
       }
 

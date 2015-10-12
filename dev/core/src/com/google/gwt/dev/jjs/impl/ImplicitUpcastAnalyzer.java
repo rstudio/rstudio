@@ -108,7 +108,7 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
       processIfTypesNotEqual(x.getType(), overridden.getType(), x.getSourceInfo());
     }
 
-    if (x.getBody() != null && x.getBody().isNative()) {
+    if (x.getBody() != null && x.getBody().isJsniMethodBody()) {
       /*
        * Check if this method has a native (jsni) method body, in which case all
        * arguments passed in are implicitly cast to JavaScriptObject

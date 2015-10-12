@@ -31,7 +31,7 @@ public abstract class JAbstractMethodBody extends JNode {
     return method;
   }
 
-  public abstract boolean isNative();
+  public abstract boolean isJsniMethodBody();
 
   public void setMethod(JMethod method) {
     this.method = method;
