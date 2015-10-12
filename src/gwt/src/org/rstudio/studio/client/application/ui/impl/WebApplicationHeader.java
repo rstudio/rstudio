@@ -151,14 +151,12 @@ public class WebApplicationHeader extends Composite
       });
       headerBarPanel_.add(mainMenu_);
 
-      HTML spacer = new HTML();
-      headerBarPanel_.add(spacer);
-      headerBarPanel_.setCellWidth(spacer, "100%");
-
       // commands panel (no widgets added until after session init)
       headerBarCommandsPanel_ = new HorizontalPanel();
       headerBarCommandsPanel_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
+      headerBarCommandsPanel_.setWidth("100%");
       headerBarPanel_.add(headerBarCommandsPanel_);
+      headerBarPanel_.setCellWidth(headerBarCommandsPanel_, "100%");
       headerBarPanel_.setCellHorizontalAlignment(headerBarCommandsPanel_,
                                                 HorizontalPanel.ALIGN_RIGHT);
 
@@ -422,7 +420,17 @@ public class WebApplicationHeader extends Composite
    @Override
    public void addLeftCommand(Widget widget)
    {
+      addLeftCommand(widget, null);
+   }
+
+   @Override
+   public void addLeftCommand(Widget widget, String width)
+   {
       headerBarCommandsPanel_.insert(widget, 0);
+      if (width != null)
+      {
+         headerBarCommandsPanel_.setCellWidth(widget, width);
+      }
    }
 
    @Override
