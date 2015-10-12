@@ -1989,44 +1989,33 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    private JsExpression convertJavaLiteral(Object javaLiteral) {
-      if (javaLiteral instanceof JLiteral) {
-        return JjsUtils.translateLiteral((JLiteral) javaLiteral);
-      } else if (javaLiteral instanceof JExpression) {
-        return transform((JExpression) javaLiteral);
-      } else {
-        return JjsUtils.translateLiteral(program.getLiteral(javaLiteral));
-      }
-    }
-
-    private void generateCallToDefineClass(JClassType x,
-        List<JsNameRef> constructorArgs) {
-      JClassType superClass = x.getSuperClass();
+    private void generateCallToDefineClass(JClassType type, List<JsNameRef> constructorArgs) {
+      JClassType superClass = type.getSuperClass();
       JExpression superTypeId = (superClass == null) ? JNullLiteral.INSTANCE :
           getRuntimeTypeReference(superClass);
-      String jsPrototype = getSuperPrototype(x);
+      String jsPrototype = getSuperPrototype(type);
 
       List<JsExpression> defineClassArguments = Lists.newArrayList();
 
-      defineClassArguments.add(transform(getRuntimeTypeReference(x)));
+      defineClassArguments.add(transform(getRuntimeTypeReference(type)));
       defineClassArguments.add(jsPrototype == null ? transform(superTypeId) :
-          createJsQualifier(jsPrototype, x.getSourceInfo()));
-      defineClassArguments.add(generateCastableTypeMap(x));
+          createJsQualifier(jsPrototype, type.getSourceInfo()));
+      defineClassArguments.add(generateCastableTypeMap(type));
       defineClassArguments.addAll(constructorArgs);
 
       // JavaClassHierarchySetupUtil.defineClass(typeId, superTypeId, castableMap, constructors)
-      JsStatement defineClassStatement = constructInvocation(x.getSourceInfo(),
+      JsStatement defineClassStatement = constructInvocation(type.getSourceInfo(),
           "JavaClassHierarchySetupUtil.defineClass", defineClassArguments).makeStmt();
-      addTypeDefinitionStatement(x, defineClassStatement);
+      addTypeDefinitionStatement(type, defineClassStatement);
 
       if (jsPrototype != null) {
         JsStatement statement =
-        constructInvocation(x.getSourceInfo(),
+        constructInvocation(type.getSourceInfo(),
             "JavaClassHierarchySetupUtil.copyObjectProperties",
-            getPrototypeQualifierViaLookup(program.getTypeJavaLangObject(), x.getSourceInfo()),
-            globalTemp.makeRef(x.getSourceInfo()))
+            getPrototypeQualifierViaLookup(program.getTypeJavaLangObject(), type.getSourceInfo()),
+            globalTemp.makeRef(type.getSourceInfo()))
             .makeStmt();
-        addTypeDefinitionStatement(x, statement);
+        addTypeDefinitionStatement(type, statement);
       }
     }
 
@@ -2306,12 +2295,11 @@ public class GenerateJavaScriptAST {
           continue;
         }
 
-        generatePrototypeDefinition(type, method, (JsExpression) transformMethod(method));
+        generatePrototypeDefinition(method, (JsExpression) transformMethod(method));
       }
     }
 
-    private void generatePrototypeDefinition(JDeclaredType x, JMethod method,
-        JsExpression functionDefinition) {
+    private void generatePrototypeDefinition(JMethod method, JsExpression functionDefinition) {
       if (functionDefinition != null) {
         generatePrototypeAssignment(method, polymorphicNames.get(method), functionDefinition);
       }
