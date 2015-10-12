@@ -1,5 +1,5 @@
 /*
- * KeybindingsChangedEvent.java
+ * RStudioKeybindingsChangedEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,24 +12,44 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.core.client.widget;
+package org.rstudio.core.client.events;
 
+import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 
 @JavaScriptSerializable
-public class KeybindingsChangedEvent extends CrossWindowEvent<KeybindingsChangedEvent.Handler>
+public class RStudioKeybindingsChangedEvent extends CrossWindowEvent<RStudioKeybindingsChangedEvent.Handler>
 {
-   @Override
-   public boolean forward() { return false; }
+   // Default method is required by @JavaScriptSerializable annotation
+   public RStudioKeybindingsChangedEvent()
+   {
+      bindings_ = JavaScriptObject.createObject();
+   }
+   
+   public RStudioKeybindingsChangedEvent(EditorKeyBindings bindings)
+   {
+      bindings_ = bindings.cast();
+   }
+   
+   public EditorKeyBindings getBindings()
+   {
+      return bindings_.cast();
+   }
+   
+   private final JavaScriptObject bindings_;
    
    // Boilerplate ----
    
+   @Override
+   public boolean forward() { return false; }
+   
    public interface Handler extends EventHandler
    {
-      void onKeybindingsChanged(KeybindingsChangedEvent event);
+      void onRStudioKeybindingsChanged(RStudioKeybindingsChangedEvent event);
    }
    
    @Override
@@ -41,7 +61,7 @@ public class KeybindingsChangedEvent extends CrossWindowEvent<KeybindingsChanged
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onKeybindingsChanged(this);
+      handler.onRStudioKeybindingsChanged(this);
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();

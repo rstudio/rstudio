@@ -46,7 +46,6 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
@@ -74,6 +73,8 @@ import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.ShortcutManager.Handle;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
+import org.rstudio.core.client.events.EditorKeybindingsChangedEvent;
+import org.rstudio.core.client.events.RStudioKeybindingsChangedEvent;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -425,18 +426,24 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             editorBindings.setBindings(id, keys);
       }
       
-      appCommands_.addBindingsAndSave(appBindings);
-      editorCommands_.addBindingsAndSave(editorBindings);
-      
       // Tell satellites that they need to update bindings.
-      new Timer()
+      appCommands_.addBindingsAndSave(appBindings, new CommandWithArg<EditorKeyBindings>()
       {
          @Override
-         public void run()
+         public void execute(EditorKeyBindings bindings)
          {
-            events_.fireEventToAllSatellites(new KeybindingsChangedEvent());
+            events_.fireEventToAllSatellites(new RStudioKeybindingsChangedEvent(bindings));
          }
-      }.schedule(2000);
+      });
+      
+      editorCommands_.addBindingsAndSave(editorBindings, new CommandWithArg<EditorKeyBindings>()
+      {
+         @Override
+         public void execute(EditorKeyBindings bindings)
+         {
+            events_.fireEventToAllSatellites(new EditorKeybindingsChangedEvent(bindings));
+         }
+      });
       
       closeDialog();
    }
