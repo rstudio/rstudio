@@ -37,6 +37,19 @@
   ;Name and file
   Name "@CPACK_NSIS_PACKAGE_NAME@"
   OutFile "@CPACK_TOPLEVEL_DIRECTORY@/@CPACK_OUTPUT_FILE_NAME@"
+  
+  ;
+  ; RSTUDIO CHANGE - Add version info
+  ;
+  ;Version info
+  VIProductVersion "@CPACK_PACKAGE_VERSION_MAJOR@.@CPACK_PACKAGE_VERSION_MINOR@.@CPACK_PACKAGE_VERSION_PATCH@.0"
+  VIAddVersionKey ProductVersion "@CPACK_PACKAGE_VERSION_MAJOR@.@CPACK_PACKAGE_VERSION_MINOR@.@CPACK_PACKAGE_VERSION_PATCH@.0"
+  VIAddVersionKey ProductName "RStudio"
+  VIAddVersionKey CompanyName "RStudio, Inc."
+  VIAddVersionKey FileDescription "RStudio"
+  VIAddVersionKey InternalName "RStudio"
+  VIAddVersionKey LegalCopyright "Copyright (C) 2009-15 by RStudio, Inc."
+  VIAddVersionKey LegalTrademarks "RStudio (TM) is a trademark of RStudio, Inc."
 
   ;Set compression
   SetCompressor @CPACK_NSIS_COMPRESSOR@
