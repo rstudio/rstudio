@@ -465,6 +465,9 @@ SEXP rs_getKnitParamsForDocument(SEXP documentIdSEXP)
       return R_NilValue;
    }
    
+   if (!pDoc->isRMarkdownDocument())
+      return R_NilValue;
+   
    r::exec::RFunction knitParams(".rs.knitParams");
    knitParams.addParam(pDoc->contents());
    

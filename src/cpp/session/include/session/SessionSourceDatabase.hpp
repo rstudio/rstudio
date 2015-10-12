@@ -120,6 +120,8 @@ public:
       type_ = type;
    }
    
+   bool isRMarkdownDocument() const { return type_ == SourceDocumentTypeRMarkdown; }
+   
    // is this an R, or potentially R-containing, source file?
    // TODO: Export these types as an 'enum' and provide converters.
    bool canContainRCode()

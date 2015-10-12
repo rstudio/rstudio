@@ -1644,8 +1644,7 @@ assign(x = ".rs.acCompletionTypes",
    
    # Inject 'params' into the global env to provide for completions in
    # parameterized R Markdown documents
-   extension <- tolower(gsub(".*\\.", ".", filePath, perl = TRUE))
-   if (extension %in% c(".rmd", ".rmarkdown") && .rs.injectKnitrParamsObject(documentId))
+   if (.rs.injectKnitrParamsObject(documentId))
       on.exit(.rs.removeKnitrParamsObject(), add = TRUE)
    
    # Get the currently active frame
