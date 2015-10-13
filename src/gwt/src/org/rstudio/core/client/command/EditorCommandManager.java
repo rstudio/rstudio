@@ -213,9 +213,10 @@ public class EditorCommandManager
                commandName,
                binding.getKeyBindings());
 
-         if (afterLoad != null)
-            afterLoad.execute(bindings);
       }
+
+      if (afterLoad != null)
+         afterLoad.execute(bindings);
    }
    
    public void resetBindings()
