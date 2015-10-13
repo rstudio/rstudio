@@ -89,6 +89,7 @@ import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
 import org.rstudio.studio.client.projects.model.ProjectUser;
+import org.rstudio.studio.client.projects.model.ProjectUserRole;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.projects.model.SharedProjectDetails;
@@ -4264,7 +4265,7 @@ public class RemoteServer implements Server
    
    @Override
    public void getProjectSharedUsers(
-         ServerRequestCallback<JsArrayString> callback)
+         ServerRequestCallback<JsArray<ProjectUserRole>> callback)
    {
       sendRequest(RPC_SCOPE, "get_shared_users", callback);
    }
