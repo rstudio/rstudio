@@ -52,6 +52,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       
       figureDimensionsPanel_.setVisible(false);
       useCustomFigureCheckbox_.setVisible(false);
+      revertButton_.setVisible(false);
       
       setHeader("Default Chunk Options", true);
    }

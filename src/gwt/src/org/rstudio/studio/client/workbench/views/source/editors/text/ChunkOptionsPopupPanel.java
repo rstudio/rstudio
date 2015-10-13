@@ -277,9 +277,9 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       buttonPanel.addStyleName(RES.styles().buttonPanel());
       buttonPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_RIGHT);
       
-      SmallButton revertButton = new SmallButton("Revert");
-      revertButton.getElement().getStyle().setMarginRight(8, Unit.PX);
-      revertButton.addClickHandler(new ClickHandler()
+      revertButton_ = new SmallButton("Revert");
+      revertButton_.getElement().getStyle().setMarginRight(8, Unit.PX);
+      revertButton_.addClickHandler(new ClickHandler()
       {
          
          @Override
@@ -289,10 +289,10 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
             hideAndFocusEditor();
          }
       });
-      buttonPanel.add(revertButton);
+      buttonPanel.add(revertButton_);
       
-      SmallButton applyButton = new SmallButton("Apply");
-      applyButton.addClickHandler(new ClickHandler()
+      applyButton_ = new SmallButton("Apply");
+      applyButton_.addClickHandler(new ClickHandler()
       {
          
          @Override
@@ -302,7 +302,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
             hideAndFocusEditor();
          }
       });
-      buttonPanel.add(applyButton);
+      buttonPanel.add(applyButton_);
       
       footerPanel.setVerticalAlignment(VerticalPanel.ALIGN_BOTTOM);
       footerPanel.add(linkPanel);
@@ -564,6 +564,8 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    protected final Grid figureDimensionsPanel_;
    protected final TextBox figWidthBox_;
    protected final TextBox figHeightBox_;
+   protected final SmallButton revertButton_;
+   protected final SmallButton applyButton_;
    protected final ThemedCheckBox useCustomFigureCheckbox_;
    protected final TriStateCheckBox showWarningsInOutputCb_;
    protected final TriStateCheckBox showMessagesInOutputCb_;
