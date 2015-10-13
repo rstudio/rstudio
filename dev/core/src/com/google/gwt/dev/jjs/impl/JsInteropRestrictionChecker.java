@@ -400,8 +400,10 @@ public class JsInteropRestrictionChecker {
   }
 
   private boolean checkJsPropertyAccessor(JMember member) {
+    JsMemberType memberType = member.getJsMemberType();
+
     if (member.getJsName().equals(JsInteropUtil.INVALID_JSNAME)) {
-      assert member.getJsMemberType().isPropertyAccessor();
+      assert memberType.isPropertyAccessor();
       logError(
           member,
           "JsProperty %s should either follow Java Bean naming conventions or provide a name.",
@@ -409,24 +411,30 @@ public class JsInteropRestrictionChecker {
       return false;
     }
 
-    if (member.getJsMemberType() == JsMemberType.UNDEFINED_ACCESSOR) {
-      logError(member, "JsProperty %s should have a correct setter or getter signature.",
-          getMemberDescription(member));
+    switch (memberType) {
+      case UNDEFINED_ACCESSOR:
+        logError(member, "JsProperty %s should have a correct setter or getter signature.",
+            getMemberDescription(member));
+        break;
+      case GETTER:
+        if (member.getType() != JPrimitiveType.BOOLEAN && member.getName().startsWith("is")) {
+          logError(member, "JsProperty %s cannot have a non-boolean return.",
+              getMemberDescription(member));
+        }
+        break;
+      case SETTER:
+        if (((JMethod) member).getParams().get(0).isVarargs()) {
+          logError(member, "JsProperty %s cannot have a vararg parameter.",
+              getMemberDescription(member));
+        }
+        break;
     }
 
-    if (member.getJsMemberType() == JsMemberType.GETTER) {
-      if (member.getType() != JPrimitiveType.BOOLEAN && member.getName().startsWith("is")) {
-        logError(member, "JsProperty %s cannot have a non-boolean return.",
-            getMemberDescription(member));
-      }
+    if (memberType.isPropertyAccessor() && member.isStatic() && !member.isJsNative()) {
+        logError(member, "Static property accessor '%s' can only be native.",
+            JjsUtils.getReadableDescription(member));
     }
 
-    if (member.getJsMemberType() == JsMemberType.SETTER) {
-      if (((JMethod) member).getParams().get(0).isVarargs()) {
-        logError(member, "JsProperty %s cannot have a vararg parameter.",
-            getMemberDescription(member));
-      }
-    }
     return true;
   }
 
