@@ -31,6 +31,7 @@ import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
 
@@ -94,7 +95,33 @@ public class ShortcutManager implements NativePreviewHandler,
       // destroyed it's not necessary to manage lifetime of this event handler
       Event.addNativePreviewHandler(this);
       addPostViewHandler();
+      
+      if (BrowseCap.isLinuxDesktop())
+         addMiddleClickPasteListener();
    }
+   
+   private void addMiddleClickPasteListener()
+   {
+      Event.addNativePreviewHandler(new NativePreviewHandler()
+      {
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent preview)
+         {
+            if (preview.getTypeInt() == Event.ONCLICK)
+            {
+               NativeEvent event = preview.getNativeEvent();
+               if (isMiddleClick(event))
+               {
+                  commands_.pasteDummy().execute();
+               }
+            }
+         }
+      });
+   }
+   
+   private static final native boolean isMiddleClick(NativeEvent event) /*-{
+      return event.which === 2;
+   }-*/;
    
    private native final void addPostViewHandler() /*-{
       var self = this;
@@ -107,12 +134,14 @@ public class ShortcutManager implements NativePreviewHandler,
    private void initialize(ApplicationCommandManager appCommands,
                            EditorCommandManager editorCommands,
                            UserCommandManager userCommands,
-                           EventBus events)
+                           EventBus events,
+                           Commands commands)
    {
       appCommands_ = appCommands;
       editorCommands_ = editorCommands;
       userCommands_ = userCommands;
       events_ = events;
+      commands_ = commands;
    }
 
    public boolean isEnabled()
@@ -192,7 +221,7 @@ public class ShortcutManager implements NativePreviewHandler,
    private void refreshKeyPrefixes()
    {
       prefixes_.clear();
-      for (KeySequence keys : commands_.keySet())
+      for (KeySequence keys : appCommandBindings_.keySet())
          updateKeyPrefixes(keys);
       
       for (KeySequence keys : customBindings_.keySet())
@@ -252,7 +281,7 @@ public class ShortcutManager implements NativePreviewHandler,
          if (disableModes.indexOf("default") != 0)
             command.setShortcut(shortcut);
          
-         commands_.addCommandBinding(keys, command, shortcut);
+         appCommandBindings_.addCommandBinding(keys, command, shortcut);
       }
    }
    
@@ -327,7 +356,7 @@ public class ShortcutManager implements NativePreviewHandler,
          info.add(new ShortcutInfo(shortcut, null));
 
       // Sort the shortcuts as they were presented in Commands.cmd.xml
-      for (Map.Entry<KeySequence, List<AppCommandBinding>> entry : commands_.entrySet())
+      for (Map.Entry<KeySequence, List<AppCommandBinding>> entry : appCommandBindings_.entrySet())
          for (AppCommandBinding binding : entry.getValue())
             shortcuts.add(binding.getShortcut());
       
@@ -344,7 +373,7 @@ public class ShortcutManager implements NativePreviewHandler,
       // shortcut bindings)
       for (KeyboardShortcut shortcut: shortcuts)
       {
-         AppCommand command = commands_.getCommand(shortcut.getKeySequence(), editorMode_);
+         AppCommand command = appCommandBindings_.getCommand(shortcut.getKeySequence(), editorMode_);
          if (infoMap.containsKey(command))
          {
             infoMap.get(command).addShortcut(shortcut);
@@ -395,7 +424,7 @@ public class ShortcutManager implements NativePreviewHandler,
          return true;
       
       // Check for RStudio AppCommands.
-      if (dispatch(shortcut, commands_, e, maskedCommands_))
+      if (dispatch(shortcut, appCommandBindings_, e, maskedCommands_))
          return true;
       
       return false;
@@ -546,7 +575,7 @@ public class ShortcutManager implements NativePreviewHandler,
       private final Map<KeySequence, List<AppCommandBinding>> bindings_;
    }
    
-   private final AppCommandBindings commands_ =
+   private final AppCommandBindings appCommandBindings_ =
          new AppCommandBindings();
    
    private final AppCommandBindings customBindings_ =
@@ -566,5 +595,6 @@ public class ShortcutManager implements NativePreviewHandler,
    private EditorCommandManager editorCommands_;
    private ApplicationCommandManager appCommands_;
    private EventBus events_;
+   private Commands commands_;
    
 }
