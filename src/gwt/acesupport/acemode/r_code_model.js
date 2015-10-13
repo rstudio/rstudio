@@ -954,7 +954,7 @@ var RCodeModel = function(session, tokenizer,
          {
             var chunkStartPos = position;
             var chunkPos = {row: chunkStartPos.row + 1, column: 0};
-            var chunkNum = this.$scopes.getTopLevelScopeCount() + 1;
+            var chunkNum = this.$scopes.getChunkCount() + 1;
 
                var chunkLabel = getChunkLabel(this.$codeBeginPattern, value);
                var scopeName = "Chunk " + chunkNum;
