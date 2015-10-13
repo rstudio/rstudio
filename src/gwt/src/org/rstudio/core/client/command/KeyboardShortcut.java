@@ -181,11 +181,11 @@ public class KeyboardShortcut
             int keyCode = 0;
             if (sc.endsWith("-"))
             {
-               keyCode = '-';
+               keyCode = KeyboardHelper.KEY_HYPHEN;
             }
             else if (sc.endsWith("+"))
             {
-               keyCode = '+';
+               keyCode = 187;
             }
             else
             {

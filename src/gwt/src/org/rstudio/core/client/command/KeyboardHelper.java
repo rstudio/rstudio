@@ -187,4 +187,6 @@ public class KeyboardHelper
    
    private static final JavaScriptObject KEY_NAME_TO_KEY_CODE_MAP =
          makeKeyNameToKeyCodeMap(KEY_CODE_TO_KEY_NAME_MAP);
+   
+   public static final int KEY_HYPHEN = BrowseCap.isFirefox() ? 173 : 189;
 }
