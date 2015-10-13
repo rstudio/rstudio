@@ -152,10 +152,9 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          if (!iterator.fwdToMatchingToken())
             continue;
          
+         
+         token = iterator.stepForward();
          Position endPos = iterator.getCurrentTokenPosition();
-         endPos = Position.create(
-               endPos.getRow(),
-               endPos.getColumn() + 1);
          
          return Range.fromPoints(startPos, endPos);
       }
@@ -218,25 +217,10 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
             });
    }
    
-   private boolean shouldAppendNewline(Range range)
-   {
-      Position startPos = range.getStart();
-      Position endPos = range.getEnd();
-      
-      if (!startPos.isEqualTo(endPos))
-         return false;
-      
-      TokenIterator iterator = TokenIterator.create(widget_.getEditor().getSession());
-      Token token = iterator.moveToPosition(endPos);
-      return token != null && token.hasType("codeend");
-   }
-   
    @Override
    protected void synchronize()
    {
       Range range = syncSelection();
-      String maybeNewLine = shouldAppendNewline(range) ? "\n" : "";
-      
       Map<String, String> options = new LinkedHashMap<String, String>();
       
       Set<String> keys = chunkOptions_.keySet();
@@ -263,16 +247,17 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       if (options.size() <= 2)
       {
          String joined = StringUtil.collapse(options, " = ", ", ");
-         String code = "knitr::opts_chunk$set(" + joined + ")" + maybeNewLine;
+         String code = "knitr::opts_chunk$set(" + joined + ")\n";
          widget_.getEditor().insert(code);
          return;
       }
       
       Map<String, String> sorted = sortedOptions(options);
       
-      String code = "knitr::opts_chunk$set(\n\t";
-      code += joinOptions(sorted);
-      code += "\n)" + maybeNewLine;
+      String code =
+            "knitr::opts_chunk$set(\n\t" +
+            joinOptions(sorted) +
+            "\n)\n";
       
       widget_.getEditor().insert(code);
    }
