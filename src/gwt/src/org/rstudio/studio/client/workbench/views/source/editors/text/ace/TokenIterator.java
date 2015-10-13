@@ -31,6 +31,10 @@ public class TokenIterator extends JavaScriptObject
    }-*/;
    
    protected TokenIterator() {}
+   
+   public native final TokenIterator clone() /*-{
+      return this.clone();
+   }-*/;
 
    public native final Token stepForward() /*-{
       return this.stepForward();

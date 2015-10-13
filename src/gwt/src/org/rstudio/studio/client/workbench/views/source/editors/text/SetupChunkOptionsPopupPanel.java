@@ -108,6 +108,16 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          options.put(name, value);
    }
    
+   private Position findKnitrPrefix(TokenIterator iterator)
+   {
+      Token token = iterator.stepBackward();
+      if (!(token.valueEquals("::") || token.valueEquals(":::")))
+         return null;
+      
+      token = iterator.stepBackward();
+      return token.valueEquals("knitr") ? iterator.getCurrentTokenPosition() : null;
+   }
+   
    private Range findOptsChunk()
    {
       TokenIterator iterator = TokenIterator.create(
@@ -125,17 +135,12 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
             break;
          
          Position startPos = iterator.getCurrentTokenPosition();
-         
-         if (!token.getValue().equals("knitr"))
-            continue;
-         
-         token = iterator.stepForward();
-         if (!token.getValue().equals("::"))
-            continue;
-         
-         token = iterator.stepForward();
          if (!token.getValue().equals("opts_chunk"))
             continue;
+         
+         Position knitrPrefixPos = findKnitrPrefix(iterator.clone());
+         if (knitrPrefixPos != null)
+            startPos = knitrPrefixPos;
          
          token = iterator.stepForward();
          if (!token.getValue().equals("$"))
