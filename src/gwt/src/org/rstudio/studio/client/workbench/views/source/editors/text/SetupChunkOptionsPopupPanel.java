@@ -28,7 +28,10 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -104,34 +107,75 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          options.put(name, value);
    }
    
-   private int findOptsChunkLine(int endRow)
+   private Range findOptsChunk()
    {
-      for (int i = endRow; i >= 0; i--)
+      TokenIterator iterator = TokenIterator.create(
+            widget_.getEditor().getSession(),
+            position_.getRow(),
+            position_.getColumn());
+      
+      while (true)
       {
-         String line = widget_.getEditor().getSession().getLine(i);
-         if (line.contains("opts_chunk$set"))
-            return i;
+         Token token = iterator.stepForward();
+         if (token == null)
+            break;
+         
+         if (token.hasType("codeend"))
+            break;
+         
+         Position startPos = iterator.getCurrentTokenPosition();
+         
+         if (!token.getValue().equals("knitr"))
+            continue;
+         
+         token = iterator.stepForward();
+         if (!token.getValue().equals("::"))
+            continue;
+         
+         token = iterator.stepForward();
+         if (!token.getValue().equals("opts_chunk"))
+            continue;
+         
+         token = iterator.stepForward();
+         if (!token.getValue().equals("$"))
+            continue;
+         
+         token = iterator.stepForward();
+         if (!token.getValue().equals("set"))
+            continue;
+         
+         token = iterator.stepForward();
+         if (!token.getValue().equals("("))
+            continue;
+         
+         if (!iterator.fwdToMatchingToken())
+            continue;
+         
+         Position endPos = iterator.getCurrentTokenPosition();
+         endPos = Position.create(
+               endPos.getRow(),
+               endPos.getColumn() + 1);
+         
+         return Range.fromPoints(startPos, endPos);
       }
-      return -1;
+      
+      return null;
    }
    
-   private void syncSelection()
+   private Range syncSelection()
    {
-      int endRow = findEndOfChunk();
-      if (endRow == -1)
-         return;
-      
-      int startRow = findOptsChunkLine(endRow);
-      if (startRow == -1)
+      Range range = findOptsChunk();
+      if (range == null)
       {
          widget_.getEditor().clearSelection();
-         widget_.getEditor().moveCursorTo(endRow, 0);
+         widget_.getEditor().moveCursorTo(position_.getRow() + 1, 0);
       }
       else
       {
-         Range range = Range.create(startRow, 0, endRow, 0);
          widget_.getEditor().getSession().getSelection().setSelectionRange(range);
       }
+      
+      return widget_.getEditor().getSession().getSelection().getRange();
    }
    
    private String joinOptions(Map<String, String> options)
@@ -173,14 +217,24 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
             });
    }
    
+   private boolean shouldAppendNewline(Range range)
+   {
+      Position startPos = range.getStart();
+      Position endPos = range.getEnd();
+      
+      if (!startPos.isEqualTo(endPos))
+         return false;
+      
+      TokenIterator iterator = TokenIterator.create(widget_.getEditor().getSession());
+      Token token = iterator.moveToPosition(endPos);
+      return token != null && token.hasType("codeend");
+   }
+   
    @Override
    protected void synchronize()
    {
-      int endRow = findEndOfChunk();
-      if (endRow == -1)
-         return;
-      
-      syncSelection();
+      Range range = syncSelection();
+      String maybeNewLine = shouldAppendNewline(range) ? "\n" : "";
       
       Map<String, String> options = new LinkedHashMap<String, String>();
       
@@ -208,7 +262,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       if (options.size() <= 2)
       {
          String joined = StringUtil.collapse(options, " = ", ", ");
-         String code = "knitr::opts_chunk$set(" + joined + ")\n";
+         String code = "knitr::opts_chunk$set(" + joined + ")" + maybeNewLine;
          widget_.getEditor().insert(code);
          return;
       }
@@ -217,7 +271,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       
       String code = "knitr::opts_chunk$set(\n\t";
       code += joinOptions(sorted);
-      code += "\n)\n";
+      code += "\n)" + maybeNewLine;
       
       widget_.getEditor().insert(code);
    }
