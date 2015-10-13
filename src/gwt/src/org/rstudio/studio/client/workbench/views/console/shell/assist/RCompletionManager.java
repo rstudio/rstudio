@@ -77,6 +77,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RInfixD
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
@@ -234,6 +237,24 @@ public class RCompletionManager implements CompletionManager
                if (sigTip_ != null && wasSigtipShowing_)
                   sigTip_.show();
             }
+         }
+      });
+      
+      docDisplay_.addCursorChangedHandler(new CursorChangedHandler()
+      {
+         @Override
+         public void onCursorChanged(CursorChangedEvent event)
+         {
+            invalidation_.invalidate();
+         }
+      });
+      
+      docDisplay_.addDocumentChangedHandler(new DocumentChangedEvent.Handler()
+      {
+         @Override
+         public void onDocumentChanged(DocumentChangedEvent event)
+         {
+            invalidation_.invalidate();
          }
       });
       
