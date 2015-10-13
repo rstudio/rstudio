@@ -409,6 +409,10 @@ public class JsInteropRestrictionChecker {
 
   private void checkNativeJsType(JDeclaredType type) {
     // TODO(rluble): add inheritance restrictions.
+    if (type.isEnumOrSubclass() != null) {
+      logError("Enum '%s' cannot be a native JsType.", type);
+      return;
+    }
     if (!isClinitEmpty(type)) {
       logError("Native JsType '%s' cannot have static initializer.", type);
     }

@@ -1050,6 +1050,15 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     assertBuggySucceeds();
   }
 
+  public void testNativeJsTypeEnumFails() {
+    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetClassDecl(
+        "@JsType(prototype = \"x\") public enum Buggy { A, B }");
+
+    assertBuggyFails(
+        "Enum 'test.EntryPoint$Buggy' cannot be a native JsType.");
+  }
+
   public void testNativeJsTypeInterfaceCompileTimeConstantSucceeds()
       throws UnableToCompleteException {
     addSnippetImport("com.google.gwt.core.client.js.JsType");
