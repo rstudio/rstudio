@@ -186,6 +186,21 @@ if (UNIX)
          ${OPENSSL_INCLUDE_DIRS}
          ${PAM_INCLUDE_DIRS}
       )
+
+      # handle El Capitan moving OpenSSL away
+      if(APPLE
+         AND ${MACOSX_VERSION} VERSION_GREATER "10.10"
+         AND EXISTS "/usr/local/opt/openssl")
+
+         set(CORE_SYSTEM_LIBRARIES
+            ${CORE_SYSTEM_LIBRARIES}
+            -lssl -lcrypto)
+
+         set(CORE_INCLUDE_DIRS
+            ${CORE_INCLUDE_DIRS}
+            /usr/local/opt/openssl/include)
+
+      endif()
    endif()
 
    # source files
