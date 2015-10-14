@@ -3712,11 +3712,13 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void getShinyRunCmd(String shinyAppDir, 
+   public void getShinyRunCmd(String shinyFile, 
+                              String extendedType,
                               ServerRequestCallback<ShinyRunCmd> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(shinyAppDir));
+      params.set(0, new JSONString(shinyFile));
+      params.set(1, new JSONString(extendedType));
       sendRequest(RPC_SCOPE,
             GET_SHINY_RUN_CMD,
             params,

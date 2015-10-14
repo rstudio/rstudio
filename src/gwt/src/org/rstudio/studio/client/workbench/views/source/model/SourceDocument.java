@@ -141,4 +141,11 @@ public class SourceDocument extends JavaScriptObject
    {
       getProperties().setString(SourceWindowManager.SOURCE_WINDOW_ID, windowId);
    }
+   
+   public final static String XT_RMARKDOWN = "rmarkdown";
+   public final static String XT_SHINY_PREFIX = "shiny-";
+   public final static String XT_SHINY_DIR = "shiny-dir";
+   public final static String XT_SHINY_SINGLE_FILE = "shiny-single-file";
+   public final static String XT_SHINY_SINGLE_EXE = "shiny-single-executable";
+   public final static String XT_SHINY_DOCUMENT = "shiny-document";
 }

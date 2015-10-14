@@ -1408,7 +1408,7 @@ public class TextEditingTarget implements
                   // if we're not in function scope, or this is a Shiny file,
                   // set a top-level (aka. Shiny-deferred) breakpoint
                   ScopeFunction innerFunction = null;
-                  if (!extendedType_.equals("shiny")) 
+                  if (StringUtil.isNullOrEmpty(extendedType_))
                      innerFunction = docDisplay_.getFunctionAtPosition(
                            breakpointPosition, false);
                   if (innerFunction == null || !innerFunction.isFunction() ||
@@ -1534,7 +1534,7 @@ public class TextEditingTarget implements
       
       // for R Markdown docs, populate the popup menu with a list of available
       // formats
-      if (extendedType_.equals("rmarkdown"))
+      if (extendedType_.equals(SourceDocument.XT_RMARKDOWN))
          updateRmdFormatList();
       
       view_.addRmdFormatChangedHandler(new RmdOutputFormatChangedEvent.Handler()
@@ -2510,7 +2510,7 @@ public class TextEditingTarget implements
    public void adaptToExtendedFileType(String extendedType)
    {
       view_.adaptToExtendedFileType(extendedType);
-      if (extendedType.equals("rmarkdown"))
+      if (extendedType.equals(SourceDocument.XT_RMARKDOWN))
          updateRmdFormatList();
       extendedType_ = extendedType;
    }
@@ -4225,7 +4225,7 @@ public class TextEditingTarget implements
 
       // If the document being sourced is a Shiny file, run the app instead.
       if (fileType_.isR() && 
-          extendedType_.equals("shiny")) 
+          extendedType_.startsWith(SourceDocument.XT_SHINY_PREFIX))
       {
          runShinyApp();
          return;
@@ -4329,7 +4329,8 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            events_.fireEvent(new LaunchShinyApplicationEvent(getPath()));
+            events_.fireEvent(new LaunchShinyApplicationEvent(getPath(),
+                  getExtendedFileType()));
          }
       }, "Run Shiny Application");
    }
@@ -4411,7 +4412,7 @@ public class TextEditingTarget implements
                                                          extendedType, 
                                                          fileType_);
       
-      if (extendedType == "rmarkdown")
+      if (extendedType == SourceDocument.XT_RMARKDOWN)
          renderRmd();
       else if (fileType_.isRd())
          previewRd();

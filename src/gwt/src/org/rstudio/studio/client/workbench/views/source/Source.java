@@ -3062,12 +3062,17 @@ public class Source implements InsertSourceHandler,
             SessionUtils.showPublishUi(session_, uiPrefs_) &&
             (activeEditor_ != null) &&
             (activeEditor_.getPath() != null) &&
-            ((activeEditor_.getExtendedFileType() == "shiny") ||
-             (activeEditor_.getExtendedFileType() == "rmarkdown"));
+            ((activeEditor_.getExtendedFileType() != null &&
+              activeEditor_.getExtendedFileType()
+                 .startsWith(SourceDocument.XT_SHINY_PREFIX)) ||
+             (activeEditor_.getExtendedFileType() == 
+                 SourceDocument.XT_RMARKDOWN));
       commands_.rsconnectDeploy().setVisible(rsCommandsAvailable);
       if (activeEditor_ != null)
          commands_.rsconnectDeploy().setLabel(
-               activeEditor_.getExtendedFileType() == "shiny" ?
+               activeEditor_.getExtendedFileType() != null &&
+               activeEditor_.getExtendedFileType() 
+                    .startsWith(SourceDocument.XT_SHINY_PREFIX) ?
                "Publish Application..." : "Publish Document...");
       commands_.rsconnectConfigure().setVisible(rsCommandsAvailable);
    }
@@ -3077,7 +3082,7 @@ public class Source implements InsertSourceHandler,
       boolean rmdCommandsAvailable = 
             session_.getSessionInfo().getRMarkdownPackageAvailable() &&
             (activeEditor_ != null) &&
-            activeEditor_.getExtendedFileType() == "rmarkdown";
+            activeEditor_.getExtendedFileType() == SourceDocument.XT_RMARKDOWN;
       commands_.editRmdFormatOptions().setVisible(rmdCommandsAvailable);
       commands_.editRmdFormatOptions().setEnabled(rmdCommandsAvailable);
    }

@@ -32,6 +32,7 @@ public interface ShinyServerOperations
                ServerRequestCallback<Void> requestCallback);
    
    void getShinyRunCmd(
-               String shinyAppDir,
+               String shinyFile,
+               String extendedType,
                ServerRequestCallback<ShinyRunCmd> requestCallback);
 }

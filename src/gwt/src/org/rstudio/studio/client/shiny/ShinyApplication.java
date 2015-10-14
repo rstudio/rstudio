@@ -123,7 +123,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    @Override
    public void onLaunchShinyApplication(LaunchShinyApplicationEvent event)
    {
-      launchShinyApplication(event.getPath());
+      launchShinyApplication(event.getPath(), event.getExtendedType());
    }
 
    @Override
@@ -211,10 +211,10 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
 
    // Private methods ---------------------------------------------------------
    
-   private void launchShinyApplication(String filePath)
+   private void launchShinyApplication(final String filePath, 
+         final String extendedType)
    {
-      final String dir = filePath.substring(0, filePath.lastIndexOf("/"));
-      if (dir.equals(currentAppPath()))
+      if (filePath.equals(currentAppPath()))
       {
          // The app being launched is the one already running; open and
          // reload the app.
@@ -242,7 +242,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
             @Override
             public void onInterruptFinished()
             {
-               launchShinyAppDir(dir);
+               launchShinyFile(filePath, extendedType);
             }
          });
       }
@@ -254,7 +254,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
                   @Override
                   public void execute()
                   {
-                     launchShinyAppDir(dir);
+                     launchShinyFile(filePath, extendedType);
                   }
          });
       }
@@ -378,9 +378,10 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       }
    }
    
-   private void launchShinyAppDir(String dir)
+   private void launchShinyFile(String file, String extendedType)
    {
-      server_.getShinyRunCmd(dir, 
+      server_.getShinyRunCmd(file, 
+            extendedType,
             new ServerRequestCallback<ShinyRunCmd>()
             {
                @Override

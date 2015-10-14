@@ -31,6 +31,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 
+#include "shiny/SessionShiny.hpp"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -143,26 +145,77 @@ Error setShinyViewer(boost::shared_ptr<int> pShinyViewerType,
 Error getShinyRunCmd(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   std::string targetPath;
-   Error error = json::readParams(request.params, &targetPath);
+   std::string targetPath, extendedType;
+   Error error = json::readParams(request.params, &targetPath, &extendedType);
    if (error)
       return error;
 
-   // Consider: if the shiny namespace is attached to the search path, we
-   // don't need to emit "shiny::".
-   std::string runCmd = "shiny::runApp(";
-   std::string dir = module_context::pathRelativeTo(
+   modules::shiny::ShinyFileType shinyType = 
+      modules::shiny::shinyTypeFromExtendedType(extendedType);
+
+   // resolve the file path we were passed; if this .R file belongs to a 
+   // Shiny directory, use the parent
+   FilePath shinyPath = module_context::resolveAliasedPath(targetPath); 
+   if (shinyType == modules::shiny::ShinyDirectory)
+      shinyPath = shinyPath.parent();
+
+   std::string shinyRunPath = module_context::pathRelativeTo(
             module_context::safeCurrentPath(),
-            module_context::resolveAliasedPath(targetPath));
-   if (dir != ".")
+            shinyPath);
+
+   // check to see if Shiny is attached to the search path
+   bool isShinyAttached = false;
+   SEXP namespaces = R_NilValue;
+   r::sexp::Protect protect;
+   error = r::exec::RFunction("search").call(&namespaces, &protect);
+   if (error)
    {
-      // runApp defaults to the current working directory, so don't specify
-      // it unless we need to.
-      runCmd.append("'");
-      runCmd.append(dir);
-      runCmd.append("'");
+      // not fatal; we'll just presume Shiny is not on the path
+      LOG_ERROR(error);
    }
-   runCmd.append(")");
+   else
+   {
+      int len = r::sexp::length(namespaces);
+      for (int i = 0; i < len; i++)
+      {
+         std::string ns = r::sexp::safeAsString(STRING_ELT(namespaces, i), "");
+         if (ns == "package:shiny") 
+         {
+            isShinyAttached = true;
+            break;
+         }
+      }
+   }
+
+   std::string runCmd; 
+   if (shinyType == modules::shiny::ShinyDirectory)
+   {
+      if (!isShinyAttached)
+         runCmd = "shiny::";
+      runCmd.append("runApp(");
+      if (shinyRunPath != ".")
+      {
+         // runApp defaults to the current working directory, so don't specify
+         // it unless we need to.
+         runCmd.append("'");
+         runCmd.append(shinyRunPath);
+         runCmd.append("'");
+      }
+      runCmd.append(")");
+   }
+   else if (shinyType == modules::shiny::ShinySingleFile ||
+            shinyType == modules::shiny::ShinySingleExecutable) 
+   {
+      if (!isShinyAttached)
+         runCmd = "library(shiny); ";
+      if (shinyType == modules::shiny::ShinySingleFile)
+         runCmd.append("print(");
+      runCmd.append("source('");
+      runCmd.append(shinyRunPath); 
+      runCmd.append("')");
+      if (shinyType == modules::shiny::ShinySingleFile)
+         runCmd.append(")");
+   }
 
    json::Object dataJson;
    dataJson["run_cmd"] = runCmd;

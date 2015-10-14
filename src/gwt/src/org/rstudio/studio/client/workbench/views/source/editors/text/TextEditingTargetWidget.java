@@ -71,6 +71,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidget;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 public class TextEditingTargetWidget
       extends ResizeComposite
@@ -497,7 +498,8 @@ public class TextEditingTargetWidget
       boolean canPreviewFromR = fileType.canPreviewFromR();
       
       // don't show the run buttons for cpp files, or R files in Shiny
-      runButton_.setVisible(canExecuteCode && !canExecuteChunks && !isCpp && !isShinyFile());
+      runButton_.setVisible(canExecuteCode && !canExecuteChunks && !isCpp && 
+            !isShinyFile());
       runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks);
       
       // chunk oriented buttons     
@@ -548,6 +550,7 @@ public class TextEditingTargetWidget
       }
       else
       {
+         shinyLaunchButton_.setVisible(false);
          setSourceButtonFromScriptState(isScript, 
                                         canPreviewFromR,
                                         fileType.getPreviewButtonText());
@@ -569,7 +572,8 @@ public class TextEditingTargetWidget
    
    private boolean isShinyFile()
    {
-      return extendedType_.equals("shiny");
+      return extendedType_ != null &&
+             extendedType_.startsWith(SourceDocument.XT_SHINY_PREFIX);
    }
 
    public HasValue<Boolean> getSourceOnSave()
@@ -601,7 +605,7 @@ public class TextEditingTargetWidget
       texToolbarButton_.setText(width < 520 ? "" : "Format");
       runButton_.setText(((width < 480) || isShinyFile()) ? "" : "Run");
       compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
-      previewHTMLButton_.setText(width < 450 ? "" : previewCommandText_);                                                       
+      previewHTMLButton_.setText(width < 450 ? "" : previewCommandText_);
       knitDocumentButton_.setText(width < 450 ? "" : knitCommandText_);
       
       if (editor_.getFileType().isRd() || editor_.getFileType().canPreviewFromR())
@@ -861,12 +865,12 @@ public class TextEditingTargetWidget
       publishPath_ = publishPath;
       if (publishButton_ != null)
       {
-         if (type == "shiny")
+         if (type == SourceDocument.XT_SHINY_DIR)
          {
             publishButton_.setContentPath(publishPath, "");
             publishButton_.setContentType(RSConnect.CONTENT_TYPE_APP);
          }
-         else if (type == "rmarkdown")
+         else if (type == SourceDocument.XT_RMARKDOWN)
          {
             publishButton_.setRmd(publishPath, !isShiny_);
          }
@@ -913,6 +917,8 @@ public class TextEditingTargetWidget
       
       sourceButton_.setTitle(sourceCommandDesc);
       sourceButton_.setText(sourceCommandText_);
+      sourceButton_.setLeftImage(
+            commands_.sourceActiveDocument().getImageResource());
    }
 
    public void setSourceButtonFromShinyState()
