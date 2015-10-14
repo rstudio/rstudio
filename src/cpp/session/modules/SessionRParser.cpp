@@ -2279,7 +2279,7 @@ START:
 BINARY_OPERATOR:
       
       checkBinaryOperatorWhitespace(cursor, status);
-      if (!canFollowBinaryOperator(cursor.nextSignificantToken()))
+      if (!cursor.isAtEndOfDocument() && !canFollowBinaryOperator(cursor.nextSignificantToken()))
          status.lint().unexpectedToken(cursor.nextSignificantToken());
       
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
