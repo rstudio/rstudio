@@ -152,29 +152,20 @@ public class JsToStringGenerationVisitorAccuracyTest extends TestCase {
   }
 
   public void testEscapes() {
-    // Use short octal escapes at the end of the string or when the next
-    // character is a non-digit
-    doTestEscapes("\u0000", "'\\0'");
-    doTestEscapes("a\u0000", "'a\\0'");
-    doTestEscapes("\u0000a", "'\\0a'");
-    doTestEscapes("a\u0000a", "'a\\0a'");
-    // Ensure hex escapes are used where octal is not possible due to a
-    // following digit
     doTestEscapes("\u00006", "'\\x006'");
-    doTestEscapes("\u00006\u0000", "'\\x006\\0'");
+    doTestEscapes("\u00006\u0000", "'\\x006\\x00'");
 
-    // Single-digit octal escapes or special cases (\b,\t,\n\,f\,\r)
-    // for characters from 0 to 15
-    doTestEscapes("\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007",
-        "'\\0\\1\\2\\3\\4\\5\\6\\7'");
-    doTestEscapes("\u0008\u0009\n\u000b\u000c\r\u000e\u000f",
-        "'\\b\\t\\n\\13\\f\\r\\16\\17'");
+    // Single-digit special cases (\b,\t,\n\,f\,\r)
+    doTestEscapes("\u0008\u0009\n\u000c\r",
+        "'\\b\\t\\n\\f\\r'");
 
-    // Use two-digit octal escapes for characters from 16 to 31
+    // Use hexadecimal even when octal would have been suitable.
+    doTestEscapes("\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\u000B\u000E\u000F",
+        "'\\x00\\x01\\x02\\x03\\x04\\x05\\x06\\x07\\x0B\\x0E\\x0F'");
     doTestEscapes("\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017",
-        "'\\20\\21\\22\\23\\24\\25\\26\\27'");
+        "'\\x10\\x11\\x12\\x13\\x14\\x15\\x16\\x17'");
     doTestEscapes("\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f",
-        "'\\30\\31\\32\\33\\34\\35\\36\\37'");
+        "'\\x18\\x19\\x1A\\x1B\\x1C\\x1D\\x1E\\x1F'");
 
     // Use two-digit hex escapes for characters up to 0xff
     doTestEscapes("\u007f\u00ab", "'\\x7F\\xAB'");

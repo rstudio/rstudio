@@ -45,7 +45,7 @@ public class StringUtils {
       }
     }
 
-    StringBuffer result = new StringBuffer(value.length() + 16);
+    StringBuilder result = new StringBuilder(value.length() + 16);
 
     char quoteChar = (quoteCount < aposCount) ? '"' : '\'';
     result.append(quoteChar);
@@ -92,38 +92,20 @@ public class StringUtils {
         result.append('\\');
         result.append((char) escape);
       } else {
-        /*
-         * Emit characters from 0 to 31 that don't have a single character
-         * escape sequence in octal where possible. This saves one or two
-         * characters compared to the hexadecimal format '\xXX'.
-         *
-         * These short octal sequences may only be used at the end of the string
-         * or where the following character is a non-digit. Otherwise, the
-         * following character would be incorrectly interpreted as belonging to
-         * the sequence.
-         */
-        if (c < ' ' && (i == n - 1 || chars[i + 1] < '0' || chars[i + 1] > '9')) {
-          result.append('\\');
-          if (c > 0x7) {
-            result.append((char) ('0' + (0x7 & (c >> 3))));
-          }
-          result.append((char) ('0' + (0x7 & c)));
+        int hexSize;
+        if (c < 256) {
+          // 2-digit hex
+          result.append("\\x");
+          hexSize = 2;
         } else {
-          int hexSize;
-          if (c < 256) {
-            // 2-digit hex
-            result.append("\\x");
-            hexSize = 2;
-          } else {
-            // Unicode.
-            result.append("\\u");
-            hexSize = 4;
-          }
-          // append hexadecimal form of ch left-padded with 0
-          for (int shift = (hexSize - 1) * 4; shift >= 0; shift -= 4) {
-            int digit = 0xf & (c >> shift);
-            result.append(HEX_CHARS[digit]);
-          }
+          // Unicode.
+          result.append("\\u");
+          hexSize = 4;
+        }
+        // append hexadecimal form of ch left-padded with 0
+        for (int shift = (hexSize - 1) * 4; shift >= 0; shift -= 4) {
+          int digit = 0xf & (c >> shift);
+          result.append(HEX_CHARS[digit]);
         }
       }
     }
@@ -158,7 +140,7 @@ public class StringUtils {
    *
    * @param str an unescaped literal; May be null
    */
-  private static void escapeClosingTags(StringBuffer str) {
+  private static void escapeClosingTags(StringBuilder str) {
     if (str == null) {
       return;
     }
