@@ -129,9 +129,14 @@ std::string getLastFunction(const std::string& fileContents)
    std::string contents = 
       boost::regex_replace(fileContents, boost::regex("#[^\n]*\n"), "");
 
+   // if there aren't enough characters to form a valid function call, bail
+   // out early
+   if (contents.size() < 3) 
+      return function;
+
    // make sure there's nothing but space up to the last closing paren
    size_t lastParenPos = std::string::npos;
-   for (size_t i = contents.size() - 1; i > 0; i--)
+   for (size_t i = contents.size() - 1; i > 1; i--)
    {
       if (std::isspace(contents.at(i)))
          continue;
@@ -146,7 +151,7 @@ std::string getLastFunction(const std::string& fileContents)
    // now find its match 
    int unbalanced = 0;
    size_t functionEndPos = std::string::npos;
-   for (size_t i = lastParenPos - 1; i > 0; i--) 
+   for (size_t i = lastParenPos - 1; i > 1; i--) 
    {
       if (contents.at(i) == ')')
       {
@@ -165,7 +170,8 @@ std::string getLastFunction(const std::string& fileContents)
    }
 
    // bail out if we rewound through the whole file without finding a match
-   if (functionEndPos == std::string::npos)
+   if (functionEndPos == std::string::npos ||
+       functionEndPos < 1)
       return function;
 
    // skip any whitespace between function paren and name
