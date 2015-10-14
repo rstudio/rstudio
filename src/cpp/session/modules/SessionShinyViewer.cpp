@@ -42,22 +42,27 @@ namespace shiny_viewer {
 
 namespace {
 
-// track the current viewed url and path
-std::string s_currentAppUrl;
-std::string s_currentAppPath;
+// track a pending Shiny path launch
+FilePath s_pendingShinyPath;
 
-void enqueStartEvent(const std::string& url, const std::string& path,
+void enqueueStartEvent(const std::string& url, const std::string& path,
                      int viewerType)
 {
-   // record the url and path
-   s_currentAppUrl = module_context::mapUrlPorts(url);
-   s_currentAppPath = path;
+   FilePath shinyPath(path);
+   if (module_context::safeCurrentPath() == shinyPath &&
+       !s_pendingShinyPath.empty())
+   {
+      // when Shiny starts an app from a anonymous expr (e.g. shinyApp(foo)),
+      // it reports the working directory as the app's "path". We sometimes
+      // know which file on disk this app corresponds to, so inject that now.
+      shinyPath = s_pendingShinyPath;
+   }
+   s_pendingShinyPath = FilePath();
 
    // enque the event
    json::Object dataJson;
-   dataJson["url"] = s_currentAppUrl;
-   dataJson["path"] =
-         module_context::createAliasedPath(FilePath(s_currentAppPath));
+   dataJson["url"] = module_context::mapUrlPorts(url);
+   dataJson["path"] = module_context::createAliasedPath(shinyPath);
    dataJson["state"] = "started";
    dataJson["viewer"] = viewerType;
    ClientEvent event(client_events::kShinyViewer, dataJson);
@@ -93,9 +98,9 @@ SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP, SEXP viewerSEXP)
          }
       }
 
-      enqueStartEvent(r::sexp::safeAsString(urlSEXP),
-                      r::sexp::safeAsString(pathSEXP),
-                      viewertype);
+      enqueueStartEvent(r::sexp::safeAsString(urlSEXP),
+                        r::sexp::safeAsString(pathSEXP),
+                        viewertype);
    }
    catch(const r::exec::RErrorException& e)
    {
@@ -243,6 +248,26 @@ Error initShinyViewerPref(boost::shared_ptr<int> pShinyViewerType)
 
    return Success();
 }
+ 
+void onConsoleInput(const std::string& input)
+{
+   boost::smatch match;
+
+   // capture source commands -- note that this doesn't handle quotes in file
+   // names or attempt to balance quote styles, evaluate expressions, etc.
+   // (it will primarily detect the output of getShinyRunCmd but we also want
+   // to catch most user-entered source() expressions)
+   if (boost::regex_search(input, match,
+                 boost::regex("source\\s*\\(\\s*['\"]([^'\"]+)['\"]\\s*\\)")))
+   {
+      // source commands can result in the execution of Shiny app objects, 
+      // which Shiny doesn't map back to the original file; keep track of 
+      // executions so we can do the mapping ourselves (see comments in 
+      // enqueueStartEvent)
+      s_pendingShinyPath = FilePath(
+            module_context::resolveAliasedPath(match[1]));
+   }
+}
 
 } // anonymous namespace
 
@@ -263,6 +288,7 @@ Error initialize()
    methodDefViewer.numArgs = 3;
    r::routines::addCallMethod(methodDefViewer);
 
+   events().onConsoleInput.connect(onConsoleInput);
    userSettings().onChanged.connect(bind(onUserSettingsChanged,
                                          pShinyViewerType));
 
