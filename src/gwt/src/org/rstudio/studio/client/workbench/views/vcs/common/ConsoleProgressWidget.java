@@ -22,8 +22,12 @@ public class ConsoleProgressWidget extends ShellWidget implements ShellDisplay
 {
    public ConsoleProgressWidget()
    {
-      super(new AceEditor(), null);     
+      super(new AceEditor(), null);
+      getEditor().setInsertMatching(false);
    }
    
-  
+   private AceEditor getEditor()
+   {
+      return input_;
+   }
 }

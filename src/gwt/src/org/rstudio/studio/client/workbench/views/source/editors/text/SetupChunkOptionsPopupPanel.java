@@ -225,7 +225,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    @Override
    protected void synchronize()
    {
-      Range range = syncSelection();
+      syncSelection();
       Map<String, String> options = new LinkedHashMap<String, String>();
       
       Set<String> keys = chunkOptions_.keySet();

@@ -307,9 +307,10 @@ public class AceEditorNative extends JavaScriptObject {
       this.onCursorChange();
    }-*/;
 
-   public static native void setInsertMatching(boolean insertMatching) /*-{
-      $wnd.require("mode/auto_brace_insert").setInsertMatching(insertMatching);
-   }-*/;
+   public final void setInsertMatching(boolean value)
+   {
+      getSession().getMode().setInsertMatching(value);
+   }
 
    public static native void setVerticallyAlignFunctionArgs(
          boolean verticallyAlign) /*-{
@@ -484,6 +485,10 @@ public class AceEditorNative extends JavaScriptObject {
    
    }-*/;
    
+   public static final native void setDefaultInsertMatching(boolean value) /*-{
+      $wnd.require("mode/auto_brace_insert").setInsertMatching(value);
+   }-*/;
+   
    public final static void syncUiPrefs(UIPrefs uiPrefs)
    {
       if (uiPrefsSynced_)
@@ -494,7 +499,7 @@ public class AceEditorNative extends JavaScriptObject {
          @Override
          public void execute(Boolean arg) 
          {
-            setInsertMatching(arg);
+            setDefaultInsertMatching(arg);
          }
       });
       

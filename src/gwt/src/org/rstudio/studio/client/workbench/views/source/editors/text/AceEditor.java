@@ -1080,6 +1080,12 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
+   public void setInsertMatching(boolean value)
+   {
+      widget_.getEditor().setInsertMatching(value);
+   }
+   
+   @Override
    public void setSurroundSelectionPref(String value)
    {
       widget_.getEditor().setSurroundSelectionPref(value);
