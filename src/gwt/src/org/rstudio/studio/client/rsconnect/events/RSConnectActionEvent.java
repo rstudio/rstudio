@@ -34,14 +34,15 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
    public static RSConnectActionEvent ConfigureAppEvent(String path)
    {
       return new RSConnectActionEvent(ACTION_TYPE_CONFIGURE, 
-            RSConnect.CONTENT_TYPE_APP, path, null, null, null, null);
+            RSConnect.CONTENT_TYPE_SHINYAPP, path, null, null, null, null);
    }
 
    public static RSConnectActionEvent DeployAppEvent(String path, 
          RSConnectDeploymentRecord fromPrevious)
    {
       return new RSConnectActionEvent(ACTION_TYPE_DEPLOY, 
-            RSConnect.CONTENT_TYPE_APP, path, null, null, null, fromPrevious);
+            RSConnect.CONTENT_TYPE_SHINYAPP, path, null, null, null, 
+            fromPrevious);
    }
    
    public static RSConnectActionEvent DeployDocEvent(RenderedDocPreview params,

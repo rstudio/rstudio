@@ -181,7 +181,8 @@ public class RSConnect implements SessionInitHandler,
       {
          switch (event.getContentType())
          {
-         case CONTENT_TYPE_APP:
+         case CONTENT_TYPE_SHINYAPP:
+         case CONTENT_TYPE_SHINYFILE:
             publishAsCode(event, true);
             break;
          case CONTENT_TYPE_PRES:
@@ -316,7 +317,8 @@ public class RSConnect implements SessionInitHandler,
             }
          }
       }
-      else if (input.getContentType() == CONTENT_TYPE_APP)
+      else if (input.getContentType() == CONTENT_TYPE_SHINYAPP ||
+               input.getContentType() == CONTENT_TYPE_SHINYFILE)
       {
          publishAsCode(event, true);
       }
@@ -325,7 +327,7 @@ public class RSConnect implements SessionInitHandler,
    private void publishAsCode(RSConnectActionEvent event, boolean isShiny)
    {
       RSConnectPublishSource source = null;
-      if (event.getContentType() == CONTENT_TYPE_APP)
+      if (event.getContentType() == CONTENT_TYPE_SHINYFILE)
       {
          if (StringUtil.getExtension(event.getPath()).equalsIgnoreCase("r"))
          {
@@ -591,7 +593,8 @@ public class RSConnect implements SessionInitHandler,
    {
       switch(contentType)
       {
-      case RSConnect.CONTENT_TYPE_APP:
+      case RSConnect.CONTENT_TYPE_SHINYAPP:
+      case RSConnect.CONTENT_TYPE_SHINYFILE:
          return "Application";
       case RSConnect.CONTENT_TYPE_PLOT:
          return "Plot";
@@ -963,22 +966,25 @@ public class RSConnect implements SessionInitHandler,
    public final static String CLOUD_SERVICE_NAME = "ShinyApps.io";
    
    // No/unknown content type 
-   public final static int CONTENT_TYPE_NONE     = 0;
+   public final static int CONTENT_TYPE_NONE      = 0;
    
    // A single HTML file representing a plot
-   public final static int CONTENT_TYPE_PLOT     = 1;
+   public final static int CONTENT_TYPE_PLOT      = 1;
    
    // A document (.Rmd, .md, etc.), 
-   public final static int CONTENT_TYPE_DOCUMENT = 2;
+   public final static int CONTENT_TYPE_DOCUMENT  = 2;
    
    // A Shiny application
-   public final static int CONTENT_TYPE_APP      = 3;
+   public final static int CONTENT_TYPE_SHINYAPP  = 3;
    
    // Standalone HTML (from HTML widgets/viewer pane, etc.)
-   public final static int CONTENT_TYPE_HTML     = 4;
+   public final static int CONTENT_TYPE_HTML      = 4;
    
    // A .Rpres presentation
-   public final static int CONTENT_TYPE_PRES     = 5;
+   public final static int CONTENT_TYPE_PRES      = 5;
+   
+   // A single-file Shiny app 
+   public final static int CONTENT_TYPE_SHINYFILE = 6;
    
    public final static String CONTENT_CATEGORY_PLOT = "plot";
 }

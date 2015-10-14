@@ -354,7 +354,7 @@ public class TextEditingTargetWidget
       {
          toolbar.addRightSeparator();
          publishButton_ = new RSConnectPublishButton(
-               RSConnect.CONTENT_TYPE_APP, false, null);
+               RSConnect.CONTENT_TYPE_SHINYAPP, false, null);
          toolbar.addRightWidget(publishButton_);
       }
       
@@ -868,7 +868,12 @@ public class TextEditingTargetWidget
          if (type == SourceDocument.XT_SHINY_DIR)
          {
             publishButton_.setContentPath(publishPath, "");
-            publishButton_.setContentType(RSConnect.CONTENT_TYPE_APP);
+            publishButton_.setContentType(RSConnect.CONTENT_TYPE_SHINYAPP);
+         }
+         else if (type == SourceDocument.XT_SHINY_SINGLE_FILE)
+         {
+            publishButton_.setContentPath(publishPath, "");
+            publishButton_.setContentType(RSConnect.CONTENT_TYPE_SHINYFILE);
          }
          else if (type == SourceDocument.XT_RMARKDOWN)
          {

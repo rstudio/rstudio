@@ -240,7 +240,16 @@ public class RSConnectPublishButton extends Composite
    public void setShinyPreview(ShinyApplicationParams params)
    {
       setContentPath(params.getPath(), "");
-      setContentType(RSConnect.CONTENT_TYPE_APP);
+      if (FileSystemItem.getExtensionFromPath(params.getPath()).toLowerCase() ==
+            ".r")
+      {
+         // an individual .R file
+         setContentType(RSConnect.CONTENT_TYPE_SHINYFILE);
+      }
+      {
+         // a directory
+         setContentType(RSConnect.CONTENT_TYPE_SHINYAPP);
+      }
    }
    
    public void setHtmlPreview(HTMLPreviewResult params)
@@ -281,7 +290,8 @@ public class RSConnectPublishButton extends Composite
       {
          // moving to a document type: get its deployment status 
          if (contentType == RSConnect.CONTENT_TYPE_DOCUMENT ||
-             contentType == RSConnect.CONTENT_TYPE_APP)
+             contentType == RSConnect.CONTENT_TYPE_SHINYAPP ||
+             contentType == RSConnect.CONTENT_TYPE_SHINYFILE)
             populateDeployments(true);
          
          // moving to a raw HTML type: erase the deployment list
@@ -424,7 +434,8 @@ public class RSConnectPublishButton extends Composite
                   });
          }
          break;
-      case RSConnect.CONTENT_TYPE_APP:
+      case RSConnect.CONTENT_TYPE_SHINYAPP:
+      case RSConnect.CONTENT_TYPE_SHINYFILE:
          // Shiny application
          events_.fireEvent(RSConnectActionEvent.DeployAppEvent(
                contentPath_, previous));
@@ -611,7 +622,8 @@ public class RSConnectPublishButton extends Composite
          // show the menu for Shiny documents
          return !docPreview_.isStatic();
       }
-      else if (contentType_ == RSConnect.CONTENT_TYPE_APP)
+      else if (contentType_ == RSConnect.CONTENT_TYPE_SHINYAPP ||
+               contentType_ == RSConnect.CONTENT_TYPE_SHINYFILE)
       {
          // show the menu for Shiny apps
          return true;
@@ -650,7 +662,8 @@ public class RSConnectPublishButton extends Composite
            publishHtmlSource_ == null)
          return false;
       
-      if (contentType_ == RSConnect.CONTENT_TYPE_APP && 
+      if ((contentType_ == RSConnect.CONTENT_TYPE_SHINYAPP ||
+           contentType_ == RSConnect.CONTENT_TYPE_SHINYFILE) && 
           StringUtil.isNullOrEmpty(contentPath_))
          return false;
 
@@ -709,7 +722,7 @@ public class RSConnectPublishButton extends Composite
       // if this is a Shiny application and an .R file is being invoked, check
       // for deployments of its parent path
       String contentPath = contentPath_;
-      if (contentType_ == RSConnect.CONTENT_TYPE_APP &&
+      if (contentType_ == RSConnect.CONTENT_TYPE_SHINYAPP &&
           StringUtil.getExtension(contentPath_).equalsIgnoreCase("r")) {
          FileSystemItem fsiContent = FileSystemItem.createFile(contentPath_);
          contentPath = fsiContent.getParentPathString();

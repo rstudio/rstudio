@@ -861,7 +861,8 @@ public class RSConnectDeploy extends Composite
       // if the app name textbox isn't populated, derive from the filename
       // (for apps and documents--other content types use temporary filenames)
       if (appName_.getText().isEmpty() && 
-            contentType_ == RSConnect.CONTENT_TYPE_APP || 
+            contentType_ == RSConnect.CONTENT_TYPE_SHINYAPP || 
+            contentType_ == RSConnect.CONTENT_TYPE_SHINYFILE || 
             contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT)
       {
          // set the app name to the filename
@@ -881,7 +882,8 @@ public class RSConnectDeploy extends Composite
       }
       
       ImageResource illustration = null;
-      if (contentType_ == RSConnect.CONTENT_TYPE_APP)
+      if (contentType_ == RSConnect.CONTENT_TYPE_SHINYAPP ||
+          contentType_ == RSConnect.CONTENT_TYPE_SHINYFILE)
          illustration = RESOURCES.publishShinyIllustration();
       else if (contentType_ == RSConnect.CONTENT_TYPE_PLOT)
          illustration = RESOURCES.publishPlotIllustration();
