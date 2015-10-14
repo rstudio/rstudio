@@ -39,6 +39,7 @@ import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JThrowStatement;
 import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +54,7 @@ public class CatchBlockNormalizer {
    * Collapses all multi-catch blocks into a single catch block.
    */
   private class CollapseCatchBlocks extends JModVisitor {
-    JMethod wrapMethod = program.getIndexedMethod("Exceptions.wrap");
+    JMethod wrapMethod = program.getIndexedMethod(RuntimeConstants.EXCEPTIONS_WRAP);
 
     @Override
     public void endVisit(JMethodBody x, Context ctx) {
@@ -144,7 +145,7 @@ public class CatchBlockNormalizer {
   private class UnwrapJavaScriptExceptionVisitor extends JModVisitor {
     JDeclaredType jseType =
         program.getFromTypeMap("com.google.gwt.core.client.JavaScriptException");
-    JMethod unwrapMethod = program.getIndexedMethod("Exceptions.unwrap");
+    JMethod unwrapMethod = program.getIndexedMethod(RuntimeConstants.EXCEPTIONS_UNWRAP);
 
     @Override
     public void endVisit(JThrowStatement x, Context ctx) {

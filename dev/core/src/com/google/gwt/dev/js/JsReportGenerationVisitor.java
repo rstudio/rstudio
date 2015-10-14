@@ -118,7 +118,7 @@ public class JsReportGenerationVisitor extends
 
     if (out.getPosition() <= beforePosition || beforeLine < 0 || out.getLine() < 0) {
       // Skip bogus entries.
-      // JavaClassHierarchySetupUtil:prototypesByTypeId is pruned here. Maybe others too?
+      // Runtime:prototypesByTypeId is pruned here. Maybe others too?
       return toReturn;
     }
 

@@ -37,6 +37,7 @@ import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.jjs.ast.js.JsniClassLiteral;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
@@ -96,6 +97,7 @@ import java.util.TreeSet;
  * {@code ordinal} with the appropriate ordinal value.
  */
 public class EnumOrdinalizer {
+
   /**
    * A simple Tracker class for compiling lists of enum classes processed by
    * this optimizer. If enabled, the results can be logged as debug output, and
@@ -749,10 +751,11 @@ public class EnumOrdinalizer {
     this.program = program;
     this.classLiteralHolderType = program.getTypeClassLiteralHolder();
     this.javaScriptObjectType = program.getJavaScriptObject();
-    this.enumOrdinalField = program.getIndexedField("Enum.ordinal");
-    this.enumCreateValueOfMapMethod = program.getIndexedMethod("Enum.createValueOfMap");
-    this.enumOrdinalMethod = program.getIndexedMethod("Enum.ordinal");
-    this.enumSuperConstructor = program.getIndexedMethod("Enum.Enum");
+    this.enumOrdinalField = program.getIndexedField(RuntimeConstants.ENUM_ORDINAL);
+    this.enumCreateValueOfMapMethod =
+        program.getIndexedMethod(RuntimeConstants.ENUM_CREATE_VALUE_OF_MAP);
+    this.enumOrdinalMethod = program.getIndexedMethod(RuntimeConstants.ENUM_ORDINAL);
+    this.enumSuperConstructor = program.getIndexedMethod(RuntimeConstants.ENUM_ENUM);
   }
 
   private OptimizerStats execImpl(OptimizerContext optimizerCtx) {

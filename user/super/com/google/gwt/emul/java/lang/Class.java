@@ -130,7 +130,7 @@ public final class Class<T> implements Type {
        return null;
      }
      var typeId = clazz.@Class::typeId;
-     var prototype = @com.google.gwt.lang.JavaClassHierarchySetupUtil::prototypesByTypeId[typeId];
+     var prototype = @com.google.gwt.lang.Runtime::prototypesByTypeId[typeId];
      return prototype;
    }-*/;
 
@@ -141,7 +141,7 @@ public final class Class<T> implements Type {
 
   /**
    * null implies non-instantiable type, with no entries in
-   * {@link JavaClassHierarchySetupUtil::prototypesByTypeId}.
+   * {@link Runtime::prototypesByTypeId}.
    */
   private static native boolean isInstantiable(JavaScriptObject typeId) /*-{
     return !!typeId;
@@ -187,7 +187,7 @@ public final class Class<T> implements Type {
     if (!prototype) {
       // Leave a place holder for now to be filled in by __defineClass__ later.
       // TODO(rluble): Do not rely on the fact that if the entry is an array it is a placeholder.
-      @com.google.gwt.lang.JavaClassHierarchySetupUtil::prototypesByTypeId[typeId] = [clazz];
+      @com.google.gwt.lang.Runtime::prototypesByTypeId[typeId] = [clazz];
       return;
     }
     // Type already registered in the metadata table, install the class literal in the appropriate

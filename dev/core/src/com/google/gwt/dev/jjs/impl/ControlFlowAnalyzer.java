@@ -50,6 +50,7 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
@@ -795,7 +796,7 @@ public class ControlFlowAnalyzer {
          * TODO: can we narrow the focus by walking up the type hierarchy or
          * doing explicit toString calls?
          */
-        JMethod toStringMethod = program.getIndexedMethod("Object.toString");
+        JMethod toStringMethod = program.getIndexedMethod(RuntimeConstants.OBJECT_TO_STRING);
         rescue(toStringMethod);
       } else if (type == charType) {
         /*
@@ -916,6 +917,8 @@ public class ControlFlowAnalyzer {
     program = cfa.program;
     asyncFragmentOnLoad = cfa.asyncFragmentOnLoad;
     runAsyncOnSuccess = cfa.runAsyncOnSuccess;
+    getClassField = cfa.getClassField;
+    getClassMethod = cfa.getClassMethod;
     fieldsWritten = Sets.newHashSet(cfa.fieldsWritten);
     instantiatedTypes = Sets.newHashSet(cfa.instantiatedTypes);
     liveFieldsAndMethods = Sets.newHashSet(cfa.liveFieldsAndMethods);
@@ -928,17 +931,15 @@ public class ControlFlowAnalyzer {
       argsToRescueIfParameterRead =
           ArrayListMultimap.create(cfa.argsToRescueIfParameterRead);
     }
-    getClassField = program.getIndexedField("Object.___clazz");
-    getClassMethod = program.getIndexedMethod("Object.getClass");
     rescuer = new RescueVisitor();
   }
 
   public ControlFlowAnalyzer(JProgram program) {
     this.program = program;
-    asyncFragmentOnLoad = program.getIndexedMethod("AsyncFragmentLoader.onLoad");
-    runAsyncOnSuccess = program.getIndexedMethod("RunAsyncCallback.onSuccess");
-    getClassField = program.getIndexedField("Object.___clazz");
-    getClassMethod = program.getIndexedMethod("Object.getClass");
+    asyncFragmentOnLoad = program.getIndexedMethod(RuntimeConstants.ASYNC_FRAGMENT_LOADER_ON_LOAD);
+    runAsyncOnSuccess = program.getIndexedMethod(RuntimeConstants.RUN_ASYNC_CALLBACK_ON_SUCCESS);
+    getClassField = program.getIndexedField(RuntimeConstants.OBJECT_CLAZZ);
+    getClassMethod = program.getIndexedMethod(RuntimeConstants.OBJECT_GET_CLASS);
     rescuer = new RescueVisitor();
   }
 

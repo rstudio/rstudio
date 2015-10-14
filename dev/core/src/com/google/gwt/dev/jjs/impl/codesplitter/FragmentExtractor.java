@@ -22,6 +22,7 @@ import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.JsHoister.Cloner;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
@@ -68,7 +69,7 @@ import java.util.Set;
  */
 public class FragmentExtractor {
 
-    /**
+  /**
    * A logger for statements that the fragment extractor encounters. Install one using
    * {@link FragmentExtractor#setStatementLogger(StatementLogger)} .
    */
@@ -169,7 +170,7 @@ public class FragmentExtractor {
    * Create a call to {@link AsyncFragmentLoader#onLoad}.
    */
   public List<JsStatement> createOnLoadedCall(int fragmentId) {
-    JMethod loadMethod = jprogram.getIndexedMethod("AsyncFragmentLoader.onLoad");
+    JMethod loadMethod = jprogram.getIndexedMethod(RuntimeConstants.ASYNC_FRAGMENT_LOADER_ON_LOAD);
     JsName loadMethodName = map.nameForMethod(loadMethod);
     SourceInfo sourceInfo = jsprogram.getSourceInfo();
     JsInvocation call = new JsInvocation(sourceInfo);
@@ -409,7 +410,7 @@ public class FragmentExtractor {
       }
       JsNameRef func = (JsNameRef) call.getQualifier();
       JsFunction defineClassJsFunc =
-          jsprogram.getIndexedFunction("JavaClassHierarchySetupUtil.defineClass");
+          jsprogram.getIndexedFunction(RuntimeConstants.RUNTIME_DEFINE_CLASS);
       if (func.getName() != defineClassJsFunc.getName()) {
         return null;
       }

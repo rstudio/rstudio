@@ -22,6 +22,7 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 
 /**
  * Prune all overrides of Object.getClass() except when the enclosing class is JavaScriptObject
@@ -41,8 +42,8 @@ public class ReplaceGetClassOverrides {
 
     public GetClassInlinerRemover(JProgram program) {
       this.program = program;
-      getClassMethod = program.getIndexedMethod("Object.getClass");
-      clazzField = program.getIndexedField("Object.___clazz");
+      getClassMethod = program.getIndexedMethod(RuntimeConstants.OBJECT_GET_CLASS);
+      clazzField = program.getIndexedField(RuntimeConstants.OBJECT_CLAZZ);
     }
 
     @Override

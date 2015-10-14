@@ -39,6 +39,7 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JRuntimeTypeReference;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.jjs.ast.js.JsniClassLiteral;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
@@ -140,7 +141,8 @@ public class ImplementClassLiteralsAsFields {
           JLiteral superclassLiteral) {
 
         // Class.createForClass(packageName, typeName, runtimeTypeReference, superclassliteral)
-        JMethodCall call = createBaseCall(info, program, type, "Class.createForClass");
+        JMethodCall call =
+            createBaseCall(info, program, type, RuntimeConstants.CLASS_CREATE_FOR_CLASS);
 
         call.addArg(new JRuntimeTypeReference(info, program.getTypeJavaLangObject(),
             (JReferenceType) type));
@@ -154,8 +156,8 @@ public class ImplementClassLiteralsAsFields {
           JLiteral superclassLiteral) {
 
         // Class.createForPrimitive(typeName, typeSignature)
-        JMethodCall call =
-            new JMethodCall(info, null, program.getIndexedMethod("Class.createForPrimitive"));
+        JMethodCall call = new JMethodCall(info, null, program.getIndexedMethod(
+                RuntimeConstants.CLASS_CREATE_FOR_PRIMITIVE));
         call.addArg(program.getStringLiteral(info, type.getShortName()));
         call.addArg(program.getStringLiteral(info, type.getJavahSignatureName()));
         return call;
@@ -167,7 +169,7 @@ public class ImplementClassLiteralsAsFields {
           JLiteral superclassLiteral) {
 
         // Class.createForInterface(packageName, typeName)
-        return createBaseCall(info, program, type, "Class.createForInterface");
+        return createBaseCall(info, program, type, RuntimeConstants.CLASS_CREATE_FOR_INTERFACE);
       }
     };
 
@@ -239,7 +241,7 @@ public class ImplementClassLiteralsAsFields {
       final Multimap<String, JsniClassLiteral> jsniClassLiteralsByJsniReference =
           ArrayListMultimap.create();
       final JMethod getClassLiteralForArrayMethod =
-          program.getIndexedMethod("Array.getClassLiteralForArray");
+          program.getIndexedMethod(RuntimeConstants.ARRAY_GET_CLASS_LITERAL_FOR_ARRAY);
       final String getClassLiteralForArrayMethodIdent =
           "@" + getClassLiteralForArrayMethod.getJsniSignature(true, false);
 

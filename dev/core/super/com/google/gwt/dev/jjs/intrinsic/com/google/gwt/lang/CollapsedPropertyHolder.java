@@ -21,13 +21,15 @@ package com.google.gwt.lang;
  */
 final class CollapsedPropertyHolder {
 
+  private static final int PERMUTATION_NOT_SET = 0xFFFFFFFF;
+
   /**
    * This variable is initialized by the compiler in gwtOnLoad.
    */
-  public static volatile int permutationId = -1;
+  public static volatile int permutationId = PERMUTATION_NOT_SET;
 
   public static int getPermutationId() {
-    assert permutationId != -1 : "The bootstrap linker did not provide a "
+    assert permutationId != PERMUTATION_NOT_SET : "The bootstrap linker did not provide a "
         + "soft permutation id to the gwtOnLoad function";
     return permutationId;
   }

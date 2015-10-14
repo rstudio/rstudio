@@ -32,6 +32,7 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JRuntimeTypeReference;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.util.EnumSet;
@@ -45,6 +46,7 @@ import java.util.Map;
  * May or may not prune trivial casts depending on configuration.
  */
 public class ImplementCastsAndTypeChecks {
+
   /**
    * Replaces all casts and instanceof operations with calls to implementation
    * methods.
@@ -69,7 +71,8 @@ public class ImplementCastsAndTypeChecks {
          * We handle this cast by throwing a ClassCastException, unless the
          * argument is null.
          */
-        JMethod method = program.getIndexedMethod("Cast.throwClassCastExceptionUnlessNull");
+        JMethod method = program.getIndexedMethod(
+            RuntimeConstants.CAST_THROW_CLASS_CAST_EXCEPTION_UNLESS_NULL);
         // Note, we must update the method call to return the null type.
         JMethodCall call = new JMethodCall(info, null, method, toType);
         call.addArg(expr);
@@ -129,24 +132,24 @@ public class ImplementCastsAndTypeChecks {
            * one to narrow. Construct the inner call here and fall through to
            * do the narrowing conversion.
            */
-          JMethod castMethod = program.getIndexedMethod("LongLib.toInt");
+          JMethod castMethod = program.getIndexedMethod(RuntimeConstants.LONG_LIB_TO_INT);
           JMethodCall call = new JMethodCall(info, null, castMethod);
           call.addArg(expr);
           expr = call;
           fromType = tInt;
         } else if (tInt == toType) {
-          methodName = "LongLib.toInt";
+          methodName = RuntimeConstants.LONG_LIB_TO_INT;
         } else if (tFloat == toType || tDouble == toType) {
-          methodName = "LongLib.toDouble";
+          methodName = RuntimeConstants.LONG_LIB_TO_DOUBLE;
         }
       }
 
       if (toType == tLong && fromType != tLong) {
         // Longs get special treatment.
         if (tByte == fromType || tShort == fromType || tChar == fromType || tInt == fromType) {
-          methodName = "LongLib.fromInt";
+          methodName = RuntimeConstants.LONG_LIB_FROM_INT;
         } else if (tFloat == fromType || tDouble == fromType) {
-          methodName = "LongLib.fromDouble";
+          methodName = RuntimeConstants.LONG_LIB_FROM_DOUBLE;
         }
       } else if (tByte == fromType) {
         if (tChar == toType) {

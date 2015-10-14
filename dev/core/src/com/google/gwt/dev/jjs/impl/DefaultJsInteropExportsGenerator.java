@@ -19,6 +19,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JMember;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsInvocation;
@@ -51,7 +52,7 @@ class DefaultJsInteropExportsGenerator implements JsInteropExportsGenerator {
       Map<String, JsFunction> indexedFunctions) {
     this.exportStmts = exportStmts;
     this.globalTemp = globalTemp;
-    this.provideFunc = indexedFunctions.get("JavaClassHierarchySetupUtil.provide").getName();
+    this.provideFunc = indexedFunctions.get(RuntimeConstants.RUNTIME_PROVIDE).getName();
   }
 
   @Override

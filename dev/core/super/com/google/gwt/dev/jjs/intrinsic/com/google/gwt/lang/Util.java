@@ -31,12 +31,12 @@ final class Util {
 
   static native void setTypeMarker(Object o) /*-{
       o.@java.lang.Object::typeMarker =
-          @com.google.gwt.lang.JavaClassHierarchySetupUtil::typeMarkerFn(*);
+          @com.google.gwt.lang.Runtime::typeMarkerFn(*);
   }-*/;
 
   static native boolean hasTypeMarker(Object o) /*-{
     return o.@java.lang.Object::typeMarker ===
-        @com.google.gwt.lang.JavaClassHierarchySetupUtil::typeMarkerFn(*);
+        @com.google.gwt.lang.Runtime::typeMarkerFn(*);
   }-*/;
 
   static native void setCastableTypeMap(Object o, JavaScriptObject castableTypeMap) /*-{

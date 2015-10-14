@@ -161,7 +161,8 @@ public class JavaAstConstructor {
         public CharSequence getContent() {
           return Joiner.on("\n").join(
               "package com.google.gwt.lang; public class CollapsedPropertyHolder {",
-              "  public static int permutationId = -1;",
+              "  private static final int PERMUTATION_NOT_SET = 0xFFFFFFFF;",
+              "  public static int permutationId = PERMUTATION_NOT_SET;",
               "}"
           );
         }
@@ -260,17 +261,17 @@ public class JavaAstConstructor {
         }
       };
 
-  public static final MockJavaResource JAVA_CLASS_HIERARCHY_SETUP_UTIL =
-      new MockJavaResource("com.google.gwt.lang.JavaClassHierarchySetupUtil") {
+  public static final MockJavaResource RUNTIME =
+      new MockJavaResource("com.google.gwt.lang.Runtime") {
         @Override
         public CharSequence getContent() {
           return Joiner.on("\n").join(
               "package com.google.gwt.lang;",
-              "public class JavaClassHierarchySetupUtil {",
+              "public class Runtime {",
               "  public static Object defineClass(int typeId, int superTypeId, Object map) {",
               "    return null;",
               "  }",
-              "  public static void modernizeBrowser() {}",
+              "  public static void bootstrap() {}",
               "  public static void emptyMethod() {}",
               "  public static void getClassPrototype() {}",
               "  static native void typeMarkerFn() /*-{}-*/;",
@@ -389,7 +390,7 @@ public class JavaAstConstructor {
     result.remove(JavaResourceBase.ENUM);
     Collections.addAll(result, ASYNCFRAGMENTLOADER, ARRAY, CAST, CLASS, CLASS_LITERAL_HOLDER,
         COLLAPSED_PROPERTY_HOLDER, ENUM, EXCEPTIONS, GWT, GWT_SHARED, IMPL,
-        JAVA_CLASS_HIERARCHY_SETUP_UTIL, LONGLIB, MODULE_UTILS, RUNASYNCCALLBACK, RUNASYNCCODE,
+        RUNTIME, LONGLIB, MODULE_UTILS, RUNASYNCCALLBACK, RUNASYNCCODE,
         UTIL);
     return result.toArray(new MockJavaResource[result.size()]);
   }

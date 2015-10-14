@@ -61,7 +61,7 @@ final class Cast {
   static native boolean canCastClass(Class<?> srcClazz, Class<?> dstClass) /*-{
     var srcTypeId = srcClazz.@java.lang.Class::typeId;
     var dstTypeId = dstClass.@java.lang.Class::typeId;
-    var prototype = @com.google.gwt.lang.JavaClassHierarchySetupUtil::prototypesByTypeId[srcTypeId];
+    var prototype = @com.google.gwt.lang.Runtime::prototypesByTypeId[srcTypeId];
     return @com.google.gwt.lang.Cast::canCast(*)(prototype, dstTypeId);
   }-*/;
 

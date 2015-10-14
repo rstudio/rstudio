@@ -16,6 +16,7 @@
 package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
 import com.google.gwt.dev.js.ast.JsContext;
@@ -40,6 +41,7 @@ import com.google.gwt.thirdparty.guava.common.collect.Multimap;
  * executed).
  */
 public class CoverageInstrumentor {
+
   /**
    * This class does the actual instrumentation. It replaces
    * {@code expr} with {@code (CoverageUtil.cover(file, line), expr)}.
@@ -116,7 +118,8 @@ public class CoverageInstrumentor {
   }
 
   private void initializeBaselineCoverage(SourceInfo info) {
-    JsNameRef coverageObject = jsProgram.getIndexedField("CoverageUtil.coverage").makeRef(info);
+    JsNameRef coverageObject =
+        jsProgram.getIndexedField(RuntimeConstants.COVERAGE_UTIL_COVERAGE).makeRef(info);
     JsBinaryOperation init = new JsBinaryOperation(info, JsBinaryOperator.ASG, coverageObject,
         baselineCoverage(info, instrumentableLines));
     jsProgram.getGlobalBlock().getStatements().add(init.makeStmt());

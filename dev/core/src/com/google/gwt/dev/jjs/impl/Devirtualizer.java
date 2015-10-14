@@ -36,6 +36,7 @@ import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.jjs.impl.MakeCallsStatic.CreateStaticImplsVisitor;
 import com.google.gwt.dev.jjs.impl.MakeCallsStatic.StaticCallConverter;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
@@ -289,8 +290,8 @@ public class Devirtualizer {
     this.program = program;
 
     this.hasJavaObjectVirtualDispatch =
-        program.getIndexedMethod("Cast.hasJavaObjectVirtualDispatch");
-    this.isJavaArray = program.getIndexedMethod("Cast.isJavaArray");
+        program.getIndexedMethod(RuntimeConstants.CAST_HAS_JAVA_OBJECT_VIRTUAL_DISPATCH);
+    this.isJavaArray = program.getIndexedMethod(RuntimeConstants.CAST_IS_JAVA_ARRAY);
     // TODO: consider turning on null checks for "this"?
     // However, for JSO's there is existing code that relies on nulls being okay.
     this.converter = new StaticCallConverter(program, false);

@@ -32,6 +32,7 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitter;
@@ -381,7 +382,7 @@ public class MakeCallsStatic {
 
     StaticCallConverter(JProgram program, boolean addNullChecksForThis) {
       if (addNullChecksForThis) {
-        checkNotNull = program.getIndexedMethod("Exceptions.checkNotNull");
+        checkNotNull = program.getIndexedMethod(RuntimeConstants.EXCEPTIONS_CHECK_NOT_NULL);
       } else {
         checkNotNull = null;
       }

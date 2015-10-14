@@ -30,6 +30,7 @@ import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 
 /**
  * Type coercion (and operator overloading) semantics differ widely in Java and JavaScript.
@@ -103,7 +104,7 @@ public class TypeCoercionNormalizer {
         return program.getStringLiteral(expr.getSourceInfo(), String.valueOf(longValue));
       } else if (expr.getType() == typePrimitiveLong) {
         JMethodCall call = new JMethodCall(expr.getSourceInfo(), null,
-            program.getIndexedMethod("LongLib.toString"), expr);
+            program.getIndexedMethod(RuntimeConstants.LONG_LIB_TO_STRING), expr);
         return call;
       } else if (expr instanceof JCharLiteral) {
         // Replace the literal by a string containing the literal.
@@ -113,7 +114,7 @@ public class TypeCoercionNormalizer {
         // A non literal expression of type Char.
         // Replace with Cast.charToString(c)
         JMethodCall call = new JMethodCall(expr.getSourceInfo(), null,
-            program.getIndexedMethod("Cast.charToString"), expr);
+            program.getIndexedMethod(RuntimeConstants.CAST_CHAR_TO_STRING), expr);
         return call;
       }
 

@@ -34,6 +34,7 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JRuntimeTypeReference;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
 
 import java.util.Collections;
@@ -213,10 +214,10 @@ public class ArrayNormalizer {
 
   private ArrayNormalizer(JProgram program) {
     this.program = program;
-    setCheckMethod = program.getIndexedMethod("Array.setCheck");
-    initDim = program.getIndexedMethod("Array.initDim");
-    initDims = program.getIndexedMethod("Array.initDims");
-    initValues = program.getIndexedMethod("Array.initValues");
+    setCheckMethod = program.getIndexedMethod(RuntimeConstants.ARRAY_SET_CHECK);
+    initDim = program.getIndexedMethod(RuntimeConstants.ARRAY_INIT_DIM);
+    initDims = program.getIndexedMethod(RuntimeConstants.ARRAY_INIT_DIMS);
+    initValues = program.getIndexedMethod(RuntimeConstants.ARRAY_INIT_VALUES);
   }
 
   private void execImpl() {

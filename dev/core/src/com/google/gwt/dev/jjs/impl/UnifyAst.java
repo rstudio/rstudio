@@ -67,6 +67,7 @@ import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVariable;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.jjs.ast.js.JDebuggerStatement;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
@@ -845,7 +846,7 @@ public class UnifyAst {
     // String literals.
     instantiate(program.getTypeJavaLangString());
     // ControlFlowAnalyzer.rescueByConcat().
-    flowInto(program.getIndexedMethod("Object.toString"));
+    flowInto(program.getIndexedMethod(RuntimeConstants.OBJECT_TO_STRING));
     mapApi(program.getTypeJavaLangString());
     flowInto(methodMap.get("java.lang.String.valueOf(C)Ljava/lang/String;"));
 
@@ -860,8 +861,8 @@ public class UnifyAst {
 
     // ReplaceRunAsyncs
     if (compilerContext.getOptions().isRunAsyncEnabled()) {
-      flowInto(program.getIndexedMethod("AsyncFragmentLoader.onLoad"));
-      flowInto(program.getIndexedMethod("AsyncFragmentLoader.runAsync"));
+      flowInto(program.getIndexedMethod(RuntimeConstants.ASYNC_FRAGMENT_LOADER_ON_LOAD));
+      flowInto(program.getIndexedMethod(RuntimeConstants.ASYNC_FRAGMENT_LOADER_RUN_ASYNC));
     }
 
     // ImplementClassLiteralsAsFields

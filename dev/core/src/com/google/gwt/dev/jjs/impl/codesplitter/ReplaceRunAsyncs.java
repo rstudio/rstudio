@@ -32,6 +32,7 @@ import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JRunAsync;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -52,10 +53,11 @@ import java.util.Map;
  * by an equivalent call using an integer rather than a class literal.
  */
 public class ReplaceRunAsyncs {
+
   private class AsyncCreateVisitor extends JModVisitor {
     private JMethod currentMethod;
     private final JMethod runAsyncOnsuccess = program
-        .getIndexedMethod("RunAsyncCallback.onSuccess");
+        .getIndexedMethod(RuntimeConstants.RUN_ASYNC_CALLBACK_ON_SUCCESS);
 
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
@@ -99,7 +101,8 @@ public class ReplaceRunAsyncs {
         int splitPoint = runAsyncs.size() + 1;
         SourceInfo info = x.getSourceInfo();
 
-        JMethod runAsyncMethod = program.getIndexedMethod("AsyncFragmentLoader.runAsync");
+        JMethod runAsyncMethod =
+            program.getIndexedMethod(RuntimeConstants.ASYNC_FRAGMENT_LOADER_RUN_ASYNC);
         assert runAsyncMethod != null;
         JMethodCall runAsyncCall = new JMethodCall(info, null, runAsyncMethod);
         runAsyncCall.addArg(new JNumericEntry(info, "RunAsyncFragmentIndex", splitPoint));
@@ -111,7 +114,7 @@ public class ReplaceRunAsyncs {
           callbackMethod = program.typeOracle.getInstanceMethodBySignature(
               (JClassType) callbackType, "onSuccess()V");
         } else {
-          callbackMethod = program.getIndexedMethod("RunAsyncCallback.onSuccess");
+          callbackMethod = program.getIndexedMethod(RuntimeConstants.RUN_ASYNC_CALLBACK_ON_SUCCESS);
         }
         if (callbackMethod == null ||
             // The callback method is a synthetic stub inserted for more accurate override
@@ -196,7 +199,7 @@ public class ReplaceRunAsyncs {
         int splitPoint = matches.get(0).getRunAsyncId();
         JMethodCall newCall =
             new JMethodCall(info, null, program
-                .getIndexedMethod("RunAsyncCode.forSplitPointNumber"));
+                .getIndexedMethod(RuntimeConstants.RUN_ASYNC_CODE_FOR_SPLIT_POINT_NUMBER));
         newCall.addArg(new JNumericEntry(info, "RunAsyncFragmentIndex", splitPoint));
         ctx.replaceMe(newCall);
       }
@@ -218,7 +221,7 @@ public class ReplaceRunAsyncs {
    * parts of the compiler modify this initializer call.
    */
   static JMethodCall getBrowserLoaderConstructor(JProgram program) {
-    JField field = program.getIndexedField("AsyncFragmentLoader.BROWSER_LOADER");
+    JField field = program.getIndexedField(RuntimeConstants.ASYNC_FRAGMENT_LOADER_BROWSER_LOADER);
     JMethodCall initializerCall = (JMethodCall) field.getDeclarationStatement().getInitializer();
     assert initializerCall.getArgs().size() == 2;
     return initializerCall;

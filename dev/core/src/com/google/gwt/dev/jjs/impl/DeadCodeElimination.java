@@ -65,6 +65,7 @@ import com.google.gwt.dev.jjs.ast.JValueLiteral;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.util.Ieee754_64_Arithmetic;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -93,6 +94,7 @@ import java.util.Set;
  * other passes will feed into this, however.
  */
 public class DeadCodeElimination {
+
   /**
    * Eliminates dead or unreachable code when possible, and makes local
    * simplifications like changing "<code>x || true</code>" to "<code>x</code>".
@@ -139,9 +141,11 @@ public class DeadCodeElimination {
 
     private final Set<JBlock> switchBlocks = Sets.newHashSet();
 
-    private final JMethod isScriptMethod = program.getIndexedMethod("GWT.isScript");
-    private final JMethod enumOrdinalMethod = program.getIndexedMethod("Enum.ordinal");
-    private final JField enumOrdinalField = program.getIndexedField("Enum.ordinal");
+    private final JMethod isScriptMethod = program.getIndexedMethod(RuntimeConstants.GWT_IS_SCRIPT);
+    private final JMethod enumOrdinalMethod =
+        program.getIndexedMethod(RuntimeConstants.ENUM_ORDINAL);
+    private final JField enumOrdinalField =
+        program.getIndexedField(RuntimeConstants.ENUM_ORDINAL);
 
     /**
      * Short circuit binary operations.

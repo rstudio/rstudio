@@ -31,6 +31,7 @@ import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.Collection;
@@ -61,11 +62,11 @@ public class EnumNameObfuscator {
         List<String> blacklistedEnums) {
       this.logger = logger;
       this.blacklistedEnums = blacklistedEnums;
-      this.enumNameMethod = jprogram.getIndexedMethod("Enum.name");
-      this.enumToStringMethod = jprogram.getIndexedMethod("Enum.toString");
-      this.classType = jprogram.getIndexedType("Class");
-      this.enumType = jprogram.getIndexedType("Enum");
-      this.stringType = jprogram.getIndexedType("String");
+      this.enumNameMethod = jprogram.getIndexedMethod(RuntimeConstants.ENUM_NAME);
+      this.enumToStringMethod = jprogram.getIndexedMethod(RuntimeConstants.ENUM_TO_STRING);
+      this.classType = jprogram.getFromTypeMap("java.lang.Class");
+      this.enumType = jprogram.getFromTypeMap("java.lang.Enum");
+      this.stringType = jprogram.getFromTypeMap("java.lang.String");
 
       /*
        * Find the correct version of enumValueOfMethod.
@@ -159,7 +160,7 @@ public class EnumNameObfuscator {
       this.jprogram = jprogram;
       this.blacklistedEnums = blacklistedEnums;
       this.closureMode = closureMode;
-      this.makeEnumName = jprogram.getIndexedMethod("Util.makeEnumName");
+      this.makeEnumName = jprogram.getIndexedMethod(RuntimeConstants.UTIL_MAKE_ENUM_NAME);
     }
 
     private void exec() {

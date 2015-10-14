@@ -31,6 +31,7 @@ import com.google.gwt.dev.jjs.ast.JThrowStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JUnaryOperation;
 import com.google.gwt.dev.jjs.ast.JUnaryOperator;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.jjs.ast.js.JDebuggerStatement;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -63,7 +64,8 @@ public class AssertionNormalizer {
 
       then.addStmt(new JDebuggerStatement(x.getSourceInfo()));
 
-      String methodName = "Exceptions.makeAssertionError" + getAssertMethodSuffix(x.getArg());
+      String methodName =
+          RuntimeConstants.EXCEPTIONS_MAKE_ASSERTION_ERROR_ + getAssertMethodSuffix(x.getArg());
       JMethod method = program.getIndexedMethod(methodName);
       JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method);
       if (x.getArg() != null) {

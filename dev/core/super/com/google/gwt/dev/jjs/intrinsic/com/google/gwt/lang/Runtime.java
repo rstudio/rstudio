@@ -20,14 +20,14 @@ import com.google.gwt.core.client.JavaScriptObject;
 import javaemul.internal.annotations.ForceInline;
 
 /**
- * Utility class for defining class prototyes to setup an equivalent to the Java class hierarchy in
- * JavaScript.
+ * Utility class that provides methods for dealing with the runtime representation of Java classes
+ * and bootstraping code.
  */
-public class JavaClassHierarchySetupUtil {
+public class Runtime {
   /**
    * Holds a map from typeIds to prototype objects.
    */
-  private static JavaScriptObject prototypesByTypeId = JavaScriptObject.createObject();
+  private static JavaScriptObject prototypesByTypeId;
 
   /**
    * If not already created it creates the prototype for the class and stores it in
@@ -50,22 +50,22 @@ public class JavaClassHierarchySetupUtil {
   public static native void defineClass(JavaScriptObject typeId,
       JavaScriptObject superTypeIdOrPrototype, JavaScriptObject castableTypeMap) /*-{
     // Setup aliases for (horribly long) JSNI references.
-    var prototypesByTypeId = @JavaClassHierarchySetupUtil::prototypesByTypeId;
+    var prototypesByTypeId = @Runtime::prototypesByTypeId;
     // end of alias definitions.
 
     var prototype = prototypesByTypeId[typeId];
-    var clazz = @JavaClassHierarchySetupUtil::maybeGetClassLiteralFromPlaceHolder(*)(prototype);
+    var clazz = @Runtime::maybeGetClassLiteralFromPlaceHolder(*)(prototype);
     if (prototype && !clazz) {
       // not a placeholder entry setup by Class.setClassLiteral
       _ = prototype;
     } else {
-      _ = @JavaClassHierarchySetupUtil::createSubclassPrototype(*)(superTypeIdOrPrototype);
+      _ = @Runtime::createSubclassPrototype(*)(superTypeIdOrPrototype);
       _.@Object::castableTypeMap = castableTypeMap;
       _.constructor = _;
       if (!superTypeIdOrPrototype) {
         // Set the typeMarker on java.lang.Object's prototype, implicitly setting it for all
         // Java subclasses (String and Arrays have special handling in Cast and Array respectively).
-        _.@Object::typeMarker = @JavaClassHierarchySetupUtil::typeMarkerFn(*);
+        _.@Object::typeMarker = @Runtime::typeMarkerFn(*);
       }
       prototypesByTypeId[typeId] = _;
     }
@@ -92,9 +92,9 @@ public class JavaClassHierarchySetupUtil {
     var superPrototype = superTypeIdOrPrototype && superTypeIdOrPrototype.prototype;
     if (!superPrototype) {
       // If it is not a prototype, then it should be a type id.
-      superPrototype = @JavaClassHierarchySetupUtil::prototypesByTypeId[superTypeIdOrPrototype];
+      superPrototype = @Runtime::prototypesByTypeId[superTypeIdOrPrototype];
     }
-    return @JavaClassHierarchySetupUtil::portableObjCreate(*)(superPrototype);
+    return @Runtime::portableObjCreate(*)(superPrototype);
   }-*/;
 
   public static native void copyObjectProperties(JavaScriptObject from,
@@ -172,9 +172,13 @@ public class JavaClassHierarchySetupUtil {
   }-*/;
 
   /**
-   * Do polyfills for all methods expected in a modern browser.
+   * Called at the beginning to setup required structures before any of the classes is defined.
+   * The code written in and invoked by this method should be plain JavaScript.
    */
-  public static native void modernizeBrowser() /*-{
+  public static native void bootstrap() /*-{
+    @Runtime::prototypesByTypeId = {};
+
+    // Do polyfills for all methods expected in a modern browser.
     // Patch up Array.isArray for browsers that don't support the fast native check.
     if (!Array.isArray) {
         Array.isArray = function (vArg) {
@@ -187,7 +191,7 @@ public class JavaClassHierarchySetupUtil {
    * Retrieves the prototype for a type if it exists, null otherwise.
    */
   public static native JavaScriptObject getClassPrototype(JavaScriptObject typeId) /*-{
-    return @JavaClassHierarchySetupUtil::prototypesByTypeId[typeId];
+    return @Runtime::prototypesByTypeId[typeId];
   }-*/;
 
   /**

@@ -36,6 +36,7 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JSwitchStatement;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
@@ -135,7 +136,8 @@ public class ResolvePermutationDependentValues {
         }).toSet();
     this.commonPropertyAndBindingInfo = PropertyAndBindingInfo.getCommonAnswers(gwtCreateAnswers);
     this.holderType = (JClassType) program.getIndexedType("CollapsedPropertyHolder");
-    this.permutationIdMethod = program.getIndexedMethod("CollapsedPropertyHolder.getPermutationId");
+    this.permutationIdMethod = program.getIndexedMethod(
+        RuntimeConstants.COLLAPSED_PROPERTY_HOLDER_GET_PERMUTATION_ID);
   }
 
   public JExpression computeInstantiationExpression(JPermutationDependentValue x) {

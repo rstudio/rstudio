@@ -29,6 +29,7 @@ import com.google.gwt.dev.jjs.ast.JRuntimeTypeReference;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.base.Objects;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultiset;
@@ -166,7 +167,7 @@ public class ResolveRuntimeTypeReferences {
 
     @Override
     public JMethodCall get(JType type) {
-      JMethod getUniqueId = program.getIndexedMethod("JavaClassHierarchySetupUtil.uniqueId");
+      JMethod getUniqueId = program.getIndexedMethod(RuntimeConstants.RUNTIME_UNIQUE_ID);
      return new JMethodCall(type.getSourceInfo(), null,
           getUniqueId, program.getStringLiteral(type.getSourceInfo(), type.getName()));
     }

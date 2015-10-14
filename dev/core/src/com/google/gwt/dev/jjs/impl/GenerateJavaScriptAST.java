@@ -93,6 +93,7 @@ import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.jjs.ast.js.JDebuggerStatement;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.ast.js.JsniClassLiteral;
@@ -190,6 +191,7 @@ import java.util.TreeMap;
  * Creates a JavaScript AST from a <code>JProgram</code> node.
  */
 public class GenerateJavaScriptAST {
+
   /**
    * Finds the nodes that are targets of JNameOf so that a name is assigned to them.
    */
@@ -522,16 +524,6 @@ public class GenerateJavaScriptAST {
     public static final String GOOG_ABSTRACT_METHOD = "goog.abstractMethod";
     public static final String GOOG_INHERITS = "goog.inherits";
     public static final String GOOG_OBJECT_CREATE_SET = "goog.object.createSet";
-    public static final String JCHSU = "JavaClassHierarchySetupUtil";
-    public static final String JCHSU_COPY_OBJECT_PROPERTIES = JCHSU + ".copyObjectProperties";
-    public static final String JCHSU_DEFINE_CLASS = JCHSU + ".defineClass";
-    public static final String JCHSU_DEFINE_PROPERTIES = JCHSU + ".defineProperties";
-    public static final String JCHSU_EMPTY_METHOD = JCHSU + ".emptyMethod";
-    public static final String JCHSU_GET_CLASS_PROTOTYPE = JCHSU + ".getClassPrototype";
-    public static final String JCHSU_MAKE_LAMBDA_FUNCTION = JCHSU + ".makeLambdaFunction";
-    public static final String JCHSU_MODERNIZE_BROWSER = JCHSU + ".modernizeBrowser";
-    public static final String JCHSU_TYPE_MARKER_FN = JCHSU + ".typeMarkerFn";
-    public static final String OBJECT_TYPEMARKER = "Object.typeMarker";
 
     private final Set<JDeclaredType> alreadyRan = Sets.newLinkedHashSet();
 
@@ -956,7 +948,7 @@ public class GenerateJavaScriptAST {
         // TODO(rluble): Ideally we would want to construct the inheritance chain the JS way and
         // then we could do Type.prototype.polyname.call(this, ...). Currently prototypes do not
         // have global names instead they are stuck into the prototypesByTypeId array.
-        return constructInvocation(sourceInfo, JCHSU_GET_CLASS_PROTOTYPE,
+        return constructInvocation(sourceInfo, RuntimeConstants.RUNTIME_GET_CLASS_PROTOTYPE,
             (JsExpression) transform(getRuntimeTypeReference(type)));
       }
     }
@@ -1025,7 +1017,7 @@ public class GenerateJavaScriptAST {
           ctorName, prototype, polymorphicNames.get(jsFunctionMethod));
 
       // makeLambdaFunction(Foo.prototype.functionMethodName, new Foo(...))
-      return constructInvocation(sourceInfo, JCHSU_MAKE_LAMBDA_FUNCTION, funcNameRef, newExpr);
+      return constructInvocation(sourceInfo, RuntimeConstants.RUNTIME_MAKE_LAMBDA_FUNCTION, funcNameRef, newExpr);
     }
 
     private JMethod getJsFunctionMethod(JClassType type) {
@@ -1243,8 +1235,8 @@ public class GenerateJavaScriptAST {
 
       //  Perform necessary polyfills.
       addTypeDefinitionStatement(
-          program.getIndexedType(JCHSU),
-          constructInvocation(program.getSourceInfo(), JCHSU_MODERNIZE_BROWSER).makeStmt());
+          program.getIndexedType(RuntimeConstants.RUNTIME),
+          constructInvocation(program.getSourceInfo(), RuntimeConstants.RUNTIME_BOOTSTRAP).makeStmt());
 
       Set<JDeclaredType> alreadyProcessed =
           Sets.<JDeclaredType>newLinkedHashSet(program.immortalCodeGenTypes);
@@ -1601,7 +1593,7 @@ public class GenerateJavaScriptAST {
               if (jsName == null) {
                 // this can occur when JSNI references an instance method on a
                 // type that was never actually instantiated.
-                jsName = indexedFunctions.get(JCHSU_EMPTY_METHOD).getName();
+                jsName = indexedFunctions.get(RuntimeConstants.RUNTIME_EMPTY_METHOD).getName();
               }
               x.resolve(jsName);
             }
@@ -1759,7 +1751,8 @@ public class GenerateJavaScriptAST {
 
     private JsExpression generateCastableTypeMap(JDeclaredType type) {
       JCastMap castMap = program.getCastMap(type);
-      JField castableTypeMapField = program.getIndexedField("Object.castableTypeMap");
+      JField castableTypeMapField = program.getIndexedField(
+          RuntimeConstants.OBJECT_CASTABLE_TYPE_MAP);
       JsName castableTypeMapName = names.get(castableTypeMapField);
 
       if (castMap != null && castableTypeMapName != null) {
@@ -1928,9 +1921,6 @@ public class GenerateJavaScriptAST {
     private void generateImmortalTypes(JsVars globals) {
       List<JClassType> immortalTypesReversed = Lists.reverse(program.immortalCodeGenTypes);
       // visit in reverse order since insertions start at head
-      JMethod createEmptyObjectMethod = program.getIndexedMethod("JavaScriptObject.createObject");
-      JMethod createEmptyArrayMethod = program.getIndexedMethod("JavaScriptObject.createArray");
-
       for (JClassType x : immortalTypesReversed) {
         // Don't generate JS for referenceOnly types.
         if (program.isReferenceOnly(x)) {
@@ -1943,7 +1933,7 @@ public class GenerateJavaScriptAST {
           /*
            * Skip virtual methods and constructors. Even in cases where there is no constructor
            * defined, the compiler will synthesize a default constructor which invokes
-           * a synthensized $init() method. We must skip both of these inserted methods.
+           * a synthesized $init() method. We must skip both of these inserted methods.
            */
           if (method.needsDynamicDispatch() || method instanceof JConstructor
               || doesNotHaveConcreteImplementation(method)) {
@@ -1955,33 +1945,16 @@ public class GenerateJavaScriptAST {
           addMethodDefinitionStatement(1, method, function.makeStmt());
         }
 
-        // TODO(rluble): simplify this so that emitFields can be reused here.
         // insert fields into global var declaration
         for (JField field : x.getFields()) {
-          assert field.isStatic() : "All fields on immortal types must be static.";
-          JExpression fieldInitializer = field.getInitializer();
-          JsExpression initializer = null;
-
-          // Patch up fields that are initialized to empty object/array literal by a call to
-          // JavaScriptObject.createObject() and JavaScriptObject.createArray()
-          if (fieldInitializer != null
-              && field.getLiteralInitializer() == null
-              && fieldInitializer.getType() == program.getJavaScriptObject()) {
-            assert fieldInitializer instanceof JMethodCall;
-            JMethod method = ((JMethodCall) fieldInitializer).getTarget();
-            if (method == createEmptyObjectMethod) {
-              initializer = new JsObjectLiteral(fieldInitializer.getSourceInfo());
-            } else if (method == createEmptyArrayMethod) {
-              initializer = new JsArrayLiteral(fieldInitializer.getSourceInfo());
-            } else {
-              assert false : "Illegal initializer expression for immortal field " + field;
-            }
-          } else if (fieldInitializer != null) {
-            initializer = transform(fieldInitializer);
-          }
+          assert field.isStatic() : "'" + field.getName()
+              + "' is not static. Only static fields are allowed on immortal types";
+          assert field.getInitializer() == field.getLiteralInitializer() : "'" + field.getName()
+              + "' is not initilialized to a literal."
+              + " Only literal initializers are allowed on immortal types";
 
           JsVar var = new JsVar(x.getSourceInfo(), names.get(field));
-          var.setInitExpr(initializer);
+          var.setInitExpr(transform(field.getLiteralInitializer()));
           globals.add(var);
         }
       }
@@ -2001,15 +1974,15 @@ public class GenerateJavaScriptAST {
       defineClassArguments.add(generateCastableTypeMap(type));
       defineClassArguments.addAll(constructorArgs);
 
-      // JavaClassHierarchySetupUtil.defineClass(typeId, superTypeId, castableMap, constructors)
+      // Runtime.defineClass(typeId, superTypeId, castableMap, constructors)
       JsStatement defineClassStatement = constructInvocation(type.getSourceInfo(),
-          JCHSU_DEFINE_CLASS, defineClassArguments).makeStmt();
+          RuntimeConstants.RUNTIME_DEFINE_CLASS, defineClassArguments).makeStmt();
       addTypeDefinitionStatement(type, defineClassStatement);
 
       if (jsPrototype != null) {
         JsStatement statement =
         constructInvocation(type.getSourceInfo(),
-            JCHSU_COPY_OBJECT_PROPERTIES,
+            RuntimeConstants.RUNTIME_COPY_OBJECT_PROPERTIES,
             getPrototypeQualifierViaLookup(program.getTypeJavaLangObject(), type.getSourceInfo()),
             globalTemp.makeRef(type.getSourceInfo()))
             .makeStmt();
@@ -2142,7 +2115,7 @@ public class GenerateJavaScriptAST {
       if (jsPrototype != null) {
         JsStatement statement =
             constructInvocation(info,
-                JCHSU_COPY_OBJECT_PROPERTIES,
+                RuntimeConstants.RUNTIME_COPY_OBJECT_PROPERTIES,
                 getPrototypeQualifierOf(program.getTypeJavaLangObject(), info),
                 getPrototypeQualifierOf(type, info)).makeStmt();
         addTypeDefinitionStatement(type, statement);
@@ -2155,8 +2128,8 @@ public class GenerateJavaScriptAST {
     }
 
     private void setupTypeMarkerOnJavaLangObjectPrototype(JDeclaredType type) {
-      JsFunction typeMarkerMethod = indexedFunctions.get(JCHSU_TYPE_MARKER_FN);
-      generatePrototypeAssignmentForJavaField(type, OBJECT_TYPEMARKER,
+      JsFunction typeMarkerMethod = indexedFunctions.get(RuntimeConstants.RUNTIME_TYPE_MARKER_FN);
+      generatePrototypeAssignmentForJavaField(type, RuntimeConstants.OBJECT_TYPEMARKER,
           typeMarkerMethod.getName().makeRef(type.getSourceInfo()));
     }
 
@@ -2220,7 +2193,7 @@ public class GenerateJavaScriptAST {
     private void maybeGenerateToStringAlias(JDeclaredType type) {
       if (type == program.getTypeJavaLangObject()) {
         // special: setup a "toString" alias for java.lang.Object.toString()
-        JMethod toStringMethod = program.getIndexedMethod("Object.toString");
+        JMethod toStringMethod = program.getIndexedMethod(RuntimeConstants.OBJECT_TO_STRING);
         if (type.getMethods().contains(toStringMethod)) {
           JsName toStringName = objectScope.declareUnobfuscatableName("toString");
           generatePrototypeDefinitionAlias(toStringMethod, toStringName);
@@ -2261,7 +2234,7 @@ public class GenerateJavaScriptAST {
       // Some JS optimizers, e.g. the closure compiler, relies on this subtle difference for
       // obfuscating property names.
       JsNameRef definePropertyMethod =
-          indexedFunctions.get(JCHSU_DEFINE_PROPERTIES).getName().makeRef(sourceInfo);
+          indexedFunctions.get(RuntimeConstants.RUNTIME_DEFINE_PROPERTIES).getName().makeRef(sourceInfo);
 
       JsObjectLiteral definePropertyLiteral =
           JsObjectLiteral.builder(sourceInfo)
@@ -2443,7 +2416,7 @@ public class GenerateJavaScriptAST {
       // provides a better debug experience that does not step into already used clinits.
 
       JsFunction emptyFunctionFn = incremental ? objectConstructorFunction
-          : indexedFunctions.get(JCHSU_EMPTY_METHOD);
+          : indexedFunctions.get(RuntimeConstants.RUNTIME_EMPTY_METHOD);
       JsExpression assignment = createAssignment(clinitFunction.getName().makeRef(sourceInfo),
           emptyFunctionFn.getName().makeRef(sourceInfo));
       statements.add(0, assignment.makeStmt());

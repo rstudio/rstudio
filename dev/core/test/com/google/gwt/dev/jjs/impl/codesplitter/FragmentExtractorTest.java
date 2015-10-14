@@ -24,6 +24,7 @@ import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.jjs.impl.JJSTestBase;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.ast.JsExprStmt;
@@ -185,7 +186,7 @@ public class FragmentExtractorTest extends JJSTestBase {
       final JConstructor barConstructor =
           new JConstructor(nullSourceInfo, barType, AccessModifier.PUBLIC);
       Map<String, JsFunction> functionsByName = new HashMap<String, JsFunction>();
-      functionsByName.put("JavaClassHierarchySetupUtil.defineClass",
+      functionsByName.put(RuntimeConstants.RUNTIME_DEFINE_CLASS,
           new JsFunction(nullSourceInfo, new JsRootScope(), DEFINE_CLASS_FUNCTION_NAME));
 
       final JsExprStmt defineClassStatement = createDefineClassStatement(barConstructorName);
