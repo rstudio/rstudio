@@ -1408,7 +1408,8 @@ public class TextEditingTarget implements
                   // if we're not in function scope, or this is a Shiny file,
                   // set a top-level (aka. Shiny-deferred) breakpoint
                   ScopeFunction innerFunction = null;
-                  if (StringUtil.isNullOrEmpty(extendedType_))
+                  if (extendedType_ == null ||
+                      !extendedType_.startsWith(SourceDocument.XT_SHINY_PREFIX))
                      innerFunction = docDisplay_.getFunctionAtPosition(
                            breakpointPosition, false);
                   if (innerFunction == null || !innerFunction.isFunction() ||
