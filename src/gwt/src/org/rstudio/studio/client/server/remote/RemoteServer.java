@@ -1353,6 +1353,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, MANIPULATOR_PLOT_CLICKED, params, requestCallback);
    }
    
+   public void validateProjectPath(String projectPath, 
+                                   ServerRequestCallback<Boolean> callback)
+   {
+      sendRequest(RPC_SCOPE, "validate_project_path", projectPath, callback);
+   }
+   
    public void getNewProjectContext(
                         ServerRequestCallback<NewProjectContext> callback)
    {

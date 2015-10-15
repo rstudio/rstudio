@@ -27,6 +27,9 @@ import com.google.gwt.core.client.JsArrayString;
 public interface ProjectsServerOperations extends PrefsServerOperations,
                                                   SourceServerOperations
 {  
+   void validateProjectPath(String projectPath, 
+                            ServerRequestCallback<Boolean> callback);
+   
    void getNewProjectContext(ServerRequestCallback<NewProjectContext> callback);
      
    void createProject(String projectFile,

@@ -764,12 +764,36 @@ public class Projects implements OpenProjectFileHandler,
    
    private void switchToProject(final String projectFilePath)
    {
-      applicationQuit_.prepareForQuit("Switch Projects",
-                                 new ApplicationQuit.QuitContext() {
-         public void onReadyToQuit(final boolean saveChanges)
+      // validate that the switch will actually work
+      projServer_.validateProjectPath(
+                      projectFilePath,
+                      new SimpleRequestCallback<Boolean>() {
+                         
+         @Override
+         public void onResponseReceived(Boolean valid)
          {
-            applicationQuit_.performQuit(saveChanges, projectFilePath);
-         }}); 
+            if (valid)
+            {
+               applicationQuit_.prepareForQuit("Switch Projects",
+                  new ApplicationQuit.QuitContext() {
+                  public void onReadyToQuit(final boolean saveChanges)
+                  {
+                     applicationQuit_.performQuit(saveChanges, projectFilePath);
+                  }
+               });
+            }
+            else
+            {
+               // show error dialog
+               String msg = "Project '" + projectFilePath + "' " +
+                            "does not exist (it has been moved or deleted)";
+               globalDisplay_.showErrorMessage("Error Opening Project", msg);
+                
+               // remove from mru list
+               pMRUList_.get().remove(projectFilePath);
+            }
+         }
+      });
    }
    
    private void showOpenProjectDialog(

@@ -60,6 +60,20 @@ void onSuspend(Settings*)
 
 void onResume(const Settings&) {}
 
+Error validateProjectPath(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   std::string projectFile;
+   Error error = json::readParams(request.params, &projectFile);
+   if (error)
+      return error;
+
+   FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
+
+   pResponse->setResult(projectFilePath.exists());
+   return Success();
+}
+
 Error getNewProjectContext(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
@@ -666,6 +680,7 @@ Error initialize()
    using namespace module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
+      (bind(registerRpcMethod, "validate_project_path", validateProjectPath))
       (bind(registerRpcMethod, "get_new_project_context", getNewProjectContext))
       (bind(registerRpcMethod, "create_project", createProject))
       (bind(registerRpcMethod, "read_project_options", readProjectOptions))
