@@ -37,10 +37,11 @@ public final class Array {
   private static final int TYPE_JAVA_LANG_DOUBLE = 5;
   private static final int TYPE_JAVA_LANG_BOOLEAN = 6;
   private static final int TYPE_JS_NATIVE = 7;
-  private static final int TYPE_JS_FUNCTION = 8;
-  private static final int TYPE_PRIMITIVE_LONG = 9;
-  private static final int TYPE_PRIMITIVE_NUMBER = 10;
-  private static final int TYPE_PRIMITIVE_BOOLEAN = 11;
+  private static final int TYPE_JS_NATIVE_PROTOTYPE = 8;
+  private static final int TYPE_JS_FUNCTION = 9;
+  private static final int TYPE_PRIMITIVE_LONG = 10;
+  private static final int TYPE_PRIMITIVE_NUMBER = 11;
+  private static final int TYPE_PRIMITIVE_BOOLEAN = 12;
 
   public static <T> T[] stampJavaTypeInfo(Object array, T[] referenceType) {
     initValues(referenceType.getClass(), Util.getCastableTypeMap(referenceType),

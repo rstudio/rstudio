@@ -404,7 +404,7 @@ java_library(
 # GWT JsInterop annotations in a separate library used by hybrid app projects
 java_library(
     name = "gwt-jsinterop-annotations",
-    srcs = [
+    srcs = glob(["src/jsinterop/**/*.java"]) + [
         "src/com/google/gwt/core/client/js/JsExport.java",
         "src/com/google/gwt/core/client/js/JsFunction.java",
         "src/com/google/gwt/core/client/js/JsNamespace.java",

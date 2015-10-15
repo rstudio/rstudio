@@ -46,6 +46,7 @@ public enum TypeCategory {
   TYPE_JAVA_LANG_DOUBLE("Double"),
   TYPE_JAVA_LANG_BOOLEAN("Boolean"),
   TYPE_JS_NATIVE("Native"),
+  TYPE_JS_UNKNOWN_NATIVE("UnknownNative"),
   TYPE_JS_FUNCTION("Function"),
   TYPE_PRIMITIVE_LONG,
   TYPE_PRIMITIVE_NUMBER,
@@ -87,10 +88,11 @@ public enum TypeCategory {
       return program.getRepresentedAsNativeTypesDispatchMap().get(type).getTypeCategory();
     } else if (program.typeOracle.isEffectivelyJavaScriptObject(type)) {
       return TypeCategory.TYPE_JSO;
-    } else if (program.typeOracle.isDualJsoInterface(type)
-        || program.typeOracle.isNonNativeJsTypeInterface(type)) {
+    } else if (program.typeOracle.isCastableLikeDualJsoInterface(type)) {
       return TypeCategory.TYPE_JAVA_OBJECT_OR_JSO;
-    } else if (type.isJsNative()) {
+    } else if (program.typeOracle.isNoOpCast(type)) {
+      return TypeCategory.TYPE_JS_UNKNOWN_NATIVE;
+    } else if (program.typeOracle.isCastableByPrototype(type)) {
       return TypeCategory.TYPE_JS_NATIVE;
     } else if (type.isJsFunction()) {
       return TypeCategory.TYPE_JS_FUNCTION;

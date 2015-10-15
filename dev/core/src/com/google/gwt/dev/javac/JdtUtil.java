@@ -184,7 +184,13 @@ public final class JdtUtil {
     return null;
   }
 
-  public static boolean getAnnotationParameterBoolean(AnnotationBinding a, String paramName) {
+  public static boolean getAnnotationParameterBoolean(
+      AnnotationBinding a, String paramName, boolean defaultValue) {
+    Boolean rv = getAnnotationParameterBoolean(a, paramName);
+    return rv == null ? defaultValue : rv;
+  }
+
+  public static Boolean getAnnotationParameterBoolean(AnnotationBinding a, String paramName) {
     if (a != null) {
       for (ElementValuePair maybeValue : a.getElementValuePairs()) {
         if (maybeValue.getValue() instanceof BooleanConstant &&
@@ -193,7 +199,7 @@ public final class JdtUtil {
         }
       }
     }
-    return false;
+    return null;
   }
 
   static AnnotationBinding getAnnotation(AnnotationBinding[] annotations, String nameToFind) {

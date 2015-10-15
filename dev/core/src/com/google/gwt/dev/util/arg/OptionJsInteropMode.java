@@ -29,9 +29,13 @@ public interface OptionJsInteropMode {
      */
     NONE,
     /**
-     * For hand coded, external JS, not run through an external compiler.
+     * Legacy JsInterop using old annotations.
      */
-    JS
+    JS,
+    /**
+     * Release candidate JsInterop using new annotations.
+     */
+    JS_RC
   }
 
   Mode getJsInteropMode();

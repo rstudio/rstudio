@@ -333,11 +333,13 @@ abstract class AbstractFieldWriter implements FieldWriter {
       // TODO: When we know better how this is used, we might want to loosen the annotation
       // constraint (e.g. it might be sufficient for the declared type to extend another
       // interface that is a JsType).
-      if (!ownerField.getRawType().isAssignableTo(getDomElement(typeOracle))
-          && ownerField.getRawType().getAnnotation(JsType.class) != null) {
+      JClassType rawType = ownerField.getRawType();
+      if (!rawType.isAssignableTo(getDomElement(typeOracle))
+          && (rawType.getAnnotation(JsType.class) != null
+              || rawType.getAnnotation(jsinterop.annotations.JsType.class) != null)) {
         w.write(
             "this.owner.%1$s = (%2$s) %1$s;", name,
-            ownerField.getRawType().getQualifiedSourceName());
+            rawType.getQualifiedSourceName());
       } else {
         w.write("this.owner.%1$s = %1$s;", name);
       }

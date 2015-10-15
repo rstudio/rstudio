@@ -112,11 +112,6 @@ public class JClassType extends JDeclaredType {
     return false;
   }
 
-  @Override
-  public boolean canBeImplementedExternally() {
-    return isJsNative();
-  }
-
   /**
    * Sets this type's super class.
    */

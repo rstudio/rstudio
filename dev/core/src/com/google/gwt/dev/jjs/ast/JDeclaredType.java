@@ -55,6 +55,7 @@ public abstract class JDeclaredType extends JReferenceType {
   private boolean isJsType;
   private boolean isClassWideExport;
   private boolean isJsNative;
+  private boolean canBeImplementedExternally;
   private String jsNamespace = null;
   private String jsName = null;
 
@@ -392,6 +393,11 @@ public abstract class JDeclaredType extends JReferenceType {
     return isJsNative;
   }
 
+  @Override
+  public boolean canBeImplementedExternally() {
+    return canBeImplementedExternally;
+  }
+
   /**
    * Returns this type's super class, or <code>null</code> if this type is
    * {@link Object} or an interface.
@@ -473,18 +479,18 @@ public abstract class JDeclaredType extends JReferenceType {
     this.isExternal = isExternal;
   }
 
-  public void setJsTypeInfo(boolean isJsType, boolean isJsNative, String jsNamespace,
-      String jsName, boolean isClassWideExport) {
+  public void setJsTypeInfo(boolean isJsType, boolean isJsNative, boolean isJsFunction,
+      String jsNamespace, String jsName, boolean isClassWideExport,
+      boolean canBeImplementedExternally) {
     this.isJsType = isJsType;
     this.isJsNative = isJsNative;
+    this.isJsFunction = isJsFunction;
     this.jsNamespace = jsNamespace;
     this.jsName = jsName;
     this.isClassWideExport = isClassWideExport;
+    this.canBeImplementedExternally = canBeImplementedExternally;
   }
 
-  public void setJsFunctionInfo(boolean isJsFunction) {
-    this.isJsFunction = isJsFunction;
-  }
   /**
    * Sorts this type's fields according to the specified sort.
    */

@@ -229,6 +229,7 @@ public class ImplementCastsAndTypeChecks {
         TypeCategory.TYPE_JAVA_LANG_DOUBLE,
         TypeCategory.TYPE_JAVA_LANG_BOOLEAN,
         TypeCategory.TYPE_JAVA_OBJECT,
+        TypeCategory.TYPE_JS_UNKNOWN_NATIVE,
         TypeCategory.TYPE_JS_NATIVE,
         TypeCategory.TYPE_JS_FUNCTION).contains(typeCategory);
 

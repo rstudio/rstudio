@@ -366,8 +366,12 @@ public class JProgram extends JNode implements ArrayTypeCreator {
   }
 
   public JProgram(MinimalRebuildCache minimalRebuildCache) {
+    this(minimalRebuildCache, true);
+  }
+
+  public JProgram(MinimalRebuildCache minimalRebuildCache, boolean legacyJsInterop) {
     super(SourceOrigin.UNKNOWN);
-    typeOracle = new JTypeOracle(this, minimalRebuildCache);
+    typeOracle = new JTypeOracle(this, minimalRebuildCache, legacyJsInterop);
   }
 
   public void addEntryMethod(JMethod entryPoint) {
