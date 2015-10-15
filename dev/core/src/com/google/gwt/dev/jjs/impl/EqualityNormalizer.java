@@ -173,8 +173,8 @@ public class EqualityNormalizer {
       assert lhs.getType().canBeNull();
 
       JMethod maskMethod = program.getIndexedMethod("Cast.maskUndefined");
-      JMethodCall lhsCall = new JMethodCall(lhs.getSourceInfo(), null, maskMethod, lhs.getType());
-      lhsCall.addArg(lhs);
+      JMethodCall lhsCall = new JMethodCall(lhs.getSourceInfo(), null, maskMethod, lhs);
+      lhsCall.overrideReturnType(lhs.getType());
       return lhsCall;
     }
   }

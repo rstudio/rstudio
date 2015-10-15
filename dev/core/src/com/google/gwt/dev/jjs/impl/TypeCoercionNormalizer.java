@@ -152,7 +152,8 @@ public class TypeCoercionNormalizer {
        */
       String methodName = "Cast.narrow_" + type.getName();
       JMethod castMethod = program.getIndexedMethod(methodName);
-      JMethodCall call = new JMethodCall(x.getSourceInfo(), null, castMethod, type, x);
+      JMethodCall call = new JMethodCall(x.getSourceInfo(), null, castMethod, x);
+      call.overrideReturnType(type);
       x.setType(program.getTypePrimitiveDouble());
       ctx.replaceMe(call);
     }

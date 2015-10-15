@@ -64,7 +64,7 @@ public class JMethodCall extends JExpression {
   private List<JExpression> args = Collections.emptyList();
   private JExpression instance;
   private JMethod method;
-  private final JType overrideReturnType;
+  private JType overriddenReturnType;
   private Polymorphism polymorphism = Polymorphism.NORMAL;
   private boolean markedAsSideAffectFree;
 
@@ -77,13 +77,9 @@ public class JMethodCall extends JExpression {
     super(other.getSourceInfo());
     this.instance = instance;
     this.method = other.method;
-    this.overrideReturnType = other.overrideReturnType;
+    this.overriddenReturnType = other.overriddenReturnType;
     this.polymorphism = other.polymorphism;
     this.markedAsSideAffectFree = other.markedAsSideAffectFree;
-  }
-
-  public JMethodCall(SourceInfo info, JExpression instance, JMethod method, JExpression... args) {
-    this(info, instance, method, null, args);
   }
 
   /**
@@ -97,14 +93,13 @@ public class JMethodCall extends JExpression {
    * allows us to preserve type information during the latter phases of
    * compilation.
    */
-  public JMethodCall(SourceInfo info, JExpression instance, JMethod method,
-      JType overrideReturnType, JExpression... args) {
+  public JMethodCall(SourceInfo info, JExpression instance, JMethod method, JExpression... args) {
     super(info);
     assert (method != null);
     assert (instance != null || method.isStatic() || this instanceof JNewInstance);
     this.instance = instance;
     this.method = method;
-    this.overrideReturnType = overrideReturnType;
+    this.overriddenReturnType = null;
     addArgs(args);
   }
 
@@ -168,11 +163,7 @@ public class JMethodCall extends JExpression {
 
   @Override
   public JType getType() {
-    if (overrideReturnType != null) {
-      return overrideReturnType;
-    } else {
-      return method.getType();
-    }
+    return overriddenReturnType != null ? overriddenReturnType : method.getType();
   }
 
   public void markSideEffectFree() {
@@ -203,6 +194,13 @@ public class JMethodCall extends JExpression {
     return polymorphism.isVolatile();
   }
 
+  /**
+   * Override the return type.
+   */
+  public void overrideReturnType(JType overridenReturnType) {
+    assert this.overriddenReturnType == null;
+    this.overriddenReturnType = overridenReturnType;
+  }
   /**
    * Resolve an external reference during AST stitching.
    */

@@ -618,9 +618,8 @@ public class Pruner {
       instance = program.getLiteralNull();
     }
 
-    JMethodCall newCall =
-        new JMethodCall(x.getSourceInfo(), instance, program.getNullMethod(),
-            primitiveTypeOrNullTypeOrArray(program, x.getType()));
+    JMethodCall newCall = new JMethodCall(x.getSourceInfo(), instance, program.getNullMethod());
+    newCall.overrideReturnType(primitiveTypeOrNullTypeOrArray(program, x.getType()));
     // Retain the original arguments, they will be evaluated for side effects.
     for (JExpression arg : args) {
       if (arg.hasSideEffects()) {

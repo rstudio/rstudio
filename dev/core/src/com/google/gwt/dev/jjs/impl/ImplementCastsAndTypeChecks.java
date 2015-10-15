@@ -74,8 +74,8 @@ public class ImplementCastsAndTypeChecks {
         JMethod method = program.getIndexedMethod(
             RuntimeConstants.CAST_THROW_CLASS_CAST_EXCEPTION_UNLESS_NULL);
         // Note, we must update the method call to return the null type.
-        JMethodCall call = new JMethodCall(info, null, method, toType);
-        call.addArg(expr);
+        JMethodCall call = new JMethodCall(info, null, method, expr);
+        call.overrideReturnType(toType);
         ctx.replaceMe(call);
         return;
       }
@@ -175,8 +175,8 @@ public class ImplementCastsAndTypeChecks {
 
       if (methodName != null) {
         JMethod castMethod = program.getIndexedMethod(methodName);
-        JMethodCall call = new JMethodCall(info, null, castMethod, toType);
-        call.addArg(expr);
+        JMethodCall call = new JMethodCall(info, null, castMethod, expr);
+        call.overrideReturnType(toType);
         ctx.replaceMe(call);
       } else {
         // Just remove the cast
@@ -246,14 +246,13 @@ public class ImplementCastsAndTypeChecks {
     TypeCategory targetTypeCategory = determineTypeCategoryForType(targetType);
     JMethod method = targetMethodByTypeCategory.get(targetTypeCategory);
     assert method != null;
-    JMethodCall call;
+    JMethodCall call = new JMethodCall(sourceInfo, null, method);
     if (overrideReturnType) {
       // Create a method call overriding the return type so that operations like Cast.dynamicCast
       // don't change the type of the original method call expression.
-      call = new JMethodCall(sourceInfo, null, method, targetType);
-    } else {
-      call = new JMethodCall(sourceInfo, null, method);
+      call.overrideReturnType(targetType);
     }
+
     call.addArg(targetExpression);
     if (method.getParams().size() >= 2) {
       call.addArg((new JRuntimeTypeReference(sourceInfo, program.getTypeJavaLangObject(),
@@ -296,7 +295,6 @@ public class ImplementCastsAndTypeChecks {
   }
 
   private void execImpl() {
-    ReplaceTypeChecksVisitor replacer = new ReplaceTypeChecksVisitor();
-    replacer.accept(program);
+    new ReplaceTypeChecksVisitor().accept(program);
   }
 }
