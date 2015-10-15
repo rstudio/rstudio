@@ -153,6 +153,8 @@ public class RSConnectDeploy extends Composite
       {
          deployIllustration_.setVisible(false);
          rootPanel_.addStyleName(style_.wizard());
+         checkUncheckAllButton_.setVisible(false);
+         addFileButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
       }
 
       // Invoke the "add account" wizard
@@ -190,8 +192,17 @@ public class RSConnectDeploy extends Composite
          }
       });
 
+      checkUncheckAllButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
+      checkUncheckAllButton_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent arg0)
+         {
+            checkUncheckAll();
+         }
+      });
+
       addFileButton_.setVisible(forDocument_);
-      addFileButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
       addFileButton_.addClickHandler(new ClickHandler()
       {
          @Override
@@ -214,6 +225,8 @@ public class RSConnectDeploy extends Composite
             }
          }
       });
+      
+      
       
       // If we're loading a previous deployment, hide new app name fields
       if (fromPrevious_ != null)
@@ -987,6 +1000,24 @@ public class RSConnectDeploy extends Composite
       fromPrevious_ = null;
    }
    
+   private void checkUncheckAll()
+   {
+      allChecked_ = !allChecked_;
+      for (CheckBox box: fileChecks_)
+      {
+         // don't toggle state for disabled boxes, or common Shiny .R filenames
+         String file = box.getText().toLowerCase();
+         if (box.isEnabled() &&
+             file != "ui.r" &&
+             file != "server.r" &&
+             file != "app.r")
+         {
+            box.setValue(allChecked_);
+         }
+      }
+      checkUncheckAllButton_.setText(allChecked_ ? "Uncheck All" : "Check All");
+   }
+   
    
    @UiField Anchor addAccountAnchor_;
    @UiField Anchor createNewAnchor_;
@@ -1005,6 +1036,7 @@ public class RSConnectDeploy extends Composite
    @UiField Label appProgressName_;
    @UiField Label nameLabel_;
    @UiField ThemedButton addFileButton_;
+   @UiField ThemedButton checkUncheckAllButton_;
    @UiField ThemedButton previewButton_;
    @UiField VerticalPanel fileListPanel_;
    @UiField VerticalPanel filePanel_;
@@ -1026,6 +1058,7 @@ public class RSConnectDeploy extends Composite
    private int contentType_;
    private Command onDeployEnabled_;
    private RSConnectDeploymentRecord fromPrevious_;
+   private boolean allChecked_ = true;
 
    private final DeployStyle style_;
    private final boolean forDocument_;
