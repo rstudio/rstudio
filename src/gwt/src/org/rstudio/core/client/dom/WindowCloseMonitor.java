@@ -26,7 +26,7 @@ public class WindowCloseMonitor
    // refresh or closing for good. To distinguish between the two cases, we ping
    // the window for 5 seconds after receiving the unload.
    public static void monitorSatelliteClosure(final String windowName, 
-         final Command onClosed)
+         final Command onClosed, final Command onOpen)
    {
       final SatelliteManager satelliteManager = RStudioGinjector.INSTANCE
                              .getSatelliteManager();
@@ -46,7 +46,16 @@ public class WindowCloseMonitor
                return false;
             }
             // retry up to 5 seconds (250ms per try)
-            return retries_++ < 20;
+            if (retries_++ < 20) 
+            {
+               return true;
+            }
+            else
+            {
+               if (onOpen != null)
+                  onOpen.execute();
+               return false;
+            }
          }
          
          private int retries_ = 0;

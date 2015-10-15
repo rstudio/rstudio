@@ -267,6 +267,11 @@ void onConsoleInput(const std::string& input)
       s_pendingShinyPath = FilePath(
             module_context::resolveAliasedPath(match[1]));
    }
+   else
+   {
+      // not a source command
+      s_pendingShinyPath = FilePath();
+   }
 }
 
 } // anonymous namespace
