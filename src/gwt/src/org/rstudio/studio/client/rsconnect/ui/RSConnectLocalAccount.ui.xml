@@ -32,14 +32,10 @@
       <g:VerticalPanel>
          <g:Label text="Enter the URL of the RStudio Connect server:">
          </g:Label>
-         <rsw:TextBoxWithPrefix styleName="{style.textControl}"
-                             prefix="http://" 
+         <rsw:TextBoxWithCue styleName="{style.textControl}"
+                             cueText="servername.com:3939"
                              width="250px"
-                             ui:field="serverUrl_"></rsw:TextBoxWithPrefix>
-         <g:CheckBox ui:field="httpsCheck_" 
-                     styleName="{style.httpsCheck}"
-                     text="Server supports secure connections (HTTPS)">
-         </g:CheckBox>
+                             ui:field="serverUrl_"></rsw:TextBoxWithCue>
          <g:Label styleName="{style.spaced}" text="Enter a nickname for your account: (optional)">
          </g:Label>
          <rsw:TextBoxWithCue styleName="{style.textControl}"
