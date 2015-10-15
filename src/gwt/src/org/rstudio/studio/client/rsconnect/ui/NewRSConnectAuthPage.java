@@ -343,5 +343,6 @@ public class NewRSConnectAuthPage
    private boolean waitingForAuth_ = false;
    private boolean runningAuthCompleteCheck_ = false;
    private ProgressIndicator wizardIndicator_;
-   private final static String AUTH_WINDOW_NAME = "rstudio_rsconnect_auth";
+
+   public final static String AUTH_WINDOW_NAME = "rstudio_rsconnect_auth";
 }
