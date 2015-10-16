@@ -20,6 +20,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.satellite.Satellite;
@@ -43,6 +44,9 @@ import org.rstudio.studio.client.workbench.prefs.views.PublishingPreferencesPane
 import org.rstudio.studio.client.workbench.ui.OptionsLoader;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -135,6 +139,7 @@ public class RSAccountConnector implements
                   });
                   wizard.showModal();
                   found = true;
+                  closeAuthWindowWhenFinished(wizard);
                   break;
                }
             }
@@ -225,6 +230,7 @@ public class RSAccountConnector implements
          }
       });
       wizard.showModal();
+      closeAuthWindowWhenFinished(wizard);
    }
    
    private void processDialogResult(final NewRSConnectAccountResult input, 
@@ -363,7 +369,24 @@ public class RSAccountConnector implements
    private final native void callSatelliteManageAccounts()/*-{
       $wnd.opener.rsManageAccountsFromRStudioSatellite();
    }-*/;
-
+   
+   
+   private void closeAuthWindowWhenFinished(PopupPanel panel)
+   {
+      if (Desktop.isDesktop())
+      {
+         panel.addCloseHandler(new CloseHandler<PopupPanel>()
+         {
+            @Override
+            public void onClose(CloseEvent<PopupPanel> arg0)
+            {
+               // take down the auth window if it's still showing
+               Desktop.getFrame().closeNamedWindow(
+                     NewRSConnectAuthPage.AUTH_WINDOW_NAME);
+            }
+         });
+      }
+   }
 
    private final GlobalDisplay display_;
    private final RSConnectServerOperations server_;

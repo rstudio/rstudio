@@ -560,7 +560,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          {
             closeSourceWindowDocs(sourceWindowId(event.getName()));
          }
-      });
+      }, null);
    }
 
    @Override

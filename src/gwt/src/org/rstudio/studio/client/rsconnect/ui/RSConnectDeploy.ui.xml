@@ -21,9 +21,13 @@
              <g:VerticalPanel ui:field="fileListPanel_">
              </g:VerticalPanel>
            </g:ScrollPanel>
-           <rw:ThemedButton ui:field="addFileButton_" 
-                            text="Add More..."
-                            visible="false"></rw:ThemedButton>
+           <g:HorizontalPanel>
+              <rw:ThemedButton ui:field="checkUncheckAllButton_" 
+                               text="Uncheck All"></rw:ThemedButton>
+              <rw:ThemedButton ui:field="addFileButton_" 
+                               text="Add More..."
+                               visible="false"></rw:ThemedButton>
+           </g:HorizontalPanel>
          </g:VerticalPanel>
          <g:VerticalPanel ui:field="descriptionPanel_" 
                           visible="false">

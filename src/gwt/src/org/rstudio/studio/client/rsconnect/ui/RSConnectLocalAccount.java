@@ -15,15 +15,11 @@
 package org.rstudio.studio.client.rsconnect.ui;
 
 import org.rstudio.core.client.widget.TextBoxWithCue;
-import org.rstudio.core.client.widget.TextBoxWithPrefix;
 import org.rstudio.studio.client.common.HelpLink;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -40,16 +36,6 @@ public class RSConnectLocalAccount extends Composite
    public RSConnectLocalAccount()
    {
       initWidget(uiBinder.createAndBindUi(this));
-      
-      httpsCheck_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
-      {
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> isHttps)
-         {
-            serverUrl_.setPrefix(isHttps.getValue() ? 
-                  "https://" : "http://");
-         }
-      });
    }
    
    public String getServerUrl() 
@@ -67,8 +53,7 @@ public class RSConnectLocalAccount extends Composite
       serverUrl_.setFocus(true);
    }
    
-   @UiField CheckBox httpsCheck_;
-   @UiField TextBoxWithPrefix serverUrl_;
+   @UiField TextBoxWithCue serverUrl_;
    @UiField TextBoxWithCue accountName_;
    @UiField HelpLink connectHelpLink_;
 }
