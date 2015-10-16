@@ -102,10 +102,12 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
         rect = e.getImageRect();
         throw new CannotBundleImageException(localized, rect);
       } finally {
-        assert rect != null : "No ImageRect";
-        rect.setHeight(image.getScaleHeight());
-        rect.setWidth(image.getScaleWidth());
+        if (rect != null) {
+          rect.setHeight(image.getScaleHeight());
+          rect.setWidth(image.getScaleWidth());
+        }
       }
+      assert rect != null : "No ImageRect";
       return localized;
     }
 
