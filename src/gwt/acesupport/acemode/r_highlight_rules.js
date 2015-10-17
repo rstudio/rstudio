@@ -114,13 +114,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
          },
          {
             token : "constant.numeric", // number + integer
-            regex : "\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?[iL]?",
-            merge : false,
-            next  : "start"
-         },
-         {
-            token : "constant.numeric", // number + integer with leading decimal
-            regex : "\\.\\d+(?:[eE][+\\-]?\\d*)?[iL]?",
+            regex : "(?:(?:\\d+(?:\\.\\d*)?)|(?:\\.\\d+))(?:[eE][+\\-]?\\d*)?[iL]?",
             merge : false,
             next  : "start"
          }
