@@ -108,19 +108,19 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       rules["#number"] = [
          {
             token : "constant.numeric", // hex
-            regex : "0[xX][0-9a-fA-F]+[Li]?\\b",
+            regex : "0[xX][0-9a-fA-F]+[Li]?",
             merge : false,
             next  : "start"
          },
          {
             token : "constant.numeric", // number + integer
-            regex : "\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?[iL]?\\b",
+            regex : "\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?[iL]?",
             merge : false,
             next  : "start"
          },
          {
             token : "constant.numeric", // number + integer with leading decimal
-            regex : "\\.\\d+(?:[eE][+\\-]?\\d*)?[iL]?\\b",
+            regex : "\\.\\d+(?:[eE][+\\-]?\\d*)?[iL]?",
             merge : false,
             next  : "start"
          }
