@@ -35,4 +35,16 @@ public interface SortedSet<E> extends Set<E> {
   SortedSet<E> subSet(E fromElement, E toElement);
 
   SortedSet<E> tailSet(E fromElement);
+
+  @Override
+  default Spliterator<E> spliterator() {
+    return new Spliterators.IteratorSpliterator<E>(this,
+        Spliterator.DISTINCT | Spliterator.ORDERED | Spliterator.SORTED) {
+
+      @Override
+      public Comparator<? super E> getComparator() {
+        return SortedSet.this.comparator();
+      }
+    };
+  }
 }

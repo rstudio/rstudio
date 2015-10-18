@@ -80,6 +80,11 @@ public interface List<E> extends Collection<E> {
   @Override
   int size();
 
+  @Override
+  default Spliterator<E> spliterator() {
+    return Spliterators.spliterator(this, Spliterator.ORDERED);
+  }
+
   List<E> subList(int fromIndex, int toIndex);
 
   @Override

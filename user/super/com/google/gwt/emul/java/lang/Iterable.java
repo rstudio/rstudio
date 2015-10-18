@@ -18,6 +18,8 @@ package java.lang;
 import static javaemul.internal.InternalPreconditions.checkNotNull;
 
 import java.util.Iterator;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.function.Consumer;
 
 /**
@@ -36,5 +38,9 @@ public interface Iterable<T> {
     for (T t : this) {
       action.accept(t);
     }
+  }
+
+  default Spliterator<T> spliterator() {
+    return Spliterators.spliteratorUnknownSize(iterator(), 0);
   }
 }

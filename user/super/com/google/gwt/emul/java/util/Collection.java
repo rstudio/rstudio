@@ -53,6 +53,11 @@ public interface Collection<E> extends Iterable<E> {
 
   int size();
 
+  @Override
+  default Spliterator<E> spliterator() {
+    return Spliterators.spliterator(this, 0);
+  }
+
   Object[] toArray();
 
   <T> T[] toArray(T[] a);

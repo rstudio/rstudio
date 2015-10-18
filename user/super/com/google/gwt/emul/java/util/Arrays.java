@@ -1043,6 +1043,43 @@ public class Arrays {
     mergeSort(x, fromIndex, toIndex, c);
   }
 
+  public static Spliterator.OfDouble spliterator(double[] array) {
+    return Spliterators.spliterator(array, Spliterator.IMMUTABLE | Spliterator.ORDERED);
+  }
+
+  public static Spliterator.OfDouble spliterator(double[] array,
+      int startInclusive, int endExclusive) {
+    return Spliterators.spliterator(array, startInclusive, endExclusive,
+        Spliterator.IMMUTABLE | Spliterator.ORDERED);
+  }
+
+  public static Spliterator.OfInt spliterator(int[] array) {
+    return Spliterators.spliterator(array, Spliterator.IMMUTABLE | Spliterator.ORDERED);
+  }
+
+  public static Spliterator.OfInt spliterator(int[] array, int startInclusive, int endExclusive) {
+    return Spliterators.spliterator(array, startInclusive, endExclusive,
+        Spliterator.IMMUTABLE | Spliterator.ORDERED);
+  }
+
+  public static Spliterator.OfLong spliterator(long[] array) {
+    return Spliterators.spliterator(array, Spliterator.IMMUTABLE | Spliterator.ORDERED);
+  }
+
+  public static Spliterator.OfLong spliterator(long[] array, int startInclusive, int endExclusive) {
+    return Spliterators.spliterator(array, startInclusive, endExclusive,
+        Spliterator.IMMUTABLE | Spliterator.ORDERED);
+  }
+
+  public static <T> Spliterator<T> spliterator(T[] array) {
+    return Spliterators.spliterator(array, Spliterator.IMMUTABLE | Spliterator.ORDERED);
+  }
+
+  public static <T> Spliterator<T> spliterator(T[] array, int startInclusive, int endExclusive) {
+    return Spliterators.spliterator(array, startInclusive, endExclusive,
+        Spliterator.IMMUTABLE | Spliterator.ORDERED);
+  }
+
   public static String toString(boolean[] a) {
     if (a == null) {
       return "null";

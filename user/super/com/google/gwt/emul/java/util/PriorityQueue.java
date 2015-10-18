@@ -194,6 +194,11 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
   }
 
   @Override
+  public Spliterator<E> spliterator() {
+    return Spliterators.spliterator(this, Spliterator.NONNULL);
+  }
+
+  @Override
   public Object[] toArray() {
     return heap.toArray();
   }

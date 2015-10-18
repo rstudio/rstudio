@@ -63,6 +63,11 @@ public interface Set<E> extends Collection<E> {
   int size();
 
   @Override
+  default Spliterator<E> spliterator() {
+    return Spliterators.spliterator(this, Spliterator.DISTINCT);
+  }
+
+  @Override
   Object[] toArray();
 
   @Override
