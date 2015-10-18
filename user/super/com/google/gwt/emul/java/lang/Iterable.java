@@ -15,16 +15,26 @@
  */
 package java.lang;
 
+import static javaemul.internal.InternalPreconditions.checkNotNull;
+
 import java.util.Iterator;
+import java.util.function.Consumer;
 
 /**
  * Allows an instance of a class implementing this interface to be used in the
- * foreach statement. <a
- * href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Iterable.html">[Sun
- * docs]</a>
- * 
+ * foreach statement.
+ * See <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Iterable.html">
+ * the official Java API doc</a> for details.
+ *
  * @param <T> type of returned iterator
  */
 public interface Iterable<T> {
   Iterator<T> iterator();
+
+  default void forEach(Consumer<? super T> action) {
+    checkNotNull(action);
+    for (T t : this) {
+      action.accept(t);
+    }
+  }
 }

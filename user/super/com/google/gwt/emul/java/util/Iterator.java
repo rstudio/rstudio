@@ -15,11 +15,14 @@
  */
 package java.util;
 
+import static javaemul.internal.InternalPreconditions.checkNotNull;
+
+import java.util.function.Consumer;
+
 /**
- * See <a
- * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Iterator.html">the
- * official Java API doc</a> for details.
- * 
+ * See <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Iterator.html">
+ * the official Java API doc</a> for details.
+ *
  * @param <E> element type
  */
 public interface Iterator<E> {
@@ -28,6 +31,14 @@ public interface Iterator<E> {
 
   E next();
 
-  void remove();
+  default void forEachRemaining(Consumer<? super E> consumer) {
+    checkNotNull(consumer);
+    while (hasNext()) {
+      consumer.accept(next());
+    }
+  }
 
+  default void remove() {
+    throw new UnsupportedOperationException();
+  }
 }
