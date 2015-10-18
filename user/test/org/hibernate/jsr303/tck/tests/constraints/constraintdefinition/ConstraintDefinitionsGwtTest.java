@@ -17,6 +17,7 @@ package org.hibernate.jsr303.tck.tests.constraints.constraintdefinition;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
+import org.hibernate.jsr303.tck.util.client.Failing;
 import org.hibernate.jsr303.tck.util.client.NonTckTest;
 
 /**
@@ -31,6 +32,7 @@ public class ConstraintDefinitionsGwtTest extends GWTTestCase {
     return "org.hibernate.jsr303.tck.tests.constraints.constraintdefinition.TckTest";
   }
 
+  @Failing(issue = 8869)
   public void testConstraintWithCustomAttributes() {
     delegate.testConstraintWithCustomAttributes();
   }

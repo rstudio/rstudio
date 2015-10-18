@@ -43,7 +43,7 @@ public @interface Failing {
    * The GWT issue for fixing this failing test.
    * <p>
    * The issue is at
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id={@code <issue>}
+   * https://github.com/gwtproject/gwt/issues/{@code <issue>}
    */
   int issue();
 }
