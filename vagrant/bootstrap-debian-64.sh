@@ -11,7 +11,7 @@ echo "deb https://cran.rstudio.com/bin/linux/ubuntu trusty/" >> /etc/apt/sources
 apt-get update
 
 # install R
-apt-get install -y r-base r-base-dev
+apt-get install -y --force-yes r-base r-base-dev
 
 # install minimal packages needed to run bootstrap scripts
 apt-get install -y unzip
@@ -30,6 +30,14 @@ done
 # install dependencies
 cd /vagrant/dependencies/linux
 ./install-dependencies-debian
+
+# resiliency (in case the above aborts early)
+./install-dependencies-debian
+
+# run overlay script if present
+if [ -f ./install-overlay-debian ]; then
+    ./install-overlay-debian
+fi 
 
 # create build folder and run cmake
 sudo -u vagrant mkdir -p /home/vagrant/rstudio-build
