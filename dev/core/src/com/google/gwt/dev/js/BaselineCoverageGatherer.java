@@ -47,12 +47,13 @@ import java.util.Set;
  * coverage reports.
  */
 public class BaselineCoverageGatherer {
+
   public static Multimap<String, Integer> exec(JProgram jProgram) {
     return new BaselineCoverageGatherer(jProgram, getCoveredSourceFiles()).execImpl();
   }
 
   private static Set<String> getCoveredSourceFiles() {
-    String filename = System.getProperty("gwt.coverage");
+    String filename = System.getProperty(CoverageInstrumentor.GWT_COVERAGE_SYSTEM_PROPERTY);
     if (filename.indexOf(',') != -1) {
       return ImmutableSet.copyOf(filename.split(","));
     }
@@ -92,7 +93,8 @@ public class BaselineCoverageGatherer {
         // strategy below of comparing source info with that of the enclosing type
         // doesn't work because the enclosing type is set to be that of the superclass.
         if (x.getTarget().isSynthetic()
-            || (x.getTarget() instanceof JConstructor && ((JConstructor) x.getTarget()).isDefaultConstructor())) {
+            || (x.getTarget().isConstructor()
+                && ((JConstructor) x.getTarget()).isDefaultConstructor())) {
           return;
         }
         endVisit((JExpression) x, ctx);

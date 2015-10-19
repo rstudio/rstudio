@@ -340,7 +340,7 @@ public final class JavaToJavaScriptCompiler {
       // be optimized out; we want those marked as "not executed", not "not
       // instrumentable".
       Multimap<String, Integer> instrumentableLines = null;
-      if (System.getProperty("gwt.coverage") != null) {
+      if (CoverageInstrumentor.isCoverageEnabled()) {
         instrumentableLines = BaselineCoverageGatherer.exec(jprogram);
       }
 
@@ -380,7 +380,7 @@ public final class JavaToJavaScriptCompiler {
       JavaToJavaScriptMap jjsmap = jjsMapAndInlineableFunctions.getLeft();
 
       // TODO(stalcup): hide metrics gathering in a callback or subclass
-      if (System.getProperty("gwt.coverage") != null) {
+      if (CoverageInstrumentor.isCoverageEnabled()) {
         CoverageInstrumentor.exec(jsProgram, instrumentableLines);
       }
 

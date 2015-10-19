@@ -25,6 +25,7 @@ import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.jjs.impl.JjsUtils;
 import com.google.gwt.dev.jjs.impl.TypeCategory;
 import com.google.gwt.dev.jjs.impl.codesplitter.FragmentPartitioningResult;
+import com.google.gwt.dev.js.CoverageInstrumentor;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -176,7 +177,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
   private static final Map<String, JPrimitiveType> primitiveTypesDeprecated = Maps.newHashMap();
 
   static {
-    if (System.getProperty("gwt.coverage") != null) {
+    if (CoverageInstrumentor.isCoverageEnabled()) {
       IMMORTAL_CODEGEN_TYPES_SET.add("com.google.gwt.lang.CoverageUtil");
     }
     CODEGEN_TYPES_SET.addAll(IMMORTAL_CODEGEN_TYPES_SET);
