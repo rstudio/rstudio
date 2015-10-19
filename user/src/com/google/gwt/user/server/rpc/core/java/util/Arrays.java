@@ -20,10 +20,8 @@ import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 import com.google.gwt.user.server.rpc.ServerCustomFieldSerializer;
 import com.google.gwt.user.server.rpc.impl.DequeMap;
-import com.google.gwt.user.server.rpc.impl.SerializabilityUtil;
 import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamReader;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.List;
@@ -44,39 +42,17 @@ public final class Arrays {
       return java.util.Arrays.asList().getClass().getName();
     }
 
-    /*
-     * Note: the reason this implementation differs from that of a standard List
-     * (which serializes a number and then each element) is the requirement that
-     * the underlying array retain its correct type across the wire. This gives
-     * toArray() results the correct type, and can generate internal
-     * ArrayStoreExceptions.
-     * 
-     * The type checking is messy because we need some way of converting the
-     * List<X> or related type that we are expecting into the array type that we
-     * are about to try to read. You can't create objects of class Type
-     * directly, so we need to create a dummy array and then use it's class as a
-     * type.
-     */
     public static List<?> instantiate(ServerSerializationStreamReader streamReader,
         Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes)
         throws SerializationException {
-      Class<?> componentClass = SerializabilityUtil.getClassFromType(expectedParameterTypes[0],
-          resolvedTypes);
-      if (componentClass == null) {
-        return com.google.gwt.user.client.rpc.core.java.util.Arrays.ArrayList_CustomFieldSerializer
+      return com.google.gwt.user.client.rpc.core.java.util.Arrays.ArrayList_CustomFieldSerializer
             .instantiate(streamReader);
-      }
-      
-      Object expectedArray = Array.newInstance(componentClass, 0);
-      Object[] array = (Object[]) streamReader.readObject(expectedArray.getClass(), resolvedTypes);
-      return java.util.Arrays.asList(array);
     }
 
     @Override
     public void deserializeInstance(SerializationStreamReader streamReader, List instance)
         throws SerializationException {
-      com.google.gwt.user.client.rpc.core.java.util.Arrays.ArrayList_CustomFieldSerializer
-          .deserialize(streamReader, instance);
+      // Handled in instantiateInstance.
     }
 
     @SuppressWarnings("unused")
@@ -114,3 +90,4 @@ public final class Arrays {
     }
   }
 }
+

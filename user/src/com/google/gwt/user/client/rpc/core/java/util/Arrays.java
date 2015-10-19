@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.rpc.core.java.util;
 
-import com.google.gwt.core.shared.GWT;
 import com.google.gwt.user.client.rpc.CustomFieldSerializer;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
@@ -32,20 +31,12 @@ public final class Arrays {
    * Custom field serializer for {@link java.util.Arrays.ArrayList}.
    */
   @SuppressWarnings("rawtypes")
-  public static final class ArrayList_CustomFieldSerializer extends
-      CustomFieldSerializer<List> {
+  public static final class ArrayList_CustomFieldSerializer extends CustomFieldSerializer<List> {
 
     public static String concreteType() {
       return java.util.Arrays.asList().getClass().getName();
     }
 
-    /*
-     * Note: the reason this implementation differs from that of a standard List
-     * (which serializes a number and then each element) is the requirement that
-     * the underlying array retain its correct type across the wire. This gives
-     * toArray() results the correct type, and can generate internal
-     * ArrayStoreExceptions.
-     */
     @SuppressWarnings("unused")
     public static void deserialize(SerializationStreamReader streamReader,
         List<?> instance) throws SerializationException {
@@ -54,21 +45,21 @@ public final class Arrays {
 
     public static List<?> instantiate(SerializationStreamReader streamReader)
         throws SerializationException {
-      Object[] array = (Object[]) streamReader.readObject();
+      int size = streamReader.readInt();
+      Object[] array = new Object[size];
+      for (int i = 0; i < size; ++i) {
+        array[i] = streamReader.readObject();
+      }
       return java.util.Arrays.asList(array);
     }
 
     public static void serialize(SerializationStreamWriter streamWriter,
         List<?> instance) throws SerializationException {
-      Object[] array;
-      if (GWT.isScript()) {
-        // Violator pattern.
-        array = ArraysViolator.getArray0(instance);
-      } else {
-        // Clone the underlying array.
-        array = instance.toArray();
+      int size = instance.size();
+      streamWriter.writeInt(size);
+      for (Object obj : instance) {
+        streamWriter.writeObject(obj);
       }
-      streamWriter.writeObject(array);
     }
 
     @Override
