@@ -261,11 +261,15 @@ private:
                "output_options = list(" + outputOptions + "))";
       }
 
+      // escape single quotes in target filename
+      std::string escapedTargetFile = boost::replace_all_copy(targetFile, "'", 
+            "\\'");
+
       // render command
       boost::format fmt("%1%('%2%', %3% %4%);");
       std::string cmd = boost::str(fmt %
                                    renderFunc %
-                                   targetFile %
+                                   escapedTargetFile %
                                    extraParams %
                                    renderOptions);
 
