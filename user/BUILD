@@ -555,7 +555,6 @@ filegroup(
         exclude = [
             "test/**/ConstraintDefinitionsGwtSuite.java",
             "test/**/*JreSuite.java",
-            "test/**/*JsInteropSuite.java",
         ],
     ),
 )
@@ -571,7 +570,7 @@ filegroup(
 )
 
 filegroup(
-    name = "emma_suite_files",
+    name = "dev_suite_files",
     srcs = glob(
         ["test/**/*Suite.java"],
         exclude = [
