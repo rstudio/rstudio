@@ -112,9 +112,7 @@ public class JsTypeLinker extends JsAbstractTextTransformer {
     for (NamedRange typeRange : typeRanges) {
       extractOne(typeRange);
     }
-    if (minimalRebuildCache.getJs(FOOTER_NAME) == null) {
-      extractOne(footerRange);
-    }
+    extractOne(footerRange);
 
     // Link new and old JS.
     linkOne(HEADER_NAME);

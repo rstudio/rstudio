@@ -265,18 +265,19 @@ public class JavaAstConstructor {
       new MockJavaResource("com.google.gwt.lang.Runtime") {
         @Override
         public CharSequence getContent() {
-          return Joiner.on("\n").join(
-              "package com.google.gwt.lang;",
-              "public class Runtime {",
-              "  public static Object defineClass(int typeId, int superTypeId, Object map) {",
-              "    return null;",
-              "  }",
-              "  public static void bootstrap() {}",
-              "  public static void emptyMethod() {}",
-              "  public static void getClassPrototype() {}",
-              "  static native void typeMarkerFn() /*-{}-*/;",
-              "}"
-          );
+          return Joiner.on("\n")
+              .join(
+                  "package com.google.gwt.lang;",
+                  "public class Runtime {",
+                  "  public static Object defineClass(int typeId, int superTypeId, Object map) {",
+                  "    return null;",
+                  "  }",
+                  "  public static void provide() {}",
+                  "  public static void bootstrap() {}",
+                  "  public static void emptyMethod() {}",
+                  "  public static void getClassPrototype() {}",
+                  "  static native void typeMarkerFn() /*-{}-*/;",
+                  "}");
         }
       };
 

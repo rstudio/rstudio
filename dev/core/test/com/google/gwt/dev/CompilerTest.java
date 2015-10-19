@@ -453,6 +453,17 @@ public class CompilerTest extends ArgProcessorTestBase {
           "  Foo foo = new Foo();",
           "}");
 
+  private MockJavaResource jsTypeBarResource =
+      JavaResourceBase.createMockJavaResource(
+          "com.foo.Bar",
+          "package com.foo;",
+          "import com.google.gwt.core.client.js.JsExport;",
+          "import com.google.gwt.core.client.js.JsType;",
+          "@JsType @JsExport public class Bar {",
+          "  void doInstanceBar() {}",
+          "  public static void doStaticBaz() {}",
+          "}");
+
   private MockJavaResource nonCompilableFooResource =
       JavaResourceBase.createMockJavaResource("com.foo.Foo",
           "package com.foo;",
@@ -943,6 +954,9 @@ public class CompilerTest extends ArgProcessorTestBase {
     assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.7b3"));
   }
 
+  /**
+   * Verify that a compile with a @JsType at least compiles successfully.
+   */
   public void testGwtCreateJsTypeRebindResult() throws Exception {
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
     compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
@@ -1013,6 +1027,310 @@ public class CompilerTest extends ArgProcessorTestBase {
         JjsUtils.classLiteralFieldNameFromJavahTypeSignatureName(
             JjsUtils.javahSignatureFromName(someInterface.getTypeName())));
     assertTrue(js.contains("var " + classliteralHolderVarName + " = "));
+  }
+
+  /**
+   * Tests that changing @JsNamespace name on an exported method comes out accurately.
+   *
+   * <p>An unrelated and non-updated @JsType is also included in each compile to verify that updated
+   * exports do not forget non-edited items in a recompile.
+   */
+  public void testChangeJsNamespaceOnMethod() throws Exception {
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    compilerOptions.setUseDetailedTypeIds(true);
+    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
+
+    MockJavaResource jsNamespaceFooResource =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.Foo",
+            "package com.foo;",
+            "import com.google.gwt.core.client.js.JsExport;",
+            "import com.google.gwt.core.client.js.JsNamespace;",
+            "import com.google.gwt.core.client.js.JsType;",
+            "@JsExport public class Foo {",
+            "  @JsNamespace(\"spazz\") public static void doStaticBar() {}",
+            "}");
+
+    MockJavaResource regularFooResource =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.Foo",
+            "package com.foo;",
+            "import com.google.gwt.core.client.js.JsExport;",
+            "import com.google.gwt.core.client.js.JsType;",
+            "@JsExport public class Foo {",
+            "  public static void doStaticBar() {}",
+            "}");
+
+    checkRecompiledModifiedApp(
+        compilerOptions,
+        "com.foo.SimpleModule",
+        Lists.newArrayList(simpleModuleResource, emptyEntryPointResource, jsTypeBarResource),
+        regularFooResource,
+        jsNamespaceFooResource,
+        stringSet("com.foo.Bar", "com.foo.Foo"),
+        JsOutputOption.DETAILED);
+  }
+
+  /**
+   * Tests that changing @JsNamespace name on a class comes out accurately.
+   *
+   * <p>An unrelated and non-updated @JsType is also included in each compile to verify that updated
+   * exports do not forget non-edited items in a recompile.
+   */
+  public void testChangeJsNamespaceOnClass() throws Exception {
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    compilerOptions.setUseDetailedTypeIds(true);
+    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
+
+    MockJavaResource jsNamespaceFooResource =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.Foo",
+            "package com.foo;",
+            "import com.google.gwt.core.client.js.JsExport;",
+            "import com.google.gwt.core.client.js.JsNamespace;",
+            "import com.google.gwt.core.client.js.JsType;",
+            "@JsNamespace(\"spazz\") @JsExport public class Foo {",
+            "  public static void doStaticBar() {}",
+            "}");
+
+    MockJavaResource regularFooResource =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.Foo",
+            "package com.foo;",
+            "import com.google.gwt.core.client.js.JsExport;",
+            "import com.google.gwt.core.client.js.JsType;",
+            "@JsExport public class Foo {",
+            "  public static void doStaticBar() {}",
+            "}");
+
+    checkRecompiledModifiedApp(
+        compilerOptions,
+        "com.foo.SimpleModule",
+        Lists.newArrayList(simpleModuleResource, emptyEntryPointResource, jsTypeBarResource),
+        regularFooResource,
+        jsNamespaceFooResource,
+        stringSet("com.foo.Bar", "com.foo.Foo"),
+        JsOutputOption.DETAILED);
+  }
+
+  /**
+   * Tests that changing @JsFunction name on an interface comes out accurately.
+   *
+   * <p>An unrelated and non-updated @JsType is also included in each compile to verify that updated
+   * exports do not forget non-edited items in a recompile.
+   */
+  public void testChangeJsFunction() throws Exception {
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    compilerOptions.setUseDetailedTypeIds(true);
+    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
+
+    MockJavaResource jsFunctionIFooResource =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.IFoo",
+            "package com.foo;",
+            "import com.google.gwt.core.client.js.JsFunction;",
+            "@JsFunction public interface IFoo {",
+            "  int foo(int x);",
+            "}");
+
+    MockJavaResource regularIFooResource =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.IFoo",
+            "package com.foo;",
+            "public interface IFoo {",
+            "  int foo(int x);",
+            "}");
+
+    MockJavaResource fooResource =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.Foo",
+            "package com.foo;",
+            "import com.google.gwt.core.client.js.JsExport;",
+            "@JsExport public class Foo implements IFoo {",
+            "  @Override public int foo(int x) { return 0; }",
+            "}");
+
+    checkRecompiledModifiedApp(
+        compilerOptions,
+        "com.foo.SimpleModule",
+        Lists.newArrayList(
+            simpleModuleResource, emptyEntryPointResource, fooResource, jsTypeBarResource),
+        regularIFooResource,
+        jsFunctionIFooResource,
+        stringSet("com.foo.Bar", "com.foo.Foo", "com.foo.IFoo"),
+        JsOutputOption.DETAILED);
+  }
+
+  /**
+   * Tests that toggling JsProperty methods in an interface comes out accurately.
+   *
+   * <p>An unrelated and non-updated @JsType is also included in each compile to verify that updated
+   * exports do not forget non-edited items in a recompile.
+   */
+  public void testChangeJsProperty() throws Exception {
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    compilerOptions.setUseDetailedTypeIds(true);
+    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
+
+    MockJavaResource jsPropertyIFooResource =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.IFoo",
+            "package com.foo;",
+            "import com.google.gwt.core.client.js.JsProperty;",
+            "import com.google.gwt.core.client.js.JsType;",
+            "@JsType public interface IFoo {",
+            "  @JsProperty int getX();",
+            "  @JsProperty int getY();",
+            "}");
+
+    MockJavaResource regularIFooResource =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.IFoo",
+            "package com.foo;",
+            "import com.google.gwt.core.client.js.JsType;",
+            "@JsType public interface IFoo {",
+            "  int getX();",
+            "  int getY();",
+            "}");
+
+    MockJavaResource fooResource =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.Foo",
+            "package com.foo;",
+            "import com.google.gwt.core.client.js.JsExport;",
+            "@JsExport public class Foo implements IFoo {",
+            "  @Override public int getX() { return 0; }",
+            "  @Override public int getY() { return 0; }",
+            "}");
+
+    checkRecompiledModifiedApp(
+        compilerOptions,
+        "com.foo.SimpleModule",
+        Lists.newArrayList(
+            simpleModuleResource, emptyEntryPointResource, fooResource, jsTypeBarResource),
+        regularIFooResource,
+        jsPropertyIFooResource,
+        stringSet("com.foo.Bar", "com.foo.Foo", "com.foo.IFoo"),
+        JsOutputOption.DETAILED);
+  }
+
+  /**
+   * Tests that adding a @JsType annotation on a class comes out accurately and that removing it
+   * comes out accurately as well.
+   *
+   * <p>An unrelated and non-updated @JsType is also included in each compile to verify that updated
+   * exports do not forget non-edited items in a recompile.
+   */
+  public void testChangeJsType() throws Exception {
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    compilerOptions.setUseDetailedTypeIds(true);
+    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
+
+    MockJavaResource jsTypeFooResource =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.Foo",
+            "package com.foo;",
+            "import com.google.gwt.core.client.js.JsExport;",
+            "import com.google.gwt.core.client.js.JsType;",
+            "@JsType @JsExport public class Foo {",
+            "  void doInstanceBar() {}",
+            "  public static void doStaticBar() {}",
+            "}");
+
+    MockJavaResource regularFooResource =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.Foo", "package com.foo;", "public class Foo {}");
+
+    checkRecompiledModifiedApp(
+        compilerOptions,
+        "com.foo.SimpleModule",
+        Lists.newArrayList(simpleModuleResource, emptyEntryPointResource, jsTypeBarResource),
+        regularFooResource,
+        jsTypeFooResource,
+        stringSet("com.foo.Bar", "com.foo.Foo"),
+        JsOutputOption.DETAILED);
+  }
+
+  /**
+   * Tests that changing a prototype on a @JsType annotated class comes out accurately.
+   *
+   * <p>An unrelated and non-updated @JsType is also included in each compile to verify that updated
+   * exports do not forget non-edited items in a recompile.
+   */
+  public void testChangeJsTypePrototype() throws Exception {
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    compilerOptions.setUseDetailedTypeIds(true);
+    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
+
+    MockJavaResource prototypeFooResource =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.Foo",
+            "package com.foo;",
+            "import com.google.gwt.core.client.js.JsExport;",
+            "import com.google.gwt.core.client.js.JsType;",
+            "@JsType(prototype = \"window.Date\") @JsExport public class Foo {",
+            "  public static void doStaticBar() {}",
+            "}");
+
+    MockJavaResource regularFooResource =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.Foo",
+            "package com.foo;",
+            "import com.google.gwt.core.client.js.JsExport;",
+            "import com.google.gwt.core.client.js.JsType;",
+            "@JsType @JsExport public class Foo {",
+            "  public static void doStaticBar() {}",
+            "}");
+
+    checkRecompiledModifiedApp(
+        compilerOptions,
+        "com.foo.SimpleModule",
+        Lists.newArrayList(simpleModuleResource, emptyEntryPointResource, jsTypeBarResource),
+        regularFooResource,
+        prototypeFooResource,
+        stringSet("com.foo.Bar", "com.foo.Foo"),
+        JsOutputOption.DETAILED);
+  }
+
+  /**
+   * Tests that adding a @JsNoExport annotation on a method comes out accurately and that removing
+   * it comes out accurately as well.
+   *
+   * <p>An unrelated and non-updated @JsType is also included in each compile to verify that updated
+   * exports do not forget non-edited items in a recompile.
+   */
+  public void testChangeJsNoExport() throws Exception {
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    compilerOptions.setUseDetailedTypeIds(true);
+    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
+
+    MockJavaResource jsNoExportFooResource =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.Foo",
+            "package com.foo;",
+            "import com.google.gwt.core.client.js.JsExport;",
+            "import com.google.gwt.core.client.js.JsNoExport;",
+            "@JsExport public class Foo {",
+            "  @JsNoExport public static void doStaticBar() {}",
+            "}");
+
+    MockJavaResource regularFooResource =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.Foo",
+            "package com.foo;",
+            "import com.google.gwt.core.client.js.JsExport;",
+            "@JsExport public class Foo {",
+            "  public static void doStaticBar() {}",
+            "}");
+
+    checkRecompiledModifiedApp(
+        compilerOptions,
+        "com.foo.SimpleModule",
+        Lists.newArrayList(simpleModuleResource, emptyEntryPointResource, jsTypeBarResource),
+        regularFooResource,
+        jsNoExportFooResource,
+        stringSet("com.foo.Bar", "com.foo.Foo"),
+        JsOutputOption.DETAILED);
   }
 
   public void testJsInteropNameCollision() throws Exception {
@@ -1928,18 +2246,39 @@ public class CompilerTest extends ArgProcessorTestBase {
     }
   }
 
-  private void checkRecompiledModifiedApp(String moduleName, List<MockResource> sharedResources,
-      MockResource originalResource, MockResource modifiedResource,
-      Set<String> expectedStaleTypeNamesOnModify, JsOutputOption output) throws IOException,
-      UnableToCompleteException, InterruptedException {
+  /**
+   * Compiles an initial application with version 1 of file Foo, then recompiles using version 2 of
+   * file Foo. Lastly it performs a final from scratch compile using version 2 of file Foo and
+   * verifies that the recompile and the full compile (both of which used version 2 of file Foo)
+   * come out the same.
+   */
+  private void checkRecompiledModifiedApp(
+      String moduleName,
+      List<MockResource> sharedResources,
+      MockResource originalResource,
+      MockResource modifiedResource,
+      Set<String> expectedStaleTypeNamesOnModify,
+      JsOutputOption output)
+      throws IOException, UnableToCompleteException, InterruptedException {
     checkRecompiledModifiedApp(new CompilerOptionsImpl(), moduleName, sharedResources,
         originalResource, modifiedResource, expectedStaleTypeNamesOnModify, output);
   }
 
-  private void checkRecompiledModifiedApp(CompilerOptions compilerOptions, String moduleName,
-      List<MockResource> sharedResources, MockResource originalResource,
-      MockResource modifiedResource, Set<String> expectedStaleTypeNamesOnModify,
-      JsOutputOption output) throws IOException, UnableToCompleteException, InterruptedException {
+  /**
+   * Compiles an initial application with version 1 of file Foo, then recompiles using version 2 of
+   * file Foo. Lastly it performs a final from scratch compile using version 2 of file Foo and
+   * verifies that the recompile and the full compile (both of which used version 2 of file Foo)
+   * come out the same.
+   */
+  private void checkRecompiledModifiedApp(
+      CompilerOptions compilerOptions,
+      String moduleName,
+      List<MockResource> sharedResources,
+      MockResource originalResource,
+      MockResource modifiedResource,
+      Set<String> expectedStaleTypeNamesOnModify,
+      JsOutputOption output)
+      throws IOException, UnableToCompleteException, InterruptedException {
     List<MockResource> originalResources = Lists.newArrayList(sharedResources);
     originalResources.add(originalResource);
 
