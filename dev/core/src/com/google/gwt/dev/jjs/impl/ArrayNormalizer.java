@@ -17,7 +17,6 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
-import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
@@ -82,18 +81,12 @@ public class ArrayNormalizer {
       if (x.initializers != null) {
         processInitializers(x, ctx, type);
       } else {
-        int realDims = 0;
-        for (JExpression dim : x.dims) {
-          if (dim instanceof JAbsentArrayDimension) {
-            break;
-          }
-          ++realDims;
-        }
+        int realDims = x.dims.size();
         assert (realDims >= 1);
         if (realDims == 1) {
           processDim(x, ctx, type);
         } else {
-          processDims(x, ctx, type, realDims);
+          processDims(x, ctx, type);
         }
       }
     }
@@ -146,7 +139,7 @@ public class ArrayNormalizer {
       ctx.replaceMe(call);
     }
 
-    private void processDims(JNewArray x, Context ctx, JArrayType arrayType, int dims) {
+    private void processDims(JNewArray x, Context ctx, JArrayType arrayType) {
       // override the type of the called method with the array's type
       SourceInfo sourceInfo = x.getSourceInfo();
       JMethodCall call = new JMethodCall(sourceInfo, null, initDims, arrayType);
@@ -155,7 +148,7 @@ public class ArrayNormalizer {
       JsonArray dimList = new JsonArray(sourceInfo, program.getJavaScriptObject());
       JType currentElementType = arrayType;
       JLiteral classLit = x.getLeafTypeClassLiteral();
-      for (int i = 0; i < dims; ++i) {
+      for (int i = 0; i < x.dims.size(); ++i) {
         // Walk down each type from most dims to least.
         JArrayType curArrayType = (JArrayType) currentElementType;
 
@@ -172,7 +165,7 @@ public class ArrayNormalizer {
       JType leafElementType = currentElementType;
       JIntLiteral leafElementTypeCategory = getTypeCategoryLiteral(leafElementType);
       call.addArgs(classLit, castableTypeMaps, elementTypeReferences, leafElementTypeCategory,
-          dimList, program.getLiteralInt(dims));
+          dimList, program.getLiteralInt(x.dims.size()));
       ctx.replaceMe(call);
     }
 

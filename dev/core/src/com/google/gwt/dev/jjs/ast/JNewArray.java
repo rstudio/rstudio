@@ -24,22 +24,16 @@ import java.util.List;
  */
 public class JNewArray extends JExpression {
 
-  public static JNewArray createDims(SourceInfo info, JArrayType arrayType, List<JExpression> dims) {
-    // Produce all class literals that will eventually get generated.
-    int realDims = 0;
-    for (JExpression dim : dims) {
-      if (dim instanceof JAbsentArrayDimension) {
-        break;
-      }
-      ++realDims;
-    }
-
+  public static JNewArray createDims(
+      SourceInfo info, JArrayType arrayType, List<JExpression> dims) {
+    assert dims != null;
     return new JNewArray(info, arrayType, dims, null,
         new JClassLiteral(info.makeChild(), arrayType.getLeafType()));
   }
 
   public static JNewArray createInitializers(SourceInfo info, JArrayType arrayType,
       List<JExpression> initializers) {
+    assert initializers != null;
     return new JNewArray(info, arrayType, null, initializers,
         new JClassLiteral(info.makeChild(), arrayType.getLeafType()));
   }

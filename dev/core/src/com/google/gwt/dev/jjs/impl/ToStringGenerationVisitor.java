@@ -21,7 +21,6 @@ import com.google.gwt.dev.jjs.ast.CanBeStatic;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.HasType;
-import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
 import com.google.gwt.dev.jjs.ast.JArrayLength;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JArrayType;
@@ -150,12 +149,6 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
 
   public ToStringGenerationVisitor(TextOutput textOutput) {
     super(textOutput);
-  }
-
-  @Override
-  public boolean visit(JAbsentArrayDimension x, Context ctx) {
-    // nothing to print, parent prints []
-    return false;
   }
 
   @Override
@@ -687,19 +680,21 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   @Override
   public boolean visit(JNewArray x, Context ctx) {
     print(CHARS_NEW);
-    printTypeName(x.getArrayType());
+    printTypeName(x.getArrayType().getLeafType());
+    for (int i = 0; i < x.getArrayType().getDims(); ++i) {
+      print('[');
+      if (x.dims != null && x.dims.size() > i) {
+        accept(x.dims.get(i));
+      }
+      print(']');
+    }
     if (x.initializers != null) {
       print(" {");
       visitCollectionWithCommas(x.initializers.iterator());
       print('}');
-    } else {
-      for (int i = 0; i < x.dims.size(); ++i) {
-        JExpression expr = x.dims.get(i);
-        print('[');
-        accept(expr);
-        print(']');
-      }
+      return false;
     }
+
     return false;
   }
 

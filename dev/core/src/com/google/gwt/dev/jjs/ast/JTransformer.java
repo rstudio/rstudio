@@ -35,10 +35,6 @@ import java.util.List;
 @SuppressWarnings("unused")
 public class JTransformer<T> {
 
-  public T transformAbsentArrayDimension(JAbsentArrayDimension x) {
-    return transformLiteral(x);
-  }
-
   public T transformAbstractMethodBody(JAbstractMethodBody x) {
     return missing(x);
   }
@@ -354,9 +350,6 @@ public class JTransformer<T> {
       throw new UnsupportedOperationException();
     }
 
-    public final void endVisit(JAbsentArrayDimension x, Context ctx) {
-    }
-
     public final void endVisit(JAbstractMethodBody x, Context ctx) {
     }
 
@@ -586,12 +579,6 @@ public class JTransformer<T> {
     }
 
     public final void endVisit(JWhileStatement x, Context ctx) {
-    }
-
-    public final boolean visit(JAbsentArrayDimension x, Context ctx) {
-      assert result == null;
-      result = transformAbsentArrayDimension(x);
-      return false;
     }
 
     public final boolean visit(JAbstractMethodBody x, Context ctx) {

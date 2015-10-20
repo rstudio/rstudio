@@ -177,10 +177,6 @@ public class JVisitor {
     throw new UnsupportedOperationException();
   }
 
-  public void endVisit(JAbsentArrayDimension x, Context ctx) {
-    endVisit((JLiteral) x, ctx);
-  }
-
   public void endVisit(JAbstractMethodBody x, Context ctx) {
     endVisit((JNode) x, ctx);
   }
@@ -495,10 +491,6 @@ public class JVisitor {
 
   public void endVisit(JWhileStatement x, Context ctx) {
     endVisit((JStatement) x, ctx);
-  }
-
-  public boolean visit(JAbsentArrayDimension x, Context ctx) {
-    return visit((JLiteral) x, ctx);
   }
 
   public boolean visit(JAbstractMethodBody x, Context ctx) {
