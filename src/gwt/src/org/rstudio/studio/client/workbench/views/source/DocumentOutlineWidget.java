@@ -423,6 +423,9 @@ public class DocumentOutlineWidget extends Composite
    
    private void buildScopeTreeImpl(Scope node, int depth, Counter counter)
    {
+      if (node == null)
+         return;
+      
       if (shouldDisplayNode(node))
          addOrSetItem(node, depth, counter.increment());
       
