@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import org.rstudio.core.client.Counter;
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -382,7 +383,7 @@ public class DocumentOutlineWidget extends Composite
    
    private void rebuildScopeTree()
    {
-      scopeTree_ = target_.getDocDisplay().getScopeTree();
+      scopeTree_ = JsArrayUtil.copy(target_.getDocDisplay().getScopeTree());
       
       if (scopeTree_.length() == 0)
       {
