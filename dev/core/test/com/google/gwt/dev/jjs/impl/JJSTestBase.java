@@ -357,7 +357,7 @@ public abstract class JJSTestBase extends CheckerTestCase {
 
     compilerContext.getOptions().setSourceLevel(sourceLevel);
     compilerContext.getOptions().setStrict(true);
-    compilerContext.getOptions().setJsInteropMode(OptionJsInteropMode.Mode.JS);
+    compilerContext.getOptions().setJsInteropMode(OptionJsInteropMode.Mode.JS_RC);
     return compilerContext;
   }
 

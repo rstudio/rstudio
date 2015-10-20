@@ -31,8 +31,6 @@ import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
-import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
-import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodScope;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
@@ -58,13 +56,6 @@ import java.util.Map;
  */
 public class JSORestrictionsChecker {
 
-  public static final String ERR_JSEXPORT_ONLY_CTORS_STATIC_METHODS_AND_STATIC_FINAL_FIELDS =
-      "@JsExport may only be applied to public constructors and static methods and public "
-      + "static final fields in public classes.";
-  public static final String ERR_EITHER_JSEXPORT_JSNOEXPORT =
-      "@JsExport and @JsNoExport is not allowed at the same time.";
-  public static final String ERR_JSEXPORT_ON_ENUMERATION =
-      "@JsExport is not allowed on individual enumerations";
   public static final String ERR_CONSTRUCTOR_WITH_PARAMETERS =
       "Constructors must not have parameters in subclasses of JavaScriptObject";
   public static final String ERR_INSTANCE_FIELD =
@@ -160,8 +151,6 @@ public class JSORestrictionsChecker {
 
     @Override
     public void endVisit(FieldDeclaration field, MethodScope scope) {
-      checkJsExport(field);
-
       if (!isJso()) {
         return;
       }
@@ -172,8 +161,6 @@ public class JSORestrictionsChecker {
 
     @Override
     public void endVisit(MethodDeclaration meth, ClassScope scope) {
-      checkJsExport(meth.binding);
-
       if (!isJso()) {
         return;
       }
@@ -228,7 +215,7 @@ public class JSORestrictionsChecker {
 
     private void checkJsFunction(TypeDeclaration type, TypeBinding typeBinding) {
       ReferenceBinding binding = (ReferenceBinding) typeBinding;
-      if (JdtUtil.getAnnotation(binding, JsInteropUtil.JSFUNCTION_CLASS) == null) {
+      if (JdtUtil.getAnnotation(binding, "jsinterop.annotations.JsFunction") == null) {
         return;
       }
       if (!binding.isFunctionalInterface(type.scope)) {
@@ -239,38 +226,6 @@ public class JSORestrictionsChecker {
       if (binding.methods().length > 1) {
         errorOn(type, ERR_JS_FUNCTION_CANNOT_HAVE_DEFAULT_METHODS);
       }
-    }
-
-    private void checkJsExport(MethodBinding mb) {
-      if (JdtUtil.getAnnotation(mb, JsInteropUtil.JSEXPORT_CLASS) != null) {
-        boolean isStatic = mb.isConstructor() || mb.isStatic();
-        if (!areAllEnclosingClassesPublic() || !isStatic || !mb.isPublic()) {
-          errorOn(mb, ERR_JSEXPORT_ONLY_CTORS_STATIC_METHODS_AND_STATIC_FINAL_FIELDS);
-        }
-        if (JdtUtil.getAnnotation(mb, JsInteropUtil.JSNOEXPORT_CLASS) != null) {
-          errorOn(mb, ERR_EITHER_JSEXPORT_JSNOEXPORT);
-        }
-      }
-    }
-
-    private void checkJsExport(FieldDeclaration fd) {
-      FieldBinding fb = fd.binding;
-      if (JdtUtil.getAnnotation(fb, JsInteropUtil.JSEXPORT_CLASS) != null) {
-        if (isEnumConstant(fd)) {
-          errorOn(fb, ERR_JSEXPORT_ON_ENUMERATION);
-        }
-        if (!areAllEnclosingClassesPublic() || !fb.isStatic() || !fb.isFinal() || !fb.isPublic()) {
-          errorOn(fb, ERR_JSEXPORT_ONLY_CTORS_STATIC_METHODS_AND_STATIC_FINAL_FIELDS);
-        }
-        if (JdtUtil.getAnnotation(fb, JsInteropUtil.JSNOEXPORT_CLASS) != null) {
-          errorOn(fb, ERR_EITHER_JSEXPORT_JSNOEXPORT);
-        }
-      }
-    }
-
-    private boolean isEnumConstant(FieldDeclaration fd) {
-      return (fd.initialization != null && fd.initialization instanceof AllocationExpression
-          && ((AllocationExpression) fd.initialization).enumConstant != null);
     }
 
     private ClassState checkType(TypeDeclaration type) {
@@ -304,15 +259,6 @@ public class JSORestrictionsChecker {
       }
 
       return ClassState.JSO;
-    }
-
-    private boolean areAllEnclosingClassesPublic() {
-      for (SourceTypeBinding typeBinding : typeBindingStack) {
-        if (!typeBinding.isPublic()) {
-          return false;
-        }
-      }
-      return true;
     }
 
     private boolean isJso() {
@@ -397,21 +343,6 @@ public class JSORestrictionsChecker {
   }
 
   private void errorOn(ASTNode node, String error) {
-    errorOn(node, cud, error);
-  }
-
-  private void errorOn(MethodBinding mb, String error) {
-    ASTNode node = JdtUtil.safeSourceMethod(mb);
-    if (node == null) {
-      node = cud;
-      // Workaround for bad JDT bug
-      error = "Error in " + mb.toString() + ": " + error;
-    }
-    errorOn(node, cud, error);
-  }
-
-  private void errorOn(FieldBinding fb, String error) {
-    ASTNode node = fb.sourceField();
     errorOn(node, cud, error);
   }
 }

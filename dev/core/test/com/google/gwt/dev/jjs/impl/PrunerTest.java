@@ -74,14 +74,11 @@ public class PrunerTest extends OptimizerTestBase {
         "}-*/;");
     addSnippetClassDecl("static void methodWithUninstantiatedParam(UninstantiatedClass c) { }");
     addSnippetClassDecl("interface UnusedInterface { void foo(); }");
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsExport");
     addSnippetClassDecl("interface Callback { void go(); }");
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsExport");
-
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsConstructor");
     addSnippetClassDecl("@JsType interface Js { void doIt(Callback cb); }");
-    addSnippetClassDecl("@JsType(prototype=\"Foo\") static class JsProto { ",
+    addSnippetClassDecl("@JsType(isNative=true) static class JsProto { ",
         "public JsProto(int arg) {}",
         "}");
     addSnippetClassDecl("static class JsProtoImpl extends JsProto {",
@@ -89,7 +86,7 @@ public class PrunerTest extends OptimizerTestBase {
         "}");
 
     addSnippetClassDecl("static class JsProtoImpl2 extends JsProto {",
-        "@JsExport(\"foo\") public JsProtoImpl2() { super(10); }",
+        "@JsConstructor public JsProtoImpl2() { super(10); }",
         "}");
 
     addSnippetClassDecl("static class JsProtoImpl3 extends JsProto {",
@@ -189,10 +186,10 @@ public class PrunerTest extends OptimizerTestBase {
             "}",
         findMethod(result.findClass("EntryPoint$JsProtoImpl"), "EntryPoint$JsProtoImpl").toSource());
 
-    // Not exported, and not instantiated, so should be pruned
+    // Not JsType'd, and not instantiated, so should be pruned
     assertNull(result.findClass("EntryPoint$JsProtoImpl3"));
 
-    // Should be rescued because of @JsExport
+    // Should be rescued because of @JsType
     assertNotNull(result.findClass("EntryPoint$JsProtoImpl2"));
   }
 
@@ -293,7 +290,7 @@ public class PrunerTest extends OptimizerTestBase {
   }
 
   public void testJsFunction_notPruneUnusedJsFunction() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsFunction");
+    addSnippetImport("jsinterop.annotations.JsFunction");
     addSnippetClassDecl(
         "@JsFunction interface MyJsFunctionInterface {",
         "int foo (int a);",
@@ -329,7 +326,7 @@ public class PrunerTest extends OptimizerTestBase {
   }
 
   public void testJsFunction_unrelatedjsFunctionCast() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsFunction");
+    addSnippetImport("jsinterop.annotations.JsFunction");
     addSnippetClassDecl(
         "@JsFunction interface MyJsFunctionInterface {",
         "int foo (int a);",

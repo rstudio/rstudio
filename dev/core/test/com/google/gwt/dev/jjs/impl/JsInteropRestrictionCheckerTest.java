@@ -29,7 +29,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
   // TODO: eventually test this for default methods in Java 8.
   public void testCollidingAccidentalOverrideConcreteMethodFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "@JsType",
         "public static interface Foo {",
@@ -47,12 +47,12 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
-        "Method 'test.EntryPoint$Buggy.doIt(Ltest/EntryPoint$Bar;)V' can't be exported in type "
-        + "'test.EntryPoint$Buggy' because the member name 'doIt' is already taken.");
+        "'test.EntryPoint$Buggy.doIt(Ltest/EntryPoint$Bar;)V' can't be exported in type "
+        + "'test.EntryPoint$Buggy' because the name 'doIt' is already taken.");
   }
 
   public void testCollidingAccidentalOverrideAbstractMethodFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "@JsType",
         "public static interface Foo {",
@@ -69,12 +69,12 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "public static class Buggy {}  // Unrelated class");
 
     assertBuggyFails(
-        "Method 'test.EntryPoint$Baz.doIt(Ltest/EntryPoint$Bar;)V' can't be exported in type "
-            + "'test.EntryPoint$Baz' because the member name 'doIt' is already taken.");
+        "'test.EntryPoint$Baz.doIt(Ltest/EntryPoint$Bar;)V' can't be exported in type "
+        + "'test.EntryPoint$Baz' because the name 'doIt' is already taken.");
   }
 
   public void testCollidingAccidentalOverrideHalfAndHalfFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "public static interface Foo {",
         "  void doIt(Foo foo);",
@@ -93,28 +93,28 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "public static class Buggy extends Parent implements Bar {}");
 
     assertBuggyFails(
-        "Method 'test.EntryPoint$Parent.doIt(Ltest/EntryPoint$Foo;)V' can't be exported in type "
-            + "'test.EntryPoint$Buggy' because the member name 'doIt' is already taken.");
+        "'test.EntryPoint$Parent.doIt(Ltest/EntryPoint$Foo;)V' can't be exported in type "
+        + "'test.EntryPoint$Buggy' because the name 'doIt' is already taken.");
   }
 
   public void testCollidingFieldExportsFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsExport");
+    addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetClassDecl(
         "public static class Buggy {",
-        "  @JsExport(\"show\")",
+        "  @JsProperty",
         "  public static final int show = 0;",
-        "  @JsExport(\"show\")",
+        "  @JsProperty(name = \"show\")",
         "  public static final int display = 0;",
         "}");
 
     assertBuggyFails(
-        "Member 'test.EntryPoint$Buggy.display' can't be exported because the "
-            + "global name 'test.EntryPoint.Buggy.show' is already taken.");
+        "'test.EntryPoint$Buggy.display' can't be exported because the "
+        + "global name 'test.EntryPoint.Buggy.show' is already taken.");
   }
 
   public void testJsPropertyGetterStyleSucceeds() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsProperty");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetClassDecl(
         "@JsType",
         "public interface Buggy {",
@@ -128,8 +128,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testJsPropertyIncorrectGetterStyleFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsProperty");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetClassDecl(
         "@JsType",
         "public interface Buggy {",
@@ -157,8 +157,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testJsPropertyNonGetterStyleFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsProperty");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetClassDecl(
         "@JsType",
         "public interface Buggy {",
@@ -174,8 +174,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testCollidingJsPropertiesTwoGettersFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsProperty");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetClassDecl(
         "@JsType",
         "public static interface IBuggy {",
@@ -195,8 +195,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testCollidingJsPropertiesTwoSettersFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsProperty");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetClassDecl(
         "@JsType",
         "public static interface IBuggy {",
@@ -217,8 +217,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
   // TODO: duplicate this check with two @JsType interfaces.
   public void testCollidingJsTypeAndJsPropertyGetterFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsProperty");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetClassDecl(
         "@JsType",
         "public static interface IBuggy {",
@@ -232,17 +232,15 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
-        "The JsType member 'test.EntryPoint$IBuggy.x(Z)Z' and JsProperty "
-            + "'test.EntryPoint$IBuggy.getX()I' can't both be named 'x' in "
-            + "type 'test.EntryPoint$IBuggy'.",
-        "The JsType member 'test.EntryPoint$Buggy.x(Z)Z' and JsProperty "
-            + "'test.EntryPoint$Buggy.getX()I' can't both be named 'x' in "
-            + "type 'test.EntryPoint$Buggy'.");
+        "'test.EntryPoint$IBuggy.x(Z)Z' and 'test.EntryPoint$IBuggy.getX()I' "
+        + "can't both be named 'x' in type 'test.EntryPoint$IBuggy'.",
+        "'test.EntryPoint$Buggy.x(Z)Z' and 'test.EntryPoint$Buggy.getX()I' "
+        + "can't both be named 'x' in type 'test.EntryPoint$Buggy'.");
   }
 
   public void testCollidingJsTypeAndJsPropertySetterFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsProperty");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetClassDecl(
         "@JsType",
         "public static interface IBuggy {",
@@ -256,46 +254,45 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
-        "The JsType member 'test.EntryPoint$IBuggy.x(Z)Z' and JsProperty "
-            + "'test.EntryPoint$IBuggy.setX(I)V' can't both be named 'x' in "
-            + "type 'test.EntryPoint$IBuggy'.",
-        "The JsType member 'test.EntryPoint$Buggy.x(Z)Z' and JsProperty "
-            + "'test.EntryPoint$Buggy.setX(I)V' can't both be named 'x' in "
-            + "type 'test.EntryPoint$Buggy'.");
+        "'test.EntryPoint$IBuggy.x(Z)Z' and 'test.EntryPoint$IBuggy.setX(I)V' "
+        + "can't both be named 'x' in type 'test.EntryPoint$IBuggy'.",
+        "'test.EntryPoint$Buggy.x(Z)Z' and 'test.EntryPoint$Buggy.setX(I)V' "
+        + "can't both be named 'x' in type 'test.EntryPoint$Buggy'.");
   }
 
   public void testCollidingMethodExportsFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsExport");
+    addSnippetImport("jsinterop.annotations.JsMethod");
     addSnippetClassDecl(
         "public static class Buggy {",
-        "  @JsExport(\"show\")",
+        "  @JsMethod",
         "  public static void show() {}",
-        "  @JsExport(\"show\")",
+        "  @JsMethod(name = \"show\")",
         "  public static void display() {}",
         "}");
 
     assertBuggyFails(
-        "Member 'test.EntryPoint$Buggy.display()V' can't be exported "
+        "'test.EntryPoint$Buggy.display()V' can't be exported "
             + "because the global name 'test.EntryPoint.Buggy.show' is already taken.");
   }
 
   public void testCollidingMethodToFieldExportsFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsExport");
+    addSnippetImport("jsinterop.annotations.JsMethod");
+    addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetClassDecl(
         "public static class Buggy {",
-        "  @JsExport(\"show\")",
+        "  @JsMethod",
         "  public static void show() {}",
-        "  @JsExport(\"show\")",
-        "  public static final int display = 0;",
+        "  @JsProperty",
+        "  public static final int show = 0;",
         "}");
 
     assertBuggyFails(
-        "Member 'test.EntryPoint$Buggy.show()V' can't be exported because the "
-            + "global name 'test.EntryPoint.Buggy.show' is already taken.");
+        "'test.EntryPoint$Buggy.show()V' can't be exported because the "
+        + "global name 'test.EntryPoint.Buggy.show' is already taken.");
   }
 
   public void testCollidingMethodToFieldJsTypeFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "@JsType",
         "public static class Buggy {",
@@ -304,12 +301,12 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
-        "Method 'test.EntryPoint$Buggy.show()V' can't be exported in type "
-            + "'test.EntryPoint$Buggy' because the member name 'show' is already taken.");
+        "'test.EntryPoint$Buggy.show()V' can't be exported in type "
+            + "'test.EntryPoint$Buggy' because the name 'show' is already taken.");
   }
 
   public void testCollidingMethodToMethodJsTypeFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "@JsType",
         "public static class Buggy {",
@@ -318,12 +315,12 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
-        "Method 'test.EntryPoint$Buggy.show()V' can't be exported in type "
-            + "'test.EntryPoint$Buggy' because the member name 'show' is already taken.");
+        "'test.EntryPoint$Buggy.show()V' can't be exported in type "
+            + "'test.EntryPoint$Buggy' because the name 'show' is already taken.");
   }
 
   public void testCollidingSubclassExportedFieldToFieldJsTypeSucceeds() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "@JsType",
         "public static class ParentBuggy {",
@@ -337,7 +334,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testCollidingSubclassExportedFieldToMethodJsTypeSucceeds() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "@JsType",
         "public static class ParentBuggy {",
@@ -351,7 +348,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testCollidingSubclassExportedMethodToMethodJsTypeSucceeds() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "@JsType",
         "public static class ParentBuggy {",
@@ -365,7 +362,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testCollidingSubclassFieldToExportedFieldJsTypeSucceeds() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "public static class ParentBuggy {",
         "  public int foo = 55;",
@@ -379,7 +376,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testCollidingSubclassFieldToExportedMethodJsTypeSucceeds() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "public static class ParentBuggy {",
         "  public int foo = 55;",
@@ -393,7 +390,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testCollidingSubclassFieldToFieldJsTypeFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "@JsType",
         "public static class ParentBuggy {",
@@ -405,12 +402,12 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
-        "Field 'test.EntryPoint$ParentBuggy.foo' can't be exported in type "
-            + "'test.EntryPoint$Buggy' because the member name 'foo' is already taken.");
+        "'test.EntryPoint$ParentBuggy.foo' can't be exported in type "
+            + "'test.EntryPoint$Buggy' because the name 'foo' is already taken.");
   }
 
   public void testCollidingSubclassFieldToMethodJsTypeFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "@JsType",
         "public static class ParentBuggy {",
@@ -422,12 +419,12 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
-        "Field 'test.EntryPoint$ParentBuggy.foo' can't be exported in type "
-            + "'test.EntryPoint$Buggy' because the member name 'foo' is already taken.");
+        "'test.EntryPoint$ParentBuggy.foo' can't be exported in type "
+            + "'test.EntryPoint$Buggy' because the name 'foo' is already taken.");
   }
 
   public void testCollidingSubclassMethodToExportedMethodJsTypeSucceeds() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "public static class ParentBuggy {",
         "  public void foo() {}",
@@ -441,7 +438,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testCollidingSubclassMethodToMethodInterfaceJsTypeFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "@JsType",
         "public interface IBuggy1 {",
@@ -459,12 +456,12 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
-        "Method 'test.EntryPoint$Buggy.show()V' can't be exported in type "
-            + "'test.EntryPoint$Buggy2' because the member name 'show' is already taken.");
+        "'test.EntryPoint$Buggy.show()V' can't be exported in type "
+            + "'test.EntryPoint$Buggy2' because the name 'show' is already taken.");
   }
 
   public void testCollidingSubclassMethodToMethodJsTypeFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "@JsType",
         "public static class ParentBuggy {",
@@ -476,12 +473,12 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
-        "Method 'test.EntryPoint$ParentBuggy.foo()V' can't be exported in type "
-            + "'test.EntryPoint$Buggy' because the member name 'foo' is already taken.");
+        "'test.EntryPoint$ParentBuggy.foo()V' can't be exported in type "
+            + "'test.EntryPoint$Buggy' because the name 'foo' is already taken.");
   }
 
   public void testCollidingSubclassMethodToMethodTwoLayerInterfaceJsTypeFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "@JsType",
         "public interface IParentBuggy1 {",
@@ -503,13 +500,13 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
-        "Method 'test.EntryPoint$Buggy.show()V' can't be exported in type "
-            + "'test.EntryPoint$Buggy2' because the member name 'show' is already taken.");
+        "'test.EntryPoint$Buggy.show()V' can't be exported in type "
+            + "'test.EntryPoint$Buggy2' because the name 'show' is already taken.");
   }
 
   public void testCollidingSyntheticBridgeMethodSucceeds() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsProperty");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetClassDecl(
         "public static interface Comparable<T> {",
         "  int compareTo(T other);",
@@ -524,7 +521,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testCollidingTwoLayerSubclassFieldToFieldJsTypeFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "@JsType",
         "public static class ParentParentBuggy {",
@@ -539,13 +536,13 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
-        "Field 'test.EntryPoint$ParentParentBuggy.foo' can't be exported in type "
-            + "'test.EntryPoint$Buggy' because the member name 'foo' is already taken.");
+        "'test.EntryPoint$ParentParentBuggy.foo' can't be exported in type "
+            + "'test.EntryPoint$Buggy' because the name 'foo' is already taken.");
   }
 
   public void testConsistentPropertyTypeSucceeds() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsProperty");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetClassDecl(
         "@JsType",
         "public static interface IBuggy {",
@@ -563,8 +560,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testInconsistentGetSetPropertyTypeFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsProperty");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetClassDecl(
         "@JsType",
         "public static interface IBuggy {",
@@ -586,8 +583,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testInconsistentIsSetPropertyTypeFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsProperty");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetClassDecl(
         "@JsType",
         "public static interface IBuggy {",
@@ -608,39 +605,10 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
             + "must have consistent types.");
   }
 
-  public void testJsPropertyInNonJsTypeFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsProperty");
-    addSnippetClassDecl(
-        "public static class Buggy {",
-        "  @JsProperty",
-        "  public int getX() {return 0;}",
-        "}");
-
-    assertBuggyFails("Method 'getX' can't be a JsProperty since 'test.EntryPoint$Buggy' "
-        + "is not an interface.");
-  }
-
-  public void testJsPropertyInTransitiveNonJsTypeFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsProperty");
-    addSnippetClassDecl(
-        "@JsType",
-        "public static interface ParentExported {",
-        "}",
-        "public static interface Exported extends ParentExported {",
-        "  @JsProperty",
-        "  public int getX();",
-        "}",
-        "public static class Buggy {} // Unrelated class");
-
-    assertBuggyFails("Method 'getX' can't be a JsProperty since interface "
-        + "'test.EntryPoint$Exported' is not a JsType.");
-  }
-
   public void testJsPropertySuperCallFails()
       throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsProperty");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetClassDecl(
         "@JsType public static class Super {",
         "  @JsProperty public int getX() { return 5; }",
@@ -656,8 +624,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
   public void testJsPropertyCallSucceeds()
       throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsProperty");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetClassDecl(
         "@JsType public static class Super {",
         "  @JsProperty public int getX() { return 5; }",
@@ -672,8 +640,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   // TODO(rluble): this test should succeed, fix after eliminating the accidental overrides.
   public void testJsPropertyAccidentalSuperCallFails()
       throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsProperty");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetClassDecl(
         "@JsType public static class Super {",
         "  @JsProperty public int getX() { return 5; }",
@@ -691,9 +659,9 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testMultiplePrivateConstructorsExportSucceeds() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsExport");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsExport",
+        "@JsType",
         "public static class Buggy {",
         "  private Buggy() {}",
         "  private Buggy(int a) {}",
@@ -702,15 +670,15 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     assertBuggySucceeds();
   }
 
-  public void testMultiplePublicConstructorsAllDelegatesToExportedConstructorSucceeds()
+  public void testMultiplePublicConstructorsAllDelegatesToJsConstructorSucceeds()
       throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsExport");
-    addSnippetImport("com.google.gwt.core.client.js.JsNoExport");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsIgnore");
     addSnippetClassDecl(
-        "@JsExport",
+        "@JsType",
         "public static class Buggy {",
         "  public Buggy() {}",
-        "  @JsNoExport",
+        "  @JsIgnore",
         "  public Buggy(int a) {",
         "    this();",
         "  }",
@@ -719,12 +687,11 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     assertBuggySucceeds();
   }
 
-  public void testMultipleConstructorsNotAllDelegatedToExportedConstructorFails()
+  public void testMultipleConstructorsNotAllDelegatedToJsConstructorFails()
       throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsExport");
-    addSnippetImport("com.google.gwt.core.client.js.JsNoExport");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsExport",
+        "@JsType",
         "public static class Buggy {",
         "  public Buggy() {}",
         "  private Buggy(int a) {",
@@ -733,29 +700,29 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
-        "Constructor 'test.EntryPoint$Buggy.EntryPoint$Buggy() <init>' can only be exported if all "
-            + "constructors in the class are delegating to it.");
+        "Constructor 'test.EntryPoint$Buggy.EntryPoint$Buggy() <init>' can be a JsConstructor only "
+            + "if all constructors in the class are delegating to it.");
   }
 
   public void testMultiplePublicConstructorsExportFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsExport");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsExport",
+        "@JsType",
         "public static class Buggy {",
         "  public Buggy() {}",
-        "  public Buggy(int a) {}",
+        "  public Buggy(int a) {",
+        "    this();",
+        "  }",
         "}");
 
     assertBuggyFails(
-        "More than one constructor exported for test.EntryPoint$Buggy.",
-        "Constructor 'test.EntryPoint$Buggy.EntryPoint$Buggy() <init>' can only be exported if all "
-            + "constructors in the class are delegating to it.",
-        "Member 'test.EntryPoint$Buggy.EntryPoint$Buggy(I) <init>' can't be "
-            + "exported because the global name 'test.EntryPoint.Buggy' is already taken.");
+        "More than one JsConstructor exists for test.EntryPoint$Buggy.",
+        "'test.EntryPoint$Buggy.EntryPoint$Buggy(I) <init>' can't be "
+        + "exported because the global name 'test.EntryPoint.Buggy' is already taken.");
   }
 
   public void testNonCollidingAccidentalOverrideSucceeds() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "public static interface Foo {",
         "  void doIt(Foo foo);",
@@ -776,43 +743,20 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     assertBuggySucceeds();
   }
 
-  public void testSingleConstructortExportWithNameFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsExport");
-    addSnippetClassDecl(
-        "public static class Buggy {",
-        "  @JsExport(\"Create\")",
-        "  public Buggy() {}",
-        "}");
-
-    assertBuggyFails(
-        "Constructor 'test.EntryPoint$Buggy.EntryPoint$Buggy() <init>' cannot have an export "
-            + "name.");
-  }
-
-  public void testSingleExportSucceeds() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsExport");
-    addSnippetClassDecl(
-        "public static class Buggy {",
-        "  @JsExport(\"show\")",
-        "  public static void show() {}",
-        "}");
-
-    assertBuggySucceeds();
-  }
-
   public void testSingleJsTypeSucceeds() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "@JsType",
         "public static class Buggy {",
-        "  public void show() {}",
+        "  public static void show1() {}",
+        "  public void show2() {}",
         "}");
 
     assertBuggySucceeds();
   }
 
   public void testJsFunctionWithNoExtendsSucceeds() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsFunction");
+    addSnippetImport("jsinterop.annotations.JsFunction");
     addSnippetClassDecl(
         "@JsFunction",
         "public interface Buggy {",
@@ -823,7 +767,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testJsFunctionExtendsInterfaceFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsFunction");
+    addSnippetImport("jsinterop.annotations.JsFunction");
     addSnippetClassDecl(
         "interface AnotherInterface {}",
         "@JsFunction",
@@ -844,8 +788,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testJsFunctionMarkedAsJsTypeFails() throws Exception {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsFunction");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsFunction");
     addSnippetClassDecl(
         "@JsFunction @JsType",
         "public interface Buggy {",
@@ -905,7 +849,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
   public void testJsFunctionImplementationMarkedAsJsTypeFails() throws Exception {
     addAll(jsFunctionInterface);
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "@JsType",
         "public static class Buggy implements MyJsFunctionInterface {",
@@ -918,8 +862,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testJsFunctionStaticInitializerFails() {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsFunction");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsFunction");
     addSnippetClassDecl(
         "public static String someString() { return \"hello\"; }",
         "@JsFunction public interface Buggy {",
@@ -932,9 +876,9 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testNativeJsTypeStaticInitializerFails() {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"x\") public static class Buggy {",
+        "@JsType(isNative=true) public static class Buggy {",
         "  public static String s = \"hello\";",
         "  static {  s += \"hello\"; }",
         "}");
@@ -944,9 +888,9 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testNativeJsTypeNonEmptyConstructorFails() {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"x\") public static class Buggy {",
+        "@JsType(isNative=true) public static class Buggy {",
         "  public Buggy(int n) {",
         "    n++;",
         "  }",
@@ -958,9 +902,9 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testNativeJsTypeInstanceInitializerFails() {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"x\") public static class Buggy {",
+        "@JsType(isNative=true) public static class Buggy {",
         "  public int x = 1;",
         "  public Buggy(int n) {",
         "  }",
@@ -972,13 +916,13 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testNativeJsTypeImplicitSuperSucceeds() throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"S\") public static class Super {",
+        "@JsType(isNative=true) public static class Super {",
         "  public Super() {",
         "  }",
         "}",
-        "@JsType(prototype = \"x\") public static class Buggy extends Super {",
+        "@JsType(isNative=true) public static class Buggy extends Super {",
         "  public Buggy(int n) {",
         "  }",
         "}");
@@ -987,13 +931,13 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testNativeJsTypeExplicitSuperSucceeds() throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"S\") public static class Super {",
+        "@JsType(isNative=true) public static class Super {",
         "  public Super(int x) {",
         "  }",
         "}",
-        "@JsType(prototype = \"x\") public static class Buggy extends Super {",
+        "@JsType(isNative=true) public static class Buggy extends Super {",
         "  public Buggy(int n) {",
         "    super(n);",
         "  }",
@@ -1003,13 +947,13 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testNativeJsTypeExplicitSuperWithEffectSucceeds() throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"S\") public static class Super {",
+        "@JsType(isNative=true) public static class Super {",
         "  public Super(int x) {",
         "  }",
         "}",
-        "@JsType(prototype = \"x\") public static class Buggy extends Super {",
+        "@JsType(isNative=true) public static class Buggy extends Super {",
         "  public Buggy(int n) {",
         "    super(n++);",
         "  }",
@@ -1019,9 +963,9 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testNativeJsTypeInlineStaticInitializerFails() {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"x\") public static class Buggy {",
+        "@JsType(isNative=true) public static class Buggy {",
         "  public static final String s = new String(\"hello\");",
         "}");
 
@@ -1030,9 +974,9 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testNativeJsTypeInterfaceInlineInitializerFails() {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"x\") public interface Buggy {",
+        "@JsType(isNative=true) public interface Buggy {",
         "  static final String s = new String(\"hello\");",
         "}");
 
@@ -1041,9 +985,9 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testNativeJsTypeCompileTimeConstantSucceeds() throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"x\") public static class Buggy {",
+        "@JsType(isNative=true) public static class Buggy {",
         "  public static final String s = \"hello\";",
         "}");
 
@@ -1051,9 +995,9 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testNativeJsTypeEnumFails() {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"x\") public enum Buggy { A, B }");
+        "@JsType(isNative=true) public enum Buggy { A, B }");
 
     assertBuggyFails(
         "Enum 'test.EntryPoint$Buggy' cannot be a native JsType.");
@@ -1061,9 +1005,9 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
   public void testNativeJsTypeInterfaceCompileTimeConstantSucceeds()
       throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"x\") public interface Buggy {",
+        "@JsType(isNative=true) public interface Buggy {",
         "  static final String s = \"hello\";",
         "}");
 
@@ -1071,22 +1015,22 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testNativeJsTypeExtendsNativeJsTypeSucceeds() throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"S\") public static class Super {",
+        "@JsType(isNative=true) public static class Super {",
         "}",
-        "@JsType(prototype = \"B\") public static class Buggy extends Super {",
+        "@JsType(isNative=true) public static class Buggy extends Super {",
         "}");
 
     assertBuggySucceeds();
   }
 
   public void testNativeJsTypeImplementsNativeJsTypeSucceeds() throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"S\") public interface Super {",
+        "@JsType(isNative=true) public interface Super {",
         "}",
-        "@JsType(prototype = \"B\") public static class Buggy implements Super {",
+        "@JsType(isNative=true) public static class Buggy implements Super {",
         "}");
 
     assertBuggySucceeds();
@@ -1094,20 +1038,20 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
   public void testNativeJsTypeInterfaceImplementsNativeJsTypeSucceeds()
       throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"S\") public interface Super {",
+        "@JsType(isNative=true) public interface Super {",
         "}",
-        "@JsType(prototype = \"B\") public interface Buggy extends Super {",
+        "@JsType(isNative=true) public interface Buggy extends Super {",
         "}");
 
     assertBuggySucceeds();
   }
 
   public void testJsTypeExtendsNativeJsTypeSucceeds() throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"S\") public static class Super {",
+        "@JsType(isNative=true) public static class Super {",
         "}",
         "@JsType public static class Buggy extends Super {",
         "}");
@@ -1116,7 +1060,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testJsTypeExtendsNonJsTypeSucceeds() throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "public static class Super {",
         "}",
@@ -1127,9 +1071,9 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testJsTypeImplementsNativeJsTypeInterfaceSucceeds() throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"S\") public interface Interface {",
+        "@JsType(isNative=true) public interface Interface {",
         "}",
         "@JsType public static class Buggy implements Interface {",
         "}");
@@ -1138,7 +1082,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testJsTypeImplementsNonJsTypeInterfaceSucceeds() throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "public interface Interface {",
         "}",
@@ -1150,9 +1094,9 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
   public void testJsTypeIntefaceExtendsNativeJsTypeInterfaceSucceeds()
       throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"S\") public interface Interface {",
+        "@JsType(isNative=true) public interface Interface {",
         "}",
         "@JsType public interface Buggy extends Interface {",
         "}");
@@ -1162,7 +1106,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
   public void testJsTypeInterfaceExtendsNonJsTypeInterfaceSucceeds()
       throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "public interface Interface {",
         "}",
@@ -1173,79 +1117,79 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testNativeJsTypeExtendsNaiveJsTypeSucceeds() throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"S\") public static class Super {",
+        "@JsType(isNative=true) public static class Super {",
         "}",
-        "@JsType(prototype = \"B\") public static class Buggy extends Super {",
+        "@JsType(isNative=true) public static class Buggy extends Super {",
         "}");
 
     assertBuggySucceeds();
   }
 
   public void testNativeJsTypeNonPublicFieldFails() {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"B\") static class Buggy {",
+        "@JsType(isNative=true) static class Buggy {",
         "  int f;",
         "}");
 
     assertBuggyFails(
-        "Native JsType member 'test.EntryPoint$Buggy.f' is not public or has @JsNoExport.");
+        "Native JsType member 'test.EntryPoint$Buggy.f' is not public or has @JsIgnore.");
   }
 
   public void testNativeJsTypeJsIgnoredFieldFails() {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsNoExport");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsIgnore");
     addSnippetClassDecl(
-        "@JsType(prototype = \"B\") static class Buggy {",
-        "  @JsNoExport public int x;",
+        "@JsType(isNative=true) static class Buggy {",
+        "  @JsIgnore public int x;",
         "}");
 
     assertBuggyFails(
-        "Native JsType member 'test.EntryPoint$Buggy.x' is not public or has @JsNoExport.");
+        "Native JsType member 'test.EntryPoint$Buggy.x' is not public or has @JsIgnore.");
   }
 
   public void testNativeJsTypeNonPublicMethodFails() {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"B\") static class Buggy {",
+        "@JsType(isNative=true) static class Buggy {",
         "  native void m();",
         "}");
 
     assertBuggyFails(
-        "Native JsType member 'test.EntryPoint$Buggy.m()V' is not public or has @JsNoExport.");
+        "Native JsType member 'test.EntryPoint$Buggy.m()V' is not public or has @JsIgnore.");
   }
 
   public void testNativeJsTypeJsIgnoredMethodFails() {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsNoExport");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsIgnore");
     addSnippetClassDecl(
-        "@JsType(prototype = \"B\") static class Buggy {",
-        "  @JsNoExport public native void m();",
+        "@JsType(isNative=true) static class Buggy {",
+        "  @JsIgnore public native void m();",
         "}");
 
     assertBuggyFails(
-        "Native JsType member 'test.EntryPoint$Buggy.m()V' is not public or has @JsNoExport.");
+        "Native JsType member 'test.EntryPoint$Buggy.m()V' is not public or has @JsIgnore.");
   }
 
   public void testNativeJsTypeJsIgnoredConstructorFails() {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
-    addSnippetImport("com.google.gwt.core.client.js.JsNoExport");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsIgnore");
     addSnippetClassDecl(
-        "@JsType(prototype = \"B\") static class Buggy {",
-        "  @JsNoExport public Buggy() { }",
+        "@JsType(isNative=true) static class Buggy {",
+        "  @JsIgnore public Buggy() { }",
         "}");
 
     assertBuggyFails(
         "Native JsType member 'test.EntryPoint$Buggy.EntryPoint$Buggy() <init>' "
-          + "is not public or has @JsNoExport.");
+          + "is not public or has @JsIgnore.");
   }
 
   public void testNativeJsTypeNonPublicConstructorSucceeds() throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"B\") static class Buggy {",
+        "@JsType(isNative=true) static class Buggy {",
         "  Buggy() { }",
         "}");
 
@@ -1253,16 +1197,16 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testNativeJsTypeDefaultConstructorSucceeds() throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"B\") static class Buggy {",
+        "@JsType(isNative=true) static class Buggy {",
         "}");
 
     assertBuggySucceeds();
   }
 
   public void testNonJsTypeExtendsJsTypeSucceeds() throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "@JsType public static class Super {",
         "}",
@@ -1273,7 +1217,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testNonJsTypeImplementsJsTypeInterfaceSucceeds() throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "@JsType public interface Interface {",
         "}",
@@ -1285,7 +1229,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
   public void testNonJsTypeInterfaceExtendsJsTypeInterfaceSucceeds()
       throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "@JsType public interface Interface {",
         "}",
@@ -1297,9 +1241,9 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
   public void testNonJsTypeExtendsNativeJsTypeSucceeds()
       throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"S\") public static class Super {",
+        "@JsType(isNative=true) public static class Super {",
         "}",
         "public static class Buggy extends Super {",
         "}");
@@ -1309,9 +1253,9 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
   public void testNonJsTypeImplementsNativeJsTypeInterfaceSucceeds()
       throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"S\") public interface Interface {",
+        "@JsType(isNative=true) public interface Interface {",
         "}",
         "public static class Buggy implements Interface {",
         "}");
@@ -1321,9 +1265,9 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
   public void testNonJsTypeInterfaceExtendsNativeJsTypeInterfaceSucceeds()
       throws UnableToCompleteException {
-    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "@JsType(prototype = \"S\") public interface Interface {",
+        "@JsType(isNative=true) public interface Interface {",
         "}",
         "public interface Buggy extends Interface {",
         "}");
@@ -1337,7 +1281,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     public CharSequence getContent() {
       StringBuilder code = new StringBuilder();
       code.append("package test;\n");
-      code.append("import com.google.gwt.core.client.js.JsFunction;\n");
+      code.append("import jsinterop.annotations.JsFunction;\n");
       code.append("@JsFunction public interface MyJsFunctionInterface {\n");
       code.append("int foo(int x);\n");
       code.append("}\n");

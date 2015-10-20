@@ -356,215 +356,9 @@ public class JSORestrictionsTest extends TestCase {
     shouldGenerateNoError(goodCode);
   }
 
-  public void testJsExport() {
-    StringBuilder goodCode = new StringBuilder();
-    goodCode.append("import com.google.gwt.core.client.js.JsExport;\n");
-    goodCode.append("public class Buggy {\n");
-    goodCode.append("  @JsExport public static final String field = null;\n");
-    goodCode.append("  @JsExport public static void method() {}\n");
-    goodCode.append("  public interface Foo {\n");
-    goodCode.append("    @JsExport String field1 = null;\n");
-    goodCode.append("    interface ImplicitlyPublicInner {\n");
-    goodCode.append("      @JsExport String field2 = null;\n");
-    goodCode.append("    }\n");
-    // TODO: enable after java 8 becomes default
-    // goodCode.append("@JsExport static void method1() {}\n");
-    goodCode.append("  }\n");
-    goodCode.append("}\n");
-
-    shouldGenerateNoError(goodCode);
-  }
-
-  public void testJsExportOnClass() {
-    StringBuilder goodCode = new StringBuilder();
-    goodCode.append("import com.google.gwt.core.client.js.JsExport;\n");
-    goodCode.append("@JsExport public class Buggy {}");
-
-    shouldGenerateNoError(goodCode);
-  }
-
-  public void testJsExportOnInterface() {
-    StringBuilder goodCode = new StringBuilder();
-    goodCode.append("import com.google.gwt.core.client.js.JsExport;\n");
-    goodCode.append("@JsExport public interface Buggy {}");
-
-    shouldGenerateNoError(goodCode);
-  }
-
-  public void testJsExportOnEnum() {
-    StringBuilder goodCode = new StringBuilder();
-    goodCode.append("import com.google.gwt.core.client.js.JsExport;\n");
-    goodCode.append("@JsExport enum Buggy { TEST1, TEST2;}");
-
-    shouldGenerateNoError(goodCode);
-  }
-
-  public void testJsExportNotOnEnumeration() {
-    StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import com.google.gwt.core.client.js.JsExport;\n");
-    buggyCode.append("public enum Buggy {\n");
-    buggyCode.append(" @JsExport TEST1, TEST2;\n;");
-    buggyCode.append("}");
-
-    shouldGenerateError(buggyCode, "Line 3: " + JSORestrictionsChecker.ERR_JSEXPORT_ON_ENUMERATION);
-  }
-
-  public void testJsExportOnConstructors() {
-    StringBuilder goodCode = new StringBuilder();
-    goodCode.append("import com.google.gwt.core.client.js.JsExport;\n");
-    goodCode.append("public class Buggy {\n");
-    // A constructor JsExported without explicit symbol is fine here.
-    // Leave it to NameConflictionChecker.
-    goodCode.append("  @JsExport public Buggy() { }\n");
-    goodCode.append("  @JsExport(\"buggy1\") public Buggy(int a) { }\n");
-    goodCode.append("  public Buggy(int a, int b) { }\n");
-    goodCode.append("}");
-
-    shouldGenerateNoError(goodCode);
-  }
-
-  public void testJsExportOnClassWithDefaultConstructor() {
-    StringBuilder goodCode = new StringBuilder();
-    goodCode.append("import com.google.gwt.core.client.js.JsExport;\n");
-    goodCode.append("@JsExport public class Buggy {}");
-
-    shouldGenerateNoError(goodCode);
-  }
-
-  public void testJsExportOnClassWithExplicitConstructor() {
-    StringBuilder goodCode = new StringBuilder();
-    goodCode.append("import com.google.gwt.core.client.js.JsExport;\n");
-    goodCode.append("@JsExport public class Buggy {\n");
-    goodCode.append("  public Buggy() { }");
-    goodCode.append("}");
-
-    shouldGenerateNoError(goodCode);
-  }
-
-  public void testJsExportOnClassWithOnePublicConstructor() {
-    StringBuilder goodCode = new StringBuilder();
-    goodCode.append("import com.google.gwt.core.client.js.JsExport;\n");
-    goodCode.append("@JsExport public class Buggy {\n");
-    goodCode.append("  public Buggy() { }\n");
-    goodCode.append("  private Buggy(int a) { }\n");
-    goodCode.append("  protected Buggy(int a, int b) { }\n");
-    goodCode.append("  Buggy(int a, int b, int c) { }\n");
-    goodCode.append("}");
-
-    shouldGenerateNoError(goodCode);
-  }
-
-  public void testJsExportOnClassWithMultipleConstructors() {
-    StringBuilder goodCode = new StringBuilder();
-    goodCode.append("import com.google.gwt.core.client.js.JsExport;\n");
-    goodCode.append("import com.google.gwt.core.client.js.JsNoExport;\n");
-    goodCode.append("@JsExport public class Buggy {\n");
-    goodCode.append("  @JsExport(\"Buggy1\") public Buggy() { }\n");
-    goodCode.append("  @JsExport(\"Buggy2\") public Buggy(int a) { }\n");
-    goodCode.append("  @JsExport public Buggy(int a, int b) { }\n");
-    goodCode.append("  @JsNoExport public Buggy(int a, int b, int c) { }\n");
-    goodCode.append("}");
-
-    shouldGenerateNoError(goodCode);
-  }
-
-  public void testJsExportNotOnNonPublicClass() {
-    StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import com.google.gwt.core.client.js.JsExport;\n");
-    buggyCode.append("public class Buggy {\n");
-    buggyCode.append("  private static class PrivateNested {\n");
-    buggyCode.append("    public static class PublicNested {\n");
-    buggyCode.append("      @JsExport public static Object foo() {return null;}\n");
-    buggyCode.append("    }\n");
-    buggyCode.append("  }\n");
-    buggyCode.append("}\n");
-
-    shouldGenerateError(buggyCode, "Line 5: "
-        + JSORestrictionsChecker.ERR_JSEXPORT_ONLY_CTORS_STATIC_METHODS_AND_STATIC_FINAL_FIELDS);
-  }
-
-  public void testJsExportNotOnNonPublicField() {
-    StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import com.google.gwt.core.client.js.JsExport;\n");
-    buggyCode.append("public class Buggy {\n");
-    buggyCode.append("@JsExport final static String foo = null;\n");
-    buggyCode.append("}\n");
-
-    shouldGenerateError(buggyCode, "Line 3: "
-        + JSORestrictionsChecker.ERR_JSEXPORT_ONLY_CTORS_STATIC_METHODS_AND_STATIC_FINAL_FIELDS);
-  }
-
-  public void testJsExportNotOnNonPublicMethod() {
-    StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import com.google.gwt.core.client.js.JsExport;\n");
-    buggyCode.append("public class Buggy {\n");
-    buggyCode.append("@JsExport static Object foo() {return null;}\n");
-    buggyCode.append("}\n");
-
-    shouldGenerateError(buggyCode, "Line 3: "
-        + JSORestrictionsChecker.ERR_JSEXPORT_ONLY_CTORS_STATIC_METHODS_AND_STATIC_FINAL_FIELDS);
-  }
-
-  public void testJsExportNotOnObjectMethod() {
-    StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import com.google.gwt.core.client.js.JsExport;\n");
-    buggyCode.append("public class Buggy {\n");
-    buggyCode.append("@JsExport public void foo() {}\n");
-    buggyCode.append("}\n");
-
-    shouldGenerateError(buggyCode, "Line 3: "
-        + JSORestrictionsChecker.ERR_JSEXPORT_ONLY_CTORS_STATIC_METHODS_AND_STATIC_FINAL_FIELDS);
-  }
-
-  public void testJsExportNotOnObjectField() {
-    StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import com.google.gwt.core.client.js.JsExport;\n");
-    buggyCode.append("public class Buggy {\n");
-    buggyCode.append("@JsExport public final String foo = null;\n");
-    buggyCode.append("}\n");
-
-    shouldGenerateError(buggyCode, "Line 3: "
-        + JSORestrictionsChecker.ERR_JSEXPORT_ONLY_CTORS_STATIC_METHODS_AND_STATIC_FINAL_FIELDS);
-  }
-
-  public void testJsExportNotOnNonFinalField() {
-    StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import com.google.gwt.core.client.js.JsExport;\n");
-    buggyCode.append("public class Buggy {\n");
-    buggyCode.append("@JsExport public static String foo = null;\n");
-    buggyCode.append("}\n");
-
-    shouldGenerateError(buggyCode, "Line 3: "
-        + JSORestrictionsChecker.ERR_JSEXPORT_ONLY_CTORS_STATIC_METHODS_AND_STATIC_FINAL_FIELDS);
-  }
-
-  public void testJsExportAndJsNotExportNotOnField() {
-    StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import com.google.gwt.core.client.js.JsExport;\n");
-    buggyCode.append("import com.google.gwt.core.client.js.JsNoExport;\n");
-    buggyCode.append("public class Buggy {\n");
-    buggyCode.append("@JsExport @JsNoExport public final static String foo = null;\n");
-    buggyCode.append("}\n");
-
-    shouldGenerateError(buggyCode, "Line 4: "
-        + JSORestrictionsChecker.ERR_EITHER_JSEXPORT_JSNOEXPORT);
-  }
-
-  public void testJsExportAndJsNotExportNotOnMethod() {
-    StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import com.google.gwt.core.client.js.JsExport;\n");
-    buggyCode.append("import com.google.gwt.core.client.js.JsNoExport;\n");
-    buggyCode.append("public class Buggy {\n");
-    buggyCode.append("@JsExport @JsNoExport public static void method() {}\n");
-    buggyCode.append("}\n");
-
-    shouldGenerateError(buggyCode, "Line 4: "
-        + JSORestrictionsChecker.ERR_EITHER_JSEXPORT_JSNOEXPORT);
-  }
-
   public void testJsFunctionOnFunctionalInterface() {
     StringBuilder goodCode = new StringBuilder();
-    goodCode.append("import com.google.gwt.core.client.js.JsFunction;\n");
+    goodCode.append("import jsinterop.annotations.JsFunction;\n");
     goodCode.append("@JsFunction public interface Buggy {\n");
     goodCode.append("int foo(int x);\n");
     goodCode.append("}\n");
@@ -575,8 +369,8 @@ public class JSORestrictionsTest extends TestCase {
   // it is OK on JSORestrictionChecker but will be disallowed by JsInteropRestrictionChecker.
   public void testJsFunctionAndJsTypeOnInterface() {
     StringBuilder goodCode = new StringBuilder();
-    goodCode.append("import com.google.gwt.core.client.js.JsFunction;\n");
-    goodCode.append("import com.google.gwt.core.client.js.JsType;\n");
+    goodCode.append("import jsinterop.annotations.JsFunction;\n");
+    goodCode.append("import jsinterop.annotations.JsType;\n");
     goodCode.append("@JsFunction @JsType public interface Buggy {\n");
     goodCode.append("int foo(int x);\n");
     goodCode.append("}\n");
@@ -586,7 +380,7 @@ public class JSORestrictionsTest extends TestCase {
 
   public void testJsFunctionNotOnClass() {
     StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import com.google.gwt.core.client.js.JsFunction;\n");
+    buggyCode.append("import jsinterop.annotations.JsFunction;\n");
     buggyCode.append("@JsFunction public class Buggy {\n");
     buggyCode.append("int foo(int x) {return 0;} \n");
     buggyCode.append("}\n");
@@ -597,7 +391,7 @@ public class JSORestrictionsTest extends TestCase {
 
   public void testJsFunctionNotOnNonFunctionalInterface1() {
     StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import com.google.gwt.core.client.js.JsFunction;\n");
+    buggyCode.append("import jsinterop.annotations.JsFunction;\n");
     buggyCode.append("@JsFunction public interface Buggy {\n");
     buggyCode.append("int foo(int x);\n");
     buggyCode.append("int bar(int x);\n");
@@ -609,7 +403,7 @@ public class JSORestrictionsTest extends TestCase {
 
   public void testJsFunctionNotOnNonFunctionalInterface2() {
     StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import com.google.gwt.core.client.js.JsFunction;\n");
+    buggyCode.append("import jsinterop.annotations.JsFunction;\n");
     buggyCode.append("@JsFunction public interface Buggy {\n");
     buggyCode.append("}\n");
 
@@ -619,7 +413,7 @@ public class JSORestrictionsTest extends TestCase {
 
   public void testJsFunctionNotOnInterfaceWithDefaultMethod() {
     StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import com.google.gwt.core.client.js.JsFunction;\n");
+    buggyCode.append("import jsinterop.annotations.JsFunction;\n");
     buggyCode.append("@JsFunction public interface Buggy {\n");
     buggyCode.append("int foo(int x);\n");
     buggyCode.append("default void bar() { }\n");

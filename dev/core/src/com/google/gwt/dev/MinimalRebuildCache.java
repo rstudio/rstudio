@@ -680,7 +680,7 @@ public class MinimalRebuildCache implements Serializable {
     rebinderTypeNamesByReboundTypeName.put(reboundTypeName, rebinderType);
   }
 
-  public void removeJsInteropNames(String inTypeName) {
+  public void removeExportedNames(String inTypeName) {
     Collection<String> exportedGlobalNamesForType =
         exportedGlobalNamesByTypeName.removeAll(inTypeName);
     exportedGlobalNames.removeAll(exportedGlobalNamesForType);

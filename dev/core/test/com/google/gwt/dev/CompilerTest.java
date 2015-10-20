@@ -145,21 +145,19 @@ public class CompilerTest extends ArgProcessorTestBase {
   private MockJavaResource simpleDialogResourceWithExport =
       JavaResourceBase.createMockJavaResource("com.foo.SimpleDialog",
           "package com.foo;",
-          "import com.google.gwt.core.client.js.JsExport;",
-          "import com.google.gwt.core.client.js.JsNamespace;",
+          "import jsinterop.annotations.JsProperty;",
           "public class SimpleDialog {",
-          "  @JsNamespace(JsNamespace.GLOBAL) @JsExport(\"show\")",
-          "  public static void show() {}",
+          "  @JsProperty(namespace = \"ns\")",
+          "  public static int show;",
           "}");
 
   private MockJavaResource complexDialogResourceWithExport =
       JavaResourceBase.createMockJavaResource("com.foo.ComplexDialog",
           "package com.foo;",
-          "import com.google.gwt.core.client.js.JsExport;",
-          "import com.google.gwt.core.client.js.JsNamespace;",
+          "import jsinterop.annotations.JsProperty;",
           "public class ComplexDialog {",
-          "  @JsNamespace(JsNamespace.GLOBAL) @JsExport(\"show\")",
-          "  public static void show() {}",
+          "  @JsProperty(namespace = \"ns\")",
+          "  public static int show;",
           "}");
 
   private MockJavaResource complexDialogResourceSansExport =
@@ -488,7 +486,7 @@ public class CompilerTest extends ArgProcessorTestBase {
           "package com.foo;",
           "import com.google.gwt.core.client.EntryPoint;",
           "import com.google.gwt.core.client.GWT;",
-          "import com.google.gwt.core.client.js.JsType;",
+          "import jsinterop.annotations.JsType;",
           "public class TestEntryPoint implements EntryPoint {",
           "  @JsType public static class MyJsType {}",
           "  @JsType public interface MyJsTypeInterface {}",
@@ -959,7 +957,7 @@ public class CompilerTest extends ArgProcessorTestBase {
    */
   public void testGwtCreateJsTypeRebindResult() throws Exception {
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
-    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
+    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS_RC);
     compileToJs(compilerOptions, Files.createTempDir(), "com.foo.SimpleModule",
         Lists.newArrayList(simpleModuleResource, gwtCreateEntryPointResource),
         new MinimalRebuildCache(), emptySet, JsOutputOption.OBFUSCATED);
@@ -973,7 +971,7 @@ public class CompilerTest extends ArgProcessorTestBase {
         JavaResourceBase.createMockJavaResource(
             "com.foo.SomeJsFunction",
             "package com.foo;",
-            "import com.google.gwt.core.client.js.JsFunction;",
+            "import jsinterop.annotations.JsFunction;",
             "@JsFunction",
             "public interface SomeJsFunction {",
             "  void m();",
@@ -1016,7 +1014,7 @@ public class CompilerTest extends ArgProcessorTestBase {
             "</module>");
 
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
-    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
+    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS_RC);
     String js = compileToJs(compilerOptions, Files.createTempDir(), testEntryPoint.getTypeName(),
         Lists.newArrayList(moduleResource, testEntryPoint, someJsFunction,
             jsFunctionInterfaceImplementation, someInterface),
@@ -1337,7 +1335,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     MinimalRebuildCache minimalRebuildCache = new MinimalRebuildCache();
     File applicationDir = Files.createTempDir();
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
-    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
+    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS_RC);
 
     // Simple compile with one dialog.alert() export succeeds.
     compileToJs(compilerOptions, applicationDir, "com.foo.SimpleModule", Lists.newArrayList(

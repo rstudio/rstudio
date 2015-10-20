@@ -147,7 +147,7 @@ public final class JsInteropUtil {
     }
 
     boolean isPublicMemberForJsType = member.getEnclosingType().isJsType() && member.isPublic();
-    if (!isPublicMemberForJsType && memberAnnotation == null) {
+    if (!isPublicMemberForJsType && !isNativeConstructor(member) && memberAnnotation == null) {
       return;
     }
 

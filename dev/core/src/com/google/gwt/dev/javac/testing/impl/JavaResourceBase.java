@@ -375,37 +375,41 @@ public class JavaResourceBase {
 
   // TODO: move JS* annotations to intrinsic mock resource base
   public static final MockJavaResource JSTYPE =
-      createMockJavaResource("com.google.gwt.core.client.js.JsType",
-          "package com.google.gwt.core.client.js;",
+      createMockJavaResource("jsinterop.annotations.JsType",
+          "package jsinterop.annotations;",
           "public @interface JsType {\n",
-          "  String prototype() default \"\";\n" +
+          "  String namespace() default \"\";\n",
+          "  String name() default \"\";\n",
+          "  boolean isNative() default false;\n" +
           "}"
       );
-  public static final MockJavaResource JSTYPEPROTOTYPE =
-      createMockJavaResource("com.google.gwt.core.client.js.impl.PrototypeOfJsType",
-          "package com.google.gwt.core.client.js.impl;",
-          "public @interface PrototypeOfJsType {\n",
-          "}");
-  public static final MockJavaResource JSEXPORT =
-      createMockJavaResource("com.google.gwt.core.client.js.JsExport",
-          "package com.google.gwt.core.client.js;",
-          "public @interface JsExport {\n",
-          "  String value() default \"\";\n",
-          "}");
-  public static final MockJavaResource JSNOEXPORT =
-      createMockJavaResource("com.google.gwt.core.client.js.JsNoExport",
-          "package com.google.gwt.core.client.js;",
-          "public @interface JsNoExport {\n",
+  public static final MockJavaResource JSCONSTRUCTOR =
+      createMockJavaResource("jsinterop.annotations.JsConstructor",
+          "package jsinterop.annotations;",
+          "public @interface JsConstructor {\n",
           "}");
   public static final MockJavaResource JSPROPERTY =
-      createMockJavaResource("com.google.gwt.core.client.js.JsProperty",
-          "package com.google.gwt.core.client.js;",
+      createMockJavaResource("jsinterop.annotations.JsProperty",
+          "package jsinterop.annotations;",
           "public @interface JsProperty {\n",
-          "  String value() default \"\";\n",
+          "  String namespace() default \"\";\n",
+          "  String name() default \"\";\n",
+          "}");
+  public static final MockJavaResource JSMETHOD =
+      createMockJavaResource("jsinterop.annotations.JsMethod",
+          "package jsinterop.annotations;",
+          "public @interface JsMethod {\n",
+          "  String namespace() default \"\";\n",
+          "  String name() default \"\";\n",
+          "}");
+  public static final MockJavaResource JSIGNORE =
+      createMockJavaResource("jsinterop.annotations.JsIgnore",
+          "package jsinterop.annotations;",
+          "public @interface JsIgnore {\n",
           "}");
   public static final MockJavaResource JSFUNCTION =
-      createMockJavaResource("com.google.gwt.core.client.js.JsFunction",
-          "package com.google.gwt.core.client.js;",
+      createMockJavaResource("jsinterop.annotations.JsFunction",
+          "package jsinterop.annotations;",
           "public @interface JsFunction {\n",
           "}");
 
@@ -416,7 +420,7 @@ public class JavaResourceBase {
         ERROR, FUNCTIONALINTERFACE, FLOAT, INTEGER, IS_SERIALIZABLE, JAVASCRIPTEXCEPTION,
         JAVASCRIPTOBJECT, LIST, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR, NUMBER, OBJECT,
         RUNTIME_EXCEPTION, SERIALIZABLE, SHORT, STRING, STRING_BUILDER, SUPPRESS_WARNINGS, SYSTEM,
-        THROWABLE, SPECIALIZE_METHOD, JSTYPE, JSTYPEPROTOTYPE, JSEXPORT, JSNOEXPORT, JSPROPERTY,
+        THROWABLE, SPECIALIZE_METHOD, JSTYPE, JSCONSTRUCTOR, JSPROPERTY, JSMETHOD, JSIGNORE,
         JSFUNCTION};
   }
 
