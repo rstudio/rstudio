@@ -352,6 +352,9 @@ public class DocumentOutlineWidget extends Composite
    
    private void addOrSetItem(Scope node, int depth, int index)
    {
+      if (node == null)
+         return;
+      
       int treeSize = tree_.getItemCount();
       if (index < treeSize)
       {
