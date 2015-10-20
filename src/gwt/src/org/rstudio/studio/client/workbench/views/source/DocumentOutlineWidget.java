@@ -107,7 +107,7 @@ public class DocumentOutlineWidget extends Composite
          if (node.isChunk())
          {
             text = node.getChunkLabel();
-            if (text.isEmpty())
+            if (StringUtil.isNullOrEmpty(text))
                text = "(" + node.getLabel().toLowerCase() + ")";
          }
          else if (node.isFunction())
@@ -353,9 +353,6 @@ public class DocumentOutlineWidget extends Composite
    
    private void addOrSetItem(Scope node, int depth, int index)
    {
-      if (node == null)
-         return;
-      
       int treeSize = tree_.getItemCount();
       if (index < treeSize)
       {
@@ -383,7 +380,7 @@ public class DocumentOutlineWidget extends Composite
    
    private void rebuildScopeTree()
    {
-      scopeTree_ = JsArrayUtil.copy(target_.getDocDisplay().getScopeTree());
+      scopeTree_ = target_.getDocDisplay().getScopeTree();
       
       if (scopeTree_.length() == 0)
       {
@@ -424,9 +421,6 @@ public class DocumentOutlineWidget extends Composite
    
    private void buildScopeTreeImpl(Scope node, int depth, Counter counter)
    {
-      if (node == null)
-         return;
-      
       if (shouldDisplayNode(node))
          addOrSetItem(node, depth, counter.increment());
       
