@@ -181,13 +181,15 @@ public class DependencyManager implements InstallShinyEvent.Handler
           "Checking installed packages",
           userPrompt,
           new Dependency[] {
-            Dependency.cranPackage("httpuv", "1.2"),
+            Dependency.cranPackage("httpuv", "1.3.3"),
             Dependency.cranPackage("caTools", "1.13"),
-            Dependency.cranPackage("RJSONIO", "1.0"),
+            Dependency.cranPackage("mime", "0.3"),
+            Dependency.cranPackage("jsonlite", "0.9.16"),
             Dependency.cranPackage("xtable", "1.7"),
             Dependency.cranPackage("digest", "0.6"),
-            Dependency.cranPackage("htmltools", "0.2.4"),
-            Dependency.cranPackage("shiny", "0.10.0", true)
+            Dependency.cranPackage("htmltools", "0.2.6"),
+            Dependency.cranPackage("R6", "2.0"),
+            Dependency.cranPackage("shiny", "0.11.0", true)
           }, 
           true,
           command
