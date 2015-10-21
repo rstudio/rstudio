@@ -29,4 +29,9 @@ public class SharedProject
    {
       return null;
    }
+   
+   public ProjectUser popCursorSync(String path)
+   {
+      return null;
+   }
 }
