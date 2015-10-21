@@ -100,6 +100,8 @@
 * Fix issue with rstudioapi previewRd function when path included spaces
 * R 3.3: Don't call setInternet2 or use --internet2 flag for child R processes
 * Linux, Windows: ensure native printer used (don't default to PDF printing)
+* Prevent spurious navigation when user cancels from the file upload dialog
+
 
 
 
