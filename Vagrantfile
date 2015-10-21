@@ -13,5 +13,10 @@ Vagrant.configure(2) do |config|
     vb.cpus = "6"
   end
 
+  # hyper-v specific options
+  config.vm.provider "hyperv" do |hv|
+    config.vm.box = "withinboredom/Trusty64"
+  end
+
   config.vm.provision :shell, path: "vagrant/bootstrap-debian-64.sh"
 end
