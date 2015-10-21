@@ -15,13 +15,13 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsNoExport;
+import jsinterop.annotations.JsIgnore;
+import jsinterop.annotations.JsType;
 
 /**
  * Test access to static field from JS through exported static method.
  */
-@JsExport
+@JsType
 public class StaticInitializerStaticMethod {
   private static StaticInitializerStaticMethod STATIC = new StaticInitializerStaticMethod();
 
@@ -29,7 +29,7 @@ public class StaticInitializerStaticMethod {
     return STATIC;
   }
 
-  @JsNoExport
+  @JsIgnore
   public static StaticInitializerStaticMethod notExported_1() {
     return STATIC;
   }

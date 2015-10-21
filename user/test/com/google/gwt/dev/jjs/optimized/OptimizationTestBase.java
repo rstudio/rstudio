@@ -48,7 +48,7 @@ public abstract class OptimizationTestBase extends GWTTestCase {
     for (char toBeEscaped : ".[]+".toCharArray()) {
       pattern = pattern.replace("" + toBeEscaped, "\\" + toBeEscaped);
     }
-    pattern = pattern.replace("<obf>", "\\w+");
+    pattern = pattern.replace("<obf>", "[\\w$_]+");
     return pattern + ";?";
   }
 }

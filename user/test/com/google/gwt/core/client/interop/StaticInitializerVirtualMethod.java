@@ -15,13 +15,11 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsType;
+import jsinterop.annotations.JsType;
 
 /**
  * Test access to static field from JS through exported virtual method.
  */
-@JsExport
 @JsType
 public class StaticInitializerVirtualMethod {
   private static StaticInitializerVirtualMethod STATIC = new StaticInitializerVirtualMethod();

@@ -15,7 +15,7 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsFunction;
+import jsinterop.annotations.JsFunction;
 
 /**
  * A functional interface annotated by JsFunction that is only referenced by instanceof.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Google Inc.
+ * Copyright 2014 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,12 +15,9 @@
  */
 package com.google.gwt.core.client.interop;
 
-/**
- * Implements ElementLikeJsInterface.
- */
-public class ElementLikeJsInterfaceImpl implements ElementLikeJsInterface {
-  @Override
-  public String getTagName() {
-    return "mytag";
-  }
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsType;
+
+@JsType(namespace = JsPackage.GLOBAL, name = "HTMLElement", isNative = true)
+class HTMLElementAnotherConcreteNativeJsType {
 }

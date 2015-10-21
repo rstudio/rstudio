@@ -13,16 +13,13 @@
  */
 package com.google.gwt.core.client.interop.subpackage;
 
-import com.google.gwt.core.client.js.JsExport;
+import jsinterop.annotations.JsType;
 
 /**
  * An exported class that is also not subject to the package namespace specified in its parent
  * package.
  */
-@JsExport // Does *not* uses the namespace from the parent package
+@JsType // Does *not* uses the namespace from the parent package
 public class MyNestedExportedClassSansPackageNamespace {
-  /**
-   * Exported field.
-   */
   public final static int WOO = 1001;
 }

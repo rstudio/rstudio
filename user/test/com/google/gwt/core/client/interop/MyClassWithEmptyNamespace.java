@@ -15,17 +15,18 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsNamespace;
+import jsinterop.annotations.JsConstructor;
+import jsinterop.annotations.JsProperty;
+import jsinterop.annotations.JsType;
 
 /**
  * Class with empty namespace.
  */
-@JsNamespace("")
+@JsType(namespace = "")
 public class MyClassWithEmptyNamespace {
-  @JsExport
+  @JsProperty
   public static final int DAN = 82;
 
-  @JsExport
+  @JsConstructor
   public MyClassWithEmptyNamespace() { }
 }

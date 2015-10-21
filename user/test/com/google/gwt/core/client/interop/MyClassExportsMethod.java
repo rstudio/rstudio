@@ -15,13 +15,12 @@
  */
 package com.google.gwt.core.client.interop;
 
-import static com.google.gwt.core.client.js.JsNamespace.GLOBAL;
+import static jsinterop.annotations.JsPackage.GLOBAL;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsNamespace;
+import jsinterop.annotations.JsMethod;
 
 /**
- * A test class that exhibits a variety of @JsExports.
+ * A test class that exhibits a variety of @JsTypes.
  */
 public class MyClassExportsMethod {
   public static boolean calledFromCallMe1 = false;
@@ -30,30 +29,27 @@ public class MyClassExportsMethod {
   public static boolean calledFromCallMe4 = false;
   public static boolean calledFromCallMe5 = false;
 
-  @JsNamespace(GLOBAL)
-  @JsExport("exported")
+  @JsMethod(namespace = GLOBAL, name = "exported")
   public static void callMe1() {
     calledFromCallMe1 = true;
   }
 
-  @JsNamespace("exportNamespace")
-  @JsExport("exported")
+  @JsMethod(namespace = "exportNamespace", name = "exported")
   public static void callMe2(int i) {
     calledFromCallMe2 = true;
   }
 
-  @JsNamespace("exportNamespace")
-  @JsExport
+  @JsMethod(namespace = "exportNamespace")
   public static void callMe3(float f) {
     calledFromCallMe3 = true;
   }
 
-  @JsExport("exported")
+  @JsMethod(name = "exported")
   public static void callMe4(boolean f) {
     calledFromCallMe4 = true;
   }
 
-  @JsExport
+  @JsMethod
   public static void callMe5(byte f) {
     calledFromCallMe5 = true;
   }
@@ -83,21 +79,18 @@ public class MyClassExportsMethod {
   }
 
   // There should be no calls to this method from java.
-  @JsNamespace(GLOBAL)
-  @JsExport("callBar")
+  @JsMethod(namespace = GLOBAL)
   public static void callBar(A a) {
     a.bar();
   }
 
   // There should be a call to this method from java.
-  @JsNamespace(GLOBAL)
-  @JsExport("callFoo")
+  @JsMethod(namespace = GLOBAL)
   public static void callFoo(A a) {
     a.foo();
   }
 
-  @JsNamespace(GLOBAL)
-  @JsExport("newA")
+  @JsMethod(namespace = GLOBAL)
   public static A newA() {
     return new A();
   }

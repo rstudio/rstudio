@@ -15,15 +15,12 @@
  */
 package com.google.gwt.core.client.interop;
 
-
-import com.google.gwt.core.client.js.JsProperty;
-import com.google.gwt.core.client.js.JsType;
-
 /**
- * An interface that represent part of HTML element's contract.
+ * Implements ElementLikeJsInterface.
  */
-@JsType
-public interface ElementLikeJsInterface {
-  @JsProperty
-  String getTagName();
+public class ElementLikeNativeInterfaceImpl implements ElementLikeNativeInterface {
+  @Override
+  public String getTagName() {
+    return "mytag";
+  }
 }

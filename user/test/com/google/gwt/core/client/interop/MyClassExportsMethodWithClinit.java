@@ -17,7 +17,7 @@ package com.google.gwt.core.client.interop;
 
 import static junit.framework.Assert.assertEquals;
 
-import com.google.gwt.core.client.js.JsExport;
+import jsinterop.annotations.JsConstructor;
 
 class MyClassExportsMethodWithClinit {
 
@@ -30,7 +30,7 @@ class MyClassExportsMethodWithClinit {
     }
   }
 
-  @JsExport
+  @JsConstructor
   public MyClassExportsMethodWithClinit() {
     // ensure clinit() is called even when invoked from JS
     assertEquals(42, magicNumber);

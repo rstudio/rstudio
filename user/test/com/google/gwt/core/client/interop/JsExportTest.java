@@ -18,9 +18,9 @@ package com.google.gwt.core.client.interop;
 import static com.google.gwt.core.client.ScriptInjector.TOP_WINDOW;
 
 import com.google.gwt.core.client.ScriptInjector;
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsNamespace;
 import com.google.gwt.junit.client.GWTTestCase;
+
+import jsinterop.annotations.JsType;
 
 /**
  * Tests JsExport.
@@ -146,8 +146,7 @@ public class JsExportTest extends GWTTestCase {
     return obj.getInstance();
   }-*/;
 
-  @JsExport
-  @JsNamespace("bar.foo.baz")
+  @JsType(namespace = "bar.foo.baz")
   static class MyExportedClassCorrectNamespace {
     public MyExportedClassCorrectNamespace() { }
   }
@@ -411,8 +410,8 @@ public class JsExportTest extends GWTTestCase {
   public void testEnum_exportedFields() {
     assertEquals(1, getPublicStaticFinalFieldInEnum());
 
-    // explicitly marked @JsExport fields must be final
-    // but ones that are in a @JsExported class don't need to be final
+    // explicitly marked @JsType() fields must be final
+    // but ones that are in a @JsType()ed class don't need to be final
     assertEquals(2, getPublicStaticFieldInEnum());
   }
 

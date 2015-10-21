@@ -15,12 +15,9 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsType;
-
 /**
  * This test class exposes parent jsmethod as non-jsmethod.
  */
-@JsType
 class ConcreteJsTypeJsSubclass extends ConcreteJsType implements SubclassInterface {
 }
 

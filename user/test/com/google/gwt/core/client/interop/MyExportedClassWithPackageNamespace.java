@@ -15,12 +15,12 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsExport;
+import jsinterop.annotations.JsType;
 
 /**
  * An exported class.
  */
-@JsExport // Uses the namespace from the package
+@JsType // Uses the namespace from the package
 public class MyExportedClassWithPackageNamespace {
   /**
    * Exported field.

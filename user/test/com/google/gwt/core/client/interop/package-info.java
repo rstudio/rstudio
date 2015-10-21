@@ -13,6 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-@com.google.gwt.core.client.js.JsNamespace("woo")
+@jsinterop.annotations.JsPackage(namespace = "woo")
 @com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.core.client.interop;

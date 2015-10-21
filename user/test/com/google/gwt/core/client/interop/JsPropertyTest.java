@@ -17,11 +17,14 @@ package com.google.gwt.core.client.interop;
 
 import static com.google.gwt.core.client.ScriptInjector.TOP_WINDOW;
 
+import static jsinterop.annotations.JsPackage.GLOBAL;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.ScriptInjector;
-import com.google.gwt.core.client.js.JsProperty;
-import com.google.gwt.core.client.js.JsType;
 import com.google.gwt.junit.client.GWTTestCase;
+
+import jsinterop.annotations.JsProperty;
+import jsinterop.annotations.JsType;
 
 /**
  * Tests JsProperty functionality.
@@ -138,7 +141,7 @@ public class JsPropertyTest extends GWTTestCase {
     assertEquals(12 + SET_X, obj.x);
   }
 
-  @JsType(prototype = "JsPropertyTest_MyNativeJsType")
+  @JsType(isNative = true, namespace = GLOBAL, name = "JsPropertyTest_MyNativeJsType")
   static class MyNativeJsType {
 
     public static int staticX;
@@ -196,7 +199,7 @@ public class JsPropertyTest extends GWTTestCase {
     assertEquals(52, mc.getY());
   }
 
-  @JsType(prototype = "JsPropertyTest_MyNativeJsTypeInterface")
+  @JsType(isNative = true, namespace = GLOBAL, name = "JsPropertyTest_MyNativeJsTypeInterface")
   interface MyNativeJsTypeInterface {
     @JsProperty
     int getX();
@@ -318,7 +321,7 @@ public class JsPropertyTest extends GWTTestCase {
     assertEquals(5 + SET_PARENT_X, ((OtherAccidentalImplementer) object).x);
   }
 
-  @JsType
+  @JsType(isNative = true)
   interface MyJsTypeInterfaceWithProtectedNames {
     String var();
 
@@ -341,7 +344,7 @@ public class JsPropertyTest extends GWTTestCase {
     assertEquals("import2", obj.getImport());
   }
 
-  @JsType
+  @JsType(isNative = true)
   interface JsTypeIsProperty {
 
     @JsProperty
@@ -361,7 +364,7 @@ public class JsPropertyTest extends GWTTestCase {
     assertFalse(object.isX());
   }
 
-  @JsType
+  @JsType(isNative = true)
   interface JsTypeGetProperty {
 
     @JsProperty

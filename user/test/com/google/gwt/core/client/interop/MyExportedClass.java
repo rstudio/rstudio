@@ -15,13 +15,12 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsType;
+import jsinterop.annotations.JsType;
 
 /**
- * A test class that is annotated by @JsExport.
+ * A test class that is exported.
  */
-@JsExport
+@JsType
 public class MyExportedClass {
 
   public static final int EXPORTED_1 = 100;

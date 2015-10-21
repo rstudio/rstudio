@@ -15,15 +15,15 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsExport;
+import jsinterop.annotations.JsConstructor;
 
 /**
- * A test class that exhibits a variety of @JsExports on constructors.
+ * A test class that exports a constructor.
  */
 public class MyClassExportsConstructor {
   private int a;
 
-  @JsExport
+  @JsConstructor
   public MyClassExportsConstructor(int a) {
     this.a = a;
   }

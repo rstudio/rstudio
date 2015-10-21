@@ -15,7 +15,7 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsFunction;
+import jsinterop.annotations.JsFunction;
 
 /**
  * A JsFunction interface, which is used to test the SAM function that returns this.

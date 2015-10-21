@@ -15,13 +15,11 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsType;
+import jsinterop.annotations.JsType;
 
 /**
- * This enum is annotated as @JsExport and has enumerations which cause subclass generation.
+ * This enum is annotated exported and has enumerations which cause subclass generation.
  */
-@JsExport
 @JsType
 public enum MyEnumWithSubclassGen {
 

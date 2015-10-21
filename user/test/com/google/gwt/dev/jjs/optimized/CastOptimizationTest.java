@@ -16,11 +16,12 @@
 package com.google.gwt.dev.jjs.optimized;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.js.JsType;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 
 import java.util.Random;
+
+import jsinterop.annotations.JsType;
 
 /**
  * Tests cast checks are optimized out when cast checking is disabled.
@@ -30,7 +31,7 @@ public class CastOptimizationTest extends OptimizationTestBase {
 
   private static class TestObject { }
 
-  @JsType(prototype = "Test")
+  @JsType(isNative = true)
   private interface JsTypeTestInterface { }
 
   private interface DualJsoTestInterface { }

@@ -15,8 +15,7 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsNamespace;
+import jsinterop.annotations.JsType;
 
 /**
  * Class with a nested exported class.
@@ -25,7 +24,7 @@ public class MyClassWithNestedExportedClass {
   /**
    * Exported nested class.
    */
-  @JsExport
+  @JsType
   public static class Inner {
     public static final int WOO = 99;
   }
@@ -33,8 +32,7 @@ public class MyClassWithNestedExportedClass {
   /**
    * Exported nested class with namespace.
    */
-  @JsNamespace("zoo")
-  @JsExport
+  @JsType(namespace = "zoo")
   public static class InnerWithNamespace {
     public static final int WOOZ = 999;
   }
@@ -42,7 +40,7 @@ public class MyClassWithNestedExportedClass {
   /**
    * Exported nested enum.
    */
-  @JsExport
+  @JsType
   public enum InnerEnum {
     AA, BB;
   }

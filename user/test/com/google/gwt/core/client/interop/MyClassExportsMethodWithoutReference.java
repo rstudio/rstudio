@@ -15,13 +15,13 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsExport;
+import jsinterop.annotations.JsMethod;
 
 /**
  * A test class exports a method but isn't referenced from any Java code.
  */
 public class MyClassExportsMethodWithoutReference {
-  @JsExport("onlyCalledFromJs")
+  @JsMethod(name = "onlyCalledFromJs")
   public static int callMe() {
     return 42;
   }

@@ -138,7 +138,7 @@ public class JsFunctionTest extends GWTTestCase {
     assertNotNull(c1);
     MyJsFunctionIdentityInterface c2 = (MyJsFunctionIdentityInterface) createFunction();
     assertNotNull(c2);
-    ElementLikeJsInterface i = (ElementLikeJsInterface) createFunction();
+    ElementLikeNativeInterface i = (ElementLikeNativeInterface) createFunction();
     assertNotNull(i);
     try {
       MyJsFunctionInterfaceImpl c3 = (MyJsFunctionInterfaceImpl) createFunction();
@@ -150,7 +150,7 @@ public class JsFunctionTest extends GWTTestCase {
   }
 
   public void testCast_fromJsObject() {
-    ElementLikeJsInterface obj = (ElementLikeJsInterface) createObject();
+    ElementLikeNativeInterface obj = (ElementLikeNativeInterface) createObject();
     assertNotNull(obj);
     try {
       MyJsFunctionInterface c = (MyJsFunctionInterface) createObject();
@@ -185,9 +185,11 @@ public class JsFunctionTest extends GWTTestCase {
     assertNotNull(c3);
     MyJsFunctionIdentityInterface c4 = (MyJsFunctionIdentityInterface) object;
     assertNotNull(c4);
+    ElementLikeNativeInterface c5 = (ElementLikeNativeInterface) object;
+    assertNotNull(c5);
     try {
-      ElementLikeJsInterface c5 = (ElementLikeJsInterface) object;
-      assertNotNull(c5);
+      HTMLElementConcreteNativeJsType c6 = (HTMLElementConcreteNativeJsType) object;
+      assertNotNull(c6);
       fail("ClassCastException should be caught.");
     } catch (ClassCastException cce) {
       // Expected.
@@ -206,7 +208,7 @@ public class JsFunctionTest extends GWTTestCase {
     assertTrue(object instanceof MyJsFunctionIdentityInterface);
     assertTrue(object instanceof MyJsFunctionWithOnlyInstanceofReference);
     assertFalse(object instanceof MyJsFunctionInterfaceImpl);
-    assertTrue(object instanceof ElementLikeJsInterface);
+    assertTrue(object instanceof ElementLikeNativeInterface);
   }
 
   public void testInstanceOf_jsObject() {
@@ -215,7 +217,7 @@ public class JsFunctionTest extends GWTTestCase {
     assertFalse(object instanceof MyJsFunctionIdentityInterface);
     assertFalse(object instanceof MyJsFunctionWithOnlyInstanceofReference);
     assertFalse(object instanceof MyJsFunctionInterfaceImpl);
-    assertTrue(object instanceof ElementLikeJsInterface);
+    assertTrue(object instanceof ElementLikeNativeInterface);
   }
 
   public void testInstanceOf_javaInstance() {
@@ -224,7 +226,8 @@ public class JsFunctionTest extends GWTTestCase {
     assertTrue(object instanceof MyJsFunctionInterfaceImpl);
     assertTrue(object instanceof MyJsFunctionIdentityInterface);
     assertTrue(object instanceof MyJsFunctionWithOnlyInstanceofReference);
-    assertFalse(object instanceof ElementLikeJsInterface);
+    assertTrue(object instanceof ElementLikeNativeInterface);
+    assertFalse(object instanceof HTMLElementConcreteNativeJsType);
   }
 
   // uncomment when Java8 is supported.

@@ -15,14 +15,12 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsType;
+import jsinterop.annotations.JsType;
 
 /**
  * A class with a method that takes and returns longs.
  */
 @JsType
-@JsExport
 public class MyJsTypeThatUsesLongType {
 
   public long addLong(long a, long b) {

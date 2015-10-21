@@ -15,12 +15,12 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsExport;
+import jsinterop.annotations.JsType;
 
 /**
- * A class which only has implicit default constructor and is annotated by "JsExport".
+ * A class which only has implicit default constructor and is exported.
  * Its default constructor is exported automatically.
  */
-@JsExport
+@JsType
 public class MyExportedClassWithImplicitConstructor {
 }

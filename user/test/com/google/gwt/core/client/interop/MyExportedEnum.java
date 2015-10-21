@@ -15,12 +15,12 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsExport;
+import jsinterop.annotations.JsType;
 
 /**
- * This enum is annotated as @JsExport.
+ * This enum is annotated as @JsType.
  */
-@JsExport
+@JsType
 public enum MyExportedEnum {
   TEST1, TEST2;
 
@@ -30,8 +30,8 @@ public enum MyExportedEnum {
 
   public static final int publicStaticFinalField = 1;
 
-  // explicitly marked @JsExport fields must be final
-  // but ones that are in a @JsExported class don't need to be final
+  // explicitly marked @JsProperty fields must be final
+  // but ones that are in an exported class doesn't need to be final
   public static int publicStaticField = 2;
 
   public final int publicFinalField = 3;

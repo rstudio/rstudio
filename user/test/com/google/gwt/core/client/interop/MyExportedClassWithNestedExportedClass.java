@@ -15,17 +15,17 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsExport;
+import jsinterop.annotations.JsType;
 
 /**
  * Exported class with a nested exported class.
  */
-@JsExport("Bloo")
+@JsType(name = "Bloo")
 public class MyExportedClassWithNestedExportedClass {
   /**
    * Exported nested class.
    */
-  @JsExport
+  @JsType
   public static class Inner {
     public static final int LOO = 99;
   }

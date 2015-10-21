@@ -15,14 +15,12 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsNamespace;
+import jsinterop.annotations.JsType;
 
 /**
  * Test namespace on a class.
  */
-@JsNamespace("foo")
-@JsExport
+@JsType(namespace = "foo")
 public class MyExportedClassWithNamespace {
   /**
    * Exported field.

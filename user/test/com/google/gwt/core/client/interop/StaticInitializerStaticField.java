@@ -15,20 +15,20 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsNoExport;
+import jsinterop.annotations.JsIgnore;
+import jsinterop.annotations.JsType;
 
 /**
  * Test access to static field from JS, ensuring clinit run.
  */
-@JsExport
+@JsType
 public class StaticInitializerStaticField {
   public static final Object EXPORTED_1 = new Object();
 
   // Not final
   public static Object EXPORTED_2 = new Object();
 
-  @JsNoExport
+  @JsIgnore
   public static final Object NOT_EXPORTED_1 = new Object();
 
   // Not static
@@ -46,7 +46,7 @@ public class StaticInitializerStaticField {
   /**
    * Test interface that export a static field.
    */
-  @JsExport
+  @JsType
   public interface InterfaceWithField {
     Object STATIC = new Object();
   }

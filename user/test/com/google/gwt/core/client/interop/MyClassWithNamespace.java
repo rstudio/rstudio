@@ -15,14 +15,14 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsNamespace;
+import jsinterop.annotations.JsProperty;
+import jsinterop.annotations.JsType;
 
 /**
  * Class with a namespace.
  */
-@JsNamespace("foobaz")
+@JsType(namespace = "foobaz")
 public class MyClassWithNamespace {
-  @JsExport
+  @JsProperty
   public static final int BAZ = 99;
 }
