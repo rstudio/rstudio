@@ -1168,6 +1168,13 @@ public class GenerateJavaScriptAST {
         return;
       }
       insertInTopologicalOrder(type.getSuperClass(), topologicallySortedSet);
+
+      for (JInterfaceType intf : type.getImplements()) {
+        if (program.typeOracle.isInstantiatedType(type)) {
+          insertInTopologicalOrder(intf, topologicallySortedSet);
+        }
+      }
+
       topologicallySortedSet.add(type);
     }
 
