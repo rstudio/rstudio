@@ -455,9 +455,8 @@ public class CompilerTest extends ArgProcessorTestBase {
       JavaResourceBase.createMockJavaResource(
           "com.foo.Bar",
           "package com.foo;",
-          "import com.google.gwt.core.client.js.JsExport;",
-          "import com.google.gwt.core.client.js.JsType;",
-          "@JsType @JsExport public class Bar {",
+          "import jsinterop.annotations.JsType;",
+          "@JsType public class Bar {",
           "  void doInstanceBar() {}",
           "  public static void doStaticBaz() {}",
           "}");
@@ -479,6 +478,16 @@ public class CompilerTest extends ArgProcessorTestBase {
           "public class TestEntryPoint implements EntryPoint {",
           "  @Override",
           "  public void onModuleLoad() {}",
+          "}");
+
+  MockJavaResource entryPointResourceForFoo =
+      JavaResourceBase.createMockJavaResource("com.foo.TestEntryPoint",
+          "package com.foo;",
+          "import com.google.gwt.core.client.EntryPoint;",
+          "import com.foo.Foo;",
+          "public class TestEntryPoint implements EntryPoint {",
+          "  @Override",
+          "  public void onModuleLoad() { new Foo(); }",
           "}");
 
   private MockJavaResource gwtCreateEntryPointResource =
@@ -957,7 +966,6 @@ public class CompilerTest extends ArgProcessorTestBase {
    */
   public void testGwtCreateJsTypeRebindResult() throws Exception {
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
-    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS_RC);
     compileToJs(compilerOptions, Files.createTempDir(), "com.foo.SimpleModule",
         Lists.newArrayList(simpleModuleResource, gwtCreateEntryPointResource),
         new MinimalRebuildCache(), emptySet, JsOutputOption.OBFUSCATED);
@@ -1014,7 +1022,6 @@ public class CompilerTest extends ArgProcessorTestBase {
             "</module>");
 
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
-    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS_RC);
     String js = compileToJs(compilerOptions, Files.createTempDir(), testEntryPoint.getTypeName(),
         Lists.newArrayList(moduleResource, testEntryPoint, someJsFunction,
             jsFunctionInterfaceImplementation, someInterface),
@@ -1028,7 +1035,7 @@ public class CompilerTest extends ArgProcessorTestBase {
   }
 
   /**
-   * Tests that changing @JsNamespace name on an exported method comes out accurately.
+   * Tests that changing Js namespace name on an exported method comes out accurately.
    *
    * <p>An unrelated and non-updated @JsType is also included in each compile to verify that updated
    * exports do not forget non-edited items in a recompile.
@@ -1036,26 +1043,23 @@ public class CompilerTest extends ArgProcessorTestBase {
   public void testChangeJsNamespaceOnMethod() throws Exception {
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
     compilerOptions.setUseDetailedTypeIds(true);
-    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
 
     MockJavaResource jsNamespaceFooResource =
         JavaResourceBase.createMockJavaResource(
             "com.foo.Foo",
             "package com.foo;",
-            "import com.google.gwt.core.client.js.JsExport;",
-            "import com.google.gwt.core.client.js.JsNamespace;",
-            "import com.google.gwt.core.client.js.JsType;",
-            "@JsExport public class Foo {",
-            "  @JsNamespace(\"spazz\") public static void doStaticBar() {}",
+            "import jsinterop.annotations.JsMethod;",
+            "import jsinterop.annotations.JsType;",
+            "@JsType public class Foo {",
+            "  @JsMethod(namespace=\"spazz\") public static void doStaticBar() {}",
             "}");
 
     MockJavaResource regularFooResource =
         JavaResourceBase.createMockJavaResource(
             "com.foo.Foo",
             "package com.foo;",
-            "import com.google.gwt.core.client.js.JsExport;",
-            "import com.google.gwt.core.client.js.JsType;",
-            "@JsExport public class Foo {",
+            "import jsinterop.annotations.JsType;",
+            "@JsType public class Foo {",
             "  public static void doStaticBar() {}",
             "}");
 
@@ -1070,7 +1074,7 @@ public class CompilerTest extends ArgProcessorTestBase {
   }
 
   /**
-   * Tests that changing @JsNamespace name on a class comes out accurately.
+   * Tests that changing Js namespace on a class comes out accurately.
    *
    * <p>An unrelated and non-updated @JsType is also included in each compile to verify that updated
    * exports do not forget non-edited items in a recompile.
@@ -1078,16 +1082,13 @@ public class CompilerTest extends ArgProcessorTestBase {
   public void testChangeJsNamespaceOnClass() throws Exception {
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
     compilerOptions.setUseDetailedTypeIds(true);
-    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
 
     MockJavaResource jsNamespaceFooResource =
         JavaResourceBase.createMockJavaResource(
             "com.foo.Foo",
             "package com.foo;",
-            "import com.google.gwt.core.client.js.JsExport;",
-            "import com.google.gwt.core.client.js.JsNamespace;",
-            "import com.google.gwt.core.client.js.JsType;",
-            "@JsNamespace(\"spazz\") @JsExport public class Foo {",
+            "import jsinterop.annotations.JsType;",
+            "@JsType(namespace=\"spazz\") public class Foo {",
             "  public static void doStaticBar() {}",
             "}");
 
@@ -1095,9 +1096,8 @@ public class CompilerTest extends ArgProcessorTestBase {
         JavaResourceBase.createMockJavaResource(
             "com.foo.Foo",
             "package com.foo;",
-            "import com.google.gwt.core.client.js.JsExport;",
-            "import com.google.gwt.core.client.js.JsType;",
-            "@JsExport public class Foo {",
+            "import jsinterop.annotations.JsType;",
+            "@JsType public class Foo {",
             "  public static void doStaticBar() {}",
             "}");
 
@@ -1120,13 +1120,12 @@ public class CompilerTest extends ArgProcessorTestBase {
   public void testChangeJsFunction() throws Exception {
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
     compilerOptions.setUseDetailedTypeIds(true);
-    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
 
     MockJavaResource jsFunctionIFooResource =
         JavaResourceBase.createMockJavaResource(
             "com.foo.IFoo",
             "package com.foo;",
-            "import com.google.gwt.core.client.js.JsFunction;",
+            "import jsinterop.annotations.JsFunction;",
             "@JsFunction public interface IFoo {",
             "  int foo(int x);",
             "}");
@@ -1143,8 +1142,7 @@ public class CompilerTest extends ArgProcessorTestBase {
         JavaResourceBase.createMockJavaResource(
             "com.foo.Foo",
             "package com.foo;",
-            "import com.google.gwt.core.client.js.JsExport;",
-            "@JsExport public class Foo implements IFoo {",
+            "public class Foo implements IFoo {",
             "  @Override public int foo(int x) { return 0; }",
             "}");
 
@@ -1152,10 +1150,10 @@ public class CompilerTest extends ArgProcessorTestBase {
         compilerOptions,
         "com.foo.SimpleModule",
         Lists.newArrayList(
-            simpleModuleResource, emptyEntryPointResource, fooResource, jsTypeBarResource),
+            simpleModuleResource, entryPointResourceForFoo, fooResource, jsTypeBarResource),
         regularIFooResource,
         jsFunctionIFooResource,
-        stringSet("com.foo.Bar", "com.foo.Foo", "com.foo.IFoo"),
+        stringSet("com.foo.Bar", "com.foo.Foo", "com.foo.IFoo", "com.foo.TestEntryPoint"),
         JsOutputOption.DETAILED);
   }
 
@@ -1168,14 +1166,13 @@ public class CompilerTest extends ArgProcessorTestBase {
   public void testChangeJsProperty() throws Exception {
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
     compilerOptions.setUseDetailedTypeIds(true);
-    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
 
     MockJavaResource jsPropertyIFooResource =
         JavaResourceBase.createMockJavaResource(
             "com.foo.IFoo",
             "package com.foo;",
-            "import com.google.gwt.core.client.js.JsProperty;",
-            "import com.google.gwt.core.client.js.JsType;",
+            "import jsinterop.annotations.JsProperty;",
+            "import jsinterop.annotations.JsType;",
             "@JsType public interface IFoo {",
             "  @JsProperty int getX();",
             "  @JsProperty int getY();",
@@ -1185,7 +1182,7 @@ public class CompilerTest extends ArgProcessorTestBase {
         JavaResourceBase.createMockJavaResource(
             "com.foo.IFoo",
             "package com.foo;",
-            "import com.google.gwt.core.client.js.JsType;",
+            "import jsinterop.annotations.JsType;",
             "@JsType public interface IFoo {",
             "  int getX();",
             "  int getY();",
@@ -1195,8 +1192,7 @@ public class CompilerTest extends ArgProcessorTestBase {
         JavaResourceBase.createMockJavaResource(
             "com.foo.Foo",
             "package com.foo;",
-            "import com.google.gwt.core.client.js.JsExport;",
-            "@JsExport public class Foo implements IFoo {",
+            "public class Foo implements IFoo {",
             "  @Override public int getX() { return 0; }",
             "  @Override public int getY() { return 0; }",
             "}");
@@ -1205,10 +1201,10 @@ public class CompilerTest extends ArgProcessorTestBase {
         compilerOptions,
         "com.foo.SimpleModule",
         Lists.newArrayList(
-            simpleModuleResource, emptyEntryPointResource, fooResource, jsTypeBarResource),
+            simpleModuleResource, entryPointResourceForFoo, fooResource, jsTypeBarResource),
         regularIFooResource,
         jsPropertyIFooResource,
-        stringSet("com.foo.Bar", "com.foo.Foo", "com.foo.IFoo"),
+        stringSet("com.foo.Bar", "com.foo.Foo", "com.foo.IFoo", "com.foo.TestEntryPoint"),
         JsOutputOption.DETAILED);
   }
 
@@ -1222,15 +1218,13 @@ public class CompilerTest extends ArgProcessorTestBase {
   public void testChangeJsType() throws Exception {
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
     compilerOptions.setUseDetailedTypeIds(true);
-    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
 
     MockJavaResource jsTypeFooResource =
         JavaResourceBase.createMockJavaResource(
             "com.foo.Foo",
             "package com.foo;",
-            "import com.google.gwt.core.client.js.JsExport;",
-            "import com.google.gwt.core.client.js.JsType;",
-            "@JsType @JsExport public class Foo {",
+            "import jsinterop.annotations.JsType;",
+            "@JsType public class Foo {",
             "  void doInstanceBar() {}",
             "  public static void doStaticBar() {}",
             "}");
@@ -1255,18 +1249,16 @@ public class CompilerTest extends ArgProcessorTestBase {
    * <p>An unrelated and non-updated @JsType is also included in each compile to verify that updated
    * exports do not forget non-edited items in a recompile.
    */
-  public void testChangeJsTypePrototype() throws Exception {
+  public void testChangeJsTypeNative() throws Exception {
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
     compilerOptions.setUseDetailedTypeIds(true);
-    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
 
-    MockJavaResource prototypeFooResource =
+    MockJavaResource nativeFooResource =
         JavaResourceBase.createMockJavaResource(
             "com.foo.Foo",
             "package com.foo;",
-            "import com.google.gwt.core.client.js.JsExport;",
-            "import com.google.gwt.core.client.js.JsType;",
-            "@JsType(prototype = \"window.Date\") @JsExport public class Foo {",
+            "import jsinterop.annotations.JsType;",
+            "@JsType(isNative=true) public class Foo {",
             "  public static void doStaticBar() {}",
             "}");
 
@@ -1274,9 +1266,8 @@ public class CompilerTest extends ArgProcessorTestBase {
         JavaResourceBase.createMockJavaResource(
             "com.foo.Foo",
             "package com.foo;",
-            "import com.google.gwt.core.client.js.JsExport;",
-            "import com.google.gwt.core.client.js.JsType;",
-            "@JsType @JsExport public class Foo {",
+            "import jsinterop.annotations.JsType;",
+            "@JsType public class Foo {",
             "  public static void doStaticBar() {}",
             "}");
 
@@ -1285,39 +1276,38 @@ public class CompilerTest extends ArgProcessorTestBase {
         "com.foo.SimpleModule",
         Lists.newArrayList(simpleModuleResource, emptyEntryPointResource, jsTypeBarResource),
         regularFooResource,
-        prototypeFooResource,
+        nativeFooResource,
         stringSet("com.foo.Bar", "com.foo.Foo"),
         JsOutputOption.DETAILED);
   }
 
   /**
-   * Tests that adding a @JsNoExport annotation on a method comes out accurately and that removing
+   * Tests that adding a @JsIgnore annotation on a method comes out accurately and that removing
    * it comes out accurately as well.
    *
    * <p>An unrelated and non-updated @JsType is also included in each compile to verify that updated
    * exports do not forget non-edited items in a recompile.
    */
-  public void testChangeJsNoExport() throws Exception {
+  public void testChangeJsIgnore() throws Exception {
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
     compilerOptions.setUseDetailedTypeIds(true);
-    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
 
-    MockJavaResource jsNoExportFooResource =
+    MockJavaResource jsIgnoreFooResource =
         JavaResourceBase.createMockJavaResource(
             "com.foo.Foo",
             "package com.foo;",
-            "import com.google.gwt.core.client.js.JsExport;",
-            "import com.google.gwt.core.client.js.JsNoExport;",
-            "@JsExport public class Foo {",
-            "  @JsNoExport public static void doStaticBar() {}",
+            "import jsinterop.annotations.JsIgnore;",
+            "import jsinterop.annotations.JsType;",
+            "@JsType public class Foo {",
+            "  @JsIgnore public static void doStaticBar() {}",
             "}");
 
     MockJavaResource regularFooResource =
         JavaResourceBase.createMockJavaResource(
             "com.foo.Foo",
             "package com.foo;",
-            "import com.google.gwt.core.client.js.JsExport;",
-            "@JsExport public class Foo {",
+            "import jsinterop.annotations.JsType;",
+            "@JsType public class Foo {",
             "  public static void doStaticBar() {}",
             "}");
 
@@ -1326,7 +1316,7 @@ public class CompilerTest extends ArgProcessorTestBase {
         "com.foo.SimpleModule",
         Lists.newArrayList(simpleModuleResource, emptyEntryPointResource, jsTypeBarResource),
         regularFooResource,
-        jsNoExportFooResource,
+        jsIgnoreFooResource,
         stringSet("com.foo.Bar", "com.foo.Foo"),
         JsOutputOption.DETAILED);
   }
@@ -1335,7 +1325,6 @@ public class CompilerTest extends ArgProcessorTestBase {
     MinimalRebuildCache minimalRebuildCache = new MinimalRebuildCache();
     File applicationDir = Files.createTempDir();
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
-    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS_RC);
 
     // Simple compile with one dialog.alert() export succeeds.
     compileToJs(compilerOptions, applicationDir, "com.foo.SimpleModule", Lists.newArrayList(
@@ -1981,7 +1970,8 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkRecompiledModifiedApp("com.foo.SuperFromStaleInnerModule",
         Lists.newArrayList(superFromStaleInnerModuleResource,
             superFromStaleInnerEntryPointResource), interfaceOneResource, interfaceOneResource,
-        stringSet(interfaceOneResource.getTypeName(), "com.foo.SuperFromStaleInnerEntryPoint$B$1"),
+        stringSet(interfaceOneResource.getTypeName(), "com.foo.SuperFromStaleInnerEntryPoint$B",
+            "com.foo.SuperFromStaleInnerEntryPoint$B$1"),
         output);
   }
 
@@ -2347,6 +2337,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     // Setup options to perform a per-file compile, output to this new application directory and
     // compile the given module.
     compilerOptions.setIncrementalCompileEnabled(true);
+    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS_RC);
     compilerOptions.setWarDir(applicationDir);
     compilerOptions.setModuleNames(ImmutableList.of(moduleName));
     compilerOptions.setOutput(output);

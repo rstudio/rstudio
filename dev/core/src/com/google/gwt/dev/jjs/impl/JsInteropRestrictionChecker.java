@@ -417,7 +417,7 @@ public class JsInteropRestrictionChecker {
       logError("'%s' cannot be both a JsFunction and a JsType at the same time.", type);
     }
 
-    Set<String> subTypes = jprogram.typeOracle.getSubTypeNames(type.getName());
+    Set<String> subTypes = jprogram.typeOracle.getSubInterfaceNames(type.getName());
     if (!subTypes.isEmpty()) {
       logError("JsFunction '%s' cannot be extended by other interfaces:%s", type, subTypes);
     }
@@ -437,7 +437,7 @@ public class JsInteropRestrictionChecker {
       logError("JsFunction implementation '%s' cannot extend a class.", type);
     }
 
-    Set<String> subTypes = jprogram.typeOracle.getSubTypeNames(type.getName());
+    Set<String> subTypes = jprogram.typeOracle.getSubClassNames(type.getName());
     if (!subTypes.isEmpty()) {
       logError("Implementation of JsFunction '%s' cannot be extended by other classes:%s", type,
           subTypes);

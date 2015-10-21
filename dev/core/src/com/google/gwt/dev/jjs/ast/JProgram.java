@@ -998,7 +998,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
   }
 
   public Collection<JType> getSubclasses(JType type) {
-    return Collections2.transform(typeOracle.getSubTypeNames(type.getName()),
+    return Collections2.transform(typeOracle.getSubClassNames(type.getName()),
         new Function<String, JType>() {
           @Override
           public JType apply(String typeName) {

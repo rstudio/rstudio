@@ -36,6 +36,7 @@ import com.google.gwt.thirdparty.guava.common.base.Predicates;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.thirdparty.guava.common.collect.Multimaps;
@@ -68,12 +69,7 @@ public class MinimalRebuildCache implements Serializable {
   private static void appendSubTypes(Set<String> accumulatedTypeNames, Set<String> parentTypeNames,
       JTypeOracle typeOracle) {
     for (String parentTypeName : parentTypeNames) {
-      Set<String> subTypeNames = typeOracle.getSubTypeNames(parentTypeName);
-      if (subTypeNames == null) {
-        // It must be a new type, thus there are no subtypes to invalidate.
-        continue;
-      }
-      accumulatedTypeNames.addAll(subTypeNames);
+      Iterables.addAll(accumulatedTypeNames, typeOracle.getSubTypeNames(parentTypeName));
     }
   }
 
