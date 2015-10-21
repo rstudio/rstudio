@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import org.rstudio.core.client.Counter;
-import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
