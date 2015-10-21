@@ -22,11 +22,15 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.junit.client.GWTTestCase;
 
+import javaemul.internal.annotations.DoNotInline;
+
 /**
  * Tests runAsync in various ways.
  */
 public class RunAsyncTest extends GWTTestCase {
   private static final String HELLO = "hello";
+
+  private static final String LONG_INTERNED_STRING = "abcdefghijklmnopqrstuvwxyz";
 
   private static final int RUNASYNC_TIMEOUT = 10000;
 
@@ -37,6 +41,11 @@ public class RunAsyncTest extends GWTTestCase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
+  }
+
+  @DoNotInline
+  public String getTestString() {
+    return LONG_INTERNED_STRING;
   }
 
   public void testBasic() {
@@ -55,6 +64,39 @@ public class RunAsyncTest extends GWTTestCase {
     });
   }
 
+  /**
+   * Only tests the XSLinker/CrossSiteRunAsyncSuite.
+   * A string which is only referenced in > 0 fragment which gets interned needs to be
+   * processed by HandleCrossFragmentReferences, but JsLiteralInterner was running after
+   * HandleCrossFragmentReferences.
+   */
+  public void testHandleCrossFragmentReference() {
+    delayTestFinish(RUNASYNC_TIMEOUT);
+
+    GWT.runAsync(new RunAsyncCallback() {
+      @Override
+      public void onFailure(Throwable caught) {
+        throw new RuntimeException(caught);
+      }
+
+      @Override
+      public void onSuccess() {
+        assertEquals(LONG_INTERNED_STRING, getTestString());
+        GWT.runAsync(new RunAsyncCallback() {
+          @Override
+          public void onFailure(Throwable caught) {
+            throw new RuntimeException(caught);
+          }
+
+          @Override
+          public void onSuccess() {
+            assertEquals(LONG_INTERNED_STRING, getTestString());
+            finishTest();
+          }
+        });
+      }
+    });
+  }
   /**
    * Unlike with pruning, writing to a field should rescue it for code-splitting
    * purposes.

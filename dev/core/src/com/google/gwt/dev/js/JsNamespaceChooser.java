@@ -19,6 +19,7 @@ import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
@@ -50,11 +51,12 @@ import java.util.Map;
  */
 public class JsNamespaceChooser {
 
-  public static void exec(JsProgram program, JavaToJavaScriptMap jjsmap) {
-    new JsNamespaceChooser(program, jjsmap).execImpl();
+  public static void exec(JProgram jprogram, JsProgram jsprogram, JavaToJavaScriptMap jjsmap) {
+    new JsNamespaceChooser(jprogram, jsprogram, jjsmap).execImpl();
   }
 
-  private final JsProgram program;
+  private final JProgram jprogram;
+  private final JsProgram jsprogram;
   private final JavaToJavaScriptMap jjsmap;
 
   /**
@@ -62,8 +64,9 @@ public class JsNamespaceChooser {
    */
   private final Map<String, JsName> packageToNamespace = Maps.newLinkedHashMap();
 
-  private JsNamespaceChooser(JsProgram program, JavaToJavaScriptMap jjsmap) {
-    this.program = program;
+  private JsNamespaceChooser(JProgram jprogram, JsProgram jsprogram, JavaToJavaScriptMap jjsmap) {
+    this.jsprogram = jsprogram;
+    this.jprogram = jprogram;
     this.jjsmap = jjsmap;
   }
 
@@ -72,7 +75,7 @@ public class JsNamespaceChooser {
     // First pass: visit each top-level statement in the program and move it if possible.
     // (This isn't a standard visitor because we don't want to recurse.)
 
-    List<JsStatement> globalStatements = program.getGlobalBlock().getStatements();
+    List<JsStatement> globalStatements = jsprogram.getGlobalBlock().getStatements();
     List<JsStatement> after = Lists.newArrayList();
     for (JsStatement before : globalStatements) {
       if (before instanceof JsVars) {
@@ -102,7 +105,7 @@ public class JsNamespaceChooser {
     globalStatements.addAll(after);
 
     // Second pass: fix all references for moved names.
-    new NameFixer().accept(program);
+    new NameFixer().accept(jsprogram);
   }
 
   /**
@@ -192,16 +195,13 @@ public class JsNamespaceChooser {
       return false; // not compiled from Java
     }
 
-    if (name.getStaticRef() instanceof JsFunction) {
-      JsFunction func = (JsFunction) name.getStaticRef();
-      if (program.isIndexedFunction(func)) {
-        return false; // may be called directly in another pass (for example JsStackEmulator).
-      }
+    if (isIndexedName(name)) {
+      return false; // may be called directly in another pass (for example JsStackEmulator).
     }
 
     JsName namespace = packageToNamespace.get(packageName);
     if (namespace == null) {
-      namespace = program.getScope().declareName(chooseUnusedName(packageName));
+      namespace = jsprogram.getScope().declareName(chooseUnusedName(packageName));
       packageToNamespace.put(packageName, namespace);
     }
 
@@ -209,11 +209,17 @@ public class JsNamespaceChooser {
     return true;
   }
 
+  private boolean isIndexedName(JsName name) {
+    return jprogram != null
+        && (jprogram.getIndexedMethods().contains(jjsmap.nameToMethod(name))
+            || jprogram.getIndexedFields().contains(jjsmap.nameToField(name)));
+  }
+
   private String chooseUnusedName(String packageName) {
     String initials = initialsForPackage(packageName);
     String candidate = initials;
     int counter = 1;
-    while (program.getScope().findExistingName(candidate) != null) {
+    while (jsprogram.getScope().findExistingName(candidate) != null) {
       counter++;
       candidate = initials + counter;
     }

@@ -20,6 +20,8 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethod.JsPropertyAccessorType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
+import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
 import com.google.gwt.dev.js.ast.JsBlock;
@@ -206,6 +208,16 @@ public class JsUtils {
     }
 
     return null;
+  }
+
+  public static JsName getJsNameForMethod(JavaToJavaScriptMap jjsmap, JProgram jprogram,
+      String indexedMethodName) {
+    return jjsmap.nameForMethod(jprogram.getIndexedMethod(indexedMethodName));
+  }
+
+  public static JsName getJsNameForField(JavaToJavaScriptMap jjsmap, JProgram jprogram,
+      String indexedMethodName) {
+    return jjsmap.nameForField(jprogram.getIndexedField(indexedMethodName));
   }
 
   public static boolean isEmpty(JsStatement stmt) {

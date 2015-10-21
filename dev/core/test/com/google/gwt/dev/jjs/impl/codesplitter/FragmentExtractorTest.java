@@ -24,21 +24,16 @@ import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.jjs.impl.JJSTestBase;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.ast.JsExprStmt;
-import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.js.ast.JsStatement;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Unit tests for {@link com.google.gwt.dev.jjs.impl.codesplitter.FragmentExtractor}.
@@ -185,19 +180,15 @@ public class FragmentExtractorTest extends JJSTestBase {
       final JsName barConstructorName = new JsName(null, "Bar", "Bar");
       final JConstructor barConstructor =
           new JConstructor(nullSourceInfo, barType, AccessModifier.PUBLIC);
-      Map<String, JsFunction> functionsByName = new HashMap<String, JsFunction>();
-      functionsByName.put(RuntimeConstants.RUNTIME_DEFINE_CLASS,
-          new JsFunction(nullSourceInfo, new JsRootScope(), DEFINE_CLASS_FUNCTION_NAME));
 
       final JsExprStmt defineClassStatement = createDefineClassStatement(barConstructorName);
 
       JsProgram jsProgram = new JsProgram();
-      jsProgram.setIndexedFunctions(functionsByName);
       // Defines the entirety of the JS program being split, to be the one defineClass statement.
       jsProgram.getGlobalBlock().getStatements().add(defineClassStatement);
 
       JavaToJavaScriptMap map = new MockJavaToJavaScriptMap() {
-          @Override
+        @Override
         public JMethod nameToMethod(JsName name) {
           if (name == barConstructorName) {
             // Finds the Bar constructor by name.
@@ -206,7 +197,7 @@ public class FragmentExtractorTest extends JJSTestBase {
           return null;
         }
 
-          @Override
+        @Override
         public JClassType typeForStatement(JsStatement statement) {
           if (statement == defineClassStatement) {
             // Indicates that Bar is the type associated with the defineClass statement.
@@ -215,7 +206,7 @@ public class FragmentExtractorTest extends JJSTestBase {
           return null;
         }
       };
-      fragmentExtractor = new FragmentExtractor(null, jsProgram, map);
+      fragmentExtractor = new FragmentExtractor(jsProgram, map, null, DEFINE_CLASS_FUNCTION_NAME);
       constructorLivePredicate = new MockLivenessPredicate() {
           @Override
         public boolean isLive(JDeclaredType type) {

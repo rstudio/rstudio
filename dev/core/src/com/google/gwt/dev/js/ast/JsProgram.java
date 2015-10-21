@@ -20,10 +20,6 @@ import com.google.gwt.dev.jjs.SourceOrigin;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * A JavaScript program.
@@ -33,12 +29,6 @@ public final class JsProgram extends JsNode {
   private final CorrelationFactory correlator;
 
   private JsProgramFragment[] fragments;
-
-  private final Map<String, JsName> indexedFields = new HashMap<String, JsName>();
-
-  private final Map<String, JsFunction> indexedFunctions = new HashMap<String, JsFunction>();
-
-  private final Set<JsFunction> indexedFunctionSet = new HashSet<JsFunction>();
 
   private final JsScope objectScope;
 
@@ -98,18 +88,6 @@ public final class JsProgram extends JsNode {
     return getFragmentBlock(0);
   }
 
-  public JsName getIndexedField(String name) {
-    return indexedFields.get(name);
-  }
-
-  public JsFunction getIndexedFunction(String name) {
-    return indexedFunctions.get(name);
-  }
-
-  public boolean isIndexedFunction(JsFunction func) {
-    return indexedFunctionSet.contains(func);
-  }
-
   @Override
   public NodeKind getKind() {
     return NodeKind.PROGRAM;
@@ -131,18 +109,6 @@ public final class JsProgram extends JsNode {
     for (int i = 0; i < fragments; i++) {
       this.fragments[i] = new JsProgramFragment(createSourceInfoSynthetic(JsProgram.class));
     }
-  }
-
-  public void setIndexedFields(Map<String, JsName> indexedFields) {
-    this.indexedFields.clear();
-    this.indexedFields.putAll(indexedFields);
-  }
-
-  public void setIndexedFunctions(Map<String, JsFunction> indexedFunctions) {
-    this.indexedFunctions.clear();
-    this.indexedFunctions.putAll(indexedFunctions);
-    this.indexedFunctionSet.clear();
-    this.indexedFunctionSet.addAll(indexedFunctions.values());
   }
 
   @Override

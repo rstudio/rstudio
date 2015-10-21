@@ -19,9 +19,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JMember;
-import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.js.ast.JsExpression;
-import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
@@ -29,7 +27,6 @@ import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Responsible for handling @JsExport code generation for non-Closure formatted code.
@@ -45,14 +42,14 @@ class DefaultJsInteropExportsGenerator implements JsInteropExportsGenerator {
 
   private final List<JsStatement> exportStmts;
   private final JsName globalTemp;
-  private final JsName provideFunc;
+  private final JsName provideFuncionName;
   private String lastExportedNamespace;
 
   public DefaultJsInteropExportsGenerator(List<JsStatement> exportStmts, JsName globalTemp,
-      Map<String, JsFunction> indexedFunctions) {
+      JsName provideFunctionName) {
     this.exportStmts = exportStmts;
     this.globalTemp = globalTemp;
-    this.provideFunc = indexedFunctions.get(RuntimeConstants.RUNTIME_PROVIDE).getName();
+    this.provideFuncionName = provideFunctionName;
   }
 
   @Override
@@ -96,7 +93,7 @@ class DefaultJsInteropExportsGenerator implements JsInteropExportsGenerator {
     // _ = JCHSU.provide('foo.bar')
     SourceInfo sourceInfo = member.getSourceInfo();
     JsInvocation provideCall = new JsInvocation(sourceInfo);
-    provideCall.setQualifier(provideFunc.makeRef(sourceInfo));
+    provideCall.setQualifier(provideFuncionName.makeRef(sourceInfo));
     provideCall.getArguments().add(new JsStringLiteral(sourceInfo, namespace));
     if (ctor != null) {
       provideCall.getArguments().add(ctor);

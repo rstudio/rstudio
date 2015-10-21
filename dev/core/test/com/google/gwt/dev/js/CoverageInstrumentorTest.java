@@ -17,25 +17,23 @@
 package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
-import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.thirdparty.guava.common.base.Splitter;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 
 import junit.framework.TestCase;
 
 import java.io.StringReader;
-import java.util.Map;
 
 /**
  * Tests for CoverageInstrumentor.
@@ -48,8 +46,6 @@ public class CoverageInstrumentorTest extends TestCase {
   public void setUp() {
     program = new JsProgram();
     SourceInfo info = program.createSourceInfo(1, "Test.java");
-    program.setIndexedFields(fields("CoverageUtil.coverage"));
-    program.setIndexedFunctions(functions("CoverageUtil.cover", "CoverageUtil.onBeforeUnload"));
     JsBlock globalBlock = program.getGlobalBlock();
     JsFunction function = new JsFunction(info, program.getScope());
     functionBody = new JsBlock(info);
@@ -57,28 +53,12 @@ public class CoverageInstrumentorTest extends TestCase {
     globalBlock.getStatements().add(new JsExprStmt(info, function));
   }
 
-  private Map<String, JsName> fields(String... names) {
-    Map<String, JsName> fields = Maps.newHashMap();
-    for (String name : names) {
-      JsName n = program.getScope().declareName(name, name);
-      fields.put(name, n);
-    }
-    return fields;
-  }
-
-  private Map<String, JsFunction> functions(String... names) {
-    Map<String, JsFunction> funcs = Maps.newHashMap();
-    for (String name : names) {
-      JsFunction f = new JsFunction(program.getSourceInfo(), program.getScope());
-      f.setName(program.getScope().declareName(name));
-      funcs.put(name, f);
-    }
-    return funcs;
-  }
-
   private String instrument(String code) throws Exception {
     functionBody.getStatements().clear();
-    CoverageInstrumentor.exec(program, parse(code));
+    CoverageInstrumentor.exec(program, parse(code),
+        program.getScope().declareName(RuntimeConstants.COVERAGE_UTIL_ON_BEFORE_UNLOAD),
+        program.getScope().declareName(RuntimeConstants.COVERAGE_UTIL_COVER),
+        program.getScope().declareName(RuntimeConstants.COVERAGE_UTIL_COVERAGE));
     return functionBody.toSource().trim().replaceAll("\\s+", " ");
   }
 

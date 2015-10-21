@@ -22,6 +22,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.ast.HasArguments;
 import com.google.gwt.dev.js.ast.HasName;
@@ -136,7 +137,7 @@ public class JsStackEmulator {
     }
 
     // caughtFunction is the JsFunction translated from Exceptions.wrap
-    if (name.getStaticRef() != wrapFunction) {
+    if (name != wrapFunctionName) {
       return false;
     }
     return true;
@@ -465,7 +466,7 @@ public class JsStackEmulator {
       JsName paramName = c.getParameter().getName();
 
       // wrap(e)
-      JsInvocation wrapCall = new JsInvocation(info, wrapFunction.getName().makeRef(info),
+      JsInvocation wrapCall = new JsInvocation(info, wrapFunctionName.makeRef(info),
           paramName.makeRef(info));
 
       // e = wrap(e)
@@ -966,7 +967,7 @@ public class JsStackEmulator {
     return StackMode.valueOf(value.toUpperCase(Locale.ROOT));
   }
 
-  private JsFunction wrapFunction;
+  private JsName wrapFunctionName;
   private JsName lineNumbers;
   private JProgram jprogram;
   private final JsProgram jsProgram;
@@ -1005,8 +1006,9 @@ public class JsStackEmulator {
   }
 
   private void execImpl() {
-    wrapFunction = jsProgram.getIndexedFunction("Exceptions.wrap");
-    if (wrapFunction == null) {
+    wrapFunctionName =
+        JsUtils.getJsNameForMethod(jjsmap, jprogram, RuntimeConstants.EXCEPTIONS_WRAP);
+    if (wrapFunctionName == null) {
       // No exceptions caught? Weird, but possible.
       return;
     }

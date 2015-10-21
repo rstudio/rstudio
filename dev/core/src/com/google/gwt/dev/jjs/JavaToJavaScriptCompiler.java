@@ -381,7 +381,7 @@ public final class JavaToJavaScriptCompiler {
 
       // TODO(stalcup): hide metrics gathering in a callback or subclass
       if (CoverageInstrumentor.isCoverageEnabled()) {
-        CoverageInstrumentor.exec(jsProgram, instrumentableLines);
+        CoverageInstrumentor.exec(jprogram, jsProgram, jjsmap, instrumentableLines);
       }
 
       // (6) Normalize the Js AST
@@ -389,15 +389,20 @@ public final class JavaToJavaScriptCompiler {
 
       // TODO(stalcup): move to AST construction
       JsSymbolResolver.exec(jsProgram);
+
       if (options.getNamespace() == JsNamespaceOption.PACKAGE) {
         if (!jprogram.getRunAsyncs().isEmpty()) {
           options.setNamespace(JsNamespaceOption.NONE);
           logger.log(TreeLogger.Type.WARN,
               "Namespace option is not compatible with CodeSplitter, turning it off.");
         } else {
-          JsNamespaceChooser.exec(jsProgram, jjsmap);
+          JsNamespaceChooser.exec(jprogram, jsProgram, jjsmap);
         }
       }
+
+      // TODO(stalcup): move to normalization
+      Pair<SyntheticArtifact, MultipleDependencyGraphRecorder> dependenciesAndRecorder =
+          splitJsIntoFragments(properties, permutationId, jjsmap);
 
       // TODO(stalcup): move to normalization
       EvalFunctionsAtTopScope.exec(jsProgram, jjsmap);
@@ -413,12 +418,12 @@ public final class JavaToJavaScriptCompiler {
       // Must run before code splitter and namer.
       JsStackEmulator.exec(jprogram, jsProgram, properties, jjsmap);
 
-      // TODO(stalcup): move to normalization
-      Pair<SyntheticArtifact, MultipleDependencyGraphRecorder> dependenciesAndRecorder =
-          splitJsIntoFragments(properties, permutationId, jjsmap);
-
       // TODO(stalcup): move to optimize.
       Map<JsName, JsLiteral> internedLiteralByVariableName = renameJsSymbols(properties, jjsmap);
+
+      // No new JsNames or references to JSNames can be introduced after this
+      // point.
+      HandleCrossFragmentReferences.exec(jsProgram, properties);
 
       // TODO(stalcup): move to normalization
       JsBreakUpLargeVarStatements.exec(jsProgram, properties.getConfigurationProperties());
@@ -599,12 +604,7 @@ public final class JavaToJavaScriptCompiler {
     } else if (options.isSoycEnabled() || options.isJsonSoycEnabled()) {
       dependencyRecorder = recordNonSplitDependencies(new ByteArrayOutputStream());
     }
-    dependenciesAndRecorder = Pair.create(
-        dependencies, dependencyRecorder);
-
-    // No new JsNames or references to JSNames can be introduced after this
-    // point.
-    HandleCrossFragmentReferences.exec(jsProgram, properties);
+    dependenciesAndRecorder = Pair.create(dependencies, dependencyRecorder);
 
     return dependenciesAndRecorder;
   }

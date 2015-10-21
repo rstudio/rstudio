@@ -162,7 +162,7 @@ public class JsNamespaceChooserTest extends TestCase {
         typeForStatement, vtableInitForMethod);
 
     // Run it.
-    JsNamespaceChooser.exec(program, jjsmap);
+    JsNamespaceChooser.exec(null, program, jjsmap);
   }
 
   private static JsProgram parseJs(String js) throws IOException, JsParserException {

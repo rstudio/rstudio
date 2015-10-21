@@ -16,7 +16,9 @@
 package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.RuntimeConstants;
+import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
 import com.google.gwt.dev.js.ast.JsContext;
@@ -24,6 +26,7 @@ import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsModVisitor;
+import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
@@ -64,15 +67,30 @@ public class CoverageInstrumentor {
         return;
       }
       JsInvocation update = new JsInvocation(info,
-          jsProgram.getIndexedFunction("CoverageUtil.cover"),
+          coverFnName.makeRef(info),
           new JsStringLiteral(info, info.getFileName()),
           new JsNumberLiteral(info, info.getStartLine()));
       ctx.replaceMe(new JsBinaryOperation(info, JsBinaryOperator.COMMA, update, x));
     }
   }
 
-  public static void exec(JsProgram jsProgram, Multimap<String, Integer> instrumentableLines) {
-    new CoverageInstrumentor(jsProgram, instrumentableLines).execImpl();
+  public static void exec(JProgram jprogram, JsProgram jsProgram, JavaToJavaScriptMap jjsmap,
+      Multimap<String, Integer> instrumentableLines) {
+
+    exec(jsProgram, instrumentableLines,
+        JsUtils
+            .getJsNameForMethod(jjsmap, jprogram, RuntimeConstants.COVERAGE_UTIL_ON_BEFORE_UNLOAD),
+        JsUtils.getJsNameForMethod(jjsmap, jprogram, RuntimeConstants.COVERAGE_UTIL_COVER),
+        JsUtils.getJsNameForField(jjsmap, jprogram, RuntimeConstants.COVERAGE_UTIL_COVERAGE));
+  }
+
+  @VisibleForTesting
+  static void exec(JsProgram jsProgram,
+      Multimap<String, Integer> instrumentableLines, JsName onBeforeUnloadFnName,
+      JsName coverFnName, JsName coverageFieldName) {
+
+    new CoverageInstrumentor(jsProgram, instrumentableLines, onBeforeUnloadFnName, coverFnName,
+        coverageFieldName).execImpl();
   }
 
   /**
@@ -95,17 +113,23 @@ public class CoverageInstrumentor {
 
   private Multimap<String, Integer> instrumentableLines;
   private JsProgram jsProgram;
+  private JsName onBeforeUnloadFnName;
+  private JsName coverFnName;
+  private JsName coverageFieldName;
 
-  private CoverageInstrumentor(JsProgram jsProgram, Multimap<String, Integer> instrumentableLines) {
+  private CoverageInstrumentor(JsProgram jsProgram, Multimap<String, Integer> instrumentableLines,
+      JsName onBeforeUnloadFnName, JsName coverFnName, JsName coverageFieldName) {
     this.instrumentableLines = instrumentableLines;
     this.jsProgram = jsProgram;
+    this.onBeforeUnloadFnName = onBeforeUnloadFnName;
+    this.coverFnName = coverFnName;
+    this.coverageFieldName = coverageFieldName;
   }
 
   private void addBeforeUnloadListener(SourceInfo info) {
     JsNameRef onbeforeunload = new JsNameRef(info, "onbeforeunload");
     onbeforeunload.setQualifier(new JsNameRef(info, "window"));
-    JsNameRef handler =
-        jsProgram.getIndexedFunction("CoverageUtil.onBeforeUnload").getName().makeRef(info);
+    JsNameRef handler = onBeforeUnloadFnName.makeRef(info);
     JsBinaryOperation assignment = new JsBinaryOperation(info, JsBinaryOperator.ASG,
         onbeforeunload, handler);
     jsProgram.getGlobalBlock().getStatements().add(assignment.makeStmt());
@@ -124,8 +148,7 @@ public class CoverageInstrumentor {
   }
 
   private void initializeBaselineCoverage(SourceInfo info) {
-    JsNameRef coverageObject =
-        jsProgram.getIndexedField(RuntimeConstants.COVERAGE_UTIL_COVERAGE).makeRef(info);
+    JsNameRef coverageObject = coverageFieldName.makeRef(info);
     JsBinaryOperation init = new JsBinaryOperation(info, JsBinaryOperator.ASG, coverageObject,
         baselineCoverage(info, instrumentableLines));
     jsProgram.getGlobalBlock().getStatements().add(init.makeStmt());

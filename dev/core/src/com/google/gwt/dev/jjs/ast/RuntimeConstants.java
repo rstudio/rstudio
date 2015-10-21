@@ -44,6 +44,8 @@ public class RuntimeConstants {
   public static final String COLLAPSED_PROPERTY_HOLDER_GET_PERMUTATION_ID
       = "CollapsedPropertyHolder.getPermutationId";
 
+  public static final String COVERAGE_UTIL_ON_BEFORE_UNLOAD = "CoverageUtil.onBeforeUnload";
+  public static final String COVERAGE_UTIL_COVER = "CoverageUtil.cover";
   public static final String COVERAGE_UTIL_COVERAGE = "CoverageUtil.coverage";
 
   public static final String ENUM_CREATE_VALUE_OF_MAP = "Enum.createValueOfMap";
@@ -64,6 +66,8 @@ public class RuntimeConstants {
   public static final String LONG_LIB_TO_DOUBLE = "LongLib.toDouble";
   public static final String LONG_LIB_TO_INT = "LongLib.toInt";
   public static final String LONG_LIB_TO_STRING = "LongLib.toString";
+
+  public static final String MODULE_UTILS_GWT_ON_LOAD = "ModuleUtils.gwtOnLoad";
 
   public static final String OBJECT_CASTABLE_TYPE_MAP = "Object.castableTypeMap";
   public static final String OBJECT_CLAZZ = "Object.___clazz";

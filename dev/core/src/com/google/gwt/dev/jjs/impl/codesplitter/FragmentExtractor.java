@@ -25,13 +25,13 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.JsHoister.Cloner;
+import com.google.gwt.dev.js.JsUtils;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsEmpty;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsExpression;
-import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
@@ -148,11 +148,12 @@ public class FragmentExtractor {
     return minimalDefineClassStatement;
   }
 
-  private final JProgram jprogram;
-
   private final JsProgram jsprogram;
 
   private final JavaToJavaScriptMap map;
+
+  private final JsName asyncFragmentLoaderOnLoadFnName;
+  private final JsName defineClassFnName;
 
   private StatementLogger statementLogger = new StatementLogger() {
     @Override
@@ -161,20 +162,26 @@ public class FragmentExtractor {
   };
 
   public FragmentExtractor(JProgram jprogram, JsProgram jsprogram, JavaToJavaScriptMap map) {
-    this.jprogram = jprogram;
+    this(jsprogram, map,
+        JsUtils.getJsNameForMethod(map, jprogram, RuntimeConstants.ASYNC_FRAGMENT_LOADER_ON_LOAD),
+        JsUtils.getJsNameForMethod(map, jprogram, (RuntimeConstants.RUNTIME_DEFINE_CLASS)));
+  }
+
+  public FragmentExtractor(JsProgram jsprogram, JavaToJavaScriptMap map,
+      JsName asyncFragmentLoaderOnLoadFnName, JsName defineClassFnName) {
     this.jsprogram = jsprogram;
     this.map = map;
+    this.asyncFragmentLoaderOnLoadFnName = asyncFragmentLoaderOnLoadFnName;
+    this.defineClassFnName = defineClassFnName;
   }
 
   /**
    * Create a call to {@link AsyncFragmentLoader#onLoad}.
    */
   public List<JsStatement> createOnLoadedCall(int fragmentId) {
-    JMethod loadMethod = jprogram.getIndexedMethod(RuntimeConstants.ASYNC_FRAGMENT_LOADER_ON_LOAD);
-    JsName loadMethodName = map.nameForMethod(loadMethod);
     SourceInfo sourceInfo = jsprogram.getSourceInfo();
     JsInvocation call = new JsInvocation(sourceInfo);
-    call.setQualifier(wrapWithEntry(loadMethodName.makeRef(sourceInfo)));
+    call.setQualifier(wrapWithEntry(asyncFragmentLoaderOnLoadFnName.makeRef(sourceInfo)));
     call.getArguments().add(new JsNumberLiteral(sourceInfo, fragmentId));
     List<JsStatement> newStats = Collections.<JsStatement> singletonList(call.makeStmt());
     return newStats;
@@ -409,9 +416,7 @@ public class FragmentExtractor {
         return null;
       }
       JsNameRef func = (JsNameRef) call.getQualifier();
-      JsFunction defineClassJsFunc =
-          jsprogram.getIndexedFunction(RuntimeConstants.RUNTIME_DEFINE_CLASS);
-      if (func.getName() != defineClassJsFunc.getName()) {
+      if (func.getName() != defineClassFnName) {
         return null;
       }
       return map.typeForStatement(statement);

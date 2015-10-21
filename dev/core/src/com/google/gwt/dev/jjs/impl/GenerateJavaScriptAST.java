@@ -246,9 +246,6 @@ public class GenerateJavaScriptAST {
                 : scopeStack.peek().declareName(mangleName(x), x.getName());
       }
       names.put(x, jsName);
-      if (program.getIndexedFields().contains(x)) {
-        indexedFields.put(JjsUtils.getIndexedName(x), jsName);
-      }
       recordSymbol(x, jsName);
     }
 
@@ -423,10 +420,6 @@ public class GenerateJavaScriptAST {
 
       jsFunctionsByJavaMethodBody.put(x.getBody(), function);
       scopeStack.push(function.getScope());
-
-      if (program.getIndexedMethods().contains(x)) {
-        indexedFunctions.put(JjsUtils.getIndexedName(x), function);
-      }
 
       // Don't traverse the method body of methods in referenceOnly types since those method bodies
       // only exist in JS output of other modules it is their responsibility to handle their naming.
@@ -1239,7 +1232,8 @@ public class GenerateJavaScriptAST {
       //  Perform necessary polyfills.
       addTypeDefinitionStatement(
           program.getIndexedType(RuntimeConstants.RUNTIME),
-          constructInvocation(program.getSourceInfo(), RuntimeConstants.RUNTIME_BOOTSTRAP).makeStmt());
+          constructInvocation(program.getSourceInfo(), RuntimeConstants.RUNTIME_BOOTSTRAP)
+              .makeStmt());
 
       Set<JDeclaredType> alreadyProcessed =
           Sets.<JDeclaredType>newLinkedHashSet(program.immortalCodeGenTypes);
@@ -1287,8 +1281,10 @@ public class GenerateJavaScriptAST {
           continue;
         }
 
-        JsExpression protoRef = getPrototypeQualifierOf(type, type.getSourceInfo());
-        JsNameRef clazzField = indexedFields.get("Object.___clazz").makeRef(type.getSourceInfo());
+        SourceInfo sourceInfo = type.getSourceInfo();
+        JsExpression protoRef = getPrototypeQualifierOf(type, sourceInfo);
+        JsNameRef clazzField =
+            getIndexedFieldJsName(RuntimeConstants.OBJECT_CLAZZ).makeRef(sourceInfo);
         clazzField.setQualifier(protoRef);
         JsExprStmt stmt = createAssignment(clazzField, classLiteralRef).makeStmt();
         addTypeDefinitionStatement(type, stmt);
@@ -1451,8 +1447,8 @@ public class GenerateJavaScriptAST {
       JsInteropExportsGenerator exportGenerator =
           closureCompilerFormatEnabled
               ? new ClosureJsInteropExportsGenerator(getGlobalStatements(), names)
-              : new DefaultJsInteropExportsGenerator(
-                  getGlobalStatements(), globalTemp, indexedFunctions);
+              : new DefaultJsInteropExportsGenerator(getGlobalStatements(), globalTemp,
+                  getIndexedMethodJsName(RuntimeConstants.RUNTIME_PROVIDE));
 
       // Gather exported things in JsNamespace order.
       for (JDeclaredType type : program.getDeclaredTypes()) {
@@ -1624,7 +1620,7 @@ public class GenerateJavaScriptAST {
               if (jsName == null) {
                 // this can occur when JSNI references an instance method on a
                 // type that was never actually instantiated.
-                jsName = indexedFunctions.get(RuntimeConstants.RUNTIME_EMPTY_METHOD).getName();
+                jsName = getIndexedMethodJsName(RuntimeConstants.RUNTIME_EMPTY_METHOD);
               }
               x.resolve(jsName);
             }
@@ -1782,9 +1778,7 @@ public class GenerateJavaScriptAST {
 
     private JsExpression generateCastableTypeMap(JDeclaredType type) {
       JCastMap castMap = program.getCastMap(type);
-      JField castableTypeMapField = program.getIndexedField(
-          RuntimeConstants.OBJECT_CASTABLE_TYPE_MAP);
-      JsName castableTypeMapName = names.get(castableTypeMapField);
+      JsName castableTypeMapName = getIndexedFieldJsName(RuntimeConstants.OBJECT_CASTABLE_TYPE_MAP);
 
       if (castMap != null && castableTypeMapName != null) {
         return transform(castMap);
@@ -1883,7 +1877,7 @@ public class GenerateJavaScriptAST {
       JsName gwtOnLoad = topScope.findExistingUnobfuscatableName("gwtOnLoad");
       JsVar varGwtOnLoad = new JsVar(sourceInfo, gwtOnLoad);
       varGwtOnLoad.setInitExpr(createAssignment(gwtOnLoad.makeRef(sourceInfo),
-          indexedFunctions.get("ModuleUtils.gwtOnLoad").getName().makeRef(sourceInfo)));
+          getIndexedMethodJsName(RuntimeConstants.MODULE_UTILS_GWT_ON_LOAD).makeRef(sourceInfo)));
       getGlobalStatements().add(new JsVars(sourceInfo, varGwtOnLoad));
 
       // ModuleUtils.addInitFunctions(init1, init2,...)
@@ -1945,8 +1939,8 @@ public class GenerateJavaScriptAST {
      */
     private JsInvocation constructInvocation(SourceInfo sourceInfo,
         String indexedFunctionName, List<JsExpression> args) {
-      JsFunction functionToInvoke = indexedFunctions.get(indexedFunctionName);
-      return new JsInvocation(sourceInfo, functionToInvoke, args);
+      JsName functionToInvoke = getIndexedMethodJsName(indexedFunctionName);
+      return new JsInvocation(sourceInfo, functionToInvoke.makeRef(sourceInfo), args);
     }
 
     private void generateImmortalTypes(JsVars globals) {
@@ -2159,16 +2153,16 @@ public class GenerateJavaScriptAST {
     }
 
     private void setupTypeMarkerOnJavaLangObjectPrototype(JDeclaredType type) {
-      JsFunction typeMarkerMethod = indexedFunctions.get(RuntimeConstants.RUNTIME_TYPE_MARKER_FN);
+      JsName typeMarkerMethod = getIndexedMethodJsName(RuntimeConstants.RUNTIME_TYPE_MARKER_FN);
       generatePrototypeAssignmentForJavaField(type, RuntimeConstants.OBJECT_TYPEMARKER,
-          typeMarkerMethod.getName().makeRef(type.getSourceInfo()));
+          typeMarkerMethod.makeRef(type.getSourceInfo()));
     }
 
     private void generatePrototypeAssignmentForJavaField(JDeclaredType type, String javaField,
         JsExpression rhs) {
       SourceInfo sourceInfo = type.getSourceInfo();
       JsNameRef protoRef = getPrototypeQualifierOf(type, sourceInfo);
-      JsNameRef fieldRef = indexedFields.get(javaField).makeQualifiedRef(sourceInfo, protoRef);
+      JsNameRef fieldRef = getIndexedFieldJsName(javaField).makeQualifiedRef(sourceInfo, protoRef);
       addTypeDefinitionStatement(type, createAssignment(fieldRef, rhs).makeStmt());
     }
 
@@ -2213,8 +2207,7 @@ public class GenerateJavaScriptAST {
      */
     private void setupCastMapForUnboxedType(JDeclaredType type, String castMapField) {
       //  Cast.[castMapName] = /* cast map */ { ..:1, ..:1}
-      JField castableTypeMapField = program.getIndexedField(castMapField);
-      JsName castableTypeMapName = names.get(castableTypeMapField);
+      JsName castableTypeMapName = getIndexedFieldJsName(castMapField);
       JsNameRef castMapVarRef = castableTypeMapName.makeRef(type.getSourceInfo());
 
       JsExpression castMapLiteral = generateCastableTypeMap(type);
@@ -2265,7 +2258,7 @@ public class GenerateJavaScriptAST {
       // Some JS optimizers, e.g. the closure compiler, relies on this subtle difference for
       // obfuscating property names.
       JsNameRef definePropertyMethod =
-          indexedFunctions.get(RuntimeConstants.RUNTIME_DEFINE_PROPERTIES).getName().makeRef(sourceInfo);
+          getIndexedMethodJsName(RuntimeConstants.RUNTIME_DEFINE_PROPERTIES).makeRef(sourceInfo);
 
       JsObjectLiteral definePropertyLiteral =
           JsObjectLiteral.builder(sourceInfo)
@@ -2422,10 +2415,10 @@ public class GenerateJavaScriptAST {
       // mode the more costly Object constructor function is used as the noop method since doing so
       // provides a better debug experience that does not step into already used clinits.
 
-      JsFunction emptyFunctionFn = incremental ? objectConstructorFunction
-          : indexedFunctions.get(RuntimeConstants.RUNTIME_EMPTY_METHOD);
+      JsName emptyFunctionFnName = incremental ? objectConstructorFunction.getName()
+          : getIndexedMethodJsName(RuntimeConstants.RUNTIME_EMPTY_METHOD);
       JsExpression assignment = createAssignment(clinitFunction.getName().makeRef(sourceInfo),
-          emptyFunctionFn.getName().makeRef(sourceInfo));
+          emptyFunctionFnName.makeRef(sourceInfo));
       statements.add(0, assignment.makeStmt());
     }
 
@@ -2820,10 +2813,6 @@ public class GenerateJavaScriptAST {
    */
   private Set<JMethod> crossClassTargets = null;
 
-  private Map<String, JsFunction> indexedFunctions = Maps.newHashMap();
-
-  private Map<String, JsName> indexedFields = Maps.newHashMap();
-
   /**
    * Contains JsNames for all interface methods. A special scope is needed so
    * that independent classes will obfuscate their interface implementation
@@ -3023,9 +3012,6 @@ public class GenerateJavaScriptAST {
     new CreateNamesAndScopesVisitor().accept(program);
     new GenerateJavaScriptTransformer().transform(program);
 
-    jsProgram.setIndexedFields(indexedFields);
-    jsProgram.setIndexedFunctions(indexedFunctions);
-
     // TODO(spoon): Instead of gathering the information here, get it via
     // SourceInfo
     JavaToJavaScriptMap jjsMap = new JavaToJavaScriptMapImpl(program.getDeclaredTypes(),
@@ -3039,5 +3025,13 @@ public class GenerateJavaScriptAST {
 
   private JsFunction getJsFunctionFor(JMethod jMethod) {
     return jsFunctionsByJavaMethodBody.get(jMethod.getBody());
+  }
+
+  private JsName getIndexedMethodJsName(String indexedName) {
+    return names.get(program.getIndexedMethod(indexedName));
+  }
+
+  private JsName getIndexedFieldJsName(String indexedName) {
+    return names.get(program.getIndexedField(indexedName));
   }
 }

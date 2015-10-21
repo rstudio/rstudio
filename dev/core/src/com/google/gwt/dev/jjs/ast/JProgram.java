@@ -38,6 +38,7 @@ import com.google.gwt.thirdparty.guava.common.collect.Collections2;
 import com.google.gwt.thirdparty.guava.common.collect.HashBiMap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
@@ -796,7 +797,8 @@ public class JProgram extends JNode implements ArrayTypeCreator {
         + "either ImplementClassLiteralsAsField has not run yet or or there is an error computing"
         + "live class literals.";
 
-    return new JMethodCall(sourceInfo, null, getIndexedMethod("Array.getClassLiteralForArray"),
+    return new JMethodCall(sourceInfo, null, getIndexedMethod(
+        RuntimeConstants.ARRAY_GET_CLASS_LITERAL_FOR_ARRAY),
         new JFieldRef(sourceInfo, null,  leafTypeClassLiteralField,
             leafTypeClassLiteralField.getEnclosingType()), getLiteralInt(dimensions));
   }
@@ -852,8 +854,8 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     return field;
   }
 
-  public Collection<JField> getIndexedFields() {
-    return Collections.unmodifiableCollection(indexedFields.values());
+  public Set<JField> getIndexedFields() {
+    return ImmutableSet.copyOf(indexedFields.values());
   }
 
   public JMethod getIndexedMethod(String string) {
@@ -864,8 +866,8 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     return method;
   }
 
-  public Collection<JMethod> getIndexedMethods() {
-    return Collections.unmodifiableCollection(indexedMethods.values());
+  public Set<JMethod> getIndexedMethods() {
+    return ImmutableSet.copyOf(indexedMethods.values());
   }
 
   public JMethod getIndexedMethodOrNull(String string) {

@@ -48,8 +48,7 @@ public class JsUnusedFunctionRemover {
       JsName name = f.getName();
 
       // Anonymous function, ignore it
-      if (name == null || seen.contains(name)
-          || program.getIndexedFunction("AsyncFragmentLoader.onLoad") == f) {
+      if (name == null || seen.contains(name)) {
         return;
       }
 
