@@ -82,6 +82,8 @@ public class AbstractSourceCreator {
   protected static String getJavaObjectTypeFor(JPrimitiveType type) {
     if (type == JPrimitiveType.INT) {
       return "Integer";
+    } else if (type == JPrimitiveType.CHAR){
+      return "Character";
     } else {
       String s = type.getSimpleSourceName();
       return s.substring(0, 1).toUpperCase(Locale.ROOT) + s.substring(1);
