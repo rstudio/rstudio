@@ -17,6 +17,7 @@ package com.google.gwt.core;
 
 import com.google.gwt.core.client.interop.JsExportTest;
 import com.google.gwt.core.client.interop.JsFunctionTest;
+import com.google.gwt.core.client.interop.JsMethodTest;
 import com.google.gwt.core.client.interop.JsPropertyTest;
 import com.google.gwt.core.client.interop.JsTypeArrayTest;
 import com.google.gwt.core.client.interop.JsTypeTest;
@@ -33,6 +34,7 @@ public class CoreJsInteropSuite {
 
     suite.addTestSuite(JsTypeTest.class);
     suite.addTestSuite(JsPropertyTest.class);
+    suite.addTestSuite(JsMethodTest.class);
     suite.addTestSuite(JsTypeArrayTest.class);
     suite.addTestSuite(JsExportTest.class);
     suite.addTestSuite(JsFunctionTest.class);

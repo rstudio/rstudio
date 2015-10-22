@@ -2541,6 +2541,7 @@ public class GenerateJavaScriptAST {
    */
   private static boolean doesNotHaveConcreteImplementation(JMethod method) {
     return method.isAbstract()
+        || method.isJsNative()
         || JjsUtils.isUnnecessarySyntheticAccidentalOverride(method)
         || (JProgram.isClinit(method)
             && method.getEnclosingType().getClinitTarget() != method.getEnclosingType());

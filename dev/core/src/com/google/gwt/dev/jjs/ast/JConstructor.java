@@ -93,6 +93,11 @@ public class JConstructor extends JMethod {
     return true;
   }
 
+  @Override
+  public boolean isJsNative() {
+    return getEnclosingType().isJsNative();
+  }
+
   /**
    * Returns <code>true</code> if this constructor does no real work.
    *
