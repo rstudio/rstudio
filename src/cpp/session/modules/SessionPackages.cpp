@@ -497,6 +497,11 @@ void onDetectChanges(module_context::ChangeSource source)
 
 void onDeferredInit(bool newSession)
 {
+   // Ensure we have a writeable user library
+   Error error = r::exec::RFunction(".rs.ensureWriteableUserLibrary").call();
+   if (error)
+      LOG_ERROR(error);
+
    // monitor libPaths for changes
    detectLibPathsChanges();
    module_context::events().onDetectChanges.connect(onDetectChanges);
