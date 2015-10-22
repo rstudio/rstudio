@@ -88,7 +88,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
          "Packrat",
          userAction,
          new Dependency[] {
-            Dependency.cranPackage("packrat", "0.4.4", true)
+            Dependency.cranPackage("packrat", "0.4.5", true)
          },
          false,
          command);
@@ -105,11 +105,11 @@ public class DependencyManager implements InstallShinyEvent.Handler
       deps.add(Dependency.cranPackage("RCurl", "1.95"));
       deps.add(Dependency.cranPackage("RJSONIO", "1.0"));
       deps.add(Dependency.cranPackage("PKI", "0.1"));
-      deps.add(Dependency.cranPackage("packrat", "0.4.4"));
       deps.add(Dependency.cranPackage("rstudioapi", "0.2"));
       deps.add(Dependency.cranPackage("yaml", "2.1.5"));
       if (requiresRmarkdown)
          deps.addAll(rmarkdownDependencies());
+      deps.add(Dependency.cranPackage("packrat", "0.4.5", true));
       deps.add(Dependency.embeddedPackage("rsconnect"));
       
       withDependencies(
