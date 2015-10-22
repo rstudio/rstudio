@@ -28,6 +28,7 @@ import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.application.ApplicationVisibility;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
@@ -99,6 +100,7 @@ public class Workbench implements BusyHandler,
                     ProfilerPresenter prof,  // required to force gin to create
                     ShinyApplication sApp,   // required to force gin to create
                     DependencyManager dm,    // required to force gin to create
+                    ApplicationVisibility av,// required to force gin to create
                     RmdOutput rmdOutput)     // required to force gin to create    
   {
       view_ = view;

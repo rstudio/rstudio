@@ -27,6 +27,7 @@ import org.rstudio.core.client.command.UserCommandManager;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationView;
+import org.rstudio.studio.client.application.ApplicationVisibility;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.ui.ApplicationWindow;
@@ -229,6 +230,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(WorkbenchListManager.class).asEagerSingleton();
       bind(ApplicationQuit.class).asEagerSingleton();
       bind(ApplicationInterrupt.class).asEagerSingleton();
+      bind(ApplicationVisibility.class).asEagerSingleton();
       bind(ClientStateUpdater.class).asEagerSingleton();
       bind(ConsoleProcessFactory.class).asEagerSingleton();
       bind(RnwWeaveRegistry.class).asEagerSingleton();
