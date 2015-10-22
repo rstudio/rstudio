@@ -137,6 +137,29 @@ public class TypeTightenerTest extends OptimizerTestBase {
     assertParameterTypes(result, "EntryPoint$Test2.fun(Ltest/EntryPoint$A;)V", "EntryPoint$B");
   }
 
+  public void testTightenParameterWithAccidentalOverrides() throws Exception {
+    // Test the assumption that accidental overrides can be safely deleted if the super method
+    // is still in place. That requires that the super method parameters not to be (over) tightened.
+    addSnippetClassDecl("interface I { boolean m1(Object obj); boolean m2(Object obj);}");
+    addSnippetClassDecl("static class A { public boolean m1(Object obj) { return obj == null; } }");
+    addSnippetClassDecl(
+        "static class B extends A {",
+        "  public boolean m2(Object obj) { return obj == null; }",
+        "}");
+    addSnippetClassDecl("static class C extends B implements I {}");
+    Result result = optimize("void",
+        "B b = new B();",
+        "b.m1(null);",
+        "b.m2(b);",
+        "C c = new C();",
+        "c.m1(c);",
+        "c.m2(c);");
+    assertParameterTypes(result, "EntryPoint$A.m1(Ljava/lang/Object;)Z", "Object");
+    // This one could be tighetened safely to EntryPoint$B but typetighener does not
+    // tighten parameters in polymorphic method calls.
+    assertParameterTypes(result, "EntryPoint$B.m2(Ljava/lang/Object;)Z", "Object");
+  }
+
   public void testMethodBasedOnLeafType() throws Exception {
     addSnippetClassDecl("abstract static class A { void makeSureFunIsCalled() {fun(this);} }");
     addSnippetClassDecl("static class B extends A {}");
@@ -213,6 +236,7 @@ public class TypeTightenerTest extends OptimizerTestBase {
     program.addEntryMethod(findMainMethod(program));
     boolean didChange = false;
     while (TypeTightener.exec(program).didChange()) {
+      MethodCallTightener.exec(program);
       DeadCodeElimination.exec(program);
       didChange = true;
     }
