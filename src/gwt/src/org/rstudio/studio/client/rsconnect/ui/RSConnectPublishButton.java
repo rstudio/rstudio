@@ -54,12 +54,15 @@ import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCancelledEvent;
+import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -744,6 +747,18 @@ public class RSConnectPublishButton extends Composite
    private void renderThenPublish(final String target,
          final RSConnectDeploymentRecord previous)
    {
+      // If the target is null, save and try again.
+      if (target == null && saveBeforeRenderHandler_ == null)
+      {
+         addSaveThenRenderHandlers();
+         commands_.saveSourceDocAs().execute();
+         return;
+      }
+      
+      // If we don't have a target, return (the user cancelled the save dialog)
+      if (target == null)
+         return;
+      
       final Command renderCommand = new Command() 
       {
          @Override
@@ -785,6 +800,53 @@ public class RSConnectPublishButton extends Composite
          }
       });
    }
+   
+   private void addSaveThenRenderHandlers()
+   {
+      if (saveBeforeRenderHandler_ == null)
+      {
+         saveBeforeRenderHandler_ = events_.addHandler(
+               SourceFileSaveCompletedEvent.TYPE,
+               new SourceFileSaveCompletedEvent.Handler()
+               {
+                  @Override
+                  public void onSourceFileSaveCompleted(SourceFileSaveCompletedEvent event)
+                  {
+                     clearSaveThenRenderHandlers();
+                     onPublishButtonClick();
+                  }
+               });
+      }
+
+      if (saveCancelledHandler_ == null)
+      {
+         saveCancelledHandler_ = events_.addHandler(
+               SourceFileSaveCancelledEvent.TYPE,
+               new SourceFileSaveCancelledEvent.Handler()
+               {
+                  @Override
+                  public void onSourceFileSaveCancelled(SourceFileSaveCancelledEvent event)
+                  {
+                     clearSaveThenRenderHandlers();
+                  }
+               });
+      }
+   }
+   
+   private void clearSaveThenRenderHandlers()
+   {
+      if (saveBeforeRenderHandler_ != null)
+      {
+         saveBeforeRenderHandler_.removeHandler();
+         saveBeforeRenderHandler_ = null;
+      }
+
+      if (saveCancelledHandler_ != null)
+      {
+         saveCancelledHandler_.removeHandler();
+         saveCancelledHandler_ = null;
+      }
+   }
 
    private final ToolbarButton publishButton_;
    private final DeploymentPopupMenu publishMenu_;
@@ -816,6 +878,9 @@ public class RSConnectPublishButton extends Composite
    private final AppCommand boundCommand_;
 
    private RSConnectDeploymentRecord defaultRec_;
+   
+   private static HandlerRegistration saveBeforeRenderHandler_ = null;
+   private static HandlerRegistration saveCancelledHandler_ = null;
    
    private static boolean anyRmdRenderPending_ = false;
 }

@@ -20,6 +20,11 @@ import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCancelledEvent;
+
+import com.google.inject.Inject;
 
 public class SaveFileDialog extends FileDialog
 {
@@ -30,8 +35,15 @@ public class SaveFileDialog extends FileDialog
                          ProgressOperationWithInput<FileSystemItem> operation)
    {
       super(title, null, "Save", true, true, true, context, "", operation);
+      RStudioGinjector.INSTANCE.injectMembers(this);
       defaultExtension_ = defaultExtension;
       forceDefaultExtension_ = forceDefaultExtension;
+   }
+   
+   @Inject
+   private void initialize(EventBus events)
+   {
+      events_ = events;
    }
 
    @Override
@@ -82,6 +94,15 @@ public class SaveFileDialog extends FileDialog
       return forceDefaultExtension_;
    }
    
+   @Override
+   protected void onCancel()
+   {
+      events_.fireEvent(new SourceFileSaveCancelledEvent());
+   }
+   
    private final String defaultExtension_;
    private final boolean forceDefaultExtension_;
+   
+   // Injected ----
+   private EventBus events_;
 }

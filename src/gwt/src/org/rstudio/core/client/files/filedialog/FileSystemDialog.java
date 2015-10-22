@@ -123,6 +123,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
             {
                operation_.execute(null, FileSystemDialog.this);
             }
+            onCancel();
             closeDialog();
          }
       }));
@@ -163,6 +164,8 @@ public abstract class FileSystemDialog extends ModalDialogBase
       else
          maybeAccept();
    }
+   
+   protected void onCancel() {}
 
    /**
     * Accept if validation passes
