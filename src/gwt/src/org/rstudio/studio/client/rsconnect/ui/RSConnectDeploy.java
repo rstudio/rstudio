@@ -44,6 +44,8 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -739,7 +741,15 @@ public class RSConnectDeploy extends Composite
                            FileSystemItem.createFile(
                                  source_.getDeployFile()).getName());
                   }
-                  indicator.clearProgress();
+                  
+                  Scheduler.get().scheduleDeferred(new ScheduledCommand()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        indicator.clearProgress();
+                     }
+                  });
                }
                @Override
                public void onError(ServerError error)
