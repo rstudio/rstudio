@@ -209,7 +209,6 @@ public class JsFunctionTest extends GWTTestCase {
     assertTrue(object instanceof MyJsFunctionIdentityInterface);
     assertTrue(object instanceof MyJsFunctionWithOnlyInstanceofReference);
     assertFalse(object instanceof MyJsFunctionInterfaceImpl);
-    assertTrue(object instanceof ElementLikeNativeInterface);
   }
 
   public void testInstanceOf_jsObject() {
@@ -218,7 +217,6 @@ public class JsFunctionTest extends GWTTestCase {
     assertFalse(object instanceof MyJsFunctionIdentityInterface);
     assertFalse(object instanceof MyJsFunctionWithOnlyInstanceofReference);
     assertFalse(object instanceof MyJsFunctionInterfaceImpl);
-    assertTrue(object instanceof ElementLikeNativeInterface);
   }
 
   public void testInstanceOf_javaInstance() {
@@ -227,7 +225,6 @@ public class JsFunctionTest extends GWTTestCase {
     assertTrue(object instanceof MyJsFunctionInterfaceImpl);
     assertTrue(object instanceof MyJsFunctionIdentityInterface);
     assertTrue(object instanceof MyJsFunctionWithOnlyInstanceofReference);
-    assertTrue(object instanceof ElementLikeNativeInterface);
     assertFalse(object instanceof HTMLElementConcreteNativeJsType);
   }
 

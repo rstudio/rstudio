@@ -15,8 +15,6 @@
  */
 package com.google.gwt.core.client.interop;
 
-import static com.google.gwt.core.client.ScriptInjector.TOP_WINDOW;
-
 import static jsinterop.annotations.JsPackage.GLOBAL;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -46,7 +44,8 @@ public class JsTypeTest extends GWTTestCase {
     ScriptInjector.fromString("function JsTypeTest_MyNativeJsType() {}\n"
         + "JsTypeTest_MyNativeJsType.prototype.sum = "
         + "    function sum(bias) { return this.y + bias; };")
-        .setWindow(TOP_WINDOW).inject();
+        .setWindow(ScriptInjector.TOP_WINDOW)
+        .inject();
   }
 
   public void testVirtualUpRefs() {
@@ -213,12 +212,9 @@ public class JsTypeTest extends GWTTestCase {
     assertFalse(object instanceof HTMLButtonElement);
     assertFalse(object instanceof HTMLElementConcreteNativeJsType);
     assertFalse(object instanceof Iterator);
-    assertTrue(object instanceof MyNativeJsTypeInterface);
     assertFalse(object instanceof MyNativeJsTypeInterfaceImpl);
-    assertTrue(object instanceof ElementLikeNativeInterface);
     assertFalse(object instanceof ElementLikeNativeInterfaceImpl);
     assertFalse(object instanceof MyJsInterfaceWithOnlyInstanceofReference);
-    assertTrue(object instanceof MyNativeJsTypeInterfaceAndOnlyInstanceofReference);
     assertTrue(object instanceof AliasToMyNativeJsTypeWithOnlyInstanceofReference);
     assertFalse(object instanceof ConcreteJsType);
   }
@@ -231,12 +227,9 @@ public class JsTypeTest extends GWTTestCase {
     assertFalse(object instanceof HTMLButtonElement);
     assertFalse(object instanceof HTMLElementConcreteNativeJsType);
     assertFalse(object instanceof Iterator);
-    assertTrue(object instanceof MyNativeJsTypeInterface);
     assertFalse(object instanceof MyNativeJsTypeInterfaceImpl);
-    assertTrue(object instanceof ElementLikeNativeInterface);
     assertFalse(object instanceof ElementLikeNativeInterfaceImpl);
     assertFalse(object instanceof MyJsInterfaceWithOnlyInstanceofReference);
-    assertTrue(object instanceof MyNativeJsTypeInterfaceAndOnlyInstanceofReference);
     assertFalse(object instanceof AliasToMyNativeJsTypeWithOnlyInstanceofReference);
     assertFalse(object instanceof ConcreteJsType);
   }
@@ -249,12 +242,9 @@ public class JsTypeTest extends GWTTestCase {
     assertTrue(object instanceof HTMLButtonElement);
     assertTrue(object instanceof HTMLElementConcreteNativeJsType);
     assertFalse(object instanceof Iterator);
-    assertTrue(object instanceof MyNativeJsTypeInterface);
     assertFalse(object instanceof MyNativeJsTypeInterfaceImpl);
-    assertTrue(object instanceof ElementLikeNativeInterface);
     assertFalse(object instanceof ElementLikeNativeInterfaceImpl);
     assertFalse(object instanceof MyJsInterfaceWithOnlyInstanceofReference);
-    assertTrue(object instanceof MyNativeJsTypeInterfaceAndOnlyInstanceofReference);
     assertFalse(object instanceof AliasToMyNativeJsTypeWithOnlyInstanceofReference);
     assertFalse(object instanceof ConcreteJsType);
   }
@@ -268,12 +258,9 @@ public class JsTypeTest extends GWTTestCase {
     assertFalse(object instanceof HTMLButtonElement);
     assertFalse(object instanceof HTMLElementConcreteNativeJsType);
     assertFalse(object instanceof Iterator);
-    assertTrue(object instanceof MyNativeJsTypeInterface);
     assertFalse(object instanceof MyNativeJsTypeInterfaceImpl);
-    assertTrue(object instanceof ElementLikeNativeInterface);
     assertTrue(object instanceof ElementLikeNativeInterfaceImpl);
     assertFalse(object instanceof MyJsInterfaceWithOnlyInstanceofReference);
-    assertTrue(object instanceof MyNativeJsTypeInterfaceAndOnlyInstanceofReference);
     assertFalse(object instanceof AliasToMyNativeJsTypeWithOnlyInstanceofReference);
     assertFalse(object instanceof ConcreteJsType);
   }
@@ -287,12 +274,9 @@ public class JsTypeTest extends GWTTestCase {
     assertFalse(object instanceof HTMLButtonElement);
     assertFalse(object instanceof HTMLElementConcreteNativeJsType);
     assertFalse(object instanceof Iterator);
-    assertTrue(object instanceof MyNativeJsTypeInterface);
     assertTrue(object instanceof MyNativeJsTypeInterfaceImpl);
-    assertTrue(object instanceof ElementLikeNativeInterface);
     assertFalse(object instanceof ElementLikeNativeInterfaceImpl);
     assertFalse(object instanceof MyJsInterfaceWithOnlyInstanceofReference);
-    assertTrue(object instanceof MyNativeJsTypeInterfaceAndOnlyInstanceofReference);
     assertFalse(object instanceof AliasToMyNativeJsTypeWithOnlyInstanceofReference);
     assertFalse(object instanceof ConcreteJsType);
   }
@@ -306,12 +290,9 @@ public class JsTypeTest extends GWTTestCase {
     assertFalse(object instanceof HTMLButtonElement);
     assertFalse(object instanceof HTMLElementConcreteNativeJsType);
     assertFalse(object instanceof Iterator);
-    assertTrue(object instanceof MyNativeJsTypeInterface);
     assertFalse(object instanceof MyNativeJsTypeInterfaceImpl);
-    assertTrue(object instanceof ElementLikeNativeInterface);
     assertFalse(object instanceof ElementLikeNativeInterfaceImpl);
     assertFalse(object instanceof MyJsInterfaceWithOnlyInstanceofReference);
-    assertTrue(object instanceof MyNativeJsTypeInterfaceAndOnlyInstanceofReference);
     assertFalse(object instanceof AliasToMyNativeJsTypeWithOnlyInstanceofReference);
     assertTrue(object instanceof ConcreteJsType);
   }
@@ -325,12 +306,9 @@ public class JsTypeTest extends GWTTestCase {
     assertTrue(object instanceof HTMLButtonElement);
     assertTrue(object instanceof HTMLElementConcreteNativeJsType);
     assertTrue(object instanceof Iterable);
-    assertTrue(object instanceof MyNativeJsTypeInterface);
     assertFalse(object instanceof MyNativeJsTypeInterfaceImpl);
-    assertTrue(object instanceof ElementLikeNativeInterface);
     assertFalse(object instanceof ElementLikeNativeInterfaceImpl);
     assertFalse(object instanceof MyJsInterfaceWithOnlyInstanceofReference);
-    assertTrue(object instanceof MyNativeJsTypeInterfaceAndOnlyInstanceofReference);
     assertFalse(object instanceof AliasToMyNativeJsTypeWithOnlyInstanceofReference);
     assertFalse(object instanceof ConcreteJsType);
   }

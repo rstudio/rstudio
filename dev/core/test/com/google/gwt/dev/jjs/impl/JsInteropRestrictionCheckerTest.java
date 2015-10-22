@@ -992,6 +992,18 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     assertBuggySucceeds();
   }
 
+  public void testJsTypeInterfaceInInstanceofFails() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetClassDecl(
+        "@JsType(isNative=true) public interface IBuggy {}",
+        "@JsType public static class Buggy {",
+        "  public Buggy() { if (new Object() instanceof IBuggy) {} }",
+        "}");
+
+    assertBuggyFails("Cannot do instanceof against native JsType interface test.EntryPoint$IBuggy "
+        + "(test/EntryPoint.java:6).");
+  }
+
   public void testNativeJsTypeEnumFails() {
     addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
