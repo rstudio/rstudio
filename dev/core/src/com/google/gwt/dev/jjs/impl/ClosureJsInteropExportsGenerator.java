@@ -68,11 +68,10 @@ class ClosureJsInteropExportsGenerator implements JsInteropExportsGenerator {
    */
   @Override
   public void exportType(JDeclaredType x) {
-    if (!x.isJsNative() && !x.isJsFunction()) {
-      // Note that synthesized constructors use the name of the declared types.
-      generateExport(x.getQualifiedJsName(), x.getQualifiedJsName(),
-          names.get(x).makeRef(x.getSourceInfo()), x.getSourceInfo());
-    }
+    assert !x.isJsNative() && !x.isJsFunction();
+    // Note that synthesized constructors use the name of the declared types.
+    generateExport(x.getQualifiedJsName(), x.getQualifiedJsName(),
+        names.get(x).makeRef(x.getSourceInfo()), x.getSourceInfo());
   }
 
   /*

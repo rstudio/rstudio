@@ -110,7 +110,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanHaveSup
       return true;
     }
     for (JMethod overriddenMethod : getOverriddenMethods()) {
-      if (exported || overriddenMethod.isJsFunctionMethod()) {
+      if (overriddenMethod.exported || overriddenMethod.isJsFunctionMethod()) {
         return true;
       }
     }

@@ -119,6 +119,24 @@ public class JsTypeTest extends GWTTestCase {
     assertEquals(101, concreteJsType.notTypeTightenedField.x());
   }
 
+  @JsType
+  interface A {
+    boolean m(Object o);
+  }
+
+  private static class AImpl implements A {
+    @Override
+    public boolean m(Object o) {
+      return o == null;
+    }
+  }
+
+  public void testNativeMethodOverrideNoTypeTightenParam() {
+    AImpl a = new AImpl();
+    assertTrue(a.m(null));
+    assertFalse((Boolean) callFunction(a, "m", new Object()));
+  }
+
   private native void setTheField(ConcreteJsType obj, ConcreteJsType.A value)/*-{
     obj.notTypeTightenedField = value;
   }-*/;
@@ -374,6 +392,10 @@ public class JsTypeTest extends GWTTestCase {
 
   private static native int callIntFunction(Object object, String functionName) /*-{
     return object[functionName]();
+  }-*/;
+
+  private static native Object callFunction(Object object, String functionName, Object param) /*-{
+    return object[functionName](param);
   }-*/;
 
   private static native Object createNativeButton() /*-{
