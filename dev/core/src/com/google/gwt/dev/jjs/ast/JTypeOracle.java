@@ -445,17 +445,21 @@ public class JTypeOracle implements Serializable {
    */
   private boolean canCrossCastLikeJso(JType type) {
     if (legacyJsInterop) {
-      return canBeJavaScriptObject(type) || isNativeJsType(type)
+      return canBeJavaScriptObject(type) || isNativeJsTypeClass(type)
           || isNonNativeJsTypeInterface(type);
     }
-    return canBeJavaScriptObject(type) || type.isJsNative();
+    return canBeJavaScriptObject(type);
+  }
+
+  private boolean isJsInteropCrossCastTarget(JType type) {
+    return type.isJsNative() || type.isJsFunction();
   }
 
   public boolean isNonNativeJsTypeInterface(JType type) {
     return type.isJsType() && type instanceof JInterfaceType && !type.isJsNative();
   }
 
-  private boolean isNativeJsType(JType type) {
+  private boolean isNativeJsTypeClass(JType type) {
     return type.isJsNative() && type instanceof JClassType;
   }
 
@@ -463,6 +467,10 @@ public class JTypeOracle implements Serializable {
     if (!fromType.canBeNull() && toType.isNullType()) {
       // Cannot cast non-nullable to null
       return true;
+    }
+
+    if (isJsInteropCrossCastTarget(toType.getUnderlyingType())) {
+      return false;
     }
 
     if (!fromType.canBeSubclass() && fromType.getUnderlyingType() instanceof JClassType &&

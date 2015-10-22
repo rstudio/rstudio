@@ -20,6 +20,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 /**
  * Tests JsFunction functionality.
  */
+@SuppressWarnings("cast")
 public class JsFunctionTest extends GWTTestCase {
 
   @Override
@@ -176,7 +177,7 @@ public class JsFunctionTest extends GWTTestCase {
   }
 
   public void testCast_inJava() {
-    Object object = alwaysTrue() ? new MyJsFunctionInterfaceImpl() : new Object();
+    Object object = new MyJsFunctionInterfaceImpl();
     MyJsFunctionInterface c1 = (MyJsFunctionInterface) object;
     assertNotNull(c1);
     MyJsFunctionInterfaceImpl c2 = (MyJsFunctionInterfaceImpl) c1;
@@ -197,7 +198,7 @@ public class JsFunctionTest extends GWTTestCase {
   }
 
   public void testCast_crossCastJavaInstance() {
-    Object o = alwaysTrue() ? new MyJsFunctionInterfaceImpl() : new Object();
+    Object o = new MyJsFunctionInterfaceImpl();
     assertEquals(11, ((MyOtherJsFunctionInterface) o).bar(10));
     assertSame((MyJsFunctionInterface) o, (MyOtherJsFunctionInterface) o);
   }
@@ -221,7 +222,7 @@ public class JsFunctionTest extends GWTTestCase {
   }
 
   public void testInstanceOf_javaInstance() {
-    Object object = alwaysTrue() ? new MyJsFunctionInterfaceImpl() : new Object();
+    Object object = new MyJsFunctionInterfaceImpl();
     assertTrue(object instanceof MyJsFunctionInterface);
     assertTrue(object instanceof MyJsFunctionInterfaceImpl);
     assertTrue(object instanceof MyJsFunctionIdentityInterface);
@@ -296,9 +297,5 @@ public class JsFunctionTest extends GWTTestCase {
   private static native Object createObject() /*-{
     var a = {};
     return a;
-  }-*/;
-
-  private static native boolean alwaysTrue() /*-{
-    return !!$wnd;
   }-*/;
 }

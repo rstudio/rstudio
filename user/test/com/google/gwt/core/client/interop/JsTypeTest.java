@@ -33,6 +33,7 @@ import jsinterop.annotations.JsType;
 /**
  * Tests JsType functionality.
  */
+@SuppressWarnings("cast")
 public class JsTypeTest extends GWTTestCase {
 
   @Override
@@ -53,12 +54,12 @@ public class JsTypeTest extends GWTTestCase {
     FooImpl listNoExport = new FooImpl(); // Does not export .add().
 
     // Use a loose type reference to force polymorphic dispatch.
-    Collection collectionWithExport = alwaysTrue() ? listWithExport : listNoExport;
+    Collection collectionWithExport = listWithExport;
     collectionWithExport.add("Loose");
     assertEquals("LooseListImpl", listWithExport.x);
 
     // Use a loose type reference to force polymorphic dispatch.
-    Collection collectionNoExport = alwaysTrue() ? listNoExport : listWithExport;
+    Collection collectionNoExport = listNoExport;
     collectionNoExport.add("Loose");
     assertEquals("LooseCollectionBaseFooImpl", listNoExport.x);
 
@@ -135,12 +136,7 @@ public class JsTypeTest extends GWTTestCase {
 
     ConcreteJsTypeJsSubclass subclass = new ConcreteJsTypeJsSubclass();
     assertEquals(100, subclass.publicMethodAlsoExposedAsNonJsMethod());
-    SubclassInterface subclassInterface = alwaysTrue() ? subclass : new SubclassInterface() {
-      @Override
-      public int publicMethodAlsoExposedAsNonJsMethod() {
-        return 0;
-      }
-    };
+    SubclassInterface subclassInterface = subclass;
     assertEquals(100, subclassInterface.publicMethodAlsoExposedAsNonJsMethod());
   }
 
@@ -247,7 +243,7 @@ public class JsTypeTest extends GWTTestCase {
 
   public void testInstanceOf_implementsJsType() {
     // Foils type tightening.
-    Object object = alwaysTrue() ? new ElementLikeNativeInterfaceImpl() : new Object();
+    Object object = new ElementLikeNativeInterfaceImpl();
 
     assertTrue(object instanceof Object);
     assertFalse(object instanceof HTMLElementAnotherConcreteNativeJsType);
@@ -266,7 +262,7 @@ public class JsTypeTest extends GWTTestCase {
 
   public void testInstanceOf_implementsJsTypeWithPrototype() {
     // Foils type tightening.
-    Object object = alwaysTrue() ? new MyNativeJsTypeInterfaceImpl() : new Object();
+    Object object = new MyNativeJsTypeInterfaceImpl();
 
     assertTrue(object instanceof Object);
     assertFalse(object instanceof HTMLElementAnotherConcreteNativeJsType);
@@ -285,7 +281,7 @@ public class JsTypeTest extends GWTTestCase {
 
   public void testInstanceOf_concreteJsType() {
     // Foils type tightening.
-    Object object = alwaysTrue() ? new ConcreteJsType() : new Object();
+    Object object = new ConcreteJsType();
 
     assertTrue(object instanceof Object);
     assertFalse(object instanceof HTMLElementAnotherConcreteNativeJsType);
@@ -304,7 +300,7 @@ public class JsTypeTest extends GWTTestCase {
 
   public void testInstanceOf_extendsJsTypeWithProto() {
     // Foils type tightening.
-    Object object = alwaysTrue() ? new MyCustomHtmlButtonWithIterator() : new Object();
+    Object object = new MyCustomHtmlButtonWithIterator();
 
     assertTrue(object instanceof Object);
     assertTrue(object instanceof HTMLElementAnotherConcreteNativeJsType);
@@ -375,10 +371,6 @@ public class JsTypeTest extends GWTTestCase {
     assertEquals(200, callPublicMethodFromEnumerationSubclass(MyEnumWithSubclassGen.B));
     assertEquals(1, callPublicMethodFromEnumerationSubclass(MyEnumWithSubclassGen.C));
   }
-
-  private static native boolean alwaysTrue() /*-{
-    return !!$wnd;
-  }-*/;
 
   private static native int callIntFunction(Object object, String functionName) /*-{
     return object[functionName]();
