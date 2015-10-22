@@ -24,7 +24,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -61,7 +61,21 @@ public class ApplicationVisibility
                try
                {
                   // register for page visibility changed events
-                  registerPageVisibilityChangedHandler();   
+                  registerPageVisibilityChangedHandler();  
+                  
+                  // check for being hidden 5 seconds after startup
+                  // and stop the event listener if we are (handles 
+                  // cases where we never get visibility events because
+                  // a browser tab was "restored" or opened as part of 
+                  // an "open all sessions" command
+                  new Timer() {
+                     @Override
+                     public void run()
+                     {
+                        if (isHidden())
+                           manageEventListener();
+                     }
+                  }.schedule(5000);;
                }
                catch(Exception e)
                {
@@ -108,33 +122,40 @@ public class ApplicationVisibility
          $wnd.document.addEventListener(
             visibilityChange, 
             $entry(function(e) {
-               thiz.@org.rstudio.studio.client.application.ApplicationVisibility::onVisibilityChanged(Lcom/google/gwt/core/client/JavaScriptObject;)(e);
+               thiz.@org.rstudio.studio.client.application.ApplicationVisibility::manageEventListener()();
             }), 
             false);
       }
    }-*/;
    
-   private void onVisibilityChanged(JavaScriptObject data)
+   private void manageEventListener()
    {
-      boolean hidden = isHidden();
-      boolean haveNoSatellitesOpen = !satelliteManager_.getSatellitesOpen();
-      
-      // stop listening or restart listening as appropriate
-      boolean stop = hidden && haveNoSatellitesOpen;
-      if (stop)
-         server_.stopEventListener();
-      else
-         server_.ensureEventListener();   
-      
-      // optional debug output
-      /*
-      if (stop)
-         Debug.logToRConsole("Stopped Listening");
-      else
-         Debug.logToRConsole("Listening to Events");
-      Debug.logToRConsole(" {hidden: " + hidden +
-                          ", noSatellites: " + haveNoSatellitesOpen +"}");
-      */
+      try
+      {
+         boolean hidden = isHidden();
+         boolean haveNoSatellitesOpen = !satelliteManager_.getSatellitesOpen();
+         
+         // stop listening or restart listening as appropriate
+         boolean stop = hidden && haveNoSatellitesOpen;
+         if (stop)
+            server_.stopEventListener();
+         else
+            server_.ensureEventListener();   
+         
+         // optional debug output
+         /*
+         if (stop)
+            Debug.logToRConsole("Stopped Listening");
+         else
+            Debug.logToRConsole("Listening to Events");
+         Debug.logToRConsole(" {hidden: " + hidden +
+                             ", noSatellites: " + haveNoSatellitesOpen +"}");
+         */
+      }
+      catch(Exception e)
+      {
+         Debug.logException(e);
+      }
    }
    
    private final ApplicationServerOperations server_;
