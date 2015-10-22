@@ -19,19 +19,28 @@ import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.RStudioFrame;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
 public class RmdParamsEditDialog extends ModalDialogBase
 {
    public RmdParamsEditDialog(String url)
    {
+      RStudioGinjector.INSTANCE.injectMembers(this);
       setText("Knit with Parameters");
       url_ = url;
       initializeEvents();
    }
    
+   @Inject
+   void initialize(Commands commands)
+   {
+      commands_ = commands;
+   }
    
    @Override
    protected Widget createMainWidget()
@@ -77,9 +86,14 @@ public class RmdParamsEditDialog extends ModalDialogBase
          // ensure the frame url starts with the specified origin
          if (frame_.getUrl().startsWith(origin))
             closeDialog();
+         
+         // interrupt R if needed
+         if (commands_.interruptR().isEnabled())
+            commands_.interruptR().execute();
       }
    }
 
    private final String url_;
    private RStudioFrame frame_;
+   private Commands commands_;
 }
