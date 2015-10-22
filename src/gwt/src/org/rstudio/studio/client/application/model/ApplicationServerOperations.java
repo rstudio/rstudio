@@ -58,6 +58,10 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    // verify current credentials
    void updateCredentials();
    
+   // event listener
+   void stopEventListener();
+   void ensureEventListener();
+   
    // get an application URL
    String getApplicationURL(String pathName);
    

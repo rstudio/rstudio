@@ -243,6 +243,16 @@ public class RemoteServer implements Server
       registerSatelliteCallback();
    }
    
+   public void stopEventListener()
+   {
+      serverEventListener_.stop();
+   }
+   
+   public void ensureEventListener()
+   {
+      ensureListeningForEvents();
+   }
+   
    public void disconnect()
    {
       disconnected_ = true;
