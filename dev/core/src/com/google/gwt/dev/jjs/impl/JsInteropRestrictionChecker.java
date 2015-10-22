@@ -16,6 +16,8 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.MinimalRebuildCache;
+import com.google.gwt.dev.javac.JsInteropUtil;
+import com.google.gwt.dev.jjs.ast.CanHaveSuppressedWarnings;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConstructor;
@@ -29,6 +31,7 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethod.JsPropertyAccessorType;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JStatement;
@@ -220,6 +223,8 @@ public class JsInteropRestrictionChecker {
       checkNativeJsMember(x);
     }
 
+    checkUnusableByJs(x);
+
     if (!x.isJsProperty()) {
       return;
     }
@@ -240,6 +245,8 @@ public class JsInteropRestrictionChecker {
     if (x.isJsNative()) {
       checkNativeJsMember(x);
     }
+
+    checkUnusableByJs(x);
 
     if (!x.isOrOverridesJsMethod()) {
       return;
@@ -488,6 +495,48 @@ public class JsInteropRestrictionChecker {
     }
   }
 
+  private void checkUnusableByJs(JMethod method) {
+    if (!method.canBeCalledExternally() || isUnusableByJsSuppressed(method.getEnclosingType())
+        || isUnusableByJsSuppressed(method)) {
+      return;
+    }
+    String methodName = method.getQualifiedName();
+    // check parameters.
+    for (JParameter parameter : method.getParams()) {
+      if (!parameter.getType().canBeReferencedExternally()
+          && !isUnusableByJsSuppressed(parameter)) {
+        logWarning(
+            "[unusable-by-js] Type of parameter '%s' in method '%s' is not usable by but exposed to"
+            + " JavaScript",
+            parameter.getName(), methodName);
+      }
+    }
+    // check return type.
+    if (!method.getType().canBeReferencedExternally()) {
+      logWarning(
+          "[unusable-by-js] Return type of '%s' is not usable by but exposed to JavaScript",
+          methodName);
+    }
+  }
+
+  private void checkUnusableByJs(JField field) {
+    if (!field.canBeReferencedExternally() || isUnusableByJsSuppressed(field.getEnclosingType())
+        || isUnusableByJsSuppressed(field)) {
+      return;
+    }
+    if (!field.getType().canBeReferencedExternally()) {
+      logWarning(
+          "[unusable-by-js] Type of field '%s' in type '%s' is not usable by but exposed to "
+          + "JavaScript",
+          field.getName(), field.getEnclosingType().getName());
+    }
+  }
+
+  private boolean isUnusableByJsSuppressed(CanHaveSuppressedWarnings x) {
+    return x.getSuppressedWarnings() != null &&
+        x.getSuppressedWarnings().contains(JsInteropUtil.UNUSABLE_BY_JS);
+  }
+
   private void logError(String format, JType type) {
     logError(format, type.getName());
   }
@@ -503,5 +552,9 @@ public class JsInteropRestrictionChecker {
   private void logError(String format, Object... args) {
     logger.log(TreeLogger.ERROR, String.format(format, args));
     hasErrors = true;
+  }
+
+  private void logWarning(String format, Object... args) {
+    logger.log(TreeLogger.WARN, String.format(format, args));
   }
 }

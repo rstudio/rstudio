@@ -68,6 +68,7 @@ public class JInterfaceType extends JDeclaredType {
   public boolean isFinal() {
     return false;
   }
+
   @Override
   public boolean isJsoType() {
     return false;

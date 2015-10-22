@@ -733,6 +733,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}",
         "@JsType",
         "public static class Parent extends ParentParent {",
+        "  @SuppressWarnings(\"unusable-by-js\") ",
         "  public void doIt(Foo x) {}",
         "}",
         "public static class Buggy extends Parent implements Foo {}");
@@ -1270,6 +1271,137 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggySucceeds();
+  }
+
+  public void testUnusableByJsSuppressionSucceeds() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetClassDecl("public static class A {}");
+    addSnippetClassDecl(
+        "@JsType @SuppressWarnings(\"unusable-by-js\")", // SuppressWarnings on the class.
+        "public static class B {",
+        "  public A field;",
+        "  public A t0(A a, A b) { return null; }",
+        "}");
+    addSnippetClassDecl(
+        "@JsType",
+        "public static class Buggy {",
+        "  @SuppressWarnings(\"unusable-by-js\") public A field;", // add SuppressWarnings to field.
+        "  @SuppressWarnings({\"unusable-by-js\", \"unused\"})", // test multiple warnings.
+        "  public A t0(A a, A b) { return null; }", // add SuppressWarnings to the method.
+        "  public void t1(",
+        "    @SuppressWarnings(\"unusable-by-js\")A a,",
+        "    @SuppressWarnings(\"unusable-by-js\")A b",
+        "  ) {}", // add SuppressWarnings to parameters.
+        "}");
+
+    assertBuggySucceeds();
+  }
+
+  public void testUsableByJsTypesSucceeds() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsExport");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsFunction");
+    addSnippetImport("com.google.gwt.core.client.JavaScriptObject");
+    addSnippetClassDecl(
+        "@JsType public static class A {}",
+        "@JsType public static interface I {}",
+        "@JsFunction public static interface FI {void foo();}",
+        "public static class C extends JavaScriptObject {protected C(){}}",
+        "@JsType public static class Buggy {",
+        "  public void f1(boolean a, int b, double c) {}", // primitive types work fine.
+        "  public void f2(Boolean a, Double b, String c) {}", // unboxed types work fine.
+        "  public void f3(A a) {}", // JsType works fine.
+        "  public void f4(FI a) {}", // JsFunction works fine.
+        "  public void f5(C a) {}", // JavaScriptObject works fine.
+        "  public void f6(Object a) {}", // Java Object works fine.
+        "  public void f7(boolean[] a) {}", // array of primitive types work fine.
+        "  public void f8(Boolean[] a, Double[] b, String[] c) {}", // array of unboxed types.
+        "  public void f9(A[] a) {}", // array of JsType works fine.
+        "  public void f10(FI[] a) {}", // array of JsFunction works fine.
+        "  public void f11(C[][] a) {}", // array of JavaScriptObject works fine.
+        "}");
+    assertBuggySucceeds();
+  }
+
+  public void testUnusableByJsNotExportedMembersSucceeds() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetClassDecl(
+        "public static class A {}",
+        "@JsType public static class Buggy {",
+        "  private A field;", // private field.
+        "  private A f1(A a) { return null; }", // private method.
+        "}");
+    assertBuggySucceeds();
+  }
+
+  public void testUnusuableByJsFails() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsFunction");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsMethod");
+    addSnippetImport("jsinterop.annotations.JsProperty");
+    addSnippetClassDecl(
+        "public static class A {}",
+        "@JsType public static interface I {}",
+        "public static class B implements I {}",
+        "public static class C {", // non-jstype class with JsMethod
+        "  @JsMethod",
+        "  public static void fc1(A a) {}", // JsMethod
+        "}",
+        "public static class D {", // non-jstype class with JsProperty
+        "  @JsProperty",
+        "  public static A a;", // JsProperty
+        "}",
+        "@JsFunction public static interface FI  { void f(A a); }", // JsFunction method is checked.
+        "@JsType public static class Buggy {",
+        "  public A field;", // exported field
+        "  public A f1(A a) { return null; }", // regular class fails.
+        "  public A[] f2(A[] a) { return null; }", // array of regular class fails.
+        "  public long f3(long a) { return 1l; }", // long fails.
+        // non-JsType class that implements a JsType interface fails.
+        "  public B f4(B a) { return null; }",
+        "  public void f5(Object[][] a) {}", // Object[][] fails.
+        "  public void f6(Object[] a) {}", // Object[] also fails.
+        "}");
+
+    assertBuggySucceeds(
+        "[unusable-by-js] Return type of "
+            + "'test.EntryPoint$Buggy.f1(Ltest/EntryPoint$A;)Ltest/EntryPoint$A;' "
+            + "is not usable by but exposed to JavaScript",
+        "[unusable-by-js] Return type of "
+            + "'test.EntryPoint$Buggy.f2([Ltest/EntryPoint$A;)[Ltest/EntryPoint$A;' "
+            + "is not usable by but exposed to JavaScript",
+        "[unusable-by-js] Return type of "
+            + "'test.EntryPoint$Buggy.f3(J)J' is not usable by but exposed to JavaScript",
+        "[unusable-by-js] Return type of "
+            + "'test.EntryPoint$Buggy.f4(Ltest/EntryPoint$B;)Ltest/EntryPoint$B;' "
+            + "is not usable by but exposed to JavaScript",
+        "[unusable-by-js] Type of field 'field' in type 'test.EntryPoint$Buggy' "
+            + "is not usable by but exposed to JavaScript",
+        "[unusable-by-js] Type of parameter 'a' in method "
+            + "'test.EntryPoint$Buggy.f1(Ltest/EntryPoint$A;)Ltest/EntryPoint$A;' "
+            + "is not usable by but exposed to JavaScript",
+        "[unusable-by-js] Type of parameter 'a' in method "
+            + "'test.EntryPoint$Buggy.f2([Ltest/EntryPoint$A;)[Ltest/EntryPoint$A;' "
+            + "is not usable by but exposed to JavaScript",
+        "[unusable-by-js] Type of parameter 'a' in method 'test.EntryPoint$Buggy.f3(J)J' "
+            + "is not usable by but exposed to JavaScript",
+        "[unusable-by-js] Type of parameter 'a' in method "
+            + "'test.EntryPoint$Buggy.f4(Ltest/EntryPoint$B;)Ltest/EntryPoint$B;' "
+            + "is not usable by but exposed to JavaScript",
+        "[unusable-by-js] Type of parameter 'a' in method "
+            + "'test.EntryPoint$Buggy.f5([[Ljava/lang/Object;)V' "
+            + "is not usable by but exposed to JavaScript",
+        "[unusable-by-js] Type of parameter 'a' in method "
+            + "'test.EntryPoint$Buggy.f6([Ljava/lang/Object;)V' "
+            + "is not usable by but exposed to JavaScript",
+        "[unusable-by-js] Type of parameter 'a' in method " // JsFunction method
+            + "'test.EntryPoint$FI.f(Ltest/EntryPoint$A;)V' "
+            + "is not usable by but exposed to JavaScript",
+        "[unusable-by-js] Type of parameter 'a' in method " // JsMethod in non-jstype class.
+            + "'test.EntryPoint$C.fc1(Ltest/EntryPoint$A;)V' "
+            + "is not usable by but exposed to JavaScript",
+        "[unusable-by-js] Type of field 'a' in type " // JsProperty in non-jstype class.
+            + "'test.EntryPoint$D' is not usable by but exposed to JavaScript");
   }
 
   private static final MockJavaResource jsFunctionInterface = new MockJavaResource(

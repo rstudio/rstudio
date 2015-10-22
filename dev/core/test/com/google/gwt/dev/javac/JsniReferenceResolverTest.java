@@ -312,7 +312,7 @@ public class JsniReferenceResolverTest extends CheckerTestCase {
   /**
    * Test for issue 8093.
    */
-  public void testBadSuppression1() {
+  public void testSuppressionNotStrintLiteral1() {
     MockJavaResource buggy = JavaResourceBase.createMockJavaResource("Buggy",
        "public class Buggy {",
        "  private static final String RAWTYPES = \"rawtypes\";",
@@ -320,14 +320,13 @@ public class JsniReferenceResolverTest extends CheckerTestCase {
        "  public void method1() {",
        "  }",
        "}");
-    shouldGenerateWarning(buggy, 3,
-        "Unable to analyze SuppressWarnings annotation, RAWTYPES not a string constant.");
+    shouldGenerateNoWarning(buggy);
   }
 
   /**
    * Test for issue 8093.
    */
-  public void testBadSuppression2() {
+  public void testSuppressionNotStringLiteral2() {
     MockJavaResource buggy = JavaResourceBase.createMockJavaResource("Buggy",
        "public class Buggy {",
        "  private static final String UNCHECKED = \"unchecked\";",
@@ -335,8 +334,7 @@ public class JsniReferenceResolverTest extends CheckerTestCase {
        "  public void method1() {",
        "  }",
        "}");
-    shouldGenerateWarning(buggy, 3,
-        "Unable to analyze SuppressWarnings annotation, UNCHECKED not a string constant.");
+    shouldGenerateNoWarning(buggy);
   }
 
   public void testDeprecationType() {

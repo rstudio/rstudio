@@ -17,8 +17,11 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.util.Name.InternalName;
+import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
+import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
@@ -42,6 +45,7 @@ import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Utility functions to interact with JDT classes.
@@ -282,6 +286,49 @@ public final class JdtUtil {
       return new TypeBinding[] {(TypeBinding) value};
     }
     return null;
+  }
+
+  public static StringConstant[] getAnnotationParameterStringConstantArray(
+      AnnotationBinding annotationBinding, String paramName) {
+    if (annotationBinding == null) {
+      return null;
+    }
+    for (ElementValuePair maybeValue : annotationBinding.getElementValuePairs()) {
+      if (!paramName.equals(String.valueOf(maybeValue.getName()))) {
+        continue;
+      }
+      Object value = maybeValue.getValue();
+      if (value instanceof Object[]) {
+        Object[] values = (Object[]) value;
+        StringConstant[] stringConstants = new StringConstant[values.length];
+        System.arraycopy(values, 0, stringConstants, 0, values.length);
+        return stringConstants;
+      }
+      assert value instanceof StringConstant;
+      return new StringConstant[] {(StringConstant) value};
+    }
+    return null;
+  }
+
+  public static Set<String> getSuppressedWarnings(Annotation[] annotations) {
+    if (annotations == null) {
+      return ImmutableSet.of();
+    }
+    AnnotationBinding suppressWarnings =
+        getAnnotation(annotations, SuppressWarnings.class.getName());
+    if (suppressWarnings != null) {
+      StringConstant[] values =
+          JdtUtil.getAnnotationParameterStringConstantArray(suppressWarnings, "value");
+      return FluentIterable.from(Arrays.asList(values))
+          .transform(new Function<StringConstant, String>() {
+            @Override
+            public String apply(StringConstant value) {
+              return value.stringValue();
+            }
+          })
+          .toSet();
+    }
+    return ImmutableSet.of();
   }
 
   /**

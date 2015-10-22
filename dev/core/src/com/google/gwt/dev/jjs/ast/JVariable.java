@@ -18,16 +18,19 @@ package com.google.gwt.dev.jjs.ast;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.util.StringInterner;
 
+import java.util.Set;
+
 /**
  * Base class for any storage location.
  */
 public abstract class JVariable extends JNode implements CanBeSetFinal, CanHaveInitializer,
-    HasName, HasType {
+    HasName, HasType, CanHaveSuppressedWarnings {
 
   protected JDeclarationStatement declStmt = null;
   private boolean isFinal;
   private String name;
   private JType type;
+  private Set<String> suppressedWarnings;
 
   JVariable(SourceInfo info, String name, JType type, boolean isFinal) {
     super(info);
@@ -91,4 +94,13 @@ public abstract class JVariable extends JNode implements CanBeSetFinal, CanHaveI
     type = newType;
   }
 
+  @Override
+  public Set<String> getSuppressedWarnings() {
+    return suppressedWarnings;
+  }
+
+  @Override
+  public void setSuppressedWarnings(Set<String> suppressedWarnings) {
+    this.suppressedWarnings = suppressedWarnings;
+  }
 }

@@ -26,20 +26,15 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.util.InstalledHelpInfo;
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.collect.Stack;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.ASTNode;
 import org.eclipse.jdt.internal.compiler.ast.Annotation;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
-import org.eclipse.jdt.internal.compiler.ast.ArrayInitializer;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
-import org.eclipse.jdt.internal.compiler.ast.Expression;
 import org.eclipse.jdt.internal.compiler.ast.ImportReference;
-import org.eclipse.jdt.internal.compiler.ast.MemberValuePair;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
-import org.eclipse.jdt.internal.compiler.ast.StringLiteral;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeReference;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
@@ -59,11 +54,9 @@ import org.eclipse.jdt.internal.compiler.lookup.SyntheticArgumentBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
 import org.eclipse.jdt.internal.compiler.lookup.UnresolvedReferenceBinding;
-import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -140,26 +133,26 @@ public class JsniReferenceResolver {
 
     @Override
     public boolean visit(MethodDeclaration meth, ClassScope scope) {
-      suppressWarningsStack.push(getSuppressedWarnings(meth.annotations));
+      suppressWarningsStack.push(JdtUtil.getSuppressedWarnings(meth.annotations));
       return true;
     }
 
     @Override
     public boolean visit(TypeDeclaration typeDeclaration, ClassScope scope) {
-      suppressWarningsStack.push(getSuppressedWarnings(typeDeclaration.annotations));
+      suppressWarningsStack.push(JdtUtil.getSuppressedWarnings(typeDeclaration.annotations));
       return true;
     }
 
     @Override
     public boolean visit(TypeDeclaration typeDeclaration,
         CompilationUnitScope scope) {
-      suppressWarningsStack.push(getSuppressedWarnings(typeDeclaration.annotations));
+      suppressWarningsStack.push(JdtUtil.getSuppressedWarnings(typeDeclaration.annotations));
       return true;
     }
 
     @Override
     public boolean visitValid(TypeDeclaration typeDeclaration, BlockScope scope) {
-      suppressWarningsStack.push(getSuppressedWarnings(typeDeclaration.annotations));
+      suppressWarningsStack.push(JdtUtil.getSuppressedWarnings(typeDeclaration.annotations));
       return true;
     }
 
@@ -756,49 +749,6 @@ public class JsniReferenceResolver {
         .resolve();
   }
 
-  Set<String> getSuppressedWarnings(Annotation[] annotations) {
-    if (annotations == null) {
-      return ImmutableSet.of();
-    }
-
-    for (Annotation a : annotations) {
-      if (!SuppressWarnings.class.getName().equals(
-          CharOperation.toString(((ReferenceBinding) a.resolvedType).compoundName))) {
-        continue;
-      }
-      for (MemberValuePair pair : a.memberValuePairs()) {
-        if (!String.valueOf(pair.name).equals("value")) {
-          continue;
-        }
-        Expression valueExpr = pair.value;
-        if (valueExpr instanceof StringLiteral) {
-          // @SuppressWarnings("Foo")
-          return ImmutableSet.of(((StringLiteral) valueExpr).constant.stringValue().toLowerCase(
-              Locale.ROOT));
-        } else if (valueExpr instanceof ArrayInitializer) {
-          // @SuppressWarnings({ "Foo", "Bar"})
-          ArrayInitializer ai = (ArrayInitializer) valueExpr;
-          ImmutableSet.Builder valuesSetBuilder = ImmutableSet.builder();
-          for (int i = 0, j = ai.expressions.length; i < j; i++) {
-            if ((ai.expressions[i]) instanceof StringLiteral) {
-              StringLiteral expression = (StringLiteral) ai.expressions[i];
-              valuesSetBuilder.add(expression.constant.stringValue().toLowerCase(Locale.ROOT));
-            } else {
-              suppressionAnnotationWarning(a,
-                  "Unable to analyze SuppressWarnings annotation, " +
-                      ai.expressions[i].toString() + " not a string constant.");
-            }
-          }
-          return valuesSetBuilder.build();
-        } else {
-          suppressionAnnotationWarning(a, "Unable to analyze SuppressWarnings annotation, " +
-              valueExpr.toString() + " not a string constant.");
-        }
-      }
-    }
-    return ImmutableSet.of();
-  }
-
   private final CompilationUnitDeclaration cud;
   private final List<ImportReference> cudImports;
   private final Map<MethodDeclaration, JsniMethod> jsniMethods;
@@ -872,11 +822,6 @@ public class JsniReferenceResolver {
   private void longAccessError(ASTNode node, String message) {
     GWTProblem.recordError(node, cud, message, new InstalledHelpInfo(
         "longJsniRestriction.html"));
-  }
-
-  private void suppressionAnnotationWarning(ASTNode node, String message) {
-    GWTProblem.recordProblem(node, cud.compilationResult(), message, null,
-        ProblemSeverities.Warning);
   }
 
   private static void resolveJsniRef(JsniRef jsniRef, FieldBinding fieldBinding) {

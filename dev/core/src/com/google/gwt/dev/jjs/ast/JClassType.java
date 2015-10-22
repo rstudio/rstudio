@@ -103,6 +103,17 @@ public class JClassType extends JDeclaredType {
   }
 
   @Override
+  public boolean isJavaLangObject() {
+    return superClass == null;
+  }
+
+  @Override
+  public boolean canBeReferencedExternally() {
+    return super.canBeReferencedExternally() || isJsoType()
+        || JProgram.isRepresentedAsNative(getName()) || isJavaLangObject();
+  }
+
+  @Override
   public boolean isJsFunctionImplementation() {
     for (JInterfaceType superInterface : getImplements()) {
       if (superInterface.isJsFunction()) {

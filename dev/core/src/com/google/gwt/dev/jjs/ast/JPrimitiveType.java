@@ -111,6 +111,12 @@ public class JPrimitiveType extends JType {
   public boolean isJsoType() {
     return false;
   }
+
+  @Override
+  public boolean canBeReferencedExternally() {
+    return this != JPrimitiveType.LONG;
+  }
+
   @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
