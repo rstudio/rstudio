@@ -30,6 +30,7 @@ var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBr
 var RMatchingBraceOutdent = require("mode/r_matching_brace_outdent").RMatchingBraceOutdent;
 var unicode = require("ace/unicode");
 var Utils = require("mode/utils");
+var AutoBraceInsert = require("mode/auto_brace_insert").AutoBraceInsert;
 
 var Mode = function(suppressHighlighting, session) {
    if (suppressHighlighting)
