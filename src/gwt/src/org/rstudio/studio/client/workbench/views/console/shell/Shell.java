@@ -511,11 +511,15 @@ public class Shell implements ConsoleInputHandler,
                      event.preventDefault() ;
                      break;
                   case 'A':
+                     event.stopPropagation();
                      event.preventDefault();
                      input_.goToLineStart();
+                     break;
                   case 'E':
+                     event.stopPropagation();
                      event.preventDefault();
                      input_.goToLineEnd();
+                     break;
                }
             }
             else if (mod == KeyboardShortcut.ALT)
