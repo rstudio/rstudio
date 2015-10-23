@@ -25,6 +25,7 @@ import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
+import com.google.gwt.dev.jjs.ast.JDeclaredType.NestedClassDisposition;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -413,12 +414,33 @@ public class JsInteropRestrictionChecker {
     }.accept(jprogram);
   }
 
-  private void checkNativeJsType(JDeclaredType type) {
+  private boolean checkJsType(JDeclaredType type) {
+    // Java (at least up to Java 8) does not allow to annotate anonymous classes or lambdas; if
+    // it ever becomes possible we should emit an error.
+    assert type.getClassDisposition() != NestedClassDisposition.ANONYMOUS
+        && type.getClassDisposition() != NestedClassDisposition.LAMBDA;
+
+    if  (type.getClassDisposition() == NestedClassDisposition.LOCAL) {
+      logError("Local class '%s' cannot be a JsType.", type);
+      return false;
+    }
+
+    return true;
+  }
+
+  private boolean checkNativeJsType(JDeclaredType type) {
     // TODO(rluble): add inheritance restrictions.
+
     if (type.isEnumOrSubclass() != null) {
       logError("Enum '%s' cannot be a native JsType.", type);
-      return;
+      return false;
     }
+
+    if (type.getClassDisposition() == NestedClassDisposition.INNER) {
+      logError("Non static inner class '%s' cannot be a native JsType.", type);
+      return false;
+    }
+
     if (!isClinitEmpty(type)) {
       logError("Native JsType '%s' cannot have static initializer.", type);
     }
@@ -429,6 +451,7 @@ public class JsInteropRestrictionChecker {
             getMemberDescription(constructor));
       }
     }
+    return true;
   }
 
   private void checkJsFunction(JDeclaredType type) {
@@ -489,8 +512,15 @@ public class JsInteropRestrictionChecker {
   private void checkType(JDeclaredType type) {
     minimalRebuildCache.removeExportedNames(type.getName());
 
+    if (type.isJsType()) {
+      if (!checkJsType(type)) {
+        return;
+      }
+    }
     if (type.isJsNative()) {
-      checkNativeJsType(type);
+      if (!checkNativeJsType(type)) {
+        return;
+      }
     }
 
     if (type.isJsFunction()) {

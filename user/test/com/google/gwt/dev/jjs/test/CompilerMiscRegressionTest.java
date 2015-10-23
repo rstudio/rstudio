@@ -314,25 +314,26 @@ public class CompilerMiscRegressionTest extends GWTTestCase {
    * <p>
    * Typetightener used to incorrectly tighten method calls marked with STATIC_DISPATCH_ONLY.
    */
+
   public void testIncorrectDispatch() {
-    final int[] state = new int[1];
-
-    @JsType
-    abstract class A {
-      public void m() {
-        state[0] = 1;
-      }
-    }
-
-    @JsType
-    class B extends A {
-      public void m() {
-        super.m();
-      }
-    }
-
+    state = new int[1];
     new B().m();
     assertEquals(1, state[0]);
+  }
+
+  static int[] state;
+  @JsType
+  abstract static class A {
+    public void m() {
+      state[0] = 1;
+    }
+  }
+
+  @JsType
+  static class B extends A {
+    public void m() {
+      super.m();
+    }
   }
 
   private static void assertEqualContents(float[] expected, float[] actual) {

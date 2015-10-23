@@ -1156,6 +1156,32 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "Line 4: Enum 'EntryPoint.Buggy' cannot be a native JsType.");
   }
 
+  public void testInnerNativeJsTypeFails() {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetClassDecl(
+        "@JsType(isNative=true) public class Buggy { }");
+
+    assertBuggyFails(
+        "Line 4: Non static inner class 'EntryPoint.Buggy' cannot be a native JsType.");
+  }
+
+  public void testInnerJsTypeSucceeds() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetClassDecl(
+        "@SuppressWarnings(\"unusable-by-js\") @JsType public class Buggy { }");
+
+    assertBuggySucceeds();
+  }
+
+  public void testLocalJsTypeFails() {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetClassDecl(
+        "public class Buggy { void m() { @JsType class Local {} } }");
+
+    assertBuggyFails(
+        "Line 4: Local class 'EntryPoint.Buggy.1Local' cannot be a JsType.");
+  }
+
   public void testNativeJsTypeInterfaceCompileTimeConstantSucceeds() throws Exception {
     addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
