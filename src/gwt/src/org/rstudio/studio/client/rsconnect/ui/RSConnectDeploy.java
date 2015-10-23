@@ -310,11 +310,18 @@ public class RSConnectDeploy extends Composite
       deployLabel_.setText(dir);
    }
    
-   public void setNewAppName(String name)
+   public void setUnsanitizedAppName(String unsanitizedName)
    {
-      appName_.setText(name);
-   }
+      // make the name into a valid URL slug
+      String sanitized = new String(unsanitizedName);
+      sanitized = sanitized.trim();
+      sanitized = sanitized.replaceAll("[^a-zA-Z0-9\\-]", "_");
+      if (sanitized.length() > 64)
+         sanitized = sanitized.substring(0, 64);
 
+      appName_.setText(sanitized);
+   }
+   
    public void setDefaultAccount(RSConnectAccount account)
    {
       accountList_.selectAccount(account);
@@ -915,7 +922,7 @@ public class RSConnectDeploy extends Composite
                   source_.getDeployDir());
          }
 
-         appName_.setText(appName);
+         setUnsanitizedAppName(appName);
       }
       
       ImageResource illustration = null;
