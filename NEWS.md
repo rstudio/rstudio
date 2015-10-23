@@ -38,6 +38,7 @@
 ### Miscellaneous
 
 * Editor and IDE keyboard shortcuts can now be customized
+* Ctrl+A, Ctrl+E now move cursor to beginning, end of line in console on all platforms
 * New Session command (create new R session with same project or working directory)
 * Open project in a new window from the projects recently used menu
 * Increase the number of items on file and project recently used menus to 15
