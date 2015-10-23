@@ -100,10 +100,14 @@ public:
             primaryDoc = string_utils::utf8ToSystem(file);
          }
       }
+      
+      std::string appDir = string_utils::utf8ToSystem(dir);
+      if (appDir == "~")
+         appDir = "~/";
 
       // form the deploy command to hand off to the async deploy process
       cmd += "rsconnect::deployApp("
-             "appDir = '" + string_utils::utf8ToSystem(dir) + "'," +
+             "appDir = '" + appDir + "'," +
              (deployFiles.empty() ? "" : "appFiles = c(" + 
                 deployFiles + "), ") +
              (primaryDoc.empty() ? "" : "appPrimaryDoc = '" + 
