@@ -14,9 +14,6 @@
       Once you've authorized this computer to publish content to an account, 
       you can publish any time without re-entering your credentials.
    </p>
-   <p>
-      Click Next to choose an account type to connect.
-   </p>
    </g:HTML>
    </g:HTMLPanel>
 </ui:UiBinder> 

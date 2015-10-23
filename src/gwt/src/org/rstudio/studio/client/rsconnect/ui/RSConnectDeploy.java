@@ -120,7 +120,7 @@ public class RSConnectDeploy extends Composite
    public static DeployResources RESOURCES = GWT.create(DeployResources.class);
    
    public RSConnectDeploy(RSConnectPublishSource source,
-                          int contentType,
+                          final int contentType,
                           RSConnectDeploymentRecord fromPrevious,
                           boolean asWizard)
    {
@@ -144,6 +144,7 @@ public class RSConnectDeploy extends Composite
          asStatic_ = fromPrevious.getAsStatic();
       }
       
+      
       // inject dependencies 
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -158,29 +159,42 @@ public class RSConnectDeploy extends Composite
          hideCheckUncheckAllButton();
       }
 
+      final boolean rsConnectEnabled = RStudioGinjector.INSTANCE.getUIPrefs()
+            .enableRStudioConnect().getGlobalValue();
+      
       // Invoke the "add account" wizard
-      addAccountAnchor_.addClickHandler(new ClickHandler()
+      if (contentType == RSConnect.CONTENT_TYPE_APP || rsConnectEnabled)
       {
-         @Override
-         public void onClick(ClickEvent event)
+         addAccountAnchor_.addClickHandler(new ClickHandler()
          {
-            connector_.showAccountWizard(false, !asStatic_, 
-                  new OperationWithInput<Boolean>() 
+            @Override
+            public void onClick(ClickEvent event)
             {
-               @Override
-               public void execute(Boolean successful)
+               connector_.showAccountWizard(false, 
+                     contentType == RSConnect.CONTENT_TYPE_APP, 
+                     new OperationWithInput<Boolean>() 
                {
-                  if (successful)
+                  @Override
+                  public void execute(Boolean successful)
                   {
-                     accountList_.refreshAccountList();
+                     if (successful)
+                     {
+                        accountList_.refreshAccountList();
+                     }
                   }
-               }
-            });
-            
-            event.preventDefault();
-            event.stopPropagation();
-         }
-      });
+               });
+               
+               event.preventDefault();
+               event.stopPropagation();
+            }
+         });
+      }
+      else
+      {
+         // if not deploying a Shiny app and RSConnect UI is not enabled, then
+         // there's no account we can add suitable for this content
+         addAccountAnchor_.setVisible(false);
+      }
       
       createNewAnchor_.addClickHandler(new ClickHandler()
       {
@@ -943,6 +957,7 @@ public class RSConnectDeploy extends Composite
    private boolean isUpdate()
    {
       return fromPrevious_ != null && 
+            getSelectedAccount() != null &&
             getSelectedAccount().equals(fromPrevious_.getAccount());
    }
    

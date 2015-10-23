@@ -90,29 +90,30 @@ public class RSConnectAccountWizard
                                NewRSConnectAccountResult> createSelectorPage(
                                      boolean showCloudPage)
    {
-      return new WizardNavigationPage<
-         NewRSConnectAccountInput,
-         NewRSConnectAccountResult>(
-               "Choose Account Type", 
-               "Choose Account Type", 
-               "Connect Account", 
-               null, 
-               null, 
-               createPages(showCloudPage));
+      if (showCloudPage)
+      {
+         return new WizardNavigationPage<
+            NewRSConnectAccountInput,
+            NewRSConnectAccountResult>(
+                  "Choose Account Type", 
+                  "Choose Account Type", 
+                  "Connect Account", 
+                  null, 
+                  null, 
+                  createPages());
+      }
+      return new NewRSConnectLocalPage();
    }
    
    protected static ArrayList<WizardPage<NewRSConnectAccountInput, 
-                                         NewRSConnectAccountResult>> createPages(boolean showCloudPage)
+                                         NewRSConnectAccountResult>> createPages()
    {
       ArrayList<WizardPage<NewRSConnectAccountInput, 
                            NewRSConnectAccountResult>> pages =
            new ArrayList<WizardPage<NewRSConnectAccountInput, 
                                     NewRSConnectAccountResult>>();
 
-      if (showCloudPage)
-      {
-         pages.add(new NewRSConnectCloudPage());
-      }
+      pages.add(new NewRSConnectCloudPage());
       pages.add(new NewRSConnectLocalPage());
       return pages;
    }
