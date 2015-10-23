@@ -18,6 +18,7 @@ package org.rstudio.core.client.widget;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -81,20 +82,33 @@ public class Wizard<I,T> extends ModalDialog<T>
                         @Override
                         public void execute(final T input)
                         {
-                           page.validateAsync(input, 
-                                 new OperationWithInput<Boolean>()
+                           // prevent re-entrancy
+                           if (validating_)
+                              return;
+                           
+                           validating_ = true;
+                           try
                            {
-                              
-                              @Override
-                              public void execute(Boolean valid)
+                              page.validateAsync(input, 
+                                    new OperationWithInput<Boolean>()
                               {
-                                 if (valid)
+                                 @Override
+                                 public void execute(Boolean valid)
                                  {
-                                    intermediateResult_ = input;
-                                    page.advance();
+                                    validating_ = false;
+                                    if (valid)
+                                    {
+                                       intermediateResult_ = input;
+                                       page.advance();
+                                    }
                                  }
-                              }
-                           });
+                              });
+                           }
+                           catch (Exception e)
+                           {
+                              validating_ = false;
+                              Debug.logException(e);
+                           }
                         }
                      });
             }
@@ -240,11 +254,30 @@ public class Wizard<I,T> extends ModalDialog<T>
 
    @Override
    protected void validateAsync(T input, 
-         OperationWithInput<Boolean> onValidated)
+         final OperationWithInput<Boolean> onValidated)
    {
       WizardPage<I,T> inputPage = activeInputPage();
       if (inputPage != null)
-         inputPage.validateAsync(input, onValidated);
+      {
+         validating_ = true;
+         try
+         {
+            inputPage.validateAsync(input, new OperationWithInput<Boolean>()
+            {
+               @Override
+               public void execute(Boolean input)
+               {
+                  validating_ = false;
+                  onValidated.execute(input);
+               }
+            });
+         }
+         catch (Exception e)
+         {
+            Debug.logException(e);
+            validating_ = false;
+         }
+      }
       else
          onValidated.execute(false);
    }
@@ -494,4 +527,5 @@ public class Wizard<I,T> extends ModalDialog<T>
    private WizardPage<I,T> activePage_ = null;
    private WizardPage<I,T> activeParentNavigationPage_ = null;
    private boolean isAnimating_ = false;
+   private boolean validating_ = false;
 }
