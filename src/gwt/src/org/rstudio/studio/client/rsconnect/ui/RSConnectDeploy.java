@@ -155,8 +155,7 @@ public class RSConnectDeploy extends Composite
       {
          deployIllustration_.setVisible(false);
          rootPanel_.addStyleName(style_.wizard());
-         checkUncheckAllButton_.setVisible(false);
-         addFileButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
+         hideCheckUncheckAllButton();
       }
 
       // Invoke the "add account" wizard
@@ -537,11 +536,23 @@ public class RSConnectDeploy extends Composite
             addFile(additionalFiles.get(i), true);
          }
       }
+      
+      // hide check/uncheck all button if there are only a few files
+      if (fileChecks_.size() < 3)
+      {
+         hideCheckUncheckAllButton();
+      }
    }
    
    private RSConnectAccount getSelectedAccount()
    {
       return accountList_.getSelectedAccount();
+   }
+   
+   private void hideCheckUncheckAllButton()
+   {
+      checkUncheckAllButton_.setVisible(false);
+      addFileButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
    }
    
    private void setPreviousInfo()
