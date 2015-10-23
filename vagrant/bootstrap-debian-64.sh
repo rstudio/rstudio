@@ -29,14 +29,14 @@ done
 
 # install dependencies
 cd /vagrant/dependencies/linux
-./install-dependencies-debian
+sudo -u vagrant ./install-dependencies-debian
 
 # resiliency (in case the above aborts early)
-./install-dependencies-debian
+sudo -u vagrant ./install-dependencies-debian
 
 # run overlay script if present
 if [ -f ./install-overlay-debian ]; then
-    ./install-overlay-debian
+    sudo -u vagrant ./install-overlay-debian
 fi 
 
 # create build folder and run cmake
