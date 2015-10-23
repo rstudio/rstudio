@@ -26,6 +26,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -51,9 +52,11 @@ public class RSConnectAccountList extends Composite
          Label serverLabel = new Label(account.getServer() + ": ");
          serverLabel.getElement().getStyle().setFontWeight(FontWeight.BOLD);
          serverLabel.getElement().getStyle().setMarginRight(5, Unit.PX);
+         serverLabel.getElement().getStyle().setCursor(Cursor.POINTER);
          panel.add(serverLabel);
 
          Label nameLabel = new Label(account.getName());
+         nameLabel.getElement().getStyle().setCursor(Cursor.POINTER);
          panel.add(nameLabel);
 
          initWidget(panel);
