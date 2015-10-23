@@ -352,11 +352,15 @@ public class RSConnectDeploy extends Composite
          urlAnchor_.setText(info.getUrl());
          urlAnchor_.setHref(info.getUrl());
       }
-      appInfoPanel_.setVisible(true);
       appDetailsPanel_.setVisible(true);
-      newAppPanel_.setVisible(false);
-      if (onDeployEnabled_ != null)
-         onDeployEnabled_.execute();
+
+      if (isUpdate())
+      {
+         appInfoPanel_.setVisible(true);
+         newAppPanel_.setVisible(false);
+         if (onDeployEnabled_ != null)
+            onDeployEnabled_.execute();
+      }
    }
    
    public HandlerRegistration addAccountChangeHandler(ChangeHandler handler)
