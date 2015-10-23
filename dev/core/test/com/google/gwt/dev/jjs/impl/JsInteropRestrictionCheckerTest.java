@@ -721,20 +721,15 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   public void testNonCollidingAccidentalOverrideSucceeds() throws Exception {
     addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "public static interface Foo {",
-        "  void doIt(Foo foo);",
-        "}",
-        "@JsType",
-        "public static interface Bar {",
-        "   void doIt(Bar bar);",
+        "public interface Foo {",
+        "  void doIt(Object foo);",
         "}",
         "public static class ParentParent {",
-        "  public void doIt(Bar x) {}",
+        "  public void doIt(String x) {}",
         "}",
         "@JsType",
         "public static class Parent extends ParentParent {",
-        "  @SuppressWarnings(\"unusable-by-js\") ",
-        "  public void doIt(Foo x) {}",
+        "  public void doIt(Object x) {}",
         "}",
         "public static class Buggy extends Parent implements Foo {}");
 
