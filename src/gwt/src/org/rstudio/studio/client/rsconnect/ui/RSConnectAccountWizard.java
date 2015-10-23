@@ -16,6 +16,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardNavigationPage;
@@ -41,6 +42,36 @@ public class RSConnectAccountWizard
                createIntroPage(showCloudPage) : 
                createSelectorPage(showCloudPage),
             operation);
+      initAuthPage(getFirstPage());
+   }
+   
+   private void initAuthPage(WizardPage<NewRSConnectAccountInput,
+                                         NewRSConnectAccountResult> page)
+   {
+      if (page instanceof NewRSConnectAuthPage)
+      {
+         NewRSConnectAuthPage localPage = (NewRSConnectAuthPage) page;
+         localPage.setOkButtonVisible(new OperationWithInput<Boolean>()
+         {
+            @Override
+            public void execute(Boolean input)
+            {
+               setOkButtonVisible(input);
+            }
+         });
+         return;
+      }
+
+      ArrayList<WizardPage<NewRSConnectAccountInput,
+                           NewRSConnectAccountResult>> subPages = 
+                           page.getSubPages();
+      if (subPages != null)
+      {
+         for (int i = 0; i < subPages.size(); i++)
+         {
+            initAuthPage(subPages.get(i));
+         }
+      }
    }
    
    

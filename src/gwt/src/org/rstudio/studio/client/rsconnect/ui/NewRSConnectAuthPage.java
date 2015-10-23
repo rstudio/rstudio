@@ -7,6 +7,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
+import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
@@ -19,6 +20,8 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -38,6 +41,16 @@ public class NewRSConnectAuthPage
       RStudioGinjector.INSTANCE.getEventBus().addHandler(
             WindowClosedEvent.TYPE, 
             this);
+
+      waitingForAuth_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> waiting)
+         {
+            if (setOkButtonVisible_ != null)
+               setOkButtonVisible_.execute(!waiting.getValue());
+         }
+      });
    }
 
    @Override
@@ -54,7 +67,7 @@ public class NewRSConnectAuthPage
    @Override
    public void onActivate(final ProgressIndicator indicator) 
    {
-      if (waitingForAuth_ || result_ == null)
+      if (waitingForAuth_.getValue() || result_ == null)
          return;
       
       // save reference to parent wizard's progress indicator for retries
@@ -101,7 +114,7 @@ public class NewRSConnectAuthPage
    {
       if (event.getName().equals(AUTH_WINDOW_NAME))
       {
-         waitingForAuth_ = false;
+         waitingForAuth_.setValue(false, true);
          
          // check to see if the user successfully authenticated
          onAuthCompleted();
@@ -112,7 +125,12 @@ public class NewRSConnectAuthPage
    public void onWizardClosing()
    {
       // this will cause us to stop polling for auth (if we haven't already)
-      waitingForAuth_ = false;
+      waitingForAuth_.setValue(false, true);
+   }
+   
+   public void setOkButtonVisible(OperationWithInput<Boolean> okButtonVisible)
+   {
+      setOkButtonVisible_ = okButtonVisible;
    }
 
    @Override
@@ -157,7 +175,7 @@ public class NewRSConnectAuthPage
          public boolean execute()
          {
             // don't keep polling once auth is complete or window is closed
-            if (!waitingForAuth_)
+            if (!waitingForAuth_.getValue())
                return false;
             
             // avoid re-entrancy--if we're already running a check but it hasn't
@@ -183,7 +201,7 @@ public class NewRSConnectAuthPage
                         // user is valid--cache account info and close the
                         // window
                         result_.setAuthUser(user);
-                        waitingForAuth_ = false;
+                        waitingForAuth_.setValue(false, true);
                         
                         if (Desktop.isDesktop())
                         {
@@ -283,7 +301,7 @@ public class NewRSConnectAuthPage
                         result_.getPreAuthToken().getClaimUrl());
 
                   // begin waiting for user to complete authentication
-                  waitingForAuth_ = true;
+                  waitingForAuth_.setValue(true, true);
                   contents_.showWaiting();
                   
                   // prepare a new window with the auth URL loaded
@@ -335,12 +353,14 @@ public class NewRSConnectAuthPage
          }
       });
    }
-
+   
+   private OperationWithInput<Boolean> setOkButtonVisible_;
+   
    private NewRSConnectAccountResult result_;
    private RSConnectServerOperations server_;
    private GlobalDisplay display_;
    private RSConnectAuthWait contents_;
-   private boolean waitingForAuth_ = false;
+   private Value<Boolean> waitingForAuth_ = new Value<Boolean>(false);
    private boolean runningAuthCompleteCheck_ = false;
    private ProgressIndicator wizardIndicator_;
 
