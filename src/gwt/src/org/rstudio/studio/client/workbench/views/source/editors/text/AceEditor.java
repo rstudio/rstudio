@@ -1924,6 +1924,16 @@ public class AceEditor implements DocDisplay,
       getSession().getSelection().setSelectionRange(
             Range.fromPoints(position, position));
    }
+   
+   public void goToLineStart()
+   {
+      widget_.getEditor().getCommandManager().exec("gotolinestart", widget_.getEditor());
+   }
+   
+   public void goToLineEnd()
+   {
+      widget_.getEditor().getCommandManager().exec("gotolineend", widget_.getEditor());
+   }
 
    @Override
    public void moveCursorNearTop(int rowOffset)

@@ -342,4 +342,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void setInsertMatching(boolean value);
    void setSurroundSelectionPref(String value);
+   
+   void goToLineStart();
+   void goToLineEnd();
 }

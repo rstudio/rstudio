@@ -55,4 +55,7 @@ public interface InputEditorDisplay extends HasAllFocusHandlers,
    
    Position getCursorPosition();
    String getLanguageMode(Position position);
+   
+   void goToLineStart();
+   void goToLineEnd();
 }

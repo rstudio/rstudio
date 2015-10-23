@@ -93,6 +93,10 @@ public class AceCommandManager extends JavaScriptObject
       return this.commands;
    }-*/;
    
+   public final native boolean exec(String command, AceEditorNative editor) /*-{
+      return this.exec(command, editor);
+   }-*/;
+   
    private static final String toAceStyleShortcutString(KeyCombination keys)
    {
       StringBuilder builder = new StringBuilder();
