@@ -97,6 +97,8 @@ git merge --strategy-option theirs \
 	origin/patch/incremental-search \
 	-m "merge again"
 
+git merge origin/patch/isearch-cursor-position -m "merge once more"
+
 ## git merge \
 ##     origin/bugfix-active-line-back \            # test printing (margin-layering; active line highlighting)
 

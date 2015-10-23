@@ -497,6 +497,7 @@ function objectToRegExp(obj) {
         if (found) {
             if (options.backwards) found = Range.fromPoints(found.end, found.start);
             this.$editor.selection.setRange(Range.fromPoints(shouldSelect ? this.$startPos : found.end, found.end));
+            this.$editor.renderer.scrollCursorIntoView(this.$editor.getCursorPosition(), 0.5);
             if (moveToNext) this.$currentPos = found.end;
             this.highlight(options.re)
         }

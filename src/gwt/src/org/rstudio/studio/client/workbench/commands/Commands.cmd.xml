@@ -530,8 +530,10 @@ well as menu structures (for main menu and popup menus).
       </shortcutgroup>
       <shortcutgroup name="Tabs/Panes">
       
-         <shortcut refid="activateSource" value="Ctrl+1"/>
+         <shortcut refid="switchFocusSourceConsole" value="Ctrl+X O|Ctrl+X Ctrl+O" disableModes="default,vim"/>
          <shortcut refid="activateConsole" value="Alt+X" disableModes="default,vim"/>
+         
+         <shortcut refid="activateSource" value="Ctrl+1"/>
          <shortcut refid="activateConsole" value="Ctrl+2"/>
          <shortcut refid="activateHelp" value="Ctrl+3"/>
          <shortcut refid="activateHistory" value="Ctrl+4"/>
