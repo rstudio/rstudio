@@ -70,7 +70,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
     assertBuggyFails(
         "'test.EntryPoint$Baz.doIt(Ltest/EntryPoint$Bar;)V' can't be exported in type "
-        + "'test.EntryPoint$Baz' because the name 'doIt' is already taken.");
+            + "'test.EntryPoint$Baz' because the name 'doIt' is already taken.");
   }
 
   public void testCollidingAccidentalOverrideHalfAndHalfFails() throws Exception {
@@ -109,7 +109,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
     assertBuggyFails(
         "'test.EntryPoint$Buggy.display' can't be exported because the "
-        + "global name 'test.EntryPoint.Buggy.show' is already taken.");
+            + "global name 'test.EntryPoint.Buggy.show' is already taken.");
   }
 
   public void testJsPropertyGetterStyleSucceeds() throws Exception {
@@ -288,7 +288,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
     assertBuggyFails(
         "'test.EntryPoint$Buggy.show()V' can't be exported because the "
-        + "global name 'test.EntryPoint.Buggy.show' is already taken.");
+            + "global name 'test.EntryPoint.Buggy.show' is already taken.");
   }
 
   public void testCollidingMethodToFieldJsTypeFails() throws Exception {
@@ -715,7 +715,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     assertBuggyFails(
         "More than one JsConstructor exists for test.EntryPoint$Buggy.",
         "'test.EntryPoint$Buggy.EntryPoint$Buggy(I) <init>' can't be "
-        + "exported because the global name 'test.EntryPoint.Buggy' is already taken.");
+            + "exported because the global name 'test.EntryPoint.Buggy' is already taken.");
   }
 
   public void testNonCollidingAccidentalOverrideSucceeds() throws Exception {
@@ -851,7 +851,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
     assertBuggyFails(
         "'test.EntryPoint$Buggy' cannot be both a JsFunction implementation and a JsType at the "
-        + "same time.");
+            + "same time.");
   }
 
   public void testJsFunctionStaticInitializerFails() {
@@ -1051,6 +1051,133 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggySucceeds();
+  }
+
+  public void testJsOverlayOnNativeJsTypeMemberSucceeds() throws UnableToCompleteException {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsOverlay");
+    addSnippetClassDecl(
+        "@JsType(isNative=true) public static class Buggy {",
+        "  @JsOverlay public final void m() { }",
+        "  @JsOverlay private final void n() { }",
+        "  @JsOverlay final void o() { }",
+        "  @JsOverlay protected final void p() { }",
+        "}");
+
+    assertBuggySucceeds();
+  }
+
+  public void testJsOverlayOnStaticFails() {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsOverlay");
+    addSnippetClassDecl(
+        "@JsType(isNative=true) public static class Buggy {",
+        "  @JsOverlay public static final void m() { }",
+        "}");
+
+    assertBuggyFails(
+        "JsOverlay method 'test.EntryPoint$Buggy.m()V' cannot be non-final, static, nor native.");
+  }
+
+  public void testJsOverlayImplementingInterfaceMethodFails() {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsOverlay");
+    addSnippetClassDecl(
+        "@JsType(isNative=true) public interface IBuggy {",
+        "  void m();",
+        "}",
+        "@JsType(isNative=true) public static class Buggy implements IBuggy {",
+        "  @JsOverlay public void m() { }",
+        "}");
+
+    assertBuggyFails(
+        "JsOverlay method 'test.EntryPoint$Buggy.m()V' cannot override a supertype method.");
+  }
+
+  public void testJsOverlayOverridingSuperclassMethodFails() {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsOverlay");
+    addSnippetClassDecl(
+        "@JsType(isNative=true) public static class Super {",
+        "  public native void m();",
+        "}",
+        "@JsType(isNative=true) public static class Buggy extends Super {",
+        "  @JsOverlay public void m() { }",
+        "}");
+
+    assertBuggyFails(
+        "JsOverlay method 'test.EntryPoint$Buggy.m()V' cannot override a supertype method.");
+  }
+
+  public void testJsOverlayOnNonFinalFails() {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsOverlay");
+    addSnippetClassDecl(
+        "@JsType(isNative=true) public static class Buggy {",
+        "  @JsOverlay public void m() { }",
+        "}");
+
+    assertBuggyFails(
+        "JsOverlay method 'test.EntryPoint$Buggy.m()V' cannot be non-final, static, nor native.");
+  }
+
+  public void testJsOverlayOnNativeMethodFails() {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsOverlay");
+    addSnippetClassDecl(
+        "@JsType(isNative=true) public static class Buggy {",
+        "  @JsOverlay public final native void m();",
+        "}");
+
+    assertBuggyFails(
+        "JsOverlay method 'test.EntryPoint$Buggy.m()V' cannot be non-final, static, nor native.");
+  }
+
+  public void testJsOverlayOnJsoMethodSucceeds() throws UnableToCompleteException {
+    addSnippetImport("com.google.gwt.core.client.JavaScriptObject");
+    addSnippetImport("jsinterop.annotations.JsOverlay");
+    addSnippetClassDecl(
+        "public static class Buggy extends JavaScriptObject {",
+        "  protected Buggy() { }",
+        "  @JsOverlay public final void m() { }",
+        "}");
+
+    assertBuggySucceeds();
+  }
+
+  public void testImplicitJsOverlayOnJsoMethodSucceeds() throws UnableToCompleteException {
+    addSnippetImport("com.google.gwt.core.client.JavaScriptObject");
+    addSnippetImport("jsinterop.annotations.JsOverlay");
+    addSnippetClassDecl(
+        "public static class Buggy extends JavaScriptObject {",
+        "  protected Buggy() { }",
+        "  public final void m() { }",
+        "}");
+
+    assertBuggySucceeds();
+  }
+
+  public void testJsOverlayOnNonNativeJsTypeFails() {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsOverlay");
+    addSnippetClassDecl(
+        "@JsType public static class Buggy {",
+        "  @JsOverlay public final void m() { };",
+        "}");
+
+    assertBuggyFails(
+        "Method 'test.EntryPoint$Buggy.m()V' in non-native type cannot be @JsOverlay.");
+  }
+
+  public void testJsOverlayOnNonJsTypeFails() {
+    addSnippetImport("jsinterop.annotations.JsOverlay");
+    addSnippetClassDecl(
+        "public static class Buggy {",
+        "  @JsOverlay public final void m() { };",
+        "}");
+
+    assertBuggyFails(
+        "Method 'test.EntryPoint$Buggy.m()V' in non-native type cannot be @JsOverlay.");
   }
 
   public void testJsTypeExtendsNativeJsTypeSucceeds() throws UnableToCompleteException {

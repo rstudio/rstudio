@@ -93,6 +93,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanHaveSup
   private boolean defaultMethod = false;
   private boolean syntheticAccidentalOverride = false;
   private Set<String> suppressedWarnings;
+  private boolean isJsOverlay = false;
 
   @Override
   public void setJsMemberInfo(String namespace, String name, boolean exported) {
@@ -247,6 +248,10 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanHaveSup
     return body == null && jsName != null;
   }
 
+  public boolean isJsOverlay() {
+    return isJsOverlay || (getEnclosingType() != null && getEnclosingType().isJsoType());
+  }
+
   public void setSyntheticAccidentalOverride() {
     this.syntheticAccidentalOverride = true;
   }
@@ -290,6 +295,10 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanHaveSup
 
   public void setDefaultMethod() {
     this.defaultMethod = true;
+  }
+
+  public void setJsOverlay() {
+    this.isJsOverlay = true;
   }
 
   public boolean isDefaultMethod() {

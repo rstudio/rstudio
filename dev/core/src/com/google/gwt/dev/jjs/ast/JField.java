@@ -166,6 +166,11 @@ public class JField extends JVariable implements JMember {
   }
 
   @Override
+  public boolean isJsOverlay() {
+    return false;
+  }
+
+  @Override
   public String getJsName() {
     return jsName;
   }

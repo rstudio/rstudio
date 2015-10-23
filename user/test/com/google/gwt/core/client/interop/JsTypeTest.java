@@ -24,6 +24,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 import java.util.Iterator;
 
 import jsinterop.annotations.JsFunction;
+import jsinterop.annotations.JsOverlay;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
@@ -498,4 +499,23 @@ public class JsTypeTest extends GWTTestCase {
   private static native void setProperty(Object object, String name, int value) /*-{
     object[name] = value;
   }-*/;
+
+  @JsType(isNative = true)
+  static class NativeJsTypeWithOverlay {
+    public native int m();
+
+    @JsOverlay
+    public final int callM() {
+      return m();
+    }
+  }
+
+  private native NativeJsTypeWithOverlay createNativeJsTypeWithOverlay() /*-{
+    return { m: function() { return 6; } };
+  }-*/;
+
+  public void testNativeJsTypeWithOverlay() {
+    NativeJsTypeWithOverlay object = createNativeJsTypeWithOverlay();
+    assertEquals(6, object.callM());
+  }
 }

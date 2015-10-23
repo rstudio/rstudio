@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 /**
@@ -67,22 +68,21 @@ public class DevirtualizerTest extends OptimizerTestBase {
         "static Iface2 val4 = Jso2.create();");
 
     // Constructs a code snippet that calls a() but NOT b().
-    StringBuilder code = new StringBuilder();
-    code.append("int result = val1.a() + val2.a() + val3.a() + val4.a();");
+    String code = "int result = val1.a() + val2.a() + val3.a() + val4.a();";
 
     // Constructs an expectation about the resulting devirtualized method calls of a(). The salient
     // point in the results below is that the JSO method used for val1 and val1 has a different name
     // the method used for val2 and val3.
-    StringBuilder expected = new StringBuilder();
-    expected.append("int result = ");
-    expected.append("EntryPoint$Jso1.a__I__devirtual$(EntryPoint.val1) + ");
-    expected.append("EntryPoint$Jso1.a__I__devirtual$(EntryPoint.val2) + ");
-    expected.append("EntryPoint$Jso2.a__I__devirtual$(EntryPoint.val3) + ");
-    expected.append("EntryPoint$Jso2.a__I__devirtual$(EntryPoint.val4);");
+    String expected = Joiner.on("").join(
+        "int result = ",
+        "EntryPoint$Jso1.a__I__devirtual$(EntryPoint.val1) + ",
+        "EntryPoint$Jso1.a__I__devirtual$(EntryPoint.val2) + ",
+        "EntryPoint$Jso2.a__I__devirtual$(EntryPoint.val3) + ",
+        "EntryPoint$Jso2.a__I__devirtual$(EntryPoint.val4);");
 
-    Result result = optimize("void", code.toString());
+    Result result = optimize("void", code);
     // Asserts that a() method calls were redirected to the devirtualized version.
-    result.intoString(expected.toString());
+    result.intoString(expected);
     // Asserts that a() AND b() method definitions were both duplicated as devirtualized versions
     // even though b() was never called.
     result.classHasMethods("EntryPoint$Jso1", Lists.newArrayList(
@@ -111,26 +111,44 @@ public class DevirtualizerTest extends OptimizerTestBase {
         "static CharSequence stringCharSeq = \"string\";");
 
     // Constructs a code snippet that calls a() but NOT b().
-    StringBuilder code = new StringBuilder();
-    code.append("int result = javaVal.compareTo(javaVal) + jsoVal.compareTo(jsoVal) +"
-        + " stringVal.compareTo(stringVal) + stringCharSeq.length() + aString.length();");
+    String code = Joiner.on("").join(
+        "int result = javaVal.compareTo(javaVal) + jsoVal.compareTo(jsoVal) +",
+        " stringVal.compareTo(stringVal) + stringCharSeq.length() + aString.length();");
 
     // Constructs an expectation about the resulting devirtualized method calls for
     // Comparable.compareTo() and CharSequence.length(). Note that calls to CharSequence.length and
     // String.length are devirtualized separately.
-    StringBuilder expected = new StringBuilder();
-    expected.append("int result = ");
-    expected.append(String.format(
+    String expected = String.format(Joiner.on("").join(
+        "int result = ",
         // Methods in Comparable and CharSequence end up in String even if used by a JSO.
-        "String.compareTo_%s__I__devirtual$(EntryPoint.javaVal, EntryPoint.javaVal) + " +
-        "String.compareTo_%s__I__devirtual$(EntryPoint.jsoVal, EntryPoint.jsoVal) + " +
-        "String.compareTo_%s__I__devirtual$(EntryPoint.stringVal, EntryPoint.stringVal) + " +
-        "String.length__I__devirtual$(EntryPoint.stringCharSeq) + " +
-        "String.length__I__devirtual$(EntryPoint.aString);", "Ljava_lang_Object",
-        "Ljava_lang_Object", "Ljava_lang_Object"));
+        "String.compareTo_%s__I__devirtual$(EntryPoint.javaVal, EntryPoint.javaVal) + ",
+        "String.compareTo_%s__I__devirtual$(EntryPoint.jsoVal, EntryPoint.jsoVal) + ",
+        "String.compareTo_%s__I__devirtual$(EntryPoint.stringVal, EntryPoint.stringVal) + ",
+        "String.length__I__devirtual$(EntryPoint.stringCharSeq) + ",
+        "String.length__I__devirtual$(EntryPoint.aString);"), "Ljava_lang_Object",
+        "Ljava_lang_Object", "Ljava_lang_Object");
 
     Result result = optimize("void", code.toString());
     result.intoString(expected.toString());
+  }
+
+  public void testDevirtualizeJsOverlay() throws UnableToCompleteException {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsOverlay");
+    addSnippetClassDecl(
+        "@JsType(isNative=true) public static class NativeClass {",
+        "  @JsOverlay public final void m() { };",
+        "}");
+
+    String code = Joiner.on('\n').join(
+        "NativeClass object = null;",
+        "object.m();");
+
+    String expected = Joiner.on('\n').join(
+        "EntryPoint$NativeClass object = null;",
+        "EntryPoint$NativeClass.$m(object);");
+    Result result = optimize("void", code);
+    result.intoString(expected);
   }
 
   @Override

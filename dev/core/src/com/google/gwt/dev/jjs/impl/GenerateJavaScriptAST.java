@@ -624,7 +624,8 @@ public class GenerateJavaScriptAST {
       alreadyRan.add(type);
 
       if (type.isJsNative()) {
-        // Don't generate JS for native JsType.
+        // Emit JsOverlay static methods for native JsTypes.
+        emitStaticMethods(type);
         return null;
       }
 
@@ -2476,7 +2477,7 @@ public class GenerateJavaScriptAST {
       }
       JDeclaredType enclosingType = method.getEnclosingType();
       if (method.canBePolymorphic() || (program.isStaticImpl(method) &&
-          !enclosingType.isJsoType())) {
+          !method.isJsOverlay())) {
         return null;
       }
       if (enclosingType == null || !enclosingType.hasClinit()) {

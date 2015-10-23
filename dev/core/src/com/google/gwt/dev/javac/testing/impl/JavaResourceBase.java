@@ -413,6 +413,12 @@ public class JavaResourceBase {
           "public @interface JsFunction {\n",
           "}");
 
+  public static final MockJavaResource JSOVERLAY =
+      createMockJavaResource("jsinterop.annotations.JsOverlay",
+          "package jsinterop.annotations;",
+          "public @interface JsOverlay {\n",
+          "}");
+
   public static MockJavaResource[] getStandardResources() {
     return new MockJavaResource[] {
         AUTOCLOSEABLE, ANNOTATION, ARRAY_LIST, BYTE, BOOLEAN, CHARACTER, CHAR_SEQUENCE, CLASS,
@@ -421,7 +427,7 @@ public class JavaResourceBase {
         JAVASCRIPTOBJECT, LIST, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR, NUMBER, OBJECT,
         RUNTIME_EXCEPTION, SERIALIZABLE, SHORT, STRING, STRING_BUILDER, SUPPRESS_WARNINGS, SYSTEM,
         THROWABLE, SPECIALIZE_METHOD, JSTYPE, JSCONSTRUCTOR, JSPROPERTY, JSMETHOD, JSIGNORE,
-        JSFUNCTION};
+        JSFUNCTION, JSOVERLAY};
   }
 
   /**

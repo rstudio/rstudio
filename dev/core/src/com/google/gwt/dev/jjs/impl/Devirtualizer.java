@@ -118,7 +118,7 @@ public class Devirtualizer {
 
       // it is a super.m() call and the superclass is not a JSO. (this case is NOT reached if
       // MakeCallsStatic was called).
-      if (x.isStaticDispatchOnly() && !method.getEnclosingType().isJsoType()) {
+      if (x.isStaticDispatchOnly() && !method.isJsOverlay()) {
         return;
       }
 
@@ -176,7 +176,7 @@ public class Devirtualizer {
         JMethod jsoStaticImpl =
             staticImplCreator.getOrCreateStaticImpl(program, overridingMethod);
         devirtualMethodByMethod.put(method, jsoStaticImpl);
-      } else if (targetType.isJsoType()) {
+      } else if (method.isJsOverlay()) {
         // A virtual dispatch on a target that is already known to be a JavaScriptObject, this
         // should have been handled by MakeCallsStatic.
         // TODO(rluble): verify that this case can not arise in optimized mode and if so
@@ -199,6 +199,9 @@ public class Devirtualizer {
         return false;
       }
       if (devirtualMethodByMethod.containsKey(method)) {
+        return true;
+      }
+      if (method.isJsOverlay()) {
         return true;
       }
       EnumSet<DispatchType> dispatchType = program.getDispatchType(instanceType);

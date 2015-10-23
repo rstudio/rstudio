@@ -29,4 +29,6 @@ public interface HasJsInfo {
   String getQualifiedJsName();
 
   boolean isJsNative();
+
+  boolean isJsOverlay();
 }

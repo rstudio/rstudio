@@ -92,13 +92,16 @@ public final class JsInteropUtil {
 
   public static void maybeSetJsInteropPropertiesNew(JMethod method, Annotation... annotations) {
     AnnotationBinding annotation = getInteropAnnotation(annotations, "JsMethod");
+    if (getInteropAnnotation(annotations, "JsOverlay") != null) {
+      method.setJsOverlay();
+    }
+
     if (annotation == null) {
       annotation = getInteropAnnotation(annotations, "JsConstructor");
     }
     if (annotation == null) {
       annotation = getInteropAnnotation(annotations, "JsProperty");
     }
-
     setJsInteropPropertiesNew(method, annotations, annotation);
     if (getInteropAnnotation(annotations, "JsProperty") != null) {
       setJsPropertyProperties(method);
