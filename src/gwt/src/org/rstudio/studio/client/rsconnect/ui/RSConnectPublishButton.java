@@ -432,10 +432,11 @@ public class RSConnectPublishButton extends Composite
       case RSConnect.CONTENT_TYPE_DOCUMENT:
          if (docPreview_ == null || 
              (docPreview_.isStatic() && 
-              StringUtil.isNullOrEmpty(docPreview_.getOutputFile())))
+              StringUtil.isNullOrEmpty(docPreview_.getOutputFile()) &&
+              docPreview_.getSourceFile() != null))
          {
-            // if the doc hasn't been rendered, go render it and come back when
-            // we're finished
+            // if the doc has been saved but not been rendered, go render it and
+            // come back when we're finished
             renderThenPublish(contentPath_, previous);
          }
          else
