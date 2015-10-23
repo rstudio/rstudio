@@ -43,17 +43,11 @@ public class RSConnectLocalAccount extends Composite
       return serverUrl_.getText();
    }
 
-   public String getAccountName() 
-   {
-      return accountName_.getText();
-   }
-   
    public void focus()
    {
       serverUrl_.setFocus(true);
    }
    
    @UiField TextBoxWithCue serverUrl_;
-   @UiField TextBoxWithCue accountName_;
    @UiField HelpLink connectHelpLink_;
 }

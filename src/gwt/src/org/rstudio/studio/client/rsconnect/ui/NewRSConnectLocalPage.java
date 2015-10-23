@@ -79,7 +79,7 @@ public class NewRSConnectLocalPage
    protected NewRSConnectAccountResult collectInput()
    {
       return new NewRSConnectAccountResult("", local_.getServerUrl().trim(), 
-            local_.getAccountName().trim());
+            "");
    }
 
    @Override
