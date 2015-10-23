@@ -18,9 +18,6 @@ package java.util;
 import static java.util.ConcurrentModificationDetector.structureChanged;
 
 import java.util.AbstractMap.SimpleEntry;
-import java.util.InternalJsMapFactory.InternalJsIterator;
-import java.util.InternalJsMapFactory.InternalJsIteratorEntry;
-import java.util.InternalJsMapFactory.InternalJsMap;
 import java.util.Map.Entry;
 
 import javaemul.internal.ArrayHelper;

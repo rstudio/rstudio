@@ -162,30 +162,6 @@ class InternalJsMapFactory {
     return true;
   }-*/;
 
-  static class InternalJsIterator<V> extends JavaScriptObject {
-    protected InternalJsIterator() { }
-    public final native InternalJsIteratorEntry<V> next() /*-{ return this.next(); }-*/;
-  }
-
-  static class InternalJsIteratorEntry<V> extends JavaScriptObject {
-    protected InternalJsIteratorEntry() { }
-    public final native boolean done() /*-{ return this.done; }-*/;
-    public final native String getKey() /*-{ return this.value[0]; }-*/;
-    public final native V getValue() /*-{ return this.value[1]; }-*/;
-  }
-
-  static class InternalJsMap<V> extends JavaScriptObject {
-    protected InternalJsMap() { }
-    public final native V get(int key) /*-{ return this.get(key); }-*/;
-    public final native V get(String key) /*-{ return this.get(key); }-*/;
-    public final native void set(int key, V value) /*-{ this.set(key, value); }-*/;
-    public final native void set(String key, V value) /*-{ this.set(key, value); }-*/;
-    // Calls delete via brackets to be workable with polyfills
-    public final native void delete(int key) /*-{ this['delete'](key); }-*/;
-    public final native void delete(String key) /*-{ this['delete'](key); }-*/;
-    public final native InternalJsIterator<V> entries() /*-{ return this.entries(); }-*/;
-  }
-
   private InternalJsMapFactory() {
     // Hides the constructor.
   }
