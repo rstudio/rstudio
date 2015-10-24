@@ -2,6 +2,8 @@
 
 ### Source Editor
 
+* New Emacs editing mode
+* Editor and IDE keyboard shortcuts can now be customized
 * Support for multiple source windows (tear editor tabs off main window)
 * New global and per-project options for line feed conversion
 * Snippets: pass parameters to snippet generating R functions
@@ -11,12 +13,9 @@
 * Added document outline display to R and C++ documents
 * New Close All Except Current command
 * Rename variable in scope (Cmd+Shift+Alt+M)
-* New Emacs editing mode
 * More context-sensitive highlighting of R keywords
 * Option to enable highlighting of R function calls
 * F2 now navigates into files (e.g. within calls to source)
-* Ctrl+PageUp and Ctrl+PageDown navigate between sections within Rmd, Rpres
-* Enabled comment/uncomment (Cmd+Shift+C) for Markdown documents
 * Yank before/after (Ctrl+K, Ctrl+U) now use system clipboard on RStudio Desktop
 * Yank after cursor (Ctrl+K) no longer eats end of line character
 * Added option controlling 'surround on text insertion' behaviour
@@ -26,28 +25,26 @@
 * New run chunk and options buttons overlaid at the top right of chunks
 * New shortcut for run current chunk (Cmd+Shift+Enter)
 * Outline view for quick navigation between sections/code chunks
+* Ctrl+PageUp and Ctrl+PageDown navigate between sections within Rmd, Rpres
+* Enabled comment/uncomment (Cmd+Shift+C) for Markdown documents
 * Knit with Parameters command for previewing with varying parameters
 * Run All now executes chunks in console (rather than calling e.g. knitr::purl)
 * Reorganize toolbar commands/menu for improved discoverability
 * Added Run Setup Chunk command
 
-### Data Viewer
-
-* Improved interface for filtering factor columns; can now filter by either text or level
-
 ### Miscellaneous
 
-* Editor and IDE keyboard shortcuts can now be customized
 * Ctrl+A, Ctrl+E now move cursor to beginning, end of line in console on all platforms
 * New Session command (create new R session with same project or working directory)
 * Open project in a new window from the projects recently used menu
-* Increase the number of items on file and project recently used menus to 15
+* Data Viewer: Filter factor columns by text or level
 * Raise limit on shinyapps uploads to 1GB from 100MB
 * 'Edit -> Replace and Find' opens Find toolbar if not already open (e.g. with Cmd+Shift+J)
 * Improve performance of console for large and/or rapidly updating output
 * Roxygen quick reference available from the Help menu
 * Links to RStudio cheat sheets available on the Help menu
 * Scan for Rtools in both HKCU and HKLM (for non-Admin installs of Rtools)
+* Run app command and shortcut now works for running single file Shiny applications 
 * Move running Shiny apps between IDE panes and windows without restarting the app
 * Add support for single-file, standalone Shiny applications
 * Parse TeX magic comments that start with "%%" (ESS compatibility).
