@@ -28,3 +28,4 @@ CMakeLists.txt.user
 *.autosave
 *~
 .orig
+.vagrant
