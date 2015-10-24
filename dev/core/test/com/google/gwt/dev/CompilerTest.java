@@ -41,6 +41,7 @@ import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -1415,8 +1416,14 @@ public class CompilerTest extends ArgProcessorTestBase {
     compileToJs(relinkApplicationDir, "com.foo.SimpleModule",
         Lists.<MockResource> newArrayList(emptyEntryPointResource), relinkMinimalRebuildCache, null,
         JsOutputOption.OBFUSCATED);
+    // Since J2CL requires a @JsMethod in Number.java and since JsInterop types
+    // are fully traversed (so that correct exports can be regenerated) Number is fully traversed
+    // and so shows up in the processed list.
+    Set<String> staleTypeNames =
+        new HashSet<>(relinkMinimalRebuildCache.getProcessedStaleTypeNames());
+    staleTypeNames.remove("java.lang.Number");
     // Show that only this little change is stale, not the whole world.
-    assertEquals(2, relinkMinimalRebuildCache.getProcessedStaleTypeNames().size());
+    assertEquals(2, staleTypeNames.size());
   }
 
   public void testIncrementalRecompile_bridgeMethodOverrideChain()
@@ -2373,8 +2380,13 @@ public class CompilerTest extends ArgProcessorTestBase {
     }
 
     if (expectedProcessedStaleTypeNames != null) {
-      assertEquals(expectedProcessedStaleTypeNames,
-          minimalRebuildCache.getProcessedStaleTypeNames());
+      Set<String> staleTypeNames =
+          new HashSet<>(minimalRebuildCache.getProcessedStaleTypeNames());
+      // Since J2CL requires a @JsMethod in Number.java and since JsInterop types
+      // are fully traversed (so that correct exports can be regenerated) Number is fully traversed
+      // and so shows up in the processed list.
+      staleTypeNames.remove("java.lang.Number");
+      assertEquals(expectedProcessedStaleTypeNames, staleTypeNames);
     }
     return Files.toString(outputJsFile, Charsets.UTF_8);
   }
