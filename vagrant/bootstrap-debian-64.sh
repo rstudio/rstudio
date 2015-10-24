@@ -3,6 +3,9 @@
 # set motd
 cp /vagrant/vagrant/build.motd.tail /etc/motd.tail
 
+# add port information to the motd
+echo "Access RStudio Server from your host machine on port $1." >> /etc/motd.tail
+
 # add repo for R 
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
 echo "deb https://cran.rstudio.com/bin/linux/ubuntu trusty/" >> /etc/apt/sources.list
