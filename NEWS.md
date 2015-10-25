@@ -9,7 +9,8 @@
 * Snippets: pass parameters to snippet generating R functions
 * Split into lines command for multiple cursors (Ctrl+Alt+A)
 * New keyboard shortcuts to expand/contract current selection
-  (Cmd+Alt+Shift+{Up/Down} on OS X, Ctrl+Shift+{Up/Down} otherwise)
+    * Cmd+Alt+Shift+{Up/Down} OS X
+    * Ctrl+Shift+{Up/Down} otherwise
 * Enhanced display of sections in R scope navigator
 * Added document outline display to R and C++ documents
 * New Close All Except Current command
