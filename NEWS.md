@@ -8,7 +8,8 @@
 * New global and per-project options for line feed conversion
 * Snippets: pass parameters to snippet generating R functions
 * Split into lines command for multiple cursors (Ctrl+Alt+A)
-* New keyboard shortcuts for expand/contract selection
+* New keyboard shortcuts to expand/contract current selection
+  (Cmd+Alt+Shift+{Up/Down} on OS X, Ctrl+Shift+{Up/Down} otherwise)
 * Enhanced display of sections in R scope navigator
 * Added document outline display to R and C++ documents
 * New Close All Except Current command
@@ -51,7 +52,7 @@
 * Change default Rpres template to specify autosize: true
 * Automatically create ~/.ssh directory if necessary on Windows
 * Added Makefile mode (used for Makefile, Makevars)
-* Always use LF for line endings in Unix Makefiles
+* Always use LF for line endings in Unix Makefiles in R packages
 * Return environment variables as completions within Sys.getenv(), Sys.setenv() calls
 * Add 'R Scripts' preset filter to Find in Files dialog
 * OS X: Enable creation of directories in folder picker dialog
@@ -88,11 +89,11 @@
 * Publish button shows in the editor and viewer at the appropriate times
 * Avoid spurious R warnings when autocompletions requested
 * Allow completions in statements following infix operators
-* Completions in Install Packages are now correct for the case of multiple active repositories.
+* Completions in Install Packages are now correct for the case of multiple active repositories
 * Vim mode: prevent paste operation from entering visual mode via Ctrl+V cross-talk
 * Fixed chunk highlighter issues that occurred when editing chunk label
 * Correctly handle call to edit() with no arguments
-* Fix inability to start up on OS X when multiple conflicting R versions are on the library search path.
+* Fix inability to start up on OS X when multiple conflicting R versions are on the library search path
 * Prevent crash when cancelling out of q() prompt on Windows
 * OSX: Viewer now correctly recognizes session temp dir even when prefixed by /private
 * Fix issue with rstudioapi previewRd function when path included spaces
