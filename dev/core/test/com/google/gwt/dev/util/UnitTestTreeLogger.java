@@ -17,6 +17,7 @@ package com.google.gwt.dev.util;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.thirdparty.guava.common.collect.ComparisonChain;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import junit.framework.Assert;
 
@@ -148,6 +149,17 @@ public class UnitTestTreeLogger extends TreeLogger {
       return type;
     }
 
+    public boolean equals(Object other) {
+      if (!(other instanceof LogEntry)) {
+        return false;
+      }
+      return this.toString().equals(other.toString());
+    }
+
+    public int hashCode() {
+      return toString().hashCode();
+    }
+
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder();
@@ -248,7 +260,11 @@ public class UnitTestTreeLogger extends TreeLogger {
     Collections.sort(actualEntries);
 
     if (expectedEntries.size() != actualEntries.size()) {
-      Assert.fail("Wrong log count: expected=" + expectedEntries + ", actual=" + actualEntries);
+      List<LogEntry> missingEntries = Lists.newArrayList(expectedEntries);
+      missingEntries.removeAll(actualEntries);
+      List<LogEntry> unexpectedEntries = Lists.newArrayList(actualEntries);
+      unexpectedEntries.removeAll(expectedEntries);
+      Assert.fail("Wrong log count: missing=" + missingEntries + ", unexpected=" + unexpectedEntries);
     }
 
     for (int i = 0; i < expectedEntries.size(); ++i) {

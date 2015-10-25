@@ -30,9 +30,11 @@ import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -48,8 +50,10 @@ public class JavaAstVerifier extends JVisitor {
   private Set<String> seenTypeNames = Sets.newHashSet();
   private Multimap<JDeclaredType, String> seenMethodsByType = HashMultimap.create();
   private Multimap<JDeclaredType, String> seenFieldsByType = HashMultimap.create();
+  private JProgram program;
 
   JavaAstVerifier(JProgram program) {
+    this.program = program;
     for (JDeclaredType type :program.getModuleDeclaredTypes()) {
       membersByType.putAll(type, type.getMethods());
       membersByType.putAll(type, type.getFields());
@@ -62,6 +66,40 @@ public class JavaAstVerifier extends JVisitor {
   public static void assertProgramIsConsistent(JProgram program) {
     if (JavaAstVerifier.class.desiredAssertionStatus()) {
       new JavaAstVerifier(program).accept(program);
+    }
+  }
+
+  public static void assertCorrectOverriddenOrder(JProgram program, JMethod method) {
+    // The order of in the overriden set is most specific to least.
+    List<JMethod> seenMethods = Lists.newArrayList(method);
+    JMethod lastMethod = method;
+    for (JMethod overriden : method.getOverriddenMethods()) {
+      for (JMethod seenMethod : seenMethods) {
+        assert !program.typeOracle.isSubType(
+            seenMethod.getEnclosingType(), overriden.getEnclosingType())
+            : "Superclass method '" + seenMethod.getQualifiedName()
+                + "' appeared before subclass method '" + overriden.getQualifiedName()
+                + "' in '" + method.getQualifiedName() + "' overridden list";
+      }
+      assert overriden.getEnclosingType() instanceof JInterfaceType
+          || lastMethod.getEnclosingType() instanceof JClassType
+          : "Class method '" + overriden.getQualifiedName()
+          + "' appeared before after interface method '" + lastMethod.getQualifiedName()
+          + "' in '" + method.getQualifiedName() + "' overridden list";
+    }
+  }
+
+  public static void assertCorrectOverridingOrder(JProgram program, JMethod method) {
+    // The order of in the overriden set is most specific to least.
+    List<JMethod> seenMethods = Lists.newArrayList(method);
+    for (JMethod overriden : method.getOverridingMethods()) {
+      for (JMethod seenMethod : seenMethods) {
+        assert !program.typeOracle.isSubType(
+            overriden.getEnclosingType(), seenMethod.getEnclosingType())
+            : "Subclass method '" + seenMethod.getQualifiedName()
+                + "' appeared before superclass method '" + overriden.getQualifiedName()
+                + "' in '" + method.getQualifiedName() + "' overriding list";
+      }
     }
   }
 
@@ -97,6 +135,8 @@ public class JavaAstVerifier extends JVisitor {
     assert !seenMethodsByType.containsEntry(enclosingType, methodSignature) :
         "Method " + x + " is duplicated.";
     seenMethodsByType.put(enclosingType, methodSignature);
+    assertCorrectOverriddenOrder(program, x);
+    assertCorrectOverridingOrder(program, x);
   }
 
   @Override

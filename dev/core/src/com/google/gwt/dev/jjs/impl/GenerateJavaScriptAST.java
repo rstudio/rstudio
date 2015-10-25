@@ -1472,6 +1472,7 @@ public class GenerateJavaScriptAST {
         for (JField field : type.getFields()) {
           if (field.isJsInteropEntryPoint()) {
             if (!field.isFinal()) {
+              // TODO(rluble): move waring to JsInteropRestrictionChecker.
               logger.log(
                   TreeLogger.Type.WARN,
                   "Exporting effectively non-final field "

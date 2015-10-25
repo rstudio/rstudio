@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.common.InliningMode;
+import com.google.gwt.dev.javac.JsInteropUtil;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
@@ -161,7 +162,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanHaveSup
         continue;
       }
       if (jsMemberName != null && !jsMemberName.equals(jsMemberOverrideName)) {
-        return null;
+        return JsInteropUtil.INVALID_JSNAME;
       }
       jsMemberName = jsMemberOverrideName;
     }
@@ -223,7 +224,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanHaveSup
     return JsPropertyAccessorType.NONE;
   }
 
-  public boolean isJsPropertyAccessor() {
+  private boolean isJsPropertyAccessor() {
     return jsPropertyType != JsPropertyAccessorType.NONE;
   }
 
@@ -561,7 +562,8 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanHaveSup
   }
 
   /**
-   * Returns the transitive closure of all the methods this method overrides.
+   * Returns the transitive closure of all the methods this method overrides; this set is ordered
+   * from most specific to least specific, where class methods appear before interface methods.
    */
   public Set<JMethod> getOverriddenMethods() {
     return overriddenMethods;
@@ -569,7 +571,9 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanHaveSup
 
   /**
    * Returns the transitive closure of all the methods that override this method; caveat this
-   * list is only complete in monolithic compiles and should not be used in incremental compiles..
+   * list is only complete in monolithic compiles and should not be used in incremental compiles.
+   * The returned set is ordered in such a way that most specific overriding methods appear after
+   * less specific ones.
    */
   public Set<JMethod> getOverridingMethods() {
     return overridingMethods;

@@ -42,6 +42,7 @@ public final class JsInteropUtil {
   public static final String JSPROPERTY_CLASS = "com.google.gwt.core.client.js.JsProperty";
   public static final String JSTYPE_CLASS = "com.google.gwt.core.client.js.JsType";
   public static final String UNUSABLE_BY_JS = "unusable-by-js";
+  public static final String INVALID_JSNAME = "<invalid>";
 
   public static void maybeSetJsInteropProperties(JDeclaredType type, Annotation... annotations) {
     AnnotationBinding jsType = JdtUtil.getAnnotation(annotations, JSTYPE_CLASS);
@@ -172,7 +173,7 @@ public final class JsInteropUtil {
       String jsName = Introspector.decapitalize(methodName.substring(2));
       method.setJsPropertyInfo(jsName, JsPropertyAccessorType.GETTER);
     } else {
-      method.setJsPropertyInfo("<invalid>", JsPropertyAccessorType.UNDEFINED);
+      method.setJsPropertyInfo(INVALID_JSNAME, JsPropertyAccessorType.UNDEFINED);
     }
   }
 

@@ -132,7 +132,7 @@ public abstract class JType extends JNode implements HasName, CanBeFinal {
    * "class Name { .. }"), i.e. it is a name that does not include enclosing type names nor package.
    */
   public String[] getCompoundName() {
-    return new String[] { shortName };
+    return new String[] { getShortName() };
   }
 
   /**

@@ -868,6 +868,12 @@ public class JTypeOracle implements Serializable {
     return subclassesByClass.containsEntry(type.getName(), possibleSubType.getName());
   }
 
+  public boolean isSubType(JDeclaredType type, JDeclaredType possibleSubType) {
+    return subclassesByClass.containsEntry(type.getName(), possibleSubType.getName())
+        || classesByImplementingInterface.containsEntry(type.getName(), possibleSubType.getName())
+        || subInterfacesByInterface.containsEntry(type.getName(), possibleSubType.getName());
+  }
+
   public Iterable<String> getSubTypeNames(String typeName) {
     return Iterables.concat(classesByImplementingInterface.get(typeName),
         subclassesByClass.get(typeName), subInterfacesByInterface.get(typeName));

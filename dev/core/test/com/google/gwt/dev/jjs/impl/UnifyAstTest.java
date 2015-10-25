@@ -20,6 +20,7 @@ import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.util.arg.SourceLevel;
@@ -90,6 +91,28 @@ public class UnifyAstTest extends OptimizerTestBase {
     assertOverrides(result, "b.D.m1()Lb/D;");
     assertOverrides(result, "b.E.m1()Lb/C;", "b.C.m1()Lb/C;");
     assertOverrides(result, "b.E.m1()Lb/E;");
+  }
+
+  public void testOverrides_orderInOverriddenSet() throws Exception {
+    addAll(A_A, A_I, A_J, A_B, B_C, B_D, B_E);
+    Result result = optimize("void", "");
+
+    for (JDeclaredType type : result.getOptimizedProgram().getDeclaredTypes()) {
+      for (JMethod method : type.getMethods()) {
+        JavaAstVerifier.assertCorrectOverriddenOrder(result.getOptimizedProgram(), method);
+      }
+    }
+  }
+
+  public void testOverrides_orderInOverridingnSet() throws Exception {
+    addAll(A_A, A_I, A_J, A_B, B_C, B_D, B_E);
+    Result result = optimize("void", "");
+
+    for (JDeclaredType type : result.getOptimizedProgram().getDeclaredTypes()) {
+      for (JMethod method : type.getMethods()) {
+        JavaAstVerifier.assertCorrectOverridingOrder(result.getOptimizedProgram(), method);
+      }
+    }
   }
 
   public void testOverrides_packagePrivate() throws Exception {
