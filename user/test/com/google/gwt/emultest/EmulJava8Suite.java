@@ -15,6 +15,9 @@
  */
 package com.google.gwt.emultest;
 
+import com.google.gwt.emultest.java8.util.DoubleSummaryStatisticsTest;
+import com.google.gwt.emultest.java8.util.IntSummaryStatisticsTest;
+import com.google.gwt.emultest.java8.util.LongSummaryStatisticsTest;
 import com.google.gwt.emultest.java8.util.OptionalDoubleTest;
 import com.google.gwt.emultest.java8.util.OptionalIntTest;
 import com.google.gwt.emultest.java8.util.OptionalLongTest;
@@ -40,7 +43,9 @@ public class EmulJava8Suite {
     suite.addTestSuite(OptionalDoubleTest.class);
     suite.addTestSuite(PrimitiveIteratorTest.class);
     suite.addTestSuite(StringJoinerTest.class);
-
+    suite.addTestSuite(DoubleSummaryStatisticsTest.class);
+    suite.addTestSuite(IntSummaryStatisticsTest.class);
+    suite.addTestSuite(LongSummaryStatisticsTest.class);
     return suite;
   }
 }
