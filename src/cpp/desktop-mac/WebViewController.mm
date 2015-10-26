@@ -473,6 +473,13 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
    }
    else
    {
+      // get the host name
+      NSString* hostName =
+         [webView stringByEvaluatingJavaScriptFromString: @"window.location.host"];
+      BOOL isSameDomain = false;
+      if (hostName)
+         isSameDomain = [[url host] hasPrefix: hostName];
+      
       // perform a base64 download if necessary
       WebNavigationType navType = (WebNavigationType)[[actionInformation
                         objectForKey:WebActionNavigationTypeKey] intValue];
@@ -485,8 +492,8 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
                                       objectForKey:WebActionElementKey]];
          [listener ignore];
       }
-      // show external links in a new window
-      else if (navType == WebNavigationTypeLinkClicked)
+      // show external links to a new domain in a new window
+      else if (navType == WebNavigationTypeLinkClicked && !isSameDomain)
       {
          desktop::utils::browseURL(url);
          [listener ignore];
