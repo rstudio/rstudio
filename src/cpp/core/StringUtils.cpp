@@ -391,7 +391,6 @@ std::string jsonLiteralEscape(const std::string& str)
 
    return escape(escapes, subs, str);
 }
-
 // The str that is passed in should INCLUDE the " " around the value!
 // (Sorry this is inconsistent with jsonLiteralEscape, but it's more efficient
 // than adding double-quotes in this function)
@@ -405,6 +404,17 @@ std::string jsonLiteralUnescape(const std::string& str)
    }
 
    return value.get_str();
+}
+
+std::string singleQuotedStrEscape(const std::string& str)
+{
+   std::string escapes = "'\\";
+
+   std::map<char, std::string> subs;
+   subs['\\'] = "\\\\";
+   subs['\''] = "\\'";
+
+   return escape(escapes, subs, str);
 }
 
 std::string filterControlChars(const std::string& str)

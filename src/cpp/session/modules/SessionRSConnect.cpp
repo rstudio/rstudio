@@ -51,8 +51,14 @@ std::string quotedFilesFromArray(json::Array array, bool quoted)
    std::string joined;
    for (size_t i = 0; i < array.size(); i++) 
    {
+      // convert filenames to system encoding and escape quotes if quoted
+      std::string filename = 
+         string_utils::singleQuotedStrEscape(string_utils::utf8ToSystem(
+                  array[i].get_str()));
+
+      // join into a single string
       joined += (quoted ? "'" : "") + 
-                string_utils::utf8ToSystem(array[i].get_str()) +
+                filename +
                 (quoted ? "'" : "");
       if (i < array.size() - 1) 
          joined += (quoted ? ", " : "|");
@@ -107,16 +113,16 @@ public:
 
       // form the deploy command to hand off to the async deploy process
       cmd += "rsconnect::deployApp("
-             "appDir = '" + appDir + "'," +
+             "appDir = '" + string_utils::singleQuotedStrEscape(appDir) + "'," +
              (deployFiles.empty() ? "" : "appFiles = c(" + 
                 deployFiles + "), ") +
              (primaryDoc.empty() ? "" : "appPrimaryDoc = '" + 
-                primaryDoc + "', ") + 
+                string_utils::singleQuotedStrEscape(primaryDoc) + "', ") + 
              (sourceDoc.empty() ? "" : "appSourceDoc = '" + 
-                sourceDoc + "', ") + 
-             "account = '" + account + "',"
-             "server = '" + server + "', "
-             "appName = '" + app + "', " + 
+                string_utils::singleQuotedStrEscape(sourceDoc) + "', ") + 
+             "account = '" + string_utils::singleQuotedStrEscape(account) + "',"
+             "server = '" + string_utils::singleQuotedStrEscape(server) + "', "
+             "appName = '" + string_utils::singleQuotedStrEscape(app) + "', " + 
              (contentCategory.empty() ? "" : "contentCategory = '" + 
                 contentCategory + "', ") +
              "launch.browser = function (url) { "

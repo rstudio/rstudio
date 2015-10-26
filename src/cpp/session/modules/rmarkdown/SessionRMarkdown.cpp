@@ -261,17 +261,13 @@ private:
                "output_options = list(" + outputOptions + "))";
       }
 
-      // escape single quotes in target filename
-      std::string escapedTargetFile = boost::replace_all_copy(targetFile, "'", 
-            "\\'");
-
       // render command
       boost::format fmt("%1%('%2%', %3% %4%);");
       std::string cmd = boost::str(fmt %
-                                   renderFunc %
-                                   escapedTargetFile %
-                                   extraParams %
-                                   renderOptions);
+                             renderFunc %
+                             string_utils::singleQuotedStrEscape(targetFile) %
+                             extraParams %
+                             renderOptions);
 
       // start the async R process with the render command
       allOutput_.clear();
