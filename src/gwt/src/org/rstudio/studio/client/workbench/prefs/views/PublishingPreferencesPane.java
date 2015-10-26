@@ -177,7 +177,7 @@ public class PublishingPreferencesPane extends PreferencesPane
       missingPkgPanel.getElement().getStyle().setMarginBottom(20, Unit.PX);
       add(missingPkgPanel);
       
-      final CheckBox chkEnableRSConnect = checkboxPref("Enable publishing to RStudio Connect",
+      final CheckBox chkEnableRSConnect = checkboxPref("Enable publishing to RStudio Connect (Beta)",
             uiPrefs_.enableRStudioConnect());
       final HorizontalPanel rsconnectPanel = checkBoxWithHelp(chkEnableRSConnect, 
                                                         "rstudio_connect");
