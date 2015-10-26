@@ -40,11 +40,9 @@ public class PublishDocServicePage
                            RSConnectPublishResult>> pages =
                            new ArrayList<WizardPage<RSConnectPublishInput, 
                                                     RSConnectPublishResult>>();
-      String rscTitle = "RStudio Connect";
-      String rscDesc = 
-            "A local service running inside your organization. Publish and " +
-            "collaborate privately and securely.";
-
+      String rscTitle = RSConnectAccountWizard.SERVICE_NAME;
+      String rscDesc = RSConnectAccountWizard.SERVICE_DESCRIPTION;
+           
       WizardPage<RSConnectPublishInput, RSConnectPublishResult> connectPage;
       if (input.isMultiRmd())
       {

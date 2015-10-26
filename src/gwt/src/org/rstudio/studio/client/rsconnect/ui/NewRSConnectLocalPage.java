@@ -29,9 +29,8 @@ public class NewRSConnectLocalPage
 
    public NewRSConnectLocalPage()
    {
-      super("RStudio Connect", 
-            "A local service running inside your organization. Publish and " +
-            "collaborate privately and securely.",
+      super(RSConnectAccountWizard.SERVICE_NAME, 
+            RSConnectAccountWizard.SERVICE_DESCRIPTION,
             "RStudio Connect Account",
             RSConnectResources.INSTANCE.localAccountIcon(), 
             RSConnectResources.INSTANCE.localAccountIconLarge(),
