@@ -500,7 +500,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
 
     Set<JMethod> modifiedMethodsInIteration1 =
         ImmutableSet.copyOf(getMethods(program, "test.EntryPoint$A",
-            "fun2", "fun3", "fun5", GwtAstBuilder.CLINIT_NAME));
+            "fun2", "fun3", "fun5", GwtAstBuilder.CLINIT_METHOD_NAME));
     Set<JField> modifiedFieldsInIteration1 =
         ImmutableSet.copyOf(getFields(program, "test.EntryPoint$A",
             "staticField"));
@@ -516,7 +516,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
 
     Set<JMethod> modifiedMethodsInIteration2 =
         ImmutableSet.copyOf(getMethods(program, "test.EntryPoint$A",
-                "fun4", "fun5", GwtAstBuilder.INIT_NAME));
+                "fun4", "fun5", GwtAstBuilder.INIT_NAME_METHOD_NAME));
     Set<JField> modifiedFieldsInIteration2 =
         ImmutableSet.copyOf(getFields(program, "test.EntryPoint$A",
             "instanceField", "field"));

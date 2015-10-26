@@ -182,7 +182,7 @@ public class ExpressionAnalyzer extends JVisitor {
      * If no array bounds, the new array is being automatically initialized. If
      * there are side-effects, they'll show up when we visit the initializers.
      */
-    if (x.dims == null) {
+    if (x.getDimensionExpressions() == null) {
       return;
     }
 
@@ -190,7 +190,7 @@ public class ExpressionAnalyzer extends JVisitor {
      * Can throw NegativeArraySizeException if we initialize an array with
      * negative dimensions.
      */
-    for (JExpression expression : x.dims) {
+    for (JExpression expression : x.getDimensionExpressions()) {
       if (expression instanceof JIntLiteral) {
         int value = ((JIntLiteral) expression).getValue();
         if (value >= 0) {

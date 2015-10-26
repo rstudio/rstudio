@@ -25,9 +25,9 @@ public class RuntimeConstants {
   public static final String ASYNC_FRAGMENT_LOADER_RUN_ASYNC = "AsyncFragmentLoader.runAsync";
 
   public static final String ARRAY_GET_CLASS_LITERAL_FOR_ARRAY = "Array.getClassLiteralForArray";
-  public static final String ARRAY_INIT_DIM = "Array.initDim";
-  public static final String ARRAY_INIT_DIMS = "Array.initDims";
-  public static final String ARRAY_INIT_VALUES = "Array.initValues";
+  public static final String ARRAY_INITIALIZE_UNIDIMENSIONAL_ARRAY = "Array.initUnidimensionalArray";
+  public static final String ARRAY_INITIALIZE_MULTIDIMENSIONAL_ARRAY = "Array.initMultidimensionalArray";
+  public static final String ARRAY_STAMP_JAVA_TYPE_INFO = "Array.stampJavaTypeInfo";
   public static final String ARRAY_SET_CHECK = "Array.setCheck";
 
   public static final String CAST_CHAR_TO_STRING = "Cast.charToString";

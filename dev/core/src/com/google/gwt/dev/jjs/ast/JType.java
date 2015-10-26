@@ -62,6 +62,10 @@ public abstract class JType extends JNode implements HasName, CanBeFinal {
    */
   public abstract boolean canBeNull();
 
+  public boolean isArrayType() {
+    return false;
+  }
+
   /**
    * Returns {@code true} if this is {@link JReferenceType.JNullType.INSTANCE}.
    */

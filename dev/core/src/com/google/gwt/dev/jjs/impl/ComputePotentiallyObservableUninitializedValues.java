@@ -232,12 +232,12 @@ public class ComputePotentiallyObservableUninitializedValues {
     }
 
     private boolean isDevirtualizedInitMethod(JMethod method) {
-      return method.isStatic() && method.getName().equals(GwtAstBuilder.STATIC_INIT_NAME) &&
+      return method.isStatic() && method.getName().equals(GwtAstBuilder.STATIC_INIT_METHOD_NAME) &&
           method.getEnclosingType() == currentClass;
     }
 
     private boolean isInitMethod(JMethod method) {
-      return !method.isStatic() && method.getName().equals(GwtAstBuilder.INIT_NAME) &&
+      return !method.isStatic() && method.getName().equals(GwtAstBuilder.INIT_NAME_METHOD_NAME) &&
           method.getEnclosingType() == currentClass;
     }
 

@@ -73,7 +73,6 @@ public class JSORestrictionsChecker {
       "Constructors must be 'protected' in subclasses of JavaScriptObject";
   public static final String ERR_OVERRIDDEN_METHOD =
       "Methods cannot be overridden in JavaScriptObject subclasses";
-  public static final String JSO_CLASS = "com/google/gwt/core/client/JavaScriptObject";
   public static final String ERR_JS_FUNCTION_ONLY_ALLOWED_ON_FUNCTIONAL_INTERFACE =
       "@JsFunction is only allowed on functional interface";
   public static final String ERR_JS_FUNCTION_CANNOT_HAVE_DEFAULT_METHODS =
@@ -128,7 +127,7 @@ public class JSORestrictionsChecker {
         resolvedType = exp.type.resolveType(scope);
       }
       // Anywhere an allocation occurs is wrong.
-      if (isJsoSubclass(resolvedType)) {
+      if (JdtUtil.isJsoSubclass(resolvedType)) {
         errorOn(exp, ERR_NEW_JSO);
       }
     }
@@ -232,7 +231,7 @@ public class JSORestrictionsChecker {
       SourceTypeBinding binding = type.binding;
       checkJsFunction(type, binding);
 
-      if (!isJsoSubclass(binding)) {
+      if (!JdtUtil.isJsoSubclass(binding)) {
         return ClassState.NORMAL;
       }
 
@@ -284,36 +283,6 @@ public class JSORestrictionsChecker {
   public static void check(CheckerState state, CompilationUnitDeclaration cud) {
     JSORestrictionsChecker checker = new JSORestrictionsChecker(state, cud);
     checker.check();
-  }
-
-  /**
-   * Returns {@code true} if {@code typeBinding} is {@code JavaScriptObject} or
-   * any subtype.
-   */
-  public static boolean isJso(TypeBinding typeBinding) {
-    if (!(typeBinding instanceof ReferenceBinding)) {
-      return false;
-    }
-    ReferenceBinding binding = (ReferenceBinding) typeBinding;
-    while (binding != null) {
-      if (JSO_CLASS.equals(String.valueOf(binding.constantPoolName()))) {
-        return true;
-      }
-      binding = binding.superclass();
-    }
-    return false;
-  }
-
-  /**
-   * Returns {@code true} if {@code typeBinding} is a subtype of
-   * {@code JavaScriptObject}, but not {@code JavaScriptObject} itself.
-   */
-  public static boolean isJsoSubclass(TypeBinding typeBinding) {
-    if (!(typeBinding instanceof ReferenceBinding)) {
-      return false;
-    }
-    ReferenceBinding binding = (ReferenceBinding) typeBinding;
-    return isJso(binding.superclass());
   }
 
   static String errAlreadyImplemented(String intfName, String impl1,

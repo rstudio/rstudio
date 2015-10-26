@@ -443,12 +443,12 @@ public class EnumOrdinalizer {
     public boolean visit(JNewArray x, Context ctx) {
       // Do not visit the implicit Class literal.
 
-      if (x.dims != null) {
-        accept(x.dims);
+      if (x.getDimensionExpressions() != null) {
+        accept(x.getDimensionExpressions());
       }
 
-      if (x.initializers != null) {
-        accept(x.initializers);
+      if (x.getInitializers() != null) {
+        accept(x.getInitializers());
       }
       return false;
     }

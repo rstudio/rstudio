@@ -44,7 +44,7 @@ public final class Array {
   private static final int TYPE_PRIMITIVE_BOOLEAN = 12;
 
   public static <T> T[] stampJavaTypeInfo(Object array, T[] referenceType) {
-    initValues(referenceType.getClass(), Util.getCastableTypeMap(referenceType),
+    stampJavaTypeInfo(referenceType.getClass(), Util.getCastableTypeMap(referenceType),
         Array.getElementTypeId(referenceType), Array.getElementTypeCategory(referenceType), array);
     return Array.asArray(array);
   }
@@ -67,10 +67,11 @@ public final class Array {
    * @param dimensions the number of dimensions of the array
    * @return the new array
    */
-  public static Object initDim(Class<?> leafClassLiteral, JavaScriptObject castableTypeMap,
-      JavaScriptObject elementTypeId, int length, int elementTypeCategory, int dimensions) {
+  public static Object initUnidimensionalArray(Class<?> leafClassLiteral,
+      JavaScriptObject castableTypeMap, JavaScriptObject elementTypeId, int length,
+      int elementTypeCategory, int dimensions) {
     Object result = initializeArrayElementsWithDefaults(elementTypeCategory, length);
-    initValues(getClassLiteralForArray(leafClassLiteral, dimensions), castableTypeMap,
+    stampJavaTypeInfo(getClassLiteralForArray(leafClassLiteral, dimensions), castableTypeMap,
         elementTypeId, elementTypeCategory, result);
     return result;
   }
@@ -92,9 +93,11 @@ public final class Array {
    * @param dimExprs the length of each dimension, from highest to lower
    * @return the new array
    */
-  public static Object initDims(Class<?> leafClassLiteral, JavaScriptObject[] castableTypeMapExprs,
+  public static Object initMultidimensionalArray(Class<?> leafClassLiteral,
+      JavaScriptObject[] castableTypeMapExprs,
       JavaScriptObject[] elementTypeIds, int leafElementTypeCategory, int[] dimExprs, int count) {
-    return initDims(leafClassLiteral, castableTypeMapExprs, elementTypeIds, leafElementTypeCategory,
+    return initMultidimensionalArray(leafClassLiteral, castableTypeMapExprs, elementTypeIds,
+        leafElementTypeCategory,
         dimExprs, 0, count);
   }
 
@@ -115,7 +118,7 @@ public final class Array {
    * @param array the JSON array that will be transformed into a GWT array
    * @return values; having wrapped it for GWT
    */
-  public static Object initValues(Class<?> arrayClass, JavaScriptObject castableTypeMap,
+  public static Object stampJavaTypeInfo(Class<?> arrayClass, JavaScriptObject castableTypeMap,
       JavaScriptObject elementTypeId, int elementTypeCategory, Object array) {
     setClass(array, arrayClass);
     Util.setCastableTypeMap(array, castableTypeMap);
@@ -210,23 +213,23 @@ public final class Array {
     return array;
   }-*/;
 
-  private static Object initDims(Class<?> leafClassLiteral, JavaScriptObject[] castableTypeMapExprs,
-      JavaScriptObject[] elementTypeIds, int leafElementTypeCategory, int[] dimExprs,
-      int index, int count) {
+  private static Object initMultidimensionalArray(Class<?> leafClassLiteral,
+      JavaScriptObject[] castableTypeMapExprs, JavaScriptObject[] elementTypeIds,
+      int leafElementTypeCategory, int[] dimExprs, int index, int count) {
     int length = dimExprs[index];
-    boolean isLastDim = (index == (count - 1));
+    boolean isLastDimension = (index == (count - 1));
     // All dimensions but the last are plain reference types.
-    int elementTypeCategory = isLastDim ? leafElementTypeCategory : TYPE_JAVA_OBJECT;
+    int elementTypeCategory = isLastDimension ? leafElementTypeCategory : TYPE_JAVA_OBJECT;
 
     Object result = initializeArrayElementsWithDefaults(elementTypeCategory, length);
-    initValues(getClassLiteralForArray(leafClassLiteral, count - index),
+    stampJavaTypeInfo(getClassLiteralForArray(leafClassLiteral, count - index),
         castableTypeMapExprs[index], elementTypeIds[index], elementTypeCategory, result);
 
-    if (!isLastDim) {
+    if (!isLastDimension) {
       // Recurse to next dimension.
       ++index;
       for (int i = 0; i < length; ++i) {
-        set(result, i, initDims(leafClassLiteral, castableTypeMapExprs,
+        set(result, i, initMultidimensionalArray(leafClassLiteral, castableTypeMapExprs,
             elementTypeIds, leafElementTypeCategory, dimExprs, index, count));
       }
     }
@@ -242,6 +245,14 @@ public final class Array {
   static <T> Class<T> getClassLiteralForArray(Class<?> clazz , int dimensions) {
     return getClassLiteralForArrayImpl(clazz, dimensions);
   }
+
+  private static native int getElementTypeCategory(Object array) /*-{
+    return array.__elementTypeCategory$;
+  }-*/;
+
+  private static native JavaScriptObject getElementTypeId(Object array) /*-{
+    return array.__elementTypeId$;
+  }-*/;
 
   // DO NOT INLINE this method into {@link getClassLiteralForArray}.
   // The purpose of this method is to avoid introducing a public api to {@link java.lang.Class}.
@@ -266,16 +277,8 @@ public final class Array {
     array.__elementTypeId$ = elementTypeId;
   }-*/;
 
-  private static native JavaScriptObject getElementTypeId(Object array) /*-{
-    return array.__elementTypeId$;
-  }-*/;
-
   private static native void setElementTypeCategory(Object array, int elementTypeCategory) /*-{
     array.__elementTypeCategory$ = elementTypeCategory;
-  }-*/;
-
-  private static native int getElementTypeCategory(Object array) /*-{
-    return array.__elementTypeCategory$;
   }-*/;
 
   private Array() {

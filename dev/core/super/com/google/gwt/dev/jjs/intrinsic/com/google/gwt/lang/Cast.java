@@ -47,14 +47,16 @@ final class Cast {
 
   @HasNoSideEffects
   static native boolean canCast(Object src, JavaScriptObject dstId) /*-{
-    return @com.google.gwt.lang.Cast::instanceOfString(*)(src) &&
-        !!@com.google.gwt.lang.Cast::stringCastMap[dstId] ||
-        src.@java.lang.Object::castableTypeMap && !!src.@java.lang.Object::castableTypeMap[dstId] ||
-        @com.google.gwt.lang.Cast::instanceOfDouble(*)(src) &&
-        !!@com.google.gwt.lang.Cast::doubleCastMap[dstId] ||
-        // this occurs last because it is much rarer and less likely to be in hot code
-        @com.google.gwt.lang.Cast::instanceOfBoolean(*)(src) &&
-        !!@com.google.gwt.lang.Cast::booleanCastMap[dstId];
+    if (@com.google.gwt.lang.Cast::instanceOfString(*)(src)) {
+      return !!@com.google.gwt.lang.Cast::stringCastMap[dstId]
+    } else if (src.@java.lang.Object::castableTypeMap) {
+      return !!src.@java.lang.Object::castableTypeMap[dstId]
+    } else if (@com.google.gwt.lang.Cast::instanceOfDouble(*)(src)) {
+      return !!@com.google.gwt.lang.Cast::doubleCastMap[dstId];
+    } else if (@com.google.gwt.lang.Cast::instanceOfBoolean(*)(src)) {
+      return !!@com.google.gwt.lang.Cast::booleanCastMap[dstId];
+    }
+    return false;
   }-*/;
 
   @HasNoSideEffects

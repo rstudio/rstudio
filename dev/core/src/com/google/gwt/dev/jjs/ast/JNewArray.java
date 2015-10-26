@@ -38,9 +38,9 @@ public class JNewArray extends JExpression {
         new JClassLiteral(info.makeChild(), arrayType.getLeafType()));
   }
 
-  public final List<JExpression> dims;
+  private final List<JExpression> dimensionExpressions;
 
-  public final List<JExpression> initializers;
+  private final List<JExpression> initializers;
 
   /**
    * The list of class literals that will be needed to support this expression.
@@ -49,18 +49,26 @@ public class JNewArray extends JExpression {
 
   private JArrayType type;
 
-  public JNewArray(SourceInfo info, JArrayType type, List<JExpression> dims,
+  public JNewArray(SourceInfo info, JArrayType type, List<JExpression> dimensionExpressions,
       List<JExpression> initializers, JClassLiteral leafTypeClassLiteral) {
     super(info);
     this.type = type;
-    this.dims = dims;
+    this.dimensionExpressions = dimensionExpressions;
     this.initializers = initializers;
     this.leafTypeClassLiteral = leafTypeClassLiteral;
-    assert !(leafTypeClassLiteral.getRefType() instanceof JArrayType);
+    assert !(leafTypeClassLiteral.getRefType().isArrayType());
   }
 
   public JArrayType getArrayType() {
     return type;
+  }
+
+  public List<JExpression> getDimensionExpressions() {
+    return dimensionExpressions;
+  }
+
+  public List<JExpression> getInitializers() {
+    return initializers;
   }
 
   /**
@@ -77,21 +85,14 @@ public class JNewArray extends JExpression {
 
   @Override
   public boolean hasSideEffects() {
-    if (initializers != null) {
-      for (JExpression initializer : initializers) {
-        if (initializer.hasSideEffects()) {
-          return true;
-        }
+    assert ((dimensionExpressions != null) ^ (initializers != null));
+
+    for (JExpression expression : initializers != null ? initializers : dimensionExpressions) {
+      if (expression.hasSideEffects()) {
+        return true;
       }
     }
-    if (dims != null) {
-      for (JExpression dim : dims) {
-        if (dim.hasSideEffects()) {
-          return true;
-        }
-      }
-    }
-    // The new operation on an array does not actually cause side effects.
+
     return false;
   }
 
@@ -102,17 +103,10 @@ public class JNewArray extends JExpression {
   @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
-      assert ((dims != null) ^ (initializers != null));
+      assert ((dimensionExpressions != null) ^ (initializers != null));
 
-      if (dims != null) {
-        visitor.accept(dims);
-      }
+      visitor.accept(initializers != null ? initializers : dimensionExpressions);
 
-      if (initializers != null) {
-        visitor.accept(initializers);
-      }
-
-      // Visit the base class that will eventually get generated.
       leafTypeClassLiteral = (JClassLiteral) visitor.accept(leafTypeClassLiteral);
     }
     visitor.endVisit(this, ctx);

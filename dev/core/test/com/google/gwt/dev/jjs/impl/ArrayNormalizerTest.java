@@ -29,7 +29,7 @@ public class ArrayNormalizerTest extends OptimizerTestBase {
     Result result =
         optimize("void", "A[] a = new A[1]; a[1] = new A();");
     result.intoString(
-        "EntryPoint$A[] a = Array.initDim(EntryPoint$A.class, , " +
+        "EntryPoint$A[] a = Array.initUnidimensionalArray(EntryPoint$A.class, [], " +
             "/* JRuntimeTypeReference */\"test.EntryPoint$A\", 1, 0, 1);",
         "a[1] = new EntryPoint$A();");
   }
@@ -41,9 +41,9 @@ public class ArrayNormalizerTest extends OptimizerTestBase {
     Result result =
         optimize("void", "A[] a = new A[1]; a = new B[1]; a[1] = new A();");
     result.intoString(
-        "EntryPoint$A[] a = Array.initDim(EntryPoint$A.class, , " +
+        "EntryPoint$A[] a = Array.initUnidimensionalArray(EntryPoint$A.class, [], " +
             "/* JRuntimeTypeReference */\"test.EntryPoint$A\", 1, 0, 1);",
-        "a = Array.initDim(EntryPoint$B.class, , " +
+        "a = Array.initUnidimensionalArray(EntryPoint$B.class, [], " +
             "/* JRuntimeTypeReference */\"test.EntryPoint$B\", 1, 0, 1);",
         "Array.setCheck(a, 1, new EntryPoint$A());");
   }

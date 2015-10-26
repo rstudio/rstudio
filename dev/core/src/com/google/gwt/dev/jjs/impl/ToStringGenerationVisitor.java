@@ -30,6 +30,7 @@ import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
 import com.google.gwt.dev.jjs.ast.JBreakStatement;
 import com.google.gwt.dev.jjs.ast.JCaseStatement;
+import com.google.gwt.dev.jjs.ast.JCastMap;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JCharLiteral;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
@@ -269,6 +270,14 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     parenPush(x, expr);
     accept(expr);
     parenPop(x, expr);
+    return false;
+  }
+
+  @Override
+  public boolean visit(JCastMap x, Context ctx) {
+    print('[');
+    visitCollectionWithCommas(x.getCanCastToTypes().iterator());
+    print(']');
     return false;
   }
 
@@ -683,14 +692,14 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     printTypeName(x.getArrayType().getLeafType());
     for (int i = 0; i < x.getArrayType().getDims(); ++i) {
       print('[');
-      if (x.dims != null && x.dims.size() > i) {
-        accept(x.dims.get(i));
+      if (x.getDimensionExpressions() != null && x.getDimensionExpressions().size() > i) {
+        accept(x.getDimensionExpressions().get(i));
       }
       print(']');
     }
-    if (x.initializers != null) {
+    if (x.getInitializers() != null) {
       print(" {");
-      visitCollectionWithCommas(x.initializers.iterator());
+      visitCollectionWithCommas(x.getInitializers().iterator());
       print('}');
       return false;
     }
@@ -823,7 +832,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   @Override
   public boolean visit(JsonArray x, Context ctx) {
     print('[');
-    visitCollectionWithCommas(x.getExprs().iterator());
+    visitCollectionWithCommas(x.getExpressions().iterator());
     print(']');
     return false;
   }

@@ -17,7 +17,6 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.common.InliningMode;
-import com.google.gwt.dev.javac.JSORestrictionsChecker;
 import com.google.gwt.dev.javac.JdtUtil;
 import com.google.gwt.dev.javac.JsInteropUtil;
 import com.google.gwt.dev.javac.JsniMethod;
@@ -249,10 +248,23 @@ import javaemul.internal.annotations.ForceInline;
  */
 public class GwtAstBuilder {
 
-  public static final String CLINIT_NAME = "$clinit";
-  public static final String INIT_NAME = "$init";
-  public static final String STATIC_INIT_NAME =  "$" + INIT_NAME;
+  public static final String CLINIT_METHOD_NAME = "$clinit";
+  public static final String GET_CLASS_METHOD_NAME = "getClass";
+  public static final String HAS_NEXT_METHOD_NAME = "hasNext";
+  public static final String ITERATOR_METHOD_NAME = "iterator";
+  public static final String INIT_NAME_METHOD_NAME = "$init";
+  public static final String NEXT_METHOD_NAME = "next";
+  public static final String ORDINAL_METHOD_NAME = "ordinal";
   public static final String OUTER_LAMBDA_PARAM_NAME = "$$outer_0";
+  public static final String STATIC_INIT_METHOD_NAME =  "$" + INIT_NAME_METHOD_NAME;
+  public static final String VALUE_OF_METHOD_NAME = "valueOf";
+  public static final String VALUES_METHOD_NAME = "values";
+
+  public static final int CLINIT_METHOD_INDEX = 0;
+  public static final int INIT_METHOD_INDEX = 1;
+  public static final int GET_CLASS_METHOD_INDEX = 2;
+  public static final int VALUE_OF_METHOD_INDEX = 3;
+  public static final int VALUES_METHOD_INDEX = 4;
 
   /**
    * Visit the JDT AST and produce our own AST. By the end of this pass, the
@@ -260,7 +272,6 @@ public class GwtAstBuilder {
    * about the code. The JDT nodes should never again be referenced after this.
    */
   class AstVisitor extends SafeASTVisitor {
-
     /**
      * Collects JSNI references from native method bodies and replaces the ones referring to
      * compile time constants by their corresponding constant value.
@@ -849,7 +860,7 @@ public class GwtAstBuilder {
         JExpression instance = pop(x.receiver);
         JExpression expr;
         if (fieldBinding.declaringClass == null) {
-          if (!ARRAY_LENGTH_FIELD.equals(String.valueOf(fieldBinding.name))) {
+          if (!LENGTH_FIELD_NAME.equals(String.valueOf(fieldBinding.name))) {
             throw new InternalCompilerException("Expected [array].length.");
           }
           expr = new JArrayLength(info, instance);
@@ -952,9 +963,9 @@ public class GwtAstBuilder {
           CompilationUnitScope cudScope = scope.compilationUnitScope();
           ReferenceBinding javaUtilIterator = scope.getJavaUtilIterator();
           ReferenceBinding javaLangIterable = scope.getJavaLangIterable();
-          MethodBinding iterator = javaLangIterable.getExactMethod(ITERATOR, NO_TYPES, cudScope);
-          MethodBinding hasNext = javaUtilIterator.getExactMethod(HAS_NEXT, NO_TYPES, cudScope);
-          MethodBinding next = javaUtilIterator.getExactMethod(NEXT, NO_TYPES, cudScope);
+          MethodBinding iterator = javaLangIterable.getExactMethod(ITERATOR_, NO_TYPES, cudScope);
+          MethodBinding hasNext = javaUtilIterator.getExactMethod(HAS_NEXT_, NO_TYPES, cudScope);
+          MethodBinding next = javaUtilIterator.getExactMethod(NEXT_, NO_TYPES, cudScope);
           JLocal iteratorVar =
               JProgram.createLocal(info, (elementVarName + "$iterator"), typeMap
                   .get(javaUtilIterator), false, curMethod.body);
@@ -1130,12 +1141,12 @@ public class GwtAstBuilder {
       return true;
     }
 
-    private void pushLambdaExpressionLocalsIntoMethodScope(LambdaExpression x, SyntheticArgumentBinding[] synthArgs,
-        JMethod lambdaMethod) {
+    private void pushLambdaExpressionLocalsIntoMethodScope(LambdaExpression x,
+        SyntheticArgumentBinding[] syntheticArguments, JMethod lambdaMethod) {
       Iterator<JParameter> it = lambdaMethod.getParams().iterator();
-      if (synthArgs != null) {
+      if (syntheticArguments != null) {
         MethodScope scope = x.getScope();
-        for (SyntheticArgumentBinding sa : synthArgs) {
+        for (SyntheticArgumentBinding sa : syntheticArguments) {
           VariableBinding[] path = scope.getEmulationPath(sa.actualOuterLocalVariable);
           assert path.length == 1 && path[0] instanceof LocalVariableBinding;
           JParameter param = it.next();
@@ -1148,16 +1159,17 @@ public class GwtAstBuilder {
     }
 
     /**
-     * Calculate the names of all the parameters a lambda method will need, that is, the combination of all
-     * captured locals plus all arguments to the lambda expression.
+     * Calculate the names of all the parameters a lambda method will need, that is, the
+     * combination of all captured locals plus all arguments to the lambda expression.
      */
-    private String[] computeCombinedParamNames(LambdaExpression x, SyntheticArgumentBinding[] synthArgs) {
+    private String[] computeCombinedParamNames(LambdaExpression x,
+        SyntheticArgumentBinding[] syntheticArguments) {
       String[] paramNames;
       paramNames = new String[x.binding.parameters.length];
-      int numSynthArgs = synthArgs != null ? synthArgs.length : 0;
+      int numSynthArgs = syntheticArguments != null ? syntheticArguments.length : 0;
       for (int i = 0; i < paramNames.length; i++) {
         if (i < numSynthArgs) {
-          paramNames[i] = nameForSyntheticArgument(synthArgs[i]);
+          paramNames[i] = nameForSyntheticArgument(syntheticArguments[i]);
         } else {
           paramNames[i] = nameForArgument(x.arguments, i - numSynthArgs, i);
         }
@@ -1194,7 +1206,7 @@ public class GwtAstBuilder {
        * And replaces the lambda with new lambda$0$Type([outer this], captured locals...).
        */
 
-      // The target accepting this lambda is looking for which type? (e.g. ClickHandler, Runnable, etc)
+      // The target accepting this lambda is looking for which type? (e.g. ClickHandler, Runnable)
       TypeBinding binding = x.expectedType();
       // Find the single abstract method of this interface
       MethodBinding samBinding = binding.getSingleAbstractMethod(blockScope, false);
@@ -1461,15 +1473,16 @@ public class GwtAstBuilder {
       }
       innerLambdaClass.setSuperClass(javaLangObject);
 
-      createSyntheticMethod(info, CLINIT_NAME, innerLambdaClass, JPrimitiveType.VOID, false, true,
+      createSyntheticMethod(info, CLINIT_METHOD_NAME, innerLambdaClass, JPrimitiveType.VOID, false, true,
           true, AccessModifier.PRIVATE);
 
-      createSyntheticMethod(info, INIT_NAME, innerLambdaClass, JPrimitiveType.VOID, false, false,
+      createSyntheticMethod(info, INIT_NAME_METHOD_NAME, innerLambdaClass, JPrimitiveType.VOID, false, false,
           true, AccessModifier.PRIVATE);
 
       // Add a getClass() implementation for all non-Object classes.
-      createSyntheticMethod(info, "getClass", innerLambdaClass, javaLangClass, false, false, false,
-          AccessModifier.PUBLIC,new JClassLiteral(info, innerLambdaClass).makeReturnStatement());
+      createSyntheticMethod(info, GwtAstBuilder.GET_CLASS_METHOD_NAME, innerLambdaClass, javaLangClass,
+          false, false, false, AccessModifier.PUBLIC,
+          new JClassLiteral(info, innerLambdaClass).makeReturnStatement());
 
       innerLambdaClass.setClassDisposition(JDeclaredType.NestedClassDisposition.LAMBDA);
       return innerLambdaClass;
@@ -1658,7 +1671,7 @@ public class GwtAstBuilder {
             FieldBinding fieldBinding = x.otherBindings[i];
             if (fieldBinding.declaringClass == null) {
               // probably array.length
-              if (!ARRAY_LENGTH_FIELD.equals(String.valueOf(fieldBinding.name))) {
+              if (!LENGTH_FIELD_NAME.equals(String.valueOf(fieldBinding.name))) {
                 throw new InternalCompilerException("Expected [array].length.");
               }
               curRef = new JArrayLength(info, curRef);
@@ -1741,7 +1754,8 @@ public class GwtAstBuilder {
       // Get the method that the Type::method is actually referring to
       MethodBinding referredMethodBinding = x.binding;
       if (referredMethodBinding instanceof SyntheticMethodBinding) {
-        SyntheticMethodBinding synthRefMethodBinding = (SyntheticMethodBinding) referredMethodBinding;
+        SyntheticMethodBinding synthRefMethodBinding =
+            (SyntheticMethodBinding) referredMethodBinding;
         if (synthRefMethodBinding.targetMethod != null) {
           // generated in cases were a private method in an outer class needed to be called
           // e.g. outer.access$0 calls some outer.private_method
@@ -2360,9 +2374,8 @@ public class GwtAstBuilder {
         if (isNested) {
           NestedTypeBinding nestedBinding = (NestedTypeBinding) declaringClass;
           if (nestedBinding.enclosingInstances != null) {
-            for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
-              SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
-              curMethod.locals.put(arg, it.next());
+            for (SyntheticArgumentBinding argument : nestedBinding.enclosingInstances) {
+              curMethod.locals.put(argument, it.next());
             }
           }
         }
@@ -2380,9 +2393,8 @@ public class GwtAstBuilder {
           NestedTypeBinding nestedBinding = (NestedTypeBinding) declaringClass;
           // add synthetic args for outer this and locals
           if (nestedBinding.outerLocalVariables != null) {
-            for (int i = 0; i < nestedBinding.outerLocalVariables.length; ++i) {
-              SyntheticArgumentBinding arg = nestedBinding.outerLocalVariables[i];
-              curMethod.locals.put(arg, it.next());
+            for (SyntheticArgumentBinding argument : nestedBinding.outerLocalVariables) {
+              curMethod.locals.put(argument, it.next());
             }
           }
         }
@@ -2526,7 +2538,7 @@ public class GwtAstBuilder {
       }
 
       // Implement getClass() implementation for all non-Object classes.
-      if (isSyntheticGetClassNeeded(x, type)) {
+      if (isSyntheticGetClassNeeded(x, type) && !type.isAbstract()) {
         implementGetClass(type);
       }
 
@@ -2646,20 +2658,18 @@ public class GwtAstBuilder {
         assert (type instanceof JClassType);
         NestedTypeBinding nestedBinding = (NestedTypeBinding) binding;
         if (nestedBinding.enclosingInstances != null) {
-          for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
-            SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
-            createSyntheticField(arg, type, Disposition.THIS_REF);
+          for (SyntheticArgumentBinding argument : nestedBinding.enclosingInstances) {
+            createSyntheticField(argument, type, Disposition.THIS_REF);
           }
         }
 
         if (nestedBinding.outerLocalVariables != null) {
-          for (int i = 0; i < nestedBinding.outerLocalVariables.length; ++i) {
-            SyntheticArgumentBinding arg = nestedBinding.outerLocalVariables[i];
+          for (SyntheticArgumentBinding argument : nestedBinding.outerLocalVariables) {
             // See InnerClassTest.testOuterThisFromSuperCall().
             boolean isReallyThisRef = false;
-            if (arg.actualOuterLocalVariable instanceof SyntheticArgumentBinding) {
+            if (argument.actualOuterLocalVariable instanceof SyntheticArgumentBinding) {
               SyntheticArgumentBinding outer =
-                  (SyntheticArgumentBinding) arg.actualOuterLocalVariable;
+                  (SyntheticArgumentBinding) argument.actualOuterLocalVariable;
               if (outer.matchingField != null) {
                 JField field = typeMap.get(outer.matchingField);
                 if (field.isThisRef()) {
@@ -2667,7 +2677,7 @@ public class GwtAstBuilder {
                 }
               }
             }
-            createSyntheticField(arg, type, isReallyThisRef ? Disposition.THIS_REF
+            createSyntheticField(argument, type, isReallyThisRef ? Disposition.THIS_REF
                 : Disposition.FINAL);
           }
         }
@@ -2733,9 +2743,8 @@ public class GwtAstBuilder {
       ClassScope scope = curClass.scope;
       BaseTypeBinding primitiveType = (BaseTypeBinding) TypeBinding.wellKnownType(scope, typeId);
       ReferenceBinding boxType = (ReferenceBinding) scope.boxing(primitiveType);
-      MethodBinding valueOfMethod =
-          boxType.getExactMethod(VALUE_OF, new TypeBinding[]{primitiveType}, scope
-              .compilationUnitScope());
+      MethodBinding valueOfMethod = boxType.getExactMethod(VALUE_OF_,
+          new TypeBinding[]{primitiveType}, scope.compilationUnitScope());
       assert valueOfMethod != null;
 
       // Add a cast to the correct primitive type if needed.
@@ -2904,20 +2913,10 @@ public class GwtAstBuilder {
      * TODO(scottb): move to UnifyAst and only for non-abstract classes.
      */
     private void implementGetClass(JDeclaredType type) {
-      JMethod method = type.getMethods().get(2);
-      assert ("getClass".equals(method.getName()));
+      JMethod method = type.getMethods().get(GET_CLASS_METHOD_INDEX);
+      assert (GwtAstBuilder.GET_CLASS_METHOD_NAME.equals(method.getName()));
       SourceInfo info = method.getSourceInfo();
-      if ("com.google.gwt.lang.Array".equals(type.getName())) {
-        /*
-         * Don't implement, fall through to Object.getClass(). Array emulation code
-         * in com.google.gwt.lang.Array invokes Array.getClass() and expects to get the
-         * class literal for the actual runtime type of the array (e.g. Foo[].class) and
-         * not Array.class.
-         */
-        type.getMethods().remove(2);
-      } else {
-        JjsUtils.replaceMethodBody(method, new JClassLiteral(info, type));
-      }
+      JjsUtils.replaceMethodBody(method, new JClassLiteral(info, type));
     }
 
     private JDeclarationStatement makeDeclaration(SourceInfo info, JLocal local,
@@ -3067,14 +3066,14 @@ public class GwtAstBuilder {
 
     private void processEnumType(JEnumType type) {
       // $clinit, $init, getClass, valueOf, values
-      JMethod valueOfMethod = type.getMethods().get(3);
-      JMethod valuesMethod = type.getMethods().get(4);
+      JMethod valueOfMethod = type.getMethods().get(VALUE_OF_METHOD_INDEX);
+      JMethod valuesMethod = type.getMethods().get(VALUES_METHOD_INDEX);
       {
-        assert "valueOf".equals(valueOfMethod.getName());
+        assert VALUE_OF_METHOD_NAME.equals(valueOfMethod.getName());
         writeEnumValueOfMethod(type, valueOfMethod, valuesMethod);
       }
       {
-        assert "values".equals(valuesMethod.getName());
+        assert VALUES_METHOD_NAME.equals(valuesMethod.getName());
         writeEnumValuesMethod(type, valuesMethod);
       }
     }
@@ -3139,7 +3138,8 @@ public class GwtAstBuilder {
           call.addArg(qualifier);
         } else {
           // Get implicit outer object.
-          call.addArg(resolveThisReference(call.getSourceInfo(), targetType, false, curMethod.scope));
+          call.addArg(
+              resolveThisReference(call.getSourceInfo(), targetType, false, curMethod.scope));
         }
       }
     }
@@ -3332,7 +3332,8 @@ public class GwtAstBuilder {
             return null;
           }
           assert path.length == 1;
-          if (curMethod.scope.isInsideInitializer() && path[0] instanceof SyntheticArgumentBinding) {
+          if (curMethod.scope.isInsideInitializer()
+              && path[0] instanceof SyntheticArgumentBinding) {
             SyntheticArgumentBinding sb = (SyntheticArgumentBinding) path[0];
             JField field = curClass.syntheticFields.get(sb);
             assert field != null;
@@ -3357,7 +3358,8 @@ public class GwtAstBuilder {
         assert field != null;
         JExpression thisRef = null;
         if (!b.isStatic()) {
-          thisRef = resolveThisReference(info, (ReferenceBinding) x.actualReceiverType, false, scope);
+          thisRef =
+              resolveThisReference(info, (ReferenceBinding) x.actualReceiverType, false, scope);
         }
         result = new JFieldRef(info, thisRef, field, curClass.type);
       } else {
@@ -3374,7 +3376,7 @@ public class GwtAstBuilder {
     private JExpression synthesizeCallToOrdinal(BlockScope scope, SourceInfo info,
         JExpression expression) {
       ReferenceBinding javaLangEnum = scope.getJavaLangEnum();
-      MethodBinding ordinal = javaLangEnum.getMethods(ORDINAL)[0];
+      MethodBinding ordinal = javaLangEnum.getMethods(ORDINAL_)[0];
       expression = new JMethodCall(info, expression, typeMap.get(ordinal));
       return expression;
     }
@@ -3398,7 +3400,7 @@ public class GwtAstBuilder {
       BaseTypeBinding primitiveType = (BaseTypeBinding) targetBinding;
 
       ReferenceBinding boxType = (ReferenceBinding) scope.boxing(primitiveType);
-      char[] selector = CharOperation.concat(primitiveType.simpleName, VALUE);
+      char[] selector = CharOperation.concat(primitiveType.simpleName, VALUE_SUFFIX_);
       MethodBinding valueMethod =
           boxType.getExactMethod(selector, NO_TYPES, scope.compilationUnitScope());
       assert valueMethod != null;
@@ -3424,7 +3426,7 @@ public class GwtAstBuilder {
         mapClass.setEnclosingType(type);
         newTypes.add(mapClass);
 
-        MethodBinding[] createValueOfMapBindings = enumType.getMethods(CREATE_VALUE_OF_MAP);
+        MethodBinding[] createValueOfMapBindings = enumType.getMethods(CREATE_VALUE_OF_MAP_);
         if (createValueOfMapBindings.length == 0) {
           throw new RuntimeException(
               "Unexpectedly unable to access Enum.createValueOfMap via reflection. "
@@ -3455,7 +3457,7 @@ public class GwtAstBuilder {
         SourceInfo info = method.getSourceInfo();
 
         MethodBinding valueOfBinding =
-            enumType.getExactMethod(VALUE_OF, new TypeBinding[]{
+            enumType.getExactMethod(VALUE_OF_, new TypeBinding[]{
                 mapType, curCud.scope.getJavaLangString()}, curCud.scope);
         assert valueOfBinding != null;
 
@@ -3632,26 +3634,28 @@ public class GwtAstBuilder {
    * TODO(zundel): something much more awesome?
    */
   private static final long AST_VERSION = 3;
-  private static final char[] _STRING = "_String".toCharArray();
-  private static final String ARRAY_LENGTH_FIELD = "length";
-
   private static final int MAX_INLINEABLE_ENUM_SIZE = 10;
+
+  private static final String CREATE_VALUE_OF_MAP_METHOD_NAME = "createValueOfMap";
+  private static final String LENGTH_FIELD_NAME = "length";
+  private static final String VALUE_SUFFIX = "Value";
+
+  private static final char[] CREATE_VALUE_OF_MAP_ = CREATE_VALUE_OF_MAP_METHOD_NAME.toCharArray();
+  private static final char[] VALUE_SUFFIX_ = VALUE_SUFFIX.toCharArray();
+  private static final char[] VALUE_OF_ = VALUE_OF_METHOD_NAME.toCharArray();
+  private static final char[] VALUES_ = VALUES_METHOD_NAME.toCharArray();
+  private static final char[] ORDINAL_ = ORDINAL_METHOD_NAME.toCharArray();
+  private static final char[] NEXT_ = NEXT_METHOD_NAME.toCharArray();
+  private static final char[] ITERATOR_ = ITERATOR_METHOD_NAME.toCharArray();
+  private static final char[] HAS_NEXT_ = HAS_NEXT_METHOD_NAME.toCharArray();
 
   /**
    * Reflective access to {@link ForeachStatement#collectionElementType}.
    */
   private static final Field collectionElementTypeField;
   private static final Field haveReceiverField;
-  private static final char[] CREATE_VALUE_OF_MAP = "createValueOfMap".toCharArray();
-  private static final char[] HAS_NEXT = "hasNext".toCharArray();
-  private static final char[] ITERATOR = "iterator".toCharArray();
-  private static final char[] NEXT = "next".toCharArray();
-  private static final TypeBinding[] NO_TYPES = new TypeBinding[0];
-  private static final char[] ORDINAL = "ordinal".toCharArray();
   private static final Interner<String> stringInterner = StringInterner.get();
-  private static final char[] VALUE = "Value".toCharArray();
-  private static final char[] VALUE_OF = "valueOf".toCharArray();
-  private static final char[] VALUES = "values".toCharArray();
+  private static final TypeBinding[] NO_TYPES = new TypeBinding[0];
 
   static {
     InternalCompilerException.preload();
@@ -3923,35 +3927,35 @@ public class GwtAstBuilder {
        * like output JavaScript. Clinit is always in slot 0, init (if it exists)
        * is always in slot 1.
        */
-      assert type.getMethods().size() == 0;
-      createSyntheticMethod(info, CLINIT_NAME, type, JPrimitiveType.VOID, false, true, true,
+      assert type.getMethods().size() == CLINIT_METHOD_INDEX;
+      createSyntheticMethod(info, CLINIT_METHOD_NAME, type, JPrimitiveType.VOID, false, true, true,
           AccessModifier.PRIVATE);
 
       if (type instanceof JClassType) {
-        assert type.getMethods().size() == 1;
-        createSyntheticMethod(info, INIT_NAME, type, JPrimitiveType.VOID, false, false, true,
+        assert type.getMethods().size() == INIT_METHOD_INDEX;
+        createSyntheticMethod(info, INIT_NAME_METHOD_NAME, type, JPrimitiveType.VOID, false, false, true,
             AccessModifier.PRIVATE);
 
         // Add a getClass() implementation for all non-Object, non-String classes.
         if (isSyntheticGetClassNeeded(x, type)) {
-          assert type.getMethods().size() == 2;
-          createSyntheticMethod(info, "getClass", type, javaLangClass, false, false, false,
-              AccessModifier.PUBLIC);
+          assert type.getMethods().size() == GET_CLASS_METHOD_INDEX;
+          createSyntheticMethod(info, GET_CLASS_METHOD_NAME, type, javaLangClass, type.isAbstract(), false,
+              false, AccessModifier.PUBLIC);
         }
       }
 
       if (type instanceof JEnumType) {
         {
-          assert type.getMethods().size() == 3;
+          assert type.getMethods().size() == VALUE_OF_METHOD_INDEX;
           MethodBinding valueOfBinding =
-              binding.getExactMethod(VALUE_OF, new TypeBinding[]{x.scope.getJavaLangString()},
-                  curCud.scope);
+              binding.getExactMethod(VALUE_OF_,
+                  new TypeBinding[]{x.scope.getJavaLangString()}, curCud.scope);
           assert valueOfBinding != null;
           createMethodFromBinding(info, valueOfBinding, new String[] {"name"});
         }
         {
-          assert type.getMethods().size() == 4;
-          MethodBinding valuesBinding = binding.getExactMethod(VALUES, NO_TYPES, curCud.scope);
+          assert type.getMethods().size() == VALUES_METHOD_INDEX;
+          MethodBinding valuesBinding = binding.getExactMethod(VALUES_, NO_TYPES, curCud.scope);
           assert valuesBinding != null;
           createMethodFromBinding(info, valuesBinding, null);
         }
@@ -3987,7 +3991,7 @@ public class GwtAstBuilder {
     // TODO(rluble): We should check whether getClass is implemented by type and only
     // instead of blacklisting.
     return type != javaLangObject && type != javaLangString  && type.getSuperClass() != null &&
-        !JSORestrictionsChecker.isJsoSubclass(typeDeclaration.binding);
+        !JdtUtil.isJsoSubclass(typeDeclaration.binding);
   }
 
   private void createMethod(AbstractMethodDeclaration x) {
@@ -4101,7 +4105,8 @@ public class GwtAstBuilder {
 
   private void maybeSetHasNoSideEffects(AbstractMethodDeclaration x,
       JMethod method) {
-    if (JdtUtil.getAnnotation(x.binding, "javaemul.internal.annotations.HasNoSideEffects") != null) {
+    if (JdtUtil.getAnnotation(x.binding,
+        "javaemul.internal.annotations.HasNoSideEffects") != null) {
       method.setHasSideEffects(false);
     }
   }

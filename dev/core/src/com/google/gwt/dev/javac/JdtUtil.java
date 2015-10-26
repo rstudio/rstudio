@@ -51,6 +51,8 @@ import java.util.Set;
  * Utility functions to interact with JDT classes.
  */
 public final class JdtUtil {
+  public static final String JSO_CLASS = "com/google/gwt/core/client/JavaScriptObject";
+
   /**
    * Returns a source name from an array of names.
    */
@@ -396,5 +398,35 @@ public final class JdtUtil {
 
   public static boolean isStaticClass(SourceTypeBinding binding) {
     return binding.isNestedType() && binding.isStatic();
+  }
+
+  /**
+   * Returns {@code true} if {@code typeBinding} is {@code JavaScriptObject} or
+   * any subtype.
+   */
+  public static boolean isJso(TypeBinding typeBinding) {
+    if (!(typeBinding instanceof ReferenceBinding)) {
+      return false;
+    }
+    ReferenceBinding binding = (ReferenceBinding) typeBinding;
+    while (binding != null) {
+      if (JSO_CLASS.equals(String.valueOf(binding.constantPoolName()))) {
+        return true;
+      }
+      binding = binding.superclass();
+    }
+    return false;
+  }
+
+  /**
+   * Returns {@code true} if {@code typeBinding} is a subtype of
+   * {@code JavaScriptObject}, but not {@code JavaScriptObject} itself.
+   */
+  public static boolean isJsoSubclass(TypeBinding typeBinding) {
+    if (!(typeBinding instanceof ReferenceBinding)) {
+      return false;
+    }
+    ReferenceBinding binding = (ReferenceBinding) typeBinding;
+    return isJso(binding.superclass());
   }
 }

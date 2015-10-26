@@ -168,10 +168,13 @@ public abstract class JDeclaredType extends JReferenceType implements CanHaveSup
    */
   public final void addMethod(int index, JMethod method) {
     assert method.getEnclosingType() == this;
-    assert !method.getName().equals(GwtAstBuilder.CLINIT_NAME) || getMethods().size() == 0 : "Attempted adding "
-        + "$clinit method with index != 0";
-    assert !method.getName().equals(GwtAstBuilder.INIT_NAME) || method.getParams().size() != 0 ||
-        getMethods().size() == 1 : "Attempted adding $init method with index != 1";
+    assert !method.getName().equals(GwtAstBuilder.CLINIT_METHOD_NAME)
+        || getMethods().size() == 0
+        : "Attempted adding $clinit method with index != 0";
+    assert !method.getName().equals(GwtAstBuilder.INIT_NAME_METHOD_NAME)
+        || method.getParams().size() != 0
+        || getMethods().size() == 1
+        : "Attempted adding $init method with index != 1";
     methods = Lists.add(methods, index, method);
   }
 
@@ -254,10 +257,10 @@ public abstract class JDeclaredType extends JReferenceType implements CanHaveSup
    */
   public final JMethod getClinitMethod() {
     assert getMethods().size() != 0;
-    JMethod clinit = this.getMethods().get(0);
+    JMethod clinit = this.getMethods().get(GwtAstBuilder.CLINIT_METHOD_INDEX);
 
     assert clinit != null;
-    assert clinit.getName().equals(GwtAstBuilder.CLINIT_NAME);
+    assert clinit.getName().equals(GwtAstBuilder.CLINIT_METHOD_NAME);
     return clinit;
   }
 

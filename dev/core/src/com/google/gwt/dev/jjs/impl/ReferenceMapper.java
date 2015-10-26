@@ -170,7 +170,7 @@ public class ReferenceMapper {
          */
       }
       // Emulate clinit method for super clinit calls.
-      JMethod clinit = new JMethod(SourceOrigin.UNKNOWN, GwtAstBuilder.CLINIT_NAME, declType,
+      JMethod clinit = new JMethod(SourceOrigin.UNKNOWN, GwtAstBuilder.CLINIT_METHOD_NAME, declType,
           JPrimitiveType.VOID, false, true, true, AccessModifier.PRIVATE);
       clinit.freezeParamTypes();
       clinit.setSynthetic();

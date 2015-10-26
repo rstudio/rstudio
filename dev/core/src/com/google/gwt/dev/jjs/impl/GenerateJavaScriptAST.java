@@ -1105,7 +1105,7 @@ public class GenerateJavaScriptAST {
     @Override
     public JsArrayLiteral transformJsonArray(JsonArray jsonArray) {
       JsArrayLiteral jsArrayLiteral = new JsArrayLiteral(jsonArray.getSourceInfo());
-      transformInto(jsonArray.getExprs(), jsArrayLiteral.getExpressions());
+      transformInto(jsonArray.getExpressions(), jsArrayLiteral.getExpressions());
       return jsArrayLiteral;
     }
 

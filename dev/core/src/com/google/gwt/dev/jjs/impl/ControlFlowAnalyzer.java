@@ -420,10 +420,10 @@ public class ControlFlowAnalyzer {
     public boolean visit(JNewArray newArray, Context ctx) {
       // rescue and instantiate the array type
       JArrayType arrayType = newArray.getArrayType();
-      if (newArray.dims != null) {
+      if (newArray.getDimensionExpressions() != null) {
         // rescue my type and all the implicitly nested types (with fewer dims)
         int arrayDimensions = arrayType.getDims();
-        int initializedDimensions = newArray.dims.size();
+        int initializedDimensions = newArray.getDimensionExpressions().size();
         JType leafType = arrayType.getLeafType();
         assert (initializedDimensions <= arrayDimensions);
         for (int i = 0; i < initializedDimensions; ++i) {

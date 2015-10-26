@@ -261,7 +261,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     JDeclaredType enclosingType = method.getEnclosingType();
 
     boolean isClinit = enclosingType != null && method == enclosingType.getClinitMethod();
-    assert !isClinit || method.getName().equals(GwtAstBuilder.CLINIT_NAME);
+    assert !isClinit || method.getName().equals(GwtAstBuilder.CLINIT_METHOD_NAME);
     return isClinit;
   }
 
@@ -270,11 +270,11 @@ public class JProgram extends JNode implements ArrayTypeCreator {
 
     if (method.isStatic()) {
       // Hack, check the name.
-      return method.getName().equals(GwtAstBuilder.STATIC_INIT_NAME);
+      return method.getName().equals(GwtAstBuilder.STATIC_INIT_METHOD_NAME);
     }
 
     boolean isInit = enclosingType != null && method == enclosingType.getInitMethod();
-    assert !isInit || method.getName().equals(GwtAstBuilder.INIT_NAME);
+    assert !isInit || method.getName().equals(GwtAstBuilder.INIT_NAME_METHOD_NAME);
     return isInit;
   }
 
@@ -484,6 +484,9 @@ public class JProgram extends JNode implements ArrayTypeCreator {
       return EnumSet.allOf(DispatchType.class);
     }
 
+    if (type.isArrayType()) {
+      return EnumSet.of(DispatchType.JAVA_ARRAY);
+    }
     EnumSet<DispatchType> dispatchSet = EnumSet.noneOf(DispatchType.class);
     DispatchType dispatchType = getRepresentedAsNativeTypesDispatchMap().get(type);
     if (dispatchType != null) {

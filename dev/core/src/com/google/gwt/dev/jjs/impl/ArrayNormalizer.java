@@ -78,17 +78,20 @@ public class ArrayNormalizer {
     public void endVisit(JNewArray x, Context ctx) {
       JArrayType type = x.getArrayType();
 
-      if (x.initializers != null) {
-        processInitializers(x, ctx, type);
-      } else {
-        int realDims = x.dims.size();
-        assert (realDims >= 1);
-        if (realDims == 1) {
-          processDim(x, ctx, type);
-        } else {
-          processDims(x, ctx, type);
-        }
+      if (x.getInitializers() != null) {
+        ctx.replaceMe(createArrayFromInitializers(x, type));
+        return;
       }
+
+      int suppliedDimensions = x.getDimensionExpressions().size();
+      assert (suppliedDimensions >= 1);
+
+      if (suppliedDimensions == 1) {
+        ctx.replaceMe(initializeUnidimensionalArray(x, type));
+        return;
+      }
+
+      ctx.replaceMe(initializeMultidimensionalArray(x, type));
     }
 
     private JRuntimeTypeReference getElementRuntimeTypeReference(SourceInfo sourceInfo,
@@ -123,7 +126,7 @@ public class ArrayNormalizer {
       return castableTypeMap;
     }
 
-    private void processDim(JNewArray x, Context ctx, JArrayType arrayType) {
+    private JExpression initializeUnidimensionalArray(JNewArray x, JArrayType arrayType) {
       // override the type of the called method with the array's type
       SourceInfo sourceInfo = x.getSourceInfo();
       JLiteral classLit = x.getLeafTypeClassLiteral();
@@ -132,16 +135,16 @@ public class ArrayNormalizer {
           getElementRuntimeTypeReference(sourceInfo, arrayType);
       JType elementType = arrayType.getElementType();
       JIntLiteral elementTypeCategory = getTypeCategoryLiteral(elementType);
-      JExpression dim = x.dims.get(0);
-
-      JMethodCall call = new JMethodCall(sourceInfo, null, initDim);
+      JExpression dim = x.getDimensionExpressions().get(0);
+      JMethodCall call =
+          new JMethodCall(sourceInfo, null, initializeUnidimensionalArrayMethod);
       call.overrideReturnType(arrayType);
       call.addArgs(classLit, castableTypeMap, arrayElementRuntimeTypeReference, dim,
           elementTypeCategory, program.getLiteralInt(arrayType.getDims()));
-      ctx.replaceMe(call);
+      return call;
     }
 
-    private void processDims(JNewArray x, Context ctx, JArrayType arrayType) {
+    private JExpression initializeMultidimensionalArray(JNewArray x, JArrayType arrayType) {
       // override the type of the called method with the array's type
       SourceInfo sourceInfo = x.getSourceInfo();
       JsonArray castableTypeMaps = new JsonArray(sourceInfo, program.getJavaScriptObject());
@@ -149,46 +152,45 @@ public class ArrayNormalizer {
       JsonArray dimList = new JsonArray(sourceInfo, program.getJavaScriptObject());
       JType currentElementType = arrayType;
       JLiteral classLit = x.getLeafTypeClassLiteral();
-      for (int i = 0; i < x.dims.size(); ++i) {
+      for (int i = 0; i < x.getDimensionExpressions().size(); ++i) {
         // Walk down each type from most dims to least.
         JArrayType curArrayType = (JArrayType) currentElementType;
 
         JExpression castableTypeMap = getOrCreateCastMap(sourceInfo, curArrayType);
-        castableTypeMaps.getExprs().add(castableTypeMap);
+        castableTypeMaps.getExpressions().add(castableTypeMap);
 
         JRuntimeTypeReference elementTypeIdLit = getElementRuntimeTypeReference(sourceInfo,
             curArrayType);
-        elementTypeReferences.getExprs().add(elementTypeIdLit);
+        elementTypeReferences.getExpressions().add(elementTypeIdLit);
 
-        dimList.getExprs().add(x.dims.get(i));
+        dimList.getExpressions().add(x.getDimensionExpressions().get(i));
         currentElementType = curArrayType.getElementType();
       }
       JType leafElementType = currentElementType;
       JIntLiteral leafElementTypeCategory = getTypeCategoryLiteral(leafElementType);
-      JMethodCall call = new JMethodCall(sourceInfo, null, initDims);
+      JMethodCall call =
+          new JMethodCall(sourceInfo, null, initializeMultidimensionalArrayMethod);
       call.overrideReturnType(arrayType);
       call.addArgs(classLit, castableTypeMaps, elementTypeReferences, leafElementTypeCategory,
-          dimList, program.getLiteralInt(x.dims.size()));
-      ctx.replaceMe(call);
+          dimList, program.getLiteralInt(x.getDimensionExpressions().size()));
+      return call;
     }
 
-    private void processInitializers(JNewArray x, Context ctx, JArrayType arrayType) {
+    private JExpression createArrayFromInitializers(JNewArray x, JArrayType arrayType) {
       // override the type of the called method with the array's type
       SourceInfo sourceInfo = x.getSourceInfo();
       JExpression classLitExpression = program.createArrayClassLiteralExpression(x.getSourceInfo(),
           x.getLeafTypeClassLiteral(), arrayType.getDims());
       JExpression castableTypeMap = getOrCreateCastMap(sourceInfo, arrayType);
       JRuntimeTypeReference elementTypeIds = getElementRuntimeTypeReference(sourceInfo, arrayType);
-      JsonArray initList = new JsonArray(sourceInfo, program.getJavaScriptObject());
+      JsonArray initializers =
+          new JsonArray(sourceInfo, program.getJavaScriptObject(), x.getInitializers());
       JIntLiteral leafElementTypeCategory = getTypeCategoryLiteral(arrayType.getElementType());
-      for (int i = 0; i < x.initializers.size(); ++i) {
-        initList.getExprs().add(x.initializers.get(i));
-      }
-      JMethodCall call = new JMethodCall(sourceInfo, null, initValues);
+      JMethodCall call = new JMethodCall(sourceInfo, null, stampJavaTypeInfoMethod);
       call.overrideReturnType(arrayType);
       call.addArgs(classLitExpression, castableTypeMap, elementTypeIds, leafElementTypeCategory,
-          initList);
-      ctx.replaceMe(call);
+          initializers);
+      return call;
     }
 
     /**
@@ -203,18 +205,20 @@ public class ArrayNormalizer {
     new ArrayNormalizer(program).execImpl();
   }
 
-  private final JMethod initDim;
-  private final JMethod initDims;
-  private final JMethod initValues;
-  private final JProgram program;
+  private final JMethod initializeUnidimensionalArrayMethod;
+  private final JMethod initializeMultidimensionalArrayMethod;
+  private final JMethod stampJavaTypeInfoMethod;
   private final JMethod setCheckMethod;
+  private final JProgram program;
 
   private ArrayNormalizer(JProgram program) {
     this.program = program;
     setCheckMethod = program.getIndexedMethod(RuntimeConstants.ARRAY_SET_CHECK);
-    initDim = program.getIndexedMethod(RuntimeConstants.ARRAY_INIT_DIM);
-    initDims = program.getIndexedMethod(RuntimeConstants.ARRAY_INIT_DIMS);
-    initValues = program.getIndexedMethod(RuntimeConstants.ARRAY_INIT_VALUES);
+    initializeUnidimensionalArrayMethod = program.getIndexedMethod(
+        RuntimeConstants.ARRAY_INITIALIZE_UNIDIMENSIONAL_ARRAY);
+    initializeMultidimensionalArrayMethod = program.getIndexedMethod(
+        RuntimeConstants.ARRAY_INITIALIZE_MULTIDIMENSIONAL_ARRAY);
+    stampJavaTypeInfoMethod = program.getIndexedMethod(RuntimeConstants.ARRAY_STAMP_JAVA_TYPE_INFO);
   }
 
   private void execImpl() {

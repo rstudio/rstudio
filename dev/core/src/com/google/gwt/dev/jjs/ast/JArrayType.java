@@ -70,6 +70,11 @@ public class JArrayType extends JReferenceType {
   }
 
   @Override
+  public boolean isArrayType() {
+    return true;
+  }
+
+  @Override
   public boolean isAbstract() {
     return false;
   }

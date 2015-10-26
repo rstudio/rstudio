@@ -145,8 +145,8 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
   @Override
   public void endVisit(JNewArray x, Context ctx) {
     JType elementType = x.getArrayType().getElementType();
-    if (x.initializers != null) {
-      for (JExpression init : x.initializers) {
+    if (x.getInitializers() != null) {
+      for (JExpression init : x.getInitializers()) {
         processIfTypesNotEqual(init.getType(), elementType, x.getSourceInfo());
       }
     }

@@ -152,7 +152,7 @@ public class LongCastNormalizer {
     @Override
     public void endVisit(JNewArray x, Context ctx) {
       JType elementType = x.getArrayType().getElementType();
-      List<JExpression> initializers = x.initializers;
+      List<JExpression> initializers = x.getInitializers();
       if (initializers != null) {
         for (int i = 0; i < initializers.size(); ++i) {
           JExpression initializer = initializers.get(i);

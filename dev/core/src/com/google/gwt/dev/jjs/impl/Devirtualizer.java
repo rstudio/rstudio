@@ -355,8 +355,7 @@ public class Devirtualizer {
   /**
    * Create a dispatch call taking the arguments from the devirtual method.
    */
-  private static JMethodCall maybeCreateDispatch(JMethod dispatchTo,
-      JMethod devirtualMethod) {
+  private static JMethodCall maybeCreateDispatch(JMethod dispatchTo, JMethod devirtualMethod) {
     if (dispatchTo == null) {
       return null;
     }
@@ -369,8 +368,7 @@ public class Devirtualizer {
       thisParamRef = new JParameterRef(sourceInfo, parameters.remove(0));
     }
 
-    JMethodCall dispatchCall = new JMethodCall(sourceInfo, thisParamRef,
-        dispatchTo);
+    JMethodCall dispatchCall = new JMethodCall(sourceInfo, thisParamRef, dispatchTo);
     for (JParameter param : parameters) {
       dispatchCall.addArg(new JParameterRef(sourceInfo, param));
     }
@@ -415,8 +413,10 @@ public class Devirtualizer {
       }
     }
 
-    maybeCreateDispatchFor(method, DispatchType.JAVA_ARRAY, possibleTargetTypes,
-        dispatchToMethodByTargetType, program.getTypeJavaLangObject());
+    if (possibleTargetTypes.contains(DispatchType.JAVA_ARRAY)) {
+      maybeCreateDispatchFor(method, DispatchType.JAVA_ARRAY, possibleTargetTypes,
+          dispatchToMethodByTargetType, program.getTypeJavaLangObject());
+    }
 
     if (possibleTargetTypes.contains(DispatchType.JSO)) {
       JMethod overridingMethod = findOverridingMethod(method,
@@ -500,7 +500,8 @@ public class Devirtualizer {
     dispatchExpression = constructMinimalCondition(
         isJavaArray,
         new JParameterRef(thisParam.getSourceInfo(), thisParam),
-        maybeCreateDispatch(dispatchToMethodByTargetType.get(DispatchType.JAVA_ARRAY), devirtualMethod),
+        maybeCreateDispatch(dispatchToMethodByTargetType.get(DispatchType.JAVA_ARRAY),
+            devirtualMethod),
         dispatchExpression);
 
     // Dispatch to regular object
@@ -508,7 +509,8 @@ public class Devirtualizer {
         hasJavaObjectVirtualDispatch,
         new JParameterRef(thisParam.getSourceInfo(), thisParam),
         maybeCreateDispatch(
-            dispatchToMethodByTargetType.get(DispatchType.HAS_JAVA_VIRTUAL_DISPATCH), devirtualMethod),
+            dispatchToMethodByTargetType.get(DispatchType.HAS_JAVA_VIRTUAL_DISPATCH),
+            devirtualMethod),
         dispatchExpression);
 
     // Dispatch to regular string, double, boolean

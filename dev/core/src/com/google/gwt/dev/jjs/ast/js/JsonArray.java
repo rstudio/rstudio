@@ -20,8 +20,9 @@ import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -29,28 +30,33 @@ import java.util.List;
  */
 public class JsonArray extends JExpression {
 
-  private final List<JExpression> exprs = new ArrayList<JExpression>();
+  private final List<JExpression> expressions;
 
-  private JClassType jsoType;
+  private JClassType arrayType;
 
-  public JsonArray(SourceInfo sourceInfo, JClassType jsoType) {
+  public JsonArray(SourceInfo sourceInfo, JClassType arrayType, Iterable<JExpression> expressions) {
     super(sourceInfo);
-    this.jsoType = jsoType;
+    this.arrayType = arrayType;
+    this.expressions = Lists.newArrayList(expressions);
   }
 
-  public List<JExpression> getExprs() {
-    return exprs;
+  public JsonArray(SourceInfo sourceInfo, JClassType arrayType, JExpression... expressions) {
+    this(sourceInfo, arrayType, Arrays.asList(expressions));
+  }
+
+  public List<JExpression> getExpressions() {
+    return expressions;
   }
 
   @Override
   public JClassType getType() {
-    return jsoType;
+    return arrayType;
   }
 
   @Override
   public boolean hasSideEffects() {
-    for (int i = 0, c = getExprs().size(); i < c; ++i) {
-      if (exprs.get(i).hasSideEffects()) {
+    for (JExpression expression : expressions) {
+      if (expression.hasSideEffects()) {
         return true;
       }
     }
@@ -61,14 +67,14 @@ public class JsonArray extends JExpression {
    * Resolve an external references during AST stitching.
    */
   public void resolve(JClassType jsoType) {
-    assert jsoType.replaces(this.jsoType);
-    this.jsoType = jsoType;
+    assert jsoType.replaces(this.arrayType);
+    this.arrayType = jsoType;
   }
 
   @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
-      visitor.accept(exprs);
+      visitor.accept(expressions);
     }
     visitor.endVisit(this, ctx);
   }
