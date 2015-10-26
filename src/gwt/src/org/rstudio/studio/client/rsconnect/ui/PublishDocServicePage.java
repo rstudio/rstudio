@@ -69,19 +69,10 @@ public class PublishDocServicePage
             new PublishRPubsPage("RPubs", "RPubs is a free service from " + 
          "RStudio for sharing documents on the web.");
 
-      // make the top/default page RStudio Connect if we have an account, 
-      // RPubs otherwise
-      if (input.hasConnectAccount())
-      {
-         pages.add(connectPage);
-         pages.add(rpubsPage);
-      }
-      else
-      {
-         pages.add(rpubsPage);
-         pages.add(connectPage);
-      }
-
+      // make Rpubs the top selection for now since RStudioConnect is in beta
+      pages.add(rpubsPage);
+      pages.add(connectPage);
+      
       return pages;
    }
 }
