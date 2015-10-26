@@ -1005,6 +1005,11 @@ private:
           boost::algorithm::starts_with(version, "10.10");
 }
 
+- (Boolean) isCentOS
+{
+   return NO;
+}
+
 // On Mavericks we need to tell the OS that we are busy so that
 // AppNap doesn't kick in. Declare a local version of NSActivityOptions
 // so we can build this on non-Mavericks systems
