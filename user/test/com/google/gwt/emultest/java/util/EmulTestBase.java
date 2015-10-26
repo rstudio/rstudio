@@ -17,6 +17,7 @@ package com.google.gwt.emultest.java.util;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -39,6 +40,21 @@ public class EmulTestBase extends GWTTestCase {
     for (int i = 0; i < array.length; i++) {
       assertEquals(target.get(i), array[i]);
     }
+  }
+
+  public static void assertEquals(int[] expected, int[] actual) {
+    assertTrue("expected: " + Arrays.toString(expected) + ", actual: " + Arrays.toString(actual),
+        Arrays.equals(expected, actual));
+  }
+
+  public static void assertEquals(long[] expected, long[] actual) {
+    assertTrue("expected: " + Arrays.toString(expected) + ", actual: " + Arrays.toString(actual),
+        Arrays.equals(expected, actual));
+  }
+
+  public static void assertEquals(double[] expected, double[] actual) {
+    assertTrue("expected: " + Arrays.toString(expected) + ", actual: " + Arrays.toString(actual),
+        Arrays.equals(expected, actual));
   }
 
   @Override

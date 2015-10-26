@@ -35,6 +35,11 @@ import java.util.function.IntToLongFunction;
 import java.util.function.IntUnaryOperator;
 import java.util.function.LongBinaryOperator;
 import java.util.function.UnaryOperator;
+import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javaemul.internal.ArrayHelper;
 import javaemul.internal.LongCompareHolder;
@@ -1450,6 +1455,38 @@ public class Arrays {
   public static <T> Spliterator<T> spliterator(T[] array, int startInclusive, int endExclusive) {
     return Spliterators.spliterator(array, startInclusive, endExclusive,
         Spliterator.IMMUTABLE | Spliterator.ORDERED);
+  }
+
+  public static DoubleStream stream(double[] array) {
+    return stream(array, 0, array.length);
+  }
+
+  public static DoubleStream stream(double[] array, int startInclusive, int endExclusive) {
+    return StreamSupport.doubleStream(spliterator(array, startInclusive, endExclusive), false);
+  }
+
+  public static IntStream stream(int[] array) {
+    return stream(array, 0, array.length);
+  }
+
+  public static IntStream stream(int[] array, int startInclusive, int endExclusive) {
+    return StreamSupport.intStream(spliterator(array, startInclusive, endExclusive), false);
+  }
+
+  public static LongStream stream(long[] array) {
+    return stream(array, 0, array.length);
+  }
+
+  public static LongStream stream(long[] array, int startInclusive, int endExclusive) {
+    return StreamSupport.longStream(spliterator(array, startInclusive, endExclusive), false);
+  }
+
+  public static <T> Stream<T> stream(T[] array) {
+    return stream(array, 0, array.length);
+  }
+
+  public static <T> Stream<T> stream(T[] array, int startInclusive, int endExclusive) {
+    return StreamSupport.stream(spliterator(array, startInclusive, endExclusive), false);
   }
 
   public static String toString(boolean[] a) {

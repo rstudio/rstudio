@@ -43,6 +43,11 @@ import com.google.gwt.emultest.java8.util.StringJoinerTest;
 import com.google.gwt.emultest.java8.util.TreeMapTest;
 import com.google.gwt.emultest.java8.util.VectorTest;
 import com.google.gwt.emultest.java8.util.stream.CollectorsTest;
+import com.google.gwt.emultest.java8.util.stream.DoubleStreamTest;
+import com.google.gwt.emultest.java8.util.stream.IntStreamTest;
+import com.google.gwt.emultest.java8.util.stream.LongStreamTest;
+import com.google.gwt.emultest.java8.util.stream.StreamSupportTest;
+import com.google.gwt.emultest.java8.util.stream.StreamTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
@@ -90,6 +95,11 @@ public class EmulJava8Suite {
 
     //-- java.util.stream
     suite.addTestSuite(CollectorsTest.class);
+    suite.addTestSuite(DoubleStreamTest.class);
+    suite.addTestSuite(IntStreamTest.class);
+    suite.addTestSuite(LongStreamTest.class);
+    suite.addTestSuite(StreamTest.class);
+    suite.addTestSuite(StreamSupportTest.class);
 
     return suite;
   }
