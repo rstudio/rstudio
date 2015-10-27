@@ -28,7 +28,10 @@ import java.util.Locale;
 import javaemul.internal.ArrayHelper;
 import javaemul.internal.EmulatedCharset;
 import javaemul.internal.HashCodes;
+import javaemul.internal.JsUtils;
 import javaemul.internal.annotations.DoNotInline;
+
+import jsinterop.annotations.JsMethod;
 
 /**
  * Intrinsic string class.
@@ -774,45 +777,55 @@ public final class String implements Comparable<String>, CharSequence,
 
   // CHECKSTYLE_OFF: Utility Methods for unboxed String.
 
+  @JsMethod(name = "$create")
   static String $createString() {
     return "";
   }
 
+  @JsMethod(name = "$create__arrayOf_byte")
   static String $createString(byte[] bytes) {
     return $createString(bytes, 0, bytes.length);
   }
 
+  @JsMethod(name = "$create__arrayOf_byte__int__int")
   static String $createString(byte[] bytes, int ofs, int len) {
     return $createString(bytes, ofs, len, EmulatedCharset.UTF_8);
   }
 
+  @JsMethod(name = "$create__arrayOf_byte__int__int__java_lang_String")
   static String $createString(byte[] bytes, int ofs, int len, String charsetName)
       throws UnsupportedEncodingException {
     return $createString(bytes, ofs, len, String.getCharset(charsetName));
   }
 
+  @JsMethod(name = "$create__arrayOf_byte__int__int__java_nio_Charset")
   static String $createString(byte[] bytes, int ofs, int len, Charset charset) {
     return String.valueOf(((EmulatedCharset) charset).decodeString(bytes, ofs, len));
   }
 
+  @JsMethod(name = "$create__arrayOf_byte__java_lang_String")
   static String $createString(byte[] bytes, String charsetName)
       throws UnsupportedEncodingException {
     return $createString(bytes, 0, bytes.length, charsetName);
   }
 
+  @JsMethod(name = "$create__arrayOf_byte__java_nio_Charset")
   static String $createString(byte[] bytes, Charset charset)
       throws UnsupportedEncodingException {
     return $createString(bytes, 0, bytes.length, charset.name());
   }
 
+  @JsMethod(name = "$create__arrayOf_char")
   static String $createString(char value[]) {
     return String.valueOf(value);
   }
 
+  @JsMethod(name = "$create__arrayOf_char__int__int")
   static String $createString(char value[], int offset, int count) {
     return String.valueOf(value, offset, count);
   }
 
+  @JsMethod(name = "$create__arrayOf_int__int__int")
   static String $createString(int[] codePoints, int offset, int count) {
     char[] chars = new char[count * 2];
     int charIdx = 0;
@@ -822,16 +835,24 @@ public final class String implements Comparable<String>, CharSequence,
     return String.valueOf(chars, 0, charIdx);
   }
 
+  @JsMethod(name = "$create__java_lang_String")
   static String $createString(String other) {
     return other;
   }
 
+  @JsMethod(name = "$create__java_lang_StringBuffer")
   static String $createString(StringBuffer sb) {
     return String.valueOf(sb);
   }
 
+  @JsMethod(name = "$create__java_lang_StringBuilder")
   static String $createString(StringBuilder sb) {
     return String.valueOf(sb);
+  }
+
+  @JsMethod
+  static boolean $isInstance(Object instance) {
+    return "string".equals(JsUtils.typeOf(instance));
   }
   // CHECKSTYLE_ON: end utility methods
 }

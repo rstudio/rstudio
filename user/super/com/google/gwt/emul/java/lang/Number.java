@@ -128,11 +128,12 @@ public abstract class Number implements Serializable {
 
   @JsMethod
   private static boolean $isInstance(Object instance) {
-    return nativeIsInstance(instance);
+    return "number".equals(JsUtils.typeOf(instance)) || instanceOfJavaLangNumber(instance);
   }
 
-  private static native boolean nativeIsInstance(Object instance) /*-{
-    return typeof instance == 'number' || instance instanceof Number;
+  private static native boolean instanceOfJavaLangNumber(Object instance) /*-{
+    // Note: The instanceof Number here refers to java.lang.Number in j2cl.
+    return instance instanceof Number;
   }-*/;
 
   /**

@@ -44,5 +44,9 @@ public class JsUtils {
   public static native void setIntProperty(Object map, String key, int value) /*-{
     map[key] = value;
   }-*/;
+
+  public static native String typeOf(Object o) /*-{
+    return typeof o;
+  }-*/;
 }
 
