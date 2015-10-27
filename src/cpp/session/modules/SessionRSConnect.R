@@ -339,7 +339,7 @@
    tryCatch({
       # rsconnect comes with a cloud server configured by default; presume any
       # additional servers are Connect
-      nrow(rsconnect::servers()) > 1
+      nrow(rsconnect::accounts()) > 1
    }, error = function(e) { FALSE })
 })
 

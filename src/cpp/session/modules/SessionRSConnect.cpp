@@ -27,6 +27,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncRProcess.hpp>
+#include <session/SessionUserSettings.hpp>
 
 #define kFinishedMarker "Deployment completed: "
 #define kRSConnectFolder "rsconnect/"
@@ -277,12 +278,33 @@ Error rsconnectDeployments(const json::JsonRpcRequest& request,
    return Success();
 }
 
+void onDeferredInit(bool)
+{
+   // automatically enable RSConnect UI if there are configured accounts
+   if (!userSettings().enableRSConnectUI())
+   {
+      bool hasAccount = false;
+      Error error = r::exec::RFunction(".rs.hasConnectAccount").call(&hasAccount);
+      if (error)
+         LOG_ERROR(error);
+
+      if (hasAccount)
+      {
+         error = r::exec::RFunction(".rs.enableRStudioConnectUI", true).call();
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+}
+
 } // anonymous namespace
 
 Error initialize()
 {
    using boost::bind;
    using namespace module_context;
+
+   events().onDeferredInit.connect(onDeferredInit);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

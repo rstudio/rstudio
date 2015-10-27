@@ -99,6 +99,7 @@ public:
    bool alwaysEnableRnwCorcordance() const;
    bool handleErrorsInUserCodeOnly() const;
    int shinyViewerType() const;
+   bool enableRSConnectUI() const;
 
    bool rProfileOnResume() const;
    void setRprofileOnResume(bool rProfileOnResume);
@@ -239,6 +240,7 @@ private:
    mutable boost::scoped_ptr<core::json::Array> pSpellingCustomDicts_;
    mutable boost::scoped_ptr<bool> pHandleErrorsInUserCodeOnly_;
    mutable boost::scoped_ptr<int> pShinyViewerType_;
+   mutable boost::scoped_ptr<bool> pEnableRSConnectUI_;
    
    // diagnostic-related prefs
    mutable boost::scoped_ptr<bool> pLintRFunctionCalls_;
