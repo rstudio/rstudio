@@ -305,14 +305,21 @@ public class NewRSConnectAuthPage
                   contents_.showWaiting();
                   
                   // prepare a new window with the auth URL loaded
-                  NewWindowOptions options = new NewWindowOptions();
-                  options.setName(AUTH_WINDOW_NAME);
-                  options.setAllowExternalNavigation(true);
-                  options.setShowDesktopToolbar(false);
-                  display_.openWebMinimalWindow(
-                        result_.getPreAuthToken().getClaimUrl(),
-                        false, 
-                        700, 800, options);
+                  if (canSpawnAuthenticationWindow())
+                  {
+                     NewWindowOptions options = new NewWindowOptions();
+                     options.setName(AUTH_WINDOW_NAME);
+                     options.setAllowExternalNavigation(true);
+                     options.setShowDesktopToolbar(false);
+                     display_.openWebMinimalWindow(
+                           result_.getPreAuthToken().getClaimUrl(),
+                           false, 
+                           700, 800, options);
+                  }
+                  else
+                  {
+                     Desktop.getFrame().browseUrl(result_.getPreAuthToken().getClaimUrl());
+                  }
                   
                   // close the window automatically when authentication finishes
                   pollForAuthCompleted();
@@ -352,6 +359,17 @@ public class NewRSConnectAuthPage
             onResult.execute(null);
          }
       });
+   }
+   
+   private boolean canSpawnAuthenticationWindow()
+   {
+      if (!Desktop.isDesktop())
+         return true;
+      
+      if (Desktop.getFrame().isCentOS())
+         return false;
+      
+      return true;
    }
    
    private OperationWithInput<Boolean> setOkButtonVisible_;

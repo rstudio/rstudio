@@ -1075,6 +1075,11 @@ bool GwtCallback::isOSXMavericks()
    return desktop::isOSXMavericks();
 }
 
+bool GwtCallback::isCentOS()
+{
+   return desktop::isCentOS();
+}
+
 QString GwtCallback::getScrollingCompensationType()
 {
 #if defined(Q_OS_MAC)
