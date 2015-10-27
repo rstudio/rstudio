@@ -316,6 +316,10 @@ public class NewRSConnectAuthPage
                            false, 
                            700, 800, options);
                   }
+                  else
+                  {
+                     Desktop.getFrame().browseUrl(result_.getPreAuthToken().getClaimUrl());
+                  }
                   
                   // close the window automatically when authentication finishes
                   pollForAuthCompleted();
