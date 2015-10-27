@@ -248,7 +248,7 @@ bool prepareEnvironment(Options& options)
             openFile:(NSString *) filename
 {
    // open file and application together
-   if (!openFile_)
+   if (!initialized_ && !openFile_)
    {
       openFile_ = [filename copy];
    }
@@ -366,6 +366,8 @@ bool prepareEnvironment(Options& options)
                             [NSString stringWithUTF8String: msg.c_str()]);
       [NSApp terminate: self];
    }
+
+   initialized_ = YES;
 }
 
 - (void) pollProcessSupervisor
