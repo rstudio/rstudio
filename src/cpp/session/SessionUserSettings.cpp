@@ -362,7 +362,10 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
 
    int shinyViewerType = readPref<int>(prefs, "shiny_viewer_type", modules::shiny_viewer::SHINY_VIEWER_WINDOW);
    pShinyViewerType_.reset(new int(shinyViewerType));
-   
+
+   bool enableRSConnectUI = readPref<bool>(prefs, "enable_rstudio_connect", false);
+   pEnableRSConnectUI_.reset(new bool(enableRSConnectUI));
+
    bool lintRFunctionCalls = readPref<bool>(prefs, "diagnostics_in_function_calls", true);
    pLintRFunctionCalls_.reset(new bool(lintRFunctionCalls));
    
@@ -435,6 +438,11 @@ bool UserSettings::handleErrorsInUserCodeOnly() const
 int UserSettings::shinyViewerType() const
 {
    return readUiPref<int>(pShinyViewerType_);
+}
+
+bool UserSettings::enableRSConnectUI() const
+{
+   return readUiPref<bool>(pEnableRSConnectUI_);
 }
 
 bool UserSettings::lintRFunctionCalls() const

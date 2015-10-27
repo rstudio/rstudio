@@ -334,12 +334,12 @@
   invisible(enable)
 })
 
-# attempt to see whether a Connect account is available to publish this doc
 .rs.addFunction("hasConnectAccount", function() {
    tryCatch({
-      # rsconnect comes with a cloud server configured by default; presume any
-      # additional servers are Connect
-      nrow(rsconnect::servers()) > 1
+      # check for any non-shinyapps.io accounts
+      accounts <- rsconnect::accounts()
+      accounts <- subset(accounts, server != "shinyapps.io")
+      nrow(accounts) > 0
    }, error = function(e) { FALSE })
 })
 
