@@ -87,7 +87,6 @@ public class RSConnectDeploy extends Composite
       String controlLabel();
       String deployLabel();
       String descriptionPanel();
-      String dropListControl();
       String fileList();
       String firstControlLabel();
       String gridControl();
@@ -103,6 +102,7 @@ public class RSConnectDeploy extends Composite
       String wizard();
       String progressPanel();
       String appDetailsPanel();
+      String wizardDeployPage();
    }
    
    public interface DeployResources extends ClientBundle

@@ -186,7 +186,9 @@ public class Wizard<I,T> extends ModalDialog<T>
       
       // main body panel for transitions
       bodyPanel_ = new LayoutPanel();
-      bodyPanel_.addStyleName(styles.wizardBodyPanel());
+      ArrayList<String> wizardBodyStyles = getWizardBodyStyles();
+      for (String styleName: wizardBodyStyles)
+         bodyPanel_.addStyleName(styleName);
       bodyPanel_.getElement().getStyle().setProperty("overflowX", "hidden");
       mainWidget.add(bodyPanel_);
      
@@ -473,6 +475,12 @@ public class Wizard<I,T> extends ModalDialog<T>
       return input;
    }
     
+   protected ArrayList<String> getWizardBodyStyles()
+   {
+      ArrayList<String> classes = new ArrayList<String>();
+      classes.add(WizardResources.INSTANCE.styles().wizardBodyPanel());
+      return classes;
+   }
    
    private void resetOkButtonCaption()
    {
@@ -510,6 +518,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       // clean this page
       page.onWizardClosing();
    }
+   
    
    private final I initialData_; 
    private T intermediateResult_;

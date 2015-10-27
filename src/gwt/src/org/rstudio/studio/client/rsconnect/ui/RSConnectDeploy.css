@@ -20,26 +20,11 @@
    color: #808080;
 }
 
-.dropListControl
-{
-   width: 250px;
-}
-
-.wizard .dropListControl
-{
-   width: 225px;
-}
-
 .gridControl
 {
    display: block;
    width: 240px;
    padding: 4px;
-}
-
-.wizard .gridControl
-{
-   width: 215px;
 }
 
 .source
@@ -90,7 +75,6 @@
 
 .wizard .fileList
 {
-   width: 225px;
    height: 140px;
 }
 
@@ -134,11 +118,6 @@
    width: 250px;
 }
 
-.wizard .accountList
-{
-   width: 225px;
-}
-
 .accountAnchor
 {
    text-align: right;
@@ -174,4 +153,9 @@
 .descriptionPanel
 {
    text-align: center;
+}
+
+.wizardDeployPage
+{
+   width: 583px;
 }

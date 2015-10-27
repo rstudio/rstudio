@@ -49,15 +49,16 @@ public class RSConnectAccountList extends Composite
                RSConnectResources.INSTANCE.localAccountIconSmall());
          icon.getElement().getStyle().setMarginRight(2, Unit.PX);
          panel.add(icon);
-         Label serverLabel = new Label(account.getServer() + ": ");
-         serverLabel.getElement().getStyle().setFontWeight(FontWeight.BOLD);
-         serverLabel.getElement().getStyle().setMarginRight(5, Unit.PX);
+
+         Label nameLabel = new Label(account.getName() + ":");
+         nameLabel.getElement().getStyle().setCursor(Cursor.POINTER);
+         nameLabel.getElement().getStyle().setFontWeight(FontWeight.BOLD);
+         nameLabel.getElement().getStyle().setMarginRight(4, Unit.PX);
+         panel.add(nameLabel);
+
+         Label serverLabel = new Label(account.getServer());
          serverLabel.getElement().getStyle().setCursor(Cursor.POINTER);
          panel.add(serverLabel);
-
-         Label nameLabel = new Label(account.getName());
-         nameLabel.getElement().getStyle().setCursor(Cursor.POINTER);
-         panel.add(nameLabel);
 
          initWidget(panel);
       }

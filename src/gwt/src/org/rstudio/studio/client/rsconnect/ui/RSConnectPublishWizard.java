@@ -13,6 +13,8 @@
  *
  */package org.rstudio.studio.client.rsconnect.ui;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardPage;
@@ -51,5 +53,13 @@ public class RSConnectPublishWizard
       }
       // note that single Shiny docs don't require a wizard (the user can choose
       // a destination directly in the dialog)
+   }
+   
+   @Override
+   protected ArrayList<String> getWizardBodyStyles()
+   {
+      ArrayList<String> styles = super.getWizardBodyStyles();
+      styles.add(RSConnectDeploy.RESOURCES.style().wizardDeployPage());
+      return styles;
    }
 }
