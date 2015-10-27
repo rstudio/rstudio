@@ -55,7 +55,6 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HistoryCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
-import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
