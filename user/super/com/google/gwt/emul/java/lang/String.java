@@ -152,8 +152,10 @@ public final class String implements Comparable<String>, CharSequence,
     return "" + x;
   }
 
+  // valueOf needs to be treated special:
+  // J2cl uses it for String concat and thus it can not use string concatenation itself.
   public static String valueOf(Object x) {
-    return "" + x;
+    return x == null ? "null" : x.toString();
   }
 
   // CHECKSTYLE_OFF: This class has special needs.
