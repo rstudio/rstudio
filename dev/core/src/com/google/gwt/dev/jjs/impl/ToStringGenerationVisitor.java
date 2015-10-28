@@ -689,19 +689,18 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   @Override
   public boolean visit(JNewArray x, Context ctx) {
     print(CHARS_NEW);
-    printTypeName(x.getArrayType().getLeafType());
-    for (int i = 0; i < x.getArrayType().getDims(); ++i) {
-      print('[');
-      if (x.getDimensionExpressions() != null && x.getDimensionExpressions().size() > i) {
-        accept(x.getDimensionExpressions().get(i));
-      }
-      print(']');
-    }
+    printTypeName(x.getArrayType());
     if (x.getInitializers() != null) {
       print(" {");
       visitCollectionWithCommas(x.getInitializers().iterator());
       print('}');
-      return false;
+    } else {
+      for (int i = 0; i < x.getDimensionExpressions().size(); ++i) {
+        JExpression expr = x.getDimensionExpressions().get(i);
+        print('[');
+        accept(expr);
+        print(']');
+      }
     }
 
     return false;

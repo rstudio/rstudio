@@ -403,7 +403,7 @@ public class GwtAstBuilder {
           // handled by ArrayInitializer.
         } else {
           List<JExpression> dims = pop(x.dimensions);
-          push(JNewArray.createDims(info, type, dims));
+          push(JNewArray.createArrayWithDimensionExpressions(info, type, dims));
         }
       } catch (Throwable e) {
         throw translateException(x, e);
@@ -416,7 +416,7 @@ public class GwtAstBuilder {
         SourceInfo info = makeSourceInfo(x);
         JArrayType type = (JArrayType) typeMap.get(x.resolvedType);
         List<JExpression> expressions = pop(x.expressions);
-        push(JNewArray.createInitializers(info, type, expressions));
+        push(JNewArray.createArrayWithInitializers(info, type, expressions));
       } catch (Throwable e) {
         throw translateException(x, e);
       }
@@ -1112,7 +1112,8 @@ public class GwtAstBuilder {
           JParameter dimParam = synthMethod.getParams().get(0);
           JExpression dimArgExpr = new JParameterRef(dimParam.getSourceInfo(), dimParam);
           dims.add(dimArgExpr);
-          JNewArray newArray = JNewArray.createDims(synthMethod.getSourceInfo(), arrayType, dims);
+          JNewArray newArray = JNewArray.createArrayWithDimensionExpressions(
+              synthMethod.getSourceInfo(), arrayType, dims);
           body.getBlock().addStmt(newArray.makeReturnStatement());
           synthMethod.setBody(body);
         }
@@ -1473,15 +1474,15 @@ public class GwtAstBuilder {
       }
       innerLambdaClass.setSuperClass(javaLangObject);
 
-      createSyntheticMethod(info, CLINIT_METHOD_NAME, innerLambdaClass, JPrimitiveType.VOID, false, true,
-          true, AccessModifier.PRIVATE);
+      createSyntheticMethod(info, CLINIT_METHOD_NAME, innerLambdaClass, JPrimitiveType.VOID, false,
+          true, true, AccessModifier.PRIVATE);
 
-      createSyntheticMethod(info, INIT_NAME_METHOD_NAME, innerLambdaClass, JPrimitiveType.VOID, false, false,
-          true, AccessModifier.PRIVATE);
+      createSyntheticMethod(info, INIT_NAME_METHOD_NAME, innerLambdaClass, JPrimitiveType.VOID,
+          false, false, true, AccessModifier.PRIVATE);
 
       // Add a getClass() implementation for all non-Object classes.
-      createSyntheticMethod(info, GwtAstBuilder.GET_CLASS_METHOD_NAME, innerLambdaClass, javaLangClass,
-          false, false, false, AccessModifier.PUBLIC,
+      createSyntheticMethod(info, GwtAstBuilder.GET_CLASS_METHOD_NAME, innerLambdaClass,
+          javaLangClass, false, false, false, AccessModifier.PUBLIC,
           new JClassLiteral(info, innerLambdaClass).makeReturnStatement());
 
       innerLambdaClass.setClassDisposition(JDeclaredType.NestedClassDisposition.LAMBDA);
@@ -1805,7 +1806,8 @@ public class GwtAstBuilder {
           instance = new JFieldRef(info,
               new JThisRef(info, innerLambdaClass), outerField, innerLambdaClass);
         } else if (referredMethod instanceof JConstructor) {
-          // the method we are invoking is a constructor and may need enclosing instances passed to it
+          // the method we are invoking is a constructor and may need enclosing instances passed to
+          // it.
           // For example, an class Foo { class Inner { Inner(int x) { } } } needs
           // it's constructor invoked with an enclosing instance, Inner::new
           // Java8 doesn't allow the qualifified case, e.g. x.new Foo() -> x.Foo::new
@@ -1909,7 +1911,7 @@ public class GwtAstBuilder {
           JArrayType lastParamType =
               (JArrayType) typeMap.get(x.binding.parameters[x.binding.parameters.length - 1]);
           JNewArray newArray =
-              JNewArray.createInitializers(info, lastParamType, varArgInitializers);
+              JNewArray.createArrayWithInitializers(info, lastParamType, varArgInitializers);
           samCall.addArg(newArray);
         }
 
@@ -2814,7 +2816,8 @@ public class GwtAstBuilder {
         JFieldRef fieldRef = new JFieldRef(info, null, field, type);
         initializers.add(fieldRef);
       }
-      JNewArray valuesArrayCopy = JNewArray.createInitializers(info, enumArrayType, initializers);
+      JNewArray valuesArrayCopy =
+          JNewArray.createArrayWithInitializers(info, enumArrayType, initializers);
       if (type.getEnumList().size() > MAX_INLINEABLE_ENUM_SIZE) {
         // Only inline values() if it is small.
         method.setInliningMode(InliningMode.DO_NOT_INLINE);
@@ -3046,7 +3049,7 @@ public class GwtAstBuilder {
       List<JExpression> initializers = Lists.newArrayList(tail);
       tail.clear();
       JArrayType lastParamType = (JArrayType) typeMap.get(params[varArg]);
-      JNewArray newArray = JNewArray.createInitializers(info, lastParamType, initializers);
+      JNewArray newArray = JNewArray.createArrayWithInitializers(info, lastParamType, initializers);
       args.add(newArray);
       return args;
     }
@@ -3630,8 +3633,6 @@ public class GwtAstBuilder {
 
   /**
    * Manually tracked version count.
-   *
-   * TODO(zundel): something much more awesome?
    */
   private static final long AST_VERSION = 3;
   private static final int MAX_INLINEABLE_ENUM_SIZE = 10;
@@ -3654,8 +3655,9 @@ public class GwtAstBuilder {
    */
   private static final Field collectionElementTypeField;
   private static final Field haveReceiverField;
-  private static final Interner<String> stringInterner = StringInterner.get();
+
   private static final TypeBinding[] NO_TYPES = new TypeBinding[0];
+  private static final Interner<String> stringInterner = StringInterner.get();
 
   static {
     InternalCompilerException.preload();
@@ -3761,11 +3763,8 @@ public class GwtAstBuilder {
   CudInfo curCud = null;
 
   JClassType javaLangClass = null;
-
   JClassType javaLangObject = null;
-
   JClassType javaLangString = null;
-
   JClassType javaLangThrowable = null;
 
   Map<MethodDeclaration, JsniMethod> jsniMethods;
@@ -3792,7 +3791,8 @@ public class GwtAstBuilder {
    *
    * The externalized form will be resolved during AST stitching.
    */
-  static JMethod SAFE_CLOSE_METHOD = JMethod.getExternalizedMethod("com.google.gwt.lang.Exceptions",
+  private static JMethod SAFE_CLOSE_METHOD =
+      JMethod.getExternalizedMethod("com.google.gwt.lang.Exceptions",
       "safeClose(Ljava/lang/AutoCloseable;Ljava/lang/Throwable;)Ljava/lang/Throwable;", true);
 
   private List<JDeclaredType> processImpl() {
@@ -3933,14 +3933,14 @@ public class GwtAstBuilder {
 
       if (type instanceof JClassType) {
         assert type.getMethods().size() == INIT_METHOD_INDEX;
-        createSyntheticMethod(info, INIT_NAME_METHOD_NAME, type, JPrimitiveType.VOID, false, false, true,
-            AccessModifier.PRIVATE);
+        createSyntheticMethod(info, INIT_NAME_METHOD_NAME, type, JPrimitiveType.VOID, false, false,
+            true, AccessModifier.PRIVATE);
 
         // Add a getClass() implementation for all non-Object, non-String classes.
         if (isSyntheticGetClassNeeded(x, type)) {
           assert type.getMethods().size() == GET_CLASS_METHOD_INDEX;
-          createSyntheticMethod(info, GET_CLASS_METHOD_NAME, type, javaLangClass, type.isAbstract(), false,
-              false, AccessModifier.PUBLIC);
+          createSyntheticMethod(info, GET_CLASS_METHOD_NAME, type, javaLangClass, type.isAbstract(),
+              false, false, AccessModifier.PUBLIC);
         }
       }
 

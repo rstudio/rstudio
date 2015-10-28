@@ -21,6 +21,6 @@ package javaemul.internal;
 class ArrayStamper {
   public static native <T> T[] stampJavaTypeInfo(Object array, T[] referenceType) /*-{
     return @com.google.gwt.lang.Array::stampJavaTypeInfo(
-        Ljava/lang/Object;[Ljava/lang/Object;)(array, referenceType);;
+        Ljava/lang/Object;[Ljava/lang/Object;)(array, referenceType);
   }-*/;
 }

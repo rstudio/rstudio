@@ -238,7 +238,7 @@ public class CodeSplitters {
           runAsync.getRunAsyncId()));
     }
     JNewArray newArray =
-        JNewArray.createInitializers(arg1.getSourceInfo(), arrayType,
+        JNewArray.createArrayWithInitializers(arg1.getSourceInfo(), arrayType,
             Lists.newArrayList(initializers));
     call.setArg(1, newArray);
   }
