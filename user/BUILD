@@ -484,6 +484,8 @@ AugmentedJar(
         exclude = [
             "test/**/super/**",
             "test/**/tck/**",
+            "test/**/java8/**",
+            "test/**/*Java8Suite.java",
             "**/RunStyleSeleniumTest.java",
         ],
     ),
@@ -555,6 +557,7 @@ filegroup(
         exclude = [
             "test/**/ConstraintDefinitionsGwtSuite.java",
             "test/**/*JreSuite.java",
+            "test/**/*Java8Suite.java",
         ],
     ),
 )
@@ -579,6 +582,7 @@ filegroup(
             "test/**/RunAsyncSuite.java",
             "test/**/*JreSuite.java",
             "test/**/*JsInteropSuite.java",
+            "test/**/*Java8Suite.java",
         ],
     ),
 )
