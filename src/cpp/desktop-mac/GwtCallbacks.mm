@@ -116,7 +116,7 @@ private:
 {
    NSString* path = @"";
    [panel beginSheetModalForWindow: [uiDelegate_ uiWindow]
-                completionHandler: nil];
+                 completionHandler: ^(NSInteger result) {}];
    long int result = [panel runModal];
    @try
    {
@@ -704,7 +704,7 @@ private:
    }
    
    // write to file
-   NSBitmapImageRep *imageRep = [[image representations] objectAtIndex: 0];
+   NSBitmapImageRep *imageRep = (NSBitmapImageRep*) [[image representations] objectAtIndex: 0];
    NSData *data = [imageRep representationUsingType: imageFileType properties: properties];
    if (![data writeToFile: targetPath atomically: NO])
    {
