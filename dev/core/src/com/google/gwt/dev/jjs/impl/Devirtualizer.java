@@ -33,7 +33,6 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JProgram.DispatchType;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
-import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.RuntimeConstants;
@@ -212,15 +211,6 @@ public class Devirtualizer {
 
   public static void exec(JProgram program) {
     new Devirtualizer(program).execImpl();
-  }
-
-  /**
-   * Returns true if getClass() is devirtualized for {@code type}; used in
-   * {@link ReplaceGetClassOverrides} to avoid replacing getClass() methods that need
-   * trampolines.
-   */
-  public static boolean isGetClassDevirtualized(JProgram program, JType type) {
-    return type == program.getJavaScriptObject() || type == program.getTypeJavaLangString();
   }
 
   /**

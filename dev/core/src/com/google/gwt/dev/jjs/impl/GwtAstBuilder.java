@@ -3990,8 +3990,7 @@ public class GwtAstBuilder {
   private boolean isSyntheticGetClassNeeded(TypeDeclaration typeDeclaration, JDeclaredType type) {
     // TODO(rluble): We should check whether getClass is implemented by type and only
     // instead of blacklisting.
-    return type != javaLangObject && type != javaLangString  && type.getSuperClass() != null &&
-        !JdtUtil.isJsoSubclass(typeDeclaration.binding);
+    return type.getSuperClass() != null && !JdtUtil.isJsoSubclass(typeDeclaration.binding);
   }
 
   private void createMethod(AbstractMethodDeclaration x) {

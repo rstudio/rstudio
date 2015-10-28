@@ -16,7 +16,6 @@
 package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.core.client.JavaScriptException;
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -293,72 +292,6 @@ public class MiscellaneousTest extends GWTTestCase {
     } else {
       noOp();
     }
-  }
-
-  public void testString() {
-    String x = "hi";
-    assertEquals("hi", x);
-    assertEquals("hi", x.toString());
-    x = new String();
-    assertEquals("", x);
-    x = new String(x);
-    assertEquals("", x);
-    x = new String("hi");
-    assertEquals("hi", x);
-    assertEquals('i', x.charAt(1));
-    assertEquals("hiyay", x.concat("yay"));
-    assertEquals("hihi", x + x);
-
-    assertEquals(
-        "blahcom.google.gwt.dev.jjs.test.MiscellaneousTestabctruefalsenullc27",
-        ("blah" + this + String.valueOf(new char[] {'a', 'b', 'c'}) + true
-            + false + null + 'c' + 27));
-  }
-
-  /**
-   * Ensures that polymorphic dispatch to String works correctly.
-   */
-  @SuppressWarnings("unchecked")
-  public void testStringDynamicMethods() {
-    Object s = FALSE ? new Object() : "Hello, World!";
-    assertEquals(String.class, s.getClass());
-    assertEquals("Hello, World!".hashCode(), s.hashCode());
-    assertTrue(s.equals("Hello, World!"));
-    assertTrue("Hello, World!".equals(s));
-    assertFalse(s.equals(""));
-    assertFalse("".equals(s));
-    assertEquals("Hello, World!", s.toString());
-    assertTrue(s instanceof String);
-
-    Comparable b = FALSE ? new Integer(1) : "Hello, World!";
-    assertTrue(((Comparable) "Hello, World!").compareTo(b) == 0);
-    assertTrue(b.compareTo("Hello, World!") == 0);
-    assertTrue(((Comparable) "A").compareTo(b) < 0);
-    assertTrue(b.compareTo("A") > 0);
-    assertTrue(((Comparable) "Z").compareTo(b) > 0);
-    assertTrue(b.compareTo("Z") < 0);
-    assertTrue(b instanceof String);
-
-    CharSequence c = FALSE ? new StringBuilder() : "Hello, World!";
-    assertEquals('e', c.charAt(1));
-    assertEquals(13, c.length());
-    assertEquals("ello", c.subSequence(1, 5));
-    assertTrue(c instanceof String);
-  }
-
-  /**
-   * Ensures that dispatch to JavaScript native arrays that are NOT Java arrays works properly.
-   */
-  public void testNativeJavaScriptArray() {
-    Object jsoArray = FALSE ? new Object() : JavaScriptObject.createArray();
-    assertEquals(JavaScriptObject.class, jsoArray.getClass());
-    assertFalse(jsoArray instanceof Object[]);
-
-    Object objectArray = FALSE ? new Object() : new Object[10];
-    assertEquals(Object[].class, objectArray.getClass());
-    assertTrue(objectArray instanceof Object[]);
-
-    assertFalse(jsoArray.toString().equals(objectArray.toString()));
   }
 
   @Override

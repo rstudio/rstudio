@@ -48,6 +48,7 @@ import com.google.gwt.dev.jjs.test.MethodBindTest;
 import com.google.gwt.dev.jjs.test.MethodCallTest;
 import com.google.gwt.dev.jjs.test.MethodInterfaceTest;
 import com.google.gwt.dev.jjs.test.MiscellaneousTest;
+import com.google.gwt.dev.jjs.test.NativeDevirtualizationTest;
 import com.google.gwt.dev.jjs.test.NativeLongTest;
 import com.google.gwt.dev.jjs.test.ObjectIdentityTest;
 import com.google.gwt.dev.jjs.test.SingleJsoImplTest;
@@ -101,6 +102,7 @@ public class CompilerSuite {
     suite.addTestSuite(MethodCallTest.class);
     suite.addTestSuite(MethodInterfaceTest.class);
     suite.addTestSuite(MiscellaneousTest.class);
+    suite.addTestSuite(NativeDevirtualizationTest.class);
     suite.addTestSuite(NativeLongTest.class);
     suite.addTestSuite(ObjectIdentityTest.class);
     suite.addTestSuite(ScriptOnlyTest.class);

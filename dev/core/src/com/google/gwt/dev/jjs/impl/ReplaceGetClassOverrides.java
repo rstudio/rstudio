@@ -22,12 +22,14 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 
 /**
- * Prune all overrides of Object.getClass() except when the enclosing class is JavaScriptObject
- * (to permit getClass() devirtualization in Devirtualizer to continue to work).
- * Also Inline all method calls to Object.getClass() as Object.clazz.
+ * Prune all overrides of Object.getClass() and inline all method calls to Object.getClass()
+ * as Object.___clazz.
+ * <p>
+ * The Devirtualizer pass needs to run before this pass.
  */
 public class ReplaceGetClassOverrides {
   public static void exec(JProgram program) {
@@ -48,27 +50,29 @@ public class ReplaceGetClassOverrides {
 
     @Override
     public void endVisit(JMethod x, Context ctx) {
-      // Don't prune getClass() for objects where it is devirtualized (String, JSOs for now)
-      if (Devirtualizer.isGetClassDevirtualized(program, x.getEnclosingType())) {
-        return;
-      }
-      if (x.getOverriddenMethods().contains(getClassMethod)) {
+      if (isGetClassMethod(x)) {
         ctx.removeMe();
       }
     }
 
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
-      // Don't inline getClass() for objects where it is devirtualized (String, JSOs for now)
-      if (Devirtualizer.isGetClassDevirtualized(program, x.getTarget().getEnclosingType())) {
-        return;
-      }
-      // replace overridden getClass() with reference to Object.clazz field
-      if (x.getTarget() == getClassMethod ||
-          x.getTarget().getOverriddenMethods().contains(getClassMethod)) {
+
+      // All calls to getClass with reference to Object.clazz field
+      if (isGetClassMethod(x.getTarget())) {
+        assert !isGetClassDevirtualized(x.getTarget().getEnclosingType());
         ctx.replaceMe(new JFieldRef(x.getSourceInfo(), x.getInstance(),
             clazzField, clazzField.getEnclosingType()));
       }
+    }
+
+    private boolean isGetClassMethod(JMethod method) {
+      return method == getClassMethod || method.getOverriddenMethods().contains(getClassMethod);
+    }
+
+    private boolean isGetClassDevirtualized(JType type) {
+      return type == program.getJavaScriptObject()
+          || program.getRepresentedAsNativeTypes().contains(type);
     }
   }
 }

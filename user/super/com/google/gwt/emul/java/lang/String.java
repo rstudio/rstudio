@@ -433,25 +433,6 @@ public final class String implements Comparable<String>, CharSequence,
     }
   }
 
-  /**
-   * Magic; JSODevirtualizer will use this implementation.<p>
-   *
-   * Each class gets a synthetic stubs for getClass at AST construction time with the exception of
-   * Object, JavaScriptObject and subclasses and String; see {@link GwtAstBuilder.createMembers()}.
-   * <p>
-   *
-   * These stubs are replaced in {@link ReplaceGetClassOverrides} by an access to field __clazz
-   * which is initialized in each class prototype to point to the class literal. String is
-   * implemented as a plain JavaScript string hence lacking said field.<p>
-   *
-   * The devirtualizer {@code JsoDevirtualizer} will insert a trampoline that uses this
-   * implementation.
-   */
-  @Override
-  public Class<? extends Object> getClass() {
-    return String.class;
-  }
-
   @Override
   public int hashCode() {
     return HashCodes.hashCodeForString(this);

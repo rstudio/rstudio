@@ -51,7 +51,7 @@ import java.util.Set;
  * Utility functions to interact with JDT classes.
  */
 public final class JdtUtil {
-  public static final String JSO_CLASS = "com/google/gwt/core/client/JavaScriptObject";
+  private static final String JSO_CLASS = "com/google/gwt/core/client/JavaScriptObject";
 
   /**
    * Returns a source name from an array of names.
