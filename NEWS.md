@@ -60,6 +60,8 @@
 * Added ability to zoom panes (e.g. Ctrl+Shift+1 to zoom source pane)
 * Add Console on Left/Right commands for quick relocation of Console
 * Add product and version metadata to Windows installer
+* Improved detection of Msysgit installation location on Windows
+
 
 ### Server
 
