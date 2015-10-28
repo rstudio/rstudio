@@ -156,7 +156,10 @@
 })
 
 .rs.addJsonRpcHandler("validate_server_url", function(url) {
-   .rs.scalarListFromList(rsconnect:::validateServerUrl(url))
+   # suppress output when validating server URL (timeouts otherwise emitted to
+   # console)
+   capture.output(serverInfo <- rsconnect:::validateServerUrl(url))
+   .rs.scalarListFromList(serverInfo)
 })
 
 .rs.addJsonRpcHandler("get_auth_token", function(name) {
