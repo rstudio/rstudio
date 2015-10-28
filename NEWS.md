@@ -62,7 +62,6 @@
 * Add product and version metadata to Windows installer
 * Improved detection of Msysgit installation location on Windows
 
-
 ### Server
 
 * Include active project in document title (caption of browser tab) 
