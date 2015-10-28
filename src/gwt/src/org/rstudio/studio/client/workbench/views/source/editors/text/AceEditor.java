@@ -2799,6 +2799,20 @@ public class AceEditor implements DocDisplay,
       return snippets_.onInsertSnippet();
    }
    
+   public void toggleTokenInfo()
+   {
+      toggleTokenInfo(widget_.getEditor());
+   }
+   
+   private static final native void toggleTokenInfo(AceEditorNative editor) /*-{
+      if (editor.tokenTooltip && editor.tokenTooltip.destroy) {
+         editor.tokenTooltip.destroy();
+      } else {
+         var TokenTooltip = $wnd.require("ace/token_tooltip").TokenTooltip;
+         editor.tokenTooltip = new TokenTooltip(editor);
+      }
+   }-*/;
+   
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
