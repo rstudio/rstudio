@@ -2333,13 +2333,19 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
    if (FAILED(hr))
       return hr;
 
+   // look for Git Bash or Git GUI link
    std::wstring path(&(data[0]));
    path.append(L"\\Git\\Git Bash.lnk");
    if (::GetFileAttributesW(path.c_str()) == INVALID_FILE_ATTRIBUTES)
-      return E_FAIL;
+   {
+      // try for Git GUI
+      path = std::wstring(&(data[0]));
+      path.append(L"\\Git\\Git GUI.lnk");
+      if (::GetFileAttributesW(path.c_str()) == INVALID_FILE_ATTRIBUTES)
+         return E_FAIL;
+   }
 
-
-   // Step 2. Extract the argument from the Git Bash shortcut
+   // Step 2. read the shortcut
    IShellLinkW* pShellLink;
    hr = CoCreateInstance(CLSID_ShellLink,
                          NULL,
@@ -2363,31 +2369,108 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
    hr = pShellLink->Resolve(NULL, SLR_NO_UI | 0x10000);
    if (FAILED(hr))
       return hr;
-   std::vector<wchar_t> argbuff(1024);
-   hr = pShellLink->GetArguments(&(argbuff[0]), argbuff.capacity() - 1);
+
+   // Step 3. Extract the git/bin directory from the shortcut's path or
+   // arguments (depending on the version of Git that is installed)
+
+   // check the path of the shortcut
+   std::vector<wchar_t> pathbuff(1024);
+   hr = pShellLink->GetPath(&(pathbuff[0]), pathbuff.capacity() - 1, NULL, 0L);
    if (FAILED(hr))
       return hr;
 
-
-   // Step 3. Extract the git/bin directory from the arguments.
-   // Example: /c ""C:\Program Files\Git\bin\sh.exe" --login -i"
-   wcmatch match;
-   if (!regex_search(&(argbuff[0]), match, wregex(L"\"\"([^\"]*)\"")))
+   // if this is git-bash then take the child bin dir
+   // (this is compatible with msysgit ~ 2.6)
+   if (boost::algorithm::contains(pathbuff, L"git-bash.exe"))
    {
-      LOG_ERROR_MESSAGE("Unexpected git bash argument format: " +
-                        string_utils::wideToUtf8(&(argbuff[0])));
+      *pPath = FilePath(std::wstring(&(pathbuff[0])));
+      if (!pPath->exists())
+         return E_FAIL;
+      // go up a level then down to bin
+      *pPath = pPath->parent().childPath("bin");
+      if (!pPath->exists())
+         return E_FAIL;
+
+      return S_OK;
+   }
+   // same check for git-gui
+   else if (boost::algorithm::contains(pathbuff, L"git-gui.exe"))
+   {
+      *pPath = FilePath(std::wstring(&(pathbuff[0])));
+      if (!pPath->exists())
+         return E_FAIL;
+      // this is located in \cmd so we need to go up two levels
+      *pPath = pPath->parent().parent().childPath("bin");
+      if (!pPath->exists())
+         return E_FAIL;
+
+      return S_OK;
+   }
+   // if this is a binary in the git bin directory then take it's parent
+   // (this is compatible with msysgit ~ 1.9)
+   else if (boost::algorithm::contains(pathbuff, L"sh.exe") ||
+            boost::algorithm::contains(pathbuff, L"wish.exe"))
+   {
+      *pPath = FilePath(std::wstring(&(pathbuff[0])));
+      if (!pPath->exists())
+         return E_FAIL;
+      *pPath = pPath->parent();
+      if (!pPath->exists())
+         return E_FAIL;
+
+      return S_OK;
+   }
+   // if we invoke via cmd.exe then check the arguments
+   // (compatible with ~ msysgit 1.7)
+   else if (boost::algorithm::contains(pathbuff, L"cmd.exe"))
+   {
+      std::vector<wchar_t> argbuff(1024);
+      hr = pShellLink->GetArguments(&(argbuff[0]), argbuff.capacity() - 1);
+      if (FAILED(hr))
+         return hr;
+
+      wcmatch match;
+      if (!regex_search(&(argbuff[0]), match, wregex(L"\"\"([^\"]*)\"")))
+      {
+         LOG_ERROR_MESSAGE("Unexpected git bash argument format: " +
+                           string_utils::wideToUtf8(&(argbuff[0])));
+         return E_FAIL;
+      }
+
+      *pPath = FilePath(match[1]);
+      if (!pPath->exists())
+         return E_FAIL;
+      // The path we have is to sh.exe or wish.exe, we want the parent
+      *pPath = pPath->parent();
+      if (!pPath->exists())
+         return E_FAIL;
+
+      return S_OK;
+   }
+   // not found
+   else
+   {
       return E_FAIL;
    }
+}
 
-   *pPath = FilePath(match[1]);
-   if (!pPath->exists())
-      return E_FAIL;
-   // The path we have is to sh.exe, we want the parent
-   *pPath = pPath->parent();
-   if (!pPath->exists())
-      return E_FAIL;
+bool detectGitBinDirFromStandardLocation(FilePath* pPath)
+{
+   FilePath standardGitBinPath("C:\\Program Files\\Git\\bin");
+   if (standardGitBinPath.exists())
+   {
+      *pPath = standardGitBinPath;
+      return true;
+   }
 
-   return S_OK;
+   standardGitBinPath = FilePath("C:\\Program Files (x86)\\Git\\bin");
+   if (standardGitBinPath.exists())
+   {
+      *pPath = standardGitBinPath;
+      return true;
+   }
+
+   return false;
 }
 
 Error discoverGitBinDir(FilePath* pPath)
@@ -2397,6 +2480,9 @@ Error discoverGitBinDir(FilePath* pPath)
 
    HRESULT hr = detectGitBinDirFromShortcut(pPath);
    if (SUCCEEDED(hr))
+      return Success();
+
+   if (detectGitBinDirFromStandardLocation(pPath))
       return Success();
 
    return systemError(boost::system::errc::no_such_file_or_directory,
