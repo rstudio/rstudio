@@ -27,10 +27,11 @@ for userdetails in `cat /vagrant/vagrant/rstudiousers.txt`
 do
     user=`echo $userdetails | cut -f 1 -d ,`
     passwd=`echo $userdetails | cut -f 2 -d ,`
-    useradd -p `mkpasswd $passwd` $user
+    useradd --create-home -p `mkpasswd $passwd` $user
 done
 
 # install dependencies
+export QT_SDK_DIR=/home/vagrant/Qt5.4.0
 cd /vagrant/dependencies/linux
 sudo -u vagrant ./install-dependencies-debian
 
