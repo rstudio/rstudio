@@ -316,7 +316,18 @@ private:
 
 - (void) performClipboardAction: (SEL) selector
 {
-   WebView* view = [[[NSApp mainWindow] windowController] webView];
+
+#if defined(__MAC_OS_X_VERSION_MAX_ALLOWED) && defined(__MAC_10_11)
+#   if __MAC_OS_X_VERSION_MAX_ALLOWED >= __MAC_10_11
+   typedef WKWebView RSWebView;
+#   else
+   typedef WebView RSWebView;
+#   endif
+#else
+   typedef WebView RSWebView;
+#endif
+   
+   RSWebView* view = [[[NSApp mainWindow] windowController] webView];
    if (view == nil) {
       NSString* errorMsg = [NSString stringWithFormat: @"nil webView on clipboard action %@", NSStringFromSelector(selector)];
       LOG_ERROR_MESSAGE([errorMsg UTF8String]);
