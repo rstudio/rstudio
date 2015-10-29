@@ -63,6 +63,7 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 
 }
 
+install packrat v0.99-700
 install rsconnect master
 
 # back to install-dir

@@ -9,6 +9,7 @@ set "PATH=C:\Program Files (x86)\Git\bin;%PATH%"
 
 set PATH=%PATH%;%CD%\tools
 
+call:install packrat v0.99-700
 call:install rsconnect master
 
 GOTO:EOF
