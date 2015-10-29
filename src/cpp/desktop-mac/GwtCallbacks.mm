@@ -316,7 +316,7 @@ private:
 
 - (void) performClipboardAction: (SEL) selector
 {
-   WKWebView* view = [[[NSApp mainWindow] windowController] webView];
+   WebView* view = [[[NSApp mainWindow] windowController] webView];
    if (view == nil) {
       NSString* errorMsg = [NSString stringWithFormat: @"nil webView on clipboard action %@", NSStringFromSelector(selector)];
       LOG_ERROR_MESSAGE([errorMsg UTF8String]);
