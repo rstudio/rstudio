@@ -425,8 +425,6 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="updateCredentials"/>
             <cmd refid="diagnosticsReport"/>
             <separator/>
-            <cmd refid="toggleEditorTokenInfo"/>
-            <separator/>
             <cmd refid="debugDumpContents"/>
             <cmd refid="debugImportDump"/>
             <cmd refid="raiseException"/>
@@ -2519,10 +2517,6 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Manage Accounts..."
         desc="Connect or disconnect accounts"
         visible="false"
-        rebindable="false"/>
-        
-   <cmd id="toggleEditorTokenInfo"
-        menuLabel="Toggle Editor Token Information"
         rebindable="false"/>
 
 </commands>

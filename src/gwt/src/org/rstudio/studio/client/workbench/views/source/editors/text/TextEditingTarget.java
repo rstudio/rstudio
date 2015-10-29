@@ -5013,12 +5013,6 @@ public class TextEditingTarget implements
       }
    }
    
-   @Handler
-   void onToggleEditorTokenInfo()
-   {
-      docDisplay_.toggleTokenInfo();
-   }
-   
    boolean useScopeTreeFolding()
    {
       return docDisplay_.hasScopeTree();

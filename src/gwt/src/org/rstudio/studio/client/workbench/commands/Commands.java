@@ -437,7 +437,6 @@ public abstract class
    public abstract AppCommand layoutConsoleOnRight();
    public abstract AppCommand paneLayout();
    public abstract AppCommand maximizeConsole();
-   public abstract AppCommand toggleEditorTokenInfo();
    
    public static final String KEYBINDINGS_PATH =
          "~/.R/keybindings/rstudio_commands.json";
