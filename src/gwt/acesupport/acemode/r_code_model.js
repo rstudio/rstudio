@@ -805,6 +805,13 @@ var RCodeModel = function(session, tokenizer,
          type = token.type;
          position = iterator.getCurrentTokenPosition();
 
+         // Skip roxygen comments.
+         var state = this.$session.getState(position.row);
+         if (state === "rd-start") {
+            iterator.moveToEndOfRow();
+            continue;
+         }
+
          // Figure out if we're in R mode. This is a hack since
          // unfortunately the code model is handling both R and
          // non-R modes right now -- for example, '{' should only
