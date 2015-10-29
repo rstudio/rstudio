@@ -336,8 +336,12 @@ public final class String implements Comparable<String>, CharSequence,
   }
 
   @Override
-  public native char charAt(int index) /*-{
-    return this.charCodeAt(index);
+  public char charAt(int index) {
+    return charAt(this, index);
+  }
+  
+  private static native char charAt(String s, int index) /*-{
+    return s.charCodeAt(index);
   }-*/;
 
   public int codePointAt(int index) {
@@ -361,8 +365,12 @@ public final class String implements Comparable<String>, CharSequence,
     return compareTo(toLowerCase(), other.toLowerCase());
   }
 
-  public native String concat(String str) /*-{
-    return this + str;
+  public String concat(String str) {
+    return concat(this, str);
+  }
+  
+  private static native String concat(String s, String str) /*-{
+    return s + str;
   }-*/;
 
   public boolean contains(CharSequence s) {
@@ -392,14 +400,18 @@ public final class String implements Comparable<String>, CharSequence,
     return this == other;
   }
 
-  public native boolean equalsIgnoreCase(String other) /*-{
+  public boolean equalsIgnoreCase(String other) {
+    return equalsIgnoreCase(this, other);
+  }
+  
+  private static native boolean equalsIgnoreCase(String s, String other) /*-{
     if (other == null) {
       return false;
     }
-    if (this == other) {
+    if (s == other) {
       return true;
     }
-    return (this.length == other.length) && (this.toLowerCase() == other.toLowerCase());
+    return (s.length == other.length) && (s.toLowerCase() == other.toLowerCase());
   }-*/;
 
   public byte[] getBytes() {
@@ -453,21 +465,29 @@ public final class String implements Comparable<String>, CharSequence,
     return indexOf(fromCodePoint(codePoint), startIndex);
   }
 
-  public native int indexOf(String str) /*-{
-    return this.indexOf(str);
+  public int indexOf(String str) {
+    return indexOf(this, str);
+  }
+
+  private static native int indexOf(String s, String str) /*-{
+    return s.indexOf(str);
+  }-*/;
+  
+  public int indexOf(String str, int startIndex) {
+    return indexOf(this, str, startIndex);
+  }
+  
+  private static native int indexOf(String s, String str, int startIndex) /*-{
+    return s.indexOf(str, startIndex);
   }-*/;
 
-  public native int indexOf(String str, int startIndex) /*-{
-    return this.indexOf(str, startIndex);
-  }-*/;
-
-  public native String intern() /*-{
+  public String intern() {
     return this;
-  }-*/;
+  }
 
-  public native boolean isEmpty() /*-{
-    return !this.length;
-  }-*/;
+  public boolean isEmpty() {
+    return length() == 0;
+  }
 
   public int lastIndexOf(int codePoint) {
     return lastIndexOf(fromCodePoint(codePoint));
@@ -477,17 +497,29 @@ public final class String implements Comparable<String>, CharSequence,
     return lastIndexOf(fromCodePoint(codePoint), startIndex);
   }
 
-  public native int lastIndexOf(String str) /*-{
-    return this.lastIndexOf(str);
+  public int lastIndexOf(String str) {
+    return lastIndexOf(this, str);
+  }
+  
+  private static native int lastIndexOf(String s, String str) /*-{
+    return s.lastIndexOf(str);
   }-*/;
 
-  public native int lastIndexOf(String str, int start) /*-{
-    return this.lastIndexOf(str, start);
+  public int lastIndexOf(String str, int start) {
+    return lastIndexOf(this, str, start);
+  }
+  
+  private static native int lastIndexOf(String s, String str, int start) /*-{
+    return s.lastIndexOf(str, start);
   }-*/;
 
   @Override
-  public native int length() /*-{
-    return this.length;
+  public int length() {
+    return length(this);
+  }
+
+  private static native int length(String s) /*-{
+    return s.length;
   }-*/;
 
   /**
@@ -498,10 +530,14 @@ public final class String implements Comparable<String>, CharSequence,
    *
    * TODO(jat): properly handle Java regex syntax
    */
-  public native boolean matches(String regex) /*-{
+  public boolean matches(String regex) {
+    return matches(this, regex);
+  }
+  
+  private static native boolean matches(String s, String regex) /*-{
     // We surround the regex with '^' and '$' because it must match
     // the entire string.
-    return new RegExp('^(' + regex + ')$').test(this);
+    return new RegExp('^(' + regex + ')$').test(s);
   }-*/;
 
   public int offsetByCodePoints(int index, int codePointOffset) {
@@ -537,7 +573,7 @@ public final class String implements Comparable<String>, CharSequence,
     String regex = "\\u" + "0000".substring(hex.length()) + hex;
     Object jsRegEx = createRegExp(regex, "g");
     String replace = fromCharCode(to);
-    return replace(jsRegEx, replace);
+    return replace(this, jsRegEx, replace);
   }
 
   private native String fromCharCode(char to) /*-{
@@ -571,7 +607,7 @@ public final class String implements Comparable<String>, CharSequence,
   public String replaceAll(String regex, String replace) {
     replace = translateReplaceString(replace);
     Object jsRegEx = createRegExp(regex, "g");
-    return replace(jsRegEx, replace);
+    return replace(this, jsRegEx, replace);
   }
 
   /**
@@ -585,7 +621,7 @@ public final class String implements Comparable<String>, CharSequence,
   public String replaceFirst(String regex, String replace) {
     replace = translateReplaceString(replace);
     Object jsRegEx = createRegExp(regex, "");
-    return replace(jsRegEx, replace);
+    return replace(this, jsRegEx, replace);
   }
 
   private static native Object createRegExp(String regex, String mode) /*-{
@@ -600,8 +636,8 @@ public final class String implements Comparable<String>, CharSequence,
     compiledRegEx.lastIndex = 0;
   }-*/;
 
-  private native String replace(Object regex, String replace) /*-{
-    return this.replace(regex, replace);
+  private static native String replace(String s, Object regex, String replace) /*-{
+    return s.replace(regex, replace);
   }-*/;
 
   private static native int getMatchIndex(Object matchObject) /*-{
@@ -717,15 +753,19 @@ public final class String implements Comparable<String>, CharSequence,
    * a transformation based on native locale of the browser, you can do
    * {@code toLowerCase(Locale.getDefault())} instead.
    */
-  public native String toLowerCase() /*-{
-    return this.toLowerCase();
+  public String toLowerCase() {
+    return toLowerCase(this);
+  }
+  
+  private static native String toLowerCase(String s) /*-{
+    return s.toLowerCase();
   }-*/;
 
   /**
    * Transforms the String to lower-case based on the native locale of the browser.
    */
-  private native String toLocaleLowerCase() /*-{
-    return this.toLocaleLowerCase();
+  private native String toLocaleLowerCase(String s) /*-{
+    return s.toLocaleLowerCase();
   }-*/;
 
   /**
@@ -735,22 +775,26 @@ public final class String implements Comparable<String>, CharSequence,
    * predefined in GWT Locale emulation.
    */
   public String toLowerCase(Locale locale) {
-    return locale == Locale.getDefault() ? toLocaleLowerCase() : toLowerCase();
+    return locale == Locale.getDefault() ? toLocaleLowerCase(this) : toLowerCase(this);
   }
 
   // See the notes in lowerCase pair.
-  public native String toUpperCase() /*-{
-    return this.toUpperCase();
+  public String toUpperCase() {
+    return toLocaleUpperCase(this);
+  }
+  
+  private static native String toUpperCase(String s) /*-{
+    return s.toUpperCase();
   }-*/;
 
   // See the notes in lowerCase pair.
-  private native String toLocaleUpperCase() /*-{
-    return this.toLocaleUpperCase();
+  private static native String toLocaleUpperCase(String s) /*-{
+    return s.toLocaleUpperCase();
   }-*/;
 
   // See the notes in lowerCase pair.
   public String toUpperCase(Locale locale) {
-    return locale == Locale.getDefault() ? toLocaleUpperCase() : toUpperCase();
+    return locale == Locale.getDefault() ? toLocaleUpperCase(this) : toUpperCase(this);
   }
 
   @Override
