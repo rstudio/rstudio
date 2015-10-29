@@ -182,7 +182,6 @@ public class DependencyManager implements InstallShinyEvent.Handler
           userPrompt,
           new Dependency[] {
             Dependency.cranPackage("httpuv", "1.3.3"),
-            Dependency.cranPackage("caTools", "1.13"),
             Dependency.cranPackage("mime", "0.3"),
             Dependency.cranPackage("jsonlite", "0.9.16"),
             Dependency.cranPackage("xtable", "1.7"),
