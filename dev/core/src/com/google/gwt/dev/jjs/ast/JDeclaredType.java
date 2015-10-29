@@ -394,6 +394,9 @@ public abstract class JDeclaredType extends JReferenceType implements CanHaveSup
   }
 
   public boolean canBeReferencedExternally() {
+    if (isJsType()) {
+      return true;
+    }
     for (JMethod method : getMethods()) {
       if (method.canBeCalledExternally()) {
         return true;

@@ -1445,14 +1445,15 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "  public void f1(boolean a, int b, double c) {}", // primitive types work fine.
         "  public void f2(Boolean a, Double b, String c) {}", // unboxed types work fine.
         "  public void f3(A a) {}", // JsType works fine.
-        "  public void f4(FI a) {}", // JsFunction works fine.
-        "  public void f5(C a) {}", // JavaScriptObject works fine.
-        "  public void f6(Object a) {}", // Java Object works fine.
-        "  public void f7(boolean[] a) {}", // array of primitive types work fine.
-        "  public void f8(Boolean[] a, Double[] b, String[] c) {}", // array of unboxed types.
-        "  public void f9(A[] a) {}", // array of JsType works fine.
-        "  public void f10(FI[] a) {}", // array of JsFunction works fine.
-        "  public void f11(C[][] a) {}", // array of JavaScriptObject works fine.
+        "  public void f4(I a) {}", // JsFunction works fine.
+        "  public void f5(FI a) {}", // JsFunction works fine.
+        "  public void f6(C a) {}", // JavaScriptObject works fine.
+        "  public void f7(Object a) {}", // Java Object works fine.
+        "  public void f8(boolean[] a) {}", // array of primitive types work fine.
+        "  public void f9(Boolean[] a, Double[] b, String[] c) {}", // array of unboxed types.
+        "  public void f10(A[] a) {}", // array of JsType works fine.
+        "  public void f11(FI[] a) {}", // array of JsFunction works fine.
+        "  public void f12(C[][] a) {}", // array of JavaScriptObject works fine.
         "}");
     assertBuggySucceeds();
   }
