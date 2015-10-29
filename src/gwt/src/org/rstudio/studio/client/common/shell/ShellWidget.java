@@ -118,6 +118,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
          @Override
          public void onKeyDown(KeyDownEvent event)
          {
+            // Don't capture keys when a completion popup is visible.
+            if (input_.isPopupVisible())
+               return;
+            
             // If the user hits Page-Up from inside the console input, we need
             // to simulate pageup because focus is not contained in the scroll
             // panel (it's in the hidden textarea that Ace uses under the
