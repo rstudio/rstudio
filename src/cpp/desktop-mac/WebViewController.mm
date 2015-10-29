@@ -796,7 +796,7 @@ decidePolicyForMIMEType: (NSDictionary *) actionInformation
                         filename: (NSString*) filename
 {
    [panel setNameFieldStringValue: filename];
-   [panel beginSheetModalForWindow: [self window] completionHandler: nil];
+   [panel beginSheetModalForWindow: [self window] completionHandler: ^(NSInteger result) {}];
    long int result = [panel runModal];
    [NSApp endSheet: panel];
    
@@ -831,7 +831,7 @@ decidePolicyForMIMEType: (NSDictionary *) actionInformation
    [panel setCanChooseFiles: true];
    [panel setCanChooseDirectories: false];
    [panel beginSheetModalForWindow: [self uiWindow]
-                 completionHandler: nil];
+                 completionHandler: ^(NSInteger result) {}];
    long int result = [panel runModal];
    @try
    {

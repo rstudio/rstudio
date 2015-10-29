@@ -116,7 +116,7 @@ private:
 {
    NSString* path = @"";
    [panel beginSheetModalForWindow: [uiDelegate_ uiWindow]
-                completionHandler: nil];
+                 completionHandler: ^(NSInteger result) {}];
    long int result = [panel runModal];
    @try
    {
@@ -314,19 +314,37 @@ private:
    }
 }
 
+- (void) performClipboardAction: (SEL) selector
+{
+   WKWebView* view = [[[NSApp mainWindow] windowController] webView];
+   if (view == nil) {
+      NSString* errorMsg = [NSString stringWithFormat: @"nil webView on clipboard action %@", NSStringFromSelector(selector)];
+      LOG_ERROR_MESSAGE([errorMsg UTF8String]);
+      return;
+   }
+
+   if ([view respondsToSelector: selector]) {
+      [view performSelector: selector withObject: view];
+   } else {
+      NSString* errorMsg = [NSString stringWithFormat: @"@webView does not respond to selector %@", NSStringFromSelector(selector)];
+      LOG_ERROR_MESSAGE([errorMsg UTF8String]);
+      return;
+   }
+}
+
 - (void) clipboardCut
 {
-   [[[[NSApp mainWindow] windowController] webView] cut: self];
+   [self performClipboardAction: @selector(cut:)];
 }
 
 - (void) clipboardCopy
 {
-   [[[[NSApp mainWindow] windowController] webView] copy: self];
+   [self performClipboardAction: @selector(copy:)];
 }
 
 - (void) clipboardPaste
 {
-   [[[[NSApp mainWindow] windowController] webView] paste: self];
+   [self performClipboardAction: @selector(paste:)];
 }
 
 - (NSString*) getUriForPath: (NSString*) path
@@ -686,7 +704,7 @@ private:
    }
    
    // write to file
-   NSBitmapImageRep *imageRep = [[image representations] objectAtIndex: 0];
+   NSBitmapImageRep *imageRep = (NSBitmapImageRep*) [[image representations] objectAtIndex: 0];
    NSData *data = [imageRep representationUsingType: imageFileType properties: properties];
    if (![data writeToFile: targetPath atomically: NO])
    {
