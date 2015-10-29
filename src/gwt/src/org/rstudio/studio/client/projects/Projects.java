@@ -140,7 +140,8 @@ public class Projects implements OpenProjectFileHandler,
                commands.showDiagnosticsProject().remove();
             }
             boolean enableProjectSharing = hasProject && 
-                  sessionInfo.projectSupportsSharing();
+                  sessionInfo.projectSupportsSharing() &&
+                  sessionInfo.isProjectOwner();
             commands.shareProject().setEnabled(enableProjectSharing);
             commands.shareProject().setVisible(enableProjectSharing);
             
