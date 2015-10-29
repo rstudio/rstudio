@@ -98,7 +98,7 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
     return unsafeCast(checkNotNull(this));
   }
 
-  private native boolean unsafeCast(Object value) /*-{
+  private static native boolean unsafeCast(Object value) /*-{
     return value;
   }-*/;
 

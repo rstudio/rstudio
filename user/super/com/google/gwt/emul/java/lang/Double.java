@@ -312,7 +312,7 @@ public final class Double extends Number implements Comparable<Double> {
     return unsafeCast(checkNotNull(this));
   }
 
-  private native double unsafeCast(Object instance) /*-{
+  private static native double unsafeCast(Object instance) /*-{
     return instance;
   }-*/;
 
