@@ -164,6 +164,19 @@ private:
       r::sexp::Protect protect;
       Error error;
 
+      // check for HTTP errors
+      boost::regex re("Error: HTTP (\\d{3})\\s+\\w+\\s+(\\S+)");
+      boost::smatch match;
+      if (boost::regex_search(output, match, re)) 
+      {
+         json::Object failure;
+         failure["http_status"] = (int)safe_convert::stringTo(match[1], 0);
+         failure["path"] = match[2].str();
+         ClientEvent event(client_events::kRmdRSConnectDeploymentFailed,
+                           failure);
+         module_context::enqueClientEvent(event);
+      }
+
       // look on each line of emitted output to see whether it contains the
       // finished marker
       std::vector<std::string> lines;

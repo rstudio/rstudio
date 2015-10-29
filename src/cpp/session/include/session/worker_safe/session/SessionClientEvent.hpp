@@ -118,6 +118,7 @@ extern const int kRmdTemplateDiscoveryCompleted;
 extern const int kRmdShinyDocStarted;
 extern const int kRmdRSConnectDeploymentOutput;
 extern const int kRmdRSConnectDeploymentCompleted;
+extern const int kRmdRSConnectDeploymentFailed;
 extern const int kUserPrompt;
 extern const int kInstallRtools;
 extern const int kInstallShiny;

@@ -136,6 +136,7 @@ const int kRVersionsChanged = 111;
 const int kRmdParamsEdit = 112;
 const int kRmdParamsReady = 113;
 const int kRegisterUserCommand = 114;
+const int kRmdRSConnectDeploymentFailed = 115;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -329,6 +330,8 @@ std::string ClientEvent::typeName() const
          return "rsconnect_deployment_output";
       case client_events::kRmdRSConnectDeploymentCompleted:
          return "rsconnect_deployment_completed";
+      case client_events::kRmdRSConnectDeploymentFailed:
+         return "rsconnect_deployment_failed";
       case client_events::kUserPrompt:
          return "user_prompt";
       case client_events::kInstallRtools:

@@ -24,10 +24,13 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.core.client.widget.images.MessageDialogImages;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
@@ -40,6 +43,7 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCompletedEvent;
+import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentFailedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentStartedEvent;
 import org.rstudio.studio.client.rsconnect.model.PlotPublishMRUList;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
@@ -70,7 +74,14 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -79,7 +90,8 @@ import com.google.inject.Singleton;
 public class RSConnect implements SessionInitHandler, 
                                   RSConnectActionEvent.Handler,
                                   RSConnectDeployInitiatedEvent.Handler,
-                                  RSConnectDeploymentCompletedEvent.Handler
+                                  RSConnectDeploymentCompletedEvent.Handler,
+                                  RSConnectDeploymentFailedEvent.Handler
 {
    public interface Binder
            extends CommandBinder<Commands, RSConnect> {}
@@ -117,6 +129,7 @@ public class RSConnect implements SessionInitHandler,
       events.addHandler(RSConnectActionEvent.TYPE, this); 
       events.addHandler(RSConnectDeployInitiatedEvent.TYPE, this); 
       events.addHandler(RSConnectDeploymentCompletedEvent.TYPE, this); 
+      events.addHandler(RSConnectDeploymentFailedEvent.TYPE, this);
       
       // satellite windows don't get session init events, so initialize the
       // session here
@@ -512,6 +525,60 @@ public class RSConnect implements SessionInitHandler,
       {
          display_.openWindow(event.getUrl());
       }
+   }
+
+   @Override
+   public void onRSConnectDeploymentFailed(
+         final RSConnectDeploymentFailedEvent event)
+   {
+      String failedPath = event.getData().getPath();
+      // if this looks like an API call, process the path to get the 'bare'
+      // server URL
+      int pos = failedPath.indexOf("__api__");
+      if (pos < 1)
+      {
+         // if not, just get the host
+         pos = failedPath.indexOf("/", 10) + 1;
+      }
+      if (pos > 0)
+      {
+         failedPath = failedPath.substring(0, pos);
+      }
+      final String serverUrl = failedPath;
+      
+      new ModalDialogBase()
+      {
+         @Override
+         protected Widget createMainWidget()
+         {
+            setText("Publish Failed");
+            addOkButton(new ThemedButton("OK", new ClickHandler()
+            {
+               @Override
+               public void onClick(ClickEvent arg0)
+               {
+                  closeDialog();
+               }
+            }));
+            HorizontalPanel panel = new HorizontalPanel();
+            Image errorImage = 
+                  new Image(MessageDialogImages.INSTANCE.dialog_error());
+            errorImage.getElement().getStyle().setMarginTop(1, Unit.EM);
+            errorImage.getElement().getStyle().setMarginRight(1, Unit.EM);
+            panel.add(errorImage);
+            panel.add(new HTML("<p>Your content could not be published because " +
+                  "of a problem on the server.</p>" + 
+                  "<p>More information may be available on the server's home " +
+                  "page:</p>" +
+                  "<p><a href=\"" + serverUrl + "\">" + serverUrl + "</a>" +
+                  "</p>" + 
+                  "<p>If the error persists, contact the server's "  +
+                  "administrator.</p>" +
+                  "<p><small>Error code: " + event.getData().getHttpStatus() + 
+                  "</small></p>"));
+            return panel;
+         }
+      }.showModal();
    }
 
    public void ensureSessionInit()
@@ -953,6 +1020,7 @@ public class RSConnect implements SessionInitHandler,
    
    private boolean launchBrowser_ = false;
    private boolean sessionInited_ = false;
+   private String lastDeployedServer_ = "";
    
    // incremented on each RPubs publish (to provide a unique context)
    private static int rpubsCount_ = 0;

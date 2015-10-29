@@ -1,7 +1,7 @@
 /*
  * ClientEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -107,6 +107,7 @@ class ClientEvent extends JavaScriptObject
    public static final String RmdShinyDocStarted = "rmd_shiny_doc_started";
    public static final String RSConnectDeploymentOutput = "rsconnect_deployment_output";
    public static final String RSConnectDeploymentCompleted = "rsconnect_deployment_completed";
+   public static final String RSConnectDeploymentFailed = "rsconnect_deployment_failed";
    public static final String UserPrompt = "user_prompt";
    public static final String InstallRtools = "install_r_tools";
    public static final String InstallShiny = "install_shiny";

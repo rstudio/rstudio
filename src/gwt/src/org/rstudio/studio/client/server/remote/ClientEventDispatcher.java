@@ -69,6 +69,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.rmarkdown.model.RmdShinyDocInfo;
 import org.rstudio.studio.client.rsconnect.events.EnableRStudioConnectUIEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCompletedEvent;
+import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentFailedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentOutputEvent;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
@@ -601,6 +602,11 @@ public class ClientEventDispatcher
          {
             String url = event.getData();
             eventBus_.fireEvent(new RSConnectDeploymentCompletedEvent(url));
+         }
+         else if (type.equals(ClientEvent.RSConnectDeploymentFailed))
+         {
+            RSConnectDeploymentFailedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new RSConnectDeploymentFailedEvent(data));
          }
          else if (type.equals(ClientEvent.UserPrompt))
          {
