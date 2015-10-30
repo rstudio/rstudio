@@ -217,6 +217,14 @@ public class ClassLiteralsTest extends GWTTestCase {
     assertNull(int.class.getEnumConstants());
   }
 
+  private static native Class<?> getClassLiteral(Object o) /*-{
+    return o.@java.lang.Object::getClass()();
+  }-*/;
+
+  public void testGetClassCallThroughJsni() {
+    assertEquals(Object.class, getClassLiteral(new Object()));
+  }
+
   private static class JSO extends JavaScriptObject {
     protected JSO() {
     }
