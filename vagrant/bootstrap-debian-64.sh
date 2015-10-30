@@ -36,5 +36,5 @@ apt-get install -y silversearcher-ag
 apt-get install -y python-dev
 
 # perform remainder of the install script as regular user
-sudo -u vagrant /vagrant/vagrant/bootstrap-user.sh
+sudo --login --set-home -u vagrant /vagrant/vagrant/bootstrap-user.sh
 
