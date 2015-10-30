@@ -1,0 +1,67 @@
+set nocompatible
+filetype off
+set rtp+=~/.vim/bundle/Vundle.vim
+call vundle#begin()
+
+" let Vundle manage Vundle
+" required! 
+Plugin 'gmarik/Vundle.vim'
+
+" Vundles
+Plugin 'bling/vim-airline'
+Plugin 'tpope/vim-fugitive'
+Plugin 'tpope/vim-dispatch'
+Plugin 'marijnh/tern_for_vim'
+Plugin 'Valloric/YouCompleteMe'
+Plugin 'kien/ctrlp.vim'
+Plugin 'rking/ag.vim'
+Plugin 'scrooloose/syntastic'
+
+call vundle#end()
+filetype plugin indent on
+
+" RStudio build commands
+au FileType cpp setlocal makeprg=make\ \-j4\ -C\ ~/rstudio-build
+nmap <Leader>a :Dispatch ant draft -f ~/rstudio/src/gwt/build.xml<CR>
+nmap <Leader>m :Make<CR>
+
+" RStudio default code formatting settings for tabs, spaces, and code width
+set ts=4
+set sw=4
+set et
+au FileType javascript setlocal shiftwidth=2 tabstop=2 
+au FileType cpp setlocal shiftwidth=3 tabstop=3
+au FileType r setlocal shiftwidth=2 tabstop=2 et 
+au FileType ruby setlocal shiftwidth=2 tabstop=2 et 
+set colorcolumn=80
+
+" don't clutter with Vim backup files
+set backupdir=~/.vimbackup
+set directory=~/.vimswap
+
+" Jump to def, find usage
+map <Leader>d :YcmCompleter GoToImprecise<CR>
+map <Leader>f :Ag -U --ignore tags --ignore *.a --ignore *.min.* --ignore *.cache.js <cword><CR>
+
+" Other preferences
+set nu
+set noerrorbells visualbell t_vb=
+set wmh=0
+set hls
+set incsearch
+set laststatus=2
+set encoding=utf-8
+set t_Co=256
+set showcmd
+let mapleader = ","
+set cursorline
+set bs=2
+set showcmd
+syn on
+
+" Airline settings
+let g:airline#extensions#whitespace#enabled = 0
+
+" use embedded YCM config
+let g:ycm_global_ycm_extra_conf = '/vagrant/vagrant/ycm_extra_conf.py'
+

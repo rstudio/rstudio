@@ -30,24 +30,11 @@ do
     useradd --create-home -p `mkpasswd $passwd` $user
 done
 
-# install dependencies
-export QT_SDK_DIR=/home/vagrant/Qt5.4.0
-cd /vagrant/dependencies/linux
-sudo -u vagrant ./install-dependencies-debian
+# install packages needed for development environment
+apt-get install -y vim
+apt-get install -y silversearcher-ag
+apt-get install -y python-dev
 
-# resiliency (in case the above aborts early)
-sudo -u vagrant ./install-dependencies-debian
-
-# run overlay script if present
-if [ -f ./install-overlay-debian ]; then
-    sudo -u vagrant ./install-overlay-debian
-fi 
-
-# create build folder and run cmake
-sudo -u vagrant mkdir -p /home/vagrant/rstudio-build
-pushd .
-cd /home/vagrant/rstudio-build
-sudo -u vagrant cmake /vagrant/src/cpp
-popd 
-
+# perform remainder of the install script as regular user
+sudo -u vagrant /vagrant/vagrant/bootstrap-user.sh
 
