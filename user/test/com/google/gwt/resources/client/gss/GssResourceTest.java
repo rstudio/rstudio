@@ -19,6 +19,8 @@ package com.google.gwt.resources.client.gss;
 import com.google.gwt.resources.client.gss.TestResources.Charset;
 import com.google.gwt.resources.client.gss.TestResources.ClassNameAnnotation;
 import com.google.gwt.resources.client.gss.TestResources.EmptyClass;
+import com.google.gwt.resources.client.gss.TestResources.Forloop;
+import com.google.gwt.resources.client.gss.TestResources.GenKeyFrames;
 import com.google.gwt.resources.client.gss.TestResources.NonStandardAtRules;
 import com.google.gwt.resources.client.gss.TestResources.NonStandardFunctions;
 import com.google.gwt.resources.client.gss.TestResources.RuntimeConditional;
@@ -194,6 +196,23 @@ public class GssResourceTest extends RenamingClassNameTest {
   public void testEmpty() {
     // should not throw an exception if the file is empty
     assertEquals("", res().empty().getText());
+  }
+
+  public void testForLoop() {
+    Forloop forloop = res().forloop();
+
+    String expectedCss = "." + forloop.foo0() + "{padding:0}." + forloop.foo2() + "{padding:2px}." + forloop.foo4() + "{padding:4px}";
+
+    assertEquals(expectedCss, forloop.getText());
+  }
+
+  public void testGenKeyFrames() {
+    GenKeyFrames genKeyFrames = res().genKeyFrames();
+
+    String expectedCss = "@keyframes myframe{0%{top:0}to{top:200px}}@-webkit-keyframes myframe{0%{top:0}to{top:200px}}" +
+            "div{animation:myframe 5s infinite}";
+
+    assertEquals(expectedCss, genKeyFrames.getText());
   }
 
   private String runtimeExpectedCss(String color, String padding, String foo) {

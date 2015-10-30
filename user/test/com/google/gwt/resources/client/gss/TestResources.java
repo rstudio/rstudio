@@ -187,6 +187,26 @@ public interface TestResources extends ClientBundle {
   interface Empty extends CssResource {
   }
 
+  /**
+   * Used to test For loop feature.
+   */
+  interface Forloop extends CssResource {
+    @ClassName("foo-0")
+    String foo0();
+
+    @ClassName("foo-2")
+    String foo2();
+
+    @ClassName("foo-4")
+    String foo4();
+  }
+
+  /**
+   * Used to test vendor keyframes generation.
+   */
+  interface GenKeyFrames extends CssResource {
+  }
+
   @Source("constants.gss")
   Constants constants();
 
@@ -234,4 +254,8 @@ public interface TestResources extends ClientBundle {
   Charset charset();
 
   Empty empty();
+
+  Forloop forloop();
+
+  GenKeyFrames genKeyFrames();
 }

@@ -1,0 +1,13 @@
+/* @gen-webkit-keyframes */
+@keyframes myframe {
+    from {
+        top: 0px;
+    }
+    to {
+        top: 200px;
+    }
+}
+
+div {
+    animation: myframe 5s infinite;
+}

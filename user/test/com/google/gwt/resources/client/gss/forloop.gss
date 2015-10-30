@@ -1,0 +1,7 @@
+@for $i from 0 to 4 step 2 {
+    @def PADDING mult(1px, $i);
+
+    .foo-$i {
+        padding: PADDING;
+    }
+}

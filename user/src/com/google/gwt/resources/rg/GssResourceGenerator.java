@@ -84,8 +84,10 @@ import com.google.gwt.thirdparty.common.css.compiler.passes.CreateComponentNodes
 import com.google.gwt.thirdparty.common.css.compiler.passes.CreateConditionalNodes;
 import com.google.gwt.thirdparty.common.css.compiler.passes.CreateConstantReferences;
 import com.google.gwt.thirdparty.common.css.compiler.passes.CreateDefinitionNodes;
+import com.google.gwt.thirdparty.common.css.compiler.passes.CreateForLoopNodes;
 import com.google.gwt.thirdparty.common.css.compiler.passes.CreateMixins;
 import com.google.gwt.thirdparty.common.css.compiler.passes.CreateStandardAtRuleNodes;
+import com.google.gwt.thirdparty.common.css.compiler.passes.CreateVendorPrefixedKeyframes;
 import com.google.gwt.thirdparty.common.css.compiler.passes.CssClassRenaming;
 import com.google.gwt.thirdparty.common.css.compiler.passes.DisallowDuplicateDeclarations;
 import com.google.gwt.thirdparty.common.css.compiler.passes.EliminateEmptyRulesetNodes;
@@ -103,6 +105,8 @@ import com.google.gwt.thirdparty.common.css.compiler.passes.ReplaceConstantRefer
 import com.google.gwt.thirdparty.common.css.compiler.passes.ReplaceMixins;
 import com.google.gwt.thirdparty.common.css.compiler.passes.ResolveCustomFunctionNodes;
 import com.google.gwt.thirdparty.common.css.compiler.passes.SplitRulesetNodes;
+import com.google.gwt.thirdparty.common.css.compiler.passes.UnrollLoops;
+import com.google.gwt.thirdparty.common.css.compiler.passes.ValidatePropertyValues;
 import com.google.gwt.thirdparty.guava.common.base.CaseFormat;
 import com.google.gwt.thirdparty.guava.common.base.Charsets;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
@@ -855,11 +859,16 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     new CreateConstantReferences(cssTree.getMutatingVisitController()).runPass();
     new CreateConditionalNodes(cssTree.getMutatingVisitController(), errorManager).runPass();
     new CreateRuntimeConditionalNodes(cssTree.getMutatingVisitController()).runPass();
+    new CreateForLoopNodes(cssTree.getMutatingVisitController(), errorManager).runPass();
     new CreateComponentNodes(cssTree.getMutatingVisitController(), errorManager).runPass();
+    new ValidatePropertyValues(cssTree.getVisitController(), errorManager).runPass();
 
     new HandleUnknownAtRuleNodes(cssTree.getMutatingVisitController(), errorManager,
         allowedAtRules, true, false).runPass();
     new ProcessKeyframes(cssTree.getMutatingVisitController(), errorManager, true, true).runPass();
+    new CreateVendorPrefixedKeyframes(cssTree.getMutatingVisitController(),
+            errorManager).runPass();
+    new UnrollLoops(cssTree.getMutatingVisitController(), errorManager).runPass();
     new ProcessRefiners(cssTree.getMutatingVisitController(), errorManager, true).runPass();
     new MarkNonFlippableNodes(cssTree.getMutatingVisitController(), errorManager).runPass();
   }
