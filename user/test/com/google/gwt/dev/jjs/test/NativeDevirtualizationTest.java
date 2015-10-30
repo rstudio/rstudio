@@ -20,8 +20,6 @@ import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
-import javaemul.internal.HashCodes;
-
 /**
  * This should probably be refactored at some point.
  */
@@ -55,7 +53,6 @@ public class NativeDevirtualizationTest extends GWTTestCase {
     Object s = HELLO_WORLD;
     assertEquals(String.class, s.getClass());
     assertEquals(HELLO_WORLD, s.toString());
-    assertEquals(HashCodes.hashCodeForString(HELLO_WORLD), s.hashCode());
 
     assertTrue(s.equals(HELLO_WORLD));
     assertTrue(HELLO_WORLD.equals(s));
@@ -67,7 +64,7 @@ public class NativeDevirtualizationTest extends GWTTestCase {
     Comparable b = HELLO_WORLD;
     assertEquals(String.class, b.getClass());
     assertEquals(HELLO_WORLD, b.toString());
-    assertEquals(HashCodes.hashCodeForString(HELLO_WORLD), b.hashCode());
+    assertEquals(HELLO_WORLD.hashCode(), b.hashCode());
 
     assertTrue(((Comparable) HELLO_WORLD).compareTo(b) == 0);
     assertTrue(b.compareTo(HELLO_WORLD) == 0);
@@ -80,7 +77,7 @@ public class NativeDevirtualizationTest extends GWTTestCase {
     CharSequence c = HELLO_WORLD;
     assertEquals(String.class, c.getClass());
     assertEquals(HELLO_WORLD, c.toString());
-    assertEquals(HashCodes.hashCodeForString(HELLO_WORLD), c.hashCode());
+    assertEquals(HELLO_WORLD.hashCode(), c.hashCode());
 
     assertEquals('e', c.charAt(1));
     assertEquals(13, c.length());
