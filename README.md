@@ -17,13 +17,10 @@
  - Optional: if you want to compile elemental you need
    `python` and `g++` installed.
 
- - You need the [gwt-tools](https://google-web-toolkit.googlecode.com/svn/tools/)
-   checked out and up-to-date, and it will be placed
-   by default at `../tools`. You can override the default
-   location using the GWT_TOOLS environment variable or passing `-Dgwt.tools=`
-   argument to ant.
-
-   _Note: that you need `svn` to checkout `gwt-tools`_
+ - You need the [GWT tools repository](https://github.com/gwtproject/tools/)
+   checked out and up-to-date. By default it is expected to be found at `../tools`.
+   You can override the default location using the GWT_TOOLS environment variable 
+   or passing `-Dgwt.tools=` argument to ant.
 
  - To create the SDK distribution files run:
 
