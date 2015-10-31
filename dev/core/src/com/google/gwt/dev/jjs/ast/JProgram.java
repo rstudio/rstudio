@@ -485,7 +485,10 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     }
 
     if (type.isArrayType()) {
-      return EnumSet.of(DispatchType.JAVA_ARRAY);
+      // A variable of type Object[] could contain an instance of native JsType[], the latter
+      // is treated as a JSO for devirtualization purposes.
+      // TODO(rluble): maybe it should not be treated as a JSO, think .toString().
+      return EnumSet.of(DispatchType.JSO, DispatchType.JAVA_ARRAY);
     }
     EnumSet<DispatchType> dispatchSet = EnumSet.noneOf(DispatchType.class);
     DispatchType dispatchType = getRepresentedAsNativeTypesDispatchMap().get(type);
@@ -1132,6 +1135,15 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     if (castMaps == null) {
       castMaps = Maps.newIdentityHashMap();
     }
+  }
+
+  public boolean isUntypedArrayType(JType type) {
+    if (!type.isArrayType()) {
+      return false;
+    }
+
+    JArrayType arrayType = (JArrayType) type;
+    return arrayType.getLeafType().isJsNative();
   }
 
   public boolean isJavaLangString(JType type) {

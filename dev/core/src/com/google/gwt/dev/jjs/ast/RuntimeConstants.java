@@ -27,13 +27,14 @@ public class RuntimeConstants {
   public static final String ARRAY_GET_CLASS_LITERAL_FOR_ARRAY = "Array.getClassLiteralForArray";
   public static final String ARRAY_INITIALIZE_UNIDIMENSIONAL_ARRAY = "Array.initUnidimensionalArray";
   public static final String ARRAY_INITIALIZE_MULTIDIMENSIONAL_ARRAY = "Array.initMultidimensionalArray";
-  public static final String ARRAY_STAMP_JAVA_TYPE_INFO = "Array.stampJavaTypeInfo";
+  public static final String ARRAY_NEW_ARRAY = "Array.newArray";
   public static final String ARRAY_SET_CHECK = "Array.setCheck";
+  public static final String ARRAY_STAMP_JAVA_TYPE_INFO = "Array.stampJavaTypeInfo";
+  public static final String ARRAY_IS_JAVA_ARRAY = "Array.isJavaArray";
 
   public static final String CAST_CHAR_TO_STRING = "Cast.charToString";
   public static final String CAST_HAS_JAVA_OBJECT_VIRTUAL_DISPATCH =
       "Cast.hasJavaObjectVirtualDispatch";
-  public static final String CAST_IS_JAVA_ARRAY = "Cast.isJavaArray";
   public static final String CAST_THROW_CLASS_CAST_EXCEPTION_UNLESS_NULL
       = "Cast.throwClassCastExceptionUnlessNull";
 

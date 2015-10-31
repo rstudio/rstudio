@@ -2912,14 +2912,20 @@ public class GwtAstBuilder {
       return new JStringLiteral(info, intern(string), javaLangString);
     }
 
-    /**
-     * TODO(scottb): move to UnifyAst and only for non-abstract classes.
-     */
     private void implementGetClass(JDeclaredType type) {
+      // TODO(rluble): Object.getClass() should be final our JRE, when that is done, GwtAstBuilder
+      // creates overrides for convenience and should unmark Object.getClass as final for
+      // consistency.
       JMethod method = type.getMethods().get(GET_CLASS_METHOD_INDEX);
-      assert (GwtAstBuilder.GET_CLASS_METHOD_NAME.equals(method.getName()));
+      assert (GET_CLASS_METHOD_NAME.equals(method.getName()));
       SourceInfo info = method.getSourceInfo();
-      JjsUtils.replaceMethodBody(method, new JClassLiteral(info, type));
+      if (type.isJsoType()) {
+        // return Cast.getClass(this)
+        JjsUtils.replaceMethodBody(method,
+            new JMethodCall(info, null, CAST_GET_CLASS_METHOD, new JThisRef(info, type)));
+      } else {
+        JjsUtils.replaceMethodBody(method, new JClassLiteral(info, type));
+      }
     }
 
     private JDeclarationStatement makeDeclaration(SourceInfo info, JLocal local,
@@ -3794,6 +3800,10 @@ public class GwtAstBuilder {
   private static JMethod SAFE_CLOSE_METHOD =
       JMethod.getExternalizedMethod("com.google.gwt.lang.Exceptions",
       "safeClose(Ljava/lang/AutoCloseable;Ljava/lang/Throwable;)Ljava/lang/Throwable;", true);
+
+  private static JMethod CAST_GET_CLASS_METHOD =
+      JMethod.getExternalizedMethod("com.google.gwt.lang.Cast",
+      "getClass(Ljava/lang/Object;)Ljava/lang/Class;", true);
 
   private List<JDeclaredType> processImpl() {
     CompilationUnitDeclaration cud = curCud.cud;

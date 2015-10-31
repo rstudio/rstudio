@@ -17,8 +17,8 @@ package com.google.gwt.dev.jjs.ast.js;
 
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
-import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
+import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
@@ -30,17 +30,19 @@ import java.util.List;
  */
 public class JsonArray extends JExpression {
 
-  private final List<JExpression> expressions;
+  private final List<JExpression> expressions = Lists.newArrayList();
 
-  private JClassType arrayType;
+  // JsonArray objects are typed as either JavaScriptObject, Object[], or native JsType[] depending
+  // on the use.
+  private JType arrayType;
 
-  public JsonArray(SourceInfo sourceInfo, JClassType arrayType, Iterable<JExpression> expressions) {
+  public JsonArray(SourceInfo sourceInfo, JType arrayType, List<JExpression> expressions) {
     super(sourceInfo);
     this.arrayType = arrayType;
-    this.expressions = Lists.newArrayList(expressions);
+    this.expressions.addAll(expressions);
   }
 
-  public JsonArray(SourceInfo sourceInfo, JClassType arrayType, JExpression... expressions) {
+  public JsonArray(SourceInfo sourceInfo, JType arrayType, JExpression... expressions) {
     this(sourceInfo, arrayType, Arrays.asList(expressions));
   }
 
@@ -49,7 +51,7 @@ public class JsonArray extends JExpression {
   }
 
   @Override
-  public JClassType getType() {
+  public JType getType() {
     return arrayType;
   }
 
@@ -66,9 +68,9 @@ public class JsonArray extends JExpression {
   /**
    * Resolve an external references during AST stitching.
    */
-  public void resolve(JClassType jsoType) {
-    assert jsoType.replaces(this.arrayType);
-    this.arrayType = jsoType;
+  public void resolve(JType arrayType) {
+    assert arrayType.replaces(this.arrayType);
+    this.arrayType = arrayType;
   }
 
   @Override

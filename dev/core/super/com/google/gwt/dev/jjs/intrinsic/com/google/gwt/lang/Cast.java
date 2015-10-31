@@ -48,9 +48,9 @@ final class Cast {
   @HasNoSideEffects
   static native boolean canCast(Object src, JavaScriptObject dstId) /*-{
     if (@com.google.gwt.lang.Cast::instanceOfString(*)(src)) {
-      return !!@com.google.gwt.lang.Cast::stringCastMap[dstId]
+      return !!@com.google.gwt.lang.Cast::stringCastMap[dstId];
     } else if (src.@java.lang.Object::castableTypeMap) {
-      return !!src.@java.lang.Object::castableTypeMap[dstId]
+      return !!src.@java.lang.Object::castableTypeMap[dstId];
     } else if (@com.google.gwt.lang.Cast::instanceOfDouble(*)(src)) {
       return !!@com.google.gwt.lang.Cast::doubleCastMap[dstId];
     } else if (@com.google.gwt.lang.Cast::instanceOfBoolean(*)(src)) {
@@ -89,6 +89,14 @@ final class Cast {
 
   static Object castToBoolean(Object src) {
     checkType(src == null || instanceOfBoolean(src));
+    return src;
+  }
+
+  /**
+   * Allow a cast to (untyped) array. This case covers single and multidimensional JsType arrays.
+   */
+  static Object castToNativeArray(Object src) {
+    checkType(src == null || instanceOfNativeArray(src));
     return src;
   }
 
@@ -147,6 +155,13 @@ final class Cast {
   static native boolean instanceOfBoolean(Object src) /*-{
     return typeof(src) === "boolean";
   }-*/;
+
+  /**
+   * Returns true if {@code src} is an array (native or not).
+   */
+  static boolean instanceOfNativeArray(Object src) {
+    return isArray(src);
+  }
 
   static boolean instanceOfNative(Object src, JavaScriptObject dstId, String jsType) {
     // TODO(goktug): Remove instanceof after new JsInterop semantics.
@@ -319,23 +334,22 @@ final class Cast {
    * generated trampolines to implement instance dispatch.
    */
   static boolean hasJavaObjectVirtualDispatch(Object src) {
-    return !instanceofArray(src) && Util.hasTypeMarker(src);
+    return !isArray(src) && Util.hasTypeMarker(src);
   }
 
+  @HasNoSideEffects
   /**
    * Returns true if {@code src} is a Java array.
    */
-  static boolean isJavaArray(Object src) {
-    return instanceofArray(src) && Util.hasTypeMarker(src);
-  }
-
-  /**
-   * Returns true if {@code src} is an array (native or not).
-   */
-  private static native boolean instanceofArray(Object src) /*-{
+  static native boolean isArray(Object src) /*-{
     return Array.isArray(src);
   }-*/;
 
+  @HasNoSideEffects
+  static native Class<?> getClass(Object array) /*-{
+    return array.@java.lang.Object::___clazz
+        || @JavaScriptObject::class;
+  }-*/;
 }
 
 // CHECKSTYLE_NAMING_ON

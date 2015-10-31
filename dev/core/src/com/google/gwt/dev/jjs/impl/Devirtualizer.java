@@ -225,7 +225,7 @@ public class Devirtualizer {
   private final JMethod hasJavaObjectVirtualDispatch;
 
   /**
-   * Contains the Cast.instanceofArray method.
+   * Contains the Cast.isJavaArray method.
    */
   private final JMethod isJavaArray;
 
@@ -284,7 +284,7 @@ public class Devirtualizer {
 
     this.hasJavaObjectVirtualDispatch =
         program.getIndexedMethod(RuntimeConstants.CAST_HAS_JAVA_OBJECT_VIRTUAL_DISPATCH);
-    this.isJavaArray = program.getIndexedMethod(RuntimeConstants.CAST_IS_JAVA_ARRAY);
+    this.isJavaArray = program.getIndexedMethod(RuntimeConstants.ARRAY_IS_JAVA_ARRAY);
     // TODO: consider turning on null checks for "this"?
     // However, for JSO's there is existing code that relies on nulls being okay.
     this.converter = new StaticCallConverter(program, false);
@@ -479,7 +479,7 @@ public class Devirtualizer {
     // Synthesize the dispatch at a single conditional doing the checks in this order.
     //   isString(obj) ? dispatchToString : (
     //     isRegularJavaObject(obj) ? obj.method : (
-    //       isArray(obj) ?
+    //       isJavaArray(obj) ?
     //         dispatchToArray :
     //         dispatchToJSO
     //     )

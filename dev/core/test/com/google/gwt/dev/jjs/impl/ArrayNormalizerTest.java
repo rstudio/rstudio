@@ -48,6 +48,28 @@ public class ArrayNormalizerTest extends OptimizerTestBase {
         "Array.setCheck(a, 1, new EntryPoint$A());");
   }
 
+  public void testObjectArray() throws Exception {
+    optimize("void", "Object[] o = new Object[10];")
+        .intoString("Object[] o = Array.initUnidimensionalArray(Object.class, [], " +
+            "/* JRuntimeTypeReference */\"java.lang.Object\", 10, 4, 1);");
+    optimize("void", "Object[] o = {null, null, Object.class};")
+        .intoString("Object[] o = " +
+            "Array.stampJavaTypeInfo(" +
+            "Array.getClassLiteralForArray(ClassLiteralHolder.Ljava_lang_Object_2_classLit, 1), " +
+            "[], /* JRuntimeTypeReference */\"java.lang.Object\", 4, [null, null, Object.class]);");
+    optimize("void", "Object[] o = new Object[] {};")
+        .intoString("Object[] o = Array.stampJavaTypeInfo(Array.getClassLiteralForArray(" +
+            "ClassLiteralHolder.Ljava_lang_Object_2_classLit, 1), [], " +
+            "/* JRuntimeTypeReference */\"java.lang.Object\", 4, []);");
+  }
+
+  public void testNativeJsTypeArray() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetClassDecl("@JsType(isNative = true) static class A {public String name; }");
+    optimize("void", "A[] a = new A[10];")
+        .intoString("EntryPoint$A[] a = Array.newArray(10);");
+  }
+
   @Override
   protected boolean doOptimizeMethod(TreeLogger logger, JProgram program, JMethod method) {
     program.addEntryMethod(findMainMethod(program));

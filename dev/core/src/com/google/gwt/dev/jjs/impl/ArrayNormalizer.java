@@ -37,6 +37,7 @@ import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Replace array accesses and instantiations with calls to the Array class.
@@ -78,8 +79,22 @@ public class ArrayNormalizer {
     public void endVisit(JNewArray x, Context ctx) {
       JArrayType type = x.getArrayType();
 
-      if (x.getInitializers() != null) {
+      List<JExpression> initializers = x.getInitializers();
+      if (initializers != null) {
+        JsonArray initializerArray = new JsonArray(x.getSourceInfo(), type, initializers);
+        if (program.isUntypedArrayType(type)) {
+          ctx.replaceMe(initializerArray);
+          return;
+        }
         ctx.replaceMe(createArrayFromInitializers(x, type));
+        return;
+      }
+
+      if (program.isUntypedArrayType(type) && type.getDims() == 1) {
+          // Create a plain array.
+        ctx.replaceMe(new JMethodCall(x.getSourceInfo(), null,
+            program.getIndexedMethod(RuntimeConstants.ARRAY_NEW_ARRAY),
+            x.getDimensionExpressions().get(0)));
         return;
       }
 

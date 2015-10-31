@@ -80,7 +80,8 @@ public class ReplaceGetClassOverrides {
 
     private boolean isGetClassDevirtualized(JType type) {
       return type == program.getJavaScriptObject()
-          || program.getRepresentedAsNativeTypes().contains(type);
+          || program.getRepresentedAsNativeTypes().contains(type)
+          || type.isJsNative();
     }
   }
 }

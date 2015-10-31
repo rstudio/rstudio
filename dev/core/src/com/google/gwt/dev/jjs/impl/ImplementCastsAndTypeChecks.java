@@ -224,6 +224,7 @@ public class ImplementCastsAndTypeChecks {
 
     assert EnumSet.of(TypeCategory.TYPE_JSO,
         TypeCategory.TYPE_JAVA_OBJECT_OR_JSO,
+        TypeCategory.TYPE_NATIVE_ARRAY,
         TypeCategory.TYPE_JAVA_LANG_OBJECT,
         TypeCategory.TYPE_JAVA_LANG_STRING,
         TypeCategory.TYPE_JAVA_LANG_DOUBLE,

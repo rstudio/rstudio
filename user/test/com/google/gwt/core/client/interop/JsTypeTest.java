@@ -218,6 +218,8 @@ public class JsTypeTest extends GWTTestCase {
     assertFalse(object instanceof MyJsInterfaceWithOnlyInstanceofReference);
     assertTrue(object instanceof AliasToMyNativeJsTypeWithOnlyInstanceofReference);
     assertFalse(object instanceof ConcreteJsType);
+    assertFalse(object instanceof MyNativeJsTypeInterface[]);
+    assertFalse(object instanceof MyNativeJsTypeInterfaceImpl[][]);
   }
 
   public void testInstanceOf_jsoWithoutProto() {
@@ -233,6 +235,8 @@ public class JsTypeTest extends GWTTestCase {
     assertFalse(object instanceof MyJsInterfaceWithOnlyInstanceofReference);
     assertFalse(object instanceof AliasToMyNativeJsTypeWithOnlyInstanceofReference);
     assertFalse(object instanceof ConcreteJsType);
+    assertFalse(object instanceof MyNativeJsTypeInterface[]);
+    assertFalse(object instanceof MyNativeJsTypeInterfaceImpl[][]);
   }
 
   public void testInstanceOf_jsoWithNativeButtonProto() {
@@ -248,6 +252,8 @@ public class JsTypeTest extends GWTTestCase {
     assertFalse(object instanceof MyJsInterfaceWithOnlyInstanceofReference);
     assertFalse(object instanceof AliasToMyNativeJsTypeWithOnlyInstanceofReference);
     assertFalse(object instanceof ConcreteJsType);
+    assertFalse(object instanceof MyNativeJsTypeInterface[]);
+    assertFalse(object instanceof MyNativeJsTypeInterfaceImpl[][]);
   }
 
   public void testInstanceOf_implementsJsType() {
@@ -264,6 +270,8 @@ public class JsTypeTest extends GWTTestCase {
     assertFalse(object instanceof MyJsInterfaceWithOnlyInstanceofReference);
     assertFalse(object instanceof AliasToMyNativeJsTypeWithOnlyInstanceofReference);
     assertFalse(object instanceof ConcreteJsType);
+    assertFalse(object instanceof MyNativeJsTypeInterface[]);
+    assertFalse(object instanceof MyNativeJsTypeInterfaceImpl[][]);
   }
 
   public void testInstanceOf_implementsJsTypeWithPrototype() {
@@ -280,6 +288,8 @@ public class JsTypeTest extends GWTTestCase {
     assertFalse(object instanceof MyJsInterfaceWithOnlyInstanceofReference);
     assertFalse(object instanceof AliasToMyNativeJsTypeWithOnlyInstanceofReference);
     assertFalse(object instanceof ConcreteJsType);
+    assertFalse(object instanceof MyNativeJsTypeInterface[]);
+    assertFalse(object instanceof MyNativeJsTypeInterfaceImpl[][]);
   }
 
   public void testInstanceOf_concreteJsType() {
@@ -296,6 +306,8 @@ public class JsTypeTest extends GWTTestCase {
     assertFalse(object instanceof MyJsInterfaceWithOnlyInstanceofReference);
     assertFalse(object instanceof AliasToMyNativeJsTypeWithOnlyInstanceofReference);
     assertTrue(object instanceof ConcreteJsType);
+    assertFalse(object instanceof MyNativeJsTypeInterface[]);
+    assertFalse(object instanceof MyNativeJsTypeInterfaceImpl[][]);
   }
 
   public void testInstanceOf_extendsJsTypeWithProto() {
@@ -312,6 +324,8 @@ public class JsTypeTest extends GWTTestCase {
     assertFalse(object instanceof MyJsInterfaceWithOnlyInstanceofReference);
     assertFalse(object instanceof AliasToMyNativeJsTypeWithOnlyInstanceofReference);
     assertFalse(object instanceof ConcreteJsType);
+    assertFalse(object instanceof MyNativeJsTypeInterface[]);
+    assertFalse(object instanceof MyNativeJsTypeInterfaceImpl[][]);
   }
 
   @JsType(isNative = true, namespace = GLOBAL, name = "JsTypeTest_MyNativeJsType")

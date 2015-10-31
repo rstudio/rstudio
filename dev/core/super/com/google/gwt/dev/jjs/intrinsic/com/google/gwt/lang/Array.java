@@ -32,22 +32,33 @@ public final class Array {
   private static final int TYPE_JAVA_OBJECT = 0;
   private static final int TYPE_JAVA_OBJECT_OR_JSO = 1;
   private static final int TYPE_JSO = 2;
-  private static final int TYPE_JAVA_LANG_OBJECT = 3;
-  private static final int TYPE_JAVA_LANG_STRING = 4;
-  private static final int TYPE_JAVA_LANG_DOUBLE = 5;
-  private static final int TYPE_JAVA_LANG_BOOLEAN = 6;
-  private static final int TYPE_JS_NATIVE = 7;
-  private static final int TYPE_JS_NATIVE_PROTOTYPE = 8;
-  private static final int TYPE_JS_FUNCTION = 9;
-  private static final int TYPE_PRIMITIVE_LONG = 10;
-  private static final int TYPE_PRIMITIVE_NUMBER = 11;
-  private static final int TYPE_PRIMITIVE_BOOLEAN = 12;
+  private static final int TYPE_NATIVE_ARRAYs = 3;
+  private static final int TYPE_JAVA_LANG_OBJECT = 4;
+  private static final int TYPE_JAVA_LANG_STRING = 5;
+  private static final int TYPE_JAVA_LANG_DOUBLE = 6;
+  private static final int TYPE_JAVA_LANG_BOOLEAN = 7;
+  private static final int TYPE_JS_NATIVE = 8;
+  private static final int TYPE_JS_UNKNOWN_NATIVE = 9;
+  private static final int TYPE_JS_FUNCTION = 10;
+  private static final int TYPE_PRIMITIVE_LONG = 11;
+  private static final int TYPE_PRIMITIVE_NUMBER = 12;
+  private static final int TYPE_PRIMITIVE_BOOLEAN = 13;
 
   public static <T> T[] stampJavaTypeInfo(Object array, T[] referenceType) {
-    stampJavaTypeInfo(referenceType.getClass(), Util.getCastableTypeMap(referenceType),
-        Array.getElementTypeId(referenceType), Array.getElementTypeCategory(referenceType), array);
+    if (Array.getElementTypeCategory(referenceType) != TYPE_JS_UNKNOWN_NATIVE) {
+      stampJavaTypeInfo(referenceType.getClass(), Util.getCastableTypeMap(referenceType),
+          Array.getElementTypeId(referenceType),
+          Array.getElementTypeCategory(referenceType), array);
+    }
     return Array.asArray(array);
   }
+
+  /**
+   * Returns an untyped uninitialized array.
+   */
+  static native Object[] newArray(int size) /*-{
+    return new Array(size);
+  }-*/;
 
   /**
    * Creates an array like "new T[a][b][c][][]" by passing in a native JSON
@@ -71,8 +82,10 @@ public final class Array {
       JavaScriptObject castableTypeMap, JavaScriptObject elementTypeId, int length,
       int elementTypeCategory, int dimensions) {
     Object result = initializeArrayElementsWithDefaults(elementTypeCategory, length);
-    stampJavaTypeInfo(getClassLiteralForArray(leafClassLiteral, dimensions), castableTypeMap,
-        elementTypeId, elementTypeCategory, result);
+    if (elementTypeCategory != TYPE_JS_UNKNOWN_NATIVE) {
+      stampJavaTypeInfo(getClassLiteralForArray(leafClassLiteral, dimensions), castableTypeMap,
+          elementTypeId, elementTypeCategory, result);
+    }
     return result;
   }
 
@@ -222,8 +235,10 @@ public final class Array {
     int elementTypeCategory = isLastDimension ? leafElementTypeCategory : TYPE_JAVA_OBJECT;
 
     Object result = initializeArrayElementsWithDefaults(elementTypeCategory, length);
-    stampJavaTypeInfo(getClassLiteralForArray(leafClassLiteral, count - index),
-        castableTypeMapExprs[index], elementTypeIds[index], elementTypeCategory, result);
+    if (leafElementTypeCategory != TYPE_JS_UNKNOWN_NATIVE) {
+      stampJavaTypeInfo(getClassLiteralForArray(leafClassLiteral, count - index),
+          castableTypeMapExprs[index], elementTypeIds[index], elementTypeCategory, result);
+    }
 
     if (!isLastDimension) {
       // Recurse to next dimension.
@@ -247,9 +262,12 @@ public final class Array {
   }
 
   private static native int getElementTypeCategory(Object array) /*-{
-    return array.__elementTypeCategory$;
+    return array.__elementTypeCategory$ == null
+        ? @Array::TYPE_JS_UNKNOWN_NATIVE
+        : array.__elementTypeCategory$;
   }-*/;
 
+  @HasNoSideEffects
   private static native JavaScriptObject getElementTypeId(Object array) /*-{
     return array.__elementTypeId$;
   }-*/;
@@ -280,6 +298,14 @@ public final class Array {
   private static native void setElementTypeCategory(Object array, int elementTypeCategory) /*-{
     array.__elementTypeCategory$ = elementTypeCategory;
   }-*/;
+
+  /**
+   * Returns true if {@code src} is a Java array.
+   */
+  @HasNoSideEffects
+  static boolean isJavaArray(Object src) {
+    return Cast.isArray(src) && Util.hasTypeMarker(src);
+  }
 
   private Array() {
   }

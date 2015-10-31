@@ -105,29 +105,74 @@ public class JsTypeArrayTest extends GWTTestCase {
   }-*/;
 
   @JsType(isNative = true)
-  interface SimpleJsTypeReturnForMultiDimArray {
-    @JsProperty int getId();
+  static class SimpleJsTypeReturnForMultiDimArray {
+    @JsProperty public native int getId();
   }
 
-  // TODO(rluble): Needs fixes in ImlementCastsAndTypeChecks, ArrayNormalizer and maybe type oracle.
-  public void __disabled__testJsType3DimArray_castedFromNativeWithACall() {
+  public void testJsType3DimArray_castFromNativeWithACall() {
     SimpleJsTypeReturnForMultiDimArray[][][] array =
         (SimpleJsTypeReturnForMultiDimArray[][][]) returnJsType3DimFromNative();
     assertEquals(1, array.length);
     assertEquals(2, array[0].length);
     assertEquals(3, array[0][0].length);
-    assertEquals(1, array[0][0][0].getId());
+    assertEquals(2, array[0][0][1].getId());
   }
 
   private native Object returnJsType3DimFromNative() /*-{
     return [ [ [{id:1}, {id:2}, {}], [] ] ];
   }-*/;
 
-  // TODO(rluble): Needs fixes in ImlementCastsAndTypeChecks, ArrayNormalizer and maybe type oracle.
-  public void __disabled__testObjectArray_castedFromNative() {
-    Object[] array = (Object[]) returnObjectArrayFromNative();
+  private native SimpleJsTypeReturnForMultiDimArray getSimpleJsType(int i) /*-{
+    return {id:i};
+  }-*/;
+
+  public void testObjectArray_castFromNative() {
+    SimpleJsTypeReturnForMultiDimArray[] array =
+        (SimpleJsTypeReturnForMultiDimArray[]) returnObjectArrayFromNative();
+    try {
+      assertNotNull((Object[]) array);
+
+    } catch (ClassCastException expected) {
+    }
     assertEquals(3, array.length);
     assertEquals("1", array[0]);
+  }
+
+  public void testJsTypeArray_objectArrayInterchangeability() {
+    Object[] objArray = new Object[1];
+
+    SimpleJsTypeReturnForMultiDimArray[][][] array =
+        (SimpleJsTypeReturnForMultiDimArray[][][]) objArray;
+
+    objArray[0] = new Object[2];
+    ((Object[]) objArray[0])[0] = new Object[3];
+    array[0][0][1] = getSimpleJsType(2);
+    assertEquals(1, array.length);
+    assertEquals(2, array[0].length);
+    assertEquals(3, array[0][0].length);
+    assertEquals(2, array[0][0][1].getId());
+  }
+
+  public void testObjectArray_instanceOf() {
+    Object array = new Object[0];
+    assertTrue(array instanceof Object[]);
+    assertFalse(array instanceof Double[]);
+    assertFalse(array instanceof int[]);
+    assertFalse(array instanceof SimpleJsTypeReturnForMultiDimArray);
+    assertTrue(array instanceof SimpleJsTypeReturnForMultiDimArray[]);
+    assertTrue(array instanceof SimpleJsTypeReturnForMultiDimArray[][]);
+    assertTrue(array instanceof SimpleJsTypeReturnForMultiDimArray[][][]);
+  }
+
+  public void testJsTypeArray_instanceOf() {
+    Object array = returnJsType3DimFromNative();
+    assertFalse(array instanceof Object[]);
+    assertFalse(array instanceof Double[]);
+    assertFalse(array instanceof int[]);
+    assertFalse(array instanceof SimpleJsTypeReturnForMultiDimArray);
+    assertTrue(array instanceof SimpleJsTypeReturnForMultiDimArray[]);
+    assertTrue(array instanceof SimpleJsTypeReturnForMultiDimArray[][]);
+    assertTrue(array instanceof SimpleJsTypeReturnForMultiDimArray[][][]);
   }
 
   private native Object returnObjectArrayFromNative() /*-{
