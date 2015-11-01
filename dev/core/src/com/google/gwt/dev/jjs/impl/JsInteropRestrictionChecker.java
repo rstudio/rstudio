@@ -273,10 +273,13 @@ public class JsInteropRestrictionChecker {
   }
 
   private void checkGlobalName(JMember member) {
-    if (!minimalRebuildCache.addExportedGlobalName(member.getQualifiedJsName(),
-        member.getEnclosingType().getName())) {
-      logError(member, "%s cannot be exported because the global name '%s' is already taken.",
-          getMemberDescription(member), member.getQualifiedJsName());
+   String currentGlobalNameDescription = minimalRebuildCache.addExportedGlobalName(
+       member.getQualifiedJsName(), JjsUtils.getReadableDescription(member),
+       member.getEnclosingType().getName());
+    if (currentGlobalNameDescription != null) {
+      logError(member,
+          "%s cannot be exported because the global name '%s' is already taken by '%s'.",
+          getMemberDescription(member), member.getQualifiedJsName(), currentGlobalNameDescription);
     }
   }
 
@@ -288,8 +291,8 @@ public class JsInteropRestrictionChecker {
             getMemberDescription(member));
       } else {
         logError(
-            member, "%s cannot be assigned a different JavaScript name than the method it overrides.",
-            getMemberDescription(member));
+            member, "%s cannot be assigned a different JavaScript name than the method "
+                + "it overrides.", getMemberDescription(member));
       }
       return;
     }
@@ -328,7 +331,7 @@ public class JsInteropRestrictionChecker {
   private void checkJsPropertyGetterConsistentWithSetter(
       JType type, JMethod setter, JMethod getter) {
     if (setter.getParams().size() == 1
-        &&  getter.getType() != setter.getParams().get(0).getType()) {
+        && getter.getType() != setter.getParams().get(0).getType()) {
       logError(setter,
           "The setter and getter for JsProperty '%s' in type '%s' must have consistent types.",
           setter.getJsName(), JjsUtils.getReadableDescription(type));

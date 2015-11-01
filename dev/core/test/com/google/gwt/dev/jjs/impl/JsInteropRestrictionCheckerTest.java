@@ -116,7 +116,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
     assertBuggyFails(
         "Line 8: 'int EntryPoint.Buggy.display' cannot be exported because the global "
-            + "name 'test.EntryPoint.Buggy.show' is already taken.");
+            + "name 'test.EntryPoint.Buggy.show' is already taken by "
+            + "'int EntryPoint.Buggy.show'.");
   }
 
   public void testJsPropertyGetterStyleSucceeds() throws Exception {
@@ -275,7 +276,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
     assertBuggyFails(
         "Line 8: 'void EntryPoint.Buggy.display()' cannot be exported because the global name "
-            + "'test.EntryPoint.Buggy.show' is already taken.");
+            + "'test.EntryPoint.Buggy.show' is already taken "
+            + "by 'void EntryPoint.Buggy.show()'.");
   }
 
   public void testCollidingMethodToFieldExportsFails() throws Exception {
@@ -291,7 +293,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
     assertBuggyFails(
         "Line 7: 'void EntryPoint.Buggy.show()' cannot be exported because the global name "
-            + "'test.EntryPoint.Buggy.show' is already taken.");
+            + "'test.EntryPoint.Buggy.show' is already taken by "
+            + "'int EntryPoint.Buggy.show'.");
   }
 
   public void testCollidingMethodToFieldJsTypeFails() throws Exception {
@@ -862,7 +865,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     assertBuggyFails(
         "Line 5: More than one JsConstructor exists for EntryPoint.Buggy.",
         "Line 7: 'EntryPoint.Buggy.EntryPoint$Buggy(int)' cannot be exported because the global "
-            + "name 'test.EntryPoint.Buggy' is already taken.");
+            + "name 'test.EntryPoint.Buggy' is already taken by "
+            + "'EntryPoint.Buggy.EntryPoint$Buggy()'.");
   }
 
   public void testNonCollidingAccidentalOverrideSucceeds() throws Exception {
