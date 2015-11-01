@@ -16,13 +16,13 @@
 package com.google.gwt.dev.jjs.ast;
 
 /**
- * Abstracts JsInterop information for the AST nodes.
+ * Abstracts JsInterop name related information for the AST nodes.
  */
-public interface HasJsInfo extends HasJsName {
+public interface HasJsName  {
 
-  void setJsMemberInfo(String namespace, String name, boolean exported);
+  String getJsName();
 
-  boolean isJsNative();
+  String getJsNamespace();
 
-  boolean isJsOverlay();
+  String getQualifiedJsName();
 }

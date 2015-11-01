@@ -883,6 +883,57 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     assertBuggySucceeds();
   }
 
+  public void testJsNameInvalidNamesFails() {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsMethod");
+    addSnippetImport("jsinterop.annotations.JsProperty");
+    addSnippetClassDecl(
+        "@JsType(name = \"a.b.c\") public static class Buggy {",
+        "   @JsMethod(name = \"34s\") public void m() {}",
+        "   @JsProperty(name = \"s^\") public int  m;",
+        "   @JsProperty(name = \"\") public int n;",
+        "}");
+
+    assertBuggyFails(
+        "Line 6: 'EntryPoint.Buggy' has invalid name 'a.b.c'.",
+        "Line 7: 'void EntryPoint.Buggy.m()' has invalid name '34s'.",
+        "Line 8: 'int EntryPoint.Buggy.m' has invalid name 's^'.",
+        "Line 9: 'int EntryPoint.Buggy.n' cannot have an empty name.");
+  }
+
+  public void testJsNameInvalidNamespacesFails() {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsMethod");
+    addSnippetImport("jsinterop.annotations.JsProperty");
+    addSnippetClassDecl(
+        "@JsType(namespace = \"a.b.\") public static class Buggy {",
+        "   @JsMethod(namespace = \"34s\") public static void m() {}",
+        "   @JsProperty(namespace = \"s^\") public static int  n;",
+        "   @JsProperty(namespace = \"\") public int p;",
+        "   @JsMethod(namespace = \"a\") public void q() {}",
+        "}");
+
+    assertBuggyFails(
+        "Line 6: 'EntryPoint.Buggy' has invalid namespace 'a.b.'.",
+        "Line 7: 'void EntryPoint.Buggy.m()' has invalid namespace '34s'.",
+        "Line 8: 'int EntryPoint.Buggy.n' has invalid namespace 's^'.",
+        "Line 9: Instance member 'int EntryPoint.Buggy.p' cannot declare a namespace.",
+        "Line 10: Instance member 'void EntryPoint.Buggy.q()' cannot declare a namespace.");
+  }
+
+  public void testJsNameEmptyNamespacesSucceeds() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsMethod");
+    addSnippetImport("jsinterop.annotations.JsProperty");
+    addSnippetClassDecl(
+        "@JsType(namespace = \"\") public static class Buggy {",
+        "   @JsMethod(namespace = \"\") public static void m() {}",
+        "   @JsProperty(namespace = \"\") public static int  n;",
+        "}");
+
+    assertBuggySucceeds();
+  }
+
   public void testSingleJsTypeSucceeds() throws Exception {
     addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(

@@ -80,7 +80,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * Produces text output from a JavaScript AST.
@@ -115,14 +114,6 @@ public class JsToStringGenerationVisitor extends JsVisitor {
    * How many lines of code to print inside of a JsBlock when printing terse.
    */
   private static final int JSBLOCK_LINES_TO_PRINT = 3;
-
-  /**
-   * A variable name is valid if it contains only letters, numbers, _, $ and
-   * does not begin with a number. There are actually other valid variable
-   * names, such as ones that contain escaped Unicode characters, but we
-   * surround those names with quotes in property initializers to be safe.
-   */
-  private static final Pattern VALID_NAME_PATTERN = Pattern.compile("[a-zA-Z_$][\\w$]*");
 
   protected boolean needSemi = true;
   private List<NamedRange> classRanges = new ArrayList<NamedRange>();
@@ -723,8 +714,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
         // labels can be either string, integral, or decimal literals
         if (labelExpr instanceof JsStringLiteral) {
           String propName = ((JsStringLiteral) labelExpr).getValue();
-          if (VALID_NAME_PATTERN.matcher(propName).matches()
-              && !JsProtectedNames.isKeyword(propName)) {
+          if (JsUtils.isValidJsIdentifier(propName) && !JsProtectedNames.isKeyword(propName)) {
+            // Print unquoted if the property name is a valid identifier.
             p.print(propName);
             break printLabel;
           }

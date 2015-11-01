@@ -42,6 +42,8 @@ import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.List;
 
+import java.util.regex.Pattern;
+
 /**
  * Utils for JS AST.
  */
@@ -245,6 +247,24 @@ public class JsUtils {
     return null;
   }
 
+  /**
+   * A JavaScript identifier contains only letters, numbers, _, $ and does not begin with a number.
+   * There are actually other valid identifiers, such as ones that contain escaped Unicode
+   * characters but we disallow those for the time being.
+   */
+  public static boolean isValidJsIdentifier(String name) {
+    return JAVASCRIPT_VALID_IDENTIFIER_PATTERN.matcher(name).matches();
+  }
+
+  public static boolean isValidJsQualifiedName(String name) {
+    return JAVASCRIPT_VALID_QUALIFIED_NAME_PATTERN.matcher(name).matches();
+  }
+
+  private static final String VALID_JS_NAME_REGEX = "[a-zA-Z_$][\\w_$]*";
+  private static final Pattern JAVASCRIPT_VALID_QUALIFIED_NAME_PATTERN =
+      Pattern.compile(VALID_JS_NAME_REGEX + "(\\." + VALID_JS_NAME_REGEX + ")*");
+  private static final Pattern JAVASCRIPT_VALID_IDENTIFIER_PATTERN =
+      Pattern.compile(VALID_JS_NAME_REGEX);
   private static final String CALL_STRING = StringInterner.get().intern("call");
 
   private JsUtils() {
