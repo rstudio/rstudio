@@ -430,23 +430,8 @@ public class TextEditingTarget implements
             NativeEvent ne = event.getNativeEvent();
             int mod = KeyboardShortcut.getModifierValue(ne);
             
-            if ((mod == KeyboardShortcut.META || (mod == KeyboardShortcut.CTRL && !BrowseCap.hasMetaKey()))
-                && ne.getKeyCode() == 'F')
-            {
-               event.preventDefault();
-               event.stopPropagation();
-               commands_.findReplace().execute();
-            }
-            else if (BrowseCap.hasMetaKey() && 
-                     (mod == KeyboardShortcut.META) &&
-                     (ne.getKeyCode() == 'E'))
-            {
-               event.preventDefault();
-               event.stopPropagation();
-               commands_.findFromSelection().execute();
-            }
-            else if (mod == KeyboardShortcut.ALT &&
-                     KeyboardHelper.isHyphenKeycode(ne.getKeyCode()))
+            if (mod == KeyboardShortcut.ALT &&
+                KeyboardHelper.isHyphenKeycode(ne.getKeyCode()))
             {
                event.preventDefault();
                event.stopPropagation();
