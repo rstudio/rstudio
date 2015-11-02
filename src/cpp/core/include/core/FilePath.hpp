@@ -104,6 +104,9 @@ public:
 
    bool hasTextMimeType() const;
    
+   // set last write time
+   void setLastWriteTime(std::time_t time = ::time(NULL)) const;
+   
    // last write time
    std::time_t lastWriteTime() const;
   

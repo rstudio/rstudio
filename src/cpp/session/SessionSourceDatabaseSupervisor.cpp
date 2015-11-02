@@ -117,6 +117,7 @@ FilePath sessionLockFilePath(const FilePath& sessionDir)
 }
 
 // session dir lock (initialized by attachToSourceDatabase)
+typedef AdvisoryFileLock FileLock;
 FileLock s_sessionDirLock;
 
 Error removeSessionDir(const FilePath& sessionDir)
@@ -260,7 +261,7 @@ Error createSessionDirFromOldSourceDatabase(FilePath* pSessionDir)
 
    // attempt to acquire the lock. if we can't then we still continue
    // so we can support filesystems that don't have file locks.
-   error =  s_sessionDirLock.acquire(sessionLockFilePath(*pSessionDir));
+   error = s_sessionDirLock.acquire(sessionLockFilePath(*pSessionDir));
    if (error)
       LOG_ERROR(error);
 

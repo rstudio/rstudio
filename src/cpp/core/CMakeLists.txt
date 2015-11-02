@@ -55,6 +55,8 @@ set (CORE_SOURCE_FILES
    Thread.cpp
    Trace.cpp
    WaitUtils.cpp
+   file_lock/AdvisoryFileLock.cpp
+   file_lock/LinkBasedFileLock.cpp
    gwt/GwtFileHandler.cpp
    gwt/GwtLogHandler.cpp
    gwt/GwtSymbolMaps.cpp

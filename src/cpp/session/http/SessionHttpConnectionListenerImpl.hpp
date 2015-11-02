@@ -27,6 +27,7 @@
 #include <core/Macros.hpp>
 #include <core/BoostThread.hpp>
 #include <core/FilePath.hpp>
+#include <core/FileLock.hpp>
 #include <core/Error.hpp>
 #include <core/BoostErrors.hpp>
 #include <core/system/System.hpp>
@@ -96,6 +97,9 @@ public:
 
       // accept next connection (asynchronously)
       acceptNextConnection();
+      
+      // refresh locks
+      core::FileLock::refreshPeriodically(acceptorService_.ioService());
 
       // block all signals for launch of listener thread (will cause it
       // to never receive signals)
