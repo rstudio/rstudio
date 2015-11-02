@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # set motd
-cp /vagrant/vagrant/build.motd.tail /etc/motd
+cp /rstudio/vagrant/build.motd.tail /etc/motd
 
 # add port information to the motd
 echo "RStudio server port: $1" >> /etc/motd
@@ -28,7 +28,7 @@ apt-get install -y libcurl4-openssl-dev
 
 # add users 
 apt-get install -y whois
-for userdetails in `cat /vagrant/vagrant/rstudiousers.txt`
+for userdetails in `cat /rstudio/vagrant/rstudiousers.txt`
 do
     user=`echo $userdetails | cut -f 1 -d ,`
     passwd=`echo $userdetails | cut -f 2 -d ,`
@@ -41,5 +41,5 @@ apt-get install -y silversearcher-ag
 apt-get install -y python-dev
 
 # perform remainder of the install script as regular user
-sudo --login --set-home -u vagrant /vagrant/vagrant/bootstrap-user.sh
+sudo --login --set-home -u vagrant /rstudio/vagrant/bootstrap-user.sh
 
