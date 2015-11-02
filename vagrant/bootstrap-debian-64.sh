@@ -21,6 +21,11 @@ apt-get install -y unzip
 apt-get install -y git
 apt-get install -y g++
 
+# install packages needed to build and run devtools
+apt-get install -y libssh2-1-dev
+apt-get install -y curl 
+apt-get install -y libcurl4-openssl-dev
+
 # add users 
 apt-get install -y whois
 for userdetails in `cat /vagrant/vagrant/rstudiousers.txt`
