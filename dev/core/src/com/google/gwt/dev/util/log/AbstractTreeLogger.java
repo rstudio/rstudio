@@ -17,13 +17,26 @@ package com.google.gwt.dev.util.log;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.thirdparty.guava.common.collect.ComparisonChain;
 
+import java.util.Comparator;
 import java.util.HashSet;
 
 /**
  * Abstract base class for TreeLoggers.
  */
 public abstract class AbstractTreeLogger extends TreeLogger implements CanUpdateMetrics {
+
+  public static final Comparator<String> LOG_LINE_COMPARATOR =
+      new Comparator<String>() {
+        @Override
+        public int compare(String thisLine, String thatLine) {
+          return ComparisonChain.start()
+              .compare(thisLine.indexOf(':'), thatLine.indexOf(':'))
+              .compare(thisLine, thatLine)
+              .result();
+        }
+      };
 
   private static class UncommittedBranchData {
 

@@ -43,11 +43,13 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
+import com.google.gwt.thirdparty.guava.common.collect.Ordering;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.google.gwt.thirdparty.guava.common.collect.TreeMultimap;
 
@@ -71,8 +73,10 @@ public class JsInteropRestrictionChecker {
     }
   }
 
-  private Multimap<String, String> errorsByFilename = TreeMultimap.create();
-  private Multimap<String, String> warningsByFilename = TreeMultimap.create();
+  private Multimap<String, String> errorsByFilename
+      = TreeMultimap.create(Ordering.natural(), AbstractTreeLogger.LOG_LINE_COMPARATOR);
+  private Multimap<String, String> warningsByFilename
+      = TreeMultimap.create(Ordering.natural(), AbstractTreeLogger.LOG_LINE_COMPARATOR);
   private final JProgram jprogram;
   private final MinimalRebuildCache minimalRebuildCache;
 

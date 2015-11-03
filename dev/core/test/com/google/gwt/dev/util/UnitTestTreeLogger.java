@@ -16,6 +16,7 @@
 package com.google.gwt.dev.util;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.thirdparty.guava.common.collect.ComparisonChain;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
@@ -207,7 +208,7 @@ public class UnitTestTreeLogger extends TreeLogger {
     @Override
     public int compareTo(LogEntry that) {
       return ComparisonChain.start()
-          .compare(this.msg, that.msg)
+          .compare(this.msg, that.msg, AbstractTreeLogger.LOG_LINE_COMPARATOR)
           .compare(this.type, that.type)
           .result();
     }
