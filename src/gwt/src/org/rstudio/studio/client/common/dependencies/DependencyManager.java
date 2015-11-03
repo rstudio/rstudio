@@ -88,7 +88,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
          "Packrat",
          userAction,
          new Dependency[] {
-            Dependency.embeddedPackage("packrat")
+            Dependency.cranPackage("packrat", "0.4.6", true)
          },
          false,
          command);
@@ -109,7 +109,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
       deps.add(Dependency.cranPackage("yaml", "2.1.5"));
       if (requiresRmarkdown)
          deps.addAll(rmarkdownDependencies());
-      deps.add(Dependency.embeddedPackage("packrat"));
+      deps.add(Dependency.cranPackage("packrat", "0.4.6", true));
       deps.add(Dependency.embeddedPackage("rsconnect"));
       
       withDependencies(
