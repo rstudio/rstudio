@@ -21,7 +21,7 @@ import com.google.gwt.dev.jjs.HasSourceInfo;
  * Abstracts class members (i.e. fields and methods).
  */
 public interface JMember extends HasEnclosingType, HasName, HasJsInfo, HasType, HasSourceInfo,
-    CanBeSetFinal, CanBeStatic, CanBeAbstract {
+    CanBeSetFinal, CanBeStatic, CanBeAbstract, CanHaveSuppressedWarnings {
 
   boolean isPublic();
 

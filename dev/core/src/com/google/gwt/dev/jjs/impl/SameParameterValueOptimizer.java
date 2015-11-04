@@ -127,7 +127,7 @@ public class SameParameterValueOptimizer {
     }
 
     private boolean isNotOptimizable(JMethod x) {
-      return x.needsDynamicDispatch() || x.canBeCalledExternally();
+      return x.needsDynamicDispatch() || x.canBeReferencedExternally();
     }
 
     private boolean equalLiterals(JValueLiteral l1, JValueLiteral l2) {

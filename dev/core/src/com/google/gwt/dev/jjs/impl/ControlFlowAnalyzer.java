@@ -616,7 +616,7 @@ public class ControlFlowAnalyzer {
           // Returning from this method passes a value from JavaScript into Java.
           maybeRescueJavaScriptObjectPassingIntoJava(method.getType());
         }
-        if (method.canBeCalledExternally() || method.canBeImplementedExternally()) {
+        if (method.canBeReferencedExternally() || method.canBeImplementedExternally()) {
           for (JParameter param : method.getParams()) {
             // Parameters in JsExport, JsType, JsFunction methods should not be pruned in order to
             // keep the API intact.
@@ -683,7 +683,7 @@ public class ControlFlowAnalyzer {
       JDeclaredType declaredType = (JDeclaredType) type;
 
       for (JMethod method : declaredType.getMethods()) {
-        if (method.canBeCalledExternally()) {
+        if (method.canBeReferencedExternally()) {
           rescue(method);
         }
       }

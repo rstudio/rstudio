@@ -386,7 +386,7 @@ public class JjsUtils {
         });
     // A synthetic accidental  override is unnecessary iff it retains the same property
     // name (polyname) as the the concrete method it overrides.
-    return overridesConcreteMethod && !method.exposesNonJsMethod();
+    return overridesConcreteMethod && !method.exposesNonJsMember();
   }
 
   /**

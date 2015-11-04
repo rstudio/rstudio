@@ -26,7 +26,6 @@ import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
-import java.beans.Introspector;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -40,76 +39,7 @@ import java.util.Set;
 /**
  * A Java method implementation.
  */
-public class JMethod extends JNode implements JMember, CanBeAbstract, CanHaveSuppressedWarnings {
-
-  /**
-   * Indicates whether a method is a JsProperty accessor.
-   */
-  public enum JsPropertyAccessorType {
-    /**
-     * Not a property accessor.
-     */
-    NONE,
-    /**
-     * A getter property accessor. Usually in the form of getX()/isX().
-     */
-    GETTER("get") {
-      @Override
-      public String computeName(JMethod member) {
-        String methodName = member.getName();
-        if (startsWithCamelCase(methodName, "get")) {
-          return Introspector.decapitalize(methodName.substring(3));
-        }
-        if (startsWithCamelCase(methodName, "is")) {
-          return Introspector.decapitalize(methodName.substring(2));
-        }
-        return JsInteropUtil.INVALID_JSNAME;
-      }
-    },
-    /**
-     * A setter JsProperty accessor. Usually in the form of setX(x).
-     */
-    SETTER("set") {
-      @Override
-      public String computeName(JMethod member) {
-        String methodName = member.getName();
-        if (startsWithCamelCase(methodName, "set")) {
-          return Introspector.decapitalize(methodName.substring(3));
-        }
-        return JsInteropUtil.INVALID_JSNAME;
-      }
-    },
-    /**
-     * A property accessor but doesn't match setter/getter patterns.
-     */
-    UNDEFINED;
-
-    private String key;
-
-    JsPropertyAccessorType() {
-    }
-
-    JsPropertyAccessorType(String key) {
-      this.key = key;
-    }
-
-    public String getKey() {
-      return key;
-    }
-
-    public boolean isPropertyAccessor() {
-      return key != null;
-    }
-
-    public String computeName(JMethod method) {
-      return method.getName();
-    }
-
-    private static boolean startsWithCamelCase(String string, String prefix) {
-      return string.length() > prefix.length() && string.startsWith(prefix)
-          && Character.isUpperCase(string.charAt(prefix.length()));
-    }
-  }
+public class JMethod extends JNode implements JMember, CanBeAbstract {
 
   public static final Comparator<JMethod> BY_SIGNATURE_COMPARATOR = new Comparator<JMethod>() {
     @Override
@@ -121,7 +51,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanHaveSup
   private String jsName;
   private boolean exported;
   private String jsNamespace;
-  private JsPropertyAccessorType jsPropertyType = JsPropertyAccessorType.NONE;
+  private JsMemberType jsMemberType = JsMemberType.NONE;
   private Specialization specialization;
   private InliningMode inliningMode = InliningMode.NORMAL;
   private boolean preventDevirtualization = false;
@@ -132,17 +62,20 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanHaveSup
   private boolean isJsOverlay = false;
 
   @Override
-  public void setJsMemberInfo(String namespace, String name, boolean exported) {
-    this.jsName = name;
+  public void setJsMemberInfo(JsMemberType type, String namespace, String name, boolean exported) {
+    this.jsMemberType = type;
+    this.jsName = name != null ? name : type.computeName(this);
     this.jsNamespace = namespace;
     this.exported = exported;
   }
 
+  @Override
   public boolean isJsInteropEntryPoint() {
     return exported && !needsDynamicDispatch() && !isJsNative();
   }
 
-  public boolean canBeCalledExternally() {
+  @Override
+  public boolean canBeReferencedExternally() {
     if (exported || isJsFunctionMethod()) {
       return true;
     }
@@ -209,58 +142,38 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanHaveSup
   }
 
   /**
-   * Returns {@code true} if this method is the first JsMethod in the method hierarchy that exposes
-   * an existing non-JsMethod inside a class.
+   * Returns {@code true} if this method is the first JsMember in the method hierarchy that exposes
+   * an existing non-JsMember inside a class.
    */
-  public boolean exposesNonJsMethod() {
-    if (isInterfaceMethod() || !isOrOverridesJsMethod()) {
+  public boolean exposesNonJsMember() {
+    if (isInterfaceMethod() || getJsMemberType() == JsMemberType.NONE) {
       return false;
     }
 
-    boolean hasNonJsMethodParent = false;
+    boolean hasNonJsMemberParent = false;
     for (JMethod overriddenMethod : overriddenMethods) {
-      if (!overriddenMethod.isOrOverridesJsMethod()) {
-        hasNonJsMethodParent = true;
+      if (overriddenMethod.getJsMemberType() == JsMemberType.NONE) {
+        hasNonJsMemberParent = true;
       }
-      if (overriddenMethod.exposesNonJsMethod()) {
+      if (overriddenMethod.exposesNonJsMember()) {
         return false; // some other method already exposed this method.
       }
     }
 
-    return hasNonJsMethodParent;
+    return hasNonJsMemberParent;
   }
 
-  public boolean isOrOverridesJsMethod() {
-    if (jsName != null) {
-      return true;
+  @Override
+  public JsMemberType getJsMemberType() {
+    if (jsMemberType != JsMemberType.NONE) {
+      return jsMemberType;
     }
     for (JMethod overriddenMethod : getOverriddenMethods()) {
-      if (overriddenMethod.jsName != null) {
-        return true;
+      if (overriddenMethod.jsMemberType != JsMemberType.NONE) {
+        return overriddenMethod.jsMemberType;
       }
     }
-    return false;
-  }
-
-  public void setJsPropertyInfo(String jsName, JsPropertyAccessorType jsPropertyType) {
-    this.jsName = jsName != null ? jsName : jsPropertyType.computeName(this);
-    this.jsPropertyType = jsPropertyType;
-  }
-
-  public JsPropertyAccessorType getJsPropertyAccessorType() {
-    if (isJsPropertyAccessor()) {
-      return jsPropertyType;
-    }
-    for (JMethod overriddenMethod : getOverriddenMethods()) {
-      if (overriddenMethod.isJsPropertyAccessor()) {
-        return overriddenMethod.jsPropertyType;
-      }
-    }
-    return JsPropertyAccessorType.NONE;
-  }
-
-  private boolean isJsPropertyAccessor() {
-    return jsPropertyType != JsPropertyAccessorType.NONE;
+    return JsMemberType.NONE;
   }
 
   private boolean isJsFunctionMethod() {
@@ -284,6 +197,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanHaveSup
     return (isAbstract || body == null) && jsName != null;
   }
 
+  @Override
   public boolean isJsOverlay() {
     return isJsOverlay || (getEnclosingType() != null && getEnclosingType().isJsoType());
   }
@@ -690,6 +604,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanHaveSup
     }
   }
 
+  @Override
   public boolean isPrivate() {
     return access == AccessModifier.PRIVATE.ordinal();
   }
@@ -704,6 +619,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanHaveSup
     return isStatic;
   }
 
+  @Override
   public boolean isSynthetic() {
     return isSynthetic;
   }

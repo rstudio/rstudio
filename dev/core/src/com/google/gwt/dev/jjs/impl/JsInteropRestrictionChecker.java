@@ -21,7 +21,9 @@ import com.google.gwt.dev.javac.JsInteropUtil;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.ast.CanHaveSuppressedWarnings;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.HasJsInfo.JsMemberType;
 import com.google.gwt.dev.jjs.ast.HasJsName;
+import com.google.gwt.dev.jjs.ast.HasType;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
@@ -34,7 +36,6 @@ import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMember;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JMethod.JsPropertyAccessorType;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JParameter;
@@ -226,50 +227,32 @@ public class JsInteropRestrictionChecker {
     return call.getTarget().equals(targetCtor);
   }
 
-  private void checkField(Map<String, JsMember> localNames, JField field) {
-    if (field.getEnclosingType().isJsNative()) {
-      checkMemberOfNativeJsType(field);
+  private void checkMember(Map<String, JsMember> localNames, JMember member) {
+    if (member.getEnclosingType().isJsNative()) {
+      checkMemberOfNativeJsType(member);
     }
 
-    checkUnusableByJs(field);
-
-    if (!field.isJsProperty()) {
+    if (member.isJsOverlay()) {
+      checkJsOverlay((JMethod) member);
       return;
     }
 
-    checkMemberQualifiedJsName(field);
-
-    if (field.needsDynamicDispatch()) {
-      checkLocalName(localNames, field);
-    } else if (!field.isJsNative()) {
-      checkGlobalName(field);
-    }
-  }
-
-  private void checkMethod(Map<String, JsMember> localNames, JMethod method) {
-    if (method.getEnclosingType().isJsNative()) {
-      checkMemberOfNativeJsType(method);
+    if (member.canBeReferencedExternally()) {
+      checkUnusableByJs(member);
     }
 
-    if (method.isJsOverlay()) {
-      checkJsOverlay(method);
+    if (member.getJsMemberType() == JsMemberType.NONE) {
       return;
     }
 
-    checkUnusableByJs(method);
+    checkMemberQualifiedJsName(member);
 
-    if (!method.isOrOverridesJsMethod()) {
-      return;
+    if (isCheckedLocalName(member)) {
+      checkLocalName(localNames, member);
     }
 
-    checkMemberQualifiedJsName(method);
-
-    if (method.needsDynamicDispatch()) {
-      if (!isSyntheticBridgeMethod(method)) {
-        checkLocalName(localNames, method);
-      }
-    } else if (!method.isJsNative()) {
-      checkGlobalName(method);
+    if (isCheckedGlobalName(member)) {
+      checkGlobalName(member);
     }
   }
 
@@ -286,8 +269,7 @@ public class JsInteropRestrictionChecker {
 
   private void checkLocalName(Map<String, JsMember> localNames, JMember member) {
     if (member.getJsName().equals(JsInteropUtil.INVALID_JSNAME)) {
-      if (member instanceof JMethod
-          && ((JMethod) member).getJsPropertyAccessorType().isPropertyAccessor()) {
+      if (member.getJsMemberType().isPropertyAccessor()) {
         logError(
             member,
             "JsProperty %s should either follow Java Bean naming conventions or "
@@ -319,27 +301,23 @@ public class JsInteropRestrictionChecker {
         getMemberDescription(member), getMemberDescription(oldMember.member), member.getJsName());
   }
 
-  private void checkJsPropertyAccessor(JMember x, JsMember newMember) {
-    if (!(x instanceof JMethod)) {
-      return;
-    }
-    JMethod method = (JMethod) x;
-
-    if (method.getJsPropertyAccessorType() == JsPropertyAccessorType.UNDEFINED) {
-      logError(method, "JsProperty %s should have a correct setter or getter signature.",
-          getMemberDescription(method));
+  private void checkJsPropertyAccessor(JMember member, JsMember newMember) {
+    if (member.getJsMemberType() == JsMemberType.UNDEFINED_ACCESSOR) {
+      logError(member, "JsProperty %s should have a correct setter or getter signature.",
+          getMemberDescription(member));
     }
 
-    if (method.getJsPropertyAccessorType() == JsPropertyAccessorType.GETTER) {
-      if (method.getType() != JPrimitiveType.BOOLEAN && method.getName().startsWith("is")) {
-        logError(method, "JsProperty %s cannot have a non-boolean return.",
-            getMemberDescription(method));
+    if (member.getJsMemberType() == JsMemberType.GETTER) {
+      if (member.getType() != JPrimitiveType.BOOLEAN && member.getName().startsWith("is")) {
+        logError(member, "JsProperty %s cannot have a non-boolean return.",
+            getMemberDescription(member));
       }
     }
 
     if (newMember.setter != null && newMember.getter != null) {
-      if (newMember.getter.getType() != newMember.setter.getParams().get(0).getType()) {
-        logError(method, "JsProperty setter %s and getter %s cannot have inconsistent types.",
+      List<JParameter> setterParams = ((JMethod) newMember.setter).getParams();
+      if (newMember.getter.getType() != setterParams.get(0).getType()) {
+        logError(member, "JsProperty setter %s and getter %s cannot have inconsistent types.",
             getMemberDescription(newMember.setter), getMemberDescription(newMember.getter));
       }
     }
@@ -447,7 +425,7 @@ public class JsInteropRestrictionChecker {
       @Override
       public void endVisit(JMethodCall x, Context ctx) {
         JMethod target = x.getTarget();
-        if (x.isStaticDispatchOnly() && target.getJsPropertyAccessorType().isPropertyAccessor()) {
+        if (x.isStaticDispatchOnly() && target.getJsMemberType().isPropertyAccessor()) {
           logError(x, "Cannot call property accessor %s via super.",
               getMemberDescription(target));
         }
@@ -603,62 +581,45 @@ public class JsInteropRestrictionChecker {
     }
 
     Map<String, JsMember> localNames = collectNames(type.getSuperClass());
-
-    for (JField field : type.getFields()) {
-      checkField(localNames, field);
-    }
-    for (JMethod method : type.getMethods()) {
-      checkMethod(localNames, method);
+    for (JMember member : type.getMembers()) {
+      checkMember(localNames, member);
     }
   }
 
-  private void checkUnusableByJs(JMethod method) {
-    if (!method.canBeCalledExternally() || isUnusableByJsSuppressed(method.getEnclosingType())
-        || isUnusableByJsSuppressed(method)) {
-      return;
-    }
-    // check parameters.
-    for (JParameter parameter : method.getParams()) {
-      if (!parameter.getType().canBeReferencedExternally()
-          && !isUnusableByJsSuppressed(parameter)) {
-        logWarning(
-            parameter,
-            "[unusable-by-js] Type of parameter '%s' in method %s is not usable by but exposed to"
-                + " JavaScript.",
-            parameter.getName(), getMemberDescription(method));
+  private void checkUnusableByJs(JMember member) {
+    logIfUnusableByJs(member, member instanceof JField ? "Type of" : "Return type of", member);
+
+    if (member instanceof JMethod) {
+      for (JParameter parameter : ((JMethod) member).getParams()) {
+        String prefix = String.format("Type of parameter '%s' in", parameter.getName());
+        logIfUnusableByJs(parameter, prefix, member);
       }
     }
-    // check return type.
-    if (!method.getType().canBeReferencedExternally()) {
-      logWarning(
-          method, "[unusable-by-js] Return type of %s is not usable by but exposed to JavaScript.",
-          getMemberDescription(method));
-    }
   }
 
-  private void checkUnusableByJs(JField field) {
-    if (!field.canBeReferencedExternally() || isUnusableByJsSuppressed(field.getEnclosingType())
-        || isUnusableByJsSuppressed(field)) {
+  private <T extends HasType & CanHaveSuppressedWarnings> void logIfUnusableByJs(
+      T hasType, String prefix, JMember x) {
+    if (hasType.getType().canBeReferencedExternally()) {
       return;
     }
-    if (!field.getType().canBeReferencedExternally()) {
-      logWarning(
-          field, "[unusable-by-js] Type of field '%s' in type '%s' is not usable by but exposed to "
-              + "JavaScript.",
-          field.getName(), JjsUtils.getReadableDescription(field.getEnclosingType()));
+    if (isUnusableByJsSuppressed(x.getEnclosingType()) || isUnusableByJsSuppressed(x)
+        || isUnusableByJsSuppressed(hasType)) {
+      return;
     }
+    logWarning(x, "[unusable-by-js] %s %s is not usable by but exposed to JavaScript.", prefix,
+        getMemberDescription(x));
   }
 
   private static class JsMember {
     private JMember member;
-    private JMethod setter;
-    private JMethod getter;
+    private JMember setter;
+    private JMember getter;
 
     public JsMember(JMember member) {
       this.member = member;
     }
 
-    public JsMember(JMethod member, JMethod setter, JMethod getter) {
+    public JsMember(JMember member, JMember setter, JMember getter) {
       this.member = member;
       this.setter = setter;
       this.getter = getter;
@@ -679,24 +640,23 @@ public class JsInteropRestrictionChecker {
     }
 
     LinkedHashMap<String, JsMember> memberByLocalMemberNames = collectNames(type.getSuperClass());
-
-    for (JField field : type.getFields()) {
-      if (!field.isJsProperty() || !field.needsDynamicDispatch()) {
-        continue;
+    for (JMember member : type.getMembers()) {
+      if (isCheckedLocalName(member)) {
+        updateJsMembers(memberByLocalMemberNames, member);
       }
-      updateJsMembers(memberByLocalMemberNames, field);
-    }
-    for (JMethod method : type.getMethods()) {
-      if (!method.isOrOverridesJsMethod() || !method.needsDynamicDispatch()
-          || isSyntheticBridgeMethod(method)) {
-        continue;
-      }
-      updateJsMembers(memberByLocalMemberNames, method);
     }
     return memberByLocalMemberNames;
   }
 
-  private boolean isSyntheticBridgeMethod(JMethod method) {
+  private boolean isCheckedLocalName(JMember method) {
+    return method.needsDynamicDispatch() && method.getJsMemberType() != JsMemberType.NONE
+        && !isSyntheticBridgeMethod(method);
+  }
+
+  private boolean isSyntheticBridgeMethod(JMember member) {
+    if (!(member instanceof JMethod)) {
+      return false;
+    }
     // A name slot taken up by a synthetic method, such as a bridge method for a generic method,
     // is not the fault of the user and so should not be reported as an error. JS generation
     // should take responsibility for ensuring that only the correct method version (in this
@@ -704,7 +664,11 @@ public class JsInteropRestrictionChecker {
     // (such as an accidental override forwarding method that occurs when a JsType interface
     // starts exposing a method in class B that is only ever implemented in its parent class A)
     // though should be checked since they are exported and do take up an name slot.
-    return method.isSynthetic() && !method.isForwarding();
+    return member.isSynthetic() && !((JMethod) member).isForwarding();
+  }
+
+  private boolean isCheckedGlobalName(JMember member) {
+    return !member.needsDynamicDispatch() && !member.isJsNative();
   }
 
   private void updateJsMembers(Map<String, JsMember> memberByLocalMemberNames, JMember member) {
@@ -714,45 +678,41 @@ public class JsInteropRestrictionChecker {
   }
 
   private JsMember createOrUpdateJsMember(JsMember jsMember, JMember member) {
-    if (member instanceof JField) {
-      return new JsMember(member);
-    }
-
-    JMethod method = (JMethod) member;
-    switch (method.getJsPropertyAccessorType()) {
+    switch (member.getJsMemberType()) {
       case GETTER:
         if (jsMember != null && jsMember.isPropertyAccessor()) {
-          if (jsMember.getter == null || overrides(method, jsMember.getter)) {
-            jsMember.getter = method;
-            jsMember.member = method;
+          if (jsMember.getter == null || overrides(member, jsMember.getter)) {
+            jsMember.getter = member;
+            jsMember.member = member;
             return jsMember;
           }
         }
-        return new JsMember(method, jsMember == null ? null : jsMember.setter, method);
+        return new JsMember(member, jsMember == null ? null : jsMember.setter, member);
       case SETTER:
         if (jsMember != null && jsMember.isPropertyAccessor()) {
-          if (jsMember.setter == null || overrides(method, jsMember.setter)) {
-            jsMember.setter = method;
-            jsMember.member = method;
+          if (jsMember.setter == null || overrides(member, jsMember.setter)) {
+            jsMember.setter = member;
+            jsMember.member = member;
             return jsMember;
           }
         }
-        return new JsMember(method, method, jsMember == null ? null : jsMember.getter);
+        return new JsMember(member, member, jsMember == null ? null : jsMember.getter);
       default:
         if (jsMember != null) {
-          if (overrides(method, jsMember.member)) {
-            jsMember.member = method;
+          if (overrides(member, jsMember.member)) {
+            jsMember.member = member;
             return jsMember;
           }
         }
-        return new JsMember(method);
+        return new JsMember(member);
     }
   }
 
-  private boolean overrides(JMethod method, JMember potentiallyOverriddenMember) {
-    if (potentiallyOverriddenMember instanceof JField) {
+  private boolean overrides(JMember member, JMember potentiallyOverriddenMember) {
+    if (member instanceof JField || potentiallyOverriddenMember instanceof JField) {
       return false;
     }
+    JMethod method = (JMethod) member;
     if (method.getOverriddenMethods().contains(potentiallyOverriddenMember)) {
       return true;
     }

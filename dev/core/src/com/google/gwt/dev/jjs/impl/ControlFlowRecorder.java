@@ -137,7 +137,7 @@ public class ControlFlowRecorder extends JVisitor {
           overriddenMethodName);
     }
 
-    if (x.canBeCalledExternally()) {
+    if (x.canBeReferencedExternally()) {
       stringAnalyzableTypeEnvironment.recordExportedMethodInType(currentMethodName, typeName);
     }
 

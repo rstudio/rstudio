@@ -1329,7 +1329,7 @@ public class UnifyAst {
 
     // Flow into any reachable virtual methods.
     for (JMethod method : type.getMethods()) {
-      if (method.canBeCalledExternally()) {
+      if (method.canBeReferencedExternally()) {
         flowInto(method);
         continue;
       }

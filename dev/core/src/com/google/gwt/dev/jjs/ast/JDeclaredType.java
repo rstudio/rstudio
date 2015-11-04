@@ -360,6 +360,10 @@ public abstract class JDeclaredType extends JReferenceType
     return methods;
   }
 
+  public Iterable<JMember> getMembers() {
+    return Iterables.<JMember>concat(fields, methods);
+  }
+
   @Override
   public boolean isJsType() {
     return isJsType;
@@ -394,22 +398,16 @@ public abstract class JDeclaredType extends JReferenceType
     return false;
   }
 
+  @Override
   public boolean canBeReferencedExternally() {
     if (isJsType()) {
       return true;
     }
-    for (JMethod method : getMethods()) {
-      if (method.canBeCalledExternally()) {
+    for (JMember member : getMembers()) {
+      if (member.canBeReferencedExternally()) {
         return true;
       }
     }
-
-    for (JField field : getFields()) {
-      if (field.canBeReferencedExternally()) {
-        return true;
-      }
-    }
-
     return false;
   }
 
@@ -613,14 +611,17 @@ public abstract class JDeclaredType extends JReferenceType
     return null;
   }
 
+  @Override
   public String getJsName() {
     return Strings.isNullOrEmpty(jsName) ? getSimpleName() : jsName;
   }
 
+  @Override
   public String getJsNamespace() {
     return jsNamespace;
   }
 
+  @Override
   public String getQualifiedJsName() {
     return jsNamespace.isEmpty() ? getJsName() : jsNamespace + "." + getJsName();
   }

@@ -30,6 +30,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasEnclosingType;
+import com.google.gwt.dev.jjs.ast.HasJsInfo.JsMemberType;
 import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JAbstractMethodBody;
 import com.google.gwt.dev.jjs.ast.JArrayLength;
@@ -64,7 +65,6 @@ import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMember;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JMethod.JsPropertyAccessorType;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNameOf;
@@ -241,7 +241,7 @@ public class GenerateJavaScriptAST {
         jsName = topScope.declareName(mangleName(x), x.getName());
       } else {
         jsName =
-            x.isJsProperty()
+            x.getJsMemberType() != JsMemberType.NONE
                 ? scopeStack.peek().declareUnobfuscatableName(x.getJsName())
                 : scopeStack.peek().declareName(mangleName(x), x.getName());
       }
@@ -366,9 +366,8 @@ public class GenerateJavaScriptAST {
           } else if (x.isPackagePrivate()) {
             polyName = interfaceScope.declareName(mangleNameForPackagePrivatePoly(x), name);
           } else {
-            boolean isJsMethod = x.isOrOverridesJsMethod();
             polyName =
-                isJsMethod
+                x.getJsMemberType() != JsMemberType.NONE
                     ? interfaceScope.declareUnobfuscatableName(x.getJsName())
                     : interfaceScope.declareName(mangleNameForPoly(x), name);
           }
@@ -886,7 +885,7 @@ public class GenerateJavaScriptAST {
         List<JsExpression> args, SourceInfo sourceInfo) {
       JsNameRef methodName = createStaticReference(method, sourceInfo);
       JsExpression result = JsUtils.createInvocationOrPropertyAccess(
-          sourceInfo, method.getJsPropertyAccessorType(), methodName, args);
+          sourceInfo, method.getJsMemberType(), methodName, args);
       return JsUtils.createCommaExpression(unnecessaryQualifier, result);
     }
 
@@ -945,10 +944,8 @@ public class GenerateJavaScriptAST {
     private JsExpression dispatchToInstanceMethod(
         JsExpression instance, JMethod method, List<JsExpression> args, SourceInfo sourceInfo) {
       JsNameRef reference = polymorphicNames.get(method).makeQualifiedRef(sourceInfo, instance);
-
-      JsPropertyAccessorType propertyAccessorType = method.getJsPropertyAccessorType();
-      return JsUtils
-          .createInvocationOrPropertyAccess(sourceInfo, propertyAccessorType, reference, args);
+      return JsUtils.createInvocationOrPropertyAccess(
+          sourceInfo, method.getJsMemberType(), reference, args);
     }
 
     @Override
@@ -1456,24 +1453,18 @@ public class GenerateJavaScriptAST {
           exportedMembersByExportName.put(type.getQualifiedJsName(), type);
         }
 
-        for (JMethod method : type.getMethods()) {
-          if (method.isJsInteropEntryPoint()) {
-            exportedMembersByExportName.put(method.getQualifiedJsName(), method);
-          }
-        }
-
-        for (JField field : type.getFields()) {
-          if (field.isJsInteropEntryPoint()) {
-            if (!field.isFinal()) {
-              // TODO(rluble): move waring to JsInteropRestrictionChecker.
+        for (JMember member : type.getMembers()) {
+          if (member.isJsInteropEntryPoint()) {
+            if (member.getJsMemberType() == JsMemberType.PROPERTY && !member.isFinal()) {
+              // TODO(goktug): Remove the warning when we export via Object.defineProperty
               logger.log(
                   TreeLogger.Type.WARN,
                   "Exporting effectively non-final field "
-                      + field.getQualifiedName()
+                      + member.getQualifiedName()
                       + ". Due to the way exporting works, the value of the"
                       + " exported field will not be reflected across Java/JavaScript border.");
             }
-            exportedMembersByExportName.put(field.getQualifiedJsName(), field);
+            exportedMembersByExportName.put(member.getQualifiedJsName(), member);
           }
         }
       }
@@ -2221,7 +2212,7 @@ public class GenerateJavaScriptAST {
     }
 
     private void generatePrototypeAssignment(JMethod method, JsName name, JsExpression rhs) {
-      generatePrototypeAssignment(method, name, rhs, method.getJsPropertyAccessorType());
+      generatePrototypeAssignment(method, name, rhs, method.getJsMemberType());
     }
 
      /**
@@ -2229,11 +2220,11 @@ public class GenerateJavaScriptAST {
       * created for {@code method}.
       */
     private void generatePrototypeAssignment(JMethod method, JsName name, JsExpression rhs,
-        JsPropertyAccessorType accessorType) {
+        JsMemberType memberType) {
       SourceInfo sourceInfo = method.getSourceInfo();
       JsNameRef prototypeQualifierOf = getPrototypeQualifierOf(method);
       JsNameRef lhs = name.makeQualifiedRef(sourceInfo, prototypeQualifierOf);
-      switch (accessorType) {
+      switch (memberType) {
         case GETTER:
         case SETTER:
           emitPropertyImplementation(method, prototypeQualifierOf, name.makeRef(sourceInfo), rhs);
@@ -2260,7 +2251,7 @@ public class GenerateJavaScriptAST {
                // {name: {get: function() { ..... }} or {set : function (v) {....}}}
               .add(name, JsObjectLiteral.builder(sourceInfo)
                       // {get: function() { ..... }} or {set : function (v) {....}}
-                  .add(method.getJsPropertyAccessorType().getKey(), methodDefinitionStatement)
+                  .add(method.getJsMemberType().getPropertyAccessorKey(), methodDefinitionStatement)
                   .build())
               .build();
 
@@ -2282,7 +2273,7 @@ public class GenerateJavaScriptAST {
       JsName polyName = polymorphicNames.get(method);
       JsExpression bridge = JsUtils.createBridge(method, polyName, topScope);
       // Aliases are never property accessors.
-      generatePrototypeAssignment(method, alias, bridge, JsPropertyAccessorType.NONE);
+      generatePrototypeAssignment(method, alias, bridge, JsMemberType.NONE);
     }
 
     private JsExprStmt outputDisplayName(JsNameRef function, JMethod method) {
@@ -2332,7 +2323,7 @@ public class GenerateJavaScriptAST {
         generatePrototypeAssignment(method, polymorphicNames.get(method), functionDefinition);
       }
 
-      if (method.exposesNonJsMethod()) {
+      if (method.exposesNonJsMember()) {
         JsName internalMangledName = interfaceScope.declareName(mangleNameForPoly(method),
             method.getName());
         generatePrototypeDefinitionAlias(method, internalMangledName);

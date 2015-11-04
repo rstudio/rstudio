@@ -1850,7 +1850,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}",
         "@JsFunction public static interface FI  { void f(A a); }", // JsFunction method is checked.
         "@JsType public static class Buggy {",
-        "  public A field;", // exported field
+        "  public A f;", // exported field
         "  public A f1(A a) { return null; }", // regular class fails.
         "  public A[] f2(A[] a) { return null; }", // array of regular class fails.
         "  public long f3(long a) { return 1l; }", // long fails.
@@ -1861,39 +1861,38 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggySucceeds(
+        "Line 12: [unusable-by-js] Type of parameter 'a' in "
+            + "'void EntryPoint.C.fc1(EntryPoint.A)' is not usable by but exposed to JavaScript.",
+        "Line 16: [unusable-by-js] Type of 'EntryPoint.A EntryPoint.D.a' is not usable by but "
+            + "exposed to JavaScript.",
+        "Line 18: [unusable-by-js] Type of parameter 'a' in "
+            + "'void EntryPoint.FI.f(EntryPoint.A)' is not usable by but exposed to JavaScript.",
+        "Line 20: [unusable-by-js] Type of 'EntryPoint.A EntryPoint.Buggy.f' is not usable by but "
+            + "exposed to JavaScript.",
         "Line 21: [unusable-by-js] Return type of 'EntryPoint.A EntryPoint.Buggy.f1(EntryPoint.A)' "
             + "is not usable by but exposed to JavaScript.",
+        "Line 21: [unusable-by-js] Type of parameter 'a' in "
+            + "'EntryPoint.A EntryPoint.Buggy.f1(EntryPoint.A)' is not usable by but "
+            + "exposed to JavaScript.",
         "Line 22: [unusable-by-js] Return type of "
+            + "'EntryPoint.A[] EntryPoint.Buggy.f2(EntryPoint.A[])' is not usable by but "
+            + "exposed to JavaScript.",
+        "Line 22: [unusable-by-js] Type of parameter 'a' in "
             + "'EntryPoint.A[] EntryPoint.Buggy.f2(EntryPoint.A[])' is not usable by but "
             + "exposed to JavaScript.",
         "Line 23: [unusable-by-js] Return type of 'long EntryPoint.Buggy.f3(long)' is not "
             + "usable by but exposed to JavaScript.",
+        "Line 23: [unusable-by-js] Type of parameter 'a' in "
+            + "'long EntryPoint.Buggy.f3(long)' is not usable by but exposed to JavaScript.",
         "Line 24: [unusable-by-js] Return type of 'EntryPoint.B EntryPoint.Buggy.f4(EntryPoint.B)' "
             + "is not usable by but exposed to JavaScript.",
-        "Line 20: [unusable-by-js] Type of field 'field' in type 'EntryPoint.Buggy' "
-            + "is not usable by but exposed to JavaScript.",
-        "Line 21: [unusable-by-js] Type of parameter 'a' in method "
-            + "'EntryPoint.A EntryPoint.Buggy.f1(EntryPoint.A)' is not usable by but "
-            + "exposed to JavaScript.",
-        "Line 22: [unusable-by-js] Type of parameter 'a' in method "
-            + "'EntryPoint.A[] EntryPoint.Buggy.f2(EntryPoint.A[])' is not usable by but "
-            + "exposed to JavaScript.",
-        "Line 23: [unusable-by-js] Type of parameter 'a' in method "
-            + "'long EntryPoint.Buggy.f3(long)' is not usable by but exposed to JavaScript.",
-        "Line 24: [unusable-by-js] Type of parameter 'a' in method "
+        "Line 24: [unusable-by-js] Type of parameter 'a' in "
             + "'EntryPoint.B EntryPoint.Buggy.f4(EntryPoint.B)' is not usable by but "
             + "exposed to JavaScript.",
-        "Line 25: [unusable-by-js] Type of parameter 'a' in method "
+        "Line 25: [unusable-by-js] Type of parameter 'a' in "
             + "'void EntryPoint.Buggy.f5(Object[][])' is not usable by but exposed to JavaScript.",
-        "Line 26: [unusable-by-js] Type of parameter 'a' in method "
-            + "'void EntryPoint.Buggy.f6(Object[])' is not usable by but exposed to JavaScript.",
-        "Line 18: [unusable-by-js] Type of parameter 'a' in method "
-            + "'void EntryPoint.FI.f(EntryPoint.A)' is not usable by but exposed to JavaScript.",
-        "Line 12: [unusable-by-js] Type of parameter 'a' in method "
-            // JsMethod in non-jstype class.
-            + "'void EntryPoint.C.fc1(EntryPoint.A)' is not usable by but exposed to JavaScript.",
-        "Line 16: [unusable-by-js] Type of field 'a' in type " // JsProperty in non-jstype class.
-            + "'EntryPoint.D' is not usable by but exposed to JavaScript.");
+        "Line 26: [unusable-by-js] Type of parameter 'a' in "
+            + "'void EntryPoint.Buggy.f6(Object[])' is not usable by but exposed to JavaScript.");
   }
 
   public void testUnusableByJsAccidentalOverrideSuppressionWarns()
@@ -1911,7 +1910,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "public static class Buggy extends Parent implements Foo {}");
 
     assertBuggySucceeds(
-        "Line 10: [unusable-by-js] Type of parameter 'x' in method "
+        "Line 10: [unusable-by-js] Type of parameter 'x' in "
             + "'void EntryPoint.Parent.doIt(Class)' (exposed by 'EntryPoint.Buggy') is not usable "
             + "by but exposed to JavaScript.");
   }

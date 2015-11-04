@@ -16,8 +16,8 @@
 package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.ast.HasJsInfo.JsMemberType;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JMethod.JsPropertyAccessorType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -108,7 +108,7 @@ public class JsUtils {
     }
 
     JsExpression invocation =
-        createInvocationOrPropertyAccess(sourceInfo, method.getJsPropertyAccessorType(), ref, args);
+        createInvocationOrPropertyAccess(sourceInfo, method.getJsMemberType(), ref, args);
 
     JsBlock block = new JsBlock(sourceInfo);
     if (method.getType() == JPrimitiveType.VOID) {
@@ -162,8 +162,8 @@ public class JsUtils {
   }
 
   public static JsExpression createInvocationOrPropertyAccess(SourceInfo sourceInfo,
-      JsPropertyAccessorType propertyAccessorType, JsNameRef reference, List<JsExpression> args) {
-    switch (propertyAccessorType) {
+      JsMemberType memberType, JsNameRef reference, List<JsExpression> args) {
+    switch (memberType) {
       case SETTER:
         assert args.size() == 1;
         return createAssignment(reference, args.get(0));

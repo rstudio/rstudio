@@ -15,14 +15,116 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.javac.JsInteropUtil;
+
+import java.beans.Introspector;
+
 /**
  * Abstracts JsInterop information for the AST nodes.
  */
 public interface HasJsInfo extends HasJsName {
+  /**
+   * Indicates type of JsMember.
+   */
+  enum JsMemberType {
+    /**
+     * Not a js member.
+     */
+    NONE,
+    /**
+     * A JsConstructor.
+     */
+    CONSTRUCTOR {
+      @Override
+      public String computeName(JMember member) {
+        return "";
+      }
+    },
+    /**
+     * A JsMethod.
+     */
+    METHOD,
+    /**
+     * A JsProperty.
+     */
+    PROPERTY,
+    /**
+     * A getter JsProperty accessor. Usually in the form of getX()/isX().
+     */
+    GETTER("get") {
+      @Override
+      public String computeName(JMember member) {
+        String methodName = member.getName();
+        if (startsWithCamelCase(methodName, "get")) {
+          return Introspector.decapitalize(methodName.substring(3));
+        }
+        if (startsWithCamelCase(methodName, "is")) {
+          return Introspector.decapitalize(methodName.substring(2));
+        }
+        return JsInteropUtil.INVALID_JSNAME;
+      }
+      @Override
+      public boolean isPropertyAccessor() {
+        return true;
+      }
+    },
+    /**
+     * A setter JsProperty accessor. Usually in the form of setX(x).
+     */
+    SETTER("set") {
+      @Override
+      public String computeName(JMember member) {
+        String methodName = member.getName();
+        if (startsWithCamelCase(methodName, "set")) {
+          return Introspector.decapitalize(methodName.substring(3));
+        }
+        return JsInteropUtil.INVALID_JSNAME;
+      }
+      @Override
+      public boolean isPropertyAccessor() {
+        return true;
+      }
+    },
+    /**
+     * A property accessor but doesn't match setter/getter patterns.
+     */
+    UNDEFINED_ACCESSOR;
 
-  void setJsMemberInfo(String namespace, String name, boolean exported);
+    private String accessorKey;
+
+    private JsMemberType() { }
+
+    private JsMemberType(String accessorKey) {
+      this.accessorKey = accessorKey;
+    }
+
+    public String getPropertyAccessorKey() {
+      return accessorKey;
+    }
+
+    public boolean isPropertyAccessor() {
+      return getPropertyAccessorKey() != null;
+    }
+
+    public String computeName(JMember member) {
+      return member.getName();
+    }
+
+    private static boolean startsWithCamelCase(String string, String prefix) {
+      return string.length() > prefix.length() && string.startsWith(prefix)
+          && Character.isUpperCase(string.charAt(prefix.length()));
+    }
+  }
+
+  void setJsMemberInfo(JsMemberType type, String namespace, String name, boolean exported);
+
+  JsMemberType getJsMemberType();
 
   boolean isJsNative();
 
   boolean isJsOverlay();
+
+  boolean canBeReferencedExternally();
+
+  boolean isJsInteropEntryPoint();
 }
