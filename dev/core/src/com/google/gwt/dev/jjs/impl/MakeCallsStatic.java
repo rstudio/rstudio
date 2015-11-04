@@ -50,7 +50,6 @@ import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -151,6 +150,8 @@ public class MakeCallsStatic {
 
     @Override
     public boolean visit(JMethod x, Context ctx) {
+      assert !x.isJsNative() : "Native methods can not be devirtualized";
+
       // Let's do it!
       JDeclaredType enclosingType = x.getEnclosingType();
       JType returnType = x.getType();
@@ -461,7 +462,7 @@ public class MakeCallsStatic {
     return exec(program, addRuntimeChecks, new FullOptimizerContext(program));
   }
 
-  protected Set<JMethod> toBeMadeStatic = new HashSet<JMethod>();
+  protected Set<JMethod> toBeMadeStatic = Sets.newHashSet();
 
   private final JProgram program;
   private final StaticCallConverter converter;

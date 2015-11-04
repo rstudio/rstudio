@@ -1345,7 +1345,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
-        "Line 6: JsOverlay method 'void EntryPoint.Buggy.m()' cannot be non-final, static, nor native.");
+        "Line 6: JsOverlay method 'void EntryPoint.Buggy.m()' cannot be non-final, "
+            + "static, nor native.");
   }
 
   public void testJsOverlayOnNativeMethodFails() {
@@ -1357,7 +1358,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
-        "Line 6: JsOverlay method 'void EntryPoint.Buggy.m()' cannot be non-final, static, nor native.");
+        "Line 6: JsOverlay method 'void EntryPoint.Buggy.m()' cannot be non-final, "
+            + "static, nor native.");
   }
 
   public void testJsOverlayOnJsoMethodSucceeds() throws Exception {
@@ -1485,63 +1487,40 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     assertBuggySucceeds();
   }
 
-  public void testNativeJsTypeNonPublicFieldFails() {
-    addSnippetImport("jsinterop.annotations.JsType");
-    addSnippetClassDecl(
-        "@JsType(isNative=true) static class Buggy {",
-        "  int f;",
-        "}");
-
-    assertBuggyFails(
-        "Line 5: Native JsType member 'int EntryPoint.Buggy.f' is not public or has @JsIgnore.");
-  }
-
-  public void testNativeJsTypeJsIgnoredFieldFails() {
-    addSnippetImport("jsinterop.annotations.JsType");
-    addSnippetImport("jsinterop.annotations.JsIgnore");
-    addSnippetClassDecl(
-        "@JsType(isNative=true) static class Buggy {",
-        "  @JsIgnore public int x;",
-        "}");
-
-    assertBuggyFails(
-        "Line 6: Native JsType member 'int EntryPoint.Buggy.x' is not public or has @JsIgnore.");
-  }
-
-  public void testNativeJsTypeNonPublicMethodFails() {
-    addSnippetImport("jsinterop.annotations.JsType");
-    addSnippetClassDecl(
-        "@JsType(isNative=true) static class Buggy {",
-        "  native void m();",
-        "}");
-
-    assertBuggyFails(
-        "Line 5: Native JsType member 'void EntryPoint.Buggy.m()' is not public or has @JsIgnore.");
-  }
-
-  public void testNativeJsTypeJsIgnoredMethodFails() {
-    addSnippetImport("jsinterop.annotations.JsType");
-    addSnippetImport("jsinterop.annotations.JsIgnore");
-    addSnippetClassDecl(
-        "@JsType(isNative=true) static class Buggy {",
-        "  @JsIgnore public native void m();",
-        "}");
-
-    assertBuggyFails(
-        "Line 6: Native JsType member 'void EntryPoint.Buggy.m()' is not public or has @JsIgnore.");
-  }
-
-  public void testNativeJsTypeJsIgnoredConstructorFails() {
+  public void testNativeJsTypeMembersFails() {
     addSnippetImport("jsinterop.annotations.JsType");
     addSnippetImport("jsinterop.annotations.JsIgnore");
     addSnippetClassDecl(
         "@JsType(isNative=true) static class Buggy {",
         "  @JsIgnore public Buggy() { }",
+        "  @JsIgnore public int x;",
+        "  native void m();",
+        "  @JsIgnore public native void n();",
+        "  int f;",
+        "  public void o() {}",
+        "  public native void p() /*-{}-*/;",
         "}");
 
     assertBuggyFails(
         "Line 6: Native JsType member 'EntryPoint.Buggy.EntryPoint$Buggy()' is not public or "
-            + "has @JsIgnore.");
+            + "has @JsIgnore.",
+        "Line 7: Native JsType member 'int EntryPoint.Buggy.x' is not public or has @JsIgnore.",
+        "Line 8: Native JsType member 'void EntryPoint.Buggy.m()' is not public or has @JsIgnore.",
+        "Line 9: Native JsType member 'void EntryPoint.Buggy.n()' is not public or has @JsIgnore.",
+        "Line 10: Native JsType member 'int EntryPoint.Buggy.f' is not public or has @JsIgnore.",
+        "Line 11: Native JsType method 'void EntryPoint.Buggy.o()' should be native or abstract.",
+        "Line 12: JSNI method 'void EntryPoint.Buggy.p()' is not allowed in a native JsType.");
+  }
+
+  public void testNativeMethodOnJsTypeSucceeds() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsMethod");
+    addSnippetClassDecl(
+        "public static class Buggy {",
+        "  @JsMethod public native void m();",
+        "  @JsMethod public native void n() /*-{}-*/;",
+        "}");
+
+    assertBuggySucceeds();
   }
 
   public void testNativeJsTypeMutlipleConstructorSucceeds() throws Exception {

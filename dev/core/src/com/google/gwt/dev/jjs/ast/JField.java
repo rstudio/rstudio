@@ -29,7 +29,7 @@ public class JField extends JVariable implements JMember {
   /**
    * Determines whether the variable is final, volatile, or neither.
    */
-  public static enum Disposition {
+  public enum Disposition {
     COMPILE_TIME_CONSTANT, FINAL, NONE, THIS_REF, VOLATILE;
 
     public boolean isFinal() {
@@ -156,13 +156,18 @@ public class JField extends JVariable implements JMember {
     return namespace.isEmpty() ? jsName : namespace + "." + jsName;
   }
 
+  @Override
+  public boolean isAbstract() {
+    return false;
+  }
+
   public boolean isJsProperty() {
     return jsName != null;
   }
 
   @Override
   public boolean isJsNative() {
-    return enclosingType.isJsNative();
+    return enclosingType.isJsNative() && jsName != null;
   }
 
   @Override
@@ -197,6 +202,11 @@ public class JField extends JVariable implements JMember {
   @Override
   public boolean isPublic() {
     return access == AccessModifier.PUBLIC.ordinal();
+  }
+
+  @Override
+  public boolean isPrivate() {
+    return access == AccessModifier.PRIVATE.ordinal();
   }
 
   @Override

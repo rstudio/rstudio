@@ -142,7 +142,7 @@ public final class JsInteropUtil {
   }
 
   private static boolean isNativeConstructor(JMember member) {
-    return member instanceof JConstructor && member.isJsNative();
+    return member instanceof JConstructor && member.getEnclosingType().isJsNative();
   }
 
   private static void setJsInteropPropertiesNew(

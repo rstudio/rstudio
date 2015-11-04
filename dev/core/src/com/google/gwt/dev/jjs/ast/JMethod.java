@@ -246,7 +246,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanHaveSup
 
   @Override
   public boolean isJsNative() {
-    return body == null && jsName != null;
+    return (isAbstract || body == null) && jsName != null;
   }
 
   public boolean isJsOverlay() {

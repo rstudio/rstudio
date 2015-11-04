@@ -95,7 +95,7 @@ public class JConstructor extends JMethod {
 
   @Override
   public boolean isJsNative() {
-    return getEnclosingType().isJsNative();
+    return getEnclosingType().isJsNative() && getJsName() != null;
   }
 
   /**
