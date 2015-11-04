@@ -120,6 +120,19 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
             + "'int EntryPoint.Buggy.show'.");
   }
 
+  public void testJsPropertyNonGetterStyleSucceeds() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsProperty");
+    addSnippetClassDecl(
+        "@JsType",
+        "public interface Buggy {",
+        "  @JsProperty(name = \"x\") int x();",
+        "  @JsProperty(name = \"x\") void x(int x);",
+        "}");
+
+    assertBuggySucceeds();
+  }
+
   public void testJsPropertyGetterStyleSucceeds() throws Exception {
     addSnippetImport("jsinterop.annotations.JsType");
     addSnippetImport("jsinterop.annotations.JsProperty");
@@ -150,20 +163,17 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
-        "Line 10: There needs to be single parameter and void return type for the JsProperty "
-            + "setter 'void EntryPoint.Buggy.setX(int, int)'.",
-        "Line 8: There cannot be void return type or any parameters for the JsProperty getter "
-            + "'int EntryPoint.Buggy.getY(int)'.",
-        "Line 9: There cannot be void return type or any parameters for the JsProperty getter "
-            + "'void EntryPoint.Buggy.getZ()'.",
-        "Line 7: There cannot be non-boolean return for the JsProperty 'is' "
-            + "getter 'int EntryPoint.Buggy.isX()'.",
-        "Line 11: There needs to be single parameter and void return type for the JsProperty "
-            + "setter 'void EntryPoint.Buggy.setY()'.",
-        "Line 12: There needs to be single parameter and void return type for the JsProperty "
-            + "setter 'int EntryPoint.Buggy.setZ(int)'.",
-        "Line 12: The setter and getter for JsProperty 'z' in type 'EntryPoint.Buggy' must "
-            + "have consistent types.");
+        "Line 7: JsProperty 'int EntryPoint.Buggy.isX()' cannot have a non-boolean return.",
+        "Line 8: JsProperty 'int EntryPoint.Buggy.getY(int)' should have a correct setter "
+            + "or getter signature.",
+        "Line 9: JsProperty 'void EntryPoint.Buggy.getZ()' should have a correct setter "
+            + "or getter signature.",
+        "Line 10: JsProperty 'void EntryPoint.Buggy.setX(int, int)' should have a correct setter "
+            + "or getter signature.",
+        "Line 11: JsProperty 'void EntryPoint.Buggy.setY()' should have a correct setter "
+            + "or getter signature.",
+        "Line 12: JsProperty 'int EntryPoint.Buggy.setZ(int)' should have a correct setter "
+            + "or getter signature.");
   }
 
   public void testJsPropertyNonGetterStyleFails() throws Exception {
@@ -178,12 +188,12 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
-        "Line 7: JsProperty 'boolean EntryPoint.Buggy.hasX()' doesn't follow Java Bean "
-            + "naming conventions.",
-        "Line 8: JsProperty 'int EntryPoint.Buggy.x()' doesn't follow Java Bean naming"
-            + " conventions.",
-        "Line 9: JsProperty 'void EntryPoint.Buggy.x(int)' doesn't follow Java Bean naming "
-            + "conventions.");
+        "Line 7: JsProperty 'boolean EntryPoint.Buggy.hasX()' should either follow Java Bean "
+        + "naming conventions or provide a name.",
+        "Line 8: JsProperty 'int EntryPoint.Buggy.x()' should either follow Java Bean "
+        + "naming conventions or provide a name.",
+        "Line 9: JsProperty 'void EntryPoint.Buggy.x(int)' should either follow Java Bean "
+        + "naming conventions or provide a name.");
   }
 
   public void testCollidingJsPropertiesTwoGettersFails() throws Exception {
@@ -713,10 +723,10 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
-        "Line 10: The setter and getter for JsProperty 'foo' in type 'EntryPoint.IBuggy' "
-            + "must have consistent types.",
-        "Line 14: The setter and getter for JsProperty 'foo' in type 'EntryPoint.Buggy' "
-            + "must have consistent types.");
+        "Line 10: JsProperty setter 'void EntryPoint.IBuggy.setFoo(Integer)' and "
+            + "getter 'int EntryPoint.IBuggy.getFoo()' cannot have inconsistent types.",
+        "Line 14: JsProperty setter 'void EntryPoint.Buggy.setFoo(Integer)' and "
+            + "getter 'int EntryPoint.Buggy.getFoo()' cannot have inconsistent types.");
   }
 
   public void testInconsistentIsSetPropertyTypeFails() throws Exception {
@@ -736,10 +746,10 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
-        "Line 10: The setter and getter for JsProperty 'foo' in type 'EntryPoint.IBuggy' "
-            + "must have consistent types.",
-        "Line 14: The setter and getter for JsProperty 'foo' in type 'EntryPoint.Buggy' "
-            + "must have consistent types.");
+        "Line 10: JsProperty setter 'void EntryPoint.IBuggy.setFoo(Object)' and "
+            + "getter 'boolean EntryPoint.IBuggy.isFoo()' cannot have inconsistent types.",
+        "Line 14: JsProperty setter 'void EntryPoint.Buggy.setFoo(Object)' and "
+            + "getter 'boolean EntryPoint.Buggy.isFoo()' cannot have inconsistent types.");
   }
 
   public void testJsPropertySuperCallFails() throws Exception {

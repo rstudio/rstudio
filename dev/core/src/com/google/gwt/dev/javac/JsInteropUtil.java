@@ -23,12 +23,11 @@ import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMember;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethod.JsPropertyAccessorType;
+import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
 
 import org.eclipse.jdt.internal.compiler.ast.Annotation;
 import org.eclipse.jdt.internal.compiler.lookup.AnnotationBinding;
-
-import java.beans.Introspector;
 
 /**
  * Utility functions to interact with JDT classes for JsInterop.
@@ -87,7 +86,7 @@ public final class JsInteropUtil {
   public static void maybeSetJsInteropProperties(JMethod method, Annotation... annotations) {
     setJsInteropProperties(method, annotations);
     if (JdtUtil.getAnnotation(annotations, JSPROPERTY_CLASS) != null) {
-      setJsPropertyProperties(method);
+      setJsPropertyProperties(method, null);
     }
   }
 
@@ -100,12 +99,14 @@ public final class JsInteropUtil {
     if (annotation == null) {
       annotation = getInteropAnnotation(annotations, "JsConstructor");
     }
+    AnnotationBinding jsPropertyAnnotation = getInteropAnnotation(annotations, "JsProperty");
     if (annotation == null) {
-      annotation = getInteropAnnotation(annotations, "JsProperty");
+      annotation = jsPropertyAnnotation;
     }
     setJsInteropPropertiesNew(method, annotations, annotation);
-    if (getInteropAnnotation(annotations, "JsProperty") != null) {
-      setJsPropertyProperties(method);
+    if (jsPropertyAnnotation != null) {
+      setJsPropertyProperties(
+          method, JdtUtil.getAnnotationParameterString(jsPropertyAnnotation, "name"));
     }
   }
 
@@ -161,19 +162,13 @@ public final class JsInteropUtil {
     member.setJsMemberInfo(namespace, name == null ? computeName(member) : name, true);
   }
 
-  private static void setJsPropertyProperties(JMethod method) {
-    String methodName = method.getName();
-    if (startsWithCamelCase(methodName, "set")) {
-      String jsName = Introspector.decapitalize(methodName.substring(3));
-      method.setJsPropertyInfo(jsName, JsPropertyAccessorType.SETTER);
-    } else if (startsWithCamelCase(methodName, "get")) {
-      String jsName = Introspector.decapitalize(methodName.substring(3));
-      method.setJsPropertyInfo(jsName, JsPropertyAccessorType.GETTER);
-    } else if (startsWithCamelCase(methodName, "is")) {
-      String jsName = Introspector.decapitalize(methodName.substring(2));
-      method.setJsPropertyInfo(jsName, JsPropertyAccessorType.GETTER);
+  private static void setJsPropertyProperties(JMethod method, String name) {
+    if (method.getParams().size() == 1 && method.getType() == JPrimitiveType.VOID) {
+      method.setJsPropertyInfo(name, JsPropertyAccessorType.SETTER);
+    } else if (method.getParams().isEmpty() && method.getType() != JPrimitiveType.VOID) {
+      method.setJsPropertyInfo(name, JsPropertyAccessorType.GETTER);
     } else {
-      method.setJsPropertyInfo(INVALID_JSNAME, JsPropertyAccessorType.UNDEFINED);
+      method.setJsPropertyInfo(name, JsPropertyAccessorType.UNDEFINED);
     }
   }
 
@@ -197,10 +192,5 @@ public final class JsInteropUtil {
     }
     String value = JdtUtil.getAnnotationParameterString(jsExport, "value");
     return Strings.isNullOrEmpty(value) ? calculatedName : value;
-  }
-
-  private static boolean startsWithCamelCase(String string, String prefix) {
-    return string.length() > prefix.length() && string.startsWith(prefix)
-        && Character.isUpperCase(string.charAt(prefix.length()));
   }
 }

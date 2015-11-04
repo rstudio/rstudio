@@ -26,6 +26,7 @@ import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
+import java.beans.Introspector;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -52,11 +53,32 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanHaveSup
     /**
      * A getter property accessor. Usually in the form of getX()/isX().
      */
-    GETTER("get"),
+    GETTER("get") {
+      @Override
+      public String computeName(JMethod member) {
+        String methodName = member.getName();
+        if (startsWithCamelCase(methodName, "get")) {
+          return Introspector.decapitalize(methodName.substring(3));
+        }
+        if (startsWithCamelCase(methodName, "is")) {
+          return Introspector.decapitalize(methodName.substring(2));
+        }
+        return JsInteropUtil.INVALID_JSNAME;
+      }
+    },
     /**
-     * A setter property accessor. Usually in the form of setX(x).
+     * A setter JsProperty accessor. Usually in the form of setX(x).
      */
-    SETTER("set"),
+    SETTER("set") {
+      @Override
+      public String computeName(JMethod member) {
+        String methodName = member.getName();
+        if (startsWithCamelCase(methodName, "set")) {
+          return Introspector.decapitalize(methodName.substring(3));
+        }
+        return JsInteropUtil.INVALID_JSNAME;
+      }
+    },
     /**
      * A property accessor but doesn't match setter/getter patterns.
      */
@@ -73,6 +95,19 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanHaveSup
 
     public String getKey() {
       return key;
+    }
+
+    public boolean isPropertyAccessor() {
+      return key != null;
+    }
+
+    public String computeName(JMethod method) {
+      return method.getName();
+    }
+
+    private static boolean startsWithCamelCase(String string, String prefix) {
+      return string.length() > prefix.length() && string.startsWith(prefix)
+          && Character.isUpperCase(string.charAt(prefix.length()));
     }
   }
 
@@ -208,7 +243,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanHaveSup
   }
 
   public void setJsPropertyInfo(String jsName, JsPropertyAccessorType jsPropertyType) {
-    this.jsName = jsName;
+    this.jsName = jsName != null ? jsName : jsPropertyType.computeName(this);
     this.jsPropertyType = jsPropertyType;
   }
 

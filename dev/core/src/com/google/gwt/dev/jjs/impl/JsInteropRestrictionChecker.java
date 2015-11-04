@@ -286,8 +286,11 @@ public class JsInteropRestrictionChecker {
   private void checkLocalName(Map<String, JsMember> localNames, JMember member) {
     if (member.getJsName().equals(JsInteropUtil.INVALID_JSNAME)) {
       if (member instanceof JMethod
-          && ((JMethod) member).getJsPropertyAccessorType() == JsPropertyAccessorType.UNDEFINED) {
-        logError(member, "JsProperty %s doesn't follow Java Bean naming conventions.",
+          && ((JMethod) member).getJsPropertyAccessorType().isPropertyAccessor()) {
+        logError(
+            member,
+            "JsProperty %s should either follow Java Bean naming conventions or "
+            + "provide a name.",
             getMemberDescription(member));
       } else {
         logError(
@@ -315,45 +318,29 @@ public class JsInteropRestrictionChecker {
         getMemberDescription(member), getMemberDescription(oldMember.member), member.getJsName());
   }
 
-  void checkJsPropertyAccessor(JMember x, JsMember newMember) {
-    if (newMember.setter != null) {
-      checkValidSetter(newMember.setter);
+  private void checkJsPropertyAccessor(JMember x, JsMember newMember) {
+    if (!(x instanceof JMethod)) {
+      return;
     }
-    if (newMember.getter != null) {
-      checkValidGetter(newMember.getter);
+    JMethod method = (JMethod) x;
+
+    if (method.getJsPropertyAccessorType() == JsPropertyAccessorType.UNDEFINED) {
+      logError(method, "JsProperty %s should have a correct setter or getter signature.",
+          getMemberDescription(method));
     }
+
+    if (method.getJsPropertyAccessorType() == JsPropertyAccessorType.GETTER) {
+      if (method.getType() != JPrimitiveType.BOOLEAN && method.getName().startsWith("is")) {
+        logError(method, "JsProperty %s cannot have a non-boolean return.",
+            getMemberDescription(method));
+      }
+    }
+
     if (newMember.setter != null && newMember.getter != null) {
-      checkJsPropertyGetterConsistentWithSetter(
-          x.getEnclosingType(), newMember.setter, newMember.getter);
-    }
-  }
-
-  private void checkJsPropertyGetterConsistentWithSetter(
-      JType type, JMethod setter, JMethod getter) {
-    if (setter.getParams().size() == 1
-        && getter.getType() != setter.getParams().get(0).getType()) {
-      logError(setter,
-          "The setter and getter for JsProperty '%s' in type '%s' must have consistent types.",
-          setter.getJsName(), JjsUtils.getReadableDescription(type));
-    }
-  }
-
-  private void checkValidSetter(JMethod setter) {
-    if (setter.getParams().size() != 1 || setter.getType() != JPrimitiveType.VOID) {
-      logError(setter, "There needs to be single parameter and void return type for the "
-          + "JsProperty setter %s.", getMemberDescription(setter));
-    }
-  }
-
-  private void checkValidGetter(JMethod getter) {
-    if (!getter.getParams().isEmpty() || getter.getType() == JPrimitiveType.VOID) {
-      logError(getter,
-          "There cannot be void return type or any parameters for the JsProperty getter"
-          + " %s.", getMemberDescription(getter));
-    }
-    if (getter.getType() != JPrimitiveType.BOOLEAN && getter.getName().startsWith("is")) {
-      logError(getter, "There cannot be non-boolean return for the JsProperty 'is' getter %s.",
-          getMemberDescription(getter));
+      if (newMember.getter.getType() != newMember.setter.getParams().get(0).getType()) {
+        logError(method, "JsProperty setter %s and getter %s cannot have inconsistent types.",
+            getMemberDescription(newMember.setter), getMemberDescription(newMember.getter));
+      }
     }
   }
 
@@ -461,8 +448,7 @@ public class JsInteropRestrictionChecker {
       @Override
       public void endVisit(JMethodCall x, Context ctx) {
         JMethod target = x.getTarget();
-        if (x.isStaticDispatchOnly() &&
-            target.getJsPropertyAccessorType() != JsPropertyAccessorType.NONE) {
+        if (x.isStaticDispatchOnly() && target.getJsPropertyAccessorType().isPropertyAccessor()) {
           logError(x, "Cannot call property accessor %s via super.",
               getMemberDescription(target));
         }
