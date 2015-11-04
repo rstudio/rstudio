@@ -31,7 +31,7 @@ public enum MyExportedEnum {
   public static final int publicStaticFinalField = 1;
 
   // explicitly marked @JsProperty fields must be final
-  // but ones that are in an exported class doesn't need to be final
+  // but ones that are in an exported class don't need to be final
   public static int publicStaticField = 2;
 
   public final int publicFinalField = 3;

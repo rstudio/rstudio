@@ -79,17 +79,20 @@ public class MyClassExportsMethod {
   }
 
   // There should be no calls to this method from java.
+  @SuppressWarnings("unusable-by-js")
   @JsMethod(namespace = GLOBAL)
   public static void callBar(A a) {
     a.bar();
   }
 
   // There should be a call to this method from java.
+  @SuppressWarnings("unusable-by-js")
   @JsMethod(namespace = GLOBAL)
   public static void callFoo(A a) {
     a.foo();
   }
 
+  @SuppressWarnings("unusable-by-js")
   @JsMethod(namespace = GLOBAL)
   public static A newA() {
     return new A();

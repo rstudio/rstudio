@@ -23,10 +23,12 @@ import jsinterop.annotations.JsType;
 @JsType
 public class MyJsTypeThatUsesLongType {
 
+  @SuppressWarnings("unusable-by-js")
   public long addLong(long a, long b) {
     return a + b;
   }
 
+  @SuppressWarnings("unusable-by-js")
   public static long addLongStatic(long a, long b) {
     return a + b;
   }

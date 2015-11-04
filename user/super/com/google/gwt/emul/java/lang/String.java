@@ -37,7 +37,7 @@ import jsinterop.annotations.JsMethod;
  * Intrinsic string class.
  */
 // Needed to have constructors not fail compilation internally at Google
-@SuppressWarnings("ReturnValueIgnored")
+@SuppressWarnings({ "ReturnValueIgnored", "unusable-by-js" })
 public final class String implements Comparable<String>, CharSequence,
     Serializable {
   /* TODO(jat): consider whether we want to support the following methods;

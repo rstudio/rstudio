@@ -66,5 +66,6 @@ class ConcreteJsType {
     public int x() { return 101; }
   }
 
+  @SuppressWarnings("unusable-by-js")
   public A notTypeTightenedField = new AImpl1();
 }
