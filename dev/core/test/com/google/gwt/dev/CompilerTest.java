@@ -28,6 +28,7 @@ import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.javac.testing.impl.MockResource;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.impl.JjsUtils;
+import com.google.gwt.dev.util.UnitTestTreeLogger;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.SourceLevel;
@@ -44,6 +45,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Test for {@link Compiler}.
@@ -898,7 +900,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     CompilerOptionsImpl options = new CompilerOptionsImpl();
     Compiler.ArgProcessor argProcessor = new Compiler.ArgProcessor(options);
 
-    assertProcessSuccess(argProcessor, new String[] {"c.g.g.h.H"});
+    assertProcessSuccess(argProcessor, new String[]{"c.g.g.h.H"});
 
     assertEquals(null, options.getGenDir());
     assertEquals(new File("war").getAbsoluteFile(),
@@ -1030,8 +1032,8 @@ public class CompilerTest extends ArgProcessorTestBase {
     // Make sure the referenced class literals ends up beign included in the resulting JS.
     String classliteralHolderVarName =
         JjsUtils.mangleMemberName("com.google.gwt.lang.ClassLiteralHolder",
-        JjsUtils.classLiteralFieldNameFromJavahTypeSignatureName(
-            JjsUtils.javahSignatureFromName(someInterface.getTypeName())));
+            JjsUtils.classLiteralFieldNameFromJavahTypeSignatureName(
+                JjsUtils.javahSignatureFromName(someInterface.getTypeName())));
     assertTrue(js.contains("var " + classliteralHolderVarName + " = "));
   }
 
@@ -1344,7 +1346,7 @@ public class CompilerTest extends ArgProcessorTestBase {
 
     // Reverting to just a single dialog.alert() starts succeeding again.
     compileToJs(compilerOptions, applicationDir, "com.foo.SimpleModule",
-        Lists.<MockResource> newArrayList(complexDialogResourceSansExport), minimalRebuildCache,
+        Lists.<MockResource>newArrayList(complexDialogResourceSansExport), minimalRebuildCache,
         stringSet("com.foo.SimpleDialog", "com.foo.ComplexDialog", "com.foo.TestEntryPoint"),
         JsOutputOption.OBFUSCATED);
   }
@@ -1357,6 +1359,49 @@ public class CompilerTest extends ArgProcessorTestBase {
       fail("Compile should have failed");
     } catch (UnableToCompleteException e) {
       // success
+    }
+  }
+
+  public void testNonZeroArgConstructorEntryPoint() throws Exception {
+    MockResource moduleResource =
+        JavaResourceBase.createMockResource(
+            "com/foo/NonZeroArgConstructor.gwt.xml",
+            "<module>",
+            "  <source path=''/>",
+            "  <entry-point class='com.foo.NonZeroArgConstructorEntryPoint'/>",
+            "</module>");
+
+    MockJavaResource entryPointResource =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.NonZeroArgConstructorEntryPoint",
+            "package com.foo;",
+            "import com.google.gwt.core.client.EntryPoint;",
+            "public class NonZeroArgConstructorEntryPoint implements EntryPoint {",
+            "  public NonZeroArgConstructorEntryPoint(String s) {",
+            "  }",
+            "  public void onModuleLoad() {",
+            "  }",
+            "}");
+
+    MinimalRebuildCache minimalRebuildCache = new MinimalRebuildCache();
+    File applicationDir = Files.createTempDir();
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+
+    UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
+    builder.setLowestLogLevel(TreeLogger.ERROR);
+    builder.expectError(Pattern.compile("Errors in .*"), null);
+    builder.expectError("Line 3: Rebind result 'com.foo.NonZeroArgConstructorEntryPoint' "
+        + "has no default (zero argument) constructors", null);
+    UnitTestTreeLogger errorLogger = builder.createLogger();
+    try {
+      // Simple compile with one dialog.alert() export succeeds.
+
+      compileToJs(errorLogger, compilerOptions, applicationDir, "com.foo.NonZeroArgConstructor",
+          Lists.newArrayList(moduleResource, entryPointResource), minimalRebuildCache,
+          emptySet, JsOutputOption.OBFUSCATED);
+      fail("Compile should have failed");
+    } catch (UnableToCompleteException expected) {
+      errorLogger.assertCorrectLogEntries();
     }
   }
 
@@ -2325,12 +2370,21 @@ public class CompilerTest extends ArgProcessorTestBase {
       String moduleName, List<MockResource> applicationResources,
       MinimalRebuildCache minimalRebuildCache, Set<String> expectedProcessedStaleTypeNames,
       JsOutputOption output) throws IOException, UnableToCompleteException, InterruptedException {
+
+    PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
+    logger.setMaxDetail(TreeLogger.ERROR);
+    return compileToJs(logger, compilerOptions, applicationDir, moduleName, applicationResources,
+        minimalRebuildCache, expectedProcessedStaleTypeNames, output);
+  }
+
+  private String compileToJs(TreeLogger logger, CompilerOptions compilerOptions, File applicationDir,
+      String moduleName, List<MockResource> applicationResources,
+      MinimalRebuildCache minimalRebuildCache, Set<String> expectedProcessedStaleTypeNames,
+      JsOutputOption output) throws IOException, UnableToCompleteException, InterruptedException {
     // Make sure we're using a MemoryUnitCache.
     System.setProperty(UnitCacheSingleton.GWT_PERSISTENTUNITCACHE, "false");
     // Wait 1 second so that any new file modification times are actually different.
     Thread.sleep(1001);
-    PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
-    logger.setMaxDetail(TreeLogger.ERROR);
     // We might be reusing the same application dir but we want to make sure that the output dir is
     // clean to avoid confusion when returning the output JS.
     File outputDir = new File(applicationDir.getPath() + File.separator + moduleName);

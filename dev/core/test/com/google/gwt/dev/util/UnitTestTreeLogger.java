@@ -157,6 +157,10 @@ public class UnitTestTreeLogger extends TreeLogger {
       return this.toString().equals(other.toString());
     }
 
+    public String getMessageOrPattern() {
+      return this.msg == null ? this.msgPattern.toString() : this.msg;
+    }
+
     public int hashCode() {
       return toString().hashCode();
     }
@@ -208,7 +212,8 @@ public class UnitTestTreeLogger extends TreeLogger {
     @Override
     public int compareTo(LogEntry that) {
       return ComparisonChain.start()
-          .compare(this.msg, that.msg, AbstractTreeLogger.LOG_LINE_COMPARATOR)
+          .compare(this.getMessageOrPattern(), that.getMessageOrPattern(),
+              AbstractTreeLogger.LOG_LINE_COMPARATOR)
           .compare(this.type, that.type)
           .result();
     }

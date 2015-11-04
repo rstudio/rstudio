@@ -181,7 +181,7 @@ public class JjsUtils {
           public boolean apply(JMethod method) {
             return method instanceof JConstructor &&  method.getOriginalParamTypes().size() == 0;
           }
-        }).get();
+        }).orNull();
     if (noArgCtor == null) {
       return null;
     }
