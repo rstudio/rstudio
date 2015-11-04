@@ -61,7 +61,9 @@ struct ConsoleAction
    std::string data;
 };
 
-core::json::Object consoleActionToJson(const ConsoleAction& action);
+std::string consoleActionTypeToString(int type);
+core::json::Object consoleActionToJson(const ConsoleAction& action,
+                                       bool typeAsString = false);
 ConsoleAction consoleActionFromJson(const core::json::Object& actionJson);
 
 
