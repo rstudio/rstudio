@@ -42,8 +42,7 @@ std::string consoleActionTypeToString(int type)
     }
 }
 
-json::Object consoleActionToJson(const ConsoleAction& action,
-                                 bool typeAsString)
+json::Object consoleActionToJson(const ConsoleAction& action)
 {
    json::Object actionJson;
    actionJson["session_id"] = action.sessionId;
@@ -51,11 +50,17 @@ json::Object consoleActionToJson(const ConsoleAction& action,
    actionJson["pid"] = action.pid;
    actionJson["username"] = action.username;
    actionJson["timestamp"] = action.timestamp;
-   if (typeAsString)
-      actionJson["type"] = consoleActionTypeToString(action.type);
-   else
-      actionJson["type"] = action.type;
+   actionJson["type"] = action.type;
    actionJson["data"] = action.data;
+   return actionJson;
+}
+
+json::Object consoleActionToJsonLogEntry(const ConsoleAction& action)
+{
+   json::Object actionJson = consoleActionToJson(action);
+   actionJson["pid"] = static_cast<boost::int64_t>(action.pid);
+   actionJson["timestamp"] = static_cast<boost::int64_t>(action.timestamp);
+   actionJson["type"] = audit::consoleActionTypeToString(action.type);
    return actionJson;
 }
 
