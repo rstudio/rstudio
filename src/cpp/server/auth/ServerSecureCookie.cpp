@@ -68,7 +68,7 @@ Error base64HMAC(const std::string& value,
 
    // compute hmac for the message
    std::vector<unsigned char> hmac;
-   Error error = core::system::crypto::HMAC_SHA1(message, cookieKey, &hmac);
+   Error error = core::system::crypto::HMAC_SHA2(message, cookieKey, &hmac);
    if (error)
       return error;
 
