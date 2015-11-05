@@ -17,7 +17,7 @@
 #define SESSION_PROJECTS_SHARING_HPP
 
 #define kProjectSharingSessionOption "allow-project-sharing"
-#define kProjectEntryExt ".proj"
+#define kProjectEntryExt ".project"
 #define kProjectSharedDir "shared-projects"
 
 // a server option passed to the sesion

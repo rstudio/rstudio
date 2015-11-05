@@ -23,7 +23,15 @@ public class SharingResult extends JavaScriptObject
    {
    }
    
+   public final native boolean succeeded() /*-{
+      return this.succeeded;
+   }-*/;
+
    public final native JsArrayString getFailedPaths() /*-{
       return this.failed_paths;
+   }-*/;
+   
+   public final native String getErrorMessage() /*-{
+      return this.error_message;
    }-*/;
 }
