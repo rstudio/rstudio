@@ -152,6 +152,9 @@ public:
    
    // remove the directory (if it exists) and create a new one in its place
    Error resetDirectory() const;
+
+   // create this file if it doesn't already exist
+   Error ensureFile() const;
    
    // complete a path (if input path is relative, returns path relative
    // to this one; if input path is absolute returns that path)
