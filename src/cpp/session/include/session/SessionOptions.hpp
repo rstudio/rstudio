@@ -323,6 +323,11 @@ public:
       return allowOverlay() || allowPublish_;
    }
 
+   bool allowPresentationCommands() const
+   {
+      return allowPresentationCommands_;
+   }
+
    // user info
    std::string userIdentity() const 
    { 
@@ -537,6 +542,7 @@ private:
    bool allowRpubsPublish_;
    bool allowExternalPublish_;
    bool allowPublish_;
+   bool allowPresentationCommands_;
 
    // user info
    bool showUserIdentity_;

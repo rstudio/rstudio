@@ -211,7 +211,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
         "allow publishing content to external services")
       ("allow-publish",
          value<bool>(&allowPublish_)->default_value(true),
-        "allow publishing content");
+        "allow publishing content")
+      ("allow-presentation-commands",
+         value<bool>(&allowPresentationCommands_)->default_value(false),
+       "allow presentation commands");
 
    // r options
    bool rShellEscape; // no longer works but don't want to break any

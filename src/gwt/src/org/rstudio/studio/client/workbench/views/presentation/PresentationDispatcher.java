@@ -100,7 +100,7 @@ public class PresentationDispatcher
       
       if (cmdName.equals("source"))
          performSourceCommand(param1, param2);
-      else if (!Desktop.isDesktop()) // support other commands in server mode
+      else if (session_.getSessionInfo().getPresentationCommands()) 
          performOtherCommand(cmdName, params, param1, param2);
    }
    

@@ -400,4 +400,8 @@ public class SessionInfo extends JavaScriptObject
    public final native RVersionsInfo getRVersionsInfo() /*-{
       return this.r_versions_info;
    }-*/;
+   
+   public final native boolean getPresentationCommands() /*-{
+      return this.presentation_commands;
+   }-*/;
 }
