@@ -253,6 +253,7 @@ public class JsInteropRestrictionChecker {
 
     if (method.isJsOverlay()) {
       checkJsOverlay(method);
+      return;
     }
 
     checkUnusableByJs(method);
@@ -362,13 +363,19 @@ public class JsInteropRestrictionChecker {
       return;
     }
 
-    if (method.isJsNative() || method.isJsniMethod() || method.isStatic() || !method.isFinal()) {
+    if (method.isJsNative() || (!method.isFinal() && !method.isStatic())) {
       logError(method,
-          "JsOverlay method '%s' cannot be non-final, static, nor native.", methodDescription);
+          "JsOverlay method '%s' cannot be non-final nor native.", methodDescription);
     }
   }
 
   private void checkMemberOfNativeJsType(JMember member) {
+    if (member instanceof JMethod && ((JMethod) member).isJsniMethod()) {
+      logError(member, "JSNI method %s is not allowed in a native JsType.",
+          getMemberDescription(member));
+      return;
+    }
+
     if (member.isSynthetic() || member.isJsNative() || member.isJsOverlay()) {
       return;
     }
@@ -376,18 +383,10 @@ public class JsInteropRestrictionChecker {
     if (member.getJsName() == null) {
       logError(member, "Native JsType member %s is not public or has @JsIgnore.",
           getMemberDescription(member));
-      return;
+    } else {
+      logError(member, "Native JsType method %s should be native or abstract.",
+          getMemberDescription(member));
     }
-
-    JMethod method = (JMethod) member;
-    if (method.isJsniMethod()) {
-      logError(method, "JSNI method %s is not allowed in a native JsType.",
-          getMemberDescription(method));
-      return;
-    }
-
-    logError(method, "Native JsType method %s should be native or abstract.",
-        getMemberDescription(method));
   }
 
   private void checkMemberQualifiedJsName(JMember member) {
