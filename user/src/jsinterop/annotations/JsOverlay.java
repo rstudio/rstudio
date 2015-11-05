@@ -22,8 +22,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- JsOverlay is used to add new helper APIs to existing JavaScript types. This is achieved by adding
- the new method to @JsType(isNative=true) and marking it with this annotation.
+ * JsOverlay is used to add new helper APIs to existing JavaScript types. This is achieved by adding
+ * the new method to @JsType(isNative=true) and marking it with this annotation.
  * <p>
  * Note that the JsOverlay methods cannot be called from JavaScript, cannot override any existing
  * methods and needs to be marked as final. This is because underneath, the original type is not
