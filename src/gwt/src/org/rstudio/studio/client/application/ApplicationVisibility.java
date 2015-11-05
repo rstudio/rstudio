@@ -16,13 +16,13 @@
 package org.rstudio.studio.client.application;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.studio.client.application.events.ApplicationVisibilityChangedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
@@ -33,11 +33,12 @@ public class ApplicationVisibility
 {
    @Inject
    public ApplicationVisibility(ApplicationServerOperations server,
-                                final EventBus eventBus,
+                                EventBus eventBus,
                                 SatelliteManager satelliteManager,
                                 final Session session)
    {
       server_ = server;
+      eventBus_ = eventBus;
       satelliteManager_ = satelliteManager;
       
       // don't register for visibility changed events in desktop mode
@@ -45,43 +46,41 @@ public class ApplicationVisibility
          return;
      
       // initialize after we have session info
-      eventBus.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
+      eventBus_.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
          @Override
          public void onSessionInit(SessionInitEvent sie)
          {
-            // only register for page visibility events if we are 
-            // in multi-session mode
-            SessionInfo sessionInfo = session.getSessionInfo();
-            if (sessionInfo.getMultiSession())
+            // check for multi session
+            isMultiSession_ = session.getSessionInfo().getMultiSession();
+            
+            // don't allow exceptions to escape (this code is being added 
+            // late in the release cycle and will run at workbench startup 
+            // so we need to make sure that unexpected errors don't bring 
+            // the entire ide down with them
+            try
             {
-               // don't allow exceptions to escape (this code is being added 
-               // late in the release cycle and will run at workbench startup 
-               // so we need to make sure that unexpected errors don't bring 
-               // the entire ide down with them
-               try
-               {
-                  // register for page visibility changed events
-                  registerPageVisibilityChangedHandler();  
-                  
-                  // check for being hidden 5 seconds after startup
-                  // and stop the event listener if we are (handles 
-                  // cases where we never get visibility events because
-                  // a browser tab was "restored" or opened as part of 
-                  // an "open all sessions" command
-                  new Timer() {
-                     @Override
-                     public void run()
-                     {
-                        if (isHidden())
-                           manageEventListener();
-                     }
-                  }.schedule(5000);;
-               }
-               catch(Exception e)
-               {
-                  Debug.logException(e);
-               }
-            }  
+               // register for page visibility changed events
+               registerPageVisibilityChangedHandler();  
+               
+               // check for being hidden 5 seconds after startup
+               // and stop the event listener if we are (handles 
+               // cases where we never get visibility events because
+               // a browser tab was "restored" or opened as part of 
+               // an "open all sessions" command
+               new Timer() {
+                  @Override
+                  public void run()
+                  {
+                     if (isHidden())
+                        handleApplicationVisibilityChanged();
+                  }
+               }.schedule(5000);;
+            }
+            catch(Exception e)
+            {
+               Debug.logException(e);
+            }
+            
          }   
       });
    }
@@ -122,11 +121,23 @@ public class ApplicationVisibility
          $wnd.document.addEventListener(
             visibilityChange, 
             $entry(function(e) {
-               thiz.@org.rstudio.studio.client.application.ApplicationVisibility::manageEventListener()();
+               thiz.@org.rstudio.studio.client.application.ApplicationVisibility::handleApplicationVisibilityChanged()();
             }), 
             false);
       }
    }-*/;
+   
+   private void handleApplicationVisibilityChanged()
+   {
+      // if we are multi session then manage the event listener
+      // (to prevent an overload of long-polling connections being
+      // opened to the server)
+      if (isMultiSession_)
+         manageEventListener();
+      
+      // fire visibility changed event
+      eventBus_.fireEvent(new ApplicationVisibilityChangedEvent(isHidden()));
+   }
    
    private void manageEventListener()
    {
@@ -159,5 +170,7 @@ public class ApplicationVisibility
    }
    
    private final ApplicationServerOperations server_;
+   private final EventBus eventBus_;
    private final SatelliteManager satelliteManager_;
+   private boolean isMultiSession_ = false;
 }
