@@ -95,6 +95,11 @@ public class JArrayType extends JReferenceType {
   }
 
   @Override
+  public boolean isJsNative() {
+    return getLeafType().isJsNative();
+  }
+
+  @Override
   public boolean isJsoType() {
     return false;
   }

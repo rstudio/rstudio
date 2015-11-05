@@ -1252,7 +1252,7 @@ public class CompilerTest extends ArgProcessorTestBase {
    * <p>An unrelated and non-updated @JsType is also included in each compile to verify that updated
    * exports do not forget non-edited items in a recompile.
    */
-  public void __disabled__testChangeJsTypeNative() throws Exception {
+  public void testChangeJsTypeNative() throws Exception {
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
     compilerOptions.setUseDetailedTypeIds(true);
 

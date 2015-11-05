@@ -203,7 +203,7 @@ public class ComputeCastabilityInformation {
       }
 
       if (!typeOracle.isInstantiatedType(type) ||
-          type.isJsoType()) {
+          type.isJsoType() || type.isJsNative()) {
         return;
       }
 

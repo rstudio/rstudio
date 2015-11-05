@@ -24,6 +24,7 @@ import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
+import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
@@ -196,6 +197,8 @@ public class ImplementCastsAndTypeChecks {
         // for casting and instanceof purposes.
         toType =  (JReferenceType) program.normalizeJsoType(toType);
       }
+
+      assert !toType.isJsNative() || !(toType instanceof JInterfaceType);
 
       boolean isTrivialCast = program.typeOracle.castSucceedsTrivially(argType, toType)
           // don't depend on type-tightener having run

@@ -208,7 +208,7 @@ public class ImplementClassLiteralsAsFields {
     @Override
     public void endVisit(JClassLiteral x, Context ctx) {
       JType type = x.getRefType();
-      if (type instanceof JArrayType) {
+      if (type instanceof JArrayType && !type.isJsNative()) {
         // Replace array class literals by an expression to obtain the class literal from the
         // leaf type of the array.
         JArrayType arrayType = (JArrayType) type;
@@ -443,7 +443,7 @@ public class ImplementClassLiteralsAsFields {
    * </pre>
    */
   private JField resolveClassLiteralField(JType type) {
-    type = program.normalizeJsoType(type);
+    type = type.isJsNative() ? program.getJavaScriptObject() : program.normalizeJsoType(type);
     JField field = classLiteralFields.get(type);
     if (field == null) {
       // Create the allocation expression FIRST since this may be recursive on
