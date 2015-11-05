@@ -893,11 +893,10 @@ public class GenerateJavaScriptAST {
     private JsExpression dispatchToSuper(
         JsExpression instance, JMethod method, List<JsExpression> args, SourceInfo sourceInfo) {
       JsNameRef methodNameRef;
-      if (method.isConstructor()) {
-        // We don't generate calls to super native constructors (yet).
-        if (method.isJsNative()) {
-          return JsNullLiteral.INSTANCE;
-        }
+      if (method.isJsNative()) {
+        // Construct Constructor.prototype.jsname or Constructor.
+        methodNameRef = createJsQualifier(method.getQualifiedJsName(), sourceInfo);
+      } else if (method.isConstructor()) {
         /*
          * Constructor calls through {@code this} and {@code super} are always dispatched statically
          * using the constructor function name (constructors are always defined as top level
@@ -913,13 +912,8 @@ public class GenerateJavaScriptAST {
         // {@link Impl.getNameOf} or calls to the native classes.
 
         JDeclaredType superClass = method.getEnclosingType();
-        if (method.isJsNative()) {
-          // Construct jsPrototype.prototype.jsname
-          methodNameRef = createJsQualifier(method.getQualifiedJsName(), sourceInfo);
-        } else {
-          JsExpression protoRef = getPrototypeQualifierViaLookup(superClass, sourceInfo);
-          methodNameRef = polymorphicNames.get(method).makeQualifiedRef(sourceInfo, protoRef);
-        }
+        JsExpression protoRef = getPrototypeQualifierViaLookup(superClass, sourceInfo);
+        methodNameRef = polymorphicNames.get(method).makeQualifiedRef(sourceInfo, protoRef);
       }
 
       // <method_qualifier>.call(instance, args);

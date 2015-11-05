@@ -15,8 +15,6 @@
  */
 package com.google.gwt.core.client.interop;
 
-import static com.google.gwt.core.client.ScriptInjector.TOP_WINDOW;
-
 import static jsinterop.annotations.JsPackage.GLOBAL;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -43,7 +41,8 @@ public class JsPropertyTest extends GWTTestCase {
 
   @Override
   protected void gwtSetUp() throws Exception {
-    ScriptInjector.fromString("function JsPropertyTest_MyNativeJsType() {}\n"
+    ScriptInjector.fromString(
+        "function JsPropertyTest_MyNativeJsType(x) { this.x = x; this.ctorExecuted = true; }\n"
         + "JsPropertyTest_MyNativeJsType.staticX = 33;"
         + "JsPropertyTest_MyNativeJsType.answerToLife = function() { return 42;};"
         + "JsPropertyTest_MyNativeJsType.prototype.sum = "
@@ -51,7 +50,7 @@ public class JsPropertyTest extends GWTTestCase {
         + "function JsPropertyTest_MyNativeJsTypeInterface() {}\n"
         + "JsPropertyTest_MyNativeJsTypeInterface.prototype.sum = "
         + "    function sum(bias) { return this.x + bias; };")
-        .setWindow(TOP_WINDOW).inject();
+        .setWindow(ScriptInjector.TOP_WINDOW).inject();
   }
 
   @JsType
@@ -148,6 +147,8 @@ public class JsPropertyTest extends GWTTestCase {
 
     public static native int answerToLife();
 
+    public boolean ctorExecuted;
+
     public int x;
 
     @JsProperty
@@ -166,6 +167,7 @@ public class JsPropertyTest extends GWTTestCase {
     assertEquals(42, MyNativeJsType.answerToLife());
 
     MyNativeJsType obj = new MyNativeJsType();
+    assertTrue(obj.ctorExecuted);
     assertTrue(isUndefined(obj.x));
     obj.x = 72;
     assertEquals(72, obj.x);
@@ -191,12 +193,47 @@ public class JsPropertyTest extends GWTTestCase {
 
   public void testNativeJsTypeSubclass() {
     MyNativeJsTypeSubclass mc = new MyNativeJsTypeSubclass();
+    assertTrue(mc.ctorExecuted);
     assertEquals(143, mc.sum(1));
 
     mc.x = -mc.x;
     assertEquals(58, mc.sum(0));
 
     assertEquals(52, mc.getY());
+  }
+
+  static class MyNativeJsTypeSubclassNoOverride extends MyNativeJsType { }
+
+  // TODO(rluble): enable when the subclass is setup correctly.
+  public void _disabled_testNativeJsTypeSubclassNoOverride() {
+    MyNativeJsTypeSubclassNoOverride myNativeJsType = new MyNativeJsTypeSubclassNoOverride();
+    myNativeJsType.x = 12;
+    assertEquals(42, myNativeJsType.sum(30));
+  }
+
+  @JsType(isNative = true, namespace = GLOBAL, name = "JsPropertyTest_MyNativeJsType")
+  static class MyNativeJsTypeWithConstructor {
+    public MyNativeJsTypeWithConstructor(int x) { }
+    public boolean ctorExecuted;
+    public int x;
+  }
+
+  public void testNativeJsTypeWithConstructor() {
+    MyNativeJsTypeWithConstructor obj = new MyNativeJsTypeWithConstructor(12);
+    assertTrue(obj.ctorExecuted);
+    assertEquals(12, obj.x);
+  }
+
+  static class MyNativeJsTypeWithConstructorSubclass extends MyNativeJsTypeWithConstructor {
+    public MyNativeJsTypeWithConstructorSubclass(int x) {
+      super(x);
+    }
+  }
+
+  public void testNativeJsTypeWithConstructorSubclass() {
+    MyNativeJsTypeWithConstructorSubclass obj = new MyNativeJsTypeWithConstructorSubclass(12);
+    assertTrue(obj.ctorExecuted);
+    assertEquals(12, obj.x);
   }
 
   @JsType(isNative = true, namespace = GLOBAL, name = "JsPropertyTest_MyNativeJsTypeInterface")

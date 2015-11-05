@@ -42,9 +42,7 @@ public class JsTypeTest extends GWTTestCase {
 
   @Override
   protected void gwtSetUp() throws Exception {
-    ScriptInjector.fromString("function JsTypeTest_MyNativeJsType() {}\n"
-        + "JsTypeTest_MyNativeJsType.prototype.sum = "
-        + "    function sum(bias) { return this.y + bias; };")
+    ScriptInjector.fromString("function JsTypeTest_MyNativeJsType() {}")
         .setWindow(ScriptInjector.TOP_WINDOW)
         .inject();
   }
@@ -310,14 +308,29 @@ public class JsTypeTest extends GWTTestCase {
     assertFalse(object instanceof MyNativeJsTypeInterfaceImpl[][]);
   }
 
+  @JsType(isNative = true, namespace = GLOBAL, name = "JsTypeTest_MyNativeJsType")
+  static class MyNativeJsType { }
+
+  static class MyNativeJsTypeSubclass extends MyNativeJsType { }
+
+  static class MyNativeJsTypeSubclassWithIterator extends MyNativeJsType implements Iterable {
+    @Override
+    public Iterator iterator() {
+      return null;
+    }
+  }
+
   public void testInstanceOf_extendsJsTypeWithProto() {
     // Foils type tightening.
-    Object object = new MyCustomHtmlButtonWithIterator();
+    Object object = new MyNativeJsTypeSubclassWithIterator();
 
     assertTrue(object instanceof Object);
-    assertTrue(object instanceof HTMLElementAnotherConcreteNativeJsType);
-    assertTrue(object instanceof HTMLButtonElement);
-    assertTrue(object instanceof HTMLElementConcreteNativeJsType);
+    assertTrue(object instanceof MyNativeJsType);
+    assertFalse(object instanceof MyNativeJsTypeSubclass);
+    assertTrue(object instanceof MyNativeJsTypeSubclassWithIterator);
+    assertFalse(object instanceof HTMLElementAnotherConcreteNativeJsType);
+    assertFalse(object instanceof HTMLButtonElement);
+    assertFalse(object instanceof HTMLElementConcreteNativeJsType);
     assertTrue(object instanceof Iterable);
     assertFalse(object instanceof MyNativeJsTypeInterfaceImpl);
     assertFalse(object instanceof ElementLikeNativeInterfaceImpl);
@@ -328,34 +341,11 @@ public class JsTypeTest extends GWTTestCase {
     assertFalse(object instanceof MyNativeJsTypeInterfaceImpl[][]);
   }
 
-  @JsType(isNative = true, namespace = GLOBAL, name = "JsTypeTest_MyNativeJsType")
-  static class MyNativeJsType {
-    @JsProperty
-    public native int getY();
-
-    @JsProperty
-    public native void setY(int value);
-
-    public native int sum(int bias);
-  }
-
-  static class MyNativeJsTypeSubclass extends MyNativeJsType {
-  }
-
-  // TODO(rluble): enable when the subclass is setup correctly.
-  public void _disabled_testNativeJsTypeSubclass() {
-    MyNativeJsTypeSubclass myNativeJsTypeSubclass = new MyNativeJsTypeSubclass();
-    myNativeJsTypeSubclass.setY(12);
-    assertEquals(42, myNativeJsTypeSubclass.sum(30));
-    assertTrue(myNativeJsTypeSubclass instanceof MyNativeJsType);
-    assertTrue(myNativeJsTypeSubclass instanceof MyNativeJsTypeSubclass);
-  }
-
   @JsType(isNative = true, namespace = "testfoo.bar")
   static class MyNamespacedNativeJsType {
   }
 
-  public void _testInstanceOf_withNameSpace() {
+  public void testInstanceOf_withNameSpace() {
     Object obj1 = createMyNamespacedJsInterface();
     Object obj2 = createMyWrongNamespacedJsInterface();
 
