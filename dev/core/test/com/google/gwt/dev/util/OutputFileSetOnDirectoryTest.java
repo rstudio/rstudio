@@ -65,7 +65,7 @@ public class OutputFileSetOnDirectoryTest extends TestCase {
     }
   }
 
-  public void testNewFileOlderTimestampOverwrites() throws IOException {
+  public void testNewFileOlderTimestampDies() throws IOException {
     File work = Utility.makeTemporaryDirectory(null, "outputfileset");
     try {
       OutputFileSetOnDirectory output = new OutputFileSetOnDirectory(work, "test/");
@@ -75,7 +75,7 @@ public class OutputFileSetOnDirectoryTest extends TestCase {
       firstStream.close();
 
       OutputStream secondStream = output.createNewOutputStream("path/to/file", 1000);
-      assertTrue(secondStream instanceof FileOutputStream);
+      assertFalse(secondStream instanceof FileOutputStream);
       secondStream.close();
     } finally {
       Util.recursiveDelete(work, false);

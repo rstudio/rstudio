@@ -65,14 +65,15 @@ public abstract class OutputFileSet {
 
   /**
    * Opens a file for write. If writing to a zip file and the file already exists,
-   * there will be no effect. If writing to a directory already existing files are
-   * overwritten.
+   * there will be no effect. If writing to a directory, the file exists, and the
+   * given timestamp is older than the current timestamp, there will be no effect.
    *
-   * @param timeStampMillis last modified time in milliseconds.
+   * @param timeStampMillis last modified time in milliseconds, or
+   *          TIMESTAMP_UNAVAILABLE to force an overwrite.
    * @return the output stream to write to, possibly a NullOutputStream
    */
-  public OutputStream openForWrite(String path, long timeStampMillis)
-      throws IOException {
+  // TODO: revalidate whether any timestamp based overwrite prevention is needed.
+  public OutputStream openForWrite(String path, long timeStampMillis) throws IOException {
     pathsSeen.add(path);
     return createNewOutputStream(path, timeStampMillis);
   }

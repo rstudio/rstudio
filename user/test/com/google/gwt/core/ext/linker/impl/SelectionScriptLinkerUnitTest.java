@@ -147,8 +147,8 @@ public class SelectionScriptLinkerUnitTest extends TestCase {
   }
 
   /**
-   * Test timestamps on the selection script. For both Development Mode and ProductionMode it should
-   * match the module's timestamp.
+   * Test timestamps on the selection script. For Development Mode, it should match
+   * the module's timestamp. For Production Mode, it should be current.
    */
   public void testTimestampOnSelectionScript() throws UnableToCompleteException {
     // Development Mode
@@ -170,7 +170,7 @@ public class SelectionScriptLinkerUnitTest extends TestCase {
       updated = new ShardableSelectionScriptLinker().link(TreeLogger.NULL,
           new MockLinkerContext(), updated, false);
       EmittedArtifact selectionScript = findSelectionScript(updated);
-      assertEquals(MOCK_MODULE_LAST_MODIFIED, selectionScript.getLastModified());
+      assertTrue(MOCK_MODULE_LAST_MODIFIED != selectionScript.getLastModified());
     }
   }
 
