@@ -696,7 +696,7 @@ bool ProjectContext::isPackageProject()
 bool ProjectContext::supportsSharing()
 {
    // never supports sharing if disabled explicitly
-   if (!options().getBoolOverlayOption(kProjectSharingSessionOption))
+   if (!core::system::getenv(kRStudioDisableProjectSharing).empty())
       return false;
 
    // otherwise, check to see whether shared storage is configured
