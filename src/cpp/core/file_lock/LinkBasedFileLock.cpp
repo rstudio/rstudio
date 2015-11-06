@@ -66,19 +66,11 @@ const std::string& hostName()
    return instance;
 }
 
-std::string makeThreadId()
+std::string threadId()
 {
    std::stringstream ss;
    ss << boost::this_thread::get_id();
    return ss.str().substr(2);
-}
-
-const std::string& threadId()
-{
-   static boost::thread_specific_ptr<std::string> instance;
-   if (instance.get() == NULL)
-      instance.reset(new std::string(makeThreadId()));
-   return *instance;
 }
 
 std::string proxyLockFileName()
