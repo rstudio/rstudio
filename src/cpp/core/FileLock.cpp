@@ -18,9 +18,73 @@
 #include <core/Macros.hpp>
 #include <core/Error.hpp>
 #include <core/Log.hpp>
+#include <core/FileSerializer.hpp>
+
+#include <boost/algorithm/string.hpp>
 
 namespace rstudio {
 namespace core {
+
+namespace locks {
+
+namespace {
+
+const char * const kLocksConfPath = "/etc/rstudio-locks.conf";
+
+} // end anonymous namespace
+
+void initialize()
+{
+   using namespace boost::algorithm;
+   
+   FilePath locksConfPath(kLocksConfPath);
+   if (!locksConfPath.exists())
+      return;
+   
+   std::map<std::string, std::string> conf;
+   Error error = core::readStringMapFromFile(locksConfPath, &conf);
+   if (error)
+      LOG_ERROR(error);
+   
+   if (conf.count("lock-type"))
+   {
+      std::string lockType = to_lower_copy(conf["lock-type"]);
+      if (lockType == "advisory")
+      {
+         FileLock::setLockType(FileLock::LOCKTYPE_ADVISORY);
+      }
+      else if (lockType == "link-based")
+      {
+         FileLock::setLockType(FileLock::LOCKTYPE_LINKBASED);
+      }
+      else
+      {
+         std::string msg = std::string() +
+               "unrecognized lock type '" + lockType + "'";
+         LOG_ERROR_MESSAGE(msg);
+      }
+   }
+   
+   if (conf.count("lock-refresh-rate"))
+   {
+      long refreshRate = ::atol(conf["lock-refresh-rate"].c_str());
+      if (refreshRate == 0)
+         LOG_ERROR_MESSAGE("invalid lock refresh rate '" + conf["lock-refresh-rate"] + "'");
+      else
+         FileLock::setLockRefreshRate(boost::posix_time::seconds(refreshRate));
+   }
+   
+   if (conf.count("lock-timeout-interval"))
+   {
+      long timeoutInterval = ::atol(conf["lock-timeout-interval"].c_str());
+      if (timeoutInterval == 0)
+         LOG_ERROR_MESSAGE("invalid lock timeout interval '" + conf["lock-timeout-interval"] + "'");
+      else
+         FileLock::setLockTimeoutInterval(boost::posix_time::seconds(timeoutInterval));
+   }
+}
+
+} // namespace locks
 
 // default values for static members
 FileLock::LockType FileLock::type_(FileLock::LOCKTYPE_ADVISORY);
