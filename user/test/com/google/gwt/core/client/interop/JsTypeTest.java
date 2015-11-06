@@ -48,29 +48,6 @@ public class JsTypeTest extends GWTTestCase {
         .inject();
   }
 
-  public void testVirtualUpRefs() {
-    ListImpl listWithExport = new ListImpl(); // Exports .add().
-    FooImpl listNoExport = new FooImpl(); // Does not export .add().
-
-    // Use a loose type reference to force polymorphic dispatch.
-    Collection collectionWithExport = listWithExport;
-    collectionWithExport.add("Loose");
-    assertEquals("LooseListImpl", listWithExport.x);
-
-    // Use a loose type reference to force polymorphic dispatch.
-    Collection collectionNoExport = listNoExport;
-    collectionNoExport.add("Loose");
-    assertEquals("LooseCollectionBaseFooImpl", listNoExport.x);
-
-    // Calls directly.
-    listNoExport.add("Tight");
-    assertEquals("TightCollectionBaseFooImpl", listNoExport.x);
-
-    // Calls through a bridge method.
-    listWithExport.add("Tight");
-    assertEquals("TightListImpl", listWithExport.x);
-  }
-
   public void testConcreteJsTypeAccess() {
     ConcreteJsType concreteJsType = new ConcreteJsType();
 
@@ -208,9 +185,9 @@ public class JsTypeTest extends GWTTestCase {
     Object object = createMyNativeJsType();
 
     assertTrue(object instanceof Object);
-    assertFalse(object instanceof HTMLElementAnotherConcreteNativeJsType);
-    assertFalse(object instanceof HTMLButtonElement);
     assertFalse(object instanceof HTMLElementConcreteNativeJsType);
+    assertFalse(object instanceof HTMLElementAnotherConcreteNativeJsType);
+    assertFalse(object instanceof HTMLButtonElementConcreteNativeJsType);
     assertFalse(object instanceof Iterator);
     assertFalse(object instanceof MyNativeJsTypeInterfaceImpl);
     assertFalse(object instanceof ElementLikeNativeInterfaceImpl);
@@ -225,9 +202,9 @@ public class JsTypeTest extends GWTTestCase {
     Object object = JavaScriptObject.createObject();
 
     assertTrue(object instanceof Object);
-    assertFalse(object instanceof HTMLElementAnotherConcreteNativeJsType);
-    assertFalse(object instanceof HTMLButtonElement);
     assertFalse(object instanceof HTMLElementConcreteNativeJsType);
+    assertFalse(object instanceof HTMLElementAnotherConcreteNativeJsType);
+    assertFalse(object instanceof HTMLButtonElementConcreteNativeJsType);
     assertFalse(object instanceof Iterator);
     assertFalse(object instanceof MyNativeJsTypeInterfaceImpl);
     assertFalse(object instanceof ElementLikeNativeInterfaceImpl);
@@ -242,9 +219,9 @@ public class JsTypeTest extends GWTTestCase {
     Object object = createNativeButton();
 
     assertTrue(object instanceof Object);
-    assertTrue(object instanceof HTMLElementAnotherConcreteNativeJsType);
-    assertTrue(object instanceof HTMLButtonElement);
     assertTrue(object instanceof HTMLElementConcreteNativeJsType);
+    assertTrue(object instanceof HTMLElementAnotherConcreteNativeJsType);
+    assertTrue(object instanceof HTMLButtonElementConcreteNativeJsType);
     assertFalse(object instanceof Iterator);
     assertFalse(object instanceof MyNativeJsTypeInterfaceImpl);
     assertFalse(object instanceof ElementLikeNativeInterfaceImpl);
@@ -260,9 +237,9 @@ public class JsTypeTest extends GWTTestCase {
     Object object = new ElementLikeNativeInterfaceImpl();
 
     assertTrue(object instanceof Object);
-    assertFalse(object instanceof HTMLElementAnotherConcreteNativeJsType);
-    assertFalse(object instanceof HTMLButtonElement);
     assertFalse(object instanceof HTMLElementConcreteNativeJsType);
+    assertFalse(object instanceof HTMLElementAnotherConcreteNativeJsType);
+    assertFalse(object instanceof HTMLButtonElementConcreteNativeJsType);
     assertFalse(object instanceof Iterator);
     assertFalse(object instanceof MyNativeJsTypeInterfaceImpl);
     assertTrue(object instanceof ElementLikeNativeInterfaceImpl);
@@ -278,9 +255,9 @@ public class JsTypeTest extends GWTTestCase {
     Object object = new MyNativeJsTypeInterfaceImpl();
 
     assertTrue(object instanceof Object);
-    assertFalse(object instanceof HTMLElementAnotherConcreteNativeJsType);
-    assertFalse(object instanceof HTMLButtonElement);
     assertFalse(object instanceof HTMLElementConcreteNativeJsType);
+    assertFalse(object instanceof HTMLElementAnotherConcreteNativeJsType);
+    assertFalse(object instanceof HTMLButtonElementConcreteNativeJsType);
     assertFalse(object instanceof Iterator);
     assertTrue(object instanceof MyNativeJsTypeInterfaceImpl);
     assertFalse(object instanceof ElementLikeNativeInterfaceImpl);
@@ -296,9 +273,9 @@ public class JsTypeTest extends GWTTestCase {
     Object object = new ConcreteJsType();
 
     assertTrue(object instanceof Object);
-    assertFalse(object instanceof HTMLElementAnotherConcreteNativeJsType);
-    assertFalse(object instanceof HTMLButtonElement);
     assertFalse(object instanceof HTMLElementConcreteNativeJsType);
+    assertFalse(object instanceof HTMLElementAnotherConcreteNativeJsType);
+    assertFalse(object instanceof HTMLButtonElementConcreteNativeJsType);
     assertFalse(object instanceof Iterator);
     assertFalse(object instanceof MyNativeJsTypeInterfaceImpl);
     assertFalse(object instanceof ElementLikeNativeInterfaceImpl);
@@ -329,9 +306,9 @@ public class JsTypeTest extends GWTTestCase {
     assertTrue(object instanceof MyNativeJsType);
     assertFalse(object instanceof MyNativeJsTypeSubclass);
     assertTrue(object instanceof MyNativeJsTypeSubclassWithIterator);
-    assertFalse(object instanceof HTMLElementAnotherConcreteNativeJsType);
-    assertFalse(object instanceof HTMLButtonElement);
     assertFalse(object instanceof HTMLElementConcreteNativeJsType);
+    assertFalse(object instanceof HTMLElementAnotherConcreteNativeJsType);
+    assertFalse(object instanceof HTMLButtonElementConcreteNativeJsType);
     assertTrue(object instanceof Iterable);
     assertFalse(object instanceof MyNativeJsTypeInterfaceImpl);
     assertFalse(object instanceof ElementLikeNativeInterfaceImpl);

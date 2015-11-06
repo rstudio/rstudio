@@ -15,9 +15,9 @@
  */
 package com.google.gwt.core.client.interop;
 
+import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 
-@JsType
-interface JsListInterface {
-  void add(Object o);
+@JsType(namespace = JsPackage.GLOBAL, name = "HTMLButtonElement", isNative = true)
+class HTMLButtonElementConcreteNativeJsType extends HTMLElementConcreteNativeJsType {
 }
