@@ -270,14 +270,14 @@ public class ReferenceMapper {
     JType type = get(paramType);
     ensureArgNames(argPosition);
     JParameter param =
-        new JParameter(info, argNames.get(argPosition), type, true, false, enclosingMethod);
+        new JParameter(info, argNames.get(argPosition), type, true, false);
     enclosingMethod.addParam(param);
     return param;
   }
 
   private JParameter createParameter(SourceInfo info, TypeBinding paramType,
       JMethod enclosingMethod, String name) {
-    JParameter param = new JParameter(info, name, get(paramType), true, false, enclosingMethod);
+    JParameter param = new JParameter(info, name, get(paramType), true, false);
     enclosingMethod.addParam(param);
     return param;
   }

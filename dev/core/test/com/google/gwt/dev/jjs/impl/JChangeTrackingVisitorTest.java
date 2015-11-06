@@ -48,7 +48,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
     @Override
     public boolean enter(JMethod x, Context ctx) {
       x.addParam(new JParameter(SourceOrigin.UNKNOWN, "_newParam_enter",
-          JPrimitiveType.INT, false, false, x));
+          JPrimitiveType.INT, false, false));
       return true;
     }
   }
@@ -61,7 +61,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
     @Override
     public void exit(JMethod x, Context ctx) {
       x.addParam(new JParameter(SourceOrigin.UNKNOWN, "_newParam_exit",
-          JPrimitiveType.INT, false, false, x));
+          JPrimitiveType.INT, false, false));
     }
   }
 
@@ -73,14 +73,14 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
     @Override
     public boolean enter(JMethod x, Context ctx) {
       x.addParam(new JParameter(SourceOrigin.UNKNOWN, "_newParam_enter",
-          JPrimitiveType.INT, false, false, x));
+          JPrimitiveType.INT, false, false));
       return true;
     }
 
     @Override
     public void exit(JMethod x, Context ctx) {
       x.addParam(new JParameter(SourceOrigin.UNKNOWN, "_newParam_exit",
-          JPrimitiveType.INT, false, false, x));
+          JPrimitiveType.INT, false, false));
     }
   }
 
@@ -93,7 +93,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
     @Override
     public boolean enter(JMethod x, Context ctx) {
       x.addParam(new JParameter(SourceOrigin.UNKNOWN, "_newParam_enter",
-          JPrimitiveType.INT, false, false, x));
+          JPrimitiveType.INT, false, false));
       return true;
     }
 
@@ -112,7 +112,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
     @Override
     public void exit(JMethod x, Context ctx) {
       x.addParam(new JParameter(SourceOrigin.UNKNOWN, "_newParam_exit",
-          JPrimitiveType.INT, false, false, x));
+          JPrimitiveType.INT, false, false));
     }
 
     @Override

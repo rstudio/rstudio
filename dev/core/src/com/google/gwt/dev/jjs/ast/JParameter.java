@@ -20,33 +20,12 @@ import com.google.gwt.dev.jjs.SourceInfo;
 /**
  * Java method parameter definition.
  */
-public class JParameter extends JVariable implements HasEnclosingMethod {
-
-  public static JParameter create(SourceInfo info, String name, JType type, boolean isFinal,
-      boolean isThis, JMethod enclosingMethod) {
-    assert (name != null);
-    assert (type != null);
-    assert (enclosingMethod != null);
-
-    JParameter x = new JParameter(info, name, type, isFinal, isThis, enclosingMethod);
-
-    enclosingMethod.addParam(x);
-    return x;
-  }
-
-  private final JMethod enclosingMethod;
+public class JParameter extends JVariable {
   private final boolean isThis;
 
-  public JParameter(SourceInfo info, String name, JType type, boolean isFinal, boolean isThis,
-      JMethod enclosingMethod) {
+  public JParameter(SourceInfo info, String name, JType type, boolean isFinal, boolean isThis) {
     super(info, name, type, isFinal);
-    this.enclosingMethod = enclosingMethod;
     this.isThis = isThis;
-  }
-
-  @Override
-  public JMethod getEnclosingMethod() {
-    return enclosingMethod;
   }
 
   /**

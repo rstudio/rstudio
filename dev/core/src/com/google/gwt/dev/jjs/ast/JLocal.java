@@ -20,18 +20,10 @@ import com.google.gwt.dev.jjs.SourceInfo;
 /**
  * Java local variable definition.
  */
-public class JLocal extends JVariable implements HasEnclosingMethod {
+public class JLocal extends JVariable {
 
-  private final JMethodBody enclosingMethodBody;
-
-  JLocal(SourceInfo info, String name, JType type, boolean isFinal, JMethodBody enclosingMethodBody) {
+  JLocal(SourceInfo info, String name, JType type, boolean isFinal) {
     super(info, name, type, isFinal);
-    this.enclosingMethodBody = enclosingMethodBody;
-  }
-
-  @Override
-  public JMethod getEnclosingMethod() {
-    return enclosingMethodBody.method;
   }
 
   @Override
@@ -46,5 +38,4 @@ public class JLocal extends JVariable implements HasEnclosingMethod {
     }
     visitor.endVisit(this, ctx);
   }
-
 }

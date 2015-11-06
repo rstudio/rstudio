@@ -1276,10 +1276,8 @@ public class GwtAstBuilder {
       // implemented
       for (JParameter origParam : interfaceMethod.getParams()) {
         JType origType = origParam.getType();
-        samMethod.addParam(new JParameter(origParam.getSourceInfo(),
-            origParam.getName(), origType,
-            origParam.isFinal(), origParam.isThis(),
-            samMethod));
+        samMethod.addParam(new JParameter(origParam.getSourceInfo(), origParam.getName(), origType,
+            origParam.isFinal(), origParam.isThis()));
       }
       // Create a body like void onClick(ClickEvent e) { OuterClass.lambdaMethod(locals, e); }
       JMethodBody samMethodBody = new JMethodBody(info);
@@ -1459,8 +1457,7 @@ public class GwtAstBuilder {
 
     private JParameter createLambdaParameter(SourceInfo info, String paramName, JType paramType,
         JConstructor ctor) {
-      JParameter outerParam = new JParameter(info, paramName, paramType,
-          true, false, ctor);
+      JParameter outerParam = new JParameter(info, paramName, paramType, true, false);
       ctor.addParam(outerParam);
       return outerParam;
     }
@@ -1834,10 +1831,8 @@ public class GwtAstBuilder {
             false, false, true, interfaceMethod.getAccess());
         for (JParameter origParam : interfaceMethod.getParams()) {
           JType origType = origParam.getType();
-          samMethod.addParam(new JParameter(origParam.getSourceInfo(),
-              origParam.getName(), origType,
-              origParam.isFinal(), origParam.isThis(),
-              samMethod));
+          samMethod.addParam(new JParameter(origParam.getSourceInfo(), origParam.getName(),
+              origType, origParam.isFinal(), origParam.isThis()));
         }
         JMethodBody samMethodBody = new JMethodBody(info);
 
@@ -2782,8 +2777,7 @@ public class GwtAstBuilder {
         JParameter param = implParams.get(paramIdx++);
         JType paramType = typeMap.get(jdtParamType.erasure());
         JParameter newParam =
-            new JParameter(param.getSourceInfo(), param.getName(), paramType, true, false,
-                bridgeMethod);
+            new JParameter(param.getSourceInfo(), param.getName(), paramType, true, false);
         bridgeMethod.addParam(newParam);
       }
       for (ReferenceBinding exceptionReference : jdtBridgeMethod.thrownExceptions) {
@@ -4024,9 +4018,8 @@ public class GwtAstBuilder {
       if (x.binding.declaringClass.isEnum()) {
         // Enums have hidden arguments for name and value
         method.addParam(new JParameter(info, "enum$name", typeMap.get(x.scope.getJavaLangString()),
-            true, false, method));
-        method.addParam(new JParameter(info, "enum$ordinal", JPrimitiveType.INT, true, false,
-            method));
+            true, false));
+        method.addParam(new JParameter(info, "enum$ordinal", JPrimitiveType.INT, true, false));
       }
       // add synthetic args for outer this
       if (isNested) {
@@ -4156,7 +4149,7 @@ public class GwtAstBuilder {
   private void createParameter(SourceInfo info, LocalVariableBinding binding, String name,
       JMethod method, Annotation... annotations) {
     JParameter param =
-        new JParameter(info, name, typeMap.get(binding.type), binding.isFinal(), false, method);
+        new JParameter(info, name, typeMap.get(binding.type), binding.isFinal(), false);
     processSuppressedWarnings(param, annotations);
     method.addParam(param);
   }

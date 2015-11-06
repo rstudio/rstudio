@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JExpression;
+import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNode;
@@ -34,9 +35,9 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
-import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,7 +53,6 @@ public class SameParameterValueOptimizer {
    * Fill parameterValues map.
    */
   private class AnalysisVisitor extends JVisitor {
-
     @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
       if (x.isAssignment() && x.getLhs() instanceof JParameterRef) {
@@ -69,30 +69,30 @@ public class SameParameterValueOptimizer {
         return;
       }
 
-      List<JExpression> args = x.getArgs();
-      List<JParameter> params = method.getParams();
+      List<JExpression> arguments = x.getArgs();
+      List<JParameter> parameters = method.getParams();
 
-      for (int i = 0; i < args.size() && i < params.size(); i++) {
-        JParameter param = params.get(i);
-        JExpression arg = args.get(i);
+      for (int i = 0; i < arguments.size() && i < parameters.size(); i++) {
+        JParameter parameter = parameters.get(i);
+        JExpression argument = arguments.get(i);
 
-        if (!(arg instanceof JValueLiteral)) {
-          parameterValues.put(param, null);
+        if (!(argument instanceof JValueLiteral)) {
+          parameterValues.put(parameter, null);
           continue;
         }
 
-        if (!parameterValues.containsKey(param)) {
-          parameterValues.put(param, (JValueLiteral) arg);
+        if (!parameterValues.containsKey(parameter)) {
+          parameterValues.put(parameter, (JValueLiteral) argument);
           continue;
         }
 
-        JValueLiteral commonParamValue = parameterValues.get(param);
+        JValueLiteral commonParamValue = parameterValues.get(parameter);
         if (commonParamValue == null) {
           continue;
         }
 
-        if (!equalLiterals(commonParamValue, (JValueLiteral) arg)) {
-          parameterValues.put(param, null);
+        if (!equalLiterals(commonParamValue, (JValueLiteral) argument)) {
+          parameterValues.put(parameter, null);
         }
       }
     }
@@ -151,21 +151,31 @@ public class SameParameterValueOptimizer {
    */
   private class SubstituteParameterVisitor extends JChangeTrackingVisitor {
     private final CloneExpressionVisitor cloner;
-    private final JExpression expression;
-    private final JParameter parameter;
 
-    public SubstituteParameterVisitor(JParameter parameter, JExpression expression,
-        OptimizerContext optimizerCtx) {
+    public SubstituteParameterVisitor(OptimizerContext optimizerCtx) {
       super(optimizerCtx);
-      this.parameter = parameter;
-      this.expression = expression;
       cloner = new CloneExpressionVisitor();
     }
 
     @Override
+    public boolean enter(JMethod x, Context ctx) {
+      if (nonOptimizableMethods.contains(x)) {
+        return false;
+      }
+      for (JParameter parameter : x.getParams()) {
+        if (parameterValues.get(parameter) != null) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    @Override
     public void endVisit(JParameterRef x, Context ctx) {
-      if (x.getParameter() == parameter) {
-        ctx.replaceMe(cloner.cloneExpression(expression));
+      JParameter parameter = x.getParameter();
+      JLiteral value = parameterValues.get(parameter);
+      if (value != null) {
+        ctx.replaceMe(cloner.cloneExpression(Simplifier.cast(parameter.getType(), value)));
       }
     }
   }
@@ -193,15 +203,14 @@ public class SameParameterValueOptimizer {
    * all calls. If value is not null - the parameter's value is the same across
    * all calls.
    */
-  private final Map<JParameter, JValueLiteral> parameterValues =
-      new IdentityHashMap<JParameter, JValueLiteral>();
+  private final Map<JParameter, JValueLiteral> parameterValues = Maps.newIdentityHashMap();
   private final JProgram program;
 
   /**
    * These methods should not be tried to be optimized, either because they are polymorphic or we
    * cannot see all the calls.
    */
-  private final Set<JMethod> nonOptimizableMethods = new HashSet<JMethod>();
+  private final Set<JMethod> nonOptimizableMethods = Sets.newHashSet();
 
   private SameParameterValueOptimizer(JProgram program) {
     this.program = program;
@@ -209,22 +218,12 @@ public class SameParameterValueOptimizer {
 
   private OptimizerStats execImpl(JNode node, OptimizerContext optimizerCtx) {
     OptimizerStats stats = new OptimizerStats(NAME);
-    AnalysisVisitor analysisVisitor = new AnalysisVisitor();
-    analysisVisitor.accept(node);
+    new AnalysisVisitor().accept(node);
+    SubstituteParameterVisitor substituteParameterVisitor =
+        new SubstituteParameterVisitor(optimizerCtx);
+    substituteParameterVisitor.accept(node);
+    stats.recordModified(substituteParameterVisitor.getNumMods());
 
-    for (JParameter parameter : parameterValues.keySet()) {
-      if (nonOptimizableMethods.contains(parameter.getEnclosingMethod())) {
-        continue;
-      }
-      JValueLiteral valueLiteral = parameterValues.get(parameter);
-      if (valueLiteral != null) {
-        SubstituteParameterVisitor substituteParameterVisitor =
-            new SubstituteParameterVisitor(parameter, Simplifier.cast(parameter.getType(),
-                valueLiteral), optimizerCtx);
-        substituteParameterVisitor.accept(parameter.getEnclosingMethod());
-        stats.recordModified(substituteParameterVisitor.getNumMods());
-      }
-    }
     JavaAstVerifier.assertProgramIsConsistent(program);
     return stats;
   }

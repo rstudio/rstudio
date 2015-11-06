@@ -177,14 +177,14 @@ public class MakeCallsStatic {
       JType thisParameterType = enclosingType.strengthenToNonNull();
       // Setup parameters; map from the old params to the new params
       JParameter thisParam =
-          JParameter.create(sourceInfo, "this$static", thisParameterType, true, true,
+          JProgram.createParameter(sourceInfo, "this$static", thisParameterType, true, true,
               newMethod);
       Map<JParameter, JParameter> varMap = new IdentityHashMap<JParameter, JParameter>();
       for (int i = 0; i < x.getParams().size(); ++i) {
         JParameter oldVar = x.getParams().get(i);
         JParameter newVar =
-            JParameter.create(oldVar.getSourceInfo(), oldVar.getName(), oldVar.getType(), oldVar
-                .isFinal(), false, newMethod);
+            JProgram.createParameter(oldVar.getSourceInfo(), oldVar.getName(), oldVar.getType(),
+                oldVar.isFinal(), false, newMethod);
         varMap.put(oldVar, newVar);
       }
 

@@ -542,7 +542,7 @@ public class JjsUtils {
     // Copy parameters.
     for (JParameter param : exampleMethod.getParams()) {
       emptyMethod.addParam(new JParameter(param.getSourceInfo(), param.getName(), param.getType(),
-          param.isFinal(), param.isThis(), emptyMethod));
+          param.isFinal(), param.isThis()));
     }
     JMethodBody body = new JMethodBody(exampleMethod.getSourceInfo());
     emptyMethod.setBody(body);

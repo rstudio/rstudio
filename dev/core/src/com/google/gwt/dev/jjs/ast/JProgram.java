@@ -224,7 +224,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     assert (name != null);
     assert (type != null);
     assert (enclosingMethodBody != null);
-    JLocal x = new JLocal(info, name, type, isFinal, enclosingMethodBody);
+    JLocal x = new JLocal(info, name, type, isFinal);
     enclosingMethodBody.addLocal(x);
     return x;
   }
@@ -235,7 +235,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     assert (type != null);
     assert (enclosingMethod != null);
 
-    JParameter x = new JParameter(info, name, type, isFinal, isThis, enclosingMethod);
+    JParameter x = new JParameter(info, name, type, isFinal, isThis);
     enclosingMethod.addParam(x);
     return x;
   }
