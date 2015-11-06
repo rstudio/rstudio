@@ -874,19 +874,19 @@ public class GenerateJavaScriptAST {
       if (method.isStatic()) {
         return dispatchToStatic(qualifier, method, args, methodCall.getSourceInfo());
       } else if (methodCall.isStaticDispatchOnly()) {
-        return  dispatchToSuper(qualifier, method, args, methodCall.getSourceInfo());
+        return dispatchToSuper(qualifier, method, args, methodCall.getSourceInfo());
       } else if (method.isOrOverridesJsFunctionMethod()) {
-        return  dispatchToJsFunction(qualifier, args, methodCall.getSourceInfo());
+        return dispatchToJsFunction(qualifier, args, methodCall.getSourceInfo());
       } else {
-        return  dispatchToInstanceMethod(qualifier, method, args, methodCall.getSourceInfo());
+        return dispatchToInstanceMethod(qualifier, method, args, methodCall.getSourceInfo());
       }
     }
 
     private JsExpression dispatchToStatic(JsExpression unnecessaryQualifier, JMethod method,
         List<JsExpression> args, SourceInfo sourceInfo) {
       JsNameRef methodName = createStaticReference(method, sourceInfo);
-      JsExpression result = new JsInvocation(sourceInfo, methodName, args);
-
+      JsExpression result = JsUtils.createInvocationOrPropertyAccess(
+          sourceInfo, method.getJsPropertyAccessorType(), methodName, args);
       return JsUtils.createCommaExpression(unnecessaryQualifier, result);
     }
 

@@ -57,4 +57,27 @@ public class JsMethodTest extends GWTTestCase {
     assertTrue(isFinite(0));
     assertTrue(isFinite(1));
   }
+
+  @JsProperty(namespace = GLOBAL, name = "NaN")
+  private static native double getNaN();
+
+  @JsProperty(namespace = GLOBAL, name = "Infinity")
+  private static native double infinity();
+
+  public void testStaticNativeJsPropertyGetter() {
+    assertTrue(getNaN() != getNaN());
+    assertTrue(Double.isInfinite(infinity()));
+    assertTrue(Double.isInfinite(-infinity()));
+  }
+
+  @JsProperty(namespace = GLOBAL)
+  private static native void setJsInteropSecret(String magic);
+
+  @JsProperty(namespace = GLOBAL)
+  private static native String getJsInteropSecret();
+
+  public void testStaticNativeJsPropertySetter() {
+    setJsInteropSecret("very secret!");
+    assertEquals("very secret!", getJsInteropSecret());
+  }
 }
