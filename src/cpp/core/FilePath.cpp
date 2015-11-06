@@ -764,6 +764,25 @@ Error FilePath::createDirectory(const std::string& name) const
    }
 }
 
+Error FilePath::ensureFile() const
+{
+   // nothing to do if the file already exists
+   if (exists())
+      return Success();
+
+   // create output stream to ensure file creation
+   boost::shared_ptr<std::ostream> pStream;
+   Error error = open_w(&pStream);
+   if (error)
+      return error;
+
+   // release file handle
+   pStream->flush();
+   pStream.reset(); 
+
+   return Success();
+}
+
 Error FilePath::resetDirectory() const
 {
    Error error = removeIfExists();

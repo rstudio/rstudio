@@ -317,8 +317,8 @@ private:
 - (void) performClipboardAction: (SEL) selector
 {
 
-#if defined(__MAC_OS_X_VERSION_MAX_ALLOWED) && defined(__MAC_10_11)
-#   if __MAC_OS_X_VERSION_MAX_ALLOWED >= __MAC_10_11
+#if defined(__MAC_OS_X_VERSION_MAX_ALLOWED) && defined(__MAC_10_10)
+#   if __MAC_OS_X_VERSION_MAX_ALLOWED >= __MAC_10_10
    typedef WKWebView RSWebView;
 #   else
    typedef WebView RSWebView;
