@@ -1326,19 +1326,19 @@ public class TextEditingTarget implements
                   beginQueuedCollabSession();
                }
             }
-            else
+
+            // check to see if the file's been saved externally--we do this even
+            // in a collaborative editing session so we can get delete
+            // notifications
+            Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
             {
-               // check to see if the file's been saved externally
-               Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+               public boolean execute()
                {
-                  public boolean execute()
-                  {
-                     if (view_.isAttached())
-                        checkForExternalEdit();
-                     return false;
-                  }
-               }, 500);
-            }
+                  if (view_.isAttached())
+                     checkForExternalEdit();
+                  return false;
+               }
+            }, 500);
             
             // if we're in the main window and we get focus, let the window
             // manager know (satellite windows are tracked on window activation)
@@ -5139,16 +5139,6 @@ public class TextEditingTarget implements
       if (getPath() == null)
          return;
       
-      // If we're in a collaborative session, we rely on it to sync contents
-      // (including saved/unsaved state); otherwise we'd need to (a) distinguish
-      // between "external edits" caused by other people in the session saving
-      // the file (already synced) and true external edits from other
-      // programs/processes,  and (b) and figure out what to when > 1 person
-      // gets the "file has changed externally" prompt (even at best this
-      // creates a "last writer wins" race condition)
-      if (docDisplay_ != null && docDisplay_.hasActiveCollabSession())
-         return;
-
       final Invalidation.Token token = externalEditCheckInvalidation_.getInvalidationToken();
 
       server_.checkForExternalEdit(
@@ -5196,6 +5186,18 @@ public class TextEditingTarget implements
                   }
                   else if (response.isModified())
                   {
+                     // If we're in a collaborative session, we rely on it to
+                     // sync modifications; otherwise we'd need to (a)
+                     // distinguish between "external edits" caused by other
+                     // people in the session saving the file (already synced)
+                     // and true external edits from other programs/processes, 
+                     // and (b) and figure out what to when > 1 person gets the
+                     // "file has changed externally" prompt (even at best this
+                     // creates a "last writer wins" race condition)
+                     if (docDisplay_ != null && 
+                         docDisplay_.hasActiveCollabSession())
+                        return;
+
                      ignoreDeletes_ = false; // Now we know it exists
 
                      // Use StringUtil.formatDate(response.getLastModified())?
