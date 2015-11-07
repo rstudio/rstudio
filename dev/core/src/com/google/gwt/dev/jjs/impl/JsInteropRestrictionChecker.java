@@ -84,8 +84,6 @@ public class JsInteropRestrictionChecker {
   private final JProgram jprogram;
   private final MinimalRebuildCache minimalRebuildCache;
 
-  // TODO review any use of word export
-
   private JsInteropRestrictionChecker(JProgram jprogram,
       MinimalRebuildCache minimalRebuildCache) {
     this.jprogram = jprogram;
@@ -93,29 +91,23 @@ public class JsInteropRestrictionChecker {
   }
 
   /**
-   * Returns true if the constructor method is locally empty (allows calls to empty init and super
+   * Returns true if the constructor method is locally empty (allows calls to init and super
    * constructor).
    */
   private static boolean isConstructorEmpty(final JConstructor constructor) {
-    List<JStatement> statements = FluentIterable
-        .from(constructor.getBody().getStatements())
-        .filter(new Predicate<JStatement>() {
-          @Override
-          public boolean apply(JStatement statement) {
-            JClassType type = constructor.getEnclosingType();
-            if (isImplicitSuperCall(statement, type.getSuperClass())) {
-              return false;
-            }
-            if (isEmptyInitCall(statement, type)) {
-              return false;
-            }
-            if (statement instanceof JDeclarationStatement) {
-              return ((JDeclarationStatement) statement).getInitializer() != null;
-            }
-            return true;
-          }
-        }).toList();
-    return statements.isEmpty();
+    return Iterables.all(constructor.getBody().getStatements(), new Predicate<JStatement>() {
+      @Override
+      public boolean apply(JStatement statement) {
+        JClassType type = constructor.getEnclosingType();
+        if (isImplicitSuperCall(statement, type.getSuperClass())) {
+          return true;
+        }
+        if (isInitCall(statement, type)) {
+          return true;
+        }
+        return false;
+      }
+    });
   }
 
   private static JMethodCall isMethodCall(JStatement statement) {
@@ -127,12 +119,11 @@ public class JsInteropRestrictionChecker {
     return expression instanceof JMethodCall ? (JMethodCall) expression : null;
   }
 
-  private static boolean isEmptyInitCall(JStatement statement, JDeclaredType type) {
+  private static boolean isInitCall(JStatement statement, JDeclaredType type) {
     JMethodCall methodCall = isMethodCall(statement);
 
     return methodCall != null
-        && methodCall.getTarget() == type.getInitMethod()
-        && ((JMethodBody) methodCall.getTarget().getBody()).getStatements().isEmpty();
+        && methodCall.getTarget() == type.getInitMethod();
   }
 
   private static boolean isImplicitSuperCall(JStatement statement, JDeclaredType superType) {
@@ -144,11 +135,16 @@ public class JsInteropRestrictionChecker {
         && methodCall.getTarget().getEnclosingType() == superType;
   }
 
+  private static boolean isInitEmpty(JDeclaredType type) {
+    return type.getInitMethod() == null
+        || ((JMethodBody) type.getInitMethod().getBody()).getStatements().isEmpty();
+  }
+
   /**
    * Returns true if the clinit for a type is locally empty (except for the call to its super
    * clinit).
    */
-  private static boolean isClinitEmpty(JDeclaredType type) {
+  private static boolean isClinitEmpty(JDeclaredType type, final boolean skipDeclaration) {
     JMethod clinit = type.getClinitMethod();
     List<JStatement> statements = FluentIterable
         .from(((JMethodBody) clinit.getBody()).getStatements())
@@ -157,6 +153,9 @@ public class JsInteropRestrictionChecker {
           public boolean apply(JStatement statement) {
             if (!(statement instanceof JDeclarationStatement)) {
               return true;
+            }
+            if (skipDeclaration) {
+              return false;
             }
             JDeclarationStatement declarationStatement = (JDeclarationStatement) statement;
             JField field = (JField) declarationStatement.getVariableRef().getTarget();
@@ -235,7 +234,7 @@ public class JsInteropRestrictionChecker {
     }
 
     if (member.isJsOverlay()) {
-      checkJsOverlay((JMethod) member);
+      checkJsOverlay(member);
       return;
     }
 
@@ -265,26 +264,35 @@ public class JsInteropRestrictionChecker {
     }
   }
 
-  private void checkJsOverlay(JMethod method) {
-    if (method.getEnclosingType().isJsoType()) {
+  private void checkJsOverlay(JMember member) {
+    if (member.getEnclosingType().isJsoType()) {
       return;
     }
 
-    String methodDescription = JjsUtils.getReadableDescription(method);
+    String methodDescription = JjsUtils.getReadableDescription(member);
 
-    if (!method.getEnclosingType().isJsNative()) {
-      logError(method,
-          "Method '%s' in non-native type cannot be @JsOverlay.", methodDescription);
+    if (!member.getEnclosingType().isJsNative()) {
+      logError(member, "JsOverlay '%s' can only be declared in a native type.", methodDescription);
     }
 
+    if (member instanceof JField) {
+      JField field = (JField) member;
+      if (!field.isCompileTimeConstant()) {
+        logError(
+            member, "JsOverlay field '%s' can only be a compile time constant.", methodDescription);
+      }
+      return;
+    }
+
+    JMethod method = (JMethod) member;
     if (!method.getOverriddenMethods().isEmpty()) {
-      logError(method,
+      logError(member,
           "JsOverlay method '%s' cannot override a supertype method.", methodDescription);
       return;
     }
 
-    if (method.isJsNative() || (!method.isFinal() && !method.isStatic())) {
-      logError(method,
+    if (method.getBody() == null || (!method.isFinal() && !method.isStatic())) {
+      logError(member,
           "JsOverlay method '%s' cannot be non-final nor native.", methodDescription);
     }
   }
@@ -296,16 +304,39 @@ public class JsInteropRestrictionChecker {
       return;
     }
 
-    if (member.isSynthetic() || member.isJsNative() || member.isJsOverlay()) {
+    if (member.isSynthetic() || member.isJsOverlay()) {
       return;
     }
 
-    if (member.getJsName() == null) {
-      logError(member, "Native JsType member %s is not public or has @JsIgnore.",
-          getMemberDescription(member));
-    } else {
-      logError(member, "Native JsType method %s should be native or abstract.",
-          getMemberDescription(member));
+    JsMemberType jsMemberType = member.getJsMemberType();
+    switch (jsMemberType) {
+      case CONSTRUCTOR:
+        if (!isConstructorEmpty((JConstructor) member)) {
+          logError(member, "Native JsType constructor %s cannot have non-empty method body.",
+              getMemberDescription(member));
+        }
+        break;
+      case METHOD:
+      case GETTER:
+      case SETTER:
+      case UNDEFINED_ACCESSOR:
+        JMethod method = (JMethod) member;
+        if (!method.isAbstract() && method.getBody() != null) {
+          logError(member, "Native JsType method %s should be native or abstract.",
+              getMemberDescription(member));
+        }
+        break;
+      case PROPERTY:
+        JField field = (JField) member;
+        if (field.hasInitializer()) {
+          logError(member, "Native JsType field %s cannot have initializer.",
+              getMemberDescription(member));
+        }
+        break;
+      case NONE:
+        logError(member, "Native JsType member %s cannot have @JsIgnore.",
+            getMemberDescription(member));
+        break;
     }
   }
 
@@ -501,21 +532,19 @@ public class JsInteropRestrictionChecker {
       }
     }
 
-    if (!isClinitEmpty(type)) {
+    if (!isInitEmpty(type)) {
+      logError("Native JsType '%s' cannot have initializer.", type);
+    }
+
+    if (!isClinitEmpty(type, true)) {
       logError("Native JsType '%s' cannot have static initializer.", type);
     }
 
-    for (JConstructor constructor : type.getConstructors()) {
-      if (!isConstructorEmpty(constructor)) {
-        logError(constructor, "Native JsType constructor %s cannot have non-empty method body.",
-            getMemberDescription(constructor));
-      }
-    }
     return true;
   }
 
   private void checkJsFunction(JDeclaredType type) {
-    if (!isClinitEmpty(type)) {
+    if (!isClinitEmpty(type, false)) {
       logError("JsFunction '%s' cannot have static initializer.", type);
     }
 

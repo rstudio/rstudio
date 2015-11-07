@@ -48,10 +48,11 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
     }
   };
 
-  private String jsName;
-  private boolean exported;
-  private String jsNamespace;
   private JsMemberType jsMemberType = JsMemberType.NONE;
+  private String jsName;
+  private String jsNamespace;
+  private boolean exported;
+  private boolean isJsOverlay = false;
   private Specialization specialization;
   private InliningMode inliningMode = InliningMode.NORMAL;
   private boolean preventDevirtualization = false;
@@ -59,7 +60,6 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
   private boolean defaultMethod = false;
   private boolean syntheticAccidentalOverride = false;
   private Set<String> suppressedWarnings;
-  private boolean isJsOverlay = false;
 
   @Override
   public void setJsMemberInfo(JsMemberType type, String namespace, String name, boolean exported) {
@@ -194,7 +194,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
 
   @Override
   public boolean isJsNative() {
-    return (isAbstract || body == null) && jsName != null;
+    return body == null || (!isJsOverlay() && getEnclosingType().isJsNative());
   }
 
   @Override
@@ -247,6 +247,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
     this.defaultMethod = true;
   }
 
+  @Override
   public void setJsOverlay() {
     this.isJsOverlay = true;
   }

@@ -118,6 +118,8 @@ public interface HasJsInfo extends HasJsName {
 
   void setJsMemberInfo(JsMemberType type, String namespace, String name, boolean exported);
 
+  void setJsOverlay();
+
   JsMemberType getJsMemberType();
 
   boolean isJsNative();

@@ -173,6 +173,9 @@ public class MakeCallsStatic {
       newMethod.setHasSideEffects(x.hasSideEffects());
       newMethod.setSynthetic();
       newMethod.addThrownExceptions(x.getThrownExceptions());
+      if (x.isJsOverlay()) {
+        newMethod.setJsOverlay();
+      }
 
       JType thisParameterType = enclosingType.strengthenToNonNull();
       // Setup parameters; map from the old params to the new params

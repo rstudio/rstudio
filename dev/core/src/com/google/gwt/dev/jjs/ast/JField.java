@@ -84,6 +84,7 @@ public class JField extends JVariable implements JMember {
   private String jsName;
   private String jsNamespace;
   private boolean exported;
+  private boolean isJsOverlay = false;
   private final JDeclaredType enclosingType;
   private final boolean isCompileTimeConstant;
   private final boolean isStatic;
@@ -141,6 +142,11 @@ public class JField extends JVariable implements JMember {
   }
 
   @Override
+  public void setJsOverlay() {
+    isJsOverlay = true;
+  }
+
+  @Override
   public JsMemberType getJsMemberType() {
     return jsMembertype;
   }
@@ -173,12 +179,12 @@ public class JField extends JVariable implements JMember {
 
   @Override
   public boolean isJsNative() {
-    return enclosingType.isJsNative() && jsName != null;
+    return !isJsOverlay() && enclosingType.isJsNative();
   }
 
   @Override
   public boolean isJsOverlay() {
-    return false;
+    return isJsOverlay;
   }
 
   @Override

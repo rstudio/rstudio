@@ -23,14 +23,15 @@ import java.lang.annotation.Target;
 
 /**
  * JsOverlay is used to add new helper APIs to existing JavaScript types. This is achieved by adding
- * the new method to @JsType(isNative=true) and marking it with this annotation.
+ * the new method/field to a @JsType(isNative=true) and marking it with this annotation.
  * <p>
  * Note that the JsOverlay methods cannot be called from JavaScript, cannot override any existing
  * methods and needs to be marked as final. This is because underneath, the original type is not
- * modified and the method is simply turned into a static dispatch.
+ * modified and the method is simply turned into a static dispatch. Similarly, JsOverlay fields can
+ * only be compile time constants.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.FIELD})
 @Documented
 public @interface JsOverlay {
 }

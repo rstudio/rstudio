@@ -89,10 +89,6 @@ public final class JsInteropUtil {
   }
 
   public static void maybeSetJsInteropPropertiesNew(JMethod method, Annotation... annotations) {
-    if (getInteropAnnotation(annotations, "JsOverlay") != null) {
-      method.setJsOverlay();
-    }
-
     AnnotationBinding annotation = getInteropAnnotation(annotations, "JsMethod");
     if (annotation == null) {
       annotation = getInteropAnnotation(annotations, "JsConstructor");
@@ -106,6 +102,9 @@ public final class JsInteropUtil {
   }
 
   public static void maybeSetJsInteropProperties(JField field, Annotation... annotations) {
+    if (field.getEnclosingType().isJsNative() && field.isCompileTimeConstant()) {
+      field.setJsOverlay();
+    }
     setJsInteropProperties(field, annotations, false);
   }
 
@@ -128,7 +127,7 @@ public final class JsInteropUtil {
     /* Apply class wide JsInterop annotations */
 
     boolean ignore = JdtUtil.getAnnotation(annotations, JSNOEXPORT_CLASS) != null;
-    if (ignore || (!member.isPublic() && !isNativeConstructor(member)) || hasExport) {
+    if (ignore || (!member.isPublic() && !member.getEnclosingType().isJsNative())) {
       return;
     }
 
@@ -143,18 +142,19 @@ public final class JsInteropUtil {
     }
   }
 
-  private static boolean isNativeConstructor(JMember member) {
-    return member instanceof JConstructor && member.getEnclosingType().isJsNative();
-  }
-
   private static void setJsInteropPropertiesNew(JMember member, Annotation[] annotations,
       AnnotationBinding memberAnnotation, boolean isAccessor) {
+    if (getInteropAnnotation(annotations, "JsOverlay") != null) {
+      member.setJsOverlay();
+    }
+
     if (getInteropAnnotation(annotations, "JsIgnore") != null) {
       return;
     }
 
     boolean isPublicMemberForJsType = member.getEnclosingType().isJsType() && member.isPublic();
-    if (!isPublicMemberForJsType && !isNativeConstructor(member) && memberAnnotation == null) {
+    boolean memberForNativeType = member.getEnclosingType().isJsNative();
+    if (!isPublicMemberForJsType && !memberForNativeType && memberAnnotation == null) {
       return;
     }
 

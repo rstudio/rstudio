@@ -485,6 +485,9 @@ public class JsTypeTest extends GWTTestCase {
   @JsType(isNative = true, namespace = GLOBAL, name = "Object")
   static class NativeJsTypeWithOverlay {
 
+    @JsOverlay
+    public static final int x = 2;
+
     public static native String[] keys(Object o);
 
     @JsOverlay @DoNotInline
@@ -508,5 +511,6 @@ public class JsTypeTest extends GWTTestCase {
     NativeJsTypeWithOverlay object = createNativeJsTypeWithOverlay();
     assertTrue(object.hasM());
     assertTrue(NativeJsTypeWithOverlay.hasM(object));
+    assertEquals(2, NativeJsTypeWithOverlay.x);
   }
 }
