@@ -20,14 +20,13 @@ import junit.framework.TestCase;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Tests for ChangedFileAccumulator.
  */
 public class ChangedFileAccumulatorTest extends TestCase {
 
-  public void testAddFile() throws IOException, InterruptedException, ExecutionException {
+  public void testAddFile() throws Exception {
     File rootDirectory = Files.createTempDir();
     File subDirectory = createDirectoryIn("subdir", rootDirectory);
 
@@ -46,7 +45,7 @@ public class ChangedFileAccumulatorTest extends TestCase {
     changedFileAccumulator.shutdown();
   }
 
-  public void testDeleteFile() throws IOException, InterruptedException, ExecutionException {
+  public void testDeleteFile() throws Exception {
     File rootDirectory = Files.createTempDir();
     File subDirectory = createDirectoryIn("subdir", rootDirectory);
     File originalFile = createFileIn("SomeFile.java", subDirectory);
@@ -66,8 +65,7 @@ public class ChangedFileAccumulatorTest extends TestCase {
     changedFileAccumulator.shutdown();
   }
 
-  public void testListensInNewDirectories() throws IOException, InterruptedException,
-      ExecutionException {
+  public void testListensInNewDirectories() throws Exception {
     File rootDirectory = Files.createTempDir();
 
     ChangedFileAccumulator changedFileAccumulator =
@@ -89,7 +87,7 @@ public class ChangedFileAccumulatorTest extends TestCase {
     changedFileAccumulator.shutdown();
   }
 
-  public void testModifyRepeatedly() throws IOException, InterruptedException, ExecutionException {
+  public void testModifyRepeatedly() throws Exception {
     File rootDirectory = Files.createTempDir();
     File fooFile = createFileIn("Foo.java", rootDirectory);
 
@@ -109,7 +107,7 @@ public class ChangedFileAccumulatorTest extends TestCase {
     changedFileAccumulator.shutdown();
   }
 
-  public void testMultipleListeners() throws IOException, InterruptedException, ExecutionException {
+  public void testMultipleListeners() throws Exception {
     File rootDirectory = Files.createTempDir();
     File subDirectory = createDirectoryIn("subdir", rootDirectory);
 
@@ -136,7 +134,7 @@ public class ChangedFileAccumulatorTest extends TestCase {
     changedFileAccumulator2.shutdown();
   }
 
-  public void testRenameFile() throws IOException, InterruptedException, ExecutionException {
+  public void testRenameFile() throws Exception {
     File rootDirectory = Files.createTempDir();
     File subDirectory = createDirectoryIn("subdir", rootDirectory);
     File originalFile = createFileIn("OriginalName.java", subDirectory);
@@ -158,8 +156,64 @@ public class ChangedFileAccumulatorTest extends TestCase {
     changedFileAccumulator.shutdown();
   }
 
-  public void testSymlinkInfiniteLoop() throws IOException, InterruptedException,
-      ExecutionException {
+  public void testRenameDirectory() throws Exception {
+    File rootDirectory = Files.createTempDir();
+    File subDirectory = createDirectoryIn("original_dir", rootDirectory);
+    createFileIn("Name1.java", subDirectory);
+    createFileIn("Name2.java", subDirectory);
+    File renamedSubDirectory = new File(rootDirectory, "new_dir");
+
+    ChangedFileAccumulator changedFileAccumulator =
+        new ChangedFileAccumulator(rootDirectory.toPath());
+
+    assertTrue(changedFileAccumulator.getAndClearChangedFiles().isEmpty());
+
+    subDirectory.renameTo(renamedSubDirectory);
+    waitForFileEvents();
+
+    List<File> modifiedFiles = changedFileAccumulator.getAndClearChangedFiles();
+    assertEquals(6, modifiedFiles.size());
+    assertTrue(modifiedFiles.get(0).getPath().endsWith("new_dir"));
+    assertTrue(modifiedFiles.get(1).getPath().endsWith("new_dir/Name1.java"));
+    assertTrue(modifiedFiles.get(2).getPath().endsWith("new_dir/Name2.java"));
+    assertTrue(modifiedFiles.get(3).getPath().endsWith("original_dir"));
+    assertTrue(modifiedFiles.get(4).getPath().endsWith("original_dir/Name1.java"));
+    assertTrue(modifiedFiles.get(5).getPath().endsWith("original_dir/Name2.java"));
+
+    changedFileAccumulator.shutdown();
+  }
+
+  public void testRenameParentDirectory() throws Exception {
+    File rootDirectory = Files.createTempDir();
+    File parentDirectory = createDirectoryIn("original_dir", rootDirectory);
+    File subDirectory = createDirectoryIn("subdir", parentDirectory);
+    createFileIn("Name1.java", subDirectory);
+    createFileIn("Name2.java", subDirectory);
+    File renamedParentDirectory = new File(rootDirectory, "new_dir");
+
+    ChangedFileAccumulator changedFileAccumulator =
+        new ChangedFileAccumulator(rootDirectory.toPath());
+
+    assertTrue(changedFileAccumulator.getAndClearChangedFiles().isEmpty());
+
+    parentDirectory.renameTo(renamedParentDirectory);
+    waitForFileEvents();
+
+    List<File> modifiedFiles = changedFileAccumulator.getAndClearChangedFiles();
+    assertEquals(8, modifiedFiles.size());
+    assertTrue(modifiedFiles.get(0).getPath().endsWith("new_dir"));
+    assertTrue(modifiedFiles.get(1).getPath().endsWith("new_dir/subdir"));
+    assertTrue(modifiedFiles.get(2).getPath().endsWith("new_dir/subdir/Name1.java"));
+    assertTrue(modifiedFiles.get(3).getPath().endsWith("new_dir/subdir/Name2.java"));
+    assertTrue(modifiedFiles.get(4).getPath().endsWith("original_dir"));
+    assertTrue(modifiedFiles.get(5).getPath().endsWith("original_dir/subdir"));
+    assertTrue(modifiedFiles.get(6).getPath().endsWith("original_dir/subdir/Name1.java"));
+    assertTrue(modifiedFiles.get(7).getPath().endsWith("original_dir/subdir/Name2.java"));
+
+    changedFileAccumulator.shutdown();
+  }
+
+  public void testSymlinkInfiniteLoop() throws Exception {
     File rootDirectory = Files.createTempDir();
     File subDirectory = Files.createTempDir();
 
@@ -178,14 +232,15 @@ public class ChangedFileAccumulatorTest extends TestCase {
 
     // Will throw an error if ChangedFileAccumulator got stuck in an infinite directory scan loop.
     List<File> modifiedFiles = changedFileAccumulator.getAndClearChangedFiles();
-    assertEquals(2, modifiedFiles.size());
+    assertEquals(3, modifiedFiles.size());
     assertTrue(modifiedFiles.get(0).getPath().endsWith("sublink"));
-    assertTrue(modifiedFiles.get(1).getPath().endsWith("New.java"));
+    assertEquals(modifiedFiles.get(1).getPath(), subDirectory.getPath());
+    assertTrue(modifiedFiles.get(2).getPath().endsWith("New.java"));
 
     changedFileAccumulator.shutdown();
   }
 
-  public void testSymlinks() throws IOException, InterruptedException, ExecutionException {
+  public void testSymlinks() throws Exception {
     File scratchDirectory = Files.createTempDir();
     File newFile = createFileIn("New.java", scratchDirectory);
     File rootDirectory = Files.createTempDir();
@@ -204,20 +259,22 @@ public class ChangedFileAccumulatorTest extends TestCase {
     waitForFileEvents();
 
     List<File> modifiedFiles = changedFileAccumulator.getAndClearChangedFiles();
-    assertEquals(2, modifiedFiles.size());
+
+    assertEquals(3, modifiedFiles.size());
     assertTrue(modifiedFiles.get(0).getPath().endsWith("New.java"));
     assertTrue(modifiedFiles.get(1).getPath().endsWith("sublink"));
+    assertEquals(modifiedFiles.get(2).getPath(), subDirectory.getPath());
 
     changedFileAccumulator.shutdown();
   }
 
-  private File createDirectoryIn(String fileName, File inDirectory) {
+  private static File createDirectoryIn(String fileName, File inDirectory) {
     File newDirectory = new File(inDirectory, fileName);
     newDirectory.mkdir();
     return newDirectory;
   }
 
-  private File createFileIn(String fileName, File inDirectory) throws IOException {
+  private static File createFileIn(String fileName, File inDirectory) throws IOException {
     File newFile = new File(inDirectory, fileName);
     newFile.createNewFile();
     return newFile;

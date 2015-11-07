@@ -13,8 +13,11 @@
  */
 package com.google.gwt.dev.resource.impl;
 
+import com.google.gwt.thirdparty.guava.common.collect.BiMap;
+import com.google.gwt.thirdparty.guava.common.collect.HashBiMap;
+import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.File;
@@ -32,7 +35,6 @@ import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -86,6 +88,11 @@ public class ChangedFileAccumulator {
               Path changedFileName = (Path) watchEvent.context();
               Path changedPath = containingDirectory.resolve(changedFileName);
 
+              if (eventKind == StandardWatchEventKinds.ENTRY_DELETE) {
+                recursivelyRemovePath(changedPath);
+                continue;
+              }
+
               // Maybe listen to newly created directories.
               if (eventKind == StandardWatchEventKinds.ENTRY_CREATE
                   && Files.isDirectory(changedPath)) {
@@ -102,6 +109,7 @@ public class ChangedFileAccumulator {
               }
 
               // Record changed files.
+              pathsByParentPath.put(changedPath.getParent(), changedPath);
               changedFiles.add(changedPath.toFile().getAbsoluteFile());
             }
 
@@ -120,7 +128,8 @@ public class ChangedFileAccumulator {
   private final Set<File> changedFiles = Collections.synchronizedSet(Sets.<File> newHashSet());
   private Thread changePollerThread;
   private Exception changePollerException;
-  private final Map<WatchKey, Path> pathsByWatchKey = Maps.newHashMap();
+  private final BiMap<WatchKey, Path> pathsByWatchKey = HashBiMap.create();
+  private final Multimap<Path, Path> pathsByParentPath = HashMultimap.create();
   private final WatchService watchService;
 
   public ChangedFileAccumulator(Path rootDirectory) throws IOException {
@@ -177,6 +186,10 @@ public class ChangedFileAccumulator {
           return FileVisitResult.SKIP_SUBTREE;
         }
 
+        if (considerPreexistingFilesChanged) {
+          changedFiles.add(currentDirectory.toFile());
+        }
+        pathsByParentPath.put(currentDirectory.getParent(), currentDirectory);
         pathsByWatchKey.put(watchKey, currentDirectory);
         return FileVisitResult.CONTINUE;
       }
@@ -191,9 +204,25 @@ public class ChangedFileAccumulator {
         if (considerPreexistingFilesChanged) {
           changedFiles.add(file.toFile());
         }
+        pathsByParentPath.put(file.getParent(), file);
         return FileVisitResult.CONTINUE;
       }
     });
+  }
+
+  private void recursivelyRemovePath(final Path path) {
+    changedFiles.add(path.toFile());
+
+    // Stop listening to this path
+    WatchKey removed = pathsByWatchKey.inverse().remove(path);
+    if (removed != null) {
+       removed.cancel();
+    }
+
+    // Remove the path and recurse into sub directories and files.
+    for (Path child : pathsByParentPath.removeAll(path)) {
+      recursivelyRemovePath(child);
+    }
   }
 
   private void setFailed(Exception caughtException) {
