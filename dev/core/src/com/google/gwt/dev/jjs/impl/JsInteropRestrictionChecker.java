@@ -46,6 +46,7 @@ import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.js.JsUtils;
+import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
@@ -227,7 +228,8 @@ public class JsInteropRestrictionChecker {
     return call.getTarget().equals(targetCtor);
   }
 
-  private void checkMember(Map<String, JsMember> localNames, JMember member) {
+  private void checkMember(
+      JMember member, Map<String, JsMember> localNames, Map<String, JsMember> ownGlobalNames) {
     if (member.getEnclosingType().isJsNative()) {
       checkMemberOfNativeJsType(member);
     }
@@ -245,6 +247,13 @@ public class JsInteropRestrictionChecker {
       return;
     }
 
+    if (member.getJsName().equals(JsInteropUtil.INVALID_JSNAME)) {
+      logInvalidName(member);
+      return;
+    }
+
+    checkJsPropertyAccessor(member);
+
     checkMemberQualifiedJsName(member);
 
     if (isCheckedLocalName(member)) {
@@ -252,74 +261,7 @@ public class JsInteropRestrictionChecker {
     }
 
     if (isCheckedGlobalName(member)) {
-      checkGlobalName(member);
-    }
-  }
-
-  private void checkGlobalName(JMember member) {
-   String currentGlobalNameDescription = minimalRebuildCache.addExportedGlobalName(
-       member.getQualifiedJsName(), JjsUtils.getReadableDescription(member),
-       member.getEnclosingType().getName());
-    if (currentGlobalNameDescription != null) {
-      logError(member,
-          "%s cannot be exported because the global name '%s' is already taken by '%s'.",
-          getMemberDescription(member), member.getQualifiedJsName(), currentGlobalNameDescription);
-    }
-  }
-
-  private void checkLocalName(Map<String, JsMember> localNames, JMember member) {
-    if (member.getJsName().equals(JsInteropUtil.INVALID_JSNAME)) {
-      if (member.getJsMemberType().isPropertyAccessor()) {
-        logError(
-            member,
-            "JsProperty %s should either follow Java Bean naming conventions or "
-            + "provide a name.",
-            getMemberDescription(member));
-      } else {
-        logError(
-            member, "%s cannot be assigned a different JavaScript name than the method "
-                + "it overrides.", getMemberDescription(member));
-      }
-      return;
-    }
-
-    JsMember oldMember = localNames.get(member.getJsName());
-    JsMember newMember = createOrUpdateJsMember(oldMember, member);
-
-    checkJsPropertyAccessor(member, newMember);
-
-    if (oldMember == null || newMember == oldMember) {
-      localNames.put(member.getJsName(), newMember);
-      return;
-    }
-
-    if (oldMember.isNativeMethod() && newMember.isNativeMethod()) {
-      return;
-    }
-
-    logError(member, "%s and %s cannot both use the same JavaScript name '%s'.",
-        getMemberDescription(member), getMemberDescription(oldMember.member), member.getJsName());
-  }
-
-  private void checkJsPropertyAccessor(JMember member, JsMember newMember) {
-    if (member.getJsMemberType() == JsMemberType.UNDEFINED_ACCESSOR) {
-      logError(member, "JsProperty %s should have a correct setter or getter signature.",
-          getMemberDescription(member));
-    }
-
-    if (member.getJsMemberType() == JsMemberType.GETTER) {
-      if (member.getType() != JPrimitiveType.BOOLEAN && member.getName().startsWith("is")) {
-        logError(member, "JsProperty %s cannot have a non-boolean return.",
-            getMemberDescription(member));
-      }
-    }
-
-    if (newMember.setter != null && newMember.getter != null) {
-      List<JParameter> setterParams = ((JMethod) newMember.setter).getParams();
-      if (newMember.getter.getType() != setterParams.get(0).getType()) {
-        logError(member, "JsProperty setter %s and getter %s cannot have inconsistent types.",
-            getMemberDescription(newMember.setter), getMemberDescription(newMember.getter));
-      }
+      checkGlobalName(ownGlobalNames, member);
     }
   }
 
@@ -367,6 +309,34 @@ public class JsInteropRestrictionChecker {
     }
   }
 
+  private void logInvalidName(JMember member) {
+    if (member.getJsMemberType().isPropertyAccessor()) {
+      logError(
+          member,
+          "JsProperty %s should either follow Java Bean naming conventions or provide a name.",
+          getMemberDescription(member));
+    } else {
+      logError(
+          member,
+          "%s cannot be assigned a different JavaScript name than the method it overrides.",
+          getMemberDescription(member));
+    }
+  }
+
+  private void checkJsPropertyAccessor(JMember member) {
+    if (member.getJsMemberType() == JsMemberType.UNDEFINED_ACCESSOR) {
+      logError(member, "JsProperty %s should have a correct setter or getter signature.",
+          getMemberDescription(member));
+    }
+
+    if (member.getJsMemberType() == JsMemberType.GETTER) {
+      if (member.getType() != JPrimitiveType.BOOLEAN && member.getName().startsWith("is")) {
+        logError(member, "JsProperty %s cannot have a non-boolean return.",
+            getMemberDescription(member));
+      }
+    }
+  }
+
   private void checkMemberQualifiedJsName(JMember member) {
     if (member instanceof JConstructor) {
       // Constructors always inherit their name and namespace from the enclosing type.
@@ -391,18 +361,12 @@ public class JsInteropRestrictionChecker {
   }
 
   private <T extends HasJsName & HasSourceInfo> void checkJsName(T item) {
-    String jsName = item.getJsName();
-    if (jsName.equals(JsInteropUtil.INVALID_JSNAME)) {
-      // Errors are reported for this case when local name is checked.
-      return;
-    }
-
-    if (jsName.isEmpty()) {
+    if (item.getJsName().isEmpty()) {
       logError(item, "%s cannot have an empty name.", getDescription(item));
       return;
     }
-    if (!JsUtils.isValidJsIdentifier(jsName)) {
-      logError(item, "%s has invalid name '%s'.", getDescription(item), jsName);
+    if (!JsUtils.isValidJsIdentifier(item.getJsName())) {
+      logError(item, "%s has invalid name '%s'.", getDescription(item), item.getJsName());
       return;
     }
   }
@@ -411,6 +375,57 @@ public class JsInteropRestrictionChecker {
       String jsNamespace = item.getJsNamespace();
     if (!jsNamespace.isEmpty() && !JsUtils.isValidJsQualifiedName(jsNamespace)) {
       logError(item, "%s has invalid namespace '%s'.", getDescription(item), jsNamespace);
+    }
+  }
+
+  private void checkLocalName(Map<String, JsMember> localNames, JMember member) {
+    Pair<JsMember, JsMember> oldAndNewJsMember = updateJsMembers(localNames, member);
+    JsMember oldJsMember = oldAndNewJsMember.left;
+    JsMember newJsMember = oldAndNewJsMember.right;
+
+    checkJsPropertyConsistency(member, newJsMember);
+
+    if (oldJsMember == null || oldJsMember == newJsMember) {
+      return;
+    }
+
+    if (oldJsMember.isNativeMethod() && newJsMember.isNativeMethod()) {
+      return;
+    }
+
+    logError(member, "%s and %s cannot both use the same JavaScript name '%s'.",
+        getMemberDescription(member), getMemberDescription(oldJsMember.member), member.getJsName());
+  }
+
+  private void checkGlobalName(Map<String, JsMember> ownGlobalNames, JMember member) {
+    Pair<JsMember, JsMember> oldAndNewJsMember = updateJsMembers(ownGlobalNames, member);
+    JsMember oldJsMember = oldAndNewJsMember.left;
+    JsMember newJsMember = oldAndNewJsMember.right;
+
+    if (oldJsMember == newJsMember) {
+      // We allow setter-getter to share the name if they are both defined in the same class, so
+      // skipping the global name check. However still need to do a consistency check.
+      checkJsPropertyConsistency(member, newJsMember);
+      return;
+    }
+
+    String currentGlobalNameDescription =
+        minimalRebuildCache.addExportedGlobalName(member.getQualifiedJsName(),
+            JjsUtils.getReadableDescription(member), member.getEnclosingType().getName());
+    if (currentGlobalNameDescription == null) {
+      return;
+    }
+    logError(member, "%s cannot be exported because the global name '%s' is already taken by '%s'.",
+        getMemberDescription(member), member.getQualifiedJsName(), currentGlobalNameDescription);
+  }
+
+  private void checkJsPropertyConsistency(JMember member, JsMember newMember) {
+    if (newMember.setter != null && newMember.getter != null) {
+      List<JParameter> setterParams = ((JMethod) newMember.setter).getParams();
+      if (newMember.getter.getType() != setterParams.get(0).getType()) {
+        logError(member, "JsProperty setter %s and getter %s cannot have inconsistent types.",
+            getMemberDescription(newMember.setter), getMemberDescription(newMember.getter));
+      }
     }
   }
 
@@ -580,9 +595,10 @@ public class JsInteropRestrictionChecker {
       checkJsConstructors(type);
     }
 
-    Map<String, JsMember> localNames = collectNames(type.getSuperClass());
+    Map<String, JsMember> ownGlobalNames = Maps.newHashMap();
+    Map<String, JsMember> localNames = collectLocalNames(type.getSuperClass());
     for (JMember member : type.getMembers()) {
-      checkMember(localNames, member);
+      checkMember(member, localNames, ownGlobalNames);
     }
   }
 
@@ -634,12 +650,12 @@ public class JsInteropRestrictionChecker {
     }
   }
 
-  private LinkedHashMap<String, JsMember> collectNames(JDeclaredType type) {
+  private LinkedHashMap<String, JsMember> collectLocalNames(JDeclaredType type) {
     if (type == null) {
       return Maps.newLinkedHashMap();
     }
 
-    LinkedHashMap<String, JsMember> memberByLocalMemberNames = collectNames(type.getSuperClass());
+    LinkedHashMap<String, JsMember> memberByLocalMemberNames = collectLocalNames(type.getSuperClass());
     for (JMember member : type.getMembers()) {
       if (isCheckedLocalName(member)) {
         updateJsMembers(memberByLocalMemberNames, member);
@@ -671,10 +687,12 @@ public class JsInteropRestrictionChecker {
     return !member.needsDynamicDispatch() && !member.isJsNative();
   }
 
-  private void updateJsMembers(Map<String, JsMember> memberByLocalMemberNames, JMember member) {
-    JsMember oldJsMember = memberByLocalMemberNames.get(member.getJsName());
-    JsMember updatedJsMember = createOrUpdateJsMember(oldJsMember, member);
-    memberByLocalMemberNames.put(member.getJsName(), updatedJsMember);
+  private Pair<JsMember, JsMember> updateJsMembers(
+      Map<String, JsMember> memberByNames, JMember member) {
+    JsMember oldJsMember = memberByNames.get(member.getJsName());
+    JsMember newJsMember = createOrUpdateJsMember(oldJsMember, member);
+    memberByNames.put(member.getJsName(), newJsMember);
+    return Pair.create(oldJsMember, newJsMember);
   }
 
   private JsMember createOrUpdateJsMember(JsMember jsMember, JMember member) {

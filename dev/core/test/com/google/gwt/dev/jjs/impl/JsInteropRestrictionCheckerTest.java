@@ -139,6 +139,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     addSnippetClassDecl(
         "@JsType",
         "public interface Buggy {",
+        "  @JsProperty static int getStaticX(){ return 0;}",
+        "  @JsProperty static void setStaticX(int x){}",
         "  @JsProperty int getX();",
         "  @JsProperty void setX(int x);",
         "  @JsProperty boolean isY();",
@@ -160,6 +162,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "  @JsProperty void setX(int x, int y);",
         "  @JsProperty void setY();",
         "  @JsProperty int setZ(int z);",
+        "  @JsProperty static void setStatic(){}",
         "}");
 
     assertBuggyFails(
@@ -173,6 +176,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "Line 11: JsProperty 'void EntryPoint.Buggy.setY()' should have a correct setter "
             + "or getter signature.",
         "Line 12: JsProperty 'int EntryPoint.Buggy.setZ(int)' should have a correct setter "
+            + "or getter signature.",
+        "Line 13: JsProperty 'void EntryPoint.Buggy.setStatic()' should have a correct setter "
             + "or getter signature.");
   }
 
@@ -274,6 +279,22 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
             + "cannot both use the same JavaScript name 'x'.");
   }
 
+  public void testCollidingPropertyAccessorExportsFails() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsProperty");
+    addSnippetClassDecl(
+        "public static class Buggy {",
+        "  @JsProperty",
+        "  public static void setDisplay(int x) {}",
+        "  @JsProperty(name = \"display\")",
+        "  public static void setDisplay2(int x) {}",
+        "}");
+
+    assertBuggyFails(
+        "Line 8: 'void EntryPoint.Buggy.setDisplay2(int)' cannot be exported because the global "
+            + "name 'test.EntryPoint.Buggy.display' is already taken "
+            + "by 'void EntryPoint.Buggy.setDisplay(int)'.");
+  }
+
   public void testCollidingMethodExportsFails() throws Exception {
     addSnippetImport("jsinterop.annotations.JsMethod");
     addSnippetClassDecl(
@@ -288,6 +309,23 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "Line 8: 'void EntryPoint.Buggy.display()' cannot be exported because the global name "
             + "'test.EntryPoint.Buggy.show' is already taken "
             + "by 'void EntryPoint.Buggy.show()'.");
+  }
+
+  public void testCollidingMethodToPropertyAccessorExportsFails() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsMethod");
+    addSnippetImport("jsinterop.annotations.JsProperty");
+    addSnippetClassDecl(
+        "public static class Buggy {",
+        "  @JsProperty",
+        "  public static void setShow(int x) {}",
+        "  @JsMethod",
+        "  public static void show() {}",
+        "}");
+
+    assertBuggyFails(
+        "Line 9: 'void EntryPoint.Buggy.show()' cannot be exported because the global name "
+            + "'test.EntryPoint.Buggy.show' is already taken by "
+            + "'void EntryPoint.Buggy.setShow(int)'.");
   }
 
   public void testCollidingMethodToFieldExportsFails() throws Exception {
