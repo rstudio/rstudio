@@ -54,7 +54,8 @@ public final class JsInteropUtil {
       exportName = jsPrototype.substring(indexOf + 1);
     }
     boolean isJsType = jsType != null;
-    boolean isClassWideExport = JdtUtil.getAnnotation(annotations, JSEXPORT_CLASS) != null;
+    boolean isClassWideExport =
+        isJsNative || JdtUtil.getAnnotation(annotations, JSEXPORT_CLASS) != null;
     boolean isJsFunction = JdtUtil.getAnnotation(annotations, JSFUNCTION_CLASS) != null;
     boolean canBeImplementedExternally =
         (type instanceof JInterfaceType && (isJsType || isJsFunction))
@@ -116,18 +117,20 @@ public final class JsInteropUtil {
   private static void setJsInteropProperties(
       JMember member, Annotation[] annotations, boolean isPropertyAccessor) {
     boolean hasExport = JdtUtil.getAnnotation(annotations, JSEXPORT_CLASS) != null;
+    JsMemberType memberType = getJsMemberType(member, isPropertyAccessor);
+    String namespace = maybeGetJsNamespace(annotations);
+    String exportName = maybeGetJsExportName(annotations);
+    if (hasExport) {
+      member.setJsMemberInfo(memberType, namespace, exportName, true);
+      return;
+    }
 
     /* Apply class wide JsInterop annotations */
 
     boolean ignore = JdtUtil.getAnnotation(annotations, JSNOEXPORT_CLASS) != null;
-    if (ignore || (!member.isPublic() && !isNativeConstructor(member)) || !hasExport) {
+    if (ignore || (!member.isPublic() && !isNativeConstructor(member)) || hasExport) {
       return;
     }
-
-    String namespace = maybeGetJsNamespace(annotations);
-    String exportName = maybeGetJsExportName(annotations);
-    JsMemberType memberType = getJsMemberType(member, isPropertyAccessor);
-    member.setJsMemberInfo(memberType, namespace, exportName, hasExport);
 
     JDeclaredType enclosingType = member.getEnclosingType();
 
