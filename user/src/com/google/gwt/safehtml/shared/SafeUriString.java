@@ -75,4 +75,9 @@ class SafeUriString implements SafeUri {
   public int hashCode() {
     return uri.hashCode();
   }
+
+  @Override
+  public String toString() {
+    return "safe: \"" + asString() + "\"";
+  }
 }
