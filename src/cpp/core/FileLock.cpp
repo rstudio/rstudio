@@ -29,7 +29,7 @@ namespace locks {
 
 namespace {
 
-const char * const kLocksConfPath = "/etc/rstudio-locks.conf";
+const char * const kLocksConfPath = "/etc/rstudio/locks.conf";
 
 } // end anonymous namespace
 
