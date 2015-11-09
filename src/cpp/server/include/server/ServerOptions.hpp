@@ -124,11 +124,6 @@ public:
       return wwwProxyLocalhost_;
    }
 
-   std::string wwwFrameAncestors() const
-   {
-      return wwwFrameAncestors_;
-   }
-
    bool wwwVerifyUserAgent() const
    {
       return wwwVerifyUserAgent_;
@@ -255,7 +250,6 @@ private:
    bool wwwUseEmulatedStack_;
    int wwwThreadPoolSize_;
    bool wwwProxyLocalhost_;
-   std::string wwwFrameAncestors_;
    bool wwwVerifyUserAgent_;
    bool authNone_;
    bool authValidateUsers_;

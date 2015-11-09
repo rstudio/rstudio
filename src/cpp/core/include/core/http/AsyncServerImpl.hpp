@@ -135,12 +135,6 @@ public:
       responseFilter_ = responseFilter;
    }
 
-   virtual void setContentSecurityPolicy(const util::ContentSecurityPolicy& csp)
-   {
-      BOOST_ASSERT(!running_);
-      csp_ = csp;
-   }
-
    virtual Error runSingleThreaded()
    {
 
@@ -376,9 +370,6 @@ private:
       // non-threadsafe std::string implementations)
       pResponse->setHeader("Server", std::string(serverName_.c_str()));
 
-      // apply content security policy
-      util::applyContentSecurityPolicy(csp_, pResponse);
-
       if (responseFilter_)
          responseFilter_(originalUri, pResponse);
    }
@@ -503,7 +494,6 @@ private:
    std::vector<boost::shared_ptr<ScheduledCommand> > scheduledCommands_;
    RequestFilter requestFilter_;
    ResponseFilter responseFilter_;
-   util::ContentSecurityPolicy csp_;
    bool running_;
 };
 

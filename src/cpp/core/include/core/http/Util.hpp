@@ -31,7 +31,6 @@ class Error;
 namespace http {
       
 class Request;
-class Response;
 
 typedef std::pair<std::string,std::string> Field;
 typedef std::vector<Field> Fields;
@@ -151,23 +150,6 @@ std::string httpDate(const boost::posix_time::ptime& datetime =
 
 std::string pathAfterPrefix(const Request& request,
                             const std::string& pathPrefix);
-
-struct ContentSecurityPolicy
-{
-   ContentSecurityPolicy()
-   {
-   }
-
-   explicit ContentSecurityPolicy(const std::string& frameAncestors)
-      : frameAncestors(frameAncestors)
-   {
-   }
-
-   std::string frameAncestors;
-};
-
-void applyContentSecurityPolicy(ContentSecurityPolicy csp,
-                                core::http::Response* pResponse);
 
 } // namespace util
 

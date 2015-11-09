@@ -170,9 +170,6 @@ ProgramStatus Options::read(int argc,
       ("www-proxy-localhost",
          value<bool>(&wwwProxyLocalhost_)->default_value(true),
          "proxy requests to localhost ports over main server port")
-      ("www-frame-ancestors",
-         value<std::string>(&wwwFrameAncestors_)->default_value("none"),
-         "content security policy for embedding within iframes")
       ("www-verify-user-agent",
          value<bool>(&wwwVerifyUserAgent_)->default_value(true),
          "verify that the user agent is compatible");
@@ -311,21 +308,6 @@ ProgramStatus Options::read(int argc,
             return ProgramStatus::exitFailure();
          }
       }
-   }
-
-   // validate www-frame-ancestors
-   if (wwwFrameAncestors_ != "all" &&
-       wwwFrameAncestors_ != "none" &&
-       wwwFrameAncestors_ != "self")
-   {
-      LOG_ERROR_MESSAGE("Invalid value for www-frame-ancestors (must be "
-                        "all, none, or self)");
-      return ProgramStatus::exitFailure();
-   }
-   // otherwise convert 'all' to no policy
-   else if (wwwFrameAncestors_ == "all")
-   {
-      wwwFrameAncestors_ = "";
    }
 
    // if app armor is enabled do a further check to see whether

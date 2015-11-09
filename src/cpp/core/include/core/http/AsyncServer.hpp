@@ -24,7 +24,6 @@
 
 #include <core/ScheduledCommand.hpp>
 
-#include <core/http/Util.hpp>
 #include <core/http/UriHandler.hpp>
 #include <core/http/AsyncUriHandler.hpp>
 
@@ -62,8 +61,6 @@ public:
 
    virtual void setRequestFilter(RequestFilter requestFilter) = 0;
    virtual void setResponseFilter(ResponseFilter responseFilter) = 0;
-
-   virtual void setContentSecurityPolicy(const util::ContentSecurityPolicy& csp) = 0;
 
    virtual Error runSingleThreaded() = 0;
 
