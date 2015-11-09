@@ -71,6 +71,7 @@
 * Suspend and resume running R sessions when server is restarted
 * Add kill-session and kill-all admin commands
 * Use SHA256 for signing cookies (previously used SHA1)
+* New www-frame-ancestors option (prevent loading in iframe by default)
 * Server Pro: Shared Projects (including concurrent multi-user editing)
 * Server Pro: Support for multiple concurrent R sessions per-user
 * Server Pro: Support for running against multiple versions of R
