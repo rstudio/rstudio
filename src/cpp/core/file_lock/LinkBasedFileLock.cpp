@@ -162,16 +162,26 @@ Error writeLockFile(const FilePath& lockFilePath)
    
    // generate proxy lockfile
    FilePath proxyPath = lockFilePath.parent().complete(proxyLockFileName());
-   if (proxyPath.exists())
-      return fileExistsError(ERROR_LOCATION);
    
-   Error error = core::writeStringToFile(proxyPath, "");
+   // since the proxy lockfile should be unique, it should _never_ be possible
+   // for a collision to be found. if that does happen, it must be a leftover
+   // from a previous process that crashed in this stage
+   if (proxyPath.exists())
+   {
+      Error error = proxyPath.remove();
+      if (error)
+         LOG_ERROR(error);
+   }
+   
+   // write something to the file (to ensure it's created)
+   Error error = core::writeStringToFile(proxyPath, pidString());
    if (error)
       return error;
    RemoveOnExitScope scope(proxyPath, ERROR_LOCATION);
    
    // attempt to link to the desired location -- ignore return value
-   // and just stat our original link after
+   // and just stat our original link after, as that's a more reliable
+   // indicator of success on old NFS systems
    ::link(
             proxyPath.absolutePathNative().c_str(),
             lockFilePath.absolutePathNative().c_str());
@@ -181,6 +191,8 @@ Error writeLockFile(const FilePath& lockFilePath)
    if (errc)
       return systemError(errno, ERROR_LOCATION);
    
+   // assume that a failure here is the result of someone else
+   // acquiring the lock before we could
    if (info.st_nlink != 2)
       return fileExistsError(ERROR_LOCATION);
    
@@ -197,20 +209,6 @@ bool isLockFileStale(const FilePath& lockFilePath, double seconds = 30.0)
 {
    double diff = ::difftime(::time(NULL), lockFilePath.lastWriteTime());
    return diff >= seconds;
-}
-
-Error beginLocking(const FilePath& lockingPath)
-{
-   // attempt to clean up stale lockfiles
-   if (lockingPath.exists() && isLockFileStale(lockingPath))
-   {
-      Error error = lockingPath.remove();
-      if (error)
-         LOG_ERROR(error);
-   }
-   
-   // write the lock file to take ownership
-   return writeLockFile(lockingPath);
 }
 
 } // end anonymous namespace
@@ -244,35 +242,36 @@ bool LinkBasedFileLock::isLocked(const FilePath& lockFilePath)
 
 Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
 {
-   // use filesystem-based mutex to ensure interprocess locking; ie, attempt to
-   // ensure that only one process can attempt to acquire a lock at a time
-   FilePath lockingPath = lockFilePath.parent().complete(".rstudio-locking");
-   Error error = beginLocking(lockingPath);
-   if (error)
-      return error;
-   RemoveOnExitScope scope(lockingPath, ERROR_LOCATION);
-   
-   // bail if the lock file exists and is active
-   if (lockFilePath.exists() && !isLockFileStale(lockFilePath))
-      return fileExistsError(ERROR_LOCATION);
-   
-   // create or update the modified time of the lockfile (this allows
-   // us to claim ownership of the file)
+   // if the lock file exists...
    if (lockFilePath.exists())
    {
-      lockFilePath.setLastWriteTime();
-   }
-   else
-   {
-      Error error = lockFilePath.parent().ensureDirectory();
-      if (error)
-         return error;
+      // ... and it's stale, it's a leftover lock from a previously
+      // (crashed?) process. remove it and acquire our own lock
+      if (isLockFileStale(lockFilePath))
+      {
+         Error error = lockFilePath.remove();
+         if (error)
+            LOG_ERROR(error);
+      }
       
-      error = writeLockFile(lockFilePath);
-      if (error)
-         return error;
+      // ... it's not stale -- someone else has the lock, cannot proceed
+      else
+      {
+         return fileExistsError(ERROR_LOCATION);
+      }
    }
    
+   // ensure the parent directory exists
+   Error error = lockFilePath.parent().ensureDirectory();
+   if (error)
+      return error;
+
+   // write the lock file
+   error = writeLockFile(lockFilePath);
+   if (error)
+      return error;
+   
+   // register our lock (for refresh)
    pImpl_->lockFilePath = lockFilePath;
    lockRegistration().registerLock(lockFilePath);
    return Success();
