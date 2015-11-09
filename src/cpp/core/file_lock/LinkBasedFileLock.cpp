@@ -82,6 +82,22 @@ std::string proxyLockFileName()
          
 }
 
+bool isLockFileStale(const FilePath& lockFilePath)
+{
+   return LinkBasedFileLock::isLockFileStale(lockFilePath);
+}
+
+} // end anonymous namespace
+
+bool LinkBasedFileLock::isLockFileStale(const FilePath& lockFilePath)
+{
+   double seconds = s_timeoutInterval.total_seconds();
+   double diff = ::difftime(::time(NULL), lockFilePath.lastWriteTime());
+   return diff >= seconds;
+}
+
+namespace {
+
 void cleanStaleLockfiles(const FilePath& dir)
 {
    std::vector<FilePath> children;
@@ -222,12 +238,6 @@ Error writeLockFile(const FilePath& lockFilePath)
    return -1;
    
 #endif
-}
-
-bool isLockFileStale(const FilePath& lockFilePath, double seconds = 30.0)
-{
-   double diff = ::difftime(::time(NULL), lockFilePath.lastWriteTime());
-   return diff >= seconds;
 }
 
 } // end anonymous namespace

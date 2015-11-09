@@ -59,7 +59,7 @@ public:
    
    virtual ~FileLock() {}
    
-private:
+protected:
    static LockType s_defaultType;
    static boost::posix_time::seconds s_timeoutInterval;
    static boost::posix_time::seconds s_refreshRate;
@@ -86,6 +86,8 @@ private:
 class LinkBasedFileLock : public FileLock
 {
 public:
+   static bool isLockFileStale(const FilePath& lockFilePath);
+   
    static bool isLocked(const FilePath& lockFilePath);
    static void refresh();
    
