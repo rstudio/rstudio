@@ -27,6 +27,7 @@
 
 #include <core/http/Header.hpp>
 #include <core/http/Request.hpp>
+#include <core/http/Response.hpp>
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 
@@ -355,6 +356,39 @@ std::string pathAfterPrefix(const Request& request,
    // was url encoding dashes in e.g. help for memory-limits)
    return  http::util::urlDecode(uri);
 }
+
+void applyContentSecurityPolicy(ContentSecurityPolicy csp,
+                                core::http::Response* pResponse)
+{
+   // buffer for generated CSP
+   std::ostringstream ostr;
+
+   // frame ancestors
+   if (!csp.frameAncestors.empty())
+      ostr << "frame-ancestors '" << csp.frameAncestors << "'";
+
+   // apply CSP if we have one
+   std::string cspStr = ostr.str();
+   if (!cspStr.empty())
+      pResponse->addHeader("Content-Security-Policy", cspStr);
+
+   // X-Frame-Options legacy header
+   if (!csp.frameAncestors.empty())
+   {
+      std::string xFrameOptions;
+      if (csp.frameAncestors == "none")
+      {
+         xFrameOptions = "DENY";
+      }
+      else if (csp.frameAncestors == "self")
+      {
+         xFrameOptions = "SAMEORIGIN";
+      }
+      if (!xFrameOptions.empty())
+         pResponse->addHeader("X-Frame-Options", xFrameOptions);
+   }
+}
+
 
 } // namespace util
 

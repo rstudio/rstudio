@@ -147,6 +147,10 @@ Error httpServerInit()
    s_pHttpServer->setScheduledCommandInterval(
                                     boost::posix_time::milliseconds(500));
 
+   // set content security policy
+   http::util::ContentSecurityPolicy csp(server::options().wwwFrameAncestors());
+   s_pHttpServer->setContentSecurityPolicy(csp);
+
    // initialize
    return server::httpServerInit(s_pHttpServer.get());
 }
