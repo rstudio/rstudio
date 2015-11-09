@@ -65,7 +65,7 @@ public interface RSConnectServerOperations
                 RSConnectPreAuthToken token, 
                 ServerRequestCallback<Void> requestCallback);
    
-   void getLintResults(String target,
+   void getLintResults(String target, 
                 ServerRequestCallback<RSConnectLintResults> resultCallback);
    
    void getRmdPublishDetails(String target,

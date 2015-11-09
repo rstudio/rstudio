@@ -870,6 +870,11 @@ public class TextEditingTargetWidget
             publishButton_.setContentPath(publishPath, "");
             publishButton_.setContentType(RSConnect.CONTENT_TYPE_APP);
          }
+         else if (type == SourceDocument.XT_SHINY_SINGLE_FILE)
+         {
+            publishButton_.setContentPath(publishPath, "");
+            publishButton_.setContentType(RSConnect.CONTENT_TYPE_APP_SINGLE);
+         }
          else if (type == SourceDocument.XT_RMARKDOWN)
          {
             publishButton_.setRmd(publishPath, !isShiny_);

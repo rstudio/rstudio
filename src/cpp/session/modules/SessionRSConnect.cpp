@@ -102,7 +102,7 @@ public:
       {
          FilePath docFile = module_context::resolveAliasedPath(file);
          std::string extension = docFile.extensionLowerCase();
-         if (extension == ".rmd" || extension == ".html") 
+         if (extension == ".rmd" || extension == ".html" || extension == ".r") 
          {
             primaryDoc = string_utils::utf8ToSystem(file);
          }

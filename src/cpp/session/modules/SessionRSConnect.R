@@ -192,6 +192,10 @@
          # a directory was specified--lint the whole thing
          basePath <- target
          results <- rsconnect::lint(basePath)
+       } else if (tolower(tools::file_ext(target)) == "r") {
+         # a single-file Shiny app--lint the directory (with file hint)
+         basePath <- dirname(target)
+         results <- rsconnect::lint(basePath, appPrimaryDoc = basename(target))
        } else {
          # a single file was specified--lint just that file
          basePath <- dirname(target)
