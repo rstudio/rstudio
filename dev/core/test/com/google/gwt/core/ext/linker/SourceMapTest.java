@@ -372,23 +372,12 @@ public class SourceMapTest extends TestCase {
       final Map<String,ClassDescriptor> classDescriptorByName) {
     return new DefaultHandler() {
       Set<Integer> currentDependencies = Sets.newHashSet();
-      // mName is just the method name, not a complete signature
-      String methodName(String mName) {
-        if (mName.startsWith("$") && !mName.equals("$init") && !mName.equals("$clinit")) {
-          return mName.substring(1);
-        }
-        return mName;
-      }
 
-      boolean compareMethodNames(String strictName, String relaxName) {
-        if (strictName.equals(relaxName)) {
-          return true;
-        }
-        // only $init and $clinit will match the below if
-        if (relaxName.startsWith("$") && !relaxName.startsWith("$create")) {
-          return strictName.equals(relaxName.substring(1));
-        }
-        return false;
+      // Compares method names in an "relaxed" manner, to account for the synthetic devirtualized
+      // methods that appear in dependencies.xml but have to match the real methods in the
+      // source map class model.
+      boolean compareMethodNames(String thisName, String thatName) {
+        return (thisName.replaceFirst("\\$*", "").equals(thatName.replaceFirst("\\$*", "")));
       }
 
       @Override
@@ -400,7 +389,7 @@ public class SourceMapTest extends TestCase {
           currentDependencies.clear();
           String[] fullName = attributes.getValue("name").split("::");
           for (MethodDescriptor method : classDescriptorByName.get(fullName[0]).getMethods()) {
-            if (compareMethodNames(method.getName(), methodName(fullName[1]))) {
+            if (compareMethodNames(method.getName(), fullName[1])) {
               currentDependencies.addAll(Ints.asList(method.getDependentPointers()));
             }
           }
@@ -411,7 +400,7 @@ public class SourceMapTest extends TestCase {
           String[] fullName = attributes.getValue("by").split("::");
           boolean present = false;
           for (MethodDescriptor method : classDescriptorByName.get(fullName[0]).getMethods()) {
-            if (compareMethodNames(method.getName(), methodName(fullName[1]))) {
+            if (compareMethodNames(method.getName(), fullName[1])) {
               if (currentDependencies.contains(method.getUniqueId())) {
                 present = true;
                 break;
