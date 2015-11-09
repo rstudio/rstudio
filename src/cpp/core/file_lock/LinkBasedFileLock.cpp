@@ -82,23 +82,6 @@ std::string proxyLockFileName()
          
 }
 
-struct CloseFileScope
-{
-   CloseFileScope(int fd, ErrorLocation location)
-      : fd_(fd), location_(location)
-   {}
-   
-   ~CloseFileScope()
-   {
-      int errc = ::close(fd_);
-      if (errc)
-         LOG_ERROR(systemError(errno, location_));
-   }
-   
-   int fd_;
-   ErrorLocation location_;
-};
-
 class LockRegistration : boost::noncopyable
 {
 public:
