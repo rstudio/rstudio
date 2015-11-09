@@ -42,7 +42,6 @@ import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.resource.Resource;
-import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
@@ -357,7 +356,7 @@ public abstract class JJSTestBase extends CheckerTestCase {
 
     compilerContext.getOptions().setSourceLevel(sourceLevel);
     compilerContext.getOptions().setStrict(true);
-    compilerContext.getOptions().setJsInteropMode(OptionJsInteropMode.Mode.JS_RC);
+    compilerContext.getOptions().setGenerateJsInteropExports(true);
     return compilerContext;
   }
 

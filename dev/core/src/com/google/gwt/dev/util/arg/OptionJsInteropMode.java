@@ -25,10 +25,6 @@ public interface OptionJsInteropMode {
    */
   public enum Mode {
     /**
-     * Disabled, interop annotations are no-ops.
-     */
-    NONE,
-    /**
      * Legacy JsInterop using old annotations.
      */
     JS,

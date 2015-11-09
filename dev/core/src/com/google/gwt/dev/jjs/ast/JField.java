@@ -158,7 +158,7 @@ public class JField extends JVariable implements JMember {
 
   @Override
   public boolean canBeReferencedExternally() {
-    return exported;
+    return getJsMemberType() != JsMemberType.NONE;
   }
 
   @Override

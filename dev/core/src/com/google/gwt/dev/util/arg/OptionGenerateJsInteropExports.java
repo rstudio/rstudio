@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2015 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,16 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev;
-
-import com.google.gwt.dev.util.arg.OptionFinalProperties;
-import com.google.gwt.dev.util.arg.OptionLogLevel;
-import com.google.gwt.dev.util.arg.OptionModuleName;
-import com.google.gwt.dev.util.arg.OptionWorkDir;
+package com.google.gwt.dev.util.arg;
 
 /**
- * A common set of options for all compile tasks.
+ * A flag to enabled/disable JsInterop export generation.
  */
-public interface CompileTaskOptions extends OptionModuleName, OptionLogLevel, OptionWorkDir,
-    OptionFinalProperties {
+public interface OptionGenerateJsInteropExports {
+
+  boolean shouldGenerateJsInteropExports();
+
+  void setGenerateJsInteropExports(boolean generateExports);
 }

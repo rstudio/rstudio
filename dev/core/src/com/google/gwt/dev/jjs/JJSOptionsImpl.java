@@ -51,7 +51,8 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean soycExtra = false;
   private boolean soycHtmlDisabled = false;
   private boolean strict = false;
-  private OptionJsInteropMode.Mode jsInteropMode = OptionJsInteropMode.Mode.NONE;
+  private OptionJsInteropMode.Mode jsInteropMode = OptionJsInteropMode.Mode.JS_RC;
+  private boolean generateJsInteropExports = false;
   private boolean useDetailedTypeIds = false;
   private OptionMethodNameDisplayMode.Mode methodNameDisplayMode =
       OptionMethodNameDisplayMode.Mode.NONE;
@@ -85,6 +86,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setSourceLevel(other.getSourceLevel());
     setNamespace(other.getNamespace());
     setJsInteropMode(other.getJsInteropMode());
+    setGenerateJsInteropExports(other.shouldGenerateJsInteropExports());
     setUseDetailedTypeIds(other.useDetailedTypeIds());
     setMethodNameDisplayMode(other.getMethodNameDisplayMode());
     setClosureCompilerFormatEnabled(other.isClosureCompilerFormatEnabled());
@@ -352,6 +354,16 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   @Override
   public void setJsInteropMode(OptionJsInteropMode.Mode mode) {
     jsInteropMode = mode;
+  }
+
+  @Override
+  public boolean shouldGenerateJsInteropExports() {
+    return generateJsInteropExports;
+  }
+
+  @Override
+  public void setGenerateJsInteropExports(boolean generateExports) {
+    generateJsInteropExports = generateExports;
   }
 
   @Override

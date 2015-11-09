@@ -37,6 +37,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerEnableClosureCompiler;
 import com.google.gwt.dev.util.arg.ArgHandlerFragmentCount;
 import com.google.gwt.dev.util.arg.ArgHandlerFragmentMerge;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
+import com.google.gwt.dev.util.arg.ArgHandlerGenerateJsInteropExports;
 import com.google.gwt.dev.util.arg.ArgHandlerIncrementalCompileWarnings;
 import com.google.gwt.dev.util.arg.ArgHandlerJsInteropMode;
 import com.google.gwt.dev.util.arg.ArgHandlerJsonSoyc;
@@ -81,6 +82,7 @@ class PrecompileTaskArgProcessor extends CompileArgProcessor {
     registerHandler(new ArgHandlerGenDir(options));
     registerHandler(new ArgHandlerIncrementalCompileWarnings());
     registerHandler(new ArgHandlerJsInteropMode(options));
+    registerHandler(new ArgHandlerGenerateJsInteropExports(options));
     registerHandler(new ArgHandlerMethodNameDisplayMode(options));
     registerHandler(new ArgHandlerMissingDepsFile());
     registerHandler(new ArgHandlerNamespace(options));

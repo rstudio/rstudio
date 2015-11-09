@@ -43,6 +43,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   private final List<String> moduleNames;
   private final SourceLevel sourceLevel;
   private final OptionJsInteropMode.Mode jsInteropMode;
+  private final boolean generateJsInteropExports;
   private final OptionMethodNameDisplayMode.Mode methodNameDisplayMode;
   private final ListMultimap<String, String> properties;
   private final boolean closureFormattedOutput;
@@ -56,6 +57,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
     this.failOnError = options.isFailOnError();
     this.logLevel = options.getLogLevel();
     this.jsInteropMode = options.getJsInteropMode();
+    this.generateJsInteropExports = options.shouldGenerateJsInteropExports();
     this.methodNameDisplayMode = options.getMethodNameDisplayMode();
     this.properties = LinkedListMultimap.create(options.getProperties());
     this.closureFormattedOutput = options.isClosureFormattedOutput();
@@ -95,6 +97,11 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   @Override
   public OptionJsInteropMode.Mode getJsInteropMode() {
     return jsInteropMode;
+  }
+
+  @Override
+  public boolean shouldGenerateJsInteropExports() {
+    return generateJsInteropExports;
   }
 
   /**

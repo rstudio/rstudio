@@ -3784,7 +3784,7 @@ public class GwtAstBuilder {
 
   private boolean isLegacyJsInteropEnabled;
 
-  private boolean isNewJsInteropEnabled;
+  private boolean generateJsInteropExports;
 
   /**
    * Externalized class and method form for Exceptions.safeClose() to provide support
@@ -3839,7 +3839,7 @@ public class GwtAstBuilder {
     this.jsniMethods = jsniMethods;
     this.compilerContext = compilerContext;
     this.isLegacyJsInteropEnabled = compilerContext.getOptions().getJsInteropMode() == Mode.JS;
-    this.isNewJsInteropEnabled = compilerContext.getOptions().getJsInteropMode() == Mode.JS_RC;
+    this.generateJsInteropExports = compilerContext.getOptions().shouldGenerateJsInteropExports();
     this.newTypes = Lists.newArrayList();
     this.curCud = new CudInfo(cud);
   }
@@ -3914,8 +3914,8 @@ public class GwtAstBuilder {
     enclosingType.addField(field);
     if (isLegacyJsInteropEnabled) {
       JsInteropUtil.maybeSetJsInteropProperties(field, x.annotations);
-    } else if (isNewJsInteropEnabled) {
-      JsInteropUtil.maybeSetJsInteropPropertiesNew(field, x.annotations);
+    } else {
+      JsInteropUtil.maybeSetJsInteropPropertiesNew(field, generateJsInteropExports, x.annotations);
     }
     processSuppressedWarnings(field, x.annotations);
     typeMap.setField(binding, field);
@@ -4087,8 +4087,8 @@ public class GwtAstBuilder {
     maybeSetHasNoSideEffects(x, method);
     if (isLegacyJsInteropEnabled) {
       JsInteropUtil.maybeSetJsInteropProperties(method, x.annotations);
-    } else if (isNewJsInteropEnabled) {
-      JsInteropUtil.maybeSetJsInteropPropertiesNew(method, x.annotations);
+    } else {
+      JsInteropUtil.maybeSetJsInteropPropertiesNew(method, generateJsInteropExports, x.annotations);
     }
     processSuppressedWarnings(method, x.annotations);
   }
@@ -4189,8 +4189,8 @@ public class GwtAstBuilder {
     method.setBody(new JMethodBody(info));
     if (isLegacyJsInteropEnabled) {
       JsInteropUtil.maybeSetJsInteropProperties(method);
-    } else if (isNewJsInteropEnabled) {
-      JsInteropUtil.maybeSetJsInteropPropertiesNew(method);
+    } else {
+      JsInteropUtil.maybeSetJsInteropPropertiesNew(method, generateJsInteropExports);
     }
     typeMap.setMethod(binding, method);
     return method;
@@ -4226,7 +4226,7 @@ public class GwtAstBuilder {
       }
       if (isLegacyJsInteropEnabled) {
         JsInteropUtil.maybeSetJsInteropProperties(type, x.annotations);
-      } else if (isNewJsInteropEnabled) {
+      } else {
         JsInteropUtil.maybeSetJsInteropPropertiesNew(type, x.annotations);
       }
       processSuppressedWarnings(type, x.annotations);

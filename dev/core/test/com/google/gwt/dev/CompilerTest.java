@@ -30,7 +30,6 @@ import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.impl.JjsUtils;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.thirdparty.guava.common.base.Charsets;
@@ -2401,7 +2400,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     // Setup options to perform a per-file compile, output to this new application directory and
     // compile the given module.
     compilerOptions.setIncrementalCompileEnabled(true);
-    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS_RC);
+    compilerOptions.setGenerateJsInteropExports(true);
     compilerOptions.setWarDir(applicationDir);
     compilerOptions.setModuleNames(ImmutableList.of(moduleName));
     compilerOptions.setOutput(output);

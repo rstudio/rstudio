@@ -25,13 +25,13 @@ public class ArgHandlerJsInteropMode extends ArgHandlerEnum<Mode> {
   private final OptionJsInteropMode options;
 
   public ArgHandlerJsInteropMode(OptionJsInteropMode options) {
-    super(Mode.class, options.getJsInteropMode(), false);
+    super(Mode.class, null, false);
     this.options = options;
   }
 
   @Override
   public String getPurpose() {
-    return getPurposeString("Specifies JsInterop mode:");
+    return getPurposeString("DEPRECATED: Specifies JsInterop mode:");
   }
 
   @Override
@@ -46,6 +46,8 @@ public class ArgHandlerJsInteropMode extends ArgHandlerEnum<Mode> {
 
   @Override
   public void setValue(Mode value) {
+    System.err.println("The experimental -XjsInteropMode option is deprecated and will be removed "
+        + "very soon. See https://goo.gl/uMdOQS for migration instructions.");
     if (options.getJsInteropMode() != value) {
       options.setJsInteropMode(value);
     }

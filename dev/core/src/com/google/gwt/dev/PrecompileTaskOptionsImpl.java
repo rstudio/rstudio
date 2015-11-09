@@ -90,8 +90,14 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
     return genDir;
   }
 
-  @Override public OptionJsInteropMode.Mode getJsInteropMode() {
+  @Override
+  public OptionJsInteropMode.Mode getJsInteropMode() {
     return jjsOptions.getJsInteropMode();
+  }
+
+  @Override
+  public boolean shouldGenerateJsInteropExports() {
+    return jjsOptions.shouldGenerateJsInteropExports();
   }
 
   @Override
@@ -268,8 +274,14 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
     jjsOptions.setInlineLiteralParameters(enabled);
   }
 
-  @Override public void setJsInteropMode(OptionJsInteropMode.Mode mode) {
+  @Override
+  public void setJsInteropMode(OptionJsInteropMode.Mode mode) {
     jjsOptions.setJsInteropMode(mode);
+  }
+
+  @Override
+  public void setGenerateJsInteropExports(boolean generateExports) {
+    jjsOptions.setGenerateJsInteropExports(generateExports);
   }
 
   @Override

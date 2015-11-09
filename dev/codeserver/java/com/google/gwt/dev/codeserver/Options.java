@@ -21,6 +21,7 @@ import com.google.gwt.dev.ArgProcessorBase;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.util.arg.ArgHandlerClosureFormattedOutput;
+import com.google.gwt.dev.util.arg.ArgHandlerGenerateJsInteropExports;
 import com.google.gwt.dev.util.arg.ArgHandlerIncrementalCompile;
 import com.google.gwt.dev.util.arg.ArgHandlerJsInteropMode;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
@@ -29,6 +30,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
 import com.google.gwt.dev.util.arg.ArgHandlerSetProperties;
 import com.google.gwt.dev.util.arg.ArgHandlerSourceLevel;
 import com.google.gwt.dev.util.arg.OptionClosureFormattedOutput;
+import com.google.gwt.dev.util.arg.OptionGenerateJsInteropExports;
 import com.google.gwt.dev.util.arg.OptionIncrementalCompile;
 import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.OptionLogLevel;
@@ -86,7 +88,8 @@ public class Options {
   private SourceLevel sourceLevel = SourceLevel.DEFAULT_SOURCE_LEVEL;
   private boolean failOnError = false;
   private int compileTestRecompiles = 0;
-  private OptionJsInteropMode.Mode jsInteropMode = OptionJsInteropMode.Mode.NONE;
+  private OptionJsInteropMode.Mode jsInteropMode = OptionJsInteropMode.Mode.JS_RC;
+  private boolean generateJsInteropExports = false;
   private OptionMethodNameDisplayMode.Mode methodNameDisplayMode =
       OptionMethodNameDisplayMode.Mode.NONE;
   private boolean closureFormattedOutput = false;
@@ -306,6 +309,10 @@ public class Options {
     return jsInteropMode;
   }
 
+  boolean shouldGenerateJsInteropExports() {
+    return generateJsInteropExports;
+  }
+
   JsOutputOption getOutput() {
     if (output == null) {
       return isIncrementalCompileEnabled() ? JsOutputOption.OBFUSCATED : JsOutputOption.PRETTY;
@@ -402,6 +409,17 @@ public class Options {
         public void setJsInteropMode(OptionJsInteropMode.Mode mode) {
           Options.this.jsInteropMode = mode;
         }}));
+      registerHandler(new ArgHandlerGenerateJsInteropExports(new OptionGenerateJsInteropExports() {
+        @Override
+        public boolean shouldGenerateJsInteropExports() {
+          return Options.this.generateJsInteropExports;
+        }
+
+        @Override
+        public void setGenerateJsInteropExports(boolean generateExports) {
+          Options.this.generateJsInteropExports = generateExports;
+        }
+      }));
       registerHandler(new ArgHandlerMethodNameDisplayMode(new OptionMethodNameDisplayMode() {
         @Override
         public OptionMethodNameDisplayMode.Mode getMethodNameDisplayMode() {
@@ -412,8 +430,7 @@ public class Options {
         public void setMethodNameDisplayMode(Mode mode) {
           Options.this.methodNameDisplayMode = mode;
         }
-      }) {
-      });
+      }));
       registerHandler(new ArgHandlerClosureFormattedOutput(new OptionClosureFormattedOutput() {
         @Override
         public boolean isClosureCompilerFormatEnabled() {

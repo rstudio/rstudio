@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2015 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,16 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev;
+package com.google.gwt.core;
 
-import com.google.gwt.dev.util.arg.OptionFinalProperties;
-import com.google.gwt.dev.util.arg.OptionLogLevel;
-import com.google.gwt.dev.util.arg.OptionModuleName;
-import com.google.gwt.dev.util.arg.OptionWorkDir;
+import com.google.gwt.core.client.interop.JsExportTest;
+
+import junit.framework.Test;
+import junit.framework.TestSuite;
 
 /**
- * A common set of options for all compile tasks.
+ * All core tests that require js interop and -generateJsInteropExports.
  */
-public interface CompileTaskOptions extends OptionModuleName, OptionLogLevel, OptionWorkDir,
-    OptionFinalProperties {
+public class JsInteropExportsSuite {
+  public static Test suite() {
+    TestSuite suite =
+        new TestSuite("All core js interop tests that require -generateJsInteropExports");
+    suite.addTestSuite(JsExportTest.class);
+    return suite;
+  }
 }

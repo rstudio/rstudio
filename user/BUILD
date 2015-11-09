@@ -558,6 +558,7 @@ filegroup(
             "test/**/ConstraintDefinitionsGwtSuite.java",
             "test/**/*JreSuite.java",
             "test/**/*Java8Suite.java",
+            "test/**/*JsInteropExportsSuite.java",
         ],
     ),
 )
@@ -565,6 +566,11 @@ filegroup(
 filegroup(
     name = "jsinterop_suite_files",
     srcs = glob(["test/**/*JsInteropSuite.java"]),
+)
+
+filegroup(
+    name = "jsinterop_exports_suite_files",
+    srcs = glob(["test/**/*JsInteropExportsSuite.java"]),
 )
 
 filegroup(
@@ -582,6 +588,7 @@ filegroup(
             "test/**/RunAsyncSuite.java",
             "test/**/*JreSuite.java",
             "test/**/*JsInteropSuite.java",
+            "test/**/*JsInteropExportsSuite.java",
             "test/**/*Java8Suite.java",
         ],
     ),

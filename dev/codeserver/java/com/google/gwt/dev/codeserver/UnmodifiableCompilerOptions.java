@@ -126,6 +126,11 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
+  public void setGenerateJsInteropExports(boolean generateExports) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public void setJsonSoycEnabled(boolean jsonSoycEnabled) {
     throw new UnsupportedOperationException();
   }

@@ -54,6 +54,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
 import com.google.gwt.dev.util.arg.ArgHandlerEnableClosureCompiler;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
+import com.google.gwt.dev.util.arg.ArgHandlerGenerateJsInteropExports;
 import com.google.gwt.dev.util.arg.ArgHandlerIncrementalCompile;
 import com.google.gwt.dev.util.arg.ArgHandlerJsInteropMode;
 import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
@@ -290,6 +291,7 @@ public class JUnitShell extends DevMode {
       registerHandler(new ArgHandlerOptimize(options));
       registerHandler(new ArgHandlerIncrementalCompile(options));
       registerHandler(new ArgHandlerJsInteropMode(options));
+      registerHandler(new ArgHandlerGenerateJsInteropExports(options));
       registerHandler(new ArgHandlerSetProperties(options));
       registerHandler(new ArgHandlerClosureFormattedOutput(options));
 
