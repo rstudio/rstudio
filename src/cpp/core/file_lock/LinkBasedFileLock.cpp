@@ -25,6 +25,7 @@
 #include <set>
 #include <vector>
 
+#include <core/SafeConvert.hpp>
 #include <core/Algorithm.hpp>
 #include <core/Thread.hpp>
 #include <core/Error.hpp>
@@ -41,11 +42,9 @@ namespace {
 
 std::string makePidString()
 {
-   // get the pid (as a string)
-   std::stringstream ss;
-   ss << (long) ::getpid();
-   return ss.str();
+   return safe_convert::numberToString((long) ::getpid());
 }
+
 const std::string& pidString()
 {
    static std::string instance = makePidString();
@@ -75,11 +74,11 @@ std::string threadId()
 
 std::string proxyLockFileName()
 {
-   return std::string() +
-         ".rstudio-lock" + "-" +
-         hostName()      + "-" +
-         pidString()     + "-" +
-         threadId();
+   return std::string()
+         + ".rstudio-lock" 
+         + "-" + hostName()
+         + "-" + pidString()
+         + "-" + threadId();
          
 }
 

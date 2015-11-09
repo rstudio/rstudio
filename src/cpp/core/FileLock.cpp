@@ -15,6 +15,7 @@
 
 #include <core/FileLock.hpp>
 
+#include <core/Settings.hpp>
 #include <core/Macros.hpp>
 #include <core/Error.hpp>
 #include <core/Log.hpp>
@@ -25,79 +26,91 @@
 namespace rstudio {
 namespace core {
 
-namespace locks {
-
 namespace {
 
 const char * const kLocksConfPath = "/etc/rstudio/locks.conf";
+#define kDefaultRefreshRate     20.0
+#define kDefaultTimeoutInterval 30.0
 
-} // end anonymous namespace
-
-void initialize()
+FileLock::LockType stringToLockType(const std::string& lockType)
 {
    using namespace boost::algorithm;
    
-   FilePath locksConfPath(kLocksConfPath);
+   if (boost::iequals(lockType, "advisory"))
+      return FileLock::LOCKTYPE_ADVISORY;
+   else if (boost::iequals(lockType, "linkbased"))
+      return FileLock::LOCKTYPE_LINKBASED;
+   
+   LOG_WARNING_MESSAGE("unrecognized lock type '" + lockType + "'");
+   return FileLock::LOCKTYPE_ADVISORY;
+}
+
+double getFieldPositive(const Settings& settings,
+                        const std::string& name,
+                        double defaultValue)
+{
+   double value = settings.getDouble(name, defaultValue);
+   if (value < 0)
+   {
+      LOG_WARNING_MESSAGE("invalid field '" + name + "': must be positive");
+      return defaultValue;
+   }
+   
+   return value;
+}
+
+} // end anonymous namespace
+
+void FileLock::initialize(FilePath locksConfPath)
+{
+   if (locksConfPath.empty())
+      locksConfPath = FilePath(kLocksConfPath);
+   
    if (!locksConfPath.exists())
       return;
    
-   std::map<std::string, std::string> conf;
-   Error error = core::readStringMapFromFile(locksConfPath, &conf);
+   Settings settings;
+   Error error = settings.initialize(locksConfPath);
    if (error)
+   {
       LOG_ERROR(error);
-   
-   if (conf.count("lock-type"))
-   {
-      std::string lockType = to_lower_copy(conf["lock-type"]);
-      if (lockType == "advisory")
-      {
-         FileLock::setLockType(FileLock::LOCKTYPE_ADVISORY);
-      }
-      else if (lockType == "link-based")
-      {
-         FileLock::setLockType(FileLock::LOCKTYPE_LINKBASED);
-      }
-      else
-      {
-         std::string msg = std::string() +
-               "unrecognized lock type '" + lockType + "'";
-         LOG_ERROR_MESSAGE(msg);
-      }
+      return;
    }
    
-   if (conf.count("lock-refresh-rate"))
-   {
-      long refreshRate = ::atol(conf["lock-refresh-rate"].c_str());
-      if (refreshRate == 0)
-         LOG_ERROR_MESSAGE("invalid lock refresh rate '" + conf["lock-refresh-rate"] + "'");
-      else
-         FileLock::setLockRefreshRate(boost::posix_time::seconds(refreshRate));
-   }
-   
-   if (conf.count("lock-timeout-interval"))
-   {
-      long timeoutInterval = ::atol(conf["lock-timeout-interval"].c_str());
-      if (timeoutInterval == 0)
-         LOG_ERROR_MESSAGE("invalid lock timeout interval '" + conf["lock-timeout-interval"] + "'");
-      else
-         FileLock::setLockTimeoutInterval(boost::posix_time::seconds(timeoutInterval));
-   }
+   FileLock::initialize(settings);
 }
 
-} // namespace locks
+void FileLock::initialize(const Settings& settings)
+{
+   // default lock type
+   FileLock::s_defaultType = stringToLockType(settings.get("lock-type", "advisory"));
+   
+   // timeout interval
+   double timeoutInterval = getFieldPositive(settings, "timeout-interval", kDefaultTimeoutInterval);
+   FileLock::s_timeoutInterval = boost::posix_time::seconds(timeoutInterval);
+   
+   // refresh rate
+   double refreshRate = getFieldPositive(settings, "refresh-rate", kDefaultRefreshRate);
+   FileLock::s_refreshRate = boost::posix_time::seconds(refreshRate);
+}
 
 // default values for static members
-FileLock::LockType FileLock::type_(FileLock::LOCKTYPE_ADVISORY);
-boost::posix_time::seconds FileLock::timeoutInterval_(30);
-boost::posix_time::seconds FileLock::refreshRate_(20);
+FileLock::LockType FileLock::s_defaultType(FileLock::LOCKTYPE_ADVISORY);
+boost::posix_time::seconds FileLock::s_timeoutInterval(kDefaultTimeoutInterval);
+boost::posix_time::seconds FileLock::s_refreshRate(kDefaultRefreshRate);
 
-boost::shared_ptr<FileLock> FileLock::create()
+boost::shared_ptr<FileLock> FileLock::create(LockType type)
 {
-   switch (FileLock::getLockType())
+   switch (type)
    {
    case LOCKTYPE_ADVISORY:  return boost::shared_ptr<FileLock>(new AdvisoryFileLock());
    case LOCKTYPE_LINKBASED: return boost::shared_ptr<FileLock>(new LinkBasedFileLock());
    }
+}
+
+boost::shared_ptr<FileLock> FileLock::createDefault()
+{
+   return FileLock::create(s_defaultType);
 }
 
 void FileLock::refresh()
@@ -109,7 +122,8 @@ void FileLock::refresh()
 namespace {
 
 void schedulePeriodicExecution(
-      boost::asio::deadline_timer* pTimer,
+      const boost::system::error_code& ec,
+      boost::asio::deadline_timer& timer,
       boost::posix_time::seconds interval,
       boost::function<void()> callback)
 {
@@ -120,18 +134,19 @@ void schedulePeriodicExecution(
 
       // reschedule
       boost::system::error_code errc;
-      pTimer->expires_at(pTimer->expires_at() + interval, errc);
+      timer.expires_at(timer.expires_at() + interval, errc);
       if (errc)
       {
          LOG_ERROR(Error(errc, ERROR_LOCATION));
          return;
       }
       
-      pTimer->async_wait(boost::bind(
-                            schedulePeriodicExecution,
-                            pTimer,
-                            interval,
-                            callback));
+      timer.async_wait(boost::bind(
+                          schedulePeriodicExecution,
+                          boost::asio::placeholders::error,
+                          boost::ref(timer),
+                          interval,
+                          callback));
    }
    catch (...)
    {
@@ -151,7 +166,12 @@ void FileLock::refreshPeriodically(boost::asio::io_service& service,
    s_isRefreshing = true;
    
    static boost::asio::deadline_timer timer(service, interval);
-   schedulePeriodicExecution(&timer, interval, FileLock::refresh);
+   timer.async_wait(boost::bind(
+                       schedulePeriodicExecution,
+                       boost::asio::placeholders::error,
+                       boost::ref(timer),
+                       interval,
+                       FileLock::refresh));
 }
 
 } // end namespace core
