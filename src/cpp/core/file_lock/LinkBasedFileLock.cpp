@@ -249,6 +249,8 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
       // (crashed?) process. remove it and acquire our own lock
       if (isLockFileStale(lockFilePath))
       {
+         // note that multiple processes may attempt to remove this
+         // file at the same time, so errors shouldn't be fatal
          Error error = lockFilePath.remove();
          if (error)
             LOG_ERROR(error);
@@ -266,7 +268,8 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    if (error)
       return error;
 
-   // write the lock file
+   // write the lock file -- this step _must_ be atomic and so only one
+   // competing process should be able to succeed here
    error = writeLockFile(lockFilePath);
    if (error)
       return error;
