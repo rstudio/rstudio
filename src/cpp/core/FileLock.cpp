@@ -15,8 +15,10 @@
 
 #include <core/FileLock.hpp>
 
-#include <core/Settings.hpp>
+#define RSTUDIO_ENABLE_DEBUG_MACROS
 #include <core/Macros.hpp>
+
+#include <core/Settings.hpp>
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
@@ -38,6 +40,18 @@ namespace {
 const char * const kLocksConfPath = "/etc/rstudio/locks.conf";
 #define kDefaultRefreshRate     20.0
 #define kDefaultTimeoutInterval 30.0
+
+std::string lockTypeToString(FileLock::LockType type)
+{
+   switch (type)
+   {
+   case FileLock::LOCKTYPE_ADVISORY:  return "advisory";
+   case FileLock::LOCKTYPE_LINKBASED: return "linkbased";
+   }
+   
+   // not reached
+   return std::string();
+}
 
 FileLock::LockType stringToLockType(const std::string& lockType)
 {
@@ -68,8 +82,20 @@ double getFieldPositive(const Settings& settings,
 
 } // end anonymous namespace
 
+bool s_isInitialized = false;
+
+void FileLock::ensureInitialized()
+{
+   if (s_isInitialized)
+      return;
+   
+   FileLock::initialize();
+}
+
 void FileLock::initialize(FilePath locksConfPath)
 {
+   s_isInitialized = true;
+   
    if (locksConfPath.empty())
       locksConfPath = FilePath(kLocksConfPath);
    
@@ -89,6 +115,8 @@ void FileLock::initialize(FilePath locksConfPath)
 
 void FileLock::initialize(const Settings& settings)
 {
+   s_isInitialized = true;
+   
    // default lock type
    FileLock::s_defaultType = stringToLockType(settings.get("lock-type", "advisory"));
    
@@ -99,6 +127,13 @@ void FileLock::initialize(const Settings& settings)
    // refresh rate
    double refreshRate = getFieldPositive(settings, "refresh-rate", kDefaultRefreshRate);
    FileLock::s_refreshRate = boost::posix_time::seconds(refreshRate);
+   
+   DEBUG_BLOCK("lock initialization")
+   {
+      std::cerr << "Type: "    << lockTypeToString(FileLock::s_defaultType) << std::endl;
+      std::cerr << "Timeout: " << FileLock::s_timeoutInterval.total_seconds() << std::endl;
+      std::cerr << "Refresh: " << FileLock::s_refreshRate.total_seconds() << std::endl;
+   }
 }
 
 // default values for static members

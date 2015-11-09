@@ -62,12 +62,19 @@ public:
    // to allow for polymorphism (ie, select method at runtime)
    virtual bool isLocked(const FilePath& lockFilePath) const = 0;
    
+   FileLock()
+   {
+      ensureInitialized();
+   }
+
    virtual ~FileLock() {}
    
 protected:
    static LockType s_defaultType;
    static boost::posix_time::seconds s_timeoutInterval;
    static boost::posix_time::seconds s_refreshRate;
+   
+   void ensureInitialized();
 };
 
 class AdvisoryFileLock : public FileLock
