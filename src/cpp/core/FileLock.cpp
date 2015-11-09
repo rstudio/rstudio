@@ -113,6 +113,9 @@ boost::shared_ptr<FileLock> FileLock::create(LockType type)
    case LOCKTYPE_ADVISORY:  return boost::shared_ptr<FileLock>(new AdvisoryFileLock());
    case LOCKTYPE_LINKBASED: return boost::shared_ptr<FileLock>(new LinkBasedFileLock());
    }
+   
+   // shouldn't be reached
+   return boost::shared_ptr<FileLock>(new AdvisoryFileLock());
 }
 
 boost::shared_ptr<FileLock> FileLock::createDefault()
