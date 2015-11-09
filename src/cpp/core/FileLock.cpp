@@ -136,6 +136,10 @@ void schedulePeriodicExecution(
 {
    try
    {
+      // log errors (and attempt to continue if possible)
+      if (ec)
+         LOG_ERROR(core::Error(ec, ERROR_LOCATION));
+      
       // execute callback
       callback();
 
