@@ -20,6 +20,7 @@ import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.Arrays;
@@ -29,6 +30,10 @@ import java.util.List;
  * Tests for the JsInteropRestrictionChecker.
  */
 public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
+  @Override
+  public void setUp() {
+    sourceLevel = SourceLevel.JAVA8;
+  }
 
   // TODO: eventually test this for default methods in Java 8.
   public void testCollidingAccidentalOverrideConcreteMethodFails() throws Exception {
