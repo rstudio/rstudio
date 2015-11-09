@@ -82,6 +82,25 @@ std::string proxyLockFileName()
          
 }
 
+void cleanStaleLockfiles(const FilePath& dir)
+{
+   std::vector<FilePath> children;
+   Error error = dir.children(&children);
+   if (error)
+      LOG_ERROR(error);
+   
+   BOOST_FOREACH(const FilePath& filePath, children)
+   {
+      if (boost::algorithm::starts_with(filePath.filename(), ".rstudio-lock") &&
+          isLockFileStale(filePath))
+      {
+         Error error = filePath.remove();
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+}
+
 class LockRegistration : boost::noncopyable
 {
 public:
@@ -273,6 +292,9 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    error = writeLockFile(lockFilePath);
    if (error)
       return error;
+   
+   // clean any other stale lockfiles in that directory
+   cleanStaleLockfiles(lockFilePath.parent());
    
    // register our lock (for refresh)
    pImpl_->lockFilePath = lockFilePath;
