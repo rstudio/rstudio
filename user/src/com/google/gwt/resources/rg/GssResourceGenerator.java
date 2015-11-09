@@ -1019,7 +1019,6 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     boolean css = ensureEitherCssOrGss(resources, logger);
 
     if (css && gssOptions.isAutoConversionOff()) {
-      // TODO(dankurka): add link explaining the situation in detail.
       logger.log(Type.ERROR,
           "Your ClientBundle is referencing css files instead of gss. "
               + "You will need to either convert these files to gss using the "
@@ -1028,7 +1027,8 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
               + "you will need to move to gss."
               + "Add this line to your gwt.xml file to temporary avoid this:"
               + "<set-configuration-property name=\"CssResource.conversionMode\""
-              + "    value=\"strict\" />");
+              + "    value=\"strict\" /> "
+              + "Details on how to migrate to GSS can be found at: http://goo.gl/tEQnmJ");
       throw new UnableToCompleteException();
     }
 
