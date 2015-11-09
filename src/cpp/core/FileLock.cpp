@@ -26,6 +26,13 @@
 namespace rstudio {
 namespace core {
 
+namespace file_lock {
+void initialize()
+{
+   FileLock::initialize();
+}
+} // end namespace file_lock
+
 namespace {
 
 const char * const kLocksConfPath = "/etc/rstudio/locks.conf";

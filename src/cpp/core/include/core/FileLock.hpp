@@ -26,6 +26,10 @@
 namespace rstudio {
 namespace core {
 
+namespace file_lock {
+void initialize();
+} // end namespace file_lock
+
 class Error;
 class FilePath;
 

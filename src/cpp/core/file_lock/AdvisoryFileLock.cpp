@@ -36,16 +36,18 @@
 namespace rstudio {
 namespace core {
 
+namespace {
+typedef boost::interprocess::file_lock BoostFileLock;
+}
+
 struct AdvisoryFileLock::Impl
 {
    FilePath lockFilePath;
-   boost::interprocess::file_lock lock;
+   BoostFileLock lock;
 };
 
 bool AdvisoryFileLock::isLocked(const FilePath& lockFilePath)
 {
-   using namespace boost::interprocess;
-
    // if the lock file doesn't exist then it's not locked
    if (!lockFilePath.exists())
       return false;
@@ -53,7 +55,7 @@ bool AdvisoryFileLock::isLocked(const FilePath& lockFilePath)
    // check if it is locked
    try
    {
-      file_lock lock(string_utils::utf8ToSystem(lockFilePath.absolutePath()).c_str());
+      BoostFileLock lock(string_utils::utf8ToSystem(lockFilePath.absolutePath()).c_str());
 
       if (lock.try_lock())
       {
@@ -99,7 +101,7 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
    // try to acquire the lock
    try
    {
-      file_lock lock(string_utils::utf8ToSystem(lockFilePath.absolutePath()).c_str());
+      BoostFileLock lock(string_utils::utf8ToSystem(lockFilePath.absolutePath()).c_str());
 
       if (lock.try_lock())
       {
@@ -150,7 +152,7 @@ Error AdvisoryFileLock::release()
    try
    {
       pImpl_->lock.unlock();
-      pImpl_->lock = file_lock();
+      pImpl_->lock = BoostFileLock();
       pImpl_->lockFilePath = FilePath();
       return Success();
    }
