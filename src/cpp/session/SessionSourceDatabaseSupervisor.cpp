@@ -340,7 +340,7 @@ bool reclaimOrphanedSession(FilePath* pSessionDir)
    BOOST_FOREACH(const FilePath& sessionDir, sessionDirs)
    {
       FilePath lockFilePath = sessionLockFilePath(sessionDir);
-      if (!FileLock::isLocked(lockFilePath))
+      if (!s_sessionDirLock.isLocked(lockFilePath))
       {
          Error error = s_sessionDirLock.acquire(lockFilePath);
          if (!error)

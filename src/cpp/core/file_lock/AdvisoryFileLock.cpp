@@ -46,7 +46,7 @@ struct AdvisoryFileLock::Impl
    BoostFileLock lock;
 };
 
-bool AdvisoryFileLock::isLocked(const FilePath& lockFilePath)
+bool AdvisoryFileLock::isLocked(const FilePath& lockFilePath) const
 {
    // if the lock file doesn't exist then it's not locked
    if (!lockFilePath.exists())

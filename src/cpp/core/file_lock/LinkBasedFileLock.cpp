@@ -261,7 +261,7 @@ FilePath LinkBasedFileLock::lockFilePath() const
    return pImpl_->lockFilePath;
 }
 
-bool LinkBasedFileLock::isLocked(const FilePath& lockFilePath)
+bool LinkBasedFileLock::isLocked(const FilePath& lockFilePath) const
 {
    if (!lockFilePath.exists())
       return false;

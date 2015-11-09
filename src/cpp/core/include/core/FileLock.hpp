@@ -57,6 +57,11 @@ public:
    virtual Error release() = 0;
    virtual FilePath lockFilePath() const = 0;
    
+   // NOTE: 'isLocked()' does not ask whether _this lock_ has the lock; rather,
+   // whether _any lock_ has the lock. it's implemented as a virtual member function
+   // to allow for polymorphism (ie, select method at runtime)
+   virtual bool isLocked(const FilePath& lockFilePath) const = 0;
+   
    virtual ~FileLock() {}
    
 protected:
@@ -68,11 +73,11 @@ protected:
 class AdvisoryFileLock : public FileLock
 {
 public:
-   static bool isLocked(const FilePath& lockFilePath);
    static void refresh();
    
    Error acquire(const FilePath& lockFilePath);
    Error release();
+   bool isLocked(const FilePath& lockFilePath) const;
    FilePath lockFilePath() const;
    
    AdvisoryFileLock();
@@ -87,12 +92,11 @@ class LinkBasedFileLock : public FileLock
 {
 public:
    static bool isLockFileStale(const FilePath& lockFilePath);
-   
-   static bool isLocked(const FilePath& lockFilePath);
    static void refresh();
    
    Error acquire(const FilePath& lockFilePath);
    Error release();
+   bool isLocked(const FilePath& lockFilePath) const;
    FilePath lockFilePath() const;
    
    LinkBasedFileLock();
