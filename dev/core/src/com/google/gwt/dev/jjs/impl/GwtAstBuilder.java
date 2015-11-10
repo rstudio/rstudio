@@ -2151,9 +2151,10 @@ public class GwtAstBuilder {
        *  to
        *
        * try {
-       *   A1 a1 = new A1();... ; An an = new An();
+       *   A1 a1 = null; ...; An an = null;
        *   Throwable $exception = null;
        *   try {
+       *     a1 = new A1();... ; an = new An();
        *     ... tryBlock...
        *   } catch (Throwable t) {
        *     $exception = t;
@@ -2169,7 +2170,7 @@ public class GwtAstBuilder {
        *
        */
 
-      JBlock innerBlock = new JBlock(info);
+      JBlock outerTryBlock = new JBlock(info);
       // add resource variables
       List<JLocal> resourceVariables = Lists.newArrayList();
       for (int i = x.resources.length - 1; i >= 0; i--) {
@@ -2179,13 +2180,13 @@ public class GwtAstBuilder {
 
         JLocal resourceVar = (JLocal) curMethod.locals.get(x.resources[i].binding);
         resourceVariables.add(0, resourceVar);
-        innerBlock.addStmt(0, resourceDecl);
+        tryBlock.addStmt(0, resourceDecl);
       }
 
       // add exception variable
       JLocal exceptionVar = createLocalThrowable(info, "$primary_ex");
 
-      innerBlock.addStmt(makeDeclaration(info, exceptionVar, JNullLiteral.INSTANCE));
+      outerTryBlock.addStmt(makeDeclaration(info, exceptionVar, JNullLiteral.INSTANCE));
 
       // create catch block
       List<JTryStatement.CatchClause> catchClauses = Lists.newArrayListWithCapacity(1);
@@ -2217,9 +2218,9 @@ public class GwtAstBuilder {
           new JThrowStatement(info, new JLocalRef(info, exceptionVar)), null));
 
       // Stitch all together into a inner try block
-      innerBlock.addStmt(new JTryStatement(info, tryBlock, catchClauses,
+      outerTryBlock.addStmt(new JTryStatement(info, tryBlock, catchClauses,
             finallyBlock));
-      return innerBlock;
+      return outerTryBlock;
     }
 
     private JLocal createLocalThrowable(SourceInfo info, String prefix) {

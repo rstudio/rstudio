@@ -19,7 +19,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -60,12 +60,26 @@ public class Java7Test extends GWTTestCase {
 
   final List<String> log = new ArrayList<String>();
 
+  enum ThrowsWhen {
+    NEVER, ONCONSTRUCTOR, ONCLOSE;
+  }
+
   class Resource implements AutoCloseable {
 
-    String name;
-    public Resource(String name) {
+    final String name;
+    final ThrowsWhen throwsWhen;
+
+    public Resource(String name) throws E1 {
+      this(name, ThrowsWhen.NEVER);
+    }
+
+    public Resource(String name, ThrowsWhen throwsWhen) throws E1 {
       this.name = name;
+      this.throwsWhen = throwsWhen;
       log.add("Open " + name);
+      if (throwsWhen == ThrowsWhen.ONCONSTRUCTOR) {
+        throwException("ExceptionOnConstructor");
+      }
     }
 
     public void doSomething() {
@@ -78,36 +92,23 @@ public class Java7Test extends GWTTestCase {
 
     public void close() throws Exception {
       log.add("Close " + name);
+      if (throwsWhen == ThrowsWhen.ONCLOSE) {
+        throwException("ExceptionOnClose");
+      }
     }
   }
 
-  class ResourceWithExceptionOnClose extends Resource {
-
-    public ResourceWithExceptionOnClose(String name) {
-      super(name);
-    }
-
-    public void close() throws Exception {
-      throw new E1("Exception in close " + name);
+  private void logException(Exception e) {
+    log.add(e.getMessage());
+    for (Throwable t : e.getSuppressed()) {
+      log.add("Suppressed: " + t.getMessage());
     }
   }
 
-  public void testResource() throws Exception {
+  public void testTryWithResources_noExceptions() throws Exception {
     log.clear();
-    try (Resource c = new Resource("A")) {
-
-      c.doSomething();
-    }
-
-    assertContentsInOrder(log,
-        "Open A",
-        "doSomething A",
-        "Close A");
-  }
-
-  public void test3Resources() throws Exception {
-    log.clear();
-    try (Resource rA = new Resource("A");
+    try (
+        Resource rA = new Resource("A");
         Resource rB = new Resource("B");
         Resource rC = new Resource("C")) {
 
@@ -129,10 +130,11 @@ public class Java7Test extends GWTTestCase {
     );
   }
 
-  public void testResourcesWithExceptions() throws Exception {
+  public void testTryWithResources_exceptions() throws Exception {
     log.clear();
-    try (Resource rA = new Resource("A");
-        Resource rB = new ResourceWithExceptionOnClose("B");
+    try (
+        Resource rA = new Resource("A");
+        Resource rB = new Resource("B", ThrowsWhen.ONCLOSE);
         Resource rC = new Resource("C")) {
 
       rA.doSomething();
@@ -152,26 +154,25 @@ public class Java7Test extends GWTTestCase {
         "doSomething B",
         "doSomething C",
         "Close C",
+        "Close B",
         "Close A",
-        "Exception in close B",
+        "ExceptionOnClose in B",
         "finally"
     );
   }
 
-  public void testResourcesWithSuppressedExceptions() throws Exception {
+  public void testTryWithResources_suppressedExceptions() throws Exception {
     log.clear();
-    try (Resource rA = new ResourceWithExceptionOnClose("A");
+    try (
+        Resource rA = new Resource("A", ThrowsWhen.ONCLOSE);
         Resource rB = new Resource("B");
-        Resource rC = new ResourceWithExceptionOnClose("C")) {
+        Resource rC = new Resource("C", ThrowsWhen.ONCLOSE)) {
 
       rA.doSomething();
       rB.doSomething();
       rC.doSomething();
     } catch (Exception e) {
-      log.add(e.getMessage());
-      for (Throwable t : e.getSuppressed()) {
-        log.add("Suppressed: " + t.getMessage());
-      }
+      logException(e);
     }
 
     assertContentsInOrder(log,
@@ -181,24 +182,24 @@ public class Java7Test extends GWTTestCase {
         "doSomething A",
         "doSomething B",
         "doSomething C",
+        "Close C",
         "Close B",
-        "Exception in close C",
-        "Suppressed: Exception in close A"
+        "Close A",
+        "ExceptionOnClose in C",
+        "Suppressed: ExceptionOnClose in A"
     );
 
     log.clear();
-    try (Resource rA = new Resource("A");
-        Resource rB = new ResourceWithExceptionOnClose("B");
+    try (
+        Resource rA = new Resource("A");
+        Resource rB = new Resource("B", ThrowsWhen.ONCLOSE);
         Resource rC = new Resource("C")) {
 
       rA.doSomething();
       rB.throwException("E1 here");
       rC.doSomething();
     } catch (Exception e) {
-      log.add(e.getMessage());
-      for (Throwable t : e.getSuppressed()) {
-        log.add("Suppressed: " + t.getMessage());
-      }
+      logException(e);
     } finally {
       log.add("finally");
     }
@@ -209,10 +210,34 @@ public class Java7Test extends GWTTestCase {
         "Open C",
         "doSomething A",
         "Close C",
+        "Close B",
         "Close A",
         "E1 here in B",
-        "Suppressed: Exception in close B",
+        "Suppressed: ExceptionOnClose in B",
         "finally"
+    );
+  }
+
+  public void testTryWithResources_exceptionInAcquisition() {
+    log.clear();
+    try (
+        Resource rA = new Resource("A", ThrowsWhen.ONCLOSE);
+        Resource rB = new Resource("B", ThrowsWhen.ONCONSTRUCTOR);
+        Resource rC = new Resource("C", ThrowsWhen.ONCLOSE)) {
+
+      rA.doSomething();
+      rB.doSomething();
+      rC.doSomething();
+    } catch (Exception e) {
+      logException(e);
+    }
+
+    assertContentsInOrder(log,
+        "Open A",
+        "Open B",
+        "Close A",
+        "ExceptionOnConstructor in B",
+        "Suppressed: ExceptionOnClose in A"
     );
   }
 
@@ -229,17 +254,6 @@ public class Java7Test extends GWTTestCase {
     assertEquals(2, throwable.getSuppressed().length);
     assertEquals(suppressed1, throwable.getSuppressed()[0]);
     assertEquals(suppressed2, throwable.getSuppressed()[1]);
-  }
-
-  private void assertContentsInOrder(Iterable<String> contents, String... elements) {
-    int sz = elements.length;
-    Iterator<String> it = contents.iterator();
-    for (int i = 0; i < sz; i++) {
-      assertTrue(it.hasNext());
-      String expected = it.next();
-      assertEquals(elements[i], expected);
-    }
-    assertFalse(it.hasNext());
   }
 
   static class E1 extends Exception {
@@ -346,5 +360,9 @@ public class Java7Test extends GWTTestCase {
     } catch (ClassCastException e) {
       // Expected.
     }
+  }
+
+  private void assertContentsInOrder(Iterable<String> contents, String... elements) {
+    assertEquals(Arrays.asList(elements).toString(), contents.toString());
   }
 }
