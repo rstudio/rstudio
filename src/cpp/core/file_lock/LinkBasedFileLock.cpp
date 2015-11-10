@@ -121,6 +121,11 @@ class LockRegistration : boost::noncopyable
 {
 public:
    
+   LockRegistration()
+      : pid_(::getpid())
+   {
+   }
+   
    void registerLock(const FilePath& lockFilePath)
    {
       LOCK_MUTEX(mutex_)
@@ -166,11 +171,27 @@ public:
       END_LOCK_MUTEX
    }
    
+   ~LockRegistration()
+   {
+      try
+      {
+         // ensure that child processes don't run
+         // the destructor
+         if (::getpid() == pid_)
+         {
+            clearLocks();
+         }
+      }
+      catch (...)
+      {
+      }
+   }
+   
 private:
    
    boost::mutex mutex_;
    std::set<FilePath> registration_;
-   
+   pid_t pid_;
 };
 
 LockRegistration& lockRegistration()
