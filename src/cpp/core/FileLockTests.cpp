@@ -127,6 +127,9 @@ TEST_CASE("File Locking")
          CHECK(s_lockFilePath.exists());
          CHECK(lock.isLocked(s_lockFilePath));
       }
+      
+      // clean up
+      s_lockFilePath.removeIfExists();
    }
 
 }
