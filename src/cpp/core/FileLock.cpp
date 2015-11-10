@@ -37,6 +37,9 @@ void initialize()
 
 namespace {
 
+const char * const kLockTypeAdvisory  = "advisory";
+const char * const kLockTypeLinkBased = "linkbased";
+
 const char * const kLocksConfPath = "/etc/rstudio/file-locks";
 #define kDefaultRefreshRate     20.0
 #define kDefaultTimeoutInterval 30.0
@@ -45,8 +48,8 @@ std::string lockTypeToString(FileLock::LockType type)
 {
    switch (type)
    {
-   case FileLock::LOCKTYPE_ADVISORY:  return "advisory";
-   case FileLock::LOCKTYPE_LINKBASED: return "linkbased";
+   case FileLock::LOCKTYPE_ADVISORY:  return kLockTypeAdvisory;
+   case FileLock::LOCKTYPE_LINKBASED: return kLockTypeLinkBased;
    }
    
    // not reached
@@ -57,9 +60,9 @@ FileLock::LockType stringToLockType(const std::string& lockType)
 {
    using namespace boost::algorithm;
    
-   if (boost::iequals(lockType, "advisory"))
+   if (boost::iequals(lockType, kLockTypeAdvisory))
       return FileLock::LOCKTYPE_ADVISORY;
-   else if (boost::iequals(lockType, "linkbased"))
+   else if (boost::iequals(lockType, kLockTypeLinkBased))
       return FileLock::LOCKTYPE_LINKBASED;
    
    LOG_WARNING_MESSAGE("unrecognized lock type '" + lockType + "'");
@@ -118,7 +121,7 @@ void FileLock::initialize(const Settings& settings)
    s_isInitialized = true;
    
    // default lock type
-   FileLock::s_defaultType = stringToLockType(settings.get("lock-type", "advisory"));
+   FileLock::s_defaultType = stringToLockType(settings.get("lock-type", kLockTypeAdvisory));
    
    // timeout interval
    double timeoutInterval = getFieldPositive(settings, "timeout-interval", kDefaultTimeoutInterval);
