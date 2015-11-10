@@ -40,15 +40,9 @@ namespace core {
 
 namespace {
 
-std::string makePidString()
-{
-   return safe_convert::numberToString((long) ::getpid());
-}
-
 const std::string& pidString()
 {
-   static std::string instance = makePidString();
-   return instance;
+   return safe_convert::numberToString((long) ::getpid());
 }
 
 std::string makeHostName()
@@ -59,6 +53,7 @@ std::string makeHostName()
       LOG_ERROR(systemError(errno, ERROR_LOCATION));
    return std::string(buffer);
 }
+
 const std::string& hostName()
 {
    static std::string instance = makeHostName();
