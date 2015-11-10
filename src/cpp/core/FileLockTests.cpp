@@ -15,6 +15,8 @@
 
 #include <core/FileLock.hpp>
 
+#include <sys/wait.h>
+
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 
