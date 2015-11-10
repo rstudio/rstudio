@@ -46,6 +46,26 @@ import java.math.BigInteger;
  * valueOf(long val), floatValue(), doubleValue().
  */
 public class BigIntegerConvertTest extends EmulTestBase {
+
+  public void testByteValueExact() {
+    assertEquals(-1, BigInteger.valueOf(-1).byteValueExact());
+    assertEquals(0, BigInteger.valueOf(0).byteValueExact());
+    assertEquals(1, BigInteger.valueOf(1).byteValueExact());
+    assertEquals(Byte.MAX_VALUE, BigInteger.valueOf(Byte.MAX_VALUE).byteValueExact());
+    assertEquals(Byte.MIN_VALUE, BigInteger.valueOf(Byte.MIN_VALUE).byteValueExact());
+
+    try {
+      BigInteger.valueOf(Byte.MAX_VALUE + 1).byteValueExact();
+      fail("overflow expected");
+    } catch (Exception expected) {
+    }
+    try {
+      BigInteger.valueOf(Byte.MIN_VALUE - 1).byteValueExact();
+      fail("overflow expected");
+    } catch (Exception expected) {
+    }
+  }
+
   /**
    * Convert a negative number to a double value. The number's bit length is
    * less than 64 bits.
@@ -634,6 +654,25 @@ public class BigIntegerConvertTest extends EmulTestBase {
     assertEquals(resInt, aNumber);
   }
 
+  public void testIntValueExact() {
+    assertEquals(-1, BigInteger.valueOf(-1).intValueExact());
+    assertEquals(0, BigInteger.valueOf(0).intValueExact());
+    assertEquals(1, BigInteger.valueOf(1).intValueExact());
+    assertEquals(Integer.MAX_VALUE, BigInteger.valueOf(Integer.MAX_VALUE).intValueExact());
+    assertEquals(Integer.MIN_VALUE, BigInteger.valueOf(Integer.MIN_VALUE).intValueExact());
+
+    try {
+      BigInteger.valueOf(Integer.MAX_VALUE + 1L).intValueExact();
+      fail("overflow expected");
+    } catch (Exception expected) {
+    }
+    try {
+      BigInteger.valueOf(Integer.MIN_VALUE - 1L).intValueExact();
+      fail("overflow expected");
+    } catch (Exception expected) {
+    }
+  }
+
   /**
    * Convert a number to a negative long value The BigInteger is longer than
    * int.
@@ -674,6 +713,44 @@ public class BigIntegerConvertTest extends EmulTestBase {
     long result = 880563758158769709L;
     long aNumber = new BigInteger(aBytes).longValue();
     assertEquals(result, aNumber);
+  }
+
+  public void testLongValueExact() {
+    assertEquals(-1, BigInteger.valueOf(-1).longValueExact());
+    assertEquals(0, BigInteger.valueOf(0).longValueExact());
+    assertEquals(1, BigInteger.valueOf(1).longValueExact());
+    assertEquals(Long.MAX_VALUE, BigInteger.valueOf(Long.MAX_VALUE).longValueExact());
+    assertEquals(Long.MIN_VALUE, BigInteger.valueOf(Long.MIN_VALUE).longValueExact());
+
+    try {
+      BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE).longValueExact();
+      fail("overflow expected");
+    } catch (Exception expected) {
+    }
+    try {
+      BigInteger.valueOf(Long.MIN_VALUE).subtract(BigInteger.ONE).longValueExact();
+      fail("overflow expected");
+    } catch (Exception expected) {
+    }
+  }
+
+  public void testShortValueExact() {
+    assertEquals(-1, BigInteger.valueOf(-1).shortValueExact());
+    assertEquals(0, BigInteger.valueOf(0).shortValueExact());
+    assertEquals(1, BigInteger.valueOf(1).shortValueExact());
+    assertEquals(Short.MAX_VALUE, BigInteger.valueOf(Short.MAX_VALUE).shortValueExact());
+    assertEquals(Short.MIN_VALUE, BigInteger.valueOf(Short.MIN_VALUE).shortValueExact());
+
+    try {
+      BigInteger.valueOf(Short.MAX_VALUE + 1).shortValueExact();
+      fail("overflow expected");
+    } catch (Exception expected) {
+    }
+    try {
+      BigInteger.valueOf(Short.MIN_VALUE - 1).shortValueExact();
+      fail("overflow expected");
+    } catch (Exception expected) {
+    }
   }
 
   /**

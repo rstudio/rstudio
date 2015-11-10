@@ -607,6 +607,21 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
   }
 
   /**
+   * Converts value of this {@code BigInteger} to a {@code byte} if it fits it,
+   * otherwise {@code ArithmeticException} is thrown.
+   *
+   * @return this {@code BigInteger} converted to a {@code byte}.
+   * @throws ArithmeticException if the value of this {@code BigInteger}
+   *         does not fit in a {@code byte}.
+   */
+  public byte byteValueExact() {
+    if (numberLength <= 1 && bitLength() <= 7) {
+      return byteValue();
+    }
+    throw new ArithmeticException("out of byte range");
+  }
+
+  /**
    * Returns a new {@code BigInteger} which has the same binary representation
    * as {@code this} but with the bit at position n cleared. The result is
    * equivalent to {@code this & ~(2^n)}.
@@ -900,6 +915,21 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
   }
 
   /**
+   * Converts value of this {@code BigInteger} to an {@code int} if it fits it,
+   * otherwise {@code ArithmeticException} is thrown.
+   *
+   * @return this {@code BigInteger} converted to an {@code int}.
+   * @throws ArithmeticException if the value of this {@code BigInteger}
+   *         does not fit in an {@code int}.
+   */
+  public int intValueExact() {
+    if (numberLength <= 1 && bitLength() <= 31) {
+      return intValue();
+    }
+    throw new ArithmeticException("out of int range");
+  }
+
+  /**
    * Tests whether this {@code BigInteger} is probably prime. If {@code true} is
    * returned, then this is prime with a probability beyond (1-1/2^certainty).
    * If {@code false} is returned, then this is definitely composite. If the
@@ -924,6 +954,21 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
     long value = (numberLength > 1) ? (((long) digits[1]) << 32)
         | (digits[0] & 0xFFFFFFFFL) : (digits[0] & 0xFFFFFFFFL);
     return (sign * value);
+  }
+
+  /**
+   * Converts value of this {@code BigInteger} to a {@code long} if it fits it,
+   * otherwise {@code ArithmeticException} is thrown.
+   *
+   * @return this {@code BigInteger} converted to a {@code long}.
+   * @throws ArithmeticException if the value of this {@code BigInteger}
+   *         does not fit in a {@code long}.
+   */
+  public long longValueExact() {
+    if (numberLength <= 2 && bitLength() <= 63) {
+      return longValue();
+    }
+    throw new ArithmeticException("out of long range");
   }
 
   /**
@@ -1248,6 +1293,21 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
     }
     return ((n > 0) ? BitLevel.shiftRight(this, n) : BitLevel.shiftLeft(this,
         -n));
+  }
+
+  /**
+   * Converts value of this {@code BigInteger} to a {@code short} if it fits it,
+   * otherwise {@code ArithmeticException} is thrown.
+   *
+   * @return this {@code BigInteger} converted to a {@code short}.
+   * @throws ArithmeticException if the value of this {@code BigInteger}
+   *         does not fit in a {@code short}.
+   */
+  public short shortValueExact() {
+    if (numberLength <= 1 && bitLength() <= 15) {
+      return shortValue();
+    }
+    throw new ArithmeticException("out of short range");
   }
 
   /**
