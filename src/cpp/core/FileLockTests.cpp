@@ -91,6 +91,9 @@ TEST_CASE("File Locking")
       
       s_threads.join_all();
       CHECK(s_lockCount == 1);
+      
+      // clean up
+      s_lockFilePath.removeIfExists();
    }
 }
 
