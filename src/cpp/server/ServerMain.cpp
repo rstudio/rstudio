@@ -275,9 +275,6 @@ Error waitForSignals()
 
          // call overlay shutdown
          overlay::shutdown();
-         
-         // clean up file locks
-         FileLock::cleanUp();
 
          // clear the signal mask
          Error error = core::system::clearSignalMask();
