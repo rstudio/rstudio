@@ -76,7 +76,8 @@ public:
       // accept next connection (asynchronously)
       acceptNextConnection();
       
-      // refresh locks
+      // initialize and refresh locks
+      core::FileLock::initialize();
       core::FileLock::refreshPeriodically(acceptorService_.ioService());
 
       // block all signals for launch of listener thread (will cause it
