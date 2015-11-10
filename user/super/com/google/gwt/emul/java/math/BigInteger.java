@@ -894,7 +894,9 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
    */
   @Override
   public int intValue() {
-    return (sign * digits[0]);
+    int i = digits[0];
+    // i is always positive except for Integer.MIN_VALUE because of int overflow
+    return (sign > 0 || i == Integer.MIN_VALUE) ? i : -i;
   }
 
   /**

@@ -596,6 +596,10 @@ public class BigIntegerConvertTest extends EmulTestBase {
     assertEquals(resInt, aNumber);
   }
 
+  public void testIntValueMinIntValue() {
+    assertEquals(Integer.MIN_VALUE, BigInteger.valueOf(Integer.MIN_VALUE).intValue());
+  }
+
   /**
    * Convert a positive BigInteger to an integer value. The low digit is
    * positive
