@@ -101,6 +101,8 @@ public:
    {
       return !isError();
    }
+   
+   static bool isShutdownError(const boost::system::error_code& ec);
 
 private:
    bool isError() const ;

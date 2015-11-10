@@ -186,7 +186,8 @@ void schedulePeriodicExecution(
       // bail on boost errors (these are very unexpected)
       if (ec)
       {
-         LOG_ERROR(core::Error(ec, ERROR_LOCATION));
+         if (!Error::isShutdownError(ec))
+            LOG_ERROR(core::Error(ec, ERROR_LOCATION));
          return;
       }
       

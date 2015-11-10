@@ -51,28 +51,6 @@
 namespace rstudio {
 namespace session {
 
-namespace {
-
-bool isShutdownError(const boost::system::error_code& ec)
-{
-   // for windows check explicitly for is not a socket error
-#ifdef _WIN32
-   if (ec.value() == WSAENOTSOCK)
-      return true;
-#endif
-
-   //  - operation cancelled (happens while shutting down the server)
-   //  - invalid argument (happens if socket is closed before we
-   //    can actually peform the handleAccept)
-   //  - bad file descriptor (simillar to above)
-   return (ec == boost::asio::error::operation_aborted ||
-           ec == boost::asio::error::invalid_argument ||
-           ec == boost::system::errc::bad_file_descriptor);
-}
-
-}
-
-
 template <typename ProtocolType>
 class HttpConnectionListenerImpl : public HttpConnectionListener,
                                    boost::noncopyable
@@ -239,7 +217,7 @@ private:
          {
             // for errors, log and continue,but don't log errors caused
             // by normal course of socket shutdown
-            if (!isShutdownError(ec))
+            if (!core::Error::isShutdownError(ec))
                LOG_ERROR(core::Error(ec, ERROR_LOCATION)) ;
          }
       }

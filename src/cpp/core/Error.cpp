@@ -22,6 +22,7 @@
 #include <core/SafeConvert.hpp>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/asio.hpp>
 
 #ifdef _WIN32
 #include <boost/system/windows_error.hpp>
@@ -153,6 +154,20 @@ bool Error::isError() const
       return pImpl_->ec.value() != 0 ;
    else
       return false ;
+}
+
+bool Error::isShutdownError(const boost::system::error_code& ec)
+{
+   
+#ifdef _WIN32
+   if (ec.value() == WSAENOTSOCK)
+      return true;
+#endif
+   
+   return
+         ec == boost::asio::error::operation_aborted ||
+         ec == boost::asio::error::invalid_argument ||
+         ec == boost::system::errc::bad_file_descriptor;
 }
 
 Error::Impl& Error::impl() const
