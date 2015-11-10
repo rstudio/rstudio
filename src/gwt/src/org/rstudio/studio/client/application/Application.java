@@ -84,6 +84,7 @@ public class Application implements ApplicationEventHandlers
                       Projects projects,
                       SatelliteManager satelliteManager,
                       ApplicationUncaughtExceptionHandler uncaughtExHandler,
+                      ApplicationCBT applicationCBT,
                       MacZoomHandler zoomHandler,
                       Provider<UIPrefs> uiPrefs,
                       Provider<Workbench> workbench,
