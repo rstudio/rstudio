@@ -404,4 +404,8 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean getPresentationCommands() /*-{
       return this.presentation_commands;
    }-*/;
+   
+   public final native String getCBTClientOrigin() /*-{
+      return this.cbt_client_origin;
+   }-*/;
 }

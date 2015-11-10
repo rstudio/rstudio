@@ -589,6 +589,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["presentation_state"] = modules::presentation::presentationStateAsJson();
    sessionInfo["presentation_commands"] = options.allowPresentationCommands();
+   sessionInfo["cbt_client_origin"] = json::Value();
 
    sessionInfo["build_state"] = modules::build::buildStateAsJson();
    sessionInfo["devtools_installed"] = module_context::isMinimumDevtoolsInstalled();
