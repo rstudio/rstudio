@@ -18,7 +18,6 @@
 #include <signal.h>
 
 #include <core/Error.hpp>
-#include <core/FileLock.hpp>
 #include <core/LogWriter.hpp>
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
