@@ -40,7 +40,7 @@ namespace core {
 
 namespace {
 
-const std::string& pidString()
+std::string pidString()
 {
    return safe_convert::numberToString((long) ::getpid());
 }
