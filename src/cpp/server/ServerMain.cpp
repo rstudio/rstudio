@@ -18,6 +18,7 @@
 #include <signal.h>
 
 #include <core/Error.hpp>
+#include <core/FileLock.hpp>
 #include <core/LogWriter.hpp>
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
@@ -274,6 +275,9 @@ Error waitForSignals()
 
          // call overlay shutdown
          overlay::shutdown();
+         
+         // clean up file locks
+         FileLock::cleanUp();
 
          // clear the signal mask
          Error error = core::system::clearSignalMask();
