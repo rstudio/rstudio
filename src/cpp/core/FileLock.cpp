@@ -180,9 +180,12 @@ void schedulePeriodicExecution(
 {
    try
    {
-      // log errors (and attempt to continue if possible)
+      // bail on boost errors (these are very unexpected)
       if (ec)
+      {
          LOG_ERROR(core::Error(ec, ERROR_LOCATION));
+         return;
+      }
       
       // execute callback
       callback();
