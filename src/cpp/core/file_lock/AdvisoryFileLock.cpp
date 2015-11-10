@@ -175,6 +175,10 @@ void AdvisoryFileLock::refresh()
 {
 }
 
+void AdvisoryFileLock::cleanUp()
+{
+}
+
 } // namespace core
 } // namespace rstudio
 

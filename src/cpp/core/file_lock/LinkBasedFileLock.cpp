@@ -166,17 +166,6 @@ public:
       END_LOCK_MUTEX
    }
    
-   ~LockRegistration()
-   {
-      try
-      {
-         clearLocks();
-      }
-      catch (...)
-      {
-      }
-   }
-   
 private:
    
    boost::mutex mutex_;
@@ -328,6 +317,11 @@ Error LinkBasedFileLock::release()
 void LinkBasedFileLock::refresh()
 {
    lockRegistration().refreshLocks();
+}
+
+void LinkBasedFileLock::cleanUp()
+{
+   lockRegistration().clearLocks();
 }
 
 } // namespace core

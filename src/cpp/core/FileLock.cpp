@@ -15,7 +15,7 @@
 
 #include <core/FileLock.hpp>
 
-#define RSTUDIO_ENABLE_DEBUG_MACROS
+// #define RSTUDIO_ENABLE_DEBUG_MACROS
 #include <core/Macros.hpp>
 
 #include <core/Settings.hpp>
@@ -162,6 +162,12 @@ void FileLock::refresh()
 {
    AdvisoryFileLock::refresh();
    LinkBasedFileLock::refresh();
+}
+
+void FileLock::cleanUp()
+{
+   AdvisoryFileLock::cleanUp();
+   LinkBasedFileLock::cleanUp();
 }
 
 namespace {
