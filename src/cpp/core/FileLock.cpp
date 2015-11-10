@@ -89,10 +89,17 @@ bool s_isInitialized = false;
 
 void FileLock::ensureInitialized()
 {
-   if (s_isInitialized)
-      return;
-   
-   FileLock::initialize();
+   if (!s_isInitialized)
+   {
+      static bool s_warned = false;
+      if (s_warned)
+         return;
+      
+      s_warned = true;
+      LOG_WARNING_MESSAGE(
+               "FileLock classes not yet initialized; please call "
+               "'FileLock::initialize()' and 'FileLock::cleanUp()' as appropriate");
+   }
 }
 
 void FileLock::initialize(FilePath locksConfPath)
@@ -146,6 +153,8 @@ boost::posix_time::seconds FileLock::s_refreshRate(kDefaultRefreshRate);
 
 boost::shared_ptr<FileLock> FileLock::create(LockType type)
 {
+   ensureInitialized();
+   
    switch (type)
    {
    case LOCKTYPE_ADVISORY:  return boost::shared_ptr<FileLock>(new AdvisoryFileLock());
@@ -158,17 +167,20 @@ boost::shared_ptr<FileLock> FileLock::create(LockType type)
 
 boost::shared_ptr<FileLock> FileLock::createDefault()
 {
+   ensureInitialized();
    return FileLock::create(s_defaultType);
 }
 
 void FileLock::refresh()
 {
+   ensureInitialized();
    AdvisoryFileLock::refresh();
    LinkBasedFileLock::refresh();
 }
 
 void FileLock::cleanUp()
 {
+   ensureInitialized();
    AdvisoryFileLock::cleanUp();
    LinkBasedFileLock::cleanUp();
 }
@@ -226,6 +238,8 @@ void FileLock::refreshPeriodically(boost::asio::io_service& service,
    if (s_isRefreshing)
       return;
    s_isRefreshing = true;
+   
+   ensureInitialized();
    
    static boost::asio::deadline_timer timer(service, interval);
    timer.async_wait(boost::bind(
