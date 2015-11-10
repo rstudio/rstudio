@@ -108,9 +108,25 @@ public final class JdtUtil {
   }
 
   public static String getSourceName(TypeBinding classBinding) {
+    return getSourceName(CharOperation.charToString(classBinding.qualifiedPackageName()),
+        CharOperation.charToString(classBinding.qualifiedSourceName()));
+  }
+
+  public static String getSourceName(String qualifiedPackageName, String qualifiedSourceName) {
     return Joiner.on(".").skipNulls().join(new String[] {
-        Strings.emptyToNull(CharOperation.charToString(classBinding.qualifiedPackageName())),
-        CharOperation.charToString(classBinding.qualifiedSourceName())});
+        Strings.emptyToNull(qualifiedPackageName),
+        qualifiedSourceName});
+  }
+
+  public static String getBinaryName(TypeBinding classBinding) {
+    return getBinaryName(CharOperation.charToString(classBinding.qualifiedPackageName()),
+        CharOperation.charToString(classBinding.qualifiedSourceName()));
+  }
+
+  public static String getBinaryName(String qualifiedPackageName, String qualifiedSourceName) {
+    return Joiner.on(".").skipNulls().join(new String[] {
+        Strings.emptyToNull(qualifiedPackageName),
+        qualifiedSourceName.replace('.','$')});
   }
 
   public static boolean isInnerClass(ReferenceBinding binding) {

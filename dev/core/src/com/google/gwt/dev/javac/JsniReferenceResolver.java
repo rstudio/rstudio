@@ -295,9 +295,10 @@ public class JsniReferenceResolver {
               originalName.substring(importedClassName.length()));
           return;
         }
-        String fullClassName = declaringClassName + "." + originalName;
+        String fullClassName =
+            JdtUtil.getBinaryName(declaringClass) + "$" + originalName.replace('.', '$');
         if (typeResolver.resolveType(fullClassName) != null) {
-          jsniRef.setResolvedClassName(fullClassName);
+          jsniRef.setResolvedClassName(JdtUtil.getSourceName(declaringClass) + "." + originalName);
           return;
         }
         declaringClass = declaringClass.enclosingTypeAt(1);
@@ -315,12 +316,16 @@ public class JsniReferenceResolver {
       }
 
       // 4. Check to see if this name is resolvable from the current package.
-      String currentPackageClassName =
-          String.valueOf(method.binding.declaringClass.qualifiedPackageName());
-      currentPackageClassName += (currentPackageClassName.isEmpty() ? "" : ".") +  originalName;
+      String currentPackageBinaryClassName =
+          JdtUtil.getBinaryName(
+              CharOperation.charToString(method.binding.declaringClass.qualifiedPackageName()),
+              originalName);
 
-      if (typeResolver.resolveType(currentPackageClassName) != null) {
-        jsniRef.setResolvedClassName(currentPackageClassName);
+      if (typeResolver.resolveType(currentPackageBinaryClassName) != null) {
+        jsniRef.setResolvedClassName(
+            JdtUtil.getSourceName(
+                CharOperation.charToString(method.binding.declaringClass.qualifiedPackageName()),
+                originalName));
         return;
       }
 
@@ -333,9 +338,9 @@ public class JsniReferenceResolver {
         importPackages.add(JdtUtil.asDottedString(importReference.getImportName()));
       }
       for (String importPackage : importPackages) {
-        String fullClassName = importPackage + "." + originalName;
+        String fullClassName = importPackage + "." + originalName.replace('.', '$');
         if (typeResolver.resolveType(fullClassName) != null) {
-          jsniRef.setResolvedClassName(fullClassName);
+          jsniRef.setResolvedClassName(importPackage + "." + originalName);
           return;
         }
       }

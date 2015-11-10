@@ -30,6 +30,7 @@ import com.google.gwt.thirdparty.guava.common.collect.ArrayListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.google.gwt.thirdparty.guava.common.io.BaseEncoding;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
@@ -104,7 +105,7 @@ public class JdtCompiler {
    * types are encountered during compilation. Currently used for allowing
    * external tools to provide source lazily when undefined references appear.
    */
-  public static interface AdditionalTypeProviderDelegate {
+  public interface AdditionalTypeProviderDelegate {
     /**
      * Checks for additional packages which may contain additional compilation
      * units.
@@ -761,6 +762,11 @@ public class JdtCompiler {
       Maps.newHashMap();
 
   /**
+   * Remembers types that where not found during resolution to avoid unnecessary file scanning.
+   */
+  private final Set<String> unresolvableReferences = Sets.newHashSet();
+
+  /**
    * Only active during a compile.
    */
   private transient CompilerImpl compilerImpl;
@@ -1035,7 +1041,15 @@ public class JdtCompiler {
   }
 
   public ReferenceBinding resolveType(String sourceOrBinaryName) {
-    return resolveType(compilerImpl.lookupEnvironment, sourceOrBinaryName);
+    if (unresolvableReferences.contains(sourceOrBinaryName)) {
+      return null;
+    }
+    ReferenceBinding typeBinding =
+        resolveType(compilerImpl.lookupEnvironment, sourceOrBinaryName);
+    if (typeBinding == null) {
+      unresolvableReferences.add(sourceOrBinaryName);
+    }
+    return typeBinding;
   }
 
   public void setAdditionalTypeProviderDelegate(AdditionalTypeProviderDelegate newDelegate) {
