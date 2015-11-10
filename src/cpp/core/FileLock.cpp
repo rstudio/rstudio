@@ -40,9 +40,9 @@ namespace {
 const char * const kLockTypeAdvisory  = "advisory";
 const char * const kLockTypeLinkBased = "linkbased";
 
-const char * const kLocksConfPath = "/etc/rstudio/file-locks";
-#define kDefaultRefreshRate     20.0
-#define kDefaultTimeoutInterval 30.0
+const char * const kLocksConfPath    = "/etc/rstudio/file-locks";
+const double kDefaultRefreshRate     = 20.0;
+const double kDefaultTimeoutInterval = 30.0;
 
 std::string lockTypeToString(FileLock::LockType type)
 {
