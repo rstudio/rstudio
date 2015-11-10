@@ -35,6 +35,7 @@
 #include <core/system/System.hpp>
 
 #include <boost/foreach.hpp>
+#include <boost/system/error_code.hpp>
 
 namespace rstudio {
 namespace core {
@@ -197,9 +198,9 @@ LockRegistration& lockRegistration()
 
 Error writeLockFile(const FilePath& lockFilePath)
 {
-   
+
 #ifndef _WIN32
-   
+
    // generate proxy lockfile
    FilePath proxyPath = lockFilePath.parent().complete(proxyLockFileName());
    
@@ -225,7 +226,7 @@ Error writeLockFile(const FilePath& lockFilePath)
    ::link(
             proxyPath.absolutePathNative().c_str(),
             lockFilePath.absolutePathNative().c_str());
-   
+
    struct stat info;
    int errc = ::stat(proxyPath.absolutePathNative().c_str(), &info);
    if (errc)
@@ -239,9 +240,9 @@ Error writeLockFile(const FilePath& lockFilePath)
    return Success();
    
 #else
-   
-   return -1;
-   
+
+   return systemError(boost::system::errc::function_not_supported, ERROR_LOCATION);
+
 #endif
 }
 
