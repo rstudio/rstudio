@@ -121,7 +121,12 @@ boost::shared_ptr<FileLock> createSessionDirLock()
 {
    return FileLock::createDefault();
 }
-boost::shared_ptr<FileLock> s_pSessionDirLock = createSessionDirLock();
+
+boost::shared_ptr<FileLock>& sessionDirLock()
+{
+   static boost::shared_ptr<FileLock> instance = createSessionDirLock();
+   return instance;
+}
 
 Error removeSessionDir(const FilePath& sessionDir)
 {
@@ -232,7 +237,7 @@ Error createSessionDir(FilePath* pSessionDir)
 
    // attempt to acquire the lock. if we can't then we still continue
    // so we can support filesystems that don't have file locks.
-   error = s_pSessionDirLock->acquire(sessionLockFilePath(*pSessionDir));
+   error = sessionDirLock()->acquire(sessionLockFilePath(*pSessionDir));
    if (error)
       LOG_ERROR(error);
 
@@ -264,7 +269,7 @@ Error createSessionDirFromOldSourceDatabase(FilePath* pSessionDir)
 
    // attempt to acquire the lock. if we can't then we still continue
    // so we can support filesystems that don't have file locks.
-   error = s_pSessionDirLock->acquire(sessionLockFilePath(*pSessionDir));
+   error = sessionDirLock()->acquire(sessionLockFilePath(*pSessionDir));
    if (error)
       LOG_ERROR(error);
 
@@ -343,9 +348,9 @@ bool reclaimOrphanedSession(FilePath* pSessionDir)
    BOOST_FOREACH(const FilePath& sessionDir, sessionDirs)
    {
       FilePath lockFilePath = sessionLockFilePath(sessionDir);
-      if (!s_pSessionDirLock->isLocked(lockFilePath))
+      if (!sessionDirLock()->isLocked(lockFilePath))
       {
-         Error error = s_pSessionDirLock->acquire(lockFilePath);
+         Error error = sessionDirLock()->acquire(lockFilePath);
          if (!error)
          {
             *pSessionDir = sessionDir;
@@ -515,10 +520,10 @@ Error detachFromSourceDatabase()
    }
 
    // record session dir (parent of lock file)
-   FilePath sessionDir = s_pSessionDirLock->lockFilePath().parent();
+   FilePath sessionDir = sessionDirLock()->lockFilePath().parent();
 
    // give up our lock
-   error = s_pSessionDirLock->release();
+   error = sessionDirLock()->release();
    if (error)
       LOG_ERROR(error);
 
