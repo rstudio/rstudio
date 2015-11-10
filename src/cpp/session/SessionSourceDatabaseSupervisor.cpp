@@ -119,7 +119,11 @@ FilePath sessionLockFilePath(const FilePath& sessionDir)
 // session dir lock (lock is acquired within 'attachToSourceDatabase()')
 boost::shared_ptr<FileLock> createSessionDirLock()
 {
+#ifdef RSTUDIO_SERVER
+   return FileLock::create(FileLock::LOCKTYPE_LINKBASED);
+#else
    return FileLock::createDefault();
+#endif
 }
 
 boost::shared_ptr<FileLock>& sessionDirLock()
