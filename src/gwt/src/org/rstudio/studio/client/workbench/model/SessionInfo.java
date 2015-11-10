@@ -405,7 +405,11 @@ public class SessionInfo extends JavaScriptObject
       return this.presentation_commands;
    }-*/;
    
-   public final native String getCBTClientOrigin() /*-{
-      return this.cbt_client_origin;
+   public final native boolean getTutorialApiAvailable() /*-{
+      return this.tutorial_api_available;
+   }-*/;
+   
+   public final native String getTutorialApiClientOrigin() /*-{
+      return this.tutorial_api_client_origin;
    }-*/;
 }
