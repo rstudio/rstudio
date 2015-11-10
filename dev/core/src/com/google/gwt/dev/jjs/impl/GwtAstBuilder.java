@@ -4016,7 +4016,7 @@ public class GwtAstBuilder {
             if (alreadyNamedVariables.contains(argName)) {
               argName += "_" + i;
             }
-            createParameter(info, arg, argName, method);
+            createParameter(info, arg, argName, method, false);
             alreadyNamedVariables.add(argName);
           }
         }
@@ -4042,7 +4042,7 @@ public class GwtAstBuilder {
             if (alreadyNamedVariables.contains(argName)) {
               argName += "_" + i;
             }
-            createParameter(info, arg, argName, method);
+            createParameter(info, arg, argName, method, false);
             alreadyNamedVariables.add(argName);
           }
         }
@@ -4126,15 +4126,15 @@ public class GwtAstBuilder {
     method.setSpecialization(paramTypes, returnsType, targetMethod);
   }
 
-  private void createParameter(SourceInfo info, LocalVariableBinding binding, JMethod method,
-      Annotation... annotations) {
-    createParameter(info, binding, intern(binding.name), method, annotations);
+  private void createParameter(SourceInfo info, LocalVariableBinding binding, boolean isVarargs,
+      JMethod method, Annotation... annotations) {
+    createParameter(info, binding, intern(binding.name), method, isVarargs, annotations);
   }
 
   private void createParameter(SourceInfo info, LocalVariableBinding binding, String name,
-      JMethod method, Annotation... annotations) {
+      JMethod method, boolean isVarargs, Annotation... annotations) {
     JParameter param =
-        method.createParameter(info, name, typeMap.get(binding.type), binding.isFinal());
+        method.createParameter(info, name, typeMap.get(binding.type), binding.isFinal(), isVarargs);
     processSuppressedWarnings(param, annotations);
   }
 
@@ -4143,7 +4143,9 @@ public class GwtAstBuilder {
       for (Argument argument : x.arguments) {
         SourceInfo info = makeSourceInfo(argument);
         LocalVariableBinding binding = argument.binding;
-        createParameter(info, binding, method, argument.annotations);
+        boolean isVarargs = x.binding.isVarargs()
+            && argument == x.arguments[x.arguments.length - 1];
+        createParameter(info, binding, isVarargs, method, argument.annotations);
       }
     }
     method.freezeParamTypes();

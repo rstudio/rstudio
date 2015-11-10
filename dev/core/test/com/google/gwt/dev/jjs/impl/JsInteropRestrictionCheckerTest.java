@@ -168,6 +168,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "  @JsProperty void setY();",
         "  @JsProperty int setZ(int z);",
         "  @JsProperty static void setStatic(){}",
+        "  @JsProperty void setW(int... z);",
         "}");
 
     assertBuggyFails(
@@ -183,7 +184,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "Line 12: JsProperty 'int EntryPoint.Buggy.setZ(int)' should have a correct setter "
             + "or getter signature.",
         "Line 13: JsProperty 'void EntryPoint.Buggy.setStatic()' should have a correct setter "
-            + "or getter signature.");
+            + "or getter signature.",
+        "Line 14: JsProperty 'void EntryPoint.Buggy.setW(int[])' cannot have a vararg parameter.");
   }
 
   public void testJsPropertyNonGetterStyleFails() throws Exception {
@@ -891,6 +893,29 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
             + "both use the same JavaScript name 'getY'.",
         "Line 11: 'void EntryPoint.Buggy.setZ(int)' and 'void EntryPoint.Super.setZ(int)' cannot "
            + "both use the same JavaScript name 'z'.");
+  }
+
+  public void testJsMethodJSNIVarargsWithNoReferenceSucceeds()
+      throws Exception {
+    addSnippetImport("jsinterop.annotations.JsMethod");
+    addSnippetClassDecl(
+        "public static class Buggy {",
+        "  @JsMethod public native void m(int i, int... z) /*-{ return arguments[i]; }-*/;",
+        "}");
+
+    assertBuggySucceeds();
+  }
+
+  public void testJsMethodJSNIVarargsWithReferenceFails() {
+    addSnippetImport("jsinterop.annotations.JsMethod");
+    addSnippetClassDecl(
+        "public static class Buggy {",
+        "  @JsMethod public native void m(int i, int... z) /*-{ return z[0];}-*/;",
+        "}");
+
+    assertBuggyFails(
+        "Line 5: Cannot access vararg parameter 'z' from JSNI in JsMethod "
+            + "'void EntryPoint.Buggy.m(int, int[])'. Use 'arguments' instead.");
   }
 
   public void testMultiplePrivateConstructorsExportSucceeds() throws Exception {

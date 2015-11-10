@@ -22,6 +22,7 @@ import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
+import com.google.gwt.dev.js.ast.JsArrayLiteral;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
 import com.google.gwt.dev.js.ast.JsBlock;
@@ -31,15 +32,20 @@ import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
+import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNode;
+import com.google.gwt.dev.js.ast.JsNullLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsReturn;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsThisRef;
 import com.google.gwt.dev.util.StringInterner;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
+import java.util.Collections;
 import java.util.List;
 
 import java.util.regex.Pattern;
@@ -100,15 +106,14 @@ public class JsUtils {
       JsName name = bridge.getScope().declareName(p.getName());
       bridge.getParameters().add(new JsParameter(sourceInfo, name));
     }
-    JsNameRef ref = polyName.makeRef(sourceInfo);
-    ref.setQualifier(new JsThisRef(sourceInfo));
+    JsNameRef reference = polyName.makeQualifiedRef(sourceInfo, new JsThisRef(sourceInfo));
     List<JsExpression> args = Lists.newArrayList();
     for (JsParameter p : bridge.getParameters()) {
       args.add(p.getName().makeRef(sourceInfo));
     }
 
-    JsExpression invocation =
-        createInvocationOrPropertyAccess(sourceInfo, method.getJsMemberType(), ref, args);
+    JsExpression invocation = createInvocationOrPropertyAccess(
+            InvocationStyle.NORMAL, sourceInfo, method, reference.getQualifier(), reference, args);
 
     JsBlock block = new JsBlock(sourceInfo);
     if (method.getType() == JPrimitiveType.VOID) {
@@ -149,30 +154,15 @@ public class JsUtils {
     return func;
   }
 
-  public static JsNameRef createQualifiedNameRef(SourceInfo info,  JsName... names) {
-    JsNameRef result = null;
-    for (JsName name : names) {
-      if (result == null) {
-        result = name.makeRef(info);
-        continue;
-      }
-      result = name.makeQualifiedRef(info, result);
+  public static JsExpression createQualifiedNameRef(
+      SourceInfo info, JsExpression base, String... names) {
+    JsExpression result = base;
+    for (String name : names) {
+      JsNameRef nameRef = new JsNameRef(info, name);
+      nameRef.setQualifier(result);
+      result = nameRef;
     }
     return result;
-  }
-
-  public static JsExpression createInvocationOrPropertyAccess(SourceInfo sourceInfo,
-      JsMemberType memberType, JsNameRef reference, List<JsExpression> args) {
-    switch (memberType) {
-      case SETTER:
-        assert args.size() == 1;
-        return createAssignment(reference, args.get(0));
-      case GETTER:
-        assert args.size() == 0;
-        return reference;
-      default:
-        return new JsInvocation(sourceInfo, reference, args);
-    }
   }
 
   /**
@@ -190,6 +180,232 @@ public class JsUtils {
       ref = newRef;
     }
     return ref;
+  }
+
+  public static JsNameRef createQualifiedNameRef(SourceInfo info,  JsName... names) {
+    JsNameRef result = null;
+    for (JsName name : names) {
+      if (result == null) {
+        result = name.makeRef(info);
+        continue;
+      }
+      result = name.makeQualifiedRef(info, result);
+    }
+    return result;
+  }
+
+  private enum TargetType {
+    SETTER, GETTER, NEWINSTANCE, FUNCTION, METHOD
+  }
+
+  private enum CallStyle {
+    DIRECT, USING_CALL_FOR_SUPER, USING_APPLY_FOR_VARARGS_ARRAY
+  }
+
+  private static class InvocationDescriptor {
+    private final TargetType targetType;
+    private final CallStyle callStyle;
+    private final List<JsExpression> nonVarargsArguments;
+    private final JsExpression varargsArgument;
+    private final JsExpression instance;
+    private final JsNameRef reference;
+
+    InvocationDescriptor(TargetType targetType, CallStyle callStyle,
+        JsExpression instance, JsNameRef reference,
+        List<JsExpression> nonVarargsArguments, JsExpression varargsArgument) {
+      this.targetType = targetType;
+      this.callStyle = callStyle;
+      this.nonVarargsArguments = nonVarargsArguments;
+      this.varargsArgument = varargsArgument;
+      this.instance = instance;
+      this.reference = reference;
+    }
+  }
+
+  /**
+   * Decides the type of invokation to perform, tranforming vararg calls into plain calls if
+   * possible.
+   */
+  private static InvocationDescriptor createInvocationDescriptor(InvocationStyle invocationStyle,
+      JMethod method, JsExpression instance, JsNameRef reference, List<JsExpression> args)  {
+
+    CallStyle callStyle = invocationStyle == InvocationStyle.SUPER
+        ? CallStyle.USING_CALL_FOR_SUPER : CallStyle.DIRECT;
+
+    TargetType targetType;
+    switch (invocationStyle) {
+      case NEWINSTANCE:
+        assert method.isConstructor();
+        targetType = TargetType.NEWINSTANCE;
+        break;
+      case FUNCTION:
+        assert method.isOrOverridesJsFunctionMethod();
+        targetType = TargetType.FUNCTION;
+        break;
+      default:
+        if (method.getJsMemberType().isPropertyAccessor()) {
+          targetType = method.getJsMemberType() == JsMemberType.GETTER
+              ? TargetType.GETTER : TargetType.SETTER;
+        } else {
+          targetType = TargetType.METHOD;
+        }
+        break;
+    }
+
+    JsExpression lastArgument = Iterables.getLast(args, null);
+    boolean needsVarargsApply = method.isJsMethodVarargs() && !(lastArgument instanceof JsArrayLiteral);
+    List<JsExpression> nonVarargArguments = args;
+    JsExpression varargArgument = null;
+    if (method.isJsMethodVarargs()) {
+      nonVarargArguments = nonVarargArguments.subList(0, args.size() - 1);
+      if (!needsVarargsApply) {
+        nonVarargArguments.addAll(((JsArrayLiteral) lastArgument).getExpressions());
+      } else {
+        varargArgument = lastArgument;
+        callStyle = CallStyle.USING_APPLY_FOR_VARARGS_ARRAY;
+      }
+    }
+
+    instance = instance != null ? instance : JsNullLiteral.INSTANCE;
+    return new InvocationDescriptor(targetType, callStyle, instance, reference,
+        nonVarargArguments, varargArgument);
+  }
+
+  private static JsExpression prepareArgumentsForApply(SourceInfo sourceInfo,
+      Iterable<JsExpression> nonVarargsArguments, JsExpression varargsArgument) {
+    if (Iterables.isEmpty(nonVarargsArguments)) {
+      return varargsArgument;
+    }
+
+    JsArrayLiteral argumentsArray = new JsArrayLiteral(sourceInfo, nonVarargsArguments);
+    JsNameRef argumentsConcat = new JsNameRef(sourceInfo,"concat");
+    argumentsConcat.setQualifier(argumentsArray);
+    return new JsInvocation(sourceInfo, argumentsConcat, varargsArgument);
+  }
+
+  public static JsExpression createApplyInvocation(
+      SourceInfo sourceInfo, InvocationDescriptor invocationDescriptor) {
+    assert invocationDescriptor.callStyle == CallStyle.USING_APPLY_FOR_VARARGS_ARRAY;
+    switch (invocationDescriptor.targetType) {
+      case FUNCTION:
+        // fn.apply(null, [p1, ..., pn].concat(varargsArray));
+        return new JsInvocation(sourceInfo,
+            createQualifiedNameRef(sourceInfo, invocationDescriptor.instance, "apply"),
+            JsNullLiteral.INSTANCE,
+            prepareArgumentsForApply(sourceInfo,
+                invocationDescriptor.nonVarargsArguments,
+                invocationDescriptor.varargsArgument));
+      case METHOD:
+        // Static method:
+        //   q.name.apply(null, [p1, ..., pn].concat(varargsArray));
+        // Instance method:
+        //   instance.name.apply(instance, [p1, ..., pn].concat(varargsArray));
+        // Super call:
+        //   q.name.apply(instance, [p1, ..., pn].concat(varargsArray));
+        JsExpression instance = invocationDescriptor.instance;
+        if (instance == invocationDescriptor.reference.getQualifier()) {
+          // If instance == qualifier, instance needs to be cloned as it can not appear in two
+          // places in the JS AST. This needs to be done only in the case of VARRAGS_ARRAY.
+          // Instance here has been normalized to be just a "leaf" JsNameRef by
+          // {@link ImplementJsVarargs} so that the following translation can be avoided here.
+          //   (_t = instance).name.apply(_t, [p1, ..., pn].concat(varargsArray));
+          assert  (instance instanceof JsNameRef && ((JsNameRef) instance).isLeaf());
+          instance = Preconditions.checkNotNull(JsSafeCloner.clone(instance));
+        }
+
+        return new JsInvocation(sourceInfo,
+            createQualifiedNameRef(sourceInfo, invocationDescriptor.reference, "apply"),
+            instance,
+            prepareArgumentsForApply(sourceInfo,
+                invocationDescriptor.nonVarargsArguments,
+                invocationDescriptor.varargsArgument));
+      case NEWINSTANCE:
+        // new (q.name.bind.apply(q, [null, p1, ... pn])())()
+        return new JsNew(sourceInfo, new JsInvocation(sourceInfo,
+            createQualifiedNameRef(sourceInfo, invocationDescriptor.reference, "bind", "apply"),
+            invocationDescriptor.reference,
+            prepareArgumentsForApply(sourceInfo,
+                Iterables.concat(
+                    Collections.singleton(JsNullLiteral.INSTANCE),
+                    invocationDescriptor.nonVarargsArguments),
+                invocationDescriptor.varargsArgument)));
+      default:
+        throw new AssertionError("Target type " + invocationDescriptor.targetType
+            + " invalid for varargs apply invocation");
+    }
+  }
+
+  public static JsExpression createDirectInvocationOrPropertyAccess(
+      SourceInfo sourceInfo, InvocationDescriptor invocationDescriptor) {
+    assert invocationDescriptor.callStyle == CallStyle.DIRECT;
+    switch (invocationDescriptor.targetType) {
+      case SETTER:
+        assert invocationDescriptor.nonVarargsArguments.size() == 1;
+        return createAssignment(invocationDescriptor.reference,
+            invocationDescriptor.nonVarargsArguments.get(0));
+      case GETTER:
+        assert invocationDescriptor.nonVarargsArguments.size() == 0;
+        return invocationDescriptor.reference;
+      case FUNCTION:
+        return new JsInvocation(sourceInfo, invocationDescriptor.instance,
+            invocationDescriptor.nonVarargsArguments);
+      case METHOD:
+        return new JsInvocation(sourceInfo, invocationDescriptor.reference,
+            invocationDescriptor.nonVarargsArguments);
+      case NEWINSTANCE:
+       return new JsNew(
+           sourceInfo, invocationDescriptor.reference, invocationDescriptor.nonVarargsArguments);
+      default:
+        throw new AssertionError("Target type " + invocationDescriptor.targetType
+            + " invalid for direct invocation");
+    }
+  }
+
+  public static JsExpression createSuperInvocationOrPropertyAccess(
+      SourceInfo sourceInfo, InvocationDescriptor invocationDescriptor) {
+    assert invocationDescriptor.callStyle == CallStyle.USING_CALL_FOR_SUPER;
+    switch (invocationDescriptor.targetType) {
+      case SETTER:
+        assert invocationDescriptor.nonVarargsArguments.size() == 1;
+        // TODO(rluble): implement super setters.
+        throw new UnsupportedOperationException("Super.setter is unsupported");
+      case GETTER:
+        assert invocationDescriptor.nonVarargsArguments.size() == 0;
+        // TODO(rluble): implement super getters.
+        throw new UnsupportedOperationException("Super.getter is unsupported");
+      case METHOD:
+        // q.name.call(instance, p1, ..., pn)
+        return new JsInvocation(sourceInfo,
+            createQualifiedNameRef(sourceInfo, invocationDescriptor.reference, "call"),
+            Iterables.concat(Collections.singleton(invocationDescriptor.instance),
+                invocationDescriptor.nonVarargsArguments));
+      default:
+        throw new AssertionError("Target type " + invocationDescriptor.targetType
+            + " invalid for super invocation");
+    }
+  }
+
+  /**
+   * Invocation styles.
+   */
+  public enum InvocationStyle {
+    NORMAL, FUNCTION, SUPER, NEWINSTANCE
+  }
+
+  public static JsExpression createInvocationOrPropertyAccess(InvocationStyle invocationStyle,
+      SourceInfo sourceInfo, JMethod method, JsExpression instance, JsNameRef reference,
+      List<JsExpression> args) {
+    InvocationDescriptor invocationDescriptor =
+        createInvocationDescriptor(invocationStyle, method, instance, reference, args);
+    switch (invocationDescriptor.callStyle) {
+      case DIRECT:
+        return createDirectInvocationOrPropertyAccess(sourceInfo, invocationDescriptor);
+      case USING_CALL_FOR_SUPER:
+        return createSuperInvocationOrPropertyAccess(sourceInfo, invocationDescriptor);
+      case USING_APPLY_FOR_VARARGS_ARRAY:
+        return createApplyInvocation(sourceInfo, invocationDescriptor);
+    }
+    throw new AssertionError();
   }
 
   /**

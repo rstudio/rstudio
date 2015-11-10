@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.ast;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.util.collect.Lists;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -73,25 +74,26 @@ public class JMethodCall extends JExpression {
    * be specified, and the new object has no arguments on initialization. This
    * forces the caller to potentially deal with cloning objects if needed.
    */
-  public JMethodCall(JMethodCall other, JExpression instance) {
+  public JMethodCall(JMethodCall other, JExpression instance, JExpression... args) {
+    this(other, instance, Arrays.asList(args));
+  }
+
+  /**
+   * Initialize a new method call equivalent to another one. A new instance must
+   * be specified, and the new object has no arguments on initialization. This
+   * forces the caller to potentially deal with cloning objects if needed.
+   */
+  public JMethodCall(JMethodCall other, JExpression instance, List<JExpression> args) {
     super(other.getSourceInfo());
     this.instance = instance;
     this.method = other.method;
     this.overriddenReturnType = other.overriddenReturnType;
     this.polymorphism = other.polymorphism;
     this.markedAsSideAffectFree = other.markedAsSideAffectFree;
+    addArgs(args);
   }
-
   /**
-   * Create a method call whose type is overridden to the specified type,
-   * ignoring the return type of the target method. This constructor is used
-   * during normalizing transformations to preserve type semantics when calling
-   * externally-defined compiler implementation methods.
-   *
-   * For example, Cast.dynamicCast() returns Object but that method is used to
-   * implement the cast operation. Using a stronger type on the call expression
-   * allows us to preserve type information during the latter phases of
-   * compilation.
+   * Create a method call.
    */
   public JMethodCall(SourceInfo info, JExpression instance, JMethod method, JExpression... args) {
     super(info);
@@ -196,6 +198,14 @@ public class JMethodCall extends JExpression {
 
   /**
    * Override the return type.
+   * <p>
+   * The method call expression will have {@code overridentReturnType} as its type ignoring the
+   * return type of the target method. This is used during normalizing transformations to preserve
+   * type semantics when calling externally-defined compiler implementation methods.
+   * <p>
+   * For example, Cast.dynamicCast() returns Object but that method is used to implement the cast
+   * operation. Using a stronger type on the call expression allows us to preserve type information
+   * during the latter phases of compilation.
    */
   public void overrideReturnType(JType overridenReturnType) {
     assert this.overriddenReturnType == null;

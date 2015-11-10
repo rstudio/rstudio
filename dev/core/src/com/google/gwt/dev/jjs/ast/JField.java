@@ -200,6 +200,11 @@ public class JField extends JVariable implements JMember {
   }
 
   @Override
+  public boolean isJsMethodVarargs() {
+    return false;
+  }
+
+  @Override
   public String getJsName() {
     return jsName;
   }

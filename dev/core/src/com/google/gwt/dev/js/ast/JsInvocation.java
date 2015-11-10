@@ -14,9 +14,9 @@
 package com.google.gwt.dev.js.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -43,14 +43,15 @@ public final class JsInvocation extends JsExpression implements HasArguments {
     Collections.addAll(this.args, args);
   }
 
-  public JsInvocation(SourceInfo sourceInfo, JsFunction function, Collection<JsExpression> args) {
+  public JsInvocation(SourceInfo sourceInfo, JsFunction function, Iterable<JsExpression> args) {
     this(sourceInfo, function.getName().makeRef(sourceInfo), args);
   }
 
-  public JsInvocation(SourceInfo sourceInfo, JsExpression function, Collection<JsExpression> args) {
+  public JsInvocation(SourceInfo sourceInfo, JsExpression function, Iterable<JsExpression> args) {
     super(sourceInfo);
+    assert function != null;
     setQualifier(function);
-    this.args.addAll(args);
+    Iterables.addAll(this.args, args);
   }
 
   @Override

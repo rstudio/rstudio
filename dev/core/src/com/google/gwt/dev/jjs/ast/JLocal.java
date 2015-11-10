@@ -26,6 +26,10 @@ public class JLocal extends JVariable {
     super(info, name, type, isFinal);
   }
 
+  public JLocalRef createRef(SourceInfo info) {
+    return new JLocalRef(info, this);
+  }
+
   @Override
   public JLocalRef makeRef(SourceInfo info) {
     return new JLocalRef(info, this);

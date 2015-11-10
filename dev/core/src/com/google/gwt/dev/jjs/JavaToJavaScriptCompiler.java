@@ -82,6 +82,7 @@ import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
 import com.google.gwt.dev.jjs.impl.HandleCrossFragmentReferences;
 import com.google.gwt.dev.jjs.impl.ImplementCastsAndTypeChecks;
 import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
+import com.google.gwt.dev.jjs.impl.ImplementJsVarargs;
 import com.google.gwt.dev.jjs.impl.JavaAstVerifier;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.JjsUtils;
@@ -504,6 +505,7 @@ public final class JavaToJavaScriptCompiler {
       }
 
       ImplementCastsAndTypeChecks.exec(jprogram, shouldOptimize() /* pruneTrivialCasts */);
+      ImplementJsVarargs.exec(jprogram);
       ArrayNormalizer.exec(jprogram);
       EqualityNormalizer.exec(jprogram);
 

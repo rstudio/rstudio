@@ -85,9 +85,9 @@ public final class JsNameRef extends JsExpression implements CanBooleanEval, Has
   public boolean isLeaf() {
     if (qualifier == null) {
       return true;
-    } else {
-      return false;
     }
+
+    return qualifier.isLeaf();
   }
 
   public boolean isResolved() {

@@ -94,50 +94,58 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
    * Adds a new final parameter to this method.
    */
   public JParameter createFinalParameter(SourceInfo info, String name, JType type) {
-    return createParameter(info, name, type, true, false);
+    return createParameter(info, name, type, true, false, false);
   }
 
   /**
    * Adds a new parameter to this method.
    */
   public JParameter createParameter(SourceInfo info, String name, JType type) {
-    return createParameter(info, name, type, false, false);
+    return createParameter(info, name, type, false, false, false);
   }
 
   /**
-   * Adds a new final parameter to this method.
+   * Adds a new parameter to this method.
    */
-  public JParameter createParameter(SourceInfo info, String name, JType type, boolean isFinal) {
-    return createParameter(info, name, type, isFinal, false);
+  public JParameter createParameter(SourceInfo info, String name, JType type, boolean isFinal,
+      boolean isVarargs) {
+    return createParameter(info, name, type, isFinal, isVarargs, false);
   }
 
   /**
    * Adds a new parameter to this method that is a copy of {@code from}.
    */
   public JParameter cloneParameter(JParameter from) {
-    return createParameter(
-        from.getSourceInfo(), from.getName(), from.getType(), from.isFinal(), from.isThis());
+    return createParameter(from.getSourceInfo(), from.getName(), from.getType(), from.isFinal(),
+        from.isVarargs(), from.isThis());
   }
 
   /**
    * Creates a parameter to hold the value of this in devirtualized methods.
    */
   public JParameter createThisParameter(SourceInfo info, JType type) {
-    return createParameter(info,  "this$static", type, true, true);
-  }
-
-  private void addParameter(JParameter x) {
-    params = Lists.add(params, x);
+    return createParameter(info,  "this$static", type, true, false, true);
   }
 
   private JParameter createParameter(SourceInfo info, String name, JType type,
-      boolean isFinal, boolean isThis) {
+      boolean isFinal, boolean isVarargs, boolean isThis) {
     assert (name != null);
     assert (type != null);
 
-    JParameter x = new JParameter(info, name, type, isFinal, isThis);
-    addParameter(x);
-    return x;
+    JParameter parameter = new JParameter(info, name, type, isFinal, isVarargs, isThis);
+    addParameter(parameter);
+    return parameter;
+  }
+
+  /**
+   * Adds a parameter to this method.
+   */
+  private void addParameter(JParameter x) {
+    // Local types can capture local variables and sandwich the parameters of constructors between
+    // the outer reference and the local captures.
+    assert params.isEmpty() || !params.get(params.size() - 1).isVarargs()
+        || getEnclosingType().getClassDisposition().isLocalType();
+    params = Lists.add(params, x);
   }
 
   private boolean isJsInterfaceMethod() {
@@ -301,6 +309,14 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
     this.preventDevirtualization = true;
   }
 
+  public boolean isJsMethodVarargs() {
+    if (getParams().isEmpty() || !canBeReferencedExternally()) {
+      return false;
+    }
+
+    JParameter lastParameter = Iterables.getLast(getParams());
+    return lastParameter.isVarargs();
+  }
   /**
    * AST representation of @SpecializeMethod.
    */

@@ -221,7 +221,7 @@ class JsPrecedenceVisitor extends JsVisitor {
 
   @Override
   public boolean visit(JsNameRef x, JsContext ctx) {
-    if (x.isLeaf()) {
+    if (x.getQualifier() == null) {
       answer = 17; // primary
     } else {
       answer = 16; // property access

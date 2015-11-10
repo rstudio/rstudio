@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import static com.google.gwt.dev.js.JsUtils.createAssignment;
+import static com.google.gwt.dev.js.JsUtils.createInvocationOrPropertyAccess;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
@@ -104,6 +105,7 @@ import com.google.gwt.dev.jjs.ast.js.JsonArray;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeMapper;
 import com.google.gwt.dev.js.JsStackEmulator;
 import com.google.gwt.dev.js.JsUtils;
+import com.google.gwt.dev.js.JsUtils.InvocationStyle;
 import com.google.gwt.dev.js.ast.JsArrayAccess;
 import com.google.gwt.dev.js.ast.JsArrayLiteral;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
@@ -213,6 +215,8 @@ public class GenerateJavaScriptAST {
 
     private final Stack<JsScope> scopeStack = new Stack<JsScope>();
 
+    private JMethod currentMethod;
+
     @Override
     public boolean visit(JProgram x, Context ctx) {
       // Scopes and name objects need to be calculated within all types, even reference-only ones.
@@ -280,6 +284,10 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JParameter x, Context ctx) {
+      if (x.isVarargs() && currentMethod.isJsMethodVarargs()) {
+        names.put(x, scopeStack.peek().declareUnobfuscatableName("arguments"));
+        return;
+      }
       names.put(x, scopeStack.peek().declareName(x.getName()));
     }
 
@@ -356,6 +364,7 @@ public class GenerateJavaScriptAST {
 
     @Override
     public boolean visit(JMethod x, Context ctx) {
+      currentMethod = x;
       // my polymorphic name
       String name = x.getName();
       if (x.needsDynamicDispatch()) {
@@ -517,11 +526,8 @@ public class GenerateJavaScriptAST {
     private JMethod currentMethod = null;
 
     private final JsName arrayLength = objectScope.declareUnobfuscatableName("length");
-
     private final JsName globalTemp = topScope.declareUnobfuscatableName("_");
-
     private final JsName prototype = objectScope.declareUnobfuscatableName("prototype");
-
     private final JsName call = objectScope.declareUnobfuscatableName("call");
 
     @Override
@@ -783,7 +789,11 @@ public class GenerateJavaScriptAST {
       if (!method.isJsniMethod()) {
         // Setup params on the generated function. A native method already got
         // its jsParams set when parsed from JSNI.
-        transformInto(method.getParams(), function.getParameters());
+        List<JParameter> parameterList = method.getParams();
+        if (method.isJsMethodVarargs()) {
+          parameterList = parameterList.subList(0, parameterList.size() - 1);
+        }
+        transformInto(parameterList, function.getParameters());
       }
 
       JsInvocation jsInvocation = maybeCreateClinitCall(method);
@@ -863,23 +873,25 @@ public class GenerateJavaScriptAST {
 
       JsExpression qualifier = transform(methodCall.getInstance());
       List<JsExpression> args = transform(methodCall.getArgs());
+      SourceInfo sourceInfo = methodCall.getSourceInfo();
       if (method.isStatic()) {
-        return dispatchToStatic(qualifier, method, args, methodCall.getSourceInfo());
+        return dispatchToStatic(qualifier, method, args, sourceInfo);
       } else if (methodCall.isStaticDispatchOnly()) {
-        return dispatchToSuper(qualifier, method, args, methodCall.getSourceInfo());
+        return dispatchToSuper(qualifier, method, args, sourceInfo);
       } else if (method.isOrOverridesJsFunctionMethod()) {
-        return dispatchToJsFunction(qualifier, args, methodCall.getSourceInfo());
+        return dispatchToJsFunction(qualifier, method, args, sourceInfo);
       } else {
-        return dispatchToInstanceMethod(qualifier, method, args, methodCall.getSourceInfo());
+        return dispatchToInstanceMethod(qualifier, method, args, sourceInfo);
       }
     }
 
     private JsExpression dispatchToStatic(JsExpression unnecessaryQualifier, JMethod method,
         List<JsExpression> args, SourceInfo sourceInfo) {
       JsNameRef methodName = createStaticReference(method, sourceInfo);
-      JsExpression result = JsUtils.createInvocationOrPropertyAccess(
-          sourceInfo, method.getJsMemberType(), methodName, args);
-      return JsUtils.createCommaExpression(unnecessaryQualifier, result);
+      return JsUtils.createCommaExpression(
+          unnecessaryQualifier,
+          createInvocationOrPropertyAccess(
+              InvocationStyle.NORMAL, sourceInfo, method, null, methodName, args));
     }
 
     private JsExpression dispatchToSuper(
@@ -900,7 +912,7 @@ public class GenerateJavaScriptAST {
         methodNameRef = names.get(method).makeRef(sourceInfo);
       } else {
         // These are regular super method call. These calls are always dispatched statically and
-        // optimizations will statify them (except in a few cases, like being target of
+        // optimizations will devirtualize them (except in a few cases, like being target of
         // {@link Impl.getNameOf} or calls to the native classes.
 
         JDeclaredType superClass = method.getEnclosingType();
@@ -908,12 +920,8 @@ public class GenerateJavaScriptAST {
         methodNameRef = polymorphicNames.get(method).makeQualifiedRef(sourceInfo, protoRef);
       }
 
-      // <method_qualifier>.call(instance, args);
-      JsNameRef qualifiedMethodName = call.makeQualifiedRef(sourceInfo, methodNameRef);
-      JsInvocation jsInvocation = new JsInvocation(sourceInfo, qualifiedMethodName);
-      jsInvocation.getArguments().add(instance);
-      jsInvocation.getArguments().addAll(args);
-      return jsInvocation;
+      return JsUtils.createInvocationOrPropertyAccess(InvocationStyle.SUPER,
+          sourceInfo, method, instance, methodNameRef, args);
     }
 
     private JsExpression getPrototypeQualifierViaLookup(JDeclaredType type, SourceInfo sourceInfo) {
@@ -929,16 +937,16 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    private JsExpression dispatchToJsFunction(
-        JsExpression instance, List<JsExpression> args, SourceInfo sourceInfo) {
-      return new JsInvocation(sourceInfo, instance, args);
+    private JsExpression dispatchToJsFunction(JsExpression instance, JMethod method,
+        List<JsExpression> args, SourceInfo sourceInfo) {
+      return createInvocationOrPropertyAccess(InvocationStyle.FUNCTION, sourceInfo, method, instance, null, args);
     }
 
-    private JsExpression dispatchToInstanceMethod(
-        JsExpression instance, JMethod method, List<JsExpression> args, SourceInfo sourceInfo) {
+    private JsExpression dispatchToInstanceMethod(JsExpression instance, JMethod method,
+        List<JsExpression> args, SourceInfo sourceInfo) {
       JsNameRef reference = polymorphicNames.get(method).makeQualifiedRef(sourceInfo, instance);
-      return JsUtils.createInvocationOrPropertyAccess(
-          sourceInfo, method.getJsMemberType(), reference, args);
+      return createInvocationOrPropertyAccess(
+          InvocationStyle.NORMAL, sourceInfo, method, instance, reference, args);
     }
 
     @Override
@@ -971,10 +979,13 @@ public class GenerateJavaScriptAST {
       SourceInfo sourceInfo = newInstance.getSourceInfo();
       JConstructor ctor = newInstance.getTarget();
       JsName ctorName = names.get(ctor);
-      JsNew  newExpr = ctor.isJsNative()
-          ? new JsNew(sourceInfo, createJsQualifier(ctor.getQualifiedJsName(), sourceInfo))
-          : new JsNew(sourceInfo, ctorName.makeRef(sourceInfo));
-      transformInto(newInstance.getArgs(), newExpr.getArguments());
+      JsNameRef  reference = ctor.isJsNative()
+          ? createJsQualifier(ctor.getQualifiedJsName(), sourceInfo)
+          : ctorName.makeRef(sourceInfo);
+      List<JsExpression> arguments = transform(newInstance.getArgs());
+
+      JsNew newExpr = (JsNew) JsUtils.createInvocationOrPropertyAccess(
+          InvocationStyle.NEWINSTANCE, sourceInfo, ctor, null, reference, arguments);
 
       if (newInstance.getClassType().isJsFunctionImplementation()) {
         return constructJsFunctionObject(sourceInfo, newInstance.getClassType(), ctorName, newExpr);
@@ -991,7 +1002,8 @@ public class GenerateJavaScriptAST {
           ctorName, prototype, polymorphicNames.get(jsFunctionMethod));
 
       // makeLambdaFunction(Foo.prototype.functionMethodName, new Foo(...))
-      return constructInvocation(sourceInfo, RuntimeConstants.RUNTIME_MAKE_LAMBDA_FUNCTION, funcNameRef, newExpr);
+      return constructInvocation(sourceInfo, RuntimeConstants.RUNTIME_MAKE_LAMBDA_FUNCTION,
+          funcNameRef, newExpr);
     }
 
     private JMethod getJsFunctionMethod(JClassType type) {
@@ -1010,6 +1022,7 @@ public class GenerateJavaScriptAST {
 
     @Override
     public JsNode transformParameter(JParameter parameter) {
+      assert !(currentMethod.isJsMethodVarargs() && parameter.isVarargs());
       return new JsParameter(parameter.getSourceInfo(), names.get(parameter));
     }
 

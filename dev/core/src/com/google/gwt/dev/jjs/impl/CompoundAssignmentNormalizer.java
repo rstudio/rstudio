@@ -16,7 +16,6 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
-import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
@@ -27,7 +26,6 @@ import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
-import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
@@ -35,7 +33,6 @@ import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JThisRef;
-import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 
@@ -125,7 +122,7 @@ public abstract class CompoundAssignmentNormalizer {
         }
 
         // Create a temp local
-        JLocal tempLocal = createTempLocal(x.getSourceInfo(), x.getType());
+        JLocal tempLocal = createTempLocal(x.getSourceInfo(), x.getType(), TEMP_LOCAL_NAME);
 
         // Create an assignment for this temp and add it to multi.
         JLocalRef tempRef = tempLocal.makeRef(x.getSourceInfo());
@@ -135,11 +132,6 @@ public abstract class CompoundAssignmentNormalizer {
         // Update me with the temp
         return cloner.cloneExpression(tempRef);
       }
-    }
-
-    @Override
-    protected String newTemporaryLocalName(SourceInfo info, JType type, JMethodBody methodBody) {
-      return CompoundAssignmentNormalizer.this.newTemporaryLocalName(info, type, methodBody);
     }
 
     @Override
@@ -204,7 +196,8 @@ public abstract class CompoundAssignmentNormalizer {
       JExpression expressionReturn = expressionToReturn(newArg);
 
       // Now generate the appropriate expressions.
-      JLocal tempLocal = createTempLocal(x.getSourceInfo(), expressionReturn.getType());
+      JLocal tempLocal =
+          createTempLocal(x.getSourceInfo(), expressionReturn.getType(), TEMP_LOCAL_NAME);
 
       // t = x
       JLocalRef tempRef = tempLocal.makeRef(x.getSourceInfo());
@@ -284,17 +277,6 @@ public abstract class CompoundAssignmentNormalizer {
   // {@link GenerateJavaScriptAst.FixNameClashesVisitor} will resolve into unique names when
   // needed.
   private static final String TEMP_LOCAL_NAME = "$tmp";
-
-  /**
-   * Gets a new temporary local variable name in {@code methodBody}. Locals might have duplicate
-   * names as they are always referred to by reference.
-   * {@link GenerateJavaScriptAST} will attempt coalesce variables of same name.
-   *
-   * <p> Subclasses might decide on different approaches to naming local temporaries.
-   */
-  protected String newTemporaryLocalName(SourceInfo info, JType type, JMethodBody methodBody) {
-    return TEMP_LOCAL_NAME;
-  }
 
   /**
    * Decide what expression to return when breaking up a compound assignment of

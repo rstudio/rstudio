@@ -45,7 +45,13 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.js.JsUtils;
+import com.google.gwt.dev.js.ast.JsContext;
+import com.google.gwt.dev.js.ast.JsFunction;
+import com.google.gwt.dev.js.ast.JsNameRef;
+import com.google.gwt.dev.js.ast.JsParameter;
+import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
@@ -250,6 +256,10 @@ public class JsInteropRestrictionChecker {
       return;
     }
 
+    if (member.isJsMethodVarargs()) {
+      checkJsVarargs(member);
+    }
+
     checkMemberQualifiedJsName(member);
 
     if (isCheckedLocalName(member)) {
@@ -337,6 +347,25 @@ public class JsInteropRestrictionChecker {
     }
   }
 
+  private void checkJsVarargs(JMember member) {
+    final JMethod method = (JMethod) member;
+    if (!method.isJsniMethod()) {
+      return;
+    }
+    final JsFunction function = ((JsniMethodBody) method.getBody()).getFunc();
+    final JsParameter varargParameter = Iterables.getLast(function.getParameters());
+    new JsVisitor() {
+      @Override
+      public void endVisit(JsNameRef x, JsContext ctx) {
+        if (x.getName() == varargParameter.getName()) {
+          logError(x, "Cannot access vararg parameter '%s' from JSNI in JsMethod %s."
+              + " Use 'arguments' instead.", x.getIdent(),
+              getMemberDescription(method));
+        }
+      }
+    }.accept(function);
+  }
+
   private boolean checkJsPropertyAccessor(JMember member) {
     if (member.getJsName().equals(JsInteropUtil.INVALID_JSNAME)) {
       assert member.getJsMemberType().isPropertyAccessor();
@@ -355,6 +384,13 @@ public class JsInteropRestrictionChecker {
     if (member.getJsMemberType() == JsMemberType.GETTER) {
       if (member.getType() != JPrimitiveType.BOOLEAN && member.getName().startsWith("is")) {
         logError(member, "JsProperty %s cannot have a non-boolean return.",
+            getMemberDescription(member));
+      }
+    }
+
+    if (member.getJsMemberType() == JsMemberType.SETTER) {
+      if (((JMethod) member).getParams().get(0).isVarargs()) {
+        logError(member, "JsProperty %s cannot have a vararg parameter.",
             getMemberDescription(member));
       }
     }

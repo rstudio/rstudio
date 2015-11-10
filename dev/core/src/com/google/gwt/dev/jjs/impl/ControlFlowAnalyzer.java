@@ -621,6 +621,11 @@ public class ControlFlowAnalyzer {
             // Parameters in JsExport, JsType, JsFunction methods should not be pruned in order to
             // keep the API intact.
             rescue(param);
+            if (param.isVarargs()) {
+              assert method.isJsMethodVarargs();
+              // Rescue the (array) type of varargs parameters as the array creation is implicit.
+              rescue((JReferenceType) param.getType(), true);
+            }
           }
         }
         rescueOverridingMethods(method);

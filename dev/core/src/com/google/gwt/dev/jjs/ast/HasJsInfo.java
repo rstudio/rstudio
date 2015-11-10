@@ -124,6 +124,8 @@ public interface HasJsInfo extends HasJsName {
 
   boolean isJsNative();
 
+  boolean isJsMethodVarargs();
+
   boolean isJsOverlay();
 
   boolean canBeReferencedExternally();

@@ -60,17 +60,18 @@ public abstract class JModVisitorWithTemporaryVariableCreation extends JChangeTr
     return super.visit(x, ctx);
   }
 
-  protected JLocal createTempLocal(SourceInfo info, JType type) {
+  /**
+   * Gets a new temporary local variable name in the current method body.
+   * Locals might have duplicate names as they are always referred to by reference and name
+   * collisions are fixed by  {@link NameClashesFixer}.
+   */
+  protected JLocal createTempLocal(SourceInfo info, JType type, String temporaryLocalName) {
     assert !getCurrentMethod().isJsniMethod();
     JMethodBody currentMethodBody = (JMethodBody) getCurrentMethod().getBody();
-    String temporaryLocalName = newTemporaryLocalName(info, type, currentMethodBody);
     JLocal local = JProgram.createLocal(info, temporaryLocalName, type, false, currentMethodBody);
     JDeclarationStatement declarationStatement =
         new JDeclarationStatement(info, local.makeRef(info), null);
     currentDeclarationInsertionPoint.peek().insertBefore(declarationStatement);
     return local;
   }
-
-  protected abstract String newTemporaryLocalName(SourceInfo info, JType type,
-      JMethodBody methodBody);
 }

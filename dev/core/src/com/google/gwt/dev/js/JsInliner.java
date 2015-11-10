@@ -1737,7 +1737,7 @@ public class JsInliner {
     }
 
     assert expression != null;
-    return JsHoister.hoist(expression);
+    return JsSafeCloner.clone(expression);
   }
 
   /**

@@ -45,11 +45,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A utility class to clone JsExpression AST members for use by
- * {@link JsInliner}. <b>Not all expressions are necessarily implemented</b>,
- * only those that are safe to hoist into outer call sites.
+ * A utility class to clone JsExpression AST members. <b>Not all expressions are necessarily
+ * cloned </b>, only those expressions that are safe to hoist into outer call sites.
  */
-public final class JsHoister {
+public final class JsSafeCloner {
   /**
    * Implements actual cloning logic. We rely on the JsExpressions to provide
    * traversal logic. The {@link #stack} field is used to accumulate
@@ -144,6 +143,11 @@ public final class JsHoister {
      */
     @Override
     public void endVisit(JsNameRef x, JsContext ctx) {
+      if (x.getQualifier() == null && x.getIdent() == "arguments") {
+        // References to the arguments object can not be hoisted.
+        successful = false;
+        stack.push(null);
+      }
       JsNameRef toReturn = new JsNameRef(x.getSourceInfo(), x.getName());
 
       if (x.getQualifier() != null) {
@@ -249,7 +253,7 @@ public final class JsHoister {
   }
 
   /**
-   * Given a JsStatement, construct an expression to hoist into the outer
+   * Given a JsStatement, construct an expression to clone into the outer
    * caller. This does not perform any name replacement, nor does it verify the
    * scope of referenced elements, but simply constructs a mutable copy of the
    * expression that can be manipulated at-will.
@@ -257,7 +261,7 @@ public final class JsHoister {
    * @return A copy of the original expression, or <code>null</code> if the
    *         expression cannot be hoisted.
    */
-  public static JsExpression hoist(JsExpression expression) {
+  public static JsExpression clone(JsExpression expression) {
     if (expression == null) {
       return null;
     }
@@ -267,6 +271,6 @@ public final class JsHoister {
     return c.getExpression();
   }
 
-  private JsHoister() {
+  private JsSafeCloner() {
   }
 }

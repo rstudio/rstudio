@@ -279,7 +279,7 @@ public class JsNamespaceChooser {
 
     @Override
     public void endVisit(JsNameRef x, JsContext ctx) {
-      if (!x.isLeaf() || x.getQualifier() != null || x.getName() == null) {
+      if (x.getQualifier() != null || x.getName() == null) {
         return;
       }
 
