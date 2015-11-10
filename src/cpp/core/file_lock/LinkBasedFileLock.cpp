@@ -32,6 +32,7 @@
 #include <core/Log.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/system/System.hpp>
 
 #include <boost/foreach.hpp>
 
@@ -42,7 +43,8 @@ namespace {
 
 std::string pidString()
 {
-   return safe_convert::numberToString((long) ::getpid());
+   PidType pid = system::currentProcessId();
+   return safe_convert::numberToString((long) pid);
 }
 
 std::string makeHostName()
@@ -117,7 +119,7 @@ class LockRegistration : boost::noncopyable
 public:
    
    LockRegistration()
-      : pid_(::getpid())
+      : pid_(system::currentProcessId())
    {
    }
    
@@ -172,10 +174,8 @@ public:
       {
          // ensure that child processes don't run
          // the destructor
-         if (::getpid() == pid_)
-         {
+         if (pid_ == system::currentProcessId())
             clearLocks();
-         }
       }
       catch (...)
       {
@@ -186,7 +186,7 @@ private:
    
    boost::mutex mutex_;
    std::set<FilePath> registration_;
-   pid_t pid_;
+   PidType pid_;
 };
 
 LockRegistration& lockRegistration()
