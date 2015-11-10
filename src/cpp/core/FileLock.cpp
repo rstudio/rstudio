@@ -37,7 +37,7 @@ void initialize()
 
 namespace {
 
-const char * const kLocksConfPath = "/etc/rstudio/locks.conf";
+const char * const kLocksConfPath = "/etc/rstudio/file-locks";
 #define kDefaultRefreshRate     20.0
 #define kDefaultTimeoutInterval 30.0
 
