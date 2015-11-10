@@ -65,6 +65,9 @@ public:
    // to allow for polymorphism (ie, select method at runtime)
    virtual bool isLocked(const FilePath& lockFilePath) const = 0;
    
+   // warns if FileLock::initialize() hasn't been called yet
+   static bool ensureInitialized();
+   
    FileLock()
    {
       ensureInitialized();
@@ -76,8 +79,6 @@ protected:
    static LockType s_defaultType;
    static boost::posix_time::seconds s_timeoutInterval;
    static boost::posix_time::seconds s_refreshRate;
-   
-   void ensureInitialized();
 };
 
 class AdvisoryFileLock : public FileLock

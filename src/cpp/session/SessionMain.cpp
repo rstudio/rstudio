@@ -1655,6 +1655,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    s_waitForMethodNames.push_back(kChooseFileCompleted);
    s_waitForMethodNames.push_back(kUserPromptCompleted);
    s_waitForMethodNames.push_back(kHandleUnsavedChangesCompleted);
+   
+   // initialize lockfile management
+   FileLock::initialize();
 
    // execute core initialization functions
    using boost::bind;

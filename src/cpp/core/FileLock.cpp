@@ -87,19 +87,21 @@ double getFieldPositive(const Settings& settings,
 
 bool s_isInitialized = false;
 
-void FileLock::ensureInitialized()
+bool FileLock::ensureInitialized()
 {
    if (!s_isInitialized)
    {
       static bool s_warned = false;
       if (s_warned)
-         return;
+         return s_isInitialized;
       
       s_warned = true;
       LOG_WARNING_MESSAGE(
                "FileLock classes not yet initialized; please call "
                "'FileLock::initialize()' and 'FileLock::cleanUp()' as appropriate");
    }
+   
+   return s_isInitialized;
 }
 
 void FileLock::initialize(FilePath locksConfPath)
