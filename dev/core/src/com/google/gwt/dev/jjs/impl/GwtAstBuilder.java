@@ -2523,16 +2523,10 @@ public class GwtAstBuilder {
 
     protected void endVisit(TypeDeclaration x) {
       JDeclaredType type = curClass.type;
-      /*
-       * Make clinits chain to super class (JDT doesn't write code to do this).
-       * Call super class $clinit;
-       */
-      if (type.getSuperClass() != null) {
-        JMethod myClinit = type.getClinitMethod();
-        JMethod superClinit = type.getSuperClass().getClinitMethod();
-        JMethodCall superClinitCall = new JMethodCall(myClinit.getSourceInfo(), null, superClinit);
-        JMethodBody body = (JMethodBody) myClinit.getBody();
-        body.getBlock().addStmt(0, superClinitCall.makeStatement());
+
+      // Synthesize super clinit calls.
+      if (type instanceof JClassType) {
+        JjsUtils.synthesizeStaticInitializerChain(type);
       }
 
       // Implement getClass() implementation for all non-Object classes.

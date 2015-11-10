@@ -116,6 +116,9 @@ public class Java8Test extends GWTTestCase {
   public void testDefaultInterfaceMethodVirtualUpRef() {
   }
 
+  public void testInterfaceWithDefaultMethodsInitialization() {
+  }
+
   public void testDefaultInterfaceMethodMultiple() {
   }
 

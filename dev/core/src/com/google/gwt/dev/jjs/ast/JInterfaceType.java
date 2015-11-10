@@ -17,6 +17,8 @@ package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.thirdparty.guava.common.base.Predicate;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 
 import java.io.Serializable;
 
@@ -72,6 +74,15 @@ public class JInterfaceType extends JDeclaredType {
   @Override
   public boolean isJsoType() {
     return false;
+  }
+
+  public boolean hasDefaultMethods() {
+    return Iterables.any(getMethods(), new Predicate<JMethod>() {
+      @Override
+      public boolean apply(JMethod method) {
+        return method.isDefaultMethod();
+      }
+    });
   }
 
   @Override

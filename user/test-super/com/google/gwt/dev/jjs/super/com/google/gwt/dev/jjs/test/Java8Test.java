@@ -18,6 +18,9 @@ package com.google.gwt.dev.jjs.test;
 import com.google.gwt.core.client.GwtScriptOnly;
 import com.google.gwt.junit.client.GWTTestCase;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 /**
  * Tests Java 8 features. It is super sourced so that gwt can be compiles under Java 7.
  *
@@ -1191,5 +1194,68 @@ public class Java8Test extends GWTTestCase {
     assertEquals("Object n", new A().callNWithInterfaceThis());
     assertEquals("Object super n", new A().callNWithSuper());
     assertEquals("Object default n", new A().callNWithInterfaceSuper());
+  }
+
+  private static List<String> initializationOrder;
+
+  private static int get(String s) {
+    initializationOrder.add(s);
+    return 1;
+  }
+
+  interface A1 {
+    int fa1 = get("A1");
+
+    default void a1() { }
+  }
+
+  interface A2 {
+    int fa2 = get("A2");
+
+    default void a2() { }
+  }
+
+  interface A3 {
+    int fa3 = get("A3");
+
+    default void a3() { }
+  }
+
+  interface B1 extends A1 {
+    int fb1 = get("B1");
+
+    default void b1() { }
+  }
+
+  interface B2 extends A2 {
+    int fb2 = get("B2");
+
+    default void b2() { }
+  }
+
+  interface B3 extends A3 {
+    int fb3 = get("B3");
+  }
+
+  static class C implements B1, A2  {
+    static {
+      get("C");
+    }
+  }
+
+  static class D extends C implements B2, B3 {
+    static {
+      get("D");
+    }
+  }
+
+  public void testInterfaceWithDefaultMethodsInitialization() {
+    initializationOrder = new ArrayList<String>();
+    new D();
+    assertContentsInOrder(initializationOrder, "A1", "B1", "A2", "C", "B2", "A3", "D");
+  }
+
+  private void assertContentsInOrder(Iterable<String> contents, String... elements) {
+    assertEquals(Arrays.asList(elements).toString(), contents.toString());
   }
 }

@@ -434,6 +434,28 @@ public class JjsUtils {
     return translatorByLiteralClass.get(literal.getClass()).translate(literal);
   }
 
+  static void synthesizeStaticInitializerChain(JDeclaredType type) {
+    // Implement static initialization as described in (Java 8) JLS 12.4.2.
+    List<JStatement> superClinitCalls = Lists.newArrayList();
+    SourceInfo sourceInfo = type.getSourceInfo();
+
+    // First call the static initializer for the superclass.
+    JClassType superClass = type.getSuperClass();
+    if (superClass != null) {
+      superClinitCalls.add(
+          new JMethodCall(sourceInfo, null, superClass.getClinitMethod()).makeStatement());
+    }
+
+    // Recurse over interfaces in preorder initializing the ones that have default methods.
+    for (JInterfaceType interfaceType : getSuperInterfacesRequiringInitialization(type)) {
+      superClinitCalls.add(
+          new JMethodCall(sourceInfo, null, interfaceType.getClinitMethod()).makeStatement());
+    }
+
+    JMethodBody body = (JMethodBody) type.getClinitMethod().getBody();
+    body.getBlock().getStatements().addAll(0, superClinitCalls);
+  }
+
   private static Map<Class<? extends JLiteral>, LiteralTranslators> translatorByLiteralClass =
       new ImmutableMap.Builder<Class<? extends JLiteral>, LiteralTranslators>()
           .put(JBooleanLiteral.class, LiteralTranslators.BOOLEAN_LITERAL_TRANSLATOR)
@@ -549,6 +571,19 @@ public class JjsUtils {
     emptyMethod.freezeParamTypes();
     inType.addMethod(emptyMethod);
     return emptyMethod;
+  }
+
+  private static Iterable<JInterfaceType> getSuperInterfacesRequiringInitialization(
+      JDeclaredType type) {
+    Iterable<JInterfaceType> interfaces = Collections.emptyList();
+    for (JInterfaceType interfaceType : type.getImplements()) {
+      interfaces =
+          Iterables.concat(interfaces, getSuperInterfacesRequiringInitialization(interfaceType));
+      if (interfaceType.hasDefaultMethods()) {
+        interfaces = Iterables.concat(interfaces, Collections.singleton(interfaceType));
+      }
+    }
+    return interfaces;
   }
 
   private JjsUtils() {
