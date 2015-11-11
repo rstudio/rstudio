@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # install dependencies
 export QT_SDK_DIR=/home/vagrant/Qt5.4.0
 cd /rstudio/dependencies/linux
@@ -22,9 +24,7 @@ vim -T builtin_dumb +PluginInstall +qall
 cd /home/vagrant/.vim/bundle/YouCompleteMe
 ./install.py --clang-completer
 
-# create build folder and run cmake
-mkdir -p /home/vagrant/rstudio-build
-cd /home/vagrant/rstudio-build
-cmake /rstudio/src/cpp -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-
+# run common user provisioning script
+cd /rstudio/vagrant
+./provision-common-user.sh
 

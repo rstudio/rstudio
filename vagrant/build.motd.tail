@@ -5,5 +5,5 @@
                                
 Welcome to an RStudio virtual development environment.
 
-RStudio sources: /vagrant
+RStudio sources: ~/rstudio
 Build folder: ~/rstudio-build

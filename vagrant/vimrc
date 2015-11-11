@@ -39,10 +39,6 @@ set colorcolumn=80
 set backupdir=~/.vimbackup
 set directory=~/.vimswap
 
-" Jump to def, find usage
-map <Leader>d :YcmCompleter GoToImprecise<CR>
-map <Leader>f :Ag -U --ignore tags --ignore *.a --ignore *.min.* --ignore *.cache.js <cword><CR>
-
 " Other preferences
 set nu
 set noerrorbells visualbell t_vb=
@@ -58,6 +54,10 @@ set cursorline
 set bs=2
 set showcmd
 syn on
+
+" Jump to def, find usage
+map <Leader>d :YcmCompleter GoToImprecise<CR>
+map <Leader>f :Ag -U --ignore tags --ignore *.a --ignore *.min.* --ignore *.cache.js <cword><CR>
 
 " Airline settings
 let g:airline#extensions#whitespace#enabled = 0
