@@ -70,7 +70,7 @@ std::string threadId()
 {
    std::stringstream ss;
    ss << boost::this_thread::get_id();
-   return ss.str().substr(2);
+   return ss.str();
 }
 
 std::string proxyLockFileName()
