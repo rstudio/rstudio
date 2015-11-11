@@ -568,7 +568,7 @@ Error executeCode(const json::JsonRpcRequest& request,
       return error;
 
    // execute the code (show error in the console)
-   error = r::exec::executeString(code);
+   error = r::exec::executeString("{" + code + "}");
    if (error)
    {
       std::string errMsg = "Error executing code: " + code + "\n";
