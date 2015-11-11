@@ -43,7 +43,7 @@ namespace core {
 namespace {
 
 const char * const kFileLockPrefix =
-      ".rstudio-lock-22341c29-6541-44eb-88da-e097378a46d4";
+      ".rstudio-lock-41c29";
 
 std::string pidString()
 {
