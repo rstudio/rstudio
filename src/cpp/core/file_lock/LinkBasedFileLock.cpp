@@ -42,7 +42,8 @@ namespace core {
 
 namespace {
 
-const char * const kFileLockGuid = "22341c29-6541-44eb-88da-e097378a46d4";
+const char * const kFileLockPrefix =
+      ".rstudio-lock-22341c29-6541-44eb-88da-e097378a46d4";
 
 std::string pidString()
 {
@@ -75,8 +76,7 @@ std::string threadId()
 std::string proxyLockFileName()
 {
    return std::string()
-         + ".rstudio-lock" 
-         + "-" + kFileLockGuid
+         + kFileLockPrefix
          + "-" + hostName()
          + "-" + pidString()
          + "-" + threadId();
@@ -108,7 +108,7 @@ void cleanStaleLockfiles(const FilePath& dir)
    
    BOOST_FOREACH(const FilePath& filePath, children)
    {
-      if (boost::algorithm::starts_with(filePath.filename(), ".rstudio-lock") &&
+      if (boost::algorithm::starts_with(filePath.filename(), kFileLockPrefix) &&
           isLockFileStale(filePath))
       {
          Error error = filePath.remove();
