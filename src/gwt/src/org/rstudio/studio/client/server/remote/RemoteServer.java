@@ -460,6 +460,15 @@ public class RemoteServer implements Server
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
    
+   @Override
+   public void executeCode(String code,
+                           ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0,  new JSONString(code));
+      sendRequest(RPC_SCOPE, "execute_code", params, requestCallback);
+   }
+   
    public void getInitMessages(ServerRequestCallback<String> requestCallback)
    {
       sendRequest(META_SCOPE,

@@ -114,4 +114,6 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
    
    
    void startShellDialog(ServerRequestCallback<ConsoleProcess> requestCallback);
+   
+   void executeCode(String code, ServerRequestCallback<Void> requestCallback);
 }

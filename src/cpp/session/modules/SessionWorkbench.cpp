@@ -558,6 +558,28 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error executeCode(const json::JsonRpcRequest& request,
+                  json::JsonRpcResponse* pResponse)
+{
+   // get the code
+   std::string code;
+   Error error = json::readParam(request.params, 0, &code);
+   if (error)
+      return error;
+
+   // execute the code (show error in the console)
+   error = r::exec::executeString(code);
+   if (error)
+   {
+      std::string errMsg = "Error executing code: " + code + "\n";
+      errMsg += r::endUserErrorMessage(error);
+      module_context::consoleWriteError(errMsg + "\n");
+   }
+
+   return Success();
+}
+
+
 Error createSshKey(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
@@ -896,7 +918,8 @@ Error initialize()
       (bind(registerRpcMethod, "set_cran_mirror", setCRANMirror))
       (bind(registerRpcMethod, "get_terminal_options", getTerminalOptions))
       (bind(registerRpcMethod, "create_ssh_key", createSshKey))
-      (bind(registerRpcMethod, "start_shell_dialog", startShellDialog));
+      (bind(registerRpcMethod, "start_shell_dialog", startShellDialog))
+      (bind(registerRpcMethod, "execute_code", executeCode));
    return initBlock.execute();
 }
 
