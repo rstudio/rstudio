@@ -1,5 +1,5 @@
 /*
- * ApplicationCBT.java
+ * ApplicationTutorialApi.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -18,6 +18,6 @@ package org.rstudio.studio.client.application;
 import com.google.inject.Singleton;
 
 @Singleton
-public class ApplicationCBT
+public class ApplicationTutorialApi
 {
 }
