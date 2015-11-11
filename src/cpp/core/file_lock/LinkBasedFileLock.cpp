@@ -42,6 +42,8 @@ namespace core {
 
 namespace {
 
+const char * const kFileLockGuid = "22341c29-6541-44eb-88da-e097378a46d4";
+
 std::string pidString()
 {
    PidType pid = system::currentProcessId();
@@ -74,6 +76,7 @@ std::string proxyLockFileName()
 {
    return std::string()
          + ".rstudio-lock" 
+         + "-" + kFileLockGuid
          + "-" + hostName()
          + "-" + pidString()
          + "-" + threadId();
