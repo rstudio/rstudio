@@ -31,6 +31,7 @@
 
 #include <core/system/System.hpp>
 
+#include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
 #include "session/SessionSourceDatabase.hpp"
 
@@ -119,11 +120,11 @@ FilePath sessionLockFilePath(const FilePath& sessionDir)
 // session dir lock (lock is acquired within 'attachToSourceDatabase()')
 boost::shared_ptr<FileLock> createSessionDirLock()
 {
-#ifdef RSTUDIO_SERVER
-   return FileLock::create(FileLock::LOCKTYPE_LINKBASED);
-#else
-   return FileLock::createDefault();
-#endif
+   bool isServer = session::options().programMode() == kSessionProgramModeServer;
+   FileLock::LockType lockType = isServer
+         ? FileLock::LOCKTYPE_LINKBASED
+         : FileLock::LOCKTYPE_ADVISORY;
+   return FileLock::create(lockType);
 }
 
 boost::shared_ptr<FileLock>& sessionDirLock()

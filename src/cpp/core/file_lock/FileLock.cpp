@@ -67,7 +67,7 @@ FileLock::LockType stringToLockType(const std::string& lockType)
       return FileLock::LOCKTYPE_LINKBASED;
    
    LOG_WARNING_MESSAGE("unrecognized lock type '" + lockType + "'");
-   return FileLock::LOCKTYPE_ADVISORY;
+   return FileLock::LOCKTYPE_LINKBASED;
 }
 
 double getFieldPositive(const Settings& settings,
@@ -150,7 +150,7 @@ void FileLock::initialize(const Settings& settings)
 }
 
 // default values for static members
-FileLock::LockType FileLock::s_defaultType(FileLock::LOCKTYPE_ADVISORY);
+FileLock::LockType FileLock::s_defaultType(FileLock::LOCKTYPE_LINKBASED);
 boost::posix_time::seconds FileLock::s_timeoutInterval(kDefaultTimeoutInterval);
 boost::posix_time::seconds FileLock::s_refreshRate(kDefaultRefreshRate);
 
