@@ -51,19 +51,13 @@ std::string pidString()
    return safe_convert::numberToString((long) pid);
 }
 
-std::string makeHostName()
+std::string hostName()
 {
    char buffer[256];
    int status = ::gethostname(buffer, 255);
    if (status)
       LOG_ERROR(systemError(errno, ERROR_LOCATION));
    return std::string(buffer);
-}
-
-const std::string& hostName()
-{
-   static std::string instance = makeHostName();
-   return instance;
 }
 
 std::string threadId()
