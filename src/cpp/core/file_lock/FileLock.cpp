@@ -84,9 +84,9 @@ double getFieldPositive(const Settings& settings,
    return value;
 }
 
-} // end anonymous namespace
-
 bool s_isInitialized = false;
+
+} // end anonymous namespace
 
 bool FileLock::ensureInitialized()
 {
