@@ -88,7 +88,7 @@ bool s_isInitialized = false;
 
 } // end anonymous namespace
 
-bool FileLock::ensureInitialized()
+bool FileLock::verifyInitialized()
 {
    if (!s_isInitialized)
    {
@@ -156,7 +156,7 @@ boost::posix_time::seconds FileLock::s_refreshRate(kDefaultRefreshRate);
 
 boost::shared_ptr<FileLock> FileLock::create(LockType type)
 {
-   ensureInitialized();
+   verifyInitialized();
    
    switch (type)
    {
@@ -170,20 +170,20 @@ boost::shared_ptr<FileLock> FileLock::create(LockType type)
 
 boost::shared_ptr<FileLock> FileLock::createDefault()
 {
-   ensureInitialized();
+   verifyInitialized();
    return FileLock::create(s_defaultType);
 }
 
 void FileLock::refresh()
 {
-   ensureInitialized();
+   verifyInitialized();
    AdvisoryFileLock::refresh();
    LinkBasedFileLock::refresh();
 }
 
 void FileLock::cleanUp()
 {
-   ensureInitialized();
+   verifyInitialized();
    AdvisoryFileLock::cleanUp();
    LinkBasedFileLock::cleanUp();
 }
@@ -242,7 +242,7 @@ void FileLock::refreshPeriodically(boost::asio::io_service& service,
       return;
    s_isRefreshing = true;
    
-   ensureInitialized();
+   verifyInitialized();
    
    static boost::asio::deadline_timer timer(service, interval);
    timer.async_wait(boost::bind(

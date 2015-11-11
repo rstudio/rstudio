@@ -66,11 +66,11 @@ public:
    virtual bool isLocked(const FilePath& lockFilePath) const = 0;
    
    // warns if FileLock::initialize() hasn't been called yet
-   static bool ensureInitialized();
+   static bool verifyInitialized();
    
    FileLock()
    {
-      ensureInitialized();
+      verifyInitialized();
    }
 
    virtual ~FileLock() {}
