@@ -111,7 +111,7 @@ void cleanStaleLockfiles(const FilePath& dir)
       if (boost::algorithm::starts_with(filePath.filename(), kFileLockPrefix) &&
           isLockFileStale(filePath))
       {
-         Error error = filePath.remove();
+         Error error = filePath.removeIfExists();
          if (error)
             LOG_ERROR(error);
       }
