@@ -28,3 +28,8 @@ cd /home/vagrant/.vim/bundle/YouCompleteMe
 cd /rstudio/vagrant
 ./provision-common-user.sh
 
+# create build folder and run cmake
+mkdir -p /home/vagrant/rstudio-build
+cd /home/vagrant/rstudio-build
+cmake ~/rstudio/src/cpp -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+

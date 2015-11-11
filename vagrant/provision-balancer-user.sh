@@ -11,3 +11,8 @@ cd /rstudio/dependencies/linux
 cd /rstudio/vagrant
 ./provision-common-user.sh
 
+# create build folder and run cmake
+mkdir -p /home/vagrant/rstudio-build
+cd /home/vagrant/rstudio-build
+cmake ~/rstudio/src/cpp -DRSTUDIO_TARGET=Server -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+

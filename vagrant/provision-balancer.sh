@@ -4,7 +4,7 @@
 echo "Load balanced: /etc/rstudio/load-balancer"
 
 # configure primary machine for load balancing
-ssh -i /rstudio/vagrant/vagrant_key_rsa vagrant@192.168.55.101 "sudo /rstudio/vagrant/provision-primary-load.sh" 
+ssh -i /rstudio/vagrant/vagrant_key_rsa -o StrictHostKeyChecking=no vagrant@192.168.55.101 "sudo /rstudio/vagrant/provision-primary-load.sh" 
 
 # set up cluster node config file
 cp /rstudio/vagrant/load-balancer /etc/rstudio/load-balancer
@@ -15,7 +15,7 @@ sh -c "echo `uuid` > /etc/rstudio/secure-cookie-key"
 chmod 0600 /etc/rstudio/secure-cookie-key
 
 # copy key to primary machine
-scp -i /rstudio/vagrant/vagrant_key_rsa /etc/rstudio/secure-cookie-key vagrant@192.168.55.101:/etc/rstudio
+scp -i /rstudio/vagrant/vagrant_key_rsa -o StrictHostKeyChecking=no /etc/rstudio/secure-cookie-key vagrant@192.168.55.101:/etc/rstudio
 
 # connect to NFS server already running on the primary machine
 apt-get install nfs-common
