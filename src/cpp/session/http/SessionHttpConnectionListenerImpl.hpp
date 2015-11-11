@@ -218,7 +218,7 @@ private:
          {
             // for errors, log and continue,but don't log errors caused
             // by normal course of socket shutdown
-            if (!core::Error::isShutdownError(ec))
+            if (!core::isShutdownError(ec))
                LOG_ERROR(core::Error(ec, ERROR_LOCATION)) ;
          }
       }

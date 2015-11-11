@@ -22,6 +22,7 @@
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/http/SocketUtils.hpp>
 
 #include <boost/algorithm/string.hpp>
 
@@ -200,7 +201,7 @@ void schedulePeriodicExecution(
       // bail on boost errors (these are very unexpected)
       if (ec)
       {
-         if (!Error::isShutdownError(ec))
+         if (!core::isShutdownError(ec))
             LOG_ERROR(core::Error(ec, ERROR_LOCATION));
          return;
       }
