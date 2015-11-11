@@ -1643,6 +1643,12 @@ Error runPreflightScript()
    // always return success
    return Success();
 }
+
+void exitEarly(int status)
+{
+   FileLock::cleanUp();
+   ::exit(status);
+}
       
 Error rInit(const rstudio::r::session::RInitInfo& rInitInfo) 
 {
@@ -1786,14 +1792,14 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       }
 
       rsession::options().verifyInstallationHomeDir().removeIfExists();
-      ::exit(EXIT_SUCCESS);
+      exitEarly(EXIT_SUCCESS);
    }
 
    // run unit tests
    if (rsession::options().runTests())
    {
       int result = tests::run();
-      ::exit(result);
+      exitEarly(result);
    }
    
    // register all of the json rpc methods implemented in R
@@ -2549,7 +2555,7 @@ void detectParentTermination()
       boost::this_thread::sleep(boost::posix_time::milliseconds(500));
       if (::getppid() == 1)
       {
-         ::exit(EXIT_FAILURE);
+         exitEarly(EXIT_FAILURE);
       }
    }
 }
