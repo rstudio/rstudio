@@ -33,7 +33,6 @@ set (CORE_SOURCE_FILES
    Error.cpp 
    Exec.cpp
    FileInfo.cpp 
-   FileLock.cpp
    FileLogWriter.cpp
    FilePath.cpp
    FileSerializer.cpp
@@ -55,6 +54,7 @@ set (CORE_SOURCE_FILES
    Thread.cpp
    Trace.cpp
    WaitUtils.cpp
+   file_lock/FileLock.cpp
    file_lock/AdvisoryFileLock.cpp
    file_lock/LinkBasedFileLock.cpp
    gwt/GwtFileHandler.cpp
