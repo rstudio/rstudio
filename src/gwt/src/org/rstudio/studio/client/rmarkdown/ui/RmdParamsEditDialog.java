@@ -73,6 +73,8 @@ public class RmdParamsEditDialog extends ModalDialogBase
    private native void initializeEvents() /*-{  
       var thiz = this;   
       var handler = $entry(function(e) {
+         if (typeof e.data != 'string')
+            return;
          thiz.@org.rstudio.studio.client.rmarkdown.ui.RmdParamsEditDialog::onMessage(Ljava/lang/String;Ljava/lang/String;)(e.data, e.origin);
          $wnd.removeEventListener('message', handler, false);
       });
