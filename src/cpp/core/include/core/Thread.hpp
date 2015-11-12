@@ -31,6 +31,9 @@
    {                                                                           \
       boost::lock_guard<boost::mutex> lock(m);
 
+#define RECURSIVE_LOCK_MUTEX(m) try {\
+   boost::lock_guard<boost::recursive_mutex> lock(m);
+
 #define END_LOCK_MUTEX                                                         \
    }                                                                           \
    catch (const boost::thread_resource_error& e)                               \
