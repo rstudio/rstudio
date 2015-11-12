@@ -21,6 +21,7 @@ import com.google.gwt.thirdparty.guava.common.collect.ArrayListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.file.DirectoryStream;
@@ -185,7 +186,8 @@ class ResourceAccumulator {
   }
 
   private String getRelativePath(Path directory) {
-    return rootDirectory.relativize(directory).toString();
+    // Make sure that paths are exposed "Unix" style to PathPrefixSet.
+    return rootDirectory.relativize(directory).toString().replace(File.separator, "/");
   }
 
   private PathPrefixSet getPathPrefixSet() {
