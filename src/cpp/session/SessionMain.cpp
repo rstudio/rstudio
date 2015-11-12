@@ -3035,6 +3035,9 @@ int main (int argc, char * const argv[])
                                                 options.programIdentity()));
       }
 
+      // initialize file lock config
+      FileLock::initialize();
+
       // convenience flags for server and desktop mode
       bool desktopMode = options.programMode() == kSessionProgramModeDesktop;
       bool serverMode = options.programMode() == kSessionProgramModeServer;
@@ -3154,10 +3157,7 @@ int main (int argc, char * const argv[])
       error = workingDir.makeCurrentPath();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
-      
-      // initialize file lock config
-      FileLock::initialize();
-      
+         
       // start http connection listener
       error = startHttpConnectionListener();
       if (error)
