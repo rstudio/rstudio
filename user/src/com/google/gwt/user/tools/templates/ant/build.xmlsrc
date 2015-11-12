@@ -37,7 +37,7 @@
   </target>
 
   <target name="gwtc" depends="javac" description="GWT compile to JavaScript (production mode)">
-    <java failonerror="true" fork="true" classname="@compileClass" maxmemory="256m">
+    <java failonerror="true" fork="true" classname="@compileClass" maxmemory="512m">
       <classpath>
         <pathelement location="@srcFolder"/>
         <path refid="project.class.path"/>
