@@ -31,7 +31,6 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.ApplicationVisibility;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -292,44 +291,7 @@ public class Workbench implements BusyHandler,
    @Handler
    void onNewSession()
    {
-      String project = workbenchContext_.getActiveProjectFile();
-      
-      if (Desktop.isDesktop())
-      {
-         if (project != null)
-         {
-            Desktop.getFrame().openProjectInNewWindow(project); 
-         }
-         else
-         {
-            Desktop.getFrame().openSessionInNewWindow(
-                  workbenchContext_.getCurrentWorkingDir().getPath());
-         }
-      }
-      else
-      {
-         // pass project dir or working dir
-         boolean isProject = project != null;
-         String directory = isProject ?
-                     workbenchContext_.getActiveProjectDir().getPath() :
-                     workbenchContext_.getCurrentWorkingDir().getPath();
-         
-         // pass R version
-         RVersionSpec rVersion = null;
-                     
-         server_.getNewSessionUrl(
-            GWT.getHostPageBaseURL(), 
-            isProject, 
-            directory,
-            rVersion,
-            new SimpleRequestCallback<String>() {
-               @Override
-               public void onResponseReceived(String url)
-               {
-                  globalDisplay_.openWindow(url);
-               }
-            });
-      }      
+      new WorkbenchNewSession().openNewSession();
    }
    
    @Handler
