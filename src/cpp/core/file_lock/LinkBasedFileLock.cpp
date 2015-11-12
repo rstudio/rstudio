@@ -189,10 +189,10 @@ Error writeLockFile(const FilePath& lockFilePath)
       LOG_ERROR(error);
    
    // ensure the proxy file is created, and remove it when we're done
+   RemoveOnExitScope scope(proxyPath, ERROR_LOCATION);
    error = proxyPath.ensureFile();
    if (error)
       return error;
-   RemoveOnExitScope scope(proxyPath, ERROR_LOCATION);
    
    // attempt to link to the desired location -- ignore return value
    // and just stat our original link after, as that's a more reliable
