@@ -30,6 +30,7 @@ import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
+import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
@@ -59,6 +60,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.remote.RResult;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
@@ -98,6 +100,7 @@ public class Projects implements OpenProjectFileHandler,
                    final Commands commands,
                    ProjectOpener opener,
                    Provider<ProjectPreferencesDialog> pPrefDialog,
+                   Provider<WorkbenchContext> pWorkbenchContext,
                    Provider<UIPrefs> pUIPrefs)
    {
       globalDisplay_ = globalDisplay;
@@ -110,6 +113,7 @@ public class Projects implements OpenProjectFileHandler,
       gitServer_ = gitServer;
       fsContext_ = fsContext;
       session_ = session;
+      pWorkbenchContext_ = pWorkbenchContext;
       pPrefDialog_ = pPrefDialog;
       pUIPrefs_ = pUIPrefs;
       opener_ = opener;
@@ -213,6 +217,7 @@ public class Projects implements OpenProjectFileHandler,
                       NewProjectWizard wiz = new NewProjectWizard(
                          session_.getSessionInfo(),
                          pUIPrefs_.get(),
+                         pWorkbenchContext_.get(),
                          new NewProjectInput(
                             FileSystemItem.createDir(
                                pUIPrefs_.get().defaultProjectLocation().getValue()), 
@@ -532,7 +537,9 @@ public class Projects implements OpenProjectFileHandler,
                else
                {
                   indicator.onProgress("Preparing to open project...");
-                  serverOpenProjectInNewWindow(project, continuation); 
+                  serverOpenProjectInNewWindow(project, 
+                                               newProject.getRVersion(),
+                                               continuation); 
                } 
             }
          }, false);
@@ -550,7 +557,8 @@ public class Projects implements OpenProjectFileHandler,
             {
                applicationQuit_.performQuit(
                                  saveChanges,
-                                 newProject.getProjectFile());
+                                 newProject.getProjectFile(),
+                                 newProject.getRVersion());
             }
             
             continuation.execute();
@@ -585,7 +593,8 @@ public class Projects implements OpenProjectFileHandler,
                
                eventBus_.fireEvent(
                    new OpenProjectNewWindowEvent(
-                         input.getProjectFile().getPath()));
+                         input.getProjectFile().getPath(),
+                         input.getRVersion()));
             }
          });
    }
@@ -607,7 +616,7 @@ public class Projects implements OpenProjectFileHandler,
       if (Desktop.isDesktop())
          Desktop.getFrame().openProjectInNewWindow(project.getPath());
       else
-         serverOpenProjectInNewWindow(project, null);
+         serverOpenProjectInNewWindow(project, event.getRVersion(), null);
    }
    
    
@@ -828,12 +837,14 @@ public class Projects implements OpenProjectFileHandler,
    }
    
    private void serverOpenProjectInNewWindow(FileSystemItem project,
+                                             RVersionSpec rVersion,
                                              final Command onSuccess)
    {
       appServer_.getNewSessionUrl(
                     GWT.getHostPageBaseURL(),
                     true,
                     project.getParentPathString(), 
+                    rVersion,
         new SimpleRequestCallback<String>() {
 
          @Override
@@ -872,7 +883,8 @@ public class Projects implements OpenProjectFileHandler,
                         // open new window if requested
                         eventBus_.fireEvent(
                             new OpenProjectNewWindowEvent(
-                                  input.getProjectFile().getPath()));
+                                  input.getProjectFile().getPath(),
+                                  input.getRVersion()));
                      }
                      else
                      {
@@ -897,6 +909,7 @@ public class Projects implements OpenProjectFileHandler,
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
    private final Session session_;
+   private final Provider<WorkbenchContext> pWorkbenchContext_;
    private final Provider<ProjectPreferencesDialog> pPrefDialog_;
    private final Provider<UIPrefs> pUIPrefs_;
    private final ProjectOpener opener_;

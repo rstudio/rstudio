@@ -81,6 +81,7 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    void getNewSessionUrl(String hostPageUrl,
          boolean isProject, 
          String directory,
+         RVersionSpec rVersion,
          ServerRequestCallback<String> callback);
    
    void getActiveSessions(

@@ -14,9 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import java.util.ArrayList;
-
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -30,7 +27,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
-import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
@@ -38,6 +34,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.application.model.RVersionsInfo;
 import org.rstudio.studio.client.application.model.SaveAction;
+import org.rstudio.studio.client.application.ui.RVersionSelectWidget;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
@@ -333,98 +330,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    
     
 
-   private static class RVersionSelectWidget extends SelectWidget
-   {
-      public RVersionSelectWidget(JsArray<RVersionSpec> rVersions)
-      {
-         super("R version for new sessions:",
-               rVersionChoices(rVersions),
-               rVersionValues(rVersions),
-               false, 
-               true, 
-               false);
-         
-         HelpButton.addHelpButton(this, "multiple_r_versions");
-      }
-      
-      public void setRVersion(RVersionSpec version)
-      {
-         if (!setValue(rVersionSpecToString(version)))
-            setValue(rVersionSpecToString(RVersionSpec.createEmpty()));
-      }
-      
-      public RVersionSpec getRVersion()
-      {
-         return rVersionSpecFromString(getValue());
-      }
-      
-      
-      private static String[] rVersionChoices(JsArray<RVersionSpec> rVersions)
-      {
-         // do we need to disambiguate identical version numbers
-         boolean disambiguate = RVersionSpec.hasDuplicates(rVersions);
-
-         // build list of choices
-         ArrayList<String> choices = new ArrayList<String>();
-
-         // always include "default" lable
-         choices.add(USE_DEFAULT_VERSION);
-
-         for (int i=0; i<rVersions.length(); i++)
-         {
-            RVersionSpec version = rVersions.get(i);
-            String choice = "R version " + version.getVersion();
-            if (disambiguate)
-               choice = choice + " (" + version.getRHome() + ")";
-            choices.add(choice);
-         }
-
-         return choices.toArray(new String[0]);
-      }
-
-      private static String[] rVersionValues(JsArray<RVersionSpec> rVersions)
-      {
-         ArrayList<String> values = new ArrayList<String>();
-
-         values.add(rVersionSpecToString(RVersionSpec.createEmpty()));
-
-         for (int i=0; i<rVersions.length(); i++)
-            values.add(rVersionSpecToString(rVersions.get(i)));
-
-         return values.toArray(new String[0]);
-      }
-      
-      private static RVersionSpec rVersionSpecFromString(String str)
-      {
-         if (str != null)
-         {
-            int loc = str.indexOf(SEP);
-            if (loc != -1)
-            {
-               String version = str.substring(0, loc);
-               String rHomeDir = str.substring(loc + SEP.length());
-               if (version.length() > 0 && rHomeDir.length() > 0)
-                  return RVersionSpec.create(version, rHomeDir);
-            }
-         }
-         
-         // couldn't parse it
-         return RVersionSpec.createEmpty();
-      }
-      
-      private static String rVersionSpecToString(RVersionSpec version)
-      {
-         if (version.getVersion().length() == 0)
-            return "";
-         else
-            return version.getVersion() + SEP + version.getRHome();
-      }
-
-      private final static String USE_DEFAULT_VERSION = "(Use System Default)";
-      private final static String SEP = "::::";
-   }
-
-   
    private final FileSystemContext fsContext_;
    private final FileDialogs fileDialogs_;
    private RVersionSelectWidget rServerRVersion_ = null;

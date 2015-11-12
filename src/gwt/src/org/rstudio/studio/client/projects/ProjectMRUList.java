@@ -101,7 +101,7 @@ public class ProjectMRUList extends MRUList
    public static void openProjectFromMru(EventBus eventBus, String file)
    {
       if (openInNewWindow_)
-         eventBus.fireEvent(new OpenProjectNewWindowEvent(file));
+         eventBus.fireEvent(new OpenProjectNewWindowEvent(file, null));
       else
          eventBus.fireEvent(new SwitchToProjectEvent(file));
    }

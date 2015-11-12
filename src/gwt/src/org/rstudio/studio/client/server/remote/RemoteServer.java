@@ -1388,12 +1388,15 @@ public class RemoteServer implements Server
    public void getNewSessionUrl(String hostPageUrl,
                                 boolean isProject, 
                                 String directory,
+                                RVersionSpec rVersion,
                                 ServerRequestCallback<String> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(hostPageUrl));
       params.set(1, JSONBoolean.getInstance(isProject));
       params.set(2, new JSONString(directory));
+      params.set(3, rVersion != null ? new JSONObject(rVersion) :
+                                       JSONNull.getInstance());
       sendRequest(RPC_SCOPE, GET_NEW_SESSION_URL, params, callback);
    }
    

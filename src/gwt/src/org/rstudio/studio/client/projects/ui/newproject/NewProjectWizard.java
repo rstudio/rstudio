@@ -19,9 +19,13 @@ import java.util.ArrayList;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardNavigationPage;
+import org.rstudio.studio.client.application.model.RVersionSpec;
+import org.rstudio.studio.client.application.model.RVersionsInfo;
+import org.rstudio.studio.client.application.ui.RVersionSelectWidget;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
@@ -33,6 +37,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
    public NewProjectWizard(
          SessionInfo sessionInfo,
          UIPrefs uiPrefs,
+         WorkbenchContext workbenchContext,
          NewProjectInput input,
          ProgressOperationWithInput<NewProjectResult> operation)
    {
@@ -43,7 +48,22 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
             operation);
     
       sessionInfo_ = sessionInfo;
-      openInNewWindow_ = new CheckBox("Open in a new R session");
+      
+      RVersionsInfo rVersions = workbenchContext.getRVersionsInfo();
+      if (rVersions.isMultiVersion())
+      {
+         rVersionSelector_ = new RVersionSelectWidget(
+           "",
+           rVersions.getAvailableRVersions(),
+           false);
+         RVersionSpec rVersion = RVersionSpec.create(rVersions.getRVersion(),
+                                                     rVersions.getRVersionHome());
+         rVersionSelector_.setRVersion(rVersion);
+         addLeftWidget(rVersionSelector_);
+         rVersionSelector_.setVisible(false);
+      }
+      
+      openInNewWindow_ = new CheckBox("Open in new session");
       addLeftWidget(openInNewWindow_);
       openInNewWindow_.setVisible(false);
    }  
@@ -55,12 +75,16 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
    {
       openInNewWindow_.setVisible(sessionInfo_.getMultiSession() && 
                                   okButtonVisible);
+      if (rVersionSelector_ != null)
+         rVersionSelector_.setVisible(okButtonVisible);
    }
    
    @Override
    protected void onSelectorActivated()
    {
       openInNewWindow_.setVisible(false);
+      if (rVersionSelector_ != null)
+         rVersionSelector_.setVisible(false);
    }
    
    @Override
@@ -69,6 +93,8 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
       if (result != null)
       {
          result.setOpenInNewWindow(openInNewWindow_.getValue());
+         if (rVersionSelector_ != null)
+            result.setRVersion(rVersionSelector_.getRVersion());
          return result;
       }
       else
@@ -100,5 +126,6 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
    }
    
    private final CheckBox openInNewWindow_;
+   private RVersionSelectWidget rVersionSelector_ = null;
    private final SessionInfo sessionInfo_;
 }

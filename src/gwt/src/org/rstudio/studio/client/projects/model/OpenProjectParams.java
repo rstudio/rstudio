@@ -15,12 +15,16 @@
 package org.rstudio.studio.client.projects.model;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.application.model.RVersionSpec;
 
 public class OpenProjectParams
 {
-   public OpenProjectParams(FileSystemItem projectFile, boolean inNewSession)
+   public OpenProjectParams(FileSystemItem projectFile, 
+                            RVersionSpec rVersion,
+                            boolean inNewSession)
    {
       projectFile_ = projectFile;
+      rVersion_ = rVersion;
       inNewSession_ = inNewSession;
    }
    
@@ -29,11 +33,17 @@ public class OpenProjectParams
       return projectFile_;
    }
    
+   public RVersionSpec getRVersion()
+   {
+      return rVersion_;
+   }
+   
    public boolean inNewSession()
    {
       return inNewSession_;
    }
 
    private final FileSystemItem projectFile_;
+   private final RVersionSpec rVersion_;
    private final boolean inNewSession_;
 }

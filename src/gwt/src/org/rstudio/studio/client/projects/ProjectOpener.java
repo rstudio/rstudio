@@ -54,7 +54,7 @@ public class ProjectOpener
                public void execute(FileSystemItem input,
                      ProgressIndicator indicator)
                {
-                  onCompleted.execute(new OpenProjectParams(input, false), 
+                  onCompleted.execute(new OpenProjectParams(input, null, false), 
                         indicator);
                }
             });  

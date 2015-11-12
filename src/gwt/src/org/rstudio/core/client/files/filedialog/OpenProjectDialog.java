@@ -38,7 +38,12 @@ public class OpenProjectDialog extends FileDialog
                public void execute(FileSystemItem input,
                      ProgressIndicator indicator)
                {
-                  operation.execute(new OpenProjectParams(input, inNewSession_),
+                  // NOTE: we currently do not expose R version selection
+                  // for the open project dialog since projects already
+                  // have a pinned R version by default
+                  operation.execute(new OpenProjectParams(input, 
+                                                          null,
+                                                          inNewSession_),
                         indicator);
                }
             });

@@ -31,6 +31,7 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.ApplicationVisibility;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -313,10 +314,14 @@ public class Workbench implements BusyHandler,
                      workbenchContext_.getActiveProjectDir().getPath() :
                      workbenchContext_.getCurrentWorkingDir().getPath();
          
+         // pass R version
+         RVersionSpec rVersion = null;
+                     
          server_.getNewSessionUrl(
             GWT.getHostPageBaseURL(), 
             isProject, 
             directory,
+            rVersion,
             new SimpleRequestCallback<String>() {
                @Override
                public void onResponseReceived(String url)
