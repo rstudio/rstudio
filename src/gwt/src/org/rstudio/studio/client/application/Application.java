@@ -683,9 +683,12 @@ public class Application implements ApplicationEventHandlers
       }
       
       // show new session when appropriate
-      if (!Desktop.isDesktop() && !sessionInfo.getMultiSession())
+      if (!Desktop.isDesktop())
       {
-         commands_.newSession().remove();
+         if (sessionInfo.getMultiSession())
+            commands_.newSession().setMenuLabel("New Session...");
+         else
+            commands_.newSession().remove();
       }
       
       // toolbar (must be after call to showWorkbenchView because
