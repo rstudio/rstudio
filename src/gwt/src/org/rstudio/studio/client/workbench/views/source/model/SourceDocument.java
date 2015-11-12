@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.model;
 import com.google.gwt.core.client.JavaScriptObject;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 
 public class SourceDocument extends JavaScriptObject
 {
@@ -141,6 +142,18 @@ public class SourceDocument extends JavaScriptObject
    {
       getProperties().setString(SourceWindowManager.SOURCE_WINDOW_ID, windowId);
    }
+   
+   // get the collaborative editing session associated with this document 
+   // (local-only property; not persisted)
+   public native final CollabEditStartParams getCollabParams() /*-{
+     if (typeof this.collab_params === "undefined")
+        return null;
+     return this.collab_params;
+   }-*/;
+   
+   public native final void setCollabParams(CollabEditStartParams params) /*-{
+     this.collab_params = params;
+   }-*/;
    
    public final static String XT_RMARKDOWN = "rmarkdown";
    public final static String XT_SHINY_PREFIX = "shiny-";
