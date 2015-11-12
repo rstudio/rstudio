@@ -117,6 +117,31 @@ public class CodeBrowserEditingTarget implements EditingTarget
                                                            events_, 
                                                            this);
       
+      docDisplay_.addKeyDownHandler(new KeyDownHandler()
+      {
+         public void onKeyDown(KeyDownEvent event)
+         {
+            NativeEvent ne = event.getNativeEvent();
+            int mod = KeyboardShortcut.getModifierValue(ne);
+            if ((mod == KeyboardShortcut.META || 
+                (mod == KeyboardShortcut.CTRL && !BrowseCap.hasMetaKey()))
+                && ne.getKeyCode() == 'F')
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               commands_.findReplace().execute();
+            }
+            else if (BrowseCap.hasMetaKey() && 
+                     (mod == KeyboardShortcut.META) &&
+                     (ne.getKeyCode() == 'E'))
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               commands_.findFromSelection().execute();
+            }
+         }
+      });
+      
       docDisplay_.addFindRequestedHandler(new FindRequestedEvent.Handler() {
          
          @Override
