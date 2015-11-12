@@ -92,6 +92,7 @@ public class Workbench implements BusyHandler,
                     FileDialogs fileDialogs,
                     FileTypeRegistry fileTypeRegistry,
                     ConsoleDispatcher consoleDispatcher,
+                    WorkbenchNewSession newSession,
                     Provider<GitState> pGitState,
                     ChooseFile chooseFile,   // required to force gin to create
                     AskPassManager askPass,  // required to force gin to create
@@ -116,6 +117,7 @@ public class Workbench implements BusyHandler,
       fileTypeRegistry_ = fileTypeRegistry;
       consoleDispatcher_ = consoleDispatcher;
       pGitState_ = pGitState;
+      newSession_ = newSession;
       
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
       
@@ -291,9 +293,7 @@ public class Workbench implements BusyHandler,
    @Handler
    void onNewSession()
    {
-      new WorkbenchNewSession().openNewSession(globalDisplay_,
-                                               workbenchContext_,
-                                               server_);
+      newSession_.openNewSession(globalDisplay_, workbenchContext_, server_);
    }
    
    @Handler
@@ -498,6 +498,7 @@ public class Workbench implements BusyHandler,
    private final Provider<GitState> pGitState_;
    private final TimeBufferedCommand metricsChangedCommand_;
    private WorkbenchMetrics lastWorkbenchMetrics_;
+   private WorkbenchNewSession newSession_;
    private boolean nearQuotaWarningShown_ = false;
    
 }
