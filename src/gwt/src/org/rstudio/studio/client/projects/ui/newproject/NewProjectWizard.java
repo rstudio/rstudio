@@ -29,6 +29,7 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.CheckBox;
 
 
@@ -55,11 +56,13 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
          rVersionSelector_ = new RVersionSelectWidget(
            "",
            rVersions.getAvailableRVersions(),
+           false,
            false);
          RVersionSpec rVersion = RVersionSpec.create(rVersions.getRVersion(),
                                                      rVersions.getRVersionHome());
          rVersionSelector_.setRVersion(rVersion);
          addLeftWidget(rVersionSelector_);
+         rVersionSelector_.getElement().getStyle().setMarginRight(8, Unit.PX);
          rVersionSelector_.setVisible(false);
       }
       

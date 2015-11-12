@@ -27,12 +27,13 @@ public class RVersionSelectWidget extends SelectWidget
 {
    public RVersionSelectWidget(JsArray<RVersionSpec> rVersions)
    {
-      this("R version for new sessions:", rVersions, true);
+      this("R version for new sessions:", rVersions, true, true);
    }
    
    public RVersionSelectWidget(String caption,
                                JsArray<RVersionSpec> rVersions,
-                               boolean includeSystemDefault)
+                               boolean includeSystemDefault,
+                               boolean includeHelpButton)
    {
       super(caption,
             rVersionChoices(rVersions, includeSystemDefault),
@@ -40,7 +41,8 @@ public class RVersionSelectWidget extends SelectWidget
             false, 
             true, 
             false);
-      HelpButton.addHelpButton(this, "multiple_r_versions");
+      if (includeHelpButton)
+         HelpButton.addHelpButton(this, "multiple_r_versions");
    }
    
    public void setRVersion(RVersionSpec version)
