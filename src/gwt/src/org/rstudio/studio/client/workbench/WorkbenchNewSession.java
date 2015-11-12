@@ -15,33 +15,17 @@
 
 package org.rstudio.studio.client.workbench;
 
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.common.GlobalDisplay;
 
-import com.google.inject.Inject;
-
 public class WorkbenchNewSession
-{
-   public WorkbenchNewSession()
+{    
+   public void openNewSession(GlobalDisplay globalDisplay,
+                              WorkbenchContext workbenchContext,
+                              ApplicationServerOperations server)
    {
-      RStudioGinjector.INSTANCE.injectMembers(this);
-   }
-   
-   @Inject
-   public void initialize(GlobalDisplay globalDisplay,
-                          WorkbenchContext workbenchContext,
-                          ApplicationServerOperations server)
-   {
-      globalDisplay_ = globalDisplay;
-      workbenchContext_ = workbenchContext;
-      server_ = server;
-   }
-   
-   public void openNewSession()
-   {
-      String project = workbenchContext_.getActiveProjectFile();
+      String project = workbenchContext.getActiveProjectFile();
       if (project != null)
       {
          Desktop.getFrame().openProjectInNewWindow(project); 
@@ -49,12 +33,7 @@ public class WorkbenchNewSession
       else
       {
          Desktop.getFrame().openSessionInNewWindow(
-               workbenchContext_.getCurrentWorkingDir().getPath());
+               workbenchContext.getCurrentWorkingDir().getPath());
       }
    }
-   
-   protected GlobalDisplay globalDisplay_;
-   protected WorkbenchContext workbenchContext_;
-   protected ApplicationServerOperations server_;
-
 }

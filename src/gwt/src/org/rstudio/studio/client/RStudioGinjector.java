@@ -154,7 +154,6 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(FileBacked<?> object);
    void injectMembers(WindowFrame frame);
    void injectMembers(RmdParamsEditDialog dialog);
-   void injectMembers(WorkbenchNewSession workbenchNewSection);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
