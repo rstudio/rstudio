@@ -75,6 +75,12 @@ public:
 
    virtual ~FileLock() {}
    
+public:
+   // getters only: set through 'initialize' method
+   static LockType getDefaultType() { return s_defaultType; }
+   static boost::posix_time::seconds getTimeoutInterval() { return s_timeoutInterval; }
+   static boost::posix_time::seconds getRefreshRate() { return s_refreshRate; }
+   
 protected:
    static LockType s_defaultType;
    static boost::posix_time::seconds s_timeoutInterval;
