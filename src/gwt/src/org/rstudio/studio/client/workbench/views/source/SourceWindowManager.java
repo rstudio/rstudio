@@ -57,6 +57,8 @@ import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserCreatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditEndedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
@@ -92,7 +94,9 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             DocWindowChangedEvent.Handler,
                                             DocTabClosedEvent.Handler,
                                             AllSatellitesClosingEvent.Handler,
-                                            ShinyApplicationStatusEvent.Handler
+                                            ShinyApplicationStatusEvent.Handler,
+                                            CollabEditStartedEvent.Handler,
+                                            CollabEditEndedEvent.Handler
 {
    @Inject
    public SourceWindowManager(
@@ -129,6 +133,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          events_.addHandler(SatelliteClosedEvent.TYPE, this);
          events_.addHandler(SatelliteFocusedEvent.TYPE, this);
          events_.addHandler(DocTabClosedEvent.TYPE, this);
+         events_.addHandler(CollabEditStartedEvent.TYPE, this);
+         events_.addHandler(CollabEditEndedEvent.TYPE, this);
 
          JsArray<SourceDocument> docs = 
                session.getSessionInfo().getSourceDocuments();
@@ -630,6 +636,35 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    public void onShinyApplicationStatus(ShinyApplicationStatusEvent event)
    {
       fireEventToAllSourceWindows(event);
+   }
+
+
+   @Override
+   public void onCollabEditStarted(CollabEditStartedEvent event)
+   {
+      JsArray<SourceDocument> sourceDocs = getSourceDocs();
+      for (int i = 0; i < sourceDocs.length(); i++)
+      {
+         if (sourceDocs.get(i).getPath() == event.getStartParams().getPath())
+         {
+            sourceDocs.get(i).setCollabParams(event.getStartParams());
+            break;
+         }
+      }
+   }
+
+   @Override
+   public void onCollabEditEnded(CollabEditEndedEvent event)
+   {
+      JsArray<SourceDocument> sourceDocs = getSourceDocs();
+      for (int i = 0; i < sourceDocs.length(); i++)
+      {
+         if (sourceDocs.get(i).getPath() == event.getPath())
+         {
+            sourceDocs.get(i).setCollabParams(null);
+            break;
+         }
+      }
    }
 
    // Private methods ---------------------------------------------------------

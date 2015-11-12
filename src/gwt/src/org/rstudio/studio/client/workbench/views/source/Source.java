@@ -2652,6 +2652,10 @@ public class Source implements InsertSourceHandler,
       if (editors_.size() == 2)
          manageMultiTabCommands();
       
+      // if the target had an editing session active, attempt to resume it
+      if (doc.getCollabParams() != null)
+         target.beginCollabSession(doc.getCollabParams());
+      
       return target;
    }
 
