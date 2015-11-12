@@ -110,15 +110,12 @@ void FileLock::initialize(FilePath locksConfPath)
    if (locksConfPath.empty())
       locksConfPath = FilePath(kLocksConfPath);
    
-   if (!locksConfPath.exists())
-      return;
-   
    Settings settings;
-   Error error = settings.initialize(locksConfPath);
-   if (error)
+   if (locksConfPath.exists())
    {
-      LOG_ERROR(error);
-      return;
+      Error error = settings.initialize(locksConfPath);
+      if (error)
+         LOG_ERROR(error);
    }
    
    FileLock::initialize(settings);
