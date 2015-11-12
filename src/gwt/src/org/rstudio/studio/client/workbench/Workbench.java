@@ -291,7 +291,9 @@ public class Workbench implements BusyHandler,
    @Handler
    void onNewSession()
    {
-      new WorkbenchNewSession().openNewSession();
+      new WorkbenchNewSession().openNewSession(globalDisplay_,
+                                               workbenchContext_,
+                                               server_);
    }
    
    @Handler
