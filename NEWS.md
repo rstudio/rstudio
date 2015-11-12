@@ -71,6 +71,7 @@
 * Suspend and resume running R sessions when server is restarted
 * Add kill-session and kill-all admin commands
 * Use SHA256 for signing cookies (previously used SHA1)
+* Use more resiliant file locking mechnaism for compatibility with NFS volumes
 * Server Pro: Shared Projects (including concurrent multi-user editing)
 * Server Pro: Support for multiple concurrent R sessions per-user
 * Server Pro: Support for running against multiple versions of R
