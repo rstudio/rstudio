@@ -17,9 +17,7 @@
 
 #include <core/FileLock.hpp>
 
-#ifndef _WIN32
-# include <sys/wait.h>
-#endif
+#include <sys/wait.h>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>

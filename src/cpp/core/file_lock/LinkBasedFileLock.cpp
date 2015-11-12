@@ -184,17 +184,14 @@ Error writeLockFile(const FilePath& lockFilePath)
    // since the proxy lockfile should be unique, it should _never_ be possible
    // for a collision to be found. if that does happen, it must be a leftover
    // from a previous process that crashed in this stage
-   if (proxyPath.exists())
-   {
-      Error error = proxyPath.remove();
-      if (error)
-         LOG_ERROR(error);
-   }
-   
-   // write something to the file (to ensure it's created)
-   Error error = core::writeStringToFile(proxyPath, pidString());
+   Error error = proxyPath.removeIfExists();
    if (error)
-      return error;
+      LOG_ERROR(error);
+   
+   // ensure the proxy file is created, and remove it when we're done
+   error = proxyPath.ensureFile();
+   if (error)
+      LOG_ERROR(error);
    RemoveOnExitScope scope(proxyPath, ERROR_LOCATION);
    
    // attempt to link to the desired location -- ignore return value

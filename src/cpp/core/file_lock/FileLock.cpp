@@ -107,8 +107,6 @@ bool FileLock::verifyInitialized()
 
 void FileLock::initialize(FilePath locksConfPath)
 {
-   s_isInitialized = true;
-   
    if (locksConfPath.empty())
       locksConfPath = FilePath(kLocksConfPath);
    
@@ -128,8 +126,6 @@ void FileLock::initialize(FilePath locksConfPath)
 
 void FileLock::initialize(const Settings& settings)
 {
-   s_isInitialized = true;
-   
    // default lock type
    FileLock::s_defaultType = stringToLockType(settings.get("lock-type", kLockTypeAdvisory));
    
@@ -147,6 +143,8 @@ void FileLock::initialize(const Settings& settings)
       std::cerr << "Timeout: " << FileLock::s_timeoutInterval.total_seconds() << std::endl;
       std::cerr << "Refresh: " << FileLock::s_refreshRate.total_seconds() << std::endl;
    }
+   
+   s_isInitialized = true;
 }
 
 // default values for static members
