@@ -513,4 +513,30 @@ public class JsTypeTest extends GWTTestCase {
     assertTrue(NativeJsTypeWithOverlay.hasM(object));
     assertEquals(2, NativeJsTypeWithOverlay.x);
   }
+
+  @JsType
+  static abstract class SomeAbstractClass {
+    public abstract SomeAbstractClass m();
+  }
+
+  // Do not rename this class.
+  @JsType
+  static abstract class SomeZAbstractSubclass extends SomeAbstractClass {
+    public abstract SomeZAbstractSubclass m();
+  }
+
+  @JsType
+  static class SomeConcreteSubclass extends SomeZAbstractSubclass {
+    public SomeConcreteSubclass m() {
+      return this;
+    }
+  }
+
+  public void testNamedBridge() {
+    // Bridges are sorted by signature in the JDT. Make sure that the bridge method appears second.
+    assertTrue(
+        SomeConcreteSubclass.class.getName().compareTo(SomeZAbstractSubclass.class.getName()) < 0);
+    SomeConcreteSubclass o = new SomeConcreteSubclass();
+    assertEquals(o, o.m());
+  }
 }

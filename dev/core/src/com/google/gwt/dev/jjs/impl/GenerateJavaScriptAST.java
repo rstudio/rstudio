@@ -2309,11 +2309,24 @@ public class GenerateJavaScriptAST {
      */
     private void generatePrototypeDefinitions(JDeclaredType type) {
         assert !program.isRepresentedAsNativeJsPrimitive(type);
-      for (JMethod method : type.getMethods()) {
-        if (!method.needsDynamicDispatch()) {
-          continue;
-        }
 
+      // Emit synthetic methods first. In JsInterop we allow a more user written method to be named
+      // with the same name as a synthetic bridge (required due to generics) relying that the
+      // synthetic method is output first into the prototype slot and rewritten in this situation.
+      // TODO(rluble): this is a band aid. The user written method (and its overrides) should be
+      // automatically JsIgnored. Otherwise some semantics become looser. E.g. the synthetic bridge
+      // method may be casting some of the parameters. Such casts are lost in this scheme.
+      Iterable<JMethod> orderedInstanceMethods = Iterables.concat(
+          Iterables.filter(type.getMethods(),
+              Predicates.and(
+                  JjsPredicates.IS_SYNTHETIC,
+                  JjsPredicates.NEEDS_DYNAMIC_DISPATCH)),
+          Iterables.filter(type.getMethods(),
+              Predicates.and(
+                  Predicates.not(JjsPredicates.IS_SYNTHETIC),
+                  JjsPredicates.NEEDS_DYNAMIC_DISPATCH)));
+
+      for (JMethod method : orderedInstanceMethods) {
         generatePrototypeDefinition(method, (JsExpression) transformMethod(method));
       }
     }
