@@ -127,10 +127,10 @@ boost::shared_ptr<FileLock> createSessionDirLock()
    return FileLock::create(lockType);
 }
 
-boost::shared_ptr<FileLock>& sessionDirLock()
+FileLock& sessionDirLock()
 {
    static boost::shared_ptr<FileLock> instance = createSessionDirLock();
-   return instance;
+   return *instance;
 }
 
 Error removeSessionDir(const FilePath& sessionDir)
@@ -242,7 +242,7 @@ Error createSessionDir(FilePath* pSessionDir)
 
    // attempt to acquire the lock. if we can't then we still continue
    // so we can support filesystems that don't have file locks.
-   error = sessionDirLock()->acquire(sessionLockFilePath(*pSessionDir));
+   error = sessionDirLock().acquire(sessionLockFilePath(*pSessionDir));
    if (error)
       LOG_ERROR(error);
 
@@ -274,7 +274,7 @@ Error createSessionDirFromOldSourceDatabase(FilePath* pSessionDir)
 
    // attempt to acquire the lock. if we can't then we still continue
    // so we can support filesystems that don't have file locks.
-   error = sessionDirLock()->acquire(sessionLockFilePath(*pSessionDir));
+   error = sessionDirLock().acquire(sessionLockFilePath(*pSessionDir));
    if (error)
       LOG_ERROR(error);
 
@@ -353,9 +353,9 @@ bool reclaimOrphanedSession(FilePath* pSessionDir)
    BOOST_FOREACH(const FilePath& sessionDir, sessionDirs)
    {
       FilePath lockFilePath = sessionLockFilePath(sessionDir);
-      if (!sessionDirLock()->isLocked(lockFilePath))
+      if (!sessionDirLock().isLocked(lockFilePath))
       {
-         Error error = sessionDirLock()->acquire(lockFilePath);
+         Error error = sessionDirLock().acquire(lockFilePath);
          if (!error)
          {
             *pSessionDir = sessionDir;
@@ -525,10 +525,10 @@ Error detachFromSourceDatabase()
    }
 
    // record session dir (parent of lock file)
-   FilePath sessionDir = sessionDirLock()->lockFilePath().parent();
+   FilePath sessionDir = sessionDirLock().lockFilePath().parent();
 
    // give up our lock
-   error = sessionDirLock()->release();
+   error = sessionDirLock().release();
    if (error)
       LOG_ERROR(error);
 
