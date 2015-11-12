@@ -534,6 +534,22 @@ bool FilePath::hasTextMimeType() const
           boost::algorithm::ends_with(mimeType, "+xml");
 }
 
+void FilePath::setLastWriteTime(std::time_t time) const
+{
+   try
+   {
+      if (!exists())
+         return;
+      else
+         boost::filesystem::last_write_time(pImpl_->path, time);
+   }
+   catch(const boost::filesystem::filesystem_error& e)
+   {
+      logError(pImpl_->path, e, ERROR_LOCATION) ;
+      return;
+   }
+}
+
 std::time_t FilePath::lastWriteTime() const
 {
    try

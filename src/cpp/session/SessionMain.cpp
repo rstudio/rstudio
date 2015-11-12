@@ -41,6 +41,7 @@
 #include <core/BoostThread.hpp>
 #include <core/ConfigUtils.hpp>
 #include <core/FilePath.hpp>
+#include <core/FileLock.hpp>
 #include <core/Exec.hpp>
 #include <core/Scope.hpp>
 #include <core/Settings.hpp>
@@ -1645,6 +1646,12 @@ Error runPreflightScript()
    // always return success
    return Success();
 }
+
+void exitEarly(int status)
+{
+   FileLock::cleanUp();
+   ::exit(status);
+}
       
 Error rInit(const rstudio::r::session::RInitInfo& rInitInfo) 
 {
@@ -1788,14 +1795,14 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       }
 
       rsession::options().verifyInstallationHomeDir().removeIfExists();
-      ::exit(EXIT_SUCCESS);
+      exitEarly(EXIT_SUCCESS);
    }
 
    // run unit tests
    if (rsession::options().runTests())
    {
       int result = tests::run();
-      ::exit(result);
+      exitEarly(result);
    }
    
    // register all of the json rpc methods implemented in R
@@ -2403,6 +2410,9 @@ void rCleanup(bool terminatedNormally)
          if (error)
             LOG_ERROR(error);
       }
+      
+      // clean up locks
+      FileLock::cleanUp();
 
       // cause graceful exit of clientEventService (ensures delivery
       // of any pending events prior to process termination). wait a
@@ -2548,7 +2558,7 @@ void detectParentTermination()
       boost::this_thread::sleep(boost::posix_time::milliseconds(500));
       if (::getppid() == 1)
       {
-         ::exit(EXIT_FAILURE);
+         exitEarly(EXIT_FAILURE);
       }
    }
 }
@@ -3144,6 +3154,9 @@ int main (int argc, char * const argv[])
       error = workingDir.makeCurrentPath();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
+      
+      // initialize file lock config
+      FileLock::initialize();
       
       // start http connection listener
       error = startHttpConnectionListener();

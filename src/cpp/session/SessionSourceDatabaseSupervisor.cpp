@@ -31,6 +31,7 @@
 
 #include <core/system/System.hpp>
 
+#include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
 #include "session/SessionSourceDatabase.hpp"
 
@@ -116,8 +117,21 @@ FilePath sessionLockFilePath(const FilePath& sessionDir)
    return sessionDir.complete("lock_file");
 }
 
-// session dir lock (initialized by attachToSourceDatabase)
-FileLock s_sessionDirLock;
+// session dir lock (lock is acquired within 'attachToSourceDatabase()')
+boost::shared_ptr<FileLock> createSessionDirLock()
+{
+   bool isServer = session::options().programMode() == kSessionProgramModeServer;
+   FileLock::LockType lockType = isServer
+         ? FileLock::LOCKTYPE_LINKBASED
+         : FileLock::LOCKTYPE_ADVISORY;
+   return FileLock::create(lockType);
+}
+
+FileLock& sessionDirLock()
+{
+   static boost::shared_ptr<FileLock> instance = createSessionDirLock();
+   return *instance;
+}
 
 Error removeSessionDir(const FilePath& sessionDir)
 {
@@ -228,7 +242,7 @@ Error createSessionDir(FilePath* pSessionDir)
 
    // attempt to acquire the lock. if we can't then we still continue
    // so we can support filesystems that don't have file locks.
-   error = s_sessionDirLock.acquire(sessionLockFilePath(*pSessionDir));
+   error = sessionDirLock().acquire(sessionLockFilePath(*pSessionDir));
    if (error)
       LOG_ERROR(error);
 
@@ -260,7 +274,7 @@ Error createSessionDirFromOldSourceDatabase(FilePath* pSessionDir)
 
    // attempt to acquire the lock. if we can't then we still continue
    // so we can support filesystems that don't have file locks.
-   error =  s_sessionDirLock.acquire(sessionLockFilePath(*pSessionDir));
+   error = sessionDirLock().acquire(sessionLockFilePath(*pSessionDir));
    if (error)
       LOG_ERROR(error);
 
@@ -339,9 +353,9 @@ bool reclaimOrphanedSession(FilePath* pSessionDir)
    BOOST_FOREACH(const FilePath& sessionDir, sessionDirs)
    {
       FilePath lockFilePath = sessionLockFilePath(sessionDir);
-      if (!FileLock::isLocked(lockFilePath))
+      if (!sessionDirLock().isLocked(lockFilePath))
       {
-         Error error = s_sessionDirLock.acquire(lockFilePath);
+         Error error = sessionDirLock().acquire(lockFilePath);
          if (!error)
          {
             *pSessionDir = sessionDir;
@@ -511,10 +525,10 @@ Error detachFromSourceDatabase()
    }
 
    // record session dir (parent of lock file)
-   FilePath sessionDir = s_sessionDirLock.lockFilePath().parent();
+   FilePath sessionDir = sessionDirLock().lockFilePath().parent();
 
    // give up our lock
-   error = s_sessionDirLock.release();
+   error = sessionDirLock().release();
    if (error)
       LOG_ERROR(error);
 

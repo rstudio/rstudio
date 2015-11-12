@@ -1,5 +1,5 @@
 /*
- * FileLock.cpp
+ * AdvisoryFileLock.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -36,10 +36,18 @@
 namespace rstudio {
 namespace core {
 
-bool FileLock::isLocked(const FilePath& lockFilePath)
-{
-   using namespace boost::interprocess;
+namespace {
+typedef boost::interprocess::file_lock BoostFileLock;
+}
 
+struct AdvisoryFileLock::Impl
+{
+   FilePath lockFilePath;
+   BoostFileLock lock;
+};
+
+bool AdvisoryFileLock::isLocked(const FilePath& lockFilePath) const
+{
    // if the lock file doesn't exist then it's not locked
    if (!lockFilePath.exists())
       return false;
@@ -47,7 +55,7 @@ bool FileLock::isLocked(const FilePath& lockFilePath)
    // check if it is locked
    try
    {
-      file_lock lock(string_utils::utf8ToSystem(lockFilePath.absolutePath()).c_str());
+      BoostFileLock lock(string_utils::utf8ToSystem(lockFilePath.absolutePath()).c_str());
 
       if (lock.try_lock())
       {
@@ -69,22 +77,16 @@ bool FileLock::isLocked(const FilePath& lockFilePath)
 }
 
 
-struct FileLock::Impl
-{
-   FilePath lockFilePath;
-   boost::interprocess::file_lock lock;
-};
-
-FileLock::FileLock()
+AdvisoryFileLock::AdvisoryFileLock()
    : pImpl_(new Impl())
 {
 }
 
-FileLock::~FileLock()
+AdvisoryFileLock::~AdvisoryFileLock()
 {
 }
 
-Error FileLock::acquire(const FilePath& lockFilePath)
+Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
 {
    using namespace boost::interprocess;
 
@@ -99,7 +101,7 @@ Error FileLock::acquire(const FilePath& lockFilePath)
    // try to acquire the lock
    try
    {
-      file_lock lock(string_utils::utf8ToSystem(lockFilePath.absolutePath()).c_str());
+      BoostFileLock lock(string_utils::utf8ToSystem(lockFilePath.absolutePath()).c_str());
 
       if (lock.try_lock())
       {
@@ -125,7 +127,7 @@ Error FileLock::acquire(const FilePath& lockFilePath)
    return Success();
 }
 
-Error FileLock::release()
+Error AdvisoryFileLock::release()
 {
    using namespace boost::interprocess;
 
@@ -150,7 +152,7 @@ Error FileLock::release()
    try
    {
       pImpl_->lock.unlock();
-      pImpl_->lock = file_lock();
+      pImpl_->lock = BoostFileLock();
       pImpl_->lockFilePath = FilePath();
       return Success();
    }
@@ -164,14 +166,20 @@ Error FileLock::release()
    return Success();
 }
 
-FilePath FileLock::lockFilePath() const
+FilePath AdvisoryFileLock::lockFilePath() const
 {
    return pImpl_->lockFilePath;
 }
 
+void AdvisoryFileLock::refresh()
+{
+}
+
+void AdvisoryFileLock::cleanUp()
+{
+}
 
 } // namespace core
 } // namespace rstudio
-
 
 
