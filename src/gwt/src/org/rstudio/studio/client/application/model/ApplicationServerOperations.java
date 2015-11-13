@@ -90,4 +90,8 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    
    void getAvailableRVersions(
       ServerRequestCallback<JsArray<RVersionSpec>> callback);
+   
+   void getProjectRVersion(
+         String projectDir,
+         ServerRequestCallback<RVersionSpec> callback);
 }

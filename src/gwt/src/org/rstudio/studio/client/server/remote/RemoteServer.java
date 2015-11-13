@@ -1415,6 +1415,13 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_AVAILABLE_R_VERSIONS, callback);
    }
    
+   public void getProjectRVersion(
+         String projectDir,
+         ServerRequestCallback<RVersionSpec> callback)
+   {
+      sendRequest(RPC_SCOPE, "get_project_r_version", callback);
+   }
+   
    @Override
    public void executeRCode(String code,
                             ServerRequestCallback<String> requestCallback)
