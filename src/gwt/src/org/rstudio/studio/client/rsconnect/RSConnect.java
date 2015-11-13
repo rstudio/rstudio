@@ -77,7 +77,6 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
@@ -150,15 +149,23 @@ public class RSConnect implements SessionInitHandler,
    @Override
    public void onRSConnectAction(final RSConnectActionEvent event)
    {
+      // ignore if we're already waiting for a dependency check 
+      if (depsPending_)
+         return;
+      
       // see if we have the requisite R packages
+      depsPending_ = true; 
       dependencyManager_.withRSConnect(
          "Publishing content", 
          event.getContentType() == CONTENT_TYPE_DOCUMENT,
-         null, new Command() {
+         null, new CommandWithArg<Boolean>() {
             @Override
-            public void execute()
+            public void execute(Boolean succeeded)
             {
-               handleRSConnectAction(event); 
+               if (succeeded)
+                  handleRSConnectAction(event); 
+               
+               depsPending_ = false;
             }
          });  
    }
@@ -1031,6 +1038,7 @@ public class RSConnect implements SessionInitHandler,
    
    private boolean launchBrowser_ = false;
    private boolean sessionInited_ = false;
+   private boolean depsPending_ = false;
    private String lastDeployedServer_ = "";
    
    // incremented on each RPubs publish (to provide a unique context)

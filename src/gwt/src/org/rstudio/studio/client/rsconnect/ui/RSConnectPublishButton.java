@@ -754,6 +754,10 @@ public class RSConnectPublishButton extends Composite
    private void renderThenPublish(final String target,
          final RSConnectDeploymentRecord previous)
    {
+      // prevent re-entrancy
+      if (rmdInfoPending_)
+         return;
+      
       final Command renderCommand = new Command() 
       {
          @Override
@@ -765,7 +769,8 @@ public class RSConnectPublishButton extends Composite
             commands_.knitDocument().execute();
          }
       };
-
+      
+      rmdInfoPending_ = true;
       rmdServer_.getRmdOutputInfo(target, 
             new ServerRequestCallback<RmdOutputInfo>()
       {
@@ -783,6 +788,7 @@ public class RSConnectPublishButton extends Composite
             {
                renderCommand.execute();
             }
+            rmdInfoPending_ = false;
          }
 
          @Override
@@ -792,6 +798,7 @@ public class RSConnectPublishButton extends Composite
             // assume one is necessary
             Debug.logError(error);
             renderCommand.execute();
+            rmdInfoPending_ = false;
          }
       });
    }
@@ -821,6 +828,7 @@ public class RSConnectPublishButton extends Composite
    private boolean manuallyHidden_ = false;
    private boolean visible_ = false;
    private boolean rmdRenderPending_ = false;
+   private boolean rmdInfoPending_ = false;
    private RSConnectDeploymentRecord publishAfterRmdRender_ = null;
    
    private final AppCommand boundCommand_;

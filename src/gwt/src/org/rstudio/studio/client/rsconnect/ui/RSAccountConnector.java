@@ -214,6 +214,10 @@ public class RSAccountConnector implements
          boolean withCloudOption,
          final OperationWithInput<Boolean> onCompleted)
    {
+      // ignore if wizard is already up
+      if (showingWizard_)
+         return;
+      
       RSConnectAccountWizard wizard = new RSConnectAccountWizard(
             server_,
             display_,
@@ -229,7 +233,20 @@ public class RSAccountConnector implements
             processDialogResult(input, indicator, onCompleted);
          }
       });
+      wizard.setGlassEnabled(true);
       wizard.showModal();
+      
+      // remember whether wizard is showing
+      showingWizard_ = true;
+      wizard.addCloseHandler(new CloseHandler<PopupPanel>()
+      {
+         @Override
+         public void onClose(CloseEvent<PopupPanel> arg0)
+         {
+            showingWizard_ = false;
+         }
+      });
+
       closeAuthWindowWhenFinished(wizard);
    }
    
@@ -393,4 +410,6 @@ public class RSAccountConnector implements
    private final OptionsLoader.Shim optionsLoader_;
    private final Provider<UIPrefs> pUiPrefs_;
    private final Session session_;
+   
+   private boolean showingWizard_;
 }
