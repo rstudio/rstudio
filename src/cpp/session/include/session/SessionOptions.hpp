@@ -206,7 +206,17 @@ public:
    {
       return std::string(rDocDirOverride_.c_str());
    }
-
+   
+   std::string defaultRVersion()
+   {
+      return std::string(defaultRVersion_.c_str());
+   }
+   
+   std::string defaultRVersionHome()
+   {
+      return std::string(defaultRVersionHome_.c_str());
+   }
+   
    bool autoReloadSource() const { return autoReloadSource_; }
 
    // limits
@@ -509,6 +519,8 @@ private:
    std::string rResourcesPath_;
    std::string rHomeDirOverride_;
    std::string rDocDirOverride_;
+   std::string defaultRVersion_;
+   std::string defaultRVersionHome_;
    
    // limits
    int limitFileUploadSizeMb_;

@@ -29,6 +29,9 @@
 #define kRStudioSessionScopeId            "RSTUDIO_SESSION_SCOPE_ID"
 #define kRStudioSessionRoute              "RSTUDIO_SESSION_ROUTE"
 
+#define kRStudioDefaultRVersion           "RSTUDIO_DEFAULT_R_VERSION"
+#define kRStudioDefaultRVersionHome       "RSTUDIO_DEFAULT_R_VERSION_HOME"
+
 #define kProgramModeSessionOption         "program-mode"
 #define kSessionProgramModeDesktop        "desktop"
 #define kSessionProgramModeServer         "server"
