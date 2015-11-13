@@ -3,7 +3,7 @@
 #import "MainFrameController.h"
 
 
-@implementation doRscriptCommand
+@implementation evaluateRScriptCommand
 
 -(id) performDefaultImplementation
 {

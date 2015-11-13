@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 
-@interface doRscriptCommand : NSScriptCommand
+@interface evaluateRScriptCommand : NSScriptCommand
 
 -(id) performDefaultImplementation;
 
