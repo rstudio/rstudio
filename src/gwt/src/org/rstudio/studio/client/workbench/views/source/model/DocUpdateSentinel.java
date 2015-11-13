@@ -43,6 +43,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.Fold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.VimMarks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -409,6 +410,9 @@ public class DocUpdateSentinel
                      }
                      if (progress != null)
                         progress.onCompleted();
+                     
+                     // let anyone interested know we just saved 
+                     eventBus_.fireEvent(new SaveFileEvent());
                   }
                   else if (!hash.equals(sourceDoc_.getHash()))
                   {
