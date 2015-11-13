@@ -85,10 +85,11 @@ bool isMethod(boost::shared_ptr<HttpConnection> ptrConnection,
                                       "rpc/" + method);
 }
 
-bool isGetEvents(boost::shared_ptr<HttpConnection> ptrConnection)
+bool isEventsRequest(boost::shared_ptr<HttpConnection> ptrConnection)
 {
-   return boost::algorithm::ends_with(ptrConnection->request().uri(),
-                                      "events/get_events");
+   std::string uri = ptrConnection->request().uri();
+   return boost::algorithm::ends_with(uri, "events/get_events") ||
+          boost::algorithm::ends_with(uri, "events/acknowledge_events");
 }
 
 void handleAbortNextProjParam(

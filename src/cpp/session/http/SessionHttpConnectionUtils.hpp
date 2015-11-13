@@ -40,7 +40,7 @@ bool isMethod(boost::shared_ptr<HttpConnection> ptrConnection,
               const std::string& method);
 
 
-bool isGetEvents(boost::shared_ptr<HttpConnection> ptrConnection);
+bool isEventsRequest(boost::shared_ptr<HttpConnection> ptrConnection);
 
 void handleAbortNextProjParam(
                boost::shared_ptr<HttpConnection> ptrConnection);

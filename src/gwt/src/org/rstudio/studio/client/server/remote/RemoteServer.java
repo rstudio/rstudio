@@ -2278,6 +2278,17 @@ public class RemoteServer implements Server
                          requestCallback,
                          retryHandler);
    }
+   
+   void acknowledgeEvents(int lastEventId, 
+                          ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONNumber(lastEventId));
+      sendRequest(EVENTS_SCOPE,
+                  "acknowledge_events",
+                  params,
+                  requestCallback);
+   }
 
    void handleUnauthorizedError()
    {

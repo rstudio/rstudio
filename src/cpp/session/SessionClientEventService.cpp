@@ -279,6 +279,18 @@ void ClientEventService::run()
          // remove all events already seen by the client from our internal list
          erasePreviouslyDeliveredEvents(lastClientEventIdSeen);
 
+         // if the method is acknowledge_events (as opposed to get_events)
+         // then we are done now
+         if (request.method == "acknowledge_events")
+         {
+            // set kEventsPending to false so this doesn't interact with the
+            // automatic event service starting / restarting
+            json::JsonRpcResponse response;
+            response.setField(kEventsPending, "false");
+            ptrConnection->sendJsonRpcResponse(response);
+            return;
+         }
+
          // sync next event id to client (required so that when we resume
          // from a suspend we provide client event ids in line with the 
          // client's expectations -- if we started with zero then the client

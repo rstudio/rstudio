@@ -141,6 +141,15 @@ class RemoteServerEventListener
       }
    }
    
+   // pause: stop with the intention of restarting
+   // do a stop and then acknowledge receipt of events, this is necessary
+   // because in some configurations we automatically stop listening for
+   // events when the IDE window is deactivated
+   public void pause()
+   {
+     
+   }
+   
    // ensure that we are actively listening for events (used to make 
    // sure that we restart listening when the session is about to resume
    // after a suspension)

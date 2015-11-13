@@ -366,7 +366,7 @@ private:
          return;
 
       // place the connection on the correct queue
-      if (connection::isGetEvents(ptrHttpConnection))
+      if (connection::isEventsRequest(ptrHttpConnection))
          eventsConnectionQueue_.enqueConnection(ptrHttpConnection);
       else
          mainConnectionQueue_.enqueConnection(ptrHttpConnection);
