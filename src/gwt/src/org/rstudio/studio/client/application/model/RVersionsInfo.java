@@ -29,12 +29,18 @@ public class RVersionsInfo extends JavaScriptObject
       return this.r_home_dir;
    }-*/;
    
+   // settings below are null unless running with an overlay
+   
    public final native String getDefaultRVersion() /*-{
       return this.default_r_version;
    }-*/;
 
    public final native String getDefaultRVersionHome() /*-{
       return this.default_r_version_home;
+   }-*/;
+   
+   public final native boolean getRestoreProjectRVersion() /*-{
+      return this.restore_project_r_version;
    }-*/;
    
    public final boolean isMultiVersion()

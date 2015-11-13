@@ -363,6 +363,9 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    // set ui prefs
    userSettings().setUiPrefs(uiPrefs);
 
+   // fire preferences saved event
+   module_context::events().onPreferencesSaved();
+
    return Success();
 }
 
