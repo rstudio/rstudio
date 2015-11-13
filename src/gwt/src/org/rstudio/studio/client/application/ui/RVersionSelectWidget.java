@@ -27,7 +27,7 @@ public class RVersionSelectWidget extends SelectWidget
 {
    public RVersionSelectWidget(JsArray<RVersionSpec> rVersions)
    {
-      this("R version for new sessions:", rVersions, true, true);
+      this("Default version of R:", rVersions, true, true);
    }
    
    public RVersionSelectWidget(String caption,
