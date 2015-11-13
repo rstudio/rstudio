@@ -3,21 +3,6 @@
 #import "MainFrameController.h"
 
 
-@implementation doJavaScriptCommand
-
--(id) performDefaultImplementation
-{
-    NSString *script = [self directParameter];
-    if (!script || [script isEqualToString:@""])
-        return [NSNumber numberWithBool:NO];
-   [[MainFrameController instance] evaluateJavaScript: script];
-
-   return [NSNumber numberWithBool:YES];
-}
-
-@end
-
-
 @implementation doRscriptCommand
 
 -(id) performDefaultImplementation
