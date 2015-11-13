@@ -55,8 +55,8 @@ public class Java8AstTest extends FullCompileTestBase {
     ));
     addAll(JavaResourceBase.createMockJavaResource("test.Lambda2",
         "package test;",
-        "public interface Lambda2<String> {",
-        "  boolean run(String a, String b);",
+        "public interface Lambda2<T> {",
+        "  boolean run(T a, T b);",
         "}"
     ));
     addAll(JavaResourceBase.createMockJavaResource("test.AcceptsLambda",
@@ -936,7 +936,8 @@ public class Java8AstTest extends FullCompileTestBase {
     // should implement run method and invoke lambda via captured instance
     JMethod samMethod = findMethod(lambdaInnerClass, "run");
     assertEquals(
-        "public final boolean run(Object arg0,Object arg1){return arg0.equalsIgnoreCase(arg1);}",
+        "public final boolean run(Object arg0,Object arg1)"
+            + "{return((String)arg0).equalsIgnoreCase((String)arg1);}",
         formatSource(samMethod.toSource()));
   }
 

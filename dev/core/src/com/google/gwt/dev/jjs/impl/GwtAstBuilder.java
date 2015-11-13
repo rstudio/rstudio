@@ -1742,7 +1742,7 @@ public class GwtAstBuilder {
 
       // Calculate what type this reference is going to bind to, and what single abstract method
       TypeBinding binding = x.expectedType();
-      MethodBinding samBinding = binding.getSingleAbstractMethod(blockScope, false);
+      MethodBinding samBinding = binding.getSingleAbstractMethod(blockScope, false).original();
 
       // Get the interface method is binds to
       JMethod interfaceMethod = typeMap.get(samBinding);
@@ -1845,7 +1845,9 @@ public class GwtAstBuilder {
         if (!haveReceiver && !referredMethod.isStatic() && instance == null &&
             samMethod.getParams().size() == referredMethod.getParams().size() + 1) {
           // the instance qualifier is the first parameter in this case.
-          instance = new JParameterRef(info, paramIt.next());
+          // Needs to be cast the actual type due to generics.
+          instance = new JCastOperation(info, typeMap.get(referredMethodBinding.declaringClass),
+              new JParameterRef(info, paramIt.next()));
         }
         JMethodCall samCall = null;
 
@@ -1871,13 +1873,13 @@ public class GwtAstBuilder {
 
         // need to build up an array of passed parameters if we have varargs
         List<JExpression> varArgInitializers = null;
-        int varArg = x.binding.parameters.length - 1;
+        int varArg = referredMethodBinding.parameters.length - 1;
 
         // interface Foo { m(int x, int y); } bound to reference foo(int... args)
         // if varargs and incoming param is not already a var-arg, we'll need to convert
         // trailing args of the target interface into an array
-        if (x.binding.isVarargs() && !samBinding.parameters[varArg].isArrayType()) {
-          varArgInitializers = new ArrayList<JExpression>();
+        if (referredMethodBinding.isVarargs() && !samBinding.parameters[varArg].isArrayType()) {
+          varArgInitializers = Lists.newArrayList();
         }
 
         while (paramIt.hasNext()) {
@@ -1886,14 +1888,14 @@ public class GwtAstBuilder {
           // params may need to be boxed or unboxed
           TypeBinding destParam = null;
           // if it is not the trailing param or varargs, or interface method is already varargs
-          if (varArgInitializers == null || !x.binding.isVarargs() || (paramNumber < varArg)) {
-            destParam = x.binding.parameters[paramNumber];
+          if (varArgInitializers == null || !referredMethodBinding.isVarargs() || (paramNumber < varArg)) {
+            destParam = referredMethodBinding.parameters[paramNumber];
             paramExpr = boxOrUnboxExpression(paramExpr, samBinding.parameters[paramNumber],
                 destParam);
             samCall.addArg(paramExpr);
           } else if (!samBinding.parameters[paramNumber].isArrayType()) {
             // else add trailing parameters to var-args initializer list for an array
-            destParam = x.binding.parameters[varArg].leafComponentType();
+            destParam = referredMethodBinding.parameters[varArg].leafComponentType();
             paramExpr = boxOrUnboxExpression(paramExpr, samBinding.parameters[paramNumber],
                 destParam);
             varArgInitializers.add(paramExpr);
@@ -1904,7 +1906,8 @@ public class GwtAstBuilder {
         // add trailing new T[] { initializers } var-arg array
         if (varArgInitializers != null) {
           JArrayType lastParamType =
-              (JArrayType) typeMap.get(x.binding.parameters[x.binding.parameters.length - 1]);
+              (JArrayType) typeMap.get(
+                  referredMethodBinding.parameters[referredMethodBinding.parameters.length - 1]);
           JNewArray newArray =
               JNewArray.createArrayWithInitializers(info, lastParamType, varArgInitializers);
           samCall.addArg(newArray);
@@ -1913,7 +1916,7 @@ public class GwtAstBuilder {
         // TODO(rluble): Make this a call to JjsUtils.makeMethodEndStatement once boxing/unboxing
         // is handled there.
         if (samMethod.getType() != JPrimitiveType.VOID) {
-          JExpression samExpression = boxOrUnboxExpression(samCall, x.binding.returnType,
+          JExpression samExpression = boxOrUnboxExpression(samCall, referredMethodBinding.returnType,
               samBinding.returnType);
           samMethodBody.getBlock().addStmt(simplify(samExpression, x).makeReturnStatement());
         } else {
@@ -1983,7 +1986,11 @@ public class GwtAstBuilder {
         return unbox(expr, implicitConversion);
       }
 
-      return expr;
+      TypeBinding castToType = fromType.genericCast(toType);
+      if (castToType == null) {
+        return expr;
+      }
+      return new JCastOperation(expr.getSourceInfo(), typeMap.get(castToType), expr);
     }
 
     @Override
@@ -3649,6 +3656,9 @@ public class GwtAstBuilder {
    * Reflective access to {@link ForeachStatement#collectionElementType}.
    */
   private static final Field collectionElementTypeField;
+  /**
+   * Reflective access to {@link ReferenceExpression#haveReceiver}.
+   */
   private static final Field haveReceiverField;
 
   private static final TypeBinding[] NO_TYPES = new TypeBinding[0];

@@ -1255,6 +1255,24 @@ public class Java8Test extends GWTTestCase {
     assertContentsInOrder(initializationOrder, "A1", "B1", "A2", "C", "B2", "A3", "D");
   }
 
+  /**
+   * Regression test for issue 9214.
+   */
+  interface P<T> {
+    boolean apply(T obj);
+  }
+
+  static class B {
+    public boolean getTrue() {
+      return true;
+    }
+  }
+
+  public void testMethodReference_generics() {
+    P<B> p = B::getTrue;
+    assertTrue(p.apply(new B()));
+  }
+
   private void assertContentsInOrder(Iterable<String> contents, String... elements) {
     assertEquals(Arrays.asList(elements).toString(), contents.toString());
   }
