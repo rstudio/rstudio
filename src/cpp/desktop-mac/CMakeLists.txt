@@ -40,9 +40,10 @@ set(DESKTOP_MAC_SOURCE_FILES
    SatelliteController.mm
    SecondaryWindowController.mm
    SessionLauncher.mm
+   ScriptCommand.mm
    Utils.mm
    WebViewController.mm
-   
+
 )
 
 # include directories
@@ -95,12 +96,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mac-terminal.in
                ${CMAKE_CURRENT_BINARY_DIR}/mac-terminal)
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/mac-terminal
                  DESTINATION ${RSTUDIO_INSTALL_BIN})
-                 
-# enable developer extras 
-exec_program(defaults 
+
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/RStudio.sdef
+                 DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})
+
+# enable developer extras
+exec_program(defaults
              ARGS write org.rstudio.RStudio WebKitDeveloperExtras -bool true
              OUTPUT_VARIABLE DEV_EXTRAS)
-
-
-
-

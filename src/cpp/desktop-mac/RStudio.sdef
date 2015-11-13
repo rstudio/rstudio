@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+
+<dictionary title="RStudio">
+    <suite name="RStudio Suite" code="MApN" description="RStudio Scripts">
+        <command name="do javascript" code="djsstrng" description="do javascript">
+            <cocoa class="doJavaScriptCommand"/>
+            <direct-parameter description="JS code to evaluate.">
+                <type type="text"/>
+            </direct-parameter>
+        </command>
+        <command name="do rscript" code="dorstrng" description="do rscript">
+            <cocoa class="doRscriptCommand"/>
+            <direct-parameter description="R code to evaluate.">
+                <type type="text"/>
+            </direct-parameter>
+        </command>
+    </suite>
+</dictionary>
