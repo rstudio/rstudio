@@ -240,12 +240,12 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
             + "cannot both use the same JavaScript name 'x'.");
   }
 
-  public void testCollidingJsTypeAndJsPropertyGetterFails() throws Exception {
-    addSnippetImport("jsinterop.annotations.JsType");
+  public void testCollidingJsMethodAndJsPropertyGetterFails() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsMethod");
     addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetClassDecl(
-        "@JsType",
         "public static interface IBuggy {",
+        "  @JsMethod",
         "  boolean x(boolean foo);",
         "  @JsProperty",
         "  int getX();",
@@ -262,12 +262,12 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
             + "cannot both use the same JavaScript name 'x'.");
   }
 
-  public void testCollidingJsTypeAndJsPropertySetterFails() throws Exception {
-    addSnippetImport("jsinterop.annotations.JsType");
+  public void testCollidingJsMethodAndJsPropertySetterFails() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsMethod");
     addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetClassDecl(
-        "@JsType",
         "public static interface IBuggy {",
+        "  @JsMethod",
         "  boolean x(boolean foo);",
         "  @JsProperty",
         "  void setX(int a);",
@@ -857,6 +857,28 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggySucceeds();
+  }
+
+  public void testMixingJsMethodJsPropertyFails()
+      throws Exception {
+    addSnippetImport("jsinterop.annotations.JsMethod");
+    addSnippetImport("jsinterop.annotations.JsProperty");
+    addSnippetClassDecl(
+        "public static class Super {",
+        "  @JsMethod public int getY() { return 5; }",
+        "  @JsProperty public void setZ(int z) {}",
+        "}",
+
+        "public static class Buggy extends Super {",
+        "  @JsProperty(name = \"getY\") public int getY() { return 6; }",
+        "  @JsMethod(name = \"z\") public void setZ(int z) {}",
+        "}");
+
+    assertBuggyFails(
+        "Line 10: 'int EntryPoint.Buggy.getY()' and 'int EntryPoint.Super.getY()' cannot "
+            + "both use the same JavaScript name 'getY'.",
+        "Line 11: 'void EntryPoint.Buggy.setZ(int)' and 'void EntryPoint.Super.setZ(int)' cannot "
+           + "both use the same JavaScript name 'z'.");
   }
 
   public void testMultiplePrivateConstructorsExportSucceeds() throws Exception {

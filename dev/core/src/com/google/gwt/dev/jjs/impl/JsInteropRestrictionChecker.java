@@ -745,7 +745,7 @@ public class JsInteropRestrictionChecker {
         }
         return new JsMember(member, member, jsMember == null ? null : jsMember.getter);
       default:
-        if (jsMember != null) {
+        if (jsMember != null && !jsMember.isPropertyAccessor()) {
           if (overrides(member, jsMember.member)) {
             jsMember.member = member;
             return jsMember;
