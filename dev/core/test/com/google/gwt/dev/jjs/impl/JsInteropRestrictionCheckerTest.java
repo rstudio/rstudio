@@ -1355,6 +1355,23 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "Line 6: Native JsType ''EntryPoint.Buggy'' can only extend native JsType interfaces.");
   }
 
+  public void testNativeJsTypeInterfaceDefenderMethodsFails() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsOverlay");
+    addSnippetClassDecl(
+        "@JsType(isNative=true) public interface Buggy {",
+        "  default void someMethod(){}",
+        "  @JsOverlay",
+        "  default void someOverlayMethod(){}",
+        "}");
+
+    assertBuggyFails(
+        "Line 6: Native JsType method 'void EntryPoint.Buggy.someMethod()' should be native "
+            + "or abstract.",
+        "Line 8: JsOverlay method 'void EntryPoint.Buggy.someOverlayMethod()' cannot be "
+            + "non-final nor native.");
+  }
+
   public void testJsOverlayOnNativeJsTypeMemberSucceeds() throws Exception {
     addSnippetImport("jsinterop.annotations.JsType");
     addSnippetImport("jsinterop.annotations.JsOverlay");
