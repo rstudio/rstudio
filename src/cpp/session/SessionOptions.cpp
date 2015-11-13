@@ -539,6 +539,12 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    rVersionsPath_ = core::system::getenv(kRStudioRVersionsPath);
    core::system::unsetenv(kRStudioRVersionsPath);
 
+   // capture default R version environment variables
+   defaultRVersion_ = core::system::getenv(kRStudioDefaultRVersion);
+   core::system::unsetenv(kRStudioDefaultRVersion);
+   defaultRVersionHome_ = core::system::getenv(kRStudioDefaultRVersionHome);
+   core::system::unsetenv(kRStudioDefaultRVersionHome);
+   
    // return status
    return status;
 }
