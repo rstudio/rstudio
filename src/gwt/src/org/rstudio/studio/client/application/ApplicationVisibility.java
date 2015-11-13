@@ -143,31 +143,50 @@ public class ApplicationVisibility
    {
       try
       {
-         boolean hidden = isHidden();
-         boolean haveNoSatellitesOpen = !satelliteManager_.getSatellitesOpen();
-         
-         // stop listening or restart listening as appropriate
-         boolean stop = hidden && haveNoSatellitesOpen;
-         if (stop)
-            server_.stopEventListener();
+         if (shouldStopEventListener())
+         {
+            // Stop the event listener but do it on a delay to provide the 
+            // system the time to confirm receipt of existing events.
+            // This is necessary because some events (like browseURL) can
+            // actually cause the de-activation of the window. If we stop
+            // the event listener right away then the next get_events call
+            // which acknowledges receipt of the event (e.g. browseURL) is
+            // actually aborted before it can acknowledge receipt. The 
+            // subsequent call to start() then resets the lastEventId to -1
+            // causing a re-delivery of the original event. 
+            //
+            // Note that the specified delay (5 seconds) is somewhat arbitrary
+            // The reason that we stop in the first place is to avoid 
+            // saturation of per-domain request limits so the stop needs to 
+            // occur reasonably soon but not right away.
+            if (stopTimer_.isRunning())
+               stopTimer_.cancel();
+            stopTimer_.schedule(5000);
+         }
          else
+         {
             server_.ensureEventListener();   
-         
-         // optional debug output
-         /*
-         if (stop)
-            Debug.logToRConsole("Stopped Listening");
-         else
-            Debug.logToRConsole("Listening to Events");
-         Debug.logToRConsole(" {hidden: " + hidden +
-                             ", noSatellites: " + haveNoSatellitesOpen +"}");
-         */
+         }
       }
       catch(Exception e)
       {
          Debug.logException(e);
       }
    }
+   
+   private boolean shouldStopEventListener()
+   {
+      return isHidden() && !satelliteManager_.getSatellitesOpen();
+   }
+   
+   private final Timer stopTimer_ = new Timer() {
+      @Override
+      public void run() 
+      {
+         if (shouldStopEventListener())
+            server_.stopEventListener();    
+      } 
+   };
    
    private final ApplicationServerOperations server_;
    private final EventBus eventBus_;
