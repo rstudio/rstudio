@@ -56,6 +56,8 @@
 * Always use LF for line endings in Unix Makefiles in R packages
 * Return environment variables as completions within Sys.getenv(), Sys.setenv() calls
 * Add 'R Scripts' preset filter to Find in Files dialog
+* OS X: Enable WebKit WebGL by default
+* OS X: Enable WebKit DeveloperExtras by default
 * OS X: Enable creation of directories in folder picker dialog
 * Added ability to zoom panes (e.g. Ctrl+Shift+1 to zoom source pane)
 * Add Console on Left/Right commands for quick relocation of Console
