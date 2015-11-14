@@ -67,14 +67,14 @@ public class JsLiteralInternerTest extends TestCase {
     checkTranslation(
         String.format("var x={a:%1$s,b:%2$s}, y={a:%1$s,b:%2$s}, z={a:%1$s,b:%3$s};",
             ONES, TWOS, THREES),
-        String.format("var $intern_0={'a':%1$s,'b':%2$s};var x=$intern_0,y=$intern_0,z={'a':%1$s,'b':%3$s};",
+        String.format("var $intern_0={a:%1$s,b:%2$s};var x=$intern_0,y=$intern_0,z={a:%1$s,b:%3$s};",
             ONES, TWOS, THREES));
 
     checkTranslation(
         String.format("var x={a:%1$s,b:%2$s}, y={a:%1$s,b:%2$s}, z={a:%1$s,b:%3$s};",
             ONES, TWOS, THREES),
-        String.format("var $intern_0=%1$s,$intern_1=%2$s;var x={'a':$intern_0,'b':$intern_1}," +
-        "y={'a':$intern_0,'b':$intern_1},z={'a':$intern_0,'b':%3$s};", ONES, TWOS, THREES), false);
+        String.format("var $intern_0=%1$s,$intern_1=%2$s;var x={a:$intern_0,b:$intern_1}," +
+        "y={a:$intern_0,b:$intern_1},z={a:$intern_0,b:%3$s};", ONES, TWOS, THREES), false);
 
     // Strings
     checkTranslation(
