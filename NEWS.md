@@ -56,6 +56,7 @@
 * Always use LF for line endings in Unix Makefiles in R packages
 * Return environment variables as completions within Sys.getenv(), Sys.setenv() calls
 * Add 'R Scripts' preset filter to Find in Files dialog
+* OS X: Support for executing commands via AppleScript via 'cmd' verb
 * OS X: Enable WebKit WebGL by default
 * OS X: Enable WebKit DeveloperExtras by default
 * OS X: Enable creation of directories in folder picker dialog

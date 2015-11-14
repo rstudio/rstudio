@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+
+<dictionary title="RStudio">
+    <suite name="RStudio Suite" code="MApN" description="RStudio Scripts">
+        <command name="cmd" code="dorstrng" description="Evaluate R code.">
+            <cocoa class="evaluateRScriptCommand"/>
+            <direct-parameter description="R code to evaluate.">
+                <type type="text"/>
+            </direct-parameter>
+        </command>
+    </suite>
+</dictionary>
