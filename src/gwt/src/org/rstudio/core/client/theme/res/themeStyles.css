@@ -1088,6 +1088,8 @@ body.ubuntu_mono .searchBox {
    padding-top: 12px;
    width: 300px;
    padding-bottom: 12px;
+   overflow-wrap: break-word;
+   word-wrap: break-word;
 }
 
 .sessionAbendMessage {
