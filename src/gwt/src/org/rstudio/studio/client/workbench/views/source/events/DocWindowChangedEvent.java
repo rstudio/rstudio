@@ -40,23 +40,27 @@ public class DocWindowChangedEvent
    }
 
    public DocWindowChangedEvent(String docId, String oldWindowId, 
-                                DocTabDragParams params, int pos)
+                                DocTabDragParams params, 
+                                CollabEditStartParams collabParams,
+                                int pos)
    {
       this(docId, oldWindowId, SourceWindowManager.getSourceWindowId(), params, 
-           pos);
+           collabParams, pos);
    }
    
    // this event is fired by the window on which the document was dropped; it
    // is rebroadcast to the the window from which the drop originated to 
    // negotiate its end of the transfer
    public DocWindowChangedEvent(String docId, String oldWindowId, 
-         String newWindowId, DocTabDragParams params, int pos)
+         String newWindowId, DocTabDragParams params, 
+         CollabEditStartParams collabParams, int pos)
    {
       docId_ = docId;
       oldWindowId_ = oldWindowId;
       newWindowId_ = newWindowId;
       pos_ = pos;
       params_ = params;
+      collabParams_ = collabParams;
    }
    
    public String getDocId()
@@ -83,6 +87,11 @@ public class DocWindowChangedEvent
    {
       return params_;
    }
+   
+   public CollabEditStartParams getCollabParams()
+   {
+      return collabParams_;
+   }
 
    @Override
    public boolean forward() 
@@ -106,5 +115,6 @@ public class DocWindowChangedEvent
    private String newWindowId_;
    private String docId_;
    private DocTabDragParams params_;
+   private CollabEditStartParams collabParams_;
    private int pos_;
 }

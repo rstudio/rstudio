@@ -58,6 +58,7 @@ import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserCreatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditEndedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
@@ -484,6 +485,19 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          return sourceShim_.getCurrentDocPath();
       else
          return getCurrentDocPath(lastFocusedWindow);
+   }
+   
+   public CollabEditStartParams getDocCollabParams(String id)
+   {
+      JsArray<SourceDocument> docs = getSourceDocs();
+      for (int i = 0; i < docs.length(); i++)
+      {
+         if (docs.get(i).getId() == id)
+         {
+            return docs.get(i).getCollabParams();
+         }
+      }
+      return null;
    }
 
    // Event handlers ----------------------------------------------------------
@@ -1074,7 +1088,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                      fireEventToSourceWindow(sourceWindowId, 
                            new DocWindowChangedEvent(
                                  sourceDocs.get(i).getId(), sourceWindowId, 
-                                 null, 0),
+                                 null, sourceDocs.get(i).getCollabParams(), 0),
                            true);
                      return new NavigationResult(
                            NavigationResult.RESULT_RELOCATE, 
@@ -1113,7 +1127,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                         getSourceWindowId(), null);
                   events_.fireEventToMainWindow(new DocWindowChangedEvent(
                               sourceDocs.get(i).getId(), sourceWindowId, null, 
-                              0));
+                              sourceDocs.get(i).getCollabParams(), 0));
                   return new NavigationResult(NavigationResult.RESULT_RELOCATE,
                         sourceDocs.get(i).getId());
                }

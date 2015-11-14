@@ -310,7 +310,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       events_.fireEventToMainWindow(new DocWindowChangedEvent(
             getId(), SourceWindowManager.getSourceWindowId(), "",
-            DocTabDragParams.create(getId(), currentPosition()), 0));
+            DocTabDragParams.create(getId(), currentPosition()), null, 0));
    }
    
    @Override
