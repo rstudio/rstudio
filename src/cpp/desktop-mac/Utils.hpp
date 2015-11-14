@@ -33,6 +33,8 @@ namespace desktop {
 namespace utils {
 
 void initializeLang();
+   
+void initializeSystemPrefs();
 
 core::FilePath userLogPath();
    

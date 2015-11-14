@@ -91,6 +91,13 @@ void initializeLang()
    core::system::setenv("LANG", clang);
    core::system::setenv("LC_CTYPE", clang);
 }
+   
+void initializeSystemPrefs()
+{
+   NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+   [defaults setBool:YES forKey: @"WebKitWebGLEnabled"];
+   [defaults setBool:YES forKey: @"WebKitDeveloperExtras"];
+}
  
 // PORT: from DesktopUtils.cpp
 FilePath userLogPath()
