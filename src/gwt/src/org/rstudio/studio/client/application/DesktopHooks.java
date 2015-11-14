@@ -34,6 +34,7 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 
 /**
@@ -147,6 +148,11 @@ public class DesktopHooks
       // open the file. pass false for second param to prevent
       // the default handler (the browser) from taking it
       fileTypeRegistry_.openFile(file, false);
+   }
+   
+   void evaluateRCmd(String cmd)
+   {
+      events_.fireEvent(new SendToConsoleEvent(cmd, true));
    }
    
    void quitR()
