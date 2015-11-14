@@ -76,16 +76,11 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
 
   @Override
   public boolean canBeReferencedExternally() {
-    if (getJsMemberType() != JsMemberType.NONE) {
+    if (exported || isJsFunctionMethod()) {
       return true;
     }
-
-    if (isJsFunctionMethod()) {
-      return true;
-    }
-
     for (JMethod overriddenMethod : getOverriddenMethods()) {
-      if (overriddenMethod.isJsFunctionMethod()) {
+      if (overriddenMethod.exported || overriddenMethod.isJsFunctionMethod()) {
         return true;
       }
     }
