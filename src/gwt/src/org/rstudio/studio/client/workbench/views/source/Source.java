@@ -1586,6 +1586,15 @@ public class Source implements InsertSourceHandler,
       {
          ensureVisible(true);
          
+         // look for a collaborative editing session currently running inside 
+         // the document being transferred between windows--if we didn't know
+         // about one with the event, try to look it up in the local cache of
+         // source documents
+         final CollabEditStartParams collabParams = 
+               e.getCollabParams() == null ? 
+                     windowManager_.getDocCollabParams(e.getDocId()) :
+                     e.getCollabParams();
+         
          // if we're the adopting window, add the doc
          server_.getSourceDocument(e.getDocId(),
                new ServerRequestCallback<SourceDocument>()
@@ -1602,6 +1611,10 @@ public class Source implements InsertSourceHandler,
                   target.restorePosition(e.getParams().getSourcePosition());
                   target.ensureCursorVisible();
                }
+               
+               // if there was a collab session, resume it
+               if (collabParams != null)
+                  target.beginCollabSession(e.getCollabParams());
             }
 
             @Override
