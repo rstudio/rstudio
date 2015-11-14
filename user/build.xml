@@ -22,15 +22,15 @@
 
   <property name="gwt.junit.testcase.web.includes" value="${gwt.junit.testcase.includes}"/>
   <condition property="gwt.junit.testcase.web.excludes"
-            value="**/*JsInteropSuite.class,**/*JreSuite.class,**/OptimizedOnly*,**/*Java8Suite.class"
-            else="**/*JsInteropSuite.class,**/*JreSuite.class,**/OptimizedOnly*">
+            value="**/*JreSuite.class,**/OptimizedOnly*,**/*Java8Suite.class"
+            else="**/*JreSuite.class,**/OptimizedOnly*">
     <equals arg1="${javac.source}" arg2="1.7" />
   </condition>
 
   <property name="gwt.junit.testcase.dev.includes" value="${gwt.junit.testcase.includes}"/>
   <condition property="gwt.junit.testcase.dev.excludes"
-            value="**/*JsInteropSuite.class,**/*JreSuite.class,**/OptimizedOnly*,**/*Java8Suite.class"
-            else="**/*JsInteropSuite.class,**/*JreSuite.class,**/OptimizedOnly*">
+            value="**/*JsInteropSuite.class,**/*JsInteropExportsSuite.class,**/*JreSuite.class,**/OptimizedOnly*,**/*Java8Suite.class"
+            else="**/*JsInteropSuite.class,**/*JsInteropExportsSuite.class,**/*JreSuite.class,**/OptimizedOnly*">
     <equals arg1="${javac.source}" arg2="1.7" />
   </condition>
 
@@ -47,7 +47,9 @@
   <property name="test.args.dev.selenium"
             value='${test.args} -out www -runStyle "Selenium:${gwt.hosts.dev.selenium}"'/>
   <property name="test.args.web.selenium"
-            value='${test.args} -prod -out www -runStyle "Selenium:${gwt.hosts.web.selenium}"'/>
+            value='${test.args} -prod -out www -generateJsInteropExports -runStyle "Selenium:${gwt.hosts.web.selenium}"'/>
+  <property name="test.args.web.htmlunit"
+            value='${test.args} -prod -out www -generateJsInteropExports'/>
 
   <!--
     Whether I18NSuite should test e.g. Foo$InnerMsgs_fr.properties (if the
@@ -350,7 +352,7 @@
              includes="${gwt.junit.testcase.web.includes}"
              excludes="${gwt.junit.testcase.web.excludes}"/>
     <gwt.junit test.name="test.web.htmlunit"
-               test.args="${test.args} -out www -prod"
+               test.args="${test.args.web.htmlunit}"
                test.jvmargs="${test.jvmargs}"
                test.out="${junit.out}/web-htmlunit"
                test.cases="test.web.htmlunit.tests">
@@ -368,7 +370,7 @@
              includes="${gwt.junit.testcase.web.includes}"
              excludes="${gwt.junit.testcase.web.excludes}"/>
     <gwt.junit test.name="test.nometa.htmlunit"
-               test.args="${test.args} -XdisableClassMetadata -out www -prod"
+               test.args="${test.args.web.htmlunit} -XdisableClassMetadata"
                test.jvmargs="${test.jvmargs}"
                test.out="${junit.out}/nometa-htmlunit"
                test.cases="test.nometa.htmlunit.tests">
@@ -386,7 +388,7 @@
              includes="${gwt.junit.testcase.web.includes}"
              excludes="${gwt.junit.testcase.web.excludes}"/>
     <gwt.junit test.name="test.draft.htmlunit"
-               test.args="${test.args} -draftCompile -out www -prod"
+               test.args="${test.args.web.htmlunit} -draftCompile"
                test.jvmargs="${test.jvmargs}"
                test.out="${junit.out}/draft-htmlunit"
                test.cases="test.draft.htmlunit.tests">
