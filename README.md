@@ -1,5 +1,10 @@
 ## GWT
 
+  [![nightly-java7](https://img.shields.io/jenkins/s/http/build.gwtproject.org/gwt.svg?label=nightly-java7)](http://build.gwtproject.org/job/gwt/)
+  [![nightly-java8](https://img.shields.io/jenkins/s/http/build.gwtproject.org/gwt-java8.svg?label=nightly-java8)](http://build.gwtproject.org/job/gwt-java8/)
+  [![gitter](https://img.shields.io/badge/gitter.im-Join%20Chat-green.svg)](https://gitter.im/gwtproject/gwt/)
+  [![irc](https://img.shields.io/badge/irc:%20chat.freenode.net-%23%23gwt-green.svg)](https://webchat.freenode.net/)
+
   GWT is the official open source project for GWT releases 2.5 and onwards.
 
   In this document you have some quick instructions to build the SDK from
