@@ -64,6 +64,7 @@ import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFrameSatellite;
 import org.rstudio.studio.client.rmarkdown.ui.RmdParamsEditDialog;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
+import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
@@ -183,4 +184,5 @@ public interface RStudioGinjector extends Ginjector
    SatelliteManager getSatelliteManager();
    SourceWindowManager getSourceWindowManager();
    SourceWindow getSourceWindow();
+   Server getServer();
 }
