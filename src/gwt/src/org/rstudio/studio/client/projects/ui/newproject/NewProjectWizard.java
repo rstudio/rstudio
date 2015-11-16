@@ -57,6 +57,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
            "",
            rVersions.getAvailableRVersions(),
            false,
+           false,
            false);
          RVersionSpec rVersion = RVersionSpec.create(
                rVersions.getDefaultRVersion(),
