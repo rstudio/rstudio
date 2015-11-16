@@ -1114,30 +1114,37 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewRShinyApp()
    {
-      server_.getWorkingDirectory(new ServerRequestCallback<String>()
+      dependencyManager_.withShiny("Creating Shiny applications", new Command()
       {
          @Override
-         public void onResponseReceived(String workingDir)
+         public void execute()
          {
-            NewShinyWebApplication widget = new NewShinyWebApplication(
-                  "New Shiny Web Application",
-                  workingDir,
-                  new OperationWithInput<NewShinyWebApplication.Result>()
-                  {
-                     @Override
-                     public void execute(Result input)
-                     {
-                        doNewRShinyApp(input);
-                     }
-                  });
+            server_.getWorkingDirectory(new ServerRequestCallback<String>()
+            {
+               @Override
+               public void onResponseReceived(String workingDir)
+               {
+                  NewShinyWebApplication widget = new NewShinyWebApplication(
+                        "New Shiny Web Application",
+                        workingDir,
+                        new OperationWithInput<NewShinyWebApplication.Result>()
+                        {
+                           @Override
+                           public void execute(Result input)
+                           {
+                              doNewRShinyApp(input);
+                           }
+                        });
 
-            widget.showModal();
-         }
+                  widget.showModal();
+               }
 
-         @Override
-         public void onError(ServerError error)
-         {
-            Debug.logError(error);
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
          }
       });
    }
