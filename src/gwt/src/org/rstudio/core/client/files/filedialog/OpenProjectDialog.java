@@ -28,6 +28,7 @@ public class OpenProjectDialog extends FileDialog
 {
    public OpenProjectDialog(FileSystemContext context,
                 int defaultType,
+                boolean newSessionOption,
                 final ProgressOperationWithInput<OpenProjectParams> operation)
    {
       super("Open Project", null, "Open", false, false, false, context, 
@@ -57,7 +58,8 @@ public class OpenProjectDialog extends FileDialog
             inNewSession_ = event.getValue();
          }
       });
-      addLeftWidget(newSessionCheck_);
+      if (newSessionOption)
+         addLeftWidget(newSessionCheck_);
    }
    
    private CheckBox newSessionCheck_;

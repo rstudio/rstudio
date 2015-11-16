@@ -45,6 +45,7 @@ import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.htmlpreview.HTMLPreview;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
+import org.rstudio.studio.client.projects.ProjectOpener;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.RmdParamsEditEvent;
 import org.rstudio.studio.client.rmarkdown.ui.RmdParamsEditDialog;
@@ -93,6 +94,7 @@ public class Workbench implements BusyHandler,
                     FileTypeRegistry fileTypeRegistry,
                     ConsoleDispatcher consoleDispatcher,
                     WorkbenchNewSession newSession,
+                    ProjectOpener projectOpener,
                     Provider<GitState> pGitState,
                     ChooseFile chooseFile,   // required to force gin to create
                     AskPassManager askPass,  // required to force gin to create
@@ -106,6 +108,7 @@ public class Workbench implements BusyHandler,
   {
       view_ = view;
       workbenchContext_ = workbenchContext;
+      projectOpener_ = projectOpener;
       globalDisplay_ = globalDisplay;
       commands_ = commands;
       eventBus_ = eventBus;
@@ -293,7 +296,10 @@ public class Workbench implements BusyHandler,
    @Handler
    void onNewSession()
    {
-      newSession_.openNewSession(globalDisplay_, workbenchContext_, server_);
+      newSession_.openNewSession(globalDisplay_, 
+                                 workbenchContext_, 
+                                 projectOpener_,
+                                 server_);
    }
    
    @Handler
@@ -494,6 +500,7 @@ public class Workbench implements BusyHandler,
    private final FileDialogs fileDialogs_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final WorkbenchContext workbenchContext_;
+   private final ProjectOpener projectOpener_;
    private final ConsoleDispatcher consoleDispatcher_;
    private final Provider<GitState> pGitState_;
    private final TimeBufferedCommand metricsChangedCommand_;

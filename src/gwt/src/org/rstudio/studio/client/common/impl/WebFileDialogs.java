@@ -57,7 +57,7 @@ public class WebFileDialogs implements FileDialogs
                            ProgressOperationWithInput<OpenProjectParams> operation)
    {
       OpenProjectDialog dialog = new OpenProjectDialog(fsContext, defaultType,
-            operation);
+            true, operation);
 
       dialog.setInvokeOperationEvenOnCancel(true);
       

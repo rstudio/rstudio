@@ -18,11 +18,13 @@ package org.rstudio.studio.client.workbench;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.projects.ProjectOpener;
 
 public class WorkbenchNewSession
 {    
    public void openNewSession(GlobalDisplay globalDisplay,
                               WorkbenchContext workbenchContext,
+                              ProjectOpener projectOpener,
                               ApplicationServerOperations server)
    {
       String project = workbenchContext.getActiveProjectFile();
