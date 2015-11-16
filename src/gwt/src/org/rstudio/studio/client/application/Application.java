@@ -415,20 +415,6 @@ public class Application implements ApplicationEventHandlers
       // own handling triggered to process exit)
       if (!Desktop.isDesktop())
       {
-         // attempt to close the window if this is a quit session
-         // (if we fail then fall through to default logic)
-         if (ApplicationQuit.isQuitSession())
-         {
-            try
-            {
-               WindowEx.get().close();
-               return;
-            }
-            catch(Exception ex)
-            {
-            }
-         }
-         
          // if we are switching projects then reload after a delay (to allow
          // the R session to fully exit on the server)
          if (event.getSwitchProjects())
@@ -442,13 +428,28 @@ public class Application implements ApplicationEventHandlers
                reloadWindowWithDelay(true);
             }
          }
-         else if (session_.getSessionInfo().getMultiSession())
+         else 
          {
-            view_.showApplicationMultiSessionQuit();
-         }
-         else
-         {
-            view_.showApplicationQuit();
+            // attempt to close the window (may or may not be able
+            // to depending on how it was created). if we fail then
+            // fall through to default logic
+            try
+            {
+               WindowEx.get().close();
+               return;
+            }
+            catch(Exception ex)
+            {
+            }
+            
+            if (session_.getSessionInfo().getMultiSession())
+            {
+               view_.showApplicationMultiSessionQuit();
+            }
+            else
+            {
+               view_.showApplicationQuit();
+            }
          }
       }
    }
