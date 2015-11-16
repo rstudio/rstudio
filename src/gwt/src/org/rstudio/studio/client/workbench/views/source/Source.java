@@ -1068,8 +1068,6 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onResponseReceived(JsObject createdFiles)
                {
-                  Debug.logObject(createdFiles);
-                  
                   // Loop once to collect failures
                   List<String> failedPaths = new ArrayList<String>();
                   for (String filePath : JsUtil.asIterable(createdFiles.keys()))
