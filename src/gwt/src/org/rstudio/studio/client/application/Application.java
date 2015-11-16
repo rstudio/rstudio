@@ -429,19 +429,7 @@ public class Application implements ApplicationEventHandlers
             }
          }
          else 
-         {
-            // attempt to close the window (may or may not be able
-            // to depending on how it was created). if we fail then
-            // fall through to default logic
-            try
-            {
-               WindowEx.get().close();
-               return;
-            }
-            catch(Exception ex)
-            {
-            }
-            
+         { 
             if (session_.getSessionInfo().getMultiSession())
             {
                view_.showApplicationMultiSessionQuit();
@@ -449,6 +437,16 @@ public class Application implements ApplicationEventHandlers
             else
             {
                view_.showApplicationQuit();
+            }
+            
+            // attempt to close the window (may or may not be able
+            // to depending on how it was created).
+            try
+            {
+               WindowEx.get().close();
+            }
+            catch(Exception ex)
+            {
             }
          }
       }
