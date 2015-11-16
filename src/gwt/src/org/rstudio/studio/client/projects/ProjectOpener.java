@@ -35,6 +35,7 @@ public class ProjectOpener
                   ProjectsServerOperations server,
                   String defaultLocation,
                   int defaultType,
+                  boolean showNewSession,
                   final ProgressOperationWithInput<OpenProjectParams> onCompleted)
    {
       // use the default dialog on desktop mode or single-session mode

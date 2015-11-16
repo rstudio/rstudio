@@ -810,8 +810,8 @@ public class Projects implements OpenProjectFileHandler,
                   ProgressOperationWithInput<OpenProjectParams> onCompleted)
    {
       opener_.showOpenProjectDialog(fsContext_, projServer_,
-            pUIPrefs_.get().defaultProjectLocation().getValue(), defaultType,
-            onCompleted);
+            pUIPrefs_.get().defaultProjectLocation().getValue(), 
+            defaultType, true, onCompleted);
    }
    
    @Handler
