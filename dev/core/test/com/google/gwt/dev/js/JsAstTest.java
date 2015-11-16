@@ -36,7 +36,7 @@ public class JsAstTest extends TestCase {
     JsArrayLiteral arrayOneTwoLiteral2 = new JsArrayLiteral(sourceInfo, one,two);
     JsArrayLiteral arrayTwoOneLiteral = new JsArrayLiteral(sourceInfo, two, one);
 
-    JsObjectLiteral emptyObject = new JsObjectLiteral(sourceInfo);
+    JsObjectLiteral emptyObject = JsObjectLiteral.EMPTY;
 
     assertEquals(arrayOneTwoLiteral, arrayOneTwoLiteral2);
     assertEquals(arrayOneTwoLiteral2, arrayOneTwoLiteral);

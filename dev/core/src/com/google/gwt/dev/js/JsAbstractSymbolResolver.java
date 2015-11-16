@@ -20,6 +20,7 @@ import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.dev.js.ast.JsPropertyInitializer;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.collect.Stack;
@@ -47,7 +48,11 @@ public abstract class JsAbstractSymbolResolver extends JsVisitor {
       return;
     }
 
-    resolve(x);
+    if (x.getQualifier() != null) {
+      resolveQualifiedName(x);
+    } else {
+      resolveUnqualifiedName(x);
+    }
   }
 
   @Override
@@ -73,11 +78,24 @@ public abstract class JsAbstractSymbolResolver extends JsVisitor {
     return true;
   }
 
+  @Override
+  public boolean visit(JsPropertyInitializer x, JsContext ctx) {
+    if (x.getLabelExpr() instanceof JsNameRef) {
+      // JsNameRefs in labels of object literals are considered qualified names even though they
+      // are created with no qualifier, matching their use as regular object property names.
+      resolveQualifiedName((JsNameRef) x.getLabelExpr());
+    }
+    accept(x.getValueExpr());
+    return false;
+  }
+
   protected JsScope getScope() {
     return scopeStack.peek();
   }
 
-  protected abstract void resolve(JsNameRef x);
+  protected abstract void resolveQualifiedName(JsNameRef x);
+
+  protected abstract void resolveUnqualifiedName(JsNameRef x);
 
   private void popScope() {
     scopeStack.pop();

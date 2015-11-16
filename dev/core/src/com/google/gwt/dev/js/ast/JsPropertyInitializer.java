@@ -32,10 +32,9 @@ public class JsPropertyInitializer extends JsNode {
       JsExpression valueExpr) {
     super(sourceInfo);
 
-    assert labelExpr instanceof JsStringLiteral || labelExpr instanceof JsNumberLiteral ||
-        labelExpr instanceof JsNameRef;
     this.labelExpr = labelExpr;
     this.valueExpr = valueExpr;
+    assert isLabelProper();
   }
 
   @Override
@@ -43,8 +42,11 @@ public class JsPropertyInitializer extends JsNode {
     if (that == null || that.getClass() != this.getClass()) {
       return false;
     }
-    return labelExpr.equals(((JsPropertyInitializer) that).labelExpr) &&
-        valueExpr.equals(((JsPropertyInitializer) that).valueExpr);
+    JsPropertyInitializer thatPropertyInitializer = (JsPropertyInitializer) that;
+
+    assert isLabelProper() && ((JsPropertyInitializer) that).isLabelProper();
+    return areLabelsEqual(labelExpr, thatPropertyInitializer.labelExpr) &&
+        valueExpr.equals(thatPropertyInitializer.valueExpr);
   }
 
   @Override
@@ -62,17 +64,11 @@ public class JsPropertyInitializer extends JsNode {
 
   @Override
   public int hashCode() {
-    return labelExpr.hashCode() + 17 * valueExpr.hashCode();
+    return labelExpr.toString().hashCode() + 17 * valueExpr.hashCode();
   }
 
   public boolean hasSideEffects() {
     return labelExpr.hasSideEffects() || valueExpr.hasSideEffects();
-  }
-
-  public void setLabelExpr(JsExpression labelExpr) {
-    assert labelExpr instanceof JsStringLiteral || labelExpr instanceof JsNumberLiteral ||
-        labelExpr instanceof JsNameRef : labelExpr.toString() + " is not a valid property label";
-    this.labelExpr = labelExpr;
   }
 
   public void setValueExpr(JsExpression valueExpr) {
@@ -86,5 +82,28 @@ public class JsPropertyInitializer extends JsNode {
       valueExpr = v.accept(valueExpr);
     }
     v.endVisit(this, ctx);
+  }
+
+  private static boolean areLabelsEqual(JsExpression thisLabel, JsExpression thatLabel) {
+    if (thisLabel instanceof JsNameRef && thatLabel instanceof JsNameRef) {
+      JsNameRef thisJsNameRef = (JsNameRef) thisLabel;
+      JsNameRef thatJsNameRef = (JsNameRef) thatLabel;
+      return thisJsNameRef.getIdent().equals(thatJsNameRef.getIdent());
+    }
+    return thisLabel.equals(thatLabel);
+  }
+
+  private boolean isLabelProper() {
+    if (labelExpr instanceof JsStringLiteral || labelExpr instanceof JsNumberLiteral) {
+      return true;
+    }
+
+    if (!(labelExpr instanceof JsNameRef)) {
+      return false;
+    }
+
+    JsNameRef labelJsNameRef = (JsNameRef) labelExpr;
+
+    return labelJsNameRef.getQualifier() == null;
   }
 }

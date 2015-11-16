@@ -317,7 +317,7 @@ public class JsParser {
         return mapContinue(node);
 
       case TokenStream.OBJLIT:
-        return mapObjectLit(node);
+        return mapObjectLiteral(node);
 
       case TokenStream.ARRAYLIT:
         return mapArrayLit(node);
@@ -843,34 +843,28 @@ public class JsParser {
         numberNode.getDouble());
   }
 
-  private JsExpression mapObjectLit(Node objLitNode) throws JsParserException {
+  private JsExpression mapObjectLiteral(Node objectLiteralNode) throws JsParserException {
     JsObjectLiteral.Builder objectLiteralBuilder =
-        JsObjectLiteral.builder(makeSourceInfo(objLitNode));
-    Node fromPropInit = objLitNode.getFirstChild();
-    while (fromPropInit != null) {
+        JsObjectLiteral.builder(makeSourceInfo(objectLiteralNode));
+    for (Node propertyComponent = objectLiteralNode.getFirstChild(); propertyComponent != null;
+        propertyComponent = propertyComponent.getNext()) {
 
-      Node fromLabelExpr = fromPropInit;
-      JsExpression toLabelExpr = mapExpression(fromLabelExpr);
+      // get the property label from the first node.
+      JsExpression labelExpression = mapExpression(propertyComponent);
 
-      // Advance to the initializer expression.
-      //
-      fromPropInit = fromPropInit.getNext();
-      Node fromValueExpr = fromPropInit;
-      if (fromValueExpr == null) {
+      // advance to the value node
+      propertyComponent = propertyComponent.getNext();
+
+      Node valueNode = propertyComponent;
+      if (valueNode == null) {
         throw createParserException("Expected an init expression for: "
-            + toLabelExpr, objLitNode);
+            + labelExpression, objectLiteralNode);
       }
-      JsExpression toValueExpr = mapExpression(fromValueExpr);
-      objectLiteralBuilder.add(makeSourceInfo(fromLabelExpr), toLabelExpr, toValueExpr);
-
-      // Begin the next property initializer, if there is one.
-      //
-      fromPropInit = fromPropInit.getNext();
+      objectLiteralBuilder.add(
+          labelExpression.getSourceInfo(), labelExpression, mapExpression(valueNode));
     }
-
     return objectLiteralBuilder.build();
   }
-
   private JsExpression mapOptionalExpression(Node exprNode)
       throws JsParserException {
     JsNode unknown = map(exprNode);

@@ -346,11 +346,11 @@ public class GwtAstBuilder {
       }
 
       @Override
-      public void resolve(JsNameRef x) {
-        if (x.getQualifier() != null) {
-          return;
-        }
-        // Only resolve unqualified names
+      public void resolveQualifiedName(JsNameRef x) {
+      }
+
+      @Override
+      protected void resolveUnqualifiedName(JsNameRef x) {
         JsName name = getScope().findExistingName(x.getIdent());
 
         // Ensure that we're resolving a name from the function's parameters

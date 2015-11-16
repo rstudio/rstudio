@@ -26,6 +26,8 @@ import java.util.Collection;
  */
 public final class JsProgram extends JsNode {
 
+  public static final String OBJECT_SCOPE_NAME = "Object";
+  public static final String GLOBAL_SCOPE_NAME = "Global";
   private final CorrelationFactory correlator;
 
   private JsProgramFragment[] fragments;
@@ -46,8 +48,8 @@ public final class JsProgram extends JsNode {
 
     this.correlator = correlator;
 
-    topScope = new JsNormalScope(JsRootScope.INSTANCE, "Global");
-    objectScope = new JsNormalScope(JsRootScope.INSTANCE, "Object");
+    topScope = new JsNormalScope(JsRootScope.INSTANCE, GLOBAL_SCOPE_NAME);
+    objectScope = new JsNormalScope(JsRootScope.INSTANCE, OBJECT_SCOPE_NAME);
     setFragmentCount(1);
   }
 

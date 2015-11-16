@@ -135,6 +135,12 @@ public abstract class JsScope implements Serializable {
   public abstract List<JsScope> getChildren();
 
   /**
+   * Returns the descriptive name.
+   */
+  public String getDescription() {
+    return description;
+  }
+  /**
    * Returns the parent scope of this scope, or <code>null</code> if this is the root scope.
    */
   public abstract JsScope getParent();

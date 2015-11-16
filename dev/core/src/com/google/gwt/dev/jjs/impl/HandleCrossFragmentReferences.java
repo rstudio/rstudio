@@ -256,7 +256,7 @@ public class HandleCrossFragmentReferences {
     jslink = jsProgram.getScope().declareName("jslink");
     JsVars vars = new JsVars(info);
     JsVar var = new JsVar(info, jslink);
-    var.setInitExpr(new JsObjectLiteral(info));
+    var.setInitExpr(JsObjectLiteral.EMPTY);
     vars.add(var);
     jsProgram.getFragmentBlock(0).getStatements().add(0, vars);
   }

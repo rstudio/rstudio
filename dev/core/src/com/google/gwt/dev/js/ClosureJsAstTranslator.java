@@ -610,17 +610,16 @@ public class ClosureJsAstTranslator {
   private Node transform(JsObjectLiteral x) {
     Node n = IR.objectlit();
 
-    for (Object element : x.getPropertyInitializers()) {
-      JsPropertyInitializer propInit = (JsPropertyInitializer) element;
+    for (JsPropertyInitializer element : x.getPropertyInitializers()) {
       Node key;
-      if (propInit.getLabelExpr().getKind() == NodeKind.NUMBER) {
-        key = transformNumberAsString((JsNumberLiteral) propInit.getLabelExpr());
+      if (element.getLabelExpr().getKind() == NodeKind.NUMBER) {
+        key = transformNumberAsString((JsNumberLiteral) element.getLabelExpr());
         key.putBooleanProp(Node.QUOTED_PROP, true);
-      } else if (propInit.getLabelExpr().getKind() == NodeKind.NAME_REF) {
-        key = transformNameAsString(((JsNameRef) propInit.getLabelExpr()).getShortIdent(),
-            propInit.getLabelExpr());
+      } else if (element.getLabelExpr().getKind() == NodeKind.NAME_REF) {
+        key = transformNameAsString(((JsNameRef) element.getLabelExpr()).getShortIdent(),
+            element.getLabelExpr());
       } else {
-        key = transform(propInit.getLabelExpr());
+        key = transform(element.getLabelExpr());
       }
       Preconditions.checkState(key.isString(), key);
       key.setType(Token.STRING_KEY);
@@ -630,7 +629,7 @@ public class ClosureJsAstTranslator {
       // obfuscatable.
       // TODO(rluble): Make sure this is handled correctly once rhino is upgraded.
       key.putBooleanProp(Node.QUOTED_PROP, true);
-      n.addChildToBack(IR.propdef(key, transform(propInit.getValueExpr())));
+      n.addChildToBack(IR.propdef(key, transform(element.getValueExpr())));
     }
     return applySourceInfo(n, x);
   }

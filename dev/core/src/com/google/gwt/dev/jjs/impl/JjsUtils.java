@@ -56,7 +56,7 @@ import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.js.ast.JsBooleanLiteral;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsLiteral;
-import com.google.gwt.dev.js.ast.JsName;
+import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNullLiteral;
 import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
@@ -507,14 +507,14 @@ public class JjsUtils {
         if (values.length == 1) {
           return new JsNumberLiteral(literal.getSourceInfo(), ((JLongLiteral) literal).getValue());
         }
-        JsObjectLiteral objectLiteral = new JsObjectLiteral(sourceInfo);
-        objectLiteral.setInternable();
+        JsObjectLiteral.Builder objectLiteralBuilder = JsObjectLiteral.builder(sourceInfo)
+            .setInternable();
 
-        assert values.length == names.length;
-        for (int i = 0; i < names.length; i++) {
-          addPropertyToObject(sourceInfo, names[i], values[i], objectLiteral);
+        assert values.length == longComponentNames.length;
+        for (int i = 0; i < longComponentNames.length; i++) {
+          addPropertyToObject(sourceInfo, longComponentNames[i], values[i], objectLiteralBuilder);
         }
-        return objectLiteral;
+        return objectLiteralBuilder.build();
       }
     },
     STRING_LITERAL_TRANSLATOR() {
@@ -530,29 +530,15 @@ public class JjsUtils {
       }
     };
 
-    private static final JsName[] names;
-
-    static {
-      // The names of the components in an emulated long ('l', 'm', and 'h') are accessed directly
-      // through JSNI in LongLib (the implementor of emulated long operations), hence it is
-      // important that they don't get renamed hence the corresponding JsNames are created
-      // unscoped (null scope) and unobfuscatable.
-      String[] stringNames = {"l","m","h"};
-      names = new JsName[stringNames.length];
-      for (int i = 0; i < stringNames.length; i++) {
-        names[i] = new JsName(null, stringNames[i], stringNames[i]);
-        names[i].setUnobfuscatable();
-      }
-    }
+    private static String[] longComponentNames = { "l", "m", "h" };
 
     abstract JsLiteral translate(JExpression literal);
   }
 
-  private static void addPropertyToObject(SourceInfo sourceInfo, JsName propertyName,
-      long propertyValue, JsObjectLiteral objectLiteral) {
-    JsExpression label = propertyName.makeRef(sourceInfo);
+  private static void addPropertyToObject(SourceInfo sourceInfo, String propertyName,
+      long propertyValue, JsObjectLiteral.Builder objectLiteralBuilder) {
     JsExpression value = new JsNumberLiteral(sourceInfo, propertyValue);
-    objectLiteral.addProperty(sourceInfo, label, value);
+    objectLiteralBuilder.add(new JsNameRef(sourceInfo, propertyName), value);
   }
 
   private static JMethod createEmptyMethodFromExample(

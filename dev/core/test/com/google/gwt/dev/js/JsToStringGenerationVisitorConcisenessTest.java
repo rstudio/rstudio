@@ -66,7 +66,8 @@ public class JsToStringGenerationVisitorConcisenessTest extends TestCase {
     // quotes are not necessary around many property variables in object
     // literals
     assertEquals("var x={1:'b'}", parse("var x = {1 : 'b'}"));
-    assertEquals("var x={$a_:'b'}", parse("var x = {'$a_' : 'b'}"));
+    assertEquals("var x={'$a_':'b'}", parse("var x = {'$a_' : 'b'}"));
+    assertEquals("var x={$a_:'b'}", parse("var x = {$a_ : 'b'}"));
     assertEquals("var x={1.2:'b'}", parse("var x = {1.2 : 'b'}"));
   }
 

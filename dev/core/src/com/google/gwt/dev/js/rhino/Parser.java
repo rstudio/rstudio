@@ -1277,8 +1277,11 @@ public class Parser {
 
             tt = ts.getToken();
             switch (tt) {
-              // map NAMEs to STRINGs in object literal context.
               case TokenStream.NAME:
+                String name = ts.getString();
+                sourceAddString(ts.NAME, name);
+                property = nf.createName(ts.getString());
+                break;
               case TokenStream.STRING:
                 String s = ts.getString();
                 sourceAddString(ts.NAME, s);

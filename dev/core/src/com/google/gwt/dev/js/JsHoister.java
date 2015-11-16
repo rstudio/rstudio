@@ -180,34 +180,28 @@ public final class JsHoister {
     }
 
     @Override
-    public void endVisit(JsObjectLiteral x, JsContext ctx) {
-      JsObjectLiteral toReturn = new JsObjectLiteral(x.getSourceInfo());
-      List<JsPropertyInitializer> inits = toReturn.getPropertyInitializers();
+    public boolean visit(JsObjectLiteral x, JsContext ctx) {
+      JsObjectLiteral.Builder builder = JsObjectLiteral.builder(x.getSourceInfo());
 
-      int size = x.getPropertyInitializers().size();
       if (x.isInternable()) {
-        toReturn.setInternable();
+        builder.setInternable();
       }
 
-      while (size-- > 0) {
+      for (JsPropertyInitializer propertyInitializer : x.getPropertyInitializers()) {
         /*
          * JsPropertyInitializers are the only non-JsExpression objects that we
          * care about, so we just go ahead and create the objects in the loop,
          * rather than expecting it to be on the stack and having to perform
          * narrowing casts at all stack.pop() invocations.
          */
-        JsPropertyInitializer newInit = new JsPropertyInitializer(
-            x.getSourceInfo());
-        newInit.setValueExpr(stack.pop());
-        if (successful) {
-          newInit.setLabelExpr(stack.pop());
-        } else {
-          stack.pop();
-        }
-
-        inits.add(0, newInit);
+        accept(propertyInitializer.getLabelExpr());
+        JsExpression label = stack.pop();
+        accept(propertyInitializer.getValueExpr());
+        JsExpression value = stack.pop();
+        builder.add(propertyInitializer.getSourceInfo(), label, value);
       }
-      stack.push(toReturn);
+      stack.push(builder.build());
+      return false;
     }
 
     @Override

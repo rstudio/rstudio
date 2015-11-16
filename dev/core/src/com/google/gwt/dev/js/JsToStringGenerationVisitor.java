@@ -706,24 +706,11 @@ public class JsToStringGenerationVisitor extends JsVisitor {
   public boolean visit(JsObjectLiteral x, JsContext ctx) {
     _lbrace();
     boolean sep = false;
-    for (Object element : x.getPropertyInitializers()) {
+    for (JsPropertyInitializer element : x.getPropertyInitializers()) {
       sep = _sepCommaOptSpace(sep);
-      JsPropertyInitializer propInit = (JsPropertyInitializer) element;
-      printLabel : {
-        JsExpression labelExpr = propInit.getLabelExpr();
-        // labels can be either string, integral, or decimal literals
-        if (labelExpr instanceof JsStringLiteral) {
-          String propName = ((JsStringLiteral) labelExpr).getValue();
-          if (JsUtils.isValidJsIdentifier(propName) && !JsProtectedNames.isKeyword(propName)) {
-            // Print unquoted if the property name is a valid identifier.
-            p.print(propName);
-            break printLabel;
-          }
-        }
-        accept(labelExpr);
-      }
+      accept(element.getLabelExpr());
       _colon();
-      JsExpression valueExpr = propInit.getValueExpr();
+      JsExpression valueExpr = element.getValueExpr();
       _parenPushIfCommaExpr(valueExpr);
       accept(valueExpr);
       _parenPopIfCommaExpr(valueExpr);

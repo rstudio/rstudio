@@ -168,7 +168,7 @@ public class JsNamespaceChooser {
     List<JsStatement> inits = Lists.newArrayList();
     for (JsName name : namespaces) {
       JsVar var = new JsVar(SourceOrigin.UNKNOWN, name);
-      var.setInitExpr(new JsObjectLiteral(SourceOrigin.UNKNOWN));
+      var.setInitExpr(JsObjectLiteral.EMPTY);
       JsVars vars = new JsVars(SourceOrigin.UNKNOWN);
       vars.add(var);
       inits.add(vars);

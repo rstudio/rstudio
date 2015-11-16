@@ -14,8 +14,10 @@
 package com.google.gwt.dev.js.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -41,7 +43,7 @@ public final class JsObjectLiteral extends JsLiteral {
     private boolean internable = false;
 
     public Builder add(String property, JsExpression value) {
-      add(new JsNameRef(sourceInfo, property), value);
+      add(new JsStringLiteral(sourceInfo, property), value);
       return this;
     }
 
@@ -62,7 +64,7 @@ public final class JsObjectLiteral extends JsLiteral {
 
     public JsObjectLiteral build() {
       JsObjectLiteral objectLiteral = new JsObjectLiteral(sourceInfo);
-      objectLiteral.getPropertyInitializers().addAll(propertyInitializers);
+      objectLiteral.properties.addAll(propertyInitializers);
       if (internable) {
         objectLiteral.setInternable();
       }
@@ -70,30 +72,14 @@ public final class JsObjectLiteral extends JsLiteral {
     }
   }
 
+  public static final JsObjectLiteral EMPTY = new JsObjectLiteral(SourceOrigin.UNKNOWN);
+
   private final List<JsPropertyInitializer> properties = Lists.newArrayList();
 
   private boolean internable = false;
 
-  public JsObjectLiteral(SourceInfo sourceInfo) {
+  private JsObjectLiteral(SourceInfo sourceInfo) {
     super(sourceInfo);
-  }
-
-  /**
-   * Adds a property and its initial value to the object literal.
-   * <p>
-   * NOTE: Does not check for duplicate names.
-   */
-  public void addProperty(SourceInfo sourceInfo, JsExpression label, JsExpression value) {
-    properties.add(new JsPropertyInitializer(sourceInfo, label, value));
-  }
-
-  /**
-   * Adds a property and its initial value to the object literal.
-   * <p>
-   * NOTE: Does not check for duplicate names.
-   */
-  public void addProperty(SourceInfo sourceInfo, String label, JsExpression value) {
-    addProperty(sourceInfo, new JsStringLiteral(sourceInfo, label), value);
   }
 
   @Override
@@ -111,7 +97,7 @@ public final class JsObjectLiteral extends JsLiteral {
   }
 
   public List<JsPropertyInitializer> getPropertyInitializers() {
-    return properties;
+    return Collections.unmodifiableList(properties);
   }
 
   @Override
