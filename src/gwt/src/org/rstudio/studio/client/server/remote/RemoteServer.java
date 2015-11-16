@@ -1419,7 +1419,7 @@ public class RemoteServer implements Server
          String projectDir,
          ServerRequestCallback<RVersionSpec> callback)
    {
-      sendRequest(RPC_SCOPE, "get_project_r_version", callback);
+      sendRequest(RPC_SCOPE, "get_project_r_version", projectDir, callback);
    }
    
    @Override
