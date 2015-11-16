@@ -56,7 +56,17 @@ public class DirectoryChooserTextBox extends TextBoxWithButton
                                   final FileDialogs fileDialogs,
                                   final FileSystemContext fsContext)
    {
-      super(label, emptyLabel, "Browse...", null);
+      this(label, emptyLabel, "Browse...", focusAfter, fileDialogs, fsContext);
+   }
+   
+   public DirectoryChooserTextBox(String label, 
+                                  String emptyLabel,
+                                  String browseLabel,
+                                  final Focusable focusAfter,
+                                  final FileDialogs fileDialogs,
+                                  final FileSystemContext fsContext)
+   {
+      super(label, emptyLabel, browseLabel, null);
       
       addClickHandler(new ClickHandler()
       {
