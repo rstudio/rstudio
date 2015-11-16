@@ -48,6 +48,7 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ImageMenuItem;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
@@ -883,6 +884,25 @@ public class TextEditingTargetWidget
          {
             publishButton_.setContentType(RSConnect.CONTENT_TYPE_NONE);
          }
+      }
+   }
+
+   @Override
+   public void invokePublish()
+   {
+      if (publishButton_ == null)
+      {
+         // shouldn't happen in practice (we hide the publish button and 
+         // disable the command when a non-publishable item is showing in the
+         // widget) but in case it does let the user know why nothing's 
+         // happening.
+         RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+               "Content not publishable", 
+               "This item cannot be published.");
+      }
+      else
+      {
+         publishButton_.invokePublish();
       }
    }
 

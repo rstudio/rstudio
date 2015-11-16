@@ -98,7 +98,6 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsDialog;
-import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSettings;
@@ -220,6 +219,7 @@ public class TextEditingTarget implements
             RmdOutputFormatChangedEvent.Handler handler);
       
       void setPublishPath(String type, String publishPath);
+      void invokePublish();
       
       void initWidgetSize();
       
@@ -3292,17 +3292,7 @@ public class TextEditingTarget implements
    @Handler
    void onRsconnectDeploy()
    {
-      if (docUpdateSentinel_ == null)
-         return;
-
-      // only Shiny files get the deploy command, so we can be confident we're
-      // deploying an app here
-      events_.fireEvent(RSConnectActionEvent.DeployAppEvent(
-            docUpdateSentinel_.getPath(), 
-            getExtendedFileType() == SourceDocument.XT_SHINY_SINGLE_FILE ? 
-                  RSConnect.CONTENT_TYPE_APP_SINGLE : 
-                  RSConnect.CONTENT_TYPE_APP,
-            null));
+      view_.invokePublish();
    }
 
    @Handler 

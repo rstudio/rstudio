@@ -128,28 +128,6 @@ public class RSConnectPublishButton extends Composite
       getElement().getStyle().setMarginRight(4, Unit.PX);    
    }
    
-   private void onPublishButtonClick()
-   {
-      // if the publish button is clicked without the droplist ever being 
-      // invoked, then we need to grab the list of existing deployments to
-      // determine what the default one will be.
-      if (defaultRec_ == null && populatedPath_ == null)
-      {
-         rebuildPopupMenu(new ToolbarPopupMenu.DynamicPopupMenuCallback()
-         {
-            @Override
-            public void onPopupMenu(ToolbarPopupMenu menu)
-            {
-               onPublishRecordClick(defaultRec_);
-            }
-         });
-      }
-      else
-      {
-         onPublishRecordClick(defaultRec_);
-      }
-   }
-   
    @Inject
    public void initialize(RSConnectServerOperations server,
          RMarkdownServerOperations rmdServer,
@@ -372,8 +350,35 @@ public class RSConnectPublishButton extends Composite
    {
       return anyRmdRenderPending_;
    }
+   
+   public void invokePublish()
+   {
+      onPublishButtonClick();
+   }
 
    // Private methods --------------------------------------------------------
+   
+   private void onPublishButtonClick()
+   {
+      // if the publish button is clicked without the droplist ever being 
+      // invoked, then we need to grab the list of existing deployments to
+      // determine what the default one will be.
+      if (defaultRec_ == null && populatedPath_ == null)
+      {
+         rebuildPopupMenu(new ToolbarPopupMenu.DynamicPopupMenuCallback()
+         {
+            @Override
+            public void onPopupMenu(ToolbarPopupMenu menu)
+            {
+               onPublishRecordClick(defaultRec_);
+            }
+         });
+      }
+      else
+      {
+         onPublishRecordClick(defaultRec_);
+      }
+   }
    
    private void populateDeployments(final boolean force)
    {
