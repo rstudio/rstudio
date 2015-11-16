@@ -2783,6 +2783,12 @@ public class AceEditor implements DocDisplay,
       return collab_.hasActiveCollabSession(this);
    }
    
+   @Override
+   public boolean hasFollowingCollabSession()
+   {
+      return collab_.hasFollowingCollabSession(this);
+   }
+   
    public void endCollabSession()
    {
       collab_.endCollabSession(this);

@@ -32,6 +32,11 @@ public class CollabEditor
       return false;
    }
    
+   boolean hasFollowingCollabSession(AceEditor editor)
+   {
+      return false;
+   }
+   
    void endCollabSession(AceEditor editor)
    {
       

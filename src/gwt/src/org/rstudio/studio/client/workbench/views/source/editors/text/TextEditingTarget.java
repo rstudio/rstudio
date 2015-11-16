@@ -2080,17 +2080,52 @@ public class TextEditingTarget implements
 
    public boolean onBeforeDismiss()
    {
-      Command closeCommand = new Command() {
+      final Command closeCommand = new Command() 
+      {
          public void execute()
          {
             CloseEvent.fire(TextEditingTarget.this, null);
          }
       };
+      
        
-      if (dirtyState_.getValue())
-         saveWithPrompt(closeCommand, null);
+      final Command promptCommand = new Command() 
+      {
+         public void execute()
+         {
+            if (dirtyState_.getValue())
+               saveWithPrompt(closeCommand, null);
+            else
+               closeCommand.execute();
+         }
+      };
+      
+      if (docDisplay_.hasFollowingCollabSession())
+      {
+         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_WARNING,
+                         getName().getValue() + " - Active Following Session",
+                         "You're actively following another user's cursor " +
+                         "in '" + getName().getValue() + "'.\n\n" +
+                         "If you close this file, you won't see their " + 
+                         "cursor until they edit another file.",
+                         false,
+                         new Operation() 
+                         {
+                            public void execute() 
+                            { 
+                               promptCommand.execute();
+                            }
+                         },
+                         null,
+                         null,
+                         "Close Anyway",
+                         "Cancel",
+                         false);
+      }
       else
-         closeCommand.execute();
+      {
+         promptCommand.execute();
+      }
 
       return false;
    }
