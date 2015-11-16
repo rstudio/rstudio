@@ -196,6 +196,63 @@ std::string getLastFunction(const std::string& fileContents)
    return function;
 }
 
+const char * const kShinyAppTypeSingleFile = "type_single_file";
+const char * const kShinyAppTypeMultiFile =  "type_multi_file";
+
+FilePath shinyTemplatePath(const std::string& name)
+{
+   return session::options().rResourcesPath().childPath("templates/shiny/" + name);
+}
+
+void copyTemplateFile(const std::string& templateFileName,
+                      const FilePath& target,
+                      json::Object* pResult)
+{
+   FilePath templatePath = shinyTemplatePath(templateFileName);
+   Error error = templatePath.copy(target);
+   if (error)
+      LOG_ERROR(error);
+   
+   std::string aliasedPath = module_context::createAliasedPath(target);
+   (*pResult)[aliasedPath] = (error == Success());
+}
+
+Error createShinyApp(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string appName;
+   std::string appType;
+   std::string appDirString;
+   
+   Error error = json::readParams(request.params,
+                                  &appName,
+                                  &appType,
+                                  &appDirString);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   json::Object result;
+   FilePath appDir = module_context::resolveAliasedPath(appDirString);
+   
+   if (appType == kShinyAppTypeSingleFile)
+   {
+      // app.R
+      copyTemplateFile("app.R", appDir.complete("app.R"), &result);
+   }
+   else if (appType == kShinyAppTypeMultiFile)
+   {
+      // ui.R
+      copyTemplateFile("ui.R", appDir.complete("ui.R"), &result);
+      copyTemplateFile("server.R", appDir.complete("server.R"), &result);
+   }
+   
+   pResponse->setResult(result);
+   return Success();
+}
+
 } // anonymous namespace
 
 ShinyFileType shinyTypeFromExtendedType(const std::string& extendedType)
@@ -290,13 +347,16 @@ ShinyFileType getShinyFileType(const FilePath& filePath)
 Error initialize()
 {
    using namespace module_context;
+   using boost::bind;
+   
    events().onPackageLoaded.connect(onPackageLoaded);
 
    events().onDetectSourceExtendedType.connect(onDetectShinySourceType);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (boost::bind(registerRpcMethod, "get_shiny_capabilities", getShinyCapabilities));
+      (bind(registerRpcMethod, "get_shiny_capabilities", getShinyCapabilities))
+      (bind(registerRpcMethod, "create_shiny_app", createShinyApp));
 
    return initBlock.execute();
 }

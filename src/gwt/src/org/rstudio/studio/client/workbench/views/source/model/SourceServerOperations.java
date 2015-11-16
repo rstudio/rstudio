@@ -219,4 +219,11 @@ public interface SourceServerOperations extends FilesServerOperations,
    
    public void getSourceDocument(String docId,
                 ServerRequestCallback<SourceDocument> requestCallback);
+   
+   public void getWorkingDirectory(ServerRequestCallback<String> requestCallback);
+   
+   public void createShinyApp(String appName,
+                              String appType,
+                              String appDir,
+                              ServerRequestCallback<JsObject> requestCallback);
 }

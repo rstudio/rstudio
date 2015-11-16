@@ -45,6 +45,7 @@ import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -99,6 +100,7 @@ import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataHandler;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
+import org.rstudio.studio.client.workbench.views.source.NewShinyWebApplication.Result;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager.NavigationResult;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
@@ -135,6 +137,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 public class Source implements InsertSourceHandler,
                                IsWidget,
@@ -1052,6 +1055,91 @@ public class Source implements InsertSourceHandler,
          newRMarkdownV2Doc();
       else
          newRMarkdownV1Doc();
+   }
+   
+   private void doNewRShinyApp(NewShinyWebApplication.Result result)
+   {
+      server_.createShinyApp(
+            result.getAppName(),
+            result.getAppType(),
+            result.getAppDir(),
+            new ServerRequestCallback<JsObject>()
+            {
+               @Override
+               public void onResponseReceived(JsObject createdFiles)
+               {
+                  Debug.logObject(createdFiles);
+                  
+                  // Loop once to collect failures
+                  List<String> failedPaths = new ArrayList<String>();
+                  for (String filePath : JsUtil.asIterable(createdFiles.keys()))
+                  {
+                     boolean success = createdFiles.getBoolean(filePath);
+                     if (!success)
+                        failedPaths.add(filePath);
+                  }
+                  
+                  if (!failedPaths.isEmpty())
+                  {
+                     String message = "Failed to create the following files:\n";
+                     for (String path : failedPaths)
+                        message += "\n\t" + path;
+                     globalDisplay_.showErrorMessage("Error Creating Shiny Application", message);
+                     return;
+                  }
+                  
+                  // Open and focus files that we created
+                  for (String filePath : JsUtil.asIterable(createdFiles.keys()))
+                  {
+                     FileSystemItem path = FileSystemItem.createFile(filePath);
+                     openFile(path, FileTypeRegistry.R, new CommandWithArg<EditingTarget>()
+                     {
+                        @Override
+                        public void execute(EditingTarget target)
+                        {
+                           target.setCursorPosition(Position.create(1, 0));
+                        }
+                     });
+                  }
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+   }
+   
+   @Handler
+   public void onNewRShinyApp()
+   {
+      server_.getWorkingDirectory(new ServerRequestCallback<String>()
+      {
+         @Override
+         public void onResponseReceived(String workingDir)
+         {
+            NewShinyWebApplication widget = new NewShinyWebApplication(
+                  "New Shiny Web Application",
+                  workingDir,
+                  new OperationWithInput<NewShinyWebApplication.Result>()
+                  {
+                     @Override
+                     public void execute(Result input)
+                     {
+                        doNewRShinyApp(input);
+                     }
+                  });
+
+            widget.showModal();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
    }
    
    @Handler

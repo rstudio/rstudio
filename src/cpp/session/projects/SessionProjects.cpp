@@ -74,6 +74,17 @@ Error validateProjectPath(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error getWorkingDirectory(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   std::string path =
+         module_context::createAliasedPath(r::session::utils::safeCurrentPath());
+   
+   pResponse->setResult(path);
+   
+   return Success();
+}
+
 Error getNewProjectContext(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
@@ -682,6 +693,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "validate_project_path", validateProjectPath))
       (bind(registerRpcMethod, "get_new_project_context", getNewProjectContext))
+      (bind(registerRpcMethod, "get_working_directory", getWorkingDirectory))
       (bind(registerRpcMethod, "create_project", createProject))
       (bind(registerRpcMethod, "read_project_options", readProjectOptions))
       (bind(registerRpcMethod, "write_project_options", writeProjectOptions))

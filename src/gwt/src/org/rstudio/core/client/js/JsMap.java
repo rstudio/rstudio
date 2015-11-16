@@ -22,7 +22,7 @@ package org.rstudio.core.client.js;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 
-public class JsMap<T> extends JavaScriptObject
+public class JsMap<T extends JavaScriptObject> extends JavaScriptObject
 {
    protected JsMap() {}
    
