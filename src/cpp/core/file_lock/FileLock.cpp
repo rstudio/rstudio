@@ -13,11 +13,6 @@
  *
  */
 
-// boost requires that winsock2.h is included before windows.h
-#ifdef _WIN32
-# include <winsock2.h>
-#endif
-
 #include <core/FileLock.hpp>
 
 // #define RSTUDIO_ENABLE_DEBUG_MACROS
