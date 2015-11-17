@@ -1063,7 +1063,7 @@ public class Source implements InsertSourceHandler,
             result.getAppName(),
             result.getAppType(),
             result.getAppDir(),
-            new SimpleRequestCallback<JsObject>("Error Creating Shiny Application")
+            new SimpleRequestCallback<JsObject>("Error Creating Shiny Application", true)
             {
                @Override
                public void onResponseReceived(JsObject createdFiles)

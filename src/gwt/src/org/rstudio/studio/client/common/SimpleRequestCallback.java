@@ -26,12 +26,19 @@ public class SimpleRequestCallback<T> extends ServerRequestCallback<T>
 {
    public SimpleRequestCallback()
    {
-      this("Error");
+      this("Error", false);
    }
 
    public SimpleRequestCallback(String caption)
    {
+      this(caption, false);
+   }
+   
+   public SimpleRequestCallback(String caption,
+                                boolean useClientInfoMsg)
+   {
       caption_ = caption;
+      useClientInfoMsg_ = useClientInfoMsg;
    }
 
    @Override
@@ -42,12 +49,15 @@ public class SimpleRequestCallback<T> extends ServerRequestCallback<T>
       String message = error.getUserMessage();
 
       // see if a special message was provided
-      JSONValue errValue = error.getClientInfo();
-      if (errValue != null)
+      if (useClientInfoMsg_)
       {
-         JSONString errMsg = errValue.isString();
-         if (errMsg != null)
-            message = errMsg.stringValue();
+         JSONValue errValue = error.getClientInfo();
+         if (errValue != null)
+         {
+            JSONString errMsg = errValue.isString();
+            if (errMsg != null)
+               message = errMsg.stringValue();
+         }
       }
       
       RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
@@ -56,4 +66,5 @@ public class SimpleRequestCallback<T> extends ServerRequestCallback<T>
    }
 
    private String caption_;
+   private boolean useClientInfoMsg_;
 }
