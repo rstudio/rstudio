@@ -1,15 +1,23 @@
 package org.rstudio.studio.client.workbench.views.source;
 
+import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.HelpLink;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.HasKeyDownHandlers;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
@@ -50,6 +58,39 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       }
    }
    
+   private void addTextFieldValidator(HasKeyDownHandlers widget)
+   {
+      widget.addKeyDownHandler(new KeyDownHandler()
+      {
+         @Override
+         public void onKeyDown(KeyDownEvent event)
+         {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  validateAppName();
+               }
+            });
+         }
+      });
+   }
+   
+   private boolean isValidAppName(String appName)
+   {
+      return RE_VALID_APP_NAME.test(appName);
+   }
+   
+   private void validateAppName()
+   {
+      String appName = appNameTextBox_.getText().trim();
+      if (appName.isEmpty() || isValidAppName(appName))
+         appNameTextBox_.removeStyleName(RES.styles().invalidAppName());
+      else
+         appNameTextBox_.addStyleName(RES.styles().invalidAppName());
+   }
+   
    public NewShinyWebApplication(String caption, 
                                  FileSystemItem workingDirectory,
                                  OperationWithInput<Result> operation)
@@ -66,6 +107,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       appNameTextBox_.getElement().getStyle().setMarginLeft(10, Unit.PX);
       appNameTextBox_.getElement().setAttribute("placeholder", "Name");
       appNameTextBox_.setText(defaultAppName(workingDirectory));
+      addTextFieldValidator(appNameTextBox_);
       
       appTypeLabel_ = new Label("Application Type:");
       appTypeLabel_.addStyleName(RES.styles().label());
@@ -87,7 +129,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       appTypeSelectWidget_.getElement().getStyle().setMarginTop(0, Unit.PX);
       appTypeSelectWidget_.getElement().getStyle().setMarginBottom(0, Unit.PX);
       
-      directoryChooserTextBox_ = new DirectoryChooserTextBox("Directory:", null);
+      directoryChooserTextBox_ = new DirectoryChooserTextBox("Create within directory:", null);
       directoryChooserTextBox_.setText(workingDirectory.getPath());
       
       // Add them to parent
@@ -104,6 +146,12 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       
       container_.add(new VerticalSpacer("12px"));
       container_.add(directoryChooserTextBox_);
+      
+      shinyHelpLink_ = new HelpLink(
+            "Creating Shiny Applications",
+            "shiny");
+      shinyHelpLink_.getElement().getStyle().setMarginTop(4, Unit.PX);
+      addLeftWidget(shinyHelpLink_);
    }
    
    @Override
@@ -111,6 +159,33 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    {
       super.onDialogShown();
       appNameTextBox_.setFocus(true);
+   }
+   
+   @Override
+   protected boolean validate(Result result)
+   {
+      GlobalDisplay display = RStudioGinjector.INSTANCE.getGlobalDisplay();
+      
+      String appName = result.getAppName();
+      if (!isValidAppName(appName))
+      {
+         String message;
+         if (appName.isEmpty())
+         {
+            message = "The application name must not be empty";
+         }
+         else
+         {
+            message = "Invalid application name";
+         }
+         
+         display.showErrorMessage(
+               "Invalid Application Name",
+               message);
+         return false;
+      }
+      
+      return true;
    }
    
    private String defaultAppName(FileSystemItem workingDir)
@@ -151,11 +226,20 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    
    private DirectoryChooserTextBox directoryChooserTextBox_;
    
+   private HelpLink shinyHelpLink_;
+   
+   private static final Pattern RE_VALID_APP_NAME = Pattern.create(
+         "^" +
+         "[" + RegexUtil.wordCharacter() + "]" +
+         "[" + RegexUtil.wordCharacter() + "._-]*" +
+         "$", "");
+   
    // Styles ----
    
    public interface Styles extends CssResource
    {
       String label();
+      String invalidAppName();
    }
 
    public interface Resources extends ClientBundle
