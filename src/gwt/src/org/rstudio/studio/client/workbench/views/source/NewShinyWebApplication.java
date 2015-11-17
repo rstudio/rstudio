@@ -7,7 +7,6 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.ModalDialog;
-import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -167,6 +166,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       appNameLabel_.addStyleName(RES.styles().label());
       
       appNameTextBox_ = new TextBox();
+      appNameTextBox_.addStyleName(RES.styles().textBox());
       appNameTextBox_.getElement().getStyle().setMarginLeft(10, Unit.PX);
       appNameTextBox_.getElement().setAttribute("placeholder", "Name");
       appNameTextBox_.setText("shiny");
@@ -203,6 +203,8 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
          directoryChooserTextBox_.setText(cachedParentDir);
       else
          directoryChooserTextBox_.setText(defaultParentDir.getPath());
+      
+      directoryChooserTextBox_.addStyleName(RES.styles().textBox());
       
       // Add them to parent
       Grid appNameTypeGrid = new Grid(3, 2);
@@ -319,6 +321,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    {
       String label();
       String invalidAppName();
+      String textBox();
    }
 
    public interface Resources extends ClientBundle

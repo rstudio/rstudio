@@ -1,8 +1,14 @@
 @CHARSET "UTF-8";
 
+@external gwt-TextBox;
+
 .label {
 }
 
 .invalidAppName {
 	background-color: #f2dede;
+}
+
+.textBox, .textBox .gwt-TextBox {
+	padding-left: 4px;
 }
