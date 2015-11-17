@@ -137,7 +137,7 @@ public class ValueLabel<T> extends LabelBase<T> implements TakesValue<T>,
 
   public void setValue(T value) {
     this.value = value;
-    directionalTextHelper.setTextOrHtml(renderer.render(value), false);
+    directionalTextHelper.setText(renderer.render(value));
     updateHorizontalAlignment();
   }
 }

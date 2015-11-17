@@ -235,7 +235,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
 
   @Override
   public String getHTML() {
-    return directionalTextHelper.getTextOrHtml(true);
+    return directionalTextHelper.getHtml();
   }
 
   @Override
@@ -250,7 +250,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
 
   @Override
   public String getText() {
-    return directionalTextHelper.getTextOrHtml(false);
+    return directionalTextHelper.getText();
   }
 
   @Override
@@ -376,12 +376,12 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
 
   @Override
   public void setHTML(SafeHtml html, Direction dir) {
-    directionalTextHelper.setTextOrHtml(html.asString(), dir, true);
+    directionalTextHelper.setHtml(html, dir);
   }
 
   @Override
   public void setHTML(String html) {
-    directionalTextHelper.setTextOrHtml(html, true);
+    directionalTextHelper.setHtml(html);
   }
 
   @Override
@@ -402,12 +402,12 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
 
   @Override
   public void setText(String text) {
-    directionalTextHelper.setTextOrHtml(text, false);
+    directionalTextHelper.setText(text);
   }
 
   @Override
   public void setText(String text, Direction dir) {
-    directionalTextHelper.setTextOrHtml(text, dir, false);
+    directionalTextHelper.setText(text, dir);
   }
 
   /**

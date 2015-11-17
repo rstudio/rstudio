@@ -257,7 +257,7 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
   }
 
   public String getHTML() {
-    return directionalTextHelper.getTextOrHtml(true);
+    return directionalTextHelper.getHtml();
   }
 
   /**
@@ -271,7 +271,7 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
   }
 
   public String getText() {
-    return directionalTextHelper.getTextOrHtml(false);
+    return directionalTextHelper.getText();
   }
 
   public Direction getTextDirection() {
@@ -323,11 +323,11 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
   }
 
   public void setHTML(String html) {
-    directionalTextHelper.setTextOrHtml(html, true);
+    directionalTextHelper.setHtml(html);
   }
 
   public void setHTML(SafeHtml html, Direction dir) {
-    directionalTextHelper.setTextOrHtml(html.asString(), dir, true);
+    directionalTextHelper.setHtml(html, dir);
   }
 
   /**
@@ -347,11 +347,11 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
   }
 
   public void setText(String text) {
-    directionalTextHelper.setTextOrHtml(text, false);
+    directionalTextHelper.setText(text);
   }
 
   public void setText(String text, Direction dir) {
-    directionalTextHelper.setTextOrHtml(text, dir, false);
+    directionalTextHelper.setText(text, dir);
   }
 
   /**

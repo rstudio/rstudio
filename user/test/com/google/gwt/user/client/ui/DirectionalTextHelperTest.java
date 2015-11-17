@@ -111,6 +111,22 @@ public class DirectionalTextHelperTest extends GWTTestCase {
     testSetTextOrHtml(false);
   }
 
+  public void testSetText() {
+    element = Document.get().createDivElement();
+    directionalTextHelper = new DirectionalTextHelper(element,
+        /* is inline? */ false);
+    directionalTextHelper.setText(EN_TEXT);
+    assertEquals(EN_TEXT, directionalTextHelper.getText());
+  }
+
+  public void testSetHtml() {
+    element = Document.get().createDivElement();
+    directionalTextHelper = new DirectionalTextHelper(element,
+        /* is inline? */ false);
+    directionalTextHelper.setHtml(EN_HTML);
+    assertEquals(EN_HTML, directionalTextHelper.getHtml());
+  }
+
   /**
    * Asserts that both the {@link HasDirectionalText#getTextDirection} and the
    * physical dir attribute match the expected direction.

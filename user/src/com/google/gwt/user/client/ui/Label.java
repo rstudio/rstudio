@@ -330,7 +330,7 @@ public class Label extends LabelBase<String> implements HasDirectionalText,
   }
 
   public String getText() {
-    return directionalTextHelper.getTextOrHtml(false);
+    return directionalTextHelper.getText();
   }
 
   public Direction getTextDirection() {
@@ -386,7 +386,7 @@ public class Label extends LabelBase<String> implements HasDirectionalText,
    * @param text the widget's new text
    */
   public void setText(String text) {
-    directionalTextHelper.setTextOrHtml(text, false);
+    directionalTextHelper.setText(text);
     updateHorizontalAlignment();
   }
 
@@ -411,7 +411,7 @@ public class Label extends LabelBase<String> implements HasDirectionalText,
    *        direction should be inherited from the widget's parent element.
    */
   public void setText(String text, Direction dir) {
-    directionalTextHelper.setTextOrHtml(text, dir, false);
+    directionalTextHelper.setText(text, dir);
     updateHorizontalAlignment();
   }
 }

@@ -169,7 +169,7 @@ public class HTML extends Label
   }
 
   public String getHTML() {
-    return directionalTextHelper.getTextOrHtml(true);
+    return directionalTextHelper.getHtml();
   }
 
   /**
@@ -180,7 +180,7 @@ public class HTML extends Label
    * @param html the new widget's HTML content
    */
   public void setHTML(String html) {
-    directionalTextHelper.setTextOrHtml(html, true);
+    directionalTextHelper.setHtml(html);
     updateHorizontalAlignment();
   }
 
@@ -195,7 +195,7 @@ public class HTML extends Label
    *          direction should be inherited from the widget's parent element.
    */
   public void setHTML(String html, Direction dir) {
-    directionalTextHelper.setTextOrHtml(html, dir, true);
+    directionalTextHelper.setHtml(html, dir);
     updateHorizontalAlignment();
   }
 
