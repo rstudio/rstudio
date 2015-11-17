@@ -758,7 +758,7 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"/>
         
    <cmd id="newRShinyApp"
-        menuLabel="R Shiny _Web App..."
+        menuLabel="Shiny _Web App..."
         desc="Create a new Shiny web application"
         rebindable="false"/>  
         
