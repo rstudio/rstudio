@@ -174,6 +174,7 @@ import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
 import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSortedSet;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
@@ -1849,7 +1850,7 @@ public class GenerateJavaScriptAST {
       generateClassDefinition(type);
       generatePrototypeDefinitions(type);
 
-      maybeGenerateToStringAlias(type);
+      maybeGenerateObjectMethodsAliases(type);
     }
 
     private void markPosition(String name, Type type) {
@@ -2222,13 +2223,19 @@ public class GenerateJavaScriptAST {
       addTypeDefinitionStatement(type, createAssignment(castMapVarRef, castMapLiteral).makeStmt());
     }
 
-    private void maybeGenerateToStringAlias(JDeclaredType type) {
+    private void maybeGenerateObjectMethodsAliases(JDeclaredType type) {
       if (type == program.getTypeJavaLangObject()) {
         // special: setup a "toString" alias for java.lang.Object.toString()
-        JMethod toStringMethod = program.getIndexedMethod(RuntimeConstants.OBJECT_TO_STRING);
-        if (type.getMethods().contains(toStringMethod)) {
-          JsName toStringName = objectScope.declareUnobfuscatableName("toString");
-          generatePrototypeDefinitionAlias(toStringMethod, toStringName);
+        Set<JMethod> overridableJavaLangObjectMethods = ImmutableSet.of(
+            program.getIndexedMethodOrNull(RuntimeConstants.OBJECT_EQUALS),
+            program.getIndexedMethodOrNull(RuntimeConstants.OBJECT_HASHCODE),
+            program.getIndexedMethodOrNull(RuntimeConstants.OBJECT_TO_STRING));
+
+        for (JMethod method : type.getMethods()) {
+          if (overridableJavaLangObjectMethods.contains(method)) {
+            JsName methodJsName = objectScope.declareUnobfuscatableName(method.getName());
+            generatePrototypeDefinitionAlias(method, methodJsName);
+          }
         }
       }
     }

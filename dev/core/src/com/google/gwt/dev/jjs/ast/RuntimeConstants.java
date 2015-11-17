@@ -73,7 +73,9 @@ public class RuntimeConstants {
 
   public static final String OBJECT_CASTABLE_TYPE_MAP = "Object.castableTypeMap";
   public static final String OBJECT_CLAZZ = "Object.___clazz";
+  public static final String OBJECT_EQUALS = "Object.equals";
   public static final String OBJECT_GET_CLASS = "Object.getClass";
+  public static final String OBJECT_HASHCODE = "Object.hashCode";
   public static final String OBJECT_TO_STRING = "Object.toString";
   public static final String OBJECT_TYPEMARKER = "Object.typeMarker";
 

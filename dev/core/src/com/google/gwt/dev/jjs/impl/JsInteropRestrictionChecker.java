@@ -150,7 +150,7 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
           "More than one JsConstructor exists for %s.", getDescription(type));
     }
 
-    final JConstructor jsConstructor = (JConstructor) jsConstructors.get(0);
+    final JConstructor jsConstructor = jsConstructors.get(0);
 
     if (JjsUtils.getPrimaryConstructor(type) != jsConstructor) {
       logError(jsConstructor,
@@ -212,10 +212,6 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
             + "type with JsConstructor.",
         getDescription(primaryConstructor),
         getDescription(superPrimaryConsructor));
-  }
-
-  private boolean isDelegatingToConstructor(JConstructor ctor, JConstructor targetCtor) {
-    return JjsUtils.getDelegatedThisOrSuperConstructor(ctor) == targetCtor;
   }
 
   private void checkMember(
@@ -333,6 +329,48 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
     }
   }
 
+  private void checkSuperDispachToNativeJavaLangObjectMethodOverride() {
+    new JVisitor() {
+      JClassType superClass;
+      @Override
+      public boolean visit(JDeclaredType x, Context ctx) {
+        superClass = JjsUtils.getNativeSuperClassOrNull(x);
+        // Only examine code in non native subclasses of native JsTypes.
+        return x instanceof JClassType && superClass != null;
+      }
+
+      @Override
+      public boolean visit(JMethod x, Context ctx) {
+        // Do not report errors from synthetic method bodies, those errors are reported
+        // explicitly elsewhere.
+        return !x.isSynthetic();
+      }
+
+      @Override
+      public void endVisit(JMethodCall x, Context ctx) {
+        JMethod target = x.getTarget();
+        if (!x.isStaticDispatchOnly()) {
+          // Not a super call, allow.
+          return;
+        }
+
+        assert (!target.isStatic());
+        // Forbid calling through super when the target is the native implementation because
+        // it might not exist in the native supertype at runtime.
+        // TODO(rluble): lift this restriction by dispatching through a trampoline. Not that this
+        // trampoline is different that the one created for non static dispatches.
+        if ((overridesObjectMethod(target) && target.getEnclosingType().isJsNative())
+            || target.getEnclosingType() == jprogram.getTypeJavaLangObject()) {
+          logError(x, "Cannot use super to call '%s.%s'. 'java.lang.Object' methods in native "
+              + "JsTypes cannot be called using super.",
+              JjsUtils.getReadableDescription(superClass),
+              target.getName());
+          return;
+        }
+      }
+    }.accept(jprogram);
+  }
+
   private void checkMemberOfNativeJsType(JMember member) {
     if (member instanceof JMethod && ((JMethod) member).isJsniMethod()) {
       logError(member, "JSNI method %s is not allowed in a native JsType.",
@@ -342,6 +380,16 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
 
     if (member.isSynthetic() || member.isJsOverlay()) {
       return;
+    }
+
+    if (overridesObjectMethod(member)) {
+      if (member.getJsMemberType() != JsMemberType.METHOD
+          || !member.getName().equals(member.getJsName())) {
+        logError(member,
+            "Method %s cannot override a method from 'java.lang.Object' and change its name.",
+            getMemberDescription(member));
+        return;
+      }
     }
 
     JsMemberType jsMemberType = member.getJsMemberType();
@@ -374,6 +422,20 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
             getMemberDescription(member));
         break;
     }
+  }
+
+  private boolean overridesObjectMethod(JMember member) {
+    if (!(member instanceof JMethod)) {
+      return false;
+    }
+
+    JMethod method = (JMethod) member;
+    for (JMethod overriddenMethod : method.getOverriddenMethods()) {
+      if (overriddenMethod.getEnclosingType() == jprogram.getTypeJavaLangObject()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void checkMethodParameters(JMethod method) {
@@ -772,6 +834,7 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
     }
     checkStaticJsPropertyCalls();
     checkInstanceOfNativeJsTypesOrJsFunctionImplementations();
+    checkSuperDispachToNativeJavaLangObjectMethodOverride();
     if (wasUnusableByJsWarningReported) {
       logSuggestion(
           "Suppress \"[unusable-by-js]\" warnings by adding a "
@@ -794,6 +857,10 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
     return isJsConstructorSubtype(superClass);
   }
 
+  private static boolean isSubclassOfNativeClass(JDeclaredType type) {
+    return JjsUtils.getNativeSuperClassOrNull(type) != null;
+  }
+
   private void checkType(JDeclaredType type) {
     minimalRebuildCache.removeExportedNames(type.getName());
 
@@ -809,6 +876,8 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
       if (!checkNativeJsType(type)) {
         return;
       }
+    } else if (isSubclassOfNativeClass(type)) {
+      checkSubclassOfNativeClass(type);
     }
 
     if (type.isJsFunction()) {
@@ -825,6 +894,28 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
     Map<String, JsMember> localNames = collectLocalNames(type.getSuperClass());
     for (JMember member : type.getMembers()) {
       checkMember(member, localNames, ownGlobalNames);
+    }
+  }
+
+  private void checkSubclassOfNativeClass(JDeclaredType type) {
+    assert (type instanceof JClassType);
+    for (JMethod method : type.getMethods()) {
+      if (!overridesObjectMethod(method) || !method.isSynthetic()) {
+        continue;
+      }
+      // Only look at synthetic (accidental) overrides.
+      for (JMethod overridenMethod : method.getOverriddenMethods()) {
+        if (overridenMethod.getEnclosingType() instanceof JInterfaceType
+            && overridenMethod.getJsMemberType() != JsMemberType.METHOD) {
+          logError(
+              type,
+              "Native JsType subclass %s can not implement interface %s that declares method '%s' "
+                  + "inherited from java.lang.Object.",
+              getDescription(type),
+              getDescription(overridenMethod.getEnclosingType()),
+              overridenMethod.getName());
+        }
+      }
     }
   }
 

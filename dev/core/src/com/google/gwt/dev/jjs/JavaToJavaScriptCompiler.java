@@ -105,6 +105,7 @@ import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.RecordRebinds;
 import com.google.gwt.dev.jjs.impl.RemoveEmptySuperCalls;
 import com.google.gwt.dev.jjs.impl.RemoveSpecializations;
+import com.google.gwt.dev.jjs.impl.ReplaceCallsToNativeJavaLangObjectOverrides;
 import com.google.gwt.dev.jjs.impl.ReplaceDefenderMethodReferences;
 import com.google.gwt.dev.jjs.impl.ReplaceGetClassOverrides;
 import com.google.gwt.dev.jjs.impl.ResolvePermutationDependentValues;
@@ -1152,6 +1153,8 @@ public final class JavaToJavaScriptCompiler {
       // (3) Normalize the unresolved Java AST
       // Replace defender method references
       ReplaceDefenderMethodReferences.exec(jprogram);
+      // Replace calls to native overrides of object methods.
+      ReplaceCallsToNativeJavaLangObjectOverrides.exec(jprogram);
 
       FixAssignmentsToUnboxOrCast.exec(jprogram);
       if (options.isEnableAssertions()) {

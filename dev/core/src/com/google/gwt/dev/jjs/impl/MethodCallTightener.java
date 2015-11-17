@@ -125,7 +125,11 @@ public class MethodCallTightener {
       JMethod mostSpecificOverride =
           program.typeOracle.findMostSpecificOverride(underlyingType, original);
 
-      if (mostSpecificOverride == original) {
+      if (mostSpecificOverride == original
+          // Never tighten object methods to native implementations. This decision forces
+          // the use of the Object trampoline for hashcCode, equals and toString.
+          || (original.getEnclosingType().isJavaLangObject()
+              && mostSpecificOverride.isJsNative())) {
         return methodCall;
       }
       JMethodCall newCall = new JMethodCall(

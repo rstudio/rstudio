@@ -132,7 +132,7 @@ public class JavaScriptObject {
    */
   @Override
   public final boolean equals(Object other) {
-    return super.equals(other);
+    return hasEquals() ? callEquals(other) : super.equals(other);
   }
 
   /**
@@ -140,14 +140,12 @@ public class JavaScriptObject {
    * underlying JavaScript object. Do not call this method on non-modifiable
    * JavaScript objects.
    *
-   * TODO: if the underlying object defines a 'hashCode' method maybe use that?
-   *
    * @return the hash code of the object
    */
   @Override
   public final int hashCode() {
-    return super.hashCode();
-  }
+    return hasHashCode() ? callHashCode() : super.hashCode();
+  };
 
   /**
    * Call the toSource() on the JSO.
@@ -169,4 +167,20 @@ public class JavaScriptObject {
     return JavaScriptObject.class.desiredAssertionStatus() ?
         toStringVerbose(this) : toStringSimple(this);
   }
+
+  private native boolean hasEquals() /*-{
+    return !!this.equals;
+  }-*/;
+
+  private native boolean hasHashCode() /*-{
+    return !!this.hashCode;
+  }-*/;
+
+  private native boolean callEquals(Object other) /*-{
+    return this.equals(other);
+  }-*/;
+
+  private native int callHashCode() /*-{
+    return this.hashCode();
+  }-*/;
 }

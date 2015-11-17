@@ -27,6 +27,7 @@ import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.AccessModifier;
 import com.google.gwt.dev.jjs.ast.CanHaveSuppressedWarnings;
 import com.google.gwt.dev.jjs.ast.HasJsInfo;
+import com.google.gwt.dev.jjs.ast.HasJsInfo.JsMemberType;
 import com.google.gwt.dev.jjs.ast.JArrayLength;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JArrayType;
@@ -247,13 +248,16 @@ public class GwtAstBuilder {
 
   public static final String CLINIT_METHOD_NAME = "$clinit";
   public static final String GET_CLASS_METHOD_NAME = "getClass";
+  public static final String EQUALS_METHOD_NAME = "equals";
   public static final String HAS_NEXT_METHOD_NAME = "hasNext";
+  public static final String HASHCODE_METHOD_NAME = "hashCode";
   public static final String ITERATOR_METHOD_NAME = "iterator";
   public static final String INIT_NAME_METHOD_NAME = "$init";
   public static final String NEXT_METHOD_NAME = "next";
   public static final String ORDINAL_METHOD_NAME = "ordinal";
   public static final String OUTER_LAMBDA_PARAM_NAME = "$$outer_0";
   public static final String STATIC_INIT_METHOD_NAME =  "$" + INIT_NAME_METHOD_NAME;
+  public static final String TO_STRING_METHOD_NAME = "toString";
   public static final String VALUE_OF_METHOD_NAME = "valueOf";
   public static final String VALUES_METHOD_NAME = "values";
 
@@ -2531,6 +2535,9 @@ public class GwtAstBuilder {
       }
 
       if (type instanceof JClassType) {
+        if (type.isJsNative()) {
+          maybeImplementJavaLangObjectMethodsOnNativeClass(type);
+        }
         addBridgeMethods(x.binding);
       }
 
@@ -2904,6 +2911,47 @@ public class GwtAstBuilder {
       } else {
         JjsUtils.replaceMethodBody(method, new JClassLiteral(info, type));
       }
+    }
+
+    private void maybeImplementJavaLangObjectMethodsOnNativeClass(JDeclaredType type) {
+      maybeCreateSyntheticJavaLangObjectMethodNativeOverride(
+          type, EQUALS_METHOD_NAME, JPrimitiveType.BOOLEAN, javaLangObject);
+      maybeCreateSyntheticJavaLangObjectMethodNativeOverride(
+          type, HASHCODE_METHOD_NAME, JPrimitiveType.INT);
+      maybeCreateSyntheticJavaLangObjectMethodNativeOverride(
+          type, TO_STRING_METHOD_NAME, javaLangString);
+    }
+
+    private void maybeCreateSyntheticJavaLangObjectMethodNativeOverride(
+        JDeclaredType type, String name, JType returnType, JType... parameterTypes) {
+      SourceInfo info = type.getSourceInfo();
+      JMethod method =
+          new JMethod(info, name, type, returnType, false, false, false, AccessModifier.PUBLIC);
+      int i = 0;
+      for (JType parameterType : parameterTypes) {
+        method.createParameter(info, "arg" + i++, parameterType);
+      }
+      method.freezeParamTypes();
+      // Do not mark this methods as synthetic because of the risk of missing some checks in
+      // JsInteropRestrictionChecker where we skip synthetic methods in many of the checks.
+      assert (!method.isSynthetic());
+      // Creating a method without a body makes it native.
+      assert (method.isJsNative());
+      final String signature = method.getJsniSignature(false, false);
+      boolean alreadyExists = Iterables.any(type.getMethods(), new Predicate<JMethod>() {
+        @Override
+        public boolean apply(JMethod typeMethod) {
+          return typeMethod.getJsniSignature(false, false).equals(signature);
+        }
+      });
+      if (alreadyExists) {
+        return;
+      }
+      type.addMethod(method);
+      // This method is declared in a native JsType, make sure JsInfo is populated correctly, by
+      // applying the JsType rules.
+      JsInteropUtil.maybeSetJsInteropProperties(method, generateJsInteropExports);
+      assert (method.getJsMemberType() == JsMemberType.METHOD);
     }
 
     private JDeclarationStatement makeDeclaration(SourceInfo info, JLocal local,

@@ -92,10 +92,12 @@ public class JMethodCall extends JExpression {
     this.markedAsSideAffectFree = other.markedAsSideAffectFree;
     addArgs(args);
   }
+
   /**
    * Create a method call.
    */
-  public JMethodCall(SourceInfo info, JExpression instance, JMethod method, JExpression... args) {
+  public JMethodCall(
+      SourceInfo info, JExpression instance, JMethod method, List<JExpression> args) {
     super(info);
     assert (method != null);
     assert (instance != null || method.isStatic() || this instanceof JNewInstance);
@@ -103,6 +105,13 @@ public class JMethodCall extends JExpression {
     this.method = method;
     this.overriddenReturnType = null;
     addArgs(args);
+  }
+
+  /**
+   * Create a method call.
+   */
+  public JMethodCall(SourceInfo info, JExpression instance, JMethod method, JExpression... args) {
+    this(info, instance, method, Arrays.asList(args));
   }
 
   /**

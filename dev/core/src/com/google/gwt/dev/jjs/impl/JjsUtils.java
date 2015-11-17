@@ -615,6 +615,17 @@ public class JjsUtils {
     return null;
   }
 
+  /**
+   * Returns the nearest native superclass of {@code type} if any, null otherwise.
+   */
+  public static JClassType getNativeSuperClassOrNull(JDeclaredType type) {
+    JClassType superClass = type.getSuperClass();
+    if (superClass == null || superClass.isJsNative()) {
+      return superClass;
+    }
+    return getNativeSuperClassOrNull(superClass);
+  }
+
   private JjsUtils() {
   }
 }
