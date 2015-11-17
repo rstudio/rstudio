@@ -104,15 +104,13 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       
       container_.add(new VerticalSpacer("12px"));
       container_.add(directoryChooserTextBox_);
-      
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         @Override
-         public void execute()
-         {
-            appNameTextBox_.setFocus(true);
-         }
-      });
+   }
+   
+   @Override
+   protected void onDialogShown()
+   {
+      super.onDialogShown();
+      appNameTextBox_.setFocus(true);
    }
    
    private String defaultAppName(FileSystemItem workingDir)
