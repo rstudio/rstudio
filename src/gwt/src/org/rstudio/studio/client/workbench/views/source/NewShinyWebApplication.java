@@ -251,21 +251,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
          globalDisplay_.showErrorMessage(
                "Invalid Application Name",
                message,
-               new Operation()
-               {
-                  @Override
-                  public void execute()
-                  {
-                     Scheduler.get().scheduleFinally(new ScheduledCommand()
-                     {
-                        @Override
-                        public void execute()
-                        {
-                           appNameTextBox_.setFocus(true);
-                        }
-                     });
-                  }
-               });
+               appNameTextBox_);
          return false;
       }
       
