@@ -1068,24 +1068,6 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onResponseReceived(JsObject createdFiles)
                {
-                  // Loop once to collect failures
-                  List<String> failedPaths = new ArrayList<String>();
-                  for (String filePath : JsUtil.asIterable(createdFiles.keys()))
-                  {
-                     boolean success = createdFiles.getBoolean(filePath);
-                     if (!success)
-                        failedPaths.add(filePath);
-                  }
-                  
-                  if (!failedPaths.isEmpty())
-                  {
-                     String message = "Failed to create the following files:\n";
-                     for (String path : failedPaths)
-                        message += "\n\t" + path;
-                     globalDisplay_.showErrorMessage("Error Creating Shiny Application", message);
-                     return;
-                  }
-                  
                   // Open and focus files that we created
                   for (String filePath : JsUtil.asIterable(createdFiles.keys()))
                   {

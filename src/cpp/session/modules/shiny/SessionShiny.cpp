@@ -240,6 +240,43 @@ Error createShinyApp(const json::JsonRpcRequest& request,
    }
    
    FilePath appDir = module_context::resolveAliasedPath(appDirString);
+   FilePath shinyDir = appDir.complete(appName);
+   
+   // if shinyDir exists and is not an empty directory, bail
+   if (shinyDir.exists())
+   {
+      if (!shinyDir.isDirectory())
+      {
+         pResponse->setError(
+                  fileExistsError(ERROR_LOCATION),
+                  "The directory '" + module_context::createAliasedPath(shinyDir) + "' already exists "
+                  "and is not a directory");
+         return Success();
+      }
+      
+      std::vector<FilePath> children;
+      Error error = shinyDir.children(&children);
+      if (error)
+         LOG_ERROR(error);
+      
+      if (!children.empty())
+      {
+         pResponse->setError(
+                  fileExistsError(ERROR_LOCATION),
+                  "The directory '" + module_context::createAliasedPath(shinyDir) + "' already exists "
+                  "and is not empty");
+         return Success();
+      }
+   }
+   else
+   {
+      Error error = shinyDir.ensureDirectory();
+      if (error)
+      {
+         pResponse->setError(error);
+         return Success();
+      }
+   }
    
    // collect the files we want to generate
    std::vector<std::string> templateFiles;
@@ -257,8 +294,8 @@ Error createShinyApp(const json::JsonRpcRequest& request,
    std::vector<std::string> existingFiles;
    BOOST_FOREACH(const std::string& fileName, templateFiles)
    {
-      FilePath filePath = appDir.complete(fileName);
-      std::string aliasedPath = module_context::createAliasedPath(appDir.complete(fileName));
+      FilePath filePath = shinyDir.complete(fileName);
+      std::string aliasedPath = module_context::createAliasedPath(shinyDir.complete(fileName));
       
       if (filePath.exists())
          existingFiles.push_back(aliasedPath);
@@ -290,7 +327,7 @@ Error createShinyApp(const json::JsonRpcRequest& request,
    // copy the files (updates success in 'result')
    BOOST_FOREACH(const std::string& fileName, templateFiles)
    {
-      FilePath target = appDir.complete(fileName);
+      FilePath target = shinyDir.complete(fileName);
       Error error = copyTemplateFile(fileName, target, &result);
       if (error)
       {

@@ -151,7 +151,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    }
    
    public NewShinyWebApplication(String caption, 
-                                 FileSystemItem workingDirectory,
+                                 FileSystemItem defaultParentDir,
                                  OperationWithInput<Result> operation)
    {
       super(caption, operation);
@@ -168,7 +168,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       appNameTextBox_ = new TextBox();
       appNameTextBox_.getElement().getStyle().setMarginLeft(10, Unit.PX);
       appNameTextBox_.getElement().setAttribute("placeholder", "Name");
-      appNameTextBox_.setText(defaultAppName(workingDirectory));
+      appNameTextBox_.setText("shiny");
       addTextFieldValidator(appNameTextBox_);
       
       appTypeLabel_ = new Label("Application Type:");
@@ -201,7 +201,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       if (!StringUtil.isNullOrEmpty(cachedParentDir))
          directoryChooserTextBox_.setText(cachedParentDir);
       else
-         directoryChooserTextBox_.setText(workingDirectory.getPath());
+         directoryChooserTextBox_.setText(defaultParentDir.getPath());
       
       // Add them to parent
       Grid appNameTypeGrid = new Grid(3, 2);
@@ -272,16 +272,6 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       return true;
    }
    
-   private String defaultAppName(FileSystemItem workingDir)
-   {
-      String path = workingDir.getPath();
-      int lastSlashIndex = path.lastIndexOf('/');
-      if (lastSlashIndex == -1)
-         return "";
-      
-      return path.substring(lastSlashIndex + 1);
-   }
-
    @Override
    protected Widget createMainWidget()
    {
