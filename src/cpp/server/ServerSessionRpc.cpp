@@ -71,7 +71,7 @@ void validateSessionSecretFilter(
    if (secret != s_sessionSharedSecret)
    {
       LOG_WARNING_MESSAGE("Session attempted to invoke server RPC with invalid "
-                          "secret.");
+                          "secret " + secret);
       pRequest->setUri(kInvalidSecretEndpoint);
    }
    continuation(boost::shared_ptr<http::Response>());
@@ -121,8 +121,7 @@ Error initialize()
       // create the shared secret and validate it on every request
       s_sessionSharedSecret = core::system::generateUuid();
       s_pSessionRpcServer->setRequestFilter(validateSessionSecretFilter);
-      s_pSessionRpcServer->addHandler(kInvalidSecretEndpoint,
-                                      invalidSecretHandler);
+      addHandler(kInvalidSecretEndpoint, invalidSecretHandler);
 
       // inject the shared secret into the session
       sessionManager().addSessionLaunchProfileFilter(sessionProfileFilter);
