@@ -1,5 +1,6 @@
 package org.rstudio.studio.client.workbench.views.source;
 
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -50,7 +51,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    }
    
    public NewShinyWebApplication(String caption, 
-                                 String workingDirectory,
+                                 FileSystemItem workingDirectory,
                                  OperationWithInput<Result> operation)
    {
       super(caption, operation);
@@ -87,7 +88,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       appTypeSelectWidget_.getElement().getStyle().setMarginBottom(0, Unit.PX);
       
       directoryChooserTextBox_ = new DirectoryChooserTextBox("Directory:", null);
-      directoryChooserTextBox_.setText(workingDirectory);
+      directoryChooserTextBox_.setText(workingDirectory.getPath());
       
       // Add them to parent
       Grid appNameTypeGrid = new Grid(3, 2);
@@ -114,13 +115,14 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       });
    }
    
-   private String defaultAppName(String workingDir)
+   private String defaultAppName(FileSystemItem workingDir)
    {
-      int lastSlashIndex = workingDir.lastIndexOf('/');
+      String path = workingDir.getPath();
+      int lastSlashIndex = path.lastIndexOf('/');
       if (lastSlashIndex == -1)
          return "";
       
-      return workingDir.substring(lastSlashIndex + 1);
+      return path.substring(lastSlashIndex + 1);
    }
 
    @Override

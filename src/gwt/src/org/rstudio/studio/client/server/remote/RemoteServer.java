@@ -1378,11 +1378,6 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "validate_project_path", projectPath, callback);
    }
    
-   public void getWorkingDirectory(ServerRequestCallback<String> callback)
-   {
-      sendRequest(RPC_SCOPE, GET_WORKING_DIRECTORY, callback);
-   }
-   
    public void createShinyApp(String appName,
                               String appType,
                               String appDir,
@@ -4495,7 +4490,6 @@ public class RemoteServer implements Server
    private static final String EXECUTE_R_CODE = "execute_r_code";
 
    private static final String GET_NEW_PROJECT_CONTEXT = "get_new_project_context";
-   private static final String GET_WORKING_DIRECTORY = "get_working_directory";
    private static final String GET_NEW_SESSION_URL = "get_new_session_url";
    private static final String GET_ACTIVE_SESSIONS = "get_active_sessions";
    private static final String GET_AVAILABLE_R_VERSIONS = "get_available_r_versions";
