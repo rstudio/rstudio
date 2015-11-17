@@ -645,6 +645,21 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
             + "both use the same JavaScript name 'foo'.");
   }
 
+  public void testShadowedSuperclassJsMethodFails() {
+    addSnippetImport("jsinterop.annotations.JsMethod");
+    addSnippetClassDecl(
+        "public static class ParentBuggy {",
+        "  @JsMethod private void foo() {}",
+        "}",
+        "public static class Buggy extends ParentBuggy {",
+        "  @JsMethod private void foo() {}",
+        "}");
+
+    assertBuggyFails(
+        "Line 8: 'void EntryPoint.Buggy.foo()' and 'void EntryPoint.ParentBuggy.foo()' cannot "
+            + "both use the same JavaScript name 'foo'.");
+  }
+
   public void testRenamedSuperclassJsMethodFails() {
     addSnippetImport("jsinterop.annotations.JsType");
     addSnippetImport("jsinterop.annotations.JsMethod");

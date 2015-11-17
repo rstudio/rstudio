@@ -25,6 +25,7 @@ import java.util.Iterator;
 
 import javaemul.internal.annotations.DoNotInline;
 import jsinterop.annotations.JsFunction;
+import jsinterop.annotations.JsMethod;
 import jsinterop.annotations.JsOverlay;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsProperty;
@@ -538,5 +539,18 @@ public class JsTypeTest extends GWTTestCase {
         SomeConcreteSubclass.class.getName().compareTo(SomeZAbstractSubclass.class.getName()) < 0);
     SomeConcreteSubclass o = new SomeConcreteSubclass();
     assertEquals(o, o.m());
+  }
+
+  static class NonPublicJsMethodClass {
+    @JsMethod private String foo() { return "foo"; }
+    @JsMethod String bar() { return "bar"; }
+  }
+
+  public void testJsMethodWithDifferentVisiblities() {
+    NonPublicJsMethodClass instance = new NonPublicJsMethodClass();
+    assertEquals("foo", instance.foo());
+    assertEquals("bar", instance.bar());
+    assertEquals("foo", callFunction(instance, "foo", null));
+    assertEquals("bar", callFunction(instance, "bar", null));
   }
 }

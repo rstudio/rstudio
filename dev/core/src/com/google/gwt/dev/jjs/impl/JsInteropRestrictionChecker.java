@@ -770,8 +770,16 @@ public class JsInteropRestrictionChecker {
     // Methods that only differ in return types are Java overrides and need to be considered so
     // for local name collision checking.
     JMethod potentiallyOverriddenMethod = (JMethod) potentiallyOverriddenMember;
-    return method.getJsniSignature(false, false)
-        .equals(potentiallyOverriddenMethod.getJsniSignature(false, false));
+
+    // TODO(goktug): make this more precise to handle package visibilities.
+    boolean visibilitiesMatchesForOverride =
+        !method.isPackagePrivate() && !method.isPrivate()
+        && !potentiallyOverriddenMethod.isPackagePrivate()
+        && !potentiallyOverriddenMethod.isPrivate();
+
+    return visibilitiesMatchesForOverride
+        && method.getJsniSignature(false, false)
+               .equals(potentiallyOverriddenMethod.getJsniSignature(false, false));
   }
 
   private static String getDescription(HasSourceInfo hasSourceInfo) {

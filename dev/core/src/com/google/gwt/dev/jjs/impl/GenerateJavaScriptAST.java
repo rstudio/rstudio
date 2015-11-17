@@ -360,17 +360,10 @@ public class GenerateJavaScriptAST {
       String name = x.getName();
       if (x.needsDynamicDispatch()) {
         if (polymorphicNames.get(x) == null) {
-          JsName polyName;
-          if (x.isPrivate()) {
-            polyName = interfaceScope.declareName(mangleNameForPrivatePoly(x), name);
-          } else if (x.isPackagePrivate()) {
-            polyName = interfaceScope.declareName(mangleNameForPackagePrivatePoly(x), name);
-          } else {
-            polyName =
-                x.getJsMemberType() != JsMemberType.NONE
-                    ? interfaceScope.declareUnobfuscatableName(x.getJsName())
-                    : interfaceScope.declareName(mangleNameForPoly(x), name);
-          }
+          JsName polyName =
+              x.getJsMemberType() != JsMemberType.NONE
+                  ? interfaceScope.declareUnobfuscatableName(x.getJsName())
+                  : interfaceScope.declareName(mangleNameForPoly(x), name);
           polymorphicNames.put(x, polyName);
         }
       }
@@ -2950,8 +2943,16 @@ public class GenerateJavaScriptAST {
   }
 
   private String mangleNameForPoly(JMethod method) {
-    assert !method.isPrivate() && !method.isStatic();
+    if (method.isPrivate()) {
+      return mangleNameForPrivatePoly(method);
+    } else if (method.isPackagePrivate()) {
+      return mangleNameForPackagePrivatePoly(method);
+    } else {
+      return mangleNameForPublicPoly(method);
+    }
+  }
 
+  private String mangleNameForPublicPoly(JMethod method) {
     return StringInterner.get().intern(
         JjsUtils.constructManglingSignature(method, JjsUtils.mangledNameString(method)));
   }
