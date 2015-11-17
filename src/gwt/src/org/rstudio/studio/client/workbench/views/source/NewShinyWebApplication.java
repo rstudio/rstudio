@@ -160,6 +160,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       loadAndPersistClientState();
       
       container_ = new VerticalPanel();
+      container_.setWidth("100%");
       
       // Create individual widgets
       appNameLabel_ = new Label("Application Name:");
@@ -217,6 +218,8 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       
       container_.add(new VerticalSpacer("12px"));
       container_.add(directoryChooserTextBox_);
+      
+      container_.add(new VerticalSpacer("12px"));
       
       shinyHelpLink_ = new HelpLink(
             "Creating Shiny Applications",
