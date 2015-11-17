@@ -16,6 +16,7 @@
 #include "SessionShiny.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/foreach.hpp>
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
@@ -204,7 +205,7 @@ FilePath shinyTemplatePath(const std::string& name)
    return session::options().rResourcesPath().childPath("templates/shiny/" + name);
 }
 
-void copyTemplateFile(const std::string& templateFileName,
+Error copyTemplateFile(const std::string& templateFileName,
                       const FilePath& target,
                       json::Object* pResult)
 {
@@ -215,11 +216,14 @@ void copyTemplateFile(const std::string& templateFileName,
    
    std::string aliasedPath = module_context::createAliasedPath(target);
    (*pResult)[aliasedPath] = (error == Success());
+   return error;
 }
 
 Error createShinyApp(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
+   json::Object result;
+   
    std::string appName;
    std::string appType;
    std::string appDirString;
@@ -234,19 +238,40 @@ Error createShinyApp(const json::JsonRpcRequest& request,
       return error;
    }
    
-   json::Object result;
    FilePath appDir = module_context::resolveAliasedPath(appDirString);
    
+   // collect the files we want to generate
+   std::vector<std::string> templateFiles;
    if (appType == kShinyAppTypeSingleFile)
    {
-      // app.R
-      copyTemplateFile("app.R", appDir.complete("app.R"), &result);
+      templateFiles.push_back("app.R");
    }
    else if (appType == kShinyAppTypeMultiFile)
    {
-      // ui.R
-      copyTemplateFile("ui.R", appDir.complete("ui.R"), &result);
-      copyTemplateFile("server.R", appDir.complete("server.R"), &result);
+      templateFiles.push_back("ui.R");
+      templateFiles.push_back("server.R");
+   }
+   
+   // by default, report failure to create a file
+   BOOST_FOREACH(const std::string& fileName, templateFiles)
+   {
+      std::string aliasedPath = module_context::createAliasedPath(appDir.complete(fileName));
+      result[aliasedPath] = false;
+   }
+   pResponse->setResult(result);
+   
+   // if any of the files already exist, bail
+   BOOST_FOREACH(const std::string& fileName, templateFiles)
+   {
+      FilePath target = appDir.complete(fileName);
+      if (target.exists())
+         return Success();
+   }
+   
+   // copy the files (updates success in 'result')
+   BOOST_FOREACH(const std::string& fileName, templateFiles)
+   {
+      copyTemplateFile(fileName, appDir.complete(fileName), &result);
    }
    
    pResponse->setResult(result);
