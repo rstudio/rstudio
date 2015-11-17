@@ -18,6 +18,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
 
+#include <core/Algorithm.hpp>
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
@@ -252,26 +253,51 @@ Error createShinyApp(const json::JsonRpcRequest& request,
       templateFiles.push_back("server.R");
    }
    
-   // by default, report failure to create a file
+   // if any files already exist, report that as an error
+   std::vector<std::string> existingFiles;
    BOOST_FOREACH(const std::string& fileName, templateFiles)
    {
+      FilePath filePath = appDir.complete(fileName);
       std::string aliasedPath = module_context::createAliasedPath(appDir.complete(fileName));
+      
+      if (filePath.exists())
+         existingFiles.push_back(aliasedPath);
+      
       result[aliasedPath] = false;
    }
-   pResponse->setResult(result);
    
-   // if any of the files already exist, bail
-   BOOST_FOREACH(const std::string& fileName, templateFiles)
+   if (!existingFiles.empty())
    {
-      FilePath target = appDir.complete(fileName);
-      if (target.exists())
-         return Success();
+      
+      std::string message;
+      if (existingFiles.size() == 1)
+      {
+         message = "The file '" + existingFiles[0] + "' already exists";
+      }
+      else
+      {
+         message =
+            "The following files already exist:\n\n\t" +
+            core::algorithm::join(existingFiles, "\n\t");
+      }
+      
+      pResponse->setError(
+               fileExistsError(ERROR_LOCATION),
+               message);
+      return Success();
    }
    
    // copy the files (updates success in 'result')
    BOOST_FOREACH(const std::string& fileName, templateFiles)
    {
-      copyTemplateFile(fileName, appDir.complete(fileName), &result);
+      FilePath target = appDir.complete(fileName);
+      Error error = copyTemplateFile(fileName, target, &result);
+      if (error)
+      {
+         std::string aliasedPath = module_context::createAliasedPath(target);
+         pResponse->setError(error, "Failed to write '" + aliasedPath + "'");
+         return Success();
+      }
    }
    
    pResponse->setResult(result);
