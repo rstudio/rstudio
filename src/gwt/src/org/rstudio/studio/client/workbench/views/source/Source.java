@@ -1063,7 +1063,7 @@ public class Source implements InsertSourceHandler,
             result.getAppName(),
             result.getAppType(),
             result.getAppDir(),
-            new ServerRequestCallback<JsObject>()
+            new SimpleRequestCallback<JsObject>("Error Creating Shiny Application")
             {
                @Override
                public void onResponseReceived(JsObject createdFiles)
@@ -1099,27 +1099,6 @@ public class Source implements InsertSourceHandler,
                         }
                      });
                   }
-               }
-               
-               @Override
-               public void onError(ServerError error)
-               {
-                  Debug.logError(error);
-                  
-                  String message = error.getUserMessage();
-                  
-                  // see if a special message was provided
-                  JSONValue errValue = error.getClientInfo();
-                  if (errValue != null)
-                  {
-                     JSONString errMsg = errValue.isString();
-                     if (errMsg != null)
-                        message = errMsg.stringValue();
-                  }
-                  
-                  globalDisplay_.showErrorMessage(
-                        "Error Creating Shiny Application",
-                        message);
                }
             });
    }

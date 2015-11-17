@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.common;
 
+import com.google.gwt.json.client.JSONString;
+import com.google.gwt.json.client.JSONValue;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
@@ -35,9 +38,21 @@ public class SimpleRequestCallback<T> extends ServerRequestCallback<T>
    public void onError(ServerError error)
    {
       Debug.logError(error);
+      
+      String message = error.getUserMessage();
+
+      // see if a special message was provided
+      JSONValue errValue = error.getClientInfo();
+      if (errValue != null)
+      {
+         JSONString errMsg = errValue.isString();
+         if (errMsg != null)
+            message = errMsg.stringValue();
+      }
+      
       RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
             caption_,
-            error.getUserMessage());
+            message);
    }
 
    private String caption_;
