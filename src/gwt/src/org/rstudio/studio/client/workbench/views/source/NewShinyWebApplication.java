@@ -20,7 +20,6 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.dom.client.Style.VerticalAlign;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -35,7 +34,6 @@ import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 import com.google.inject.Inject;
 
 public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.Result>
@@ -172,8 +170,13 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       appNameTextBox_.addStyleName(RES.styles().textBox());
       appNameTextBox_.getElement().getStyle().setMarginLeft(10, Unit.PX);
       appNameTextBox_.getElement().setAttribute("placeholder", "Name");
-      appNameTextBox_.setText("shiny");
       addTextFieldValidator(appNameTextBox_);
+      
+      String cachedAppName = result_.getAppName();
+      String appName = StringUtil.isNullOrEmpty(cachedAppName)
+            ? "shiny"
+            : cachedAppName;
+      appNameTextBox_.setText(appName);
       
       appTypeLabel_ = new Label("Application Type:");
       appTypeLabel_.addStyleName(RES.styles().label());
