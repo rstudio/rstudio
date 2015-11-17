@@ -5,6 +5,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.ModalDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -181,7 +182,22 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
          
          display.showErrorMessage(
                "Invalid Application Name",
-               message);
+               message,
+               new Operation()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     Scheduler.get().scheduleFinally(new ScheduledCommand()
+                     {
+                        @Override
+                        public void execute()
+                        {
+                           appNameTextBox_.setFocus(true);
+                        }
+                     });
+                  }
+               });
          return false;
       }
       
