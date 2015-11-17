@@ -2,12 +2,12 @@
 # This is a single-file Shiny web application.
 # You can find out more about building applications with Shiny here:
 #
-# http://www.rstudio.com/shiny/
+#    http://shiny.rstudio.com/
 #
 
 server <- function(input, output) {
   output$distPlot <- renderPlot({
-    hist(rnorm(input$obs), col = 'darkgray', border = 'white')
+    hist(rnorm(input$obs), col = "darkgray", border = "white")
   })
 }
 
