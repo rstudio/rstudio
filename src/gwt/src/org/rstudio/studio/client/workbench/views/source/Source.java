@@ -137,7 +137,6 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 
 public class Source implements InsertSourceHandler,
                                IsWidget,

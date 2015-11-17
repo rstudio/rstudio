@@ -8,7 +8,6 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
@@ -21,6 +20,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style.VerticalAlign;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -29,10 +29,13 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 import com.google.inject.Inject;
 
 public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.Result>
@@ -174,27 +177,21 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       
       appTypeLabel_ = new Label("Application Type:");
       appTypeLabel_.addStyleName(RES.styles().label());
+      appTypeLabel_.getElement().getStyle().setMarginTop(2, Unit.PX);
       
-      appTypeSelectWidget_ = new SelectWidget(
-            "",
-            new String[] {
-                  "Single File (app.R)",
-                  "Multiple File (ui.R/server.R)",
-            },
-            new String[] {
-                  TYPE_SINGLE_FILE,
-                  TYPE_MULTI_FILE
-            },
-            false,
-            true,
-            false);
-      
-      appTypeSelectWidget_.getElement().getStyle().setMarginTop(0, Unit.PX);
-      appTypeSelectWidget_.getElement().getStyle().setMarginBottom(0, Unit.PX);
+      VerticalPanel radioPanel = new VerticalPanel();
+      appTypeSingleFileButton_ = new RadioButton("shiny", "Single File (app.R)");
+      appTypeMultipleFileButton_ = new RadioButton("shiny", "Multiple File (ui.R/server.R)");
+      radioPanel.add(appTypeSingleFileButton_);
+      radioPanel.add(appTypeMultipleFileButton_);
       
       String cachedAppType = result_.getAppType();
-      if (!StringUtil.isNullOrEmpty(cachedAppType))
-         appTypeSelectWidget_.setValue(cachedAppType);
+      if ("single".equals(cachedAppType))
+         appTypeSingleFileButton_.setValue(true);
+      else if ("multiple".equals(cachedAppType))
+         appTypeMultipleFileButton_.setValue(true);
+      else
+         appTypeSingleFileButton_.setValue(true);
       
       directoryChooserTextBox_ = new DirectoryChooserTextBox("Create within directory:", null);
       
@@ -214,8 +211,9 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       appNameTypeGrid.setWidget(1, 0, new VerticalSpacer("4px"));
       appNameTypeGrid.setWidget(1, 1, new VerticalSpacer("4px"));
       
+      appNameTypeGrid.getCellFormatter().setVerticalAlignment(2, 0, HasVerticalAlignment.ALIGN_TOP);
       appNameTypeGrid.setWidget(2, 0, appTypeLabel_);
-      appNameTypeGrid.setWidget(2, 1, appTypeSelectWidget_);
+      appNameTypeGrid.setWidget(2, 1, radioPanel);
       container_.add(appNameTypeGrid);
       
       container_.add(new VerticalSpacer("12px"));
@@ -272,10 +270,17 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    @Override
    protected Result collectInput()
    {
+      String type = "";
+      if (appTypeSingleFileButton_.getValue())
+         type = "single";
+      else if (appTypeMultipleFileButton_.getValue())
+         type = "multiple";
+      
       result_ = Result.create(
             appNameTextBox_.getText().trim(),
-            appTypeSelectWidget_.getValue(),
+            type,
             directoryChooserTextBox_.getText());
+      
       return result_;
    }
    
@@ -295,7 +300,8 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    private TextBox appNameTextBox_;
    
    private Label   appTypeLabel_;
-   private SelectWidget appTypeSelectWidget_;
+   private RadioButton appTypeSingleFileButton_;
+   private RadioButton appTypeMultipleFileButton_;
    
    private DirectoryChooserTextBox directoryChooserTextBox_;
    
