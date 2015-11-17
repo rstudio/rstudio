@@ -135,9 +135,8 @@ final class Cast {
   /**
    * A dynamic cast that optionally checks for JsType prototypes.
    */
-  static Object castToNative(Object src, JavaScriptObject dstId, JavaScriptObject jsType) {
-    // TODO(goktug): Remove canCast after new JsInterop semantics.
-    checkType(src == null || canCast(src, dstId) || jsinstanceOf(src, jsType));
+  static Object castToNative(Object src, JavaScriptObject jsType) {
+    checkType(src == null ||  jsinstanceOf(src, jsType));
     return src;
   }
 
@@ -178,9 +177,8 @@ final class Cast {
     return isArray(src);
   }
 
-  static boolean instanceOfNative(Object src, JavaScriptObject dstId, JavaScriptObject jsType) {
-    // TODO(goktug): Remove instanceof after new JsInterop semantics.
-    return instanceOf(src, dstId) || jsinstanceOf(src, jsType);
+  static boolean instanceOfNative(Object src, JavaScriptObject jsType) {
+    return jsinstanceOf(src, jsType);
   }
 
   static boolean instanceOfUnknownNative(Object src) {

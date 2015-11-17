@@ -15,7 +15,6 @@
  */
 package com.google.gwt.uibinder.rebind;
 
-import com.google.gwt.core.client.js.JsType;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
@@ -335,8 +334,7 @@ abstract class AbstractFieldWriter implements FieldWriter {
       // interface that is a JsType).
       JClassType rawType = ownerField.getRawType();
       if (!rawType.isAssignableTo(getDomElement(typeOracle))
-          && (rawType.getAnnotation(JsType.class) != null
-              || rawType.getAnnotation(jsinterop.annotations.JsType.class) != null)) {
+          && rawType.getAnnotation(jsinterop.annotations.JsType.class) != null) {
         w.write(
             "this.owner.%1$s = (%2$s) %1$s;", name,
             rawType.getQualifiedSourceName());

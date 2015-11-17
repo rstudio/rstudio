@@ -23,7 +23,6 @@ import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.util.arg.ArgHandlerClosureFormattedOutput;
 import com.google.gwt.dev.util.arg.ArgHandlerGenerateJsInteropExports;
 import com.google.gwt.dev.util.arg.ArgHandlerIncrementalCompile;
-import com.google.gwt.dev.util.arg.ArgHandlerJsInteropMode;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerMethodNameDisplayMode;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
@@ -32,7 +31,6 @@ import com.google.gwt.dev.util.arg.ArgHandlerSourceLevel;
 import com.google.gwt.dev.util.arg.OptionClosureFormattedOutput;
 import com.google.gwt.dev.util.arg.OptionGenerateJsInteropExports;
 import com.google.gwt.dev.util.arg.OptionIncrementalCompile;
-import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.OptionLogLevel;
 import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode;
 import com.google.gwt.dev.util.arg.OptionScriptStyle;
@@ -88,7 +86,6 @@ public class Options {
   private SourceLevel sourceLevel = SourceLevel.DEFAULT_SOURCE_LEVEL;
   private boolean failOnError = false;
   private int compileTestRecompiles = 0;
-  private OptionJsInteropMode.Mode jsInteropMode = OptionJsInteropMode.Mode.JS_RC;
   private boolean generateJsInteropExports = false;
   private OptionMethodNameDisplayMode.Mode methodNameDisplayMode =
       OptionMethodNameDisplayMode.Mode.NONE;
@@ -305,10 +302,6 @@ public class Options {
     return failOnError;
   }
 
-  OptionJsInteropMode.Mode getJsInteropMode() {
-    return jsInteropMode;
-  }
-
   boolean shouldGenerateJsInteropExports() {
     return generateJsInteropExports;
   }
@@ -399,16 +392,6 @@ public class Options {
           Options.this.logLevel = logLevel;
         }
       }));
-      registerHandler(new ArgHandlerJsInteropMode(new OptionJsInteropMode() {
-        @Override
-        public OptionJsInteropMode.Mode getJsInteropMode() {
-          return Options.this.jsInteropMode;
-        }
-
-        @Override
-        public void setJsInteropMode(OptionJsInteropMode.Mode mode) {
-          Options.this.jsInteropMode = mode;
-        }}));
       registerHandler(new ArgHandlerGenerateJsInteropExports(new OptionGenerateJsInteropExports() {
         @Override
         public boolean shouldGenerateJsInteropExports() {

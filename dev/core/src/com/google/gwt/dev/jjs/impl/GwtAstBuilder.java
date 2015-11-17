@@ -106,7 +106,6 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.util.StringInterner;
-import com.google.gwt.dev.util.arg.OptionJsInteropMode.Mode;
 import com.google.gwt.dev.util.collect.Stack;
 import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
@@ -3771,8 +3770,6 @@ public class GwtAstBuilder {
 
   private CompilerContext compilerContext;
 
-  private boolean isLegacyJsInteropEnabled;
-
   private boolean generateJsInteropExports;
 
   /**
@@ -3827,7 +3824,6 @@ public class GwtAstBuilder {
     this.jsniRefs = jsniRefs;
     this.jsniMethods = jsniMethods;
     this.compilerContext = compilerContext;
-    this.isLegacyJsInteropEnabled = compilerContext.getOptions().getJsInteropMode() == Mode.JS;
     this.generateJsInteropExports = compilerContext.getOptions().shouldGenerateJsInteropExports();
     this.newTypes = Lists.newArrayList();
     this.curCud = new CudInfo(cud);
@@ -3901,11 +3897,7 @@ public class GwtAstBuilder {
               getFieldDisposition(binding), AccessModifier.fromFieldBinding(binding));
     }
     enclosingType.addField(field);
-    if (isLegacyJsInteropEnabled) {
-      JsInteropUtil.maybeSetJsInteropProperties(field, x.annotations);
-    } else {
-      JsInteropUtil.maybeSetJsInteropPropertiesNew(field, generateJsInteropExports, x.annotations);
-    }
+    JsInteropUtil.maybeSetJsInteropProperties(field, generateJsInteropExports, x.annotations);
     processSuppressedWarnings(field, x.annotations);
     typeMap.setField(binding, field);
   }
@@ -4069,11 +4061,7 @@ public class GwtAstBuilder {
     maybeAddMethodSpecialization(x, method);
     maybeSetInliningMode(x, method);
     maybeSetHasNoSideEffects(x, method);
-    if (isLegacyJsInteropEnabled) {
-      JsInteropUtil.maybeSetJsInteropProperties(method, x.annotations);
-    } else {
-      JsInteropUtil.maybeSetJsInteropPropertiesNew(method, generateJsInteropExports, x.annotations);
-    }
+    JsInteropUtil.maybeSetJsInteropProperties(method, generateJsInteropExports, x.annotations);
     processSuppressedWarnings(method, x.annotations);
   }
 
@@ -4172,11 +4160,7 @@ public class GwtAstBuilder {
     JMethod method = typeMap.createMethod(info, binding, paramNames);
     assert !method.isExternal();
     method.setBody(new JMethodBody(info));
-    if (isLegacyJsInteropEnabled) {
-      JsInteropUtil.maybeSetJsInteropProperties(method);
-    } else {
-      JsInteropUtil.maybeSetJsInteropPropertiesNew(method, generateJsInteropExports);
-    }
+    JsInteropUtil.maybeSetJsInteropProperties(method, generateJsInteropExports);
     typeMap.setMethod(binding, method);
     return method;
   }
@@ -4209,11 +4193,7 @@ public class GwtAstBuilder {
       } else {
         throw new InternalCompilerException("ReferenceBinding is not a class, interface, or enum.");
       }
-      if (isLegacyJsInteropEnabled) {
-        JsInteropUtil.maybeSetJsInteropProperties(type, x.annotations);
-      } else {
-        JsInteropUtil.maybeSetJsInteropPropertiesNew(type, x.annotations);
-      }
+      JsInteropUtil.maybeSetJsInteropProperties(type, x.annotations);
       processSuppressedWarnings(type, x.annotations);
       JdtUtil.setClassDispositionFromBinding(binding, type);
       typeMap.setSourceType(binding, type);

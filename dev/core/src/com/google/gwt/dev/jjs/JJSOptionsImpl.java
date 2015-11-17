@@ -16,7 +16,6 @@
 package com.google.gwt.dev.jjs;
 
 import com.google.gwt.dev.js.JsNamespaceOption;
-import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.arg.SourceLevel;
@@ -51,7 +50,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean soycExtra = false;
   private boolean soycHtmlDisabled = false;
   private boolean strict = false;
-  private OptionJsInteropMode.Mode jsInteropMode = OptionJsInteropMode.Mode.JS_RC;
   private boolean generateJsInteropExports = false;
   private boolean useDetailedTypeIds = false;
   private OptionMethodNameDisplayMode.Mode methodNameDisplayMode =
@@ -85,7 +83,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setStrict(other.isStrict());
     setSourceLevel(other.getSourceLevel());
     setNamespace(other.getNamespace());
-    setJsInteropMode(other.getJsInteropMode());
     setGenerateJsInteropExports(other.shouldGenerateJsInteropExports());
     setUseDetailedTypeIds(other.useDetailedTypeIds());
     setMethodNameDisplayMode(other.getMethodNameDisplayMode());
@@ -344,16 +341,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   @Override
   public boolean shouldRemoveDuplicateFunctions() {
     return removeDuplicateFunctions;
-  }
-
-  @Override
-  public OptionJsInteropMode.Mode getJsInteropMode() {
-    return jsInteropMode;
-  }
-
-  @Override
-  public void setJsInteropMode(OptionJsInteropMode.Mode mode) {
-    jsInteropMode = mode;
   }
 
   @Override

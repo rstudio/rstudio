@@ -250,19 +250,27 @@ public class ImplementCastsAndTypeChecks {
     }
 
     call.addArg(targetExpression);
-    if (method.getParams().size() >= 2) {
+
+    if (method.getParams().size() < 2) {
+      // The cast checking method does not require an additional parameter. This situation arises
+      // when the call is a cast check and cast checking has been disabled or when the type category
+      // provides enough information, e.g. TYPE_UNTYPED_ARRAY.
+      return call;
+    } else if (targetTypeCategory.requiresTypeId()) {
       call.addArg((new JRuntimeTypeReference(sourceInfo, program.getTypeJavaLangObject(),
           targetType)));
-    }
-    if (method.getParams().size() == 3) {
+      return call;
+    } else if (targetTypeCategory.requiresJsConstructor()) {
       JDeclaredType declaredType = (JDeclaredType) targetType;
 
       JMethod jsConstructor = JjsUtils.getJsNativeConstructorOrNull(declaredType);
       assert jsConstructor != null &&  declaredType.isJsNative();
       call.addArg(new JsniMethodRef(sourceInfo, declaredType.getQualifiedJsName(), jsConstructor,
           program.getJavaScriptObject()));
+      return call;
+    } else {
+      throw new AssertionError();
     }
-    return call;
   }
 
   public static void exec(JProgram program, boolean pruneTrivialCasts) {

@@ -20,7 +20,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.js.JsNamespaceOption;
-import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.arg.SourceLevel;
@@ -42,7 +41,6 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   private final TreeLogger.Type logLevel;
   private final List<String> moduleNames;
   private final SourceLevel sourceLevel;
-  private final OptionJsInteropMode.Mode jsInteropMode;
   private final boolean generateJsInteropExports;
   private final OptionMethodNameDisplayMode.Mode methodNameDisplayMode;
   private final ListMultimap<String, String> properties;
@@ -56,7 +54,6 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
     this.sourceLevel = options.getSourceLevel();
     this.failOnError = options.isFailOnError();
     this.logLevel = options.getLogLevel();
-    this.jsInteropMode = options.getJsInteropMode();
     this.generateJsInteropExports = options.shouldGenerateJsInteropExports();
     this.methodNameDisplayMode = options.getMethodNameDisplayMode();
     this.properties = LinkedListMultimap.create(options.getProperties());
@@ -92,11 +89,6 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   @Override
   public File getGenDir() {
     return compileDir.getGenDir();
-  }
-
-  @Override
-  public OptionJsInteropMode.Mode getJsInteropMode() {
-    return jsInteropMode;
   }
 
   @Override

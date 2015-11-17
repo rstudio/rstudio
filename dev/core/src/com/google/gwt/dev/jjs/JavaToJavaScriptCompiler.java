@@ -171,7 +171,6 @@ import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.Name.SourceName;
 import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.dev.util.arg.OptionJsInteropMode.Mode;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -1163,8 +1162,7 @@ public final class JavaToJavaScriptCompiler {
        */
 
       // (1) Initialize local state
-      boolean legacyJsInterop = compilerContext.getOptions().getJsInteropMode() == Mode.JS;
-      jprogram = new JProgram(compilerContext.getMinimalRebuildCache(), legacyJsInterop);
+      jprogram = new JProgram(compilerContext.getMinimalRebuildCache());
       // Synchronize JTypeOracle with compile optimization behavior.
       jprogram.typeOracle.setOptimize(
           options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT);

@@ -392,19 +392,13 @@ public class JTypeOracle implements Serializable {
   private ImmediateTypeRelations immediateTypeRelations;
   private ArrayTypeCreator arrayTypeCreator;
   private StandardTypes standardTypes;
-  private boolean legacyJsInterop;
 
-  public JTypeOracle(ArrayTypeCreator arrayTypeCreator, MinimalRebuildCache minimalRebuildCache) {
-    this(arrayTypeCreator, minimalRebuildCache, true);
-  }
   /**
    * Constructs a new JTypeOracle.
    */
-  public JTypeOracle(ArrayTypeCreator arrayTypeCreator, MinimalRebuildCache minimalRebuildCache,
-      boolean legacyJsInterop) {
+  public JTypeOracle(ArrayTypeCreator arrayTypeCreator, MinimalRebuildCache minimalRebuildCache) {
     this.immediateTypeRelations = minimalRebuildCache.getImmediateTypeRelations();
     this.arrayTypeCreator = arrayTypeCreator;
-    this.legacyJsInterop = legacyJsInterop;
 
     // Be ready to answer simple questions (type hierarchy) even before recompute...().
     computeExtendedTypeRelations();
@@ -419,48 +413,12 @@ public class JTypeOracle implements Serializable {
     return type.isJsoType() || isSingleJsoImpl(type);
   }
 
-  public boolean isCastableLikeDualJsoInterface(JType type) {
-    if (legacyJsInterop) {
-      return isDualJsoInterface(type) || isNonNativeJsTypeInterface(type);
-    }
-    return isDualJsoInterface(type);
-  }
-
-  public boolean isCastableByPrototype(JType type) {
-    if (legacyJsInterop) {
-      return type.isJsNative();
-    }
-    return type instanceof JClassType && type.isJsNative();
-  }
-
-  public boolean isNoOpCast(JType type) {
-    if (legacyJsInterop) {
-      return false;
-    }
+  public static boolean isNoOpCast(JType type) {
     return type instanceof JInterfaceType && type.isJsNative();
-  }
-
-  /**
-   * True if the type can be casted across different Java types that are unrelated.
-   */
-  private boolean canCrossCastLikeJso(JType type) {
-    if (legacyJsInterop) {
-      return canBeJavaScriptObject(type) || isNativeJsTypeClass(type)
-          || isNonNativeJsTypeInterface(type);
-    }
-    return canBeJavaScriptObject(type);
   }
 
   private boolean isJsInteropCrossCastTarget(JType type) {
     return type.isJsNative() || type.isJsFunction();
-  }
-
-  public boolean isNonNativeJsTypeInterface(JType type) {
-    return type.isJsType() && type instanceof JInterfaceType && !type.isJsNative();
-  }
-
-  private boolean isNativeJsTypeClass(JType type) {
-    return type.isJsNative() && type instanceof JClassType;
   }
 
   public boolean castFailsTrivially(JReferenceType fromType, JReferenceType toType) {
@@ -493,7 +451,7 @@ public class JTypeOracle implements Serializable {
      * Cross-cast allowed in theory, prevents TypeTightener from turning
      * cross-casts into null-casts.
      */
-    if (canCrossCastLikeJso(fromType) && canCrossCastLikeJso(toType)) {
+    if (canBeJavaScriptObject(fromType) && canBeJavaScriptObject(toType)) {
       return false;
     }
 

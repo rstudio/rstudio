@@ -20,7 +20,6 @@ import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.JJSOptionsImpl;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.js.JsNamespaceOption;
-import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedListMultimap;
@@ -88,11 +87,6 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   @Override
   public File getGenDir() {
     return genDir;
-  }
-
-  @Override
-  public OptionJsInteropMode.Mode getJsInteropMode() {
-    return jjsOptions.getJsInteropMode();
   }
 
   @Override
@@ -272,11 +266,6 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   @Override
   public void setInlineLiteralParameters(boolean enabled) {
     jjsOptions.setInlineLiteralParameters(enabled);
-  }
-
-  @Override
-  public void setJsInteropMode(OptionJsInteropMode.Mode mode) {
-    jjsOptions.setJsInteropMode(mode);
   }
 
   @Override

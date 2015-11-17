@@ -42,7 +42,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * Builds minimal cast maps to cover cast and instanceof operations. Depends
@@ -163,12 +162,12 @@ public class ComputeCastabilityInformation {
       recordCast(x.getTestType(), x.getExpr());
     }
 
+    /**
+     * Returns true if the cast *might* succeed at runtime considering the semantics of JSO casts.
+     */
     private boolean castSucceedsTriviallyJsoSemantics(
         JReferenceType fromType, JReferenceType toType) {
-      // TODO(rluble): this should be the semantics of castSucceedsTrivially; no need for two
-      // different semantics. However changing JTypeOracle.castSucceedsTrivially affects how
-      // decisions are made to remove casts and change return types, which in turn affects
-      // how we compute liveness of JSO type.
+
       fromType = fromType.getUnderlyingType();
       toType = toType.getUnderlyingType();
 
@@ -176,7 +175,8 @@ public class ComputeCastabilityInformation {
         return true;
       }
 
-      // Casting from any Java Object to a native JsType is allowed.
+      // Casting to a native type might succeed (even in cases where the same cast would never
+      // succeed in the Java type system, due to JSOs and native JsType sematics).
       if (toType.isJsNative()) {
         return true;
       }
@@ -213,7 +213,7 @@ public class ComputeCastabilityInformation {
       }
 
       // Find all possible query types which I can satisfy
-      Set<JReferenceType> castableTypes = new TreeSet<JReferenceType>(HasName.BY_NAME_COMPARATOR);
+      Set<JReferenceType> castableTypes = Sets.newTreeSet(HasName.BY_NAME_COMPARATOR);
 
       /*
        * NOTE: non-deterministic iteration over HashSet and HashMap. Okay
@@ -221,6 +221,7 @@ public class ComputeCastabilityInformation {
        */
       for (JReferenceType castTargetType : castSourceTypesPerCastTargetType.keySet()) {
         if (!castSucceedsTriviallyJsoSemantics(type, castTargetType)) {
+          // Cannot cast type to castTargetType, hence no entry in the cast map.
           continue;
         }
 
@@ -231,8 +232,7 @@ public class ComputeCastabilityInformation {
          * with JSO cross-casts anymore.
          */
         for (JReferenceType castSourceType : castSourceTypes) {
-          if (castSucceedsTriviallyJsoSemantics(type, castSourceType) ||
-              castTargetType.isJsoType()) {
+          if (castSucceedsTriviallyJsoSemantics(type, castSourceType)) {
             boolean isTrivialCast = castTargetType == program.getTypeJavaLangObject()
                 || castTargetType == program.getJavaScriptObject();
             if (recordTrivialCasts || !isTrivialCast) {

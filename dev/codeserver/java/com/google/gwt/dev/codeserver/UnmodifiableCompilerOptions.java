@@ -21,7 +21,6 @@ import com.google.gwt.dev.CompilerOptions;
 import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.js.JsNamespaceOption;
-import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode;
 import com.google.gwt.dev.util.arg.SourceLevel;
 
@@ -117,11 +116,6 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
 
   @Override
   public void setInlineLiteralParameters(boolean inlineLiteralParameters) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setJsInteropMode(OptionJsInteropMode.Mode mode) {
     throw new UnsupportedOperationException();
   }
 

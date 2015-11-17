@@ -58,7 +58,6 @@ public abstract class JDeclaredType extends JReferenceType
   private boolean isJsType;
   private boolean isClassWideExport;
   private boolean isJsNative;
-  private boolean canBeImplementedExternally;
   private String jsNamespace = null;
   private String jsName = null;
   private Set<String> suppressedWarnings;
@@ -424,7 +423,7 @@ public abstract class JDeclaredType extends JReferenceType
 
   @Override
   public boolean canBeImplementedExternally() {
-    return canBeImplementedExternally;
+    return isJsNative() || isJsFunction();
   }
 
   /**
@@ -509,15 +508,13 @@ public abstract class JDeclaredType extends JReferenceType
   }
 
   public void setJsTypeInfo(boolean isJsType, boolean isJsNative, boolean isJsFunction,
-      String jsNamespace, String jsName, boolean isClassWideExport,
-      boolean canBeImplementedExternally) {
+      String jsNamespace, String jsName, boolean isClassWideExport) {
     this.isJsType = isJsType;
     this.isJsNative = isJsNative;
     this.isJsFunction = isJsFunction;
     this.jsNamespace = jsNamespace;
     this.jsName = jsName;
     this.isClassWideExport = isClassWideExport;
-    this.canBeImplementedExternally = canBeImplementedExternally;
   }
 
   /**
