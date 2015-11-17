@@ -186,9 +186,9 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       radioPanel.add(appTypeMultipleFileButton_);
       
       String cachedAppType = result_.getAppType();
-      if ("single".equals(cachedAppType))
+      if (TYPE_SINGLE_FILE.equals(cachedAppType))
          appTypeSingleFileButton_.setValue(true);
-      else if ("multiple".equals(cachedAppType))
+      else if (TYPE_MULTI_FILE.equals(cachedAppType))
          appTypeMultipleFileButton_.setValue(true);
       else
          appTypeSingleFileButton_.setValue(true);
@@ -272,9 +272,9 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    {
       String type = "";
       if (appTypeSingleFileButton_.getValue())
-         type = "single";
+         type = TYPE_SINGLE_FILE;
       else if (appTypeMultipleFileButton_.getValue())
-         type = "multiple";
+         type = TYPE_MULTI_FILE;
       
       result_ = Result.create(
             appNameTextBox_.getText().trim(),
