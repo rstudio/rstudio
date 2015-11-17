@@ -81,6 +81,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletio
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.source.DocsMenu;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
+import org.rstudio.studio.client.workbench.views.source.NewShinyWebApplication;
 import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
 import org.rstudio.studio.client.workbench.views.source.SourceWindow;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
@@ -154,6 +155,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(FileBacked<?> object);
    void injectMembers(WindowFrame frame);
    void injectMembers(RmdParamsEditDialog dialog);
+   void injectMembers(NewShinyWebApplication dialog);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

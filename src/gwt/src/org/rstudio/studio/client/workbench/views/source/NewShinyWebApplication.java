@@ -1,7 +1,9 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import org.rstudio.core.client.RegexUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -11,8 +13,12 @@ import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.workbench.model.ClientState;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
@@ -28,25 +34,34 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
 public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.Result>
 {
-   public static class Result
+   // extends JavaScriptObject for easy serialization (as client state)
+   public static class Result extends JavaScriptObject
    {
-      public Result(String appName, String appType, String appDir)
+      protected Result() {}
+      
+      public static final Result create()
       {
-         appName_ = appName;
-         appType_ = appType;
-         appDir_ = appDir;
+         return create("", "", "");
       }
       
-      public String getAppName() { return appName_; }
-      public String getAppType() { return appType_; }
-      public String getAppDir() { return appDir_; }
+      public static final native Result create(String appName,
+                                               String appType,
+                                               String appDir)
+      /*-{
+         return {
+            "name": appName,
+            "type": appType,
+            "dir": appDir
+         };
+      }-*/;
       
-      private String appName_;
-      private String appType_;
-      private String appDir_;
+      public final native String getAppName() /*-{ return this["name"]; }-*/;
+      public final native String getAppType() /*-{ return this["type"]; }-*/;
+      public final native String getAppDir() /*-{ return this["dir"]; }-*/;
    }
    
    private static class VerticalSpacer extends Composite
@@ -92,11 +107,57 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
          appNameTextBox_.addStyleName(RES.styles().invalidAppName());
    }
    
+   private class ShinyWebApplicationClientState extends JSObjectStateValue
+   {
+      public ShinyWebApplicationClientState()
+      {
+         super("shiny",
+               "options",
+               ClientState.PERSISTENT,
+               session_.getSessionInfo().getClientState(),
+               false);
+      }
+
+      @Override
+      protected void onInit(JsObject value)
+      {
+         result_ = (value == null) ?
+               Result.create() :
+                  Result.create(
+                        value.getString("name"),
+                        value.getString("type"),
+                        value.getString("dir"));
+      }
+
+      @Override
+      protected JsObject getValue()
+      {
+         return result_.cast();
+      }
+   }
+   
+   private final void loadAndPersistClientState()
+   {
+      if (clientStateValue_ == null)
+         clientStateValue_ = new ShinyWebApplicationClientState();
+   }
+   
+   @Inject
+   private void initialize(Session session,
+                           GlobalDisplay globalDisplay)
+   {
+      session_ = session;
+      globalDisplay_ = globalDisplay;
+   }
+   
    public NewShinyWebApplication(String caption, 
                                  FileSystemItem workingDirectory,
                                  OperationWithInput<Result> operation)
    {
       super(caption, operation);
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      
+      loadAndPersistClientState();
       
       container_ = new VerticalPanel();
       
@@ -130,8 +191,17 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       appTypeSelectWidget_.getElement().getStyle().setMarginTop(0, Unit.PX);
       appTypeSelectWidget_.getElement().getStyle().setMarginBottom(0, Unit.PX);
       
+      String cachedAppType = result_.getAppType();
+      if (!StringUtil.isNullOrEmpty(cachedAppType))
+         appTypeSelectWidget_.setValue(cachedAppType);
+      
       directoryChooserTextBox_ = new DirectoryChooserTextBox("Create within directory:", null);
-      directoryChooserTextBox_.setText(workingDirectory.getPath());
+      
+      String cachedParentDir = result_.getAppDir();
+      if (!StringUtil.isNullOrEmpty(cachedParentDir))
+         directoryChooserTextBox_.setText(cachedParentDir);
+      else
+         directoryChooserTextBox_.setText(workingDirectory.getPath());
       
       // Add them to parent
       Grid appNameTypeGrid = new Grid(3, 2);
@@ -165,8 +235,6 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    @Override
    protected boolean validate(Result result)
    {
-      GlobalDisplay display = RStudioGinjector.INSTANCE.getGlobalDisplay();
-      
       String appName = result.getAppName();
       if (!isValidAppName(appName))
       {
@@ -180,7 +248,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
             message = "Invalid application name";
          }
          
-         display.showErrorMessage(
+         globalDisplay_.showErrorMessage(
                "Invalid Application Name",
                message,
                new Operation()
@@ -223,10 +291,18 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    @Override
    protected Result collectInput()
    {
-      return new Result(
+      result_ = Result.create(
             appNameTextBox_.getText().trim(),
             appTypeSelectWidget_.getValue(),
             directoryChooserTextBox_.getText());
+      return result_;
+   }
+   
+   @Override
+   protected void onUnload()
+   {
+      super.onUnload();
+      session_.persistClientState();
    }
    
    public static final String TYPE_SINGLE_FILE = "type_single_file";
@@ -244,11 +320,19 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    
    private HelpLink shinyHelpLink_;
    
+   private static Result result_ = Result.create();
+   private static ShinyWebApplicationClientState clientStateValue_;
+   
+   
    private static final Pattern RE_VALID_APP_NAME = Pattern.create(
          "^" +
          "[" + RegexUtil.wordCharacter() + "]" +
          "[" + RegexUtil.wordCharacter() + "._-]*" +
          "$", "");
+   
+   // Injected ----
+   private Session session_;
+   private GlobalDisplay globalDisplay_;
    
    // Styles ----
    
