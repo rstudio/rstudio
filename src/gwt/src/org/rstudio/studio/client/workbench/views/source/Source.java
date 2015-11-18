@@ -99,6 +99,7 @@ import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataHandler;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
+import org.rstudio.studio.client.workbench.views.source.NewShinyWebApplication.Result;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager.NavigationResult;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
@@ -1052,6 +1053,97 @@ public class Source implements InsertSourceHandler,
          newRMarkdownV2Doc();
       else
          newRMarkdownV1Doc();
+   }
+   
+   private void doNewRShinyApp(NewShinyWebApplication.Result result)
+   {
+      server_.createShinyApp(
+            result.getAppName(),
+            result.getAppType(),
+            result.getAppDir(),
+            new SimpleRequestCallback<JsArrayString>("Error Creating Shiny Application", true)
+            {
+               @Override
+               public void onResponseReceived(JsArrayString createdFiles)
+               {
+                  // Open and focus files that we created
+                  new SourceFilesOpener(createdFiles).run();
+               }
+            });
+   }
+   
+   // open a list of source files then focus the first one within the list
+   private class SourceFilesOpener extends SerializedCommandQueue
+   {
+      public SourceFilesOpener(JsArrayString sourceFiles)
+      {
+         for (int i=0; i<sourceFiles.length(); i++)
+         {
+            final String filePath = sourceFiles.get(i);
+            addCommand(new SerializedCommand() {
+
+               @Override
+               public void onExecute(final Command continuation)
+               {
+                  FileSystemItem path = FileSystemItem.createFile(filePath);
+                  openFile(path, FileTypeRegistry.R, new CommandWithArg<EditingTarget>()
+                  {
+                     @Override
+                     public void execute(EditingTarget target)
+                     {
+                        // record first target if necessary
+                        if (firstTarget_ == null)
+                           firstTarget_ = target;
+                        
+                        continuation.execute();
+                     }
+                  });  
+               }
+            });
+         }
+         
+         addCommand(new SerializedCommand() {
+
+            @Override
+            public void onExecute(Command continuation)
+            {
+               if (firstTarget_ != null)
+               {
+                  view_.selectTab(firstTarget_.asWidget());
+                  firstTarget_.setCursorPosition(Position.create(0, 0));
+               }
+               
+               continuation.execute();
+            }
+            
+         });
+      }
+      
+      private EditingTarget firstTarget_ = null;
+   }
+   
+   @Handler
+   public void onNewRShinyApp()
+   {
+      dependencyManager_.withShiny("Creating Shiny applications", new Command()
+      {
+         @Override
+         public void execute()
+         {
+            NewShinyWebApplication widget = new NewShinyWebApplication(
+                  "New Shiny Web Application",
+                  new OperationWithInput<NewShinyWebApplication.Result>()
+                  {
+                     @Override
+                     public void execute(Result input)
+                     {
+                        doNewRShinyApp(input);
+                     }
+                  });
+
+            widget.showModal();
+         }
+      });
    }
    
    @Handler

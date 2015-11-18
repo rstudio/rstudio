@@ -1,0 +1,26 @@
+@CHARSET "UTF-8";
+
+@external gwt-TextBox;
+
+.image {
+   margin-right: 12px;
+}
+
+.grid {
+   width: 350px;
+}
+
+.label {
+}
+
+.invalidAppName {
+	background-color: #f2dede;
+}
+
+.appNameTextBox {
+   width: 180px;
+}
+
+.textBox, .textBox .gwt-TextBox {
+	padding-left: 4px;
+}

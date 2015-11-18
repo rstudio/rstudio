@@ -16,7 +16,9 @@
 #include "SessionShiny.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/foreach.hpp>
 
+#include <core/Algorithm.hpp>
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
@@ -196,6 +198,142 @@ std::string getLastFunction(const std::string& fileContents)
    return function;
 }
 
+const char * const kShinyAppTypeSingleFile = "type_single_file";
+const char * const kShinyAppTypeMultiFile =  "type_multi_file";
+
+FilePath shinyTemplatePath(const std::string& name)
+{
+   return session::options().rResourcesPath().childPath("templates/shiny/" + name);
+}
+
+Error copyTemplateFile(const std::string& templateFileName,
+                      const FilePath& target)
+{
+   FilePath templatePath = shinyTemplatePath(templateFileName);
+   return templatePath.copy(target);
+}
+
+Error createShinyApp(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   json::Array result;
+   
+   std::string appName;
+   std::string appType;
+   std::string appDirString;
+   
+   Error error = json::readParams(request.params,
+                                  &appName,
+                                  &appType,
+                                  &appDirString);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   FilePath appDir = module_context::resolveAliasedPath(appDirString);
+   FilePath shinyDir = appDir.complete(appName);
+   
+   // if shinyDir exists and is not an empty directory, bail
+   if (shinyDir.exists())
+   {
+      if (!shinyDir.isDirectory())
+      {
+         pResponse->setError(
+                  fileExistsError(ERROR_LOCATION),
+                  "The directory '" + module_context::createAliasedPath(shinyDir) + "' already exists "
+                  "and is not a directory");
+         return Success();
+      }
+      
+      std::vector<FilePath> children;
+      Error error = shinyDir.children(&children);
+      if (error)
+         LOG_ERROR(error);
+      
+      if (!children.empty())
+      {
+         pResponse->setError(
+                  fileExistsError(ERROR_LOCATION),
+                  "The directory '" + module_context::createAliasedPath(shinyDir) + "' already exists "
+                  "and is not empty");
+         return Success();
+      }
+   }
+   else
+   {
+      Error error = shinyDir.ensureDirectory();
+      if (error)
+      {
+         pResponse->setError(error);
+         return Success();
+      }
+   }
+   
+   // collect the files we want to generate
+   std::vector<std::string> templateFiles;
+   if (appType == kShinyAppTypeSingleFile)
+   {
+      templateFiles.push_back("app.R");
+   }
+   else if (appType == kShinyAppTypeMultiFile)
+   {
+      templateFiles.push_back("ui.R");
+      templateFiles.push_back("server.R");
+   }
+   
+   // if any files already exist, report that as an error
+   std::vector<std::string> existingFiles;
+   BOOST_FOREACH(const std::string& fileName, templateFiles)
+   {
+      FilePath filePath = shinyDir.complete(fileName);
+      std::string aliasedPath = module_context::createAliasedPath(shinyDir.complete(fileName));
+      
+      if (filePath.exists())
+         existingFiles.push_back(aliasedPath);
+      
+      result.push_back(aliasedPath);
+   }
+   
+   if (!existingFiles.empty())
+   {
+      
+      std::string message;
+      if (existingFiles.size() == 1)
+      {
+         message = "The file '" + existingFiles[0] + "' already exists";
+      }
+      else
+      {
+         message =
+            "The following files already exist:\n\n\t" +
+            core::algorithm::join(existingFiles, "\n\t");
+      }
+      
+      pResponse->setError(
+               fileExistsError(ERROR_LOCATION),
+               message);
+      return Success();
+   }
+   
+   // copy the files (updates success in 'result')
+   BOOST_FOREACH(const std::string& fileName, templateFiles)
+   {
+      FilePath target = shinyDir.complete(fileName);
+      Error error = copyTemplateFile(fileName, target);
+      if (error)
+      {
+         std::string aliasedPath = module_context::createAliasedPath(target);
+         pResponse->setError(error, "Failed to write '" + aliasedPath + "'");
+         return Success();
+      }
+   }
+   
+   pResponse->setResult(result);
+   return Success();
+}
+
 } // anonymous namespace
 
 ShinyFileType shinyTypeFromExtendedType(const std::string& extendedType)
@@ -290,13 +428,16 @@ ShinyFileType getShinyFileType(const FilePath& filePath)
 Error initialize()
 {
    using namespace module_context;
+   using boost::bind;
+   
    events().onPackageLoaded.connect(onPackageLoaded);
 
    events().onDetectSourceExtendedType.connect(onDetectShinySourceType);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (boost::bind(registerRpcMethod, "get_shiny_capabilities", getShinyCapabilities));
+      (bind(registerRpcMethod, "get_shiny_capabilities", getShinyCapabilities))
+      (bind(registerRpcMethod, "create_shiny_app", createShinyApp));
 
    return initBlock.execute();
 }

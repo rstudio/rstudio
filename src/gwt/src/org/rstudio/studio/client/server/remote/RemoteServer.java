@@ -1378,6 +1378,18 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "validate_project_path", projectPath, callback);
    }
    
+   public void createShinyApp(String appName,
+                              String appType,
+                              String appDir,
+                              ServerRequestCallback<JsArrayString> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(appName));
+      params.set(1, new JSONString(appType));
+      params.set(2, new JSONString(appDir));
+      sendRequest(RPC_SCOPE, CREATE_SHINY_APP, params, requestCallback);
+   }
+   
    public void getNewProjectContext(
                         ServerRequestCallback<NewProjectContext> callback)
    {
@@ -4651,6 +4663,7 @@ public class RemoteServer implements Server
    private static final String CHECK_FOR_UPDATES = "check_for_updates";
    private static final String GET_PRODUCT_INFO = "get_product_info";
 
+   private static final String CREATE_SHINY_APP = "create_shiny_app";
    private static final String GET_SHINY_VIEWER_TYPE = "get_shiny_viewer_type";
    private static final String GET_SHINY_RUN_CMD = "get_shiny_run_cmd";
    private static final String SET_SHINY_VIEWER_TYPE = "set_shiny_viewer_type";
