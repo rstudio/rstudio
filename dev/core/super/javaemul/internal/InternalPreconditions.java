@@ -22,11 +22,16 @@ import java.util.NoSuchElementException;
  */
 // Some parts adapted from Guava
 public final class InternalPreconditions {
-  private static final boolean CHECKED_MODE = System.getProperty("superdevmode").equals("on");
-  private static final boolean JSNI_CHECK = System.getProperty("checks.jsni").equals("ENABLED");
-  private static final boolean TYPE_CHECK = System.getProperty("checks.type").equals("ENABLED");
-  private static final boolean API_CHECK = System.getProperty("checks.api").equals("ENABLED");
-  private static final boolean BOUND_CHECK = System.getProperty("checks.bounds").equals("ENABLED");
+  private static final boolean CHECKED_MODE =
+      System.getProperty("superdevmode", "on").equals("on");
+  private static final boolean JSNI_CHECK =
+      System.getProperty("checks.jsni", "ENABLED").equals("ENABLED");
+  private static final boolean TYPE_CHECK =
+      System.getProperty("checks.type", "ENABLED").equals("ENABLED");
+  private static final boolean API_CHECK =
+      System.getProperty("checks.api", "ENABLED").equals("ENABLED");
+  private static final boolean BOUND_CHECK =
+      System.getProperty("checks.bounds", "ENABLED").equals("ENABLED");
 
   public static void checkType(boolean expression) {
     if (TYPE_CHECK) {
