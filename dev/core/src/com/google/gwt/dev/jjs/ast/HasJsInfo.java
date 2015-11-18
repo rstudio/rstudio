@@ -128,5 +128,7 @@ public interface HasJsInfo extends HasJsName {
 
   boolean canBeReferencedExternally();
 
+  boolean canBeImplementedExternally();
+
   boolean isJsInteropEntryPoint();
 }

@@ -87,6 +87,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
     return false;
   }
 
+  @Override
   public boolean canBeImplementedExternally() {
     return isJsNative() || isJsFunctionMethod() || isJsInterfaceMethod();
   }
@@ -177,7 +178,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
   }
 
   private boolean isJsFunctionMethod() {
-    return enclosingType != null && enclosingType.isJsFunction();
+    return enclosingType.isJsFunction();
   }
 
   public boolean isOrOverridesJsFunctionMethod() {
@@ -199,7 +200,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
 
   @Override
   public boolean isJsOverlay() {
-    return isJsOverlay || (getEnclosingType() != null && getEnclosingType().isJsoType());
+    return isJsOverlay || getEnclosingType().isJsoType();
   }
 
   public void setSyntheticAccidentalOverride() {
@@ -325,8 +326,9 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
     }
   }
 
-  public static final JMethod NULL_METHOD = new JMethod(SourceOrigin.UNKNOWN, "nullMethod", null,
-      JReferenceType.NULL_TYPE, false, false, true, AccessModifier.PUBLIC);
+  public static final JMethod NULL_METHOD = new JMethod(SourceOrigin.UNKNOWN, "nullMethod",
+      JClassType.NULL_CLASS, JReferenceType.NULL_TYPE, false, false, true,
+      AccessModifier.PUBLIC);
 
   static {
     NULL_METHOD.setSynthetic();
@@ -585,7 +587,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
   }
 
   public boolean isExternal() {
-    return getEnclosingType() != null && getEnclosingType().isExternal();
+    return getEnclosingType().isExternal();
   }
 
   @Override

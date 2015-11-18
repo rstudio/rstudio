@@ -260,7 +260,8 @@ public class JProgram extends JNode implements ArrayTypeCreator {
   public static boolean isClinit(JMethod method) {
     JDeclaredType enclosingType = method.getEnclosingType();
 
-    boolean isClinit = enclosingType != null && method == enclosingType.getClinitMethod();
+    boolean isClinit = enclosingType != JClassType.NULL_CLASS &&
+        method == enclosingType.getClinitMethod();
     assert !isClinit || method.getName().equals(GwtAstBuilder.CLINIT_METHOD_NAME);
     return isClinit;
   }

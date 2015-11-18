@@ -77,8 +77,8 @@ public class JField extends JVariable implements JMember {
     }
   }
 
-  public static final JField NULL_FIELD = new JField(SourceOrigin.UNKNOWN, "nullField", null,
-      JReferenceType.NULL_TYPE, false, Disposition.FINAL);
+  public static final JField NULL_FIELD = new JField(SourceOrigin.UNKNOWN, "nullField",
+      JClassType.NULL_CLASS, JReferenceType.NULL_TYPE, false, Disposition.FINAL);
 
   private JsMemberType jsMembertype = JsMemberType.NONE;
   private String jsName;
@@ -162,6 +162,11 @@ public class JField extends JVariable implements JMember {
   }
 
   @Override
+  public boolean canBeImplementedExternally() {
+    return isJsNative();
+  }
+
+  @Override
   public String getJsNamespace() {
     return jsNamespace == null ? enclosingType.getQualifiedJsName() : jsNamespace;
   }
@@ -208,7 +213,7 @@ public class JField extends JVariable implements JMember {
   }
 
   public boolean isExternal() {
-    return getEnclosingType() != null && getEnclosingType().isExternal();
+    return getEnclosingType().isExternal();
   }
 
   @Override

@@ -459,8 +459,9 @@ public class TypeTightener {
 
     @Override
     public void exit(JField x, Context ctx) {
-      if (program.codeGenTypes.contains(x.getEnclosingType()) || x.canBeReferencedExternally()) {
-        // We cannot tighten this field as we don't see all references.
+      if (program.codeGenTypes.contains(x.getEnclosingType())
+          || x.canBeReferencedExternally() || x.canBeImplementedExternally()) {
+        // We cannot tighten this field as we don't see all references or the initial value.
         return;
       }
       if (!x.isVolatile()) {

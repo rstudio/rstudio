@@ -20,6 +20,7 @@ import com.google.gwt.dev.jjs.scriptonly.ScriptOnlyTest;
 import com.google.gwt.dev.jjs.test.AnnotationsTest;
 import com.google.gwt.dev.jjs.test.ArrayTest;
 import com.google.gwt.dev.jjs.test.AutoboxTest;
+import com.google.gwt.dev.jjs.test.BasicJsInteropTest;
 import com.google.gwt.dev.jjs.test.BlankInterfaceTest;
 import com.google.gwt.dev.jjs.test.ClassCastTest;
 import com.google.gwt.dev.jjs.test.ClassLiteralsTest;
@@ -73,6 +74,7 @@ public class CompilerSuite {
     suite.addTestSuite(AnnotationsTest.class);
     suite.addTestSuite(ArrayTest.class);
     suite.addTestSuite(AutoboxTest.class);
+    suite.addTestSuite(BasicJsInteropTest.class);
     suite.addTestSuite(BlankInterfaceTest.class);
     suite.addTestSuite(ClassCastTest.class);
     suite.addTestSuite(ClassLiteralsTest.class);
