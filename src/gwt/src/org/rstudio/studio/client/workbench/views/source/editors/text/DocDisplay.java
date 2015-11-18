@@ -312,6 +312,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void beginCollabSession(CollabEditStartParams params, DirtyState dirtyState);
    boolean hasActiveCollabSession();
+   boolean hasFollowingCollabSession();
    void endCollabSession();
 
    void setPopupVisible(boolean visible);

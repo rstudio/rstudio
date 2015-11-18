@@ -886,6 +886,25 @@ public class TextEditingTargetWidget
       }
    }
 
+   @Override
+   public void invokePublish()
+   {
+      if (publishButton_ == null)
+      {
+         // shouldn't happen in practice (we hide the publish button and 
+         // disable the command when a non-publishable item is showing in the
+         // widget) but in case it does let the user know why nothing's 
+         // happening.
+         RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+               "Content not publishable", 
+               "This item cannot be published.");
+      }
+      else
+      {
+         publishButton_.invokePublish();
+      }
+   }
+
    private void setFormatText(String text)
    {
       if (text.length() > 0)

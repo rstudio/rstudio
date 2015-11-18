@@ -16,6 +16,12 @@
 #ifndef CORE_FILE_LOCK_HPP
 #define CORE_FILE_LOCK_HPP
 
+// inclusion of boost/asio requires us to include
+// winsock2.h beforehand on windows
+#ifdef _WIN32
+# include <winsock2.h>
+#endif
+
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>

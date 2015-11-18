@@ -380,10 +380,7 @@ public class ShortcutManager implements NativePreviewHandler,
       
       // If this matches a prefix key, return false early.
       if (prefixes_.contains(shortcut.getKeySequence()))
-      {
-         e.preventDefault();
          return false;
-      }
       
       // Clear the key buffer (we've reached a 'leaf' for the
       // key sequence chain; there may or may not be a command)

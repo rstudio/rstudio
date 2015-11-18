@@ -49,7 +49,14 @@ namespace {
 
 bool canWriteToProjectDir(const FilePath& projectDirPath)
 {
-   FilePath testFile = projectDirPath.complete(core::system::generateUuid());
+   std::string prefix(
+#ifndef _WIN32
+   "."
+#endif 
+   "write-test-");
+
+   FilePath testFile = projectDirPath.complete(prefix +
+         core::system::generateUuid());
    Error error = core::writeStringToFile(testFile, "test");
    if (error)
    {
