@@ -557,7 +557,7 @@ public final class String implements Comparable<String>, CharSequence,
     return replace(this, jsRegEx, replace);
   }
 
-  private native String fromCharCode(char to) /*-{
+  private static native String fromCharCode(char to) /*-{
     return String.fromCharCode(to);
   }-*/;
 
@@ -745,7 +745,7 @@ public final class String implements Comparable<String>, CharSequence,
   /**
    * Transforms the String to lower-case based on the native locale of the browser.
    */
-  private native String toLocaleLowerCase(String s) /*-{
+  private static native String toLocaleLowerCase(String s) /*-{
     return s.toLocaleLowerCase();
   }-*/;
 
