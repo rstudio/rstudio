@@ -153,11 +153,17 @@ public class DependencyManager implements InstallShinyEvent.Handler
    private ArrayList<Dependency> rmarkdownDependencies()
    {
       ArrayList<Dependency> deps = new ArrayList<Dependency>();
-      deps.add(Dependency.cranPackage("knitr", "1.11"));
+      deps.add(Dependency.cranPackage("evaluate", "0.7.2"));
+      deps.add(Dependency.cranPackage("digest", "0.6"));
+      deps.add(Dependency.cranPackage("formatR", "1.1"));
+      deps.add(Dependency.cranPackage("highr", "0.3"));
+      deps.add(Dependency.cranPackage("markdown", "0.7"));
+      deps.add(Dependency.cranPackage("stringr", "0.6"));
       deps.add(Dependency.cranPackage("yaml", "2.1.5"));
       deps.add(Dependency.cranPackage("htmltools", "0.2.4"));
       deps.add(Dependency.cranPackage("caTools", "1.14"));
       deps.add(Dependency.cranPackage("bitops", "1.0-6"));
+      deps.add(Dependency.cranPackage("knitr", "1.11", true));
       deps.add(Dependency.cranPackage("rmarkdown", "0.8.1", true));
       return deps;
    }
