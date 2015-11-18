@@ -140,8 +140,12 @@ public final class MathContext implements Serializable {
   public MathContext(String val) {
     checkNotNull(val, "null string");
 
+    String[] extractedValues = parseValue(val);
+    if (extractedValues == null || extractedValues.length != 3) {
+      throw new IllegalArgumentException("bad string format");
+    }
+
     try {
-      String[] extractedValues = parseValue(val);
       this.precision = Integer.parseInt(extractedValues[1]);
       // Can use RoundingMode.valueOf here because it is blacklisted in enum obfuscation.
       this.roundingMode = RoundingMode.valueOf(extractedValues[2]);
