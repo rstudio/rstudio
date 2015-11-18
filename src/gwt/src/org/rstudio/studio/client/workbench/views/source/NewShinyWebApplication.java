@@ -115,7 +115,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       public ShinyWebApplicationClientState()
       {
          super("shiny",
-               "options",
+               "new-shiny-application",
                ClientState.PERSISTENT,
                session_.getSessionInfo().getClientState(),
                false);
