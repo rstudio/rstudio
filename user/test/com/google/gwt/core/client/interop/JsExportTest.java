@@ -20,6 +20,8 @@ import static com.google.gwt.core.client.ScriptInjector.TOP_WINDOW;
 import com.google.gwt.core.client.ScriptInjector;
 import com.google.gwt.junit.client.GWTTestCase;
 
+import javaemul.internal.annotations.DoNotInline;
+import jsinterop.annotations.JsMethod;
 import jsinterop.annotations.JsType;
 
 /**
@@ -477,4 +479,22 @@ public class JsExportTest extends GWTTestCase {
   private static native int callPublicMethodFromEnumerationC() /*-{
     return $global.woo.MyEnumWithSubclassGen.C.foo();
   }-*/;
+
+  static class X {
+    @JsMethod
+    @DoNotInline
+    public static String m(String s) {
+      return s;
+    }
+  }
+
+  private native String callM(String s) /*-{
+    return $global.woo.JsExportTest.X.m(s);
+  }-*/;
+
+  public void testSameParameterValueOptimization() {
+    assertEquals("L", X.m("L"));
+    assertEquals("M", callM("M"));
+  }
+
 }
