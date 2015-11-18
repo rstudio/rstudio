@@ -1017,7 +1017,7 @@ bool sourceDatabaseFilter(const r_util::RSourceIndex& index)
    }
    else
    {
-      return true;
+      return !index.context().empty();
    }
 }
 
