@@ -344,16 +344,29 @@ public class ShortcutManager implements NativePreviewHandler,
       // shortcut bindings)
       for (KeyboardShortcut shortcut: shortcuts)
       {
-         AppCommand command = commands_.getCommand(shortcut.getKeySequence(), editorMode_);
-         if (infoMap.containsKey(command))
+         List<AppCommandBinding> bindings = commands_.getBoundCommands(shortcut.getKeySequence());
+         for (AppCommandBinding binding : bindings)
          {
-            infoMap.get(command).addShortcut(shortcut);
-         }
-         else
-         {
-            ShortcutInfo shortcutInfo = new ShortcutInfo(shortcut, command);
-            info.add(shortcutInfo);
-            infoMap.put(command, shortcutInfo);
+            AppCommand command = binding.getCommand();
+            int disableModes = binding.getShortcut().getDisableModes();
+            
+            // If this command is disabled for the current mode, bail
+            if ((editorMode_ & disableModes) != 0)
+               continue;
+            
+            if (infoMap.containsKey(command))
+            {
+               infoMap.get(command).addShortcut(shortcut);
+            }
+            else
+            {
+               ShortcutInfo shortcutInfo = new ShortcutInfo(shortcut, command);
+               info.add(shortcutInfo);
+               infoMap.put(command, shortcutInfo);
+            }
+            
+            // Only add the top-level command bound
+            break;
          }
       }
       // Sort the commands back into the order in which they were created 
@@ -500,6 +513,13 @@ public class ShortcutManager implements NativePreviewHandler,
          
          List<AppCommandBinding> commands = bindings_.get(keys);
          commands.add(new AppCommandBinding(command, shortcut));
+      }
+      
+      public List<AppCommandBinding> getBoundCommands(KeySequence keys)
+      {
+         if (!bindings_.containsKey(keys))
+            return new ArrayList<AppCommandBinding>();
+         return bindings_.get(keys);
       }
       
       public AppCommand getCommand(KeySequence keys,
