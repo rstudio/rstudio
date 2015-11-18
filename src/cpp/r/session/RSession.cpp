@@ -1707,7 +1707,7 @@ bool isPackratModeOn()
 
 bool isDevtoolsDevModeOn()
 {
-   bool isDevtoolsDevModeOn;
+   bool isDevtoolsDevModeOn = false;
    Error error = r::exec::RFunction(".rs.devModeOn").call(&isDevtoolsDevModeOn);
    if (error)
       LOG_ERROR(error);
