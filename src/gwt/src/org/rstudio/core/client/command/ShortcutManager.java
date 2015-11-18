@@ -523,12 +523,6 @@ public class ShortcutManager implements NativePreviewHandler,
       }
       
       public AppCommand getCommand(KeySequence keys,
-                                   int editorMode)
-      {
-         return getCommand(keys, editorMode, null);
-      }
-      
-      public AppCommand getCommand(KeySequence keys,
                                    int editorMode,
                                    Map<AppCommand, Boolean> maskedCommands)
       {
