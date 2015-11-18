@@ -200,9 +200,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       addTextFieldValidator(appNameTextBox_);
       
       String cachedAppName = result_.getAppName();
-      String appName = StringUtil.isNullOrEmpty(cachedAppName)
-            ? "shiny"
-            : cachedAppName;
+      String appName = StringUtil.isNullOrEmpty(cachedAppName) ? "" : cachedAppName;
       appNameTextBox_.setText(appName);
       
       appTypeLabel_ = new Label("Application type:");
