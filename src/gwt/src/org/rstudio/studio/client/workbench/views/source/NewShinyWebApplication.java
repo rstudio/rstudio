@@ -11,6 +11,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
@@ -29,6 +30,8 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.TextBox;
@@ -160,8 +163,8 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       setOkButtonCaption("Create");
       
       loadAndPersistClientState();
-      
-      container_ = new VerticalPanel();
+        
+      controls_ = new VerticalPanel();
       
       // Create individual widgets
       appNameLabel_ = new Label("Application name:");
@@ -213,21 +216,28 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       appNameTypeGrid.setWidget(0, 0, appNameLabel_);
       appNameTypeGrid.setWidget(0, 1, appNameTextBox_);
       
-      appNameTypeGrid.setWidget(1, 0, new VerticalSpacer("12px"));
-      appNameTypeGrid.setWidget(1, 1, new VerticalSpacer("12px"));
+      appNameTypeGrid.setWidget(1, 0, new VerticalSpacer("9px"));
+      appNameTypeGrid.setWidget(1, 1, new VerticalSpacer("9px"));
       
       appNameTypeGrid.getCellFormatter().setVerticalAlignment(2, 0, HasVerticalAlignment.ALIGN_TOP);
       appNameTypeGrid.setWidget(2, 0, appTypeLabel_);
       appNameTypeGrid.setWidget(2, 1, radioPanel);
-      container_.add(appNameTypeGrid);
+      controls_.add(appNameTypeGrid);
       
-      container_.add(new VerticalSpacer("12px"));
-      container_.add(directoryChooserTextBox_);
+      controls_.add(new VerticalSpacer("12px"));
+      controls_.add(directoryChooserTextBox_);
       
-      container_.add(new VerticalSpacer("20px"));
+      controls_.add(new VerticalSpacer("20px"));
+      
+      container_ = new HorizontalPanel();
+      Image image = new Image(NewProjectResources.INSTANCE.shinyAppIcon());
+      image.addStyleName(RES.styles().image());
+      container_.add(image);
+      container_.add(controls_);
+      
       
       shinyHelpLink_ = new HelpLink(
-            "About Shiny",
+            "Shiny Web Applications",
             "about_shiny",
             false);
       shinyHelpLink_.getElement().getStyle().setMarginTop(4, Unit.PX);
@@ -300,7 +310,8 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    public static final String TYPE_SINGLE_FILE = "type_single_file";
    public static final String TYPE_MULTI_FILE  = "type_multi_file";
    
-   private VerticalPanel container_;
+   private HorizontalPanel container_;
+   private VerticalPanel controls_;
    
    private Label   appNameLabel_;
    private TextBox appNameTextBox_;
@@ -331,6 +342,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    
    public interface Styles extends CssResource
    {
+      String image();
       String grid();
       String label();
       String invalidAppName();

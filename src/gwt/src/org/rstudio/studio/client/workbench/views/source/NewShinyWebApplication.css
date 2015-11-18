@@ -2,6 +2,10 @@
 
 @external gwt-TextBox;
 
+.image {
+   margin-right: 12px;
+}
+
 .grid {
    width: 350px;
 }
