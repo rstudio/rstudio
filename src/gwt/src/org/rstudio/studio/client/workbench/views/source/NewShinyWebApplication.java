@@ -224,7 +224,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       container_.add(new VerticalSpacer("12px"));
       container_.add(directoryChooserTextBox_);
       
-      container_.add(new VerticalSpacer("12px"));
+      container_.add(new VerticalSpacer("20px"));
       
       shinyHelpLink_ = new HelpLink(
             "About Shiny",
