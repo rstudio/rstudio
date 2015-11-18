@@ -28,6 +28,8 @@ import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
@@ -110,13 +112,28 @@ public class GlobalToolbar extends Toolbar
          @Override
          public void onCancel()
          {
-            codeSearchFocusContext_.restore();     
+            // Experimental workaround for crashes observed on El Capitan
+            Scheduler.get().scheduleFinally(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  codeSearchFocusContext_.restore();
+               }
+            });
          }
          
          @Override
          public void onCompleted()
-         {   
-            codeSearchFocusContext_.clear();
+         {
+            Scheduler.get().scheduleFinally(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  codeSearchFocusContext_.clear();
+               }
+            });
          }
          
          @Override
