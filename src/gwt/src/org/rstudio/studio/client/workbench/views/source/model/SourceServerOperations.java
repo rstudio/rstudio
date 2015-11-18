@@ -223,5 +223,5 @@ public interface SourceServerOperations extends FilesServerOperations,
    public void createShinyApp(String appName,
                               String appType,
                               String appDir,
-                              ServerRequestCallback<JsObject> requestCallback);
+                              ServerRequestCallback<JsArrayString> requestCallback);
 }

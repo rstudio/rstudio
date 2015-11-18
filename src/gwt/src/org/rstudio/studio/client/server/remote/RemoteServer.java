@@ -1381,7 +1381,7 @@ public class RemoteServer implements Server
    public void createShinyApp(String appName,
                               String appType,
                               String appDir,
-                              ServerRequestCallback<JsObject> requestCallback)
+                              ServerRequestCallback<JsArrayString> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(appName));

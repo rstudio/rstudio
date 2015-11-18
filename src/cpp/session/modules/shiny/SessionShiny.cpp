@@ -207,23 +207,16 @@ FilePath shinyTemplatePath(const std::string& name)
 }
 
 Error copyTemplateFile(const std::string& templateFileName,
-                      const FilePath& target,
-                      json::Object* pResult)
+                      const FilePath& target)
 {
    FilePath templatePath = shinyTemplatePath(templateFileName);
-   Error error = templatePath.copy(target);
-   if (error)
-      LOG_ERROR(error);
-   
-   std::string aliasedPath = module_context::createAliasedPath(target);
-   (*pResult)[aliasedPath] = (error == Success());
-   return error;
+   return templatePath.copy(target);
 }
 
 Error createShinyApp(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   json::Object result;
+   json::Array result;
    
    std::string appName;
    std::string appType;
@@ -300,7 +293,7 @@ Error createShinyApp(const json::JsonRpcRequest& request,
       if (filePath.exists())
          existingFiles.push_back(aliasedPath);
       
-      result[aliasedPath] = false;
+      result.push_back(aliasedPath);
    }
    
    if (!existingFiles.empty())
@@ -328,7 +321,7 @@ Error createShinyApp(const json::JsonRpcRequest& request,
    BOOST_FOREACH(const std::string& fileName, templateFiles)
    {
       FilePath target = shinyDir.complete(fileName);
-      Error error = copyTemplateFile(fileName, target, &result);
+      Error error = copyTemplateFile(fileName, target);
       if (error)
       {
          std::string aliasedPath = module_context::createAliasedPath(target);
