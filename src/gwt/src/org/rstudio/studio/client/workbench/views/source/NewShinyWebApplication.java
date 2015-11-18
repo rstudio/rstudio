@@ -2,7 +2,6 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
@@ -12,6 +11,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
@@ -145,16 +145,39 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
          clientStateValue_ = new ShinyWebApplicationClientState();
    }
    
+   private String defaultParentDirectory()
+   {
+      String dir;
+      
+      // if we're in a project, use the project directory
+      if (context_.isProjectActive())
+      {
+         dir = context_.getActiveProjectDir().getPath();
+      }
+      else
+      {
+         // otherwise, use the sticky value (if it exists)
+         String cachedDir = result_.getAppDir();
+         dir = StringUtil.isNullOrEmpty(cachedDir)
+               ? "~"
+               : cachedDir;
+      }
+      
+      return dir;
+      
+   }
+   
    @Inject
    private void initialize(Session session,
-                           GlobalDisplay globalDisplay)
+                           GlobalDisplay globalDisplay,
+                           WorkbenchContext context)
    {
       session_ = session;
       globalDisplay_ = globalDisplay;
+      context_ = context;
    }
    
    public NewShinyWebApplication(String caption, 
-                                 FileSystemItem defaultParentDir,
                                  OperationWithInput<Result> operation)
    {
       super(caption, operation);
@@ -201,13 +224,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
          appTypeSingleFileButton_.setValue(true);
       
       directoryChooserTextBox_ = new DirectoryChooserTextBox("Create within directory:", null);
-      
-      String cachedParentDir = result_.getAppDir();
-      if (!StringUtil.isNullOrEmpty(cachedParentDir))
-         directoryChooserTextBox_.setText(cachedParentDir);
-      else
-         directoryChooserTextBox_.setText(defaultParentDir.getPath());
-      
+      directoryChooserTextBox_.setText(defaultParentDirectory());
       directoryChooserTextBox_.addStyleName(RES.styles().textBox());
       
       // Add them to parent
@@ -257,15 +274,9 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       String appName = result.getAppName();
       if (!isValidAppName(appName))
       {
-         String message;
-         if (appName.isEmpty())
-         {
-            message = "The application name must not be empty";
-         }
-         else
-         {
-            message = "Invalid application name";
-         }
+         String message = appName.isEmpty()
+               ? "The application name must not be empty"
+               : "Invalid application name";
          
          globalDisplay_.showErrorMessage(
                "Invalid Application Name",
@@ -286,18 +297,22 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    @Override
    protected Result collectInput()
    {
+      String name = appNameTextBox_.getText().trim();
+      
       String type = "";
       if (appTypeSingleFileButton_.getValue())
          type = TYPE_SINGLE_FILE;
       else if (appTypeMultipleFileButton_.getValue())
          type = TYPE_MULTI_FILE;
       
-      result_ = Result.create(
-            appNameTextBox_.getText().trim(),
-            type,
-            directoryChooserTextBox_.getText());
-      
-      return result_;
+      // don't persist new parent directories if within a project
+      String dirToUse = directoryChooserTextBox_.getText().trim();
+      String dirToCache = context_.isProjectActive()
+            ? result_.getAppDir()
+            : dirToUse;
+            
+      result_ = Result.create(name, type, dirToCache);
+      return Result.create(name, type, dirToUse);
    }
    
    @Override
@@ -329,14 +344,15 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    
    
    private static final Pattern RE_VALID_APP_NAME = Pattern.create(
-         "^" +
+         "^\\s*" +
          "[" + RegexUtil.wordCharacter() + "]" +
          "[" + RegexUtil.wordCharacter() + "._-]*" +
-         "$", "");
+         "\\s*$", "");
    
    // Injected ----
    private Session session_;
    private GlobalDisplay globalDisplay_;
+   private WorkbenchContext context_;
    
    // Styles ----
    

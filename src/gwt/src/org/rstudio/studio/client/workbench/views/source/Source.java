@@ -1132,7 +1132,6 @@ public class Source implements InsertSourceHandler,
          {
             NewShinyWebApplication widget = new NewShinyWebApplication(
                   "New Shiny Web Application",
-                  workbenchContext_.getCurrentWorkingDir(),
                   new OperationWithInput<NewShinyWebApplication.Result>()
                   {
                      @Override
