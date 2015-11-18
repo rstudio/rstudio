@@ -823,7 +823,7 @@ public final class String implements Comparable<String>, CharSequence,
     return $createString(bytes, ofs, len, String.getCharset(charsetName));
   }
 
-  @JsMethod(name = "$create__arrayOf_byte__int__int__java_nio_Charset")
+  @JsMethod(name = "$create__arrayOf_byte__int__int__java_nio_charset_Charset")
   static String $createString(byte[] bytes, int ofs, int len, Charset charset) {
     return String.valueOf(((EmulatedCharset) charset).decodeString(bytes, ofs, len));
   }
@@ -834,7 +834,7 @@ public final class String implements Comparable<String>, CharSequence,
     return $createString(bytes, 0, bytes.length, charsetName);
   }
 
-  @JsMethod(name = "$create__arrayOf_byte__java_nio_Charset")
+  @JsMethod(name = "$create__arrayOf_byte__java_nio_charset_Charset")
   static String $createString(byte[] bytes, Charset charset)
       throws UnsupportedEncodingException {
     return $createString(bytes, 0, bytes.length, charset.name());
