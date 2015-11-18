@@ -157,18 +157,19 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       super(caption, operation);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
+      setOkButtonCaption("Create");
+      
       loadAndPersistClientState();
       
       container_ = new VerticalPanel();
-      container_.setWidth("100%");
       
       // Create individual widgets
-      appNameLabel_ = new Label("Application Name:");
+      appNameLabel_ = new Label("Application name:");
       appNameLabel_.addStyleName(RES.styles().label());
       
       appNameTextBox_ = new TextBox();
       appNameTextBox_.addStyleName(RES.styles().textBox());
-      appNameTextBox_.getElement().getStyle().setMarginLeft(10, Unit.PX);
+      appNameTextBox_.addStyleName(RES.styles().appNameTextBox());
       appNameTextBox_.getElement().setAttribute("placeholder", "Name");
       addTextFieldValidator(appNameTextBox_);
       
@@ -178,7 +179,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
             : cachedAppName;
       appNameTextBox_.setText(appName);
       
-      appTypeLabel_ = new Label("Application Type:");
+      appTypeLabel_ = new Label("Application type:");
       appTypeLabel_.addStyleName(RES.styles().label());
       appTypeLabel_.getElement().getStyle().setMarginTop(2, Unit.PX);
       
@@ -208,11 +209,12 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       
       // Add them to parent
       Grid appNameTypeGrid = new Grid(3, 2);
+      appNameTypeGrid.addStyleName(RES.styles().grid());
       appNameTypeGrid.setWidget(0, 0, appNameLabel_);
       appNameTypeGrid.setWidget(0, 1, appNameTextBox_);
       
-      appNameTypeGrid.setWidget(1, 0, new VerticalSpacer("4px"));
-      appNameTypeGrid.setWidget(1, 1, new VerticalSpacer("4px"));
+      appNameTypeGrid.setWidget(1, 0, new VerticalSpacer("12px"));
+      appNameTypeGrid.setWidget(1, 1, new VerticalSpacer("12px"));
       
       appNameTypeGrid.getCellFormatter().setVerticalAlignment(2, 0, HasVerticalAlignment.ALIGN_TOP);
       appNameTypeGrid.setWidget(2, 0, appTypeLabel_);
@@ -225,8 +227,9 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       container_.add(new VerticalSpacer("12px"));
       
       shinyHelpLink_ = new HelpLink(
-            "Creating Shiny Applications",
-            "shiny");
+            "About Shiny",
+            "about_shiny",
+            false);
       shinyHelpLink_.getElement().getStyle().setMarginTop(4, Unit.PX);
       addLeftWidget(shinyHelpLink_);
    }
@@ -328,8 +331,10 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    
    public interface Styles extends CssResource
    {
+      String grid();
       String label();
       String invalidAppName();
+      String appNameTextBox();
       String textBox();
    }
 

@@ -2,11 +2,19 @@
 
 @external gwt-TextBox;
 
+.grid {
+   width: 350px;
+}
+
 .label {
 }
 
 .invalidAppName {
 	background-color: #f2dede;
+}
+
+.appNameTextBox {
+   width: 180px;
 }
 
 .textBox, .textBox .gwt-TextBox {
