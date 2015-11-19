@@ -51,25 +51,31 @@ void disableSharingFilter(core::r_util::SessionLaunchProfile* pProfile)
       std::make_pair<std::string>(kRStudioDisableProjectSharing, "1"));
 }
 
-void validateSessionSecretFilter(
-            boost::asio::io_service& ioService,
-            http::Request* pRequest,
-            http::RequestFilterContinuation continuation)
-{
-   std::string secret = pRequest->headerValue(kServerRpcSecretHeader);
-   if (secret != s_sessionSharedSecret)
-   {
-      LOG_WARNING_MESSAGE("Session attempted to invoke server RPC with invalid "
-                          "secret " + secret);
-      pRequest->setUri(kInvalidSecretEndpoint);
-   }
-   continuation(boost::shared_ptr<http::Response>());
-}
-
 void invalidSecretHandler(
           boost::shared_ptr<core::http::AsyncConnection> pConnection)
 {
    pConnection->response().setStatusCode(core::http::status::Unauthorized);
+}
+
+void secretValidatingHandler(
+      const core::http::AsyncUriHandlerFunction& handler,
+      boost::shared_ptr<core::http::AsyncConnection> pConnection)
+{
+   // validate that the secret matches what we expect
+   core::http::Response* pResponse = &(pConnection->response());
+   std::string secret =
+         pConnection->request().headerValue(kServerRpcSecretHeader);
+   if (secret != s_sessionSharedSecret)
+   {
+      LOG_WARNING_MESSAGE("Session attempted to invoke server RPC with invalid "
+                          "secret " + secret);
+      pResponse->setStatusCode(core::http::status::BadRequest);
+      pResponse->setStatusMessage("Invalid request.");
+      return;
+   }
+
+   // invoke the wrapped async URI handler
+   handler(pConnection);
 }
 
 } // anonymous namespace
@@ -78,7 +84,10 @@ void addHandler(const std::string &prefix,
                 const core::http::AsyncUriHandlerFunction &handler)
 {
    if (s_pSessionRpcServer)
-      s_pSessionRpcServer->addHandler(prefix, handler);
+   {
+      s_pSessionRpcServer->addHandler(
+               prefix, boost::bind(secretValidatingHandler, handler, _1));
+   }
 }
 
 void addPeriodicCommand(boost::shared_ptr<PeriodicCommand> pCmd)
@@ -93,10 +102,9 @@ void addPeriodicCommand(boost::shared_ptr<PeriodicCommand> pCmd)
 Error startup()
 {
    // start the server (it might not exist if project sharing isn't on)
-   if (s_pSessionRpcServer && !s_pSessionRpcServer->isRunning())
-   {
+   if (s_pSessionRpcServer)
       return s_pSessionRpcServer->run();
-   }
+
    return Success();
 }
 
@@ -119,8 +127,6 @@ Error initialize()
 
       // create the shared secret and validate it on every request
       s_sessionSharedSecret = core::system::generateUuid();
-      s_pSessionRpcServer->setRequestFilter(validateSessionSecretFilter);
-      addHandler(kInvalidSecretEndpoint, invalidSecretHandler);
 
       // inject the shared secret into the session
       sessionManager().addSessionLaunchProfileFilter(sessionProfileFilter);
