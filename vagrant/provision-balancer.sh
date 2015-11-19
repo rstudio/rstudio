@@ -1,21 +1,20 @@
 #!/usr/bin/env bash
 
 # amend MOTD
-echo "Load balanced: /etc/rstudio/load-balancer"
-
-# configure primary machine for load balancing
-ssh -i /rstudio/vagrant/vagrant_key_rsa -o StrictHostKeyChecking=no vagrant@192.168.55.101 "sudo /rstudio/vagrant/provision-primary-load.sh" 
+echo "Load balanced: /etc/rstudio/load-balancer" >> /etc/motd
 
 # set up cluster node config file
 cp /rstudio/vagrant/load-balancer /etc/rstudio/load-balancer
 
-# create secure cookie key
+# create secure cookie key (keep dev copy accessible)
 apt-get install -y uuid
-sh -c "echo `uuid` > /etc/rstudio/secure-cookie-key"
+echo `uuid` > /rstudio/vagrant/secure-cookie-key
+chown vagrant /rstudio/vagrant/secure-cookie-key
+cp /rstudio/vagrant/secure-cookie-key /etc/rstudio/secure-cookie-key
 chmod 0600 /etc/rstudio/secure-cookie-key
 
-# copy key to primary machine
-scp -i /rstudio/vagrant/vagrant_key_rsa -o StrictHostKeyChecking=no /etc/rstudio/secure-cookie-key vagrant@192.168.55.101:/etc/rstudio
+# configure primary machine for load balancing
+ssh -i /rstudio/vagrant/vagrant_key_rsa -o StrictHostKeyChecking=no vagrant@192.168.55.101 "sudo /rstudio/vagrant/provision-primary-load.sh" 
 
 # connect to NFS server already running on the primary machine
 apt-get install nfs-common
