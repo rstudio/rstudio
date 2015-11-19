@@ -43,17 +43,6 @@ void sessionProfileFilter(core::r_util::SessionLaunchProfile* pProfile)
    // give the session the shared secret
    pProfile->config.environment.push_back(
          std::make_pair(kServerRpcSecretEnvVar, s_sessionSharedSecret));
-
-   // start the server if it's not yet running (TODO: feels a little unusual
-   // to do this as a side effect of our profile filter, but we can't do it on
-   // init without becoming dependent on the order of server module init, so
-   // perhaps what's needed here is a session started event we can listen to)
-   if (s_pSessionRpcServer && !s_pSessionRpcServer->isRunning())
-   {
-      Error error = s_pSessionRpcServer->run();
-      if (error)
-         LOG_ERROR(error);
-   }
 }
 
 void disableSharingFilter(core::r_util::SessionLaunchProfile* pProfile)
@@ -99,6 +88,16 @@ void addPeriodicCommand(boost::shared_ptr<PeriodicCommand> pCmd)
       s_pSessionRpcServer->setScheduledCommandInterval(pCmd->period());
       s_pSessionRpcServer->addScheduledCommand(pCmd);
    }
+}
+
+Error startup()
+{
+   // start the server (it might not exist if project sharing isn't on)
+   if (s_pSessionRpcServer && !s_pSessionRpcServer->isRunning())
+   {
+      return s_pSessionRpcServer->run();
+   }
+   return Success();
 }
 
 Error initialize()

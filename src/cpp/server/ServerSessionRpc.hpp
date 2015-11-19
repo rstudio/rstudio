@@ -30,6 +30,7 @@ namespace server {
 namespace session_rpc {
    
 core::Error initialize();
+core::Error startup();
 void addHandler(const std::string& prefix,
                 const core::http::AsyncUriHandlerFunction& handler);
 void addPeriodicCommand(boost::shared_ptr<core::PeriodicCommand> pCmd);
