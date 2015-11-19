@@ -39,7 +39,6 @@ import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Focusable;
@@ -1046,7 +1045,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
     cssBuilder.appendTrustedString("height: " + res.getHeight() + "px;");
 
     AbstractImagePrototype proto = AbstractImagePrototype.create(res);
-    SafeHtml image = SafeHtmlUtils.fromTrustedString(proto.getHTML());
+    SafeHtml image = proto.getSafeHtml();
     return template
         .imageWrapper(classesBuilder.toString(), cssBuilder.toSafeStyles(), image);
   }

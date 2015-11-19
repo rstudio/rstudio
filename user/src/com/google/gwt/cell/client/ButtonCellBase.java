@@ -284,7 +284,7 @@ public class ButtonCellBase<C> extends AbstractCell<C> implements IsCollapsible,
           iconSafeHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
         } else {
           AbstractImagePrototype proto = AbstractImagePrototype.create(icon);
-          SafeHtml iconOnly = SafeHtmlUtils.fromTrustedString(proto.getHTML());
+          SafeHtml iconOnly = proto.getSafeHtml();
           int halfHeight = (int) Math.round(icon.getHeight() / 2.0);
           SafeStylesBuilder styles = new SafeStylesBuilder();
           styles.marginTop(-halfHeight, Unit.PX);
@@ -326,7 +326,7 @@ public class ButtonCellBase<C> extends AbstractCell<C> implements IsCollapsible,
       openTag.append(" class=\"" + classes.toSafeHtml().asString() + "\"");
       openTag.append(" tabindex=\"" + tabIndex + "\" ");
       openTag.append(attributes.toString()).append(">");
-      sb.appendHtmlConstant(openTag.toString());
+      sb.append(SafeHtmlUtils.fromTrustedString(openTag.toString()));
       sb.append(content);
       sb.appendHtmlConstant("</button>");
     }

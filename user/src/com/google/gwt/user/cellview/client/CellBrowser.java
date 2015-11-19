@@ -1237,7 +1237,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize, Req
   private SafeHtml getImageHtml(ImageResource res) {
     // Right-justify image if LTR, left-justify if RTL
     AbstractImagePrototype proto = AbstractImagePrototype.create(res);
-    SafeHtml image = SafeHtmlUtils.fromTrustedString(proto.getHTML());
+    SafeHtml image = proto.getSafeHtml();
 
     SafeStylesBuilder cssBuilder = new SafeStylesBuilder();
     if (LocaleInfo.getCurrentLocale().isRTL()) {
