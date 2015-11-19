@@ -10,7 +10,7 @@ function finishAndCleanup () {
     do
       echo "$jarExpandDir-${i}"
     done
-    find $pomDir -name pom.xml
+    find $pomDir -name pom.xml -o -name pom.xml.asc
     echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
   else
     # Clean up
@@ -20,7 +20,7 @@ function finishAndCleanup () {
       rm -rf $jarExpandDir-${i}
     done
     # Remove POMs & ASCs, leaving only templates
-    find $pomDir -name pom.xml | xargs rm
+    find $pomDir -name pom.xml -o -name pom.xml.asc | xargs rm
   fi
 
 }
