@@ -218,6 +218,10 @@ public:
          threads_[i]->join();
    }
    
+   virtual bool isRunning()
+   {
+      return running_;
+   }
    
 private:
 
