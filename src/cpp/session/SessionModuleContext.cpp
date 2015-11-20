@@ -135,6 +135,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kRmdParamsReady;
       else if (name == "jump_to_function")
          type = session::client_events::kJumpToFunction;
+      else if (name == "replace_selection")
+         type = session::client_events::kReplaceSelection;
 
       if (type != -1)
       {

@@ -138,6 +138,7 @@ extern const int kRVersionsChanged;
 extern const int kRmdParamsEdit;
 extern const int kRmdParamsReady;
 extern const int kRegisterUserCommand;
+extern const int kReplaceSelection;
 }
    
 class ClientEvent

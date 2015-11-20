@@ -79,6 +79,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
+import org.rstudio.studio.client.server.remote.ReplaceSelectionEvent;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
@@ -538,6 +539,23 @@ public class Source implements InsertSourceHandler,
       events.addHandler(DocWindowChangedEvent.TYPE, this);
       events.addHandler(DocTabDragInitiatedEvent.TYPE, this);
       events.addHandler(PopoutDocInitiatedEvent.TYPE, this);
+      events.addHandler(
+            ReplaceSelectionEvent.TYPE,
+            new ReplaceSelectionEvent.Handler()
+            {
+               @Override
+               public void onReplaceSelection(ReplaceSelectionEvent event)
+               {
+                  if (activeEditor_ == null)
+                     return;
+                  
+                  if (!(activeEditor_ instanceof TextEditingTarget))
+                     return;
+                  
+                  TextEditingTarget target = (TextEditingTarget) activeEditor_;
+                  target.insertCode(event.getData(), false);
+               }
+            });
 
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
       Event.addNativePreviewHandler(new NativePreviewHandler()
@@ -1758,7 +1776,7 @@ public class Source implements InsertSourceHandler,
          }
       });
    }
-
+   
    @Override
    public void onPopoutDocInitiated(final PopoutDocInitiatedEvent event)
    {

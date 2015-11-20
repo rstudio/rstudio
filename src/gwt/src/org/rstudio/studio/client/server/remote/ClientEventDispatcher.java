@@ -704,6 +704,11 @@ public class ClientEventDispatcher
             RegisterUserCommandEvent.Data data = event.getData();
             eventBus_.fireEvent(new RegisterUserCommandEvent(data));
          }
+         else if (type.equals(ClientEvent.ReplaceSelection))
+         {
+            String selection = event.getData();
+            eventBus_.fireEvent(new ReplaceSelectionEvent(selection));
+         }
          else
          {
             GWT.log("WARNING: Server event not dispatched: " + type, null);

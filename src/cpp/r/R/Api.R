@@ -149,3 +149,14 @@
 
    invisible(NULL)
 })
+
+.rs.addApiFunction("replaceSelection", function(text) {
+   
+   # validate arguments
+   if (!is.character(text))
+      stop("text must be a character vector")
+   
+   text <- paste(text, collapse = "\n")
+   .rs.enqueClientEvent("replace_selection", text)
+   
+})
