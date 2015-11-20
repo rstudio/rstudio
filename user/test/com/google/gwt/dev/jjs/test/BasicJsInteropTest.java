@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.test;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import jsinterop.annotations.JsType;
@@ -42,6 +44,7 @@ public class BasicJsInteropTest extends GWTTestCase {
     return { field: "AA" };
   }-*/;
 
+  @DoNotRunWith(Platform.Devel)
   public void testANotPruned() {
     A a = createA();
     assertEquals("aa", a.field.toLowerCase());
