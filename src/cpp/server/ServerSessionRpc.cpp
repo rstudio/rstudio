@@ -65,6 +65,7 @@ void secretValidatingHandler(
                           "secret " + secret);
       pResponse->setStatusCode(core::http::status::BadRequest);
       pResponse->setStatusMessage("Invalid request.");
+      pConnection->writeResponse();
       return;
    }
 
