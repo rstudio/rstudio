@@ -4369,6 +4369,15 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "get_project_user", params, callback);
    }
 
+   @Override
+   public void setFollowingUser(String sessionId,
+         ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(sessionId));
+      sendRequest(RPC_SCOPE, "set_following_user", params, callback);
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;

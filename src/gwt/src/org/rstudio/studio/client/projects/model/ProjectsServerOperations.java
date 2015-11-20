@@ -73,4 +73,7 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
    
    void getProjectUser(String sessionId, 
          ServerRequestCallback<ProjectUser> callback);
+   
+   void setFollowingUser(String sessionId,
+         ServerRequestCallback<Void> callback);
 }
