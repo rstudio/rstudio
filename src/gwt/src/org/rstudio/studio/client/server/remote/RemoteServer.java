@@ -1391,12 +1391,10 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CREATE_SHINY_APP, params, requestCallback);
    }
    
-   public void getActiveDocumentContextCompleted(String path,
+   public void getActiveDocumentContextCompleted(JsObject context,
                                                  VoidServerRequestCallback requestCallback)
    {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(path));
-      sendRequest(RPC_SCOPE, GET_ACTIVE_DOCUMENT_CONTEXT_COMPLETED, params, requestCallback);
+      sendRequest(RPC_SCOPE, GET_ACTIVE_DOCUMENT_CONTEXT_COMPLETED, context, requestCallback);
    }
    
    public void getNewProjectContext(

@@ -22,6 +22,7 @@
 #include <boost/format.hpp>
 
 #include <core/Error.hpp>
+#include <core/Debug.hpp>
 #include <core/Exec.hpp>
 #include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
@@ -85,13 +86,28 @@ SEXP rs_getActiveDocumentContext()
    if (!succeeded)
       return R_NilValue;
    
-   // read params from event
+   json::Object context = request.params[0].get_obj();
+   
    std::string path;
-   Error error = json::readParams(request.params, &path);
+   std::string contents;
+   json::Array rangeJson;
+   std::string selection;
+   
+   Error error = json::readObject(context,
+                                  "path", &path,
+                                  "contents", &contents,
+                                  "selection", &selection,
+                                  "range", &rangeJson);
    if (error)
    {
       LOG_ERROR(error);
       return R_NilValue;
+   }
+   
+   std::vector<int> range;
+   if (!json::fillVectorInt(rangeJson, &range))
+   {
+      LOG_WARNING_MESSAGE("failed to parse document range");
    }
    
    using namespace r::sexp;
@@ -99,6 +115,9 @@ SEXP rs_getActiveDocumentContext()
    ListBuilder builder(&protect);
    
    builder.add("path", path);
+   builder.add("contents", contents);
+   builder.add("selection", selection);
+   builder.add("range", range);
    
    return r::sexp::create(builder, &protect);
 }

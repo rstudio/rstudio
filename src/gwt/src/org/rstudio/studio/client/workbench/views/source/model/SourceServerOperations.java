@@ -226,6 +226,6 @@ public interface SourceServerOperations extends FilesServerOperations,
                               String appDir,
                               ServerRequestCallback<JsArrayString> requestCallback);
    
-   public void getActiveDocumentContextCompleted(String path,
+   public void getActiveDocumentContextCompleted(JsObject context,
                                                  VoidServerRequestCallback requestCallback);
 }

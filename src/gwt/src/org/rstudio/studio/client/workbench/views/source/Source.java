@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayNumber;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -118,6 +119,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DisplayChunkOptionsEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunksEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
@@ -565,12 +567,30 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onGetActiveDocumentContext(GetActiveDocumentContextEvent event)
                {
-                  String path = "";
+                  JsObject context = JsObject.createJsObject();
+                  context.setString("path", null);
+                  context.setString("contents", null);
+                  context.setString("selection", null);
+                  context.setObject("range", null);
+                  
                   if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
-                     path = activeEditor_.getPath();
+                  {
+                     TextEditingTarget target = (TextEditingTarget) activeEditor_;
+                     context.setString("path", target.getPath());
+                     context.setString("contents", target.getDocDisplay().getCode());
+                     context.setString("selection", target.getDocDisplay().getSelectionValue());
+                     
+                     Range selectionRange = target.getDocDisplay().getSelectionRange();
+                     JsArrayNumber range = JsArrayNumber.createArray(4).cast();
+                     range.set(0, selectionRange.getStart().getRow() + 1);
+                     range.set(1, selectionRange.getStart().getColumn() + 1);
+                     range.set(2, selectionRange.getEnd().getRow() + 1);
+                     range.set(3, selectionRange.getEnd().getColumn() + 1);
+                     context.setObject("range", range);
+                  }
                   
                   server_.getActiveDocumentContextCompleted(
-                        path,
+                        context,
                         new VoidServerRequestCallback());
                }
             });
