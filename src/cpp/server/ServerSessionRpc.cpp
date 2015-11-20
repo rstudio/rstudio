@@ -114,13 +114,13 @@ Error initialize()
                std::string(),
                core::system::EveryoneReadWriteMode);
 
+      s_pSessionRpcServer->setScheduledCommandInterval(
+               boost::posix_time::milliseconds(kSessionRpcCmdPeriodMs));
+
       // initialize with path to our scoket
       Error error = s_pSessionRpcServer->init(FilePath(kServerRpcSocketPath));
       if (error)
          return error;
-
-      s_pSessionRpcServer->setScheduledCommandInterval(
-               boost::posix_time::milliseconds(kSessionRpcCmdPeriodMs));
 
       // create the shared secret and validate it on every request
       s_sessionSharedSecret = core::system::generateUuid();
