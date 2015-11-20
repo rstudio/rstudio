@@ -38,6 +38,7 @@
 #include <r/session/RSession.hpp>
 #include <r/session/RClientState.hpp> 
 #include <r/RFunctionHook.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 
@@ -68,8 +69,40 @@ namespace session {
 namespace modules { 
 namespace workbench {
 
-namespace {   
-      
+namespace {
+
+module_context::WaitForMethodFunction s_waitForActiveDocumentContext;
+
+SEXP rs_getActiveDocumentContext()
+{
+   // prepare context event
+   ClientEvent activeDocumentContextEvent(client_events::kGetActiveDocumentContext);
+   
+   // wait for event to complete
+   json::JsonRpcRequest request;
+   
+   bool succeeded = s_waitForActiveDocumentContext(&request, activeDocumentContextEvent);
+   if (!succeeded)
+      return R_NilValue;
+   
+   // read params from event
+   std::string path;
+   Error error = json::readParams(request.params, &path);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+   
+   using namespace r::sexp;
+   Protect protect;
+   ListBuilder builder(&protect);
+   
+   builder.add("path", path);
+   
+   return r::sexp::create(builder, &protect);
+}
+
 Error setClientState(const json::JsonRpcRequest& request, 
                      json::JsonRpcResponse* pResponse)
 {   
@@ -906,6 +939,13 @@ Error initialize()
       s_waitForEditCompleted = module_context::registerWaitForMethod(
                                                          "edit_completed");
    }
+   
+   // register waitForMethod for active document context
+   using namespace module_context;
+   s_waitForActiveDocumentContext =
+         registerWaitForMethod("get_active_document_context_completed");
+   
+   RS_REGISTER_CALL_METHOD(rs_getActiveDocumentContext, 0);
    
    // complete initialization
    using boost::bind;

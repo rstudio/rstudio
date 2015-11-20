@@ -79,6 +79,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
+import org.rstudio.studio.client.server.remote.GetActiveDocumentContextEvent;
 import org.rstudio.studio.client.server.remote.ReplaceSelectionEvent;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
@@ -554,6 +555,23 @@ public class Source implements InsertSourceHandler,
                   
                   TextEditingTarget target = (TextEditingTarget) activeEditor_;
                   target.insertCode(event.getData(), false);
+               }
+            });
+      
+      events.addHandler(
+            GetActiveDocumentContextEvent.TYPE,
+            new GetActiveDocumentContextEvent.Handler()
+            {
+               @Override
+               public void onGetActiveDocumentContext(GetActiveDocumentContextEvent event)
+               {
+                  String path = "";
+                  if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+                     path = activeEditor_.getPath();
+                  
+                  server_.getActiveDocumentContextCompleted(
+                        path,
+                        new VoidServerRequestCallback());
                }
             });
 

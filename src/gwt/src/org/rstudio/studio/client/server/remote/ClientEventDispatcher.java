@@ -709,6 +709,10 @@ public class ClientEventDispatcher
             String selection = event.getData();
             eventBus_.fireEvent(new ReplaceSelectionEvent(selection));
          }
+         else if (type.equals(ClientEvent.GetActiveDocumentContext))
+         {
+            eventBus_.fireEvent(new GetActiveDocumentContextEvent());
+         }
          else
          {
             GWT.log("WARNING: Server event not dispatched: " + type, null);

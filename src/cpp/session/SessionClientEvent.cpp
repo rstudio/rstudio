@@ -138,6 +138,7 @@ const int kRmdParamsReady = 113;
 const int kRegisterUserCommand = 114;
 const int kRmdRSConnectDeploymentFailed = 115;
 const int kReplaceSelection = 116;
+const int kGetActiveDocumentContext = 117;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -373,6 +374,8 @@ std::string ClientEvent::typeName() const
          return "register_user_command";
       case client_events::kReplaceSelection:
          return "replace_selection";
+      case client_events::kGetActiveDocumentContext:
+         return "get_active_document_context";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

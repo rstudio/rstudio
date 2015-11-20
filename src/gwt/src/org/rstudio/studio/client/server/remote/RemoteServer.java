@@ -120,6 +120,7 @@ import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
@@ -1388,6 +1389,14 @@ public class RemoteServer implements Server
       params.set(1, new JSONString(appType));
       params.set(2, new JSONString(appDir));
       sendRequest(RPC_SCOPE, CREATE_SHINY_APP, params, requestCallback);
+   }
+   
+   public void getActiveDocumentContextCompleted(String path,
+                                                 VoidServerRequestCallback requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      sendRequest(RPC_SCOPE, GET_ACTIVE_DOCUMENT_CONTEXT_COMPLETED, params, requestCallback);
    }
    
    public void getNewProjectContext(
@@ -4524,6 +4533,8 @@ public class RemoteServer implements Server
    private static final String DUPLICATE_DATA_VIEW = "duplicate_data_view";
    private static final String ENSURE_FILE_EXISTS = "ensure_file_exists";
    private static final String GET_SOURCE_DOCUMENT = "get_source_document";
+   
+   private static final String GET_ACTIVE_DOCUMENT_CONTEXT_COMPLETED = "get_active_document_context_completed";
 
    private static final String GET_RECENT_HISTORY = "get_recent_history";
    private static final String GET_HISTORY_ITEMS = "get_history_items";
