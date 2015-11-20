@@ -59,21 +59,7 @@ Error base64HMAC(const std::string& value,
                  std::string* pHMAC)
 {
    // compute message to apply hmac to
-   std::string message = value + expires;
-
-   // get cookie key
-   // NOTE: threadsafe because we never modify s_secureCookieKey and
-   // the c_str accessor just returns a pointer to the internal data
-   const char * cookieKey = s_secureCookieKey.c_str();
-
-   // compute hmac for the message
-   std::vector<unsigned char> hmac;
-   Error error = core::system::crypto::HMAC_SHA2(message, cookieKey, &hmac);
-   if (error)
-      return error;
-
-   // base 64 encode it
-   return core::system::crypto::base64Encode(hmac, pHMAC);
+   return hashWithSecureKey(value + expires, pHMAC);
 }
 
 http::Cookie createSecureCookie(
@@ -117,6 +103,23 @@ http::Cookie createSecureCookie(
 }
 
 } // anonymous namespace
+
+Error hashWithSecureKey(const std::string& message, std::string* pHMAC)
+{
+   // get cookie key
+   // NOTE: threadsafe because we never modify s_secureCookieKey and
+   // the c_str accessor just returns a pointer to the internal data
+   const char * cookieKey = s_secureCookieKey.c_str();
+
+   // compute hmac for the message
+   std::vector<unsigned char> hmac;
+   Error error = core::system::crypto::HMAC_SHA2(message, cookieKey, &hmac);
+   if (error)
+      return error;
+
+   // base 64 encode it
+   return core::system::crypto::base64Encode(hmac, pHMAC);
+}
 
 std::string readSecureCookie(const core::http::Request& request,
                              const std::string& name)
@@ -305,4 +308,3 @@ Error initialize()
 } // namespace auth
 } // namespace server
 } // namespace rstudio
-
