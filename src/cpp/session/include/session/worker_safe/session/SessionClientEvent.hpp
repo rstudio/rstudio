@@ -138,6 +138,8 @@ extern const int kRVersionsChanged;
 extern const int kRmdParamsEdit;
 extern const int kRmdParamsReady;
 extern const int kRegisterUserCommand;
+extern const int kUserFollowStarted;
+extern const int kUserFollowEnded;
 }
    
 class ClientEvent

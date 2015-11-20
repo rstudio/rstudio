@@ -128,6 +128,8 @@ class ClientEvent extends JavaScriptObject
    public static final String RmdParamsEdit = "rmd_params_edit";
    public static final String RmdParamsReady = "rmd_params_ready";
    public static final String RegisterUserCommand = "register_user_command";
+   public static final String UserFollowStarted = "user_follow_started";
+   public static final String UserFollowEnded = "user_follow_ended";
    
    protected ClientEvent()
    {
