@@ -51,12 +51,6 @@ void disableSharingFilter(core::r_util::SessionLaunchProfile* pProfile)
       std::make_pair<std::string>(kRStudioDisableProjectSharing, "1"));
 }
 
-void invalidSecretHandler(
-          boost::shared_ptr<core::http::AsyncConnection> pConnection)
-{
-   pConnection->response().setStatusCode(core::http::status::Unauthorized);
-}
-
 void secretValidatingHandler(
       const core::http::AsyncUriHandlerFunction& handler,
       boost::shared_ptr<core::http::AsyncConnection> pConnection)
@@ -94,7 +88,6 @@ void addPeriodicCommand(boost::shared_ptr<PeriodicCommand> pCmd)
 {
    if (s_pSessionRpcServer)
    {
-      s_pSessionRpcServer->setScheduledCommandInterval(pCmd->period());
       s_pSessionRpcServer->addScheduledCommand(pCmd);
    }
 }
@@ -124,6 +117,9 @@ Error initialize()
       Error error = s_pSessionRpcServer->init(FilePath(kServerRpcSocketPath));
       if (error)
          return error;
+
+      s_pSessionRpcServer->setScheduledCommandInterval(
+               boost::posix_time::milliseconds(kSessionRpcCmdPeriodMs));
 
       // create the shared secret and validate it on every request
       s_sessionSharedSecret = core::system::generateUuid();

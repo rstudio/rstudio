@@ -19,6 +19,8 @@
 #include <core/http/AsyncUriHandler.hpp>
 #include <core/PeriodicCommand.hpp>
 
+#define kSessionRpcCmdPeriodMs 50
+
 namespace rstudio {
 namespace core {
    class Error;
