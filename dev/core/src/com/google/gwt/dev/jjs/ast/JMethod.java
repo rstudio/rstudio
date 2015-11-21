@@ -16,7 +16,6 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.common.InliningMode;
-import com.google.gwt.dev.javac.JsInteropUtil;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
@@ -24,6 +23,7 @@ import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.impl.JjsUtils;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.IOException;
@@ -76,11 +76,8 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
 
   @Override
   public boolean canBeReferencedExternally() {
-    if (exported || isJsFunctionMethod()) {
-      return true;
-    }
-    for (JMethod overriddenMethod : getOverriddenMethods()) {
-      if (overriddenMethod.exported || overriddenMethod.isJsFunctionMethod()) {
+    for (JMethod method : getOverriddenMethodsIncludingSelf()) {
+      if (method.exported || method.isJsFunctionMethod()) {
         return true;
       }
     }
@@ -124,18 +121,12 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
 
   @Override
   public String getJsName() {
-    String jsMemberName = jsName;
-    for (JMethod override : getOverriddenMethods()) {
-      String jsMemberOverrideName = override.jsName;
-      if (jsMemberOverrideName == null) {
-        continue;
+    for (JMethod method : getOverriddenMethodsIncludingSelf()) {
+      if (method.jsName != null) {
+        return method.jsName;
       }
-      if (jsMemberName != null && !jsMemberName.equals(jsMemberOverrideName)) {
-        return JsInteropUtil.INVALID_JSNAME;
-      }
-      jsMemberName = jsMemberOverrideName;
     }
-    return jsMemberName;
+    return null;
   }
 
   public boolean isJsConstructor() {
@@ -166,12 +157,9 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
 
   @Override
   public JsMemberType getJsMemberType() {
-    if (jsMemberType != JsMemberType.NONE) {
-      return jsMemberType;
-    }
-    for (JMethod overriddenMethod : getOverriddenMethods()) {
-      if (overriddenMethod.jsMemberType != JsMemberType.NONE) {
-        return overriddenMethod.jsMemberType;
+    for (JMethod method : getOverriddenMethodsIncludingSelf()) {
+      if (method.jsMemberType != JsMemberType.NONE) {
+        return method.jsMemberType;
       }
     }
     return JsMemberType.NONE;
@@ -182,11 +170,8 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
   }
 
   public boolean isOrOverridesJsFunctionMethod() {
-    if (isJsFunctionMethod()) {
-      return true;
-    }
-    for (JMethod overriddenMethod : getOverriddenMethods()) {
-      if (overriddenMethod.isJsFunctionMethod()) {
+    for (JMethod method : getOverriddenMethodsIncludingSelf()) {
+      if (method.isJsFunctionMethod()) {
         return true;
       }
     }
@@ -519,6 +504,13 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
    */
   public Set<JMethod> getOverriddenMethods() {
     return overriddenMethods;
+  }
+
+  /**
+   * Return all overridden methods including the method itself (where it is the first item).
+   */
+  private Iterable<JMethod> getOverriddenMethodsIncludingSelf() {
+    return Iterables.concat(Collections.singleton(this), overriddenMethods);
   }
 
   /**

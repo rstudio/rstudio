@@ -711,21 +711,18 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         + "cannot be assigned a different JavaScript name than the method it overrides.");
   }
 
-  // TODO(goktug): enable once the property names are handled.
-  public void __disabled__testRenamedSuperclassJsPropertyFails() {
-    addSnippetImport("jsinterop.annotations.JsType");
+  public void testRenamedSuperclassJsPropertyFails() {
     addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetClassDecl(
-        "@JsType",
         "public static class ParentBuggy {",
         "  @JsProperty public int getFoo() { return 0; }",
         "}",
         "public static class Buggy extends ParentBuggy {",
-        "  @JsProperty(name = \"bar\") public int getFoo() { return 0;}",
+        "  @JsProperty(name = \"bar\") public int getFoo() { return 0; }",
         "}");
 
-    assertBuggyFails("'EntryPoint.Buggy.getFoo()I' cannot be exported because the method "
-        + "overrides a method with different name.");
+    assertBuggyFails("Line 8: 'int EntryPoint.Buggy.getFoo()' "
+        + "cannot be assigned a different JavaScript name than the method it overrides.");
   }
 
   public void testJsPropertyDifferentFlavourInSubclassFails() {

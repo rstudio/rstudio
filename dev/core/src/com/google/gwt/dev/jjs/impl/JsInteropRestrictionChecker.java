@@ -246,12 +246,9 @@ public class JsInteropRestrictionChecker {
       return;
     }
 
-    if (member.getJsName().equals(JsInteropUtil.INVALID_JSNAME)) {
-      logInvalidName(member);
+    if (!checkJsPropertyAccessor(member)) {
       return;
     }
-
-    checkJsPropertyAccessor(member);
 
     checkMemberQualifiedJsName(member);
 
@@ -340,21 +337,16 @@ public class JsInteropRestrictionChecker {
     }
   }
 
-  private void logInvalidName(JMember member) {
-    if (member.getJsMemberType().isPropertyAccessor()) {
+  private boolean checkJsPropertyAccessor(JMember member) {
+    if (member.getJsName().equals(JsInteropUtil.INVALID_JSNAME)) {
+      assert member.getJsMemberType().isPropertyAccessor();
       logError(
           member,
           "JsProperty %s should either follow Java Bean naming conventions or provide a name.",
           getMemberDescription(member));
-    } else {
-      logError(
-          member,
-          "%s cannot be assigned a different JavaScript name than the method it overrides.",
-          getMemberDescription(member));
+      return false;
     }
-  }
 
-  private void checkJsPropertyAccessor(JMember member) {
     if (member.getJsMemberType() == JsMemberType.UNDEFINED_ACCESSOR) {
       logError(member, "JsProperty %s should have a correct setter or getter signature.",
           getMemberDescription(member));
@@ -366,6 +358,7 @@ public class JsInteropRestrictionChecker {
             getMemberDescription(member));
       }
     }
+    return true;
   }
 
   private void checkMemberQualifiedJsName(JMember member) {
@@ -414,6 +407,7 @@ public class JsInteropRestrictionChecker {
     JsMember oldJsMember = oldAndNewJsMember.left;
     JsMember newJsMember = oldAndNewJsMember.right;
 
+    checkNameConsistency(member);
     checkJsPropertyConsistency(member, newJsMember);
 
     if (oldJsMember == null || oldJsMember == newJsMember) {
@@ -456,6 +450,22 @@ public class JsInteropRestrictionChecker {
       if (newMember.getter.getType() != setterParams.get(0).getType()) {
         logError(member, "JsProperty setter %s and getter %s cannot have inconsistent types.",
             getMemberDescription(newMember.setter), getMemberDescription(newMember.getter));
+      }
+    }
+  }
+
+  private void checkNameConsistency(JMember member) {
+    if (member instanceof JMethod) {
+      String jsName = member.getJsName();
+      for (JMethod jMethod : ((JMethod) member).getOverriddenMethods()) {
+        String parentName = jMethod.getJsName();
+        if (parentName != null && !parentName.equals(jsName)) {
+          logError(
+              member,
+              "%s cannot be assigned a different JavaScript name than the method it overrides.",
+              getMemberDescription(member));
+          break;
+        }
       }
     }
   }
