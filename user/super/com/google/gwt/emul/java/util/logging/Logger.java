@@ -27,11 +27,11 @@ public class Logger {
 
 public static final String GLOBAL_LOGGER_NAME = "global";
 
-  private static final boolean SUPER_DEV_MODE =
-      System.getProperty("superdevmode", "off").equals("on");
+  private static final boolean DEBUG_MODE_ENABLED =
+      System.getProperty("debugMode", "DISABLED").equals("ENABLED");
 
   private static final String LOGGING_ENABLED =
-      System.getProperty("gwt.logging.enabled", SUPER_DEV_MODE ? "TRUE" : "FALSE");
+      System.getProperty("gwt.logging.enabled", DEBUG_MODE_ENABLED ? "TRUE" : "FALSE");
 
   private static final boolean LOGGING_WARNING = LOGGING_ENABLED.equals("WARNING");
   private static final boolean LOGGING_SEVERE = LOGGING_ENABLED.equals("SEVERE");

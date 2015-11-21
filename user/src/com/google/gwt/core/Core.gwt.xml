@@ -27,6 +27,12 @@
   <define-property name="superdevmode" values="off, on"/>
   <set-property name="superdevmode" value="off"/>
 
+  <define-property name="debugMode" values="ENABLED,DISABLED" />
+  <set-property name="debugMode" value="DISABLED" />
+  <set-property name="debugMode" value="ENABLED">
+    <when-property-is name="superdevmode" value="on" />
+  </set-property>
+
   <inherits name="com.google.gwt.dev.jjs.intrinsic.Intrinsic" />
   <inherits name="com.google.gwt.core.CompilerParameters" />
   <inherits name="com.google.gwt.emul.Emulation" />
@@ -76,6 +82,6 @@
   <set-property name="gwt.logging.simpleConsoleHandler" value="ENABLED"/>
 
   <set-property name="gwt.logging.enabled" value="TRUE">
-    <when-property-is name="superdevmode" value="on"/>
+    <when-property-is name="debugMode" value="ENABLED"/>
   </set-property>
 </module>

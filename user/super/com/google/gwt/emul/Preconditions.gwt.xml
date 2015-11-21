@@ -118,4 +118,10 @@
   <!-- Default checkLevel is NORMAL -->
   <set-property name="checks.checkLevel" value="NORMAL" />
 
+  <define-property name="checkedMode" values="ENABLED,DISABLED" />
+
+  <set-property name="checkedMode" value="DISABLED" />
+  <set-property name="checkedMode" value="ENABLED">
+    <when-property-is name="debugMode" value="ENABLED" />
+  </set-property>
 </module>

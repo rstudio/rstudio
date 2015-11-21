@@ -16,8 +16,8 @@
   <inherits name="com.google.gwt.logging.LoggingDisabled"/>
   <set-property name="gwt.logging.enabled" value="SEVERE"/>
 
-  <!-- Preserve the logging level in superdevmode -->
+  <!-- Preserve the logging level in debugMode -->
   <set-property name="gwt.logging.enabled" value="TRUE">
-    <when-property-is name="superdevmode" value="on"/>
+    <when-property-is name="debugMode" value="ENABLED"/>
   </set-property>
 </module>
