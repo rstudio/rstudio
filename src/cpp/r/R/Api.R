@@ -160,3 +160,7 @@
    .rs.enqueClientEvent("replace_selection", text)
    
 })
+
+.rs.addApiFunction("getActiveDocumentContext", function() {
+   .Call(.rs.routines$rs_getActiveDocumentContext)
+})
