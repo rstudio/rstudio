@@ -1000,6 +1000,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "@JsType(namespace = \"a.b.\") public static class Buggy {",
         "   @JsMethod(namespace = \"34s\") public static void m() {}",
         "   @JsProperty(namespace = \"s^\") public static int  n;",
+        "   @JsMethod(namespace = \"\") public static void o() {}",
         "   @JsProperty(namespace = \"\") public int p;",
         "   @JsMethod(namespace = \"a\") public void q() {}",
         "}");
@@ -1008,18 +1009,20 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "Line 6: 'EntryPoint.Buggy' has invalid namespace 'a.b.'.",
         "Line 7: 'void EntryPoint.Buggy.m()' has invalid namespace '34s'.",
         "Line 8: 'int EntryPoint.Buggy.n' has invalid namespace 's^'.",
-        "Line 9: Instance member 'int EntryPoint.Buggy.p' cannot declare a namespace.",
-        "Line 10: Instance member 'void EntryPoint.Buggy.q()' cannot declare a namespace.");
+        "Line 9: 'void EntryPoint.Buggy.o()' cannot have an empty namespace.",
+        "Line 10: Instance member 'int EntryPoint.Buggy.p' cannot declare a namespace.",
+        "Line 11: Instance member 'void EntryPoint.Buggy.q()' cannot declare a namespace.");
   }
 
-  public void testJsNameEmptyNamespacesSucceeds() throws Exception {
+  public void testJsNameGlobalNamespacesSucceeds() throws Exception {
     addSnippetImport("jsinterop.annotations.JsType");
     addSnippetImport("jsinterop.annotations.JsMethod");
     addSnippetImport("jsinterop.annotations.JsProperty");
+    addSnippetImport("jsinterop.annotations.JsPackage");
     addSnippetClassDecl(
-        "@JsType(namespace = \"\") public static class Buggy {",
-        "   @JsMethod(namespace = \"\") public static void m() {}",
-        "   @JsProperty(namespace = \"\") public static int  n;",
+        "@JsType(namespace = JsPackage.GLOBAL) public static class Buggy {",
+        "   @JsMethod(namespace = JsPackage.GLOBAL) public static void m() {}",
+        "   @JsProperty(namespace = JsPackage.GLOBAL) public static int  n;",
         "}");
 
     assertBuggySucceeds();

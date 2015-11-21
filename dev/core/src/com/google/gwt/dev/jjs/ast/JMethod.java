@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.common.InliningMode;
+import com.google.gwt.dev.javac.JsInteropUtil;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
@@ -111,7 +112,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
     if (jsName.isEmpty()) {
       assert !needsDynamicDispatch();
       return namespace;
-    } else if (namespace.isEmpty()) {
+    } else if (JsInteropUtil.isGlobal(namespace)) {
       assert !needsDynamicDispatch();
       return jsName;
     } else {

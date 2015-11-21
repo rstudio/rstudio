@@ -29,7 +29,10 @@ import java.lang.annotation.Target;
 @Target(ElementType.PACKAGE)
 @Documented
 public @interface JsPackage {
-  String GLOBAL = "";
+  /**
+   * Namespace for the global JavaScript object.
+   */
+  String GLOBAL = "<global>";
 
   String namespace();
 }

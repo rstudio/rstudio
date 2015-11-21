@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.javac.JsInteropUtil;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.jjs.impl.JjsUtils;
@@ -623,7 +624,7 @@ public abstract class JDeclaredType extends JReferenceType
 
   @Override
   public String getQualifiedJsName() {
-    return jsNamespace.isEmpty() ? getJsName() : jsNamespace + "." + getJsName();
+    return JsInteropUtil.isGlobal(jsNamespace) ? getJsName() : jsNamespace + "." + getJsName();
   }
 
   public NestedClassDisposition getClassDisposition() {

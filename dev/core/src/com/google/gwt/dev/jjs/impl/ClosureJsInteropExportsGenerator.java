@@ -13,6 +13,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.javac.JsInteropUtil;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
@@ -97,7 +98,7 @@ class ClosureJsInteropExportsGenerator implements JsInteropExportsGenerator {
   }
 
   private void ensureGoogProvide(String namespace, SourceInfo info) {
-    if (!providedNamespaces.add(namespace) || namespace.isEmpty()) {
+    if (JsInteropUtil.isGlobal(namespace) || !providedNamespaces.add(namespace)) {
       return;
     }
 
@@ -114,6 +115,7 @@ class ClosureJsInteropExportsGenerator implements JsInteropExportsGenerator {
   }
 
   private static JsExpression createExportQualifier(String namespace, SourceInfo sourceInfo) {
-    return JsUtils.createQualifiedNameRef(namespace.isEmpty() ? "window" : namespace, sourceInfo);
+    return JsUtils.createQualifiedNameRef(
+        JsInteropUtil.isGlobal(namespace) ? "window" : namespace, sourceInfo);
   }
 }

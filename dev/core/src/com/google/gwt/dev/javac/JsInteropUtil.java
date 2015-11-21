@@ -42,6 +42,10 @@ public final class JsInteropUtil {
   public static final String UNUSABLE_BY_JS = "unusable-by-js";
   public static final String INVALID_JSNAME = "<invalid>";
 
+  public static boolean isGlobal(String jsNamespace) {
+    return "<global>".equals(jsNamespace);
+  }
+
   public static void maybeSetJsInteropProperties(JDeclaredType type, Annotation... annotations) {
     AnnotationBinding jsType = JdtUtil.getAnnotation(annotations, JSTYPE_CLASS);
     String namespace = maybeGetJsNamespace(annotations);

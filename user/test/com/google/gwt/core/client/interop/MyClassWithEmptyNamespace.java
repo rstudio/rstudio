@@ -16,13 +16,14 @@
 package com.google.gwt.core.client.interop;
 
 import jsinterop.annotations.JsConstructor;
+import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 
 /**
  * Class with empty namespace.
  */
-@JsType(namespace = "")
+@JsType(namespace = JsPackage.GLOBAL)
 public class MyClassWithEmptyNamespace {
   @JsProperty
   public static final int DAN = 82;

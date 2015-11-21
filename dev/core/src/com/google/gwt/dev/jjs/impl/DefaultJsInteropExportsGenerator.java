@@ -15,6 +15,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import static com.google.gwt.dev.js.JsUtils.createAssignment;
 
+import com.google.gwt.dev.javac.JsInteropUtil;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
@@ -85,6 +86,7 @@ class DefaultJsInteropExportsGenerator implements JsInteropExportsGenerator {
 
   private void ensureProvideNamespace(JMember member, JsExpression ctor) {
     String namespace = member.getJsNamespace();
+    namespace = JsInteropUtil.isGlobal(namespace) ? "" : namespace;
     if (namespace.equals(lastExportedNamespace)) {
       return;
     }

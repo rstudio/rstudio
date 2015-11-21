@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.javac.JsInteropUtil;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.util.StringInterner;
@@ -174,7 +175,7 @@ public class JField extends JVariable implements JMember {
   @Override
   public String getQualifiedJsName() {
     String namespace = getJsNamespace();
-    return namespace.isEmpty() ? jsName : namespace + "." + jsName;
+    return JsInteropUtil.isGlobal(namespace) ? jsName : namespace + "." + jsName;
   }
 
   @Override

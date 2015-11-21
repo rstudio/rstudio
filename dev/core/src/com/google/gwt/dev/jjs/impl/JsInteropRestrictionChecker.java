@@ -387,18 +387,19 @@ public class JsInteropRestrictionChecker {
   private <T extends HasJsName & HasSourceInfo> void checkJsName(T item) {
     if (item.getJsName().isEmpty()) {
       logError(item, "%s cannot have an empty name.", getDescription(item));
-      return;
-    }
-    if (!JsUtils.isValidJsIdentifier(item.getJsName())) {
+    } else if (!JsUtils.isValidJsIdentifier(item.getJsName())) {
       logError(item, "%s has invalid name '%s'.", getDescription(item), item.getJsName());
-      return;
     }
   }
 
   private <T extends HasJsName & HasSourceInfo> void checkJsNamespace(T item) {
-      String jsNamespace = item.getJsNamespace();
-    if (!jsNamespace.isEmpty() && !JsUtils.isValidJsQualifiedName(jsNamespace)) {
-      logError(item, "%s has invalid namespace '%s'.", getDescription(item), jsNamespace);
+    if (JsInteropUtil.isGlobal(item.getJsNamespace())) {
+      return;
+    }
+    if (item.getJsNamespace().isEmpty()) {
+      logError(item, "%s cannot have an empty namespace.", getDescription(item));
+    } else if (!JsUtils.isValidJsQualifiedName(item.getJsNamespace())) {
+      logError(item, "%s has invalid namespace '%s'.", getDescription(item), item.getJsNamespace());
     }
   }
 
