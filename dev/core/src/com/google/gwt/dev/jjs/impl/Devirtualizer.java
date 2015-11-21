@@ -203,6 +203,10 @@ public class Devirtualizer {
       if (method.isJsOverlay()) {
         return true;
       }
+      if (method.getEnclosingType().isJsNative()) {
+        // Methods in a native JsType that are not JsOverlay should NOT be devirtualized.
+        return false;
+      }
       EnumSet<DispatchType> dispatchType = program.getDispatchType(instanceType);
       dispatchType.remove(DispatchType.HAS_JAVA_VIRTUAL_DISPATCH);
       return !dispatchType.isEmpty();
@@ -434,7 +438,7 @@ public class Devirtualizer {
     // Decide where to place the devirtual method. Ideally these methods should reside in the
     // declaring type, but some of these will be interfaces and currently GWT does not emit
     // any code for them.
-    // TODO(rluble): place interface methods in the corresponding interface once Java 9 defender
+    // TODO(rluble): place interface methods in the corresponding interface once Java 8 defender
     // method support is implemented.
     JClassType devirtualMethodEnclosingClass  = null;
     if (method.getEnclosingType() instanceof JClassType) {
@@ -455,7 +459,7 @@ public class Devirtualizer {
         devirtualMethodEnclosingClass = (JClassType)
             dispatchToMethodByTargetType.get(DispatchType.JSO).getEnclosingType();
       } else {
-        // It is an interface implemented by String or arrays, place it in Object.
+        // It is an interface implemented by devirtualized types, place it in Object.
         devirtualMethodEnclosingClass = program.getTypeJavaLangObject();
       }
     }

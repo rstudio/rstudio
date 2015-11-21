@@ -2915,7 +2915,9 @@ public class GwtAstBuilder {
       JMethod method = type.getMethods().get(GET_CLASS_METHOD_INDEX);
       assert (GET_CLASS_METHOD_NAME.equals(method.getName()));
       SourceInfo info = method.getSourceInfo();
-      if (type.isJsoType()) {
+      if (type.isJsoType() || type.isJsNative()) {
+        // Native types and JSOs get a synthetic get class that return JavaScriptObject.class.
+        //
         // return Cast.getClass(this)
         JjsUtils.replaceMethodBody(method,
             new JMethodCall(info, null, CAST_GET_CLASS_METHOD, new JThisRef(info, type)));

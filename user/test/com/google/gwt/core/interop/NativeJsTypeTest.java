@@ -33,7 +33,7 @@ public class NativeJsTypeTest extends GWTTestCase {
 
   @JsType(isNative = true)
   static class MyNativeJsType {
-    // TODO(rluble): these methods should be synthesyzed by the compiler.
+    // TODO(rluble): these methods should be synthesized by the compiler.
     @Override
     public native String toString();
     @Override

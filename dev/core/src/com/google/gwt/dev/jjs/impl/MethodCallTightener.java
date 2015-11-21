@@ -124,7 +124,10 @@ public class MethodCallTightener {
 
       JMethod mostSpecificOverride =
           program.typeOracle.findMostSpecificOverride(underlyingType, original);
-      if (mostSpecificOverride == original) {
+
+      if (mostSpecificOverride == original || mostSpecificOverride.isJsNative()) {
+        // Do not tighten if the target method is a native JsMethod; this is necessary for the
+        // JSO trampoline to be invoked on getClass().
         return methodCall;
       }
       JMethodCall newCall = new JMethodCall(

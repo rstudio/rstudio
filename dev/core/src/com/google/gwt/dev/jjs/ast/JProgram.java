@@ -488,15 +488,15 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     if (type.isArrayType()) {
       // A variable of type Object[] could contain an instance of native JsType[], the latter
       // is treated as a JSO for devirtualization purposes.
-      // TODO(rluble): maybe it should not be treated as a JSO, think .toString().
       return EnumSet.of(DispatchType.JSO, DispatchType.JAVA_ARRAY);
     }
     EnumSet<DispatchType> dispatchSet = EnumSet.noneOf(DispatchType.class);
     DispatchType dispatchType = getRepresentedAsNativeTypesDispatchMap().get(type);
     if (dispatchType != null) {
       dispatchSet = EnumSet.of(dispatchType);
-    } else if (typeOracle.isDualJsoInterface(type)) {
-      // If it is an interface implemented both by JSOs and regular Java Objects;
+    } else if (typeOracle.isDualJsoInterface(type) || type.isJsNative()) {
+      // If it is an interface implemented both by JSOs and regular Java Objects; native JsTypes
+      // are considered JSOs for object method devirtualization.
       dispatchSet = EnumSet.of(DispatchType.HAS_JAVA_VIRTUAL_DISPATCH, DispatchType.JSO);
     } else if (typeOracle.isSingleJsoImpl(type) || type.isJsoType()) {
       // If it is either an interface implemented by JSOs or JavaScriptObject or one of its
