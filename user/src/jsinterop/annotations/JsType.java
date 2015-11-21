@@ -60,12 +60,12 @@ public @interface JsType {
    * Customizes the name of the type in generated JavaScript. If not provided, the simple Java name
    * will be used.
    */
-  String name() default "";
+  String name() default "<auto>";
 
   /**
    * Customizes the namespace of the type in generated JavaScript.
    */
-  String namespace() default "";
+  String namespace() default "<auto>";
 
   /**
    * Set to {@code true}, this JsType is a native JavaScript type.

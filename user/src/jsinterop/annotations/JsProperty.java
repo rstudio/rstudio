@@ -52,11 +52,11 @@ public @interface JsProperty {
    * <li>if it is field, the simple Java name will be used.
    * <li>if it is a method, the name will be generated based on JavaBean conventions.
    */
-  String name() default "";
+  String name() default "<auto>";
 
   /**
    * Customizes the namespace of the static member in generated JavaScript. If none is provided,
    * namespace is the enclosing class' fully qualified JavaScript name.
    */
-  String namespace() default "";
+  String namespace() default "<auto>";
 }
