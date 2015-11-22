@@ -849,6 +849,10 @@ public class Collections {
     }
   }
 
+  private static class RandomHolder {
+    private static final Random rnd = new Random();
+  }
+
   @SuppressWarnings("unchecked")
   public static final List EMPTY_LIST = new EmptyList();
 
@@ -1228,6 +1232,30 @@ public class Collections {
     }
   }
 
+  public static <T> void shuffle(List<T> list) {
+    shuffle(list, RandomHolder.rnd);
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T> void shuffle(List<T> list, Random rnd) {
+    if (list instanceof RandomAccess) {
+      for (int i = list.size() - 1; i >= 1; i--) {
+        swapImpl(list, i, rnd.nextInt(i + 1));
+      }
+    } else {
+      Object arr[] = list.toArray();
+      for (int i = arr.length - 1; i >= 1; i--) {
+        swapImpl(arr, i, rnd.nextInt(i + 1));
+      }
+
+      ListIterator<T> it = list.listIterator();
+      for (Object e : arr) {
+        it.next();
+        it.set((T) e);
+      }
+    }
+  }
+
   public static <T> Set<T> singleton(T o) {
     HashSet<T> set = new HashSet<T>(1);
     set.add(o);
@@ -1336,5 +1364,11 @@ public class Collections {
     T t = list.get(i);
     list.set(i, list.get(j));
     list.set(j, t);
+  }
+
+  private static void swapImpl(Object[] a, int i, int j) {
+    Object obj = a[i];
+    a[i] = a[j];
+    a[j] = obj;
   }
 }
