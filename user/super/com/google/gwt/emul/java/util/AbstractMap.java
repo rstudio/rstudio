@@ -269,20 +269,15 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("{");
-    boolean comma = false;
+    StringJoiner joiner = new StringJoiner(", ", "{", "}");
     for (Entry<K, V> entry : entrySet()) {
-      if (comma) {
-        sb.append(", ");
-      } else {
-        comma = true;
-      }
-      sb.append(toString(entry.getKey()));
-      sb.append("=");
-      sb.append(toString(entry.getValue()));
+      joiner.add(toString(entry));
     }
-    sb.append("}");
-    return sb.toString();
+    return joiner.toString();
+  }
+
+  private String toString(Entry<K, V> entry) {
+    return toString(entry.getKey()) + "=" + toString(entry.getValue());
   }
 
   private String toString(Object o) {

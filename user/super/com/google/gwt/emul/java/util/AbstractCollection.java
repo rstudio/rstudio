@@ -143,18 +143,11 @@ public abstract class AbstractCollection<E> implements Collection<E> {
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("[");
-    boolean comma = false;
+    StringJoiner joiner = new StringJoiner(", ", "[", "]");
     for (E e : this) {
-      if (comma) {
-        sb.append(", ");
-      } else {
-        comma = true;
-      }
-      sb.append(e == this ? "(this Collection)" : String.valueOf(e));
+      joiner.add(e == this ? "(this Collection)" : String.valueOf(e));
     }
-    sb.append("]");
-    return sb.toString();
+    return joiner.toString();
   }
 
   private boolean advanceToFind(Object o, boolean remove) {

@@ -1047,112 +1047,77 @@ public class Arrays {
     if (a == null) {
       return "null";
     }
-
-    StringBuilder b = new StringBuilder("[");
-    for (int i = 0; i < a.length; i++) {
-      if (i != 0) {
-        b.append(", ");
-      }
-      b.append(String.valueOf(a[i]));
+    StringJoiner joiner = new StringJoiner(", ", "[", "]");
+    for (boolean element : a) {
+      joiner.add(String.valueOf(element));
     }
-    b.append("]");
-    return b.toString();
+    return joiner.toString();
   }
 
   public static String toString(byte[] a) {
     if (a == null) {
       return "null";
     }
-
-    StringBuilder b = new StringBuilder("[");
-    for (int i = 0; i < a.length; i++) {
-      if (i != 0) {
-        b.append(", ");
-      }
-      b.append(String.valueOf(a[i]));
+    StringJoiner joiner = new StringJoiner(", ", "[", "]");
+    for (byte element : a) {
+      joiner.add(String.valueOf(element));
     }
-    b.append("]");
-    return b.toString();
+    return joiner.toString();
   }
 
   public static String toString(char[] a) {
     if (a == null) {
       return "null";
     }
-
-    StringBuilder b = new StringBuilder("[");
-    for (int i = 0; i < a.length; i++) {
-      if (i != 0) {
-        b.append(", ");
-      }
-      b.append(String.valueOf(a[i]));
+    StringJoiner joiner = new StringJoiner(", ", "[", "]");
+    for (char element : a) {
+      joiner.add(String.valueOf(element));
     }
-    b.append("]");
-    return b.toString();
+    return joiner.toString();
   }
 
   public static String toString(double[] a) {
     if (a == null) {
       return "null";
     }
-
-    StringBuilder b = new StringBuilder("[");
-    for (int i = 0; i < a.length; i++) {
-      if (i != 0) {
-        b.append(", ");
-      }
-      b.append(String.valueOf(a[i]));
+    StringJoiner joiner = new StringJoiner(", ", "[", "]");
+    for (double element : a) {
+      joiner.add(String.valueOf(element));
     }
-    b.append("]");
-    return b.toString();
+    return joiner.toString();
   }
 
   public static String toString(float[] a) {
     if (a == null) {
       return "null";
     }
-
-    StringBuilder b = new StringBuilder("[");
-    for (int i = 0; i < a.length; i++) {
-      if (i != 0) {
-        b.append(", ");
-      }
-      b.append(String.valueOf(a[i]));
+    StringJoiner joiner = new StringJoiner(", ", "[", "]");
+    for (float element : a) {
+      joiner.add(String.valueOf(element));
     }
-    b.append("]");
-    return b.toString();
+    return joiner.toString();
   }
 
   public static String toString(int[] a) {
     if (a == null) {
       return "null";
     }
-
-    StringBuilder b = new StringBuilder("[");
-    for (int i = 0; i < a.length; i++) {
-      if (i != 0) {
-        b.append(", ");
-      }
-      b.append(String.valueOf(a[i]));
+    StringJoiner joiner = new StringJoiner(", ", "[", "]");
+    for (int element : a) {
+      joiner.add(String.valueOf(element));
     }
-    b.append("]");
-    return b.toString();
+    return joiner.toString();
   }
 
   public static String toString(long[] a) {
     if (a == null) {
       return "null";
     }
-
-    StringBuilder b = new StringBuilder("[");
-    for (int i = 0; i < a.length; i++) {
-      if (i != 0) {
-        b.append(", ");
-      }
-      b.append(String.valueOf(a[i]));
+    StringJoiner joiner = new StringJoiner(", ", "[", "]");
+    for (long element : a) {
+      joiner.add(String.valueOf(element));
     }
-    b.append("]");
-    return b.toString();
+    return joiner.toString();
   }
 
   public static String toString(Object[] x) {
@@ -1167,16 +1132,11 @@ public class Arrays {
     if (a == null) {
       return "null";
     }
-
-    StringBuilder b = new StringBuilder("[");
-    for (int i = 0; i < a.length; i++) {
-      if (i != 0) {
-        b.append(", ");
-      }
-      b.append(String.valueOf(a[i]));
+    StringJoiner joiner = new StringJoiner(", ", "[", "]");
+    for (short element : a) {
+      joiner.add(String.valueOf(element));
     }
-    b.append("]");
-    return b.toString();
+    return joiner.toString();
   }
 
   /**
@@ -1187,54 +1147,45 @@ public class Arrays {
       return "null";
     }
 
-    if (arraysIveSeen.contains(a)) {
+    if (!arraysIveSeen.add(a)) {
       return "[...]";
     }
 
-    arraysIveSeen.add(a);
-
-    StringBuilder b = new StringBuilder("[");
-    for (int i = 0; i < a.length; i++) {
-      if (i != 0) {
-        b.append(", ");
-      }
-      Object obj = a[i];
-      if (obj == null) {
-        b.append("null");
-      } else if (obj.getClass().isArray()) {
+    StringJoiner joiner = new StringJoiner(", ", "[", "]");
+    for (Object obj : a) {
+      if (obj != null && obj.getClass().isArray()) {
         if (obj instanceof Object[]) {
           if (arraysIveSeen.contains(obj)) {
-            b.append("[...]");
+            joiner.add("[...]");
           } else {
             Object[] objArray = (Object[]) obj;
             HashSet<Object[]> tempSet = new HashSet<Object[]>(arraysIveSeen);
-            b.append(deepToString(objArray, tempSet));
+            joiner.add(deepToString(objArray, tempSet));
           }
         } else if (obj instanceof boolean[]) {
-          b.append(toString((boolean[]) obj));
+          joiner.add(toString((boolean[]) obj));
         } else if (obj instanceof byte[]) {
-          b.append(toString((byte[]) obj));
+          joiner.add(toString((byte[]) obj));
         } else if (obj instanceof char[]) {
-          b.append(toString((char[]) obj));
+          joiner.add(toString((char[]) obj));
         } else if (obj instanceof short[]) {
-          b.append(toString((short[]) obj));
+          joiner.add(toString((short[]) obj));
         } else if (obj instanceof int[]) {
-          b.append(toString((int[]) obj));
+          joiner.add(toString((int[]) obj));
         } else if (obj instanceof long[]) {
-          b.append(toString((long[]) obj));
+          joiner.add(toString((long[]) obj));
         } else if (obj instanceof float[]) {
-          b.append(toString((float[]) obj));
+          joiner.add(toString((float[]) obj));
         } else if (obj instanceof double[]) {
-          b.append(toString((double[]) obj));
+          joiner.add(toString((double[]) obj));
         } else {
           assert false : "Unexpected array type: " + obj.getClass().getName();
         }
       } else {
-        b.append(String.valueOf(obj));
+        joiner.add(String.valueOf(obj));
       }
     }
-    b.append("]");
-    return b.toString();
+    return joiner.toString();
   }
 
   private static int getCopyLength(Object array, int from, int to) {
