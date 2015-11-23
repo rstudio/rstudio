@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 import java.util.ArrayList;
@@ -71,7 +72,7 @@ public class MultiWordSuggestOracle extends SuggestOracle {
    * Suggestion class for {@link MultiWordSuggestOracle}.
    */
   public static class MultiWordSuggestion implements Suggestion, IsSerializable {
-    private String displayString;
+    @IsSafeHtml private String displayString;
     private String replacementString;
 
     /**
@@ -87,11 +88,12 @@ public class MultiWordSuggestOracle extends SuggestOracle {
      *          box if the suggestion is chosen
      * @param displayString the display string
      */
-    public MultiWordSuggestion(String replacementString, String displayString) {
+    public MultiWordSuggestion(String replacementString, @IsSafeHtml String displayString) {
       this.replacementString = replacementString;
       this.displayString = displayString;
     }
-
+    
+    @IsSafeHtml
     public String getDisplayString() {
       return displayString;
     }
@@ -347,8 +349,8 @@ public class MultiWordSuggestOracle extends SuggestOracle {
    *
    * @return the suggestion created
    */
-  protected MultiWordSuggestion createSuggestion(String replacementString,
-      String displayString) {
+  protected MultiWordSuggestion createSuggestion(
+      String replacementString, @IsSafeHtml String displayString) {
     return new MultiWordSuggestion(replacementString, displayString);
   }
 

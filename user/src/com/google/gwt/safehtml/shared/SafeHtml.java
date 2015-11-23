@@ -15,6 +15,8 @@
  */
 package com.google.gwt.safehtml.shared;
 
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
+
 import java.io.Serializable;
 
 /**
@@ -87,6 +89,7 @@ public interface SafeHtml extends Serializable {
    * 
    * @return the contents as a String
    */
+  @IsSafeHtml
   String asString();
 
   /**

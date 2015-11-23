@@ -32,6 +32,8 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
+import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -172,22 +174,24 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
   /**
    * Adds a child widget to this stack, along with a widget representing the
    * stack header.
-   * 
+   *
    * @param widget the child widget to be added
    * @param header the text to be shown on its header
    * @param asHtml <code>true</code> to treat the specified text as HTML
    * @param headerSize the size of the header widget
    */
-  public void add(final Widget widget, String header, boolean asHtml, double headerSize) {
+  public void add(
+      final Widget widget, @IsSafeHtml String header, boolean asHtml, double headerSize) {
     insert(widget, header, asHtml, headerSize, getWidgetCount());
   }
   
   /**
    * Overloaded version for IsWidget.
-   * 
+   *
    * @see #add(Widget,String,boolean,double)
    */
-  public void add(final IsWidget widget, String header, boolean asHtml, double headerSize) {
+  public void add(
+      final IsWidget widget, @IsSafeHtml String header, boolean asHtml, double headerSize) {
     this.add(widget.asWidget(), header, asHtml, headerSize);
   }
 
@@ -376,15 +380,15 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
   /**
    * Inserts a widget into the panel. If the Widget is already attached, it will
    * be moved to the requested index.
-   * 
+   *
    * @param child the widget to be added
    * @param text the text to be shown on its header
    * @param asHtml <code>true</code> to treat the specified text as HTML
    * @param headerSize the size of the header widget
    * @param beforeIndex the index before which it will be inserted
    */
-  public void insert(Widget child, String text, boolean asHtml,
-      double headerSize, int beforeIndex) {
+  public void insert(
+      Widget child, @IsSafeHtml String text, boolean asHtml, double headerSize, int beforeIndex) {
     HTML contents = new HTML();
     if (asHtml) {
       contents.setHTML(text);
@@ -403,6 +407,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
    * @param headerSize the size of the header widget
    * @param beforeIndex the index before which it will be inserted
    */
+  @SuppressIsSafeHtmlCastCheck
   public void insert(Widget child, String text, double headerSize, int beforeIndex) {
     insert(child, text, false, headerSize, beforeIndex);
   }
@@ -506,13 +511,13 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
    *
    * Use care when setting an object's HTML; it is an easy way to expose
    * script-based security problems. Consider using
-   * {@link #setHeaderHTML(int, SafeHtml)} or 
+   * {@link #setHeaderHTML(int, SafeHtml)} or
    * {@link #setHeaderText(int, String)} whenever possible.
    *
    * @param index the index of the header whose HTML is to be set
    * @param html the header's new HTML contents
    */
-  public void setHeaderHTML(int index, String html) {
+  public void setHeaderHTML(int index, @IsSafeHtml String html) {
     checkIndex(index);
     LayoutData data = layoutData.get(index);
 

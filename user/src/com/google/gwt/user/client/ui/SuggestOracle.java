@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 import java.util.ArrayList;
@@ -277,9 +278,10 @@ public abstract class SuggestOracle {
      * Gets the display string associated with this suggestion. The
      * interpretation of the display string depends upon the value of its
      * oracle's {@link SuggestOracle#isDisplayStringHTML()}.
-     * 
+     *
      * @return the display string for this suggestion
      */
+    @IsSafeHtml
     String getDisplayString();
 
     /**

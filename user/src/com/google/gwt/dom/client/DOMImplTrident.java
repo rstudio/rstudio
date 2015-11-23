@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dom.client;
 
+import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
+
 abstract class DOMImplTrident extends DOMImpl {
 
   /**
@@ -60,6 +62,7 @@ abstract class DOMImplTrident extends DOMImpl {
   }-*/;
 
   @Override
+  @SuppressIsSafeHtmlCastCheck
   public Element createElement(Document doc, String tagName) {
     if (tagName.contains(":")) {
       // Special implementation for tag names with namespace-prefixes. The only

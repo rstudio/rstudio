@@ -21,6 +21,7 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.PushButton;
@@ -118,7 +119,8 @@ public final class DefaultMonthSelector extends MonthSelector {
     initWidget(grid);
   }
 
-  private PushButton createNavigationButton(String label, final int noOfMonths, String styleName) {
+  private PushButton createNavigationButton(
+      @IsSafeHtml String label, final int noOfMonths, String styleName) {
     PushButton button = new PushButton();
 
     button.addClickHandler(new ClickHandler() {

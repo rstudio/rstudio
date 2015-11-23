@@ -19,6 +19,7 @@ import com.google.gwt.dom.client.ButtonElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 
 /**
  * A standard push-button widget which will automatically submit its enclosing
@@ -78,7 +79,7 @@ public class SubmitButton extends Button {
    *
    * @param html the HTML caption
    */
-  public SubmitButton(String html) {
+  public SubmitButton(@IsSafeHtml String html) {
     this();
     setHTML(html);
   }
@@ -99,7 +100,7 @@ public class SubmitButton extends Button {
    * @param html the HTML caption
    * @param handler the click handler
    */
-  public SubmitButton(String html, ClickHandler handler) {
+  public SubmitButton(@IsSafeHtml String html, ClickHandler handler) {
     this(html);
     addClickHandler(handler);
   }

@@ -15,7 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.i18n.client.HasDirection.Direction; 
+import com.google.gwt.i18n.client.HasDirection.Direction;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 
 /**
  * An object that implements this interface contains html that has a direction.
@@ -27,5 +28,5 @@ public interface HasDirectionalHtml extends HasDirectionalText, HasHTML {
    * @param html the object's new html
    * @param dir the html's direction
    */
-  void setHTML(String html, Direction dir);
+  void setHTML(@IsSafeHtml String html, Direction dir);
 }

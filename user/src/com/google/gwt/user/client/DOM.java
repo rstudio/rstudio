@@ -22,6 +22,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.dom.client.OptionElement;
 import com.google.gwt.dom.client.SelectElement;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.impl.DOMImpl;
 
@@ -1277,13 +1278,13 @@ public class DOM {
 
   /**
    * Sets the HTML contained within an element.
-   * 
+   *
    * @param elem the element whose inner HTML is to be set
    * @param html the new html
    * @deprecated Use {@link Element#setInnerHTML(String)} instead.
    */
   @Deprecated
-  public static void setInnerHTML(Element elem, String html) {
+  public static void setInnerHTML(Element elem, @IsSafeHtml String html) {
     elem.setInnerHTML(html);
   }
 

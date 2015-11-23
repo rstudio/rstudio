@@ -31,6 +31,8 @@ import com.google.gwt.layout.client.Layout.Alignment;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.resources.client.CommonResources;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
+import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -275,7 +277,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   /**
    * Convenience overload to allow {@link IsWidget} to be used directly.
    */
-  public void add(IsWidget w, String text, boolean asHtml) {
+  public void add(IsWidget w, @IsSafeHtml String text, boolean asHtml) {
     add(asWidgetOrNull(w), text, asHtml);
   }
 
@@ -313,7 +315,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
    * @param text the text to be shown on its tab
    * @param asHtml <code>true</code> to treat the specified text as HTML
    */
-  public void add(Widget child, String text, boolean asHtml) {
+  public void add(Widget child, @IsSafeHtml String text, boolean asHtml) {
     insert(child, text, asHtml, getWidgetCount());
   }
 
@@ -450,7 +452,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   /**
    * Convenience overload to allow {@link IsWidget} to be used directly.
    */
-  public void insert(IsWidget child, String text, boolean asHtml, int beforeIndex) {
+  public void insert(IsWidget child, @IsSafeHtml String text, boolean asHtml, int beforeIndex) {
     insert(asWidgetOrNull(child), text, asHtml, beforeIndex);
   }
 
@@ -493,7 +495,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
    * @param asHtml <code>true</code> to treat the specified text as HTML
    * @param beforeIndex the index before which it will be inserted
    */
-  public void insert(Widget child, String text, boolean asHtml, int beforeIndex) {
+  public void insert(Widget child, @IsSafeHtml String text, boolean asHtml, int beforeIndex) {
     Widget contents;
     if (asHtml) {
       contents = new HTML(text);
@@ -511,6 +513,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
    * @param text the text to be shown on its tab
    * @param beforeIndex the index before which it will be inserted
    */
+  @SuppressIsSafeHtmlCastCheck
   public void insert(Widget child, String text, int beforeIndex) {
     insert(child, text, false, beforeIndex);
   }
@@ -686,7 +689,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
    * @param index the index of the tab whose HTML is to be set
    * @param html the tab's new HTML contents
    */
-  public void setTabHTML(int index, String html) {
+  public void setTabHTML(int index, @IsSafeHtml String html) {
     checkIndex(index);
     tabs.get(index).setWidget(new HTML(html));
   }

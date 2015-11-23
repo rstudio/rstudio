@@ -21,6 +21,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.i18n.client.HasDirection.Direction;
 import com.google.gwt.i18n.shared.DirectionEstimator;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 import com.google.gwt.uibinder.client.UiConstructor;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -178,15 +179,15 @@ public class RadioButton extends CheckBox {
    * initialized with the given label (optionally treated as HTML). All radio
    * buttons associated with the same group name belong to a mutually-exclusive
    * set.
-   * 
+   *
    * Radio buttons are grouped by their name attribute, so changing their name
    * using the setName() method will also change their associated group.
-   * 
+   *
    * @param name name the group with which to associate the radio button
    * @param label this radio button's label
    * @param asHTML <code>true</code> to treat the specified label as HTML
    */
-  public RadioButton(String name, String label, boolean asHTML) {
+  public RadioButton(String name, @IsSafeHtml String label, boolean asHTML) {
     this(name);
     if (asHTML) {
       setHTML(label);

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
+
 /**
  * An object that implements this interface contains text, which can be set and
  * retrieved using these methods. The object's text can be set either as HTML or
@@ -43,8 +45,8 @@ public interface HasHTML extends HasText {
    * Sets this object's contents via HTML. Use care when setting an object's
    * HTML; it is an easy way to expose script-based security problems. Consider
    * using {@link #setText(String)} whenever possible.
-   * 
+   *
    * @param html the object's new HTML
    */
-  void setHTML(String html);
+  void setHTML(@IsSafeHtml String html);
 }

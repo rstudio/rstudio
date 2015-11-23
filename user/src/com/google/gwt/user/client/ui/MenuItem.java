@@ -19,6 +19,8 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.safehtml.client.HasSafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
+import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 
@@ -76,7 +78,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
    * @param asHTML <code>true</code> to treat the specified text as html
    * @param cmd the command to be fired when it is selected
    */
-  public MenuItem(String text, boolean asHTML, ScheduledCommand cmd) {
+  public MenuItem(@IsSafeHtml String text, boolean asHTML, ScheduledCommand cmd) {
     this(text, asHTML);
     setScheduledCommand(cmd);
   }
@@ -88,7 +90,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
    * @param asHTML <code>true</code> to treat the specified text as html
    * @param subMenu the sub-menu to be displayed when it is selected
    */
-  public MenuItem(String text, boolean asHTML, MenuBar subMenu) {
+  public MenuItem(@IsSafeHtml String text, boolean asHTML, MenuBar subMenu) {
     this(text, asHTML);
     setSubMenu(subMenu);
   }
@@ -99,6 +101,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
    * @param text the item's text
    * @param cmd the command to be fired when it is selected
    */
+  @SuppressIsSafeHtmlCastCheck
   public MenuItem(String text, ScheduledCommand cmd) {
     this(text, false);
     setScheduledCommand(cmd);
@@ -110,12 +113,13 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
    * @param text the item's text
    * @param subMenu the sub-menu to be displayed when it is selected
    */
+  @SuppressIsSafeHtmlCastCheck
   public MenuItem(String text, MenuBar subMenu) {
     this(text, false);
     setSubMenu(subMenu);
   }
 
-  MenuItem(String text, boolean asHTML) {
+  MenuItem(@IsSafeHtml String text, boolean asHTML) {
     setElement(DOM.createTD());
     setSelectionStyle(false);
 
@@ -230,7 +234,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
   }
 
   @Override
-  public void setHTML(String html) {
+  public void setHTML(@IsSafeHtml String html) {
     getElement().setInnerHTML(html);
   }
 

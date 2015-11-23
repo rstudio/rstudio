@@ -16,6 +16,7 @@
 
 package com.google.gwt.logging.client;
 
+import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.Label;
@@ -56,6 +57,7 @@ public class HasWidgetsLogHandler extends Handler {
   }
 
   @Override
+  @SuppressIsSafeHtmlCastCheck
   public void publish(LogRecord record) {
     if (!isLoggable(record)) {
       return;

@@ -19,6 +19,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.i18n.shared.DirectionEstimator;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 
 /**
  * A widget that can contain arbitrary HTML.
@@ -126,7 +127,7 @@ public class HTML extends Label
    *
    * @param html the new widget's HTML contents
    */
-  public HTML(String html) {
+  public HTML(@IsSafeHtml String html) {
     this();
     setHTML(html);
   }
@@ -139,7 +140,7 @@ public class HTML extends Label
    * @param dir the content's direction. Note: {@code Direction.DEFAULT} means
    *        direction should be inherited from the widget's parent element.
    */
-  public HTML(String html, Direction dir) {
+  public HTML(@IsSafeHtml String html, Direction dir) {
     this();
     setHTML(html, dir);
   }
@@ -151,7 +152,7 @@ public class HTML extends Label
    * @param html the widget's contents
    * @param wordWrap <code>false</code> to disable word wrapping
    */
-  public HTML(String html, boolean wordWrap) {
+  public HTML(@IsSafeHtml String html, boolean wordWrap) {
     this(html);
     setWordWrap(wordWrap);
   }
@@ -179,7 +180,7 @@ public class HTML extends Label
    *
    * @param html the new widget's HTML content
    */
-  public void setHTML(String html) {
+  public void setHTML(@IsSafeHtml String html) {
     directionalTextHelper.setHtml(html);
     updateHorizontalAlignment();
   }
@@ -189,12 +190,12 @@ public class HTML extends Label
    * See
    * {@link #setText(String, com.google.gwt.i18n.client.HasDirection.Direction) setText(String, Direction)}
    * for details on potential effects on alignment.
-   * 
+   *
    * @param html the new widget's HTML content
    * @param dir the content's direction. Note: {@code Direction.DEFAULT} means
    *          direction should be inherited from the widget's parent element.
    */
-  public void setHTML(String html, Direction dir) {
+  public void setHTML(@IsSafeHtml String html, Direction dir) {
     directionalTextHelper.setHtml(html, dir);
     updateHorizontalAlignment();
   }

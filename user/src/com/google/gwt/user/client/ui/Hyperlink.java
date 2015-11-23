@@ -25,6 +25,8 @@ import com.google.gwt.i18n.client.HasDirection.Direction;
 import com.google.gwt.i18n.shared.DirectionEstimator;
 import com.google.gwt.i18n.shared.HasDirectionEstimator;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
+import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.History;
@@ -136,26 +138,28 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
    *          may not be null (use {@link Anchor} instead if you don't need
    *          history processing)
    */
+  @SuppressIsSafeHtmlCastCheck
   public Hyperlink(String text, String targetHistoryToken) {
     this(text, false, targetHistoryToken);
   }
 
   /**
    * Creates a hyperlink with its text and target history token specified.
-   * 
+   *
    * @param text the hyperlink's text
    * @param dir the text's direction
    * @param targetHistoryToken the history token to which it will link, which
    *          may not be null (use {@link Anchor} instead if you don't need
    *          history processing)
    */
+  @SuppressIsSafeHtmlCastCheck
   public Hyperlink(String text, Direction dir, String targetHistoryToken) {
     this(text, false, dir, targetHistoryToken);
   }
 
   /**
    * Creates a hyperlink with its text and target history token specified.
-   * 
+   *
    * @param text the hyperlink's text
    * @param directionEstimator A DirectionEstimator object used for automatic
    *          direction adjustment. For convenience,
@@ -164,8 +168,8 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
    *          may not be null (use {@link Anchor} instead if you don't need
    *          history processing)
    */
-  public Hyperlink(String text, DirectionEstimator directionEstimator,
-      String targetHistoryToken) {
+  @SuppressIsSafeHtmlCastCheck
+  public Hyperlink(String text, DirectionEstimator directionEstimator, String targetHistoryToken) {
     this(text, false, directionEstimator, targetHistoryToken);
   }
 
@@ -177,7 +181,7 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
    * @param targetHistoryToken the history token to which it will link
    * @see #setTargetHistoryToken
    */
-  public Hyperlink(String text, boolean asHTML, String targetHistoryToken) {
+  public Hyperlink(@IsSafeHtml String text, boolean asHTML, String targetHistoryToken) {
     this();
     directionalTextHelper.setTextOrHtml(text, asHTML);
     setTargetHistoryToken(targetHistoryToken);
@@ -206,8 +210,8 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
    * @param targetHistoryToken the history token to which it will link
    * @see #setTargetHistoryToken
    */
-  private Hyperlink(String text, boolean asHTML, Direction dir,
-      String targetHistoryToken) {
+  private Hyperlink(
+      @IsSafeHtml String text, boolean asHTML, Direction dir, String targetHistoryToken) {
     this();
     directionalTextHelper.setTextOrHtml(text, dir, asHTML);
     setTargetHistoryToken(targetHistoryToken);
@@ -224,8 +228,11 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
    * @param targetHistoryToken the history token to which it will link
    * @see #setTargetHistoryToken
    */
-  private Hyperlink(String text, boolean asHTML,
-      DirectionEstimator directionEstimator, String targetHistoryToken) {
+  private Hyperlink(
+      @IsSafeHtml String text,
+      boolean asHTML,
+      DirectionEstimator directionEstimator,
+      String targetHistoryToken) {
     this();
     directionalTextHelper.setDirectionEstimator(directionEstimator);
     directionalTextHelper.setTextOrHtml(text, asHTML);
@@ -322,7 +329,7 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
     setHTML(html.asString());
   }
 
-  public void setHTML(String html) {
+  public void setHTML(@IsSafeHtml String html) {
     directionalTextHelper.setHtml(html);
   }
 

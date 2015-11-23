@@ -17,6 +17,8 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
+import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 
@@ -83,6 +85,7 @@ public class StackPanel extends ComplexPanel implements InsertPanel.ForIsWidget 
    * @param w the widget to be added
    * @param stackText the header text associated with this widget
    */
+  @SuppressIsSafeHtmlCastCheck
   public void add(Widget w, String stackText) {
     add(w, stackText, false);
   }
@@ -106,7 +109,7 @@ public class StackPanel extends ComplexPanel implements InsertPanel.ForIsWidget 
    * @param stackText the header text associated with this widget
    * @param asHTML <code>true</code> to treat the specified text as HTML
    */
-  public void add(Widget w, String stackText, boolean asHTML) {
+  public void add(Widget w, @IsSafeHtml String stackText, boolean asHTML) {
     add(w);
     setStackText(getWidgetCount() - 1, stackText, asHTML);
   }
@@ -202,6 +205,7 @@ public class StackPanel extends ComplexPanel implements InsertPanel.ForIsWidget 
    * @param index the index of the child whose text is to be set
    * @param text the text to be associated with it
    */
+  @SuppressIsSafeHtmlCastCheck
   public void setStackText(int index, String text) {
     setStackText(index, text, false);
   }
@@ -223,7 +227,7 @@ public class StackPanel extends ComplexPanel implements InsertPanel.ForIsWidget 
    * @param text the text to be associated with it
    * @param asHTML <code>true</code> to treat the specified text as HTML
    */
-  public void setStackText(int index, String text, boolean asHTML) {
+  public void setStackText(int index, @IsSafeHtml String text, boolean asHTML) {
     if (index >= getWidgetCount()) {
       return;
     }

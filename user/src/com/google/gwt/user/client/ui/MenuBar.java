@@ -34,6 +34,7 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
@@ -403,7 +404,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * @param cmd the command to be fired
    * @return the {@link MenuItem} object created
    */
-  public MenuItem addItem(String text, boolean asHTML, ScheduledCommand cmd) {
+  public MenuItem addItem(@IsSafeHtml String text, boolean asHTML, ScheduledCommand cmd) {
     return addItem(new MenuItem(text, asHTML, cmd));
   }
 
@@ -428,7 +429,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * @param popup the menu to be cascaded from it
    * @return the {@link MenuItem} object created
    */
-  public MenuItem addItem(String text, boolean asHTML, MenuBar popup) {
+  public MenuItem addItem(@IsSafeHtml String text, boolean asHTML, MenuBar popup) {
     return addItem(new MenuItem(text, asHTML, popup));
   }
 

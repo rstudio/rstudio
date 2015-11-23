@@ -20,6 +20,7 @@ import com.google.gwt.i18n.client.HasDirection.Direction;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
 
 import java.util.HashMap;
 
@@ -266,6 +267,7 @@ public class SafeHtmlBidiFormatter extends BidiFormatterBase {
    *          of whatever may follow {@code str}
    * @return Input string after applying the above processing.
    */
+  @SuppressIsSafeHtmlCastCheck
   public SafeHtml spanWrap(String str, boolean dirReset) {
     // This is safe since spanWrapBase escapes plain-text input.
     return SafeHtmlUtils.fromTrustedString(spanWrapBase(str, false, dirReset));
@@ -323,8 +325,8 @@ public class SafeHtmlBidiFormatter extends BidiFormatterBase {
    *          of whatever may follow {@code str}
    * @return Input string after applying the above processing.
    */
-  public SafeHtml spanWrapWithKnownDir(Direction dir, String str,
-      boolean dirReset) {
+  @SuppressIsSafeHtmlCastCheck
+  public SafeHtml spanWrapWithKnownDir(Direction dir, String str, boolean dirReset) {
     // This is safe since spanWrapWithKnownDirBase escapes plain-text input.
     return SafeHtmlUtils.fromTrustedString(
         spanWrapWithKnownDirBase(dir, str, false, dirReset));

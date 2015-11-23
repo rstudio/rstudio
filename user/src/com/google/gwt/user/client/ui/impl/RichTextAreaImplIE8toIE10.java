@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui.impl;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 
 /**
  * IE6-specific implementation of rich-text editing.
@@ -69,7 +70,7 @@ public class RichTextAreaImplIE8toIE10 extends RichTextAreaImplStandard {
   }-*/;
 
   @Override
-  public native void insertHTML(String html) /*-{
+  public native void insertHTML(@IsSafeHtml String html) /*-{
     try {
       var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
       var doc = elem.contentWindow.document;

@@ -44,6 +44,7 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.impl.ElementMapperImpl;
@@ -1135,13 +1136,13 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
 
   /**
    * Sets the HTML contents of the specified cell.
-   * 
+   *
    * @param row the cell's row
    * @param column the cell's column
    * @param html the cell's HTML contents
    * @throws IndexOutOfBoundsException
    */
-  public void setHTML(int row, int column, String html) {
+  public void setHTML(int row, int column, @IsSafeHtml String html) {
     prepareCell(row, column);
     Element td = cleanCell(row, column, html == null);
     if (html != null) {

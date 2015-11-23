@@ -23,6 +23,8 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.FieldSetElement;
 import com.google.gwt.dom.client.LegendElement;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
+import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
 
 import java.util.Iterator;
 
@@ -41,8 +43,8 @@ public class CaptionPanel extends Composite implements HasWidgets.ForIsWidget {
       setCaption(fieldset, legend, caption.asString(), true);
     }
 
-    public void setCaption(FieldSetElement fieldset, Element legend,
-        String caption, boolean asHTML) {
+    public void setCaption(
+        FieldSetElement fieldset, Element legend, @IsSafeHtml String caption, boolean asHTML) {
       // TODO(bruce): rewrite to be inlinable
       assert (caption != null);
 
@@ -76,8 +78,11 @@ public class CaptionPanel extends Composite implements HasWidgets.ForIsWidget {
     }
 
     @Override
-    public void setCaption(final FieldSetElement fieldset, Element legend,
-        String caption, boolean asHTML) {
+    public void setCaption(
+        final FieldSetElement fieldset,
+        Element legend,
+        @IsSafeHtml String caption,
+        boolean asHTML) {
       fieldset.getStyle().setProperty("display", "none");
       super.setCaption(fieldset, legend, caption, asHTML);
       fieldset.getStyle().setProperty("display", "");
@@ -95,8 +100,11 @@ public class CaptionPanel extends Composite implements HasWidgets.ForIsWidget {
     }
 
     @Override
-    public void setCaption(final FieldSetElement fieldset, Element legend,
-        String caption, boolean asHTML) {
+    public void setCaption(
+        final FieldSetElement fieldset,
+        Element legend,
+        @IsSafeHtml String caption,
+        boolean asHTML) {
       fieldset.getStyle().setProperty("visibility", "hidden");
       super.setCaption(fieldset, legend, caption, asHTML);
       Scheduler.get().scheduleDeferred(new ScheduledCommand() {
@@ -138,6 +146,7 @@ public class CaptionPanel extends Composite implements HasWidgets.ForIsWidget {
    *
    * @param captionText the text of the caption, which is automatically escaped
    */
+  @SuppressIsSafeHtmlCastCheck
   public CaptionPanel(String captionText) {
     this(captionText, false);
   }
@@ -150,7 +159,7 @@ public class CaptionPanel extends Composite implements HasWidgets.ForIsWidget {
    *            interpreted as HTML; otherwise, <code>caption</code> is
    *            treated as text and automatically escaped
    */
-  public CaptionPanel(String caption, boolean asHTML) {
+  public CaptionPanel(@IsSafeHtml String caption, boolean asHTML) {
     FieldSetElement fieldSet = Document.get().createFieldSetElement();
     initWidget(new SimplePanel(fieldSet));
     legend = Document.get().createLegendElement();
@@ -245,7 +254,7 @@ public class CaptionPanel extends Composite implements HasWidgets.ForIsWidget {
    *
    * @param html HTML for the new caption; must not be <code>null</code>
    */
-  public void setCaptionHTML(String html) {
+  public void setCaptionHTML(@IsSafeHtml String html) {
     assert (html != null);
     impl.setCaption(FieldSetElement.as(getElement()), legend, html, true);
   }
@@ -266,6 +275,7 @@ public class CaptionPanel extends Composite implements HasWidgets.ForIsWidget {
    *
    * @param text text for the new caption; must not be <code>null</code>
    */
+  @SuppressIsSafeHtmlCastCheck
   public void setCaptionText(String text) {
     assert (text != null);
     impl.setCaption(FieldSetElement.as(getElement()), legend, text, false);

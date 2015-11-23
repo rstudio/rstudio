@@ -18,6 +18,8 @@ package com.google.gwt.i18n.shared;
 
 import com.google.gwt.i18n.client.HasDirection.Direction;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
+import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
 
 /**
  * Base class for {@link BidiFormatter} and {@link SafeHtmlBidiFormatter} that
@@ -240,7 +242,8 @@ public abstract class BidiFormatterBase {
    *          of whatever may follow {@code str}
    * @return Input string after applying the above processing.
    */
-  protected String spanWrapBase(String str, boolean isHtml, boolean dirReset) {
+  @IsSafeHtml
+  protected String spanWrapBase(@IsSafeHtml String str, boolean isHtml, boolean dirReset) {
     Direction dir = BidiUtils.get().estimateDirection(str, isHtml);
     return spanWrapWithKnownDirBase(dir, str, isHtml, dirReset);
   }
@@ -256,8 +259,10 @@ public abstract class BidiFormatterBase {
    *          of whatever may follow {@code str}
    * @return Input string after applying the above processing.
    */
-  protected String spanWrapWithKnownDirBase(Direction dir, String str,
-      boolean isHtml, boolean dirReset) {
+  @SuppressIsSafeHtmlCastCheck
+  @IsSafeHtml
+  protected String spanWrapWithKnownDirBase(
+      Direction dir, @IsSafeHtml String str, boolean isHtml, boolean dirReset) {
     boolean dirCondition = dir != Direction.DEFAULT && dir != contextDir;
     String origStr = str;
     if (!isHtml) {

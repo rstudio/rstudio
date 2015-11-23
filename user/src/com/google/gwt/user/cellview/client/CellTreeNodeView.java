@@ -1186,7 +1186,7 @@ class CellTreeNodeView<T> extends UIObject {
       ensureAnimationFrame().appendChild(contentContainer);
 
       emptyMessageElem = Document.get().createDivElement();
-      emptyMessageElem.setInnerHTML(messages.emptyTree());
+      emptyMessageElem.setInnerText(messages.emptyTree());
       setStyleName(emptyMessageElem, tree.getStyle().cellTreeEmptyMessage(), true);
       showOrHide(emptyMessageElem, false);
       contentContainer.appendChild(emptyMessageElem);

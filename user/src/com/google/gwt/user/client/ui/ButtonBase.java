@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.client.HasSafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 
 /**
  * Abstract base class for {@link com.google.gwt.user.client.ui.Button},
@@ -44,7 +45,7 @@ public abstract class ButtonBase extends FocusWidget
     return getElement().getInnerText();
   }
 
-  public void setHTML(String html) {
+  public void setHTML(@IsSafeHtml String html) {
     getElement().setInnerHTML(html);
   }
 

@@ -25,6 +25,8 @@ import com.google.gwt.i18n.shared.DirectionEstimator;
 import com.google.gwt.i18n.shared.HasDirectionEstimator;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
+import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
 
 /**
  * A widget that represents a simple &lt;a&gt; element.
@@ -163,10 +165,10 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
 
   /**
    * Creates an anchor for scripting.
-   * 
+   *
    * The anchor's href is set to <code>javascript:;</code>, based on the
    * expectation that listeners will be added to the anchor.
-   * 
+   *
    * @param text the anchor's text
    */
   public Anchor(String text) {
@@ -203,14 +205,14 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
 
   /**
    * Creates an anchor for scripting.
-   * 
+   *
    * The anchor's href is set to <code>javascript:;</code>, based on the
    * expectation that listeners will be added to the anchor.
-   * 
+   *
    * @param text the anchor's text
    * @param asHtml <code>true</code> to treat the specified text as html
    */
-  public Anchor(String text, boolean asHtml) {
+  public Anchor(@IsSafeHtml String text, boolean asHtml) {
     this(text, asHtml, DEFAULT_HREF);
   }
 
@@ -286,36 +288,38 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
 
   /**
    * Creates an anchor with its text and href (target URL) specified.
-   * 
+   *
    * @param text the anchor's text
    * @param href the url to which it will link
    */
+  @SuppressIsSafeHtmlCastCheck
   public Anchor(String text, String href) {
     this(text, false, href);
   }
 
   /**
    * Creates an anchor with its text and href (target URL) specified.
-   * 
+   *
    * @param text the anchor's text
    * @param dir the text's direction
    * @param href the url to which it will link
    */
+  @SuppressIsSafeHtmlCastCheck
   public Anchor(String text, Direction dir, String href) {
     this(text, false, dir, href);
   }
 
   /**
    * Creates an anchor with its text and href (target URL) specified.
-   * 
+   *
    * @param text the anchor's text
    * @param directionEstimator A DirectionEstimator object used for automatic
    *          direction adjustment. For convenience,
    *          {@link #DEFAULT_DIRECTION_ESTIMATOR} can be used.
    * @param href the url to which it will link
    */
-  public Anchor(String text, DirectionEstimator directionEstimator,
-      String href) {
+  @SuppressIsSafeHtmlCastCheck
+  public Anchor(String text, DirectionEstimator directionEstimator, String href) {
     this(text, false, directionEstimator, href);
   }
 
@@ -326,7 +330,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    * @param asHTML <code>true</code> to treat the specified text as html
    * @param href the url to which it will link
    */
-  public Anchor(String text, boolean asHTML, String href) {
+  public Anchor(@IsSafeHtml String text, boolean asHTML, String href) {
     this();
     directionalTextHelper.setTextOrHtml(text, asHTML);
     setHref(href);
@@ -362,12 +366,13 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
 
   /**
    * Creates a source anchor with a frame target.
-   * 
+   *
    * @param text the anchor's text
    * @param href the url to which it will link
    * @param target the target frame (e.g. "_blank" to open the link in a new
    *          window)
    */
+  @SuppressIsSafeHtmlCastCheck
   public Anchor(String text, String href, String target) {
     this(text, false, href, target);
   }
@@ -383,7 +388,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    * @param target the target frame (e.g. "_blank" to open the link in a new
    *          window)
    */
-  public Anchor(String text, boolean asHtml, String href, String target) {
+  public Anchor(@IsSafeHtml String text, boolean asHtml, String href, String target) {
     this(text, asHtml, href);
     setTarget(target);
   }
@@ -403,13 +408,13 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
 
   /**
    * Creates an anchor with its text, direction and href (target URL) specified.
-   * 
+   *
    * @param text the anchor's text
    * @param asHTML <code>true</code> to treat the specified text as html
    * @param dir the text's direction
    * @param href the url to which it will link
    */
-  private Anchor(String text, boolean asHTML, Direction dir, String href) {
+  private Anchor(@IsSafeHtml String text, boolean asHTML, Direction dir, String href) {
     this();
     directionalTextHelper.setTextOrHtml(text, dir, asHTML);
     setHref(href);
@@ -417,7 +422,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
 
   /**
    * Creates an anchor with its text, direction and href (target URL) specified.
-   * 
+   *
    * @param text the anchor's text
    * @param asHTML <code>true</code> to treat the specified text as html
    * @param directionEstimator A DirectionEstimator object used for automatic
@@ -425,8 +430,8 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    *          {@link #DEFAULT_DIRECTION_ESTIMATOR} can be used.
    * @param href the url to which it will link
    */
-  private Anchor(String text, boolean asHTML,
-      DirectionEstimator directionEstimator, String href) {
+  private Anchor(
+      @IsSafeHtml String text, boolean asHTML, DirectionEstimator directionEstimator, String href) {
     this();
     directionalTextHelper.setDirectionEstimator(directionEstimator);
     directionalTextHelper.setTextOrHtml(text, asHTML);
@@ -575,7 +580,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
   }
 
   @Override
-  public void setHTML(String html) {
+  public void setHTML(@IsSafeHtml String html) {
     directionalTextHelper.setHtml(html);
   }
 

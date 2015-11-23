@@ -20,6 +20,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 
 /**
  * A standard push-button widget.
@@ -85,20 +86,20 @@ public class Button extends ButtonBase {
    *
    * @param html the HTML caption
    */
-  public Button(String html) {
+  public Button(@IsSafeHtml String html) {
     this();
     setHTML(html);
   }
 
   /**
    * Creates a button with the given HTML caption and click listener.
-   * 
+   *
    * @param html the HTML caption
    * @param listener the click listener
    * @deprecated Use {@link Button#Button(String, ClickHandler)} instead
    */
   @Deprecated
-  public Button(String html, ClickListener listener) {
+  public Button(@IsSafeHtml String html, ClickListener listener) {
     this(html);
     addClickListener(listener);
   }
@@ -119,7 +120,7 @@ public class Button extends ButtonBase {
    * @param html the HTML caption
    * @param handler the click handler
    */
-  public Button(String html, ClickHandler handler) {
+  public Button(@IsSafeHtml String html, ClickHandler handler) {
     this(html);
     addClickHandler(handler);
   }

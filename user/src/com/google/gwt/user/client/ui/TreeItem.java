@@ -23,6 +23,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.safehtml.client.HasSafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 import com.google.gwt.user.client.DOM;
 
 import java.util.ArrayList;
@@ -678,7 +679,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
   }
 
   @Override
-  public void setHTML(String html) {
+  public void setHTML(@IsSafeHtml String html) {
     setWidget(null);
     contentElem.setInnerHTML(html);
   }

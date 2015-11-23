@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui.impl;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.HasInitializeHandlers;
 import com.google.gwt.event.logical.shared.InitializeEvent;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.RichTextArea;
@@ -71,7 +72,7 @@ public class RichTextAreaImpl {
     }
   }-*/;
 
-  public void setHTML(String html) {
+  public void setHTML(@IsSafeHtml String html) {
     elem.setPropertyString("value", html);
   }
 

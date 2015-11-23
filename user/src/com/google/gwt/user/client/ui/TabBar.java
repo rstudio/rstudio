@@ -35,8 +35,11 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
+import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
+
 /**
  * A horizontal bar of folder-style tabs, most commonly used as part of a
  * {@link com.google.gwt.user.client.ui.TabPanel}.
@@ -255,7 +258,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
    * @param text the new tab's text
    * @param asHTML <code>true</code> to treat the specified text as html
    */
-  public void addTab(String text, boolean asHTML) {
+  public void addTab(@IsSafeHtml String text, boolean asHTML) {
     insertTab(text, asHTML, getTabCount());
   }
 
@@ -357,7 +360,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
    * @param asHTML <code>true</code> to treat the specified text as HTML
    * @param beforeIndex the index before which this tab will be inserted
    */
-  public void insertTab(String text, boolean asHTML, int beforeIndex) {
+  public void insertTab(@IsSafeHtml String text, boolean asHTML, int beforeIndex) {
     checkInsertBeforeTabIndex(beforeIndex);
 
     Label item;
@@ -377,6 +380,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
    * @param text the new tab's text
    * @param beforeIndex the index before which this tab will be inserted
    */
+  @SuppressIsSafeHtmlCastCheck
   public void insertTab(String text, int beforeIndex) {
     insertTab(text, false, beforeIndex);
   }
@@ -544,7 +548,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
    * @param index the index of the tab whose HTML is to be set
    * @param html the tab new HTML
    */
-  public void setTabHTML(int index, String html) {
+  public void setTabHTML(int index, @IsSafeHtml String html) {
     assert (index >= 0) && (index < getTabCount()) : "Tab index out of bounds";
 
     ClickDelegatePanel delPanel = (ClickDelegatePanel) panel.getWidget(index + 1);

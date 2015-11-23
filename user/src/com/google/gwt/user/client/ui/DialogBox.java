@@ -36,6 +36,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.client.HasSafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
@@ -404,7 +405,7 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML,
    *
    * @param html the object's new HTML
    */
-  public void setHTML(String html) {
+  public void setHTML(@IsSafeHtml String html) {
     caption.setHTML(SafeHtmlUtils.fromTrustedString(html));
   }
 

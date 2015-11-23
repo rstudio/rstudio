@@ -18,6 +18,7 @@ package com.google.gwt.uibinder.client;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.UIObject;
 
@@ -81,7 +82,7 @@ public class UiBinderUtil {
     return new TempAttachment(origParent, origSibling, element);
   }
 
-  public static Element fromHtml(String html) {
+  public static Element fromHtml(@IsSafeHtml String html) {
     ensureHiddenDiv();
     hiddenDiv.setInnerHTML(html);
     Element newbie = hiddenDiv.getFirstChildElement();

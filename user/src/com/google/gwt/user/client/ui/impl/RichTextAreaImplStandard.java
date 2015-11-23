@@ -17,6 +17,8 @@ package com.google.gwt.user.client.ui.impl;
 
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
+import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.RichTextArea;
 import com.google.gwt.user.client.ui.RichTextArea.FontSize;
@@ -111,7 +113,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     execCommand("InsertHorizontalRule", null);
   }
 
-  public void insertHTML(String html) {
+  public void insertHTML(@IsSafeHtml String html) {
     execCommand("InsertHTML", html);
   }
 
@@ -218,7 +220,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
   }
 
   @Override
-  public final void setHTML(String html) {
+  public final void setHTML(@IsSafeHtml String html) {
     if (beforeInitPlaceholder == null) {
       setHTMLImpl(html);
     } else {
@@ -276,6 +278,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
   }
 
   @Override
+  @SuppressIsSafeHtmlCastCheck
   public void uninitElement() {
     isReady = false;
 
@@ -293,7 +296,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     // Recreate the placeholder element and store the iframe's contents and the
     // enabled status in it. This is necessary because some browsers will wipe
     // the iframe's contents when it is removed from the DOM.
-    String html = getHTML();
+    @IsSafeHtml String html = getHTML(); // TODO: mXSS
     boolean enabled = isEnabled();
     beforeInitPlaceholder = DOM.createDiv();
     beforeInitPlaceholder.setInnerHTML(html);
@@ -354,7 +357,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     return elem.contentWindow.document.designMode.toUpperCase() == 'ON';
   }-*/;
 
-  @Override
+  @Override @SuppressIsSafeHtmlCastCheck
   protected void onElementInitialized() {
     // Issue 1897: This method is called after a timeout, during which time the
     // element might by detached.
@@ -398,7 +401,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     }
   }-*/;
 
-  protected native void setHTMLImpl(String html) /*-{
+  protected native void setHTMLImpl(@IsSafeHtml String html) /*-{
     this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.innerHTML = html;
   }-*/;
 

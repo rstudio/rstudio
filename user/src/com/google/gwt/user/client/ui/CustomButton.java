@@ -25,6 +25,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.safehtml.client.HasSafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 
@@ -195,7 +196,7 @@ public abstract class CustomButton extends ButtonBase {
      *
      */
     @Override
-    public void setHTML(String html) {
+    public void setHTML(@IsSafeHtml String html) {
       face = DOM.createDiv();
       UIObject.setStyleName(face, STYLENAME_HTML_FACE, true);
       face.setInnerHTML(html);
@@ -775,7 +776,7 @@ public abstract class CustomButton extends ButtonBase {
    * @param html html to set
    */
   @Override
-  public void setHTML(String html) {
+  public void setHTML(@IsSafeHtml String html) {
     getCurrentFace().setHTML(html);
   }
 

@@ -23,6 +23,8 @@ import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
+import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
 
 import java.util.Iterator;
 
@@ -120,8 +122,8 @@ public class TabPanel extends Composite implements TabListener,
       return false;
     }
 
-    protected void insertProtected(Widget w, String tabText, boolean asHTML,
-        int beforeIndex) {
+    protected void insertProtected(
+        Widget w, @IsSafeHtml String tabText, boolean asHTML, int beforeIndex) {
 
       // Check to see if the TabPanel already contains the Widget. If so,
       // remove it and see if we need to shift the position to the left.
@@ -160,7 +162,7 @@ public class TabPanel extends Composite implements TabListener,
    */
   private class UnmodifiableTabBar extends TabBar {
     @Override
-    public void insertTab(String text, boolean asHTML, int beforeIndex) {
+    public void insertTab(@IsSafeHtml String text, boolean asHTML, int beforeIndex) {
       throw new UnsupportedOperationException(
           "Use TabPanel.insert() to alter the TabBar");
     }
@@ -171,7 +173,7 @@ public class TabPanel extends Composite implements TabListener,
           "Use TabPanel.insert() to alter the TabBar");
     }
 
-    public void insertTabProtected(String text, boolean asHTML, int beforeIndex) {
+    public void insertTabProtected(@IsSafeHtml String text, boolean asHTML, int beforeIndex) {
       super.insertTab(text, asHTML, beforeIndex);
     }
 
@@ -237,7 +239,7 @@ public class TabPanel extends Composite implements TabListener,
   /**
    * Convenience overload to allow {@link IsWidget} to be used directly.
    */
-  public void add(IsWidget w, String tabText, boolean asHTML) {
+  public void add(IsWidget w, @IsSafeHtml String tabText, boolean asHTML) {
     add(asWidgetOrNull(w), tabText, asHTML);
   }
 
@@ -266,7 +268,7 @@ public class TabPanel extends Composite implements TabListener,
    * @param tabText the text to be shown on its tab
    * @param asHTML <code>true</code> to treat the specified text as HTML
    */
-  public void add(Widget w, String tabText, boolean asHTML) {
+  public void add(Widget w, @IsSafeHtml String tabText, boolean asHTML) {
     insert(w, tabText, asHTML, getWidgetCount());
   }
 
@@ -364,8 +366,7 @@ public class TabPanel extends Composite implements TabListener,
   /**
    * Convenience overload to allow {@link IsWidget} to be used directly.
    */
-  public void insert(IsWidget widget, String tabText, boolean asHTML,
-      int beforeIndex) {
+  public void insert(IsWidget widget, @IsSafeHtml String tabText, boolean asHTML, int beforeIndex) {
     insert(asWidgetOrNull(widget), tabText, asHTML, beforeIndex);
   }
 
@@ -385,8 +386,7 @@ public class TabPanel extends Composite implements TabListener,
    * @param asHTML <code>true</code> to treat the specified text as HTML
    * @param beforeIndex the index before which it will be inserted
    */
-  public void insert(Widget widget, String tabText, boolean asHTML,
-      int beforeIndex) {
+  public void insert(Widget widget, @IsSafeHtml String tabText, boolean asHTML, int beforeIndex) {
     // Delegate updates to the TabBar to our DeckPanel implementation
     deck.insertProtected(widget, tabText, asHTML, beforeIndex);
   }
@@ -399,6 +399,7 @@ public class TabPanel extends Composite implements TabListener,
    * @param tabText the text to be shown on its tab
    * @param beforeIndex the index before which it will be inserted
    */
+  @SuppressIsSafeHtmlCastCheck
   public void insert(Widget widget, String tabText, int beforeIndex) {
     insert(widget, tabText, false, beforeIndex);
   }

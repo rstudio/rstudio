@@ -19,6 +19,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.i18n.shared.DirectionEstimator;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 
 /**
  * A widget that can contain arbitrary HTML.
@@ -120,7 +121,7 @@ public class InlineHTML extends HTML {
    *
    * @param html the new widget's HTML contents
    */
-  public InlineHTML(String html) {
+  public InlineHTML(@IsSafeHtml String html) {
     this();
     setHTML(html);
   }
@@ -133,7 +134,7 @@ public class InlineHTML extends HTML {
    * @param dir the content's direction. Note: {@code Direction.DEFAULT} means
    *        direction should be inherited from the widget's parent element.
    */
-  public InlineHTML(String html, Direction dir) {
+  public InlineHTML(@IsSafeHtml String html, Direction dir) {
     this();
     setHTML(html, dir);
   }

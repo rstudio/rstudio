@@ -19,6 +19,8 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.i18n.client.HasDirection.Direction;
 import com.google.gwt.i18n.shared.DirectionEstimator;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
+import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
 
 /**
  * A widget that serves as an "internal" hyperlink. That is, it is a link to
@@ -91,37 +93,39 @@ public class InlineHyperlink extends Hyperlink {
 
   /**
    * Creates a hyperlink with its text and target history token specified.
-   * 
+   *
    * @param text the hyperlink's text
    * @param targetHistoryToken the history token to which it will link
    */
+  @SuppressIsSafeHtmlCastCheck
   public InlineHyperlink(String text, String targetHistoryToken) {
     this(text, false, targetHistoryToken);
   }
 
   /**
    * Creates a hyperlink with its text and target history token specified.
-   * 
+   *
    * @param text the hyperlink's text
    * @param dir the text's direction
    * @param targetHistoryToken the history token to which it will link
    */
-  public InlineHyperlink(String text, Direction dir,
-      String targetHistoryToken) {
+  @SuppressIsSafeHtmlCastCheck
+  public InlineHyperlink(String text, Direction dir, String targetHistoryToken) {
     this(text, false, dir, targetHistoryToken);
   }
 
   /**
    * Creates a hyperlink with its text and target history token specified.
-   * 
+   *
    * @param text the hyperlink's text
    * @param directionEstimator A DirectionEstimator object used for automatic
    *          direction adjustment. For convenience,
    *          {@link Hyperlink#DEFAULT_DIRECTION_ESTIMATOR} can be used.
    * @param targetHistoryToken the history token to which it will link
    */
-  public InlineHyperlink(String text, DirectionEstimator directionEstimator,
-      String targetHistoryToken) {
+  @SuppressIsSafeHtmlCastCheck
+  public InlineHyperlink(
+      String text, DirectionEstimator directionEstimator, String targetHistoryToken) {
     this(text, false, directionEstimator, targetHistoryToken);
   }
 
@@ -133,8 +137,7 @@ public class InlineHyperlink extends Hyperlink {
    * @param targetHistoryToken the history token to which it will link
    * @see #setTargetHistoryToken
    */
-  public InlineHyperlink(String text, boolean asHTML,
-      String targetHistoryToken) {
+  public InlineHyperlink(@IsSafeHtml String text, boolean asHTML, String targetHistoryToken) {
     this();
     directionalTextHelper.setTextOrHtml(text, asHTML);
     setTargetHistoryToken(targetHistoryToken);
@@ -149,8 +152,8 @@ public class InlineHyperlink extends Hyperlink {
    * @param targetHistoryToken the history token to which it will link
    * @see #setTargetHistoryToken
    */
-  private InlineHyperlink(String text, boolean asHTML, Direction dir,
-      String targetHistoryToken) {
+  private InlineHyperlink(
+      @IsSafeHtml String text, boolean asHTML, Direction dir, String targetHistoryToken) {
     this();
     directionalTextHelper.setTextOrHtml(text, dir, asHTML);
     setTargetHistoryToken(targetHistoryToken);
@@ -167,8 +170,11 @@ public class InlineHyperlink extends Hyperlink {
    * @param targetHistoryToken the history token to which it will link
    * @see #setTargetHistoryToken
    */
-  private InlineHyperlink(String text, boolean asHTML,
-      DirectionEstimator directionEstimator, String targetHistoryToken) {
+  private InlineHyperlink(
+      @IsSafeHtml String text,
+      boolean asHTML,
+      DirectionEstimator directionEstimator,
+      String targetHistoryToken) {
     this();
     directionalTextHelper.setDirectionEstimator(directionEstimator);
     directionalTextHelper.setTextOrHtml(text, asHTML);

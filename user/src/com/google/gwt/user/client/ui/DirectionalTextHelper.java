@@ -23,6 +23,8 @@ import com.google.gwt.i18n.shared.DirectionEstimator;
 import com.google.gwt.i18n.shared.HasDirectionEstimator;
 import com.google.gwt.i18n.shared.WordCountDirectionEstimator;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
+import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
 
 /**
  * A helper class for displaying bidi (i.e. potentially opposite-direction) text 
@@ -151,15 +153,16 @@ public class DirectionalTextHelper implements HasDirectionEstimator {
    * @deprecated
    */
   @Deprecated
+  @SuppressIsSafeHtmlCastCheck
   public void setDirection(Direction direction) {
     BidiUtils.setDirectionOnElement(element, direction);
     initialElementDir = direction;
 
-    /* 
+    /*
      * For backwards compatibility, assure there's no span wrap, and update the
      * content direction.
      */
-    setInnerTextOrHtml(getHtml(), true);
+    setInnerTextOrHtml(getHtml(), true); // TODO: mXSS?
     isSpanWrapped = false;
     textDir = initialElementDir;
     isDirectionExplicitlySet = true;
@@ -179,6 +182,7 @@ public class DirectionalTextHelper implements HasDirectionEstimator {
    * flicker, and thus should be avoided; DirectionEstimator should be set
    * before the element has any content.
    */
+  @SuppressIsSafeHtmlCastCheck
   public void setDirectionEstimator(DirectionEstimator directionEstimator) {
     this.directionEstimator = directionEstimator;
     /* 
@@ -186,7 +190,7 @@ public class DirectionalTextHelper implements HasDirectionEstimator {
      * setTextOrHtml call.
      */
     if (!isDirectionExplicitlySet) {
-      setHtml(getHtml());
+      setHtml(getHtml()); // TODO: mXSS
     }
   }
 
@@ -200,6 +204,7 @@ public class DirectionalTextHelper implements HasDirectionEstimator {
    *
    * @param content the element's new content
    */
+  @SuppressIsSafeHtmlCastCheck
   public void setText(String content) {
     setTextOrHtml(content, false /* isHtml */);
   }
@@ -228,7 +233,7 @@ public class DirectionalTextHelper implements HasDirectionEstimator {
    *
    * @param content the element's new content
    */
-  public void setHtml(String content) {
+  public void setHtml(@IsSafeHtml String content) {
     setTextOrHtml(content, true /* isHtml */);
   }
 
@@ -240,7 +245,7 @@ public class DirectionalTextHelper implements HasDirectionEstimator {
    * @param content the element's new content
    * @param isHtml whether the content is HTML
    */
-  public void setTextOrHtml(String content, boolean isHtml) {
+  public void setTextOrHtml(@IsSafeHtml String content, boolean isHtml) {
     if (directionEstimator == null) {
       isSpanWrapped = false;
       setInnerTextOrHtml(content, isHtml);
@@ -281,6 +286,7 @@ public class DirectionalTextHelper implements HasDirectionEstimator {
    * @param content the element's new content
    * @param dir the content's direction
    */
+  @SuppressIsSafeHtmlCastCheck
   public void setText(String content, Direction dir) {
     setTextOrHtml(content, dir, false /* isHtml */);
   }
@@ -329,7 +335,7 @@ public class DirectionalTextHelper implements HasDirectionEstimator {
    * @param content the element's new content
    * @param dir the content's direction
    */
-  public void setHtml(String content, Direction dir) {
+  public void setHtml(@IsSafeHtml String content, Direction dir) {
     setTextOrHtml(content, dir, true /* isHtml */);
   }
 
@@ -344,7 +350,7 @@ public class DirectionalTextHelper implements HasDirectionEstimator {
    * @param dir the content's direction
    * @param isHtml whether the content is HTML
    */
-  public void setTextOrHtml(String content, Direction dir, boolean isHtml) {
+  public void setTextOrHtml(@IsSafeHtml String content, Direction dir, boolean isHtml) {
     textDir = dir;
     // Set the text and the direction.
     if (isElementInline) {
@@ -359,7 +365,7 @@ public class DirectionalTextHelper implements HasDirectionEstimator {
     isDirectionExplicitlySet = true;
   }
 
-  private void setInnerTextOrHtml(String content, boolean isHtml) {
+  private void setInnerTextOrHtml(@IsSafeHtml String content, boolean isHtml) {
     if (isHtml) {
       element.setInnerHTML(content);
     } else {

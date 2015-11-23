@@ -18,6 +18,8 @@ package com.google.gwt.i18n.shared;
 
 import com.google.gwt.i18n.client.HasDirection.Direction;
 import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
+import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
 
 /**
  * Utility class for formatting text for display in a potentially
@@ -262,6 +264,8 @@ public class BidiFormatter extends BidiFormatterBase {
    * @param str The input string
    * @return Input string after applying the above processing.
    */
+  @SuppressIsSafeHtmlCastCheck
+  @IsSafeHtml
   public String spanWrap(String str) {
     return spanWrap(str, false, true);
   }
@@ -274,7 +278,8 @@ public class BidiFormatter extends BidiFormatterBase {
    * @param isHtml Whether {@code str} is HTML / HTML-escaped
    * @return Input string after applying the above processing.
    */
-  public String spanWrap(String str, boolean isHtml) {
+  @IsSafeHtml
+  public String spanWrap(@IsSafeHtml String str, boolean isHtml) {
     return spanWrap(str, isHtml, true);
   }
 
@@ -303,7 +308,8 @@ public class BidiFormatter extends BidiFormatterBase {
    *          of whatever may follow {@code str}
    * @return Input string after applying the above processing.
    */
-  public String spanWrap(String str, boolean isHtml, boolean dirReset) {
+  @IsSafeHtml
+  public String spanWrap(@IsSafeHtml String str, boolean isHtml, boolean dirReset) {
     return spanWrapBase(str, isHtml, dirReset);
   }
 
@@ -316,6 +322,8 @@ public class BidiFormatter extends BidiFormatterBase {
    * @param str The input string
    * @return Input string after applying the above processing.
    */
+  @SuppressIsSafeHtmlCastCheck
+  @IsSafeHtml
   public String spanWrapWithKnownDir(Direction dir, String str) {
     return spanWrapWithKnownDir(dir, str, false, true);
   }
@@ -330,7 +338,8 @@ public class BidiFormatter extends BidiFormatterBase {
    * @param isHtml Whether {@code str} is HTML / HTML-escaped
    * @return Input string after applying the above processing.
    */
-  public String spanWrapWithKnownDir(Direction dir, String str, boolean isHtml) {
+  @IsSafeHtml
+  public String spanWrapWithKnownDir(Direction dir, @IsSafeHtml String str, boolean isHtml) {
     return spanWrapWithKnownDir(dir, str, isHtml, true);
   }
 
@@ -360,8 +369,9 @@ public class BidiFormatter extends BidiFormatterBase {
    *          of whatever may follow {@code str}
    * @return Input string after applying the above processing.
    */
-  public String spanWrapWithKnownDir(Direction dir, String str, boolean isHtml,
-      boolean dirReset) {
+  @IsSafeHtml
+  public String spanWrapWithKnownDir(
+      Direction dir, @IsSafeHtml String str, boolean isHtml, boolean dirReset) {
     return spanWrapWithKnownDirBase(dir, str, isHtml, dirReset);
   }
 
