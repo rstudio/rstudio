@@ -219,31 +219,64 @@ inline core::r_util::ProjectId toProjectId(const std::string& projectDir,
    core::FilePath projectIdsPath = projectIdsFilePath(userScratchPath);
    std::map<std::string,std::string> idMap = projectIdsMap(projectIdsPath);
 
+   std::string id;
+
    // look for this value
-   typedef std::map<std::string,std::string>::value_type ProjId;
-   BOOST_FOREACH(ProjId projId, idMap)
+   std::map<std::string,std::string>::iterator it;
+   for (it = idMap.begin(); it != idMap.end(); it++)
    {
-      if (projId.second == projectDir)
+      if (it->second == projectDir)
       {
-         return core::r_util::ProjectId(projId.first);
+         id = it->first;
+
+         // if this ID includes both project and user information, we can
+         // return it immediately
+         if (id.length() == kUserIdLen + kProjectIdLen)
+            return core::r_util::ProjectId(id);
+
+         break;
       }
    }
 
-   std::string id;
-
    // if this project belongs to someone else, try to look up its shared
-   // project ID
+   // project ID (we currently have to do this even if we found the ID in the
+   // map; see note below)
 #ifndef _WIN32
    struct stat st;
    if (::stat(projectDir.c_str(), &st) == 0 &&
        st.st_uid != ::getuid())
    {
+      // if we already found an ID but it doesn't contain any user information
+      // (just a raw project ID), we need to do some fixup
+      if (id.length() == kProjectIdLen)
+      {
+         // TODO: The following code is temporary. There was a period of time
+         // during which it was possible to get your own project ID for a
+         // project that did not belong to you.
+         //
+         // This is no longer possible, but mismatched project IDs cause
+         // features such as distributed events to fail, and the project IDs
+         // are cached in the mapping file, so until all the per-user IDs are
+         // flushed and replaced with shared IDs, we need to leave this in; it
+         // causes us to erase the per-user ID so it's replaced with a shared
+         // ID.
+
+         idMap.erase(it);
+         it = idMap.end();
+      }
+
       id = sharedProjectId(sharedStoragePath, projectDir);
    }
 #endif
 
-   // if we didn't find it then we need to generate a new one (loop until
-   // we find one that isn't already in the map)
+   // if we found a cached ID, return it now
+   if (it != idMap.end() && !id.empty())
+   {
+      return core::r_util::ProjectId(id);
+   }
+
+   // if we didn't find it, and we don't already have an ID, then we need to
+   // generate a new one (loop until we find one that isn't already in the map)
    while (id.empty())
    {
       std::string candidateId = core::r_util::generateScopeId();
