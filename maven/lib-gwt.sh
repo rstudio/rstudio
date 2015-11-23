@@ -44,8 +44,6 @@ function warnJavaDoc () {
 function maven-gwt() {
   local gwtMavenVersion=$1
   shift
-  local jsinteropMavenVersion=$1
-  shift
   local gwtSdkArchive=$1
   shift
   local mavenRepoUrl=$1
@@ -77,10 +75,6 @@ function maven-gwt() {
   JAVADOC_FILE_PATH=$RANDOM_DIR/gwt-javadoc.jar
   jar cf $JAVADOC_FILE_PATH -C $GWT_EXTRACT_DIR/doc/javadoc .
 
-  # Create a dummy javadoc JAR for JsInterop (gwt-javadoc is too heavy)
-  JSINTEROP_JAVADOC_FILE_PATH=$RANDOM_DIR/jsinterop-javadoc.jar
-  jar cf $JSINTEROP_JAVADOC_FILE_PATH -C $pomDir/jsinterop README.javadoc
-
   jarExpandDir=/tmp/tmp-jar-expand-dir-$RANDOM
 
   # Generate POMs with correct version
@@ -88,7 +82,7 @@ function maven-gwt() {
   do
     dir=`dirname $template`
     pushd $dir > /dev/null
-    sed -e "s|\${gwtVersion}|$gwtMavenVersion|g" -e "s|\${jsinteropVersion}|$jsinteropMavenVersion|g" pom-template.xml >pom.xml
+    sed "s|\${gwtVersion}|$gwtMavenVersion|g" pom-template.xml >pom.xml
     popd > /dev/null
   done
 
@@ -101,8 +95,6 @@ function maven-gwt() {
   if [ -f $GWT_EXTRACT_DIR/gwt-elemental.jar ]; then
     gwtLibs="${gwtLibs} elemental"
   fi
-
-  jsinteropLibs='annotations'
 
   for i in $gwtLibs
   do
@@ -123,29 +115,9 @@ function maven-gwt() {
     pushd $curExpandDir > /dev/null
 
     rm -rf javafilelist
-    find . -path "./jsinterop/*" -prune -o -name "*.java" -print  > javafilelist
+    find . -name "*.java" -print  > javafilelist
     if [ -s javafilelist ]; then
       jar cf $SOURCES_FILE @javafilelist
-    fi
-
-    if [[ "$i" == "user" ]]; then
-      # Get rid of JsInterop classes from gwt-user.jar
-      echo "Removing jsinterop/* from gwt-${i}"
-      zip -d $CUR_FILE "jsinterop/*"
-
-      # Create jsinterop jars
-      for i in $jsinteropLibs
-      do
-        rm -rf jsinterop-${i}-classfilelist jsinterop-${i}-javafilelist
-        find . -path "./jsinterop/$i/*" -name "*.class" -print  > jsinterop-${i}-classfilelist
-        if [ -s jsinterop-${i}-classfilelist ]; then
-          jar cf jsinterop-${i}.jar @jsinterop-${i}-classfilelist
-        fi
-        find . -path "./jsinterop/$i/*" -name "*.java" -print  > jsinterop-${i}-javafilelist
-        if [ -s jsinterop-${i}-javafilelist ]; then
-          jar cf jsinterop-${i}-sources.jar @jsinterop-${i}-javafilelist
-        fi
-      done
     fi
     popd > /dev/null
   done
@@ -181,15 +153,6 @@ function maven-gwt() {
          || die
   done
 
-  # Deploy jsInterop jars
-  maven-deploy-file $mavenRepoUrl $mavenRepoId $pomDir/jsinterop/pom.xml $pomDir/jsinterop/pom.xml || die
-
-  for i in $jsinteropLibs
-  do
-    maven-deploy-file $mavenRepoUrl $mavenRepoId $jarExpandDir-user/jsinterop-${i}.jar $pomDir/jsinterop/${i}/pom.xml \
-        $JSINTEROP_JAVADOC_FILE_PATH $jarExpandDir-user/jsinterop-${i}-sources.jar \
-         || die
-  done
-
   finishAndCleanup
 }
+
