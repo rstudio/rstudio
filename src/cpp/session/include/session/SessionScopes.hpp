@@ -179,7 +179,8 @@ inline std::string sharedProjectId(const core::FilePath& sharedStoragePath,
 {
    // enumerate the project entries in shared storage (this should succeed)
    std::vector<core::FilePath> projectEntries;
-   core::Error error = sharedStoragePath.children(&projectEntries);
+   core::Error error = sharedStoragePath.complete(kProjectSharedDir)
+                                        .children(&projectEntries);
    if (error)
    {
       LOG_ERROR(error);
