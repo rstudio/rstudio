@@ -31,6 +31,7 @@
 
 #ifndef _WIN32
 #include <core/system/FileMode.hpp>
+#include <sys/stat.h>
 #endif
 
 #include <core/r_util/RSessionContext.hpp>
@@ -64,6 +65,52 @@ inline std::map<std::string,std::string> projectIdsMap(
          LOG_ERROR(error);
    }
    return idMap;
+}
+
+inline core::Error projectPathFromEntry(const core::FilePath& projectEntry,
+                                        std::string* pPath)
+{
+   // get the path from shared storage
+   std::string entryContents;
+   core::Error error = core::readStringFromFile(projectEntry,
+                                                &entryContents);
+   if (error)
+      return error;
+
+   // read the contents
+   core::json::Value projectEntryVal;
+   if (!core::json::parse(entryContents, &projectEntryVal))
+   {
+      error = core::Error(core::json::errc::ParseError,
+                                ERROR_LOCATION);
+      error.addProperty("path", projectEntry.absolutePath());
+      return error;
+   }
+
+   // extract the path
+   std::string projectPath;
+   if (projectEntryVal.type() == core::json::ObjectType)
+   {
+      core::json::Object obj = projectEntryVal.get_obj();
+      core::json::Object::iterator it = obj.find(kProjectEntryDir);
+      if (it != obj.end() && it->second.type() == core::json::StringType)
+      {
+         projectPath = it->second.get_str();
+      }
+   }
+
+   // ensure we got a path from the shared project data
+   if (projectPath.empty())
+   {
+      error = core::systemError(boost::system::errc::invalid_argument,
+                       "No project directory found in " kProjectEntryDir,
+                       ERROR_LOCATION);
+      error.addProperty("path", projectEntry.absolutePath());
+      return error;
+   }
+
+   *pPath = projectPath;
+   return core::Success();
 }
 
 inline std::string toFilePath(const core::r_util::ProjectId& projectId,
@@ -101,46 +148,12 @@ inline std::string toFilePath(const core::r_util::ProjectId& projectId,
                              .complete(projectId.asString() + kProjectEntryExt);
       if (projectEntryPath.exists())
       {
-         // get the path from shared storage
-         std::string entryContents;
-         core::Error error = core::readStringFromFile(projectEntryPath,
-                                                      &entryContents);
+         // extract the path from the entry
+         std::string projectPath;
+         core::Error error = projectPathFromEntry(projectEntryPath,
+                                                  &projectPath);
          if (error)
          {
-            LOG_ERROR(error);
-            return "";
-         }
-
-         // read the contents
-         core::json::Value projectEntryVal;
-         if (!core::json::parse(entryContents, &projectEntryVal))
-         {
-            error = core::Error(core::json::errc::ParseError,
-                                      ERROR_LOCATION);
-            error.addProperty("path", projectEntryPath.absolutePath());
-            LOG_ERROR(error);
-            return "";
-         }
-
-         // extract the path
-         std::string projectPath;
-         if (projectEntryVal.type() == core::json::ObjectType)
-         {
-            core::json::Object obj = projectEntryVal.get_obj();
-            core::json::Object::iterator it = obj.find(kProjectEntryDir);
-            if (it != obj.end() && it->second.type() == core::json::StringType)
-            {
-               projectPath = it->second.get_str();
-            }
-         }
-
-         // ensure we got a path from the shared project data
-         if (projectPath.empty())
-         {
-            error = core::systemError(boost::system::errc::invalid_argument,
-                             "No project directory found in " kProjectEntryDir,
-                             ERROR_LOCATION);
-            error.addProperty("path", projectEntryPath.absolutePath());
             LOG_ERROR(error);
             return "";
          }
@@ -160,8 +173,46 @@ inline std::string toFilePath(const core::r_util::ProjectId& projectId,
    return "";
 }
 
+#ifndef _WIN32
+inline std::string sharedProjectId(const core::FilePath& sharedStoragePath,
+                                   const std::string& projectDir)
+{
+   // enumerate the project entries in shared storage (this should succeed)
+   std::vector<core::FilePath> projectEntries;
+   core::Error error = sharedStoragePath.children(&projectEntries);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return "";
+   }
+
+   BOOST_FOREACH(const core::FilePath& projectEntry, projectEntries)
+   {
+      // skip files that don't look like project entries
+      if (projectEntry.extensionLowerCase() != kProjectEntryExt)
+         continue;
+
+      std::string projectPath;
+      error = projectPathFromEntry(projectEntry, &projectPath);
+      if (error)
+      {
+         // this is very much expected (we aren't going to be able to examine
+         // the contents of most project entries)
+         continue;
+      }
+      else if (projectDir == projectPath)
+      {
+         return projectEntry.stem();
+      }
+   }
+
+   return "";
+}
+#endif
+
 inline core::r_util::ProjectId toProjectId(const std::string& projectDir,
-                             const core::FilePath& userScratchPath)
+                             const core::FilePath& userScratchPath,
+                             const core::FilePath& sharedStoragePath)
 {
    // get the id map
    core::FilePath projectIdsPath = projectIdsFilePath(userScratchPath);
@@ -177,9 +228,21 @@ inline core::r_util::ProjectId toProjectId(const std::string& projectDir,
       }
    }
 
+   std::string id;
+
+   // if this project belongs to someone else, try to look up its shared
+   // project ID
+#ifndef _WIN32
+   struct stat st;
+   if (::stat(projectDir.c_str(), &st) == 0 &&
+       st.st_uid != ::getuid())
+   {
+      id = sharedProjectId(sharedStoragePath, projectDir);
+   }
+#endif
+
    // if we didn't find it then we need to generate a new one (loop until
    // we find one that isn't already in the map)
-   std::string id;
    while (id.empty())
    {
       std::string candidateId = core::r_util::generateScopeId();
@@ -216,19 +279,22 @@ inline core::r_util::ProjectIdToFilePath projectIdToFilePath(
 }
 
 inline core::r_util::FilePathToProjectId filePathToProjectId(
-                                    const core::FilePath& userScratchPath)
+                                    const core::FilePath& userScratchPath,
+                                    const core::FilePath& sharedStoragePath)
 {
-   return boost::bind(toProjectId, _1, userScratchPath);
+   return boost::bind(toProjectId, _1, userScratchPath, sharedStoragePath);
 }
 
 inline core::r_util::ProjectId projectToProjectId(
                             const core::FilePath& userScratchPath,
+                            const core::FilePath& sharedStoragePath,
                             const std::string& project)
 {
    if (project == kProjectNone)
       return core::r_util::ProjectId(kProjectNoneId);
    else
-      return session::filePathToProjectId(userScratchPath)(project);
+      return session::filePathToProjectId(userScratchPath, sharedStoragePath)
+                                         (project);
 }
 
 

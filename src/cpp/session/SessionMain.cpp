@@ -964,7 +964,9 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                      scope = r_util::SessionScope::fromProject(
                               projDir,
                               options().sessionScope().id(),
-                              filePathToProjectId(options().userScratchPath()));
+                              filePathToProjectId(options().userScratchPath(),
+                                   FilePath(options().getOverlayOption(
+                                               kSessionSharedStoragePath))));
 
                      // update the project and working dir
                      activeSession().setProject(projDir);
@@ -1003,7 +1005,9 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                         FilePath projFile = resolveAliasedPath(switchToProject);
                         std::string projDir = createAliasedPath(projFile.parent());
                         RVersionSettings verSettings(
-                                               options().userScratchPath());
+                                            options().userScratchPath(),
+                                            FilePath(options().getOverlayOption(
+                                                  kSessionSharedStoragePath)));
                         verSettings.setProjectLastRVersion(projDir,
                                                            version,
                                                            rHome);
