@@ -182,7 +182,9 @@
    if (length(text) != 1)
      text <- text[idx]
    
-   .rs.enqueClientEvent("replace_ranges", list(ranges = ranges, text = text))
+   data <- list(ranges = ranges, text = text)
+   .rs.enqueClientEvent("replace_ranges", data)
+   data
 })
 
 .rs.addApiFunction("replaceSelection", function(text) {
@@ -193,7 +195,7 @@
    
    text <- paste(text, collapse = "\n")
    .rs.enqueClientEvent("replace_selection", text)
-   
+   text
 })
 
 .rs.addApiFunction("getActiveDocumentContext", function() {
@@ -209,11 +211,13 @@
       stop("'code' should be a character vector", call. = FALSE)
    
    code <- paste(code, collapse = "\n")
-   
-   .rs.enqueClientEvent("send_to_console", list(
+   data <- list(
       code = .rs.scalar(code),
       echo = .rs.scalar(as.logical(echo)),
       execute = .rs.scalar(as.logical(execute)),
       focus = .rs.scalar(as.logical(focus))
-   ))
+   )
+   
+   .rs.enqueClientEvent("send_to_console", data)
+   data
 })
