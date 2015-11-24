@@ -77,6 +77,7 @@ public class JInterfaceType extends JDeclaredType {
   }
 
   public boolean hasDefaultMethods() {
+    assert !isExternal();
     return Iterables.any(getMethods(), new Predicate<JMethod>() {
       @Override
       public boolean apply(JMethod method) {

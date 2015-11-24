@@ -2533,7 +2533,16 @@ public class GwtAstBuilder {
 
       // Synthesize super clinit calls.
       if (type instanceof JClassType) {
-        JjsUtils.synthesizeStaticInitializerChain(type);
+        Iterable<JInterfaceType> interfacesToInitialize =
+            Iterables.transform(
+                JdtUtil.getSuperInterfacesRequiringInitialization(x.binding),
+                new Function<ReferenceBinding, JInterfaceType>() {
+                  @Override
+                  public JInterfaceType apply(ReferenceBinding referenceBinding) {
+                    return (JInterfaceType) typeMap.get(referenceBinding);
+                  }
+                });
+        JjsUtils.synthesizeStaticInitializerChain(type, interfacesToInitialize);
       }
 
       // Implement getClass() implementation for all non-Object classes.

@@ -16,6 +16,8 @@
 package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.core.client.GwtScriptOnly;
+import com.google.gwt.dev.jjs.test.defaultmethods.ImplementsWithDefaultMethodAndStaticInitializer;
+import com.google.gwt.dev.jjs.test.defaultmethods.SomeClass;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.ArrayList;
@@ -1271,6 +1273,12 @@ public class Java8Test extends GWTTestCase {
   public void testMethodReference_generics() {
     P<B> p = B::getTrue;
     assertTrue(p.apply(new B()));
+  }
+
+  public void testDefaultMethod_staticInitializer() {
+    SomeClass.initializationOrder = new ArrayList<String>();
+    Object object = ImplementsWithDefaultMethodAndStaticInitializer.someClass;
+    assertContentsInOrder(SomeClass.initializationOrder, "1", "2", "3", "4");
   }
 
   private void assertContentsInOrder(Iterable<String> contents, String... elements) {

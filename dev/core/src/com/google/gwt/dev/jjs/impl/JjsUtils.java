@@ -434,7 +434,8 @@ public class JjsUtils {
     return translatorByLiteralClass.get(literal.getClass()).translate(literal);
   }
 
-  static void synthesizeStaticInitializerChain(JDeclaredType type) {
+  static void synthesizeStaticInitializerChain(
+      JDeclaredType type, Iterable<JInterfaceType> superInterfacesRequiringStaticInitialization) {
     // Implement static initialization as described in (Java 8) JLS 12.4.2.
     List<JStatement> superClinitCalls = Lists.newArrayList();
     SourceInfo sourceInfo = type.getSourceInfo();
@@ -447,7 +448,7 @@ public class JjsUtils {
     }
 
     // Recurse over interfaces in preorder initializing the ones that have default methods.
-    for (JInterfaceType interfaceType : getSuperInterfacesRequiringInitialization(type)) {
+    for (JInterfaceType interfaceType : superInterfacesRequiringStaticInitialization) {
       superClinitCalls.add(
           new JMethodCall(sourceInfo, null, interfaceType.getClinitMethod()).makeStatement());
     }
@@ -557,19 +558,6 @@ public class JjsUtils {
     emptyMethod.freezeParamTypes();
     inType.addMethod(emptyMethod);
     return emptyMethod;
-  }
-
-  private static Iterable<JInterfaceType> getSuperInterfacesRequiringInitialization(
-      JDeclaredType type) {
-    Iterable<JInterfaceType> interfaces = Collections.emptyList();
-    for (JInterfaceType interfaceType : type.getImplements()) {
-      interfaces =
-          Iterables.concat(interfaces, getSuperInterfacesRequiringInitialization(interfaceType));
-      if (interfaceType.hasDefaultMethods()) {
-        interfaces = Iterables.concat(interfaces, Collections.singleton(interfaceType));
-      }
-    }
-    return interfaces;
   }
 
   private JjsUtils() {

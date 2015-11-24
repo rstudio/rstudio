@@ -144,6 +144,10 @@ public class Java8Test extends GWTTestCase {
     assertFalse(isGwtSourceLevel8());
   }
 
+  public void testDefaultMethod_staticInitializer() {
+    assertFalse(isGwtSourceLevel8());
+  }
+
   public void testThisRefInDefenderMethod() {
     assertFalse(isGwtSourceLevel8());
   }

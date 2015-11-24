@@ -19,9 +19,11 @@ import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
 import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
@@ -44,6 +46,7 @@ import org.eclipse.jdt.internal.compiler.lookup.SyntheticMethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -444,5 +447,27 @@ public final class JdtUtil {
     }
     ReferenceBinding binding = (ReferenceBinding) typeBinding;
     return isJso(binding.superclass());
+  }
+
+  public static Iterable<ReferenceBinding> getSuperInterfacesRequiringInitialization(
+      ReferenceBinding type) {
+    Iterable<ReferenceBinding> interfaces = Collections.emptyList();
+    for (ReferenceBinding interfaceType : type.superInterfaces()) {
+      interfaces =
+          Iterables.concat(interfaces, getSuperInterfacesRequiringInitialization(interfaceType));
+      if (hasDefaultMethods(interfaceType)) {
+        interfaces = Iterables.concat(interfaces, Collections.singleton(interfaceType));
+      }
+    }
+    return interfaces;
+  }
+
+  private static boolean hasDefaultMethods(ReferenceBinding interfaceType) {
+    return Iterables.any(Arrays.asList(interfaceType.methods()), new Predicate<MethodBinding>() {
+      @Override
+      public boolean apply(MethodBinding methodBinding) {
+        return methodBinding.isDefaultMethod();
+      }
+    });
   }
 }
