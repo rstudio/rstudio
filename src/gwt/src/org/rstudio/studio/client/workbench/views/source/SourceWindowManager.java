@@ -483,6 +483,15 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          return getCurrentDocPath(lastFocusedWindow);
    }
    
+   public String getCurrentDocId()
+   {
+      WindowEx lastFocusedWindow = getLastFocusedSourceWindow();
+      if (lastFocusedWindow == null)
+         return sourceShim_.getCurrentDocId();
+      else
+         return getCurrentDocId(lastFocusedWindow);
+   }
+   
    public CollabEditStartParams getDocCollabParams(String id)
    {
       JsArray<SourceDocument> docs = getSourceDocs();
@@ -838,6 +847,10 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    
    private final native String getCurrentDocPath(WindowEx satellite) /*-{
       return satellite.rstudioGetCurrentDocPath();
+   }-*/;
+   
+   private final native String getCurrentDocId(WindowEx satellite) /*-{
+      return satellite.rstudioGetCurrentDocId();
    }-*/;
    
    private final native void handleUnsavedChangesBeforeExit(WindowEx satellite, 
