@@ -1320,7 +1320,7 @@ public class TextEditingTarget implements
          public void onFocus(FocusEvent event)
          {
             // let anyone listening know this doc just got focus
-            events_.fireEvent(new DocFocusedEvent(getPath()));
+            events_.fireEvent(new DocFocusedEvent(getPath(), getId()));
             
             if (queuedCollabParams_ != null)
             {

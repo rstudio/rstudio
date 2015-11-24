@@ -36,14 +36,20 @@ public class DocFocusedEvent extends CrossWindowEvent<DocFocusedEvent.Handler>
    {
    }
    
-   public DocFocusedEvent(String path)
+   public DocFocusedEvent(String path, String id)
    {
       path_ = path;
+      id_ = id;
    }
    
    public String getPath()
    {
       return path_;
+   }
+   
+   public String getId()
+   {
+      return id_;
    }
  
    @Override
@@ -59,4 +65,5 @@ public class DocFocusedEvent extends CrossWindowEvent<DocFocusedEvent.Handler>
    }
    
    private String path_;
+   private String id_;
 }
