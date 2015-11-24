@@ -150,6 +150,41 @@
    invisible(NULL)
 })
 
+.rs.addApiFunction("replaceRanges", function(ranges, text) {
+   
+   invalidRangeMsg <- "'ranges' should be a list of 4-element integer vectors"
+   invalidTextMsg <- "'text' should be a character vector"
+   invalidLengthMsg <- "'text' should either be length 1, or same length as 'ranges'"
+   
+   if (!is.list(ranges))
+      stop(invalidRangeMsg, call. = FALSE)
+   
+   ranges <- lapply(ranges, function(range) {
+      
+      if (length(range) != 4 || !is.numeric(range))
+         stop(invalidRangeMsg, call. = FALSE)
+      
+      as.integer(range)
+   })
+   
+   if (!is.character(text))
+      stop(invalidTextMsg, call. = FALSE)
+   
+   if (length(text) != 1 && length(ranges) != length(text))
+      stop(invalidLengthMsg, call. = FALSE)
+   
+   # sort the ranges in decreasing order -- this way, we can
+   # ensure the replacements occur correctly (expect in the
+   # case of overlaps)
+   idx <- order(unlist(lapply(ranges, `[[`, 1)))
+   
+   ranges <- ranges[idx]
+   if (length(text) != 1)
+     text <- text[idx]
+   
+   .rs.enqueClientEvent("replace_ranges", list(ranges = ranges, text = text))
+})
+
 .rs.addApiFunction("replaceSelection", function(text) {
    
    # validate arguments

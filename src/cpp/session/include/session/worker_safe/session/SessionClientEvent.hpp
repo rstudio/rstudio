@@ -139,6 +139,7 @@ extern const int kRmdParamsEdit;
 extern const int kRmdParamsReady;
 extern const int kRegisterUserCommand;
 extern const int kReplaceSelection;
+extern const int kReplaceRanges;
 extern const int kGetActiveDocumentContext;
 }
    

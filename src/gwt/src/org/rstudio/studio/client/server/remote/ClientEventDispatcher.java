@@ -709,6 +709,11 @@ public class ClientEventDispatcher
             String selection = event.getData();
             eventBus_.fireEvent(new ReplaceSelectionEvent(selection));
          }
+         else if (type.equals(ClientEvent.ReplaceRanges))
+         {
+            ReplaceRangesEvent.Data data = event.getData();
+            eventBus_.fireEvent(new ReplaceRangesEvent(data));
+         }
          else if (type.equals(ClientEvent.GetActiveDocumentContext))
          {
             eventBus_.fireEvent(new GetActiveDocumentContextEvent());

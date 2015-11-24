@@ -138,7 +138,8 @@ const int kRmdParamsReady = 113;
 const int kRegisterUserCommand = 114;
 const int kRmdRSConnectDeploymentFailed = 115;
 const int kReplaceSelection = 116;
-const int kGetActiveDocumentContext = 117;
+const int kReplaceRanges = 117;
+const int kGetActiveDocumentContext = 118;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -374,6 +375,8 @@ std::string ClientEvent::typeName() const
          return "register_user_command";
       case client_events::kReplaceSelection:
          return "replace_selection";
+      case client_events::kReplaceRanges:
+         return "replace_ranges";
       case client_events::kGetActiveDocumentContext:
          return "get_active_document_context";
       default:

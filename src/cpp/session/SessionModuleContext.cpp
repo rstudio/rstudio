@@ -137,6 +137,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kJumpToFunction;
       else if (name == "replace_selection")
          type = session::client_events::kReplaceSelection;
+      else if (name == "replace_ranges")
+         type = session::client_events::kReplaceRanges;
       else if (name == "get_active_document_context")
          type = session::client_events::kGetActiveDocumentContext;
 

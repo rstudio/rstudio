@@ -81,6 +81,8 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
 import org.rstudio.studio.client.server.remote.GetActiveDocumentContextEvent;
+import org.rstudio.studio.client.server.remote.ReplaceRangesEvent;
+import org.rstudio.studio.client.server.remote.ReplaceRangesEvent.ReplacementData;
 import org.rstudio.studio.client.server.remote.ReplaceSelectionEvent;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
@@ -542,6 +544,7 @@ public class Source implements InsertSourceHandler,
       events.addHandler(DocWindowChangedEvent.TYPE, this);
       events.addHandler(DocTabDragInitiatedEvent.TYPE, this);
       events.addHandler(PopoutDocInitiatedEvent.TYPE, this);
+      
       events.addHandler(
             ReplaceSelectionEvent.TYPE,
             new ReplaceSelectionEvent.Handler()
@@ -557,6 +560,33 @@ public class Source implements InsertSourceHandler,
                   
                   TextEditingTarget target = (TextEditingTarget) activeEditor_;
                   target.insertCode(event.getData(), false);
+               }
+            });
+      
+      events.addHandler(
+            ReplaceRangesEvent.TYPE,
+            new ReplaceRangesEvent.Handler()
+            {
+               @Override
+               public void onReplaceRanges(ReplaceRangesEvent event)
+               {
+                  if (activeEditor_ == null)
+                     return;
+                  
+                  if (!(activeEditor_ instanceof TextEditingTarget))
+                     return;
+                  
+                  TextEditingTarget target = (TextEditingTarget) activeEditor_;
+                  
+                  JsArray<ReplacementData> data = event.getData().getReplacementData();
+                  for (int i = 0; i < data.length(); i++)
+                  {
+                     ReplacementData el = data.get(i);
+                     Range range = el.getRange();
+                     String text = el.getText();
+                     
+                     target.getDocDisplay().replaceRange(range, text);
+                  }
                }
             });
       
