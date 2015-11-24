@@ -156,6 +156,9 @@
    invalidTextMsg <- "'text' should be a character vector"
    invalidLengthMsg <- "'text' should either be length 1, or same length as 'ranges'"
    
+   if (length(ranges) == 0)
+      return()
+   
    if (!is.list(ranges))
       stop(invalidRangeMsg, call. = FALSE)
    
