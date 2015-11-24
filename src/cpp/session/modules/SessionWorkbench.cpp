@@ -88,12 +88,14 @@ SEXP rs_getActiveDocumentContext()
    
    json::Object context = request.params[0].get_obj();
    
+   std::string id;
    std::string path;
    std::string contents;
-   json::Array rangeJson;
    std::string selection;
+   json::Array rangeJson;
    
    Error error = json::readObject(context,
+                                  "id", &id,
                                   "path", &path,
                                   "contents", &contents,
                                   "selection", &selection,
@@ -114,6 +116,7 @@ SEXP rs_getActiveDocumentContext()
    Protect protect;
    ListBuilder builder(&protect);
    
+   builder.add("id", id);
    builder.add("path", path);
    builder.add("contents", contents);
    builder.add("selection", selection);

@@ -568,17 +568,19 @@ public class Source implements InsertSourceHandler,
                public void onGetActiveDocumentContext(GetActiveDocumentContextEvent event)
                {
                   JsObject context = JsObject.createJsObject();
-                  context.setString("path", null);
-                  context.setString("contents", null);
-                  context.setString("selection", null);
+                  context.setString("id", "");
+                  context.setString("path", "");
+                  context.setString("contents", "");
+                  context.setString("selection", "");
                   context.setObject("range", null);
                   
                   if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
                   {
                      TextEditingTarget target = (TextEditingTarget) activeEditor_;
-                     context.setString("path", target.getPath());
-                     context.setString("contents", target.getDocDisplay().getCode());
-                     context.setString("selection", target.getDocDisplay().getSelectionValue());
+                     context.setString("id", StringUtil.notNull(target.getId()));
+                     context.setString("path", StringUtil.notNull(target.getPath()));
+                     context.setString("contents", StringUtil.notNull(target.getDocDisplay().getCode()));
+                     context.setString("selection", StringUtil.notNull(target.getDocDisplay().getSelectionValue()));
                      
                      Range selectionRange = target.getDocDisplay().getSelectionRange();
                      JsArrayNumber range = JsArrayNumber.createArray(4).cast();
