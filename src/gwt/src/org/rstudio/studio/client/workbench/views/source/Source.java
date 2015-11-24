@@ -636,8 +636,9 @@ public class Source implements InsertSourceHandler,
       // Same with this event
       fireDocTabsChanged();
       
-      // open project docs
-      openProjectDocs(session);    
+      // open project docs (only for main source window)
+      if (SourceWindowManager.isMainSourceWindow())
+         openProjectDocs(session);
       
       // add vim commands
       initVimCommands();

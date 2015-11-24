@@ -60,6 +60,12 @@ public class ShinyApplicationStatusEvent
    }
    
    @Override
+   public boolean forward()
+   {
+      return false;
+   }
+   
+   @Override
    protected void dispatch(ShinyApplicationStatusEvent.Handler handler)
    {
       handler.onShinyApplicationStatus(this);
