@@ -4352,11 +4352,13 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void setCurrentlyEditing(String path,
+   public void setCurrentlyEditing(String path, 
+         String id,
          ServerRequestCallback<Void> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
+      params.set(1, new JSONString(id));
       sendRequest(RPC_SCOPE, "set_currently_editing", params, callback);
    }
 
