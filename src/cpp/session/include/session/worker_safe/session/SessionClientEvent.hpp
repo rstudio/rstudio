@@ -141,6 +141,7 @@ extern const int kRegisterUserCommand;
 extern const int kReplaceSelection;
 extern const int kReplaceRanges;
 extern const int kGetActiveDocumentContext;
+extern const int kSendToConsole;
 }
    
 class ClientEvent

@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.console.events;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.GwtEvent;
 
 @JavaScriptSerializable
@@ -24,6 +25,17 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleHandler>
 {
    public static final GwtEvent.Type<SendToConsoleHandler> TYPE =
       new GwtEvent.Type<SendToConsoleHandler>();
+   
+   public static class Data extends JavaScriptObject
+   {
+      protected Data() {}
+      
+      public final native String getCode() /*-{ return this["code"]; }-*/;
+      
+      public final native boolean shouldExecute() /*-{ return !!this["execute"]; }-*/;
+      public final native boolean shouldFocus() /*-{ return !!this["focus"]; }-*/;
+      public final native boolean shouldAnimate() /*-{ return !!this["animate"]; }-*/;
+   }
   
    public SendToConsoleEvent()
    {
@@ -37,6 +49,14 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleHandler>
    public SendToConsoleEvent(String code, boolean execute, boolean focus)
    {
       this(code, execute, focus, false);
+   }
+   
+   public SendToConsoleEvent(Data data)
+   {
+      this(data.getCode(),
+            data.shouldExecute(),
+            data.shouldFocus(),
+            data.shouldAnimate());
    }
    
    public SendToConsoleEvent(String code, 

@@ -718,6 +718,11 @@ public class ClientEventDispatcher
          {
             eventBus_.fireEvent(new GetActiveDocumentContextEvent());
          }
+         else if (type.equals(ClientEvent.SendToConsole))
+         {
+            SendToConsoleEvent.Data data = event.getData();
+            eventBus_.fireEvent(new SendToConsoleEvent(data));
+         }
          else
          {
             GWT.log("WARNING: Server event not dispatched: " + type, null);

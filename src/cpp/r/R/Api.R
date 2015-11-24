@@ -199,3 +199,21 @@
 .rs.addApiFunction("getActiveDocumentContext", function() {
    .Call(.rs.routines$rs_getActiveDocumentContext)
 })
+
+.rs.addApiFunction("sendToConsole", function(code,
+                                             echo = TRUE,
+                                             execute = TRUE,
+                                             focus = TRUE)
+{
+   if (!is.character(code))
+      stop("'code' should be a character vector", call. = FALSE)
+   
+   code <- paste(code, collapse = "\n")
+   
+   .rs.enqueClientEvent("send_to_console", list(
+      code = .rs.scalar(code),
+      echo = .rs.scalar(as.logical(echo)),
+      execute = .rs.scalar(as.logical(execute)),
+      focus = .rs.scalar(as.logical(focus))
+   ))
+})

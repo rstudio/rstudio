@@ -47,9 +47,6 @@ public class ReplaceRangesEvent
          var ranges = this["ranges"];
          var text = this["text"];
          
-         console.log(ranges);
-         console.log(text);
-         
          var isTextScalar = text.length === 1;
          
          var result = [];
@@ -60,8 +57,6 @@ public class ReplaceRangesEvent
                text: isTextScalar ? text[0] : text[i]
             });
          }
-         
-         console.log(result);
          
          this["result"] = result;
          return result;
