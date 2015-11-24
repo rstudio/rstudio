@@ -496,5 +496,4 @@ public class JsExportTest extends GWTTestCase {
     assertEquals("L", X.m("L"));
     assertEquals("M", callM("M"));
   }
-
 }

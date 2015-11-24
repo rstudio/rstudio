@@ -498,4 +498,18 @@ public class JsPropertyTest extends GWTTestCase {
       assertFalse("Field '" + field + "' should not be exported", hasField(obj, field));
     }
   }
+
+  static class B {
+    @JsProperty
+    public String field;
+  }
+  private native String getB(B b)/*-{
+    return b.field;
+  }-*/;
+
+  public void testNotReadExpoprtedFieldNotPruned() {
+    B b = new B();
+    b.field = "secret";
+    assertEquals("secret", getB(b));
+  }
 }
