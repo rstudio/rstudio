@@ -110,6 +110,11 @@ SEXP rs_getActiveDocumentContext()
       LOG_WARNING_MESSAGE("failed to parse document range");
    }
    
+   // the 'range' above is passed as a 0-indexed object;
+   // transform to 1-based indexing for the R side
+   for (std::size_t i = 0; i < range.size(); ++i)
+      ++range[i];
+   
    using namespace r::sexp;
    Protect protect;
    ListBuilder builder(&protect);
