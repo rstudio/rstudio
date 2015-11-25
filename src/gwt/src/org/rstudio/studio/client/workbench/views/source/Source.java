@@ -2985,6 +2985,11 @@ public class Source implements InsertSourceHandler,
       {
          activeEditor_ = editors_.get(event.getSelectedItem());
          activeEditor_.onActivate();
+         
+         // let any listeners know this tab was activated
+         events_.fireEvent(new DocTabActivatedEvent(activeEditor_.getPath(), 
+               activeEditor_.getId()));
+
          // don't send focus to the tab if we're expecting a debug selection
          // event
          if (initialized_ && !isDebugSelectionPending())
