@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.events;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 
 import org.rstudio.core.client.js.JavaScriptSerializable;
@@ -23,6 +24,14 @@ import org.rstudio.studio.client.application.events.CrossWindowEvent;
 public class ReplaceSelectionEvent
    extends CrossWindowEvent<ReplaceSelectionEvent.Handler>
 {
+   public static class Data extends JavaScriptObject
+   {
+      protected Data() {}
+      
+      public final native String getText() /*-{ return this["text"]; }-*/;
+      public final native String getId() /*-{ return this["id"]; }-*/;
+   }
+   
    public interface Handler extends EventHandler
    {
       void onReplaceSelection(ReplaceSelectionEvent event);
@@ -33,17 +42,17 @@ public class ReplaceSelectionEvent
       this(null);
    }
    
-   public ReplaceSelectionEvent(String data)
+   public ReplaceSelectionEvent(Data data)
    {
       data_ = data;
    }
    
-   public String getData()
+   public Data getData()
    {
       return data_;
    }
    
-   private final String data_;
+   private final Data data_;
    
    // Boilerplate ----
    

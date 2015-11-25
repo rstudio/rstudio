@@ -551,12 +551,15 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onReplaceSelection(final ReplaceSelectionEvent event)
                {
-                  withActiveTarget(new CommandWithArg<TextEditingTarget>()
+                  final String id = event.getData().getId();
+                  final String text = event.getData().getText();
+                  
+                  withTarget(id, new CommandWithArg<TextEditingTarget>()
                   {
                      @Override
                      public void execute(TextEditingTarget target)
                      {
-                        target.insertCode(event.getData(), false);
+                        target.insertCode(text, false);
                      }
                   });
                }
@@ -569,7 +572,8 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onReplaceRanges(final ReplaceRangesEvent event)
                {
-                  withActiveTarget(new CommandWithArg<TextEditingTarget>()
+                  final String id = event.getData().getId();
+                  withTarget(id, new CommandWithArg<TextEditingTarget>()
                   {
                      @Override
                      public void execute(TextEditingTarget target)
@@ -595,7 +599,7 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onGetActiveDocumentContext(GetActiveDocumentContextEvent event)
                {
-                  withActiveTarget(new CommandWithArg<TextEditingTarget>()
+                  withTarget(null, new CommandWithArg<TextEditingTarget>()
                   {
                      @Override
                      public void execute(TextEditingTarget target)
@@ -721,15 +725,19 @@ public class Source implements InsertSourceHandler,
       handleChunkOptionsEvent();
    }
    
-   private void withActiveTarget(CommandWithArg<TextEditingTarget> command)
+   private void withTarget(String id, CommandWithArg<TextEditingTarget> command)
    {
-      if (activeEditor_ == null)
+      EditingTarget target = StringUtil.isNullOrEmpty(id)
+            ? activeEditor_
+            : getEditingTargetForId(id);
+      
+      if (target == null)
          return;
       
-      if (!(activeEditor_ instanceof TextEditingTarget))
+      if (!(target instanceof TextEditingTarget))
          return;
       
-      command.execute((TextEditingTarget) activeEditor_);
+      command.execute((TextEditingTarget) target);
    }
    
    private void initVimCommands()

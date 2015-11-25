@@ -712,7 +712,7 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.ReplaceSelection))
          {
-            String data = event.getData();
+            ReplaceSelectionEvent.Data data = event.getData();
             ReplaceSelectionEvent payload = new ReplaceSelectionEvent(data);
             eventBus_.fireEvent(new ReplaceSelectionDispatchEvent(payload));
          }

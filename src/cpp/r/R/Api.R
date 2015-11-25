@@ -150,7 +150,7 @@
    invisible(NULL)
 })
 
-.rs.addApiFunction("replaceRanges", function(ranges, text) {
+.rs.addApiFunction("replaceRanges", function(ranges, text, id = "") {
    
    invalidRangeMsg <- "'ranges' should be a list of 4-element integer vectors"
    invalidTextMsg <- "'text' should be a character vector"
@@ -185,20 +185,23 @@
    if (length(text) != 1)
      text <- text[idx]
    
-   data <- list(ranges = ranges, text = text)
+   data <- list(ranges = ranges, text = text, id = .rs.scalar(id))
    .rs.enqueClientEvent("replace_ranges", data)
    data
 })
 
-.rs.addApiFunction("replaceSelection", function(text) {
+.rs.addApiFunction("replaceSelection", function(text, id = "") {
    
    # validate arguments
    if (!is.character(text))
       stop("text must be a character vector")
    
-   text <- paste(text, collapse = "\n")
-   .rs.enqueClientEvent("replace_selection", text)
-   text
+   data <- list(
+      text = .rs.scalar(paste(text, collapse = "\n")),
+      id = .rs.scalar(id)
+   )
+   .rs.enqueClientEvent("replace_selection", data)
+   data
 })
 
 .rs.addApiFunction("getActiveDocumentContext", function() {
@@ -224,3 +227,4 @@
    .rs.enqueClientEvent("send_to_console", data)
    data
 })
+

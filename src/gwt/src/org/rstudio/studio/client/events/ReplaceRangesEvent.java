@@ -37,6 +37,7 @@ public class ReplaceRangesEvent extends CrossWindowEvent<ReplaceRangesEvent.Hand
    {
       protected Data() {}
       
+      public final native String getId() /*-{ return this["id"]; }-*/;
       public final native JsArray<ReplacementData> getReplacementData() /*-{
          
          if (this["result"] != null)
