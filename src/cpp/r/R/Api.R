@@ -167,7 +167,8 @@
       if (length(range) != 4 || !is.numeric(range))
          stop(invalidRangeMsg, call. = FALSE)
       
-      as.integer(range)
+      # transform from 1-based to 0-based indexing for server
+      as.integer(range) - 1L
    })
    
    if (!is.character(text))
@@ -177,7 +178,7 @@
       stop(invalidLengthMsg, call. = FALSE)
    
    # sort the ranges in decreasing order -- this way, we can
-   # ensure the replacements occur correctly (expect in the
+   # ensure the replacements occur correctly (except in the
    # case of overlaps)
    idx <- order(unlist(lapply(ranges, `[[`, 1)))
    
