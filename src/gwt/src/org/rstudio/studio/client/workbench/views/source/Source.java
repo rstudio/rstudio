@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayNumber;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -550,16 +549,16 @@ public class Source implements InsertSourceHandler,
             new ReplaceSelectionEvent.Handler()
             {
                @Override
-               public void onReplaceSelection(ReplaceSelectionEvent event)
+               public void onReplaceSelection(final ReplaceSelectionEvent event)
                {
-                  if (activeEditor_ == null)
-                     return;
-                  
-                  if (!(activeEditor_ instanceof TextEditingTarget))
-                     return;
-                  
-                  TextEditingTarget target = (TextEditingTarget) activeEditor_;
-                  target.insertCode(event.getData(), false);
+                  withActiveTarget(new CommandWithArg<TextEditingTarget>()
+                  {
+                     @Override
+                     public void execute(TextEditingTarget target)
+                     {
+                        target.insertCode(event.getData(), false);
+                     }
+                  });
                }
             });
       
@@ -568,25 +567,24 @@ public class Source implements InsertSourceHandler,
             new ReplaceRangesEvent.Handler()
             {
                @Override
-               public void onReplaceRanges(ReplaceRangesEvent event)
+               public void onReplaceRanges(final ReplaceRangesEvent event)
                {
-                  if (activeEditor_ == null)
-                     return;
-                  
-                  if (!(activeEditor_ instanceof TextEditingTarget))
-                     return;
-                  
-                  TextEditingTarget target = (TextEditingTarget) activeEditor_;
-                  
-                  JsArray<ReplacementData> data = event.getData().getReplacementData();
-                  for (int i = 0; i < data.length(); i++)
+                  withActiveTarget(new CommandWithArg<TextEditingTarget>()
                   {
-                     ReplacementData el = data.get(i);
-                     Range range = el.getRange();
-                     String text = el.getText();
-                     
-                     target.getDocDisplay().replaceRange(range, text);
-                  }
+                     @Override
+                     public void execute(TextEditingTarget target)
+                     {
+                        JsArray<ReplacementData> data = event.getData().getReplacementData();
+                        for (int i = 0; i < data.length(); i++)
+                        {
+                           ReplacementData el = data.get(i);
+                           Range range = el.getRange();
+                           String text = el.getText();
+
+                           target.getDocDisplay().replaceRange(range, text);
+                        }
+                     }
+                  });
                }
             });
       
@@ -597,33 +595,22 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onGetActiveDocumentContext(GetActiveDocumentContextEvent event)
                {
-                  JsObject context = JsObject.createJsObject();
-                  context.setString("id", "");
-                  context.setString("path", "");
-                  context.setString("contents", "");
-                  context.setString("selection", "");
-                  context.setObject("range", null);
-                  
-                  if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+                  withActiveTarget(new CommandWithArg<TextEditingTarget>()
                   {
-                     TextEditingTarget target = (TextEditingTarget) activeEditor_;
-                     context.setString("id", StringUtil.notNull(target.getId()));
-                     context.setString("path", StringUtil.notNull(target.getPath()));
-                     context.setString("contents", StringUtil.notNull(target.getDocDisplay().getCode()));
-                     context.setString("selection", StringUtil.notNull(target.getDocDisplay().getSelectionValue()));
-                     
-                     Range selectionRange = target.getDocDisplay().getSelectionRange();
-                     JsArrayNumber range = JsArrayNumber.createArray(4).cast();
-                     range.set(0, selectionRange.getStart().getRow() + 1);
-                     range.set(1, selectionRange.getStart().getColumn() + 1);
-                     range.set(2, selectionRange.getEnd().getRow() + 1);
-                     range.set(3, selectionRange.getEnd().getColumn() + 1);
-                     context.setObject("range", range);
-                  }
-                  
-                  server_.getActiveDocumentContextCompleted(
-                        context,
-                        new VoidServerRequestCallback());
+                     @Override
+                     public void execute(TextEditingTarget target)
+                     {
+                        GetActiveDocumentContextEvent.Data data =
+                              GetActiveDocumentContextEvent.Data.create(
+                                    StringUtil.notNull(target.getId()),
+                                    StringUtil.notNull(target.getPath()),
+                                    StringUtil.notNull(target.getDocDisplay().getCode()),
+                                    StringUtil.notNull(target.getDocDisplay().getSelectionValue()),
+                                    target.getDocDisplay().getSelectionRange());
+                        
+                        server_.getActiveDocumentContextCompleted(data, new VoidServerRequestCallback());
+                     }
+                  });
                }
             });
 
@@ -732,6 +719,17 @@ public class Source implements InsertSourceHandler,
       
       // handle chunk options event
       handleChunkOptionsEvent();
+   }
+   
+   private void withActiveTarget(CommandWithArg<TextEditingTarget> command)
+   {
+      if (activeEditor_ == null)
+         return;
+      
+      if (!(activeEditor_ instanceof TextEditingTarget))
+         return;
+      
+      command.execute((TextEditingTarget) activeEditor_);
    }
    
    private void initVimCommands()
