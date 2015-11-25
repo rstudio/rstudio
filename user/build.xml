@@ -29,8 +29,8 @@
 
   <property name="gwt.junit.testcase.dev.includes" value="${gwt.junit.testcase.includes}"/>
   <condition property="gwt.junit.testcase.dev.excludes"
-            value="**/*JsInteropSuite.class,**/*JsInteropExportsSuite.class,**/*JreSuite.class,**/OptimizedOnly*,**/*Java8Suite.class"
-            else="**/*JsInteropSuite.class,**/*JsInteropExportsSuite.class,**/*JreSuite.class,**/OptimizedOnly*">
+            value="**/*JsInteropSuite.class,**/*JreSuite.class,**/OptimizedOnly*,**/*Java8Suite.class"
+            else="**/*JsInteropSuite.class,**/*JreSuite.class,**/OptimizedOnly*">
     <equals arg1="${javac.source}" arg2="1.7" />
   </condition>
 
