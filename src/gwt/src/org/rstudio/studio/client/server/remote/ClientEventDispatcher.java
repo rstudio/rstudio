@@ -49,6 +49,12 @@ import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.common.synctex.events.SynctexEditFileEvent;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
+import org.rstudio.studio.client.events.GetActiveDocumentContextDispatchEvent;
+import org.rstudio.studio.client.events.GetActiveDocumentContextEvent;
+import org.rstudio.studio.client.events.ReplaceRangesDispatchEvent;
+import org.rstudio.studio.client.events.ReplaceRangesEvent;
+import org.rstudio.studio.client.events.ReplaceSelectionDispatchEvent;
+import org.rstudio.studio.client.events.ReplaceSelectionEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
@@ -706,17 +712,20 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.ReplaceSelection))
          {
-            String selection = event.getData();
-            eventBus_.fireEvent(new ReplaceSelectionEvent(selection));
+            String data = event.getData();
+            ReplaceSelectionEvent payload = new ReplaceSelectionEvent(data);
+            eventBus_.fireEvent(new ReplaceSelectionDispatchEvent(payload));
          }
          else if (type.equals(ClientEvent.ReplaceRanges))
          {
             ReplaceRangesEvent.Data data = event.getData();
-            eventBus_.fireEvent(new ReplaceRangesEvent(data));
+            ReplaceRangesEvent payload = new ReplaceRangesEvent(data);
+            eventBus_.fireEvent(new ReplaceRangesDispatchEvent(payload));
          }
          else if (type.equals(ClientEvent.GetActiveDocumentContext))
          {
-            eventBus_.fireEvent(new GetActiveDocumentContextEvent());
+            GetActiveDocumentContextEvent payload = new GetActiveDocumentContextEvent();
+            eventBus_.fireEvent(new GetActiveDocumentContextDispatchEvent(payload));
          }
          else if (type.equals(ClientEvent.SendToConsole))
          {

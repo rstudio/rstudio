@@ -1,5 +1,5 @@
 /*
- * ReplaceSelectionEvent.java
+ * GetActiveDocumentContextEvent.java
  *
  * Copyright (C) 2009-13 by RStudio, Inc.
  *
@@ -12,27 +12,20 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.server.remote;
+package org.rstudio.studio.client.events;
 
 import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
 
-public class ReplaceSelectionEvent
-   extends GwtEvent<ReplaceSelectionEvent.Handler>
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
+
+@JavaScriptSerializable
+public class GetActiveDocumentContextEvent
+   extends CrossWindowEvent<GetActiveDocumentContextEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onReplaceSelection(ReplaceSelectionEvent event);
-   }
-   
-   public ReplaceSelectionEvent(String data)
-   {
-      data_ = data;
-   }
-   
-   public String getData()
-   {
-      return data_;
+      void onGetActiveDocumentContext(GetActiveDocumentContextEvent event);
    }
    
    @Override
@@ -44,10 +37,10 @@ public class ReplaceSelectionEvent
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onReplaceSelection(this);
+      handler.onGetActiveDocumentContext(this);
    }
    
-   private final String data_;
    public static final Type<Handler> TYPE = new Type<Handler>();
+   
 
 }
