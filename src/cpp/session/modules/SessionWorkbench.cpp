@@ -86,20 +86,18 @@ SEXP rs_getActiveDocumentContext()
    if (!succeeded)
       return R_NilValue;
    
-   json::Object context = request.params[0].get_obj();
-   
    std::string id;
    std::string path;
    std::string contents;
    std::string selection;
    json::Array rangeJson;
    
-   Error error = json::readObject(context,
-                                  "id", &id,
-                                  "path", &path,
-                                  "contents", &contents,
-                                  "selection", &selection,
-                                  "range", &rangeJson);
+   Error error = json::readObjectParam(request.params, 0,
+                                       "id", &id,
+                                       "path", &path,
+                                       "contents", &contents,
+                                       "selection", &selection,
+                                       "range", &rangeJson);
    if (error)
    {
       LOG_ERROR(error);
