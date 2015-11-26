@@ -9,7 +9,7 @@ chmod 0600 /etc/rstudio/secure-cookie-key
 
 # install NFS server and export user home directories
 apt-get install -y nfs-kernel-server
-echo "/home   *(rw,sync,no_root_squash)" >> /etc/exports
+echo "/primary/home   *(rw,sync,no_root_squash)" >> /etc/exports
 service nfs-kernel-server start
 
 # create shared storage folder and add to config files

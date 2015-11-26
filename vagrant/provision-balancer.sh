@@ -19,7 +19,7 @@ ssh -i /rstudio/vagrant/vagrant_key_rsa -o StrictHostKeyChecking=no vagrant@192.
 # connect to NFS server already running on the primary machine
 apt-get install nfs-common
 mkdir -p /primary/home 
-echo "192.168.55.101:/home /primary/home nfs rsize=8192,wsize=8192,timeo=14,intr" >> /etc/fstab
+echo "192.168.55.101:/primary/home /primary/home nfs rsize=8192,wsize=8192,timeo=14,intr" >> /etc/fstab
 mount -a 
 
 # add users; use NFS home directories
