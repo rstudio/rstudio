@@ -190,7 +190,7 @@ public class IconCellDecorator<C> implements Cell<C> {
       image = SafeHtmlUtils.fromSafeConstant("<div></div>");
     } else {
       AbstractImagePrototype proto = AbstractImagePrototype.create(res);
-      image = SafeHtmlUtils.fromTrustedString(proto.getHTML());
+      image = proto.getSafeHtml();
     }
 
     // Create the wrapper based on the vertical alignment.
