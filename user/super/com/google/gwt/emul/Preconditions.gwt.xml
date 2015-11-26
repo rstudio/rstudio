@@ -40,11 +40,11 @@
  │        │checks is not supported.                             │                               │
  └────────┴─────────────────────────────────────────────────────┴───────────────────────────────┘
   -->
-  <define-property name="checks.jsni" values="ENABLED,DISABLED" />
-  <define-property name="checks.bounds" values="ENABLED,DISABLED" />
-  <define-property name="checks.api" values="ENABLED,DISABLED" />
-  <define-property name="checks.type" values="ENABLED,DISABLED" />
-  <define-property name="checks.critical" values="ENABLED" />
+  <define-property name="jre.checks.jsni" values="ENABLED,DISABLED" />
+  <define-property name="jre.checks.bounds" values="ENABLED,DISABLED" />
+  <define-property name="jre.checks.api" values="ENABLED,DISABLED" />
+  <define-property name="jre.checks.type" values="ENABLED,DISABLED" />
+  <define-property name="jre.checks.critical" values="ENABLED" />
 
 
   <!--
@@ -62,52 +62,52 @@
  │None (N/A yet)  │         │          │         │         │         │
  └────────────────┴─────────┴──────────┴─────────┴─────────┴─────────┘
   -->
-  <define-property name="checks.checkLevel" values="FULL,NORMAL,OPTIMIZED,MINIMAL" />
+  <define-property name="jre.checks.checkLevel" values="FULL,NORMAL,OPTIMIZED,MINIMAL" />
 
 
   <!-- Associate individual checks with levels -->
 
-  <set-property name="checks.jsni" value="DISABLED" />
-  <set-property name="checks.jsni" value="ENABLED">
+  <set-property name="jre.checks.jsni" value="DISABLED" />
+  <set-property name="jre.checks.jsni" value="ENABLED">
     <any>
-      <when-property-is name="checks.checkLevel" value="FULL" />
+      <when-property-is name="jre.checks.checkLevel" value="FULL" />
     </any>
   </set-property>
 
-  <set-property name="checks.bounds" value="DISABLED" />
-  <set-property name="checks.bounds" value="ENABLED">
+  <set-property name="jre.checks.bounds" value="DISABLED" />
+  <set-property name="jre.checks.bounds" value="ENABLED">
     <any>
-      <when-property-is name="checks.checkLevel" value="FULL" />
-      <when-property-is name="checks.checkLevel" value="NORMAL" />
+      <when-property-is name="jre.checks.checkLevel" value="FULL" />
+      <when-property-is name="jre.checks.checkLevel" value="NORMAL" />
     </any>
   </set-property>
 
-  <set-property name="checks.api" value="DISABLED" />
-  <set-property name="checks.api" value="ENABLED">
+  <set-property name="jre.checks.api" value="DISABLED" />
+  <set-property name="jre.checks.api" value="ENABLED">
     <any>
-      <when-property-is name="checks.checkLevel" value="FULL" />
-      <when-property-is name="checks.checkLevel" value="NORMAL" />
+      <when-property-is name="jre.checks.checkLevel" value="FULL" />
+      <when-property-is name="jre.checks.checkLevel" value="NORMAL" />
     </any>
   </set-property>
 
 
-  <set-property name="checks.type" value="DISABLED" />
-  <set-property name="checks.type" value="ENABLED">
+  <set-property name="jre.checks.type" value="DISABLED" />
+  <set-property name="jre.checks.type" value="ENABLED">
     <any>
-      <when-property-is name="checks.checkLevel" value="FULL" />
-      <when-property-is name="checks.checkLevel" value="NORMAL" />
-      <when-property-is name="checks.checkLevel" value="OPTIMIZED" />
+      <when-property-is name="jre.checks.checkLevel" value="FULL" />
+      <when-property-is name="jre.checks.checkLevel" value="NORMAL" />
+      <when-property-is name="jre.checks.checkLevel" value="OPTIMIZED" />
     </any>
   </set-property>
 
   <!-- CRITICAL checking cannot be disabled for now.
-  <set-property name="checks.critical" value="DISABLED" />
-  <set-property name="checks.critical" value="ENABLED">
+  <set-property name="jre.checks.critical" value="DISABLED" />
+  <set-property name="jre.checks.critical" value="ENABLED">
     <any>
-      <when-property-is name="checks.checkLevel" value="FULL" />
-      <when-property-is name="checks.checkLevel" value="NORMAL" />
-      <when-property-is name="checks.checkLevel" value="OPTIMIZED" />
-      <when-property-is name="checks.checkLevel" value="MINIMAL" />
+      <when-property-is name="jre.checks.checkLevel" value="FULL" />
+      <when-property-is name="jre.checks.checkLevel" value="NORMAL" />
+      <when-property-is name="jre.checks.checkLevel" value="OPTIMIZED" />
+      <when-property-is name="jre.checks.checkLevel" value="MINIMAL" />
     </any>
   </set-property>
   -->
@@ -116,12 +116,12 @@
 
 
   <!-- Default checkLevel is NORMAL -->
-  <set-property name="checks.checkLevel" value="NORMAL" />
+  <set-property name="jre.checks.checkLevel" value="NORMAL" />
 
-  <define-property name="checkedMode" values="ENABLED,DISABLED" />
+  <define-property name="jre.checkedMode" values="ENABLED,DISABLED" />
 
-  <set-property name="checkedMode" value="DISABLED" />
-  <set-property name="checkedMode" value="ENABLED">
-    <when-property-is name="debugMode" value="ENABLED" />
+  <set-property name="jre.checkedMode" value="DISABLED" />
+  <set-property name="jre.checkedMode" value="ENABLED">
+    <when-property-is name="jre.debugMode" value="ENABLED" />
   </set-property>
 </module>

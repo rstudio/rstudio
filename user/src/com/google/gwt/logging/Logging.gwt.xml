@@ -18,6 +18,6 @@
 
   <!-- Preserve the logging level in debugMode -->
   <set-property name="gwt.logging.enabled" value="TRUE">
-    <when-property-is name="debugMode" value="ENABLED"/>
+    <when-property-is name="jre.debugMode" value="ENABLED"/>
   </set-property>
 </module>
