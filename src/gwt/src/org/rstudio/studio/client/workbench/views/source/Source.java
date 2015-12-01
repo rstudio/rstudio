@@ -627,6 +627,16 @@ public class Source implements InsertSourceHandler,
                         
                         server_.getActiveDocumentContextCompleted(data, new VoidServerRequestCallback());
                      }
+                  },
+                  new Command()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        server_.getActiveDocumentContextCompleted(
+                              GetActiveDocumentContextEvent.Data.create(),
+                              new VoidServerRequestCallback());
+                     }
                   });
                }
             });
@@ -739,19 +749,34 @@ public class Source implements InsertSourceHandler,
       handleChunkOptionsEvent();
    }
    
-   private void withTarget(String id, CommandWithArg<TextEditingTarget> command)
+   private void withTarget(String id,
+                           CommandWithArg<TextEditingTarget> command,
+                           Command onFailure)
    {
       EditingTarget target = StringUtil.isNullOrEmpty(id)
             ? activeEditor_
             : getEditingTargetForId(id);
       
       if (target == null)
+      {
+         if (onFailure != null)
+            onFailure.execute();
          return;
+      }
       
       if (!(target instanceof TextEditingTarget))
+      {
+         if (onFailure != null)
+            onFailure.execute();
          return;
+      }
       
       command.execute((TextEditingTarget) target);
+   }
+   
+   private void withTarget(String id, CommandWithArg<TextEditingTarget> command)
+   {
+      withTarget(id, command, null);
    }
    
    private void initVimCommands()

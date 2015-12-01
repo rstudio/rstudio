@@ -43,6 +43,16 @@ public class GetActiveDocumentContextEvent
    {
       protected Data() {}
       
+      public static final native Data create()
+      /*-{
+         return {
+            "id": "",
+            "path": "",
+            "contents": "",
+            "selection": []
+         };
+      }-*/;
+      
       public static final native Data create(String id,
                                              String path,
                                              String contents,

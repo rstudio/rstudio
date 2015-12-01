@@ -102,6 +102,11 @@ SEXP rs_getActiveDocumentContext()
       return R_NilValue;
    }
    
+   // if the id is empty, implies the source window is closed or
+   // no documents were available
+   if (id.empty())
+      return R_NilValue;
+   
    using namespace r::sexp;
    Protect protect;
    ListBuilder builder(&protect);
