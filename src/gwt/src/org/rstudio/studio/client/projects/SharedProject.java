@@ -34,4 +34,8 @@ public class SharedProject
    {
       return null;
    }
+   
+   public void reportCollabDisconnected(String path, String id)
+   {
+   }
 }
