@@ -165,16 +165,29 @@
    if (length(ranges) == 0)
       return()
    
+   # allow a single range (then validate that it's a true range after)
    if (!is.list(ranges))
-      stop(invalidRangeMsg, call. = FALSE)
+      ranges <- list(ranges)
    
    ranges <- lapply(ranges, function(range) {
       
-      if (length(range) != 4 || !is.numeric(range))
+      # detect positions (2-element vectors) and transform them to ranges
+      n <- length(range)
+      if (n == 2)
+         range <- c(range, range)
+      
+      # validate we have a range-like object
+      if (length(range) != 4 || !is.numeric(range) || any(is.na(range)))
          stop(invalidRangeMsg, call. = FALSE)
       
+      # transform out-of-bounds values appropriately
+      range[range < 1] <- 1
+      
       # transform from 1-based to 0-based indexing for server
-      as.integer(range) - 1L
+      result <- suppressWarnings(as.integer(range)) - 1L
+      
+      # treat NAs as end of row / column
+      result[is.na(result)] <- as.integer(2 ^ 31 - 1)
    })
    
    if (!is.character(text))
