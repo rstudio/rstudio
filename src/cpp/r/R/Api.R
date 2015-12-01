@@ -155,6 +155,12 @@
    invalidRangeMsg <- "'ranges' should be a list of 4-element integer vectors"
    invalidTextMsg <- "'text' should be a character vector"
    invalidLengthMsg <- "'text' should either be length 1, or same length as 'ranges'"
+
+   if (is.null(id))
+      id <- ""
+   
+   if (!is.character(id))
+      stop("'id' must be NULL or a character vector of length one")
    
    if (length(ranges) == 0)
       return()
@@ -192,6 +198,12 @@
 })
 
 .rs.addApiFunction("replaceSelection", function(text, id = "") {
+   
+   if (is.null(id))
+      id <- ""
+   
+   if (!is.character(id))
+      stop("'id' must be NULL or a character vector of length one")
    
    # validate arguments
    if (!is.character(text))
