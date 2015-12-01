@@ -141,6 +141,8 @@ const int kReplaceSelection = 116;
 const int kReplaceRanges = 117;
 const int kGetActiveDocumentContext = 118;
 const int kSendToConsole = 119;
+const int kUserFollowStarted = 120;
+const int kUserFollowEnded = 121;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -382,6 +384,10 @@ std::string ClientEvent::typeName() const
          return "get_active_document_context";
       case client_events::kSendToConsole:
          return "send_to_console";
+      case client_events::kUserFollowStarted:
+         return "user_follow_started";
+      case client_events::kUserFollowEnded:
+         return "user_follow_ended";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

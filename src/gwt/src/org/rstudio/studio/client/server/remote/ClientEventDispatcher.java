@@ -59,9 +59,11 @@ import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
+import org.rstudio.studio.client.projects.events.FollowUserEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.events.ProjectUserChangedEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
+import org.rstudio.studio.client.projects.model.ProjectUser;
 import org.rstudio.studio.client.rmarkdown.events.RmdParamsEditEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdParamsReadyEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
@@ -731,6 +733,15 @@ public class ClientEventDispatcher
          {
             SendToConsoleEvent.Data data = event.getData();
             eventBus_.fireEvent(new SendToConsoleEvent(data));
+         else if (type.equals(ClientEvent.UserFollowStarted))
+         {
+            ProjectUser user = event.getData();
+            eventBus_.fireEvent(new FollowUserEvent(user, true));
+         }
+         else if (type.equals(ClientEvent.UserFollowEnded))
+         {
+            ProjectUser user = event.getData();
+            eventBus_.fireEvent(new FollowUserEvent(user, false));
          }
          else
          {

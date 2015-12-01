@@ -132,6 +132,8 @@ class ClientEvent extends JavaScriptObject
    public static final String ReplaceRanges = "replace_ranges";
    public static final String GetActiveDocumentContext = "get_active_document_context";
    public static final String SendToConsole = "send_to_console";
+   public static final String UserFollowStarted = "user_follow_started";
+   public static final String UserFollowEnded = "user_follow_ended";
    
    protected ClientEvent()
    {

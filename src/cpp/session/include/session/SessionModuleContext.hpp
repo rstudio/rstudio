@@ -64,6 +64,9 @@ namespace session {
 
 namespace rstudio {
 namespace session {   
+
+class DistributedEvent;
+
 namespace module_context {
 
 enum PackageCompatStatus
@@ -317,6 +320,8 @@ struct Events : boost::noncopyable
    boost::signal<void (const std::string&)>  onPackageLoaded;
    boost::signal<void ()>                    onPackageLibraryMutated;
    boost::signal<void ()>                    onPreferencesSaved;
+   boost::signal<void (const DistributedEvent&)>
+                                             onDistributedEvent;
 
    // signal for detecting extended type of documents
    boost::signal<std::string(boost::shared_ptr<source_database::SourceDocument>),

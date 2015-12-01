@@ -124,7 +124,7 @@ void FileLock::initialize(FilePath locksConfPath)
 void FileLock::initialize(const Settings& settings)
 {
    // default lock type
-   FileLock::s_defaultType = stringToLockType(settings.get("lock-type", kLockTypeAdvisory));
+   FileLock::s_defaultType = stringToLockType(settings.get("lock-type", kLockTypeLinkBased));
    
    // timeout interval
    double timeoutInterval = getFieldPositive(settings, "timeout-interval", kDefaultTimeoutInterval);

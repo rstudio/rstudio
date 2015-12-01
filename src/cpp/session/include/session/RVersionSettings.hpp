@@ -35,9 +35,11 @@ namespace session {
 class RVersionSettings : public core::SharedSettings
 {
 public:
-   explicit RVersionSettings(const core::FilePath& userScratchPath)
+   explicit RVersionSettings(const core::FilePath& userScratchPath,
+                             const core::FilePath& sharedStoragePath)
       : core::SharedSettings(rVersionSettingsPath(userScratchPath)),
-        userScratchPath_(userScratchPath)
+        userScratchPath_(userScratchPath),
+        sharedStoragePath_(sharedStoragePath)
    {
    }
 
@@ -74,7 +76,8 @@ public:
    {
       // get a project id
       core::r_util::FilePathToProjectId filePathToProjectId =
-                           session::filePathToProjectId(userScratchPath_);
+                           session::filePathToProjectId(userScratchPath_,
+                                                        sharedStoragePath_);
       core::r_util::ProjectId projectId = filePathToProjectId(projectDir);
 
       // save the version
@@ -89,7 +92,8 @@ public:
    {
       // get a project id
       core::r_util::FilePathToProjectId filePathToProjectId =
-                           session::filePathToProjectId(userScratchPath_);
+                           session::filePathToProjectId(userScratchPath_,
+                                                        sharedStoragePath_);
       core::r_util::ProjectId projectId = filePathToProjectId(projectDir);
 
       *pVersion = readProjectSetting(projectId.asString(),
@@ -128,6 +132,7 @@ private:
    }
 
    core::FilePath userScratchPath_;
+   core::FilePath sharedStoragePath_;
 };
 
 

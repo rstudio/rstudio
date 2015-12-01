@@ -291,7 +291,9 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    if (error)
       return error;
 
-   RVersionSettings versionSettings(module_context::userScratchPath());
+   RVersionSettings versionSettings(module_context::userScratchPath(),
+                                    FilePath(options().getOverlayOption(
+                                                kSessionSharedStoragePath)));
    versionSettings.setDefaultRVersion(defaultRVersion, defaultRVersionHome);
    versionSettings.setRestoreProjectRVersion(restoreProjectRVersion);
 
@@ -466,7 +468,9 @@ Error getRPrefs(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
    // proj settings
-   RVersionSettings versionSettings(module_context::userScratchPath());
+   RVersionSettings versionSettings(module_context::userScratchPath(),
+                                    FilePath(options().getOverlayOption(
+                                                kSessionSharedStoragePath)));
    json::Object defaultRVersionJson;
    defaultRVersionJson["version"] = versionSettings.defaultRVersion();
    defaultRVersionJson["r_home"] = versionSettings.defaultRVersionHome();

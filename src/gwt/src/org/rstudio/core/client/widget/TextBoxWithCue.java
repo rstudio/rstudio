@@ -15,33 +15,29 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.BlurEvent;
-import com.google.gwt.event.dom.client.BlurHandler;
-import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.FocusHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.TextBox;
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.dom.WindowEx;
 
 public class TextBoxWithCue extends TextBox
 {
    public TextBoxWithCue() 
    {
-      this("");
+      init("", getElement());
    }
 
    public TextBoxWithCue(String cueText)
    {
-      cueText_ = cueText;
-      getElement().setAttribute("spellcheck", "false");
+      init(cueText, getElement());
    }
 
    public TextBoxWithCue(String cueText, Element element)
    {
       super(element);
-      cueText_ = cueText;
+      init(cueText, element);
+   }
+   
+   private void init(String cueText, Element element)
+   {
+      setCueText(cueText);
       element.setAttribute("spellcheck", "false");
    }
 
@@ -53,99 +49,8 @@ public class TextBoxWithCue extends TextBox
    public void setCueText(String cueText)
    {
       cueText_ = cueText;
-   }
-
-   @Override
-   public String getText()
-   {
-      return isCueMode() ? "" : super.getText();
-   }
-
-   @Override
-   protected void onAttach()
-   {
-      super.onAttach();
-      if (!StringUtil.isNullOrEmpty(cueText_))
-         hookEvents();
-   }
-
-   @Override
-   protected void onDetach()
-   {
-      super.onDetach();
-      unhookEvents();
-   }
-
-   private void hookEvents()
-   {
-      unhookEvents();
-
-      FocusHandler focusHandler = new FocusHandler()
-      {
-         public void onFocus(FocusEvent event)
-         {
-            if (DomUtils.hasFocus(getElement()))
-            {
-               if (isCueMode())
-               {
-                  setText("");
-                  removeStyleName(CUE_STYLE);
-               }
-            }
-         }
-      };
-
-      BlurHandler blurHandler = new BlurHandler()
-      {
-         public void onBlur(BlurEvent event)
-         {
-            if (getText().length() == 0)
-            {
-               addStyleName(CUE_STYLE);
-               setText(cueText_);
-            }
-         }
-      };
-
-      registrations_ = new HandlerRegistration[] {
-            addFocusHandler(focusHandler),
-            addBlurHandler(blurHandler),
-            WindowEx.addFocusHandler(focusHandler),
-            WindowEx.addBlurHandler(blurHandler)
-      };
-
-      blurHandler.onBlur(null);
-   }
-
-   private boolean isCueMode()
-   {
-      return (getStyleName() + " ").indexOf(CUE_STYLE + " ") >= 0;
-   }
-   
-   public void setCueMode(boolean cueMode)
-   {
-      if (cueMode)
-      {
-         addStyleName(CUE_STYLE);
-         setText(cueText_);
-      }
-      else
-      {
-         removeStyleName(CUE_STYLE);
-      }
-   }
-
-   private void unhookEvents()
-   {
-      if (registrations_ != null)
-      {
-         for (HandlerRegistration reg : registrations_)
-            reg.removeHandler();
-         registrations_ = null;
-      }
+      getElement().setAttribute("placeholder", cueText);
    }
 
    private String cueText_;
-   private final String CUE_STYLE = "cueText";
-   private HandlerRegistration[] registrations_;
 }

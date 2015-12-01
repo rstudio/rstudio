@@ -149,6 +149,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.RMarkdownNoParamsDialog;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
+import org.rstudio.studio.client.workbench.views.source.events.DocFocusedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
@@ -1318,6 +1319,9 @@ public class TextEditingTarget implements
       {
          public void onFocus(FocusEvent event)
          {
+            // let anyone listening know this doc just got focus
+            events_.fireEvent(new DocFocusedEvent(getPath(), getId()));
+            
             if (queuedCollabParams_ != null)
             {
                // join an in-progress collab session if we aren't already part
@@ -1340,24 +1344,6 @@ public class TextEditingTarget implements
                   return false;
                }
             }, 500);
-            
-            // if we're in the main window and we get focus, let the window
-            // manager know (satellite windows are tracked on window activation)
-            if (SourceWindowManager.isMainSourceWindow())
-            {
-               // we won't sync the focus point to the main window unless it
-               // has focus, and the doc gets focus before the window does, so
-               // defer sync until the window has a chance to acquire focus
-               Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
-               {
-                  @Override
-                  public void execute()
-                  {
-                     RStudioGinjector.INSTANCE.getSourceWindowManager()
-                                              .setLastFocusedSourceWindowId("");
-                  }
-               });
-            }
          }
       });
       

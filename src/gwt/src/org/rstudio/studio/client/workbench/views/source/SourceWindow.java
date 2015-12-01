@@ -217,6 +217,10 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       $wnd.rstudioGetCurrentDocPath = $entry(function() {
          return satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::getCurrentDocPath()();
       });
+
+      $wnd.rstudioGetCurrentDocId = $entry(function() {
+         return satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::getCurrentDocId()();
+      });
       
       $wnd.rstudioHandleUnsavedChangesBeforeExit = $entry(function(targets, onCompleted) {
          satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::handleUnsavedChangesBeforeExit(Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/user/client/Command;)(targets, onCompleted);
@@ -279,6 +283,11 @@ public class SourceWindow implements LastSourceDocClosedHandler,
    private String getCurrentDocPath()
    {
       return sourceShim_.getCurrentDocPath();
+   }
+
+   private String getCurrentDocId()
+   {
+      return sourceShim_.getCurrentDocId();
    }
 
    private void closeSourceWindow()

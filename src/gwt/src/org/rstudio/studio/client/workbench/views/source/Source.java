@@ -715,8 +715,9 @@ public class Source implements InsertSourceHandler,
       // Same with this event
       fireDocTabsChanged();
       
-      // open project docs
-      openProjectDocs(session);    
+      // open project docs (only for main source window)
+      if (SourceWindowManager.isMainSourceWindow())
+         openProjectDocs(session);
       
       // add vim commands
       initVimCommands();
@@ -3078,6 +3079,11 @@ public class Source implements InsertSourceHandler,
       {
          activeEditor_ = editors_.get(event.getSelectedItem());
          activeEditor_.onActivate();
+         
+         // let any listeners know this tab was activated
+         events_.fireEvent(new DocTabActivatedEvent(activeEditor_.getPath(), 
+               activeEditor_.getId()));
+
          // don't send focus to the tab if we're expecting a debug selection
          // event
          if (initialized_ && !isDebugSelectionPending())
