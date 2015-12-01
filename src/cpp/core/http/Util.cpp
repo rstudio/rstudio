@@ -27,6 +27,7 @@
 
 #include <core/http/Header.hpp>
 #include <core/http/Request.hpp>
+#include <core/http/Response.hpp>
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -415,6 +416,51 @@ core::FilePath requestedFile(const std::string& wwwLocalPath,
 
 #endif
 }
+
+void fileRequestHandler(const std::string& wwwLocalPath,
+                        const std::string& baseUri,
+                        const http::Request& request,
+                        http::Response* pResponse)
+{
+   // get the uri and strip the query string
+   std::string uri = request.uri();
+   std::size_t pos = uri.find("?");
+   if (pos != std::string::npos)
+      uri.erase(pos);
+
+   // request for one-character short of root location redirects to root
+   if (uri == baseUri.substr(0, baseUri.size()-1))
+   {
+      pResponse->setMovedPermanently(request, baseUri);
+      return;
+   }
+
+   // request for a URI not within our location scope
+   if (uri.find(baseUri) != 0)
+   {
+      pResponse->setNotFoundError(request.uri());
+      return;
+   }
+
+   // auto-append index.htm to request for root location
+   const char * const kIndexFile = "index.htm";
+   if (uri == baseUri)
+      uri += kIndexFile;
+
+   // get path to the requested file requested file
+   std::string relativePath = uri.substr(baseUri.length());
+   FilePath filePath = http::util::requestedFile(wwwLocalPath, relativePath);
+   if (filePath.empty())
+   {
+      pResponse->setNotFoundError(request.uri());
+      return;
+   }
+
+   // return requested file
+   pResponse->setCacheWithRevalidationHeaders();
+   pResponse->setCacheableFile(filePath, request);
+}
+
 
 } // namespace util
 
