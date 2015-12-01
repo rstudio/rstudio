@@ -173,7 +173,7 @@
       
       # detect positions (2-element vectors) and transform them to ranges
       n <- length(el)
-      if (n == 2)
+      if (n == 2 && is.numeric(el))
          el <- c(el, el)
       
       # detect document_ranges and transform
@@ -189,10 +189,12 @@
       el[is.infinite(el)] <- NA
       
       # transform from 1-based to 0-based indexing for server
-      result <- as.integer(range) - 1L
+      result <- as.integer(el) - 1L
       
       # treat NAs as end of row / column
       result[is.na(result)] <- as.integer(2 ^ 31 - 1)
+      
+      result
    })
    
    if (!is.character(text))
