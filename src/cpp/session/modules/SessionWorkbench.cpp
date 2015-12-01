@@ -89,31 +89,18 @@ SEXP rs_getActiveDocumentContext()
    std::string id;
    std::string path;
    std::string contents;
-   std::string selection;
-   json::Array rangeJson;
+   json::Array selection;
    
    Error error = json::readObjectParam(request.params, 0,
                                        "id", &id,
                                        "path", &path,
                                        "contents", &contents,
-                                       "selection", &selection,
-                                       "range", &rangeJson);
+                                       "selection", &selection);
    if (error)
    {
       LOG_ERROR(error);
       return R_NilValue;
    }
-   
-   std::vector<int> range;
-   if (!json::fillVectorInt(rangeJson, &range))
-   {
-      LOG_WARNING_MESSAGE("failed to parse document range");
-   }
-   
-   // the 'range' above is passed as a 0-indexed object;
-   // transform to 1-based indexing for the R side
-   for (std::size_t i = 0; i < range.size(); ++i)
-      ++range[i];
    
    using namespace r::sexp;
    Protect protect;
@@ -121,9 +108,45 @@ SEXP rs_getActiveDocumentContext()
    
    builder.add("id", id);
    builder.add("path", path);
-   builder.add("contents", contents);
-   builder.add("selection", selection);
-   builder.add("range", range);
+   builder.add("contents", core::algorithm::split(contents, "\n"));
+   
+   // add in the selection ranges
+   ListBuilder selectionBuilder(&protect);
+   for (std::size_t i = 0; i < selection.size(); ++i)
+   {
+      json::Object object = selection[i].get_obj();
+      
+      json::Array rangeJson;
+      std::string text;
+      Error error = json::readObject(object,
+                                     "range", &rangeJson,
+                                     "text", &text);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+      
+      std::vector<int> range;
+      if (!json::fillVectorInt(rangeJson, &range))
+      {
+         LOG_WARNING_MESSAGE("failed to parse document range");
+         continue;
+      }
+      
+      // the ranges passed use 0-based indexing;
+      // transform to 1-based indexing for R
+      for (std::size_t i = 0; i < range.size(); ++i)
+         ++range[i];
+      
+      ListBuilder builder(&protect);
+      builder.add("range", range);
+      builder.add("text", text);
+      
+      selectionBuilder.add(builder);
+   }
+   
+   builder.add("selection", selectionBuilder);
    
    return r::sexp::create(builder, &protect);
 }

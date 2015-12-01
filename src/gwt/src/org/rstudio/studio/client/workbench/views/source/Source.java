@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
@@ -72,6 +73,7 @@ import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
 import org.rstudio.studio.client.events.GetActiveDocumentContextEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
+import org.rstudio.studio.client.events.GetActiveDocumentContextEvent.DocumentSelection;
 import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
 import org.rstudio.studio.client.events.ReplaceSelectionEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
@@ -121,6 +123,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Display
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunksEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
@@ -604,13 +607,23 @@ public class Source implements InsertSourceHandler,
                      @Override
                      public void execute(TextEditingTarget target)
                      {
+                        Selection selection = target.getDocDisplay().getNativeSelection();
+                        Range[] ranges = selection.getAllRanges();
+                        
+                        JsArray<DocumentSelection> docSelections = JavaScriptObject.createArray().cast();
+                        for (int i = 0; i < ranges.length; i++)
+                        {
+                           docSelections.push(DocumentSelection.create(
+                                 ranges[i],
+                                 target.getDocDisplay().getTextForRange(ranges[i])));
+                        }
+                        
                         GetActiveDocumentContextEvent.Data data =
                               GetActiveDocumentContextEvent.Data.create(
                                     StringUtil.notNull(target.getId()),
                                     StringUtil.notNull(target.getPath()),
                                     StringUtil.notNull(target.getDocDisplay().getCode()),
-                                    StringUtil.notNull(target.getDocDisplay().getSelectionValue()),
-                                    target.getDocDisplay().getSelectionRange());
+                                    docSelections);
                         
                         server_.getActiveDocumentContextCompleted(data, new VoidServerRequestCallback());
                      }
