@@ -150,7 +150,7 @@
    invisible(NULL)
 })
 
-.rs.addApiFunction("replaceRanges", function(ranges, text, id = "") {
+.rs.addApiFunction("insertText", function(location, text, id = "") {
    
    invalidRangeMsg <- "'ranges' should be a list of 4-element integer vectors"
    invalidTextMsg <- "'text' should be a character vector"
@@ -162,29 +162,34 @@
    if (!is.character(id))
       stop("'id' must be NULL or a character vector of length one")
    
-   if (length(ranges) == 0)
+   if (length(location) == 0)
       return()
    
    # allow a single range (then validate that it's a true range after)
-   if (!is.list(ranges))
-      ranges <- list(ranges)
+   if (!is.list(location) && !inherits(location, "document_range"))
+      location <- list(location)
    
-   ranges <- lapply(ranges, function(range) {
+   location <- lapply(location, function(el) {
       
       # detect positions (2-element vectors) and transform them to ranges
-      n <- length(range)
+      n <- length(el)
       if (n == 2)
-         range <- c(range, range)
+         el <- c(el, el)
+      
+      # detect document_ranges and transform
+      if (is.list(el) && all(c("start", "end") %in% el))
+         el <- c(el$start, el$end)
       
       # validate we have a range-like object
-      if (length(range) != 4 || !is.numeric(range) || any(is.na(range)))
+      if (length(el) != 4 || !is.numeric(el) || any(is.na(el)))
          stop(invalidRangeMsg, call. = FALSE)
       
       # transform out-of-bounds values appropriately
-      range[range < 1] <- 1
+      el[el < 1] <- 1
+      el[is.infinite(el)] <- NA
       
       # transform from 1-based to 0-based indexing for server
-      result <- suppressWarnings(as.integer(range)) - 1L
+      result <- as.integer(range) - 1L
       
       # treat NAs as end of row / column
       result[is.na(result)] <- as.integer(2 ^ 31 - 1)
@@ -193,19 +198,19 @@
    if (!is.character(text))
       stop(invalidTextMsg, call. = FALSE)
    
-   if (length(text) != 1 && length(ranges) != length(text))
+   if (length(text) != 1 && length(location) != length(text))
       stop(invalidLengthMsg, call. = FALSE)
    
    # sort the ranges in decreasing order -- this way, we can
    # ensure the replacements occur correctly (except in the
    # case of overlaps)
-   idx <- order(unlist(lapply(ranges, `[[`, 1)))
+   idx <- order(unlist(lapply(location, `[[`, 1)))
    
-   ranges <- ranges[idx]
+   location <- location[idx]
    if (length(text) != 1)
      text <- text[idx]
    
-   data <- list(ranges = ranges, text = text, id = .rs.scalar(id))
+   data <- list(ranges = location, text = text, id = .rs.scalar(id))
    .rs.enqueClientEvent("replace_ranges", data)
    invisible(data)
 })
