@@ -458,7 +458,7 @@ public class JsStackEmulator {
 
     private JsCatch makeSyntheticCatchBlock(JsTry x) {
       /*
-       * catch (e) { e = wrap(e); throw e; }
+       * catch (e) { e = wrap(e); throw unwrap(e); }
        */
       SourceInfo info = x.getSourceInfo();
 
@@ -473,8 +473,12 @@ public class JsStackEmulator {
       JsBinaryOperation asg = new JsBinaryOperation(info, JsBinaryOperator.ASG,
           paramName.makeRef(info), wrapCall);
 
-      // throw e
-      JsThrow throwStatement = new JsThrow(info, paramName.makeRef(info));
+      // unwrap(e)
+      JsInvocation unwrapCall =
+          new JsInvocation(info, unwrapFunctionName.makeRef(info), paramName.makeRef(info));
+
+      // throw unwrap(e)
+      JsThrow throwStatement = new JsThrow(info, unwrapCall);
 
       JsBlock body = new JsBlock(info);
       body.getStatements().add(asg.makeStmt());
@@ -968,6 +972,7 @@ public class JsStackEmulator {
   }
 
   private JsName wrapFunctionName;
+  private JsName unwrapFunctionName;
   private JsName lineNumbers;
   private JProgram jprogram;
   private final JsProgram jsProgram;
@@ -1008,10 +1013,13 @@ public class JsStackEmulator {
   private void execImpl() {
     wrapFunctionName =
         JsUtils.getJsNameForMethod(jjsmap, jprogram, RuntimeConstants.EXCEPTIONS_WRAP);
+    unwrapFunctionName =
+        JsUtils.getJsNameForMethod(jjsmap, jprogram, RuntimeConstants.EXCEPTIONS_UNWRAP);
     if (wrapFunctionName == null) {
       // No exceptions caught? Weird, but possible.
       return;
     }
+    assert unwrapFunctionName != null;
     initNames();
     makeVars();
     (new ReplaceUnobfuscatableNames()).accept(jsProgram);

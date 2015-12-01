@@ -107,6 +107,20 @@ public class JavaScriptExceptionTest extends GWTTestCase {
     };
   }
 
+  private static boolean keepFinallyAlive = false;
+
+  private static Runnable wrapWithFinally(final Runnable runnable) {
+    return new Runnable() {
+      @Override public void run() {
+        try {
+          runnable.run();
+        } finally {
+          keepFinallyAlive = true;
+        }
+      }
+    };
+  }
+
   private static void assertJavaScriptException(Object expected, Throwable exception) {
     assertTrue(exception instanceof JavaScriptException);
     assertEquals(expected, ((JavaScriptException) exception).getThrown());
@@ -140,6 +154,17 @@ public class JavaScriptExceptionTest extends GWTTestCase {
     JavaScriptObject jso = makeJSO();
     e = new JavaScriptException(jso);
     assertJavaScriptException(jso, catchJava(createThrowRunnable(e)));
+  }
+
+  public void testCatchNativePropagatedFromFinally() {
+    RuntimeException e = new RuntimeException();
+    assertSame(e, catchNative(wrapWithFinally(createThrowRunnable(e))));
+
+    JavaScriptObject jso = makeJSO();
+    e = new JavaScriptException(jso);
+    assertSame(jso, catchNative(wrapWithFinally(createThrowRunnable(e))));
+
+    assertTrue(keepFinallyAlive);
   }
 
   // java throw -> jsni catch -> jsni throw -> java catch
