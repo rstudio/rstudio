@@ -27,6 +27,7 @@ namespace rstudio {
 namespace core {
    
 class Error;
+class FilePath;
 
 namespace http {
       
@@ -150,6 +151,9 @@ std::string httpDate(const boost::posix_time::ptime& datetime =
 
 std::string pathAfterPrefix(const Request& request,
                             const std::string& pathPrefix);
+
+core::FilePath requestedFile(const std::string& wwwLocalPath,
+                             const std::string& relativePath);
 
 } // namespace util
 
