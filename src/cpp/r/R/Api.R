@@ -188,7 +188,7 @@
    
    data <- list(ranges = ranges, text = text, id = .rs.scalar(id))
    .rs.enqueClientEvent("replace_ranges", data)
-   data
+   invisible(data)
 })
 
 .rs.addApiFunction("replaceSelection", function(text, id = "") {
@@ -202,7 +202,7 @@
       id = .rs.scalar(id)
    )
    .rs.enqueClientEvent("replace_selection", data)
-   data
+   invisible(data)
 })
 
 .rs.addApiFunction("getActiveDocumentContext", function() {
@@ -226,6 +226,6 @@
    )
    
    .rs.enqueClientEvent("send_to_console", data)
-   data
+   invisible(data)
 })
 
