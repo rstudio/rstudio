@@ -72,6 +72,10 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
          String id,
          ServerRequestCallback<Void> callback);
    
+   void reportCollabDisconnected(String path, 
+         String id, 
+         ServerRequestCallback<Void> callback);
+   
    void getProjectUser(String sessionId, 
          ServerRequestCallback<ProjectUser> callback);
    

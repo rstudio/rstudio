@@ -4370,6 +4370,16 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void reportCollabDisconnected(String path, String id,
+         ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      params.set(1, new JSONString(id));
+      sendRequest(RPC_SCOPE, "report_collab_disconnected", params, callback);
+   }
+
+   @Override
    public void getProjectUser(String sessionId,
          ServerRequestCallback<ProjectUser> callback)
    {
