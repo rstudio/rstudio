@@ -61,6 +61,7 @@ import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.projects.events.FollowUserEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
+import org.rstudio.studio.client.projects.events.ProjectAccessRevokedEvent;
 import org.rstudio.studio.client.projects.events.ProjectUserChangedEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
 import org.rstudio.studio.client.projects.model.ProjectUser;
@@ -743,6 +744,10 @@ public class ClientEventDispatcher
          {
             ProjectUser user = event.getData();
             eventBus_.fireEvent(new FollowUserEvent(user, false));
+         }
+         else if (type.equals(ClientEvent.ProjectAccessRevoked))
+         {
+            eventBus_.fireEvent(new ProjectAccessRevokedEvent());
          }
          else
          {

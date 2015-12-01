@@ -144,6 +144,7 @@ extern const int kGetActiveDocumentContext;
 extern const int kSendToConsole;
 extern const int kUserFollowStarted;
 extern const int kUserFollowEnded;
+extern const int kProjectAccessRevoked;
 }
    
 class ClientEvent

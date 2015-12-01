@@ -143,6 +143,7 @@ const int kGetActiveDocumentContext = 118;
 const int kSendToConsole = 119;
 const int kUserFollowStarted = 120;
 const int kUserFollowEnded = 121;
+const int kProjectAccessRevoked = 122;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -388,6 +389,8 @@ std::string ClientEvent::typeName() const
          return "user_follow_started";
       case client_events::kUserFollowEnded:
          return "user_follow_ended";
+      case client_events::kProjectAccessRevoked:
+         return "project_access_revoked";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));
