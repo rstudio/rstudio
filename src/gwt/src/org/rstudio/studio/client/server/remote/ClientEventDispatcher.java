@@ -53,8 +53,6 @@ import org.rstudio.studio.client.events.GetActiveDocumentContextDispatchEvent;
 import org.rstudio.studio.client.events.GetActiveDocumentContextEvent;
 import org.rstudio.studio.client.events.ReplaceRangesDispatchEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
-import org.rstudio.studio.client.events.ReplaceSelectionDispatchEvent;
-import org.rstudio.studio.client.events.ReplaceSelectionEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
@@ -712,12 +710,6 @@ public class ClientEventDispatcher
          {
             RegisterUserCommandEvent.Data data = event.getData();
             eventBus_.fireEvent(new RegisterUserCommandEvent(data));
-         }
-         else if (type.equals(ClientEvent.ReplaceSelection))
-         {
-            ReplaceSelectionEvent.Data data = event.getData();
-            ReplaceSelectionEvent payload = new ReplaceSelectionEvent(data);
-            eventBus_.fireEvent(new ReplaceSelectionDispatchEvent(payload));
          }
          else if (type.equals(ClientEvent.ReplaceRanges))
          {

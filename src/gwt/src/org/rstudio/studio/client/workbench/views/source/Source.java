@@ -75,7 +75,6 @@ import org.rstudio.studio.client.events.GetActiveDocumentContextEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.events.GetActiveDocumentContextEvent.DocumentSelection;
 import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
-import org.rstudio.studio.client.events.ReplaceSelectionEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
@@ -546,27 +545,6 @@ public class Source implements InsertSourceHandler,
       events.addHandler(DocWindowChangedEvent.TYPE, this);
       events.addHandler(DocTabDragInitiatedEvent.TYPE, this);
       events.addHandler(PopoutDocInitiatedEvent.TYPE, this);
-      
-      events.addHandler(
-            ReplaceSelectionEvent.TYPE,
-            new ReplaceSelectionEvent.Handler()
-            {
-               @Override
-               public void onReplaceSelection(final ReplaceSelectionEvent event)
-               {
-                  final String id = event.getData().getId();
-                  final String text = event.getData().getText();
-                  
-                  withTarget(id, new CommandWithArg<TextEditingTarget>()
-                  {
-                     @Override
-                     public void execute(TextEditingTarget target)
-                     {
-                        target.insertCode(text, false);
-                     }
-                  });
-               }
-            });
       
       events.addHandler(
             ReplaceRangesEvent.TYPE,
