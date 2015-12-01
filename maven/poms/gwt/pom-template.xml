@@ -55,6 +55,13 @@
               <scope>import</scope>
             </dependency>
             <dependency>
+              <groupId>com.google.jsinterop</groupId>
+              <artifactId>jsinterop</artifactId>
+              <version>${jsinteropVersion}</version>
+              <type>pom</type>
+              <scope>import</scope>
+            </dependency>
+            <dependency>
                 <groupId>javax.validation</groupId>
                 <artifactId>validation-api</artifactId>
                 <version>1.0.0.GA</version>

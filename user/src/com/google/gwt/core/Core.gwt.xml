@@ -38,6 +38,7 @@
   <inherits name="com.google.gwt.emul.Emulation" />
   <inherits name="com.google.gwt.core.StackTrace" />
   <inherits name="com.google.gwt.core.AsyncFragmentLoader" />
+  <inherits name="jsinterop.annotations.Annotations" />
 
   <source path="client" />
   <source path="shared" />

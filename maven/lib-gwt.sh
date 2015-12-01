@@ -20,7 +20,7 @@ function finishAndCleanup () {
       rm -rf $jarExpandDir-${i}
     done
     # Remove POMs & ASCs, leaving only templates
-    find $pomDir -name pom.xml -o -name pom.xml.asc | xargs rm
+    find $pomDir -name pom.xml -o -name pom.xml.asc -delete
   fi
 
 }
@@ -43,6 +43,8 @@ function warnJavaDoc () {
 # Appends to COMMIT_MESSAGE
 function maven-gwt() {
   local gwtMavenVersion=$1
+  shift
+  local jsinteropMavenVersion=$1
   shift
   local gwtSdkArchive=$1
   shift
@@ -75,6 +77,10 @@ function maven-gwt() {
   JAVADOC_FILE_PATH=$RANDOM_DIR/gwt-javadoc.jar
   jar cf $JAVADOC_FILE_PATH -C $GWT_EXTRACT_DIR/doc/javadoc .
 
+  # Create a dummy javadoc JAR for JsInterop (gwt-javadoc is too heavy)
+  JSINTEROP_JAVADOC_FILE_PATH=$RANDOM_DIR/jsinterop-javadoc.jar
+  jar cf $JSINTEROP_JAVADOC_FILE_PATH -C $pomDir/jsinterop README.javadoc
+
   jarExpandDir=/tmp/tmp-jar-expand-dir-$RANDOM
 
   # Generate POMs with correct version
@@ -82,7 +88,7 @@ function maven-gwt() {
   do
     dir=`dirname $template`
     pushd $dir > /dev/null
-    sed "s|\${gwtVersion}|$gwtMavenVersion|g" pom-template.xml >pom.xml
+    sed -e "s|\${gwtVersion}|$gwtMavenVersion|g" -e "s|\${jsinteropVersion}|$jsinteropMavenVersion|g" pom-template.xml >pom.xml
     popd > /dev/null
   done
 
@@ -95,6 +101,8 @@ function maven-gwt() {
   if [ -f $GWT_EXTRACT_DIR/gwt-elemental.jar ]; then
     gwtLibs="${gwtLibs} elemental"
   fi
+
+  jsinteropLibs='annotations'
 
   for i in $gwtLibs
   do
@@ -115,9 +123,31 @@ function maven-gwt() {
     pushd $curExpandDir > /dev/null
 
     rm -rf javafilelist
-    find . -name "*.java" -print  > javafilelist
+    find . -name "*.java" > javafilelist
     if [ -s javafilelist ]; then
       jar cf $SOURCES_FILE @javafilelist
+    fi
+
+    if [[ "$i" == "user" ]]; then
+      # Create jsinterop jars
+      for i in $jsinteropLibs
+      do
+        # Get rid of JsInterop classes from gwt-user.jar and gwt-user-sources
+        echo "Removing jsinterop/${i} from gwt-user"
+        zip -d $CUR_FILE "jsinterop/${i}/*"
+        echo "Removing jsinterop/${i} from gwt-user-sources"
+        zip -d $SOURCES_FILE "jsinterop/${i}/*"
+
+        rm -rf jsinterop-${i}-classfilelist jsinterop-${i}-javafilelist
+        find "./jsinterop/${i}" -type f -not -name "*.java" -not -name "*.gwt.xml" > jsinterop-${i}-classfilelist
+        if [ -s jsinterop-${i}-classfilelist ]; then
+          jar cf jsinterop-${i}.jar @jsinterop-${i}-classfilelist
+        fi
+        find "./jsinterop/${i}" -name "*.java" -o -name "*.gwt.xml" > jsinterop-${i}-javafilelist
+        if [ -s jsinterop-${i}-javafilelist ]; then
+          jar cf jsinterop-${i}-sources.jar @jsinterop-${i}-javafilelist
+        fi
+      done
     fi
     popd > /dev/null
   done
@@ -153,6 +183,15 @@ function maven-gwt() {
          || die
   done
 
+  # Deploy jsInterop jars
+  maven-deploy-file $mavenRepoUrl $mavenRepoId $pomDir/jsinterop/pom.xml $pomDir/jsinterop/pom.xml || die
+
+  for i in $jsinteropLibs
+  do
+    maven-deploy-file $mavenRepoUrl $mavenRepoId $jarExpandDir-user/jsinterop-${i}.jar $pomDir/jsinterop/${i}/pom.xml \
+        $JSINTEROP_JAVADOC_FILE_PATH $jarExpandDir-user/jsinterop-${i}-sources.jar \
+         || die
+  done
+
   finishAndCleanup
 }
-
