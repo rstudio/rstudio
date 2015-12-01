@@ -40,14 +40,27 @@ public class ReplaceRangesEvent extends CrossWindowEvent<ReplaceRangesEvent.Hand
       public final native String getId() /*-{ return this["id"]; }-*/;
       public final native JsArray<ReplacementData> getReplacementData() /*-{
          
+         // return a cached result if available
          if (this["result"] != null)
             return this["result"];
-            
+         
+         // generate the array of replacement data
          var Range = $wnd.require("ace/range").Range;
          
          var ranges = this["ranges"];
          var text = this["text"];
          
+         // an empty range implies we should replace the current selection
+         // do this by propagating a null range, and let caller handle
+         if (ranges.length == 0) {
+            var result = [];
+            result.push({range: null, text: text[0]});
+            this["result"] = result;
+            return result;
+         }
+         
+         // text can either be passed as a length 1 array, or length n
+         // array (where n should be the same as the number of ranges)
          var isTextScalar = text.length === 1;
          
          var result = [];
@@ -59,6 +72,7 @@ public class ReplaceRangesEvent extends CrossWindowEvent<ReplaceRangesEvent.Hand
             });
          }
          
+         // cache result and return
          this["result"] = result;
          return result;
       

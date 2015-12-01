@@ -587,7 +587,11 @@ public class Source implements InsertSourceHandler,
                            ReplacementData el = data.get(i);
                            Range range = el.getRange();
                            String text = el.getText();
-
+                           
+                           // A null range at this point is a proxy to use the current selection
+                           if (range == null)
+                              range = target.getDocDisplay().getSelectionRange();
+                           
                            target.getDocDisplay().replaceRange(range, text);
                         }
                      }

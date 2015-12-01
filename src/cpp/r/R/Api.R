@@ -162,14 +162,34 @@
    if (!is.character(id))
       stop("'id' must be NULL or a character vector of length one")
    
-   if (length(location) == 0)
+   # allow calls of the form:
+   #    
+   #    insertText("foo")
+   #    insertText(text = "foo")
+   #    
+   # in such cases, we replace the current selection. we pass an empty range
+   # and let upstream interpret this as a request to replace the current
+   # selection.
+   
+   if (missing(text) && is.character(location)) {
+      text <- location
+      location <- list()
+   } else if (missing(location) && is.character(text)) {
+      text <- text
+      location <- list()
+   } else if (length(location) == 0) {
       return()
+   }
    
    # allow a single range (then validate that it's a true range after)
    if (!is.list(location) && !inherits(location, "document_range"))
       location <- list(location)
    
-   location <- lapply(location, function(el) {
+   ranges <- lapply(location, function(el) {
+      
+      # detect proxy Inf object
+      if (identical(el, Inf))
+         el <- c(Inf, 0, Inf, 0)
       
       # detect positions (2-element vectors) and transform them to ranges
       n <- length(el)
@@ -200,40 +220,22 @@
    if (!is.character(text))
       stop(invalidTextMsg, call. = FALSE)
    
-   if (length(text) != 1 && length(location) != length(text))
+   if (length(text) != 1 && length(ranges) != length(text))
       stop(invalidLengthMsg, call. = FALSE)
    
    # sort the ranges in decreasing order -- this way, we can
    # ensure the replacements occur correctly (except in the
    # case of overlaps)
-   idx <- order(unlist(lapply(location, `[[`, 1)))
+   if (length(ranges)) {
+      idx <- order(unlist(lapply(ranges, `[[`, 1)))
+      
+      ranges <- ranges[idx]
+      if (length(text) != 1)
+         text <- text[idx]
+   }
    
-   location <- location[idx]
-   if (length(text) != 1)
-     text <- text[idx]
-   
-   data <- list(ranges = location, text = text, id = .rs.scalar(id))
+   data <- list(ranges = ranges, text = text, id = .rs.scalar(id))
    .rs.enqueClientEvent("replace_ranges", data)
-   invisible(data)
-})
-
-.rs.addApiFunction("replaceSelection", function(text, id = "") {
-   
-   if (is.null(id))
-      id <- ""
-   
-   if (!is.character(id))
-      stop("'id' must be NULL or a character vector of length one")
-   
-   # validate arguments
-   if (!is.character(text))
-      stop("text must be a character vector")
-   
-   data <- list(
-      text = .rs.scalar(paste(text, collapse = "\n")),
-      id = .rs.scalar(id)
-   )
-   .rs.enqueClientEvent("replace_selection", data)
    invisible(data)
 })
 
