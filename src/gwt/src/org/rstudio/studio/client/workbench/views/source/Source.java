@@ -70,6 +70,10 @@ import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
+import org.rstudio.studio.client.events.GetActiveDocumentContextEvent;
+import org.rstudio.studio.client.events.ReplaceRangesEvent;
+import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
+import org.rstudio.studio.client.events.ReplaceSelectionEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
@@ -116,6 +120,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DisplayChunkOptionsEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunksEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
@@ -538,6 +543,80 @@ public class Source implements InsertSourceHandler,
       events.addHandler(DocWindowChangedEvent.TYPE, this);
       events.addHandler(DocTabDragInitiatedEvent.TYPE, this);
       events.addHandler(PopoutDocInitiatedEvent.TYPE, this);
+      
+      events.addHandler(
+            ReplaceSelectionEvent.TYPE,
+            new ReplaceSelectionEvent.Handler()
+            {
+               @Override
+               public void onReplaceSelection(final ReplaceSelectionEvent event)
+               {
+                  final String id = event.getData().getId();
+                  final String text = event.getData().getText();
+                  
+                  withTarget(id, new CommandWithArg<TextEditingTarget>()
+                  {
+                     @Override
+                     public void execute(TextEditingTarget target)
+                     {
+                        target.insertCode(text, false);
+                     }
+                  });
+               }
+            });
+      
+      events.addHandler(
+            ReplaceRangesEvent.TYPE,
+            new ReplaceRangesEvent.Handler()
+            {
+               @Override
+               public void onReplaceRanges(final ReplaceRangesEvent event)
+               {
+                  final String id = event.getData().getId();
+                  withTarget(id, new CommandWithArg<TextEditingTarget>()
+                  {
+                     @Override
+                     public void execute(TextEditingTarget target)
+                     {
+                        JsArray<ReplacementData> data = event.getData().getReplacementData();
+                        for (int i = 0; i < data.length(); i++)
+                        {
+                           ReplacementData el = data.get(i);
+                           Range range = el.getRange();
+                           String text = el.getText();
+
+                           target.getDocDisplay().replaceRange(range, text);
+                        }
+                     }
+                  });
+               }
+            });
+      
+      events.addHandler(
+            GetActiveDocumentContextEvent.TYPE,
+            new GetActiveDocumentContextEvent.Handler()
+            {
+               @Override
+               public void onGetActiveDocumentContext(GetActiveDocumentContextEvent event)
+               {
+                  withTarget(null, new CommandWithArg<TextEditingTarget>()
+                  {
+                     @Override
+                     public void execute(TextEditingTarget target)
+                     {
+                        GetActiveDocumentContextEvent.Data data =
+                              GetActiveDocumentContextEvent.Data.create(
+                                    StringUtil.notNull(target.getId()),
+                                    StringUtil.notNull(target.getPath()),
+                                    StringUtil.notNull(target.getDocDisplay().getCode()),
+                                    StringUtil.notNull(target.getDocDisplay().getSelectionValue()),
+                                    target.getDocDisplay().getSelectionRange());
+                        
+                        server_.getActiveDocumentContextCompleted(data, new VoidServerRequestCallback());
+                     }
+                  });
+               }
+            });
 
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
       Event.addNativePreviewHandler(new NativePreviewHandler()
@@ -645,6 +724,21 @@ public class Source implements InsertSourceHandler,
       
       // handle chunk options event
       handleChunkOptionsEvent();
+   }
+   
+   private void withTarget(String id, CommandWithArg<TextEditingTarget> command)
+   {
+      EditingTarget target = StringUtil.isNullOrEmpty(id)
+            ? activeEditor_
+            : getEditingTargetForId(id);
+      
+      if (target == null)
+         return;
+      
+      if (!(target instanceof TextEditingTarget))
+         return;
+      
+      command.execute((TextEditingTarget) target);
    }
    
    private void initVimCommands()
@@ -1759,7 +1853,7 @@ public class Source implements InsertSourceHandler,
          }
       });
    }
-
+   
    @Override
    public void onPopoutDocInitiated(final PopoutDocInitiatedEvent event)
    {

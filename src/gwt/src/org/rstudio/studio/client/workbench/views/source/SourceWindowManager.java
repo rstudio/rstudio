@@ -17,15 +17,7 @@ package org.rstudio.studio.client.workbench.views.source;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.FilePosition;
-import org.rstudio.core.client.JsArrayUtil;
-import org.rstudio.core.client.Pair;
-import org.rstudio.core.client.Point;
-import org.rstudio.core.client.SerializedCommand;
-import org.rstudio.core.client.SerializedCommandQueue;
-import org.rstudio.core.client.Size;
-import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.*;
 import org.rstudio.core.client.dom.WindowCloseMonitor;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -44,6 +36,7 @@ import org.rstudio.studio.client.common.satellite.events.AllSatellitesClosingEve
 import org.rstudio.studio.client.common.satellite.events.SatelliteClosedEvent;
 import org.rstudio.studio.client.common.satellite.events.SatelliteFocusedEvent;
 import org.rstudio.studio.client.common.satellite.model.SatelliteWindowGeometry;
+import org.rstudio.studio.client.events.*;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -100,6 +93,9 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             ShinyApplicationStatusEvent.Handler,
                                             CollabEditStartedEvent.Handler,
                                             CollabEditEndedEvent.Handler,
+                                            ReplaceSelectionDispatchEvent.Handler,
+                                            ReplaceRangesDispatchEvent.Handler,
+                                            GetActiveDocumentContextDispatchEvent.Handler,
                                             DocFocusedEvent.Handler
 {
    @Inject
@@ -127,6 +123,9 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       if (isMainSourceWindow())
       {
          // most event handlers only make sense on the main window
+         events_.addHandler(ReplaceSelectionDispatchEvent.TYPE, this);
+         events_.addHandler(ReplaceRangesDispatchEvent.TYPE, this);
+         events_.addHandler(GetActiveDocumentContextDispatchEvent.TYPE, this);
          events_.addHandler(PopoutDocEvent.TYPE, this);
          events_.addHandler(DocTabDragStartedEvent.TYPE, this);
          events_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
@@ -506,6 +505,37 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    }
 
    // Event handlers ----------------------------------------------------------
+   
+   @Override
+   public void onReplaceRangesDispatch(ReplaceRangesDispatchEvent event)
+   {
+      String id = getLastFocusedSourceWindowId();
+      if (StringUtil.isNullOrEmpty(id))
+         events_.fireEvent(event.getEvent());
+      else
+         fireEventToSourceWindow(id, event.getEvent(), false);
+   }
+
+   @Override
+   public void onReplaceSelectionDispatch(ReplaceSelectionDispatchEvent event)
+   {
+      String id = getLastFocusedSourceWindowId();
+      if (StringUtil.isNullOrEmpty(id))
+         events_.fireEvent(event.getEvent());
+      else
+         fireEventToSourceWindow(id, event.getEvent(), false);
+   }
+   
+   @Override
+   public void onGetActiveDocumentContextDispatch(GetActiveDocumentContextDispatchEvent event)
+   {
+      String id = getLastFocusedSourceWindowId();
+      if (StringUtil.isNullOrEmpty(id))
+         events_.fireEvent(event.getEvent());
+      else
+         fireEventToSourceWindow(id, event.getEvent(), false);
+   }
+
    @Override
    public void onPopoutDoc(final PopoutDocEvent evt)
    {

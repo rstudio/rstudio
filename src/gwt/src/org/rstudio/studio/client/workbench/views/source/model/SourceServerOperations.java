@@ -18,6 +18,7 @@ import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
+import org.rstudio.studio.client.events.GetActiveDocumentContextEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
@@ -224,4 +225,7 @@ public interface SourceServerOperations extends FilesServerOperations,
                               String appType,
                               String appDir,
                               ServerRequestCallback<JsArrayString> requestCallback);
+   
+   public void getActiveDocumentContextCompleted(GetActiveDocumentContextEvent.Data data,
+                                                 ServerRequestCallback<Void> requestCallback);
 }

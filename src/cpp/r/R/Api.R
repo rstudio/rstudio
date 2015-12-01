@@ -149,3 +149,83 @@
 
    invisible(NULL)
 })
+
+.rs.addApiFunction("replaceRanges", function(ranges, text, id = "") {
+   
+   invalidRangeMsg <- "'ranges' should be a list of 4-element integer vectors"
+   invalidTextMsg <- "'text' should be a character vector"
+   invalidLengthMsg <- "'text' should either be length 1, or same length as 'ranges'"
+   
+   if (length(ranges) == 0)
+      return()
+   
+   if (!is.list(ranges))
+      stop(invalidRangeMsg, call. = FALSE)
+   
+   ranges <- lapply(ranges, function(range) {
+      
+      if (length(range) != 4 || !is.numeric(range))
+         stop(invalidRangeMsg, call. = FALSE)
+      
+      # transform from 1-based to 0-based indexing for server
+      as.integer(range) - 1L
+   })
+   
+   if (!is.character(text))
+      stop(invalidTextMsg, call. = FALSE)
+   
+   if (length(text) != 1 && length(ranges) != length(text))
+      stop(invalidLengthMsg, call. = FALSE)
+   
+   # sort the ranges in decreasing order -- this way, we can
+   # ensure the replacements occur correctly (except in the
+   # case of overlaps)
+   idx <- order(unlist(lapply(ranges, `[[`, 1)))
+   
+   ranges <- ranges[idx]
+   if (length(text) != 1)
+     text <- text[idx]
+   
+   data <- list(ranges = ranges, text = text, id = .rs.scalar(id))
+   .rs.enqueClientEvent("replace_ranges", data)
+   invisible(data)
+})
+
+.rs.addApiFunction("replaceSelection", function(text, id = "") {
+   
+   # validate arguments
+   if (!is.character(text))
+      stop("text must be a character vector")
+   
+   data <- list(
+      text = .rs.scalar(paste(text, collapse = "\n")),
+      id = .rs.scalar(id)
+   )
+   .rs.enqueClientEvent("replace_selection", data)
+   invisible(data)
+})
+
+.rs.addApiFunction("getActiveDocumentContext", function() {
+   .Call(.rs.routines$rs_getActiveDocumentContext)
+})
+
+.rs.addApiFunction("sendToConsole", function(code,
+                                             echo = TRUE,
+                                             execute = TRUE,
+                                             focus = TRUE)
+{
+   if (!is.character(code))
+      stop("'code' should be a character vector", call. = FALSE)
+   
+   code <- paste(code, collapse = "\n")
+   data <- list(
+      code = .rs.scalar(code),
+      echo = .rs.scalar(as.logical(echo)),
+      execute = .rs.scalar(as.logical(execute)),
+      focus = .rs.scalar(as.logical(focus))
+   )
+   
+   .rs.enqueClientEvent("send_to_console", data)
+   invisible(data)
+})
+

@@ -78,6 +78,7 @@ import org.rstudio.studio.client.common.vcs.DiffResult;
 import org.rstudio.studio.client.common.vcs.ProcessResult;
 import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
+import org.rstudio.studio.client.events.GetActiveDocumentContextEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
@@ -1388,6 +1389,12 @@ public class RemoteServer implements Server
       params.set(1, new JSONString(appType));
       params.set(2, new JSONString(appDir));
       sendRequest(RPC_SCOPE, CREATE_SHINY_APP, params, requestCallback);
+   }
+   
+   public void getActiveDocumentContextCompleted(GetActiveDocumentContextEvent.Data data,
+                                                 ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_ACTIVE_DOCUMENT_CONTEXT_COMPLETED, data, requestCallback);
    }
    
    public void getNewProjectContext(
@@ -4535,6 +4542,8 @@ public class RemoteServer implements Server
    private static final String DUPLICATE_DATA_VIEW = "duplicate_data_view";
    private static final String ENSURE_FILE_EXISTS = "ensure_file_exists";
    private static final String GET_SOURCE_DOCUMENT = "get_source_document";
+   
+   private static final String GET_ACTIVE_DOCUMENT_CONTEXT_COMPLETED = "get_active_document_context_completed";
 
    private static final String GET_RECENT_HISTORY = "get_recent_history";
    private static final String GET_HISTORY_ITEMS = "get_history_items";
