@@ -54,7 +54,7 @@ public class ReplaceRangesEvent extends CrossWindowEvent<ReplaceRangesEvent.Hand
          for (var i = 0; i < ranges.length; i++) {
             var range = ranges[i];
             result.push({
-               range: new Range(range[0] - 1, range[1] - 1, range[2] - 1, range[3] - 1),
+               range: new Range(range[0], range[1], range[2], range[3]),
                text: isTextScalar ? text[0] : text[i]
             });
          }
