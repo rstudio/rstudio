@@ -103,8 +103,15 @@ public class EventBus extends HandlerManager
    
    public void fireEventToMainWindow(CrossWindowEvent<?> event)
    {
-      fireEventToMainWindow(serializer_.serialize(event), 
-            pSatellite_.get().getSatelliteName());
+      if (Satellite.isCurrentWindowSatellite())
+      {
+         fireEventToMainWindow(serializer_.serialize(event), 
+               pSatellite_.get().getSatelliteName());
+      }
+      else
+      {
+         fireEvent(event);
+      }
    }
 
    /**
