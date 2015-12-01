@@ -95,7 +95,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             CollabEditEndedEvent.Handler,
                                             ReplaceSelectionDispatchEvent.Handler,
                                             ReplaceRangesDispatchEvent.Handler,
-                                            GetActiveDocumentContextDispatchEvent.Handler
+                                            GetActiveDocumentContextDispatchEvent.Handler,
                                             DocFocusedEvent.Handler
 {
    @Inject

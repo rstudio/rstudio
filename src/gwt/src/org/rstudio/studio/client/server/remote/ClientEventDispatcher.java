@@ -733,6 +733,7 @@ public class ClientEventDispatcher
          {
             SendToConsoleEvent.Data data = event.getData();
             eventBus_.fireEvent(new SendToConsoleEvent(data));
+         }
          else if (type.equals(ClientEvent.UserFollowStarted))
          {
             ProjectUser user = event.getData();
