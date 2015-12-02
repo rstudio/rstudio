@@ -19,6 +19,7 @@
 
 #include <server/ServerOptionsOverlay.hpp>
 #include <server/ServerSessionManager.hpp>
+#include <server/ServerSecureKeyFile.hpp>
 
 #include <session/SessionServerRpc.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
@@ -122,8 +123,11 @@ Error initialize()
       if (error)
          return error;
 
-      // create the shared secret and validate it on every request
-      s_sessionSharedSecret = core::system::generateUuid();
+      // create the shared secret (if necessary)
+      error = key_file::readSecureKeyFile("session-rpc-key",
+                                          &s_sessionSharedSecret);
+      if (error)
+         return error;
 
       // inject the shared secret into the session
       sessionManager().addSessionLaunchProfileFilter(sessionProfileFilter);
