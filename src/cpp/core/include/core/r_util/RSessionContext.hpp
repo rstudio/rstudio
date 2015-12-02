@@ -208,6 +208,9 @@ SessionScopeState validateSessionScope(const SessionScope& scope,
                           core::r_util::ProjectIdToFilePath projectIdToFilePath,
                           std::string* pProjectFilePath);
 
+bool isSharedPath(const std::string& projectPath,
+                  const core::FilePath& userHomePath);
+
 std::string urlPathForSessionScope(const SessionScope& scope);
 
 std::string createSessionUrl(const std::string& hostPageUrl,
