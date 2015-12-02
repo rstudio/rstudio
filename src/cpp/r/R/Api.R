@@ -182,7 +182,7 @@
    }
    
    # allow a single range (then validate that it's a true range after)
-   if (!is.list(location) && !inherits(location, "document_range"))
+   if (!is.list(location) || inherits(location, "document_range"))
       location <- list(location)
    
    ranges <- lapply(location, function(el) {
@@ -197,7 +197,7 @@
          el <- c(el, el)
       
       # detect document_ranges and transform
-      if (is.list(el) && all(c("start", "end") %in% el))
+      if (is.list(el) && all(c("start", "end") %in% names(el)))
          el <- c(el$start, el$end)
       
       # validate we have a range-like object
