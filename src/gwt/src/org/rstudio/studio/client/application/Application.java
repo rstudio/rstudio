@@ -706,9 +706,18 @@ public class Application implements ApplicationEventHandlers
       
       clientStateUpdaterInstance_ = clientStateUpdater_.get();
       
-      // initiate quit if requested
+      // initiate quit if requested. do this after a delay 
+      // so that the source database has time to load
+      // before we interrogate it for unsaved documents
       if (ApplicationQuit.isQuitSession())
-         commands_.quitSession().execute();
+      {
+         new Timer() {
+            @Override
+            public void run() {
+               commands_.quitSession().execute();
+            }
+         }.schedule(500); 
+      }
    }
    
    private void setToolbarPref(boolean showToolbar)
