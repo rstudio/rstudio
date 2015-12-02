@@ -78,7 +78,7 @@ namespace {
 FilesListingMonitor s_filesListingMonitor;
 
 // make sure that monitoring persists accross suspended sessions
-const char * const kMonitoredPath = "files.monitored-path";   
+const char * const kFilesMonitoredPath = "files.monitored-path";
 
 void onSuspend(Settings* pSettings)
 {
@@ -91,7 +91,7 @@ void onSuspend(Settings* pSettings)
    }
 
    // set it
-   pSettings->set(kMonitoredPath, monitoredPath);
+   pSettings->set(kFilesMonitoredPath, monitoredPath);
 }
 
 void onResume(const Settings& settings)

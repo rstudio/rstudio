@@ -39,7 +39,7 @@ namespace {
 
 // list names
 const char * const kFileMru = "file_mru";
-const char * const kProjectMru = "project_mru";
+const char * const kProjectMru = kProjectMruList;
 const char * const kHelpHistory = "help_history_links";
 const char * const kUserDictioanry = "user_dictionary";
 const char * const kPlotPublishMru = "plot_publish_mru";
@@ -333,7 +333,7 @@ Error initialize()
 
    // monitor the lists directory
    s_listsPath = module_context::registerMonitoredUserScratchDir(
-                                                      "lists",
+                                                      kListsPath,
                                                       onListsFileChanged);
 
    using boost::bind;

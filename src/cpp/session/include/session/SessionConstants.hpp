@@ -59,5 +59,9 @@
 #define kPostbackUriScope                 "postback/"
 #define kPostbackExitCodeHeader           "X-Postback-ExitCode"
 
+#define kMonitoredPath      "monitored"
+#define kListsPath          "lists"
+#define kProjectMruList     "project_mru"
+
 #endif // SESSION_CONSTANTS_HPP
 
