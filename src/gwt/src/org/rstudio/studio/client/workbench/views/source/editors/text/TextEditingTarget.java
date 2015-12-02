@@ -935,51 +935,6 @@ public class TextEditingTarget implements
       }
    }
    
-   public void onExecuteUserCommand(final ExecuteUserCommandEvent event)
-   {
-      withSavedDoc(new Command()
-      {
-         @Override
-         public void execute()
-         {
-            Range range = docDisplay_.getSelectionRange();
-            String filePath = StringUtil.notNull(docUpdateSentinel_.getPath());
-            server_.executeUserCommand(
-                  event.getCommandName(),
-                  docDisplay_.getLines(),
-                  filePath,
-                  range.getStart().getRow(),
-                  range.getStart().getColumn(),
-                  range.getEnd().getRow(),
-                  range.getEnd().getColumn(),
-                  new ServerRequestCallback<JsArray<UserCommandResult>>()
-                  {
-                     @Override
-                     public void onResponseReceived(JsArray<UserCommandResult> results)
-                     {
-                        applyUserCommandResult(results);
-                     }
-
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        Debug.logError(error);
-                     }
-                  });
-         }
-      });
-   }
-   
-   private void applyUserCommandResult(JsArray<UserCommandResult> results)
-   {
-      for (int i = 0; i < results.length(); i++)
-      {
-         UserCommandResult result = results.get(i);
-         docDisplay_.replaceRange(result.getRange(), result.getText());
-      }
-
-   }
-   
    @Override
    public void recordCurrentNavigationPosition()
    {

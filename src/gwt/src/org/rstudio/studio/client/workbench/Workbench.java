@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.apache.tools.ant.taskdefs.ExecuteStreamHandler;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
@@ -55,6 +56,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
 import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;
@@ -77,7 +79,8 @@ public class Workbench implements BusyHandler,
                                   WorkbenchLoadedHandler,
                                   WorkbenchMetricsChangedHandler,
                                   InstallRtoolsEvent.Handler,
-                                  RmdParamsEditEvent.Handler
+                                  RmdParamsEditEvent.Handler,
+                                  ExecuteUserCommandEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Workbench> {}
    
@@ -136,6 +139,7 @@ public class Workbench implements BusyHandler,
       eventBus.addHandler(WorkbenchMetricsChangedEvent.TYPE, this);
       eventBus.addHandler(InstallRtoolsEvent.TYPE, this);
       eventBus.addHandler(RmdParamsEditEvent.TYPE, this);
+      eventBus.addHandler(ExecuteUserCommandEvent.TYPE, this);
 
       // We don't want to send setWorkbenchMetrics more than once per 1/2-second
       metricsChangedCommand_ = new TimeBufferedCommand(-1, -1, 500)
@@ -494,6 +498,12 @@ public class Workbench implements BusyHandler,
          Desktop.getFrame().installRtools(event.getVersion(),
                                           event.getInstallerPath());  
       }
+   }
+   
+   @Override
+   public void onExecuteUserCommand(ExecuteUserCommandEvent event)
+   {
+      server_.executeUserCommand(event.getCommandName(), new VoidServerRequestCallback());
    }
    
    private final Server server_;

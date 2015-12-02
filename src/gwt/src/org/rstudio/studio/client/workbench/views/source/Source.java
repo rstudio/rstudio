@@ -526,22 +526,6 @@ public class Source implements InsertSourceHandler,
       });
       
       events.addHandler(PopoutDocEvent.TYPE, this);
-      
-      events.addHandler(
-            ExecuteUserCommandEvent.TYPE,
-            new ExecuteUserCommandEvent.Handler()
-            {
-               @Override
-               public void onExecuteUserCommand(ExecuteUserCommandEvent event)
-               {
-                  if (activeEditor_ == null || !(activeEditor_ instanceof TextEditingTarget))
-                     return;
-                  
-                  TextEditingTarget target = (TextEditingTarget) activeEditor_;
-                  target.onExecuteUserCommand(event);
-               }
-            });
-
       events.addHandler(DocWindowChangedEvent.TYPE, this);
       events.addHandler(DocTabDragInitiatedEvent.TYPE, this);
       events.addHandler(PopoutDocInitiatedEvent.TYPE, this);

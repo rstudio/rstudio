@@ -739,24 +739,11 @@ public class RemoteServer implements Server
    }
    
    public void executeUserCommand(String functionName,
-                                  JsArrayString content,
-                                  String fileName,
-                                  int rowStart,
-                                  int columnStart,
-                                  int rowEnd,
-                                  int columnEnd,
-                                  ServerRequestCallback<JsArray<UserCommandResult>> requestCallback)
+                                  ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       
       params.set(0, new JSONString(functionName));
-      setArrayString(params, 1, content);
-      params.set(2, new JSONString(fileName));
-      
-      params.set(3, new JSONNumber(rowStart));
-      params.set(4, new JSONNumber(columnStart));
-      params.set(5, new JSONNumber(rowEnd));
-      params.set(6, new JSONNumber(columnEnd));
       
       sendRequest(RPC_SCOPE,
                   EXECUTE_USER_COMMAND,
