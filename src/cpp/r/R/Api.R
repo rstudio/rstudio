@@ -263,6 +263,6 @@
    invisible(data)
 })
 
-.rs.addApiFunction("registerCommand", function(name, shortcuts, fn) {
-   .rs.registerUserCommand(name, shortcuts, fn)
+.rs.addApiFunction("registerCommand", function(name, shortcuts, fn, overwrite = TRUE) {
+   .rs.registerUserCommand(name, shortcuts, fn, overwrite)
 })

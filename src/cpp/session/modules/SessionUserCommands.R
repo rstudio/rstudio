@@ -65,10 +65,15 @@ assign(".rs.userCommands", new.env(parent = emptyenv()), envir = .rs.toolsEnv())
    
 })
 
-.rs.addFunction("registerUserCommand", function(name, shortcuts, fn)
+.rs.addFunction("registerUserCommand", function(name, shortcuts, fn, overwrite = TRUE)
 {
    if (length(name) != 1 || !is.character(name))
       stop("'name' should be a length-one character vector")
+   
+   if (!overwrite && exists(name, envir = .rs.userCommands)) {
+      stop("'", name, "' is already bound to a command; use 'overwrite = TRUE'",
+           "to overwrite with the new command definition.")
+   }
    
    shortcuts <- unlist(lapply(shortcuts, .rs.normalizeKeyboardShortcut))
    .rs.userCommands[[name]] <- fn
