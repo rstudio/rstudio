@@ -1,7 +1,7 @@
 /*
  * ServerSecureCookie.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,6 +39,7 @@
 #include <core/system/FileMode.hpp>
 
 #include <server/ServerOptions.hpp>
+#include <server/ServerSecureKeyFile.hpp>
 
 namespace rstudio {
 namespace server {
@@ -239,68 +240,7 @@ void remove(const http::Request& request,
 
 Error initialize()
 {
-   // determine path to use for secure cookie key file
-   FilePath secureCookieKeyPath;
-   if (core::system::effectiveUserIsRoot())
-   {
-      secureCookieKeyPath = FilePath("/etc/rstudio/secure-cookie-key");
-      if (!secureCookieKeyPath.exists())
-         secureCookieKeyPath = FilePath("/var/lib/rstudio-server/secure-cookie-key");
-   }
-   else
-      secureCookieKeyPath = FilePath("/tmp/rstudio-server/secure-cookie-key");
-
-   // read file if it already exists
-   if (secureCookieKeyPath.exists())
-   {
-      // read the key
-      std::string secureCookieKey;
-      Error error = readStringFromFile(secureCookieKeyPath, &secureCookieKey);
-      if (error)
-         return error;
-
-      // check for non-empty key
-      if (secureCookieKey.empty())
-      {
-         return systemError(boost::system::errc::no_such_file_or_directory,
-                            ERROR_LOCATION);
-      }
-
-      // save the key and return success
-      s_secureCookieKey = secureCookieKey;
-      return Success();
-   }
-
-   // otherwise generate a new key and write it to the file
-   else
-   {
-      // generate a new key
-      std::string secureCookieKey = core::system::generateUuid(false);
-
-      // ensure the parent directory
-      Error error = secureCookieKeyPath.parent().ensureDirectory();
-      if (error)
-         return error;
-
-      // attempt to write it
-      error = writeStringToFile(secureCookieKeyPath, secureCookieKey);
-      if (error)
-         return error;
-
-      // change mode it so it is only readable and writeable by this user
-      if (changeFileMode(secureCookieKeyPath,
-                         core::system::UserReadWriteMode) < 0)
-      {
-         return systemError(errno, ERROR_LOCATION);
-      }
-
-      // successfully generated the cookie key, set it
-      s_secureCookieKey = secureCookieKey;
-
-      // reutrn success
-      return Success();
-   }
-
+   return key_file::readSecureKeyFile("secure-cookie-key", &s_secureCookieKey);
 }
 
 
