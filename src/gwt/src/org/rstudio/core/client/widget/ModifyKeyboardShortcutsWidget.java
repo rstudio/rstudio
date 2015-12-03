@@ -60,21 +60,21 @@ import com.google.gwt.view.client.ProvidesKey;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Pair;
+import org.rstudio.core.client.SerializedCommand;
+import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.AppCommand;
-import org.rstudio.core.client.command.ApplicationCommandManager;
-import org.rstudio.core.client.command.EditorCommandManager;
+import org.rstudio.core.client.command.*;
+import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBinding;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
-import org.rstudio.core.client.command.KeyboardHelper;
-import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
-import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.ShortcutManager.Handle;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.core.client.events.EditorKeybindingsChangedEvent;
 import org.rstudio.core.client.events.RStudioKeybindingsChangedEvent;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -82,6 +82,12 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
+import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
+import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
+import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
@@ -197,8 +203,9 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       private boolean isCustom_ = false;
       private KeySequence newKeySequence_;
       
-      public static final int TYPE_RSTUDIO_COMMAND =  1; // RStudio AppCommands
-      public static final int TYPE_EDITOR_COMMAND =   2; // e.g. Ace commands
+      public static final int TYPE_RSTUDIO_COMMAND = 1; // RStudio AppCommands
+      public static final int TYPE_EDITOR_COMMAND  = 2; // e.g. Ace commands
+      public static final int TYPE_ADDIN           = 3; 
    }
    
    private static interface ValueGetter<T>
@@ -400,6 +407,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       // Build up command diffs for save after application
       EditorKeyBindings editorBindings = EditorKeyBindings.create();
       EditorKeyBindings appBindings = EditorKeyBindings.create();
+      EditorKeyBindings addinBindings = EditorKeyBindings.create();
       
       // Loop through all changes and apply based on type
       for (Map.Entry<CommandBinding, CommandBinding> entry : changes_.entrySet())
@@ -424,6 +432,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             appBindings.setBindings(id, keys);
          else if (commandType == CommandBinding.TYPE_EDITOR_COMMAND)
             editorBindings.setBindings(id, keys);
+         else if (commandType == CommandBinding.TYPE_ADDIN)
+            addinBindings.setBindings(id, keys);
       }
       
       // Tell satellites that they need to update bindings.
@@ -445,18 +455,31 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       });
       
+      addins_.addBindingsAndSave(addinBindings, new CommandWithArg<EditorKeyBindings>()
+      {
+         @Override
+         public void execute(EditorKeyBindings bindings)
+         {
+            // TODO: Let satellites know.
+         }
+      });
+      
       closeDialog();
    }
    
    @Inject
    public void initialize(EditorCommandManager editorCommands,
                           ApplicationCommandManager appCommands,
+                          AddinsCommandManager addins,
+                          AddinsServerOperations addinsServer,
                           Commands commands,
                           GlobalDisplay globalDisplay,
                           EventBus events)
    {
       editorCommands_ = editorCommands;
       appCommands_ = appCommands;
+      addins_ = addins;
+      addinsServer_ = addinsServer;
       commands_ = commands;
       globalDisplay_ = globalDisplay;
       events_ = events;
@@ -956,63 +979,173 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private void collectShortcuts()
    {
       final List<CommandBinding> bindings = new ArrayList<CommandBinding>();
+      SerializedCommandQueue queue = new SerializedCommandQueue();
       
-      // Ace Commands
-      JsArray<AceCommand> aceCommands = editorCommands_.getCommands();
-      for (int i = 0; i < aceCommands.length(); i++)
-      {
-         AceCommand command = aceCommands.get(i);
-         JsArrayString shortcuts = command.getBindingsForCurrentPlatform();
-         
-         if (shortcuts != null)
-         {
-            String id = command.getInternalName();
-            String name = command.getDisplayName();
-            boolean custom = command.isCustomBinding();
-         
-            for (int j = 0; j < shortcuts.length(); j++)
-            {
-               String shortcut = shortcuts.get(j);
-               KeySequence keys = KeySequence.fromShortcutString(shortcut);
-               int type = CommandBinding.TYPE_EDITOR_COMMAND;
-               bindings.add(new CommandBinding(id, name, keys, type, custom,
-                     AppCommand.Context.Editor));
-            }
-         }
-      }
-      
-      // RStudio Commands
-      appCommands_.loadBindings(new CommandWithArg<EditorKeyBindings>()
+      // Load addins discovered as part of package exports
+      queue.addCommand(new SerializedCommand()
       {
          @Override
-         public void execute(final EditorKeyBindings customBindings)
+         public void onExecute(final Command continuation)
          {
-            Map<String, AppCommand> commands = commands_.getCommands();
-            for (Map.Entry<String, AppCommand> entry : commands.entrySet())
+            addinsServer_.getRAddins(new ServerRequestCallback<RAddins>()
             {
-               AppCommand command = entry.getValue();
-               if (isExcludedCommand(command))
-                  continue;
-
-               String id = command.getId();
-               String name = getAppCommandName(command);
-               int type = CommandBinding.TYPE_RSTUDIO_COMMAND;
-               boolean isCustom = customBindings.hasKey(id);
-               
-               List<KeySequence> keySequences = new ArrayList<KeySequence>();
-               if (isCustom)
-                  keySequences = customBindings.get(id).getKeyBindings();
-               else
-                  keySequences.add(command.getKeySequence());
-                     
-               for (KeySequence keys : keySequences)
+               @Override
+               public void onResponseReceived(RAddins addins)
                {
-                  CommandBinding binding = new CommandBinding(
-                        id, name, keys, type, isCustom, command.getContext());
-                  bindings.add(binding);
+                  for (String key : JsUtil.asIterable(addins.keys()))
+                  {
+                     RAddin addin = addins.get(key);
+                     
+                     bindings.add(new CommandBinding(
+                           addin.getPackage() + "::" + addin.getBinding(),
+                           addin.getName(),
+                           new KeySequence(),
+                           CommandBinding.TYPE_ADDIN,
+                           false,
+                           AppCommand.Context.Addin));
+                  }
+                  continuation.execute();
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+                  continuation.execute();
+               }
+            });
+         }
+      });
+      
+      // Load saved addin bindings
+      queue.addCommand(new SerializedCommand()
+      {
+         @Override
+         public void onExecute(final Command continuation)
+         {
+            addins_.loadBindings(new CommandWithArg<EditorKeyBindings>()
+            {
+               @Override
+               public void execute(EditorKeyBindings addinBindings)
+               {
+                  for (String commandId : addinBindings.iterableKeys())
+                  {
+                     EditorKeyBinding addinBinding = addinBindings.get(commandId);
+                     for (CommandBinding binding : bindings)
+                     {
+                        if (binding.getId() == commandId)
+                        {
+                           List<KeySequence> keys = addinBinding.getKeyBindings();
+                           if (keys.size() >= 1)
+                              binding.setKeySequence(keys.get(0));
+                           
+                           if (keys.size() >= 2)
+                           {
+                              for (int i = 1; i < keys.size(); i++)
+                              {
+                                 bindings.add(new CommandBinding(
+                                       binding.getId(),
+                                       binding.getName(),
+                                       keys.get(i),
+                                       CommandBinding.TYPE_ADDIN,
+                                       false,
+                                       AppCommand.Context.Addin));
+                              }
+                           }
+                        }
+                     }
+                  }
+                  
+                  continuation.execute();
+               }
+            });
+         }
+      });
+      
+      // Ace loading command
+      queue.addCommand(new SerializedCommand()
+      {
+         @Override
+         public void onExecute(final Command continuation)
+         {
+            // Ace Commands
+            JsArray<AceCommand> aceCommands = editorCommands_.getCommands();
+            for (int i = 0; i < aceCommands.length(); i++)
+            {
+               AceCommand command = aceCommands.get(i);
+               JsArrayString shortcuts = command.getBindingsForCurrentPlatform();
+               
+               if (shortcuts != null)
+               {
+                  String id = command.getInternalName();
+                  String name = command.getDisplayName();
+                  boolean custom = command.isCustomBinding();
+               
+                  for (int j = 0; j < shortcuts.length(); j++)
+                  {
+                     String shortcut = shortcuts.get(j);
+                     KeySequence keys = KeySequence.fromShortcutString(shortcut);
+                     int type = CommandBinding.TYPE_EDITOR_COMMAND;
+                     bindings.add(new CommandBinding(id, name, keys, type, custom,
+                           AppCommand.Context.Editor));
+                  }
                }
             }
             
+            continuation.execute();
+         }
+      });
+      
+      // RStudio commands
+      queue.addCommand(new SerializedCommand()
+      {
+         @Override
+         public void onExecute(final Command continuation)
+         {
+            // RStudio Commands
+            appCommands_.loadBindings(new CommandWithArg<EditorKeyBindings>()
+            {
+               @Override
+               public void execute(final EditorKeyBindings customBindings)
+               {
+                  Map<String, AppCommand> commands = commands_.getCommands();
+                  for (Map.Entry<String, AppCommand> entry : commands.entrySet())
+                  {
+                     AppCommand command = entry.getValue();
+                     if (isExcludedCommand(command))
+                        continue;
+      
+                     String id = command.getId();
+                     String name = getAppCommandName(command);
+                     int type = CommandBinding.TYPE_RSTUDIO_COMMAND;
+                     boolean isCustom = customBindings.hasKey(id);
+                     
+                     List<KeySequence> keySequences = new ArrayList<KeySequence>();
+                     if (isCustom)
+                        keySequences = customBindings.get(id).getKeyBindings();
+                     else
+                        keySequences.add(command.getKeySequence());
+                           
+                     for (KeySequence keys : keySequences)
+                     {
+                        CommandBinding binding = new CommandBinding(
+                              id, name, keys, type, isCustom, command.getContext());
+                        bindings.add(binding);
+                     }
+                  }
+                  
+                  continuation.execute();
+               }
+            });
+         }
+      });
+      
+      // Sort and finish up
+      queue.addCommand(new SerializedCommand()
+      {
+         @Override
+         public void onExecute(final Command continuation)
+         {
             Collections.sort(bindings, new Comparator<CommandBinding>()
             {
                @Override
@@ -1020,15 +1153,19 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                {
                   if (o1.getContext() != o2.getContext())
                      return o1.getContext().compareTo(o2.getContext());
-                  
+
                   return o1.getName().compareTo(o2.getName());
                }
             });
-            
+
             originalBindings_ = bindings;
             updateData(bindings);
+            continuation.execute();
          }
       });
+      
+      // Exhaust the queue
+      queue.run();
    }
    
    private void updateData(List<CommandBinding> bindings)
@@ -1266,6 +1403,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    // Injected ----
    private EditorCommandManager editorCommands_;
    private ApplicationCommandManager appCommands_;
+   private AddinsCommandManager addins_;
+   private AddinsServerOperations addinsServer_;
    private Commands commands_;
    private GlobalDisplay globalDisplay_;
    private EventBus events_;

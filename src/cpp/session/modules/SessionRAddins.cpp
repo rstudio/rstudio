@@ -89,7 +89,7 @@ public:
    
    void add(const std::string& package, const AddinSpecification& spec)
    {
-      addins_[constructKey(package, spec.getName())] = spec;
+      addins_[constructKey(package, spec.getBinding())] = spec;
    }
    
    bool contains(const std::string& package, const std::string& name)

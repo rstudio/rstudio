@@ -237,7 +237,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public enum Context
    {
       Workbench, Editor, R, Cpp, PackageDevelopment, RMarkdown,
-      Markdown, Sweave, Help, VCS, Packrat, RPresentation;
+      Markdown, Sweave, Help, VCS, Packrat, RPresentation, Addin;
       
       @Override
       public String toString()

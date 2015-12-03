@@ -69,7 +69,7 @@ import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.vcs.VCSApplication;
-import org.rstudio.studio.client.workbench.addins.AddinCommandManager;
+import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -153,7 +153,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(UserCommandManager manager);
    void injectMembers(EditorCommandManager manager);
    void injectMembers(ApplicationCommandManager manager);
-   void injectMembers(AddinCommandManager manager);
+   void injectMembers(AddinsCommandManager manager);
    void injectMembers(FileBacked<?> object);
    void injectMembers(WindowFrame frame);
    void injectMembers(RmdParamsEditDialog dialog);

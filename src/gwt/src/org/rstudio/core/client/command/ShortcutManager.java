@@ -31,7 +31,7 @@ import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.workbench.addins.AddinCommandManager;
+import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
 
@@ -108,7 +108,7 @@ public class ShortcutManager implements NativePreviewHandler,
    private void initialize(ApplicationCommandManager appCommands,
                            EditorCommandManager editorCommands,
                            UserCommandManager userCommands,
-                           AddinCommandManager addins,
+                           AddinsCommandManager addins,
                            EventBus events)
    {
       appCommands_ = appCommands;
@@ -586,7 +586,7 @@ public class ShortcutManager implements NativePreviewHandler,
    private UserCommandManager userCommands_;
    private EditorCommandManager editorCommands_;
    private ApplicationCommandManager appCommands_;
-   private AddinCommandManager addins_;
+   private AddinsCommandManager addins_;
    private EventBus events_;
    
 }

@@ -2,8 +2,10 @@ package org.rstudio.studio.client.workbench.addins;
 
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
@@ -18,9 +20,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class AddinCommandManager
+@Singleton
+public class AddinsCommandManager
 {
-   public AddinCommandManager()
+   public AddinsCommandManager()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -29,7 +32,7 @@ public class AddinCommandManager
             false,
             EditorKeyBindings.create());
       
-      commandMap_ = new HashMap<KeyboardShortcut, Command>();
+      commandMap_ = new HashMap<KeySequence, Command>();
       
       events_.addHandler(
             EditorLoadedEvent.TYPE,
@@ -49,6 +52,27 @@ public class AddinCommandManager
    {
       events_ = events;
       server_ = server;
+   }
+   
+   public void addBindingsAndSave(final EditorKeyBindings newBindings,
+                                  final CommandWithArg<EditorKeyBindings> onLoad)
+   {
+      bindings_.execute(new CommandWithArg<EditorKeyBindings>()
+      {
+         @Override
+         public void execute(EditorKeyBindings currentBindings)
+         {
+            currentBindings.insert(newBindings);
+            bindings_.set(currentBindings, new Command()
+            {
+               @Override
+               public void execute()
+               {
+                  loadBindings(onLoad);
+               }
+            });
+         }
+      });
    }
    
    public void loadBindings()
@@ -84,7 +108,7 @@ public class AddinCommandManager
    
    private void registerBinding(final String commandId, final KeySequence keys)
    {
-      commandMap_.put(new KeyboardShortcut(keys), new Command()
+      commandMap_.put(keys, new Command()
       {
          @Override
          public void execute()
@@ -96,16 +120,17 @@ public class AddinCommandManager
    
    public boolean dispatch(KeyboardShortcut shortcut)
    {
-      if (commandMap_.containsKey(shortcut))
+      KeySequence keys = shortcut.getKeySequence();
+      if (commandMap_.containsKey(keys))
       {
-         Command command = commandMap_.get(shortcut);
+         Command command = commandMap_.get(keys);
          command.execute();
          return true;
       }
       return false;
    }
    
-   private final Map<KeyboardShortcut, Command> commandMap_;
+   private final Map<KeySequence, Command> commandMap_;
    private final FileBacked<EditorKeyBindings> bindings_;
    private static final String KEYBINDINGS_PATH = "~/.R/rstudio/keybindings/addins.json";
    
