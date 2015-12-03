@@ -1383,6 +1383,17 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_ACTIVE_DOCUMENT_CONTEXT_COMPLETED, data, requestCallback);
    }
    
+   public void setSourceDocumentDirty(String docId, 
+         boolean dirty,
+         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(docId));
+      params.set(1, JSONBoolean.getInstance(dirty));
+      sendRequest(RPC_SCOPE, "set_source_document_dirty", params, 
+                  requestCallback);
+   }
+   
    public void getNewProjectContext(
                         ServerRequestCallback<NewProjectContext> callback)
    {

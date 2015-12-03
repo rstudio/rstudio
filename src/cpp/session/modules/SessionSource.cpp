@@ -968,6 +968,25 @@ Error getSourceDocument(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error setSourceDocumentDirty(const json::JsonRpcRequest& request,
+                             json::JsonRpcResponse* pResponse)
+{
+   std::string id;
+   bool dirty;
+   Error error = json::readParams(request.params, &id, &dirty);
+   if (error)
+      return error;
+
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
+   error = source_database::get(id, pDoc);
+   if (error)
+      return error;
+   
+   pDoc->setDirty(dirty);
+
+   return Success();
+}
+
 void enqueFileEditEvent(const std::string& file)
 {
    // ignore if no file passed
@@ -1151,6 +1170,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_script_run_command", getScriptRunCommand))
       (bind(registerRpcMethod, "set_doc_order", setDocOrder))
       (bind(registerRpcMethod, "get_source_document", getSourceDocument))
+      (bind(registerRpcMethod, "set_source_document_dirty", setSourceDocumentDirty))
       (bind(sourceModuleRFile, "SessionSource.R"));
    Error error = initBlock.execute();
    if (error)
