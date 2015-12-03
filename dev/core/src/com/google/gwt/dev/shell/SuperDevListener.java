@@ -172,7 +172,6 @@ public class SuperDevListener implements CodeServerListener {
     }
     if (options.shouldGenerateJsInteropExports()) {
       args.add("-generateJsInteropExports");
-      args.add(options.getJsInteropMode().name());
     }
     if (!options.isIncrementalCompileEnabled()) {
       args.add("-noincremental");
