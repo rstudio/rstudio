@@ -122,6 +122,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
+import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
@@ -3730,6 +3731,12 @@ public class RemoteServer implements Server
             GET_PRODUCT_INFO,
             requestCallback);
    }
+   
+   @Override
+   public void getRAddins(ServerRequestCallback<RAddins> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_R_ADDINS, requestCallback);
+   }
 
    @Override
    public void getShinyViewerType(ServerRequestCallback<ShinyViewerType> requestCallback)
@@ -4678,6 +4685,8 @@ public class RemoteServer implements Server
 
    private static final String CHECK_FOR_UPDATES = "check_for_updates";
    private static final String GET_PRODUCT_INFO = "get_product_info";
+   
+   private static final String GET_R_ADDINS = "get_r_addins";
 
    private static final String CREATE_SHINY_APP = "create_shiny_app";
    private static final String GET_SHINY_VIEWER_TYPE = "get_shiny_viewer_type";

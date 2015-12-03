@@ -223,8 +223,8 @@ void onDeferredInit(bool newSession)
    discoverAddins(getLibPaths());
 }
 
-Error getAddins(const json::JsonRpcRequest& request,
-                json::JsonRpcResponse* pResponse)
+Error getRAddins(const json::JsonRpcRequest& request,
+                 json::JsonRpcResponse* pResponse)
 {
    pResponse->setResult(addinRegistry().toJson());
    return Success();
@@ -242,7 +242,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
          (bind(sourceModuleRFile, "SessionRAddins.R"))
-         (bind(registerRpcMethod, "get_addins", getAddins));
+         (bind(registerRpcMethod, "get_r_addins", getRAddins));
    
    return initBlock.execute();
 }
