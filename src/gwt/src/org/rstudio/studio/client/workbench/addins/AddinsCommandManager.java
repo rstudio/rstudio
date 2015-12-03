@@ -5,7 +5,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
@@ -42,6 +41,17 @@ public class AddinsCommandManager
                public void onEditorLoaded(EditorLoadedEvent event)
                {
                   loadBindings();
+               }
+            });
+      
+      events_.addHandler(
+            AddinsKeyBindingsChangedEvent.TYPE,
+            new AddinsKeyBindingsChangedEvent.Handler()
+            {
+               @Override
+               public void onAddinsKeyBindingsChanged(AddinsKeyBindingsChangedEvent event)
+               {
+                  registerBindings(event.getBindings(), null);
                }
             });
    }
@@ -87,14 +97,15 @@ public class AddinsCommandManager
          @Override
          public void execute(EditorKeyBindings bindings)
          {
-            finishLoading(bindings, afterLoad);
+            registerBindings(bindings, afterLoad);
          }
       });
    }
    
-   private void finishLoading(final EditorKeyBindings bindings,
-                              final CommandWithArg<EditorKeyBindings> afterLoad)
+   private void registerBindings(final EditorKeyBindings bindings,
+                                 final CommandWithArg<EditorKeyBindings> afterLoad)
    {
+      commandMap_.clear();
       for (String commandId : bindings.iterableKeys())
       {
          List<KeySequence> keyList = bindings.get(commandId).getKeyBindings();
@@ -114,6 +125,24 @@ public class AddinsCommandManager
          public void execute()
          {
             server_.executeRAddin(commandId, new VoidServerRequestCallback());
+         }
+      });
+   }
+   
+   public void resetBindings()
+   {
+      resetBindings(null);
+   }
+   
+   public void resetBindings(final Command afterReset)
+   {
+      bindings_.set(EditorKeyBindings.create(), new Command()
+      {
+         @Override
+         public void execute()
+         {
+            if (afterReset != null)
+               afterReset.execute();
          }
       });
    }

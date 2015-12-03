@@ -87,6 +87,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
+import org.rstudio.studio.client.workbench.addins.AddinsKeyBindingsChangedEvent;
 import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
@@ -389,8 +390,15 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                                  @Override
                                  public void execute()
                                  {
-                                    indicator.onCompleted();
-                                    resetState();
+                                    addins_.resetBindings(new Command()
+                                    {
+                                       @Override
+                                       public void execute()
+                                       {
+                                          indicator.onCompleted();
+                                          resetState();
+                                       }
+                                    });
                                  }
                               });
                            }
@@ -460,7 +468,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          @Override
          public void execute(EditorKeyBindings bindings)
          {
-            // TODO: Let satellites know.
+            events_.fireEvent(new AddinsKeyBindingsChangedEvent(bindings));
          }
       });
       
