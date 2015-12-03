@@ -238,7 +238,7 @@ Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pRes
 #ifndef _WIN32
    // on *nix systems, see if browsing above this path is possible
    error = core::system::isFileReadable(targetPath.parent(), &browseable);
-   if (!core::isPathNotFoundError(error))
+   if (error && !core::isPathNotFoundError(error))
       LOG_ERROR(error);
 #endif
 
