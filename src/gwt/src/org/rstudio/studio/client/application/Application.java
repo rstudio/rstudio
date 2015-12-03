@@ -709,7 +709,7 @@ public class Application implements ApplicationEventHandlers
       // initiate quit if requested. do this after a delay 
       // so that the source database has time to load
       // before we interrogate it for unsaved documents
-      if (ApplicationQuit.isQuitSession())
+      if (ApplicationAction.isQuit())
       {
          new Timer() {
             @Override

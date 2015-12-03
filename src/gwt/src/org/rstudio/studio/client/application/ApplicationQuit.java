@@ -64,7 +64,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -147,11 +146,6 @@ public class ApplicationQuit implements SaveActionChangedHandler,
          }
       }
    }
-   
-   public static boolean isQuitSession()
-   {
-      return ("1".equals(Window.Location.getParameter("quit")));
-   }
   
    
    private void handleUnsavedChanges(String caption, QuitContext quitContext)
@@ -181,7 +175,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
          }};
         
          // if this is a quit session then we always prompt
-         if (isQuitSession())
+         if (ApplicationAction.isQuit())
          {
             RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
                   MessageDialog.QUESTION,
