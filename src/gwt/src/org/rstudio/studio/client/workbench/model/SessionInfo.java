@@ -412,4 +412,8 @@ public class SessionInfo extends JavaScriptObject
    public final native String getTutorialApiClientOrigin() /*-{
       return this.tutorial_api_client_origin;
    }-*/;
+   
+   public final native boolean getPackratAvailable() /*-{
+      return this.packrat_available;
+   }-*/;
 }
