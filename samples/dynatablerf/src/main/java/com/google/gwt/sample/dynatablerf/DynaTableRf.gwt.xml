@@ -30,4 +30,9 @@
   <entry-point class='com.google.gwt.sample.dynatablerf.client.DynaTableRf' />
   
   <set-configuration-property name="CssResource.obfuscationPrefix" value="empty" />
+  
+  <set-configuration-property name="CssResource.enableGss" value="true" />
+  <set-configuration-property name="CssResource.gssDefaultInUiBinder" value="true" />
+  <!-- CSS to GSS Conversion -->
+  <set-configuration-property name="CssResource.conversionMode" value="strict" />
 </module>

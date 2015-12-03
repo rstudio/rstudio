@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
   xmlns:g="urn:import:com.google.gwt.user.client.ui">
-  <ui:style gss="true" type ="com.google.gwt.sample.validation.client.ValidationView.MyStyle">
+  <ui:style type ="com.google.gwt.sample.validation.client.ValidationView.MyStyle">
     @external gwt-DialogBox;
     .gwt-DialogBox {
       width: 400px;

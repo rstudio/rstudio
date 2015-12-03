@@ -5,7 +5,7 @@
   xmlns:c="urn:import:com.google.gwt.user.cellview.client"
   xmlns:app="urn:import:com.google.gwt.sample.mobilewebapp.client.ui">
 
-  <ui:style gss="true">
+  <ui:style>
     .title {
       padding: 4px 10px;
       font-size: 14pt;

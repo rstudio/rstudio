@@ -5,7 +5,7 @@
   xmlns:g="urn:import:com.google.gwt.user.client.ui"
   xmlns:c="urn:import:com.google.gwt.user.cellview.client">
 
-  <ui:style gss="true">
+  <ui:style>
     .header {
       background: #1a1a1a;
       position: relative;

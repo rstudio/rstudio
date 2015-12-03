@@ -4,7 +4,7 @@
   xmlns:g="urn:import:com.google.gwt.user.client.ui"
   xmlns:app="urn:import:com.google.gwt.sample.mobilewebapp.client.ui">
 
-  <ui:style gss="true">
+  <ui:style>
     .outer {
       background: #eee;
     }

@@ -11,28 +11,37 @@
 
   <properties>
     <!-- Convenience property to set the GWT version -->
-    <gwtVersion>2.7.0-SNAPSHOT</gwtVersion>
+    <gwt.version>2.8.0-SNAPSHOT</gwt.version>
 
     <!-- GWT needs at least java 1.6 -->
     <maven.compiler.source>1.7</maven.compiler.source>
     <maven.compiler.target>1.7</maven.compiler.target>
 
-    <!-- GAE properties -->
-    <gae.version>1.9.13</gae.version>
-    <gae.home>${user.home}/.m2/repository/com/google/appengine/appengine-java-sdk/${gae.version}/appengine-java-sdk-${gae.version}</gae.home>
-    <gae.application.version>1</gae.application.version>
+    <!-- App Engine properties -->
+    <appengine.version>1.9.30</appengine.version>
+    <appengine.application.version>1</appengine.application.version>
 
     <!-- Don't let your Mac use a crazy non-standard encoding -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
 
+  <!-- App Engine Goals -->
+  <!-- mvn help:describe -Dplugin=appengine -->
+
+  <!-- Running with Maven -->
+  <!-- mvn clean package -->
+  <!-- mvn appengine:devserver_start - start web server -->
+  <!-- mvn gwt:run-codeserver - start gwt code server -->
+  <!-- goto http://localhost:8080 -->
+  <!-- mvn appengine:devserver_stop - stop web server -->
+
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>com.google.gwt</groupId>
         <artifactId>gwt</artifactId>
-        <version>${gwtVersion}</version>
+        <version>${gwt.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -40,9 +49,7 @@
   </dependencyManagement>
 
   <dependencies>
-
     <!-- GWT -->
-
     <dependency>
       <groupId>com.google.gwt</groupId>
       <artifactId>gwt-user</artifactId>
@@ -79,7 +86,6 @@
     <dependency>
       <groupId>javax.validation</groupId>
       <artifactId>validation-api</artifactId>
-      <version>1.0.0.GA</version>
     </dependency>
     <dependency>
       <groupId>org.hibernate</groupId>
@@ -114,28 +120,27 @@
     <dependency>
       <groupId>com.google.appengine</groupId>
       <artifactId>appengine-api-1.0-sdk</artifactId>
-      <version>${gae.version}</version>
+      <version>${appengine.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.appengine</groupId>
       <artifactId>appengine-testing</artifactId>
-      <version>${gae.version}</version>
+      <version>${appengine.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.google.appengine</groupId>
       <artifactId>appengine-api-stubs</artifactId>
-      <version>${gae.version}</version>
+      <version>${appengine.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.google.appengine</groupId>
       <artifactId>appengine-api-labs</artifactId>
-      <version>${gae.version}</version>
+      <version>${appengine.version}</version>
     </dependency>
 
     <!-- Objectify for persistence. It uses the stock javax.persistence annotations -->
-
     <dependency>
       <groupId>com.googlecode.objectify</groupId>
       <artifactId>objectify</artifactId>
@@ -148,7 +153,6 @@
     </dependency>
 
     <!-- GIN and Guice for IoC / DI -->
-
     <dependency>
       <groupId>com.google.inject</groupId>
       <artifactId>guice</artifactId>
@@ -167,11 +171,10 @@
     </dependency>
 
     <!-- Unit tests -->
-
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.11</version>
+      <version>4.12</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -186,7 +189,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
-        <version>${gwtVersion}</version>
+        <version>${gwt.version}</version>
         <executions>
           <execution>
             <goals>
@@ -214,13 +217,14 @@
           <modules>
             <module>com.google.gwt.sample.mobilewebapp.MobileWebApp</module>
           </modules>
-          <appEngineVersion>${gae.version}</appEngineVersion>
-          <appEngineHome>${gae.home}</appEngineHome>
+
           <logLevel>INFO</logLevel>
           <style>${gwt.style}</style>
 
-          <server>com.google.appengine.tools.development.gwt.AppEngineLauncher</server>
           <copyWebapp>true</copyWebapp>
+          
+          <!-- mvn gwt:run-codeserver - won't have to use the bookmarklet -->
+          <launcherDir>${project.build.directory}/${project.build.finalName}</launcherDir>
 
           <!-- Run tests using HtmlUnit -->
           <mode>htmlunit</mode>
@@ -229,20 +233,22 @@
          </configuration>
       </plugin>
 
-      <!-- Google App Engine plugin -->
+      <!-- Google App Engine Plugin -->
+      <!-- appengine:devserver_start - start web server -->
+      <!-- appengine:devserver_stop - stop web server -->
       <plugin>
-        <groupId>net.kindleit</groupId>
-        <artifactId>maven-gae-plugin</artifactId>
-        <version>0.8.1</version>
-        <executions>
-          <execution>
-            <id />
-            <phase>validate</phase>
-            <goals>
-              <goal>unpack</goal>
-            </goals>
-          </execution>
-        </executions>
+        <groupId>com.google.appengine</groupId>
+        <artifactId>appengine-maven-plugin</artifactId>
+        <version>${appengine.version}</version>
+        <configuration>
+          <version>${appengine.application.version}</version>
+          <enableJarClasses>false</enableJarClasses>
+          <!-- Uncomment the snippet below to bind to all IPs instead of just localhost -->
+          <!-- <address>0.0.0.0</address> <port>8080</port> -->
+          <!-- Uncomment the snippet below to enable local debugging with a remove debugger like those included with Eclipse 
+            or IntelliJ -->
+          <!-- <jvmFlags><jvmFlag>-agentlib:jdwp=transport=dt_socket,address=8000,server=y,suspend=n</jvmFlag></jvmFlags> -->
+        </configuration>
       </plugin>
 
       <!-- Skip normal test execution, we use gwt:test instead -->
@@ -255,36 +261,6 @@
       </plugin>
 
     </plugins>
-
-    <!-- Required by m2e for import into eclipse. No effect on command line builds  -->
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.eclipse.m2e</groupId>
-          <artifactId>lifecycle-mapping</artifactId>
-          <version>1.0.0</version>
-          <configuration>
-            <lifecycleMappingMetadata>
-              <pluginExecutions>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>net.kindleit</groupId>
-                    <artifactId>maven-gae-plugin</artifactId>
-                    <versionRange>[0.7.3,)</versionRange>
-                    <goals>
-                      <goal>unpack</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <execute />
-                  </action>
-                </pluginExecution>
-              </pluginExecutions>
-            </lifecycleMappingMetadata>
-          </configuration>
-        </plugin>
-      </plugins>
-    </pluginManagement>
   </build>
 
   <repositories>
@@ -305,8 +281,8 @@
   </repositories>
   <pluginRepositories>
     <pluginRepository>
-      <id>codehaus-snapshots</id>
-      <url>https://nexus.codehaus.org/content/groups/snapshots-group/</url>
+      <id>google-snapshots</id>
+      <url>https://oss.sonatype.org/content/repositories/google-snapshots/</url>
       <releases>
         <enabled>false</enabled>
       </releases>
@@ -315,8 +291,8 @@
       </snapshots>
     </pluginRepository>
     <pluginRepository>
-      <id>google-snapshots</id>
-      <url>https://oss.sonatype.org/content/repositories/google-snapshots/</url>
+      <id>gwt-plugin-snapshots</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
       <releases>
         <enabled>false</enabled>
       </releases>

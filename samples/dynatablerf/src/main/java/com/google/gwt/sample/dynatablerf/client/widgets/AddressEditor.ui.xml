@@ -2,7 +2,7 @@
     xmlns:dt='urn:import:com.google.gwt.sample.dynatablerf.client.widgets'
     xmlns:g='urn:import:com.google.gwt.user.client.ui'
     xmlns:e='urn:import:com.google.gwt.editor.ui.client'>
-  <ui:style src="../common.css">
+  <ui:style src="../common.gss">
     
   </ui:style>
   <g:HTMLPanel>

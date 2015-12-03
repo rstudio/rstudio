@@ -42,4 +42,9 @@
   <source path='client'/>
   <source path='presenter'/>
   <source path='shared'/>
+  
+  <set-configuration-property name="CssResource.enableGss" value="true" />
+  <set-configuration-property name="CssResource.gssDefaultInUiBinder" value="true" />
+  <!-- CSS to GSS Conversion -->
+  <set-configuration-property name="CssResource.conversionMode" value="strict" />
 </module>

@@ -1,6 +1,6 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder">
-  <ui:style gss="true">
+  <ui:style>
     .taskTemplateCell {
       margin: 8px;
       border: 1px solid #666;

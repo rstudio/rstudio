@@ -1,9 +1,9 @@
 /* Common measurements used in the app. */
-@def fieldWidth 30em;
+@def FIELDWIDTH 30em;
 
 .editField {
   display: inline;
-  width: fieldWidth;
+  width: FIELDWIDTH;
 }
 
 .rightAlign {

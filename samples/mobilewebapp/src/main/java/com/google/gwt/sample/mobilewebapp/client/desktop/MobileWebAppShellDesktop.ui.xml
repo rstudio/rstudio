@@ -6,7 +6,7 @@
   xmlns:c="urn:import:com.google.gwt.user.cellview.client"
   xmlns:d="urn:import:com.google.gwt.sample.mobilewebapp.client.desktop">
 
-  <ui:style gss="true">
+  <ui:style>
     .header {
       border-bottom: 1px solid #666;
       padding-top: 6px;
