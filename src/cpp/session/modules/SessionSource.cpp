@@ -983,6 +983,9 @@ Error setSourceDocumentDirty(const json::JsonRpcRequest& request,
       return error;
    
    pDoc->setDirty(dirty);
+   error = source_database::put(pDoc);
+   if (error)
+      return error;
 
    return Success();
 }
