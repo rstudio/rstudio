@@ -15,8 +15,11 @@
 
 #include <tests/TestThat.hpp>
 
+#include <vector>
+#include <string>
 #include <iostream>
 
+#include <core/Algorithm.hpp>
 #include <core/collection/Position.hpp>
 
 namespace rstudio {
@@ -34,6 +37,22 @@ context("Position")
       expect_true(Position(2, 2) <  Position(2, 4));
    }
    
+}
+
+context("Splitting")
+{
+   test_that("core::algorithm::split handles multi-character delimiters")
+   {
+      std::string contents = "foo::bar::baz";
+      std::vector<std::string> splat = core::algorithm::split(contents, "::");
+      expect_true(splat.size() == 3);
+      if (splat.size() == 3)
+      {
+         expect_true(splat[0] == "foo");
+         expect_true(splat[1] == "bar");
+         expect_true(splat[2] == "baz");
+      }
+   }
 }
 
 } // namespace unit_tests

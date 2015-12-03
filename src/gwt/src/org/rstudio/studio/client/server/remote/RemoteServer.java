@@ -3737,6 +3737,14 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, GET_R_ADDINS, requestCallback);
    }
+   
+   @Override
+   public void executeRAddin(String commandId, ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(commandId));
+      sendRequest(RPC_SCOPE, EXECUTE_R_ADDIN, params, requestCallback);
+   }
 
    @Override
    public void getShinyViewerType(ServerRequestCallback<ShinyViewerType> requestCallback)
@@ -4687,6 +4695,7 @@ public class RemoteServer implements Server
    private static final String GET_PRODUCT_INFO = "get_product_info";
    
    private static final String GET_R_ADDINS = "get_r_addins";
+   private static final String EXECUTE_R_ADDIN = "execute_r_addin";
 
    private static final String CREATE_SHINY_APP = "create_shiny_app";
    private static final String GET_SHINY_VIEWER_TYPE = "get_shiny_viewer_type";

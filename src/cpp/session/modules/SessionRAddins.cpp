@@ -13,6 +13,7 @@
  *
  */
 
+#include <core/Algorithm.hpp>
 #include <core/Debug.hpp>
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
@@ -91,6 +92,11 @@ public:
       addins_[constructKey(package, spec.getName())] = spec;
    }
    
+   bool contains(const std::string& package, const std::string& name)
+   {
+      return addins_.count(constructKey(package, name));
+   }
+
    const AddinSpecification& get(const std::string& package, const std::string& name)
    {
       return addins_[constructKey(package, name)];
@@ -230,6 +236,51 @@ Error getRAddins(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error executeRAddin(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   std::string commandId;
+   Error error;
+   
+   error = json::readParams(request.params, &commandId);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   std::vector<std::string> splat = core::algorithm::split(commandId, "::");
+   if (splat.size() != 2)
+   {
+      LOG_ERROR_MESSAGE("unexpected command id '" + commandId + "'");
+      return Success();
+   }
+   
+   std::string pkgName = splat[0];
+   std::string cmdName = splat[1];
+   
+   if (!addinRegistry().contains(pkgName, cmdName))
+   {
+      LOG_ERROR_MESSAGE("no command with id '" + commandId + "'");
+      return Success();
+   }
+   
+   SEXP fnSEXP = r::sexp::findFunction(cmdName, pkgName);
+   if (fnSEXP == R_UnboundValue)
+   {
+      LOG_ERROR_MESSAGE("no function '" + cmdName + "' found in package '" + pkgName + "'");
+      return Success();
+   }
+   
+    error = r::exec::RFunction(fnSEXP).call();
+    if (error)
+    {
+       LOG_ERROR(error);
+       return error;
+    }
+   
+   return Success();
+}
 } // end anonymous namespace
   
 Error initialize()
@@ -242,7 +293,8 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
          (bind(sourceModuleRFile, "SessionRAddins.R"))
-         (bind(registerRpcMethod, "get_r_addins", getRAddins));
+         (bind(registerRpcMethod, "get_r_addins", getRAddins))
+         (bind(registerRpcMethod, "execute_r_addin", executeRAddin));
    
    return initBlock.execute();
 }
