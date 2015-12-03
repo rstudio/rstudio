@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.application;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIUtils;
 
 import com.google.gwt.user.client.Window;
@@ -30,6 +31,11 @@ public class ApplicationAction
       return URIUtils.addQueryParam(url, URL_PARAMETER, action);  
    }
    
+   public static boolean hasAction()
+   {
+      return getAction().length() > 0;
+   }
+   
    public static boolean isQuit()
    {
       return isAction(QUIT);
@@ -42,7 +48,13 @@ public class ApplicationAction
    
    private static boolean isAction(String action)
    {
-      return (action.equals(Window.Location.getParameter(URL_PARAMETER)));
+      return action.equals(getAction());
+   }
+   
+   private static String getAction()
+   {
+      return StringUtil.notNull(
+          Window.Location.getParameter(URL_PARAMETER));
    }
    
    private static final String URL_PARAMETER = "action";
