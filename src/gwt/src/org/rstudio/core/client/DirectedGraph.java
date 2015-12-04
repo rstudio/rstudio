@@ -14,8 +14,10 @@
  */
 package org.rstudio.core.client;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DirectedGraph<K, V>
@@ -93,6 +95,20 @@ public class DirectedGraph<K, V>
          return getChild(key);
       else
          return addChild(key);
+   }
+   
+   public List<V> flatten()
+   {
+      List<V> list = new ArrayList<V>();
+      fillRecursive(list, this);
+      return list;
+   }
+   
+   private void fillRecursive(List<V> list, DirectedGraph<K, V> node)
+   {
+      list.add(node.getData());
+      for (Map.Entry<K, DirectedGraph<K, V>> entry : children_.entrySet())
+         fillRecursive(list, entry.getValue());
    }
    
    public V getData() { return data_; }
