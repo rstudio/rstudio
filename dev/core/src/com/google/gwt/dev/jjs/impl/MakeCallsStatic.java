@@ -118,14 +118,12 @@ public class MakeCallsStatic {
       @Override
       public void endVisit(JParameterRef x, Context ctx) {
         JParameter param = varMap.get(x.getTarget());
-        JParameterRef paramRef = new JParameterRef(x.getSourceInfo(), param);
-        ctx.replaceMe(paramRef);
+        ctx.replaceMe(param.makeRef(x.getSourceInfo()));
       }
 
       @Override
       public void endVisit(JThisRef x, Context ctx) {
-        JParameterRef paramRef = new JParameterRef(x.getSourceInfo(), thisParam);
-        ctx.replaceMe(paramRef);
+        ctx.replaceMe(thisParam.makeRef(x.getSourceInfo()));
       }
     }
 
@@ -201,7 +199,7 @@ public class MakeCallsStatic {
       newCall.addArg(new JThisRef(sourceInfo, enclosingType));
       for (int i = 0; i < x.getParams().size(); ++i) {
         JParameter param = x.getParams().get(i);
-        newCall.addArg(new JParameterRef(sourceInfo, param));
+        newCall.addArg(param.makeRef(sourceInfo));
       }
       newBody.getBlock().addStmt(JjsUtils.makeMethodEndStatement(returnType, newCall));
 

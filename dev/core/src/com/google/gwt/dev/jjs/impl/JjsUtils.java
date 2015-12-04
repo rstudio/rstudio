@@ -44,7 +44,6 @@ import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JParameter;
-import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
@@ -212,7 +211,7 @@ public class JjsUtils {
     forwardingCall.setStaticDispatchOnly();
     // copy params
     for (JParameter p : forwardingMethod.getParams()) {
-      forwardingCall.addArg(new JParameterRef(p.getSourceInfo(), p));
+      forwardingCall.addArg(p.makeRef(p.getSourceInfo()));
     }
 
     // return statement if not void return type

@@ -27,6 +27,11 @@ public class JLocal extends JVariable {
   }
 
   @Override
+  public JLocalRef makeRef(SourceInfo info) {
+    return new JLocalRef(info, this);
+  }
+
+  @Override
   public void setInitializer(JDeclarationStatement declStmt) {
     this.declStmt = declStmt;
   }

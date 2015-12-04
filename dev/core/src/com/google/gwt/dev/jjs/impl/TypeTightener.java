@@ -37,7 +37,6 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JParameter;
-import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPermutationDependentValue;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
@@ -310,7 +309,7 @@ public class TypeTightener {
       // Fake an assignment-to-self on all args to prevent tightening
       JMethod method = x.getTarget();
       for (JParameter param : method.getParams()) {
-        addAssignment(param, new JParameterRef(SourceOrigin.UNKNOWN, param));
+        addAssignment(param, param.makeRef(SourceOrigin.UNKNOWN));
       }
     }
 

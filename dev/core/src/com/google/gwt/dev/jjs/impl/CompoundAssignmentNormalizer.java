@@ -128,7 +128,7 @@ public abstract class CompoundAssignmentNormalizer {
         JLocal tempLocal = createTempLocal(x.getSourceInfo(), x.getType());
 
         // Create an assignment for this temp and add it to multi.
-        JLocalRef tempRef = new JLocalRef(x.getSourceInfo(), tempLocal);
+        JLocalRef tempRef = tempLocal.makeRef(x.getSourceInfo());
         JBinaryOperation asg =
             new JBinaryOperation(x.getSourceInfo(), x.getType(), JBinaryOperator.ASG, tempRef, x);
         multi.addExpressions(asg);
@@ -207,7 +207,7 @@ public abstract class CompoundAssignmentNormalizer {
       JLocal tempLocal = createTempLocal(x.getSourceInfo(), expressionReturn.getType());
 
       // t = x
-      JLocalRef tempRef = new JLocalRef(x.getSourceInfo(), tempLocal);
+      JLocalRef tempRef = tempLocal.makeRef(x.getSourceInfo());
       JBinaryOperation asg =
           new JBinaryOperation(x.getSourceInfo(), x.getType(), JBinaryOperator.ASG, tempRef,
               expressionReturn);
@@ -219,7 +219,7 @@ public abstract class CompoundAssignmentNormalizer {
       multi.addExpressions(accept(asg));
 
       // t
-      tempRef = new JLocalRef(x.getSourceInfo(), tempLocal);
+      tempRef = tempLocal.makeRef(x.getSourceInfo());
       multi.addExpressions(tempRef);
 
       ctx.replaceMe(multi);

@@ -15,16 +15,10 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow.copy;
 
-import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
-import com.google.gwt.dev.jjs.ast.JLocal;
-import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNode;
-import com.google.gwt.dev.jjs.ast.JParameter;
-import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JVariable;
-import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.impl.gflow.AssumptionMap;
 import com.google.gwt.dev.jjs.impl.gflow.AssumptionUtil;
 import com.google.gwt.dev.jjs.impl.gflow.IntegratedFlowFunction;
@@ -65,7 +59,7 @@ public class CopyIntegratedFlowFunction implements
             @Override
             public void endVisit(JNode x, Context ctx) {
               if (x == node.getJNode()) {
-                ctx.replaceMe(createRef(x.getSourceInfo(), original));
+                ctx.replaceMe(original.makeRef(x.getSourceInfo()));
               }
             }
           };
@@ -81,23 +75,13 @@ public class CopyIntegratedFlowFunction implements
     @Override
     public Cfg getNewSubgraph() {
       CfgReadNode newNode = new CfgReadNode(node.getParent(),
-          createRef(node.getJNode().getSourceInfo(), original));
+          original.makeRef(node.getJNode().getSourceInfo()));
       return CfgUtil.createSingleNodeReplacementGraph(graph, node, newNode);
     }
 
     @Override
     public String toString() {
       return "CopyTransformation(" + node + "," + original + ")";
-    }
-
-    private JVariableRef createRef(SourceInfo sourceInfo, JVariable variable) {
-      if (variable instanceof JLocal) {
-        return new JLocalRef(sourceInfo, (JLocal) variable);
-      } else if (variable instanceof JParameter) {
-        return new JParameterRef(sourceInfo, (JParameter) variable);
-      }
-      throw new IllegalArgumentException("Unsupported variable: " +
-          variable.getClass());
     }
   }
 

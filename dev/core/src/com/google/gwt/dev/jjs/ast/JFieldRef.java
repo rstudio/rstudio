@@ -39,7 +39,8 @@ public class JFieldRef extends JVariableRef implements HasEnclosingType {
    */
   private final JType overriddenType;
 
-  public JFieldRef(SourceInfo info, JExpression instance, JField field, JDeclaredType enclosingType) {
+  public JFieldRef(
+      SourceInfo info, JExpression instance, JField field, JDeclaredType enclosingType) {
     this(info, instance, field, enclosingType, null);
   }
 

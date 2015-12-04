@@ -36,6 +36,11 @@ public class JParameter extends JVariable {
   }
 
   @Override
+  public JParameterRef makeRef(SourceInfo info) {
+    return new JParameterRef(info, this);
+  }
+
+  @Override
   public void setInitializer(JDeclarationStatement declStmt) {
     throw new UnsupportedOperationException("A JParameter cannot have an initializer");
   }

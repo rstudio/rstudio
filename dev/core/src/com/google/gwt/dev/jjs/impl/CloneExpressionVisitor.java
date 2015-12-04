@@ -183,7 +183,7 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JLocalRef x, Context ctx) {
-    expression = new JLocalRef(x.getSourceInfo(), x.getLocal());
+    expression = x.getLocal().makeRef(x.getSourceInfo());
     return false;
   }
 
@@ -244,7 +244,7 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JParameterRef x, Context ctx) {
-    expression = new JParameterRef(x.getSourceInfo(), x.getParameter());
+    expression = x.getParameter().makeRef(x.getSourceInfo());
     return false;
   }
 

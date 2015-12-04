@@ -358,7 +358,7 @@ public abstract class OptimizerTestBase extends JJSTestBase {
             JLocal var = JProgram.createLocal(instance.getSourceInfo(), "$t", instance.getType(),
                 false, body);
 
-            JLocalRef localRef = new JLocalRef(var.getSourceInfo(), var);
+            JLocalRef localRef = var.makeRef(var.getSourceInfo());
             instance = new JBinaryOperation(instance.getSourceInfo(), localRef.getType(),
                 JBinaryOperator.ASG, localRef, instance);
           }

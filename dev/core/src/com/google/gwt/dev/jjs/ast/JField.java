@@ -133,6 +133,12 @@ public class JField extends JVariable implements JMember {
     return null;
   }
 
+
+  @Override
+  public JFieldRef makeRef(SourceInfo info) {
+    throw new UnsupportedOperationException();
+  }
+
   @Override
   public void setJsMemberInfo(
       JsMemberType jsMembertype, String namespace, String name, boolean exported) {

@@ -27,7 +27,7 @@ public class JLocalRef extends JVariableRef {
    */
   private final JLocal local;
 
-  public JLocalRef(SourceInfo info, JLocal local) {
+  JLocalRef(SourceInfo info, JLocal local) {
     super(info, local);
     this.local = local;
   }

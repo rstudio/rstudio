@@ -60,6 +60,8 @@ public abstract class JVariable extends JNode implements CanBeSetFinal, CanHaveI
     return null;
   }
 
+  public abstract JVariableRef makeRef(SourceInfo sourceInfo);
+
   @Override
   public String getName() {
     return name;

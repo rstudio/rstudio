@@ -90,18 +90,30 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
     return isJsNative() || isJsFunctionMethod() || isJsInterfaceMethod();
   }
 
+  /**
+   * Adds a new final parameter to this method.
+   */
   public JParameter createFinalParameter(SourceInfo info, String name, JType type) {
     return createParameter(info, name, type, true, false);
   }
 
+  /**
+   * Adds a new parameter to this method.
+   */
   public JParameter createParameter(SourceInfo info, String name, JType type) {
     return createParameter(info, name, type, false, false);
   }
 
+  /**
+   * Adds a new final parameter to this method.
+   */
   public JParameter createParameter(SourceInfo info, String name, JType type, boolean isFinal) {
     return createParameter(info, name, type, isFinal, false);
   }
 
+  /**
+   * Adds a new parameter to this method that is a copy of {@code from}.
+   */
   public JParameter cloneParameter(JParameter from) {
     return createParameter(
         from.getSourceInfo(), from.getName(), from.getType(), from.isFinal(), from.isThis());
@@ -114,13 +126,17 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
     return createParameter(info,  "this$static", type, true, true);
   }
 
+  private void addParameter(JParameter x) {
+    params = Lists.add(params, x);
+  }
+
   private JParameter createParameter(SourceInfo info, String name, JType type,
       boolean isFinal, boolean isThis) {
     assert (name != null);
     assert (type != null);
 
     JParameter x = new JParameter(info, name, type, isFinal, isThis);
-    addParam(x);
+    addParameter(x);
     return x;
   }
 
@@ -445,12 +461,6 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
     assert canBePolymorphic() : this + " is not polymorphic";
     assert overridingMethod != this : this + " cannot override itself";
     overridingMethods.add(overridingMethod);
-  }
-  /**
-   * Adds a parameter to this method.
-   */
-  public void addParam(JParameter x) {
-    params = Lists.add(params, x);
   }
 
   public void addThrownException(JClassType exceptionType) {

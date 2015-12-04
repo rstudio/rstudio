@@ -19,7 +19,6 @@ import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JLocal;
-import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JStatement;
@@ -67,7 +66,7 @@ public abstract class JModVisitorWithTemporaryVariableCreation extends JChangeTr
     String temporaryLocalName = newTemporaryLocalName(info, type, currentMethodBody);
     JLocal local = JProgram.createLocal(info, temporaryLocalName, type, false, currentMethodBody);
     JDeclarationStatement declarationStatement =
-        new JDeclarationStatement(info, new JLocalRef(info, local), null);
+        new JDeclarationStatement(info, local.makeRef(info), null);
     currentDeclarationInsertionPoint.peek().insertBefore(declarationStatement);
     return local;
   }

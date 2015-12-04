@@ -244,7 +244,7 @@ public class MethodInliner {
           JLocal local = (JLocal) declStatement.getVariableRef().getTarget();
           JExpression clone = new JBinaryOperation(stmt.getSourceInfo(), local.getType(),
               JBinaryOperator.ASG,
-              new JLocalRef(declStatement.getVariableRef().getSourceInfo(), local),
+              local.makeRef(declStatement.getVariableRef().getSourceInfo()),
               cloner.cloneExpression(initializer));
           expressions.add(clone);
         } else if (stmt instanceof JExpressionStatement) {
@@ -543,7 +543,7 @@ public class MethodInliner {
         newLocalsByOriginalLocal.put(originalLocal, newLocal);
       }
 
-      ctx.replaceMe(new JLocalRef(x.getSourceInfo(), newLocal));
+      ctx.replaceMe(newLocal.makeRef(x.getSourceInfo()));
     }
   }
 

@@ -22,7 +22,6 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JLocal;
-import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JType;
 
@@ -57,7 +56,7 @@ public class JModVisitorWithTemporaryVariableCreationTest extends JJSTestBase {
         JType type = x.getType();
         JLocal local = createTempLocal(info, type);
         ctx.replaceMe(new JBinaryOperation(info, type, JBinaryOperator.ASG,
-            new JLocalRef(info, local), x));
+            local.makeRef(info), x));
       }
     }
 
