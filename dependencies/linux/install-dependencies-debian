@@ -44,7 +44,9 @@ sudo apt-get -y install libboost-all-dev
 sudo apt-get -y install libpango1.0-dev
 
 # gwt prereqs
-sudo apt-get -y install openjdk-6-jdk 
+## openjdk-6-jdk is no longer available in the current stable version of debian [2015-12-04]
+## Also, ant no longer depends on openjdk-6-jdk
+# sudo apt-get -y install openjdk-6-jdk 
 sudo apt-get -y install ant
 
 # overlay
