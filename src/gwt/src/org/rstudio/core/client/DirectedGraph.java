@@ -107,23 +107,26 @@ public class DirectedGraph<K, V>
       return list;
    }
    
-   private void fillRecursive(List<Pair<List<K>, V>> list,
-                              List<K> keys,
-                              DirectedGraph<K, V> node)
+   private static <K, V> void fillRecursive(List<Pair<List<K>, V>> list,
+                                            List<K> keys,
+                                            DirectedGraph<K, V> node)
    {
       keys.add(node.getKey());
       list.add(new Pair<List<K>, V>(new ArrayList<K>(keys), node.getValue()));
       
-      for (Map.Entry<K, DirectedGraph<K, V>> entry : children_.entrySet())
+      for (Map.Entry<K, DirectedGraph<K, V>> entry : node.getChildren().entrySet())
          fillRecursive(list, keys, entry.getValue());
    }
    
    public V getValue() { return value_; }
    public void setValue(V value) { value_ = value; }
+   
    public K getKey() { return key_; }
    
    public boolean isRoot() { return parent_ == null; }
 
+   private Map<K, DirectedGraph<K, V>> getChildren() { return children_; }
+   
    private final DirectedGraph<K, V> parent_;
    private final Map<K, DirectedGraph<K, V>> children_;
    
