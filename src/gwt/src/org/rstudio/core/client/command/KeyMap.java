@@ -1,5 +1,5 @@
 /*
- * GlobalKeyMap.java
+ * KeyMap.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -21,16 +21,13 @@ import org.rstudio.core.client.DirectedGraph;
 import org.rstudio.core.client.command.KeyboardShortcut.KeyCombination;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 
-public class GlobalKeyMap
+public class KeyMap
 {
    public interface BindableCommand
    {
       public void execute();
       public boolean isEnabled();
    }
-   
-   public static GlobalKeyMap INSTANCE = new GlobalKeyMap();
-   private GlobalKeyMap() {}
    
    public void addBinding(KeySequence keys, BindableCommand command)
    {
