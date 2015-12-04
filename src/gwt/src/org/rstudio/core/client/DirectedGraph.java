@@ -14,7 +14,6 @@
  */
 package org.rstudio.core.client;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,7 +39,7 @@ public class DirectedGraph<K, V>
    
    public DirectedGraph<K, V> ensureNode(K key)
    {
-      return ensureNode(Arrays.asList(key));
+      return ensureChild(key);
    }
    
    public DirectedGraph<K, V> ensureNode(Collection<K> keys)
@@ -54,7 +53,7 @@ public class DirectedGraph<K, V>
    
    public DirectedGraph<K, V> findNode(K key)
    {
-      return findNode(Arrays.asList(key));
+      return getChild(key);
    }
    
    public DirectedGraph<K, V> findNode(Collection<K> keys)
@@ -71,7 +70,7 @@ public class DirectedGraph<K, V>
       return node;
    }
    
-   public DirectedGraph<K, V> addChild(K key)
+   private DirectedGraph<K, V> addChild(K key)
    {
       DirectedGraph<K, V> child = new DirectedGraph<K, V>(this, null);
       children_.put(key, child);
