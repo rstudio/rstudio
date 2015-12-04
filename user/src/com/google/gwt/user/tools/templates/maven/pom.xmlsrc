@@ -110,26 +110,6 @@
         </configuration>
       </plugin>
 
-      <!-- NOTE: this is only needed if you use "mvn eclipse:eclipse". -->
-      <!-- You can remove this plugin if you intend to only use the Maven integration in Eclipse, or another IDE -->
-      <plugin>
-        <artifactId>maven-eclipse-plugin</artifactId>
-        <version>2.7</version>  <!--  Note 2.8 does not work with AspectJ aspect path -->
-        <configuration>
-          <downloadSources>true</downloadSources>
-          <downloadJavadocs>false</downloadJavadocs>
-          <wtpversion>2.0</wtpversion>
-          <additionalBuildcommands>
-            <buildCommand>
-              <name>com.google.gwt.eclipse.core.gwtProjectValidator</name>
-            </buildCommand>
-          </additionalBuildcommands>
-          <additionalProjectnatures>
-            <projectnature>com.google.gwt.eclipse.core.gwtNature</projectnature>
-          </additionalProjectnatures>
-        </configuration>
-      </plugin>
-
     </plugins>
   </build>
 </project>
