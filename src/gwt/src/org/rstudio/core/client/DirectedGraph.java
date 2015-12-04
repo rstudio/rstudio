@@ -14,9 +14,9 @@
  */
 package org.rstudio.core.client;
 
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class DirectedGraph<K, V>
@@ -38,37 +38,30 @@ public class DirectedGraph<K, V>
       data_ = data;
    }
    
-   public DirectedGraph<K, V> addChild(K key, V data)
+   public DirectedGraph<K, V> ensureNode(K key)
    {
-      DirectedGraph<K, V> node = new DirectedGraph<K, V>(this, data);
-      children_.put(key, node);
+      return ensureNode(Arrays.asList(key));
+   }
+   
+   public DirectedGraph<K, V> ensureNode(Collection<K> keys)
+   {
+      DirectedGraph<K, V> node = this;
+      for (K key : keys)
+         node = node.ensureChild(key);
+      
       return node;
-   }
-   
-   public boolean hasChild(K key)
-   {
-      return children_.containsKey(key);
-   }
-   
-   public DirectedGraph<K, V> getChild(K key)
-   {
-      if (!hasChild(key))
-         return addChild(key, null);
-      return children_.get(key);
    }
    
    public DirectedGraph<K, V> findNode(K key)
    {
-      List<K> keyList = new ArrayList<K>();
-      return findNode(keyList);
+      return findNode(Arrays.asList(key));
    }
    
-   public DirectedGraph<K, V> findNode(List<K> keyList)
+   public DirectedGraph<K, V> findNode(Collection<K> keys)
    {
       DirectedGraph<K, V> node = this;
-      for (int i = 0; i < keyList.size(); i++)
+      for (K key : keys)
       {
-         K key = keyList.get(i);
          if (!node.hasChild(key))
             return null;
          
@@ -78,6 +71,31 @@ public class DirectedGraph<K, V>
       return node;
    }
    
+   public DirectedGraph<K, V> addChild(K key)
+   {
+      DirectedGraph<K, V> child = new DirectedGraph<K, V>(this, null);
+      children_.put(key, child);
+      return child;
+   }
+   
+   public DirectedGraph<K, V> getChild(K key)
+   {
+      return children_.get(key);
+   }
+   
+   public boolean hasChild(K key)
+   {
+      return children_.containsKey(key);
+   }
+   
+   private DirectedGraph<K, V> ensureChild(K key)
+   {
+      if (hasChild(key))
+         return getChild(key);
+      else
+         return addChild(key);
+   }
+   
    public V getData() { return data_; }
    public void setData(V data) { data_ = data; }
    
@@ -85,5 +103,6 @@ public class DirectedGraph<K, V>
 
    private final DirectedGraph<K, V> parent_;
    private final Map<K, DirectedGraph<K, V>> children_;
+   
    private V data_;
 }
