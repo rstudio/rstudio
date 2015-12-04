@@ -38,7 +38,10 @@ sudo apt-get -y install libapparmor1
 sudo apt-get -y install apparmor-utils
 
 # boost
-sudo apt-get -y install libboost-all-dev
+## This version of libboost-all-dev is now 1.55.0.2 in the current stable version of debian (jessie) [2015-12-04].
+## This is further along than the version installed by the install-boost script also run by install-dependencies-debian.
+## So comment this out to ensure only one version of boost is installed here and it is supported by rstudio.
+#sudo apt-get -y install libboost-all-dev
 
 # pango cairo
 sudo apt-get -y install libpango1.0-dev
