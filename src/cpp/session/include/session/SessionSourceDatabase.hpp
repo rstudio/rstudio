@@ -59,6 +59,7 @@ public:
    const std::string& folds() const { return folds_; }
    const std::string& collabServer() const { return collabServer_; }
    std::string getProperty(const std::string& name) const;
+   const std::time_t lastContentUpdate() const { return lastContentUpdate_; }
 
    // is this an untitled document?
    bool isUntitled() const;
@@ -151,6 +152,7 @@ private:
    std::string encoding_;
    std::string folds_;
    std::time_t lastKnownWriteTime_;
+   std::time_t lastContentUpdate_;
    bool dirty_;
    double created_;
    bool sourceOnSave_;
