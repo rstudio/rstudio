@@ -32,7 +32,7 @@ namespace text {
 
 extern const char * const kDcfFieldRegex;
 
-typedef boost::function<void(const std::pair<std::string,std::string>&)>
+typedef boost::function<bool(const std::pair<std::string,std::string>&)>
                                                            DcfFieldRecorder;
 
 Error parseDcfFile(const std::string& dcfFileContents,

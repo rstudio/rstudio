@@ -61,9 +61,14 @@ Error parseDcfFile(const std::string& dcfFileContents,
    {
       lineNumber++;
 
-      // skip blank lines
+      // report blank lines (so clients can see record delimiters)
       if (it->empty() || boost::algorithm::trim_copy(*it).empty())
+      {
+         if (!recordField(std::make_pair(std::string(), std::string())))
+            return Success();
+
          continue;
+      }
 
       // skip comment lines
       if (it->at(0) == '#')
@@ -80,7 +85,9 @@ Error parseDcfFile(const std::string& dcfFileContents,
          // if we have a pending key & value then resolve it
          if (!currentKey.empty())
          {
-            recordField(std::make_pair(currentKey,currentValue));
+            if (!recordField(std::make_pair(currentKey,currentValue)))
+               return Success();
+
             currentKey.clear();
             currentValue.clear();
          }
@@ -115,7 +122,10 @@ Error parseDcfFile(const std::string& dcfFileContents,
 
    // resolve any pending key and value
    if (!currentKey.empty())
-      recordField(std::make_pair(currentKey,currentValue));
+   {
+      if (!recordField(std::make_pair(currentKey,currentValue)))
+         return Success();
+   }
 
    return Success();
 }
@@ -147,10 +157,15 @@ Error parseDcfFile(const FilePath& dcfFilePath,
 
 namespace {
 
-void mapInsert(std::map<std::string,std::string>* pMap,
+bool mapInsert(std::map<std::string,std::string>* pMap,
                const std::pair<std::string,std::string>& field)
 {
+   // ignore empty records
+   if (field.first.empty())
+      return true;
+
    pMap->insert(field);
+   return true;
 }
 
 } // anonymous namespace
