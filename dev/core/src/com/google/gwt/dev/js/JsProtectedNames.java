@@ -29,26 +29,22 @@ import java.util.Set;
  */
 public class JsProtectedNames {
 
-  private static final Set<String> javaScriptKeywords;
-
   private static final Set<String> illegalNames;
 
   static {
-    javaScriptKeywords = Sets.newHashSet(
-        // These are current keywords
-        "break", "delete", "function", "return", "typeof", "case", "do", "if",
-        "switch", "var", "catch", "else", "in", "this", "void", "continue",
-        "false", "instanceof", "throw", "while", "debugger",
-        "finally", "new", "true", "with", "default", "for", "null", "try",
-
-        // These are future keywords
-        "abstract", "double", "goto", "native", "static", "boolean", "enum",
-        "implements", "package", "super", "byte", "export", "import",
-        "private", "synchronized", "char", "extends", "int", "protected",
-        "throws", "class", "final", "interface", "public", "transient",
-        "const", "float", "long", "short", "volatile");
-
     illegalNames = Sets.newHashSet(
+        // These are current keywords as of ES6
+        "break", "case", "class", "catch", "const", "continue", "debugger", "default", "delete",
+        "do", "else", "export", "extends", "finally", "for", "function", "if", "import", "in",
+        "instanceof", "let", "new", "return", "super", "switch", "this", "throw", "try", "typeof",
+        "var", "void", "while", "with", "yield",
+
+        // Future reserved keywords
+        "abstract", "arguments", "async", "await",  "boolean", "byte", "char", "double", "false",
+        "final", "float", "goto", "implements", "int",  "interface", "long", "native", "null",
+        "package", "private", "protected", "public", "short", "static", "synchronized", "throws",
+        "transient", "true", "volatile",
+
         // These might be top level variables or functions that we care not to hide. Grabbed from
         // closure externs es?.js, w3c_d*.js and window.js.
         //
@@ -70,17 +66,16 @@ public class JsProtectedNames {
         "match", "src", "cos", "title", "write", "JSON", "PI", "beta", "log", "forms", "split",
         "input", "NaN", "focus", "map", "defer", "data", "push", "atan2", "atan", "shape", "small",
         "blur", "text", "LN2", "get", "max", "arity", "dir", "x", "Error", "y", "z", "sort", "size",
-        "round", "Math",
+        "round", "Math", "undefined",
         // From Chrome 30
         "CSS", "Rect", "Blob", "self", "Node", "JSON", "Intl", "Attr", "Date",
         "File", "name", "Text", "Array", "Audio", "event", "Range", "Touch", "Image", "Error",
         "Event", "top", "url",
         // From Firefox 25
-        "Map", "Set", "eval", "Proxy",
+        "Map", "Set", "Proxy",
         // From Safari 7.0
         "Path", "self");
 
-    illegalNames.addAll(javaScriptKeywords);
     illegalNames.addAll(loadGlobals("chrome"));
     illegalNames.addAll(loadGlobals("firefox25"));
     illegalNames.addAll(loadGlobals("ie9"));
@@ -102,10 +97,6 @@ public class JsProtectedNames {
     } catch (IOException e) {
       throw new RuntimeException("JsProtectedNames can't read resource: " + path, e);
     }
-  }
-
-  public static boolean isKeyword(String s) {
-    return javaScriptKeywords.contains(s);
   }
 
   public static boolean isLegalName(String s) {
