@@ -13,7 +13,7 @@
   <properties>
     <!-- Convenience property to set the GWT version -->
     <gwtVersion>@gwtVersion</gwtVersion>
-    <!-- Note: GWT needs at least java 1.6 -->
+    <!-- Note: GWT needs at least java 1.7 -->
     <maven.compiler.source>1.7</maven.compiler.source>
     <maven.compiler.target>1.7</maven.compiler.target>
   </properties>
@@ -45,11 +45,6 @@
     <dependency>
       <groupId>com.google.gwt</groupId>
       <artifactId>gwt-dev</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.google.gwt</groupId>
-      <artifactId>gwt-codeserver</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>

@@ -54,12 +54,6 @@
       <!-- "provided" so that we don't deploy -->
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>com.google.gwt</groupId>
-      <artifactId>gwt-codeserver</artifactId>
-      <!-- "provided" so that we don't deploy -->
-      <scope>provided</scope>
-    </dependency>
 
 
     <!-- Hibernate bean validation binary for the server -->
