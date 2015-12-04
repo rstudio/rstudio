@@ -526,6 +526,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       core::system::unsetenv(kRStudioInitialProject);
    }
 
+   // ensure we aren't trying to open a shared project if sharing is disabled
+   if (!core::system::getenv(kRStudioDisableProjectSharing).empty() &&
+       r_util::isSharedPath(initialProjectPath_, userHomePath()))
+   {
+      scopeState_ = r_util::ScopeInvalidProject;
+   }
+
    // limit rpc client uid
    limitRpcClientUid_ = -1;
    std::string limitUid = core::system::getenv(kRStudioLimitRpcClientUid);

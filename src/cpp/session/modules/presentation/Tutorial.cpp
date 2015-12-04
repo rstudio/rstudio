@@ -43,10 +43,14 @@ void onSlideDeckChangedOverlay(const SlideDeck& slideDeck)
 
 namespace {
 
-void readTutorialField(const FilePath& tutorialPath,
+bool readTutorialField(const FilePath& tutorialPath,
                        const std::pair<std::string,std::string>& field,
                        Tutorial* pTutorial)
 {
+   // ignore empty records
+   if (field.first.empty())
+      return true;
+
    std::string name = field.first;
    std::string value = field.second;
    if (boost::iequals(name, "slides"))
@@ -70,6 +74,7 @@ void readTutorialField(const FilePath& tutorialPath,
       module_context::consoleWriteError(
                "Unrecognized field in TUTORIAL file: " + name + "\n");
    }
+   return true;
 }
 
 

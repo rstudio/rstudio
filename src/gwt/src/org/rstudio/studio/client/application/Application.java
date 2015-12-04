@@ -706,15 +706,18 @@ public class Application implements ApplicationEventHandlers
       
       clientStateUpdaterInstance_ = clientStateUpdater_.get();
       
-      // initiate quit if requested. do this after a delay 
+      // initiate action if requested. do this after a delay 
       // so that the source database has time to load
       // before we interrogate it for unsaved documents
-      if (ApplicationQuit.isQuitSession())
+      if (ApplicationAction.hasAction())
       {
          new Timer() {
             @Override
             public void run() {
-               commands_.quitSession().execute();
+               if (ApplicationAction.isQuit())
+                  commands_.quitSession().execute();
+               else if (ApplicationAction.isNewProject())
+                  commands_.newProject().execute();
             }
          }.schedule(500); 
       }

@@ -228,4 +228,7 @@ public interface SourceServerOperations extends FilesServerOperations,
    
    public void getActiveDocumentContextCompleted(GetActiveDocumentContextEvent.Data data,
                                                  ServerRequestCallback<Void> requestCallback);
+   
+   public void setSourceDocumentDirty(String docId, boolean dirty,
+         ServerRequestCallback<Void> requestCallback);
 }

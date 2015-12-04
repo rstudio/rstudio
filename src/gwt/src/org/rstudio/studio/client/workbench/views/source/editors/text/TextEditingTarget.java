@@ -1099,7 +1099,7 @@ public class TextEditingTarget implements
                   }
                }, 
                null, // cancelOperation,
-               "Join Edit Session", 
+               "Discard and Join", 
                "Work on a Copy", 
                true  // yesIsDefault
                );

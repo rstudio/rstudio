@@ -36,6 +36,10 @@
 #include <core/r_util/RActiveSessions.hpp>
 #include <core/r_util/RProjectFile.hpp>
 
+#ifndef _WIN32
+#include <sys/stat.h>
+#endif
+
 #define kSessionSuffix "-d"
 #define kProjectNone   "none"
 
@@ -87,6 +91,36 @@ bool SessionScope::isProjectNone() const
 bool SessionScope::isWorkspaces() const
 {
    return project_.id() == kWorkspacesId;
+}
+
+bool isSharedPath(const std::string& projectPath,
+                  const core::FilePath& userHomePath)
+{
+#ifndef _WIN32
+   // ensure this is a real path
+   FilePath projectDir = FilePath::resolveAliasedPath(projectPath,
+                                                      userHomePath);
+   if (!projectDir.exists())
+      return false;
+
+   struct stat st;
+   if (::stat(projectDir.absolutePath().c_str(), &st) == 0)
+   {
+      // consider this project to be shared if we aren't the owner
+      if (st.st_uid != ::getuid())
+      {
+         return true;
+      }
+   }
+   else
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", projectDir.absolutePath());
+      LOG_ERROR(error);
+   }
+
+#endif
+   return false;
 }
 
 SessionScopeState validateSessionScope(const SessionScope& scope,

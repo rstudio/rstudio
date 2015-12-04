@@ -968,6 +968,35 @@ Error getSourceDocument(const json::JsonRpcRequest& request,
    return Success();
 }
 
+void onDocUpdated(boost::shared_ptr<SourceDocument> pDoc)
+{
+   source_database::events().onDocUpdated(pDoc);
+}
+
+Error setSourceDocumentDirty(const json::JsonRpcRequest& request,
+                             json::JsonRpcResponse* pResponse)
+{
+   std::string id;
+   bool dirty;
+   Error error = json::readParams(request.params, &id, &dirty);
+   if (error)
+      return error;
+
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
+   error = source_database::get(id, pDoc);
+   if (error)
+      return error;
+   
+   pDoc->setDirty(dirty);
+   error = source_database::put(pDoc);
+   if (error)
+      return error;
+
+   onDocUpdated(pDoc);
+
+   return Success();
+}
+
 void enqueFileEditEvent(const std::string& file)
 {
    // ignore if no file passed
@@ -1005,11 +1034,6 @@ void onSuspend(Settings*)
 // TODO: a resume followed by a client_init will cause us to call
 // source_database::list twice (which will cause us to read all of
 // the files twice). find a way to prevent this.
-
-void onDocUpdated(boost::shared_ptr<SourceDocument> pDoc)
-{
-   source_database::events().onDocUpdated(pDoc);
-}
 
 void onResume(const Settings&)
 {
@@ -1151,6 +1175,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_script_run_command", getScriptRunCommand))
       (bind(registerRpcMethod, "set_doc_order", setDocOrder))
       (bind(registerRpcMethod, "get_source_document", getSourceDocument))
+      (bind(registerRpcMethod, "set_source_document_dirty", setSourceDocumentDirty))
       (bind(sourceModuleRFile, "SessionSource.R"));
    Error error = initBlock.execute();
    if (error)
