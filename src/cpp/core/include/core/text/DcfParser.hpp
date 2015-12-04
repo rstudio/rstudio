@@ -32,6 +32,10 @@ namespace text {
 
 extern const char * const kDcfFieldRegex;
 
+// Function which is called to record the results of parsing. If
+// a blank line (i.e. record delimiter) is encountered then the
+// function will be called with a pair of empty strings. Return
+// true to continue parsing and false to terminate parsing.
 typedef boost::function<bool(const std::pair<std::string,std::string>&)>
                                                            DcfFieldRecorder;
 
