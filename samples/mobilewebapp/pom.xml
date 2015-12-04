@@ -190,14 +190,6 @@
               <goal>compile</goal>
             </goals>
           </execution>
-          <execution>
-            <!-- Run tests through gwt:test, this allows reusing the plugin configuration for GWTTestCases -->
-            <id>gwt-tests</id>
-            <phase>test</phase>
-            <goals>
-              <goal>test</goal>
-            </goals>
-          </execution>
         </executions>
 
         <!-- Plugin configuration. There are many available options,
@@ -222,8 +214,6 @@
 
           <!-- Run tests using HtmlUnit -->
           <mode>htmlunit</mode>
-          <!-- Tests patterns -->
-          <includes>**/Test*.java,**/*Test.java,**/*TestCase.java</includes>
          </configuration>
       </plugin>
 
@@ -242,15 +232,6 @@
           <!-- Uncomment the snippet below to enable local debugging with a remove debugger like those included with Eclipse 
             or IntelliJ -->
           <!-- <jvmFlags><jvmFlag>-agentlib:jdwp=transport=dt_socket,address=8000,server=y,suspend=n</jvmFlag></jvmFlags> -->
-        </configuration>
-      </plugin>
-
-      <!-- Skip normal test execution, we use gwt:test instead -->
-      <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.17</version>
-        <configuration>
-          <skip>true</skip>
         </configuration>
       </plugin>
 
