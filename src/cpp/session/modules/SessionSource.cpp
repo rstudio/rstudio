@@ -968,6 +968,11 @@ Error getSourceDocument(const json::JsonRpcRequest& request,
    return Success();
 }
 
+void onDocUpdated(boost::shared_ptr<SourceDocument> pDoc)
+{
+   source_database::events().onDocUpdated(pDoc);
+}
+
 Error setSourceDocumentDirty(const json::JsonRpcRequest& request,
                              json::JsonRpcResponse* pResponse)
 {
@@ -986,6 +991,8 @@ Error setSourceDocumentDirty(const json::JsonRpcRequest& request,
    error = source_database::put(pDoc);
    if (error)
       return error;
+
+   onDocUpdated(pDoc);
 
    return Success();
 }
@@ -1027,11 +1034,6 @@ void onSuspend(Settings*)
 // TODO: a resume followed by a client_init will cause us to call
 // source_database::list twice (which will cause us to read all of
 // the files twice). find a way to prevent this.
-
-void onDocUpdated(boost::shared_ptr<SourceDocument> pDoc)
-{
-   source_database::events().onDocUpdated(pDoc);
-}
 
 void onResume(const Settings&)
 {
