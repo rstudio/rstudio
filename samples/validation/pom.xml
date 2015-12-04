@@ -133,7 +133,7 @@
         <configuration>
           <moduleName>com.google.gwt.sample.validation.Validation</moduleName>
           <moduleShortName>Validation</moduleShortName>
-          <failOnError>false</failOnError><!-- There are deliberate server-only code in ServerValidator that would fail the build -->
+          <failOnError>true</failOnError>
           <!-- Compiler configuration -->
           <compilerArgs>
             <!-- Ask GWT to create the Story of Your Compile (SOYC) (gwt:compile) -->
