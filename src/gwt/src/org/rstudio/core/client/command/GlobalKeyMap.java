@@ -37,10 +37,10 @@ public class GlobalKeyMap
       DirectedGraph<KeyCombination, List<BindableCommand>> node =
             data_.ensureNode(keys.getData());
       
-      if (node.getData() == null)
-         node.setData(new ArrayList<BindableCommand>());
+      if (node.getValue() == null)
+         node.setValue(new ArrayList<BindableCommand>());
       
-      node.getData().add(command);
+      node.getValue().add(command);
    }
    
    public List<BindableCommand> getBindings(KeySequence keys)
@@ -51,7 +51,7 @@ public class GlobalKeyMap
       if (node == null)
          return null;
       
-      return node.getData();
+      return node.getValue();
    }
    
    public BindableCommand getActiveBinding(KeySequence keys)

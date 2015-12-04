@@ -24,19 +24,21 @@ public class DirectedGraph<K, V>
 {
    public DirectedGraph()
    {
-      this(null, null);
+      this(null, null, null);
    }
    
-   public DirectedGraph(V data)
+   public DirectedGraph(V value)
    {
-      this(null, data);
+      this(null, null, value);
    }
    
-   private DirectedGraph(DirectedGraph<K, V> parent, V data)
+   private DirectedGraph(DirectedGraph<K, V> parent, K key, V value)
    {
       parent_ = parent;
       children_ = new HashMap<K, DirectedGraph<K, V>>();
-      data_ = data;
+      
+      key_ = key;
+      value_ = value;
    }
    
    public DirectedGraph<K, V> ensureNode(K key)
@@ -74,7 +76,7 @@ public class DirectedGraph<K, V>
    
    private DirectedGraph<K, V> addChild(K key)
    {
-      DirectedGraph<K, V> child = new DirectedGraph<K, V>(this, null);
+      DirectedGraph<K, V> child = new DirectedGraph<K, V>(this, key, null);
       children_.put(key, child);
       return child;
    }
@@ -97,27 +99,34 @@ public class DirectedGraph<K, V>
          return addChild(key);
    }
    
-   public List<V> flatten()
+   public List<Pair<List<K>, V>> flatten()
    {
-      List<V> list = new ArrayList<V>();
-      fillRecursive(list, this);
+      List<Pair<List<K>, V>> list = new ArrayList<Pair<List<K>, V>>();
+      List<K> keys = new ArrayList<K>();
+      fillRecursive(list, keys, this);
       return list;
    }
    
-   private void fillRecursive(List<V> list, DirectedGraph<K, V> node)
+   private void fillRecursive(List<Pair<List<K>, V>> list,
+                              List<K> keys,
+                              DirectedGraph<K, V> node)
    {
-      list.add(node.getData());
+      keys.add(node.getKey());
+      list.add(new Pair<List<K>, V>(new ArrayList<K>(keys), node.getValue()));
+      
       for (Map.Entry<K, DirectedGraph<K, V>> entry : children_.entrySet())
-         fillRecursive(list, entry.getValue());
+         fillRecursive(list, keys, entry.getValue());
    }
    
-   public V getData() { return data_; }
-   public void setData(V data) { data_ = data; }
+   public V getValue() { return value_; }
+   public void setValue(V value) { value_ = value; }
+   public K getKey() { return key_; }
    
    public boolean isRoot() { return parent_ == null; }
 
    private final DirectedGraph<K, V> parent_;
    private final Map<K, DirectedGraph<K, V>> children_;
    
-   private V data_;
+   private final K key_;
+   private V value_;
 }
