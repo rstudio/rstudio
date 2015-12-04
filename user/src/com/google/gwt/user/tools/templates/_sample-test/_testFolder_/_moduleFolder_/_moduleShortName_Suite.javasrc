@@ -1,0 +1,14 @@
+package @modulePackageName;
+
+import @clientPackage.@moduleShortNameTest;
+import com.google.gwt.junit.tools.GWTTestSuite;
+import junit.framework.Test;
+import junit.framework.TestSuite;
+
+public class @moduleShortNameSuite extends GWTTestSuite {
+  public static Test suite() {
+    TestSuite suite = new TestSuite("Tests for @moduleShortName");
+    suite.addTestSuite(@moduleShortNameTest.class);
+    return suite;
+  }
+}

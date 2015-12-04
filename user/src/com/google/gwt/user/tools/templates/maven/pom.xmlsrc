@@ -92,8 +92,6 @@
           <compilerMetrics>true</compilerMetrics>
           <!-- Run tests using HtmlUnit -->
           <mode>htmlunit</mode>
-          <!-- Tests patterns -->
-          <includes>**/Test*.java,**/*Test.java,**/*TestCase.java</includes>
         </configuration>
       </plugin>
 

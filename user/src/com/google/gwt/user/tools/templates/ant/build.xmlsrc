@@ -93,7 +93,7 @@
       </classpath>
       <batchtest todir="reports/htmlunit.dev" >
         <fileset dir="@testFolder" >
-          <include name="**/*Test.java" />
+          <include name="**/*Suite.java" />
         </fileset>
       </batchtest>
       <formatter type="plain" />
@@ -116,7 +116,7 @@
       </classpath>
       <batchtest todir="reports/htmlunit.prod" >
         <fileset dir="@testFolder" >
-          <include name="**/*Test.java" />
+          <include name="**/*Suite.java" />
         </fileset>
       </batchtest>
       <formatter type="plain" />
