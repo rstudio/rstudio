@@ -319,6 +319,11 @@ public class KeyboardShortcut
          return true;
       }
       
+      public List<KeyCombination> getData()
+      {
+         return keyCombinations_;
+      }
+      
       private final List<KeyCombination> keyCombinations_;
    }
    
