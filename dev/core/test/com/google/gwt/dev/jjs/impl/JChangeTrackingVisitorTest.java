@@ -22,7 +22,6 @@ import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JVariable;
@@ -47,8 +46,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
 
     @Override
     public boolean enter(JMethod x, Context ctx) {
-      x.addParam(new JParameter(SourceOrigin.UNKNOWN, "_newParam_enter",
-          JPrimitiveType.INT, false, false));
+      x.createParameter(SourceOrigin.UNKNOWN, "_newParam_enter", JPrimitiveType.INT);
       return true;
     }
   }
@@ -60,8 +58,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
 
     @Override
     public void exit(JMethod x, Context ctx) {
-      x.addParam(new JParameter(SourceOrigin.UNKNOWN, "_newParam_exit",
-          JPrimitiveType.INT, false, false));
+      x.createParameter(SourceOrigin.UNKNOWN, "_newParam_exit", JPrimitiveType.INT);
     }
   }
 
@@ -72,15 +69,13 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
 
     @Override
     public boolean enter(JMethod x, Context ctx) {
-      x.addParam(new JParameter(SourceOrigin.UNKNOWN, "_newParam_enter",
-          JPrimitiveType.INT, false, false));
+      x.createParameter(SourceOrigin.UNKNOWN, "_newParam_enter", JPrimitiveType.INT);
       return true;
     }
 
     @Override
     public void exit(JMethod x, Context ctx) {
-      x.addParam(new JParameter(SourceOrigin.UNKNOWN, "_newParam_exit",
-          JPrimitiveType.INT, false, false));
+      x.createParameter(SourceOrigin.UNKNOWN, "_newParam_exit", JPrimitiveType.INT);
     }
   }
 
@@ -92,8 +87,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
 
     @Override
     public boolean enter(JMethod x, Context ctx) {
-      x.addParam(new JParameter(SourceOrigin.UNKNOWN, "_newParam_enter",
-          JPrimitiveType.INT, false, false));
+      x.createParameter(SourceOrigin.UNKNOWN, "_newParam_enter", JPrimitiveType.INT);
       return true;
     }
 
@@ -111,8 +105,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
 
     @Override
     public void exit(JMethod x, Context ctx) {
-      x.addParam(new JParameter(SourceOrigin.UNKNOWN, "_newParam_exit",
-          JPrimitiveType.INT, false, false));
+      x.createParameter(SourceOrigin.UNKNOWN, "_newParam_exit", JPrimitiveType.INT);
     }
 
     @Override

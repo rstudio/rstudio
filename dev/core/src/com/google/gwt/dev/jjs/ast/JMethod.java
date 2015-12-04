@@ -90,6 +90,40 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
     return isJsNative() || isJsFunctionMethod() || isJsInterfaceMethod();
   }
 
+  public JParameter createFinalParameter(SourceInfo info, String name, JType type) {
+    return createParameter(info, name, type, true, false);
+  }
+
+  public JParameter createParameter(SourceInfo info, String name, JType type) {
+    return createParameter(info, name, type, false, false);
+  }
+
+  public JParameter createParameter(SourceInfo info, String name, JType type, boolean isFinal) {
+    return createParameter(info, name, type, isFinal, false);
+  }
+
+  public JParameter cloneParameter(JParameter from) {
+    return createParameter(
+        from.getSourceInfo(), from.getName(), from.getType(), from.isFinal(), from.isThis());
+  }
+
+  /**
+   * Creates a parameter to hold the value of this in devirtualized methods.
+   */
+  public JParameter createThisParameter(SourceInfo info, JType type) {
+    return createParameter(info,  "this$static", type, true, true);
+  }
+
+  private JParameter createParameter(SourceInfo info, String name, JType type,
+      boolean isFinal, boolean isThis) {
+    assert (name != null);
+    assert (type != null);
+
+    JParameter x = new JParameter(info, name, type, isFinal, isThis);
+    addParam(x);
+    return x;
+  }
+
   private boolean isJsInterfaceMethod() {
     return isInterfaceMethod() && enclosingType.isJsType();
   }

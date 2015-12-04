@@ -229,17 +229,6 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     return x;
   }
 
-  public static JParameter createParameter(SourceInfo info, String name, JType type,
-      boolean isFinal, boolean isThis, JMethod enclosingMethod) {
-    assert (name != null);
-    assert (type != null);
-    assert (enclosingMethod != null);
-
-    JParameter x = new JParameter(info, name, type, isFinal, isThis);
-    enclosingMethod.addParam(x);
-    return x;
-  }
-
   public static List<JDeclaredType> deserializeTypes(ObjectInputStream stream) throws IOException,
       ClassNotFoundException {
     @SuppressWarnings("unchecked")

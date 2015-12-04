@@ -267,19 +267,8 @@ public class ReferenceMapper {
 
   private JParameter createParameter(SourceInfo info, TypeBinding paramType,
       JMethod enclosingMethod, int argPosition) {
-    JType type = get(paramType);
     ensureArgNames(argPosition);
-    JParameter param =
-        new JParameter(info, argNames.get(argPosition), type, true, false);
-    enclosingMethod.addParam(param);
-    return param;
-  }
-
-  private JParameter createParameter(SourceInfo info, TypeBinding paramType,
-      JMethod enclosingMethod, String name) {
-    JParameter param = new JParameter(info, name, get(paramType), true, false);
-    enclosingMethod.addParam(param);
-    return param;
+    return enclosingMethod.createFinalParameter(info, argNames.get(argPosition), get(paramType));
   }
 
   private JDeclaredType createType(ReferenceBinding binding) {
@@ -326,7 +315,7 @@ public class ReferenceMapper {
     if (binding.parameters != null) {
       ensureArgNames(argPosition + binding.parameters.length);
       for (TypeBinding argType : binding.parameters) {
-        createParameter(info, argType, method, argNames.get(argPosition++));
+        method.createFinalParameter(info, argNames.get(argPosition++), get(argType));
       }
     }
     method.freezeParamTypes();
@@ -338,7 +327,7 @@ public class ReferenceMapper {
     if (binding.parameters != null) {
       int i = 0;
       for (TypeBinding argType : binding.parameters) {
-        createParameter(info, argType, method, paramNames[i++]);
+        method.createFinalParameter(info, paramNames[i++], get(argType));
       }
     }
     method.freezeParamTypes();

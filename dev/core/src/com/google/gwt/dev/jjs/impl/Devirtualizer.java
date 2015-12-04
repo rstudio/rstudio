@@ -260,11 +260,9 @@ public class Devirtualizer {
     devirtualMethod.setSynthetic();
     inClass.addMethod(devirtualMethod);
     // Setup parameters.
-    JProgram.createParameter(sourceInfo, "this$static", method.getEnclosingType(), true,
-        true, devirtualMethod);
+    devirtualMethod.createThisParameter(sourceInfo, method.getEnclosingType());
     for (JParameter oldParam : method.getParams()) {
-      JProgram.createParameter(sourceInfo, oldParam.getName(), oldParam.getType(), true, false,
-          devirtualMethod);
+      devirtualMethod.createFinalParameter(sourceInfo, oldParam.getName(), oldParam.getType());
     }
 
     devirtualMethod.freezeParamTypes();

@@ -23,11 +23,10 @@ import com.google.gwt.dev.jjs.SourceInfo;
 public class JParameter extends JVariable {
   private final boolean isThis;
 
-  public JParameter(SourceInfo info, String name, JType type, boolean isFinal, boolean isThis) {
+  JParameter(SourceInfo info, String name, JType type, boolean isFinal, boolean isThis) {
     super(info, name, type, isFinal);
     this.isThis = isThis;
   }
-
   /**
    * Returns <code>true</code> if this parameter is the this parameter of a
    * static impl method.

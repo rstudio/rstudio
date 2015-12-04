@@ -550,8 +550,7 @@ public class JjsUtils {
     emptyMethod.setSynthetic();
     // Copy parameters.
     for (JParameter param : exampleMethod.getParams()) {
-      emptyMethod.addParam(new JParameter(param.getSourceInfo(), param.getName(), param.getType(),
-          param.isFinal(), param.isThis()));
+      emptyMethod.cloneParameter(param);
     }
     JMethodBody body = new JMethodBody(exampleMethod.getSourceInfo());
     emptyMethod.setBody(body);

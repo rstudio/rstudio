@@ -858,17 +858,7 @@ public class GwtAstBuilder {
         FieldBinding fieldBinding = x.binding;
         SourceInfo info = makeSourceInfo(x);
         JExpression instance = pop(x.receiver);
-        JExpression expr;
-        if (fieldBinding.declaringClass == null) {
-          if (!LENGTH_FIELD_NAME.equals(String.valueOf(fieldBinding.name))) {
-            throw new InternalCompilerException("Expected [array].length.");
-          }
-          expr = new JArrayLength(info, instance);
-        } else {
-          JField field = typeMap.get(fieldBinding);
-          expr = new JFieldRef(info, instance, field, curClass.type);
-        }
-
+        JExpression expr = createFieldRef(instance, info, fieldBinding);
         if (x.genericCast != null) {
           JType castType = typeMap.get(x.genericCast);
           /*
@@ -1275,9 +1265,7 @@ public class GwtAstBuilder {
       // The parameters to this method will be the same as the Java interface that must be
       // implemented
       for (JParameter origParam : interfaceMethod.getParams()) {
-        JType origType = origParam.getType();
-        samMethod.addParam(new JParameter(origParam.getSourceInfo(), origParam.getName(), origType,
-            origParam.isFinal(), origParam.isThis()));
+        samMethod.cloneParameter(origParam);
       }
       // Create a body like void onClick(ClickEvent e) { OuterClass.lambdaMethod(locals, e); }
       JMethodBody samMethodBody = new JMethodBody(info);
@@ -1457,9 +1445,7 @@ public class GwtAstBuilder {
 
     private JParameter createLambdaParameter(SourceInfo info, String paramName, JType paramType,
         JConstructor ctor) {
-      JParameter outerParam = new JParameter(info, paramName, paramType, true, false);
-      ctor.addParam(outerParam);
-      return outerParam;
+      return ctor.createFinalParameter(info, paramName, paramType);
     }
 
     private JClassType createInnerClass(String name, FunctionalExpression x, SourceInfo info,
@@ -1667,16 +1653,7 @@ public class GwtAstBuilder {
         if (x.otherBindings != null) {
           for (int i = 0; i < x.otherBindings.length; ++i) {
             FieldBinding fieldBinding = x.otherBindings[i];
-            if (fieldBinding.declaringClass == null) {
-              // probably array.length
-              if (!LENGTH_FIELD_NAME.equals(String.valueOf(fieldBinding.name))) {
-                throw new InternalCompilerException("Expected [array].length.");
-              }
-              curRef = new JArrayLength(info, curRef);
-            } else {
-              JField field = typeMap.get(fieldBinding);
-              curRef = new JFieldRef(info, curRef, field, curClass.type);
-            }
+            curRef = createFieldRef(curRef, info, fieldBinding);
             if (x.otherGenericCasts != null && x.otherGenericCasts[i] != null) {
               JType castType = typeMap.get(x.otherGenericCasts[i]);
               curRef = maybeCast(castType, curRef);
@@ -1687,6 +1664,21 @@ public class GwtAstBuilder {
       } catch (Throwable e) {
         throw translateException(x, e);
       }
+    }
+
+    private JExpression createFieldRef(JExpression instance, SourceInfo info,
+        FieldBinding fieldBinding) {
+      if (fieldBinding.declaringClass == null) {
+        // probably array.length
+        if (!LENGTH_FIELD_NAME.equals(String.valueOf(fieldBinding.name))) {
+          throw new InternalCompilerException("Expected [array].length.");
+        }
+        instance = new JArrayLength(info, instance);
+      } else {
+        JField field = typeMap.get(fieldBinding);
+        instance = new JFieldRef(info, instance, field, curClass.type);
+      }
+      return instance;
     }
 
     @Override
@@ -1830,9 +1822,7 @@ public class GwtAstBuilder {
             innerLambdaClass, interfaceMethod.getType(),
             false, false, true, interfaceMethod.getAccess());
         for (JParameter origParam : interfaceMethod.getParams()) {
-          JType origType = origParam.getType();
-          samMethod.addParam(new JParameter(origParam.getSourceInfo(), origParam.getName(),
-              origType, origParam.isFinal(), origParam.isThis()));
+          samMethod.cloneParameter(origParam);
         }
         JMethodBody samMethodBody = new JMethodBody(info);
 
@@ -2787,9 +2777,7 @@ public class GwtAstBuilder {
       for (TypeBinding jdtParamType : jdtBridgeMethod.parameters) {
         JParameter param = implParams.get(paramIdx++);
         JType paramType = typeMap.get(jdtParamType.erasure());
-        JParameter newParam =
-            new JParameter(param.getSourceInfo(), param.getName(), paramType, true, false);
-        bridgeMethod.addParam(newParam);
+        bridgeMethod.createFinalParameter(param.getSourceInfo(), param.getName(), paramType);
       }
       for (ReferenceBinding exceptionReference : jdtBridgeMethod.thrownExceptions) {
         bridgeMethod.addThrownException((JClassType) typeMap.get(exceptionReference.erasure()));
@@ -3999,11 +3987,7 @@ public class GwtAstBuilder {
         }
       }
     } catch (Throwable e) {
-      InternalCompilerException ice = translateException(null, e);
-      StringBuffer sb = new StringBuffer();
-      x.printHeader(0, sb);
-      ice.addNode(x.getClass().getName(), sb.toString(), type.getSourceInfo());
-      throw ice;
+      throw getInternalCompilerException(x, e);
     }
   }
 
@@ -4033,9 +4017,8 @@ public class GwtAstBuilder {
       }
       if (x.binding.declaringClass.isEnum()) {
         // Enums have hidden arguments for name and value
-        method.addParam(new JParameter(info, "enum$name", typeMap.get(x.scope.getJavaLangString()),
-            true, false));
-        method.addParam(new JParameter(info, "enum$ordinal", JPrimitiveType.INT, true, false));
+        method.createFinalParameter(info, "enum$name", typeMap.get(x.scope.getJavaLangString()));
+        method.createFinalParameter(info, "enum$ordinal", JPrimitiveType.INT);
       }
       // add synthetic args for outer this
       if (isNested) {
@@ -4165,9 +4148,8 @@ public class GwtAstBuilder {
   private void createParameter(SourceInfo info, LocalVariableBinding binding, String name,
       JMethod method, Annotation... annotations) {
     JParameter param =
-        new JParameter(info, name, typeMap.get(binding.type), binding.isFinal(), false);
+        method.createParameter(info, name, typeMap.get(binding.type), binding.isFinal());
     processSuppressedWarnings(param, annotations);
-    method.addParam(param);
   }
 
   private void createParameters(JMethod method, AbstractMethodDeclaration x) {
@@ -4297,12 +4279,17 @@ public class GwtAstBuilder {
         }
       }
     } catch (Throwable e) {
-      InternalCompilerException ice = translateException(null, e);
-      StringBuffer sb = new StringBuffer();
-      x.printHeader(0, sb);
-      ice.addNode(x.getClass().getName(), sb.toString(), type.getSourceInfo());
-      throw ice;
+      throw getInternalCompilerException(x, e);
     }
+  }
+
+  private InternalCompilerException getInternalCompilerException(TypeDeclaration x, Throwable e) {
+    JDeclaredType type = (JDeclaredType) typeMap.get(x.binding);
+    InternalCompilerException ice = translateException(null, e);
+    StringBuffer sb = new StringBuffer();
+    x.printHeader(0, sb);
+    ice.addNode(x.getClass().getName(), sb.toString(), type.getSourceInfo());
+    return ice;
   }
 
   /**
