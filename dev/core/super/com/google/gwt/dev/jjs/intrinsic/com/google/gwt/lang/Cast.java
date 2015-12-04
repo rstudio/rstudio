@@ -241,7 +241,7 @@ final class Cast {
 
     if (jsTypeStr == "Object") {
       // TODO(rluble): Handle this case in the compiler side.
-      return true;
+      return (typeof obj) == "object";
     } else if (jsTypeStr == "Array" ) {
       // TODO(rluble): remove array special handling once
       // instanceOf can be customized for native classes.
