@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.rstudio.core.client.DirectedGraph;
+import org.rstudio.core.client.DirectedGraph.DefaultConstructor;
 import org.rstudio.core.client.command.KeyboardShortcut.KeyCombination;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 
@@ -37,7 +38,15 @@ public class KeyMap
    
    public KeyMap()
    {
-      graph_ = new DirectedGraph<KeyCombination, List<BindableCommand>>();
+      graph_ = new DirectedGraph<KeyCombination, List<BindableCommand>>(new DefaultConstructor<List<BindableCommand>>()
+      {
+         @Override
+         public List<BindableCommand> create()
+         {
+            return new ArrayList<BindableCommand>();
+         }
+      });
+      
       commandToNodeMap_ = new HashMap<BindableCommand, List<DirectedGraph<KeyCombination, List<BindableCommand>>>>();
    }
    

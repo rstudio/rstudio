@@ -23,25 +23,59 @@ import java.util.Map;
 
 public class DirectedGraph<K, V>
 {
+   public interface DefaultConstructor<R>
+   {
+      public R create();
+   }
+   
    public DirectedGraph()
    {
-      this(null, null, null);
+      this(null, null, null, null);
    }
    
    public DirectedGraph(V value)
    {
-      this(null, null, value);
+      this(null, null, value, null);
    }
    
-   private DirectedGraph(DirectedGraph<K, V> parent, K key, V value)
+   public DirectedGraph(DefaultConstructor<V> constructor)
+   {
+      this(null, null, null, constructor);
+   }
+   
+   public DirectedGraph(V value, DefaultConstructor<V> constructor)
+   {
+      this(null, null, value, constructor);
+   }
+   
+   private DefaultConstructor<V> createNullDefaultConstructor()
+   {
+      return new DefaultConstructor<V>()
+      {
+         @Override
+         public V create()
+         {
+            return null;
+         }
+      };
+   }
+   
+   private DirectedGraph(DirectedGraph<K, V> parent, K key, V value, DefaultConstructor<V> constructor)
    {
       parent_ = parent;
       children_ = new HashMap<K, DirectedGraph<K, V>>();
       
       key_ = key;
-      value_ = value;
+      
+      constructor_ = constructor == null
+            ? createNullDefaultConstructor()
+            : constructor;
+      
+      value_ = value == null
+            ? constructor_.create()
+            : value;
    }
-   
+
    public DirectedGraph<K, V> ensureNode(K key)
    {
       return ensureChild(key);
@@ -77,7 +111,7 @@ public class DirectedGraph<K, V>
    
    private DirectedGraph<K, V> addChild(K key)
    {
-      DirectedGraph<K, V> child = new DirectedGraph<K, V>(this, key, null);
+      DirectedGraph<K, V> child = new DirectedGraph<K, V>(this, key, null, constructor_);
       children_.put(key, child);
       return child;
    }
@@ -148,4 +182,6 @@ public class DirectedGraph<K, V>
    
    private final K key_;
    private V value_;
+   
+   private DefaultConstructor<V> constructor_;
 }
