@@ -65,6 +65,4 @@ public class ActiveSession extends JavaScriptObject
    public native final String getRVersionHome() /*-{
       return this.r_version_home;
    }-*/;
-   
-   
 }
