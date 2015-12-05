@@ -41,6 +41,7 @@
 
 #include "qtlocalpeer.h"
 #include <QCoreApplication>
+#include <QDataStream>    // Patch for building against Qt 5.5.1
 #include <QTime>
 
 #if defined(Q_OS_WIN)
