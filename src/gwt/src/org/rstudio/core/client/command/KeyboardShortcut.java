@@ -157,6 +157,11 @@ public class KeyboardShortcut
          keyCombinations_.add(new KeyCombination(keyCode, modifiers));
       }
       
+      public KeySequence(List<KeyCombination> keyList)
+      {
+         keyCombinations_ = new ArrayList<KeyCombination>(keyList);
+      }
+      
       public static KeySequence fromShortcutString(String shortcut)
       {
          KeySequence sequence = new KeySequence();

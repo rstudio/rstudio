@@ -14,8 +14,14 @@
  */
 package org.rstudio.core.client.command;
 
+// A KeyMap provides a two-way lookup between a KeySequence, and a BindableCommand:
+// - Given a key sequence, one can discover commands bound to that key sequence,
+// - Given a command, one can discover what key sequences it is bound to.
+import com.google.gwt.dev.util.collect.HashMap;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.rstudio.core.client.DirectedGraph;
 import org.rstudio.core.client.command.KeyboardShortcut.KeyCombination;
@@ -29,26 +35,64 @@ public class KeyMap
       public boolean isEnabled();
    }
    
+   public KeyMap()
+   {
+      graph_ = new DirectedGraph<KeyCombination, List<BindableCommand>>();
+      commandToNodeMap_ = new HashMap<BindableCommand, List<DirectedGraph<KeyCombination, List<BindableCommand>>>>();
+   }
+   
    public void addBinding(KeySequence keys, BindableCommand command)
    {
-      DirectedGraph<KeyCombination, List<BindableCommand>> node =
-            data_.ensureNode(keys.getData());
+      DirectedGraph<KeyCombination, List<BindableCommand>> node = graph_.ensureNode(keys.getData());
       
       if (node.getValue() == null)
          node.setValue(new ArrayList<BindableCommand>());
-      
       node.getValue().add(command);
+      
+      if (!commandToNodeMap_.containsKey(command))
+         commandToNodeMap_.put(command, new ArrayList<DirectedGraph<KeyCombination, List<BindableCommand>>>());
+      commandToNodeMap_.get(command).add(node);
+   }
+   
+   public void clearBindings(BindableCommand command)
+   {
+      List<DirectedGraph<KeyCombination, List<BindableCommand>>> nodes = commandToNodeMap_.get(command);
+      for (DirectedGraph<KeyCombination, List<BindableCommand>> node : nodes)
+      {
+         List<BindableCommand> commands = node.getValue();
+         if (commands == null || commands.isEmpty())
+            continue;
+         
+         while (commands.remove(command))
+         {
+         }
+      }
+      
+      commandToNodeMap_.remove(command);
    }
    
    public List<BindableCommand> getBindings(KeySequence keys)
    {
-      DirectedGraph<KeyCombination, List<BindableCommand>> node =
-            data_.findNode(keys.getData());
+      DirectedGraph<KeyCombination, List<BindableCommand>> node = graph_.findNode(keys.getData());
       
       if (node == null)
          return null;
       
       return node.getValue();
+   }
+   
+   public List<KeySequence> getBindings(BindableCommand command)
+   {
+      List<KeySequence> keys = new ArrayList<KeySequence>();
+      
+      List<DirectedGraph<KeyCombination, List<BindableCommand>>> bindings = commandToNodeMap_.get(command);
+      if (bindings == null)
+         return keys;
+      
+      for (int i = 0, n = bindings.size(); i < n; i++)
+         keys.add(new KeySequence(bindings.get(i).getKeyChain()));
+      
+      return keys;
    }
    
    public BindableCommand getActiveBinding(KeySequence keys)
@@ -65,6 +109,11 @@ public class KeyMap
       return null;
    }
    
-   private final DirectedGraph<KeyCombination, List<BindableCommand>> data_ =
-         new DirectedGraph<KeyCombination, List<BindableCommand>>();
+   // Private members ----
+   
+   // The actual graph used for dispatching key sequences to commands.
+   private final DirectedGraph<KeyCombination, List<BindableCommand>> graph_;
+   
+   // Map used so we can quickly discover what bindings are active for a particular command.
+   private final Map<BindableCommand, List<DirectedGraph<KeyCombination, List<BindableCommand>>>> commandToNodeMap_;
 }
