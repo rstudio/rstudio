@@ -65,12 +65,17 @@ const char * const kImageDirtyState = "imageDirtyState";
 
 
 
-void updateSaveRequired()
+void updateSavePromptRequired()
 {
-   bool workspaceSaveRequired = s_lastSaveAction == r::session::kSaveActionAsk;
-   bool documentSaveRequired = s_dirtyDocuments.size() > 0;
-   bool saveRequired = workspaceSaveRequired || documentSaveRequired;
-   module_context::activeSession().setSaveRequired(saveRequired);
+   bool workspaceSavePromptRequired =
+                    s_lastSaveAction == r::session::kSaveActionAsk;
+
+   bool documentSavePromptRequired = s_dirtyDocuments.size() > 0;
+
+   bool savePromptRequired = workspaceSavePromptRequired ||
+                             documentSavePromptRequired;
+
+   module_context::activeSession().setSavePromptRequired(savePromptRequired);
 }
 
 void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
@@ -87,25 +92,25 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
       s_dirtyDocuments.erase(pDoc->id());
 
    if (s_dirtyDocuments.size() != previousDirtyDocsSize)
-      updateSaveRequired();
+      updateSavePromptRequired();
 }
 
 void onDocRemoved(const std::string& id)
 {
    s_dirtyDocuments.erase(id);
-   updateSaveRequired();
+   updateSavePromptRequired();
 }
 
 void onRemoveAll()
 {
    s_dirtyDocuments.clear();
-   updateSaveRequired();
+   updateSavePromptRequired();
 }
 
 void handleSaveActionChanged()
 {
-   // update saveRequired
-   updateSaveRequired();
+   // update savePromptRequired
+   updateSavePromptRequired();
 
    // enque event to client
    json::Object saveAction;

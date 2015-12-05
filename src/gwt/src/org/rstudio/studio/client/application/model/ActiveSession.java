@@ -50,8 +50,8 @@ public class ActiveSession extends JavaScriptObject
       return this.executing;
    }-*/;
    
-   public native final boolean getSaveRequired() /*-{
-      return this.save_required;
+   public native final boolean getSavePromptRequired() /*-{
+      return this.save_prompt_required;
    }-*/;
    
    public native final double getLastUsed() /*-{

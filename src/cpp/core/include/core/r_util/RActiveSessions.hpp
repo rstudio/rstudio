@@ -135,11 +135,11 @@ public:
       }
    }
 
-   bool saveRequired() const
+   bool savePromptRequired() const
    {
       if (!empty())
       {
-         std::string value = readProperty("save_required");
+         std::string value = readProperty("save_prompt_required");
          if (!value.empty())
             return safe_convert::stringTo<bool>(value, false);
          else
@@ -149,12 +149,12 @@ public:
          return false;
    }
 
-   void setSaveRequired(bool saveRequired)
+   void setSavePromptRequired(bool savePromptRequired)
    {
       if (!empty())
       {
-         std::string value = safe_convert::numberToString(saveRequired);
-         writeProperty("save_required", value);
+         std::string value = safe_convert::numberToString(savePromptRequired);
+         writeProperty("save_prompt_required", value);
       }
    }
 
