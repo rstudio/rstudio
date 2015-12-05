@@ -112,6 +112,53 @@ public:
       }
    }
 
+   bool executing() const
+   {
+      if (!empty())
+      {
+         std::string value = readProperty("executing");
+         if (!value.empty())
+            return safe_convert::stringTo<bool>(value, false);
+         else
+            return false;
+      }
+      else
+         return false;
+   }
+
+   void setExecuting(bool executing)
+   {
+      if (!empty())
+      {
+         std::string value = safe_convert::numberToString(executing);
+         writeProperty("executing", value);
+      }
+   }
+
+   bool saveRequired() const
+   {
+      if (!empty())
+      {
+         std::string value = readProperty("save_required");
+         if (!value.empty())
+            return safe_convert::stringTo<bool>(value, false);
+         else
+            return false;
+      }
+      else
+         return false;
+   }
+
+   void setSaveRequired(bool saveRequired)
+   {
+      if (!empty())
+      {
+         std::string value = safe_convert::numberToString(saveRequired);
+         writeProperty("save_required", value);
+      }
+   }
+
+
    bool running() const
    {
       if (!empty())
@@ -164,6 +211,7 @@ public:
    {
       setLastUsed();
       setRunning(false);
+      setExecuting(false);
    }
 
    core::Error destroy()

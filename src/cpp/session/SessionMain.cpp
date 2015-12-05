@@ -1921,6 +1921,12 @@ void reissueLastConsolePrompt()
    consolePrompt(s_lastPrompt, false);
 }
 
+void setExecuting(bool executing)
+{
+   s_rProcessingInput = executing;
+   module_context::activeSession().setExecuting(executing);
+}
+
 bool rConsoleRead(const std::string& prompt,
                   bool addToHistory,
                   rstudio::r::session::RConsoleInput* pConsoleInput)
@@ -1933,7 +1939,7 @@ bool rConsoleRead(const std::string& prompt,
    }
 
    // r is not processing input
-   s_rProcessingInput = false;
+   setExecuting(false);
 
    if (!s_consoleInputBuffer.empty())
    {
@@ -1982,7 +1988,7 @@ bool rConsoleRead(const std::string& prompt,
    }
 
    // we are about to return input to r so set the flag indicating that state
-   s_rProcessingInput = true;
+   setExecuting(true);
 
    ClientEvent promptEvent(kConsoleWritePrompt, prompt);
    rsession::clientEventQueue().add(promptEvent);

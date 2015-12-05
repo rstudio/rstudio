@@ -46,6 +46,14 @@ public class ActiveSession extends JavaScriptObject
       return this.running;
    }-*/;
    
+   public native final boolean getExecuting() /*-{
+      return this.executing;
+   }-*/;
+   
+   public native final boolean getSaveRequired() /*-{
+      return this.save_required;
+   }-*/;
+   
    public native final double getLastUsed() /*-{
       return this.last_used;
    }-*/;
