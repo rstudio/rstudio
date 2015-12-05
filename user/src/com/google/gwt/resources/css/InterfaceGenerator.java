@@ -21,7 +21,20 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.CssResource.ClassName;
-import com.google.gwt.resources.css.ast.CssStylesheet;
+import com.google.gwt.resources.gss.ClassNamesCollector;
+import com.google.gwt.resources.rg.GssResourceGenerator;
+import com.google.gwt.resources.rg.GssResourceGenerator.LoggerErrorManager;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssTree;
+import com.google.gwt.thirdparty.common.css.compiler.ast.GssParser;
+import com.google.gwt.thirdparty.common.css.compiler.ast.GssParserException;
+import com.google.gwt.thirdparty.common.css.compiler.passes.CollectConstantDefinitions;
+import com.google.gwt.thirdparty.common.css.compiler.passes.CreateDefinitionNodes;
+import com.google.gwt.thirdparty.common.css.compiler.passes.CreateForLoopNodes;
+import com.google.gwt.thirdparty.common.css.compiler.passes.UnrollLoops;
+import com.google.gwt.thirdparty.guava.common.base.CaseFormat;
+import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.rebind.StringSourceWriter;
 import com.google.gwt.util.tools.ArgHandlerFile;
@@ -32,6 +45,8 @@ import com.google.gwt.util.tools.ToolBase;
 import java.io.File;
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
@@ -228,14 +243,19 @@ public class InterfaceGenerator extends ToolBase {
   private String process() throws MalformedURLException,
       UnableToCompleteException {
     // Create AST
-    CssStylesheet sheet = GenerateCssAst.exec(logger, inputFile.toURI().toURL());
+    CssTree cssTree = createAst(inputFile.toURI().toURL(), logger);
 
     // Sort all names
     Set<String> names = new TreeSet<String>(NAME_COMPARATOR);
-    names.addAll(ExtractClassNamesVisitor.exec(sheet));
-    DefsCollector defs = new DefsCollector();
-    defs.accept(sheet);
-    names.addAll(defs.getDefs());
+
+    names.addAll(new ClassNamesCollector().getClassNames(cssTree));
+
+    CollectConstantDefinitions collectConstantDefinitionsPass = new CollectConstantDefinitions(
+            cssTree);
+    collectConstantDefinitionsPass.runPass();
+    Collection<String> renamedDefs = renameDefs(collectConstantDefinitionsPass
+            .getConstantDefinitions().getConstantsNames());
+    names.addAll(renamedDefs);
 
     // Deduplicate method names
     Set<String> methodNames = new HashSet<String>();
@@ -274,5 +294,41 @@ public class InterfaceGenerator extends ToolBase {
     sw.println("}");
 
     return sw.toString();
+  }
+
+  /**
+   * In GSS, constant names are defined in upper case but a method name to access a constant in
+   * a CssResource interface can be written in lower camel case.
+   * <p>
+   * This method converts all constant names in a lower camel case identifier.
+   */
+  private Collection<String> renameDefs(Iterable<String> constantsNames) {
+    return Lists.newArrayList(Iterables.transform(constantsNames, new Function<String, String>() {
+      @Override
+      public String apply(String constantName) {
+        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, constantName);
+      }
+    }));
+  }
+
+  private CssTree createAst(URL sourceFileUrl, TreeLogger logger)
+          throws UnableToCompleteException {
+    LoggerErrorManager errorManager = new LoggerErrorManager(logger);
+
+    CssTree cssTree;
+
+    try {
+      cssTree = new GssParser(GssResourceGenerator.readUrlContent(sourceFileUrl, logger)).parse();
+    } catch (GssParserException e) {
+      logger.log(TreeLogger.ERROR, "Unable to parse CSS", e);
+      throw new UnableToCompleteException();
+    }
+
+    new CreateDefinitionNodes(cssTree.getMutatingVisitController(), errorManager).runPass();
+    // Can create new style classes
+    new CreateForLoopNodes(cssTree.getMutatingVisitController(), errorManager).runPass();
+    new UnrollLoops(cssTree.getMutatingVisitController(), errorManager).runPass();
+
+    return cssTree;
   }
 }

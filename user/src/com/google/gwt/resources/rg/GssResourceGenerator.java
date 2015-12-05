@@ -220,6 +220,43 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     }
   }
 
+  public static SourceCode readUrlContent(URL fileUrl, TreeLogger logger) throws UnableToCompleteException {
+    TreeLogger branchLogger = logger.branch(TreeLogger.DEBUG,
+            "Reading GSS stylesheet " + fileUrl.toExternalForm());
+    try {
+      ByteSource byteSource = Resources.asByteSource(fileUrl);
+      // default charset
+      Charset charset = Charsets.UTF_8;
+
+      // check if the stylesheet doesn't include a @charset at-rule
+      String styleSheetCharset = extractCharset(byteSource);
+      if (styleSheetCharset != null) {
+        try {
+          charset = Charset.forName(styleSheetCharset);
+        } catch (UnsupportedCharsetException e) {
+          logger.log(Type.ERROR, "Unsupported charset found: " + styleSheetCharset);
+          throw new UnableToCompleteException();
+        }
+      }
+
+      String fileContent = byteSource.asCharSource(charset).read();
+      // If the stylesheet specified a charset, we have to remove the at-rule otherwise the GSS
+      // compiler will fail.
+      if (styleSheetCharset != null) {
+        int charsetAtRuleLength = CHARSET_MIN_LENGTH + styleSheetCharset.length();
+        // replace charset at-rule by blanks to keep correct source location of the rest of
+        // the stylesheet.
+        fileContent = Strings.repeat(" ", charsetAtRuleLength) +
+                fileContent.substring(charsetAtRuleLength);
+      }
+      return new SourceCode(fileUrl.getFile(), fileContent);
+
+    } catch (IOException e) {
+      branchLogger.log(TreeLogger.ERROR, "Unable to parse CSS", e);
+    }
+    throw new UnableToCompleteException();
+  }
+
   public static GssOptions getGssOptions(PropertyOracle propertyOracle, TreeLogger logger) throws UnableToCompleteException {
     boolean gssEnabled;
     boolean gssDefaultInUiBinder;
@@ -267,11 +304,11 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
    * {@link ErrorManager} used to log the errors and warning messages produced by the different
    * {@link com.google.gwt.thirdparty.common.css.compiler.ast.CssCompilerPass}.
    */
-  private static class LoggerErrorManager implements ErrorManager {
+  public static class LoggerErrorManager implements ErrorManager {
     private final TreeLogger logger;
     private boolean hasErrors;
 
-    private LoggerErrorManager(TreeLogger logger) {
+    public LoggerErrorManager(TreeLogger logger) {
       this.logger = logger;
     }
 
@@ -1048,42 +1085,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
       constantNameMappingBuilder.putAll(result.defNameMapping);
     } else {
       for (URL stylesheet : resources) {
-        TreeLogger branchLogger = logger.branch(TreeLogger.DEBUG,
-            "Parsing GSS stylesheet " + stylesheet.toExternalForm());
-        try {
-          ByteSource byteSource = Resources.asByteSource(stylesheet);
-          // default charset
-          Charset charset = Charsets.UTF_8;
-
-          // check if the stylesheet doesn't include a @charset at-rule
-          String styleSheetCharset = extractCharset(byteSource);
-          if (styleSheetCharset != null) {
-            try {
-              charset = Charset.forName(styleSheetCharset);
-            } catch (UnsupportedCharsetException e) {
-              logger.log(Type.ERROR, "Unsupported charset found: " + styleSheetCharset);
-              throw new UnableToCompleteException();
-            }
-          }
-
-          String fileContent = byteSource.asCharSource(charset).read();
-          // If the stylesheet specified a charset, we have to remove the at-rule otherwise the GSS
-          // compiler will fail.
-          if (styleSheetCharset != null) {
-            int charsetAtRuleLength = CHARSET_MIN_LENGTH + styleSheetCharset.length();
-            // replace charset at-rule by blanks to keep correct source location of the rest of
-            // the stylesheet.
-            fileContent = Strings.repeat(" ", charsetAtRuleLength) +
-                fileContent.substring(charsetAtRuleLength);
-          }
-
-          sourceCodes.add(new SourceCode(stylesheet.getFile(), fileContent));
-          continue;
-
-        } catch (IOException e) {
-          branchLogger.log(TreeLogger.ERROR, "Unable to parse CSS", e);
-        }
-        throw new UnableToCompleteException();
+          sourceCodes.add(readUrlContent(stylesheet, logger));
       }
     }
 
@@ -1115,7 +1117,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
         booleanConditionCollector.getBooleanConditions(), constantNameMappingBuilder.build());
   }
 
-  private String extractCharset(ByteSource byteSource) throws IOException {
+  private static String extractCharset(ByteSource byteSource) throws IOException {
     String firstLine = byteSource.asCharSource(Charsets.UTF_8).readFirstLine();
 
     if (firstLine != null) {

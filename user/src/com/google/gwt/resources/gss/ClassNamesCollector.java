@@ -35,6 +35,13 @@ public class ClassNamesCollector extends DefaultTreeVisitor {
   private SortedSet<String> excludedPrefixes;
 
   /**
+   * Extract all CSS class names in the provided stylesheet.
+   */
+  public Set<String> getClassNames(CssTree tree) {
+    return getClassNames(tree, new HashSet<JClassType>());
+  }
+
+  /**
    * Extract all CSS class names in the provided stylesheet, modulo those
    * imported from another context.
    */
