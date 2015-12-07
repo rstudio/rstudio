@@ -65,3 +65,6 @@ let g:airline#extensions#whitespace#enabled = 0
 " use embedded YCM config
 let g:ycm_global_ycm_extra_conf = '/rstudio/vagrant/ycm_extra_conf.py'
 
+" tell eclim to use YCM
+let g:EclimCompletionMethod = 'omnifunc'
+
