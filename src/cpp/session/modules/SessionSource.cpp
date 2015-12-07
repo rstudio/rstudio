@@ -988,6 +988,11 @@ Error setSourceDocumentDirty(const json::JsonRpcRequest& request,
       return error;
    
    pDoc->setDirty(dirty);
+
+   // if marking clean, ignore external edits too
+   if (!dirty)
+      pDoc->updateLastKnownWriteTime();
+
    error = source_database::put(pDoc);
    if (error)
       return error;
