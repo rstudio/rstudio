@@ -63,6 +63,19 @@ public class KeyMap
       commandToNodeMap_.get(command).add(node);
    }
    
+   public void setBindings(KeySequence keys, BindableCommand command)
+   {
+      clearBindings(command);
+      addBinding(keys, command);
+   }
+   
+   public void setBindings(List<KeySequence> keyList, BindableCommand command)
+   {
+      clearBindings(command);
+      for (KeySequence keys : keyList)
+         addBinding(keys, command);
+   }
+   
    public void clearBindings(BindableCommand command)
    {
       List<DirectedGraph<KeyCombination, List<BindableCommand>>> nodes = commandToNodeMap_.get(command);
