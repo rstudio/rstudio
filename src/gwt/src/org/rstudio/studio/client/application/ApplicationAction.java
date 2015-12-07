@@ -24,6 +24,7 @@ public class ApplicationAction
 {
    public static final String QUIT = "quit";
    public static final String NEW_PROJECT = "new_project";
+   public static final String OPEN_PROJECT = "open_project";
    
    
    public static String addAction(String url, String action)
@@ -44,6 +45,11 @@ public class ApplicationAction
    public static boolean isNewProject()
    {
       return isAction(NEW_PROJECT);
+   }
+   
+   public static boolean isOpenProject()
+   {
+      return isAction(OPEN_PROJECT);
    }
    
    private static boolean isAction(String action)

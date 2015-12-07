@@ -40,6 +40,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
          UIPrefs uiPrefs,
          WorkbenchContext workbenchContext,
          NewProjectInput input,
+         boolean allowOpenInNewWindow,
          ProgressOperationWithInput<NewProjectResult> operation)
    {
       super("New Project", 
@@ -49,6 +50,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
             operation);
     
       sessionInfo_ = sessionInfo;
+      allowOpenInNewWindow_ = allowOpenInNewWindow;
       
       RVersionsInfo rVersions = workbenchContext.getRVersionsInfo();
       if (rVersions.isMultiVersion())
@@ -78,7 +80,8 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
                      WizardPage<NewProjectInput,NewProjectResult> page,
                      boolean okButtonVisible)
    {
-      openInNewWindow_.setVisible(sessionInfo_.getMultiSession() && 
+      openInNewWindow_.setVisible(allowOpenInNewWindow_ &&
+                                  sessionInfo_.getMultiSession() && 
                                   okButtonVisible);
       if (rVersionSelector_ != null)
          rVersionSelector_.setVisible(okButtonVisible);
@@ -133,4 +136,5 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
    private final CheckBox openInNewWindow_;
    private RVersionSelectWidget rVersionSelector_ = null;
    private final SessionInfo sessionInfo_;
+   private final boolean allowOpenInNewWindow_;
 }

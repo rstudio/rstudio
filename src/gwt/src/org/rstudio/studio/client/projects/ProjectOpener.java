@@ -66,7 +66,7 @@ public class ProjectOpener
          WebFileDialogs webDialogs = (WebFileDialogs)dialogs;
          webDialogs.openProject(fsContext, 
                FileSystemItem.createDir(defaultLocation), 
-               defaultType, onCompleted);
+               defaultType, showNewSession, onCompleted);
       }
    }
 }

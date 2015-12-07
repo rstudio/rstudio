@@ -56,6 +56,8 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.projects.Projects;
+import org.rstudio.studio.client.projects.events.NewProjectEvent;
+import org.rstudio.studio.client.projects.events.OpenProjectEvent;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
 import org.rstudio.studio.client.workbench.Workbench;
@@ -717,7 +719,9 @@ public class Application implements ApplicationEventHandlers
                if (ApplicationAction.isQuit())
                   commands_.quitSession().execute();
                else if (ApplicationAction.isNewProject())
-                  commands_.newProject().execute();
+                  events_.fireEvent(new NewProjectEvent(true, false));
+               else if (ApplicationAction.isOpenProject())
+                  events_.fireEvent(new OpenProjectEvent(true, false));
             }
          }.schedule(500); 
       }

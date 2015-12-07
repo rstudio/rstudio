@@ -319,7 +319,7 @@ public class SourceWindow implements LastSourceDocClosedHandler,
          quitContext.onReadyToQuit(false);
       else
          ApplicationQuit.handleUnsavedChanges(SaveAction.SAVEASK, 
-               "Close Source Window", sourceShim_, null, null, quitContext);
+               "Close Source Window", false, sourceShim_, null, null, quitContext);
    }
    
    private final native void markReadyToClose() /*-{

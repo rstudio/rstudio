@@ -47,6 +47,8 @@ import org.rstudio.studio.client.projects.events.OpenProjectNewWindowEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectNewWindowHandler;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectHandler;
+import org.rstudio.studio.client.projects.events.NewProjectEvent;
+import org.rstudio.studio.client.projects.events.OpenProjectEvent;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
@@ -80,7 +82,9 @@ import com.google.inject.Singleton;
 public class Projects implements OpenProjectFileHandler,
                                  SwitchToProjectHandler,
                                  OpenProjectErrorHandler,
-                                 OpenProjectNewWindowHandler
+                                 OpenProjectNewWindowHandler,
+                                 NewProjectEvent.Handler,
+                                 OpenProjectEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, Projects> {}
    
@@ -124,6 +128,8 @@ public class Projects implements OpenProjectFileHandler,
       eventBus.addHandler(SwitchToProjectEvent.TYPE, this);
       eventBus.addHandler(OpenProjectFileEvent.TYPE, this);
       eventBus.addHandler(OpenProjectNewWindowEvent.TYPE, this);
+      eventBus.addHandler(NewProjectEvent.TYPE, this);
+      eventBus.addHandler(OpenProjectEvent.TYPE, this);
       
       eventBus.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
          public void onSessionInit(SessionInitEvent sie)
@@ -202,9 +208,16 @@ public class Projects implements OpenProjectFileHandler,
    @Handler
    public void onNewProject()
    {
+      handleNewProject(false, true);
+   }
+
+   private void handleNewProject(boolean forceSaveAll, 
+                                 final boolean allowOpenInNewWindow)
+   {
       // first resolve the quit context (potentially saving edited documents   
       // and determining whether to save the R environment on exit)
       applicationQuit_.prepareForQuit("Save Current Workspace",
+         forceSaveAll,
          new ApplicationQuit.QuitContext() {
            @Override
            public void onReadyToQuit(final boolean saveChanges)
@@ -223,6 +236,7 @@ public class Projects implements OpenProjectFileHandler,
                                pUIPrefs_.get().defaultProjectLocation().getValue()), 
                             context
                          ),
+                         allowOpenInNewWindow,
                          
                          new ProgressOperationWithInput<NewProjectResult>() {
 
@@ -243,6 +257,13 @@ public class Projects implements OpenProjectFileHandler,
       
    }
    
+
+   @Override
+   public void onNewProjectEvent(NewProjectEvent event)
+   {
+      handleNewProject(event.getForceSaveAll(), 
+                       event.getAllowOpenInNewWindow());
+   }
 
    private void createNewProject(final NewProjectResult newProject,
                                  final boolean saveChanges)
@@ -576,10 +597,19 @@ public class Projects implements OpenProjectFileHandler,
       showOpenProjectDialog(ProjectOpener.PROJECT_TYPE_FILE);
    }
    
+   @Override
+   public void onOpenProjectEvent(OpenProjectEvent event)
+   {
+      showOpenProjectDialog(ProjectOpener.PROJECT_TYPE_FILE,
+                            event.getForceSaveAll(),
+                            event.getAllowOpenInNewWindow());
+   }
+   
    @Handler
    public void onOpenProjectInNewWindow()
    {
       showOpenProjectDialog(ProjectOpener.PROJECT_TYPE_FILE,
+         false,
          new ProgressOperationWithInput<OpenProjectParams>() 
          {
             @Override
@@ -807,11 +837,12 @@ public class Projects implements OpenProjectFileHandler,
    
    private void showOpenProjectDialog(
                   int defaultType,
+                  boolean allowOpenInNewWindow,
                   ProgressOperationWithInput<OpenProjectParams> onCompleted)
    {
       opener_.showOpenProjectDialog(fsContext_, projServer_,
             "~", 
-            defaultType, true, onCompleted);
+            defaultType, allowOpenInNewWindow, onCompleted);
    }
    
    @Handler
@@ -860,13 +891,22 @@ public class Projects implements OpenProjectFileHandler,
    
    private void showOpenProjectDialog(final int projectType)
    {
+      showOpenProjectDialog(projectType, false, true);
+   }
+   
+   private void showOpenProjectDialog(final int projectType, 
+                                      boolean forceSaveAll,
+                                      final boolean allowOpenInNewWindow)
+   {
       // first resolve the quit context (potentially saving edited documents
       // and determining whether to save the R environment on exit)
       applicationQuit_.prepareForQuit("Switch Projects",
+                                      forceSaveAll,
                                       new ApplicationQuit.QuitContext() {
          public void onReadyToQuit(final boolean saveChanges)
          {
             showOpenProjectDialog(projectType,
+               allowOpenInNewWindow,
                new ProgressOperationWithInput<OpenProjectParams>() 
                {
                   @Override
