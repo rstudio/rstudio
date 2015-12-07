@@ -56,7 +56,7 @@ public class StackTraceCreator {
    */
   abstract static class Collector {
 
-    public abstract void collect(Object t, Object jsThrown);
+    public abstract void collect(Object error);
 
     public abstract StackTraceElement[] getStackTrace(Object t);
   }
@@ -68,10 +68,10 @@ public class StackTraceCreator {
   static class CollectorLegacy extends Collector {
 
     @Override
-    public native void collect(Object t, Object thrownIgnored) /*-{
+    public native void collect(Object error) /*-{
       var seen = {};
       var fnStack = [];
-      t.__gwt$backingJsError = { fnStack: fnStack };
+      error.fnStack= fnStack;
 
       // Ignore the collect() call
       var callee = arguments.callee.caller;
@@ -117,9 +117,9 @@ public class StackTraceCreator {
   static final class CollectorEmulated extends Collector {
 
     @Override
-    public native void collect(Object t, Object jsThrownIgnored) /*-{
+    public native void collect(Object error) /*-{
       var fnStack = [];
-      t.__gwt$backingJsError = { fnStack: fnStack };
+      error.fnStack= fnStack;
       for (var i = 0; i < $stackDepth; i++) {
         var location = $location[i];
         var fn = $stack[i];
@@ -162,44 +162,10 @@ public class StackTraceCreator {
    */
   static class CollectorModern extends Collector {
 
-    static {
-      increaseStackTraceLimit();
-    }
-
-    // As of today, only available in IE10+ and Chrome.
-    private static native void increaseStackTraceLimit() /*-{
-      // TODO(cromwellian) make this a configurable?
-      Error.stackTraceLimit = 64;
-    }-*/;
-
     @Override
-    public native void collect(Object t, Object jsThrown) /*-{
-      // Carefully crafted to delay the 'stack' property until stack trace construction as it is
-      // costly in some browsers (e.g. Chrome).
-
-     function fixIE(e) {
-        // In IE -unlike every other browser-, the stack property is not defined until you throw
-        // the Error object. Sometimes I hope they would just stop developing browsers...
-        if (!("stack" in e)) {
-          try { throw e; } catch(ignored) {}
-        }
-        return e;
-      }
-
-      var backingJsError;
-      if (typeof jsThrown == 'string') {
-        // Replace newlines with spaces so that we don't confuse the parser
-        // below which splits on newlines, and will otherwise try to parse
-        // the error message as part of the stack trace.
-        backingJsError = fixIE(new Error(jsThrown.replace('\n', ' ')));
-      } else if (jsThrown && typeof jsThrown == 'object' && "stack" in jsThrown){
-        backingJsError = jsThrown;
-      } else {
-        backingJsError = fixIE(new Error());
-      }
-
-      t.__gwt$backingJsError = backingJsError;
-    }-*/;
+    public void collect(Object error) {
+      // No op, already collected by the error itself.
+    }
 
     @Override
     public StackTraceElement[] getStackTrace(Object t) {
@@ -326,7 +292,7 @@ public class StackTraceCreator {
    */
   static class CollectorNull extends Collector {
     @Override
-    public void collect(Object ignored, Object jsThrownIgnored) {
+    public void collect(Object error) {
       // Nothing to do
     }
 
@@ -339,8 +305,8 @@ public class StackTraceCreator {
   /**
    * Collect necessary information to construct stack trace trace later in time.
    */
-  public static void captureStackTrace(Throwable throwable, Object reference) {
-    collector.collect(throwable, reference);
+  public static void captureStackTrace(Object error) {
+    collector.collect(error);
   }
 
   public static StackTraceElement[] constructJavaStackTrace(Throwable thrown) {
@@ -351,10 +317,13 @@ public class StackTraceCreator {
   private static StackTraceElement[] dropInternalFrames(StackTraceElement[] stackTrace) {
     final String dropFrameUntilFnName =
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreator::captureStackTrace(*)");
+    final String dropFrameUntilFnName2 =
+        Impl.getNameOf("@java.lang.Throwable::initializeBackingError(*)");
 
-    int numberOfFrameToSearch = Math.min(stackTrace.length, DROP_FRAME_LIMIT);
-    for (int i = 0; i < numberOfFrameToSearch; i++) {
-      if (stackTrace[i].getMethodName().equals(dropFrameUntilFnName)) {
+    int numberOfFramesToSearch = Math.min(stackTrace.length, DROP_FRAME_LIMIT);
+    for (int i = numberOfFramesToSearch - 1; i >= 0; i--) {
+      if (stackTrace[i].getMethodName().equals(dropFrameUntilFnName)
+          || stackTrace[i].getMethodName().equals(dropFrameUntilFnName2)) {
         splice(stackTrace, i + 1);
         break;
       }
@@ -381,11 +350,15 @@ public class StackTraceCreator {
 
   private static native boolean supportsErrorStack() /*-{
     // Error.stackTraceLimit is cheaper to check and available in both IE and Chrome
-    return !!Error.stackTraceLimit || "stack" in new Error();
+    if (Error.stackTraceLimit > 0) {
+      Error.stackTraceLimit = 64;
+      return true;
+    }
+
+    return "stack" in new Error();
   }-*/;
 
-  private static native JsArrayString getFnStack(Object t) /*-{
-    var e = t.__gwt$backingJsError;
+  private static native JsArrayString getFnStack(Object e) /*-{
     return (e && e.fnStack) ? e.fnStack : [];
   }-*/;
 
@@ -401,7 +374,7 @@ public class StackTraceCreator {
   }-*/;
 
   private static native JsArrayString split(Object t) /*-{
-    var e = t.__gwt$backingJsError;
+    var e = t.backingJsObject;
     return (e && e.stack) ? e.stack.split('\n') : [];
   }-*/;
 }

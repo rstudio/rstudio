@@ -48,11 +48,11 @@ public class StackTraceEmulTest extends StackTraceNativeTest {
     String[] methodNames = getTraceJse(TYPE_ERROR);
 
     StackTraceElement[] expectedTrace = new StackTraceElement[] {
-        createSTE(methodNames[0], "StackTraceExamples.java", 80),
-        createSTE(methodNames[1], "StackTraceExamples.java", 76),
-        createSTE(methodNames[2], "StackTraceExamples.java", 92),
-        createSTE(methodNames[3], "StackTraceExamples.java", 58),
-        createSTE(methodNames[4], "StackTraceExamples.java", 49),
+        createSTE(methodNames[0], "StackTraceExamples.java", 83),
+        createSTE(methodNames[1], "StackTraceExamples.java", 79),
+        createSTE(methodNames[2], "StackTraceExamples.java", 95),
+        createSTE(methodNames[3], "StackTraceExamples.java", 61),
+        createSTE(methodNames[4], "StackTraceExamples.java", 52),
         createSTE(methodNames[5], "StackTraceExamples.java", 40)
     };
 
@@ -67,12 +67,11 @@ public class StackTraceEmulTest extends StackTraceNativeTest {
     String[] methodNames = getTraceJava();
 
     StackTraceElement[] expectedTrace = new StackTraceElement[] {
-        createSTE(methodNames[0], "Throwable.java", 114),
-        createSTE(methodNames[1], "Throwable.java", 58),
-        createSTE(methodNames[2], "Exception.java", 29),
-        createSTE(methodNames[3], "StackTraceExamples.java", 54),
-        createSTE(methodNames[4], "StackTraceExamples.java", 49),
-        createSTE(methodNames[5], "StackTraceExamples.java", 40)
+        createSTE(methodNames[0], "Throwable.java", 68),
+        createSTE(methodNames[1], "Exception.java", 29),
+        createSTE(methodNames[2], "StackTraceExamples.java", 57),
+        createSTE(methodNames[3], "StackTraceExamples.java", 52),
+        createSTE(methodNames[4], "StackTraceExamples.java", 40)
     };
 
     assertTrace(expectedTrace, exception);
@@ -130,6 +129,7 @@ public class StackTraceEmulTest extends StackTraceNativeTest {
   }
 
   private static StackTraceElement createSTE(String methodName, String fileName, int lineNumber) {
+    methodName = methodName.startsWith("?") ? methodName.substring(1) : methodName;
     return new StackTraceElement("Unknown", methodName, fileName, lineNumber);
   }
 }

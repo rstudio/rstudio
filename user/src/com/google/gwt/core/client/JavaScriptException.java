@@ -15,6 +15,8 @@
  */
 package com.google.gwt.core.client;
 
+import com.google.gwt.core.client.impl.JavaScriptExceptionBase;
+
 /**
  * Any JavaScript exceptions occurring within JSNI methods are wrapped as this
  * class when caught in Java code. The wrapping does not occur until the
@@ -30,7 +32,7 @@ package com.google.gwt.core.client;
  * determined, {@link #fillInStackTrace()} can be called in the associated catch
  * block to create a stack trace corresponding to the location where the
  * JavaScriptException object was created.
- * 
+ *
  * <pre>
  * try {
  *   nativeMethod();
@@ -41,7 +43,7 @@ package com.google.gwt.core.client;
  * }
  * </pre>
  */
-public final class JavaScriptException extends RuntimeException {
+public final class JavaScriptException extends JavaScriptExceptionBase {
 
   private static final Object NOT_SET = new Object();
 
@@ -108,14 +110,13 @@ public final class JavaScriptException extends RuntimeException {
    *          trace
    */
   public JavaScriptException(Object e, String description) {
-    // Stack trace is writeable for outside just for classic devmode but otherwise it is not and we
-    // don't want unnecessary fillInStackTrace calls from super constructor as well.
-    super(null, null, true, !GWT.isScript());
+    super(e);
     this.e = e;
     this.description = description;
   }
 
   public JavaScriptException(String name, String description) {
+    super(null);
     this.message = "JavaScript " + name + " exception: " + description;
     this.name = name;
     this.description = description;
@@ -128,9 +129,10 @@ public final class JavaScriptException extends RuntimeException {
    * @param message the detail message
    */
   protected JavaScriptException(String message) {
-    super(message);
+    super(null);
     this.message = this.description = message;
     this.e = NOT_SET;
+    fillInStackTrace();
   }
 
   /**

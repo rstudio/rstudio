@@ -27,6 +27,12 @@ import com.google.gwt.core.client.JavaScriptObject;
  */
 public final class Impl {
 
+  static {
+    if (GWT.isClient() && StackTraceCreator.collector != null) {
+      // Just enforces loading of StackTraceCreator early on, nothing else to do here...
+    }
+  }
+
   private static final int WATCHDOG_ENTRY_DEPTH_CHECK_INTERVAL_MS = 2000;
 
   /**

@@ -41,6 +41,9 @@ public class StackTraceExamples {
       fail("No exception thrown");
       return null; // shouldn't happen
     } catch (Exception e) {
+      if (e.getStackTrace().length == 0) {
+        e.fillInStackTrace();
+      }
       return e;
     }
   }

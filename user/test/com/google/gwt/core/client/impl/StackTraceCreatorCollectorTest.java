@@ -206,11 +206,12 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
   }
 
   private static void assertStackTrace(JavaScriptObject jsError, StackTraceElement[] expected) {
-    assertEquals(expected, new CollectorModern().getStackTrace(toException(jsError)));
+    assertEquals(expected, new CollectorModern().getStackTrace(link(new Throwable(), jsError)));
   }
 
-  private static native Object toException(JavaScriptObject jsError) /*-{
-    return { __gwt$backingJsError: jsError };
+  private static native Object link(Throwable t, JavaScriptObject jsError) /*-{
+    t.@Throwable::backingJsObject = jsError;
+    return t;
   }-*/;
 
   private static void assertEquals(StackTraceElement[] expecteds, StackTraceElement[] actuals) {

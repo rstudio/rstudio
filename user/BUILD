@@ -310,6 +310,7 @@ java_library(
             "src/com/google/gwt/user/client/impl/DomImpl.java",
             "src/com/google/gwt/user/client/HistoryListener.java",
             "src/com/google/gwt/user/client/Cookies.java",
+            "src/com/google/gwt/core/client/impl/JavaScriptExceptionBase.java",
             "src/com/google/gwt/user/client/ui/AcceptsOneWidget.java",
             "src/com/google/gwt/user/client/ui/Widget.java",
             "src/com/google/gwt/user/client/ui/IsWidget.java",

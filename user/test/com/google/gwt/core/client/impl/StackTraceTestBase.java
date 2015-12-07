@@ -68,15 +68,24 @@ public abstract class StackTraceTestBase extends GWTTestCase {
   protected abstract String[] getTraceJse(Object whatToThrow);
 
   private void assertTrace(String[] expected, Exception t) {
+    int i = 0;
     StackTraceElement[] trace = t.getStackTrace();
-    for (int i = 0; i < expected.length; i++) {
+    for (String expectedMethodName : expected) {
+      boolean optionalFrame = expectedMethodName.startsWith("?");
+      if (optionalFrame) {
+        expectedMethodName = expectedMethodName.substring(1);
+      }
       StackTraceElement actualElement = trace[i];
       String methodName = actualElement == null ? "!MISSING!" : actualElement.getMethodName();
-      if (expected[i].equals(methodName)) {
+      if (expectedMethodName.equals(methodName)) {
+        i++;
+        continue;
+      }
+      if (optionalFrame) {
         continue;
       }
       AssertionFailedError e = new AssertionFailedError("Incorrect frame at " + i + " - "
-          + " Expected: " + expected[i] + " Actual: " + methodName);
+          + " Expected: " + expectedMethodName + " Actual: " + methodName);
       e.initCause(t);
       throw e;
     }

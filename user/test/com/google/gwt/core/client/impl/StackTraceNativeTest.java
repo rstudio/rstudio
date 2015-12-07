@@ -35,10 +35,10 @@ public class StackTraceNativeTest extends StackTraceTestBase {
 
   @Override
   protected String[] getTraceJava() {
+    // First two frames are optional as they are automatically stripped by EDGE.
     return new String[] {
-        Impl.getNameOf("@java.lang.Throwable::fillInStackTrace()"),
-        Impl.getNameOf("@java.lang.Throwable::new(Ljava/lang/String;)"),
-        Impl.getNameOf("@java.lang.Exception::new(Ljava/lang/String;)"),
+        "?" + Impl.getNameOf("@java.lang.Throwable::new(Ljava/lang/String;)"),
+        "?" + Impl.getNameOf("@java.lang.Exception::new(Ljava/lang/String;)"),
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceExamples::throwException2(*)"),
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceExamples::throwException1(*)"),
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceExamples::getLiveException(*)"),
@@ -48,10 +48,10 @@ public class StackTraceNativeTest extends StackTraceTestBase {
 
   @Override
   protected String[] getTraceRecursion() {
+    // First two frames are optional as they are automatically stripped by EDGE.
     final String[] expectedModern = {
-        Impl.getNameOf("@java.lang.Throwable::fillInStackTrace()"),
-        Impl.getNameOf("@java.lang.Throwable::new(Ljava/lang/String;)"),
-        Impl.getNameOf("@java.lang.Exception::new(Ljava/lang/String;)"),
+        "?" + Impl.getNameOf("@java.lang.Throwable::new(Ljava/lang/String;)"),
+        "?" + Impl.getNameOf("@java.lang.Exception::new(Ljava/lang/String;)"),
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceExamples::throwException2(*)"),
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceExamples::throwException1(*)"),
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceExamples::throwRecursive(*)"),
@@ -64,7 +64,6 @@ public class StackTraceNativeTest extends StackTraceTestBase {
     };
 
     final String[] expectedLegacy = {
-        Impl.getNameOf("@java.lang.Throwable::fillInStackTrace()"),
         Impl.getNameOf("@java.lang.Throwable::new(Ljava/lang/String;)"),
         Impl.getNameOf("@java.lang.Exception::new(Ljava/lang/String;)"),
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceExamples::throwException2(*)"),
@@ -88,16 +87,22 @@ public class StackTraceNativeTest extends StackTraceTestBase {
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceTestBase::assertJse(*)"),
     };
 
-    final String[] limited = {
+    final String[] limited_wrap = {
         Impl.getNameOf("@com.google.gwt.lang.Exceptions::wrap(*)"),
+        Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceExamples::getLiveException(*)"),
+        Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceTestBase::assertJse(*)"),
+    };
+
+    final String[] limited_fillInStackTrace = {
+        Impl.getNameOf("@java.lang.Throwable::fillInStackTrace()"),
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceExamples::getLiveException(*)"),
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceTestBase::assertJse(*)"),
     };
 
     // For legacy browsers and non-error javascript exceptions (e.g. throw "string"), we can only
     // construct stack trace from the catch block and below.
-
-    return (isLegacyCollector() || thrown != TYPE_ERROR) ? limited : full;
+    return isLegacyCollector()
+        ? limited_wrap : (thrown != TYPE_ERROR ? limited_fillInStackTrace : full);
   }
 
   // TODO(goktug): new Error().stack is broken for htmlunit:

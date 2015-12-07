@@ -21,7 +21,6 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
-import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JIfStatement;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
@@ -31,7 +30,6 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
-import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
@@ -143,26 +141,10 @@ public class CatchBlockNormalizer {
   }
 
   private class UnwrapJavaScriptExceptionVisitor extends JModVisitor {
-    JDeclaredType jseType =
-        program.getFromTypeMap("com.google.gwt.core.client.JavaScriptException");
     JMethod unwrapMethod = program.getIndexedMethod(RuntimeConstants.EXCEPTIONS_UNWRAP);
 
     @Override
     public void endVisit(JThrowStatement x, Context ctx) {
-      assert jseType != null;
-
-      JExpression expr = x.getExpr();
-
-      // Optimization: unwrap not needed if "new BlahException()"
-      if (expr instanceof JNewInstance && !expr.getType().equals(jseType)) {
-        return;
-      }
-
-      // Optimization: unwrap not needed if expression can never be JavaScriptException
-      if (program.typeOracle.castFailsTrivially((JReferenceType) expr.getType(), jseType)) {
-        return;
-      }
-
       // throw x; -> throw Exceptions.unwrap(x);
       ctx.replaceMe(createUnwrappedThrow(x));
     }

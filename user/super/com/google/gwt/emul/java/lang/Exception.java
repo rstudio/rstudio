@@ -41,4 +41,8 @@ public class Exception extends Throwable {
       boolean writableStackTrace) {
     super(message, cause, enableSuppression, writableStackTrace);
   }
+
+  Exception(Object backingJsObject) {
+    super(backingJsObject);
+  }
 }

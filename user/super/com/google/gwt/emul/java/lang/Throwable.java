@@ -22,12 +22,19 @@ import static javaemul.internal.InternalPreconditions.checkState;
 import java.io.PrintStream;
 import java.io.Serializable;
 
+import javaemul.internal.JsUtils;
+import javaemul.internal.annotations.DoNotInline;
+import jsinterop.annotations.JsProperty;
+
 /**
  * See <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Throwable.html">the
  * official Java API doc</a> for details.
  */
 public class Throwable implements Serializable {
+
+  private static final Object UNITIALIZED = new Object();
+
   /*
    * NOTE: We cannot use custom field serializers because we need the client and
    * server to use different serialization strategies to deal with this type.
@@ -39,35 +46,40 @@ public class Throwable implements Serializable {
    * to ensure that only the detailMessage field is serialized. Changing the
    * field modifiers below may necessitate a change to the server's
    * SerializabilityUtil.fieldQualifiesForSerialization(Field) method.
-   *
-   * TODO(rluble): Add remaining functionality for suppressed Exceptions (e.g.
-   * printing). Also review the class for missing Java 7 compatibility.
    */
-  private transient Throwable cause;
   private String detailMessage;
+  private transient Throwable cause;
   private transient Throwable[] suppressedExceptions;
   private transient StackTraceElement[] stackTrace;
   private transient boolean disableSuppression;
+  private transient boolean writetableStackTrace = true;
+
+  @JsProperty
+  private transient Object backingJsObject = UNITIALIZED;
 
   public Throwable() {
     fillInStackTrace();
+    initializeBackingError();
   }
 
   public Throwable(String message) {
     this.detailMessage = message;
     fillInStackTrace();
+    initializeBackingError();
   }
 
   public Throwable(String message, Throwable cause) {
     this.cause = cause;
     this.detailMessage = message;
     fillInStackTrace();
+    initializeBackingError();
   }
 
   public Throwable(Throwable cause) {
     this.detailMessage = (cause == null) ? null : cause.toString();
     this.cause = cause;
     fillInStackTrace();
+    initializeBackingError();
   }
 
   /**
@@ -78,9 +90,57 @@ public class Throwable implements Serializable {
       boolean writetableStackTrace) {
     this.cause = cause;
     this.detailMessage = message;
+    this.writetableStackTrace = writetableStackTrace;
     this.disableSuppression = !enableSuppression;
     if (writetableStackTrace) {
       fillInStackTrace();
+    }
+    initializeBackingError();
+  }
+
+  Throwable(Object backingJsObject) {
+    setBackingJsObject(backingJsObject);
+  }
+
+  private void initializeBackingError() {
+    this.stackTrace = null; // Invalidate the cached trace
+
+    // Replace newlines with spaces so that we don't confuse the parser
+    // below which splits on newlines, and will otherwise try to parse
+    // the error message as part of the stack trace.
+    // TODO: use string.asNativeString.replace instead when available.
+    String errorMessage = internalToString().replace('\n', ' ');
+
+    setBackingJsObject(createError(errorMessage));
+
+    captureStackTrace();
+  }
+
+  // TODO(goktug): set 'name' property to class name and 'message' to detailMessage instead when
+  // they are respected by dev tools logging.
+  private static native Object createError(String msg) /*-{
+    var e = new Error(msg);
+
+    // In IE -unlike every other browser-, the stack property is not defined until you throw it.
+    if (!("stack" in e)) {
+      try { throw e; } catch(ignored) {}
+    }
+
+    return e;
+  }-*/;
+
+  private native void captureStackTrace() /*-{
+    @com.google.gwt.core.client.impl.StackTraceCreator::captureStackTrace(*)(this);
+  }-*/;
+
+  private void setBackingJsObject(Object backingJsObject) {
+    this.backingJsObject = backingJsObject;
+    linkBack(backingJsObject);
+  }
+
+  private void linkBack(Object error) {
+    if (error != null) {
+      JsUtils.setProperty(error, "__java$exception", this);
     }
   }
 
@@ -109,11 +169,18 @@ public class Throwable implements Serializable {
    *
    * @return this
    */
-  public native Throwable fillInStackTrace() /*-{
-    this.@Throwable::stackTrace = null; // Invalidate the cached trace
-    @com.google.gwt.core.client.impl.StackTraceCreator::captureStackTrace(*)(this, this.@Throwable::detailMessage);
+  @DoNotInline
+  public Throwable fillInStackTrace() {
+    if (writetableStackTrace) {
+      // If this is the first run, let constructor initialize it.
+      // (We need to initialize the backingJsObject from constructor as our own implementation of
+      // fillInStackTrace is not guaranteed to be executed.)
+      if (backingJsObject != UNITIALIZED) {
+        initializeBackingError();
+      }
+    }
     return this;
-  }-*/;
+  }
 
   public Throwable getCause() {
     return cause;
@@ -134,13 +201,13 @@ public class Throwable implements Serializable {
    */
   public StackTraceElement[] getStackTrace() {
     if (stackTrace == null) {
-      stackTrace = constructJavaStackTrace(this);
+      stackTrace = constructJavaStackTrace();
     }
     return stackTrace;
   }
 
-  private static native StackTraceElement[] constructJavaStackTrace(Throwable t) /*-{
-    return @com.google.gwt.core.client.impl.StackTraceCreator::constructJavaStackTrace(*)(t);
+  private native StackTraceElement[] constructJavaStackTrace() /*-{
+    return @com.google.gwt.core.client.impl.StackTraceCreator::constructJavaStackTrace(*)(this);
   }-*/;
 
   /**
@@ -200,13 +267,12 @@ public class Throwable implements Serializable {
 
   @Override
   public String toString() {
-    String className = this.getClass().getName();
-    String msg = getMessage();
-    if (msg != null) {
-      return className + ": " + msg;
-    } else {
-      return className;
-    }
+    return internalToString();
   }
 
+  // A private method to avoid polymorphic calls from constructor.
+  private String internalToString() {
+    String className = getClass().getName();
+    return detailMessage == null ? className : className + ": " + detailMessage;
+  }
 }

@@ -41,4 +41,8 @@ public class RuntimeException extends Exception {
       boolean writableStackTrace) {
     super(message, cause, enableSuppression, writableStackTrace);
   }
+
+  RuntimeException(Object backingJsObject) {
+    super(backingJsObject);
+  }
 }
