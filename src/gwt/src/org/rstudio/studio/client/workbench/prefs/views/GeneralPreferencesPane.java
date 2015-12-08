@@ -132,7 +132,8 @@ public class GeneralPreferencesPane extends PreferencesPane
                  "never"
             },
             false,
-            true);
+            true,
+            false);
       if (session_.getSessionInfo().getShowUserHomePage())
       {
          spaced(showServerHomePage_);
