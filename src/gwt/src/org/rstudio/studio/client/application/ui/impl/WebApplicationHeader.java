@@ -270,7 +270,7 @@ public class WebApplicationHeader extends Composite
       public void onClick(ClickEvent event)
       {
          if (logoTargetUrl_ != null)
-            Window.Location.replace(logoTargetUrl_);
+            Window.Location.assign(logoTargetUrl_);
       }
    };
 
