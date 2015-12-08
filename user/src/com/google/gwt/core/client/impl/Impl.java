@@ -28,7 +28,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 public final class Impl {
 
   static {
-    if (GWT.isClient() && StackTraceCreator.collector != null) {
+    if (GWT.isScript() && StackTraceCreator.collector != null) {
       // Just enforces loading of StackTraceCreator early on, nothing else to do here...
     }
   }
