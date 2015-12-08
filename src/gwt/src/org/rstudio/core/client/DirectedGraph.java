@@ -167,6 +167,20 @@ public class DirectedGraph<K, V>
       return chain;
    }
    
+   public void forEachNode(CommandWithArg<DirectedGraph<K, V>> command)
+   {
+      forEachNodeImpl(this, command);
+   }
+   
+   private static <K, V> void forEachNodeImpl(
+         DirectedGraph<K, V> node,
+         CommandWithArg<DirectedGraph<K, V>> command)
+   {
+      command.execute(node);
+      for (Map.Entry<K, DirectedGraph<K, V>> entry : node.getChildren().entrySet())
+         forEachNodeImpl(entry.getValue(), command);
+   }
+   
    public V getValue() { return value_; }
    public void setValue(V value) { value_ = value; }
    
