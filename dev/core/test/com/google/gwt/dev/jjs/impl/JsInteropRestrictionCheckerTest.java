@@ -1483,21 +1483,31 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "Line 9: JsOverlay method 'void EntryPoint.Buggy.m()' cannot override a supertype method.");
   }
 
-  public void testJsOverlayOnNonFinalMethodAndNonCompileTimeConstantFieldFails() {
+  public void testJsOverlayOnNonFinalMethodAndInstanceFieldFails() {
     addSnippetImport("jsinterop.annotations.JsType");
     addSnippetImport("jsinterop.annotations.JsOverlay");
     addSnippetClassDecl(
         "@JsType(isNative=true) public static class Buggy {",
-        "  @JsOverlay public static int f1 = 2;",
         "  @JsOverlay public final int f2 = 2;",
         "  @JsOverlay public void m() { }",
         "}");
 
     assertBuggyFails(
         "Line 5: Native JsType 'EntryPoint.Buggy' cannot have initializer.",
-        "Line 6: JsOverlay field 'int EntryPoint.Buggy.f1' can only be a compile time constant.",
-        "Line 7: JsOverlay field 'int EntryPoint.Buggy.f2' can only be a compile time constant.",
-        "Line 8: JsOverlay method 'void EntryPoint.Buggy.m()' cannot be non-final nor native.");
+        "Line 6: JsOverlay field 'int EntryPoint.Buggy.f2' can only be static.",
+        "Line 7: JsOverlay method 'void EntryPoint.Buggy.m()' cannot be non-final nor native.");
+  }
+
+  public void testJsOverlayWithStaticInitializerSucceeds() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsOverlay");
+    addSnippetClassDecl(
+        "@JsType(isNative=true) public static class Buggy {",
+        "  @JsOverlay public final static Object f1 = new Object();",
+        "  @JsOverlay public static int f2 = 2;",
+        "}");
+
+    assertBuggySucceeds();
   }
 
   public void testJsOverlayOnNativeMethodFails() {

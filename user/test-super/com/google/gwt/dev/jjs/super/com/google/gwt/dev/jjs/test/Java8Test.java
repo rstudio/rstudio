@@ -23,6 +23,10 @@ import com.google.gwt.junit.client.GWTTestCase;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import jsinterop.annotations.JsOverlay;
+import jsinterop.annotations.JsType;
+
 /**
  * Tests Java 8 features. It is super sourced so that gwt can be compiles under Java 7.
  *
@@ -1283,5 +1287,64 @@ public class Java8Test extends GWTTestCase {
 
   private void assertContentsInOrder(Iterable<String> contents, String... elements) {
     assertEquals(Arrays.asList(elements).toString(), contents.toString());
+  }
+
+  @JsType(isNative = true)
+  interface  NativeJsTypeInterfaceWithStaticInitializationAndFieldAccess {
+    @JsOverlay
+    Object object = new Integer(3);
+  }
+
+  @JsType(isNative = true)
+  interface NativeJsTypeInterfaceWithStaticInitializationAndStaticOverlayMethod {
+    @JsOverlay
+    Object object = new Integer(4);
+
+    @JsOverlay
+    static Object getObject() {
+      return object;
+    }
+  }
+
+// TODO(rluble): uncomment when we allow @JsOverlay methods to be default methods of
+// interfaces
+//  @JsType(isNative = true)
+//  interface NativeJsTypeInterfaceWithStaticInitializationAndInstanceOverlayMethod {
+//  @JsOverlay
+//    Object object = new Integer(5);
+//
+//    @JsOverlay
+//    default Object getObject() {
+//      return object;
+//    }
+//  }
+//
+//  private native NativeJsTypeInterfaceWithStaticInitializationAndInstanceOverlayMethod
+//      createNativeJsTypeInterfaceWithStaticInitializationAndInstanceOverlayMethod() /*-{
+//    return {};
+//  }-*/;
+
+  @JsType(isNative = true)
+  interface NativeJsTypeInterfaceWithStaticInitialization {
+    @JsOverlay
+    Object object = new Integer(6);
+  }
+
+  @JsType(isNative = true)
+  interface NativeJsTypeInterfaceWithComplexStaticInitialization {
+    @JsOverlay
+    Object object = (Integer) (((int) NativeJsTypeInterfaceWithStaticInitialization.object) + 1);
+  }
+
+  public void testNativeJsTypeWithStaticIntializer() {
+    assertEquals(3, NativeJsTypeInterfaceWithStaticInitializationAndFieldAccess.object);
+    assertEquals(
+        4, NativeJsTypeInterfaceWithStaticInitializationAndStaticOverlayMethod.getObject());
+// TODO(rluble): uncomment when we allow @JsOverlay methods to be default methods of
+// interfaces
+//    assertEquals(new Integer(5),
+//        createNativeJsTypeInterfaceWithStaticInitializationAndInstanceOverlayMethod()
+//            .getObject());
+    assertEquals(7, NativeJsTypeInterfaceWithComplexStaticInitialization.object);
   }
 }

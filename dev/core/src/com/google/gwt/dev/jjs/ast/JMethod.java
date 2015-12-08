@@ -72,11 +72,16 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
 
   @Override
   public boolean isJsInteropEntryPoint() {
-    return exported && !needsDynamicDispatch() && !isJsNative();
+    return exported && !needsDynamicDispatch() && !isJsNative() && !isJsOverlay();
   }
 
   @Override
   public boolean canBeReferencedExternally() {
+    if (isJsOverlay() || (!needsDynamicDispatch() && isJsNative()))  {
+      // JsOverlays, native constructors and native static methods can not be referenced
+      // externally
+      return false;
+    }
     for (JMethod method : getOverriddenMethodsIncludingSelf()) {
       if (method.exported || method.isJsFunctionMethod()) {
         return true;
@@ -244,7 +249,8 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
 
   @Override
   public boolean isJsOverlay() {
-    return isJsOverlay || getEnclosingType().isJsoType();
+    return isJsOverlay || getEnclosingType().isJsoType() ||
+        getEnclosingType().isJsNative() && JProgram.isClinit(this);
   }
 
   public void setSyntheticAccidentalOverride() {
@@ -310,7 +316,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
   }
 
   public boolean isJsMethodVarargs() {
-    if (getParams().isEmpty() || !canBeReferencedExternally()) {
+    if (getParams().isEmpty() || !(canBeReferencedExternally() || canBeImplementedExternally())) {
       return false;
     }
 

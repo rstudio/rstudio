@@ -377,46 +377,52 @@ public class JavaResourceBase {
   public static final MockJavaResource JSTYPE =
       createMockJavaResource("jsinterop.annotations.JsType",
           "package jsinterop.annotations;",
-          "public @interface JsType {\n",
-          "  String namespace() default \"\";\n",
-          "  String name() default \"\";\n",
-          "  boolean isNative() default false;\n" +
+          "public @interface JsType {",
+          "  String namespace() default \"\";",
+          "  String name() default \"\";",
+          "  boolean isNative() default false;",
           "}"
       );
   public static final MockJavaResource JSCONSTRUCTOR =
       createMockJavaResource("jsinterop.annotations.JsConstructor",
           "package jsinterop.annotations;",
-          "public @interface JsConstructor {\n",
+          "public @interface JsConstructor {",
+          "}");
+  public static final MockJavaResource JSPACKAGE =
+      createMockJavaResource("jsinterop.annotations.JsPackage",
+          "package jsinterop.annotations;",
+          "public @interface JsPackage {",
+          "  String GLOBAL = \"<global>\";",
+          "  String namespace();",
           "}");
   public static final MockJavaResource JSPROPERTY =
       createMockJavaResource("jsinterop.annotations.JsProperty",
           "package jsinterop.annotations;",
-          "public @interface JsProperty {\n",
-          "  String namespace() default \"\";\n",
-          "  String name() default \"\";\n",
+          "public @interface JsProperty {",
+          "  String namespace() default \"\";",
+          "  String name() default \"\";",
           "}");
   public static final MockJavaResource JSMETHOD =
       createMockJavaResource("jsinterop.annotations.JsMethod",
           "package jsinterop.annotations;",
           "public @interface JsMethod {\n",
-          "  String namespace() default \"\";\n",
-          "  String name() default \"\";\n",
+          "  String namespace() default \"\";",
+          "  String name() default \"\";",
           "}");
   public static final MockJavaResource JSIGNORE =
       createMockJavaResource("jsinterop.annotations.JsIgnore",
           "package jsinterop.annotations;",
-          "public @interface JsIgnore {\n",
+          "public @interface JsIgnore {",
           "}");
   public static final MockJavaResource JSFUNCTION =
       createMockJavaResource("jsinterop.annotations.JsFunction",
           "package jsinterop.annotations;",
-          "public @interface JsFunction {\n",
+          "public @interface JsFunction {",
           "}");
-
   public static final MockJavaResource JSOVERLAY =
       createMockJavaResource("jsinterop.annotations.JsOverlay",
           "package jsinterop.annotations;",
-          "public @interface JsOverlay {\n",
+          "public @interface JsOverlay {",
           "}");
 
   public static MockJavaResource[] getStandardResources() {
@@ -426,8 +432,8 @@ public class JavaResourceBase {
         ERROR, FUNCTIONALINTERFACE, FLOAT, INTEGER, IS_SERIALIZABLE, JAVASCRIPTEXCEPTION,
         JAVASCRIPTOBJECT, LIST, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR, NUMBER, OBJECT,
         RUNTIME_EXCEPTION, SERIALIZABLE, SHORT, STRING, STRING_BUILDER, SUPPRESS_WARNINGS, SYSTEM,
-        THROWABLE, SPECIALIZE_METHOD, JSTYPE, JSCONSTRUCTOR, JSPROPERTY, JSMETHOD, JSIGNORE,
-        JSFUNCTION, JSOVERLAY};
+        THROWABLE, SPECIALIZE_METHOD, JSTYPE, JSCONSTRUCTOR, JSPACKAGE, JSPROPERTY, JSMETHOD,
+        JSIGNORE, JSFUNCTION, JSOVERLAY};
   }
 
   /**

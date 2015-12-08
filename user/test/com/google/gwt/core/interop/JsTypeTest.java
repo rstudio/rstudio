@@ -23,10 +23,8 @@ import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Iterator;
 
-import javaemul.internal.annotations.DoNotInline;
 import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsMethod;
-import jsinterop.annotations.JsOverlay;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
@@ -477,42 +475,6 @@ public class JsTypeTest extends GWTTestCase {
     assertTrue(new JavaConcreteJsFunction() != new JavaConcreteJsFunction());
     assertSame(5, new JavaConcreteJsFunction().m());
     assertSame(3, ((JsFunctionInterface) nativeJsFunction()).m());
-  }
-
-  private static native void setProperty(Object object, String name, int value) /*-{
-    object[name] = value;
-  }-*/;
-
-  @JsType(isNative = true, namespace = GLOBAL, name = "Object")
-  static class NativeJsTypeWithOverlay {
-
-    @JsOverlay
-    public static final int x = 2;
-
-    public static native String[] keys(Object o);
-
-    @JsOverlay @DoNotInline
-    public static final boolean hasM(Object obj) {
-      return keys(obj)[0].equals("m");
-    }
-
-    public native boolean hasOwnProperty(String name);
-
-    @JsOverlay @DoNotInline
-    public final boolean hasM() {
-      return hasOwnProperty("m");
-    }
-  }
-
-  private native NativeJsTypeWithOverlay createNativeJsTypeWithOverlay() /*-{
-    return { m: function() { return 6; } };
-  }-*/;
-
-  public void testNativeJsTypeWithOverlay() {
-    NativeJsTypeWithOverlay object = createNativeJsTypeWithOverlay();
-    assertTrue(object.hasM());
-    assertTrue(NativeJsTypeWithOverlay.hasM(object));
-    assertEquals(2, NativeJsTypeWithOverlay.x);
   }
 
   @JsType

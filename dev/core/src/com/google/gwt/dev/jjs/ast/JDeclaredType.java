@@ -271,7 +271,7 @@ public abstract class JDeclaredType extends JReferenceType
    * superclass, or <code>null</code> if this class has no static initializer.
    */
   public final JDeclaredType getClinitTarget() {
-    if (isJsNative() || isJsFunction()) {
+    if (isJsFunction()) {
       return null;
     }
     return clinitTarget;

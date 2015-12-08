@@ -284,9 +284,10 @@ public class JsInteropRestrictionChecker {
 
     if (member instanceof JField) {
       JField field = (JField) member;
-      if (!field.isCompileTimeConstant()) {
+      if (field.needsDynamicDispatch()) {
         logError(
-            member, "JsOverlay field '%s' can only be a compile time constant.", methodDescription);
+            member, "JsOverlay field '%s' can only be static.",
+            methodDescription);
       }
       return;
     }

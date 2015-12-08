@@ -160,12 +160,12 @@ public class JField extends JVariable implements JMember {
 
   @Override
   public boolean isJsInteropEntryPoint() {
-    return exported && isStatic() && !isJsNative();
+    return exported && isStatic() && !isJsNative() && !isJsOverlay();
   }
 
   @Override
   public boolean canBeReferencedExternally() {
-    return exported;
+    return exported && !isJsNative();
   }
 
   @Override

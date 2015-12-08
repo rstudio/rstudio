@@ -245,11 +245,11 @@ public class JsPropertyTest extends GWTTestCase {
     void setX(int x);
   }
 
-  static class MyNativeNativeJsTypeTypeInterfaceSubclassNeedingBridge
-      extends AccidentaImplementer implements MyNativeJsTypeInterface {
+  static class MyNativeJsTypeInterfaceImplementorNeedingBridge
+      extends AccidentalImplementer implements MyNativeJsTypeInterface {
   }
 
-  static abstract class AccidentaImplementer {
+  static abstract class AccidentalImplementer {
     private int x;
 
     public int getX() {
@@ -266,25 +266,25 @@ public class JsPropertyTest extends GWTTestCase {
   }
 
   public void testJsPropertyBridges() {
-    MyNativeJsTypeInterface object = new MyNativeNativeJsTypeTypeInterfaceSubclassNeedingBridge();
+    MyNativeJsTypeInterface object = new MyNativeJsTypeInterfaceImplementorNeedingBridge();
 
     object.setX(3);
     assertEquals(3 + 150, object.getX());
-    assertEquals(3 + SET_X, ((AccidentaImplementer) object).x);
+    assertEquals(3 + SET_X, ((AccidentalImplementer) object).x);
 
-    AccidentaImplementer accidentaImplementer = (AccidentaImplementer) object;
+    AccidentalImplementer accidentalImplementer = (AccidentalImplementer) object;
 
-    accidentaImplementer.setX(3);
-    assertEquals(3 + 150, accidentaImplementer.getX());
+    accidentalImplementer.setX(3);
+    assertEquals(3 + 150, accidentalImplementer.getX());
     assertEquals(3 + 150, getProperty(object, "x"));
-    assertEquals(3 + SET_X, accidentaImplementer.x);
+    assertEquals(3 + SET_X, accidentalImplementer.x);
 
     setProperty(object, "x", 4);
-    assertEquals(4 + 150, accidentaImplementer.getX());
+    assertEquals(4 + 150, accidentalImplementer.getX());
     assertEquals(4 + 150, getProperty(object, "x"));
-    assertEquals(4 + SET_X, accidentaImplementer.x);
+    assertEquals(4 + SET_X, accidentalImplementer.x);
 
-    assertEquals(3 + 4 + SET_X, accidentaImplementer.sum(3));
+    assertEquals(3 + 4 + SET_X, accidentalImplementer.sum(3));
   }
 
   static class MyNativeJsTypeInterfaceImplNeedingBridgeSubclassed
