@@ -17,7 +17,6 @@ package org.rstudio.core.client.jsonrpc;
 
 import com.google.gwt.http.client.*;
 import com.google.gwt.json.client.JSONArray;
-import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.Random;
@@ -39,7 +38,7 @@ public class RpcRequest
                      boolean redactLog,
                      String sourceWindow,
                      String clientId,
-                     double clientVersion)
+                     String clientVersion)
    {
       url_ = url;
       method_ = method;
@@ -54,7 +53,7 @@ public class RpcRequest
          clientId_ = new JSONString(clientId);
       else
          clientId_ = null;
-      clientVersion_ = new JSONNumber(clientVersion);
+      clientVersion_ = new JSONString(clientVersion);
    }
    
    public void send(RpcRequestCallback callback)
@@ -80,7 +79,7 @@ public class RpcRequest
          request.put("clientId", clientId_);
       
       // add client version
-      request.put("version", clientVersion_);
+      request.put("clientVersion", clientVersion_);
       
       // configure request builder
       RequestBuilder builder = new RequestBuilder(RequestBuilder.POST, url_);
@@ -207,7 +206,7 @@ public class RpcRequest
    private final boolean redactLog_;
    final private JSONString sourceWindow_;
    final private JSONString clientId_;
-   final private JSONNumber clientVersion_;
+   final private JSONString clientVersion_;
    private Request request_ = null;
    private RequestLogEntry requestLogEntry_ = null;
    

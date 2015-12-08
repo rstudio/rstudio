@@ -49,6 +49,15 @@ if(NOT RSTUDIO_TARGET)
    set(RSTUDIO_DEVELOPMENT TRUE)
 endif()
 
+# record git revision hash (cache it since we don't use this in development
+# mode and we don't want it to force rebuilds there)
+if(NOT RSTUDIO_GIT_REVISION_HASH)
+   exec_program(git ARGS rev-parse HEAD
+                OUTPUT_VARIABLE RSTUDIO_GIT_REVISION_HASH)
+   SET(RSTUDIO_GIT_REVISION_HASH "${RSTUDIO_GIT_REVISION_HASH}" CACHE STRING "Git Revision Hash")
+endif()
+
+
 # set desktop and server build flags
 if( NOT WIN32 AND ( (${RSTUDIO_TARGET} STREQUAL "Development") OR
                     (${RSTUDIO_TARGET} STREQUAL "Server")) )

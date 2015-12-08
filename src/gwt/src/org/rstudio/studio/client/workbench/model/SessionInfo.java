@@ -44,8 +44,8 @@ public class SessionInfo extends JavaScriptObject
       return this.clientId;
    }-*/;
    
-   public final native double getClientVersion() /*-{
-      return this.version;
+   public final native String getClientVersion() /*-{
+      return this.client_version;
    }-*/;
 
    public final native String getUserIdentity() /*-{
