@@ -17,9 +17,8 @@ package org.rstudio.core.client.command;
 // A KeyMap provides a two-way lookup between a KeySequence, and a BindableCommand:
 // - Given a key sequence, one can discover commands bound to that key sequence,
 // - Given a command, one can discover what key sequences it is bound to.
-import com.google.gwt.dev.util.collect.HashMap;
-
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
