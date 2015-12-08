@@ -20,7 +20,7 @@ import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
-import jsinterop.annotations.JsMethod;
+import jsinterop.annotations.JsFunction;
 
 /**
  * Unit tests for the GWT emulation of java.lang.NullPointerException class.
@@ -34,23 +34,29 @@ public class NullPointerExceptionTest extends GWTTestCase {
 
   @DoNotRunWith(Platform.Devel)
   public void testBackingJsObject() {
-    Object caughtNative = catchNpeInNative();
+    Object caughtNative = catchNpeInNative(new Callback() {
+      @Override
+      public void call() {
+        throw new NullPointerException("<my msg>");
+      }
+    });
+
     assertTrue(caughtNative instanceof JavaScriptObject);
     assertTrue(caughtNative.toString().startsWith("TypeError:"));
     assertTrue(caughtNative.toString().contains("<my msg>"));
     assertTrue(caughtNative.toString().contains(NullPointerException.class.getName()));
   }
 
-  private native Object catchNpeInNative() /*-{
+  @JsFunction
+  interface Callback {
+    void call();
+  }
+
+  private native Object catchNpeInNative(Callback cb) /*-{
     try {
-      this.throwJavaNpe();
+      cb();
     } catch (e) {
       return e;
     }
   }-*/;
-
-  @JsMethod
-  private void throwJavaNpe() {
-    throw new NullPointerException("<my msg>");
-  }
 }
