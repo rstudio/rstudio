@@ -49,6 +49,10 @@ if(NOT RSTUDIO_TARGET)
    set(RSTUDIO_DEVELOPMENT TRUE)
 endif()
 
+# record git revision hash
+exec_program(git ARGS rev-parse HEAD
+             OUTPUT_VARIABLE RSTUDIO_GIT_REVISION_HASH)
+
 # set desktop and server build flags
 if( NOT WIN32 AND ( (${RSTUDIO_TARGET} STREQUAL "Development") OR
                     (${RSTUDIO_TARGET} STREQUAL "Server")) )

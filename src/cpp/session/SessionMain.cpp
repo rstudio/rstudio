@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <csignal>
+#include <limits>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
@@ -274,57 +275,26 @@ void handleUSR2(int unused)
    s_forceSuspend = 1;
 }
 
-// version of the executable
-double s_version = 0;
-   
-// installed version (computed as the time in seconds since epoch that 
-// the running/served code was installed) can be distinct from the version 
-// of the currently running executable if a deployment occured after this 
-// executable started running.
-double installedVersion()
+// version of the executable -- this is the legacy version designator. we
+// set it to double max so that it always invalidates legacy clients
+double s_version = std::numeric_limits<double>::max();
+
+// client version -- this is determined by the git revision hash. the client
+// and the server can diverge if a new version of the server was installed
+// underneath a previously rendered client. if versions diverge then a reload
+// of the client is forced
+inline std::string clientVersion()
 {
    // never return a version in desktop mode
    if (rsession::options().programMode() == kSessionProgramModeDesktop)
-      return 0;
+      return std::string();
 
    // never return a version in standalone mode
    if (rsession::options().standalone())
-      return 0;
+      return std::string();
 
-   // read installation time (as string) from file (return 0 if not found)
-   FilePath installedPath("/var/lib/rstudio-server/installed");
-   if (!installedPath.exists())
-      return 0;
-   
-   // attempt to get the value (return 0 if we have any trouble)
-   std::string installedStr;
-   Error error = readStringFromFile(installedPath, &installedStr);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return 0;
-   }
-   
-   // empty string means 0
-   if (installedStr.empty())
-   {
-      LOG_ERROR_MESSAGE("No value within /var/lib/rstudio-server/installed");
-      return 0;
-   }
-   
-   // attempt to parse the value into a double
-   double installedSeconds = 0.0;
-   try
-   {
-      std::istringstream istr(installedStr);
-      istr >> installedSeconds;
-      if (istr.fail())
-         LOG_ERROR(systemError(boost::system::errc::io_error, ERROR_LOCATION));
-   }
-   CATCH_UNEXPECTED_EXCEPTION
-    
-   // return installed seconds as version
-   return installedSeconds ;
+   // clientVersion is the git revision hash
+   return RSTUDIO_GIT_REVISION_HASH;
 }
    
 
@@ -447,8 +417,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
       LOG_ERROR(error);
    sessionInfo["temp_dir"] = tempDir.absolutePath();
    
-   // installed version
-   sessionInfo["version"] = installedVersion();
+   // installed client version
+   sessionInfo["client_version"] = clientVersion();
    
    // default prompt
    sessionInfo["prompt"] = rstudio::r::options::getOption<std::string>("prompt");
@@ -861,9 +831,19 @@ bool parseAndValidateJsonRpcConnection(
       return false;
    }
 
-   // check for old client version
+   // check for legacy client version (need to invalidate any client using
+   // the old version field)
    if ( (pJsonRpcRequest->version > 0) &&
         (s_version > pJsonRpcRequest->version) )
+   {
+      Error error(json::errc::InvalidClientVersion, ERROR_LOCATION);
+      ptrConnection->sendJsonRpcError(error);
+      return false;
+   }
+
+   // check for client version
+   if (!pJsonRpcRequest->clientVersion.empty() &&
+       clientVersion() != pJsonRpcRequest->clientVersion)
    {
       Error error(json::errc::InvalidClientVersion, ERROR_LOCATION);
       ptrConnection->sendJsonRpcError(error);
@@ -3076,9 +3056,6 @@ int main (int argc, char * const argv[])
       error = rsession::overlay::initialize();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
-
-      // set version
-      s_version = installedVersion();
 
       // set the rstudio environment variable so code can check for
       // whether rstudio is running

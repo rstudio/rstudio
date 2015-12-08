@@ -4395,7 +4395,7 @@ public class RemoteServer implements Server
    }
 
    private String clientId_;
-   private double clientVersion_ = 0;
+   private String clientVersion_ = "";
    private boolean listeningForEvents_;
    private boolean disconnected_;
 
