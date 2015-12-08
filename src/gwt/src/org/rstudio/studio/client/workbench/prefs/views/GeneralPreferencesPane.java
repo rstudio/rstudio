@@ -122,7 +122,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       showServerHomePage_ = new SelectWidget(
             "Show server home page:",
             new String[] {
-                  "Multiple Sessions",
+                  "Automatic",
                   "Always",
                   "Never"
             },
@@ -131,7 +131,8 @@ public class GeneralPreferencesPane extends PreferencesPane
                  "always",
                  "never"
             },
-            false);
+            false,
+            true);
       if (session_.getSessionInfo().getShowUserHomePage())
       {
          spaced(showServerHomePage_);
