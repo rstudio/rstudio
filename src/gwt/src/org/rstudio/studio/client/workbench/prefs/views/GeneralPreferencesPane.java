@@ -122,7 +122,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       showServerHomePage_ = new SelectWidget(
             "Show server home page:",
             new String[] {
-                  "Automatic",
+                  "Multiple active sessions",
                   "Always",
                   "Never"
             },
