@@ -111,21 +111,22 @@ public class Throwable implements Serializable {
     // TODO: use string.asNativeString.replace instead when available.
     String errorMessage = internalToString().replace('\n', ' ');
 
-    setBackingJsObject(createError(errorMessage));
+    setBackingJsObject(fixIE(createError(errorMessage)));
 
     captureStackTrace();
   }
 
   // TODO(goktug): set 'name' property to class name and 'message' to detailMessage instead when
   // they are respected by dev tools logging.
-  private static native Object createError(String msg) /*-{
-    var e = new Error(msg);
+  native Object createError(String msg) /*-{
+    return new Error(msg);
+  }-*/;
 
+  private static native Object fixIE(Object e) /*-{
     // In IE -unlike every other browser-, the stack property is not defined until you throw it.
     if (!("stack" in e)) {
       try { throw e; } catch(ignored) {}
     }
-
     return e;
   }-*/;
 
