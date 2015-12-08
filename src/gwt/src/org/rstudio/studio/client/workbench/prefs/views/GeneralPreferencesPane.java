@@ -119,6 +119,25 @@ public class GeneralPreferencesPane extends PreferencesPane
       nudgeRight(dirChooser_);
       textBoxWithChooser(dirChooser_);
 
+      showServerHomePage_ = new SelectWidget(
+            "Show server home page:",
+            new String[] {
+                  "Multiple Sessions",
+                  "Always",
+                  "Never"
+            },
+            new String[] {
+                 "sessions",
+                 "always",
+                 "never"
+            },
+            false);
+      if (session_.getSessionInfo().getShowUserHomePage())
+      {
+         spaced(showServerHomePage_);
+         add(showServerHomePage_);
+      }
+      
       restoreLastProject_ = new CheckBox("Restore most recently opened project at startup");
       lessSpaced(restoreLastProject_);
       add(restoreLastProject_);
@@ -180,6 +199,7 @@ public class GeneralPreferencesPane extends PreferencesPane
                           prefs_.checkForUpdates()));
       }
       
+      showServerHomePage_.setEnabled(false);
       saveWorkspace_.setEnabled(false);
       loadRData_.setEnabled(false);
       dirChooser_.setEnabled(false);
@@ -196,9 +216,12 @@ public class GeneralPreferencesPane extends PreferencesPane
       // general prefs
       GeneralPrefs generalPrefs = rPrefs.getGeneralPrefs();
       
+      showServerHomePage_.setEnabled(true);
       saveWorkspace_.setEnabled(true);
       loadRData_.setEnabled(true);
       dirChooser_.setEnabled(true);
+      
+      showServerHomePage_.setValue(generalPrefs.getShowUserHomePage());
       
       int saveWorkspaceIndex;
       switch (generalPrefs.getSaveAction())
@@ -279,7 +302,8 @@ public class GeneralPreferencesPane extends PreferencesPane
          }
 
          // set general prefs
-         GeneralPrefs generalPrefs = GeneralPrefs.create(saveAction, 
+         GeneralPrefs generalPrefs = GeneralPrefs.create(showServerHomePage_.getValue(),
+                                                         saveAction, 
                                                          loadRData_.getValue(),
                                                          rProfileOnResume_.getValue(),
                                                          dirChooser_.getText(),
@@ -334,6 +358,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private final FileDialogs fileDialogs_;
    private RVersionSelectWidget rServerRVersion_ = null;
    private CheckBox rememberRVersionForProjects_ = null;
+   private SelectWidget showServerHomePage_;
    private SelectWidget saveWorkspace_;
    private TextBoxWithButton rVersion_;
    private TextBoxWithButton dirChooser_;

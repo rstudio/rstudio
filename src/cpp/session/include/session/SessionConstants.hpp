@@ -65,5 +65,14 @@
 #define kListsPath          "lists"
 #define kProjectMruList     "project_mru"
 
+#define kUserSettingsDir       "user-settings"
+#define kUserSettingsFile      kUserSettingsDir
+
+#define kServerHomeSetting     "showUserHomePage"
+#define kServerHomeAlways      "always"
+#define kServerHomeNever       "never"
+#define kServerHomeSessions    "sessions"
+
+
 #endif // SESSION_CONSTANTS_HPP
 
