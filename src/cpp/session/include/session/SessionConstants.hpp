@@ -32,6 +32,8 @@
 #define kRStudioDefaultRVersion           "RSTUDIO_DEFAULT_R_VERSION"
 #define kRStudioDefaultRVersionHome       "RSTUDIO_DEFAULT_R_VERSION_HOME"
 
+#define kRStudioUserHomePage              "RSTUDIO_USER_HOME_PAGE"
+
 #define kProgramModeSessionOption         "program-mode"
 #define kSessionProgramModeDesktop        "desktop"
 #define kSessionProgramModeServer         "server"
