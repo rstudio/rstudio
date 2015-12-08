@@ -46,6 +46,7 @@ import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.core.client.widget.ToolbarSeparator;
 import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationUtils;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.LogoutRequestedEvent;
@@ -188,9 +189,9 @@ public class WebApplicationHeader extends Composite
             if (logoTargetUrl_ != null)
             {
                // convert to full url so we get any url custom prefex
-               if (logoTargetUrl_.startsWith("/"))
-                  logoTargetUrl_ = logoTargetUrl_.substring(1);
-               logoTargetUrl_ = GWT.getHostPageBaseURL() + logoTargetUrl_;
+               logoTargetUrl_ = 
+                  ApplicationUtils.getHostPageBaseURLWithoutContext(false) +
+                  logoTargetUrl_;
                logoLarge_.getElement().getStyle().setCursor(Cursor.POINTER);
                logoLarge_.setTitle("RStudio Server Home");
                logoSmall_.getElement().getStyle().setCursor(Cursor.POINTER);

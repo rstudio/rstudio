@@ -42,7 +42,6 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.events.*;
@@ -600,15 +599,11 @@ public class Application implements ApplicationEventHandlers
    {
       cleanupWorkbench();
     
-      // remove any session context from the url
-      String url = GWT.getHostPageBaseURL();
-      
-      if (!includeContext)
-      {
-         Pattern pattern = Pattern.create("/s/[A-Fa-f0-9]{8}[A-Fa-f0-9]{8}/");
-         url = pattern.replaceAll(url, "/");
-      }
-      
+      // ensure there is no session context if requested
+      String url = includeContext ? 
+            GWT.getHostPageBaseURL() :
+            ApplicationUtils.getHostPageBaseURLWithoutContext(true);
+            
       // add relative URL
       url += relativeUrl;
      
