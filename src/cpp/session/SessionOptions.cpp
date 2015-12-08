@@ -495,6 +495,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       the name of the pipe is in an environment variable. */
    //core::system::unsetenv("RS_SHARED_SECRET");
 
+   // show user home page
+   showUserHomePage_ = core::system::getenv(kRStudioUserHomePage) == "1";
+   core::system::unsetenv(kRStudioUserHomePage);
+
    // multi session
    multiSession_ = (programMode_ == kSessionProgramModeDesktop) ||
                    (core::system::getenv(kRStudioMultiSession) == "1");

@@ -671,6 +671,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    rVersionsJson["r_home_dir"] = module_context::rHomeDir();
    sessionInfo["r_versions_info"] = rVersionsJson;
 
+   sessionInfo["show_user_home_page"] = options.showUserHomePage();
+   sessionInfo["user_home_page_url"] = json::Value();
+
    module_context::events().onSessionInfo(&sessionInfo);
 
    // send response  (we always set kEventsPending to false so that the client
