@@ -1,6 +1,9 @@
 # install virtual X framebuffer (so we can run eclipse without X)
 apt-get install -y xvfb
 
+# install JDK for Java 1.7 (required by eclim)
+apt-get install -y openjdk-7-jdk
+
 # download eclipse and eclim
 cd /tmp 
 wget http://eclipse.bluemix.net/packages/mars.1/data/eclipse-jee-mars-1-linux-gtk-x86_64.tar.gz 
