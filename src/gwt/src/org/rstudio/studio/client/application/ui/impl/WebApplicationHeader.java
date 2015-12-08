@@ -187,6 +187,10 @@ public class WebApplicationHeader extends Composite
             logoTargetUrl_ = sessionInfo.getUserHomePageUrl();
             if (logoTargetUrl_ != null)
             {
+               // convert to full url so we get any url custom prefex
+               if (logoTargetUrl_.startsWith("/"))
+                  logoTargetUrl_ = logoTargetUrl_.substring(1);
+               logoTargetUrl_ = GWT.getHostPageBaseURL() + logoTargetUrl_;
                logoLarge_.getElement().getStyle().setCursor(Cursor.POINTER);
                logoLarge_.setTitle("RStudio Server Home");
                logoSmall_.getElement().getStyle().setCursor(Cursor.POINTER);
