@@ -388,7 +388,7 @@ well as menu structures (for main menu and popup menus).
          </menu>
          <separator/>
          <cmd refid="showShellDialog"/>
-         <cmd refid="launchShinyGadget"/>
+         <cmd refid="showAddinsDialog"/>
          <separator/>
          <cmd refid="helpKeyboardShortcuts"/>
          <cmd refid="modifyKeyboardShortcuts"/>
@@ -2097,10 +2097,10 @@ well as menu structures (for main menu and popup menus).
         desc="Execute shell commands(s)"
         windowMode="main"/>
         
-   <cmd id="launchShinyGadget"
-        label="Launch Shiny Gadget"
-        menuLabel="_Gadgets..."
-        desc="Launch a Shiny Gadget"
+   <cmd id="showAddinsDialog"
+        label="Execute an Addin"
+        menuLabel="Addins..."
+        desc="Execute an Addin"
         windowMode="main"/>
 
    <cmd id="macPreferences"
