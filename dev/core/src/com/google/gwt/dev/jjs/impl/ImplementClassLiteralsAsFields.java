@@ -34,6 +34,7 @@ import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
+import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
@@ -54,6 +55,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.collect.ArrayListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
@@ -222,6 +224,17 @@ public class ImplementClassLiteralsAsFields {
       } else {
         // Just resolve the class literal.
         resolveClassLiteral(x);
+      }
+    }
+
+    @Override
+    public void endVisit(JMethod x, Context ctx) {
+      if (x.isJsMethodVarargs()) {
+        // ImplementJsVarargs might insert an array creation for the varargs parameter which is not
+        // seen by this pass.
+        JParameter varargsParameter = Iterables.getLast(x.getParams());
+        assert varargsParameter.isVarargs();
+        resolveClassLiteralField(((JArrayType) varargsParameter.getType()).getLeafType());
       }
     }
 
