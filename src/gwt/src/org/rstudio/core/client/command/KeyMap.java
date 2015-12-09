@@ -29,72 +29,81 @@ import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 
 public class KeyMap
 {
-   public interface BindableCommand
+   public static enum KeyMapType {
+      ADDIN, EDITOR, APPLICATION;
+   }
+   public interface CommandBinding
    {
+      public String getId();
       public void execute();
       public boolean isEnabled();
    }
    
    public KeyMap()
    {
-      graph_ = new DirectedGraph<KeyCombination, List<BindableCommand>>(new DefaultConstructor<List<BindableCommand>>()
+      graph_ = new DirectedGraph<KeyCombination, List<CommandBinding>>(new DefaultConstructor<List<CommandBinding>>()
       {
          @Override
-         public List<BindableCommand> create()
+         public List<CommandBinding> create()
          {
-            return new ArrayList<BindableCommand>();
+            return new ArrayList<CommandBinding>();
          }
       });
       
-      commandToNodeMap_ = new HashMap<BindableCommand, List<DirectedGraph<KeyCombination, List<BindableCommand>>>>();
+      commandToNodeMap_ = new HashMap<String, List<DirectedGraph<KeyCombination, List<CommandBinding>>>>();
    }
    
-   public void addBinding(KeySequence keys, BindableCommand command)
+   public void addBinding(KeySequence keys, CommandBinding command)
    {
-      DirectedGraph<KeyCombination, List<BindableCommand>> node = graph_.ensureNode(keys.getData());
+      DirectedGraph<KeyCombination, List<CommandBinding>> node = graph_.ensureNode(keys.getData());
       
       if (node.getValue() == null)
-         node.setValue(new ArrayList<BindableCommand>());
+         node.setValue(new ArrayList<CommandBinding>());
       node.getValue().add(command);
       
-      if (!commandToNodeMap_.containsKey(command))
-         commandToNodeMap_.put(command, new ArrayList<DirectedGraph<KeyCombination, List<BindableCommand>>>());
-      commandToNodeMap_.get(command).add(node);
+      if (!commandToNodeMap_.containsKey(command.getId()))
+         commandToNodeMap_.put(command.getId(), new ArrayList<DirectedGraph<KeyCombination, List<CommandBinding>>>());
+      commandToNodeMap_.get(command.getId()).add(node);
    }
    
-   public void setBindings(KeySequence keys, BindableCommand command)
+   public void setBindings(KeySequence keys, CommandBinding command)
    {
       clearBindings(command);
       addBinding(keys, command);
    }
    
-   public void setBindings(List<KeySequence> keyList, BindableCommand command)
+   public void setBindings(List<KeySequence> keyList, CommandBinding command)
    {
       clearBindings(command);
       for (KeySequence keys : keyList)
          addBinding(keys, command);
    }
    
-   public void clearBindings(BindableCommand command)
+   public void clearBindings(CommandBinding command)
    {
-      List<DirectedGraph<KeyCombination, List<BindableCommand>>> nodes = commandToNodeMap_.get(command);
-      for (DirectedGraph<KeyCombination, List<BindableCommand>> node : nodes)
+      if (!commandToNodeMap_.containsKey(command.getId()))
+         return;
+      List<DirectedGraph<KeyCombination, List<CommandBinding>>> nodes = commandToNodeMap_.get(command.getId());
+      
+      for (DirectedGraph<KeyCombination, List<CommandBinding>> node : nodes)
       {
-         List<BindableCommand> commands = node.getValue();
-         if (commands == null || commands.isEmpty())
+         List<CommandBinding> bindings = node.getValue();
+         if (bindings == null || bindings.isEmpty())
             continue;
          
-         while (commands.remove(command))
-         {
-         }
+         List<CommandBinding> filtered = new ArrayList<CommandBinding>();
+         for (CommandBinding binding : bindings)
+            if (binding.getId() != command.getId())
+               filtered.add(binding);
+         node.setValue(filtered);
       }
       
       commandToNodeMap_.remove(command);
    }
    
-   public List<BindableCommand> getBindings(KeySequence keys)
+   public List<CommandBinding> getBindings(KeySequence keys)
    {
-      DirectedGraph<KeyCombination, List<BindableCommand>> node = graph_.findNode(keys.getData());
+      DirectedGraph<KeyCombination, List<CommandBinding>> node = graph_.findNode(keys.getData());
       
       if (node == null)
          return null;
@@ -102,11 +111,11 @@ public class KeyMap
       return node.getValue();
    }
    
-   public List<KeySequence> getBindings(BindableCommand command)
+   public List<KeySequence> getBindings(CommandBinding command)
    {
       List<KeySequence> keys = new ArrayList<KeySequence>();
       
-      List<DirectedGraph<KeyCombination, List<BindableCommand>>> bindings = commandToNodeMap_.get(command);
+      List<DirectedGraph<KeyCombination, List<CommandBinding>>> bindings = commandToNodeMap_.get(command);
       if (bindings == null)
          return keys;
       
@@ -116,25 +125,31 @@ public class KeyMap
       return keys;
    }
    
-   public BindableCommand getActiveBinding(KeySequence keys)
+   public CommandBinding getActiveBinding(KeySequence keys)
    {
-      List<BindableCommand> commands = getBindings(keys);
+      List<CommandBinding> commands = getBindings(keys);
       
       if (commands == null)
          return null;
       
-      for (BindableCommand command : commands)
+      for (CommandBinding command : commands)
          if (command.isEnabled())
             return command;
       
       return null;
    }
    
+   public boolean isPrefix(KeySequence keys)
+   {
+      DirectedGraph<KeyCombination, List<CommandBinding>> node = graph_.findNode(keys.getData());
+      return node != null && !node.getChildren().isEmpty();
+   }
+   
    // Private members ----
    
    // The actual graph used for dispatching key sequences to commands.
-   private final DirectedGraph<KeyCombination, List<BindableCommand>> graph_;
+   private final DirectedGraph<KeyCombination, List<CommandBinding>> graph_;
    
    // Map used so we can quickly discover what bindings are active for a particular command.
-   private final Map<BindableCommand, List<DirectedGraph<KeyCombination, List<BindableCommand>>>> commandToNodeMap_;
+   private final Map<String, List<DirectedGraph<KeyCombination, List<CommandBinding>>>> commandToNodeMap_;
 }

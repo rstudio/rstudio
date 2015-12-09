@@ -5,19 +5,22 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Pair;
+import org.rstudio.core.client.command.AddinCommandBinding;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
-import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.command.KeyMap;
+import org.rstudio.core.client.command.KeyMap.CommandBinding;
+import org.rstudio.core.client.command.KeyMap.KeyMapType;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
+import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.files.FileBacked;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedHandler;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Singleton
 public class AddinsCommandManager
@@ -30,8 +33,6 @@ public class AddinsCommandManager
             KEYBINDINGS_PATH,
             false,
             EditorKeyBindings.create());
-      
-      commandMap_ = new HashMap<KeySequence, Command>();
       
       events_.addHandler(
             EditorLoadedEvent.TYPE,
@@ -57,11 +58,9 @@ public class AddinsCommandManager
    }
    
    @Inject
-   private void initialize(EventBus events,
-                           AddinsServerOperations server)
+   private void initialize(EventBus events)
    {
       events_ = events;
-      server_ = server;
    }
    
    public void addBindingsAndSave(final EditorKeyBindings newBindings,
@@ -105,28 +104,26 @@ public class AddinsCommandManager
    private void registerBindings(final EditorKeyBindings bindings,
                                  final CommandWithArg<EditorKeyBindings> afterLoad)
    {
-      commandMap_.clear();
-      for (String commandId : bindings.iterableKeys())
+      List<Pair<List<KeySequence>, CommandBinding>> commands =
+            new ArrayList<Pair<List<KeySequence>, CommandBinding>>();
+      
+      for (String id : bindings.iterableKeys())
       {
-         List<KeySequence> keyList = bindings.get(commandId).getKeyBindings();
-         for (KeySequence keys : keyList)
-            registerBinding(commandId, keys);
+         List<KeySequence> keyList = bindings.get(id).getKeyBindings();
+         CommandBinding binding = new AddinCommandBinding(id);
+         commands.add(new Pair<List<KeySequence>, CommandBinding>(keyList, binding));
+      }
+      
+      KeyMap map = ShortcutManager.INSTANCE.getKeyMap(KeyMapType.ADDIN);
+      for (int i = 0; i < commands.size(); i++)
+      {
+         map.setBindings(
+               commands.get(i).first,
+               commands.get(i).second);
       }
       
       if (afterLoad != null)
          afterLoad.execute(bindings);
-   }
-   
-   private void registerBinding(final String commandId, final KeySequence keys)
-   {
-      commandMap_.put(keys, new Command()
-      {
-         @Override
-         public void execute()
-         {
-            server_.executeRAddin(commandId, new VoidServerRequestCallback());
-         }
-      });
    }
    
    public void resetBindings()
@@ -147,25 +144,11 @@ public class AddinsCommandManager
       });
    }
    
-   public boolean dispatch(KeyboardShortcut shortcut)
-   {
-      KeySequence keys = shortcut.getKeySequence();
-      if (commandMap_.containsKey(keys))
-      {
-         Command command = commandMap_.get(keys);
-         command.execute();
-         return true;
-      }
-      return false;
-   }
-   
-   private final Map<KeySequence, Command> commandMap_;
    private final FileBacked<EditorKeyBindings> bindings_;
    private static final String KEYBINDINGS_PATH = "~/.R/rstudio/keybindings/addins.json";
    
    
    // Injected ----
    private EventBus events_;
-   private AddinsServerOperations server_;
 
 }

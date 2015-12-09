@@ -672,29 +672,6 @@ public class Source implements InsertSourceHandler,
       else
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
       
-      // adjust shortcuts when vim mode changes
-      uiPrefs_.useVimMode().bind(new CommandWithArg<Boolean>()
-      {
-         @Override
-         public void execute(Boolean arg)
-         {
-            ShortcutManager.INSTANCE.setEditorMode(arg ? 
-                  KeyboardShortcut.MODE_VIM :
-                  KeyboardShortcut.MODE_DEFAULT);
-         }
-      });
-      
-      uiPrefs_.enableEmacsKeybindings().bind(new CommandWithArg<Boolean>()
-      {
-         @Override
-         public void execute(Boolean arg)
-         {
-            ShortcutManager.INSTANCE.setEditorMode(arg ?
-                  KeyboardShortcut.MODE_EMACS :
-                  KeyboardShortcut.MODE_DEFAULT);
-         }
-      });
-
       initialized_ = true;
 
       // As tabs were added before, manageCommands() was suppressed due to

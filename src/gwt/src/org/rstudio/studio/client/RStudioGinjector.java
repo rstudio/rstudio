@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;
 
+import org.rstudio.core.client.command.AddinCommandBinding;
 import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.command.ShortcutManager;
@@ -158,6 +159,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(WindowFrame frame);
    void injectMembers(RmdParamsEditDialog dialog);
    void injectMembers(NewShinyWebApplication dialog);
+   void injectMembers(AddinCommandBinding binding);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

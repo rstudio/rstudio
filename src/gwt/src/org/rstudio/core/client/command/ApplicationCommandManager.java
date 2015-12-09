@@ -14,10 +14,10 @@
  */
 package org.rstudio.core.client.command;
 
-import java.util.List;
-
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
+import org.rstudio.core.client.command.KeyMap.KeyMapType;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.files.FileBacked;
 import org.rstudio.core.client.events.RStudioKeybindingsChangedEvent;
@@ -26,6 +26,9 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedHandler;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
@@ -37,7 +40,6 @@ public class ApplicationCommandManager
    public ApplicationCommandManager()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      shortcuts_ = ShortcutManager.INSTANCE;
       
       bindings_ = new FileBacked<EditorKeyBindings>(
             KEYBINDINGS_PATH,
@@ -116,21 +118,26 @@ public class ApplicationCommandManager
    private void loadBindings(EditorKeyBindings bindings,
                              final CommandWithArg<EditorKeyBindings> afterLoad)
    {
-      shortcuts_.clearCustomBindings();
-      for (String commandId : bindings.iterableKeys())
+      List<Pair<List<KeySequence>, AppCommand>> resolvedBindings;
+      resolvedBindings = new ArrayList<Pair<List<KeySequence>, AppCommand>>();
+      
+      for (String id : bindings.iterableKeys())
       {
-         AppCommand command = commands_.getCommandById(commandId);
-         if (command == null)
-         {
-            // TODO: How should mis-named commands be reported?
-            continue;
-         }
-
-         List<KeySequence> keyList = bindings.get(commandId).getKeyBindings();
-         for (KeySequence keys : keyList)
-            shortcuts_.addCustomBinding(keys, command);
+         AppCommand command = commands_.getCommandById(id);
+         List<KeySequence> keys = bindings.get(id).getKeyBindings();
+         resolvedBindings.add(new Pair<List<KeySequence>, AppCommand>(keys, command));
       }
-
+      
+      KeyMap map = ShortcutManager.INSTANCE.getKeyMap(KeyMapType.APPLICATION);
+      for (int i = 0; i < resolvedBindings.size(); i++)
+      {
+         map.setBindings(
+               resolvedBindings.get(i).first,
+               new AppCommandBinding(resolvedBindings.get(i).second, ""));
+      }
+      
+      // TODO: Set the bindings in the AppCommand keymap, removing any
+      // previously registered bindings.
       if (afterLoad != null)
          afterLoad.execute(bindings);
    }
@@ -153,7 +160,6 @@ public class ApplicationCommandManager
    }
    
    private final FileBacked<EditorKeyBindings> bindings_;
-   private final ShortcutManager shortcuts_;
    
    public static final String KEYBINDINGS_PATH =
          "~/.R/rstudio/keybindings/rstudio_bindings.json";

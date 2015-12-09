@@ -181,19 +181,17 @@ public class DirectedGraph<K, V>
          forEachNodeImpl(entry.getValue(), command);
    }
    
+   // Simple getters, setters ----
    public V getValue() { return value_; }
    public void setValue(V value) { value_ = value; }
-   
    public K getKey() { return key_; }
-   
    public DirectedGraph<K, V> getParent() { return parent_; }
+   public Map<K, DirectedGraph<K, V>> getChildren() { return children_; }
    public boolean isRoot() { return parent_ == null; }
-
-   private Map<K, DirectedGraph<K, V>> getChildren() { return children_; }
    
+   // Private members ----
    private final DirectedGraph<K, V> parent_;
    private final Map<K, DirectedGraph<K, V>> children_;
-   
    private final K key_;
    private V value_;
    
