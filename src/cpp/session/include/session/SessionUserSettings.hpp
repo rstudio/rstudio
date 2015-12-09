@@ -203,6 +203,9 @@ public:
    bool usingMingwGcc49() const;
    void setUsingMingwGcc49(bool usingMingwGcc49);
 
+   std::string showUserHomePage() const;
+   void setShowUserHomePage(const std::string& value);
+
 private:
 
    void onSettingsFileChanged(

@@ -192,8 +192,10 @@ public class WebApplicationHeader extends Composite
                logoTargetUrl_ = 
                   ApplicationUtils.getHostPageBaseURLWithoutContext(false) +
                   logoTargetUrl_;
+               logoLarge_.setResource(ThemeResources.INSTANCE.rstudio_home());
                logoLarge_.getElement().getStyle().setCursor(Cursor.POINTER);
                logoLarge_.setTitle("RStudio Server Home");
+               logoSmall_.setResource(ThemeResources.INSTANCE.rstudio_home_small());
                logoSmall_.getElement().getStyle().setCursor(Cursor.POINTER);
                logoSmall_.setTitle(logoLarge_.getTitle());
             }

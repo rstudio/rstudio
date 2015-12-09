@@ -69,6 +69,9 @@ public interface ThemeResources extends ClientBundle
    ImageResource rstudio();
    ImageResource rstudio_small();
    
+   ImageResource rstudio_home();
+   ImageResource rstudio_home_small();
+   
    @Source("backgroundGradient.png")
    DataResource backgroundGradient();
 
