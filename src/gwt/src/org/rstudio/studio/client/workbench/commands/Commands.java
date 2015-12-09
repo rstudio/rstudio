@@ -424,12 +424,14 @@ public abstract class
    public abstract AppCommand shinyRunInPane();
    public abstract AppCommand shinyRunInViewer();
    public abstract AppCommand shinyRunInBrowser();
-   public abstract AppCommand launchShinyGadget();
    
    // RSConnect connectivity
    public abstract AppCommand rsconnectDeploy();
    public abstract AppCommand rsconnectConfigure();
    public abstract AppCommand rsconnectManageAccounts();
+   
+   // Addins
+   public abstract AppCommand showAddinsDialog();
 
    // Other
    public abstract AppCommand checkSpelling();   

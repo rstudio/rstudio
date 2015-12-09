@@ -70,6 +70,7 @@ import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.vcs.VCSApplication;
+import org.rstudio.studio.client.workbench.ShowAddinsDialog;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -160,6 +161,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(RmdParamsEditDialog dialog);
    void injectMembers(NewShinyWebApplication dialog);
    void injectMembers(AddinCommandBinding binding);
+   void injectMembers(ShowAddinsDialog dialog);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
