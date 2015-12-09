@@ -19,6 +19,8 @@ import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.SuggestOracle;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
@@ -27,9 +29,12 @@ import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ListUtil;
+import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
+import org.rstudio.core.client.widget.FilterWidget;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -49,6 +54,17 @@ public class ShowAddinsDialog extends ModalDialog<Command>
    {
       super("Addins", operation);
       RStudioGinjector.INSTANCE.injectMembers(this);
+      
+      setOkButtonCaption("Execute");
+      
+      filterWidget_ = new FilterWidget()
+      {
+         @Override
+         public void filter(String query)
+         {
+            ShowAddinsDialog.this.filter(query);
+         }
+      };
       
       keyProvider_ = new ProvidesKey<RAddin>()
       {
@@ -88,7 +104,9 @@ public class ShowAddinsDialog extends ModalDialog<Command>
             List<RAddin> data = new ArrayList<RAddin>();
             for (String key : JsUtil.asIterable(addins.keys()))
                data.add(addins.get(key));
+            
             dataProvider_.setList(data);
+            originalData_ = data;
          }
          
          @Override
@@ -97,6 +115,10 @@ public class ShowAddinsDialog extends ModalDialog<Command>
             Debug.logError(error);
          }
       });
+      
+      container_ = new VerticalPanel();
+      container_.add(filterWidget_);
+      container_.add(table_);
    }
    
    @Inject
@@ -144,10 +166,33 @@ public class ShowAddinsDialog extends ModalDialog<Command>
      
    }
    
+   private void filter(String query)
+   {
+      final String[] splat = query.toLowerCase().split("\\s+");
+      List<RAddin> data = ListUtil.filter(originalData_, new FilterPredicate<RAddin>()
+      {
+         @Override
+         public boolean test(RAddin object)
+         {
+            for (String el : splat)
+            {
+               boolean match =
+                     object.getName().toLowerCase().contains(el) ||
+                     object.getPackage().toLowerCase().contains(el);
+               
+               if (!match)
+                  return false;
+            }
+            return true;
+         }
+      });
+      dataProvider_.setList(data);
+   }
+   
    @Override
    protected Command collectInput()
    {
-      final String id = selection_.getPackage() + "::" + selection_.getBinding();
+      final String id = selection_.getId();
       return new Command()
       {
          @Override
@@ -161,15 +206,18 @@ public class ShowAddinsDialog extends ModalDialog<Command>
    @Override
    protected Widget createMainWidget()
    {
-      return table_;
+      return container_;
    }
    
    // Private members ----
+   private final VerticalPanel container_;
+   private final FilterWidget filterWidget_;
    private final DataGrid<RAddin> table_;
    private final ProvidesKey<RAddin> keyProvider_;
    private final ListDataProvider<RAddin> dataProvider_;
    private final SingleSelectionModel<RAddin> selectionModel_;
    
+   private List<RAddin> originalData_;
    private RAddin selection_;
    
    // Injected ----

@@ -15,6 +15,11 @@ public class Addins
       public final native String getTitle() /*-{ return this["title"]; }-*/;
       public final native String getDescription() /*-{ return this["description"]; }-*/;
       public final native String getBinding() /*-{ return this["binding"]; }-*/;
+      
+      public final String getId()
+      {
+         return getPackage() + "::" + getBinding();
+      }
    }
    
    public static class RAddins extends JsMap<RAddin>
