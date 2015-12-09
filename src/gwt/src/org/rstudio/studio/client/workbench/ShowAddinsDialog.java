@@ -15,8 +15,6 @@
 package org.rstudio.studio.client.workbench;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.FontStyle;
-import com.google.gwt.dom.client.Style.TextDecoration;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.DataGrid;
@@ -26,7 +24,6 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
@@ -85,7 +82,7 @@ public class ShowAddinsDialog extends ModalDialog<Command>
       };
       
       table_ = new DataGrid<RAddin>(1000, RES, keyProvider_);
-      table_.setWidth("700px");
+      table_.setWidth("500px");
       table_.setHeight("400px");
       
       selectionModel_ = new SingleSelectionModel<RAddin>();
