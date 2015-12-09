@@ -740,9 +740,7 @@ public class Application implements ApplicationEventHandlers
    }
    
    private void handleSwitchProjectAction()
-   {
-      // TODO: enumerated projects need their id
-      
+   { 
       String projectId = 
             StringUtil.notNull(Window.Location.getParameter("id"));
       if (projectId.length() > 0)
