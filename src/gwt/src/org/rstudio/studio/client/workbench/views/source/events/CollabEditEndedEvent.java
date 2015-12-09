@@ -15,17 +15,26 @@
 
 package org.rstudio.studio.client.workbench.views.source.events;
 
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class CollabEditEndedEvent extends GwtEvent<CollabEditEndedEvent.Handler>
+@JavaScriptSerializable
+public class CollabEditEndedEvent 
+             extends CrossWindowEvent<CollabEditEndedEvent.Handler>
 { 
    public static class Data extends JavaScriptObject
    {
       protected Data() 
       {
       }
+
+      public final native static Data create(String path) /*-{
+         return { "path": path };
+      }-*/;
       
       public final native String getPath() /*-{
          return this.path;
@@ -39,6 +48,10 @@ public class CollabEditEndedEvent extends GwtEvent<CollabEditEndedEvent.Handler>
 
    public static final GwtEvent.Type<CollabEditEndedEvent.Handler> TYPE =
       new GwtEvent.Type<CollabEditEndedEvent.Handler>();
+
+   public CollabEditEndedEvent()
+   {
+   }
    
    public CollabEditEndedEvent(Data data)
    {
@@ -62,5 +75,5 @@ public class CollabEditEndedEvent extends GwtEvent<CollabEditEndedEvent.Handler>
       return TYPE;
    }
    
-   private final Data data_;
+   private Data data_;
 }
