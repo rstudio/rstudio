@@ -15,10 +15,17 @@
 package org.rstudio.studio.client.workbench;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.FontStyle;
+import com.google.gwt.dom.client.Style.TextDecoration;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -46,6 +53,8 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class ShowAddinsDialog extends ModalDialog<Command>
@@ -90,12 +99,17 @@ public class ShowAddinsDialog extends ModalDialog<Command>
       });
       
       table_.setSelectionModel(selectionModel_);
+      Label emptyLabel = new Label("No addins available");
+      emptyLabel.getElement().getStyle().setMarginTop(20, Unit.PX);
+      emptyLabel.getElement().getStyle().setColor("#888");
+      table_.setEmptyTableWidget(emptyLabel);
       
       addColumns();
       
       dataProvider_ = new ListDataProvider<RAddin>();
       dataProvider_.addDataDisplay(table_);
       
+      originalData_ = new ArrayList<RAddin>();
       server_.getRAddins(new ServerRequestCallback<RAddins>()
       {
          @Override
@@ -118,7 +132,18 @@ public class ShowAddinsDialog extends ModalDialog<Command>
       
       container_ = new VerticalPanel();
       container_.add(filterWidget_);
+      container_.add(new VerticalSeparator("4px"));
       container_.add(table_);
+   }
+   
+   private static class VerticalSeparator extends Composite
+   {
+      public VerticalSeparator(String size)
+      {
+         FlowPanel panel = new FlowPanel();
+         panel.setHeight(size);
+         initWidget(panel);
+      }
    }
    
    @Inject
@@ -130,7 +155,7 @@ public class ShowAddinsDialog extends ModalDialog<Command>
    private void addColumns()
    {
       // Package ----
-      TextColumn<RAddin> pkgColumn = new TextColumn<RAddin>()
+      pkgColumn_ = new TextColumn<RAddin>()
       {
          @Override
          public String getValue(RAddin addin)
@@ -138,11 +163,12 @@ public class ShowAddinsDialog extends ModalDialog<Command>
             return addin.getPackage();
          }
       };
-      table_.addColumn(pkgColumn, new TextHeader("Package"));
-      table_.setColumnWidth(pkgColumn, "120px");
+      pkgColumn_.setSortable(true);
+      table_.addColumn(pkgColumn_, new TextHeader("Package"));
+      table_.setColumnWidth(pkgColumn_, "120px");
             
       // Name ----
-      TextColumn<RAddin> nameColumn = new TextColumn<RAddin>()
+      nameColumn_ = new TextColumn<RAddin>()
       {
          @Override
          public String getValue(RAddin addin)
@@ -150,11 +176,12 @@ public class ShowAddinsDialog extends ModalDialog<Command>
             return addin.getName();
          }
       };
-      table_.addColumn(nameColumn, new TextHeader("Name"));
-      table_.setColumnWidth(nameColumn, "120px");
+      nameColumn_.setSortable(true);
+      table_.addColumn(nameColumn_, new TextHeader("Name"));
+      table_.setColumnWidth(nameColumn_, "120px");
       
       // Description ----
-      TextColumn<RAddin> descColumn = new TextColumn<RAddin>()
+      descColumn_ = new TextColumn<RAddin>()
       {
          @Override
          public String getValue(RAddin addin)
@@ -162,8 +189,62 @@ public class ShowAddinsDialog extends ModalDialog<Command>
             return addin.getDescription();
          }
       };
-      table_.addColumn(descColumn, new TextHeader("Description"));
+      descColumn_.setSortable(true);
+      table_.addColumn(descColumn_, new TextHeader("Description"));
      
+      table_.addColumnSortHandler(new ColumnSortEvent.Handler()
+      {
+         @Override
+         public void onColumnSort(ColumnSortEvent event)
+         {
+            int index = -1;
+            if (event.getColumn().equals(pkgColumn_))
+               index = 0;
+            else if (event.getColumn().equals(nameColumn_))
+               index = 1;
+            else if (event.getColumn().equals(descColumn_))
+               index = 2;
+            
+            if (index == -1)
+               return;
+            
+            sort(index, event.isSortAscending());
+         }
+      });
+   }
+   
+   private void sort(final int index, final boolean forward)
+   {
+      Collections.sort(dataProvider_.getList(), new Comparator<RAddin>()
+      {
+         @Override
+         public int compare(RAddin o1, RAddin o2)
+         {
+            String f1 = "";
+            String f2 = "";
+            
+            if (index == 0)
+            {
+               f1 = o1.getPackage();
+               f2 = o2.getPackage();
+            }
+            else if (index == 1)
+            {
+               f1 = o1.getName();
+               f2 = o2.getName();
+            }
+            else if (index == 2)
+            {
+               f1 = o1.getDescription();
+               f2 = o2.getDescription();
+            }
+            
+            return forward
+                  ? f1.compareTo(f2)
+                  : f2.compareTo(f1);
+         }
+         
+      });
    }
    
    private void filter(String query)
@@ -212,7 +293,12 @@ public class ShowAddinsDialog extends ModalDialog<Command>
    // Private members ----
    private final VerticalPanel container_;
    private final FilterWidget filterWidget_;
+   
    private final DataGrid<RAddin> table_;
+   private TextColumn<RAddin> pkgColumn_;
+   private TextColumn<RAddin> nameColumn_;
+   private TextColumn<RAddin> descColumn_;
+   
    private final ProvidesKey<RAddin> keyProvider_;
    private final ListDataProvider<RAddin> dataProvider_;
    private final SingleSelectionModel<RAddin> selectionModel_;
