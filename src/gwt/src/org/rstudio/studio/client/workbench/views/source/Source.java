@@ -83,6 +83,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.ConsoleEditorProvider;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
@@ -100,6 +101,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataHandler;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
@@ -113,6 +115,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.profiler.Profile
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkIconsManager;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
@@ -231,6 +234,7 @@ public class Source implements InsertSourceHandler,
                  Provider<FileMRUList> pMruList,
                  UIPrefs uiPrefs,
                  Satellite satellite,
+                 ConsoleEditorProvider consoleEditorProvider,
                  RnwWeaveRegistry rnwWeaveRegistry,
                  ChunkIconsManager chunkIconsManager,
                  DependencyManager dependencyManager,
@@ -251,6 +255,7 @@ public class Source implements InsertSourceHandler,
       workbenchContext_ = workbenchContext;
       pMruList_ = pMruList;
       uiPrefs_ = uiPrefs;
+      consoleEditorProvider_ = consoleEditorProvider;
       rnwWeaveRegistry_ = rnwWeaveRegistry;
       chunkIconsManager_ = chunkIconsManager;
       dependencyManager_ = dependencyManager;
@@ -536,27 +541,31 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onReplaceRanges(final ReplaceRangesEvent event)
                {
+                  InputEditorDisplay console = consoleEditorProvider_.getConsoleEditor();
                   final String id = event.getData().getId();
-                  withTarget(id, new CommandWithArg<TextEditingTarget>()
+                  
+                  boolean isConsoleEvent = false;
+                  if (console != null)
                   {
-                     @Override
-                     public void execute(TextEditingTarget target)
+                     isConsoleEvent =
+                           (StringUtil.isNullOrEmpty(id) && console.isFocused()) ||
+                           "#console".equals(id);
+                  }
+                  if (isConsoleEvent)
+                  {
+                     doReplaceRanges(event, (DocDisplay) console);
+                  }
+                  else
+                  {
+                     withTarget(id, new CommandWithArg<TextEditingTarget>()
                      {
-                        JsArray<ReplacementData> data = event.getData().getReplacementData();
-                        for (int i = 0; i < data.length(); i++)
+                        @Override
+                        public void execute(TextEditingTarget target)
                         {
-                           ReplacementData el = data.get(i);
-                           Range range = el.getRange();
-                           String text = el.getText();
-                           
-                           // A null range at this point is a proxy to use the current selection
-                           if (range == null)
-                              range = target.getDocDisplay().getSelectionRange();
-                           
-                           target.getDocDisplay().replaceRange(range, text);
+                           doReplaceRanges(event, target.getDocDisplay());
                         }
-                     }
-                  });
+                     });
+                  }
                }
             });
       
@@ -567,42 +576,69 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onGetActiveDocumentContext(GetActiveDocumentContextEvent event)
                {
-                  withTarget(null, new CommandWithArg<TextEditingTarget>()
+                  InputEditorDisplay console = consoleEditorProvider_.getConsoleEditor();
+                  if (console != null && console.isFocused())
                   {
-                     @Override
-                     public void execute(TextEditingTarget target)
+                     AceEditor editor = (AceEditor) console;
+                     Selection selection = editor.getNativeSelection();
+                     Range[] ranges = selection.getAllRanges();
+
+                     JsArray<DocumentSelection> docSelections = JavaScriptObject.createArray().cast();
+                     for (int i = 0; i < ranges.length; i++)
                      {
-                        Selection selection = target.getDocDisplay().getNativeSelection();
-                        Range[] ranges = selection.getAllRanges();
-                        
-                        JsArray<DocumentSelection> docSelections = JavaScriptObject.createArray().cast();
-                        for (int i = 0; i < ranges.length; i++)
+                        docSelections.push(DocumentSelection.create(
+                              ranges[i],
+                              editor.getTextForRange(ranges[i])));
+                     }
+                     
+                     GetActiveDocumentContextEvent.Data data =
+                           GetActiveDocumentContextEvent.Data.create(
+                                 "#console",
+                                 "",
+                                 editor.getCode(),
+                                 docSelections);
+                     
+                     server_.getActiveDocumentContextCompleted(data, new VoidServerRequestCallback());
+                  }
+                  else
+                  {
+                     withTarget(null, new CommandWithArg<TextEditingTarget>()
+                     {
+                        @Override
+                        public void execute(TextEditingTarget target)
                         {
-                           docSelections.push(DocumentSelection.create(
-                                 ranges[i],
-                                 target.getDocDisplay().getTextForRange(ranges[i])));
+                           Selection selection = target.getDocDisplay().getNativeSelection();
+                           Range[] ranges = selection.getAllRanges();
+                           
+                           JsArray<DocumentSelection> docSelections = JavaScriptObject.createArray().cast();
+                           for (int i = 0; i < ranges.length; i++)
+                           {
+                              docSelections.push(DocumentSelection.create(
+                                    ranges[i],
+                                    target.getDocDisplay().getTextForRange(ranges[i])));
+                           }
+                           
+                           GetActiveDocumentContextEvent.Data data =
+                                 GetActiveDocumentContextEvent.Data.create(
+                                       StringUtil.notNull(target.getId()),
+                                       StringUtil.notNull(target.getPath()),
+                                       StringUtil.notNull(target.getDocDisplay().getCode()),
+                                       docSelections);
+                           
+                           server_.getActiveDocumentContextCompleted(data, new VoidServerRequestCallback());
                         }
-                        
-                        GetActiveDocumentContextEvent.Data data =
-                              GetActiveDocumentContextEvent.Data.create(
-                                    StringUtil.notNull(target.getId()),
-                                    StringUtil.notNull(target.getPath()),
-                                    StringUtil.notNull(target.getDocDisplay().getCode()),
-                                    docSelections);
-                        
-                        server_.getActiveDocumentContextCompleted(data, new VoidServerRequestCallback());
-                     }
-                  },
-                  new Command()
-                  {
-                     @Override
-                     public void execute()
+                     },
+                     new Command()
                      {
-                        server_.getActiveDocumentContextCompleted(
-                              GetActiveDocumentContextEvent.Data.create(),
-                              new VoidServerRequestCallback());
-                     }
-                  });
+                        @Override
+                        public void execute()
+                        {
+                           server_.getActiveDocumentContextCompleted(
+                                 GetActiveDocumentContextEvent.Data.create(),
+                                 new VoidServerRequestCallback());
+                        }
+                     });
+                  }
                }
             });
 
@@ -3061,7 +3097,8 @@ public class Source implements InsertSourceHandler,
          activeEditor_.onActivate();
          
          // let any listeners know this tab was activated
-         events_.fireEvent(new DocTabActivatedEvent(activeEditor_.getPath(), 
+         events_.fireEvent(new DocTabActivatedEvent(
+               activeEditor_.getPath(), 
                activeEditor_.getId()));
 
          // don't send focus to the tab if we're expecting a debug selection
@@ -3879,6 +3916,23 @@ public class Source implements InsertSourceHandler,
       }
    }
    
+   private void doReplaceRanges(ReplaceRangesEvent event, DocDisplay docDisplay)
+   {
+      JsArray<ReplacementData> data = event.getData().getReplacementData();
+      for (int i = 0; i < data.length(); i++)
+      {
+         ReplacementData el = data.get(i);
+         Range range = el.getRange();
+         String text = el.getText();
+         
+         // A null range at this point is a proxy to use the current selection
+         if (range == null)
+            range = docDisplay.getSelectionRange();
+         
+         docDisplay.replaceRange(range, text);
+      }
+   }
+   
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();
    ArrayList<Integer> tabOrder_ = new ArrayList<Integer>();
    private EditingTarget activeEditor_;
@@ -3897,6 +3951,7 @@ public class Source implements InsertSourceHandler,
    private final Synctex synctex_;
    private final Provider<FileMRUList> pMruList_;
    private final UIPrefs uiPrefs_;
+   private final ConsoleEditorProvider consoleEditorProvider_;
    private final RnwWeaveRegistry rnwWeaveRegistry_;
    private HashSet<AppCommand> activeCommands_ = new HashSet<AppCommand>();
    private final HashSet<AppCommand> dynamicCommands_;

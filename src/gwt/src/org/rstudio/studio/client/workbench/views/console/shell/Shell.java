@@ -40,6 +40,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.ConsoleEditorProvider;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientInitState;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -93,7 +94,8 @@ public class Shell implements ConsoleInputHandler,
                 Session session,
                 Commands commands,
                 UIPrefs uiPrefs, 
-                ErrorManager errorManager)
+                ErrorManager errorManager,
+                ConsoleEditorProvider tracker)
    {
       super() ;
 
@@ -108,6 +110,7 @@ public class Shell implements ConsoleInputHandler,
       historyManager_ = new CommandLineHistory(input_);
       browseHistoryManager_ = new CommandLineHistory(input_);
       prefs_ = uiPrefs;
+      tracker.setConsoleEditor(input_);
 
       inputAnimator_ = new ShellInputAnimator(view_.getInputEditorDisplay());
       
