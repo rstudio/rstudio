@@ -206,6 +206,7 @@ SessionScopeState validateSessionScope(const SessionScope& scope,
                           const core::FilePath& userHomePath,
                           const core::FilePath& userScratchPath,
                           core::r_util::ProjectIdToFilePath projectIdToFilePath,
+                          bool projectSharingEnabled,
                           std::string* pProjectFilePath);
 
 bool isSharedPath(const std::string& projectPath,
