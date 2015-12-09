@@ -877,6 +877,16 @@ void UserSettings::setShowUserHomePage(const std::string& value)
    settings_.set(kServerHomeSetting, value);
 }
 
+bool UserSettings::reuseSessionsForProjectLinks() const
+{
+   return settings_.getBool(kReuseSessionsForProjectLinksSettings, true);
+}
+
+void UserSettings::setReuseSessionsForProjectLinks(bool reuse)
+{
+   settings_.set(kReuseSessionsForProjectLinksSettings, reuse);
+}
+
 
 } // namespace session
 } // namespace rstudio

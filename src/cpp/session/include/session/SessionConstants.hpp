@@ -73,6 +73,8 @@
 #define kServerHomeNever       "never"
 #define kServerHomeSessions    "sessions"
 
+#define kReuseSessionsForProjectLinksSettings "reuseSessionsForProjectLinks"
+
 
 #endif // SESSION_CONSTANTS_HPP
 

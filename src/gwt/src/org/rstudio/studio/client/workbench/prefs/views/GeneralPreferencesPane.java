@@ -134,10 +134,15 @@ public class GeneralPreferencesPane extends PreferencesPane
             false,
             true,
             false);
+      
+      reuseSessionsForProjectLinks_ = new CheckBox("Re-use idle sessions for project links");
+      
       if (session_.getSessionInfo().getShowUserHomePage())
       {
          spaced(showServerHomePage_);
          add(showServerHomePage_);
+         lessSpaced(reuseSessionsForProjectLinks_);
+         add(reuseSessionsForProjectLinks_);
       }
       
       restoreLastProject_ = new CheckBox("Restore most recently opened project at startup");
@@ -202,6 +207,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       }
       
       showServerHomePage_.setEnabled(false);
+      reuseSessionsForProjectLinks_.setEnabled(false);
       saveWorkspace_.setEnabled(false);
       loadRData_.setEnabled(false);
       dirChooser_.setEnabled(false);
@@ -219,11 +225,13 @@ public class GeneralPreferencesPane extends PreferencesPane
       GeneralPrefs generalPrefs = rPrefs.getGeneralPrefs();
       
       showServerHomePage_.setEnabled(true);
+      reuseSessionsForProjectLinks_.setEnabled(true);
       saveWorkspace_.setEnabled(true);
       loadRData_.setEnabled(true);
       dirChooser_.setEnabled(true);
       
       showServerHomePage_.setValue(generalPrefs.getShowUserHomePage());
+      reuseSessionsForProjectLinks_.setValue(generalPrefs.getReuseSessionsForProjectLinks());
       
       int saveWorkspaceIndex;
       switch (generalPrefs.getSaveAction())
@@ -305,6 +313,7 @@ public class GeneralPreferencesPane extends PreferencesPane
 
          // set general prefs
          GeneralPrefs generalPrefs = GeneralPrefs.create(showServerHomePage_.getValue(),
+                                                         reuseSessionsForProjectLinks_.getValue(),
                                                          saveAction, 
                                                          loadRData_.getValue(),
                                                          rProfileOnResume_.getValue(),
@@ -360,6 +369,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private final FileDialogs fileDialogs_;
    private RVersionSelectWidget rServerRVersion_ = null;
    private CheckBox rememberRVersionForProjects_ = null;
+   private CheckBox reuseSessionsForProjectLinks_ = null;
    private SelectWidget showServerHomePage_;
    private SelectWidget saveWorkspace_;
    private TextBoxWithButton rVersion_;

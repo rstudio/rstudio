@@ -206,6 +206,9 @@ public:
    std::string showUserHomePage() const;
    void setShowUserHomePage(const std::string& value);
 
+   bool reuseSessionsForProjectLinks() const;
+   void setReuseSessionsForProjectLinks(bool reuse);
+
 private:
 
    void onSettingsFileChanged(
