@@ -210,7 +210,7 @@ public class ShortcutManager implements NativePreviewHandler,
       KeyboardShortcut shortcut = new KeyboardShortcut(keys, groupName, title, disableModes);
       shortcutInfo_.add(new ShortcutInfo(shortcut, command));
       
-      // Bind the command in the application keymap.
+      // Bind the command in the application key map.
       if (command != null)
       {
          // Setting the shortcut on the command just registers this binding as the

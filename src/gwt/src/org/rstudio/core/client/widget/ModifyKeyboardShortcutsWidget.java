@@ -160,6 +160,12 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          return context_;
       }
       
+      public void setDefaultKeySequence(KeySequence keys)
+      {
+         keySequence_ = keys.clone();
+         newKeySequence_ = null;
+      }
+      
       public void setKeySequence(KeySequence keys)
       {
          if (keys.equals(keySequence_))
@@ -197,11 +203,11 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       private final String id_;
       private final String name_;
-      private final KeySequence keySequence_;
       private final int commandType_;
       private final AppCommand.Context context_;
       
       private boolean isCustom_ = false;
+      private KeySequence keySequence_;
       private KeySequence newKeySequence_;
       
       public static final int TYPE_RSTUDIO_COMMAND = 1; // RStudio AppCommands
@@ -989,7 +995,9 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       final List<CommandBinding> bindings = new ArrayList<CommandBinding>();
       SerializedCommandQueue queue = new SerializedCommandQueue();
       
-      // Load addins discovered as part of package exports
+      // Load addins discovered as part of package exports. This registers
+      // the addin, with the actual keybinding to be registered later,
+      // if discovered.
       queue.addCommand(new SerializedCommand()
       {
          @Override
@@ -1045,7 +1053,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                         {
                            List<KeySequence> keys = addinBinding.getKeyBindings();
                            if (keys.size() >= 1)
-                              binding.setKeySequence(keys.get(0));
+                              binding.setDefaultKeySequence(keys.get(0));
                            
                            if (keys.size() >= 2)
                            {
