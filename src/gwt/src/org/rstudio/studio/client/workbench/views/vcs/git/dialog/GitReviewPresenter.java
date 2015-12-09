@@ -63,6 +63,7 @@ import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
+import org.rstudio.studio.client.workbench.views.vcs.common.VcsFilesChangedCallback;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.*;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.*;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffChunkActionEvent.Action;
@@ -147,7 +148,7 @@ public class GitReviewPresenter implements ReviewPresenter
                                new SimpleRequestCallback<Void>("Unstage"));
          else if (patchMode_ == PatchMode.Working && reverse_)
             server_.gitDiscard(paths,
-                               new SimpleRequestCallback<Void>("Discard"));
+               new VcsFilesChangedCallback<Void>("Discard", paths));
          else
             throw new RuntimeException("Unknown patchMode and reverse combo");
 
@@ -396,7 +397,8 @@ public class GitReviewPresenter implements ReviewPresenter
 
                         server_.gitRevert(
                               paths,
-                              new SimpleRequestCallback<Void>("Revert Changes"));
+                              new VcsFilesChangedCallback<Void>(
+                                    "Revert Changes", paths));
                         
                         view_.getChangelistTable().focus();
                      }
