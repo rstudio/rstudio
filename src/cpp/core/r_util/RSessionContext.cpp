@@ -127,6 +127,7 @@ SessionScopeState validateSessionScope(const SessionScope& scope,
                           const core::FilePath& userHomePath,
                           const core::FilePath& userScratchPath,
                           core::r_util::ProjectIdToFilePath projectIdToFilePath,
+                          bool projectSharingEnabled,
                           std::string* pProjectFilePath)
 {
    // does this session exist?
@@ -144,7 +145,7 @@ SessionScopeState validateSessionScope(const SessionScope& scope,
                scope,
                projectIdToFilePath);
       if (project.empty())
-         return ScopeInvalidProject;
+         return ScopeMissingProject;
 
       // if session points to another project then the scope is invalid
       if (project != pSession->project())
@@ -162,17 +163,23 @@ SessionScopeState validateSessionScope(const SessionScope& scope,
 
       // record path to project file
       *pProjectFilePath = projectPath.absolutePath();
-
-      // success!
-      return ScopeValid;
    }
    else
    {
       // if the session project isn't project none then it's invalid
       if (pSession->project() != kProjectNone)
          return ScopeInvalidProject;
+   }
 
-      // success!
+   // if we got this far the scope is valid, do one final check for
+   // trying to open a shared project if sharing is disabled
+   if (!projectSharingEnabled &&
+       r_util::isSharedPath(*pProjectFilePath, userHomePath))
+   {
+      return r_util::ScopeMissingProject;
+   }
+   else
+   {
       return ScopeValid;
    }
 }

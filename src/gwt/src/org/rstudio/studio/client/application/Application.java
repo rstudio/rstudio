@@ -507,7 +507,7 @@ public class Application implements ApplicationEventHandlers
       if (loc != -1)
          baseURL = baseURL.substring(0, loc) + "/";
 
-      if (info.getScopeState() == InvalidSessionInfo.ScopeInvalidProject)
+      if (info.getScopeState() == InvalidSessionInfo.ScopeMissingProject)
       {
          baseURL += "projectnotfound.htm";
       }

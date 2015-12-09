@@ -515,6 +515,8 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    r_util::SessionScope scope = sessionScope();
    if (!scope.empty())
    {
+      bool projectSharingEnabled =
+                  core::system::getenv(kRStudioDisableProjectSharing).empty();
       scopeState_ = r_util::validateSessionScope(
                        scope,
                        userHomePath(),
@@ -522,19 +524,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
                        session::projectIdToFilePath(userScratchPath(), 
                                  FilePath(getOverlayOption(
                                        kSessionSharedStoragePath))),
+                       projectSharingEnabled,
                        &initialProjectPath_);
    }
    else
    {
       initialProjectPath_ = core::system::getenv(kRStudioInitialProject);
       core::system::unsetenv(kRStudioInitialProject);
-   }
-
-   // ensure we aren't trying to open a shared project if sharing is disabled
-   if (!core::system::getenv(kRStudioDisableProjectSharing).empty() &&
-       r_util::isSharedPath(initialProjectPath_, userHomePath()))
-   {
-      scopeState_ = r_util::ScopeInvalidProject;
    }
 
    // limit rpc client uid
