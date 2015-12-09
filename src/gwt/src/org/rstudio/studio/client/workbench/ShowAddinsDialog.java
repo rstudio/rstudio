@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.DataGrid;
@@ -42,6 +43,7 @@ import org.rstudio.core.client.widget.FilterWidget;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -71,6 +73,10 @@ public class ShowAddinsDialog extends ModalDialog<Command>
             ShowAddinsDialog.this.filter(query);
          }
       };
+      filterWidget_.getElement().getStyle().setFloat(Style.Float.LEFT);
+      
+      helpLink_ = new HelpLink("Using RStudio Addins", "rstudio_addins");
+      helpLink_.getElement().getStyle().setFloat(Style.Float.RIGHT);
       
       keyProvider_ = new ProvidesKey<RAddin>()
       {
@@ -127,8 +133,12 @@ public class ShowAddinsDialog extends ModalDialog<Command>
          }
       });
       
+      FlowPanel headerPanel = new FlowPanel();
+      headerPanel.add(filterWidget_);
+      headerPanel.add(helpLink_);
+      
       container_ = new VerticalPanel();
-      container_.add(filterWidget_);
+      container_.add(headerPanel);
       container_.add(new VerticalSeparator("4px"));
       container_.add(table_);
    }
@@ -290,6 +300,7 @@ public class ShowAddinsDialog extends ModalDialog<Command>
    // Private members ----
    private final VerticalPanel container_;
    private final FilterWidget filterWidget_;
+   private final HelpLink helpLink_;
    
    private final DataGrid<RAddin> table_;
    private TextColumn<RAddin> pkgColumn_;
