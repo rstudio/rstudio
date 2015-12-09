@@ -431,7 +431,7 @@ public abstract class
    public abstract AppCommand rsconnectManageAccounts();
    
    // Addins
-   public abstract AppCommand showAddinsDialog();
+   public abstract AppCommand browseAddins();
 
    // Other
    public abstract AppCommand checkSpelling();   

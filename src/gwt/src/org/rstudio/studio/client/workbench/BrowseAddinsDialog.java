@@ -56,9 +56,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class ShowAddinsDialog extends ModalDialog<Command>
+public class BrowseAddinsDialog extends ModalDialog<Command>
 {
-   public ShowAddinsDialog(OperationWithInput<Command> operation)
+   public BrowseAddinsDialog(OperationWithInput<Command> operation)
    {
       super("Addins", operation);
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -70,7 +70,7 @@ public class ShowAddinsDialog extends ModalDialog<Command>
          @Override
          public void filter(String query)
          {
-            ShowAddinsDialog.this.filter(query);
+            BrowseAddinsDialog.this.filter(query);
          }
       };
       filterWidget_.getElement().getStyle().setFloat(Style.Float.LEFT);

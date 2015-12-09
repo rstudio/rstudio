@@ -410,9 +410,9 @@ public class Workbench implements BusyHandler,
    }
    
    @Handler
-   public void onShowAddinsDialog()
+   public void onBrowseAddins()
    {
-      ShowAddinsDialog dialog = new ShowAddinsDialog(new OperationWithInput<Command>()
+      BrowseAddinsDialog dialog = new BrowseAddinsDialog(new OperationWithInput<Command>()
       {
          @Override
          public void execute(Command input)

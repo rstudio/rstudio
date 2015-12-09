@@ -388,7 +388,9 @@ well as menu structures (for main menu and popup menus).
          </menu>
          <separator/>
          <cmd refid="showShellDialog"/>
-         <cmd refid="showAddinsDialog"/>
+         <menu label="Addins">
+         	<cmd refid="browseAddins"/>
+         </menu>
          <separator/>
          <cmd refid="helpKeyboardShortcuts"/>
          <cmd refid="modifyKeyboardShortcuts"/>
@@ -2097,10 +2099,10 @@ well as menu structures (for main menu and popup menus).
         desc="Execute shell commands(s)"
         windowMode="main"/>
         
-   <cmd id="showAddinsDialog"
-        label="Execute an Addin"
-        menuLabel="Addins..."
-        desc="Execute an Addin"
+   <cmd id="browseAddins"
+        label="Browse addins"
+        menuLabel="Browse Addins..."
+        desc="Browse addins"
         windowMode="main"/>
 
    <cmd id="macPreferences"
