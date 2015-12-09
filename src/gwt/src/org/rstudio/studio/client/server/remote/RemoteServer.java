@@ -1438,6 +1438,13 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "get_project_r_version", projectDir, callback);
    }
    
+   public void getProjectPath(
+         String projectId,
+         ServerRequestCallback<String> callback)
+   {
+      sendRequest(RPC_SCOPE, "get_project_path", projectId, callback);
+   }
+   
    @Override
    public void executeRCode(String code,
                             ServerRequestCallback<String> requestCallback)

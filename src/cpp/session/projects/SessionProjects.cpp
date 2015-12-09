@@ -74,6 +74,26 @@ Error validateProjectPath(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error getProjectPath(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   std::string projectIdParam;
+   Error error = json::readParams(request.params, &projectIdParam);
+   if (error)
+      return error;
+
+   core::r_util::ProjectId projectId(projectIdParam);
+
+   std::string projectPath = session::projectIdToProject(
+            options().userScratchPath(),
+            FilePath(options().getOverlayOption(kSessionSharedStoragePath)),
+            projectId);
+
+   pResponse->setResult(projectPath);
+   return Success();
+}
+
+
 Error getNewProjectContext(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
@@ -690,6 +710,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "validate_project_path", validateProjectPath))
       (bind(registerRpcMethod, "get_new_project_context", getNewProjectContext))
+      (bind(registerRpcMethod, "get_project_path", getProjectPath))
       (bind(registerRpcMethod, "create_project", createProject))
       (bind(registerRpcMethod, "read_project_options", readProjectOptions))
       (bind(registerRpcMethod, "write_project_options", writeProjectOptions))

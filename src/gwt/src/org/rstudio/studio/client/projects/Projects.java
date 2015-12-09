@@ -780,7 +780,7 @@ public class Projects implements OpenProjectFileHandler,
    @Override
    public void onSwitchToProject(final SwitchToProjectEvent event)
    {
-      switchToProject(event.getProject());
+      switchToProject(event.getProject(), event.getForceSaveAll());
    }
    
    @Override
@@ -800,8 +800,13 @@ public class Projects implements OpenProjectFileHandler,
       return session_.getSessionInfo().getActiveProjectFile() != null;
    }
    
+   private void switchToProject(String projectFilePath)
+   {
+      switchToProject(projectFilePath, false);
+   }
    
-   private void switchToProject(final String projectFilePath)
+   private void switchToProject(final String projectFilePath, 
+                                final boolean forceSaveAll)
    {
       // validate that the switch will actually work
       projServer_.validateProjectPath(
@@ -814,6 +819,7 @@ public class Projects implements OpenProjectFileHandler,
             if (valid)
             {
                applicationQuit_.prepareForQuit("Switch Projects",
+                  forceSaveAll,
                   new ApplicationQuit.QuitContext() {
                   public void onReadyToQuit(final boolean saveChanges)
                   {

@@ -119,7 +119,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                               final boolean forceSaveAll,
                               final QuitContext quitContext)
    {
-      if (workbenchContext_.isServerBusy())
+      if (workbenchContext_.isServerBusy() && !forceSaveAll)
       {
          globalDisplay_.showYesNoMessage(
                MessageDialog.QUESTION,
