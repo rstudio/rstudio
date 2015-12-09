@@ -207,13 +207,19 @@ public class ShortcutManager implements NativePreviewHandler,
                         String disableModes)
    {
       // Register the keyboard shortcut information.
-      shortcutInfo_.add(new ShortcutInfo(
-            new KeyboardShortcut(keys, groupName, title, disableModes),
-            command));
+      KeyboardShortcut shortcut = new KeyboardShortcut(keys, groupName, title, disableModes);
+      shortcutInfo_.add(new ShortcutInfo(shortcut, command));
       
       // Bind the command in the application keymap.
       if (command != null)
       {
+         // Setting the shortcut on the command just registers this binding as the
+         // default shortcut for the command. This allows UI (e.g. menu items) to easily
+         // look up and display an active shortcut, without displaying _all_ active shortcuts.
+         command.setShortcut(shortcut);
+         
+         // Add the command into the keymap, ensuring it can be executed on the associated
+         // keypress.
          KeyMap appKeyMap = keyMaps_.get(KeyMapType.APPLICATION);
          appKeyMap.addBinding(keys, new AppCommandBinding(command, disableModes));
       }
@@ -359,10 +365,19 @@ public class ShortcutManager implements NativePreviewHandler,
       if (!pending)
          keyBuffer_.clear();
       
-      // If we were in Vim mode and pressed 'i', assume the key was handled.
-      // For some reason, Ace doesn't report that it handled this event.
-      if (editorMode_ == KeyboardShortcut.MODE_VIM && event.getKeyCode() == KeyCodes.KEY_I)
-         keyBuffer_.clear();
+      // Assume that a keypress without a modifier key clears the keybuffer.
+      // This disallows binding of commands in a way like '<SPC> a a', which
+      // kind of stinks, but helps ensure that we don't get a stale keybuffer.
+      // This code could be removed if we could reliably detect whether an
+      // underlying editor instance handled the key combination, but there seem
+      // to be cased where Ace doesn't report handling a keypress (e.g. arrow keys,
+      // 'I', and some other cases)
+      if (!keyBuffer_.isEmpty())
+      {
+         KeyCombination keys = keyBuffer_.get(keyBuffer_.size() - 1);
+         if (keys.getModifier() == KeyboardShortcut.NONE)
+            keyBuffer_.clear();
+      }
       
       return false;
    }
