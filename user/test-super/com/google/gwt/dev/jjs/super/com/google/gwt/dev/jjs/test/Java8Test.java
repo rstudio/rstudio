@@ -1338,6 +1338,14 @@ public class Java8Test extends GWTTestCase {
     Object object = (Integer) (((int) NativeJsTypeInterfaceWithStaticInitialization.object) + 1);
   }
 
+  static class JavaTypeImplementingNativeJsTypeInterceWithDefaultMethod implements
+      NativeJsTypeInterfaceWithStaticInitializationAndInstanceOverlayMethod {
+    @JsProperty
+    public int getA() {
+      return 4;
+    }
+  }
+
   public void testNativeJsTypeWithStaticIntializer() {
     assertEquals(3, NativeJsTypeInterfaceWithStaticInitializationAndFieldAccess.object);
     assertEquals(
@@ -1346,5 +1354,6 @@ public class Java8Test extends GWTTestCase {
         createNativeJsTypeInterfaceWithStaticInitializationAndInstanceOverlayMethod()
             .getObject());
     assertEquals(7, NativeJsTypeInterfaceWithComplexStaticInitialization.object);
+    assertEquals(9, new JavaTypeImplementingNativeJsTypeInterceWithDefaultMethod().getObject());
   }
 }

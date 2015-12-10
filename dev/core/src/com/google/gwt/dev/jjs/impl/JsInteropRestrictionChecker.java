@@ -281,11 +281,22 @@ public class JsInteropRestrictionChecker {
     }
 
     JMethod method = (JMethod) member;
-    for (JMethod overriddeMethod : method.getOverriddenMethods()) {
-      if (overriddeMethod.isJsOverlay()) {
+
+    if (method.isSynthetic()) {
+      // Ignore synthetic methods. These synthetic methods might be accidental overrides or
+      // default method implementations, and they forward to the same implementation so it is
+      // safe to allow them.
+      return;
+    }
+    for (JMethod overriddenMethod : method.getOverriddenMethods()) {
+      if (overriddenMethod.isSynthetic()) {
+        // Ignore synthetic methods for a better error message.
+        continue;
+      }
+      if (overriddenMethod.isJsOverlay()) {
         logError(member, "Method '%s' cannot override a JsOverlay method '%s'.",
             JjsUtils.getReadableDescription(method),
-            JjsUtils.getReadableDescription(overriddeMethod));
+            JjsUtils.getReadableDescription(overriddenMethod));
         return;
       }
     }

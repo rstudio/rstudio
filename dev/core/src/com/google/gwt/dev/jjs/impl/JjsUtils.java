@@ -202,6 +202,10 @@ public class JjsUtils {
       forwardingMethod.setDefaultMethod();
     }
 
+    if (methodToDelegateTo.isJsOverlay() && type.isJsNative()) {
+      forwardingMethod.isJsOverlay();
+    }
+
     // Create the forwarding body.
     JMethodBody body = (JMethodBody) forwardingMethod.getBody();
     // Invoke methodToDelegate
