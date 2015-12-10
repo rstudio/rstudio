@@ -100,7 +100,7 @@ public class AddinsMRUList extends MRUList
             String entry = entries.get(i);
             try
             {
-               RAddin addin = JsonUtils.<RAddin>safeEval(entry);
+               RAddin addin = RAddin.decode(entry);
                String label = addin.getPackage() + ": " + addin.getName();
                commands[i].setVisible(true);
                commands[i].setMenuLabel(label);

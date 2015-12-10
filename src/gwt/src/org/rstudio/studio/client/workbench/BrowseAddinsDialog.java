@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsonUtils;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
@@ -295,7 +294,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
       }
       
       final String id = selection_.getId();
-      final String encoded = JsonUtils.stringify(selection_);
+      final String encoded = RAddin.encode(selection_);
       return new Command()
       {
          @Override

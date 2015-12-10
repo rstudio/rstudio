@@ -235,6 +235,11 @@ public class StringUtil
       return indent + str.replaceAll("\n", "\n" + indent);
    }
    
+   public static String join(String delimiter, String... strings)
+   {
+      return join(strings, delimiter);
+   }
+   
    public static String join(String[] collection, String delim)
    {
       return join(Arrays.asList(collection), delim);
