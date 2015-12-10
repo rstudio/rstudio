@@ -3931,6 +3931,7 @@ public class Source implements InsertSourceHandler,
          
          docDisplay.replaceRange(range, text);
       }
+      docDisplay.focus();
    }
    
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();

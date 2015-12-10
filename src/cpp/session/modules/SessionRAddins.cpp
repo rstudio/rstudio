@@ -233,6 +233,7 @@ void onDeferredInit(bool newSession)
 Error getRAddins(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
+   discoverAddins(getLibPaths());
    pResponse->setResult(addinRegistry().toJson());
    return Success();
 }
