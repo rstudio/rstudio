@@ -95,7 +95,7 @@ public interface ApplicationServerOperations extends PrefsServerOperations
          String projectDir,
          ServerRequestCallback<RVersionSpec> callback);
    
-   void getProjectPath(
+   void getProjectFilePath(
          String projectId,
          ServerRequestCallback<String> callback);
 }

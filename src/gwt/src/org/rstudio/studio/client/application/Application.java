@@ -745,17 +745,17 @@ public class Application implements ApplicationEventHandlers
             StringUtil.notNull(Window.Location.getParameter("id"));
       if (projectId.length() > 0)
       {
-         server_.getProjectPath(
+         server_.getProjectFilePath(
             projectId, 
             new ServerRequestCallback<String>() {
 
                @Override
-               public void onResponseReceived(String projectPath)
+               public void onResponseReceived(String projectFilePath)
                {
-                  if (projectPath.length() > 0)
+                  if (projectFilePath.length() > 0)
                   {
                      events_.fireEvent(
-                           new SwitchToProjectEvent(projectPath, true));
+                           new SwitchToProjectEvent(projectFilePath, true));
                   }
                }
                @Override
