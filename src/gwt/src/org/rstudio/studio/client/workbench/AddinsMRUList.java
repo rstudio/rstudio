@@ -1,0 +1,64 @@
+/*
+ * AddinsMRUList.java
+ *
+ * Copyright (C) 2009-12 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+package org.rstudio.studio.client.workbench;
+
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
+import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
+import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
+
+@Singleton
+public class AddinsMRUList extends MRUList
+{
+   @Inject
+   public AddinsMRUList(Commands commands,
+                        WorkbenchListManager listManager,
+                        EventBus events,
+                        Session session,
+                        final AddinsServerOperations server)
+   {
+      super(
+            listManager.getAddinsMruList(),
+            new AppCommand[] {
+               commands.addinsMru0(),
+               commands.addinsMru1(),
+               commands.addinsMru2(),
+               commands.addinsMru3(),
+               commands.addinsMru4(),
+               commands.addinsMru5(),
+               commands.addinsMru6(),
+               commands.addinsMru7(),
+               commands.addinsMru8(),
+               commands.addinsMru9()
+            },
+            commands.clearAddinsMruList(),
+            false,
+            new OperationWithInput<String>()
+            {
+               @Override
+               public void execute(String addin)
+               {
+                  server.executeRAddin(addin, new VoidServerRequestCallback());
+               }
+            });
+   }
+
+}

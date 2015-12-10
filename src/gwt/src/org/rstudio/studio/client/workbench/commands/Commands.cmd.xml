@@ -389,6 +389,18 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="showShellDialog"/>
          <menu label="Addins">
+            <cmd refid="addinsMru0"/>
+            <cmd refid="addinsMru1"/>
+            <cmd refid="addinsMru2"/>
+            <cmd refid="addinsMru3"/>
+            <cmd refid="addinsMru4"/>
+            <cmd refid="addinsMru5"/>
+            <cmd refid="addinsMru6"/>
+            <cmd refid="addinsMru7"/>
+            <cmd refid="addinsMru8"/>
+            <cmd refid="addinsMru9"/>
+            <separator/>
+            <cmd refid="clearAddinsMruList"/>
          	<cmd refid="browseAddins"/>
          </menu>
          <separator/>
@@ -2098,6 +2110,12 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Shell..."
         desc="Execute shell commands(s)"
         windowMode="main"/>
+        
+   <cmd id="clearAddinsMruList"
+        label="Clear Addins List"
+        desc="Clear recently used addins"
+        windowMode="main"
+        rebindable="false"/>
         
    <cmd id="browseAddins"
         label="Browse addins"

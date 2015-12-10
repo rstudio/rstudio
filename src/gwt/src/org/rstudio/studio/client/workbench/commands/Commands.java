@@ -431,6 +431,17 @@ public abstract class
    public abstract AppCommand rsconnectManageAccounts();
    
    // Addins
+   public abstract AppCommand addinsMru0();
+   public abstract AppCommand addinsMru1();
+   public abstract AppCommand addinsMru2();
+   public abstract AppCommand addinsMru3();
+   public abstract AppCommand addinsMru4();
+   public abstract AppCommand addinsMru5();
+   public abstract AppCommand addinsMru6();
+   public abstract AppCommand addinsMru7();
+   public abstract AppCommand addinsMru8();
+   public abstract AppCommand addinsMru9();
+   public abstract AppCommand clearAddinsMruList();
    public abstract AppCommand browseAddins();
 
    // Other
