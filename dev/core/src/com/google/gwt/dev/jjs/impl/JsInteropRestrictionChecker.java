@@ -239,6 +239,10 @@ public class JsInteropRestrictionChecker {
       checkMemberOfNativeJsType(member);
     }
 
+    if (member.needsDynamicDispatch()) {
+      checkIllegalOverrides(member);
+    }
+
     if (member.isJsOverlay()) {
       checkJsOverlay(member);
       return;
@@ -271,6 +275,22 @@ public class JsInteropRestrictionChecker {
     }
   }
 
+  private void checkIllegalOverrides(JMember member) {
+    if (member instanceof JField) {
+      return;
+    }
+
+    JMethod method = (JMethod) member;
+    for (JMethod overriddeMethod : method.getOverriddenMethods()) {
+      if (overriddeMethod.isJsOverlay()) {
+        logError(member, "Method '%s' cannot override a JsOverlay method '%s'.",
+            JjsUtils.getReadableDescription(method),
+            JjsUtils.getReadableDescription(overriddeMethod));
+        return;
+      }
+    }
+  }
+
   private void checkJsOverlay(JMember member) {
     if (member.getEnclosingType().isJsoType()) {
       return;
@@ -299,7 +319,8 @@ public class JsInteropRestrictionChecker {
       return;
     }
 
-    if (method.getBody() == null || (!method.isFinal() && !method.isStatic())) {
+    if (method.getBody() == null || (!method.isFinal() && !method.isStatic()
+        && !method.isDefaultMethod())) {
       logError(member,
           "JsOverlay method '%s' cannot be non-final nor native.", methodDescription);
     }

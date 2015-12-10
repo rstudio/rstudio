@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import jsinterop.annotations.JsOverlay;
+import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 
 /**
@@ -1306,23 +1307,24 @@ public class Java8Test extends GWTTestCase {
     }
   }
 
-// TODO(rluble): uncomment when we allow @JsOverlay methods to be default methods of
-// interfaces
-//  @JsType(isNative = true)
-//  interface NativeJsTypeInterfaceWithStaticInitializationAndInstanceOverlayMethod {
-//  @JsOverlay
-//    Object object = new Integer(5);
-//
-//    @JsOverlay
-//    default Object getObject() {
-//      return object;
-//    }
-//  }
-//
-//  private native NativeJsTypeInterfaceWithStaticInitializationAndInstanceOverlayMethod
-//      createNativeJsTypeInterfaceWithStaticInitializationAndInstanceOverlayMethod() /*-{
-//    return {};
-//  }-*/;
+  @JsType(isNative = true)
+  interface NativeJsTypeInterfaceWithStaticInitializationAndInstanceOverlayMethod {
+    @JsOverlay
+    Object object = new Integer(5);
+
+    @JsProperty
+    int getA();
+
+    @JsOverlay
+    default Object getObject() {
+      return ((int) object) + this.getA();
+    }
+  }
+
+  private native NativeJsTypeInterfaceWithStaticInitializationAndInstanceOverlayMethod
+      createNativeJsTypeInterfaceWithStaticInitializationAndInstanceOverlayMethod() /*-{
+    return {a: 1};
+  }-*/;
 
   @JsType(isNative = true)
   interface NativeJsTypeInterfaceWithStaticInitialization {
@@ -1340,11 +1342,9 @@ public class Java8Test extends GWTTestCase {
     assertEquals(3, NativeJsTypeInterfaceWithStaticInitializationAndFieldAccess.object);
     assertEquals(
         4, NativeJsTypeInterfaceWithStaticInitializationAndStaticOverlayMethod.getObject());
-// TODO(rluble): uncomment when we allow @JsOverlay methods to be default methods of
-// interfaces
-//    assertEquals(new Integer(5),
-//        createNativeJsTypeInterfaceWithStaticInitializationAndInstanceOverlayMethod()
-//            .getObject());
+    assertEquals(6,
+        createNativeJsTypeInterfaceWithStaticInitializationAndInstanceOverlayMethod()
+            .getObject());
     assertEquals(7, NativeJsTypeInterfaceWithComplexStaticInitialization.object);
   }
 }

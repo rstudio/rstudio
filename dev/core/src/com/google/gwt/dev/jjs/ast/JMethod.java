@@ -249,8 +249,9 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
 
   @Override
   public boolean isJsOverlay() {
-    return isJsOverlay || getEnclosingType().isJsoType() ||
-        getEnclosingType().isJsNative() && JProgram.isClinit(this);
+    return isJsOverlay
+        || getEnclosingType().isJsoType()
+        || getEnclosingType().isJsNative() && JProgram.isClinit(this);
   }
 
   public void setSyntheticAccidentalOverride() {

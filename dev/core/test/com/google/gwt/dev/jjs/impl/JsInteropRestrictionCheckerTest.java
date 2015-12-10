@@ -1417,21 +1417,40 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "Line 6: Native JsType ''EntryPoint.Buggy'' can only extend native JsType interfaces.");
   }
 
-  public void testNativeJsTypeInterfaceDefenderMethodsFails() throws Exception {
+  public void testNativeJsTypeInterfaceDefenderMethodsFails() {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsOverlay");
+    addSnippetClassDecl(
+        "@JsType(isNative=true) public interface Interface {",
+        "  @JsOverlay default void someOtherMethod(){}",
+        "}",
+        "public static class OtherClass implements Interface {",
+        "  public void someOtherMethod() {}",
+        "}",
+        "@JsType(isNative=true) public interface Buggy extends Interface {",
+        "  default void someMethod(){}",
+        "  void someOtherMethod();",
+        "}");
+
+    assertBuggyFails(
+        "Line 9: Method 'void EntryPoint.OtherClass.someOtherMethod()' cannot override a "
+            + "JsOverlay method 'void EntryPoint.Interface.someOtherMethod()'.",
+        "Line 12: Native JsType method 'void EntryPoint.Buggy.someMethod()' should be native "
+            + "or abstract.",
+        "Line 13: Method 'void EntryPoint.Buggy.someOtherMethod()' cannot override a JsOverlay"
+            + " method 'void EntryPoint.Interface.someOtherMethod()'.");
+  }
+
+  public void testJsOverlayOnNativeJsTypeInterfaceSucceds() throws Exception {
     addSnippetImport("jsinterop.annotations.JsType");
     addSnippetImport("jsinterop.annotations.JsOverlay");
     addSnippetClassDecl(
         "@JsType(isNative=true) public interface Buggy {",
-        "  default void someMethod(){}",
-        "  @JsOverlay",
-        "  default void someOverlayMethod(){}",
+        "  @JsOverlay Object obj = new Object();",
+        "  @JsOverlay default void someOverlayMethod(){}",
         "}");
 
-    assertBuggyFails(
-        "Line 6: Native JsType method 'void EntryPoint.Buggy.someMethod()' should be native "
-            + "or abstract.",
-        "Line 8: JsOverlay method 'void EntryPoint.Buggy.someOverlayMethod()' cannot be "
-            + "non-final nor native.");
+    assertBuggySucceeds();
   }
 
   public void testJsOverlayOnNativeJsTypeMemberSucceeds() throws Exception {
@@ -1439,7 +1458,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     addSnippetImport("jsinterop.annotations.JsOverlay");
     addSnippetClassDecl(
         "@JsType(isNative=true) public static class Buggy {",
-        "  @JsOverlay public static final int f = 2;",
+        "  @JsOverlay public static Object object = new Object();",
         "  @JsOverlay public static void m() { }",
         "  @JsOverlay public static void m(int x) { }",
         "  @JsOverlay private static void m(boolean x) { }",
