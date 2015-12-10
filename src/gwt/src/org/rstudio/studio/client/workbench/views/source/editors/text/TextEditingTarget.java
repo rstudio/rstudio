@@ -147,6 +147,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.RMarkdownNoParamsDialog;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
+import org.rstudio.studio.client.workbench.views.source.events.CollabExternalEditEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocFocusedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
@@ -5156,17 +5157,15 @@ public class TextEditingTarget implements
                   }
                   else if (response.isModified())
                   {
-                     // If we're in a collaborative session, we rely on it to
-                     // sync modifications; otherwise we'd need to (a)
-                     // distinguish between "external edits" caused by other
-                     // people in the session saving the file (already synced)
-                     // and true external edits from other programs/processes, 
-                     // and (b) and figure out what to when > 1 person gets the
-                     // "file has changed externally" prompt (even at best this
-                     // creates a "last writer wins" race condition)
+                     // If we're in a collaborative session, we need to let it
+                     // reconcile the modification
                      if (docDisplay_ != null && 
                          docDisplay_.hasActiveCollabSession())
+                     {
+                        events_.fireEvent(new CollabExternalEditEvent(
+                              getId(), getPath()));
                         return;
+                     }
 
                      ignoreDeletes_ = false; // Now we know it exists
 
