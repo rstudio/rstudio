@@ -274,6 +274,9 @@ Error SourceDocument::setPathAndContents(const std::string& path,
    setContents(contents);
    lastKnownWriteTime_ = docPath.lastWriteTime();
 
+   // rewind the last content update to the file's write time
+   lastContentUpdate_ = lastKnownWriteTime_;
+
    return Success();
 }
 

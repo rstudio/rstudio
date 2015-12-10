@@ -87,12 +87,21 @@ Error parseJsonRpcRequest(const std::string& input, JsonRpcRequest* pRequest)
             
             pRequest->clientId = fieldValue.get_str();
          }
+         // legacy version field
          else if (fieldName == "version" )
          {
-            if (!json::isType<double>(fieldValue))
-               return Error(errc::InvalidRequest, ERROR_LOCATION);
-            
-            pRequest->version = fieldValue.get_value<double>();
+            if (json::isType<double>(fieldValue))
+               pRequest->version = fieldValue.get_value<double>();
+            else
+               pRequest->version = 0;
+         }
+         // new version field
+         else if (fieldName == "clientVersion")
+         {
+            if (fieldValue.type() == json::StringType)
+               pRequest->clientVersion = fieldValue.get_str();
+            else
+               pRequest->clientVersion = std::string();
          }
       }
 

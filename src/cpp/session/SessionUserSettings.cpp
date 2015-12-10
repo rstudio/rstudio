@@ -193,9 +193,9 @@ Error UserSettings::initialize()
 {
    // calculate settings file path
    FilePath settingsDir = module_context::registerMonitoredUserScratchDir(
-              "user-settings",
+              kUserSettingsDir,
               boost::bind(&UserSettings::onSettingsFileChanged, this, _1));
-   settingsFilePath_ = settingsDir.complete("user-settings");
+   settingsFilePath_ = settingsDir.complete(kUserSettingsFile);
 
    // if it doesn't exist see if we can migrate an old user settings
    if (!settingsFilePath_.exists())
@@ -865,6 +865,26 @@ bool  UserSettings::usingMingwGcc49() const
 void  UserSettings::setUsingMingwGcc49(bool usingMingwGcc49)
 {
    settings_.set("usingMingwGcc49", usingMingwGcc49);
+}
+
+std::string UserSettings::showUserHomePage() const
+{
+   return settings_.get(kServerHomeSetting, kServerHomeSessions);
+}
+
+void UserSettings::setShowUserHomePage(const std::string& value)
+{
+   settings_.set(kServerHomeSetting, value);
+}
+
+bool UserSettings::reuseSessionsForProjectLinks() const
+{
+   return settings_.getBool(kReuseSessionsForProjectLinksSettings, true);
+}
+
+void UserSettings::setReuseSessionsForProjectLinks(bool reuse)
+{
+   settings_.set(kReuseSessionsForProjectLinksSettings, reuse);
 }
 
 

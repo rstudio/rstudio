@@ -1,5 +1,5 @@
 /*
- * CollabEditEndedEvent.java
+ * CollabEditSavedEvent.java
  *
  * Copyright (C) 2009-15 by RStudio, Inc.
  *
@@ -15,62 +15,65 @@
 
 package org.rstudio.studio.client.workbench.views.source.events;
 
-import org.rstudio.core.client.js.JavaScriptSerializable;
-import org.rstudio.studio.client.application.events.CrossWindowEvent;
-
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-@JavaScriptSerializable
-public class CollabEditEndedEvent 
-             extends CrossWindowEvent<CollabEditEndedEvent.Handler>
+public class CollabEditSavedEvent extends GwtEvent<CollabEditSavedEvent.Handler>
 { 
    public static class Data extends JavaScriptObject
    {
-      protected Data() 
+      protected Data()
       {
       }
 
-      public final native static Data create(String path) /*-{
-         return { "path": path };
-      }-*/;
-      
       public final native String getPath() /*-{
          return this.path;
+      }-*/;
+
+      public final native String getId() /*-{
+         return this.id;
+      }-*/;
+
+      public final native String getCrc32() /*-{
+         return this.crc32;
+      }-*/;
+
+      public final native String getWriteTime() /*-{
+         return this.write_time;
       }-*/;
    }
 
    public interface Handler extends EventHandler
    {
-      void onCollabEditEnded(CollabEditEndedEvent event);
+      void onCollabEditSaved(CollabEditSavedEvent event);
    }
 
-   public static final GwtEvent.Type<CollabEditEndedEvent.Handler> TYPE =
-      new GwtEvent.Type<CollabEditEndedEvent.Handler>();
+   public static final GwtEvent.Type<CollabEditSavedEvent.Handler> TYPE =
+      new GwtEvent.Type<CollabEditSavedEvent.Handler>();
 
-   public CollabEditEndedEvent()
+   public CollabEditSavedEvent()
    {
    }
    
-   public CollabEditEndedEvent(Data data)
+   public CollabEditSavedEvent(Data data)
    {
       data_ = data;
    }
    
-   public String getPath()
+   public Data getData()
    {
-      return data_.getPath();
+      return data_;
    }
    
    @Override
-   protected void dispatch(CollabEditEndedEvent.Handler handler)
+   protected void dispatch(CollabEditSavedEvent.Handler handler)
    {
-      handler.onCollabEditEnded(this);
+      handler.onCollabEditSaved(this);
    }
 
    @Override
-   public GwtEvent.Type<CollabEditEndedEvent.Handler> getAssociatedType()
+   public GwtEvent.Type<CollabEditSavedEvent.Handler> getAssociatedType()
    {
       return TYPE;
    }

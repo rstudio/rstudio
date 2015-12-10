@@ -1,5 +1,5 @@
 /*
- * config.h.in
+ * ApplicationUtils.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,9 +13,21 @@
  *
  */
 
-#define RSTUDIO_VERSION "${CPACK_PACKAGE_VERSION}"
-#define RSTUDIO_GIT_REVISION_HASH "${RSTUDIO_GIT_REVISION_HASH}"
-#cmakedefine RSTUDIO_SERVER
-#cmakedefine RSTUDIO_UNVERSIONED_BUILD
-#cmakedefine TRACE_PACKRAT_OUTPUT
+package org.rstudio.studio.client.application;
 
+import org.rstudio.core.client.regex.Pattern;
+
+import com.google.gwt.core.client.GWT;
+
+
+public class ApplicationUtils
+{
+   public static String getHostPageBaseURLWithoutContext(boolean includeSlash)
+   {
+      String replaceWith = includeSlash ? "/" : "";
+      String url = GWT.getHostPageBaseURL();
+      Pattern pattern = Pattern.create("/s/[A-Fa-f0-9]{5}[A-Fa-f0-9]{8}[A-Fa-f0-9]{8}/");
+      return pattern.replaceAll(url, replaceWith);
+   }
+   
+}

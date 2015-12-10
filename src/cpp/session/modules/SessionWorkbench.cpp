@@ -276,9 +276,12 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    // read and set general prefs
    int saveAction;
    bool loadRData, rProfileOnResume, restoreProjectRVersion, showLastDotValue;
-   std::string initialWorkingDir;
+   bool reuseSessionsForProjectLinks;
+   std::string initialWorkingDir, showUserHomePage;
    json::Object defaultRVersionJson;
    error = json::readObject(generalPrefs,
+                            "show_user_home_page", &showUserHomePage,
+                            "reuse_sessions_for_project_links", &reuseSessionsForProjectLinks,
                             "save_action", &saveAction,
                             "load_rdata", &loadRData,
                             "rprofile_on_resume", &rProfileOnResume,
@@ -294,6 +297,8 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 
    // update settings
    userSettings().beginUpdate();
+   userSettings().setShowUserHomePage(showUserHomePage);
+   userSettings().setReuseSessionsForProjectLinks(reuseSessionsForProjectLinks);
    userSettings().setSaveAction(saveAction);
    userSettings().setLoadRData(loadRData);
    userSettings().setRprofileOnResume(rProfileOnResume);
@@ -505,6 +510,8 @@ Error getRPrefs(const json::JsonRpcRequest& request,
 
    // get general prefs
    json::Object generalPrefs;
+   generalPrefs["show_user_home_page"] = userSettings().showUserHomePage();
+   generalPrefs["reuse_sessions_for_project_links"] = userSettings().reuseSessionsForProjectLinks();
    generalPrefs["save_action"] = userSettings().saveAction();
    generalPrefs["load_rdata"] = userSettings().loadRData();
    generalPrefs["rprofile_on_resume"] = userSettings().rProfileOnResume();

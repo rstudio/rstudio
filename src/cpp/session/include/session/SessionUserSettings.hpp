@@ -203,6 +203,12 @@ public:
    bool usingMingwGcc49() const;
    void setUsingMingwGcc49(bool usingMingwGcc49);
 
+   std::string showUserHomePage() const;
+   void setShowUserHomePage(const std::string& value);
+
+   bool reuseSessionsForProjectLinks() const;
+   void setReuseSessionsForProjectLinks(bool reuse);
+
 private:
 
    void onSettingsFileChanged(

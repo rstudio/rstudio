@@ -331,6 +331,17 @@ inline core::r_util::ProjectId projectToProjectId(
                                          (project);
 }
 
+inline std::string projectIdToProject(
+                            const core::FilePath& userScratchPath,
+                            const core::FilePath& sharedStoragePath,
+                            const core::r_util::ProjectId& projectId)
+{
+   if (projectId.id() == kProjectNone)
+      return kProjectNone;
+   else
+      return session::projectIdToFilePath(userScratchPath, sharedStoragePath)
+                                         (projectId);
+}
 
 
 } // namespace session

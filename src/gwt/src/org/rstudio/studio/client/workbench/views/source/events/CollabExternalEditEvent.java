@@ -1,5 +1,5 @@
 /*
- * CollabEditEndedEvent.java
+ * CollabExternalEditEvent.java
  *
  * Copyright (C) 2009-15 by RStudio, Inc.
  *
@@ -18,62 +18,59 @@ package org.rstudio.studio.client.workbench.views.source.events;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 @JavaScriptSerializable
-public class CollabEditEndedEvent 
-             extends CrossWindowEvent<CollabEditEndedEvent.Handler>
+public class CollabExternalEditEvent 
+             extends CrossWindowEvent<CollabExternalEditEvent.Handler>
 { 
-   public static class Data extends JavaScriptObject
-   {
-      protected Data() 
-      {
-      }
-
-      public final native static Data create(String path) /*-{
-         return { "path": path };
-      }-*/;
-      
-      public final native String getPath() /*-{
-         return this.path;
-      }-*/;
-   }
-
    public interface Handler extends EventHandler
    {
-      void onCollabEditEnded(CollabEditEndedEvent event);
+      void onCollabExternalEdit(CollabExternalEditEvent event);
    }
 
-   public static final GwtEvent.Type<CollabEditEndedEvent.Handler> TYPE =
-      new GwtEvent.Type<CollabEditEndedEvent.Handler>();
+   public static final GwtEvent.Type<CollabExternalEditEvent.Handler> TYPE =
+      new GwtEvent.Type<CollabExternalEditEvent.Handler>();
 
-   public CollabEditEndedEvent()
+   public CollabExternalEditEvent()
    {
    }
    
-   public CollabEditEndedEvent(Data data)
+   public CollabExternalEditEvent(String docId, String docPath)
    {
-      data_ = data;
+      docId_ = docId;
+      docPath_ = docPath;
    }
    
-   public String getPath()
+   public String getDocPath()
    {
-      return data_.getPath();
+      return docPath_;
+   }
+   
+   public String getDocId()
+   {
+      return docId_;
    }
    
    @Override
-   protected void dispatch(CollabEditEndedEvent.Handler handler)
+   public boolean forward()
    {
-      handler.onCollabEditEnded(this);
+      return false;
+   }
+   
+   @Override
+   protected void dispatch(CollabExternalEditEvent.Handler handler)
+   {
+      handler.onCollabExternalEdit(this);
    }
 
    @Override
-   public GwtEvent.Type<CollabEditEndedEvent.Handler> getAssociatedType()
+   public GwtEvent.Type<CollabExternalEditEvent.Handler> getAssociatedType()
    {
       return TYPE;
    }
    
-   private Data data_;
+   private String docId_;
+   private String docPath_;
 }

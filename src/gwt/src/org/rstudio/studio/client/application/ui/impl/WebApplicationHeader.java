@@ -20,6 +20,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -28,6 +29,7 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -44,6 +46,7 @@ import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.core.client.widget.ToolbarSeparator;
 import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationUtils;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.LogoutRequestedEvent;
@@ -93,6 +96,7 @@ public class WebApplicationHeader extends Composite
       
       // large logo
       logoLarge_ = new Image(ThemeResources.INSTANCE.rstudio());
+      logoLarge_.addClickHandler(logoClickHandler_);
       ((ImageElement)logoLarge_.getElement().cast()).setAlt("RStudio");
       Style style = logoLarge_.getElement().getStyle();
       style.setPosition(Position.ABSOLUTE);
@@ -101,6 +105,7 @@ public class WebApplicationHeader extends Composite
       
       // small logo
       logoSmall_ = new Image(ThemeResources.INSTANCE.rstudio_small());
+      logoSmall_.addClickHandler(logoClickHandler_);
       ((ImageElement)logoSmall_.getElement().cast()).setAlt("RStudio");
       style = logoSmall_.getElement().getStyle();
       style.setPosition(Position.ABSOLUTE);
@@ -179,6 +184,22 @@ public class WebApplicationHeader extends Composite
             headerBarPanel_.add(projectMenuButton_);
             showProjectMenu(!toolbar_.isVisible());
                 
+            // record logo target url (if any)
+            logoTargetUrl_ = sessionInfo.getUserHomePageUrl();
+            if (logoTargetUrl_ != null)
+            {
+               // convert to full url so we get any url custom prefex
+               logoTargetUrl_ = 
+                  ApplicationUtils.getHostPageBaseURLWithoutContext(false) +
+                  logoTargetUrl_;
+               logoLarge_.setResource(ThemeResources.INSTANCE.rstudio_home());
+               logoLarge_.getElement().getStyle().setCursor(Cursor.POINTER);
+               logoLarge_.setTitle("RStudio Server Home");
+               logoSmall_.setResource(ThemeResources.INSTANCE.rstudio_home_small());
+               logoSmall_.getElement().getStyle().setCursor(Cursor.POINTER);
+               logoSmall_.setTitle(logoLarge_.getTitle());
+            }
+            
             // init commands panel in server mode
             if (!Desktop.isDesktop())
                initCommandsPanel(sessionInfo);
@@ -245,7 +266,15 @@ public class WebApplicationHeader extends Composite
       projectMenuButton_.setVisible(show);
    }
    
-   
+   private ClickHandler logoClickHandler_ = new ClickHandler() {
+
+      @Override
+      public void onClick(ClickEvent event)
+      {
+         if (logoTargetUrl_ != null)
+            Window.Location.assign(logoTargetUrl_);
+      }
+   };
 
    private native final void suppressBrowserForwardBack() /*-{
       try {
@@ -497,6 +526,7 @@ public class WebApplicationHeader extends Composite
    private FlowPanel outerPanel_;
    private Image logoLarge_;
    private Image logoSmall_;
+   private String logoTargetUrl_ = null;
    private HorizontalPanel headerBarPanel_;
    private HorizontalPanel headerBarCommandsPanel_;
    private HorizontalPanel projectBarCommandsPanel_;

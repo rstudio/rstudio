@@ -20,6 +20,7 @@
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -70,7 +71,7 @@ std::string quotedFilesFromArray(json::Array array, bool quoted)
 class RSConnectPublish : public async_r::AsyncRProcess
 {
 public:
-   static boost::shared_ptr<RSConnectPublish> create(
+   static Error create(
          const std::string& dir,
          const json::Array& fileList, 
          const std::string& file, 
@@ -82,14 +83,30 @@ public:
          const json::Array& additionalFilesList,
          const json::Array& ignoredFilesList,
          bool asMultiple,
-         bool asStatic)
+         bool asStatic,
+         boost::shared_ptr<RSConnectPublish>* pDeployOut)
    {
       boost::shared_ptr<RSConnectPublish> pDeploy(new RSConnectPublish(file));
 
       std::string cmd("{ " + module_context::CRANDownloadOptions() + "; ");
 
+      // create temporary file to host file manifest
+      if (!fileList.empty())
+      {
+         Error error = FilePath::tempFilePath(&pDeploy->manifestPath_);
+         if (error)
+            return error;
+
+         // write manifest to temporary file
+         std::vector<std::string> deployFileList;
+         json::fillVectorString(fileList, &deployFileList);
+         error = core::writeStringVectorToFile(pDeploy->manifestPath_, 
+                                               deployFileList);
+         if (error)
+            return error;
+      }
+
       // join and quote incoming filenames to deploy
-      std::string deployFiles = quotedFilesFromArray(fileList, true);
       std::string additionalFiles = quotedFilesFromArray(additionalFilesList,
             false);
       std::string ignoredFiles = quotedFilesFromArray(ignoredFilesList,
@@ -115,8 +132,9 @@ public:
       // form the deploy command to hand off to the async deploy process
       cmd += "rsconnect::deployApp("
              "appDir = '" + string_utils::singleQuotedStrEscape(appDir) + "'," +
-             (deployFiles.empty() ? "" : "appFiles = c(" + 
-                deployFiles + "), ") +
+             (pDeploy->manifestPath_.empty() ? "" : "appFileManifest = '" + 
+                string_utils::singleQuotedStrEscape(
+                   pDeploy->manifestPath_.absolutePath()) + "', ") +
              (primaryDoc.empty() ? "" : "appPrimaryDoc = '" + 
                 string_utils::singleQuotedStrEscape(primaryDoc) + "', ") + 
              (sourceDoc.empty() ? "" : "appSourceDoc = '" + 
@@ -140,7 +158,8 @@ public:
              "))}";
 
       pDeploy->start(cmd.c_str(), FilePath(), async_r::R_PROCESS_VANILLA);
-      return pDeploy;
+      *pDeployOut = pDeploy;
+      return Success();
    }
 
 private:
@@ -202,10 +221,16 @@ private:
       ClientEvent event(client_events::kRmdRSConnectDeploymentCompleted,
                         deployedUrl_);
       module_context::enqueClientEvent(event);
+
+      // clean up the manifest if we created it
+      Error error = manifestPath_.removeIfExists();
+      if (error)
+         LOG_ERROR(error);
    }
 
    std::string deployedUrl_;
    std::string sourceFile_;
+   FilePath manifestPath_;
 };
 
 boost::shared_ptr<RSConnectPublish> s_pRSConnectPublish_;
@@ -232,13 +257,17 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
    }
    else
    {
-      s_pRSConnectPublish_ = RSConnectPublish::create(sourceDir, sourceFiles, 
-                                                  sourceFile, sourceDoc, 
-                                                  account, server, appName, 
-                                                  contentCategory,
-                                                  additionalFiles,
-                                                  ignoredFiles, asMultiple,
-                                                  asStatic);
+      error = RSConnectPublish::create(sourceDir, sourceFiles, 
+                                       sourceFile, sourceDoc, 
+                                       account, server, appName, 
+                                       contentCategory,
+                                       additionalFiles,
+                                       ignoredFiles, asMultiple,
+                                       asStatic,
+                                       &s_pRSConnectPublish_);
+      if (error)
+         return error;
+
       pResponse->setResult(true);
    }
 

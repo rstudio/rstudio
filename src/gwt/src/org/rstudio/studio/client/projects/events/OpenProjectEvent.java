@@ -1,7 +1,7 @@
 /*
- * SwitchToProjectEvent.java
+ * OpenProjectActionEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,48 +12,53 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
 package org.rstudio.studio.client.projects.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class SwitchToProjectEvent extends GwtEvent<SwitchToProjectHandler>
+public class OpenProjectEvent 
+   extends GwtEvent<OpenProjectEvent.Handler>
 {
-   public static final GwtEvent.Type<SwitchToProjectHandler> TYPE =
-      new GwtEvent.Type<SwitchToProjectHandler>();
-   
-   public SwitchToProjectEvent(String project)
+   public interface Handler extends EventHandler
    {
-      this(project, false);
+      void onOpenProjectEvent(OpenProjectEvent event);
    }
    
-   public SwitchToProjectEvent(String project, boolean forceSaveAll)
+   public OpenProjectEvent(boolean forceSaveAll, boolean allowOpenInNewWindow)
    {
-      project_ = project;
       forceSaveAll_ = forceSaveAll;
+      allowOpenInNewWindow_ = allowOpenInNewWindow;
    }
    
-   public String getProject()
-   {
-      return project_;
-   }
    
    public boolean getForceSaveAll()
    {
       return forceSaveAll_;
    }
    
-   @Override
-   protected void dispatch(SwitchToProjectHandler handler)
+   
+   public boolean getAllowOpenInNewWindow()
    {
-      handler.onSwitchToProject(this);
+      return allowOpenInNewWindow_;
    }
-
+   
+   
    @Override
-   public GwtEvent.Type<SwitchToProjectHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
+
+   @Override
+   protected void dispatch(Handler handler)
+   {
+      handler.onOpenProjectEvent(this);
+   }
    
-   private final String project_;
+   public static final Type<Handler> TYPE = new Type<Handler>();
+   
    private final boolean forceSaveAll_;
+   private final boolean allowOpenInNewWindow_;
 }

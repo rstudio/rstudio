@@ -28,7 +28,6 @@ import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -42,7 +41,6 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.events.*;
@@ -56,6 +54,9 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.projects.Projects;
+import org.rstudio.studio.client.projects.events.NewProjectEvent;
+import org.rstudio.studio.client.projects.events.OpenProjectEvent;
+import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
 import org.rstudio.studio.client.workbench.Workbench;
@@ -154,10 +155,25 @@ public class Application implements ApplicationEventHandlers
             verifyAgreement(sessionInfo, new Operation() {
                public void execute()
                {
-                  dismissLoadingProgress.execute();
-
-                  session_.setSessionInfo(sessionInfo);
+                  // if this is a switch project then wait to dismiss the 
+                  // loading progress animation for 3 seconds
+                  if (ApplicationAction.isSwitchProject())
+                  {
+                     new Timer() {
+                        @Override
+                        public void run()
+                        {
+                           dismissLoadingProgress.execute();
+                        }   
+                     }.schedule(3000);  
+                  }
+                  else
+                  {
+                     dismissLoadingProgress.execute();
+                  }
                   
+                  session_.setSessionInfo(sessionInfo);
+                        
                   // initialize workbench
                   initializeWorkbench();
                }
@@ -506,7 +522,7 @@ public class Application implements ApplicationEventHandlers
       if (loc != -1)
          baseURL = baseURL.substring(0, loc) + "/";
 
-      if (info.getScopeState() == InvalidSessionInfo.ScopeInvalidProject)
+      if (info.getScopeState() == InvalidSessionInfo.ScopeMissingProject)
       {
          baseURL += "projectnotfound.htm";
       }
@@ -598,15 +614,11 @@ public class Application implements ApplicationEventHandlers
    {
       cleanupWorkbench();
     
-      // remove any session context from the url
-      String url = GWT.getHostPageBaseURL();
-      
-      if (!includeContext)
-      {
-         Pattern pattern = Pattern.create("/s/[A-Fa-f0-9]{8}[A-Fa-f0-9]{8}/");
-         url = pattern.replaceAll(url, "/");
-      }
-      
+      // ensure there is no session context if requested
+      String url = includeContext ? 
+            GWT.getHostPageBaseURL() :
+            ApplicationUtils.getHostPageBaseURLWithoutContext(true);
+            
       // add relative URL
       url += relativeUrl;
      
@@ -717,11 +729,45 @@ public class Application implements ApplicationEventHandlers
                if (ApplicationAction.isQuit())
                   commands_.quitSession().execute();
                else if (ApplicationAction.isNewProject())
-                  commands_.newProject().execute();
+                  events_.fireEvent(new NewProjectEvent(true, false));
+               else if (ApplicationAction.isOpenProject())
+                  events_.fireEvent(new OpenProjectEvent(true, false));
+               else if (ApplicationAction.isSwitchProject())
+                  handleSwitchProjectAction();
             }
          }.schedule(500); 
       }
    }
+   
+   private void handleSwitchProjectAction()
+   { 
+      String projectId = 
+            StringUtil.notNull(Window.Location.getParameter("id"));
+      if (projectId.length() > 0)
+      {
+         server_.getProjectPath(
+            projectId, 
+            new ServerRequestCallback<String>() {
+
+               @Override
+               public void onResponseReceived(String projectPath)
+               {
+                  if (projectPath.length() > 0)
+                  {
+                     events_.fireEvent(
+                           new SwitchToProjectEvent(projectPath, true));
+                  }
+               }
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+         
+            });
+      } 
+   }
+ 
    
    private void setToolbarPref(boolean showToolbar)
    {
@@ -737,17 +783,6 @@ public class Application implements ApplicationEventHandlers
       // manage commands
       commands_.showToolbar().setVisible(!showToolbar);
       commands_.hideToolbar().setVisible(showToolbar);
-   }
-   
-   private void hideWorkbench(final RootLayoutPanel rootPanel)
-   {
-      final Label w = new Label();
-      w.getElement().getStyle().setBackgroundColor("#e1e2e5");
-      rootPanel.add(w);
-      rootPanel.setWidgetTopBottom(w, 0, Style.Unit.PX, 
-                                      0, Style.Unit.PX);
-      rootPanel.setWidgetLeftRight(w, 0, Style.Unit.PX, 
-                                      0, Style.Unit.PX);
    }
       
    private void cleanupWorkbench()

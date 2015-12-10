@@ -144,6 +144,7 @@ extern const int kSendToConsole;
 extern const int kUserFollowStarted;
 extern const int kUserFollowEnded;
 extern const int kProjectAccessRevoked;
+extern const int kCollabEditSaved;
 }
    
 class ClientEvent

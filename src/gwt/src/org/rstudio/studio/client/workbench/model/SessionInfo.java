@@ -44,8 +44,8 @@ public class SessionInfo extends JavaScriptObject
       return this.clientId;
    }-*/;
    
-   public final native double getClientVersion() /*-{
-      return this.version;
+   public final native String getClientVersion() /*-{
+      return this.client_version;
    }-*/;
 
    public final native String getUserIdentity() /*-{
@@ -416,4 +416,13 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean getPackratAvailable() /*-{
       return this.packrat_available;
    }-*/;
+   
+   public final native boolean getShowUserHomePage() /*-{
+      return this.show_user_home_page;
+   }-*/;
+   
+   public final native String getUserHomePageUrl() /*-{
+      return this.user_home_page_url;
+   }-*/;
+   
 }

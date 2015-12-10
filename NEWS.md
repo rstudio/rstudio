@@ -61,6 +61,7 @@
 * OS X: Enable WebKit WebGL by default
 * OS X: Enable WebKit DeveloperExtras by default
 * OS X: Enable creation of directories in folder picker dialog
+* Windows: Update to SumatraPDF 3.1.1
 * Added ability to zoom panes (e.g. Ctrl+Shift+1 to zoom source pane)
 * Add Console on Left/Right commands for quick relocation of Console
 * Add product and version metadata to Windows installer
@@ -77,6 +78,7 @@
 * Use SHA256 for signing cookies (previously used SHA1)
 * Use more resiliant file locking mechnaism for compatibility with NFS volumes
 * Attempt to close application window when quitting
+* Track installed client version using git commit hash rather than timestamp
 * Server Pro: Shared Projects (including concurrent multi-user editing)
 * Server Pro: Support for multiple concurrent R sessions per-user
 * Server Pro: Support for running against multiple versions of R
