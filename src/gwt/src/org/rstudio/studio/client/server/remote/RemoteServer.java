@@ -1442,7 +1442,7 @@ public class RemoteServer implements Server
          String projectId,
          ServerRequestCallback<String> callback)
    {
-      sendRequest(RPC_SCOPE, "get_project_path", projectId, callback);
+      sendRequest(RPC_SCOPE, "get_project_file_path", projectId, callback);
    }
    
    @Override
