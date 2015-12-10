@@ -23,16 +23,18 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 
 @Singleton
 public class AddinsMRUList extends MRUList
 {
    @Inject
-   public AddinsMRUList(Commands commands,
-                        WorkbenchListManager listManager,
-                        EventBus events,
-                        Session session,
+   public AddinsMRUList(final Commands commands,
+                        final WorkbenchListManager listManager,
+                        final EventBus events,
+                        final Session session,
                         final AddinsServerOperations server)
    {
       super(
@@ -59,6 +61,17 @@ public class AddinsMRUList extends MRUList
                   server.executeRAddin(addin, new VoidServerRequestCallback());
                }
             });
+      
+      events.addHandler(
+            SessionInitEvent.TYPE,
+            new SessionInitHandler()
+            {
+               @Override
+               public void onSessionInit(SessionInitEvent event)
+               {
+                  // force initialization
+                  listManager.getAddinsMruList();
+               }
+            });
    }
-
 }
