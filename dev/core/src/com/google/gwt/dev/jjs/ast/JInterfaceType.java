@@ -76,6 +76,16 @@ public class JInterfaceType extends JDeclaredType {
     return false;
   }
 
+  @Override
+  public boolean isJavaLangObject() {
+    return false;
+  }
+
+  @Override
+  public JEnumType isEnumOrSubclass() {
+    return null;
+  }
+
   public boolean hasDefaultMethods() {
     assert !isExternal();
     return Iterables.any(getMethods(), new Predicate<JMethod>() {

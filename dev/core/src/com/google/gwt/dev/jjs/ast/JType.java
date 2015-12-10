@@ -62,9 +62,7 @@ public abstract class JType extends JNode implements HasName, CanBeFinal {
    */
   public abstract boolean canBeNull();
 
-  public boolean isArrayType() {
-    return false;
-  }
+  public abstract boolean isArrayType();
 
   /**
    * Returns {@code true} if this is {@link JReferenceType.JNullType.INSTANCE}.
@@ -73,29 +71,17 @@ public abstract class JType extends JNode implements HasName, CanBeFinal {
     return false;
   }
 
-  public boolean isJsType() {
-    return false;
-  }
+  public abstract boolean isJsType();
 
-  public boolean isJsFunction() {
-    return false;
-  }
+  public abstract boolean isJsFunction();
 
-  public boolean isJsNative() {
-    return false;
-  }
+  public abstract boolean isJsNative();
 
-  public boolean canBeImplementedExternally() {
-    return false;
-  }
+  public abstract boolean canBeImplementedExternally();
 
-  public boolean canBeReferencedExternally() {
-    return false;
-  }
+  public abstract boolean canBeReferencedExternally();
 
-  public boolean isJavaLangObject() {
-    return false;
-  }
+  public abstract boolean isJavaLangObject();
 
   /**
    * Returns {@code true} if this is a JavaScriptObject type.
@@ -161,9 +147,7 @@ public abstract class JType extends JNode implements HasName, CanBeFinal {
    * Returns the (closest) enum supertype if the type is a subclass of an enum; it returns
    * {@code this} if {@code this} is a {@link JEnumType} and {@code null} otherwise.
    */
-  public JEnumType isEnumOrSubclass() {
-    return null;
-  }
+  public abstract JEnumType isEnumOrSubclass();
 
   /**
    * Binary name of the type.

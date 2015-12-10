@@ -75,6 +75,31 @@ public class JPrimitiveType extends JType {
   }
 
   @Override
+  public boolean isArrayType() {
+    return false;
+  }
+
+  @Override
+  public boolean isJsType() {
+    return false;
+  }
+
+  @Override
+  public boolean isJsFunction() {
+    return false;
+  }
+
+  @Override
+  public boolean isJsNative() {
+    return false;
+  }
+
+  @Override
+  public boolean canBeImplementedExternally() {
+    return false;
+  }
+
+  @Override
   public boolean canBeSubclass() {
     return false;
   }
@@ -98,6 +123,11 @@ public class JPrimitiveType extends JType {
     return signatureName;
   }
 
+  @Override
+  public JEnumType isEnumOrSubclass() {
+    return null;
+  }
+
   public String getWrapperTypeName() {
     return wrapperTypeName;
   }
@@ -115,6 +145,11 @@ public class JPrimitiveType extends JType {
   @Override
   public boolean canBeReferencedExternally() {
     return this != JPrimitiveType.LONG;
+  }
+
+  @Override
+  public boolean isJavaLangObject() {
+    return false;
   }
 
   @Override

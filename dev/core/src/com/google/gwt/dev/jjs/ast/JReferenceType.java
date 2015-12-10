@@ -41,6 +41,11 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
         }
 
         @Override
+        public JEnumType isEnumOrSubclass() {
+          return null;
+        }
+
+        @Override
         public boolean isAbstract() {
           return false;
         }
@@ -56,8 +61,43 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
         }
 
         @Override
+        public boolean isArrayType() {
+          return false;
+        }
+
+        @Override
         public boolean isNullType() {
           return true;
+        }
+
+        @Override
+        public boolean isJsType() {
+          return false;
+        }
+
+        @Override
+        public boolean isJsFunction() {
+          return false;
+        }
+
+        @Override
+        public boolean isJsNative() {
+          return false;
+        }
+
+        @Override
+        public boolean canBeImplementedExternally() {
+          return false;
+        }
+
+        @Override
+        public boolean canBeReferencedExternally() {
+          return false;
+        }
+
+        @Override
+        public boolean isJavaLangObject() {
+          return false;
         }
 
         @Override
@@ -146,8 +186,38 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
     }
 
     @Override
+    public boolean isJsType() {
+      return ref.isJsType();
+    }
+
+    @Override
+    public boolean isJsFunction() {
+      return ref.isJsFunction();
+    }
+
+    @Override
     public boolean isJsoType() {
       return ref.isJsoType();
+    }
+
+    @Override
+    public boolean isJsNative() {
+      return ref.isJsNative();
+    }
+
+    @Override
+    public boolean canBeImplementedExternally() {
+      return ref.canBeImplementedExternally();
+    }
+
+    @Override
+    public boolean canBeReferencedExternally() {
+      return ref.canBeReferencedExternally();
+    }
+
+    @Override
+    public boolean isJavaLangObject() {
+      return ref.isJavaLangObject();
     }
 
     @Override

@@ -366,6 +366,11 @@ public abstract class JDeclaredType extends JReferenceType
   }
 
   @Override
+  public boolean isArrayType() {
+    return false;
+  }
+
+  @Override
   public boolean isJsType() {
     return isJsType;
   }
