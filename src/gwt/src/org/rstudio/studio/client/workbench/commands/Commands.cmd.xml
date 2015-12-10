@@ -2111,6 +2111,17 @@ well as menu structures (for main menu and popup menus).
         desc="Execute shell commands(s)"
         windowMode="main"/>
         
+   <cmd id="addinsMru0" visible="false" rebindable="false"/>
+   <cmd id="addinsMru1" visible="false" rebindable="false"/>
+   <cmd id="addinsMru2" visible="false" rebindable="false"/>
+   <cmd id="addinsMru3" visible="false" rebindable="false"/>
+   <cmd id="addinsMru4" visible="false" rebindable="false"/>
+   <cmd id="addinsMru5" visible="false" rebindable="false"/>
+   <cmd id="addinsMru6" visible="false" rebindable="false"/>
+   <cmd id="addinsMru7" visible="false" rebindable="false"/>
+   <cmd id="addinsMru8" visible="false" rebindable="false"/>
+   <cmd id="addinsMru9" visible="false" rebindable="false"/>
+   
    <cmd id="clearAddinsMruList"
         label="Clear Addins List"
         desc="Clear recently used addins"
