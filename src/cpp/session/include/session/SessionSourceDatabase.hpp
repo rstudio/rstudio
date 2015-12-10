@@ -60,6 +60,7 @@ public:
    const std::string& collabServer() const { return collabServer_; }
    std::string getProperty(const std::string& name) const;
    const std::time_t lastContentUpdate() const { return lastContentUpdate_; }
+   const std::time_t lastKnownWriteTime() const { return lastKnownWriteTime_; }
 
    // is this an untitled document?
    bool isUntitled() const;
