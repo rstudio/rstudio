@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench;
 
-import com.google.gwt.core.client.JsonUtils;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -65,7 +64,7 @@ public class AddinsMRUList extends MRUList
                {
                   try
                   {
-                     RAddin addin = JsonUtils.<RAddin>safeEval(encoded);
+                     RAddin addin = RAddin.decode(encoded);
                      server.executeRAddin(addin.getId(), new VoidServerRequestCallback());
                   }
                   catch (Exception e)
@@ -101,10 +100,12 @@ public class AddinsMRUList extends MRUList
             try
             {
                RAddin addin = RAddin.decode(entry);
-               String label = addin.getPackage() + ": " + addin.getName();
+               String label = addin.getName();
+               String desc = addin.getDescription() +
+                     " [" + addin.getPackage() + "::" + addin.getBinding() + "()]";
                commands[i].setVisible(true);
                commands[i].setMenuLabel(label);
-               commands[i].setDesc(addin.getDescription());
+               commands[i].setDesc(desc);
             }
             catch (Exception e)
             {
