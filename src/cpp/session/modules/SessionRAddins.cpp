@@ -25,6 +25,7 @@
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
 #include <boost/range/adaptor/map.hpp>
+#include <boost/system/error_code.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -236,6 +237,11 @@ Error getRAddins(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error noSuchAddin(const ErrorLocation& errorLocation)
+{
+   return systemError(boost::system::errc::invalid_argument, errorLocation);
+}
+
 Error executeRAddin(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
@@ -262,6 +268,7 @@ Error executeRAddin(const json::JsonRpcRequest& request,
    if (!addinRegistry().contains(pkgName, cmdName))
    {
       LOG_ERROR_MESSAGE("no command with id '" + commandId + "'");
+      pResponse->setError(noSuchAddin(ERROR_LOCATION));
       return Success();
    }
    
@@ -269,6 +276,7 @@ Error executeRAddin(const json::JsonRpcRequest& request,
    if (fnSEXP == R_UnboundValue)
    {
       LOG_ERROR_MESSAGE("no function '" + cmdName + "' found in package '" + pkgName + "'");
+      pResponse->setError(noSuchAddin(ERROR_LOCATION));
       return Success();
    }
    

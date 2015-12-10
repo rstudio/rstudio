@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench;
 
+import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -21,7 +23,9 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -39,6 +43,7 @@ public class AddinsMRUList extends MRUList
                         final WorkbenchListManager listManager,
                         final EventBus events,
                         final Session session,
+                        final GlobalDisplay display,
                         final AddinsServerOperations server)
    {
       super(
@@ -60,17 +65,25 @@ public class AddinsMRUList extends MRUList
             new OperationWithInput<String>()
             {
                @Override
-               public void execute(String encoded)
+               public void execute(final String encoded)
                {
-                  try
-                  {
-                     RAddin addin = RAddin.decode(encoded);
-                     server.executeRAddin(addin.getId(), new VoidServerRequestCallback());
-                  }
-                  catch (Exception e)
-                  {
-                     Debug.logException(e);
-                  }
+                  final RAddin addin = RAddin.decode(encoded);
+                   server.executeRAddin(
+                         addin.getId(),
+                         new ServerRequestCallback<org.rstudio.studio.client.server.Void>()
+                         {
+                            @Override
+                            public void onError(ServerError error)
+                            {
+                               // I can't access 'this' in this scope, so I have to
+                               // do this silly round trip through the event bus.
+                               events.fireEvent(new AddinExecutionFailedEvent(encoded));
+                               display.showErrorMessage(
+                                     "Error Executing Addin",
+                                     "The addin '" + addin.getId() + "()' could not be found.");
+                               Debug.logError(error);
+                            }
+                         });
                }
             });
       
@@ -83,6 +96,17 @@ public class AddinsMRUList extends MRUList
                {
                   // force initialization
                   listManager.getAddinsMruList();
+               }
+            });
+      
+      events.addHandler(
+            AddinExecutionFailedEvent.TYPE,
+            new AddinExecutionFailedEvent.Handler()
+            {
+               @Override
+               public void onFailure(AddinExecutionFailedEvent event)
+               {
+                  remove(event.getData());
                }
             });
    }
@@ -114,5 +138,33 @@ public class AddinsMRUList extends MRUList
             }
          }
       }
+   }
+   
+   public static class AddinExecutionFailedEvent extends GwtEvent<AddinExecutionFailedEvent.Handler>
+   {
+      public AddinExecutionFailedEvent(String data) { data_ = data; }
+      public String getData() { return data_; }
+      private final String data_;
+      
+      // Boilerplate ----
+      
+      public interface Handler extends EventHandler
+      {
+         void onFailure(AddinExecutionFailedEvent event);
+      }
+
+      @Override
+      public com.google.gwt.event.shared.GwtEvent.Type<Handler> getAssociatedType()
+      {
+         return TYPE;
+      }
+      
+      @Override
+      protected void dispatch(Handler handler)
+      {
+         handler.onFailure(this);
+      }
+
+      public static final Type<Handler> TYPE = new Type<Handler>();
    }
 }
