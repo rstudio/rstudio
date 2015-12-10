@@ -29,6 +29,10 @@ public class MyExportedClass {
     return 200;
   }
 
+  public static int replacementFoo() {
+    return 1000;
+  }
+
   public static final InnerClass EXPORTED_2 = new InnerClass(5);
 
   public static int bar(int a, int b) {

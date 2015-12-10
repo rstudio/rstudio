@@ -176,6 +176,11 @@ public class ComputeCastabilityInformation {
         return true;
       }
 
+      // Casting from any Java Object to a native JsType is allowed.
+      if (toType.isJsNative()) {
+        return true;
+      }
+
       if (fromType instanceof JArrayType && toType instanceof JArrayType) {
         JArrayType fromArrayType = (JArrayType) fromType;
         JArrayType toArrayType = (JArrayType) toType;
@@ -253,7 +258,7 @@ public class ComputeCastabilityInformation {
     }
 
     private void recordCast(JType targetType, JExpression rhs) {
-      if (!(targetType instanceof JReferenceType)) {
+      if (!(targetType instanceof JReferenceType) || targetType.isJsNative()) {
         return;
       }
       targetType = targetType.getUnderlyingType();

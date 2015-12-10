@@ -15,17 +15,17 @@
  */
 package com.google.gwt.core.interop;
 
-import static com.google.gwt.core.client.ScriptInjector.TOP_WINDOW;
+import static jsinterop.annotations.JsPackage.GLOBAL;
 
-import com.google.gwt.core.client.ScriptInjector;
+import com.google.gwt.core.interop.MyExportedClass.InnerClass;
 import com.google.gwt.junit.client.GWTTestCase;
 
-import javaemul.internal.annotations.DoNotInline;
 import jsinterop.annotations.JsMethod;
+import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 
 /**
- * Tests JsExport.
+ * Tests presence and naming of exported classes, fields, and methods.
  */
 public class JsExportTest extends GWTTestCase {
 
@@ -46,56 +46,53 @@ public class JsExportTest extends GWTTestCase {
   }-*/;
 
   public void testMethodExport() {
-    // Test exported method can be called from JS in host page
-    ScriptInjector.fromString("$global.exported();").setWindow(TOP_WINDOW).inject();
+    myClassExportsMethodCallMe1();
     assertTrue(MyClassExportsMethod.calledFromCallMe1);
 
-    ScriptInjector.fromString("$global.exportNamespace.exported();").setWindow(TOP_WINDOW).inject();
+    myClassExportsMethodCallMe2();
     assertTrue(MyClassExportsMethod.calledFromCallMe2);
 
-    ScriptInjector.fromString("$global.exportNamespace.callMe3();").setWindow(TOP_WINDOW).inject();
+    myClassExportsMethodCallMe3();
     assertTrue(MyClassExportsMethod.calledFromCallMe3);
 
-    ScriptInjector.fromString("$global.woo.MyClassExportsMethod.exported();").setWindow(TOP_WINDOW)
-        .inject();
+    myClassExportsMethodCallMe4();
     assertTrue(MyClassExportsMethod.calledFromCallMe4);
 
-    ScriptInjector.fromString("$global.woo.MyClassExportsMethod.callMe5();").setWindow(TOP_WINDOW)
-        .inject();
+    myClassExportsMethodCallMe5();
     assertTrue(MyClassExportsMethod.calledFromCallMe5);
-
-    MyClassExportsMethod.calledFromCallMe1 = false;
-    // Test exported constructor called from JS in module window
-    ScriptInjector.fromString("$global.exported();").inject();
-    assertTrue(MyClassExportsMethod.calledFromCallMe1);
   }
+
+  @JsMethod(namespace = "$global", name = "exported")
+  private static native void myClassExportsMethodCallMe1();
+
+  @JsMethod(namespace = "$global.exportNamespace", name = "exported")
+  private static native void myClassExportsMethodCallMe2();
+
+  @JsMethod(namespace = "$global.exportNamespace", name = "callMe3")
+  private static native void myClassExportsMethodCallMe3();
+
+  @JsMethod(namespace = "$global.woo.MyClassExportsMethod", name = "exported")
+  private static native void myClassExportsMethodCallMe4();
+
+  @JsMethod(namespace = "$global.woo.MyClassExportsMethod", name = "callMe5")
+  private static native void myClassExportsMethodCallMe5();
 
   public void testMethodExportWithLong() {
-    assertEquals(42.0, callLongMethod(40.0, 2.0));
-    assertEquals(82.0, callStaticLongMethod(80.0, 2.0));
+    NativeMyJsTypeThatUsesLongType obj = new NativeMyJsTypeThatUsesLongType();
+
+    assertEquals(42.0, obj.addLong(40.0, 2.0));
+    assertEquals(82.0, NativeMyJsTypeThatUsesLongType.addLongStatic(80.0, 2.0));
   }
 
-  private native double callLongMethod(double a, double b) /*-{
-    var obj = new $global.woo.MyJsTypeThatUsesLongType();
-    return obj.addLong(a,b);
-  }-*/;
+  /**
+   * Native interface to type MyJsTypeThatUsesLongType which has been exported to a particular
+   * namespaces.
+   */
+  @JsType(isNative = true, namespace = "$global.woo", name = "MyJsTypeThatUsesLongType")
+  private static class NativeMyJsTypeThatUsesLongType {
+    public native double addLong(double a, double b);
 
-  private native double callStaticLongMethod(double a, double b) /*-{
-    return $global.woo.MyJsTypeThatUsesLongType.addLongStatic(a,b);
-  }-*/;
-
-  public void testMethodExport_noTypeTightenParams() {
-
-    // If we type-tighten, java side will see no calls and think that parameter could only be null.
-    // As a result, it will be optimized to null.nullMethod().
-    ScriptInjector.fromString("$global.callBar($global.newA());").inject();
-    assertTrue(MyClassExportsMethod.calledFromBar);
-
-    // If we type-tighten, java side will only see a call to subclass and think that parameter could
-    // be optimized to that one. As a result, the method call will be inlined.
-    MyClassExportsMethod.callFoo(new MyClassExportsMethod.SubclassOfA());
-    ScriptInjector.fromString("$global.callFoo($global.newA());").inject();
-    assertTrue(MyClassExportsMethod.calledFromFoo);
+    public static native double addLongStatic(double a, double b);
   }
 
   public void testMethodExport_notReferencedFromJava() {
@@ -104,99 +101,111 @@ public class JsExportTest extends GWTTestCase {
     assertEquals(42, onlyCalledFromJs());
   }
 
-  private native int onlyCalledFromJs() /*-{
-    return $global.woo.MyClassExportsMethodWithoutReference.onlyCalledFromJs();
-  }-*/;
+  @JsMethod(
+      namespace = "$global.woo.MyClassExportsMethodWithoutReference", name = "onlyCalledFromJs")
+  private static native int onlyCalledFromJs();
 
   public void testClinit() {
-    ScriptInjector.fromString("new $global.woo.MyClassExportsMethodWithClinit();").inject();
+    new NativeMyClassExportsMethodWithClinit();
     assertEquals(23, MyClassExportsMethodWithClinit.magicNumber);
   }
 
+  /**
+   * Native interface to type MyClassExportsMethodWithClinit which has been exported to a particular
+   * namespaces.
+   */
+  @JsType(isNative = true, namespace = "$global.woo", name = "MyClassExportsMethodWithClinit")
+  private static class NativeMyClassExportsMethodWithClinit { }
+
   public void testClinit_staticField() {
-    assertNotNull(getStaticInitializerStaticField1());
-    assertNotNull(getStaticInitializerStaticField2());
-    assertNotNull(getExportedFieldOnInterface());
+    assertNotNull(getStaticInitializerStaticFieldExported1());
+    assertNotNull(getStaticInitializerStaticFieldExported2());
+    assertNotNull(getStaticInitializerStaticFieldInterfaceStatic());
   }
 
-  private native Object getStaticInitializerStaticField1() /*-{
-    return $global.woo.StaticInitializerStaticField.EXPORTED_1;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.StaticInitializerStaticField", name = "EXPORTED_1")
+  private static native Object getStaticInitializerStaticFieldExported1();
 
-  private native Object getStaticInitializerStaticField2() /*-{
-    return $global.woo.StaticInitializerStaticField.EXPORTED_2;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.StaticInitializerStaticField", name = "EXPORTED_2")
+  private static native Object getStaticInitializerStaticFieldExported2();
 
-  private native Object getExportedFieldOnInterface() /*-{
-    return $global.woo.StaticInitializerStaticField.InterfaceWithField.STATIC;
-  }-*/;
+  @JsProperty(
+      namespace = "$global.woo.StaticInitializerStaticField.InterfaceWithField", name = "STATIC")
+  private static native Object getStaticInitializerStaticFieldInterfaceStatic();
 
   public void testClinit_staticMethod() {
     assertNotNull(getStaticInitializerStaticMethod());
   }
 
-  private native Object getStaticInitializerStaticMethod() /*-{
-    return $global.woo.StaticInitializerStaticMethod.getInstance();
-  }-*/;
+  @JsMethod(
+      namespace = "$global.woo.StaticInitializerStaticMethod", name = "getInstance")
+  private static native int getStaticInitializerStaticMethod();
 
   public void testClinit_virtualMethod() {
-    assertNotNull(getStaticInitializerVirtualMethod());
+    assertNotNull(new NativeStaticInitializerVirtualMethod().getInstance());
   }
 
-  private native Object getStaticInitializerVirtualMethod() /*-{
-    var obj = new $global.woo.StaticInitializerVirtualMethod();
-    return obj.getInstance();
-  }-*/;
+  /**
+   * Native interface to type StaticInitializerVirtualMethod which has been exported to a particular
+   * namespaces.
+   */
+  @JsType(isNative = true, namespace = "$global.woo", name = "StaticInitializerVirtualMethod")
+  private static class NativeStaticInitializerVirtualMethod {
+    public native Object getInstance();
+  }
 
   @JsType(namespace = "bar.foo.baz")
-  static class MyExportedClassCorrectNamespace {
+  class MyExportedClassCorrectNamespace {
     public MyExportedClassCorrectNamespace() { }
   }
 
   public void testExportClass_correctNamespace() {
-    assertNull(getGlobalByQualifiedName("bar.MyExportedClassCorrectNamespace"));
-    assertNull(getGlobalByQualifiedName("bar.foo.MyExportedClassCorrectNamespace"));
-    assertTrue(isFunction(getGlobalByQualifiedName("bar.foo.baz.MyExportedClassCorrectNamespace")));
-    Object o = newInstance(getGlobalByQualifiedName("bar.foo.baz.MyExportedClassCorrectNamespace"));
+    assertNull(getBarMyExportedClassCorrectNamespace());
+    assertNull(getBarFooMyExportedClassCorrectNamespace());
+    assertTrue(getBarFooBazMyExportedClassCorrectNamespace() instanceof NativeFunction);
+    Object o = new NativeMyExportedClassCorrectNamespace();
     assertNotNull(o);
     assertTrue(o instanceof MyExportedClassCorrectNamespace);
   }
 
-  private native Object getGlobalByQualifiedName(String qualifiedName) /*-{
-    var components = qualifiedName.split('\.');
-    var scope = $global;
-    for (var i = 0; i < components.length; i++) {
-      scope = scope[components[i]];
-    }
-    return scope;
-  }-*/;
+  @JsProperty(namespace = "$global.bar", name = "MyExportedClassCorrectNamespace")
+  private static native Object getBarMyExportedClassCorrectNamespace();
 
-  private native boolean isFunction(Object object) /*-{
-    return typeof object == "function";
-  }-*/;
+  @JsProperty(namespace = "$global.bar.foo", name = "MyExportedClassCorrectNamespace")
+  private static native Object getBarFooMyExportedClassCorrectNamespace();
 
-  private native Object newInstance(Object jsConstructor) /*-{
-    return new jsConstructor;
-  }-*/;
+  @JsProperty(namespace = "$global.bar.foo.baz", name = "MyExportedClassCorrectNamespace")
+  private static native Object getBarFooBazMyExportedClassCorrectNamespace();
+
+  @JsType(isNative = true, namespace = GLOBAL, name = "Function")
+  private static class NativeFunction { }
+
+  @JsType(
+      isNative = true, namespace = "$global.bar.foo.baz", name = "MyExportedClassCorrectNamespace")
+  private static class NativeMyExportedClassCorrectNamespace { }
 
   public void testExportClass_implicitConstructor() {
-    Object o = createMyExportedClassWithImplicitConstructor();
+    Object o = new NativeMyExportedClassWithImplicitConstructor();
     assertNotNull(o);
     assertTrue(o instanceof MyExportedClassWithImplicitConstructor);
   }
 
-  private native Object createMyExportedClassWithImplicitConstructor() /*-{
-    return new $global.woo.MyExportedClassWithImplicitConstructor();
-  }-*/;
+  @JsType(
+      isNative = true, namespace = "$global.woo", name = "MyExportedClassWithImplicitConstructor")
+  private static class NativeMyExportedClassWithImplicitConstructor { }
 
   public void testExportConstructors() {
-    assertEquals(4, createMyClassExportsConstructor().foo());
+    MyClassExportsConstructor nativeMyClassExportsConstructor =
+        (MyClassExportsConstructor) (Object) new NativeMyClassExportsConstructor(2);
+    assertEquals(4, nativeMyClassExportsConstructor.foo());
     assertEquals(2, new MyClassExportsConstructor().foo());
   }
 
-  private native MyClassExportsConstructor createMyClassExportsConstructor() /*-{
-    return new $global.woo.MyClassExportsConstructor(2);
-  }-*/;
+  @JsType(
+      isNative = true, namespace = "$global.woo", name = "MyClassExportsConstructor")
+  private static class NativeMyClassExportsConstructor {
+    public NativeMyClassExportsConstructor(@SuppressWarnings("unused") int a) { }
+  }
 
   public void testExportedField() {
     assertEquals(100, MyExportedClass.EXPORTED_1);
@@ -206,190 +215,188 @@ public class JsExportTest extends GWTTestCase {
     assertEquals(1000, getExportedField());
   }
 
-  private native int getExportedField() /*-{
-    return $global.woo.MyExportedClass.EXPORTED_1;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.MyExportedClass", name = "EXPORTED_1")
+  private static native int getExportedField();
 
-  private native void setExportedField(int a) /*-{
-    $global.woo.MyExportedClass.EXPORTED_1 = a;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.MyExportedClass", name = "EXPORTED_1")
+  private static native void setExportedField(int value);
 
   public void testExportedMethod() {
     assertEquals(200, MyExportedClass.foo());
     assertEquals(200, callExportedMethod());
-    setExportedMethod();
+    setExportedMethod(getReplacementExportedMethod());
     assertEquals(200, MyExportedClass.foo());
     assertEquals(1000, callExportedMethod());
   }
 
-  private native int callExportedMethod() /*-{
-    return $global.woo.MyExportedClass.foo();
-  }-*/;
+  @JsMethod(
+      namespace = "$global.woo.MyExportedClass", name = "foo")
+  private static native int callExportedMethod();
 
-  private native int setExportedMethod() /*-{
-    $global.woo.MyExportedClass.foo = function () {
-      return 1000;
-    };
-  }-*/;
+  @JsProperty(
+      namespace = "$global.woo.MyExportedClass", name = "foo")
+  private static native void setExportedMethod(Object object);
+
+  @JsProperty(
+      namespace = "$global.woo.MyExportedClass", name = "replacementFoo")
+  private static native Object getReplacementExportedMethod();
 
   public void testExportedFieldRefInExportedMethod() {
     assertEquals(5, MyExportedClass.bar(0, 0));
     assertEquals(5, callExportedFieldByExportedMethod(0, 0));
-    setExportedField2(10);
+    setExportedField2(myExportedClassNewInnerClass(10));
 
     assertEquals(10, getExportedField2());
     assertEquals(7, MyExportedClass.bar(1, 1));
     assertEquals(7, callExportedFieldByExportedMethod(1, 1));
   }
 
-  private native int callExportedFieldByExportedMethod(int a, int b) /*-{
-    return $global.woo.MyExportedClass.bar(a, b);
-  }-*/;
+  @JsMethod(namespace = "$global.woo.MyExportedClass", name = "bar")
+  private static native int callExportedFieldByExportedMethod(int a, int b);
 
-  private native void setExportedField2(int a) /*-{
-    $global.woo.MyExportedClass.EXPORTED_2 = $global.woo.MyExportedClass.newInnerClass(a);
-  }-*/;
+  @JsProperty(namespace = "$global.woo.MyExportedClass", name = "EXPORTED_2")
+  private static native void setExportedField2(InnerClass a);
 
-  private native int getExportedField2() /*-{
-    return $global.woo.MyExportedClass.EXPORTED_2.field;
-  }-*/;
+  @JsMethod(namespace = "$global.woo.MyExportedClass", name = "newInnerClass")
+  private static native InnerClass myExportedClassNewInnerClass(int a);
+
+  @JsProperty(namespace = "$global.woo.MyExportedClass.EXPORTED_2", name = "field")
+  private static native int getExportedField2();
 
   public void testNoExport() {
-    assertNull(getNotExportedMethods());
-    assertNull(getNotExportedFields());
+    assertNull(getNotExportedMethod1());
+    assertNull(getNotExportedMethod2());
+
+    assertNull(getNotExported1());
+    assertNull(getNotExported2());
+    assertNull(getNotExported3());
+    assertNull(getNotExported4());
+    assertNull(getNotExported5());
   }
 
-  private native Object getNotExportedFields() /*-{
-    return $global.woo.StaticInitializerStaticField.NOT_EXPORTED_1
-        || $global.woo.StaticInitializerStaticField.NOT_EXPORTED_2
-        || $global.woo.StaticInitializerStaticField.NOT_EXPORTED_3
-        || $global.woo.StaticInitializerStaticField.NOT_EXPORTED_4
-        || $global.woo.StaticInitializerStaticField.NOT_EXPORTED_5;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.StaticInitializerStaticMethod", name = "notExported_1")
+  private static native Object getNotExportedMethod1();
 
-  private native Object getNotExportedMethods() /*-{
-    return $global.woo.StaticInitializerStaticMethod.notExported_1
-        || $global.woo.StaticInitializerStaticMethod.notExported_2;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.StaticInitializerStaticMethod", name = "notExported_2")
+  private static native Object getNotExportedMethod2();
+
+  @JsProperty(namespace = "$global.woo.StaticInitializerStaticField", name = "NOT_EXPORTED_1")
+  private static native Object getNotExported1();
+
+  @JsProperty(namespace = "$global.woo.StaticInitializerStaticField", name = "NOT_EXPORTED_2")
+  private static native Object getNotExported2();
+
+  @JsProperty(namespace = "$global.woo.StaticInitializerStaticField", name = "NOT_EXPORTED_3")
+  private static native Object getNotExported3();
+
+  @JsProperty(namespace = "$global.woo.StaticInitializerStaticField", name = "NOT_EXPORTED_4")
+  private static native Object getNotExported4();
+
+  @JsProperty(namespace = "$global.woo.StaticInitializerStaticField", name = "NOT_EXPORTED_5")
+  private static native Object getNotExported5();
 
   public static void testInheritClassNamespace() {
     assertEquals(42, getBAR());
   }
 
-  private static native int getBAR() /*-{
-    return $global.foo.MyExportedClassWithNamespace.BAR;
-  }-*/;
+  @JsProperty(namespace = "$global.foo.MyExportedClassWithNamespace", name = "BAR")
+  private static native int getBAR();
 
   public static void testInheritClassNamespace_empty() {
     assertEquals(82, getDAN());
-    assertNotNull(createNestedExportedClassWithEmptyNamespace());
+    assertNotNull(new NativeMyClassWithEmptyNamespace());
   }
 
-  private static native int getDAN() /*-{
-    return $global.MyClassWithEmptyNamespace.DAN;
-  }-*/;
+  @JsProperty(namespace = "$global.MyClassWithEmptyNamespace", name = "DAN")
+  private static native int getDAN();
 
-  private static native Object createNestedExportedClassWithEmptyNamespace() /*-{
-    return new $global.MyClassWithEmptyNamespace();
-  }-*/;
+  @JsType(isNative = true, namespace = "$global", name = "MyClassWithEmptyNamespace")
+  private static class NativeMyClassWithEmptyNamespace { }
 
   public static void testInheritClassNamespace_withName() {
     assertEquals(42, getBooBAR());
   }
 
-  private static native int getBooBAR() /*-{
-    return $global.foo.boo.BAR;
-  }-*/;
+  @JsProperty(namespace = "$global.foo.boo", name = "BAR")
+  private static native int getBooBAR();
 
   public static void testInheritClassNamespace_noExport() {
     assertEquals(99, getBAZ());
   }
 
-  private static native int getBAZ() /*-{
-    return $global.foobaz.MyClassWithNamespace.BAZ;
-  }-*/;
+  @JsProperty(namespace = "$global.foobaz.MyClassWithNamespace", name = "BAZ")
+  private static native int getBAZ();
 
   public static void testInheritClassNamespace_nested() {
     assertEquals(99, getLOO());
-    assertNotNull(createNestedExportedClassInExportedClass());
+    assertNotNull(new BlooInner());
   }
 
-  private static native int getLOO() /*-{
-    return $global.woo.Bloo.Inner.LOO;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.Bloo.Inner", name = "LOO")
+  private static native int getLOO();
 
-  private static native Object createNestedExportedClassInExportedClass() /*-{
-    return new $global.woo.Bloo.Inner();
-  }-*/;
+  @JsType(isNative = true, namespace = "$global.woo.Bloo", name = "Inner")
+  private static class BlooInner { }
 
   public static void testInheritClassNamespace_nestedNoExport() {
     assertEquals(999, getWOOZ());
-    assertNotNull(createNestedExportedClassWithNamespace());
+    assertNotNull(new NativeInnerWithNamespace());
   }
 
-  private static native int getWOOZ() /*-{
-    return $global.zoo.InnerWithNamespace.WOOZ;
-  }-*/;
+  @JsProperty(namespace = "$global.zoo.InnerWithNamespace", name = "WOOZ")
+  private static native int getWOOZ();
 
-  private static native Object createNestedExportedClassWithNamespace() /*-{
-    return new $global.zoo.InnerWithNamespace();
-  }-*/;
+  @JsType(isNative = true, namespace = "$global.zoo", name = "InnerWithNamespace")
+  private static class NativeInnerWithNamespace { }
 
   public void testInheritPackageNamespace() {
     assertEquals(1001, getWOO());
   }
 
-  private static native int getWOO() /*-{
-    return $global.woo.MyExportedClassWithPackageNamespace.WOO;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.MyExportedClassWithPackageNamespace", name = "WOO")
+  private static native int getWOO();
 
   public void testInheritPackageNamespace_nestedClass() {
     assertEquals(99, getNestedWOO());
-    assertNotNull(createNestedExportedClass());
+    assertNotNull(new NativeMyClassWithNestedExportedClassInner());
   }
 
-  private static native int getNestedWOO() /*-{
-    return $global.woo.MyClassWithNestedExportedClass.Inner.WOO;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.MyClassWithNestedExportedClass.Inner", name = "WOO")
+  private static native int getNestedWOO();
 
-  private static native Object createNestedExportedClass() /*-{
-    return new $global.woo.MyClassWithNestedExportedClass.Inner();
-  }-*/;
+  @JsType(isNative = true, namespace = "$global.woo.MyClassWithNestedExportedClass", name = "Inner")
+  private static class NativeMyClassWithNestedExportedClassInner { }
 
   public void testInheritPackageNamespace_nestedEnum() {
     assertNotNull(getNestedEnum());
   }
 
-  private static native Object getNestedEnum() /*-{
-    return $global.woo.MyClassWithNestedExportedClass.InnerEnum.AA;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.MyClassWithNestedExportedClass.InnerEnum", name = "AA")
+  private static native Object getNestedEnum();
 
   public void testInheritPackageNamespace_subpackage() {
     assertNull(getNestedSubpackage());
     assertNotNull(getNestedSubpackageCorrect());
   }
 
-  private static native Object getNestedSubpackage() /*-{
-    return $global.woo.subpackage;
-  }-*/;
+  @JsProperty(namespace = "$global.woo", name = "subpackage")
+  private static native Object getNestedSubpackage();
 
-  private static native Object getNestedSubpackageCorrect() /*-{
-    return $global.com.google.gwt.core.interop.subpackage.
-        MyNestedExportedClassSansPackageNamespace;
-  }-*/;
+  @JsProperty(
+      namespace = "$global.com.google.gwt.core.interop.subpackage",
+      name = "MyNestedExportedClassSansPackageNamespace")
+  private static native Object getNestedSubpackageCorrect();
 
   public void testEnum_enumerations() {
     assertNotNull(getEnumerationTEST1());
     assertNotNull(getEnumerationTEST2());
   }
 
-  private static native Object getEnumerationTEST1() /*-{
-    return $global.woo.MyExportedEnum.TEST1;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.MyExportedEnum", name = "TEST1")
+  private static native Object getEnumerationTEST1();
 
-  private static native Object getEnumerationTEST2() /*-{
-    return $global.woo.MyExportedEnum.TEST2;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.MyExportedEnum", name = "TEST2")
+  private static native Object getEnumerationTEST2();
 
   public void testEnum_exportedMethods() {
     assertNotNull(getPublicStaticMethodInEnum());
@@ -397,17 +404,14 @@ public class JsExportTest extends GWTTestCase {
     assertNotNull(getValueOfMethodInEnum());
   }
 
-  private static native Object getPublicStaticMethodInEnum() /*-{
-    return $global.woo.MyExportedEnum.publicStaticMethod;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.MyExportedEnum", name = "publicStaticMethod")
+  private static native Object getPublicStaticMethodInEnum();
 
-  private static native Object getValuesMethodInEnum() /*-{
-    return $global.woo.MyExportedEnum.values;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.MyExportedEnum", name = "values")
+  private static native Object getValuesMethodInEnum();
 
-  private static native Object getValueOfMethodInEnum() /*-{
-    return $global.woo.MyExportedEnum.valueOf;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.MyExportedEnum", name = "valueOf")
+  private static native Object getValueOfMethodInEnum();
 
   public void testEnum_exportedFields() {
     assertEquals(1, getPublicStaticFinalFieldInEnum());
@@ -417,32 +421,47 @@ public class JsExportTest extends GWTTestCase {
     assertEquals(2, getPublicStaticFieldInEnum());
   }
 
-  private static native int getPublicStaticFinalFieldInEnum() /*-{
-    return $global.woo.MyExportedEnum.publicStaticFinalField;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.MyExportedEnum", name = "publicStaticFinalField")
+  private static native int getPublicStaticFinalFieldInEnum();
 
-  private static native int getPublicStaticFieldInEnum() /*-{
-    return $global.woo.MyExportedEnum.publicStaticField;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.MyExportedEnum", name = "publicStaticField")
+  private static native int getPublicStaticFieldInEnum();
 
   public void testEnum_notExported() {
-    assertNull(getNotExportedFieldsInEnum());
-    assertNull(getNotExportedMethodsInEnum());
+    assertNull(myExportedEnumPublicFinalField());
+    assertNull(myExportedEnumPrivateStaticFinalField());
+    assertNull(myExportedEnumProtectedStaticFinalField());
+    assertNull(myExportedEnumDefaultStaticFinalField());
+
+    assertNull(myExportedEnumPublicMethod());
+    assertNull(myExportedEnumProtectedStaticMethod());
+    assertNull(myExportedEnumPrivateStaticMethod());
+    assertNull(myExportedEnumDefaultStaticMethod());
   }
 
-  private native Object getNotExportedFieldsInEnum() /*-{
-    return $global.woo.MyExportedEnum.publicFinalField
-        || $global.woo.MyExportedEnum.privateStaticFinalField
-        || $global.woo.MyExportedEnum.protectedStaticFinalField
-        || $global.woo.MyExportedEnum.defaultStaticFinalField;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.MyExportedEnum", name = "publicFinalField")
+  private static native Object myExportedEnumPublicFinalField();
 
-  private native Object getNotExportedMethodsInEnum() /*-{
-    return $global.woo.MyExportedEnum.publicMethod
-        || $global.woo.MyExportedEnum.protectedStaticMethod
-        || $global.woo.MyExportedEnum.privateStaticMethod
-        || $global.woo.MyExportedEnum.defaultStaticMethod;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.MyExportedEnum", name = "privateStaticFinalField")
+  private static native Object myExportedEnumPrivateStaticFinalField();
+
+  @JsProperty(namespace = "$global.woo.MyExportedEnum", name = "protectedStaticFinalField")
+  private static native Object myExportedEnumProtectedStaticFinalField();
+
+  @JsProperty(namespace = "$global.woo.MyExportedEnum", name = "defaultStaticFinalField")
+  private static native Object myExportedEnumDefaultStaticFinalField();
+
+  @JsProperty(namespace = "$global.woo.MyExportedEnum", name = "publicMethod")
+  private static native Object myExportedEnumPublicMethod();
+
+  @JsProperty(namespace = "$global.woo.MyExportedEnum", name = "protectedStaticMethod")
+  private static native Object myExportedEnumProtectedStaticMethod();
+
+  @JsProperty(namespace = "$global.woo.MyExportedEnum", name = "privateStaticMethod")
+  private static native Object myExportedEnumPrivateStaticMethod();
+
+  @JsProperty(namespace = "$global.woo.MyExportedEnum", name = "defaultStaticMethod")
+  private static native Object myExportedEnumDefaultStaticMethod();
 
   public void testEnum_subclassEnumerations() {
     assertNotNull(getEnumerationA());
@@ -450,17 +469,14 @@ public class JsExportTest extends GWTTestCase {
     assertNotNull(getEnumerationC());
   }
 
-  private static native Object getEnumerationA() /*-{
-    return $global.woo.MyEnumWithSubclassGen.A;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.MyEnumWithSubclassGen", name = "A")
+  private static native Object getEnumerationA();
 
-  private static native Object getEnumerationB() /*-{
-    return $global.woo.MyEnumWithSubclassGen.B;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.MyEnumWithSubclassGen", name = "B")
+  private static native Object getEnumerationB();
 
-  private static native Object getEnumerationC() /*-{
-    return $global.woo.MyEnumWithSubclassGen.C;
-  }-*/;
+  @JsProperty(namespace = "$global.woo.MyEnumWithSubclassGen", name = "C")
+  private static native Object getEnumerationC();
 
   public void testEnum_subclassMethodCallFromExportedEnumerations() {
     assertEquals(100, callPublicMethodFromEnumerationA());
@@ -468,32 +484,12 @@ public class JsExportTest extends GWTTestCase {
     assertEquals(1, callPublicMethodFromEnumerationC());
   }
 
-  private static native int callPublicMethodFromEnumerationA() /*-{
-    return $global.woo.MyEnumWithSubclassGen.A.foo();
-  }-*/;
+  @JsMethod(namespace = "$global.woo.MyEnumWithSubclassGen.A", name = "foo")
+  private static native int callPublicMethodFromEnumerationA();
 
-  private static native int callPublicMethodFromEnumerationB() /*-{
-    return $global.woo.MyEnumWithSubclassGen.B.foo();
-  }-*/;
+  @JsMethod(namespace = "$global.woo.MyEnumWithSubclassGen.B", name = "foo")
+  private static native int callPublicMethodFromEnumerationB();
 
-  private static native int callPublicMethodFromEnumerationC() /*-{
-    return $global.woo.MyEnumWithSubclassGen.C.foo();
-  }-*/;
-
-  static class X {
-    @JsMethod
-    @DoNotInline
-    public static String m(String s) {
-      return s;
-    }
-  }
-
-  private native String callM(String s) /*-{
-    return $global.woo.JsExportTest.X.m(s);
-  }-*/;
-
-  public void testSameParameterValueOptimization() {
-    assertEquals("L", X.m("L"));
-    assertEquals("M", callM("M"));
-  }
+  @JsMethod(namespace = "$global.woo.MyEnumWithSubclassGen.C", name = "foo")
+  private static native int callPublicMethodFromEnumerationC();
 }

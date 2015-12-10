@@ -236,12 +236,16 @@ final class Cast {
   @HasNoSideEffects
   private static native boolean jsinstanceOf(Object obj, String jsTypeStr) /*-{
     if (!obj) {
-        return false;
+      return false;
     }
 
     if (jsTypeStr == "Object") {
       // TODO(rluble): Handle this case in the compiler side.
       return (typeof obj) == "object";
+    } else if (jsTypeStr == "Function") {
+      // TODO(rluble): remove array special handling once
+      // instanceOf can be customized for native classes.
+      return (typeof obj) == "function";
     } else if (jsTypeStr == "Array" ) {
       // TODO(rluble): remove array special handling once
       // instanceOf can be customized for native classes.

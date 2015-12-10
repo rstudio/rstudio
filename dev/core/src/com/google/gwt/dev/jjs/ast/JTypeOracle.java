@@ -469,7 +469,8 @@ public class JTypeOracle implements Serializable {
       return true;
     }
 
-    if (isJsInteropCrossCastTarget(toType.getUnderlyingType())) {
+    if (isJsInteropCrossCastTarget(toType.getUnderlyingType())
+        || isJsInteropCrossCastTarget(fromType.getUnderlyingType())) {
       return false;
     }
 
@@ -538,7 +539,6 @@ public class JTypeOracle implements Serializable {
         return !potentialInterfaceByClass.containsEntry(cType.getName(), toType.getName());
       }
     } else if (fromType instanceof JInterfaceType) {
-
       JInterfaceType fromInterfaceType = (JInterfaceType) fromType;
       if (toType instanceof JClassType) {
         return !potentialInterfaceByClass.containsEntry(
