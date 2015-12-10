@@ -129,6 +129,7 @@ import org.rstudio.studio.client.workbench.views.presentation.events.ShowPresent
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditEndedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DataViewChangedEvent;
@@ -740,6 +741,11 @@ public class ClientEventDispatcher
          else if (type.equals(ClientEvent.ProjectAccessRevoked))
          {
             eventBus_.fireEvent(new ProjectAccessRevokedEvent());
+         }
+         else if (type.equals(ClientEvent.CollabEditSaved))
+         {
+            CollabEditSavedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new CollabEditSavedEvent(data));
          }
          else
          {
