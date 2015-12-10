@@ -14,18 +14,23 @@
  */
 package org.rstudio.studio.client.workbench;
 
+import com.google.gwt.core.client.JsonUtils;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
+
+import java.util.List;
 
 @Singleton
 public class AddinsMRUList extends MRUList
@@ -56,9 +61,17 @@ public class AddinsMRUList extends MRUList
             new OperationWithInput<String>()
             {
                @Override
-               public void execute(String addin)
+               public void execute(String encoded)
                {
-                  server.executeRAddin(addin, new VoidServerRequestCallback());
+                  try
+                  {
+                     RAddin addin = JsonUtils.<RAddin>safeEval(encoded);
+                     server.executeRAddin(addin.getId(), new VoidServerRequestCallback());
+                  }
+                  catch (Exception e)
+                  {
+                     Debug.logException(e);
+                  }
                }
             });
       
@@ -73,5 +86,32 @@ public class AddinsMRUList extends MRUList
                   listManager.getAddinsMruList();
                }
             });
+   }
+   
+   @Override
+   protected void manageCommands(List<String> entries, AppCommand[] commands)
+   {
+      for (int i = 0; i < commands.length; i++)
+      {
+         if (i >= entries.size())
+            commands[i].setVisible(false);
+         else
+         {
+            String entry = entries.get(i);
+            try
+            {
+               RAddin addin = JsonUtils.<RAddin>safeEval(entry);
+               String label = addin.getPackage() + ": " + addin.getName();
+               commands[i].setVisible(true);
+               commands[i].setMenuLabel(label);
+               commands[i].setDesc(addin.getDescription());
+            }
+            catch (Exception e)
+            {
+               Debug.logException(e);
+               commands[i].setVisible(false);
+            }
+         }
+      }
    }
 }
