@@ -437,6 +437,10 @@ public class AceEditorNative extends JavaScriptObject {
       this.commands = commands;
    }-*/;
    
+   public final native void setDragEnabled(boolean enabled) /*-{
+      this.setOption("dragEnabled", enabled);
+   }-*/;
+   
    public final native JsMap<Position> getMarks() /*-{
       
       var marks = {};
