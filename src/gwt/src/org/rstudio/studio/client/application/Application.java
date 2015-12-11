@@ -459,14 +459,23 @@ public class Application implements ApplicationEventHandlers
                view_.showApplicationQuit();
             }
             
-            // attempt to close the window (may or may not be able
-            // to depending on how it was created).
-            try
+            // attempt to close the window if this is a quit
+            // action (may or may not be able to depending on 
+            // how it was created)
+            if (ApplicationAction.isQuit())
             {
-               WindowEx.get().close();
+               try
+               {
+                  WindowEx.get().close();
+               }
+               catch(Exception ex)
+               {
+               }
             }
-            catch(Exception ex)
+            else if (session_.getSessionInfo().getShowUserHomePage())
             {
+               navigateWindowWithDelay(
+                     session_.getSessionInfo().getUserHomePageUrl());
             }
          }
       }
