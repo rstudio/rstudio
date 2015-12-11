@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rstudio.core.client.CommandWith2Args;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DirectedGraph;
 import org.rstudio.core.client.DirectedGraph.DefaultConstructor;
 import org.rstudio.core.client.command.KeyboardShortcut.KeyCombination;
@@ -145,6 +147,20 @@ public class KeyMap
    {
       DirectedGraph<KeyCombination, List<CommandBinding>> node = graph_.findNode(keys.getData());
       return node != null && !node.getChildren().isEmpty();
+   }
+   
+   public void forEachBinding(CommandWith2Args<KeySequence, List<CommandBinding>> command)
+   {
+      graph_.forEachNode(new CommandWithArg<DirectedGraph<KeyCombination, List<CommandBinding>>>()
+      {
+         @Override
+         public void execute(DirectedGraph<KeyCombination, List<CommandBinding>> node)
+         {
+            command.execute(
+                  new KeySequence(node.getKeyChain()),
+                  node.getValue());
+         }
+      });
    }
    
    // Private members ----
