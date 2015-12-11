@@ -263,9 +263,10 @@ void indexLibraryPaths(const std::vector<FilePath>& libPaths)
 {
    addinIndexer().initialize(libPaths);
    module_context::scheduleIncrementalWork(
-            boost::posix_time::milliseconds(10),
+            boost::posix_time::milliseconds(300),
+            boost::posix_time::milliseconds(20),
             boost::bind(&AddinIndexer::work, &addinIndexer()),
-            true);
+            false);
 }
 
 void onDeferredInit(bool newSession)
