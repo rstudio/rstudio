@@ -268,7 +268,8 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
       // ... it's not stale -- someone else has the lock, cannot proceed
       else
       {
-         return fileExistsError(ERROR_LOCATION);
+         return systemError(boost::system::errc::no_lock_available,
+                            ERROR_LOCATION);
       }
    }
    
@@ -281,8 +282,12 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    // competing process should be able to succeed here
    error = writeLockFile(lockFilePath);
    if (error)
-      return error;
-   
+   {
+      return systemError(boost::system::errc::no_lock_available,
+                         error,
+                         ERROR_LOCATION);
+   }
+
    // clean any other stale lockfiles in that directory
    cleanStaleLockfiles(lockFilePath.parent());
    
