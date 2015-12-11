@@ -30,6 +30,7 @@ import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
@@ -716,9 +717,12 @@ public class Source implements InsertSourceHandler,
       // Same with this event
       fireDocTabsChanged();
       
-      // open project docs (only for main source window)
+      // open project or edit_published docs (only for main source window)
       if (SourceWindowManager.isMainSourceWindow())
+      {
          openProjectDocs(session);
+         openEditPublishedDocs();
+      }
       
       // add vim commands
       initVimCommands();
@@ -908,6 +912,29 @@ public class Source implements InsertSourceHandler,
                }
             }
          }
+      }
+   }
+   
+   private void openEditPublishedDocs()
+   {
+      // check for edit_published url parameter
+      String editPublished = StringUtil.notNull(
+          Window.Location.getParameter("edit_published"));
+      
+      // this is an appPath which we can call the server
+      // to determine source files to edit 
+      if (editPublished.length() > 0)
+      {
+         server_.getEditPublishedDocs(
+            editPublished, 
+            new SimpleRequestCallback<JsArrayString>() {
+               @Override
+               public void onResponseReceived(JsArrayString docs)
+               {
+                  new SourceFilesOpener(docs).run();
+               }
+            }
+         );
       }
    }
    

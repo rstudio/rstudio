@@ -68,6 +68,12 @@ std::string quotedFilesFromArray(json::Array array, bool quoted)
    return joined;
 }
 
+// transforms a FilePath into an aliased json string
+json::Value toJsonString(const core::FilePath& filePath)
+{
+   return module_context::createAliasedPath(filePath);
+}
+
 class RSConnectPublish : public async_r::AsyncRProcess
 {
 public:
@@ -320,6 +326,53 @@ Error rsconnectDeployments(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error getEditPublishedDocs(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   std::string appPathParam;
+   Error error = json::readParams(request.params, &appPathParam);
+   if (error)
+      return error;
+
+   FilePath appPath = module_context::resolveAliasedPath(appPathParam);
+   if (!appPath.exists())
+      return pathNotFoundError(ERROR_LOCATION);
+
+   // doc paths to return
+   std::vector<FilePath> docPaths;
+
+   // if it's a file then just return the file
+   if (!appPath.isDirectory())
+   {
+      docPaths.push_back(appPath);
+   }
+   // otherwise look for shiny files
+   else
+   {
+      std::vector<FilePath> shinyPaths;
+      shinyPaths.push_back(appPath.childPath("app.R"));
+      shinyPaths.push_back(appPath.childPath("ui.R"));
+      shinyPaths.push_back(appPath.childPath("server.R"));
+      shinyPaths.push_back(appPath.childPath("www/index.html"));
+      BOOST_FOREACH(const FilePath& filePath, shinyPaths)
+      {
+         if (filePath.exists())
+            docPaths.push_back(filePath);
+      }
+   }
+
+   // return as json
+   json::Array resultJson;
+   std::transform(docPaths.begin(),
+                  docPaths.end(),
+                  std::back_inserter(resultJson),
+                  toJsonString);
+   pResponse->setResult(resultJson);
+   return Success();
+}
+
+
+
 void onDeferredInit(bool)
 {
    // automatically enable RSConnect UI if there are configured accounts
@@ -352,6 +405,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_rsconnect_deployments", rsconnectDeployments))
       (bind(registerRpcMethod, "rsconnect_publish", rsconnectPublish))
+      (bind(registerRpcMethod, "get_edit_published_docs", getEditPublishedDocs))
       (bind(sourceModuleRFile, "SessionRSConnect.R"));
 
    return initBlock.execute();

@@ -156,7 +156,11 @@ public class Application implements ApplicationEventHandlers
                public void execute()
                {
                   // if this is a switch project then wait to dismiss the 
-                  // loading progress animation for 3 seconds
+                  // loading progress animation for 10 seconds. typically
+                  // this will be enough time to switch projects. if it
+                  // isn't then it's nice to reveal whatever progress 
+                  // operation or error state is holding up the switch
+                  // directly to the user
                   if (ApplicationAction.isSwitchProject())
                   {
                      new Timer() {
@@ -165,7 +169,7 @@ public class Application implements ApplicationEventHandlers
                         {
                            dismissLoadingProgress.execute();
                         }   
-                     }.schedule(3000);  
+                     }.schedule(10000);  
                   }
                   else
                   {
@@ -745,17 +749,17 @@ public class Application implements ApplicationEventHandlers
             StringUtil.notNull(Window.Location.getParameter("id"));
       if (projectId.length() > 0)
       {
-         server_.getProjectPath(
+         server_.getProjectFilePath(
             projectId, 
             new ServerRequestCallback<String>() {
 
                @Override
-               public void onResponseReceived(String projectPath)
+               public void onResponseReceived(String projectFilePath)
                {
-                  if (projectPath.length() > 0)
+                  if (projectFilePath.length() > 0)
                   {
                      events_.fireEvent(
-                           new SwitchToProjectEvent(projectPath, true));
+                           new SwitchToProjectEvent(projectFilePath, true));
                   }
                }
                @Override

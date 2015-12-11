@@ -1439,11 +1439,11 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "get_project_r_version", projectDir, callback);
    }
    
-   public void getProjectPath(
+   public void getProjectFilePath(
          String projectId,
          ServerRequestCallback<String> callback)
    {
-      sendRequest(RPC_SCOPE, "get_project_path", projectId, callback);
+      sendRequest(RPC_SCOPE, "get_project_file_path", projectId, callback);
    }
    
    @Override
@@ -4017,6 +4017,16 @@ public class RemoteServer implements Server
             HAS_ORPHANED_ACCOUNTS,
             new JSONArray(),
             requestCallback);
+   }
+   
+   @Override
+   public void getEditPublishedDocs(String appPath,
+         ServerRequestCallback<JsArrayString> resultCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+                 "get_edit_published_docs", 
+                 appPath, 
+                 resultCallback);
    }
 
    @Override
