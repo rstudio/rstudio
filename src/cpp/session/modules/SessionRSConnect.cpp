@@ -68,6 +68,12 @@ std::string quotedFilesFromArray(json::Array array, bool quoted)
    return joined;
 }
 
+// transforms a FilePath into an aliased json string
+json::Value toJsonString(const core::FilePath& filePath)
+{
+   return module_context::createAliasedPath(filePath);
+}
+
 class RSConnectPublish : public async_r::AsyncRProcess
 {
 public:
@@ -332,10 +338,35 @@ Error getEditPublishedDocs(const json::JsonRpcRequest& request,
    if (!appPath.exists())
       return pathNotFoundError(ERROR_LOCATION);
 
+   // doc paths to return
+   std::vector<FilePath> docPaths;
+
+   // if it's a file then just return the file
+   if (!appPath.isDirectory())
+   {
+      docPaths.push_back(appPath);
+   }
+   // otherwise look for shiny files
+   else
+   {
+      std::vector<FilePath> shinyPaths;
+      shinyPaths.push_back(appPath.childPath("app.R"));
+      shinyPaths.push_back(appPath.childPath("ui.R"));
+      shinyPaths.push_back(appPath.childPath("server.R"));
+      shinyPaths.push_back(appPath.childPath("www/index.html"));
+      BOOST_FOREACH(const FilePath& filePath, shinyPaths)
+      {
+         if (filePath.exists())
+            docPaths.push_back(filePath);
+      }
+   }
+
+   // return as json
    json::Array resultJson;
-
-   // TODO: determine documents to edit for appPath
-
+   std::transform(docPaths.begin(),
+                  docPaths.end(),
+                  std::back_inserter(resultJson),
+                  toJsonString);
    pResponse->setResult(resultJson);
    return Success();
 }
