@@ -131,9 +131,11 @@ public class ApplicationCommandManager
       KeyMap map = ShortcutManager.INSTANCE.getKeyMap(KeyMapType.APPLICATION);
       for (int i = 0; i < resolvedBindings.size(); i++)
       {
+         // TODO: We should make it possible for users to define a command
+         // binding that is disabled for certain modes.
          map.setBindings(
                resolvedBindings.get(i).first,
-               new AppCommandBinding(resolvedBindings.get(i).second, ""));
+               new AppCommandBinding(resolvedBindings.get(i).second, "", true));
       }
       
       // TODO: Set the bindings in the AppCommand keymap, removing any

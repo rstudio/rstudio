@@ -221,7 +221,7 @@ public class ShortcutManager implements NativePreviewHandler,
          // Add the command into the keymap, ensuring it can be executed on the associated
          // keypress.
          KeyMap appKeyMap = keyMaps_.get(KeyMapType.APPLICATION);
-         appKeyMap.addBinding(keys, new AppCommandBinding(command, disableModes));
+         appKeyMap.addBinding(keys, new AppCommandBinding(command, disableModes, false));
       }
    }
    

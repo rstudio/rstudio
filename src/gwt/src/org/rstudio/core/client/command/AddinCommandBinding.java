@@ -53,6 +53,12 @@ public class AddinCommandBinding implements CommandBinding
       return true;
    }
    
+   @Override
+   public boolean isUserDefinedBinding()
+   {
+      return true;
+   }
+   
    private final String id_;
    private AddinsServerOperations server_;
 }

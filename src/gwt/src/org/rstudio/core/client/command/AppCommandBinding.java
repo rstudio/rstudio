@@ -18,10 +18,11 @@ import org.rstudio.core.client.command.KeyMap.CommandBinding;
 
 public class AppCommandBinding implements CommandBinding
 {
-   public AppCommandBinding(AppCommand command, String disableModes)
+   public AppCommandBinding(AppCommand command, String disableModes, boolean custom)
    {
       command_ = command;
       disableModes_ = ShortcutManager.parseDisableModes(disableModes);
+      custom_ = custom;
    }
    
    @Override
@@ -49,7 +50,13 @@ public class AppCommandBinding implements CommandBinding
       return true;
    }
    
+   @Override
+   public boolean isUserDefinedBinding()
+   {
+      return custom_;
+   }
+
    private final AppCommand command_;
    private final int disableModes_;
-
+   private final boolean custom_;
 }

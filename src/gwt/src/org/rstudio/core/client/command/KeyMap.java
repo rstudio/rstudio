@@ -32,11 +32,13 @@ public class KeyMap
    public static enum KeyMapType {
       ADDIN, EDITOR, APPLICATION;
    }
+   
    public interface CommandBinding
    {
       public String getId();
       public void execute();
       public boolean isEnabled();
+      public boolean isUserDefinedBinding();
    }
    
    public KeyMap()
