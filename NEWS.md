@@ -86,7 +86,6 @@
 * Server Pro: Don't close PAM sessions by default (configurable via an option)
 * Server Pro: Remove Google OpenID auth (deprecated by Google in favor of OAuth)
 * Server Pro: Add option to specify client-id for Graphite metrics back end
-* Server Pro: Ability to record user console history for audit purposes
 * Server Pro: Supported SSL protocols is now configurable
 * Server Pro: Add option to rewrite user header in proxied authentication
 
