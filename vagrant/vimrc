@@ -13,7 +13,7 @@ Plugin 'tpope/vim-fugitive'
 Plugin 'tpope/vim-dispatch'
 Plugin 'marijnh/tern_for_vim'
 Plugin 'Valloric/YouCompleteMe'
-Plugin 'kien/ctrlp.vim'
+Plugin 'ctrlpvim/ctrlp.vim'
 Plugin 'rking/ag.vim'
 Plugin 'scrooloose/syntastic'
 
