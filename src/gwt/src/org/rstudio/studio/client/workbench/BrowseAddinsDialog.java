@@ -17,11 +17,14 @@ package org.rstudio.studio.client.workbench;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -33,6 +36,7 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
@@ -41,7 +45,9 @@ import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.widget.FilterWidget;
 import org.rstudio.core.client.widget.ModalDialog;
+import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.server.ServerError;
@@ -130,6 +136,16 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
             Debug.logError(error);
          }
       });
+      
+      addLeftWidget(new ThemedButton("Shortcuts...", new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            ModifyKeyboardShortcutsWidget widget = new ModifyKeyboardShortcutsWidget("addin");
+            widget.showModal();
+         }
+      }));
       
       FlowPanel headerPanel = new FlowPanel();
       headerPanel.add(filterWidget_);

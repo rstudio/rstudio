@@ -222,7 +222,14 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    public ModifyKeyboardShortcutsWidget()
    {
+      this(null);
+   }
+   
+   public ModifyKeyboardShortcutsWidget(String filterText)
+   {
       RStudioGinjector.INSTANCE.injectMembers(this);
+      
+      initialFilterText_ = filterText;
       shortcuts_ = ShortcutManager.INSTANCE;
       
       changes_ = new HashMap<KeyboardShortcutEntry, KeyboardShortcutEntry>();
@@ -242,7 +249,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       // Add a 'global' click handler that performs a row selection regardless
       // of the cell clicked (it seems GWT clicks can be 'fussy' about whether
-      // you click on the contents of a cell vs. the '<td>' element iteself)
+      // you click on the contents of a cell vs. the '<td>' element itself)
       table_.addDomHandler(new ClickHandler()
       {
          @Override
@@ -1180,6 +1187,20 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       });
       
+      queue.addCommand(new SerializedCommand()
+      {
+         @Override
+         public void onExecute(Command continuation)
+         {
+            if (initialFilterText_ != null)
+            {
+               filterWidget_.setText(initialFilterText_);
+               filter();
+            }
+            continuation.execute();
+         }
+      });
+      
       // Exhaust the queue
       queue.run();
    }
@@ -1401,6 +1422,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private final ListDataProvider<KeyboardShortcutEntry> dataProvider_;
    private final Map<KeyboardShortcutEntry, KeyboardShortcutEntry> changes_;
    private final SearchWidget filterWidget_;
+   private final String initialFilterText_;
    
    private final RadioButton radioAll_;
    private final RadioButton radioCustomized_;
