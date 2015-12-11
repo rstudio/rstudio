@@ -371,6 +371,11 @@ public:
       return multiSession_;
    }
 
+   bool projectSharingEnabled() const
+   {
+      return projectSharingEnabled_;
+   }
+
    bool switchProjectsWithUrl() const
    {
       return programMode() == kSessionProgramModeServer &&
@@ -565,6 +570,7 @@ private:
    core::r_util::SessionScope scope_;
    core::r_util::SessionScopeState scopeState_;
    bool multiSession_;
+   bool projectSharingEnabled_;
    std::string userHomePath_;
    std::string userScratchPath_;   
 

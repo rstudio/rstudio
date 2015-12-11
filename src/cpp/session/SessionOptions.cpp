@@ -511,20 +511,22 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    initialEnvironmentFileOverride_ = core::system::getenv(kRStudioInitialEnvironment);
    core::system::unsetenv(kRStudioInitialEnvironment);
 
+   // project sharing enabled
+   projectSharingEnabled_ =
+                core::system::getenv(kRStudioDisableProjectSharing).empty();
+
    // initial project (can either be a command line param or via env)
    r_util::SessionScope scope = sessionScope();
    if (!scope.empty())
    {
-      bool projectSharingEnabled =
-                  core::system::getenv(kRStudioDisableProjectSharing).empty();
-      scopeState_ = r_util::validateSessionScope(
+        scopeState_ = r_util::validateSessionScope(
                        scope,
                        userHomePath(),
                        userScratchPath(),
                        session::projectIdToFilePath(userScratchPath(), 
                                  FilePath(getOverlayOption(
                                        kSessionSharedStoragePath))),
-                       projectSharingEnabled,
+                       projectSharingEnabled(),
                        &initialProjectPath_);
    }
    else
