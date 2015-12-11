@@ -910,16 +910,19 @@ public class Source implements InsertSourceHandler,
       
       // this is an appPath which we can call the server
       // to determine source files to edit 
-      server_.getEditPublishedDocs(
-         editPublished, 
-         new SimpleRequestCallback<JsArrayString>() {
-            @Override
-            public void onResponseReceived(JsArrayString docs)
-            {
-               new SourceFilesOpener(docs).run();
+      if (editPublished.length() > 0)
+      {
+         server_.getEditPublishedDocs(
+            editPublished, 
+            new SimpleRequestCallback<JsArrayString>() {
+               @Override
+               public void onResponseReceived(JsArrayString docs)
+               {
+                  new SourceFilesOpener(docs).run();
+               }
             }
-         }
-      );
+         );
+      }
    }
    
    private void openProjectDocs(final Session session)
