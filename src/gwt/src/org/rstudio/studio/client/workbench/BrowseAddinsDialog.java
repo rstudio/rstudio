@@ -102,10 +102,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
       });
       
       table_.setSelectionModel(selectionModel_);
-      Label emptyLabel = new Label("No addins available");
-      emptyLabel.getElement().getStyle().setMarginTop(20, Unit.PX);
-      emptyLabel.getElement().getStyle().setColor("#888");
-      table_.setEmptyTableWidget(emptyLabel);
+      table_.setEmptyTableWidget(emptyTableLabel("Loading addins..."));
       
       addColumns();
       
@@ -124,6 +121,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
             
             dataProvider_.setList(data);
             originalData_ = data;
+            table_.setEmptyTableWidget(emptyTableLabel("No addins available"));
          }
          
          @Override
@@ -310,6 +308,14 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
    protected Widget createMainWidget()
    {
       return container_;
+   }
+   
+   private Label emptyTableLabel(String caption)
+   {
+      Label label = new Label(caption);
+      label.getElement().getStyle().setMarginTop(20, Unit.PX);
+      label.getElement().getStyle().setColor("#888");
+      return label;
    }
    
    // Private members ----
