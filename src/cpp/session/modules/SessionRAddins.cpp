@@ -13,6 +13,7 @@
  *
  */
 
+#include <core/Macros.hpp>
 #include <core/Algorithm.hpp>
 #include <core/Debug.hpp>
 #include <core/Error.hpp>
@@ -196,46 +197,100 @@ void registerAddins(const std::string& pkgName, const FilePath& addinPath)
    }
 }
 
-void discoverAddins(const std::vector<FilePath>& libPaths)
+class AddinIndexer : public boost::noncopyable
 {
-   BOOST_FOREACH(const FilePath& libPath, libPaths)
+public:
+   
+   void initialize(const std::vector<FilePath>& libPaths)
    {
-      if (!libPath.exists())
-         continue;
-      
-      // get the children in this directory
       std::vector<FilePath> pkgPaths;
-      Error error = libPath.children(&pkgPaths);
-      if (error)
+      BOOST_FOREACH(const FilePath& libPath, libPaths)
       {
-         LOG_ERROR(error);
-         continue;
-      }
-      
-      BOOST_FOREACH(const FilePath& pkgPath, pkgPaths)
-      {
-         // construct the addin path and check if it exists
-         FilePath addinPath = pkgPath.complete("rstudio/addins.dcf");
-         if (!addinPath.exists())
+         if (!libPath.exists())
             continue;
          
-         std::string pkgName = pkgPath.filename();
-         registerAddins(pkgName, addinPath);
+         pkgPaths.clear();
+         Error error = libPath.children(&pkgPaths);
+         if (error)
+            LOG_ERROR(error);
+         children_.insert(
+                  children_.end(),
+                  pkgPaths.begin(),
+                  pkgPaths.end());
       }
+      
+      n_ = children_.size();
    }
+   
+   bool pending()
+   {
+      return index_ != n_;
+   }
+   
+   bool work()
+   {
+      // std::cout << "Job " << index_ + 1 << " of " << n_ << "\n";
+      // ::usleep(10000);
+      
+      const FilePath& pkgPath = children_[index_];
+      FilePath addinPath = pkgPath.childPath("rstudio/addins.dcf");
+      if (!addinPath.exists())
+      {
+         ++index_;
+         return pending();
+      }
+      
+      std::string pkgName = pkgPath.filename();
+      registerAddins(pkgName, addinPath);
+      
+      ++index_;
+      return pending();
+   }
+   
+private:
+   std::vector<FilePath> children_;
+   std::size_t n_;
+   std::size_t index_;
+};
+
+AddinIndexer& addinIndexer()
+{
+   static AddinIndexer instance;
+   return instance;
+}
+
+void indexLibraryPaths(const std::vector<FilePath>& libPaths)
+{
+   addinIndexer().initialize(libPaths);
+   module_context::scheduleIncrementalWork(
+            boost::posix_time::milliseconds(10),
+            boost::bind(&AddinIndexer::work, &addinIndexer()),
+            true);
 }
 
 void onDeferredInit(bool newSession)
 {
-   discoverAddins(getLibPaths());
+   indexLibraryPaths(getLibPaths());
 }
 
-Error getRAddins(const json::JsonRpcRequest& request,
-                 json::JsonRpcResponse* pResponse)
+bool waitForGetRAddins(json::JsonRpcFunctionContinuation continuation)
 {
-   discoverAddins(getLibPaths());
-   pResponse->setResult(addinRegistry().toJson());
-   return Success();
+   if (addinIndexer().pending())
+      return true;
+   
+   json::JsonRpcResponse response;
+   response.setResult(addinRegistry().toJson());
+   continuation(Success(), &response);
+   return false;
+}
+
+void getRAddins(const json::JsonRpcRequest& request,
+                const json::JsonRpcFunctionContinuation& continuation)
+{
+   module_context::schedulePeriodicWork(
+            boost::posix_time::milliseconds(20),
+            boost::bind(waitForGetRAddins, continuation),
+            true);
 }
 
 Error noSuchAddin(const ErrorLocation& errorLocation)
@@ -268,16 +323,17 @@ Error executeRAddin(const json::JsonRpcRequest& request,
    
    if (!addinRegistry().contains(pkgName, cmdName))
    {
-      LOG_ERROR_MESSAGE("no command with id '" + commandId + "'");
-      pResponse->setError(noSuchAddin(ERROR_LOCATION));
+      std::string message = "no addin with id '" + commandId + "' registered";
+      pResponse->setError(noSuchAddin(ERROR_LOCATION), message);
       return Success();
    }
    
    SEXP fnSEXP = r::sexp::findFunction(cmdName, pkgName);
    if (fnSEXP == R_UnboundValue)
    {
-      LOG_ERROR_MESSAGE("no function '" + cmdName + "' found in package '" + pkgName + "'");
-      pResponse->setError(noSuchAddin(ERROR_LOCATION));
+      std::string message =
+            "no function '" + cmdName + "' found in package '" + pkgName + "'";
+      pResponse->setError(noSuchAddin(ERROR_LOCATION), message);
       return Success();
    }
    
@@ -290,6 +346,7 @@ Error executeRAddin(const json::JsonRpcRequest& request,
    
    return Success();
 }
+
 } // end anonymous namespace
   
 Error initialize()
@@ -302,7 +359,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
          (bind(sourceModuleRFile, "SessionRAddins.R"))
-         (bind(registerRpcMethod, "get_r_addins", getRAddins))
+         (bind(registerAsyncRpcMethod, "get_r_addins", getRAddins))
          (bind(registerRpcMethod, "execute_r_addin", executeRAddin));
    
    return initBlock.execute();
