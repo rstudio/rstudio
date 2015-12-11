@@ -30,7 +30,6 @@ public interface CoreResources extends ClientBundle
    @Source("progress_gray.gif")
    DataResource progress_gray_as_data();
    ImageResource progress();
-   ImageResource progress_blue();
    ImageResource progress_gray();
    ImageResource progress_large();
    ImageResource progress_large_gray();
