@@ -19,6 +19,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 public interface RSConnectServerOperations
 {
@@ -72,4 +73,7 @@ public interface RSConnectServerOperations
                 ServerRequestCallback<RmdPublishDetails> resultCallback);
    
    void hasOrphanedAccounts(ServerRequestCallback<Int> resultCallback);
+   
+   void getEditPublishedDocs(String appPath,
+                ServerRequestCallback<JsArrayString> resultCallback);
 }

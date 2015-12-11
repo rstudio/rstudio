@@ -4003,6 +4003,16 @@ public class RemoteServer implements Server
             new JSONArray(),
             requestCallback);
    }
+   
+   @Override
+   public void getEditPublishedDocs(String appPath,
+         ServerRequestCallback<JsArrayString> resultCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+                 "get_edit_published_docs", 
+                 appPath, 
+                 resultCallback);
+   }
 
    @Override
    public void getRMarkdownContext(

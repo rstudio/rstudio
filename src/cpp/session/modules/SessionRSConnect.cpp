@@ -320,6 +320,28 @@ Error rsconnectDeployments(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error getEditPublishedDocs(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   std::string appPathParam;
+   Error error = json::readParams(request.params, &appPathParam);
+   if (error)
+      return error;
+
+   FilePath appPath = module_context::resolveAliasedPath(appPathParam);
+   if (!appPath.exists())
+      return pathNotFoundError(ERROR_LOCATION);
+
+   json::Array resultJson;
+
+   // TODO: determine documents to edit for appPath
+
+   pResponse->setResult(resultJson);
+   return Success();
+}
+
+
+
 void onDeferredInit(bool)
 {
    // automatically enable RSConnect UI if there are configured accounts
@@ -352,6 +374,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_rsconnect_deployments", rsconnectDeployments))
       (bind(registerRpcMethod, "rsconnect_publish", rsconnectPublish))
+      (bind(registerRpcMethod, "get_edit_published_docs", getEditPublishedDocs))
       (bind(sourceModuleRFile, "SessionRSConnect.R"));
 
    return initBlock.execute();

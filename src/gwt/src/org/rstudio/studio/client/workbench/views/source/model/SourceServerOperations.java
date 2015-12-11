@@ -22,6 +22,7 @@ import org.rstudio.studio.client.events.GetActiveDocumentContextEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
@@ -48,7 +49,8 @@ public interface SourceServerOperations extends FilesServerOperations,
                                                 HTMLPreviewServerOperations,
                                                 BuildServerOperations,
                                                 PresentationServerOperations,
-                                                LintServerOperations
+                                                LintServerOperations,
+                                                RSConnectServerOperations
 {
    /**
     * Create a new, empty document, without a path but with a unique ID, and
