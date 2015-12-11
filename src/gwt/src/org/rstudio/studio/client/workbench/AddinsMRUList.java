@@ -24,8 +24,8 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -68,22 +68,9 @@ public class AddinsMRUList extends MRUList
                public void execute(final String encoded)
                {
                   final RAddin addin = RAddin.decode(encoded);
-                   server.executeRAddin(
-                         addin.getId(),
-                         new ServerRequestCallback<org.rstudio.studio.client.server.Void>()
-                         {
-                            @Override
-                            public void onError(ServerError error)
-                            {
-                               // I can't access 'this' in this scope, so I have to
-                               // do this silly round trip through the event bus.
-                               events.fireEvent(new AddinExecutionFailedEvent(encoded));
-                               display.showErrorMessage(
-                                     "Error Executing Addin",
-                                     "The addin '" + addin.getId() + "()' could not be found.");
-                               Debug.logError(error);
-                            }
-                         });
+                  server.executeRAddin(
+                        addin.getId(),
+                        new SimpleRequestCallback<Void>("Error Executing Addin", true));
                }
             });
       
