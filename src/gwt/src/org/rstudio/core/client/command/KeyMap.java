@@ -149,12 +149,12 @@ public class KeyMap
       return node != null && !node.getChildren().isEmpty();
    }
    
-   public void forEachBinding(CommandWith2Args<KeySequence, List<CommandBinding>> command)
+   public void forEachBinding(final CommandWith2Args<KeySequence, List<CommandBinding>> command)
    {
       graph_.forEachNode(new CommandWithArg<DirectedGraph<KeyCombination, List<CommandBinding>>>()
       {
          @Override
-         public void execute(DirectedGraph<KeyCombination, List<CommandBinding>> node)
+         public void execute(final DirectedGraph<KeyCombination, List<CommandBinding>> node)
          {
             command.execute(
                   new KeySequence(node.getKeyChain()),
