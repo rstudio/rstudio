@@ -141,9 +141,11 @@ public class GeneralPreferencesPane extends PreferencesPane
       {
          spaced(showServerHomePage_);
          add(showServerHomePage_);
-         lessSpaced(reuseSessionsForProjectLinks_);
-         add(reuseSessionsForProjectLinks_);
+         lessSpaced(reuseSessionsForProjectLinks_);  
       }
+      
+      if (session_.getSessionInfo().getMultiSession())
+         add(reuseSessionsForProjectLinks_);
       
       restoreLastProject_ = new CheckBox("Restore most recently opened project at startup");
       lessSpaced(restoreLastProject_);
