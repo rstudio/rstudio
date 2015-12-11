@@ -192,7 +192,12 @@ Error writeLockFile(const FilePath& lockFilePath)
    RemoveOnExitScope scope(proxyPath, ERROR_LOCATION);
    error = proxyPath.ensureFile();
    if (error)
+   {
+      // log the error since it isn't expected and could get swallowed
+      // upstream by a caller ignore lock_not_available errors
+      LOG_ERROR(error);
       return error;
+   }
    
    // attempt to link to the desired location -- ignore return value
    // and just stat our original link after, as that's a more reliable
@@ -204,7 +209,13 @@ Error writeLockFile(const FilePath& lockFilePath)
    struct stat info;
    int errc = ::stat(proxyPath.absolutePathNative().c_str(), &info);
    if (errc)
-      return systemError(errno, ERROR_LOCATION);
+   {
+      // log the error since it isn't expected and could get swallowed
+      // upstream by a caller ignore lock_not_available errors
+      Error error = systemError(errno, ERROR_LOCATION);
+      LOG_ERROR(error);
+      return error;
+   }
    
    // assume that a failure here is the result of someone else
    // acquiring the lock before we could
