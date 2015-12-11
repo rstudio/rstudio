@@ -916,7 +916,7 @@ public class Source implements InsertSourceHandler,
             @Override
             public void onResponseReceived(JsArrayString docs)
             {
-               openDocs(docs);
+               new SourceFilesOpener(docs).run();
             }
          }
       );
@@ -924,11 +924,7 @@ public class Source implements InsertSourceHandler,
    
    private void openProjectDocs(final Session session)
    {
-      openDocs(session.getSessionInfo().getProjectOpenDocs());
-   }
-   
-   private void openDocs(final JsArrayString openDocs)
-   {
+      JsArrayString openDocs = session.getSessionInfo().getProjectOpenDocs();
       if (openDocs.length() > 0)
       {
          // set new tab pending for the duration of the continuation
