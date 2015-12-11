@@ -27,6 +27,7 @@
 #include <core/SafeConvert.hpp>
 
 #include <core/r_util/RSessionContext.hpp>
+#include <core/r_util/RProjectFile.hpp>
 
 namespace rstudio {
 namespace core {
@@ -222,7 +223,8 @@ public:
          return Success();
    }
 
-   bool validate(const FilePath& userHomePath) const
+   bool validate(const FilePath& userHomePath,
+                 bool projectSharingEnabled) const
    {
       // ensure the scratch path and properties paths exist
       if (!scratchPath_.exists() || !propertiesPath_.exists())
@@ -240,6 +242,17 @@ public:
                                                             userHomePath);
          if (!projectDir.exists())
             return false;
+
+        // check for project file
+        FilePath projectPath = r_util::projectFromDirectory(projectDir);
+        if (!projectPath.exists())
+           return false;
+
+        // if we got this far the scope is valid, do one final check for
+        // trying to open a shared project if sharing is disabled
+        if (!projectSharingEnabled &&
+            r_util::isSharedPath(projectPath.absolutePath(), userHomePath))
+           return false;
       }
 
       // validated!
@@ -283,9 +296,11 @@ public:
                       std::string* pId) const;
 
    std::vector<boost::shared_ptr<ActiveSession> > list(
-                                    const FilePath& userHomePath) const;
+                                    const FilePath& userHomePath,
+                                    bool projectSharingEnabled) const;
 
-   size_t count(const FilePath& userHomePath) const;
+   size_t count(const FilePath& userHomePath,
+                bool projectSharingEnabled) const;
 
    boost::shared_ptr<ActiveSession> get(const std::string& id) const;
 
@@ -299,6 +314,7 @@ private:
 
 void trackActiveSessionCount(const FilePath& rootStoragePath,
                              const FilePath& userHomePath,
+                             bool projectSharingEnabled,
                              boost::function<void(size_t)> onCountChanged);
 
 

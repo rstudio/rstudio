@@ -102,7 +102,8 @@ Error ActiveSessions::create(const std::string& project,
 }
 
 std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(
-                                       const FilePath& userHomePath) const
+                                       const FilePath& userHomePath,
+                                       bool projectSharingEnabled) const
 {
    // list to return
    std::vector<boost::shared_ptr<ActiveSession> > sessions;
@@ -124,7 +125,7 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(
          boost::shared_ptr<ActiveSession> pSession = get(id);
          if (!pSession->empty())
          {
-            if (pSession->validate(userHomePath))
+            if (pSession->validate(userHomePath, projectSharingEnabled))
             {
                sessions.push_back(pSession);
             }
@@ -146,9 +147,10 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(
    return sessions;
 }
 
-size_t ActiveSessions::count(const FilePath& userHomePath) const
+size_t ActiveSessions::count(const FilePath& userHomePath,
+                             bool projectSharingEnabled) const
 {
-   return list(userHomePath).size();
+   return list(userHomePath, projectSharingEnabled).size();
 }
 
 boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id) const
@@ -172,15 +174,17 @@ namespace {
 
 void notifyCountChanged(boost::shared_ptr<ActiveSessions> pSessions,
                         const FilePath& userHomePath,
+                        bool projectSharingEnabled,
                         boost::function<void(size_t)> onCountChanged)
 {
-   onCountChanged(pSessions->count(userHomePath));
+   onCountChanged(pSessions->count(userHomePath, projectSharingEnabled));
 }
 
 } // anonymous namespace
 
 void trackActiveSessionCount(const FilePath& rootStoragePath,
                              const FilePath& userHomePath,
+                             bool projectSharingEnabled,
                              boost::function<void(size_t)> onCountChanged)
 {
 
@@ -191,10 +195,12 @@ void trackActiveSessionCount(const FilePath& rootStoragePath,
    cb.onRegistered = boost::bind(notifyCountChanged,
                                  pSessions,
                                  userHomePath,
+                                 projectSharingEnabled,
                                  onCountChanged);
    cb.onFilesChanged = boost::bind(notifyCountChanged,
                                    pSessions,
                                    userHomePath,
+                                   projectSharingEnabled,
                                    onCountChanged);
    cb.onRegistrationError = boost::bind(log::logError, _1, ERROR_LOCATION);
 
