@@ -59,6 +59,7 @@ public interface FileIconResources extends ClientBundle
    ImageResource iconSourceViewer();
    ImageResource iconProfiler();
    ImageResource iconWord();
+   ImageResource iconDCF();
    
    // Ace modes
    ImageResource iconClojure();
