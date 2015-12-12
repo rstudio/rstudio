@@ -20,7 +20,7 @@
 * F2 now navigates into files (e.g. within calls to source)
 * Yank before/after (Ctrl+K, Ctrl+U) now use system clipboard on RStudio Desktop
 * Yank after cursor (Ctrl+K) no longer eats end of line character
-* Added option controlling 'surround on text insertion' behaviour
+* Added option controlling 'surround on text insertion' behavior
 
 ### R Markdown
 
@@ -79,7 +79,7 @@
 * Suspend and resume running R sessions when server is restarted
 * Add kill-session and kill-all admin commands
 * Use SHA256 for signing cookies (previously used SHA1)
-* Use more resiliant file locking mechnaism for compatibility with NFS volumes
+* Use more resilient file locking mechanism for compatibility with NFS volumes
 * Attempt to close application window when quitting
 * Track installed client version using git commit hash rather than timestamp
 * Server Pro: Shared Projects (including concurrent multi-user editing)
@@ -111,7 +111,7 @@
 * Fixed chunk highlighter issues that occurred when editing chunk label
 * Correctly handle call to edit() with no arguments
 * Fix inability to start up on OS X when multiple conflicting R versions are on the library search path
-* Prevent crash when cancelling out of q() prompt on Windows
+* Prevent crash when canceling out of q() prompt on Windows
 * OS X: Fix crash which could occur when focusing text boxes with placeholders
 * OS X: Viewer now correctly recognizes session temp dir even when prefixed by /private
 * Fix issue with rstudioapi previewRd function when path included spaces
