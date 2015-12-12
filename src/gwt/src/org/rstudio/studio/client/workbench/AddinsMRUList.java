@@ -160,8 +160,6 @@ public class AddinsMRUList extends MRUList
          List<KeySequence> bindings = keyMap.getBindings(id);
          if (bindings != null && !bindings.isEmpty())
             commands[i].setShortcut(new KeyboardShortcut(bindings.get(0)));
-         else
-            Debug.logToRConsole("Failed to find binding for id '" + id + "'");
       }
    }
    
