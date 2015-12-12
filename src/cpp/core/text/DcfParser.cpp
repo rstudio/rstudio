@@ -130,7 +130,6 @@ Error parseDcfFile(const std::string& dcfFileContents,
    return Success();
 }
 
-
 Error parseDcfFile(const FilePath& dcfFilePath,
                    bool preserveKeyCase,
                    DcfFieldRecorder recordField,
@@ -177,6 +176,17 @@ Error parseDcfFile(const FilePath& dcfFilePath,
                    std::string* pUserErrMsg)
 {
    return parseDcfFile(dcfFilePath,
+                       preserveKeyCase,
+                       boost::bind(mapInsert, pFields, _1),
+                       pUserErrMsg);
+}
+
+Error parseDcfFile(const std::string& dcfFileContents,
+                   bool preserveKeyCase,
+                   std::map<std::string, std::string>* pFields,
+                   std::string* pUserErrMsg)
+{
+   return parseDcfFile(dcfFileContents,
                        preserveKeyCase,
                        boost::bind(mapInsert, pFields, _1),
                        pUserErrMsg);

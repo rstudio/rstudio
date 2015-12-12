@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
@@ -24,9 +25,9 @@ import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.LaunchShinyGadgetDialog;
 import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.ApplicationVisibility;
@@ -409,9 +410,18 @@ public class Workbench implements BusyHandler,
    }
    
    @Handler
-   public void onLaunchShinyGadget()
+   public void onBrowseAddins()
    {
-      new LaunchShinyGadgetDialog().showModal();
+      BrowseAddinsDialog dialog = new BrowseAddinsDialog(new OperationWithInput<Command>()
+      {
+         @Override
+         public void execute(Command input)
+         {
+            if (input != null)
+               input.execute();
+         }
+      });
+      dialog.showModal();
    }
    
    @Handler

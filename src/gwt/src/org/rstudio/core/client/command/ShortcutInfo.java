@@ -33,6 +33,7 @@ public class ShortcutInfo
                      (command.isEnabled() && command.isVisible()) :
                      true;
       order_ = shortcut.getOrder();
+      disableModes_ = shortcut.getDisableModes();
       addShortcut(shortcut);
    }
 
@@ -67,9 +68,15 @@ public class ShortcutInfo
       return order_;
    }
    
+   public int getDisableModes()
+   {
+      return disableModes_;
+   }
+   
    private List<String> shortcuts_;
    private String description_;
    private String groupName_;
    private boolean isActive_;
    private int order_;
+   private int disableModes_;
 }

@@ -74,6 +74,11 @@ public class MRUList
          }
       });
    }
+   
+   public boolean contains(String entry)
+   {
+      return mruList_.contains(entry);
+   }
 
    public void add(String entry)
    {
@@ -128,33 +133,46 @@ public class MRUList
          mruEntries_.remove(mruEntries_.size() - 1);
 
       clearCommand_.setEnabled(mruEntries_.size() > 0);
-
+      manageCommands(mruEntries_, mruCmds_);
+   }
+   
+   protected void manageCommands(List<String> entries, AppCommand[] commands)
+   {
       // optionally transform paths
-      ArrayList<String> entries = new ArrayList<String>();
-      for (String entry : mruEntries_)
-         entries.add(transformMruEntryPath(entry));
+      ArrayList<String> transformed = new ArrayList<String>();
+      for (String entry : entries)
+         transformed.add(transformMruEntryPath(entry));
       
       // generate labels
-      ArrayList<String> labels = generateLabels(entries, includeExt_);
+      ArrayList<String> labels = generateLabels(transformed, includeExt_);
 
-      for (int i = 0; i < mruCmds_.length; i++)
+      for (int i = 0; i < commands.length; i++)
       {
-         if (i >= mruEntries_.size())
-            mruCmds_[i].setVisible(false);
+         if (i >= entries.size())
+            commands[i].setVisible(false);
          else
          {
-            mruCmds_[i].setVisible(true);
-            mruCmds_[i].setMenuLabel(
+            commands[i].setVisible(true);
+            commands[i].setMenuLabel(
                   AppMenuItem.escapeMnemonics(labels.get(i)));
-            mruCmds_[i].setDesc(mruEntries_.get(i));
+            commands[i].setDesc(entries.get(i));
          }
       }
    }
 
-   
    protected String transformMruEntryPath(String entryPath)
    {
       return entryPath;
+   }
+   
+   protected ArrayList<String> getMruEntries()
+   {
+      return mruEntries_;
+   }
+   
+   protected AppCommand[] getMruCommands()
+   {
+      return mruCmds_;
    }
 
    private final ArrayList<String> mruEntries_ = new ArrayList<String>();

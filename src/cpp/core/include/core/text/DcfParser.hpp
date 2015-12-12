@@ -44,6 +44,11 @@ Error parseDcfFile(const std::string& dcfFileContents,
                    DcfFieldRecorder recordField,
                    std::string* pUserErrMsg);
 
+Error parseDcfFile(const std::string& dcfFileContents,
+                   bool preserveKeyCase,
+                   std::map<std::string, std::string>* pFields,
+                   std::string* pUserErrMsg);
+
 Error parseDcfFile(const FilePath& dcfFilePath,
                    bool preserveKeyCase,
                    std::map<std::string,std::string>* pFields,

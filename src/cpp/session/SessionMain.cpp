@@ -125,6 +125,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionPackages.hpp"
 #include "modules/SessionPackrat.hpp"
 #include "modules/SessionProfiler.hpp"
+#include "modules/SessionRAddins.hpp"
 #include "modules/SessionRCompletions.hpp"
 #include "modules/SessionRPubs.hpp"
 #include "modules/SessionRHooks.hpp"
@@ -1748,6 +1749,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::markers::initialize)
       (modules::snippets::initialize)
       (modules::user_commands::initialize)
+      (modules::r_addins::initialize)
 
       // workers
       (workers::web_request::initialize)
