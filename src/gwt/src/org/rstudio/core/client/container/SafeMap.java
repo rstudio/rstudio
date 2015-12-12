@@ -33,11 +33,6 @@ public class SafeMap<K, V>
       return data_.get(key);
    }
    
-   public V getOrDefault(K key, V defaultValue)
-   {
-      return data_.getOrDefault(key, defaultValue);
-   }
-   
    public void put(K key, V value)
    {
       data_.put(key, value);
