@@ -17,9 +17,10 @@ package org.rstudio.core.client;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.rstudio.core.client.container.SafeMap;
 
 public class DirectedGraph<K, V>
 {
@@ -63,7 +64,7 @@ public class DirectedGraph<K, V>
    private DirectedGraph(DirectedGraph<K, V> parent, K key, V value, DefaultConstructor<V> constructor)
    {
       parent_ = parent;
-      children_ = new HashMap<K, DirectedGraph<K, V>>();
+      children_ = new SafeMap<K, DirectedGraph<K, V>>();
       
       key_ = key;
       
@@ -186,12 +187,12 @@ public class DirectedGraph<K, V>
    public void setValue(V value) { value_ = value; }
    public K getKey() { return key_; }
    public DirectedGraph<K, V> getParent() { return parent_; }
-   public Map<K, DirectedGraph<K, V>> getChildren() { return children_; }
+   public SafeMap<K, DirectedGraph<K, V>> getChildren() { return children_; }
    public boolean isRoot() { return parent_ == null; }
    
    // Private members ----
    private final DirectedGraph<K, V> parent_;
-   private final Map<K, DirectedGraph<K, V>> children_;
+   private final SafeMap<K, DirectedGraph<K, V>> children_;
    private final K key_;
    private V value_;
    

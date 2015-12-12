@@ -18,9 +18,7 @@ package org.rstudio.core.client.command;
 // - Given a key sequence, one can discover commands bound to that key sequence,
 // - Given a command, one can discover what key sequences it is bound to.
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.CommandWithArg;
@@ -28,6 +26,7 @@ import org.rstudio.core.client.DirectedGraph;
 import org.rstudio.core.client.DirectedGraph.DefaultConstructor;
 import org.rstudio.core.client.command.KeyboardShortcut.KeyCombination;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
+import org.rstudio.core.client.container.SafeMap;
 
 public class KeyMap
 {
@@ -54,7 +53,7 @@ public class KeyMap
          }
       });
       
-      idToNodeMap_ = new HashMap<String, List<DirectedGraph<KeyCombination, List<CommandBinding>>>>();
+      idToNodeMap_ = new SafeMap<String, List<DirectedGraph<KeyCombination, List<CommandBinding>>>>();
    }
    
    public void addBinding(KeySequence keys, CommandBinding command)
@@ -173,5 +172,5 @@ public class KeyMap
    private final DirectedGraph<KeyCombination, List<CommandBinding>> graph_;
    
    // Map used so we can quickly discover what bindings are active for a particular command.
-   private final Map<String, List<DirectedGraph<KeyCombination, List<CommandBinding>>>> idToNodeMap_;
+   private final SafeMap<String, List<DirectedGraph<KeyCombination, List<CommandBinding>>>> idToNodeMap_;
 }
