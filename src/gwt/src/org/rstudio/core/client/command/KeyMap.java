@@ -54,7 +54,7 @@ public class KeyMap
          }
       });
       
-      commandToNodeMap_ = new HashMap<String, List<DirectedGraph<KeyCombination, List<CommandBinding>>>>();
+      idToNodeMap_ = new HashMap<String, List<DirectedGraph<KeyCombination, List<CommandBinding>>>>();
    }
    
    public void addBinding(KeySequence keys, CommandBinding command)
@@ -65,9 +65,9 @@ public class KeyMap
          node.setValue(new ArrayList<CommandBinding>());
       node.getValue().add(command);
       
-      if (!commandToNodeMap_.containsKey(command.getId()))
-         commandToNodeMap_.put(command.getId(), new ArrayList<DirectedGraph<KeyCombination, List<CommandBinding>>>());
-      commandToNodeMap_.get(command.getId()).add(node);
+      if (!idToNodeMap_.containsKey(command.getId()))
+         idToNodeMap_.put(command.getId(), new ArrayList<DirectedGraph<KeyCombination, List<CommandBinding>>>());
+      idToNodeMap_.get(command.getId()).add(node);
    }
    
    public void setBindings(KeySequence keys, CommandBinding command)
@@ -85,9 +85,9 @@ public class KeyMap
    
    public void clearBindings(CommandBinding command)
    {
-      if (!commandToNodeMap_.containsKey(command.getId()))
+      if (!idToNodeMap_.containsKey(command.getId()))
          return;
-      List<DirectedGraph<KeyCombination, List<CommandBinding>>> nodes = commandToNodeMap_.get(command.getId());
+      List<DirectedGraph<KeyCombination, List<CommandBinding>>> nodes = idToNodeMap_.get(command.getId());
       
       for (DirectedGraph<KeyCombination, List<CommandBinding>> node : nodes)
       {
@@ -102,7 +102,7 @@ public class KeyMap
          node.setValue(filtered);
       }
       
-      commandToNodeMap_.remove(command);
+      idToNodeMap_.remove(command.getId());
    }
    
    public List<CommandBinding> getBindings(KeySequence keys)
@@ -117,9 +117,13 @@ public class KeyMap
    
    public List<KeySequence> getBindings(CommandBinding command)
    {
+      return getBindings(command.getId());
+   }
+   
+   public List<KeySequence> getBindings(String id)
+   {
       List<KeySequence> keys = new ArrayList<KeySequence>();
-      
-      List<DirectedGraph<KeyCombination, List<CommandBinding>>> bindings = commandToNodeMap_.get(command);
+      List<DirectedGraph<KeyCombination, List<CommandBinding>>> bindings = idToNodeMap_.get(id);
       if (bindings == null)
          return keys;
       
@@ -169,5 +173,5 @@ public class KeyMap
    private final DirectedGraph<KeyCombination, List<CommandBinding>> graph_;
    
    // Map used so we can quickly discover what bindings are active for a particular command.
-   private final Map<String, List<DirectedGraph<KeyCombination, List<CommandBinding>>>> commandToNodeMap_;
+   private final Map<String, List<DirectedGraph<KeyCombination, List<CommandBinding>>>> idToNodeMap_;
 }

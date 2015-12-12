@@ -16,11 +16,17 @@ package org.rstudio.studio.client.workbench;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.KeyMap;
+import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
+import org.rstudio.core.client.command.ShortcutManager;
+import org.rstudio.core.client.command.KeyMap.KeyMapType;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -33,6 +39,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Singleton
@@ -83,6 +90,16 @@ public class AddinsMRUList extends MRUList
                {
                   // force initialization
                   listManager.getAddinsMruList();
+                  
+                  // timeout to wait for server operations
+                  new Timer()
+                  {
+                     @Override
+                     public void run()
+                     {
+                        updateShortcuts();
+                     }
+                  }.schedule(1000);
                }
             });
       
@@ -124,6 +141,26 @@ public class AddinsMRUList extends MRUList
                commands[i].setVisible(false);
             }
          }
+      }
+      
+      updateShortcuts();
+   }
+   
+   public void updateShortcuts()
+   {
+      ArrayList<String> entries = getMruEntries();
+      AppCommand[] commands = getMruCommands();
+      KeyMap keyMap = ShortcutManager.INSTANCE.getKeyMap(KeyMapType.ADDIN);
+      
+      for (int i = 0; i < entries.size(); i++)
+      {
+         RAddin addin = RAddin.decode(entries.get(i));
+         String id = addin.getId();
+         List<KeySequence> bindings = keyMap.getBindings(id);
+         if (bindings != null && !bindings.isEmpty())
+            commands[i].setShortcut(new KeyboardShortcut(bindings.get(0)));
+         else
+            Debug.logToRConsole("Failed to find binding for id '" + id + "'");
       }
    }
    

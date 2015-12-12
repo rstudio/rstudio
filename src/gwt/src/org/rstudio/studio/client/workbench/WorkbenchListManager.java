@@ -149,6 +149,12 @@ public class WorkbenchListManager
       {
          server_.listRemoveItem(name_, item, new ListRequestCallback());
       }
+      
+      @Override
+      public boolean contains(String item)
+      {
+         return list_.contains(item);
+      }
 
       @Override
       public void clear()

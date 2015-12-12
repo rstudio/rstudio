@@ -74,6 +74,11 @@ public class MRUList
          }
       });
    }
+   
+   public boolean contains(String entry)
+   {
+      return mruList_.contains(entry);
+   }
 
    public void add(String entry)
    {

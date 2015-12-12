@@ -84,6 +84,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.AddinsMRUList;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
@@ -426,9 +427,9 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private void applyChanges()
    {
       // Build up command diffs for save after application
-      EditorKeyBindings editorBindings = EditorKeyBindings.create();
-      EditorKeyBindings appBindings = EditorKeyBindings.create();
-      EditorKeyBindings addinBindings = EditorKeyBindings.create();
+      final EditorKeyBindings editorBindings = EditorKeyBindings.create();
+      final EditorKeyBindings appBindings = EditorKeyBindings.create();
+      final EditorKeyBindings addinBindings = EditorKeyBindings.create();
       
       // Loop through all changes and apply based on type
       for (Map.Entry<KeyboardShortcutEntry, KeyboardShortcutEntry> entry : changes_.entrySet())
@@ -485,6 +486,28 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       });
       
+      // Addins: ensure any recently bound addins become part of the MRU
+      addinsServer_.getRAddins(new ServerRequestCallback<RAddins>()
+      {
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+         
+         @Override
+         public void onResponseReceived(RAddins addins)
+         {
+            for (String id : JsUtil.asIterable(addinBindings.keys()))
+            {
+               RAddin addin = addins.get(id);
+               String encoded = RAddin.encode(addin);
+               if (!mruAddins_.contains(encoded))
+                  mruAddins_.add(encoded);
+               mruAddins_.updateShortcuts();
+            }
+         }
+      });
       closeDialog();
    }
    
@@ -495,7 +518,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                           AddinsServerOperations addinsServer,
                           Commands commands,
                           GlobalDisplay globalDisplay,
-                          EventBus events)
+                          EventBus events,
+                          AddinsMRUList mruAddins)
    {
       editorCommands_ = editorCommands;
       appCommands_ = appCommands;
@@ -504,6 +528,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       commands_ = commands;
       globalDisplay_ = globalDisplay;
       events_ = events;
+      mruAddins_ = mruAddins;
    }
    
    private void addColumns()
@@ -1446,6 +1471,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private Commands commands_;
    private GlobalDisplay globalDisplay_;
    private EventBus events_;
+   private AddinsMRUList mruAddins_;
    
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources
