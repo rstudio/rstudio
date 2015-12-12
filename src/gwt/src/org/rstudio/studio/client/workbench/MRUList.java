@@ -30,12 +30,14 @@ public class MRUList
    public MRUList(WorkbenchList mruList,
                   AppCommand[] mruCmds,
                   AppCommand clearCommand,
+                  boolean hideClearOnEmpty,
                   boolean includeExt,
                   OperationWithInput<String> operation)
    {
       clearCommand_ = clearCommand;
       mruList_ = mruList;
       mruCmds_ = mruCmds;
+      hideClearOnEmpty_ = hideClearOnEmpty;
       includeExt_ = includeExt;
       operation_ = operation;
      
@@ -133,6 +135,8 @@ public class MRUList
          mruEntries_.remove(mruEntries_.size() - 1);
 
       clearCommand_.setEnabled(mruEntries_.size() > 0);
+      if (hideClearOnEmpty_)
+         clearCommand_.setVisible(clearCommand_.isEnabled());
       manageCommands(mruEntries_, mruCmds_);
    }
    
@@ -179,6 +183,7 @@ public class MRUList
    private final AppCommand[] mruCmds_;
    private final AppCommand clearCommand_;
    private final WorkbenchList mruList_;
+   private final boolean hideClearOnEmpty_;
    private final boolean includeExt_;
    private final OperationWithInput<String> operation_;
 }

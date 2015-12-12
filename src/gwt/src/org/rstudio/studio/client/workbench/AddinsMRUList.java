@@ -68,6 +68,7 @@ public class AddinsMRUList extends MRUList
                commands.addinsMru9()
             },
             commands.clearAddinsMruList(),
+            true,
             false,
             new OperationWithInput<String>()
             {

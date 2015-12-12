@@ -401,7 +401,8 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="addinsMru9"/>
             <separator/>
             <cmd refid="clearAddinsMruList"/>
-         	<cmd refid="browseAddins"/>
+            <separator/>
+            <cmd refid="browseAddins"/>
          </menu>
          <separator/>
          <cmd refid="helpKeyboardShortcuts"/>

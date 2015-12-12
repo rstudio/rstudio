@@ -79,7 +79,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
       };
       filterWidget_.getElement().getStyle().setFloat(Style.Float.LEFT);
       
-      helpLink_ = new HelpLink("Using RStudio Addins", "rstudio_addins");
+      helpLink_ = new HelpLink("Using RStudio Addins", "rstudio_addins", false);
       helpLink_.getElement().getStyle().setFloat(Style.Float.RIGHT);
       
       keyProvider_ = new ProvidesKey<RAddin>()
@@ -135,7 +135,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
          }
       });
       
-      addLeftWidget(new ThemedButton("Shortcuts...", new ClickHandler()
+      addLeftWidget(new ThemedButton("Keyboard Shortcuts...", new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)

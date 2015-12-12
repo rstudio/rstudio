@@ -62,6 +62,7 @@ public class ProjectMRUList extends MRUList
             },
             commands.clearRecentProjects(),
             false,
+            false,
             new OperationWithInput<String>() 
             {
                @Override
