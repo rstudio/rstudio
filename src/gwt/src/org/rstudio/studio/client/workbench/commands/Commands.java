@@ -441,6 +441,11 @@ public abstract class
    public abstract AppCommand addinsMru7();
    public abstract AppCommand addinsMru8();
    public abstract AppCommand addinsMru9();
+   public abstract AppCommand addinsMru10();
+   public abstract AppCommand addinsMru11();
+   public abstract AppCommand addinsMru12();
+   public abstract AppCommand addinsMru13();
+   public abstract AppCommand addinsMru14();
    public abstract AppCommand clearAddinsMruList();
    public abstract AppCommand browseAddins();
 

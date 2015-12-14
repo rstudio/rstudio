@@ -65,7 +65,12 @@ public class AddinsMRUList extends MRUList
                commands.addinsMru6(),
                commands.addinsMru7(),
                commands.addinsMru8(),
-               commands.addinsMru9()
+               commands.addinsMru9(),
+               commands.addinsMru10(),
+               commands.addinsMru11(),
+               commands.addinsMru12(),
+               commands.addinsMru13(),
+               commands.addinsMru14()
             },
             commands.clearAddinsMruList(),
             true,
