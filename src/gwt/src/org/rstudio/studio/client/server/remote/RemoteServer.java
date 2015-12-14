@@ -3758,7 +3758,7 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void executeRAddin(String commandId, ServerRequestCallback<Void> requestCallback)
+   public void executeRAddinNonInteractively(String commandId, ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(commandId));

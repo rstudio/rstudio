@@ -52,9 +52,11 @@ public:
                       const std::string& package,
                       const std::string& title,
                       const std::string& description,
+                      bool interactive,
                       const std::string& binding)
       : name_(name), package_(package), title_(title),
-        description_(description), binding_(binding)
+        description_(description), interactive_(interactive),
+        binding_(binding)
    {
    }
    
@@ -62,6 +64,7 @@ public:
    const std::string& getPackage() const { return package_; }
    const std::string& getTitle() const { return title_; }
    const std::string& getDescription() const { return description_; }
+   bool isInteractive() const { return interactive_; }
    const std::string& getBinding() const { return binding_; }
    
    json::Object toJson() const
@@ -72,6 +75,7 @@ public:
       object["package"] = package_;
       object["title"] = title_;
       object["description"] = description_;
+      object["interactive"] = interactive_;
       object["binding"] = binding_;
       
       return object;
@@ -82,6 +86,7 @@ private:
    std::string package_;
    std::string title_;
    std::string description_;
+   bool interactive_;
    std::string binding_;
 };
 
@@ -130,12 +135,14 @@ public:
             json::Value valueJson = addinsJson.at(key);
             if(json::isType<json::Object>(valueJson))
             {
+               bool interactive;
                std::string name, package, title, description, binding;
                Error error = json::readObject(valueJson.get_obj(),
                                               "name", &name,
                                               "package", &package,
                                               "title", &title,
                                               "description", &description,
+                                              "interactive", &interactive,
                                               "binding", &binding);
                if (error)
                {
@@ -147,6 +154,7 @@ public:
                                                  package,
                                                  title,
                                                  description,
+                                                 interactive,
                                                  binding);
             }
          }
@@ -163,11 +171,17 @@ public:
    void add(const std::string& pkgName,
             std::map<std::string, std::string>& fields)
    {
+      // if the 'interactive' field is not specified, default to 'true'
+      bool interactive = true;
+      if (fields.count("Interactive"))
+         interactive = isTruthy(fields["Interactive"]);
+      
       add(pkgName, AddinSpecification(
             fields["Name"],
             pkgName,
             fields["Title"],
             fields["Description"],
+            interactive,
             fields["Binding"]));
    }
 
@@ -236,6 +250,19 @@ private:
    static std::string constructKey(const std::string& package, const std::string& name)
    {
       return package + "::" + name;
+   }
+   
+   static bool isTruthy(const std::string& string)
+   {
+      std::string lower = string_utils::trimWhitespace(
+               boost::algorithm::to_lower_copy(string));
+      
+      return
+            lower == "true" ||
+            lower == "t" ||
+            lower == "yes" ||
+            lower == "y" ||
+            lower == "please";
    }
 
    std::map<std::string, AddinSpecification> addins_;

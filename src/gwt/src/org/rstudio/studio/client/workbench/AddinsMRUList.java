@@ -30,8 +30,7 @@ import org.rstudio.core.client.command.KeyMap.KeyMapType;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -51,7 +50,8 @@ public class AddinsMRUList extends MRUList
                         final EventBus events,
                         final Session session,
                         final GlobalDisplay display,
-                        final AddinsServerOperations server)
+                        final AddinsServerOperations server,
+                        final AddinExecutor executor)
    {
       super(
             listManager.getAddinsMruList(),
@@ -76,9 +76,7 @@ public class AddinsMRUList extends MRUList
                public void execute(final String encoded)
                {
                   final RAddin addin = RAddin.decode(encoded);
-                  server.executeRAddin(
-                        addin.getId(),
-                        new SimpleRequestCallback<Void>("Error Executing Addin", true));
+                  executor.execute(addin);
                }
             });
       

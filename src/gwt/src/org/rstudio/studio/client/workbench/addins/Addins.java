@@ -1,10 +1,16 @@
 package org.rstudio.studio.client.workbench.addins;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.inject.Inject;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsMap;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 public class Addins
 {
@@ -17,6 +23,7 @@ public class Addins
                                                String pkg,
                                                String title,
                                                String description,
+                                               boolean interactive,
                                                String binding)
       /*-{
          return {
@@ -24,6 +31,7 @@ public class Addins
             "package": pkg,
             "title": title,
             "description": description,
+            "interactive": interactive,
             "binding": binding
          };
       }-*/;
@@ -32,6 +40,7 @@ public class Addins
       public final native String getPackage() /*-{ return this["package"]; }-*/;
       public final native String getTitle() /*-{ return this["title"]; }-*/;
       public final native String getDescription() /*-{ return this["description"]; }-*/;
+      public final native boolean isInteractive() /*-{ return this["interactive"]; }-*/;
       public final native String getBinding() /*-{ return this["binding"]; }-*/;
       
       public final String getId()
@@ -47,13 +56,14 @@ public class Addins
                addin.getPackage(),
                addin.getTitle(),
                addin.getDescription(),
+               addin.isInteractive() ? "true" : "false",
                addin.getBinding());
       }
       
       public final static RAddin decode(String decoded)
       {
          String[] splat = decoded.split(PATTERN);
-         if (splat.length != 5)
+         if (splat.length != 6)
          {
             Debug.log("Unexpected RAddin format");
             return RAddin.create();
@@ -64,13 +74,55 @@ public class Addins
                splat[1],
                splat[2],
                splat[3],
-               splat[4]);
+               splat[4] == "false" ? false : true,
+               splat[5]);
       }
    }
    
    public static class RAddins extends JsMap<RAddin>
    {
       protected RAddins() {}
+   }
+   
+   public static class AddinExecutor
+   {
+      public AddinExecutor()
+      {
+      }
+      
+      @Inject
+      private void initialize(AddinsServerOperations server, EventBus events)
+      {
+         server_ = server;
+         events_ = events;
+      }
+      
+      public void execute(RAddin addin)
+      {
+         if (!injected_)
+         {
+            RStudioGinjector.INSTANCE.injectMembers(this);
+            injected_ = true;
+         }
+         
+         if (addin.isInteractive())
+         {
+            String code = addin.getPackage() + ":::" + addin.getBinding() + "()";
+            events_.fireEvent(new SendToConsoleEvent(code, true, false, false));
+         }
+         else
+         {
+            server_.executeRAddinNonInteractively(
+                  addin.getId(),
+                  new SimpleRequestCallback<Void>("Error Executing Addin", true));
+         }
+      }
+      
+      private boolean injected_ = false;
+      
+      // Injected ----
+      private AddinsServerOperations server_;
+      private EventBus events_;
    }
    
    private static final String DELIMITER = "|||";

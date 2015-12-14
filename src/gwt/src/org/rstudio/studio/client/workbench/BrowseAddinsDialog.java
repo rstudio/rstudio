@@ -35,6 +35,7 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
@@ -50,7 +51,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
@@ -118,12 +119,13 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
       // get R addins handler
       class AddinsServerRequestCallback extends ServerRequestCallback<RAddins>
       {
+         @SuppressWarnings("unused")
          AddinsServerRequestCallback()
          {
             this(null);
          }
          
-         AddinsServerRequestCallback(Command onSuccess)
+         AddinsServerRequestCallback(CommandWithArg<RAddins> onSuccess)
          {
             onSuccess_ = onSuccess;
          }
@@ -140,7 +142,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
             table_.setEmptyTableWidget(emptyTableLabel("No addins available"));
             
             if (onSuccess_ != null)
-               onSuccess_.execute();
+               onSuccess_.execute(addins);
          }
          
          @Override
@@ -149,19 +151,26 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
             Debug.logError(error);
          }
          
-         private Command onSuccess_;
+         private CommandWithArg<RAddins> onSuccess_;
          
       };
      
       // first call for cached addins then call for full reindex
-      server_.getRAddins(false, new AddinsServerRequestCallback(new Command() {
+      server_.getRAddins(false, new AddinsServerRequestCallback(new CommandWithArg<RAddins>() {
          @Override
-         public void execute()
+         public void execute(RAddins addins)
          {
-            server_.getRAddins(true, new AddinsServerRequestCallback());
+            addins_ = addins;
+            server_.getRAddins(true, new AddinsServerRequestCallback(new CommandWithArg<RAddins>()
+            {
+               @Override
+               public void execute(RAddins addins)
+               {
+                  addins_ = addins;
+               }
+            }));
          }
       }));
-      
       
       addLeftWidget(new ThemedButton("Keyboard Shortcuts...", new ClickHandler()
       {
@@ -333,17 +342,37 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
          };
       }
       
-      final String id = selection_.getId();
-      final String encoded = RAddin.encode(selection_);
-      return new Command()
+      return new ExecuteAddinCommand(
+            mruList_,
+            addins_.get(selection_.getId()),
+            RAddin.encode(selection_),
+            new AddinExecutor());
+   }
+   
+   private static class ExecuteAddinCommand implements Command
+   {
+      public ExecuteAddinCommand(AddinsMRUList mruList,
+                                 RAddin addin,
+                                 String encoded,
+                                 AddinExecutor executor)
       {
-         @Override
-         public void execute()
-         {
-            mruList_.add(encoded);
-            server_.executeRAddin(id, new VoidServerRequestCallback());
-         }
-      };
+         mruList_ = mruList;
+         addin_ = addin;
+         encoded_ = encoded;
+         executor_ = executor;
+      }
+      
+      @Override
+      public void execute()
+      {
+         mruList_.add(encoded_);
+         executor_.execute(addin_);
+      }
+      
+      private final AddinsMRUList mruList_;
+      private final RAddin addin_;
+      private final String encoded_;
+      private final AddinExecutor executor_;
    }
 
    @Override
@@ -375,6 +404,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
    private final SingleSelectionModel<RAddin> selectionModel_;
    
    private List<RAddin> originalData_;
+   private RAddins addins_;
    private RAddin selection_;
    
    // Injected ----
