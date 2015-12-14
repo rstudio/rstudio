@@ -144,6 +144,7 @@ const int kUserFollowStarted = 120;
 const int kUserFollowEnded = 121;
 const int kProjectAccessRevoked = 122;
 const int kCollabEditSaved = 123;
+const int kAddinRegistryUpdated = 124;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -391,6 +392,8 @@ std::string ClientEvent::typeName() const
          return "project_access_revoked";
       case client_events::kCollabEditSaved:
          return "collab_edit_saved";
+      case client_events::kAddinRegistryUpdated:
+         return "addin_registry_updated";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

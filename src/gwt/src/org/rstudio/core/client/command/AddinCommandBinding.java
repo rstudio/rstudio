@@ -14,37 +14,28 @@
  */
 package org.rstudio.core.client.command;
 
-import com.google.inject.Inject;
-
 import org.rstudio.core.client.command.KeyMap.CommandBinding;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
+import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
+import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 
 public class AddinCommandBinding implements CommandBinding
 {
-   public AddinCommandBinding(String id)
+   public AddinCommandBinding(RAddin addin)
    {
-      RStudioGinjector.INSTANCE.injectMembers(this);
-      id_ = id;
-   }
-   
-   @Inject
-   private void initialize(AddinsServerOperations server)
-   {
-      server_ = server;
+      addin_ = addin;
+      executor_ = new AddinExecutor();
    }
    
    @Override
    public String getId()
    {
-      return id_;
+      return addin_.getId();
    }
 
    @Override
    public void execute()
    {
-      server_.executeRAddin(id_, new VoidServerRequestCallback());
+      executor_.execute(addin_);
    }
 
    @Override
@@ -59,6 +50,6 @@ public class AddinCommandBinding implements CommandBinding
       return true;
    }
    
-   private final String id_;
-   private AddinsServerOperations server_;
+   private final RAddin addin_;
+   private final AddinExecutor executor_;
 }

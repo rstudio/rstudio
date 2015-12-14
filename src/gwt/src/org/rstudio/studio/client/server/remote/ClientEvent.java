@@ -135,6 +135,7 @@ class ClientEvent extends JavaScriptObject
    public static final String UserFollowEnded = "user_follow_ended";
    public static final String ProjectAccessRevoked = "project_access_revoked";
    public static final String CollabEditSaved = "collab_edit_saved";
+   public static final String AddinRegistryUpdated = "addin_registry_updated";
    
    protected ClientEvent()
    {

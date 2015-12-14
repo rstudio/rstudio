@@ -50,7 +50,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
@@ -131,6 +131,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
          @Override
          public void onResponseReceived(RAddins addins)
          {
+            addins_ = addins;
             List<RAddin> data = new ArrayList<RAddin>();
             for (String key : JsUtil.asIterable(addins.keys()))
                data.add(addins.get(key));
@@ -161,7 +162,6 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
             server_.getRAddins(true, new AddinsServerRequestCallback());
          }
       }));
-      
       
       addLeftWidget(new ThemedButton("Keyboard Shortcuts...", new ClickHandler()
       {
@@ -333,17 +333,37 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
          };
       }
       
-      final String id = selection_.getId();
-      final String encoded = RAddin.encode(selection_);
-      return new Command()
+      return new ExecuteAddinCommand(
+            mruList_,
+            addins_.get(selection_.getId()),
+            RAddin.encode(selection_),
+            new AddinExecutor());
+   }
+   
+   private static class ExecuteAddinCommand implements Command
+   {
+      public ExecuteAddinCommand(AddinsMRUList mruList,
+                                 RAddin addin,
+                                 String encoded,
+                                 AddinExecutor executor)
       {
-         @Override
-         public void execute()
-         {
-            mruList_.add(encoded);
-            server_.executeRAddin(id, new VoidServerRequestCallback());
-         }
-      };
+         mruList_ = mruList;
+         addin_ = addin;
+         encoded_ = encoded;
+         executor_ = executor;
+      }
+      
+      @Override
+      public void execute()
+      {
+         mruList_.add(encoded_);
+         executor_.execute(addin_);
+      }
+      
+      private final AddinsMRUList mruList_;
+      private final RAddin addin_;
+      private final String encoded_;
+      private final AddinExecutor executor_;
    }
 
    @Override
@@ -375,6 +395,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
    private final SingleSelectionModel<RAddin> selectionModel_;
    
    private List<RAddin> originalData_;
+   private RAddins addins_;
    private RAddin selection_;
    
    // Injected ----

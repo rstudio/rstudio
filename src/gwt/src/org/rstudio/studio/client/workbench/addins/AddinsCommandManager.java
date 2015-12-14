@@ -5,6 +5,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.command.AddinCommandBinding;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
@@ -16,8 +17,13 @@ import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.files.FileBacked;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedHandler;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
+import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
+import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,17 +40,19 @@ public class AddinsCommandManager
             false,
             EditorKeyBindings.create());
       
+      // load addin bindings on session init
       events_.addHandler(
-            EditorLoadedEvent.TYPE,
-            new EditorLoadedHandler()
+            SessionInitEvent.TYPE,
+            new SessionInitHandler()
             {
                @Override
-               public void onEditorLoaded(EditorLoadedEvent event)
+               public void onSessionInit(SessionInitEvent sie)
                {
                   loadBindings();
                }
             });
       
+      // set bindings when updated (e.g. through ModifyKeyboardShortcuts widget)
       events_.addHandler(
             AddinsKeyBindingsChangedEvent.TYPE,
             new AddinsKeyBindingsChangedEvent.Handler()
@@ -55,12 +63,26 @@ public class AddinsCommandManager
                   registerBindings(event.getBindings(), null);
                }
             });
+      
+      // update addin bindings when registry populated
+      events_.addHandler(
+            AddinRegistryUpdatedEvent.TYPE,
+            new AddinRegistryUpdatedEvent.Handler()
+            {
+               @Override
+               public void onAddinRegistryUpdated(AddinRegistryUpdatedEvent event)
+               {
+                  loadBindings();
+               }
+            });
    }
    
    @Inject
-   private void initialize(EventBus events)
+   private void initialize(EventBus events,
+                           AddinsServerOperations server)
    {
       events_ = events;
+      server_ = server;
    }
    
    public void addBindingsAndSave(final EditorKeyBindings newBindings,
@@ -104,26 +126,46 @@ public class AddinsCommandManager
    private void registerBindings(final EditorKeyBindings bindings,
                                  final CommandWithArg<EditorKeyBindings> afterLoad)
    {
-      List<Pair<List<KeySequence>, CommandBinding>> commands =
-            new ArrayList<Pair<List<KeySequence>, CommandBinding>>();
-      
-      for (String id : bindings.iterableKeys())
+      server_.getRAddins(false, new ServerRequestCallback<RAddins>()
       {
-         List<KeySequence> keyList = bindings.get(id).getKeyBindings();
-         CommandBinding binding = new AddinCommandBinding(id);
-         commands.add(new Pair<List<KeySequence>, CommandBinding>(keyList, binding));
-      }
-      
-      KeyMap map = ShortcutManager.INSTANCE.getKeyMap(KeyMapType.ADDIN);
-      for (int i = 0; i < commands.size(); i++)
-      {
-         map.setBindings(
-               commands.get(i).first,
-               commands.get(i).second);
-      }
-      
-      if (afterLoad != null)
-         afterLoad.execute(bindings);
+         @Override
+         public void onResponseReceived(RAddins addins)
+         {
+            List<Pair<List<KeySequence>, CommandBinding>> commands =
+                  new ArrayList<Pair<List<KeySequence>, CommandBinding>>();
+
+            for (String id : bindings.iterableKeys())
+            {
+               List<KeySequence> keyList = bindings.get(id).getKeyBindings();
+               RAddin addin = addins.get(id);
+               if (addin == null)
+               {
+                  Debug.log("Failed to register addin with id '" + id + "'");
+                  continue;
+               }
+               CommandBinding binding = new AddinCommandBinding(addin);
+               commands.add(new Pair<List<KeySequence>, CommandBinding>(keyList, binding));
+            }
+
+            KeyMap map = ShortcutManager.INSTANCE.getKeyMap(KeyMapType.ADDIN);
+            for (int i = 0; i < commands.size(); i++)
+            {
+               map.setBindings(
+                     commands.get(i).first,
+                     commands.get(i).second);
+            }
+
+            if (afterLoad != null)
+               afterLoad.execute(bindings);
+            
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
    }
    
    public void resetBindings()
@@ -150,5 +192,6 @@ public class AddinsCommandManager
    
    // Injected ----
    private EventBus events_;
+   private AddinsServerOperations server_;
 
 }
