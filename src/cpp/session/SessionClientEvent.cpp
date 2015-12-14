@@ -133,7 +133,7 @@ const int kSessionCountChanged = 108;
 const int kCollabEditEnded = 109;
 const int kProjectUsersChanged = 110;
 const int kRVersionsChanged = 111;
-const int kRmdParamsEdit = 112;
+const int kShinyGadgetDialog = 112;
 const int kRmdParamsReady = 113;
 const int kRegisterUserCommand = 114;
 const int kRmdRSConnectDeploymentFailed = 115;
@@ -371,8 +371,8 @@ std::string ClientEvent::typeName() const
          return "project_users_changed";
       case client_events::kRVersionsChanged:
          return "r_versions_changed";
-      case client_events::kRmdParamsEdit:
-         return "rmd_params_edit";
+      case client_events::kShinyGadgetDialog:
+         return "shiny_gadget_dialog";
       case client_events::kRmdParamsReady:
          return "rmd_params_ready";
       case client_events::kRegisterUserCommand:

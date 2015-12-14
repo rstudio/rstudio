@@ -63,7 +63,7 @@ import org.rstudio.studio.client.projects.events.ProjectAccessRevokedEvent;
 import org.rstudio.studio.client.projects.events.ProjectUserChangedEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
 import org.rstudio.studio.client.projects.model.ProjectUser;
-import org.rstudio.studio.client.rmarkdown.events.RmdParamsEditEvent;
+import org.rstudio.studio.client.rmarkdown.events.ShinyGadgetDialogEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdParamsReadyEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderOutputEvent;
@@ -697,10 +697,10 @@ public class ClientEventDispatcher
             RVersionsInfo versions = event.getData();
             eventBus_.fireEvent(new RVersionsChangedEvent(versions));
          }
-         else if (type.equals(ClientEvent.RmdParamsEdit))
+         else if (type.equals(ClientEvent.ShinyGadgetDialog))
          {
-            String url = event.getData();
-            eventBus_.fireEvent(new RmdParamsEditEvent(url));
+            ShinyGadgetDialogEvent.Data data = event.getData();
+            eventBus_.fireEvent(new ShinyGadgetDialogEvent(data));
          }
          else if (type.equals(ClientEvent.RmdParamsReady))
          {

@@ -1,5 +1,5 @@
 /*
- * RmdParamsEditDialog.java
+ * ShinyGadgetDialog.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -13,7 +13,7 @@
  *
  */
 
-package org.rstudio.studio.client.rmarkdown.ui;
+package org.rstudio.studio.client.shiny.ui;
 
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
@@ -26,13 +26,14 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-public class RmdParamsEditDialog extends ModalDialogBase
+public class ShinyGadgetDialog extends ModalDialogBase
 {
-   public RmdParamsEditDialog(String url)
+   public ShinyGadgetDialog(String caption, String url, Size preferredSize)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      setText("Knit with Parameters");
+      setText(caption);
       url_ = url;
+      preferredSize_ = preferredSize;
       initializeEvents();
    }
    
@@ -48,12 +49,11 @@ public class RmdParamsEditDialog extends ModalDialogBase
       frame_ = new RStudioFrame();
       
       // compute the widget size and set it
-      Size size = new Size(600, 600);
       Size minimumSize = new Size(300, 300);
-      size = DomMetrics.adjustedElementSize(size, 
-                                            minimumSize, 
-                                            0,   // pad
-                                            100); // client margin
+      Size size = DomMetrics.adjustedElementSize(preferredSize_, 
+                                                 minimumSize, 
+                                                 0,   // pad
+                                                 100); // client margin
       frame_.setSize(size.width + "px", size.height + "px");
       
       if (Desktop.isDesktop())
@@ -75,7 +75,7 @@ public class RmdParamsEditDialog extends ModalDialogBase
       var handler = $entry(function(e) {
          if (typeof e.data != 'string')
             return;
-         thiz.@org.rstudio.studio.client.rmarkdown.ui.RmdParamsEditDialog::onMessage(Ljava/lang/String;Ljava/lang/String;)(e.data, e.origin);
+         thiz.@org.rstudio.studio.client.shiny.ui.ShinyGadgetDialog::onMessage(Ljava/lang/String;Ljava/lang/String;)(e.data, e.origin);
          $wnd.removeEventListener('message', handler, false);
       });
       $wnd.addEventListener("message", handler, true);
@@ -96,6 +96,7 @@ public class RmdParamsEditDialog extends ModalDialogBase
    }
 
    private final String url_;
+   private Size preferredSize_;
    private RStudioFrame frame_;
    private Commands commands_;
 }

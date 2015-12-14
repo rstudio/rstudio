@@ -206,7 +206,11 @@
          params = params,
          shiny_args = list(
             launch.browser = function(url, ...) {
-               .Call("rs_showRmdParamsEditor", url)
+               .Call("rs_showShinyGadgetDialog",
+                     "Knit with Parameters",
+                     url,
+                     600,
+                     600)
             },
             quiet = TRUE),
          save_caption = "Knit",

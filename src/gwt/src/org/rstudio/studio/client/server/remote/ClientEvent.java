@@ -125,7 +125,7 @@ class ClientEvent extends JavaScriptObject
    public static final String CollabEditEnded = "collab_edit_ended";
    public static final String ProjectUsersChanged = "project_users_changed";
    public static final String RVersionsChanged = "r_versions_changed";
-   public static final String RmdParamsEdit = "rmd_params_edit";
+   public static final String ShinyGadgetDialog = "shiny_gadget_dialog";
    public static final String RmdParamsReady = "rmd_params_ready";
    public static final String RegisterUserCommand = "register_user_command";
    public static final String ReplaceRanges = "replace_ranges";

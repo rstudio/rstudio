@@ -24,6 +24,7 @@
 #include <core/FileSerializer.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/SessionRUtil.hpp>
 #include <session/SessionOptions.hpp>
@@ -334,6 +335,35 @@ Error createShinyApp(const json::JsonRpcRequest& request,
    return Success();
 }
 
+SEXP rs_showShinyGadgetDialog(SEXP captionSEXP,
+                              SEXP urlSEXP,
+                              SEXP preferredWidthSEXP,
+                              SEXP preferredHeightSEXP)
+{
+   // get caption
+   std::string caption = r::sexp::safeAsString(captionSEXP);
+
+   // get transformed URL
+   std::string url = r::sexp::safeAsString(urlSEXP);
+   url = module_context::mapUrlPorts(url);
+
+   // get preferred width and height
+   int preferredWidth = r::sexp::asInteger(preferredWidthSEXP);
+   int preferredHeight = r::sexp::asInteger(preferredHeightSEXP);
+
+   // enque client event
+   json::Object dataJson;
+   dataJson["caption"] = caption;
+   dataJson["url"] = url;
+   dataJson["width"] = preferredWidth;
+   dataJson["height"] = preferredHeight;
+
+   ClientEvent event(client_events::kShinyGadgetDialog, dataJson);
+   module_context::enqueClientEvent(event);
+
+   return R_NilValue;
+}
+
 } // anonymous namespace
 
 ShinyFileType shinyTypeFromExtendedType(const std::string& extendedType)
@@ -430,6 +460,12 @@ Error initialize()
    using namespace module_context;
    using boost::bind;
    
+   R_CallMethodDef methodDef ;
+   methodDef.name = "rs_showShinyGadgetDialog" ;
+   methodDef.fun = (DL_FUNC)rs_showShinyGadgetDialog ;
+   methodDef.numArgs = 4;
+   r::routines::addCallMethod(methodDef);
+
    events().onPackageLoaded.connect(onPackageLoaded);
 
    events().onDetectSourceExtendedType.connect(onDetectShinySourceType);

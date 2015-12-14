@@ -1082,19 +1082,6 @@ Error prepareForRmdChunkExecution(const json::JsonRpcRequest& request,
 }
 
 
-SEXP rs_showRmdParamsEditor(SEXP urlSEXP)
-{
-   // get transformed URL
-   std::string url = r::sexp::safeAsString(urlSEXP);
-   url = module_context::mapUrlPorts(url);
-
-   // enque client event
-   ClientEvent event(client_events::kRmdParamsEdit, url);
-   module_context::enqueClientEvent(event);
-
-   return R_NilValue;
-}
-
 SEXP rs_paramsFileForRmd(SEXP fileSEXP)
 {
    static std::map<std::string,std::string> s_paramsFiles;
@@ -1137,11 +1124,6 @@ Error initialize()
    using namespace module_context;
 
    R_CallMethodDef methodDef ;
-   methodDef.name = "rs_showRmdParamsEditor" ;
-   methodDef.fun = (DL_FUNC)rs_showRmdParamsEditor ;
-   methodDef.numArgs = 1;
-   r::routines::addCallMethod(methodDef);
-
    methodDef.name = "rs_paramsFileForRmd" ;
    methodDef.fun = (DL_FUNC)rs_paramsFileForRmd ;
    methodDef.numArgs = 1;

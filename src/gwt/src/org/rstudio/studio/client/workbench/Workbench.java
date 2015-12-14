@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
@@ -49,8 +50,7 @@ import org.rstudio.studio.client.htmlpreview.HTMLPreview;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.projects.ProjectOpener;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
-import org.rstudio.studio.client.rmarkdown.events.RmdParamsEditEvent;
-import org.rstudio.studio.client.rmarkdown.ui.RmdParamsEditDialog;
+import org.rstudio.studio.client.rmarkdown.events.ShinyGadgetDialogEvent;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -58,6 +58,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
 import org.rstudio.studio.client.shiny.ShinyApplication;
+import org.rstudio.studio.client.shiny.ui.ShinyGadgetDialog;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
@@ -79,7 +80,7 @@ public class Workbench implements BusyHandler,
                                   WorkbenchLoadedHandler,
                                   WorkbenchMetricsChangedHandler,
                                   InstallRtoolsEvent.Handler,
-                                  RmdParamsEditEvent.Handler,
+                                  ShinyGadgetDialogEvent.Handler,
                                   ExecuteUserCommandEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Workbench> {}
@@ -138,7 +139,7 @@ public class Workbench implements BusyHandler,
       eventBus.addHandler(WorkbenchLoadedEvent.TYPE, this);
       eventBus.addHandler(WorkbenchMetricsChangedEvent.TYPE, this);
       eventBus.addHandler(InstallRtoolsEvent.TYPE, this);
-      eventBus.addHandler(RmdParamsEditEvent.TYPE, this);
+      eventBus.addHandler(ShinyGadgetDialogEvent.TYPE, this);
       eventBus.addHandler(ExecuteUserCommandEvent.TYPE, this);
 
       // We don't want to send setWorkbenchMetrics more than once per 1/2-second
@@ -255,9 +256,12 @@ public class Workbench implements BusyHandler,
    }
    
    @Override
-   public void onRmdParamsEdit(RmdParamsEditEvent event)
+   public void onShinyGadgetDialog(ShinyGadgetDialogEvent event)
    {
-      new RmdParamsEditDialog(event.getUrl()).showModal();
+      new ShinyGadgetDialog(event.getCaption(), 
+                            event.getUrl(),
+                            new Size(event.getPreferredWidth(),
+                                     event.getPreferredHeight())).showModal();
    }
   
    @Handler

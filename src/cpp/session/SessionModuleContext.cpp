@@ -129,8 +129,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kUnhandledError;
       else if (name == "enable_rstudio_connect")
          type = session::client_events::kEnableRStudioConnect;
-      else if (name == "rmd_params_edit")
-         type = session::client_events::kRmdParamsEdit;
+      else if (name == "shiny_gadget_dialog")
+         type = session::client_events::kShinyGadgetDialog;
       else if (name == "rmd_params_ready")
          type = session::client_events::kRmdParamsReady;
       else if (name == "jump_to_function")
