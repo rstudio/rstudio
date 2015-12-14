@@ -257,12 +257,7 @@ private:
       std::string lower = string_utils::trimWhitespace(
                boost::algorithm::to_lower_copy(string));
       
-      return
-            lower == "true" ||
-            lower == "t" ||
-            lower == "yes" ||
-            lower == "y" ||
-            lower == "please";
+      return lower == "true";
    }
 
    std::map<std::string, AddinSpecification> addins_;
