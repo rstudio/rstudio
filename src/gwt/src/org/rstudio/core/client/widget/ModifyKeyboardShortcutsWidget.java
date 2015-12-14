@@ -1263,11 +1263,14 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             if (cb1.equals(cb2))
                continue;
             
-            if (cb1.getContext() != cb2.getContext())
-               continue;
-            
             int t1 = cb1.getCommandType();
             int t2 = cb2.getCommandType();
+            
+            // allow for keybindings within the same keymap when they
+            // map to different contexts. this is mainly done to support
+            // 'dynamic' commands as handled with AppCommands
+            if (t1 == t2 && cb1.getContext() != cb2.getContext())
+               continue;
             
             KeySequence ks1 = cb1.getKeySequence();
             KeySequence ks2 = cb2.getKeySequence();
@@ -1282,8 +1285,15 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             
             if (hasConflict)
             {
+               // editor commands can be masked by AppCommands and addins
                if (t1 == KeyboardShortcutEntry.TYPE_EDITOR_COMMAND && t1 != t2)
                   addMaskedCommandStyles(i, j, cb2);
+               
+               // addins can mask both AppCommands and editor commands
+               else if (t2 == KeyboardShortcutEntry.TYPE_ADDIN && t1 != t2)
+                  addMaskedCommandStyles(i, j, cb2);
+               
+               // two commands with the same binding in the same 'group' == conflict
                else if (t1 == t2)
                   addConflictCommandStyles(i, j, cb2);
             }
