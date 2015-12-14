@@ -22,6 +22,8 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +40,19 @@ public class AddinsCommandManager
             false,
             EditorKeyBindings.create());
       
+      // load addin bindings on session init
+      events_.addHandler(
+            SessionInitEvent.TYPE,
+            new SessionInitHandler()
+            {
+               @Override
+               public void onSessionInit(SessionInitEvent sie)
+               {
+                  loadBindings();
+               }
+            });
+      
+      // set bindings when updated (e.g. through ModifyKeyboardShortcuts widget)
       events_.addHandler(
             AddinsKeyBindingsChangedEvent.TYPE,
             new AddinsKeyBindingsChangedEvent.Handler()
@@ -49,6 +64,7 @@ public class AddinsCommandManager
                }
             });
       
+      // update addin bindings when registry populated
       events_.addHandler(
             AddinRegistryUpdatedEvent.TYPE,
             new AddinRegistryUpdatedEvent.Handler()
