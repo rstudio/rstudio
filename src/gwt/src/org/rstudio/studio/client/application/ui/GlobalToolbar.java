@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FocusContext;
@@ -220,6 +221,30 @@ public class GlobalToolbar extends Toolbar
       paneLayoutButton.setTitle("Workspace Panes");
       
       addLeftWidget(paneLayoutButton);
+      
+      // addins menu
+      ToolbarPopupMenu addinsMenu = new ToolbarPopupMenu();
+      addinsMenu.addItem(commands_.addinsMru0().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru1().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru2().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru3().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru4().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru5().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru6().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru7().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru8().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru9().createMenuItem(false));
+      addinsMenu.addSeparator();
+      addinsMenu.addItem(commands_.clearAddinsMruList().createMenuItem(false));
+      addinsMenu.addSeparator();
+      addinsMenu.addItem(commands_.browseAddins().createMenuItem(false));
+      addLeftSeparator();
+      ToolbarButton addinsButton = new ToolbarButton(
+           "Addins", CoreResources.INSTANCE.iconEmpty(), addinsMenu);
+      addLeftWidget(addinsButton);
+      
+      
+      
       // project popup menu
       ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
                                                           commands_);
