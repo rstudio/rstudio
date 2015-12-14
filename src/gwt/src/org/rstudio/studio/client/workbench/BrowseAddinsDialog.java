@@ -35,7 +35,6 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
@@ -119,13 +118,12 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
       // get R addins handler
       class AddinsServerRequestCallback extends ServerRequestCallback<RAddins>
       {
-         @SuppressWarnings("unused")
          AddinsServerRequestCallback()
          {
             this(null);
          }
          
-         AddinsServerRequestCallback(CommandWithArg<RAddins> onSuccess)
+         AddinsServerRequestCallback(Command onSuccess)
          {
             onSuccess_ = onSuccess;
          }
@@ -133,6 +131,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
          @Override
          public void onResponseReceived(RAddins addins)
          {
+            addins_ = addins;
             List<RAddin> data = new ArrayList<RAddin>();
             for (String key : JsUtil.asIterable(addins.keys()))
                data.add(addins.get(key));
@@ -142,7 +141,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
             table_.setEmptyTableWidget(emptyTableLabel("No addins available"));
             
             if (onSuccess_ != null)
-               onSuccess_.execute(addins);
+               onSuccess_.execute();
          }
          
          @Override
@@ -151,24 +150,16 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
             Debug.logError(error);
          }
          
-         private CommandWithArg<RAddins> onSuccess_;
+         private Command onSuccess_;
          
       };
      
       // first call for cached addins then call for full reindex
-      server_.getRAddins(false, new AddinsServerRequestCallback(new CommandWithArg<RAddins>() {
+      server_.getRAddins(false, new AddinsServerRequestCallback(new Command() {
          @Override
-         public void execute(RAddins addins)
+         public void execute()
          {
-            addins_ = addins;
-            server_.getRAddins(true, new AddinsServerRequestCallback(new CommandWithArg<RAddins>()
-            {
-               @Override
-               public void execute(RAddins addins)
-               {
-                  addins_ = addins;
-               }
-            }));
+            server_.getRAddins(true, new AddinsServerRequestCallback());
          }
       }));
       
