@@ -81,6 +81,7 @@ import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentOutputEvent
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
+import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEvent;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
@@ -746,6 +747,10 @@ public class ClientEventDispatcher
          {
             CollabEditSavedEvent.Data data = event.getData();
             eventBus_.fireEvent(new CollabEditSavedEvent(data));
+         }
+         else if (type.equals(ClientEvent.AddinRegistryUpdated))
+         {
+            eventBus_.fireEvent(new AddinRegistryUpdatedEvent());
          }
          else
          {

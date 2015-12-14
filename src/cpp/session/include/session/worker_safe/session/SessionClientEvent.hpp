@@ -145,6 +145,7 @@ extern const int kUserFollowStarted;
 extern const int kUserFollowEnded;
 extern const int kProjectAccessRevoked;
 extern const int kCollabEditSaved;
+extern const int kAddinRegistryUpdated;
 }
    
 class ClientEvent

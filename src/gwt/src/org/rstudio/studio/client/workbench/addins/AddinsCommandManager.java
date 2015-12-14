@@ -21,8 +21,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedHandler;
+import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,17 +39,6 @@ public class AddinsCommandManager
             EditorKeyBindings.create());
       
       events_.addHandler(
-            EditorLoadedEvent.TYPE,
-            new EditorLoadedHandler()
-            {
-               @Override
-               public void onEditorLoaded(EditorLoadedEvent event)
-               {
-                  loadBindings();
-               }
-            });
-      
-      events_.addHandler(
             AddinsKeyBindingsChangedEvent.TYPE,
             new AddinsKeyBindingsChangedEvent.Handler()
             {
@@ -58,6 +46,17 @@ public class AddinsCommandManager
                public void onAddinsKeyBindingsChanged(AddinsKeyBindingsChangedEvent event)
                {
                   registerBindings(event.getBindings(), null);
+               }
+            });
+      
+      events_.addHandler(
+            AddinRegistryUpdatedEvent.TYPE,
+            new AddinRegistryUpdatedEvent.Handler()
+            {
+               @Override
+               public void onAddinRegistryUpdated(AddinRegistryUpdatedEvent event)
+               {
+                  loadBindings();
                }
             });
    }

@@ -276,8 +276,14 @@ FilePath addinRegistryPath()
 
 void updateAddinRegistry(boost::shared_ptr<AddinRegistry> pRegistry)
 {
+   // update registry in memory + on disk
    s_pCurrentRegistry = pRegistry;
    s_pCurrentRegistry->saveToFile(addinRegistryPath());
+   
+   // notify client
+   json::Value data = s_pCurrentRegistry->toJson();
+   ClientEvent event(client_events::kAddinRegistryUpdated, data);
+   module_context::enqueClientEvent(event);
 }
 
 void loadAddinRegistry()
