@@ -3751,9 +3751,10 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void getRAddins(ServerRequestCallback<RAddins> requestCallback)
+   public void getRAddins(boolean reindex, 
+                          ServerRequestCallback<RAddins> requestCallback)
    {
-      sendRequest(RPC_SCOPE, GET_R_ADDINS, requestCallback);
+      sendRequest(RPC_SCOPE, GET_R_ADDINS, reindex, requestCallback);
    }
    
    @Override

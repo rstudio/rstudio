@@ -487,7 +487,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       });
       
       // Addins: ensure any recently bound addins become part of the MRU
-      addinsServer_.getRAddins(new ServerRequestCallback<RAddins>()
+      addinsServer_.getRAddins(false, new ServerRequestCallback<RAddins>()
       {
          @Override
          public void onError(ServerError error)
@@ -1035,7 +1035,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          @Override
          public void onExecute(final Command continuation)
          {
-            addinsServer_.getRAddins(new ServerRequestCallback<RAddins>()
+            addinsServer_.getRAddins(false, new ServerRequestCallback<RAddins>()
             {
                @Override
                public void onResponseReceived(RAddins addins)

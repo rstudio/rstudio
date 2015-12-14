@@ -64,7 +64,7 @@ public:
    const std::string& getDescription() const { return description_; }
    const std::string& getBinding() const { return binding_; }
    
-   json::Object toJson()
+   json::Object toJson() const
    {
       json::Object object;
       
@@ -89,9 +89,108 @@ class AddinRegistry : boost::noncopyable
 {
 public:
    
+   void saveToFile(const core::FilePath& filePath) const
+   {
+      boost::shared_ptr<std::ostream> pStream;
+      Error error = filePath.open_w(&pStream);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+
+      json::writeFormatted(toJson(), *pStream);
+   }
+
+   void loadFromFile(const core::FilePath& filePath)
+   {
+      addins_.clear();
+
+      if (!filePath.exists())
+         return;
+
+      std::string contents;
+      Error error = core::readStringFromFile(filePath, &contents);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+
+      // check but don't log for unexpected input because we are the only ones
+      // that write this file
+      json::Value parsedJson;
+      if (json::parse(contents, &parsedJson) &&
+          json::isType<json::Object>(parsedJson))
+      {
+         json::Object addinsJson = parsedJson.get_obj();
+
+         BOOST_FOREACH(const std::string& key, addinsJson | boost::adaptors::map_keys)
+         {
+            json::Value valueJson = addinsJson.at(key);
+            if(json::isType<json::Object>(valueJson))
+            {
+               std::string name, package, title, description, binding;
+               Error error = json::readObject(valueJson.get_obj(),
+                                              "name", &name,
+                                              "package", &package,
+                                              "title", &title,
+                                              "description", &description,
+                                              "binding", &binding);
+               if (error)
+               {
+                  LOG_ERROR(error);
+                  continue;
+               }
+
+               addins_[key] = AddinSpecification(name,
+                                                 package,
+                                                 title,
+                                                 description,
+                                                 binding);
+            }
+         }
+
+      }
+
+   }
+
    void add(const std::string& package, const AddinSpecification& spec)
    {
       addins_[constructKey(package, spec.getBinding())] = spec;
+   }
+
+   void add(const std::string& pkgName,
+            std::map<std::string, std::string>& fields)
+   {
+      add(pkgName, AddinSpecification(
+            fields["Name"],
+            pkgName,
+            fields["Title"],
+            fields["Description"],
+            fields["Binding"]));
+   }
+
+   void add(const std::string& pkgName, const FilePath& addinPath)
+   {
+      static const boost::regex reSeparator("\\n{2,}");
+
+      std::string contents;
+      Error error = core::readStringFromFile(addinPath, &contents, string_utils::LineEndingPosix);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+
+      boost::sregex_token_iterator it(contents.begin(), contents.end(), reSeparator, -1);
+      boost::sregex_token_iterator end;
+
+      for (; it != end; ++it)
+      {
+         std::map<std::string, std::string> fields = parseAddinDcf(*it);
+         add(pkgName, fields);
+      }
    }
    
    bool contains(const std::string& package, const std::string& name)
@@ -104,13 +203,13 @@ public:
       return addins_[constructKey(package, name)];
    }
    
-   json::Object toJson()
+   json::Object toJson() const
    {
       json::Object object;
       
       BOOST_FOREACH(const std::string& key, addins_ | boost::adaptors::map_keys)
       {
-         object[key] = addins_[key].toJson();
+         object[key] = addins_.at(key).toJson();
       }
       
       return object;
@@ -120,6 +219,20 @@ public:
    
 private:
    
+   static std::map<std::string, std::string> parseAddinDcf(
+                                          const std::string& contents)
+   {
+      // read and parse the DCF file
+      std::map<std::string, std::string> fields;
+      std::string errMsg;
+      Error error = text::parseDcfFile(contents, true, &fields, &errMsg);
+      if (error)
+         LOG_ERROR(error);
+
+      return fields;
+   }
+
+
    static std::string constructKey(const std::string& package, const std::string& name)
    {
       return package + "::" + name;
@@ -128,63 +241,48 @@ private:
    std::map<std::string, AddinSpecification> addins_;
 };
 
+// maintain single "active" registry that is updatable as a result of indexing
+// and which is persisted to disk
+
+boost::shared_ptr<AddinRegistry> s_pCurrentRegistry =
+                                    boost::make_shared<AddinRegistry>();
+
+FilePath addinRegistryPath()
+{
+   return module_context::userScratchPath().childPath("addin_registry");
+}
+
+void updateAddinRegistry(boost::shared_ptr<AddinRegistry> pRegistry)
+{
+   s_pCurrentRegistry = pRegistry;
+   s_pCurrentRegistry->saveToFile(addinRegistryPath());
+}
+
+void loadAddinRegistry()
+{
+   s_pCurrentRegistry->loadFromFile(addinRegistryPath());
+}
+
 AddinRegistry& addinRegistry()
 {
-   static AddinRegistry instance;
-   return instance;
-}
-
-std::map<std::string, std::string> parseAddinDcf(const std::string& contents)
-{
-   // read and parse the DCF file
-   std::map<std::string, std::string> fields;
-   std::string errMsg;
-   Error error = text::parseDcfFile(contents, true, &fields, &errMsg);
-   if (error)
-      LOG_ERROR(error);
-   
-   return fields;
-}
-
-void registerAddin(const std::string& pkgName,
-                   std::map<std::string, std::string>& fields)
-{
-   addinRegistry().add(pkgName, AddinSpecification(
-         fields["Name"],
-         pkgName,
-         fields["Title"],
-         fields["Description"],
-         fields["Binding"]));
-}
-
-void registerAddins(const std::string& pkgName, const FilePath& addinPath)
-{
-   static const boost::regex reSeparator("\\n{2,}");
-   
-   std::string contents;
-   Error error = core::readStringFromFile(addinPath, &contents, string_utils::LineEndingPosix);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-   
-   boost::sregex_token_iterator it(contents.begin(), contents.end(), reSeparator, -1);
-   boost::sregex_token_iterator end;
-   
-   for (; it != end; ++it)
-   {
-      std::map<std::string, std::string> fields = parseAddinDcf(*it);
-      registerAddin(pkgName, fields);
-   }
+   return *s_pCurrentRegistry;
 }
 
 class AddinIndexer : public boost::noncopyable
 {
 public:
    
-   void initialize(const std::vector<FilePath>& libPaths)
+   AddinIndexer()
    {
+      clear();
+   }
+
+   void start(const std::vector<FilePath>& libPaths)
+   {
+      // reset instance data
+      clear();
+
+      // prime work list
       std::vector<FilePath> pkgPaths;
       BOOST_FOREACH(const FilePath& libPath, libPaths)
       {
@@ -203,8 +301,13 @@ public:
       
       n_ = children_.size();
    }
-   
-   bool pending()
+
+   void addContinuation(json::JsonRpcFunctionContinuation continuation)
+   {
+      continuations_.push_back(continuation);
+   }
+
+   bool running()
    {
       return index_ != n_;
    }
@@ -219,20 +322,62 @@ public:
       if (!addinPath.exists())
       {
          ++index_;
-         return pending();
+         return maybeFinishRunning();
       }
       
       std::string pkgName = pkgPath.filename();
-      registerAddins(pkgName, addinPath);
+      pRegistry_->add(pkgName, addinPath);
       
       ++index_;
-      return pending();
+      return maybeFinishRunning();
+   }
+
+private:
+
+   // reset all instance data
+   void clear()
+   {
+      children_.clear();
+      n_ = 0;
+      index_ = 0;
+      pRegistry_ = boost::make_shared<AddinRegistry>();
+      continuations_.clear();
+   }
+
+   // check for still running, if we aren't still running then complete
+   // our work and return false, otherwise return true
+   bool maybeFinishRunning()
+   {
+      if (!running())
+      {
+         // update the addin registry
+         updateAddinRegistry(pRegistry_);
+
+         // handle pending continuations
+         json::Object registryJson = addinRegistry().toJson();
+         BOOST_FOREACH(json::JsonRpcFunctionContinuation continuation, continuations_)
+         {
+            json::JsonRpcResponse response;
+            response.setResult(registryJson);
+            continuation(Success(), &response);
+         }
+
+         // clear instance data and return false
+         clear();
+         return false;
+      }
+      else
+      {
+         return true;
+      }
    }
    
 private:
    std::vector<FilePath> children_;
    std::size_t n_;
    std::size_t index_;
+   boost::shared_ptr<AddinRegistry> pRegistry_;
+   std::vector<json::JsonRpcFunctionContinuation> continuations_;
 };
 
 AddinIndexer& addinIndexer()
@@ -241,39 +386,74 @@ AddinIndexer& addinIndexer()
    return instance;
 }
 
-void indexLibraryPaths(const std::vector<FilePath>& libPaths)
+void indexLibraryPaths(
+   const std::vector<FilePath>& libPaths,
+   json::JsonRpcFunctionContinuation continuation = json::JsonRpcFunctionContinuation())
 {
-   addinIndexer().initialize(libPaths);
-   module_context::scheduleIncrementalWork(
-            boost::posix_time::milliseconds(300),
-            boost::posix_time::milliseconds(20),
-            boost::bind(&AddinIndexer::work, &addinIndexer()),
-            false);
+   // start if we arent' already running
+   if (!addinIndexer().running())
+   {
+      // start indexer
+      addinIndexer().start(libPaths);
+
+      // register continuation if provided
+      if (continuation)
+         addinIndexer().addContinuation(continuation);
+
+      // schedule work
+      module_context::scheduleIncrementalWork(
+               boost::posix_time::milliseconds(300),
+               boost::posix_time::milliseconds(20),
+               boost::bind(&AddinIndexer::work, &addinIndexer()),
+               false);
+   }
+   else
+   {
+      // register continuation if provided
+      if (continuation)
+         addinIndexer().addContinuation(continuation);
+   }
 }
 
 void onDeferredInit(bool newSession)
 {
-   indexLibraryPaths(module_context::getLibPaths());
-}
+   // load cached registry
+   loadAddinRegistry();
 
-bool waitForGetRAddins(json::JsonRpcFunctionContinuation continuation)
-{
-   if (addinIndexer().pending())
-      return true;
-   
-   json::JsonRpcResponse response;
-   response.setResult(addinRegistry().toJson());
-   continuation(Success(), &response);
-   return false;
+   // re-index
+   indexLibraryPaths(module_context::getLibPaths());
 }
 
 void getRAddins(const json::JsonRpcRequest& request,
                 const json::JsonRpcFunctionContinuation& continuation)
 {
-   module_context::schedulePeriodicWork(
-            boost::posix_time::milliseconds(20),
-            boost::bind(waitForGetRAddins, continuation),
-            true);
+   // read params
+   bool reindex;
+   Error error = json::readParams(request.params, &reindex);
+   if (error)
+   {
+      json::JsonRpcResponse response;
+      continuation(error, &response);
+      return;
+   }
+
+   // if we aren't reindexing or if the packages pane is disabled (indicating
+   // that the user has told us they don't want aggressive crawling of the
+   // package libraries) then just return what's in the cache. note that in
+   // the case of a disabled packages pane we'll still get the benefit of
+   // the library crawl that is done at startup.
+   if (!reindex || module_context::disablePackages())
+   {
+      json::JsonRpcResponse response;
+      response.setResult(addinRegistry().toJson());
+      continuation(Success(), &response);
+   }
+   // otherwise re-index and arrange for the reply to occur once
+   // re-indexing is completed
+   else
+   {
+      indexLibraryPaths(module_context::getLibPaths(), continuation);
+   }
 }
 
 Error noSuchAddin(const ErrorLocation& errorLocation)

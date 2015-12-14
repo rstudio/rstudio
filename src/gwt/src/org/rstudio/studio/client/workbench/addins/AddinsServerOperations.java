@@ -6,6 +6,7 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 
 public interface AddinsServerOperations
 {
-   void getRAddins(ServerRequestCallback<RAddins> requestCallback);
+   void getRAddins(boolean reindex,
+                   ServerRequestCallback<RAddins> requestCallback);
    void executeRAddin(String commandId, ServerRequestCallback<Void> requestCallback);
 }

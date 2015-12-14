@@ -114,8 +114,20 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
       dataProvider_.addDataDisplay(table_);
       
       originalData_ = new ArrayList<RAddin>();
-      server_.getRAddins(new ServerRequestCallback<RAddins>()
+      
+      // get R addins handler
+      class AddinsServerRequestCallback extends ServerRequestCallback<RAddins>
       {
+         AddinsServerRequestCallback()
+         {
+            this(null);
+         }
+         
+         AddinsServerRequestCallback(Command onSuccess)
+         {
+            onSuccess_ = onSuccess;
+         }
+         
          @Override
          public void onResponseReceived(RAddins addins)
          {
@@ -126,6 +138,9 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
             dataProvider_.setList(data);
             originalData_ = data;
             table_.setEmptyTableWidget(emptyTableLabel("No addins available"));
+            
+            if (onSuccess_ != null)
+               onSuccess_.execute();
          }
          
          @Override
@@ -133,7 +148,20 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
          {
             Debug.logError(error);
          }
-      });
+         
+         private Command onSuccess_;
+         
+      };
+     
+      // first call for cached addins then call for full reindex
+      server_.getRAddins(false, new AddinsServerRequestCallback(new Command() {
+         @Override
+         public void execute()
+         {
+            server_.getRAddins(true, new AddinsServerRequestCallback());
+         }
+      }));
+      
       
       addLeftWidget(new ThemedButton("Keyboard Shortcuts...", new ClickHandler()
       {
