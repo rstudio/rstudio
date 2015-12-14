@@ -126,6 +126,9 @@ core::shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir);
 // get the R local help port
 std::string rLocalHelpPort();
 
+// get current libpaths
+std::vector<core::FilePath> getLibPaths();
+
 // check if a package is installed
 bool isPackageInstalled(const std::string& packageName);
 

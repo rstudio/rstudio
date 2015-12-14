@@ -134,24 +134,6 @@ AddinRegistry& addinRegistry()
    return instance;
 }
 
-// TODO: This probably belongs in a separate module and could be exported
-std::vector<FilePath> getLibPaths()
-{
-   std::vector<std::string> libPathsString;
-   r::exec::RFunction rfLibPaths(".libPaths");
-   Error error = rfLibPaths.call(&libPathsString);
-   if (error)
-      LOG_ERROR(error);
-   
-   std::vector<FilePath> libPaths(libPathsString.size());
-   BOOST_FOREACH(const std::string& path, libPathsString)
-   {
-      libPaths.push_back(module_context::resolveAliasedPath(path));
-   }
-   
-   return libPaths;
-}
-
 std::map<std::string, std::string> parseAddinDcf(const std::string& contents)
 {
    // read and parse the DCF file
@@ -271,7 +253,7 @@ void indexLibraryPaths(const std::vector<FilePath>& libPaths)
 
 void onDeferredInit(bool newSession)
 {
-   indexLibraryPaths(getLibPaths());
+   indexLibraryPaths(module_context::getLibPaths());
 }
 
 bool waitForGetRAddins(json::JsonRpcFunctionContinuation continuation)

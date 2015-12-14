@@ -1004,6 +1004,24 @@ std::string rLocalHelpPort()
    return port;
 }
 
+std::vector<FilePath> getLibPaths()
+{
+   std::vector<std::string> libPathsString;
+   r::exec::RFunction rfLibPaths(".libPaths");
+   Error error = rfLibPaths.call(&libPathsString);
+   if (error)
+      LOG_ERROR(error);
+
+   std::vector<FilePath> libPaths(libPathsString.size());
+   BOOST_FOREACH(const std::string& path, libPathsString)
+   {
+      libPaths.push_back(module_context::resolveAliasedPath(path));
+   }
+
+   return libPaths;
+}
+
+
 // check if a package is installed
 bool isPackageInstalled(const std::string& packageName)
 {
