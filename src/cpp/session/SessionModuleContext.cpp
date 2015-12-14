@@ -1021,6 +1021,10 @@ std::vector<FilePath> getLibPaths()
    return libPaths;
 }
 
+bool disablePackages()
+{
+   return !core::system::getenv("RSTUDIO_DISABLE_PACKAGES").empty();
+}
 
 // check if a package is installed
 bool isPackageInstalled(const std::string& packageName)

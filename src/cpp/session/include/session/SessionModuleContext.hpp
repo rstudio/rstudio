@@ -129,6 +129,9 @@ std::string rLocalHelpPort();
 // get current libpaths
 std::vector<core::FilePath> getLibPaths();
 
+// is the packages pane disabled
+bool disablePackages();
+
 // check if a package is installed
 bool isPackageInstalled(const std::string& packageName);
 

@@ -580,8 +580,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["console_history_capacity"] =
                               rstudio::r::session::consoleHistory().capacity();
 
-   sessionInfo["disable_packages"] =
-           !core::system::getenv("RSTUDIO_DISABLE_PACKAGES").empty();
+   sessionInfo["disable_packages"] = module_context::disablePackages();
 
    sessionInfo["disable_check_for_updates"] =
           !core::system::getenv("RSTUDIO_DISABLE_CHECK_FOR_UPDATES").empty();
