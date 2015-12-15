@@ -340,7 +340,8 @@ public class ShortcutManager implements NativePreviewHandler,
          return false;
       }
       
-      keyBuffer_.add(event);
+      KeyCombination keyCombination = new KeyCombination(event);
+      keyBuffer_.add(keyCombination);
       
       // Loop through all active key maps, and attempt to find an active
       // binding. 'pending' is used to indicate whether there are any bindings
@@ -362,7 +363,7 @@ public class ShortcutManager implements NativePreviewHandler,
             pending = true;
       }
       
-      if (!pending)
+      if (!(pending || isPrefixForEditor(keyCombination)))
          keyBuffer_.clear();
       
       // Assume that a keypress without a modifier key clears the keybuffer.
@@ -377,6 +378,26 @@ public class ShortcutManager implements NativePreviewHandler,
          KeyCombination keys = keyBuffer_.get(keyBuffer_.size() - 1);
          if (keys.getModifier() == KeyboardShortcut.NONE)
             keyBuffer_.clear();
+      }
+      
+      return false;
+   }
+   
+   // TODO: In a perfect world, this function does not exist and
+   // instead we populate an editor key map based on the current state
+   // of the Ace editor, which we could check for prefix matches.
+   // For now, we'll just hard code the prefix
+   // keys used in the default keymaps for Emacs.
+   private boolean isPrefixForEditor(KeyCombination keys)
+   {
+      if (editorMode_ == KeyboardShortcut.MODE_EMACS)
+      {
+         if (keys.isCtrlPressed())
+         {
+            int keyCode = keys.getKeyCode();
+            return keyCode == KeyCodes.KEY_C ||
+                   keyCode == KeyCodes.KEY_X;
+         }
       }
       
       return false;
