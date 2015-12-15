@@ -140,7 +140,7 @@ public class AddinsMRUList implements SessionInitHandler,
             
             // Recently used commands come first.
             if (r1 != r2)
-               return r1 ? 1 : -1;
+               return r1 ? -1 : 1;
             
             // Otherwise, compare on IDs.
             return o1.getId().compareTo(o2.getId());
