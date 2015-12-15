@@ -445,9 +445,6 @@ void indexLibraryPaths(
 
 void onDeferredInit(bool newSession)
 {
-   // load cached registry
-   loadAddinRegistry();
-
    // re-index
    indexLibraryPaths(module_context::getLibPaths());
 }
@@ -545,6 +542,9 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
    
+   // load cached registry
+   loadAddinRegistry();
+
    events().onDeferredInit.connect(onDeferredInit);
    
    ExecBlock initBlock;
