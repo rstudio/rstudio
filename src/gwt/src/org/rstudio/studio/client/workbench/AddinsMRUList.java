@@ -61,6 +61,24 @@ public class AddinsMRUList implements SessionInitHandler,
       events_ = events;
       commands_ = commands;
       
+      mruCommands_ = new AppCommand[] {
+            commands_.addinsMru0(),
+            commands_.addinsMru1(),
+            commands_.addinsMru2(),
+            commands_.addinsMru3(),
+            commands_.addinsMru4(),
+            commands_.addinsMru5(),
+            commands_.addinsMru6(),
+            commands_.addinsMru7(),
+            commands_.addinsMru8(),
+            commands_.addinsMru9(),
+            commands_.addinsMru10(),
+            commands_.addinsMru11(),
+            commands_.addinsMru12(),
+            commands_.addinsMru13(),
+            commands_.addinsMru14()
+      };
+      
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(AddinRegistryUpdatedEvent.TYPE, this);
       
@@ -69,21 +87,8 @@ public class AddinsMRUList implements SessionInitHandler,
    
    private void initCommandHandlers()
    {
-      addIndexedHandler(commands_.addinsMru0(),   0);
-      addIndexedHandler(commands_.addinsMru1(),   1);
-      addIndexedHandler(commands_.addinsMru2(),   2);
-      addIndexedHandler(commands_.addinsMru3(),   3);
-      addIndexedHandler(commands_.addinsMru4(),   4);
-      addIndexedHandler(commands_.addinsMru5(),   5);
-      addIndexedHandler(commands_.addinsMru6(),   6);
-      addIndexedHandler(commands_.addinsMru7(),   7);
-      addIndexedHandler(commands_.addinsMru8(),   8);
-      addIndexedHandler(commands_.addinsMru9(),   9);
-      addIndexedHandler(commands_.addinsMru10(), 10);
-      addIndexedHandler(commands_.addinsMru11(), 11);
-      addIndexedHandler(commands_.addinsMru12(), 12);
-      addIndexedHandler(commands_.addinsMru13(), 13);
-      addIndexedHandler(commands_.addinsMru14(), 14);
+      for (int i = 0; i < mruCommands_.length; i++)
+         addIndexedHandler(mruCommands_[i], i);
    }
    
    private void addIndexedHandler(AppCommand command, int index)
@@ -149,21 +154,8 @@ public class AddinsMRUList implements SessionInitHandler,
             ShortcutManager.INSTANCE.getKeyMap(KeyMapType.ADDIN);
       
       // Populate up to 15 commands.
-      manageCommand(commands_.addinsMru0(),  addinsList, addinsKeyMap,  0);
-      manageCommand(commands_.addinsMru1(),  addinsList, addinsKeyMap,  1);
-      manageCommand(commands_.addinsMru2(),  addinsList, addinsKeyMap,  2);
-      manageCommand(commands_.addinsMru3(),  addinsList, addinsKeyMap,  3);
-      manageCommand(commands_.addinsMru4(),  addinsList, addinsKeyMap,  4);
-      manageCommand(commands_.addinsMru5(),  addinsList, addinsKeyMap,  5);
-      manageCommand(commands_.addinsMru6(),  addinsList, addinsKeyMap,  6);
-      manageCommand(commands_.addinsMru7(),  addinsList, addinsKeyMap,  7);
-      manageCommand(commands_.addinsMru8(),  addinsList, addinsKeyMap,  8);
-      manageCommand(commands_.addinsMru9(),  addinsList, addinsKeyMap,  9);
-      manageCommand(commands_.addinsMru10(), addinsList, addinsKeyMap, 10);
-      manageCommand(commands_.addinsMru11(), addinsList, addinsKeyMap, 11);
-      manageCommand(commands_.addinsMru12(), addinsList, addinsKeyMap, 12);
-      manageCommand(commands_.addinsMru13(), addinsList, addinsKeyMap, 13);
-      manageCommand(commands_.addinsMru14(), addinsList, addinsKeyMap, 14);
+      for (int i = 0; i < mruCommands_.length; i++)
+         manageCommand(mruCommands_[i], addinsList, addinsKeyMap, i);
    }
    
    private class AddinCommandHandler implements CommandHandler
@@ -216,9 +208,16 @@ public class AddinsMRUList implements SessionInitHandler,
       mruList_.prepend(addin.getId());
    }
    
+   public AppCommand[] getAddinMruCommands()
+   {
+      return mruCommands_;
+   }
+   
    // Private Members ----
    private WorkbenchList mruList_;
    private List<RAddin> addinsList_;
+   
+   private final AppCommand[] mruCommands_;
    
    // Injected ----
    private final Provider<WorkbenchListManager> pListManager_;
