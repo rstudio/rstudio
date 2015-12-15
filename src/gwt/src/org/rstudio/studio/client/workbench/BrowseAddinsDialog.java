@@ -191,11 +191,9 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
    }
    
    @Inject
-   private void initialize(AddinsServerOperations server,
-                           AddinsMRUList mruList)
+   private void initialize(AddinsServerOperations server)
    {
       server_ = server;
-      mruList_ = mruList;
    }
    
    private void addColumns()
@@ -387,7 +385,6 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
    
    // Injected ----
    private AddinsServerOperations server_;
-   private AddinsMRUList mruList_;
    
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources

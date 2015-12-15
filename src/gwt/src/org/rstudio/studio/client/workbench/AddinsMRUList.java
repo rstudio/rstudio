@@ -79,8 +79,8 @@ public class AddinsMRUList implements SessionInitHandler,
             commands_.addinsMru14()
       };
       
-      events.addHandler(SessionInitEvent.TYPE, this);
-      events.addHandler(AddinRegistryUpdatedEvent.TYPE, this);
+      events_.addHandler(SessionInitEvent.TYPE, this);
+      events_.addHandler(AddinRegistryUpdatedEvent.TYPE, this);
       
       initCommandHandlers();
    }
@@ -110,7 +110,15 @@ public class AddinsMRUList implements SessionInitHandler,
       update(event.getData());
    }
    
-   private void update(final RAddins addins)
+   private void update(RAddins addins)
+   {
+      List<RAddin> addinsList = new ArrayList<RAddin>();
+      for (String key : JsUtil.asIterable(addins.keys()))
+         addinsList.add(addins.get(key));
+      update(addinsList);
+   }
+   
+   private void update(final List<RAddin> addins)
    {
       pAddinManager_.get().loadBindings(new CommandWithArg<EditorKeyBindings>()
       {
@@ -122,14 +130,10 @@ public class AddinsMRUList implements SessionInitHandler,
       });
    }
    
-   private void finishUpdate(RAddins addins)
+   private void finishUpdate(List<RAddin> addinsList)
    {
-      // Collect the addins as key-value pairs (so we can sort)
-      List<RAddin> addinsList = new ArrayList<RAddin>();
-      
-      for (String key : JsUtil.asIterable(addins.keys()))
-         addinsList.add(addins.get(key));
-      
+      // Sort the addins list, favoring addins that have
+      // been recently updated.
       Collections.sort(addinsList, new Comparator<RAddin>()
       {
          @Override
@@ -206,6 +210,7 @@ public class AddinsMRUList implements SessionInitHandler,
    public void add(RAddin addin)
    {
       mruList_.prepend(addin.getId());
+      update(addinsList_);
    }
    
    public AppCommand[] getAddinMruCommands()
