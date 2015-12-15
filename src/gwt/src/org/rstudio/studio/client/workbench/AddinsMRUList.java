@@ -20,8 +20,8 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.CommandHandler;
 import org.rstudio.core.client.command.KeyMap;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
@@ -30,6 +30,7 @@ import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.KeyMap.KeyMapType;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
@@ -62,11 +63,38 @@ public class AddinsMRUList implements SessionInitHandler,
       
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(AddinRegistryUpdatedEvent.TYPE, this);
+      
+      initCommandHandlers();
+   }
+   
+   private void initCommandHandlers()
+   {
+      addIndexedHandler(commands_.addinsMru0(),   0);
+      addIndexedHandler(commands_.addinsMru1(),   1);
+      addIndexedHandler(commands_.addinsMru2(),   2);
+      addIndexedHandler(commands_.addinsMru3(),   3);
+      addIndexedHandler(commands_.addinsMru4(),   4);
+      addIndexedHandler(commands_.addinsMru5(),   5);
+      addIndexedHandler(commands_.addinsMru6(),   6);
+      addIndexedHandler(commands_.addinsMru7(),   7);
+      addIndexedHandler(commands_.addinsMru8(),   8);
+      addIndexedHandler(commands_.addinsMru9(),   9);
+      addIndexedHandler(commands_.addinsMru10(), 10);
+      addIndexedHandler(commands_.addinsMru11(), 11);
+      addIndexedHandler(commands_.addinsMru12(), 12);
+      addIndexedHandler(commands_.addinsMru13(), 13);
+      addIndexedHandler(commands_.addinsMru14(), 14);
+   }
+   
+   private void addIndexedHandler(AppCommand command, int index)
+   {
+      command.addHandler(new AddinCommandHandler(index));
    }
 
    @Override
    public void onSessionInit(SessionInitEvent sie)
    {
+      mruList_ = pListManager_.get().getAddinsMruList();
       RAddins addins = session_.getSessionInfo().getAddins();
       update(addins);
    }
@@ -92,44 +120,75 @@ public class AddinsMRUList implements SessionInitHandler,
    private void finishUpdate(RAddins addins)
    {
       // Collect the addins as key-value pairs (so we can sort)
-      List<Pair<String, RAddin>> addinsList =
-            new ArrayList<Pair<String, RAddin>>();
+      List<RAddin> addinsList = new ArrayList<RAddin>();
       
       for (String key : JsUtil.asIterable(addins.keys()))
-         addinsList.add(new Pair<String, RAddin>(key, addins.get(key)));
+         addinsList.add(addins.get(key));
       
-      Collections.sort(addinsList, new Comparator<Pair<String, RAddin>>()
+      Collections.sort(addinsList, new Comparator<RAddin>()
       {
          @Override
-         public int compare(Pair<String, RAddin> o1, Pair<String, RAddin> o2)
+         public int compare(RAddin o1, RAddin o2)
          {
-            return o1.first.compareTo(o2.first);
+            boolean r1 = mruList_.contains(o1.getId());
+            boolean r2 = mruList_.contains(o2.getId());
+            
+            // Recently used commands come first.
+            if (r1 != r2)
+               return r1 ? 1 : -1;
+            
+            // Otherwise, compare on IDs.
+            return o1.getId().compareTo(o2.getId());
          }
       });
+      
+      // Save the list (so that the dummy commands can be routed properly)
+      addinsList_ = addinsList;
       
       KeyMap addinsKeyMap =
             ShortcutManager.INSTANCE.getKeyMap(KeyMapType.ADDIN);
       
       // Populate up to 15 commands.
-      manageCommand(commands_.addinsMru0(),  addinsList, addinsKeyMap, 0);
-      manageCommand(commands_.addinsMru1(),  addinsList, addinsKeyMap, 1);
-      manageCommand(commands_.addinsMru2(),  addinsList, addinsKeyMap, 2);
-      manageCommand(commands_.addinsMru3(),  addinsList, addinsKeyMap, 3);
-      manageCommand(commands_.addinsMru4(),  addinsList, addinsKeyMap, 4);
-      manageCommand(commands_.addinsMru5(),  addinsList, addinsKeyMap, 5);
-      manageCommand(commands_.addinsMru6(),  addinsList, addinsKeyMap, 6);
-      manageCommand(commands_.addinsMru7(),  addinsList, addinsKeyMap, 7);
-      manageCommand(commands_.addinsMru8(),  addinsList, addinsKeyMap, 8);
-      manageCommand(commands_.addinsMru9(),  addinsList, addinsKeyMap, 9);
-      manageCommand(commands_.addinsMru10(), addinsList, addinsKeyMap,10);
-      manageCommand(commands_.addinsMru11(), addinsList, addinsKeyMap,11);
-      manageCommand(commands_.addinsMru12(), addinsList, addinsKeyMap,12);
-      manageCommand(commands_.addinsMru13(), addinsList, addinsKeyMap,13);
-      manageCommand(commands_.addinsMru14(), addinsList, addinsKeyMap,14);
+      manageCommand(commands_.addinsMru0(),  addinsList, addinsKeyMap,  0);
+      manageCommand(commands_.addinsMru1(),  addinsList, addinsKeyMap,  1);
+      manageCommand(commands_.addinsMru2(),  addinsList, addinsKeyMap,  2);
+      manageCommand(commands_.addinsMru3(),  addinsList, addinsKeyMap,  3);
+      manageCommand(commands_.addinsMru4(),  addinsList, addinsKeyMap,  4);
+      manageCommand(commands_.addinsMru5(),  addinsList, addinsKeyMap,  5);
+      manageCommand(commands_.addinsMru6(),  addinsList, addinsKeyMap,  6);
+      manageCommand(commands_.addinsMru7(),  addinsList, addinsKeyMap,  7);
+      manageCommand(commands_.addinsMru8(),  addinsList, addinsKeyMap,  8);
+      manageCommand(commands_.addinsMru9(),  addinsList, addinsKeyMap,  9);
+      manageCommand(commands_.addinsMru10(), addinsList, addinsKeyMap, 10);
+      manageCommand(commands_.addinsMru11(), addinsList, addinsKeyMap, 11);
+      manageCommand(commands_.addinsMru12(), addinsList, addinsKeyMap, 12);
+      manageCommand(commands_.addinsMru13(), addinsList, addinsKeyMap, 13);
+      manageCommand(commands_.addinsMru14(), addinsList, addinsKeyMap, 14);
+   }
+   
+   private class AddinCommandHandler implements CommandHandler
+   {
+      public AddinCommandHandler(int index)
+      {
+         index_ = index;
+      }
+      
+      @Override
+      public void onCommand(AppCommand command)
+      {
+         if (executor_ == null)
+            executor_ = new AddinExecutor();
+         
+         RAddin addin = addinsList_.get(index_);
+         executor_.execute(addin);
+      }
+      
+      private final int index_;
+      private AddinExecutor executor_;
    }
    
    private void manageCommand(AppCommand command,
-                              List<Pair<String, RAddin>> addinsList,
+                              List<RAddin> addinsList,
                               KeyMap keyMap,
                               int index)
    {
@@ -140,21 +199,26 @@ public class AddinsMRUList implements SessionInitHandler,
          return;
       }
       
-      String id    = addinsList.get(index).first;
-      RAddin addin = addinsList.get(index).second;
+      RAddin addin = addinsList.get(index);
       
       command.setEnabled(true);
       command.setVisible(true);
       command.setDesc(addin.getDescription());
       command.setLabel(addin.getName());
       
-      List<KeySequence> keys = keyMap.getBindings(id);
+      List<KeySequence> keys = keyMap.getBindings(addin.getId());
       if (keys != null && !keys.isEmpty())
          command.setShortcut(new KeyboardShortcut(keys.get(0)));
    }
    
+   public void add(RAddin addin)
+   {
+      mruList_.prepend(addin.getId());
+   }
+   
    // Private Members ----
    private WorkbenchList mruList_;
+   private List<RAddin> addinsList_;
    
    // Injected ----
    private final Provider<WorkbenchListManager> pListManager_;
