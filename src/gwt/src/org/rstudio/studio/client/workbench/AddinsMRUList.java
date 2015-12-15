@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandHandler;
@@ -132,34 +131,63 @@ public class AddinsMRUList implements SessionInitHandler,
    
    private void finishUpdate(List<RAddin> addinsList)
    {
+      // The list that will eventually hold the backing set
+      // of addins that the dummy MRU commands will dispatch to
+      List<RAddin> backingAddinsList = new ArrayList<RAddin>();
+      
+      // Collect addins. First, collect addins in the MRU list.
+      for (RAddin addin : addinsList)
+      {
+         if (backingAddinsList.size() >= MRU_LIST_SIZE)
+            break;
+         
+         if (mruList_.contains(addin.getId()))
+            backingAddinsList.add(addin);
+      }
+      
+      // Now, collect the rest of the addins (that haven't been added
+      // to the backing list.
+      for (RAddin addin : addinsList)
+      {
+         if (backingAddinsList.size() >= MRU_LIST_SIZE)
+            break;
+         
+         if (!backingAddinsList.contains(addin))
+            backingAddinsList.add(addin);
+      }
+      
       // Sort the addins list, favoring addins that have
       // been recently updated.
-      Collections.sort(addinsList, new Comparator<RAddin>()
+      Collections.sort(backingAddinsList, new Comparator<RAddin>()
       {
          @Override
          public int compare(RAddin o1, RAddin o2)
          {
-            boolean r1 = mruList_.contains(o1.getId());
-            boolean r2 = mruList_.contains(o2.getId());
+            int compare = 0;
             
-            // Recently used commands come first.
-            if (r1 != r2)
-               return r1 ? -1 : 1;
+            // Compare first on package name.
+            compare = o1.getPackage().compareTo(o2.getPackage());
+            if (compare != 0)
+               return compare;
             
-            // Otherwise, compare on IDs.
-            return o1.getId().compareTo(o2.getId());
+            // Then compare on actual name.
+            compare = o1.getName().compareTo(o2.getName());
+            if (compare != 0)
+               return compare;
+            
+            return 0;
          }
       });
       
       // Save the list (so that the dummy commands can be routed properly)
-      addinsList_ = addinsList;
+      addinsList_ = backingAddinsList;
       
       KeyMap addinsKeyMap =
             ShortcutManager.INSTANCE.getKeyMap(KeyMapType.ADDIN);
       
       // Populate up to 15 commands.
       for (int i = 0; i < mruCommands_.length; i++)
-         manageCommand(mruCommands_[i], addinsList, addinsKeyMap, i);
+         manageCommand(mruCommands_[i], addinsList_, addinsKeyMap, i);
    }
    
    private class AddinCommandHandler implements CommandHandler
@@ -199,8 +227,12 @@ public class AddinsMRUList implements SessionInitHandler,
       
       command.setEnabled(true);
       command.setVisible(true);
-      command.setDesc(addin.getDescription());
-      command.setLabel(addin.getName());
+      
+      String description = addin.getDescription() + " [" + addin.getId() + "]";
+      command.setDesc(description);
+      
+      String name = addin.getName();
+      command.setLabel(name);
       
       List<KeySequence> keys = keyMap.getBindings(addin.getId());
       if (keys != null && !keys.isEmpty())
@@ -223,6 +255,8 @@ public class AddinsMRUList implements SessionInitHandler,
    private List<RAddin> addinsList_;
    
    private final AppCommand[] mruCommands_;
+   
+   private static final int MRU_LIST_SIZE = 15;
    
    // Injected ----
    private final Provider<WorkbenchListManager> pListManager_;
