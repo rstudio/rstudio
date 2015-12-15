@@ -486,28 +486,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       });
       
-      // Addins: ensure any recently bound addins become part of the MRU
-      addinsServer_.getRAddins(false, new ServerRequestCallback<RAddins>()
-      {
-         @Override
-         public void onError(ServerError error)
-         {
-            Debug.logError(error);
-         }
-         
-         @Override
-         public void onResponseReceived(RAddins addins)
-         {
-            for (String id : JsUtil.asIterable(addinBindings.keys()))
-            {
-               RAddin addin = addins.get(id);
-               String encoded = RAddin.encode(addin);
-               if (!mruAddins_.contains(encoded))
-                  mruAddins_.add(encoded);
-               mruAddins_.updateShortcuts();
-            }
-         }
-      });
       closeDialog();
    }
    

@@ -331,35 +331,25 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
       }
       
       return new ExecuteAddinCommand(
-            mruList_,
             addins_.get(selection_.getId()),
-            RAddin.encode(selection_),
             new AddinExecutor());
    }
    
    private static class ExecuteAddinCommand implements Command
    {
-      public ExecuteAddinCommand(AddinsMRUList mruList,
-                                 RAddin addin,
-                                 String encoded,
-                                 AddinExecutor executor)
+      public ExecuteAddinCommand(RAddin addin, AddinExecutor executor)
       {
-         mruList_ = mruList;
          addin_ = addin;
-         encoded_ = encoded;
          executor_ = executor;
       }
       
       @Override
       public void execute()
       {
-         mruList_.add(encoded_);
          executor_.execute(addin_);
       }
       
-      private final AddinsMRUList mruList_;
       private final RAddin addin_;
-      private final String encoded_;
       private final AddinExecutor executor_;
    }
 
