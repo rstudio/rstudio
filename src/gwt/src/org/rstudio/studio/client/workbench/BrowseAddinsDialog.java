@@ -154,14 +154,11 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
          
       };
      
-      // first call for cached addins then call for full reindex
-      server_.getRAddins(false, new AddinsServerRequestCallback(new Command() {
-         @Override
-         public void execute()
-         {
-            server_.getRAddins(true, new AddinsServerRequestCallback());
-         }
-      }));
+      // get list of addins. note that we no longer call for a reindex
+      // here because we are reindexing whenever packages are installed
+      // or removed
+      server_.getRAddins(false, new AddinsServerRequestCallback());
+
       
       addLeftWidget(new ThemedButton("Keyboard Shortcuts...", new ClickHandler()
       {

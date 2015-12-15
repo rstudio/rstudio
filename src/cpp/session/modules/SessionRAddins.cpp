@@ -414,10 +414,12 @@ AddinIndexer& addinIndexer()
    return instance;
 }
 
-void indexLibraryPaths(
-   const std::vector<FilePath>& libPaths,
-   json::JsonRpcFunctionContinuation continuation = json::JsonRpcFunctionContinuation())
+void indexLibraryPathsWithContinuation(
+                        json::JsonRpcFunctionContinuation continuation)
 {
+   // get the libpaths
+   std::vector<FilePath> libPaths = module_context::getLibPaths();
+
    // start if we arent' already running
    if (!addinIndexer().running())
    {
@@ -443,10 +445,51 @@ void indexLibraryPaths(
    }
 }
 
-void onDeferredInit(bool newSession)
+void indexLibraryPaths()
+{
+   indexLibraryPathsWithContinuation(json::JsonRpcFunctionContinuation());
+}
+
+void onDeferredInit(bool)
 {
    // re-index
-   indexLibraryPaths(module_context::getLibPaths());
+   indexLibraryPaths();
+}
+
+// re-index on package library mutating commands (however don't do so
+// if the packages pane is disabled)
+void onConsoleInput(const std::string& input)
+{
+   // check for packages pane disabled
+   if (module_context::disablePackages())
+      return;
+
+   // initialize commands if necessary
+   static std::vector<std::string> commands;
+   if (commands.empty())
+   {
+      commands.push_back("install.packages");
+      commands.push_back("remove.packages");
+      commands.push_back("devtools::install_github");
+      commands.push_back("install_github");
+   }
+
+   // check for package library mutating command
+   std::string trimmedInput = boost::algorithm::trim_copy(input);
+   BOOST_FOREACH(const std::string& command, commands)
+   {
+      if (boost::algorithm::starts_with(trimmedInput, command))
+      {
+         // we need to give R a chance to actually process the package library
+         // mutating command before we update the index. schedule delayed work
+         // with idleOnly = true so that it waits until the user has returned
+         // to the R prompt
+         module_context::scheduleDelayedWork(boost::posix_time::seconds(1),
+                                             indexLibraryPaths,
+                                             true); // idle only
+         return;
+      }
+   }
 }
 
 void getRAddins(const json::JsonRpcRequest& request,
@@ -477,7 +520,7 @@ void getRAddins(const json::JsonRpcRequest& request,
    // re-indexing is completed
    else
    {
-      indexLibraryPaths(module_context::getLibPaths(), continuation);
+      indexLibraryPathsWithContinuation(continuation);
    }
 }
 
@@ -546,6 +589,7 @@ Error initialize()
    loadAddinRegistry();
 
    events().onDeferredInit.connect(onDeferredInit);
+   events().onConsoleInput.connect(onConsoleInput);
    
    ExecBlock initBlock;
    initBlock.addFunctions()
