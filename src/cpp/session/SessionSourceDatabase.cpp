@@ -356,6 +356,11 @@ void SourceDocument::updateLastKnownWriteTime()
 
    lastKnownWriteTime_ = filePath.lastWriteTime();
 }
+
+void SourceDocument::setLastKnownWriteTime(std::time_t time)
+{
+   lastKnownWriteTime_ = time;
+}
    
 Error SourceDocument::readFromJson(json::Object* pDocJson)
 {

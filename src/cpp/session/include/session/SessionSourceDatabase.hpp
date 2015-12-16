@@ -110,6 +110,8 @@ public:
 
    void updateLastKnownWriteTime();
 
+   void setLastKnownWriteTime(std::time_t time);
+
    // applies the values in the given properties object to the document's property
    // bag. this does NOT replace all of the doc's properties on the server; any
    // properties that already exist but are not present in the given object are
