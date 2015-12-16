@@ -407,6 +407,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                                        public void execute()
                                        {
                                           indicator.onCompleted();
+                                          ShortcutManager.INSTANCE.resetAppCommandBindings();
                                           resetState();
                                        }
                                     });

@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyMap.CommandBinding;
 import org.rstudio.core.client.command.KeyMap.KeyMapType;
@@ -70,6 +71,7 @@ public class ShortcutManager implements NativePreviewHandler,
       };
       
       shortcutInfo_ = new ArrayList<ShortcutInfo>();
+      defaultBindings_ = new ArrayList<Pair<KeySequence, AppCommandBinding>>();
       
       // Initialize the key maps. We use a LinkedHashMap so that insertion
       // order can be preserved.
@@ -221,8 +223,20 @@ public class ShortcutManager implements NativePreviewHandler,
          // Add the command into the keymap, ensuring it can be executed on the associated
          // keypress.
          KeyMap appKeyMap = keyMaps_.get(KeyMapType.APPLICATION);
-         appKeyMap.addBinding(keys, new AppCommandBinding(command, disableModes, false));
+         AppCommandBinding binding = new AppCommandBinding(command, disableModes, false);
+         appKeyMap.addBinding(keys, binding);
+         
+         // Cache the binding (so we can reset later if required)
+         defaultBindings_.add(new Pair<KeySequence, AppCommandBinding>(keys, binding));
       }
+   }
+   
+   public void resetAppCommandBindings()
+   {
+      KeyMap map = new KeyMap();
+      for (Pair<KeySequence, AppCommandBinding> pair : defaultBindings_)
+         map.addBinding(pair.first, pair.second);
+      keyMaps_.put(KeyMapType.APPLICATION, map);
    }
    
    public static int parseDisableModes(String disableModes)
@@ -437,6 +451,7 @@ public class ShortcutManager implements NativePreviewHandler,
    
    private final Map<KeyMapType, KeyMap> keyMaps_;
    private final List<ShortcutInfo> shortcutInfo_;
+   private final List<Pair<KeySequence, AppCommandBinding>> defaultBindings_;
    
    // Injected ----
    private UserCommandManager userCommands_;
