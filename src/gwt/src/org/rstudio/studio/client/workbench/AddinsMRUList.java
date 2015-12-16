@@ -102,6 +102,9 @@ public class AddinsMRUList implements SessionInitHandler,
    @Override
    public void onSessionInit(SessionInitEvent sie)
    {
+      RAddins addins = session_.getSessionInfo().getAddins();
+      update(addins);
+      
       mruList_ = pListManager_.get().getAddinsMruList();
       mruList_.addListChangedHandler(new ListChangedHandler()
       {
@@ -112,8 +115,7 @@ public class AddinsMRUList implements SessionInitHandler,
             update(addinRegistry_);
          }
       });
-      RAddins addins = session_.getSessionInfo().getAddins();
-      update(addins);
+     
    }
 
    @Override
@@ -132,6 +134,7 @@ public class AddinsMRUList implements SessionInitHandler,
    
    private void update(final List<RAddin> addins)
    {
+      addinRegistry_ = addins;
       pAddinManager_.get().loadBindings(new CommandWithArg<EditorKeyBindings>()
       {
          @Override
@@ -199,7 +202,6 @@ public class AddinsMRUList implements SessionInitHandler,
       
       // Save the list (so that the dummy commands can be routed properly)
       addinList_ = addinList;
-      addinRegistry_ = addinRegistry;
       
       KeyMap addinsKeyMap =
             ShortcutManager.INSTANCE.getKeyMap(KeyMapType.ADDIN);
