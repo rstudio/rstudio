@@ -205,7 +205,7 @@ public class AceCommandManager extends JavaScriptObject
          "togglerecording", "replaymacro", "passKeysToBrowser",
          "copy", "cut", "cut_or_delete", "paste", "replace",
          "insertstring", "inserttext", "gotoline", "jumptomatching",
-         "backspace", "delete", "togglecomment"
+         "backspace", "delete", "togglecomment", "toggleBlockComment"
       ];
       
       var map = {};
