@@ -103,19 +103,31 @@ Error ActiveSessions::create(const std::string& project,
 
 namespace {
 
-bool compareActivityLevel(const boost::shared_ptr<ActiveSession>& a,
-                          const boost::shared_ptr<ActiveSession>& b)
+bool compareActivityLevel(boost::shared_ptr<ActiveSession> a,
+                          boost::shared_ptr<ActiveSession> b)
 {
-   if (a->executing())
-      return true;
-   else if (b->executing())
-      return false;
-   else if (a->running())
-      return true;
-   else if (b->running())
-      return false;
+   if (a->executing() == b->executing())
+   {
+      if (a->running() == b->running())
+      {
+         if (a->lastUsed() == b->lastUsed())
+         {
+            return a->id() > b->id();
+         }
+         else
+         {
+            return a->lastUsed() > b->lastUsed();
+         }
+      }
+      else
+      {
+         return a->running();
+      }
+   }
    else
-      return a->lastUsed() >= b->lastUsed();
+   {
+      return a->executing();
+   }
 }
 
 } // anonymous namespace
