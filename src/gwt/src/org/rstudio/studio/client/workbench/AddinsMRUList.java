@@ -37,6 +37,7 @@ import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
+import org.rstudio.studio.client.workbench.addins.AddinsKeyBindingsChangedEvent;
 import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.ListChangedEvent;
@@ -51,7 +52,8 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class AddinsMRUList implements SessionInitHandler,
-                                      AddinRegistryUpdatedEvent.Handler
+                                      AddinRegistryUpdatedEvent.Handler,
+                                      AddinsKeyBindingsChangedEvent.Handler
 {
    @Inject
    public AddinsMRUList(Provider<WorkbenchListManager> pListManager,
@@ -86,6 +88,7 @@ public class AddinsMRUList implements SessionInitHandler,
       
       events_.addHandler(SessionInitEvent.TYPE, this);
       events_.addHandler(AddinRegistryUpdatedEvent.TYPE, this);
+      events_.addHandler(AddinsKeyBindingsChangedEvent.TYPE, this);
       
       initCommandHandlers();
    }
@@ -124,6 +127,12 @@ public class AddinsMRUList implements SessionInitHandler,
    public void onAddinRegistryUpdated(AddinRegistryUpdatedEvent event)
    {
       update(event.getData());
+   }
+   
+   @Override
+   public void onAddinsKeyBindingsChanged(AddinsKeyBindingsChangedEvent event)
+   {
+      update(addinRegistry_);
    }
    
    private void update(RAddins addins)
