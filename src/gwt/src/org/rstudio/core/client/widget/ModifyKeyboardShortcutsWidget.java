@@ -60,7 +60,6 @@ import com.google.gwt.view.client.ProvidesKey;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
@@ -82,8 +81,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.AddinsMRUList;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
@@ -1013,33 +1010,20 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          @Override
          public void onExecute(final Command continuation)
          {
-            addinsServer_.getRAddins(false, new ServerRequestCallback<RAddins>()
+            RAddins rAddins = addins_.getRAddins();
+            for (String key : JsUtil.asIterable(rAddins.keys()))
             {
-               @Override
-               public void onResponseReceived(RAddins addins)
-               {
-                  for (String key : JsUtil.asIterable(addins.keys()))
-                  {
-                     RAddin addin = addins.get(key);
-                     
-                     bindings.add(new KeyboardShortcutEntry(
-                           addin.getPackage() + "::" + addin.getBinding(),
-                           addin.getName(),
-                           new KeySequence(),
-                           KeyboardShortcutEntry.TYPE_ADDIN,
-                           false,
-                           AppCommand.Context.Addin));
-                  }
-                  continuation.execute();
-               }
+               RAddin addin = rAddins.get(key);
                
-               @Override
-               public void onError(ServerError error)
-               {
-                  Debug.logError(error);
-                  continuation.execute();
-               }
-            });
+               bindings.add(new KeyboardShortcutEntry(
+                     addin.getPackage() + "::" + addin.getBinding(),
+                     addin.getName(),
+                     new KeySequence(),
+                     KeyboardShortcutEntry.TYPE_ADDIN,
+                     false,
+                     AppCommand.Context.Addin));
+            }
+            continuation.execute();
          }
       });
       

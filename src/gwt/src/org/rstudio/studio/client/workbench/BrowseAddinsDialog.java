@@ -35,7 +35,6 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.js.JsUtil;
@@ -48,12 +47,10 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.HelpLink;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
-import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
+import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -115,50 +112,14 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
       
       originalData_ = new ArrayList<RAddin>();
       
-      // get R addins handler
-      class AddinsServerRequestCallback extends ServerRequestCallback<RAddins>
-      {
-         AddinsServerRequestCallback()
-         {
-            this(null);
-         }
-         
-         AddinsServerRequestCallback(Command onSuccess)
-         {
-            onSuccess_ = onSuccess;
-         }
-         
-         @Override
-         public void onResponseReceived(RAddins addins)
-         {
-            addins_ = addins;
-            List<RAddin> data = new ArrayList<RAddin>();
-            for (String key : JsUtil.asIterable(addins.keys()))
-               data.add(addins.get(key));
-            
-            dataProvider_.setList(data);
-            originalData_ = data;
-            table_.setEmptyTableWidget(emptyTableLabel("No addins available"));
-            
-            if (onSuccess_ != null)
-               onSuccess_.execute();
-         }
-         
-         @Override
-         public void onError(ServerError error)
-         {
-            Debug.logError(error);
-         }
-         
-         private Command onSuccess_;
-         
-      };
-     
-      // get list of addins. note that we no longer call for a reindex
-      // here because we are reindexing whenever packages are installed
-      // or removed
-      server_.getRAddins(false, new AddinsServerRequestCallback());
-
+      // sync to current addins
+      addins_ = addinsCommandManager_.getRAddins();
+      List<RAddin> data = new ArrayList<RAddin>();
+      for (String key : JsUtil.asIterable(addins_.keys()))
+         data.add(addins_.get(key));
+      dataProvider_.setList(data);
+      originalData_ = data;
+      table_.setEmptyTableWidget(emptyTableLabel("No addins available"));
       
       addLeftWidget(new ThemedButton("Keyboard Shortcuts...", new ClickHandler()
       {
@@ -191,9 +152,9 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
    }
    
    @Inject
-   private void initialize(AddinsServerOperations server)
+   private void initialize(AddinsCommandManager addinsCommandManager)
    {
-      server_ = server;
+      addinsCommandManager_ = addinsCommandManager;
    }
    
    private void addColumns()
@@ -384,7 +345,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
    private RAddin selection_;
    
    // Injected ----
-   private AddinsServerOperations server_;
+   private AddinsCommandManager addinsCommandManager_;
    
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources

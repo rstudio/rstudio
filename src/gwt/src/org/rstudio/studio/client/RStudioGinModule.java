@@ -101,6 +101,7 @@ import org.rstudio.studio.client.workbench.ClientStateUpdater;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchMainView;
+import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
@@ -260,6 +261,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(UserCommandManager.class).in(Singleton.class);
       bind(ApplicationCommandManager.class).in(Singleton.class);
       bind(CodeSearchLauncher.class).in(Singleton.class);
+      bind(AddinsCommandManager.class).asEagerSingleton();
       bind(AddinsMRUList.class).asEagerSingleton();
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
