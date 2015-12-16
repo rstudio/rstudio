@@ -62,7 +62,7 @@ public class KeyMap
       
       if (node.getValue() == null)
          node.setValue(new ArrayList<CommandBinding>());
-      node.getValue().add(command);
+      node.getValue().add(0, command);
       
       if (!idToNodeMap_.containsKey(command.getId()))
          idToNodeMap_.put(command.getId(), new ArrayList<DirectedGraph<KeyCombination, List<CommandBinding>>>());
