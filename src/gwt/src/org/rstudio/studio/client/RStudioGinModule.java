@@ -101,7 +101,6 @@ import org.rstudio.studio.client.workbench.ClientStateUpdater;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchMainView;
-import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;

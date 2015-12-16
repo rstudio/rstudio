@@ -59,7 +59,6 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
 import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ui.ShinyGadgetDialog;
-import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
