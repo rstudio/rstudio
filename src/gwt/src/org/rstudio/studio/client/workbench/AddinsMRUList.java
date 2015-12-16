@@ -20,7 +20,9 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandHandler;
 import org.rstudio.core.client.command.KeyMap;
@@ -252,7 +254,7 @@ public class AddinsMRUList implements SessionInitHandler,
       String description = addin.getDescription() + " [" + addin.getId() + "]";
       command.setDesc(description);
       
-      String name = addin.getName();
+      String name = StringUtil.truncate(addin.getName(), 25, "...");
       command.setLabel(name);
       
       List<KeySequence> keys = keyMap.getBindings(addin.getId());

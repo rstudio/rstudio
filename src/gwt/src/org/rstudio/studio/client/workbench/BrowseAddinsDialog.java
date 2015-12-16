@@ -36,6 +36,7 @@ import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.ListUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
@@ -178,7 +179,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
          @Override
          public String getValue(RAddin addin)
          {
-            return addin.getName();
+            return StringUtil.truncate(addin.getName(), 25, "...");
          }
       };
       nameColumn_.setSortable(true);
