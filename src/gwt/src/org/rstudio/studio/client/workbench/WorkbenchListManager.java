@@ -151,12 +151,6 @@ public class WorkbenchListManager
       }
       
       @Override
-      public boolean contains(String item)
-      {
-         return list_.contains(item);
-      }
-
-      @Override
       public void clear()
       {
          server_.listClear(name_, new ListRequestCallback());

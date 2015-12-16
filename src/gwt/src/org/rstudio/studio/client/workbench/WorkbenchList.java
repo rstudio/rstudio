@@ -34,9 +34,6 @@ public interface WorkbenchList
    void remove(String item);
    void clear();
    
-   // status
-   boolean contains(String item);
-   
    // change handler
    HandlerRegistration addListChangedHandler(ListChangedHandler handler);
 }

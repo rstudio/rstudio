@@ -17,7 +17,9 @@ package org.rstudio.studio.client.workbench;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandHandler;
@@ -35,6 +37,8 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.ListChangedEvent;
+import org.rstudio.studio.client.workbench.events.ListChangedHandler;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -99,6 +103,15 @@ public class AddinsMRUList implements SessionInitHandler,
    public void onSessionInit(SessionInitEvent sie)
    {
       mruList_ = pListManager_.get().getAddinsMruList();
+      mruList_.addListChangedHandler(new ListChangedHandler()
+      {
+         @Override
+         public void onListChanged(ListChangedEvent event)
+         {
+            mruEntries_ = event.getList();
+            update(addinRegistry_);
+         }
+      });
       RAddins addins = session_.getSessionInfo().getAddins();
       update(addins);
    }
@@ -129,36 +142,41 @@ public class AddinsMRUList implements SessionInitHandler,
       });
    }
    
-   private void finishUpdate(List<RAddin> addinsList)
+   private void finishUpdate(List<RAddin> addinRegistry)
    {
       // The list that will eventually hold the backing set
       // of addins that the dummy MRU commands will dispatch to
-      List<RAddin> backingAddinsList = new ArrayList<RAddin>();
+      List<RAddin> addinList = new ArrayList<RAddin>();
+      
+      // Set used for quick lookup (map MRU ids to Addins)
+      Map<String, RAddin> addinMap = new HashMap<String, RAddin>();
+      for (RAddin addin : addinRegistry)
+         addinMap.put(addin.getId(), addin);
       
       // Collect addins. First, collect addins in the MRU list.
-      for (RAddin addin : addinsList)
+      for (String id : mruEntries_)
       {
-         if (backingAddinsList.size() >= MRU_LIST_SIZE)
+         if (addinList.size() >= MRU_LIST_SIZE)
             break;
          
-         if (mruList_.contains(addin.getId()))
-            backingAddinsList.add(addin);
+         if (addinMap.containsKey(id))
+            addinList.add(addinMap.get(id));
       }
       
       // Now, collect the rest of the addins (that haven't been added
       // to the backing list.
-      for (RAddin addin : addinsList)
+      for (RAddin addin : addinRegistry)
       {
-         if (backingAddinsList.size() >= MRU_LIST_SIZE)
+         if (addinList.size() >= MRU_LIST_SIZE)
             break;
          
-         if (!backingAddinsList.contains(addin))
-            backingAddinsList.add(addin);
+         if (!addinList.contains(addin))
+            addinList.add(addin);
       }
       
       // Sort the addins list, favoring addins that have
       // been recently updated.
-      Collections.sort(backingAddinsList, new Comparator<RAddin>()
+      Collections.sort(addinList, new Comparator<RAddin>()
       {
          @Override
          public int compare(RAddin o1, RAddin o2)
@@ -180,14 +198,15 @@ public class AddinsMRUList implements SessionInitHandler,
       });
       
       // Save the list (so that the dummy commands can be routed properly)
-      addinsList_ = backingAddinsList;
+      addinList_ = addinList;
+      addinRegistry_ = addinRegistry;
       
       KeyMap addinsKeyMap =
             ShortcutManager.INSTANCE.getKeyMap(KeyMapType.ADDIN);
       
       // Populate up to 15 commands.
       for (int i = 0; i < mruCommands_.length; i++)
-         manageCommand(mruCommands_[i], addinsList_, addinsKeyMap, i);
+         manageCommand(mruCommands_[i], addinList_, addinsKeyMap, i);
    }
    
    private class AddinCommandHandler implements CommandHandler
@@ -203,7 +222,7 @@ public class AddinsMRUList implements SessionInitHandler,
          if (executor_ == null)
             executor_ = new AddinExecutor();
          
-         RAddin addin = addinsList_.get(index_);
+         RAddin addin = addinList_.get(index_);
          executor_.execute(addin);
       }
       
@@ -242,7 +261,6 @@ public class AddinsMRUList implements SessionInitHandler,
    public void add(RAddin addin)
    {
       mruList_.prepend(addin.getId());
-      update(addinsList_);
    }
    
    public AppCommand[] getAddinMruCommands()
@@ -252,7 +270,14 @@ public class AddinsMRUList implements SessionInitHandler,
    
    // Private Members ----
    private WorkbenchList mruList_;
-   private List<RAddin> addinsList_;
+   private ArrayList<String> mruEntries_;
+   
+   // NOTE: The addinRegistry_ is distinct from the addinList_;
+   // the addinRegistry_ contains ALL commands, while the addinList_
+   // is just the top n sorted commands (used as a backing for the
+   // MRU commands)
+   private List<RAddin> addinRegistry_;
+   private List<RAddin> addinList_;
    
    private final AppCommand[] mruCommands_;
    
