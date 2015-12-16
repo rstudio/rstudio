@@ -14,183 +14,280 @@
  */
 package org.rstudio.studio.client.workbench;
 
-import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.user.client.Timer;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-
-import org.rstudio.core.client.Debug;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.CommandHandler;
 import org.rstudio.core.client.command.KeyMap;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.KeyMap.KeyMapType;
-import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
-import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
+import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
+import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
+import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.ListChangedEvent;
+import org.rstudio.studio.client.workbench.events.ListChangedHandler;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
 
 @Singleton
-public class AddinsMRUList extends MRUList
+public class AddinsMRUList implements SessionInitHandler,
+                                      AddinRegistryUpdatedEvent.Handler
 {
    @Inject
-   public AddinsMRUList(final Commands commands,
-                        final WorkbenchListManager listManager,
-                        final EventBus events,
-                        final Session session,
-                        final GlobalDisplay display,
-                        final AddinsServerOperations server,
-                        final AddinExecutor executor)
+   public AddinsMRUList(Provider<WorkbenchListManager> pListManager,
+                        Provider<AddinsCommandManager> pAddinManager,
+                        Session session,
+                        EventBus events,
+                        Commands commands)
    {
-      super(
-            listManager.getAddinsMruList(),
-            new AppCommand[] {
-               commands.addinsMru0(),
-               commands.addinsMru1(),
-               commands.addinsMru2(),
-               commands.addinsMru3(),
-               commands.addinsMru4(),
-               commands.addinsMru5(),
-               commands.addinsMru6(),
-               commands.addinsMru7(),
-               commands.addinsMru8(),
-               commands.addinsMru9(),
-               commands.addinsMru10(),
-               commands.addinsMru11(),
-               commands.addinsMru12(),
-               commands.addinsMru13(),
-               commands.addinsMru14()
-            },
-            commands.clearAddinsMruList(),
-            true,
-            false,
-            new OperationWithInput<String>()
-            {
-               @Override
-               public void execute(final String encoded)
-               {
-                  final RAddin addin = RAddin.decode(encoded);
-                  executor.execute(addin);
-               }
-            });
+      pListManager_ = pListManager;
+      pAddinManager_ = pAddinManager;
+      session_ = session;
+      events_ = events;
+      commands_ = commands;
       
-      events.addHandler(
-            SessionInitEvent.TYPE,
-            new SessionInitHandler()
-            {
-               @Override
-               public void onSessionInit(SessionInitEvent event)
-               {
-                  // force initialization
-                  listManager.getAddinsMruList();
-                  
-                  // timeout to wait for server operations
-                  new Timer()
-                  {
-                     @Override
-                     public void run()
-                     {
-                        updateShortcuts();
-                     }
-                  }.schedule(1000);
-               }
-            });
+      mruCommands_ = new AppCommand[] {
+            commands_.addinsMru0(),
+            commands_.addinsMru1(),
+            commands_.addinsMru2(),
+            commands_.addinsMru3(),
+            commands_.addinsMru4(),
+            commands_.addinsMru5(),
+            commands_.addinsMru6(),
+            commands_.addinsMru7(),
+            commands_.addinsMru8(),
+            commands_.addinsMru9(),
+            commands_.addinsMru10(),
+            commands_.addinsMru11(),
+            commands_.addinsMru12(),
+            commands_.addinsMru13(),
+            commands_.addinsMru14()
+      };
       
-      events.addHandler(
-            AddinExecutionFailedEvent.TYPE,
-            new AddinExecutionFailedEvent.Handler()
-            {
-               @Override
-               public void onFailure(AddinExecutionFailedEvent event)
-               {
-                  remove(event.getData());
-               }
-            });
+      events_.addHandler(SessionInitEvent.TYPE, this);
+      events_.addHandler(AddinRegistryUpdatedEvent.TYPE, this);
+      
+      initCommandHandlers();
    }
    
+   private void initCommandHandlers()
+   {
+      for (int i = 0; i < mruCommands_.length; i++)
+         addIndexedHandler(mruCommands_[i], i);
+   }
+   
+   private void addIndexedHandler(AppCommand command, int index)
+   {
+      command.addHandler(new AddinCommandHandler(index));
+   }
+
    @Override
-   protected void manageCommands(List<String> entries, AppCommand[] commands)
+   public void onSessionInit(SessionInitEvent sie)
    {
-      for (int i = 0; i < commands.length; i++)
+      mruList_ = pListManager_.get().getAddinsMruList();
+      mruList_.addListChangedHandler(new ListChangedHandler()
       {
-         if (i >= entries.size())
-            commands[i].setVisible(false);
-         else
+         @Override
+         public void onListChanged(ListChangedEvent event)
          {
-            String entry = entries.get(i);
-            try
-            {
-               RAddin addin = RAddin.decode(entry);
-               String label = addin.getName();
-               String desc = addin.getDescription() +
-                     " [" + addin.getPackage() + "::" + addin.getBinding() + "()]";
-               commands[i].setVisible(true);
-               commands[i].setMenuLabel(label);
-               commands[i].setDesc(desc);
-            }
-            catch (Exception e)
-            {
-               Debug.logException(e);
-               commands[i].setVisible(false);
-            }
+            mruEntries_ = event.getList();
+            update(addinRegistry_);
          }
-      }
-      
-      updateShortcuts();
+      });
+      RAddins addins = session_.getSessionInfo().getAddins();
+      update(addins);
+   }
+
+   @Override
+   public void onAddinRegistryUpdated(AddinRegistryUpdatedEvent event)
+   {
+      update(event.getData());
    }
    
-   public void updateShortcuts()
+   private void update(RAddins addins)
    {
-      ArrayList<String> entries = getMruEntries();
-      AppCommand[] commands = getMruCommands();
-      KeyMap keyMap = ShortcutManager.INSTANCE.getKeyMap(KeyMapType.ADDIN);
-      
-      for (int i = 0; i < entries.size(); i++)
-      {
-         RAddin addin = RAddin.decode(entries.get(i));
-         String id = addin.getId();
-         List<KeySequence> bindings = keyMap.getBindings(id);
-         if (bindings != null && !bindings.isEmpty())
-            commands[i].setShortcut(new KeyboardShortcut(bindings.get(0)));
-      }
+      List<RAddin> addinsList = new ArrayList<RAddin>();
+      for (String key : JsUtil.asIterable(addins.keys()))
+         addinsList.add(addins.get(key));
+      update(addinsList);
    }
    
-   public static class AddinExecutionFailedEvent extends GwtEvent<AddinExecutionFailedEvent.Handler>
+   private void update(final List<RAddin> addins)
    {
-      public AddinExecutionFailedEvent(String data) { data_ = data; }
-      public String getData() { return data_; }
-      private final String data_;
-      
-      // Boilerplate ----
-      
-      public interface Handler extends EventHandler
+      pAddinManager_.get().loadBindings(new CommandWithArg<EditorKeyBindings>()
       {
-         void onFailure(AddinExecutionFailedEvent event);
-      }
-
-      @Override
-      public com.google.gwt.event.shared.GwtEvent.Type<Handler> getAssociatedType()
-      {
-         return TYPE;
-      }
-      
-      @Override
-      protected void dispatch(Handler handler)
-      {
-         handler.onFailure(this);
-      }
-
-      public static final Type<Handler> TYPE = new Type<Handler>();
+         @Override
+         public void execute(EditorKeyBindings bindings)
+         {
+            finishUpdate(addins);
+         }
+      });
    }
+   
+   private void finishUpdate(List<RAddin> addinRegistry)
+   {
+      // The list that will eventually hold the backing set
+      // of addins that the dummy MRU commands will dispatch to
+      List<RAddin> addinList = new ArrayList<RAddin>();
+      
+      // Map used for quick lookup of MRU addin ids
+      Map<String, RAddin> addinMap = new HashMap<String, RAddin>();
+      for (RAddin addin : addinRegistry)
+         addinMap.put(addin.getId(), addin);
+      
+      // Collect addins. First, collect addins in the MRU list.
+      for (String id : mruEntries_)
+      {
+         if (addinList.size() >= MRU_LIST_SIZE)
+            break;
+         
+         if (addinMap.containsKey(id))
+            addinList.add(addinMap.get(id));
+      }
+      
+      // Now, collect the rest of the addins (that haven't been added
+      // to the backing list.
+      for (RAddin addin : addinRegistry)
+      {
+         if (addinList.size() >= MRU_LIST_SIZE)
+            break;
+         
+         if (!addinList.contains(addin))
+            addinList.add(addin);
+      }
+      
+      // Sort the addins list, favoring addins that have
+      // been recently updated.
+      Collections.sort(addinList, new Comparator<RAddin>()
+      {
+         @Override
+         public int compare(RAddin o1, RAddin o2)
+         {
+            int compare = 0;
+            
+            // Compare first on package name.
+            compare = o1.getPackage().compareTo(o2.getPackage());
+            if (compare != 0)
+               return compare;
+            
+            // Then compare on actual name.
+            compare = o1.getName().compareTo(o2.getName());
+            if (compare != 0)
+               return compare;
+            
+            return 0;
+         }
+      });
+      
+      // Save the list (so that the dummy commands can be routed properly)
+      addinList_ = addinList;
+      addinRegistry_ = addinRegistry;
+      
+      KeyMap addinsKeyMap =
+            ShortcutManager.INSTANCE.getKeyMap(KeyMapType.ADDIN);
+      
+      // Populate up to 15 commands.
+      for (int i = 0; i < mruCommands_.length; i++)
+         manageCommand(mruCommands_[i], addinList_, addinsKeyMap, i);
+   }
+   
+   private class AddinCommandHandler implements CommandHandler
+   {
+      public AddinCommandHandler(int index)
+      {
+         index_ = index;
+      }
+      
+      @Override
+      public void onCommand(AppCommand command)
+      {
+         if (executor_ == null)
+            executor_ = new AddinExecutor();
+         
+         RAddin addin = addinList_.get(index_);
+         executor_.execute(addin);
+      }
+      
+      private final int index_;
+      private AddinExecutor executor_;
+   }
+   
+   private void manageCommand(AppCommand command,
+                              List<RAddin> addinsList,
+                              KeyMap keyMap,
+                              int index)
+   {
+      if (index >= addinsList.size())
+      {
+         command.setEnabled(false);
+         command.setVisible(false);
+         return;
+      }
+      
+      RAddin addin = addinsList.get(index);
+      
+      command.setEnabled(true);
+      command.setVisible(true);
+      
+      String description = addin.getDescription() + " [" + addin.getId() + "]";
+      command.setDesc(description);
+      
+      String name = addin.getName();
+      command.setLabel(name);
+      
+      List<KeySequence> keys = keyMap.getBindings(addin.getId());
+      if (keys != null && !keys.isEmpty())
+         command.setShortcut(new KeyboardShortcut(keys.get(0)));
+   }
+   
+   public void add(RAddin addin)
+   {
+      mruList_.prepend(addin.getId());
+   }
+   
+   public AppCommand[] getAddinMruCommands()
+   {
+      return mruCommands_;
+   }
+   
+   // Private Members ----
+   private WorkbenchList mruList_;
+   private ArrayList<String> mruEntries_;
+   
+   // NOTE: The addinRegistry_ is distinct from the addinList_;
+   // the addinRegistry_ contains ALL commands, while the addinList_
+   // is just the top n sorted commands (used as a backing for the
+   // MRU commands)
+   private List<RAddin> addinRegistry_;
+   private List<RAddin> addinList_;
+   
+   private final AppCommand[] mruCommands_;
+   
+   private static final int MRU_LIST_SIZE = 15;
+   
+   // Injected ----
+   private final Provider<WorkbenchListManager> pListManager_;
+   private final Provider<AddinsCommandManager> pAddinManager_;
+   private final Session  session_;
+   private final EventBus events_;
+   private final Commands commands_;
+
 }

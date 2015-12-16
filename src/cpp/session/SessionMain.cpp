@@ -151,6 +151,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionMarkers.hpp"
 #include "modules/SessionSnippets.hpp"
 #include "modules/SessionUserCommands.hpp"
+#include "modules/SessionRAddins.hpp"
 
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"
@@ -643,6 +644,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["show_user_home_page"] = options.showUserHomePage();
    sessionInfo["user_home_page_url"] = json::Value();
+   
+   sessionInfo["r_addins"] = modules::r_addins::addinRegistryAsJson();
 
    module_context::events().onSessionInfo(&sessionInfo);
 

@@ -579,6 +579,11 @@ Error executeRAddin(const json::JsonRpcRequest& request,
 }
 
 } // end anonymous namespace
+
+core::json::Value addinRegistryAsJson()
+{
+   return addinRegistry().toJson();
+}
   
 Error initialize()
 {

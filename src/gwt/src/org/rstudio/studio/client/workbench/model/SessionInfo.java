@@ -23,6 +23,7 @@ import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
+import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
@@ -423,6 +424,10 @@ public class SessionInfo extends JavaScriptObject
    
    public final native String getUserHomePageUrl() /*-{
       return this.user_home_page_url;
+   }-*/;
+   
+   public final native RAddins getAddins() /*-{
+      return this.r_addins;
    }-*/;
    
 }

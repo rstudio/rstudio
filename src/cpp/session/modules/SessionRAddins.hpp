@@ -16,6 +16,8 @@
 #ifndef SESSION_R_ADDINS_HPP
 #define SESSION_R_ADDINS_HPP
 
+#include <core/json/Json.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -26,7 +28,9 @@ namespace rstudio {
 namespace session {
 namespace modules {
 namespace r_addins {
-   
+
+core::json::Value addinRegistryAsJson();
+
 core::Error initialize();
 
 } // namespace r_addins

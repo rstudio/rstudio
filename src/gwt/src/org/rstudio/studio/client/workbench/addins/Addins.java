@@ -10,6 +10,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.AddinsMRUList;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 public class Addins
@@ -91,10 +92,13 @@ public class Addins
       }
       
       @Inject
-      private void initialize(AddinsServerOperations server, EventBus events)
+      private void initialize(AddinsServerOperations server,
+                              EventBus events,
+                              AddinsMRUList mruList)
       {
          server_ = server;
          events_ = events;
+         mruList_ = mruList;
       }
       
       public void execute(RAddin addin)
@@ -116,6 +120,8 @@ public class Addins
                   addin.getId(),
                   new SimpleRequestCallback<Void>("Error Executing Addin", true));
          }
+         
+         mruList_.add(addin);
       }
       
       private boolean injected_ = false;
@@ -123,6 +129,7 @@ public class Addins
       // Injected ----
       private AddinsServerOperations server_;
       private EventBus events_;
+      private AddinsMRUList mruList_;
    }
    
    private static final String DELIMITER = "|||";

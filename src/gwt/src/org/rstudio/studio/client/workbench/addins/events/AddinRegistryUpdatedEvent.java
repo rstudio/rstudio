@@ -14,11 +14,25 @@
  */
 package org.rstudio.studio.client.workbench.addins.events;
 
+import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class AddinRegistryUpdatedEvent extends GwtEvent<AddinRegistryUpdatedEvent.Handler>
 {
+   public AddinRegistryUpdatedEvent(RAddins data)
+   {
+      data_ = data;
+   }
+   
+   public RAddins getData()
+   {
+      return data_;
+   }
+   
+   private final RAddins data_;
+   
    // Boilerplate ----
    
    public interface Handler extends EventHandler

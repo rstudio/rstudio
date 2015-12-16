@@ -240,8 +240,6 @@ public class GlobalToolbar extends Toolbar
       addinsMenu.addItem(commands_.addinsMru13().createMenuItem(false));
       addinsMenu.addItem(commands_.addinsMru14().createMenuItem(false));
       addinsMenu.addSeparator();
-      addinsMenu.addItem(commands_.clearAddinsMruList().createMenuItem(false));
-      addinsMenu.addSeparator();
       addinsMenu.addItem(commands_.browseAddins().createMenuItem(false));
       addLeftSeparator();
       ToolbarButton addinsButton = new ToolbarButton(

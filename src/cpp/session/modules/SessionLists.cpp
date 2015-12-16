@@ -331,7 +331,7 @@ Error initialize()
    s_lists[kHelpHistory] = 15;
    s_lists[kPlotPublishMru] = 15;
    s_lists[kUserDictioanry] = 10000;
-   s_lists[kAddinsMru] = 10;
+   s_lists[kAddinsMru] = 15;
 
    // monitor the lists directory
    s_listsPath = module_context::registerMonitoredUserScratchDir(
