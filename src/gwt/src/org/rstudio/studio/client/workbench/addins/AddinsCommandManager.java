@@ -15,7 +15,6 @@ import org.rstudio.core.client.command.KeyMap.KeyMapType;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.files.FileBacked;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
@@ -30,10 +29,12 @@ import java.util.List;
 @Singleton
 public class AddinsCommandManager
 {
-   public AddinsCommandManager()
+   @Inject
+   public AddinsCommandManager(EventBus events, 
+                               final Session session)
    {
-      RStudioGinjector.INSTANCE.injectMembers(this);
-      
+      events_ = events;
+     
       bindings_ = new FileBacked<EditorKeyBindings>(
             KEYBINDINGS_PATH,
             false,
@@ -47,7 +48,7 @@ public class AddinsCommandManager
                @Override
                public void onSessionInit(SessionInitEvent sie)
                {
-                  rAddins_ = session_.getSessionInfo().getAddins();
+                  rAddins_ = session.getSessionInfo().getAddins();
                   loadBindings();
                }
             });
@@ -76,14 +77,6 @@ public class AddinsCommandManager
                   loadBindings();
                }
             });
-   }
-   
-   @Inject
-   private void initialize(EventBus events,
-                           Session session)
-   {
-      events_ = events;
-      session_ = session;
    }
    
    public void addBindingsAndSave(final EditorKeyBindings newBindings,
@@ -186,5 +179,4 @@ public class AddinsCommandManager
    
    // Injected ----
    private EventBus events_;
-   private Session session_;
 }
