@@ -101,6 +101,25 @@ Error ActiveSessions::create(const std::string& project,
    return Success();
 }
 
+namespace {
+
+bool compareActivityLevel(const boost::shared_ptr<ActiveSession>& a,
+                          const boost::shared_ptr<ActiveSession>& b)
+{
+   if (a->executing())
+      return true;
+   else if (b->executing())
+      return false;
+   else if (a->running())
+      return true;
+   else if (b->running())
+      return false;
+   else
+      return a->lastUsed() >= b->lastUsed();
+}
+
+} // anonymous namespace
+
 std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(
                                        const FilePath& userHomePath,
                                        bool projectSharingEnabled) const
@@ -144,6 +163,10 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(
 
    }
 
+   // sort by activity level (most active sessions first)
+   std::sort(sessions.begin(), sessions.end(), compareActivityLevel);
+
+   // return
    return sessions;
 }
 
@@ -212,7 +235,7 @@ void trackActiveSessionCount(const FilePath& rootStoragePath,
 }
 
 } // namespace r_util
-} // namespace core 
+} // namespace core
 } // namespace rstudio
 
 
