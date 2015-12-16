@@ -262,12 +262,7 @@ public class AddinsMRUList implements SessionInitHandler,
    {
       mruList_.prepend(addin.getId());
    }
-   
-   public AppCommand[] getAddinMruCommands()
-   {
-      return mruCommands_;
-   }
-   
+  
    // Private Members ----
    private WorkbenchList mruList_;
    private ArrayList<String> mruEntries_;
