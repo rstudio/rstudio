@@ -148,7 +148,7 @@ public class AddinsMRUList implements SessionInitHandler,
       // of addins that the dummy MRU commands will dispatch to
       List<RAddin> addinList = new ArrayList<RAddin>();
       
-      // Set used for quick lookup (map MRU ids to Addins)
+      // Map used for quick lookup of MRU addin ids
       Map<String, RAddin> addinMap = new HashMap<String, RAddin>();
       for (RAddin addin : addinRegistry)
          addinMap.put(addin.getId(), addin);
