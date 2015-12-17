@@ -88,7 +88,7 @@ public class SuperDevListener implements CodeServerListener {
   public void start() {
     try {
       Stopwatch watch = Stopwatch.createStarted();
-      logger.log(Type.INFO, "Runing CodeServer with parameters: " + codeServerArgs);
+      logger.log(Type.INFO, "Running CodeServer with parameters: " + codeServerArgs);
       runCodeServer(codeServerArgs.toArray(new String[0]));
       logger.log(Type.INFO, "Code server started in " + watch + " ms");
     } catch (Exception e) {
