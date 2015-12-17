@@ -21,6 +21,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
@@ -215,6 +216,10 @@ inline core::r_util::ProjectId toProjectId(const std::string& projectDir,
                              const core::FilePath& userScratchPath,
                              const core::FilePath& sharedStoragePath)
 {
+   // warn if this is a project file
+   if (boost::algorithm::iends_with(projectDir, ".Rproj"))
+      LOG_WARNING_MESSAGE("Project file path not directory: " + projectDir);
+
    // get the id map
    core::FilePath projectIdsPath = projectIdsFilePath(userScratchPath);
    std::map<std::string,std::string> idMap = projectIdsMap(projectIdsPath);
