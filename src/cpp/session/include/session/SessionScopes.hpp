@@ -22,6 +22,7 @@
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/range/adaptor/map.hpp>
 
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
@@ -65,6 +66,27 @@ inline std::map<std::string,std::string> projectIdsMap(
       if (error)
          LOG_ERROR(error);
    }
+
+   // somewhere in our system we've had .Rproj files get injected into
+   // the project ids map -- we need to fix this up here
+   size_t previousMapSize = idMap.size();
+   for (std::map<std::string,std::string>::iterator
+         it = idMap.begin(); it != idMap.end();)
+   {
+      if (boost::algorithm::iends_with(it->second, ".Rproj"))
+         idMap.erase(it++);
+      else
+         ++it;
+   }
+
+   // persist if we made any changes
+   if (idMap.size() != previousMapSize)
+   {
+      core::Error error = core::writeStringMapToFile(projectIdsPath, idMap);
+      if (error)
+         LOG_ERROR(error);
+   }
+
    return idMap;
 }
 
