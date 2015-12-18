@@ -1441,6 +1441,7 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
        ext == ".rdata"    ||
        ext == ".rhistory" ||
        ext == ".renviron" ||
+       ext == ".httr-oauth" ||
        ext == ".gitignore")
    {
       return true;
