@@ -120,7 +120,6 @@
 * Prevent spurious navigation when user cancels from the file upload dialog
 * Don't include H3 (and higher) headers when creating presentation slide preview navigation menu
 * Don't allow long file paths to overflow in message dialogs
-* RPM: Don't automatically provide dependencies for embedded libraries
 
 
 
