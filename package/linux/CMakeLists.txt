@@ -72,9 +72,6 @@ elseif(RSTUDIO_DESKTOP)
   # depend on libjpeg62 (for Qt 4.8 jpeg plugin)
   set(RSTUDIO_DEBIAN_DEPENDS "libjpeg62, libedit2, ")
 
-  # don't automatically provide dependencies
-  set(CPACK_RPM_PACKAGE_AUTOPROV " no")
-
 endif()
 
 # define package suffix
