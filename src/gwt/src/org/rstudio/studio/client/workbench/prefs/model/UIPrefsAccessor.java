@@ -102,12 +102,21 @@ public class UIPrefsAccessor extends Prefs
    public static final String EDITOR_KEYBINDINGS_VIM = "vim";
    public static final String EDITOR_KEYBINDINGS_EMACS = "emacs";
    
-   public PrefValue<Boolean> useVimMode()
+   // NOTE: This pref subsumes the 'use_vim_mode' and
+   // 'enable_emacs_keybindings' prefs and so should
+   // respect those settings when unset if possible,
+   // and use 'default' otherwise
+   public PrefValue<String> editorMode()
+   {
+      return string("editor_mode", "");
+   }
+   
+   public PrefValue<Boolean> deprecatedUseVimMode()
    {
       return bool("use_vim_mode", false);
    }
    
-   public PrefValue<Boolean> enableEmacsKeybindings()
+   public PrefValue<Boolean> deprecatedEnableEmacsKeybindings()
    {
       return bool("enable_emacs_keybindings", false);
    }

@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyMap.CommandBinding;
@@ -36,6 +37,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
 
 import com.google.gwt.core.client.Scheduler;
@@ -288,6 +290,23 @@ public class ShortcutManager implements NativePreviewHandler,
             event.cancel();
             events_.fireEvent(new RStudioCommandExecutedFromShortcutEvent());
          }
+      }
+   }
+   
+   public void setEditorMode(String editorMode)
+   {
+      if (editorMode.equals(UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM))
+         editorMode_ = KeyboardShortcut.MODE_VIM;
+      else if (editorMode.equals(UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS))
+         editorMode_ = KeyboardShortcut.MODE_EMACS;
+      else if (editorMode.equals(UIPrefsAccessor.EDITOR_KEYBINDINGS_DEFAULT))
+         editorMode_ = KeyboardShortcut.MODE_DEFAULT;
+      else
+      {
+         if (!StringUtil.isNullOrEmpty(editorMode))
+            Debug.log("Unexpected editorMode '" + editorMode + "'");
+         
+         editorMode_ = KeyboardShortcut.MODE_DEFAULT;
       }
    }
    

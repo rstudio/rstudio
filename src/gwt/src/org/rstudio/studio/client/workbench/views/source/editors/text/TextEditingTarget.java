@@ -476,7 +476,7 @@ public class TextEditingTarget implements
                jumpToNextFunction();
             }
             else if ((ne.getKeyCode() == KeyCodes.KEY_ESCAPE) &&
-                     !prefs_.useVimMode().getValue())
+                     !prefs_.editorMode().getGlobalValue().equals(UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM))
             {
                event.preventDefault();
                event.stopPropagation();
@@ -5376,7 +5376,7 @@ public class TextEditingTarget implements
    
    public static void registerPrefs(
                      ArrayList<HandlerRegistration> releaseOnDismiss,
-                     UIPrefs prefs,
+                     final UIPrefs prefs,
                      final DocDisplay docDisplay,
                      final PrefsContext context)
    {
@@ -5447,15 +5447,19 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.setHighlightRFunctionCalls(arg);
                }}));
-      releaseOnDismiss.add(prefs.useVimMode().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay.setUseVimMode(arg);
-               }}));
-      releaseOnDismiss.add(prefs.enableEmacsKeybindings().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay.setUseEmacsKeybindings(arg);
+      releaseOnDismiss.add(prefs.editorMode().bind(
+            new CommandWithArg<String>() {
+               public void execute(String arg) {
+                  if (StringUtil.isNullOrEmpty(arg))
+                  {
+                     docDisplay.setUseEmacsKeybindings(prefs.deprecatedEnableEmacsKeybindings().getGlobalValue());
+                     docDisplay.setUseVimMode(prefs.deprecatedUseVimMode().getGlobalValue());
+                  }
+                  else
+                  {
+                     docDisplay.setUseEmacsKeybindings(arg.equals(UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS));
+                     docDisplay.setUseVimMode(arg.equals(UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM));
+                  }
                }}));
       releaseOnDismiss.add(prefs.codeCompleteOther().bind(
             new CommandWithArg<String>() {

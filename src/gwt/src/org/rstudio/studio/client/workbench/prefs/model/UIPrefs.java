@@ -153,13 +153,8 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          showDocumentOutlineRmd().setGlobalValue(
                               newUiPrefs.showDocumentOutlineRmd().getGlobalValue());
          
-         // use vim mode
-         useVimMode().setGlobalValue(
-                              newUiPrefs.useVimMode().getGlobalValue());
-         
-         // emacs keybindings
-         enableEmacsKeybindings().setGlobalValue(
-                              newUiPrefs.enableEmacsKeybindings().getGlobalValue());
+         editorMode().setGlobalValue(
+                              newUiPrefs.editorMode().getGlobalValue());
          
          continueCommentsOnNewline().setGlobalValue(
                               newUiPrefs.continueCommentsOnNewline().getGlobalValue());

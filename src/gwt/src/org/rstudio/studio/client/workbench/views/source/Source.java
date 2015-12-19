@@ -702,12 +702,8 @@ public class Source implements InsertSourceHandler,
       AceEditorNative.syncUiPrefs(uiPrefs_);
       
       // sync UI prefs with shortcut manager
-      if (uiPrefs_.useVimMode().getGlobalValue())
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_VIM);
-      else if (uiPrefs_.enableEmacsKeybindings().getGlobalValue())
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_EMACS);
-      else
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
+      String editorMode = uiPrefs_.editorMode().getGlobalValue();
+      ShortcutManager.INSTANCE.setEditorMode(editorMode);
       
       initialized_ = true;
 

@@ -447,12 +447,21 @@ public class EditingPreferencesPane extends PreferencesPane
       
       showCompletions_.setValue(prefs_.codeComplete().getValue());
       showCompletionsOther_.setValue(prefs_.codeCompleteOther().getValue());
-      if (prefs_.useVimMode().getValue())
-         editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM);
-      else if (prefs_.enableEmacsKeybindings().getValue())
-         editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS);
-      else
-         editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_DEFAULT);
+      
+      String editorMode = prefs_.editorMode().getGlobalValue();
+      
+      // Respect the old prefs of use_vim_mode or enable_emacs if possible
+      if (StringUtil.isNullOrEmpty(editorMode))
+      {
+         if (prefs_.deprecatedUseVimMode().getGlobalValue())
+            editorMode = UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM;
+         else if (prefs_.deprecatedEnableEmacsKeybindings().getGlobalValue())
+            editorMode = UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS;
+         else
+            editorMode = UIPrefsAccessor.EDITOR_KEYBINDINGS_DEFAULT;
+      }
+      
+      editorMode_.setValue(editorMode);
       delimiterSurroundWidget_.setValue(prefs_.surroundSelection().getValue());
       rmdViewerMode_.setValue(prefs_.rmdViewerType().getValue().toString());
    }
@@ -471,18 +480,8 @@ public class EditingPreferencesPane extends PreferencesPane
       prefs_.codeCompleteOther().setGlobalValue(showCompletionsOther_.getValue());
       
       String editorMode = editorMode_.getValue();
-      boolean isVim = editorMode.equals(UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM);
-      boolean isEmacs = editorMode.equals(UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS);
-      
-      prefs_.useVimMode().setGlobalValue(isVim);
-      prefs_.enableEmacsKeybindings().setGlobalValue(isEmacs);
-      
-      if (isVim)
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_VIM);
-      else if (isEmacs)
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_EMACS);
-      else
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
+      prefs_.editorMode().setGlobalValue(editorMode);
+      ShortcutManager.INSTANCE.setEditorMode(editorMode);
       
       prefs_.rmdViewerType().setGlobalValue(Integer.decode(
             rmdViewerMode_.getValue()));
