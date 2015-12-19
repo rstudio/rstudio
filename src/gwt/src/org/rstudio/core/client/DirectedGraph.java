@@ -29,6 +29,11 @@ public class DirectedGraph<K, V>
       public R create();
    }
    
+   public interface ForEachNodeCommand<K, V>
+   {
+      public boolean continueExecution(DirectedGraph<K, V> node);
+   }
+   
    public DirectedGraph()
    {
       this(null, null, null, null);
@@ -168,16 +173,18 @@ public class DirectedGraph<K, V>
       return chain;
    }
    
-   public void forEachNode(CommandWithArg<DirectedGraph<K, V>> command)
+   public void forEachNode(ForEachNodeCommand<K, V> command)
    {
       forEachNodeImpl(this, command);
    }
    
    private static <K, V> void forEachNodeImpl(
          DirectedGraph<K, V> node,
-         CommandWithArg<DirectedGraph<K, V>> command)
+         ForEachNodeCommand<K, V> command)
    {
-      command.execute(node);
+      if (!command.continueExecution(node))
+         return;
+      
       for (Map.Entry<K, DirectedGraph<K, V>> entry : node.getChildren().entrySet())
          forEachNodeImpl(entry.getValue(), command);
    }
