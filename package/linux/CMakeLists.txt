@@ -56,6 +56,9 @@ if(RSTUDIO_SERVER)
      set(RSTUDIO_RPM_DEPENDS "${RSTUDIO_RPM_DEPENDS}libffi, ")
   endif()
 
+  # don't auto-resolve other dependencies
+  set(CPACK_RPM_PACKAGE_AUTOREQPROV " no")
+
 elseif(RSTUDIO_DESKTOP)
  
    # debian control files
@@ -68,6 +71,9 @@ elseif(RSTUDIO_DESKTOP)
 
   # depend on libjpeg62 (for Qt 4.8 jpeg plugin)
   set(RSTUDIO_DEBIAN_DEPENDS "libjpeg62, libedit2, ")
+
+  # don't automatically provide dependencies
+  set(CPACK_RPM_PACKAGE_AUTOPROV " no")
 
 endif()
 
@@ -186,8 +192,6 @@ set(CPACK_RPM_PACKAGE_LICENSE "AGPL v.3.0")
 set(CPACK_RPM_PACKAGE_GROUP "Development/Tools")
 set(CPACK_RPM_PACKAGE_ARCHITECTURE "${PACKAGE_ARCHITECTURE}")
 set(CPACK_RPM_PACKAGE_REQUIRES "${RSTUDIO_RPM_DEPENDS}")
-set(CPACK_RPM_PACKAGE_AUTOREQPROV " no")
-
 
 # build package
 include(CPack)
