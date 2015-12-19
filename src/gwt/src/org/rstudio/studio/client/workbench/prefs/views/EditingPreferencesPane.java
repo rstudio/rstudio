@@ -29,6 +29,8 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.widget.HelpButton;
@@ -474,6 +476,14 @@ public class EditingPreferencesPane extends PreferencesPane
       
       prefs_.useVimMode().setGlobalValue(isVim);
       prefs_.enableEmacsKeybindings().setGlobalValue(isEmacs);
+      
+      if (isVim)
+         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_VIM);
+      else if (isEmacs)
+         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_EMACS);
+      else
+         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
+      
       prefs_.rmdViewerType().setGlobalValue(Integer.decode(
             rmdViewerMode_.getValue()));
       

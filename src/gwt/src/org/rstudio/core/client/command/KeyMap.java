@@ -21,9 +21,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.CommandWith2Args;
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DirectedGraph;
+import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.DirectedGraph.DefaultConstructor;
+import org.rstudio.core.client.DirectedGraph.ForEachNodeCommand;
 import org.rstudio.core.client.command.KeyboardShortcut.KeyCombination;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.container.SafeMap;
@@ -149,19 +150,47 @@ public class KeyMap
    public boolean isPrefix(KeySequence keys)
    {
       DirectedGraph<KeyCombination, List<CommandBinding>> node = graph_.findNode(keys.getData());
-      return node != null && !node.getChildren().isEmpty();
+      if (node == null)
+         return false;
+      
+      final Mutable<Boolean> pending = new Mutable<Boolean>(false);
+      node.forEachNode(new ForEachNodeCommand<KeyCombination, List<CommandBinding>>()
+      {
+         @Override
+         public boolean continueExecution(DirectedGraph<KeyCombination, List<CommandBinding>> node)
+         {
+            List<CommandBinding> bindings = node.getValue();
+            if (bindings == null || bindings.isEmpty())
+               return true;
+            
+            for (CommandBinding binding : bindings)
+            {
+               if (binding.isEnabled())
+               {
+                  pending.set(true);
+                  return false;
+               }
+            }
+            
+            return true;
+         }
+      });
+      
+      return pending.get();
    }
    
    public void forEachBinding(final CommandWith2Args<KeySequence, List<CommandBinding>> command)
    {
-      graph_.forEachNode(new CommandWithArg<DirectedGraph<KeyCombination, List<CommandBinding>>>()
+      graph_.forEachNode(new ForEachNodeCommand<KeyCombination, List<CommandBinding>>()
       {
          @Override
-         public void execute(final DirectedGraph<KeyCombination, List<CommandBinding>> node)
+         public boolean continueExecution(DirectedGraph<KeyCombination, List<CommandBinding>> node)
          {
             command.execute(
                   new KeySequence(node.getKeyChain()),
                   node.getValue());
+            
+            return true;
          }
       });
    }
