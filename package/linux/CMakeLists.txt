@@ -69,7 +69,7 @@ elseif(RSTUDIO_DESKTOP)
   # depend on libjpeg62 (for Qt 4.8 jpeg plugin)
   set(RSTUDIO_DEBIAN_DEPENDS "libjpeg62, libedit2, ")
   
-   # rpm dependencies
+  # rpm dependencies
   set(RSTUDIO_RPM_DEPENDS "gstreamer, gstreamer-plugins-base, ")
 
 endif()
