@@ -24,6 +24,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -111,6 +112,15 @@ public class Shell implements ConsoleInputHandler,
       browseHistoryManager_ = new CommandLineHistory(input_);
       prefs_ = uiPrefs;
       tracker.setConsoleEditor(input_);
+      
+      prefs_.surroundSelection().bind(new CommandWithArg<String>()
+      {
+         @Override
+         public void execute(String value)
+         {
+            ((DocDisplay) input_).setSurroundSelectionPref(value);
+         }
+      });
 
       inputAnimator_ = new ShellInputAnimator(view_.getInputEditorDisplay());
       
