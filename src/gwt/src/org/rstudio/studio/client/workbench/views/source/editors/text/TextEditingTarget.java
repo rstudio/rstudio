@@ -2354,6 +2354,15 @@ public class TextEditingTarget implements
       if (lineCount < 1)
          return;
       
+      if (docDisplay_.hasActiveCollabSession())
+      {
+         // mutating the code (especially as below where the entire document 
+         // contents are changed) during a save operation inside a collaborative
+         // editing session would require some nuanced orchestration so for now
+         // these preferences don't apply to shared editing sessions
+         return;
+      }
+      
       if (prefs_.stripTrailingWhitespace().getValue() &&
           !fileType_.isMarkdown())
       {
