@@ -64,6 +64,16 @@ Error parseDcfFile(const std::string& dcfFileContents,
       // report blank lines (so clients can see record delimiters)
       if (it->empty() || boost::algorithm::trim_copy(*it).empty())
       {
+         // if we have a pending key & value then resolve it
+         if (!currentKey.empty())
+         {
+            if (!recordField(std::make_pair(currentKey,currentValue)))
+               return Success();
+
+            currentKey.clear();
+            currentValue.clear();
+         }
+
          if (!recordField(std::make_pair(std::string(), std::string())))
             return Success();
 
@@ -126,6 +136,9 @@ Error parseDcfFile(const std::string& dcfFileContents,
       if (!recordField(std::make_pair(currentKey,currentValue)))
          return Success();
    }
+
+   // always report a final blank line (so clients can see record delimiters)
+   recordField(std::make_pair(std::string(), std::string()));
 
    return Success();
 }
