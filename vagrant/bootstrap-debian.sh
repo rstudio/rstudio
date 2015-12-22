@@ -24,6 +24,9 @@ apt-get install -y libssh2-1-dev
 apt-get install -y curl 
 apt-get install -y libcurl4-openssl-dev
 
+# install GNU debugger
+apt-get install -y gdb
+
 # create SSH key if needed
 if [ ! -f /rstudio/vagrant/vagrant_key_rsa ]; then
     ssh-keygen -t rsa -b 4096 -N "" -C "vagrant ssh" -f /rstudio/vagrant/vagrant_key_rsa

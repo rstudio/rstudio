@@ -16,11 +16,8 @@ chmod 0600 /etc/rstudio/secure-cookie-key
 # configure primary machine for load balancing
 ssh -i /rstudio/vagrant/vagrant_key_rsa -o StrictHostKeyChecking=no vagrant@192.168.55.101 "sudo /rstudio/vagrant/provision-primary-load.sh" 
 
-# connect to NFS server already running on the primary machine
-apt-get install -y nfs-common
-mkdir -p /primary/home 
-echo "192.168.55.101:/primary/home /primary/home nfs rsize=8192,wsize=8192,timeo=14,intr,nfsvers=3,acl" >> /etc/fstab
-mount -a 
+# attach to NFS client
+/rstudio/vagrant/provision-nfs-client.sh
 
 # add users; use NFS home directories
 apt-get install -y whois
