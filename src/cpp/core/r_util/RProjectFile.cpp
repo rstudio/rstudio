@@ -864,7 +864,7 @@ FilePath projectFromDirectory(const FilePath& directoryPath)
    // first use simple heuristic of a case sentitive match between
    // directory name and project file name
    std::string dirName = directoryPath.filename();
-   if (!dirName.empty())
+   if (!FilePath::isRootPath(dirName))
    {
       FilePath projectFile = directoryPath.childPath(dirName + ".Rproj");
       if (projectFile.exists())
