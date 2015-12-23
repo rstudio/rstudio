@@ -37,10 +37,12 @@ public class CollabExternalEditEvent
    {
    }
    
-   public CollabExternalEditEvent(String docId, String docPath)
+   public CollabExternalEditEvent(String docId, String docPath, 
+         double lastModified)
    {
       docId_ = docId;
       docPath_ = docPath;
+      lastModified_ = lastModified;
    }
    
    public String getDocPath()
@@ -51,6 +53,11 @@ public class CollabExternalEditEvent
    public String getDocId()
    {
       return docId_;
+   }
+   
+   public double getLastModified()
+   {
+      return lastModified_;
    }
    
    @Override
@@ -73,4 +80,5 @@ public class CollabExternalEditEvent
    
    private String docId_;
    private String docPath_;
+   private double lastModified_;
 }

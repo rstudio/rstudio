@@ -302,7 +302,7 @@ public class FileSystemItem extends JavaScriptObject
       return this.length;
    }-*/;
 
-   private final native double getLastModifiedNative() /*-{
+   public final native double getLastModifiedNative() /*-{
       return this.lastModified;
    }-*/;
 

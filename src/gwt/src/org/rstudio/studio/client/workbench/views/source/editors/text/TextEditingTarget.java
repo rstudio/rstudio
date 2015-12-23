@@ -5169,10 +5169,12 @@ public class TextEditingTarget implements
                      // If we're in a collaborative session, we need to let it
                      // reconcile the modification
                      if (docDisplay_ != null && 
-                         docDisplay_.hasActiveCollabSession())
+                         docDisplay_.hasActiveCollabSession() &&
+                         response.getItem() != null)
                      {
                         events_.fireEvent(new CollabExternalEditEvent(
-                              getId(), getPath()));
+                              getId(), getPath(), 
+                              response.getItem().getLastModifiedNative()));
                         return;
                      }
 
