@@ -39,7 +39,7 @@ public class CollabEditSavedEvent extends GwtEvent<CollabEditSavedEvent.Handler>
          return this.crc32;
       }-*/;
 
-      public final native String getWriteTime() /*-{
+      public final native double getWriteTime() /*-{
          return this.write_time;
       }-*/;
    }
