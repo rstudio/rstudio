@@ -863,10 +863,13 @@ FilePath projectFromDirectory(const FilePath& directoryPath)
 {
    // first use simple heuristic of a case sentitive match between
    // directory name and project file name
-   FilePath projectFile = directoryPath.childPath(
-                                       directoryPath.filename() + ".Rproj");
-   if (projectFile.exists())
-      return projectFile;
+   std::string dirName = directoryPath.filename();
+   if (!dirName.empty())
+   {
+      FilePath projectFile = directoryPath.childPath(dirName + ".Rproj");
+      if (projectFile.exists())
+         return projectFile;
+   }
 
    // didn't satisfy it with simple check so do scan of directory
    std::vector<FilePath> children;
@@ -879,7 +882,7 @@ FilePath projectFromDirectory(const FilePath& directoryPath)
 
    // build a vector of children with .rproj extensions. at the same
    // time allow for a case insensitive match with dir name and return that
-   std::string projFileLower = string_utils::toLower(projectFile.filename());
+   std::string projFileLower = string_utils::toLower(dirName);
    std::vector<FilePath> rprojFiles;
    for (std::vector<FilePath>::const_iterator it = children.begin();
         it != children.end();
@@ -902,7 +905,7 @@ FilePath projectFromDirectory(const FilePath& directoryPath)
    // more than one, take most recent
    else if (rprojFiles.size() > 1 )
    {
-      projectFile = rprojFiles.at(0);
+      FilePath projectFile = rprojFiles.at(0);
       for (std::vector<FilePath>::const_iterator it = rprojFiles.begin();
            it != rprojFiles.end();
            ++it)
