@@ -203,16 +203,9 @@ public class DependencyManager implements InstallShinyEvent.Handler
        withDependencies(
           "Checking installed packages",
           userPrompt,
-          new Dependency[] {
-            Dependency.cranPackage("httpuv", "1.3.3"),
-            Dependency.cranPackage("mime", "0.3"),
-            Dependency.cranPackage("jsonlite", "0.9.16"),
-            Dependency.cranPackage("xtable", "1.7"),
-            Dependency.cranPackage("digest", "0.6"),
-            Dependency.cranPackage("htmltools", "0.2.6"),
-            Dependency.cranPackage("R6", "2.0"),
-            Dependency.cranPackage("shiny", "0.11.0", true)
-          }, 
+          shinyDependenciesArray(
+              "0.11.0", // shiny version
+              "0.2.6"), // htmltools version
           true,
           new CommandWithArg<Boolean>()
           {
@@ -225,6 +218,51 @@ public class DependencyManager implements InstallShinyEvent.Handler
           }
        ); 
    }
+   
+   public void withShinyAddins(final Command command)
+   {
+     withDependencies(   
+        "Checking installed packages",
+        "Executing addins", 
+        // TODO: bump versions and add miniUI when it's on CRAN
+        shinyDependenciesArray(
+              "0.11.0", // shiny version
+              "0.2.6"), // htmltools version
+        false,
+        new CommandWithArg<Boolean>()
+        {
+         @Override
+         public void execute(Boolean succeeded)
+         {
+            if (succeeded)
+               command.execute();
+         }
+        }
+     );
+   }
+   
+   private Dependency[] shinyDependenciesArray(String shinyVersion,
+                                               String htmltoolsVersion)
+   {
+      ArrayList<Dependency> deps = shinyDependencies(shinyVersion,
+                                                     htmltoolsVersion);
+      return deps.toArray(new Dependency[deps.size()]);
+   }
+
+   private ArrayList<Dependency> shinyDependencies(String shinyVersion,
+         String htmltoolsVersion)
+         {
+      ArrayList<Dependency> deps = new ArrayList<Dependency>();
+      deps.add(Dependency.cranPackage("httpuv", "1.3.3"));
+      deps.add(Dependency.cranPackage("mime", "0.3"));
+      deps.add(Dependency.cranPackage("jsonlite", "0.9.16"));
+      deps.add(Dependency.cranPackage("xtable", "1.7"));
+      deps.add(Dependency.cranPackage("digest", "0.6"));
+      deps.add(Dependency.cranPackage("R6", "2.0"));
+      deps.add(Dependency.cranPackage("htmltools", htmltoolsVersion, true));
+      deps.add(Dependency.cranPackage("shiny", shinyVersion, true));
+      return deps;
+         }
    
    @Override
    public void onInstallShiny(InstallShinyEvent event)

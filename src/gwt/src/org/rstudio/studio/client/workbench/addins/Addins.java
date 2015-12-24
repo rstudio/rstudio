@@ -1,6 +1,7 @@
 package org.rstudio.studio.client.workbench.addins;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Debug;
@@ -9,6 +10,7 @@ import org.rstudio.core.client.js.JsMap;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.AddinsMRUList;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -94,14 +96,16 @@ public class Addins
       @Inject
       private void initialize(AddinsServerOperations server,
                               EventBus events,
-                              AddinsMRUList mruList)
+                              AddinsMRUList mruList,
+                              DependencyManager dependencyManager)
       {
          server_ = server;
          events_ = events;
          mruList_ = mruList;
+         dependencyManager_ = dependencyManager;
       }
       
-      public void execute(RAddin addin)
+      public void execute(final RAddin addin)
       {
          if (!injected_)
          {
@@ -111,8 +115,15 @@ public class Addins
          
          if (addin.isInteractive())
          {
-            String code = addin.getPackage() + ":::" + addin.getBinding() + "()";
-            events_.fireEvent(new SendToConsoleEvent(code, true, false, false));
+            dependencyManager_.withShinyAddins(new Command() {
+
+               @Override
+               public void execute()
+               {
+                  String code = addin.getPackage() + ":::" + addin.getBinding() + "()";
+                  events_.fireEvent(new SendToConsoleEvent(code, true, false, false));
+               }
+            });
          }
          else
          {
@@ -130,6 +141,7 @@ public class Addins
       private AddinsServerOperations server_;
       private EventBus events_;
       private AddinsMRUList mruList_;
+      private DependencyManager dependencyManager_;
    }
    
    private static final String DELIMITER = "|||";
