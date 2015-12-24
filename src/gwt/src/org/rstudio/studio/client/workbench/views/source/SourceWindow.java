@@ -17,6 +17,8 @@ package org.rstudio.studio.client.workbench.views.source;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.command.ApplicationCommandManager;
+import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.Desktop;
@@ -62,7 +64,9 @@ public class SourceWindow implements LastSourceDocClosedHandler,
          EventBus events,
          MacZoomHandler zoomHandler,
          SourceShim shim,
-         SnippetServerOperations snippetServer)
+         SnippetServerOperations snippetServer,
+         ApplicationCommandManager appCommandManager,
+         EditorCommandManager editorCommandManager)
    {
       sourceShim_ = shim;
       events_ = events;
