@@ -16,9 +16,8 @@
 package com.google.gwt.emultest.java.lang;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.testing.TestUtils;
 
 import jsinterop.annotations.JsFunction;
 
@@ -32,8 +31,11 @@ public class NullPointerExceptionTest extends GWTTestCase {
     return "com.google.gwt.emultest.EmulSuite";
   }
 
-  @DoNotRunWith(Platform.Devel)
   public void testBackingJsObject() {
+    // Do not run the test in JVM.
+    if (TestUtils.isJvm()) {
+      return;
+    }
     Object caughtNative = catchNpeInNative(new Callback() {
       @Override
       public void call() {
