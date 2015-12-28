@@ -124,6 +124,8 @@ public interface ThemeResources extends ClientBundle
    @Source("busyTab.gif")
    ImageResource busyTab();
 
+   ImageResource closeDialog();
+  
    ImageResource toolbarSeparator();
 
    ImageResource menuDownArrow();

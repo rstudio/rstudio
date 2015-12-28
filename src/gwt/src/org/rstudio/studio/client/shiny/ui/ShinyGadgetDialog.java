@@ -17,12 +17,25 @@ package org.rstudio.studio.client.shiny.ui;
 
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.i18n.client.HasDirection.Direction;
+import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -31,10 +44,10 @@ public class ShinyGadgetDialog extends ModalDialogBase
    public ShinyGadgetDialog(String caption, String url, Size preferredSize)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      setText(caption);
       url_ = url;
       preferredSize_ = preferredSize;
       initializeEvents();
+      addCaptionWithCloseButton(caption);
    }
    
    @Inject
@@ -47,6 +60,7 @@ public class ShinyGadgetDialog extends ModalDialogBase
    protected Widget createMainWidget()
    {
       frame_ = new RStudioFrame();
+      frame_.addStyleName(ThemeStyles.INSTANCE.borderedIFrame());
       
       // compute the widget size and set it
       Size minimumSize = new Size(300, 300);
@@ -87,12 +101,53 @@ public class ShinyGadgetDialog extends ModalDialogBase
       {
          // ensure the frame url starts with the specified origin
          if (frame_.getUrl().startsWith(origin))
-            closeDialog();
-         
-         // interrupt R if needed
-         if (commands_.interruptR().isEnabled())
-            commands_.interruptR().execute();
+            performClose();
       }
+   }
+   
+   private void addCaptionWithCloseButton(String caption)
+   {
+      final Image closeIcon = new Image(ThemeResources.INSTANCE.closeDialog());
+      Style closeIconStyle = closeIcon.getElement().getStyle();
+      closeIconStyle.setCursor(Style.Cursor.POINTER);
+      closeIconStyle.setMarginTop(2, Unit.PX);
+
+      FlexTable captionLayoutTable = new FlexTable();
+      captionLayoutTable.setWidth("100%");
+      captionLayoutTable.setText(0, 0, caption);
+      captionLayoutTable.setWidget(0, 1, closeIcon);
+      captionLayoutTable.getCellFormatter().setHorizontalAlignment(0, 1,
+            HasHorizontalAlignment.HorizontalAlignmentConstant.endOf(Direction.LTR));
+
+      HTML captionWidget = (HTML) getCaption();
+      captionWidget.getElement().appendChild(captionLayoutTable.getElement());
+
+      captionWidget.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event) {
+            EventTarget target = event.getNativeEvent().getEventTarget();
+            Element targetElement = (Element) target.cast();
+
+            if (targetElement == closeIcon.getElement()) {
+               closeIcon.fireEvent(event);
+            }
+         }
+      });
+
+      closeIcon.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event) {
+            performClose();
+         }
+      });
+   }
+   
+   private void performClose()
+   {
+      closeDialog();
+      
+      if (commands_.interruptR().isEnabled())
+         commands_.interruptR().execute();
    }
 
    private final String url_;
