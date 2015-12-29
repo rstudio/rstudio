@@ -46,14 +46,34 @@ public class ShinyGadgetDialog extends ModalDialogBase
       RStudioGinjector.INSTANCE.injectMembers(this);
       url_ = url;
       preferredSize_ = preferredSize;
-      initializeEvents();
       addCaptionWithCloseButton(caption);
+      
+      // one time initialization of static event handlers
+      if (!initializedEvents_)
+      {
+         initializedEvents_ = true;
+         initializeEvents();
+      }
    }
    
    @Inject
    void initialize(Commands commands)
    {
       commands_ = commands;
+   }
+   
+   @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+      activeDialog_ = this;
+   }
+   
+   @Override
+   protected void onUnload()
+   {
+      super.onUnload();
+      activeDialog_ = null;
    }
    
    @Override
@@ -84,24 +104,25 @@ public class ShinyGadgetDialog extends ModalDialogBase
       frame_.getWindow().focus();
    }
    
-   private native void initializeEvents() /*-{  
-      var thiz = this;   
+   private native static void initializeEvents() /*-{  
       var handler = $entry(function(e) {
          if (typeof e.data != 'string')
             return;
-         thiz.@org.rstudio.studio.client.shiny.ui.ShinyGadgetDialog::onMessage(Ljava/lang/String;Ljava/lang/String;)(e.data, e.origin);
-         $wnd.removeEventListener('message', handler, false);
+         @org.rstudio.studio.client.shiny.ui.ShinyGadgetDialog::onMessage(Ljava/lang/String;Ljava/lang/String;)(e.data, e.origin);
       });
       $wnd.addEventListener("message", handler, true);
    }-*/;
 
-   private void onMessage(String data, String origin)
+   private static void onMessage(String data, String origin)
    {  
       if ("disconnected".equals(data))
       {
          // ensure the frame url starts with the specified origin
-         if (frame_.getUrl().startsWith(origin))
-            performClose();
+         if ((activeDialog_ != null) && 
+             activeDialog_.getUrl().startsWith(origin))
+         {
+            activeDialog_.performClose();
+         }
       }
    }
    
@@ -149,9 +170,16 @@ public class ShinyGadgetDialog extends ModalDialogBase
       if (commands_.interruptR().isEnabled())
          commands_.interruptR().execute();
    }
+   
+   private String getUrl()
+   {
+      return frame_.getUrl();
+   }
 
    private final String url_;
    private Size preferredSize_;
    private RStudioFrame frame_;
    private Commands commands_;
+   private static boolean initializedEvents_ = false;
+   private static ShinyGadgetDialog activeDialog_ = null;
 }
