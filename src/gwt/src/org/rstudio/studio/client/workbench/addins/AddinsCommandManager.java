@@ -128,10 +128,7 @@ public class AddinsCommandManager
          List<KeySequence> keyList = bindings.get(id).getKeyBindings();
          RAddin addin = rAddins_.get(id);
          if (addin == null)
-         {
-            Debug.log("Failed to register addin with id '" + id + "'");
             continue;
-         }
          CommandBinding binding = new AddinCommandBinding(addin);
          commands.add(new Pair<List<KeySequence>, CommandBinding>(keyList, binding));
       }
