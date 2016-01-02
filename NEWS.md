@@ -99,6 +99,7 @@
 * Diagnostics: Fix invalid diagnostics within formulas
 * Diagnostics: Respect // [[Rcpp::export]] functions used in R code
 * Fix grid metrics issues (e.g. text too small) by using res of 96 rather than 72
+* Correct computation of getOption("width") on high DPI displays
 * Rcpp: Parse attributes when generating diagnostics for header files
 * Enable outdenting in Rhtml documents
 * Find all now respects active search/replace options
