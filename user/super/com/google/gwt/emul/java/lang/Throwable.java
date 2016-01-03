@@ -50,7 +50,7 @@ public class Throwable implements Serializable {
   private String detailMessage;
   private transient Throwable cause;
   private transient Throwable[] suppressedExceptions;
-  private transient StackTraceElement[] stackTrace;
+  private transient StackTraceElement[] stackTrace = new StackTraceElement[0];
   private transient boolean disableSuppression;
   private transient boolean writetableStackTrace = true;
 
@@ -99,17 +99,18 @@ public class Throwable implements Serializable {
   }
 
   Throwable(Object backingJsObject) {
+    fillInStackTrace();
     setBackingJsObject(backingJsObject);
+    detailMessage = String.valueOf(backingJsObject);
   }
 
   private void initializeBackingError() {
-    this.stackTrace = null; // Invalidate the cached trace
-
     // Replace newlines with spaces so that we don't confuse the parser
     // below which splits on newlines, and will otherwise try to parse
     // the error message as part of the stack trace.
     // TODO: use string.asNativeString.replace instead when available.
-    String errorMessage = internalToString().replace('\n', ' ');
+    String message = detailMessage == null ? null : detailMessage.replace('\n', ' ');
+    String errorMessage = toString(message);
 
     setBackingJsObject(fixIE(createError(errorMessage)));
 
@@ -141,7 +142,7 @@ public class Throwable implements Serializable {
 
   private void linkBack(Object error) {
     if (error != null) {
-      JsUtils.setProperty(error, "__java$exception", this);
+      JsUtils.setPropertySafe(error, "__java$exception", this);
     }
   }
 
@@ -179,6 +180,9 @@ public class Throwable implements Serializable {
       if (backingJsObject != UNITIALIZED) {
         initializeBackingError();
       }
+
+      // Invalidate the cached trace
+      this.stackTrace = null;
     }
     return this;
   }
@@ -268,12 +272,12 @@ public class Throwable implements Serializable {
 
   @Override
   public String toString() {
-    return internalToString();
+    return toString(getLocalizedMessage());
   }
 
   // A private method to avoid polymorphic calls from constructor.
-  private String internalToString() {
+  private String toString(String message) {
     String className = getClass().getName();
-    return detailMessage == null ? className : className + ": " + detailMessage;
+    return message == null ? className : className + ": " + message;
   }
 }

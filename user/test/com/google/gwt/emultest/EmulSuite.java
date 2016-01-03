@@ -29,6 +29,7 @@ import com.google.gwt.emultest.java.lang.CompilerConstantStringTest;
 import com.google.gwt.emultest.java.lang.DoubleTest;
 import com.google.gwt.emultest.java.lang.FloatTest;
 import com.google.gwt.emultest.java.lang.IntegerTest;
+import com.google.gwt.emultest.java.lang.JsExceptionTest;
 import com.google.gwt.emultest.java.lang.LongTest;
 import com.google.gwt.emultest.java.lang.MathTest;
 import com.google.gwt.emultest.java.lang.NullPointerExceptionTest;
@@ -37,6 +38,7 @@ import com.google.gwt.emultest.java.lang.ShortTest;
 import com.google.gwt.emultest.java.lang.StringBufferTest;
 import com.google.gwt.emultest.java.lang.StringTest;
 import com.google.gwt.emultest.java.lang.SystemTest;
+import com.google.gwt.emultest.java.lang.ThrowableStackTraceEmulTest;
 import com.google.gwt.emultest.java.lang.ThrowableTest;
 import com.google.gwt.emultest.java.math.MathContextTest;
 import com.google.gwt.emultest.java.math.MathContextWithObfuscatedEnumsTest;
@@ -79,6 +81,7 @@ public class EmulSuite {
     suite.addTestSuite(DoubleTest.class);
     suite.addTestSuite(FloatTest.class);
     suite.addTestSuite(IntegerTest.class);
+    suite.addTestSuite(JsExceptionTest.class);
     suite.addTestSuite(LongTest.class);
     suite.addTestSuite(MathTest.class);
     suite.addTestSuite(NullPointerExceptionTest.class);
@@ -88,6 +91,7 @@ public class EmulSuite {
     suite.addTestSuite(StringTest.class);
     suite.addTestSuite(SystemTest.class);
     suite.addTestSuite(ThrowableTest.class);
+    suite.addTestSuite(ThrowableStackTraceEmulTest.class);
     //-- java.math
     // BigDecimal is tested in {@link BigDecimalSuite}
     // BigInteger is tested in {@link BigIntegerSuite}

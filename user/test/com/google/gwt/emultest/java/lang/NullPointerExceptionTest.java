@@ -15,16 +15,12 @@
  */
 package com.google.gwt.emultest.java.lang;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.testing.TestUtils;
-
-import jsinterop.annotations.JsFunction;
 
 /**
  * Unit tests for the GWT emulation of java.lang.NullPointerException class.
  */
-public class NullPointerExceptionTest extends GWTTestCase {
+public class NullPointerExceptionTest extends ThrowableTestBase {
 
   @Override
   public String getModuleName() {
@@ -36,29 +32,11 @@ public class NullPointerExceptionTest extends GWTTestCase {
     if (TestUtils.isJvm()) {
       return;
     }
-    Object caughtNative = catchNpeInNative(new Callback() {
-      @Override
-      public void call() {
-        throw new NullPointerException("<my msg>");
-      }
-    });
 
-    assertTrue(caughtNative instanceof JavaScriptObject);
+    Object caughtNative = catchNative(createThrower(new NullPointerException("<my msg>")));
+    assertInstanceOf("TypeError", caughtNative);
     assertTrue(caughtNative.toString().startsWith("TypeError:"));
     assertTrue(caughtNative.toString().contains("<my msg>"));
     assertTrue(caughtNative.toString().contains(NullPointerException.class.getName()));
   }
-
-  @JsFunction
-  interface Callback {
-    void call();
-  }
-
-  private native Object catchNpeInNative(Callback cb) /*-{
-    try {
-      cb();
-    } catch (e) {
-      return e;
-    }
-  }-*/;
 }

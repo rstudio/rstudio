@@ -15,37 +15,32 @@
  */
 package com.google.gwt.emultest.java.lang;
 
-import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.testing.TestUtils;
 
 /**
  * Unit tests for the GWT emulation of java.lang.Throwable class.
  */
-public class ThrowableTest extends GWTTestCase {
+public class ThrowableTest extends ThrowableTestBase {
 
   @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
 
-  public void testStackTraceContainsConstructorLineNumber() {
+  public void testStackTrace() {
+    Throwable e = new Throwable("<my msg>");
+    assertTrue(e.getStackTrace().length > 0);
 
-    final int lineNumber1 = 33; // should be the next line.
-    Throwable throwable = new Throwable("stacktrace");
-    StackTraceElement[] trace = throwable.getStackTrace();
-    assertTrace(trace, lineNumber1, isObfuscated(trace) ? 7 : 3);
+    e = new Throwable("<my msg>") {
+      public Throwable fillInStackTrace() {
+        // Replace fill in stack trace with no-op.
+        return this;
+      }
+    };
+    assertEquals(0, e.getStackTrace().length);
 
-    final int lineNumber2 = 38; // should be the next line.
-    throwable.fillInStackTrace();
-    assertTrace(throwable.getStackTrace(), lineNumber2, 2);
-
-    // break fillinstacktrace and test again
-  }
-
-  private void assertTrace(StackTraceElement[] trace, final int lineNumber, int maxDepthToExamine) {
-    assertNotNull(trace);
-    assertTrue("StackTrace too short: \n" + getTraceAsString(trace), trace.length > 2);
-    StackTraceElement e = getFirstElementMentionsTest(trace, maxDepthToExamine);
-    assertEquals(lineNumber, e.getLineNumber());
+    e = new Throwable("<my msg>", null, true, false) { };
+    assertEquals(0, e.getStackTrace().length);
   }
 
   public void testSetStackTrace() {
@@ -66,28 +61,44 @@ public class ThrowableTest extends GWTTestCase {
     assertEquals("TestClass.testCaller(fakefile2:97)", trace[1].toString());
   }
 
-  private boolean isObfuscated(StackTraceElement[] trace) {
-    assertTrue(trace.length > 0);
-    return trace[0].getClassName().equals("Unknown");
+  public void testCatchJava() {
+    Throwable e = new Throwable();
+    assertSame(e, catchJava(createThrower(e)));
   }
 
-  private StackTraceElement getFirstElementMentionsTest(StackTraceElement[] trace,
-      int maxDepthToExamine) {
-    for (int i = 0; i < maxDepthToExamine && i < trace.length; i++) {
-      StackTraceElement e = trace[i];
-      if (e.getFileName().contains("ThrowableTest")) {
-        return e;
+  public void testCatchNative() {
+    if (TestUtils.isJvm()) {
+      return;
+    }
+    Throwable e = new Throwable("<my msg>");
+    Object caughtNative = catchNative(createThrower(e));
+    assertInstanceOf("Error", caughtNative);
+    assertTrue(caughtNative.toString().contains("<my msg>"));
+    assertTrue(caughtNative.toString().contains(Throwable.class.getName()));
+  }
+
+  public void testCatchNativeWithFillInStackTraceOverride() {
+    if (TestUtils.isJvm()) {
+      return;
+    }
+    Throwable e = new Throwable("<my msg>") {
+      public Throwable fillInStackTrace() {
+        // Replace fill in stack trace with no-op.
+        return this;
       }
-    }
-    fail("Unable to find trace element: \n" + getTraceAsString(trace));
-    return null; // shouldn't happen
+    };
+
+    Object caughtNative = catchNative(createThrower(e));
+    assertInstanceOf("Error", caughtNative);
+    assertTrue(caughtNative.toString().contains("<my msg>"));
+    assertTrue(caughtNative.toString().contains(e.getClass().getName()));
   }
 
-  private String getTraceAsString(StackTraceElement[] trace) {
-    String result = "";
-    for (StackTraceElement e : trace) {
-      result += e.toString() + "\n";
+  public void testJavaNativeJavaSandwichCatch() {
+    if (TestUtils.isJvm()) {
+      return;
     }
-    return result;
+    Throwable e = new Throwable();
+    assertSame(e, javaNativeJavaSandwich(e));
   }
 }
