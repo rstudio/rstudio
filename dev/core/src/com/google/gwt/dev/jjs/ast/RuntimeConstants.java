@@ -57,8 +57,8 @@ public class RuntimeConstants {
 
   public static final String EXCEPTIONS_CHECK_NOT_NULL = "Exceptions.checkNotNull";
   public static final String EXCEPTIONS_MAKE_ASSERTION_ERROR_ = "Exceptions.makeAssertionError";
-  public static final String EXCEPTIONS_UNWRAP = "Exceptions.unwrap";
-  public static final String EXCEPTIONS_WRAP = "Exceptions.wrap";
+  public static final String EXCEPTIONS_TO_JS = "Exceptions.toJs";
+  public static final String EXCEPTIONS_TO_JAVA = "Exceptions.toJava";
 
   public static final String GWT_IS_SCRIPT = "GWT.isScript";
 

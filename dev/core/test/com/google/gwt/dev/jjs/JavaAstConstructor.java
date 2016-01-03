@@ -210,8 +210,8 @@ public class JavaAstConstructor {
       return Joiner.on("\n").join(
           "package com.google.gwt.lang;",
           "public class Exceptions { ",
-          "  static Object wrap(Object e) { return e; }",
-          "  static Object unwrap(Object e) { return e; }",
+          "  static Object toJava(Object e) { return e; }",
+          "  static Object toJs(Object e) { return e; }",
           "  static RuntimeException makeAssertionError() { return new RuntimeException(); }",
           "  static Throwable safeClose(AutoCloseable resource, Throwable mainException) {",
           "    return mainException;", "  }",

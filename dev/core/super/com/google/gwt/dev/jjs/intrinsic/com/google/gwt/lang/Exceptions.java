@@ -26,7 +26,7 @@ import javaemul.internal.annotations.DoNotInline;
 final class Exceptions {
 
   @DoNotInline // This frame can be useful in understanding the native stack
-  static Object wrap(Object e) {
+  static Object toJava(Object e) {
     // Although this is impossible to happen in code generated from Java (as we always unwrap
     // before throwing), there are code out there where the Java exception is instantiated and
     // thrown in native code, hence we may receive it already wrapped.
@@ -43,7 +43,7 @@ final class Exceptions {
   }
 
   @DoNotInline // This method shouldn't be inlined and pruned as JsStackEmulator needs it.
-  static native Object unwrap(Object t)/*-{
+  static native Object toJs(Object t)/*-{
     return t.@Throwable::backingJsObject;
   }-*/;
 

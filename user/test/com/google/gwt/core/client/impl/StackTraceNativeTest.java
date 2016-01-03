@@ -88,7 +88,7 @@ public class StackTraceNativeTest extends StackTraceTestBase {
     };
 
     final String[] limited_wrap = {
-        Impl.getNameOf("@com.google.gwt.lang.Exceptions::wrap(*)"),
+        Impl.getNameOf("@com.google.gwt.lang.Exceptions::toJava(*)"),
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceExamples::getLiveException(*)"),
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceTestBase::assertJse(*)"),
     };

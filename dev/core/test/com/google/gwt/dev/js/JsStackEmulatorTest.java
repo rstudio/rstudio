@@ -146,7 +146,7 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
     checkOnModuleLoad(program, "function onModuleLoad(){" +
         "var stackIndex;$stack[stackIndex=++$stackDepth]=onModuleLoad;" +
         "$location[stackIndex]='EntryPoint.java:'+'3',$clinit_EntryPoint();" +
-        "throw unwrap(($location[stackIndex]='EntryPoint.java:'+'4',new RuntimeException))" +
+        "throw toJs(($location[stackIndex]='EntryPoint.java:'+'4',new RuntimeException))" +
         "}");
   }
 
@@ -170,7 +170,7 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
     checkOnModuleLoad(program, "function onModuleLoad(){" +
         "var stackIndex;$stack[stackIndex=++$stackDepth]=onModuleLoad;" +
         "$location[stackIndex]='EntryPoint.java:'+'6',$clinit_EntryPoint();" +
-        "throw unwrap(new RuntimeException(" +
+        "throw toJs(new RuntimeException(" +
         "($tmp=($location[stackIndex]='EntryPoint.java:'+'4',thing).toString()," +
         "$location[stackIndex]='EntryPoint.java:'+'7',$tmp)))" +
         "}");
@@ -201,7 +201,7 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
     checkOnModuleLoad(program, "function onModuleLoad(){" +
         "var stackIndex;$stack[stackIndex=++$stackDepth]=onModuleLoad;" +
         "$location[stackIndex]='EntryPoint.java:'+'7',$clinit_EntryPoint();" +
-        "throw unwrap(($tmp=($location[stackIndex]='EntryPoint.java:'+'5',factory)," +
+        "throw toJs(($tmp=($location[stackIndex]='EntryPoint.java:'+'5',factory)," +
         "$location[stackIndex]='EntryPoint.java:'+'8',$tmp).makeException())" +
         "}");
   }
@@ -226,12 +226,12 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
     checkOnModuleLoad(program, "function onModuleLoad(){" +
         "var stackIndex;$stack[stackIndex=++$stackDepth]=onModuleLoad;" +
         "$location[stackIndex]='EntryPoint.java:'+'3',$clinit_EntryPoint();var e,s;" +
-        "try{throw unwrap(($location[stackIndex]='EntryPoint.java:'+'5',new RuntimeException))" +
-        "}catch($e0){$e0=wrap($e0);" +
+        "try{throw toJs(($location[stackIndex]='EntryPoint.java:'+'5',new RuntimeException))" +
+        "}catch($e0){$e0=toJava($e0);" +
         "$stackDepth=($location[stackIndex]='EntryPoint.java:'+'6',stackIndex);" +
         "if(instanceOf($e0,'java.lang.RuntimeException')){" +
         "e=$e0;s=($location[stackIndex]='EntryPoint.java:'+'7',e).getMessage()}" +
-        "else throw unwrap(($location[stackIndex]='EntryPoint.java:'+'6',$e0))}" +
+        "else throw toJs(($location[stackIndex]='EntryPoint.java:'+'6',$e0))}" +
         "$stackDepth=stackIndex-1" +
         "}");
   }

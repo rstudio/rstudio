@@ -82,7 +82,7 @@ public class JsStackEmulator {
 
   /**
    * Resets the global stack depth to the local stack index and top stack frame
-   * after calls to Exceptions.wrap. This is created by
+   * after calls to Exceptions.toJava. This is created by
    * {@link EntryExitVisitor#visit(JsCatch, JsContext)}.
    */
   private class CatchStackReset extends JsModVisitor {
@@ -113,7 +113,7 @@ public class JsStackEmulator {
   }
 
   private boolean isExceptionWrappingCode(JsExprStmt x) {
-    // Looking for e = wrap(e);
+    // Looking for e = Exceptions.toJava(e);
     JsExpression expr = x.getExpression();
 
     if (!(expr instanceof JsBinaryOperation)) {
@@ -136,7 +136,7 @@ public class JsStackEmulator {
       return false;
     }
 
-    // caughtFunction is the JsFunction translated from Exceptions.wrap
+    // caughtFunction is the JsFunction translated from Exceptions.toJava
     if (name != wrapFunctionName) {
       return false;
     }
@@ -204,7 +204,7 @@ public class JsStackEmulator {
    * try {
    *   foo();
    * } catch (e) {
-   *   e = wrap(e);
+   *   e = Exceptions.toJava(e);
    *   $stackDepth = stackIndex;
    *   throw e;
    * } finally {
@@ -458,26 +458,26 @@ public class JsStackEmulator {
 
     private JsCatch makeSyntheticCatchBlock(JsTry x) {
       /*
-       * catch (e) { e = wrap(e); throw unwrap(e); }
+       * catch (e) { e = Exceptions.toJava(e); throw Exceptions.toJs(e); }
        */
       SourceInfo info = x.getSourceInfo();
 
       JsCatch c = new JsCatch(info, currentFunction.getScope(), "e");
       JsName paramName = c.getParameter().getName();
 
-      // wrap(e)
+      // Exceptiobs.toJava(e)
       JsInvocation wrapCall = new JsInvocation(info, wrapFunctionName.makeRef(info),
           paramName.makeRef(info));
 
-      // e = wrap(e)
+      // e = Exceptions.toJava(e)
       JsBinaryOperation asg = new JsBinaryOperation(info, JsBinaryOperator.ASG,
           paramName.makeRef(info), wrapCall);
 
-      // unwrap(e)
+      // Exceptions.toJs(e)
       JsInvocation unwrapCall =
           new JsInvocation(info, unwrapFunctionName.makeRef(info), paramName.makeRef(info));
 
-      // throw unwrap(e)
+      // throw Exceptions.toJs(e)
       JsThrow throwStatement = new JsThrow(info, unwrapCall);
 
       JsBlock body = new JsBlock(info);
@@ -1012,9 +1012,9 @@ public class JsStackEmulator {
 
   private void execImpl() {
     wrapFunctionName =
-        JsUtils.getJsNameForMethod(jjsmap, jprogram, RuntimeConstants.EXCEPTIONS_WRAP);
+        JsUtils.getJsNameForMethod(jjsmap, jprogram, RuntimeConstants.EXCEPTIONS_TO_JAVA);
     unwrapFunctionName =
-        JsUtils.getJsNameForMethod(jjsmap, jprogram, RuntimeConstants.EXCEPTIONS_UNWRAP);
+        JsUtils.getJsNameForMethod(jjsmap, jprogram, RuntimeConstants.EXCEPTIONS_TO_JS);
     if (wrapFunctionName == null) {
       // No exceptions caught? Weird, but possible.
       return;

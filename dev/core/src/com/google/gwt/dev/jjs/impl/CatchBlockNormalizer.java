@@ -52,7 +52,7 @@ public class CatchBlockNormalizer {
    * Collapses all multi-catch blocks into a single catch block.
    */
   private class CollapseCatchBlocks extends JModVisitor {
-    JMethod wrapMethod = program.getIndexedMethod(RuntimeConstants.EXCEPTIONS_WRAP);
+    JMethod wrapMethod = program.getIndexedMethod(RuntimeConstants.EXCEPTIONS_TO_JAVA);
 
     @Override
     public void endVisit(JMethodBody x, Context ctx) {
@@ -78,7 +78,7 @@ public class CatchBlockNormalizer {
       JBlock newCatchBlock = new JBlock(catchInfo);
 
       {
-        // $e = Exceptions.wrap($e)
+        // $e = Exceptions.toJava($e)
         JMethodCall call =
             new JMethodCall(catchInfo, null, wrapMethod, exceptionVariable.makeRef(catchInfo));
         newCatchBlock.addStmt(
@@ -140,12 +140,12 @@ public class CatchBlockNormalizer {
     }
   }
 
-  private class UnwrapJavaScriptExceptionVisitor extends JModVisitor {
-    JMethod unwrapMethod = program.getIndexedMethod(RuntimeConstants.EXCEPTIONS_UNWRAP);
+  private class UnwrapThrowableVisitor extends JModVisitor {
+    JMethod unwrapMethod = program.getIndexedMethod(RuntimeConstants.EXCEPTIONS_TO_JS);
 
     @Override
     public void endVisit(JThrowStatement x, Context ctx) {
-      // throw x; -> throw Exceptions.unwrap(x);
+      // throw x; -> throw Exceptions.toJs(x);
       ctx.replaceMe(createUnwrappedThrow(x));
     }
 
@@ -175,7 +175,7 @@ public class CatchBlockNormalizer {
   private void execImpl() {
     CollapseCatchBlocks collapser = new CollapseCatchBlocks();
     collapser.accept(program);
-    UnwrapJavaScriptExceptionVisitor unwrapper = new UnwrapJavaScriptExceptionVisitor();
+    UnwrapThrowableVisitor unwrapper = new UnwrapThrowableVisitor();
     unwrapper.accept(program);
   }
 
