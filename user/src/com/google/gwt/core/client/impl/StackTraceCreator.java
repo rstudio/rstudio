@@ -71,7 +71,7 @@ public class StackTraceCreator {
     public native void collect(Object error) /*-{
       var seen = {};
       var fnStack = [];
-      error.fnStack= fnStack;
+      error["fnStack"] = fnStack;
 
       // Ignore the collect() call
       var callee = arguments.callee.caller;
@@ -119,7 +119,7 @@ public class StackTraceCreator {
     @Override
     public native void collect(Object error) /*-{
       var fnStack = [];
-      error.fnStack= fnStack;
+      error["fnStack"] = fnStack;
       for (var i = 0; i < $stackDepth; i++) {
         var location = $location[i];
         var fn = $stack[i];
@@ -359,7 +359,7 @@ public class StackTraceCreator {
   }-*/;
 
   private static native JsArrayString getFnStack(Object e) /*-{
-    return (e && e.fnStack) ? e.fnStack : [];
+    return (e && e["fnStack"]) ? e["fnStack"] : [];
   }-*/;
 
   private static native String getFunctionName(JavaScriptObject fn) /*-{
