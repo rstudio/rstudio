@@ -33,6 +33,8 @@
 * Run All now executes chunks in console (rather than calling e.g. knitr::purl)
 * Reorganize toolbar commands/menu for improved discoverability
 * Added Run Setup Chunk command
+* Updated embedded pandoc to v1.15.2
+* Support additional options for MS Word (table of contents, keep markdown)
 
 ### Miscellaneous
 

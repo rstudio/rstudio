@@ -45,8 +45,8 @@ public class RmdTemplateData
             format_name: "word_document", 
             format_ui_name: "Word",
             format_extension: "docx",
-            format_options: [ "highlight", "fig_width", "fig_height", 
-                              "fig_caption" ],
+            format_options: [ "toc", "toc_depth", "highlight", "fig_width", "fig_height", 
+                              "fig_caption", "keep_md" ],
             format_notes: "Previewing Word documents requires an installation of MS Word (or Libre/Open Office on Linux)."
             } 
          ],
