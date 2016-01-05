@@ -187,6 +187,11 @@ if (UNIX)
          set(CORE_INCLUDE_DIRS
             ${CORE_INCLUDE_DIRS}
             /usr/local/opt/openssl/include)
+
+         if(NOT DEFINED OPENSSL_ROOT_DIR)
+            set(OPENSSL_ROOT_DIR
+               /usr/local/opt/openssl)
+         endif()
       endif()
    endif()
 
