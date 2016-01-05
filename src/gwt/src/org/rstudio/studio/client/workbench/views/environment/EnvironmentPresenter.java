@@ -63,6 +63,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportDialog;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettings;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialogResult;
@@ -474,6 +475,16 @@ public class EnvironmentPresenter extends BasePresenter
    void onImportDatasetFromCSV()
    {
       view_.bringToFront();
+      DataImportDialog dataImportDialog = new DataImportDialog("CSV Import", new OperationWithInput<String>()
+      {
+         @Override
+         public void execute(String input)
+         {
+            
+         }
+      });
+      
+      dataImportDialog.showModal();
    }
 
    public void onOpenDataFile(OpenDataFileEvent event)
