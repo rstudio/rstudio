@@ -471,6 +471,11 @@ public class EnvironmentPresenter extends BasePresenter
               });
    }
 
+   void onImportDatasetFromCSV()
+   {
+      view_.bringToFront();
+   }
+
    public void onOpenDataFile(OpenDataFileEvent event)
    {
       final String dataFilePath = event.getFile().getPath();
