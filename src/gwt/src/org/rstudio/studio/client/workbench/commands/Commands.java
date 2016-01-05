@@ -70,6 +70,7 @@ public abstract class
    public abstract AppCommand sourceNavigateBack();
    public abstract AppCommand sourceNavigateForward();
    public abstract AppCommand markdownHelp();
+   public abstract AppCommand openRStudioIDECheatSheet();
    public abstract AppCommand openDataVisualizationCheatSheet();
    public abstract AppCommand openPackageDevelopmentCheatSheet();
    public abstract AppCommand openDataWranglingCheatSheet();

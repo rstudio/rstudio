@@ -426,16 +426,18 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="helpUsingRStudio"/>
          <cmd refid="rstudioSupport"/>
          <separator/>
-         <cmd refid="markdownHelp"/>
-         <cmd refid="openRoxygenQuickReference"/>
          <menu label="_Cheatsheets">
-            <cmd refid="openDataVisualizationCheatSheet"/>
-            <cmd refid="openPackageDevelopmentCheatSheet"/>
+            <cmd refid="openRStudioIDECheatSheet"/>'
             <cmd refid="openDataWranglingCheatSheet"/>
+            <cmd refid="openDataVisualizationCheatSheet"/>
             <cmd refid="openRMarkdownCheatSheet"/>
             <cmd refid="openRMarkdownReferenceGuide"/>
             <cmd refid="openShinyCheatSheet"/>
+            <cmd refid="openPackageDevelopmentCheatSheet"/>
          </menu>
+         <separator/>
+         <cmd refid="markdownHelp"/>
+         <cmd refid="openRoxygenQuickReference"/>
          <separator/>
          <cmd refid="rstudioAgreement"/>
          <separator/>
@@ -1544,6 +1546,11 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Authoring R Presentations"
         desc="Guide to using R Markdown"
         context="help"/>
+
+    <cmd id="openRStudioIDECheatSheet"
+         menuLabel="RStudio IDE Cheat Sheet"
+         desc="RStudio IDE cheat sheet"
+         context="help"/>
 
     <cmd id="openDataVisualizationCheatSheet"
          menuLabel="Data Visualization with ggplot2"
