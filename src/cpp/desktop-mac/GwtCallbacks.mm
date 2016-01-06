@@ -409,27 +409,13 @@ private:
    // create the structure describing the doc to open
    path = resolveAliasedPath(path);
    
-   // figure out what application is associated with this path
-   NSURL* appURL = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL: [NSURL fileURLWithPath: path]];
-   if (appURL != nil)
+   // figure out if word is installed
+   if ([[NSWorkspace sharedWorkspace] fullPathForApplication:@"Microsoft Word"]!= nil)
    {
-      NSString* app = [appURL absoluteString];
-      NSArray* splat = [app componentsSeparatedByString: @"/"];
-      
-      // URLs should be stored in the format, e.g.
-      // file://<path>/<app>/
-      // and so we want the second last component
-      NSString* appName = [splat objectAtIndex: [splat count] - 2];
-      
-      // infer whether the application is Word
-      BOOL defaultAppIsWord = [appName rangeOfString: @"Word.app"].location != NSNotFound;
-      
-      if (defaultAppIsWord)
-      {
-         // looks like Word is installed. try to reopen this Word document if it's
-         // already open, while preserving its scroll position; if it isn't already
-         // open, open it.
-         NSString *openDocScript = [NSString stringWithFormat:
+       // looks like Word is installed. try to reopen this Word document if it's
+       // already open, while preserving its scroll position; if it isn't already
+       // open, open it.
+       NSString *openDocScript = [NSString stringWithFormat:
             @"tell application \"Microsoft Word\"\n"
             "  activate\n"
             "  set reopened to false\n"
@@ -451,14 +437,13 @@ private:
             "  if not reopened then open file name POSIX file \"%@\" with read only\n"
             "end tell\n" , path, path];
          
-         NSAppleScript *openDoc =
-         [[[NSAppleScript alloc] initWithSource: openDocScript] autorelease];
+       NSAppleScript *openDoc =
+           [[[NSAppleScript alloc] initWithSource: openDocScript] autorelease];
          
-         if ([openDoc executeAndReturnError: nil] != nil)
-         {
-            opened = true;
-         }
-      }
+       if ([openDoc executeAndReturnError: nil] != nil)
+       {
+           opened = true;
+       }
    }
    
    if (!opened)
