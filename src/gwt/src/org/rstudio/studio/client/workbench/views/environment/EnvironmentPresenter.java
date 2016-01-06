@@ -475,7 +475,7 @@ public class EnvironmentPresenter extends BasePresenter
    void onImportDatasetFromCSV()
    {
       view_.bringToFront();
-      DataImportDialog dataImportDialog = new DataImportDialog("CSV Import", new OperationWithInput<String>()
+      DataImportDialog dataImportDialog = new DataImportDialog("Import CSV", new OperationWithInput<String>()
       {
          @Override
          public void execute(String input)
