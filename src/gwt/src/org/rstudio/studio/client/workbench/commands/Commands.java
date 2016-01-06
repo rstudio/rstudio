@@ -266,6 +266,7 @@ public abstract class
    public abstract AppCommand loadWorkspace();
    public abstract AppCommand importDatasetFromFile();
    public abstract AppCommand importDatasetFromURL();
+   public abstract AppCommand importDatasetFromCSV();
 
    // Environment
    public abstract AppCommand activateEnvironment();
