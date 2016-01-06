@@ -367,7 +367,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                globalDisplay_.showHtmlFile(result.getOutputFile());
          }
       }
-      else if (".docx".equals(extension))
+      else if (".docx".equals(extension) || ".rtf".equals(extension))
       {
          if (Desktop.isDesktop())
             globalDisplay_.showWordDoc(result.getOutputFile());
