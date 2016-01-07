@@ -117,6 +117,7 @@
 * Prevent crash when canceling out of q() prompt on Windows
 * OS X: Fix crash which could occur when focusing text boxes with placeholders
 * OS X: Viewer now correctly recognizes session temp dir even when prefixed by /private
+* OS X: Word document preview now correctly reloads for newer versions of Office
 * Fix issue with rstudioapi previewRd function when path included spaces
 * R 3.3: Don't call setInternet2 or use --internet2 flag for child R processes
 * Linux, Windows: ensure native printer used (don't default to PDF printing)
