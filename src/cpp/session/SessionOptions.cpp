@@ -554,6 +554,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    defaultRVersionHome_ = core::system::getenv(kRStudioDefaultRVersionHome);
    core::system::unsetenv(kRStudioDefaultRVersionHome);
    
+   // capture auth required user group environment variable
+   authRequiredUserGroup_ = core::system::getenv(kRStudioRequiredUserGroup);
+   core::system::unsetenv(kRStudioRequiredUserGroup);
+
    // return status
    return status;
 }
