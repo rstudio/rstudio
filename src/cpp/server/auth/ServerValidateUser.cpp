@@ -63,7 +63,9 @@ bool validateUser(const std::string& username,
       {
          boost::format fmt(
             "User %1% could not be authenticated because they "
-            "did not meet the minimum required user id (%2%)");
+            "did not meet the minimum required user id (%2%). "
+            "The minimum user id is controlled by the "
+            "auth-minimum-user-id rserver.conf option.");
          std::string msg = boost::str(fmt % username % minimumUserId);
          LOG_WARNING_MESSAGE(msg);
       }
