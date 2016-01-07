@@ -334,7 +334,7 @@ public class ShortcutManager implements NativePreviewHandler,
       
       return filtered;
    }
-
+   
    private boolean handleKeyDown(NativeEvent event)
    {
       // Bail if the shortcut manager is not enabled (e.g.
@@ -420,6 +420,22 @@ public class ShortcutManager implements NativePreviewHandler,
    private void swallowEvents(Object object)
    {
       NativeEvent event = (NativeEvent) object;
+      
+      // If the keybuffer is a prefix key sequence, swallow
+      // the event. This ensures that the system doesn't 'beep'
+      // when seeing unhandled keys.
+      if (!keyBuffer_.isEmpty())
+      {
+         for (Map.Entry<KeyMapType, KeyMap> entry : keyMaps_.entrySet())
+         {
+            if (entry.getValue().isPrefix(keyBuffer_))
+            {
+               event.stopPropagation();
+               event.preventDefault();
+               return;
+            }
+         }
+      }
       
       // Suppress save / quit events from reaching the browser
       KeyCombination keys = new KeyCombination(event);
