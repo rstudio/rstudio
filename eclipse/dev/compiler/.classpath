@@ -4,8 +4,8 @@
 	<classpathentry excluding="com/google/gwt/dev/jjs/intrinsic/" kind="src" path="core/super"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/ant-1.6.5.jar" sourcepath="/GWT_TOOLS/lib/apache/ant-1.6.5-src.zip"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/org.eclipse.jdt.core_3.11.0.v20150126-2015.jar" sourcepath="/GWT_TOOLS/lib/eclipse/org.eclipse.jdt.core.source_3.11.0.v20150126-2015.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/jdtCompilerAdapter_3.11.0.v20150126-2015.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/org.eclipse.jdt.core_3.11.2-CUSTOM-GWT-2.8-20160205.jar" sourcepath="/GWT_TOOLS/lib/eclipse/org.eclipse.jdt.core.source_3.11.2-CUSTOM-GWT-2.8-20160205.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/jdtCompilerAdapter_3.11.2-CUSTOM-GWT-2.8-20160205.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/junit/junit-4.8.2.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-4.8.2-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/commons-collections-3.1.jar" sourcepath="/GWT_TOOLS/lib/tomcat/commons-collections-3.1-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-16.0.1/guava-16.0.1-rebased.jar"/>

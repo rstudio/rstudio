@@ -63,8 +63,8 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/testng/testng-5.14.1-nojunit.jar" sourcepath="/GWT_TOOLS/lib/testng/testng-5.14.1-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/protobuf/protobuf-2.5.0/protobuf-java-rebased-2.5.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20131118.json.rebased/sourcemap-rebased.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/org.eclipse.jdt.core_3.11.0.v20150126-2015.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/jdtCompilerAdapter_3.11.0.v20150126-2015.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/org.eclipse.jdt.core_3.11.2-CUSTOM-GWT-2.8-20160205.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/jdtCompilerAdapter_3.11.2-CUSTOM-GWT-2.8-20160205.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
 

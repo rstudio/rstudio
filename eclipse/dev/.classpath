@@ -6,8 +6,8 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/ant-1.6.5.jar" sourcepath="/GWT_TOOLS/lib/apache/ant-1.6.5-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2.jar" sourcepath="/GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2-src.zip"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/org.eclipse.jdt.core_3.11.0.v20150126-2015.jar" sourcepath="/GWT_TOOLS/lib/eclipse/org.eclipse.jdt.core.source_3.11.0.v20150126-2015.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/jdtCompilerAdapter_3.11.0.v20150126-2015.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/org.eclipse.jdt.core_3.11.2-CUSTOM-GWT-2.8-20160205.jar" sourcepath="/GWT_TOOLS/lib/eclipse/org.eclipse.jdt.core.source_3.11.2-CUSTOM-GWT-2.8-20160205.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/jdtCompilerAdapter_3.11.2-CUSTOM-GWT-2.8-20160205.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-8.1.12.v20130726/jetty-8.1.12.v20130726.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jsr305/jsr305.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/junit/junit-4.8.2.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-4.8.2-src.zip"/>
