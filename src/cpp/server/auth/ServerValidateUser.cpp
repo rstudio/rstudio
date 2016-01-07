@@ -57,7 +57,7 @@ bool validateUser(const std::string& username,
    }
 
    // validate minimum user id
-   if (core::system::effectiveUserId() < minimumUserId)
+   if (user.userId < minimumUserId)
    {
       if (failureWarning)
       {
