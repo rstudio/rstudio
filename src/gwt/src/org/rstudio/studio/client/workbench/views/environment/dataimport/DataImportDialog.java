@@ -11,7 +11,7 @@ public class DataImportDialog extends ModalDialog<String>
    public DataImportDialog(String caption, OperationWithInput<String> operation)
    {
       super(caption, operation);
-      super.setOkButtonCaption("Import");
+      setOkButtonCaption("Import");
    }
 
    @Override
