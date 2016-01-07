@@ -29,6 +29,7 @@
 #define kRStudioSessionScopeId            "RSTUDIO_SESSION_SCOPE_ID"
 #define kRStudioSessionRoute              "RSTUDIO_SESSION_ROUTE"
 #define kRStudioRequiredUserGroup         "RSTUDIO_REQUIRED_USER_GROUP"
+#define kRStudioMinimumUserId             "RSTUDIO_MINIMUM_USER_ID"
 
 #define kRStudioDefaultRVersion           "RSTUDIO_DEFAULT_R_VERSION"
 #define kRStudioDefaultRVersionHome       "RSTUDIO_DEFAULT_R_VERSION_HOME"

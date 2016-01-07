@@ -17,6 +17,7 @@
 
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/format.hpp>
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
@@ -35,7 +36,8 @@ namespace auth {
 
 bool validateUser(const std::string& username,
                   const std::string& requiredGroup,
-                  bool groupFailureWarning)
+                  unsigned int minimumUserId,
+                  bool failureWarning)
 {
    // short circuit if we aren't validating users
    if (!server::options().authValidateUsers())
@@ -51,6 +53,21 @@ bool validateUser(const std::string& username,
          LOG_ERROR(error);
 
       // not found either due to non-existence or an unexpected error
+      return false;
+   }
+
+   // validate minimum user id
+   if (core::system::effectiveUserId() < minimumUserId)
+   {
+      if (failureWarning)
+      {
+         boost::format fmt(
+            "User %1% could not be authenticated because they "
+            "did not meet the minimum required user id (%2%)");
+         std::string msg = boost::str(fmt % username % minimumUserId);
+         LOG_WARNING_MESSAGE(msg);
+      }
+
       return false;
    }
 
@@ -77,7 +94,7 @@ bool validateUser(const std::string& username,
       }
 
       // log a warning whenever a user doesn't belong to a required group
-      if (!belongsToGroup && groupFailureWarning)
+      if (!belongsToGroup && failureWarning)
       {
          LOG_WARNING_MESSAGE(
           "User " + username + " could not be authenticated because they "

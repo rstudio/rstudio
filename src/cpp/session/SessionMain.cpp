@@ -3094,10 +3094,17 @@ int main (int argc, char * const argv[])
            
       // ensure we aren't being started as a low (priviliged) account
       if (serverMode &&
-          core::system::currentUserIsPrivilleged(options.minimumUserId()))
+          core::system::currentUserIsPrivilleged(options.authMinimumUserId()))
       {
          Error error = systemError(boost::system::errc::permission_denied,
                                    ERROR_LOCATION);
+         boost::format fmt("User '%1%' has id %2%, which is lower than the "
+                           "minimum user id of %3% (this is controlled by "
+                           "the the auth-minimum-user-id rserver option)");
+         std::string msg = boost::str(fmt % core::system::username()
+                                          % core::system::effectiveUserId()
+                                          % options.authMinimumUserId());
+         error.addProperty("message", msg);
          return sessionExitFailure(error, ERROR_LOCATION);
       }
 
