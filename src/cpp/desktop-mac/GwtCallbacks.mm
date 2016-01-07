@@ -420,7 +420,7 @@ private:
             "  activate\n"
             "  set reopened to false\n"
             "  repeat with i from 1 to (count of documents)\n"
-            "     set docPath to path of document i\n"
+            "     set docPath to full name of document i\n"
             "     if POSIX path of docPath is equal to \"%@\" then\n"
             "        set w to active window of document i\n"
             "        set h to horizontal percent scrolled of w\n"
