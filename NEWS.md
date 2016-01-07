@@ -84,6 +84,7 @@
 * Use more resilient file locking mechanism for compatibility with NFS volumes
 * Attempt to close application window when quitting
 * Track installed client version using git commit hash rather than timestamp
+* Detect minimum user id from /etc/login.defs (can also be specified via option)
 * Server Pro: Shared Projects (including concurrent multi-user editing)
 * Server Pro: Support for multiple concurrent R sessions per-user
 * Server Pro: Support for running against multiple versions of R

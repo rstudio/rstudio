@@ -437,6 +437,11 @@ std::string username()
    return system::getenv("USER");
 }
 
+unsigned int effectiveUserId()
+{
+   return ::geteuid();
+}
+
 FilePath userHomePath(std::string envOverride)
 {
    using namespace boost::algorithm;

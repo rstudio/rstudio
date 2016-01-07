@@ -155,6 +155,11 @@ public:
       return std::string(authRequiredUserGroup_.c_str());
    }
 
+   unsigned int authMinimumUserId()
+   {
+      return authMinimumUserId_;
+   }
+
    std::string authPamHelperPath() const
    {
       return std::string(authPamHelperPath_.c_str());
@@ -256,6 +261,7 @@ private:
    int authStaySignedInDays_;
    bool authEncryptPassword_;
    std::string authRequiredUserGroup_;
+   unsigned int authMinimumUserId_;
    std::string authPamHelperPath_;
    std::string rsessionWhichR_;
    std::string rsessionPath_;

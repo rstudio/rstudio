@@ -247,6 +247,11 @@ std::string username()
    return system::getenv("USERNAME");
 }
 
+unsigned int effectiveUserId()
+{
+   return 0; // no concept of this on Win32
+}
+
 // home path strategies
 namespace {
 
