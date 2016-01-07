@@ -54,7 +54,7 @@ public class DataImport extends Composite
    {
       DataImportOptions options = new DataImportOptions();
       options.setDataName("dataset");
-      options.setImportLocation(fileChooserTextBox_.getText());
+      options.setImportLocation(fileChooserTextBox_.getTextBoxText());
       
       return options;
    }

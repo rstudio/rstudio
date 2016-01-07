@@ -127,6 +127,11 @@ public class TextBoxWithButton extends Composite
       return text_;
    }
    
+   public String getTextBoxText()
+   {
+      return textBox_.getText();
+   }
+   
    public void setTextWidth(String width)
    {
       inner_.setCellWidth(textBox_, width);
