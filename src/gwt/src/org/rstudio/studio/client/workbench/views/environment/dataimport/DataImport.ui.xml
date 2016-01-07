@@ -4,18 +4,8 @@
 	xmlns:rs="urn:import:org.rstudio.core.client.widget">
 	<ui:with field='res' type='org.rstudio.core.client.theme.res.ThemeResources'/>
 	<ui:style>
-		.spacedLabel
-		{
-			padding-right: 3px;
-		}
 	</ui:style>
 	<g:HTMLPanel>
-		<g:HorizontalPanel verticalAlignment="middle" width="100%">
-	    	<g:Label text="File/URL:" styleName="{style.spacedLabel}"/>
-	    	<g:cell width="100%">
-	    		<g:TextBox ui:field="textResource_" width="100%"/>
-	    	</g:cell>
-	    	<rs:ThemedButton ui:field="buttonBrowse_" text="Browse"/>
-	    </g:HorizontalPanel>
+		<rs:FileChooserTextBox/>
 	</g:HTMLPanel>
 </ui:UiBinder> 
