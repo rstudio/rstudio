@@ -34,6 +34,7 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.debugging.DebugCommander;
 import org.rstudio.studio.client.common.debugging.DebugCommander.DebugMode;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
@@ -60,9 +61,13 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInpu
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportDialog;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportScript;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettings;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialogResult;
@@ -134,7 +139,8 @@ public class EnvironmentPresenter extends BasePresenter
                                RemoteFileSystemContext fsContext,
                                Session session,
                                SourceShim sourceShim,
-                               DebugCommander debugCommander)
+                               DebugCommander debugCommander,
+                               DependencyManager dependencyManager)
    {
       super(view);
       binder.bind(commands, this);
@@ -155,6 +161,7 @@ public class EnvironmentPresenter extends BasePresenter
       sourceShim_ = sourceShim;
       debugCommander_ = debugCommander;
       session_ = session;
+      dependencyManager_ = dependencyManager;
       requeryContextTimer_ = new Timer()
       {
          @Override
@@ -469,6 +476,34 @@ public class EnvironmentPresenter extends BasePresenter
                         });
                  }
               });
+   }
+
+   void onImportDatasetFromCSV()
+   {
+      final String action = "Preparing data import";
+      dependencyManager_.withDataImport(
+         action, 
+         new Command() {
+            @Override
+            public void execute()
+            {
+               view_.bringToFront();
+               DataImportDialog dataImportDialog = new DataImportDialog(
+                     "Data Import",
+                     new OperationWithInput<DataImportOptions>()
+               {
+                  @Override
+                  public void execute(final DataImportOptions options)
+                  {
+                     final DataImportScript dataImportScript = new DataImportScript();
+                     String code = dataImportScript.getImportScript(options);
+                     eventBus_.fireEvent(new SendToConsoleEvent(code, true)); 
+                  }
+               });
+               
+               dataImportDialog.showModal();
+            }
+      });
    }
 
    public void onOpenDataFile(OpenDataFileEvent event)
@@ -899,6 +934,7 @@ public class EnvironmentPresenter extends BasePresenter
    private final SourceShim sourceShim_;
    private final DebugCommander debugCommander_;
    private final Session session_;
+   private final DependencyManager dependencyManager_;
    
    private int contextDepth_;
    private boolean refreshingView_;
