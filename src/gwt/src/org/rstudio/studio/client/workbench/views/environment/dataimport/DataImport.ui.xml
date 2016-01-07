@@ -6,6 +6,6 @@
 	<ui:style>
 	</ui:style>
 	<g:HTMLPanel>
-		<rs:FileChooserTextBox/>
+		<rs:FileChooserTextBox ui:field="fileChooserTextBox_"/>
 	</g:HTMLPanel>
 </ui:UiBinder> 
