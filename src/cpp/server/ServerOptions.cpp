@@ -101,7 +101,7 @@ unsigned int resolveMinimumUserId(std::string minimumUserId,
                                   std::ostream& osWarnings)
 {
    // default for invalid input
-   const unsigned int kDefaultMinimumId = 100;
+   const unsigned int kDefaultMinimumId = 1000;
 
    // auto-detect if requested
    if (minimumUserId == "auto")
