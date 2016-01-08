@@ -328,6 +328,7 @@ struct Events : boost::noncopyable
    boost::signal<void ()>                    onPreferencesSaved;
    boost::signal<void (const DistributedEvent&)>
                                              onDistributedEvent;
+   boost::signal<void (core::FilePath)>      onPermissionsChanged;
 
    // signal for detecting extended type of documents
    boost::signal<std::string(boost::shared_ptr<source_database::SourceDocument>),

@@ -43,6 +43,10 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionContentUrls.hpp>
 
+#ifndef _WIN32
+#include <core/system/FileMode.hpp>
+#endif
+
 #define kGridResource "grid_resource"
 #define kViewerCacheDir "viewer-cache"
 #define kGridResourceLocation "/" kGridResource "/"
@@ -863,9 +867,33 @@ void onShutdown(bool terminatedNormally)
 {
    if (terminatedNormally) 
    {
+      // ensure the viewer cache directory exists
+      FilePath cacheDir(viewerCacheDir());
+      Error error = cacheDir.ensureDirectory();
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+
+#ifndef _WIN32
+      // tighten permissions on viewer cache directory
+      error = core::system::changeFileMode(
+               cacheDir,  core::system::UserReadWriteExecuteMode);
+      if (error)
+      {
+         // not fatal, log and continue
+         LOG_ERROR(error);
+      }
+      else
+      {
+         module_context::events().onPermissionsChanged(cacheDir);
+      }
+#endif
+
       // when R suspends or shuts down, write out the contents of the cache
       // environment to disk so we can load them again if we need to
-      Error error = r::exec::RFunction(".rs.saveCachedData", viewerCacheDir())
+      error = r::exec::RFunction(".rs.saveCachedData", viewerCacheDir())
          .call();
       if (error)
          LOG_ERROR(error);
