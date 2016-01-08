@@ -481,7 +481,7 @@ public class EnvironmentPresenter extends BasePresenter
    void onImportDatasetFromCSV()
    {
       final String action = "Preparing data import";
-      dependencyManager_.withDataImport(
+      dependencyManager_.withDataImportCSV(
          action, 
          new Command() {
             @Override
@@ -497,7 +497,7 @@ public class EnvironmentPresenter extends BasePresenter
                   {
                      final DataImportScript dataImportScript = new DataImportScript();
                      String code = dataImportScript.getImportScript(options);
-                     eventBus_.fireEvent(new SendToConsoleEvent(code, true)); 
+                     eventBus_.fireEvent(new SendToConsoleEvent(code, true, true)); 
                   }
                });
                

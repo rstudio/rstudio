@@ -15,12 +15,15 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import org.rstudio.core.client.Size;
+import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.widget.FileChooserTextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -37,11 +40,13 @@ public class DataImport extends Composite
    public DataImport()
    {
       initWidget(uiBinder.createAndBindUi(this));
-      setWidth("400px");
+      
+      Size size = DomMetrics.adjustedElementSizeToDefaultMax();
+      setSize(size.width + "px", size.height + "px");
    }
    
    @UiFactory
-   FileChooserTextBox makeSomeWidget() {
+   FileChooserTextBox makeFileChooserTextBoxWidget() {
       FileChooserTextBox fileChooserTextBox = new FileChooserTextBox("File/URL:", null);
       fileChooserTextBox.setReadOnly(false);
       return fileChooserTextBox;

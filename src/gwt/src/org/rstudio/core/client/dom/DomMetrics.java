@@ -55,6 +55,16 @@ public class DomMetrics
             "ace_editor " + FontSizer.getNormalFontSizeClass());
    }
    
+   public static Size adjustedElementSizeToDefaultMax()
+   {
+      Size size = new Size(Window.getClientWidth(), Window.getClientHeight());
+      size = DomMetrics.adjustedElementSize(size, 
+                                            null, 
+                                            70,   // pad
+                                            100); // client margin
+      return size;
+   }
+   
    public static Size adjustedElementSize(Size contentSize, 
                                           Size minimumSize,
                                           int contentPad,
