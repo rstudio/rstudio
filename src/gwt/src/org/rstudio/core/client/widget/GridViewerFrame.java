@@ -31,6 +31,7 @@ public class GridViewerFrame extends RStudioFrame
    
    public void onAttach()
    {
+      super.onAttach();
    }
    
    public String getId()
