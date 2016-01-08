@@ -2,11 +2,9 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui"
 	xmlns:rs="urn:import:org.rstudio.core.client.widget">
-	<ui:with field='res' type='org.rstudio.core.client.theme.res.ThemeResources'/>
 	<ui:style>
 	</ui:style>
 	<g:HTMLPanel>
-		<rs:FileChooserTextBox ui:field="fileChooserTextBox_"/>
-		<rs:GridViewer/>
+	    <rs:GridViewerFrame ui:field="gridViewerFrame_"/>
 	</g:HTMLPanel>
 </ui:UiBinder> 

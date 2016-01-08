@@ -628,6 +628,31 @@ var createHeader = function(idx, col) {
   return th;
 };
 
+var parseLocationUrl = function() {
+  var parsedLocation = {};
+
+  parsedLocation.env = parsedLocation.obj = parsedLocation.cacheKey = parsedLocation.id = "";
+
+  var query = window.location.search.substring(1);
+  var queryVars = query.split("&");
+  for (var i = 0; i < queryVars.length; i++) {
+    var queryVar = queryVars[i].split("=");
+    if (queryVar[0] == "env") {
+      parsedLocation.env = queryVar[1];
+    } else if (queryVar[0] == "obj") {
+      parsedLocation.obj = queryVar[1];
+    } else if (queryVar[0] == "cache_key") {
+      parsedLocation.cacheKey = queryVar[1];
+    } else if (queryVar[0] == "data_source") {
+      parsedLocation.dataSource = queryVar[1];
+    } else if (queryVar[0] == "id") {
+      parsedLocation.id = queryVar[1];
+    }
+  }
+
+  return parsedLocation;
+}
+
 var initDataTable = function(result) {
   // parse result
   resCols = $.parseJSON(result);
@@ -639,19 +664,8 @@ var initDataTable = function(result) {
   cols = resCols;
 
   // look up the query parameters
-  var env = "", obj = "", cacheKey = "";
-  var query = window.location.search.substring(1);
-  var queryVars = query.split("&");
-  for (var i = 0; i < queryVars.length; i++) {
-    var queryVar = queryVars[i].split("=");
-    if (queryVar[0] == "env") {
-      env = queryVar[1];
-    } else if (queryVar[0] == "obj") {
-      obj = queryVar[1];
-    } else if (queryVar[0] == "cache_key") {
-      cacheKey = queryVar[1];
-    }
-  }
+  var parsedLocation = parseLocationUrl();
+  var env = parsedLocation.env, obj = parsedLocation.obj, cacheKey = parsedLocation.cacheKey;
 
   // keep track of which columns are numeric and which are text (we use
   // different renderers for these types)
@@ -743,6 +757,46 @@ var debouncedSearch = debounce(function(text) {
   }
 }, 100);
 
+var loadDataFromUrl = function(callback) {
+  // call the server to get data shape
+  $.ajax({
+        url: "../grid_data",
+        data: "show=cols&" + window.location.search.substring(1),
+        type: "POST"})
+    .done(function(result) {
+      $(document).ready(function() {
+        callback(result);
+      });
+    })
+    .fail(function(jqXHR)
+    {
+      if (jqXHR.responseText[0] !== "{")
+        showError(jqXHR.responseText);
+      else
+      {
+        var result = $.parseJSON(jqXHR.responseText);
+
+        if (result.error) {
+          showError(result.error);
+        } else {
+          showError("The object could not be displayed.");
+        }
+      }
+    }); 
+}
+
+var loadDataFromCallback = function(callback) {
+  var parsedLocation = parseLocationUrl();
+
+  Object.keys(window.parent.onLoadGridViewer).forEach(function(onLoadGridViewerKey){
+    var result = window.parent.onLoadGridViewer[onLoadGridViewerKey](parsedLocation.id);
+    if (result) {
+      alert("Hello From Grid Viewer: " + result);
+      // callback();
+    }
+  });
+}
+
 // bootstrapping: 
 // 1. clean up state (we re-bootstrap whenever table structure changes)
 // 2. make the request to get the shape of the data object to be viewed 
@@ -786,36 +840,21 @@ var bootstrap = function() {
   newEle.innerHTML = "<thead>" +
                      "    <tr id='data_cols'>" +
                      "    </tr>" +
-                     "</thead>";
+                     "</thead>";  
 
-  // call the server to get data shape
-  $.ajax({
-        url: "../grid_data",
-        data: "show=cols&" + window.location.search.substring(1),
-        type: "POST"})
-    .done(function(result) {
-      $(document).ready(function() {
-        document.body.appendChild(newEle);
-        runAfterSizing(function() {
-          initDataTable(result);
-        });
-      });
-    })
-    .fail(function(jqXHR)
-    {
-      if (jqXHR.responseText[0] !== "{")
-        showError(jqXHR.responseText);
-      else
-      {
-        var result = $.parseJSON(jqXHR.responseText);
+  var parsedLocation = parseLocationUrl();
 
-        if (result.error) {
-          showError(result.error);
-        } else {
-          showError("The object could not be displayed.");
-        }
-      }
-    });  
+  var loadDataOperation = loadDataFromUrl;
+  if (parsedLocation && parsedLocation.dataSource === "callback") {
+    loadDataOperation = loadDataFromCallback;
+  }
+
+  loadDataOperation(function(result) {
+    document.body.appendChild(newEle);
+    runAfterSizing(function() {
+      initDataTable(result);
+    });
+  })
 };
 
 // Exports -------------------------------------------------------------------
