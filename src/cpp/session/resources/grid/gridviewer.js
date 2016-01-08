@@ -791,7 +791,6 @@ var loadDataFromCallback = function(callback) {
   Object.keys(window.parent.onLoadGridViewer).forEach(function(onLoadGridViewerKey){
     var result = window.parent.onLoadGridViewer[onLoadGridViewerKey](parsedLocation.id);
     if (result) {
-      alert("Hello From Grid Viewer: " + result);
       // callback();
     }
   });

@@ -490,6 +490,7 @@ public class EnvironmentPresenter extends BasePresenter
                view_.bringToFront();
                DataImportDialog dataImportDialog = new DataImportDialog(
                      "Data Import",
+                     sourceServer_,
                      new OperationWithInput<DataImportOptions>()
                {
                   @Override

@@ -4,9 +4,14 @@
 	xmlns:rs="urn:import:org.rstudio.core.client.widget">
 	<ui:with field='res' type='org.rstudio.core.client.theme.res.ThemeResources'/>
 	<ui:style>
+		.dataPreview {
+			margin-top: 10px;
+			width: 100%;
+			border: 1px solid #999;
+		}
 	</ui:style>
 	<g:HTMLPanel>
 		<rs:FileChooserTextBox ui:field="fileChooserTextBox_"/>
-		<rs:GridViewer/>
+		<rs:GridViewer ui:field="gridViewer_" styleName='{style.dataPreview}'/>
 	</g:HTMLPanel>
 </ui:UiBinder> 

@@ -18,8 +18,16 @@ package org.rstudio.studio.client.workbench.views.environment.dataimport;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.widget.FileChooserTextBox;
+import org.rstudio.core.client.widget.GridViewer;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
@@ -33,27 +41,57 @@ public class DataImport extends Composite
    private static DataImportUiBinder uiBinder = GWT
          .create(DataImportUiBinder.class);
    
+   private final SourceServerOperations server_;
+   
    interface DataImportUiBinder extends UiBinder<Widget, DataImport>
    {
    }
 
-   public DataImport()
+   public DataImport(SourceServerOperations server)
    {
       initWidget(uiBinder.createAndBindUi(this));
       
+      server_ = server;
+      
       Size size = DomMetrics.adjustedElementSizeToDefaultMax();
       setSize(size.width + "px", size.height + "px");
+      
+      int previewHeight = size.height - 60;
+      gridViewer_.setHeight(previewHeight + "px");
    }
    
    @UiFactory
    FileChooserTextBox makeFileChooserTextBoxWidget() {
       FileChooserTextBox fileChooserTextBox = new FileChooserTextBox("File/URL:", null);
       fileChooserTextBox.setReadOnly(false);
+      
+      /*
+      fileChooserTextBox.addValueChangeHandler(new ValueChangeHandler<String>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> arg0)
+         {
+            refreshPreview();
+         }
+      });
+      
+      fileChooserTextBox.addTextBoxValueChangeHandler(new ChangeHandler()
+      {
+         @Override
+         public void onChange(ChangeEvent arg0)
+         {
+            refreshPreview();
+         }
+      });*/
+      
       return fileChooserTextBox;
    }
    
    @UiField
    FileChooserTextBox fileChooserTextBox_;
+   
+   @UiField
+   GridViewer gridViewer_;
    
    public DataImportOptions getOptions()
    {
@@ -62,5 +100,22 @@ public class DataImport extends Composite
       options.setImportLocation(fileChooserTextBox_.getTextBoxText());
       
       return options;
+   }
+   
+   private void refreshPreview()
+   {
+      server_.executeRCode("paste0(\"a\", \"b\")", new ServerRequestCallback<String>()
+      {
+         @Override
+         public void onResponseReceived(String response)
+         {
+            Window.alert(response);
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+         }
+      });
    }
 }
