@@ -271,6 +271,39 @@ public class DependencyManager implements InstallShinyEvent.Handler
                 new Command() { public void execute() {}});
    }
    
+   public void withDataImportCSV(String userAction, final Command command)
+   {
+     withDependencies(
+        "Preparing Import from CSV",
+        userAction, 
+        dataImportCsvDependenciesArray(), 
+        false,
+        new CommandWithArg<Boolean>()
+        {
+           @Override
+           public void execute(Boolean succeeded)
+           {
+              if (succeeded)
+                 command.execute();
+           }
+        }
+     );
+   }
+   
+   private ArrayList<Dependency> dataImportCsvDependencies()
+   {
+      ArrayList<Dependency> deps = new ArrayList<Dependency>();
+      deps.add(Dependency.cranPackage("readr", "0.2.2"));
+      deps.add(Dependency.cranPackage("Rcpp", "0.11.5"));
+      return deps;
+   }
+   
+   private Dependency[] dataImportCsvDependenciesArray()
+   {
+      ArrayList<Dependency> deps = dataImportCsvDependencies();
+      return deps.toArray(new Dependency[deps.size()]);
+   }
+   
    private void withDependencies(String progressCaption,
                                  final String userAction,
                                  final CommandWith2Args<String,Command> userPrompt,
