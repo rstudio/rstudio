@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.javac.JsInteropUtil;
+import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
@@ -83,7 +85,9 @@ public enum TypeCategory {
 
     assert type instanceof JReferenceType;
     type = type.getUnderlyingType();
-    if (program.isUntypedArrayType(type)) {
+    if (getJsSpecialType(type) != null) {
+      return getJsSpecialType(type);
+    } else if (program.isUntypedArrayType(type)) {
       return TypeCategory.TYPE_NATIVE_ARRAY;
     } else if (type == program.getTypeJavaLangObject()) {
       return TypeCategory.TYPE_JAVA_LANG_OBJECT;
@@ -101,5 +105,30 @@ public enum TypeCategory {
       return TypeCategory.TYPE_JS_FUNCTION;
     }
     return TypeCategory.TYPE_JAVA_OBJECT;
+  }
+
+  private static TypeCategory getJsSpecialType(JType type) {
+    if (!(type instanceof JClassType) || !type.isJsNative()) {
+      return null;
+    }
+
+    JClassType classType = (JClassType) type;
+    if (!JsInteropUtil.isGlobal(classType.getJsNamespace())) {
+      return null;
+    }
+
+    switch (classType.getJsName()) {
+      case "Object":
+        return TypeCategory.TYPE_JAVA_LANG_OBJECT;
+      case "Function":
+        return TypeCategory.TYPE_JS_FUNCTION;
+      case "Array":
+        return TypeCategory.TYPE_NATIVE_ARRAY;
+      case "Number":
+        return TypeCategory.TYPE_JAVA_LANG_DOUBLE;
+      case "String":
+        return TypeCategory.TYPE_JAVA_LANG_STRING;
+    }
+    return null;
   }
 }

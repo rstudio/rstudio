@@ -92,7 +92,8 @@ public class ImplementCastsAndTypeChecks {
           refType =  (JReferenceType) program.normalizeJsoType(refType);
         }
 
-        if (pruneTrivialCasts && program.typeOracle.castSucceedsTrivially(argType, refType)) {
+        if (pruneTrivialCasts && program.typeOracle.castSucceedsTrivially(argType, refType) ||
+            determineTypeCategoryForType(refType) == TypeCategory.TYPE_JAVA_LANG_OBJECT) {
           // just remove the cast
           ctx.replaceMe(curExpr);
           return;
@@ -204,7 +205,8 @@ public class ImplementCastsAndTypeChecks {
           // don't depend on type-tightener having run
           || (program.typeOracle.isEffectivelyJavaScriptObject(argType)
               && program.typeOracle.isEffectivelyJavaScriptObject(toType));
-      if (pruneTrivialCasts && isTrivialCast) {
+      if (pruneTrivialCasts && isTrivialCast ||
+          determineTypeCategoryForType(toType) == TypeCategory.TYPE_JAVA_LANG_OBJECT) {
         // trivially true if non-null; replace with a null test
         JBinaryOperation eq =
             new JBinaryOperation(x.getSourceInfo(), program.getTypePrimitiveBoolean(),

@@ -239,19 +239,6 @@ final class Cast {
       return false;
     }
 
-    if (jsTypeStr == "Object") {
-      // TODO(rluble): Handle this case in the compiler side.
-      return (typeof obj) == "object";
-    } else if (jsTypeStr == "Function") {
-      // TODO(rluble): remove array special handling once
-      // instanceOf can be customized for native classes.
-      return (typeof obj) == "function";
-    } else if (jsTypeStr == "Array" ) {
-      // TODO(rluble): remove array special handling once
-      // instanceOf can be customized for native classes.
-      return Array.isArray(obj);
-    }
-
     var jsType = $wnd;
     for (var i = 0, parts = jsTypeStr.split("."), l = parts.length; i < l ; i++) {
       jsType = jsType && jsType[parts[i]];
