@@ -15,13 +15,22 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.ast.HasJsInfo.JsMemberType;
 import com.google.gwt.dev.jjs.ast.JMember;
+import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 
 /**
  * General predicates for Java AST nodes.
  */
 public class JjsPredicates {
+  public static final Predicate<JMethod> IS_JS_CONSTRUCTOR =
+      new Predicate<JMethod>() {
+        @Override
+        public boolean apply(JMethod method) {
+          return method.isConstructor() && method.getJsMemberType() == JsMemberType.CONSTRUCTOR;
+        }
+      };
   public static Predicate<JMember> IS_SYNTHETIC =
       new Predicate<JMember>() {
         @Override

@@ -30,6 +30,7 @@ import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
+import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
@@ -200,6 +201,10 @@ public class ControlFlowAnalyzer {
     public boolean visit(JCastOperation x, Context ctx) {
       // Rescue any JavaScriptObject type that is the target of a cast.
       JType targetType = x.getCastType();
+
+      // Casts to native classes use the native constructor qualified name.
+      maybeRescueNativeConstructor(targetType);
+
       if (!canBeInstantiatedInJavaScript(targetType)) {
         return true;
       }
@@ -305,6 +310,13 @@ public class ControlFlowAnalyzer {
           membersToRescueIfTypeIsInstantiated.add(target);
         }
       }
+      return true;
+    }
+
+    @Override
+    public boolean visit(JInstanceOf expression, Context ctx) {
+      // Instanceof checks for native classes use the native constructor qualified name.
+      maybeRescueNativeConstructor(expression.getTestType());
       return true;
     }
 
@@ -749,6 +761,13 @@ public class ControlFlowAnalyzer {
         for (JExpression arg : list) {
           this.accept(arg);
         }
+      }
+    }
+
+    private void maybeRescueNativeConstructor(JType type) {
+      JConstructor jsConstructor = JjsUtils.getJsNativeConstructorOrNull(type);
+      if (jsConstructor != null) {
+        rescue(jsConstructor);
       }
     }
 

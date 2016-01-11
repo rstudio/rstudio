@@ -34,6 +34,7 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JRuntimeTypeReference;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.RuntimeConstants;
+import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.util.EnumSet;
@@ -265,8 +266,12 @@ public class ImplementCastsAndTypeChecks {
           targetType)));
     }
     if (method.getParams().size() == 3) {
-     call.addArg(program.getStringLiteral(sourceInfo,
-         ((JDeclaredType) targetType).getQualifiedJsName()));
+      JDeclaredType declaredType = (JDeclaredType) targetType;
+
+      JMethod jsConstructor = JjsUtils.getJsNativeConstructorOrNull(declaredType);
+      assert jsConstructor != null &&  declaredType.isJsNative();
+      call.addArg(new JsniMethodRef(sourceInfo, declaredType.getQualifiedJsName(), jsConstructor,
+          program.getJavaScriptObject()));
     }
     return call;
   }

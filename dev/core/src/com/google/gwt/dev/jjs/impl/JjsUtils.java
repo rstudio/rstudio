@@ -304,6 +304,19 @@ public class JjsUtils {
   }
 
   /**
+   * Returns a native constructor of a native JsType class.
+   */
+  public static JConstructor getJsNativeConstructorOrNull(JType type) {
+    if (!type.isJsNative() || !(type.getUnderlyingType() instanceof JClassType)) {
+      return null;
+    }
+    JMethod jsConstructor = Iterables.getFirst(Iterables.filter(
+        ((JClassType) type).getMethods(), JjsPredicates.IS_JS_CONSTRUCTOR), null);
+    assert jsConstructor != null;
+    return (JConstructor) jsConstructor;
+  }
+
+  /**
    * Returns a description for a type suitable for reporting errors to the users.
    */
   public static String getReadableDescription(JType type) {

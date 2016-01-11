@@ -15,8 +15,10 @@
  */
 package com.google.gwt.core.interop;
 
+import com.google.gwt.core.client.ScriptInjector;
 import com.google.gwt.junit.client.GWTTestCase;
 
+import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 
@@ -24,6 +26,12 @@ import jsinterop.annotations.JsType;
  * Tests JsType with array functionality.
  */
 public class JsTypeArrayTest extends GWTTestCase {
+  @Override
+  protected void gwtSetUp() throws Exception {
+    ScriptInjector.fromString("function JsTypeArrayTest_SimpleJsTypeReturnForMultiDimArray() {}")
+        .setWindow(ScriptInjector.TOP_WINDOW)
+        .inject();
+  }
 
   @Override
   public String getModuleName() {
@@ -104,7 +112,8 @@ public class JsTypeArrayTest extends GWTTestCase {
     holder.setArrayParam([{}, {}]);
   }-*/;
 
-  @JsType(isNative = true)
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL,
+      name = "JsTypeArrayTest_SimpleJsTypeReturnForMultiDimArray")
   static class SimpleJsTypeReturnForMultiDimArray {
     @JsProperty public native int getId();
   }
