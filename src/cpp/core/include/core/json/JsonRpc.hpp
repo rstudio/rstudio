@@ -474,6 +474,20 @@ inline Error typeMismatch(const json::Value& value,
 
 } // namespace errors
 
+inline core::Error readObject(const json::Object& object,
+                              const std::string& name,
+                              json::Value* pValue)
+{
+   json::Object::const_iterator it = object.find(name);
+   if (it == object.end())
+      *pValue = json::Value();
+   else
+      *pValue = it->second;
+
+   return Success();
+}
+
+
 template <typename T>
 core::Error readObject(const json::Object& object, 
                        const std::string& name, 
