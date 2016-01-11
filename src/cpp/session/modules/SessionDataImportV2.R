@@ -13,9 +13,9 @@
 #
 #
 
-.rs.addJsonRpcHandler("preview_data_import", function(path, maxCols = 100, maxFactors = 64)
+.rs.addJsonRpcHandler("preview_data_import", function(path, maxRows, maxCols = 100, maxFactors = 64)
 {
-  data <- readr::read_csv(path)
+  data <- readr::read_csv(path, n_max = maxRows)
 
   columns <- .rs.describeCols(data, maxCols, maxFactors)
 

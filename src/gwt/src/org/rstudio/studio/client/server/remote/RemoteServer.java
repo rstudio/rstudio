@@ -184,6 +184,10 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
+import elemental.json.JsonNumber;
+import elemental.json.JsonType;
+import elemental.json.JsonValue;
+
 @Singleton
 public class RemoteServer implements Server
 { 
@@ -4429,10 +4433,12 @@ public class RemoteServer implements Server
 
    @Override
    public void previewDataImport(String path,
+                                 int maxRows,
                                  ServerRequestCallback<JsObject> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0,  new JSONString(path));
+      params.set(0, new JSONString(path));
+      params.set(1, new JSONNumber(maxRows));
       sendRequest(RPC_SCOPE, PREVIEW_DATA_IMPORT, params, requestCallback);
    }
 

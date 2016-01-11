@@ -49,6 +49,11 @@ public class GridViewer extends Composite
       gridViewerFrame_.setData(data);
    }
    
+   public void setOption(String option, String value)
+   {
+      gridViewerFrame_.setOption(option, value);
+   }
+   
    @UiField
    GridViewerFrame gridViewerFrame_;
 }

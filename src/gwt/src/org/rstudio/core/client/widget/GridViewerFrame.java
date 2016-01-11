@@ -40,7 +40,17 @@ public class GridViewerFrame extends RStudioFrame
       setDataNative(gridViewerFrameWindow, data);
    }
    
+   public void setOption(String option, String value)
+   {
+      WindowEx gridViewerFrameWindow = getIFrame().getContentWindow();
+      setOptionNative(gridViewerFrameWindow, option, value);
+   }
+   
    private final native void setDataNative(WindowEx frameContentWindow, JsObject data) /*-{
       frameContentWindow.setData(data);
+   }-*/;
+   
+   private final native void setOptionNative(WindowEx frameContentWindow, String option, String value) /*-{
+      frameContentWindow.setOption(option, value);
    }-*/;
 }

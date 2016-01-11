@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.environment.dataimport;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.GridViewer;
 import org.rstudio.studio.client.server.ServerError;
@@ -44,6 +45,7 @@ public class DataImport extends Composite
          .create(DataImportUiBinder.class);
    
    private final SourceServerOperations server_;
+   private final int maxRows_ = 200;
    
    interface DataImportUiBinder extends UiBinder<Widget, DataImport>
    {
@@ -105,11 +107,13 @@ public class DataImport extends Composite
    
    private void refreshPreview()
    {
-      server_.previewDataImport(fileChooserTextBox_.getTextBoxText(), new ServerRequestCallback<JsObject>()
+      server_.previewDataImport(fileChooserTextBox_.getTextBoxText(), maxRows_, new ServerRequestCallback<JsObject>()
       {
          @Override
          public void onResponseReceived(JsObject response)
          {
+            gridViewer_.setOption("nullsAsNAs", "true");
+            gridViewer_.setOption("status", "Previewing first " + toLocaleString(maxRows_) + " entries");
             gridViewer_.setData(response);
          }
          
@@ -119,4 +123,8 @@ public class DataImport extends Composite
          }
       });
    }
+   
+   private final native String toLocaleString(int number) /*-{
+      return number.toLocaleString ? number.toLocaleString() : number;
+   }-*/;
 }

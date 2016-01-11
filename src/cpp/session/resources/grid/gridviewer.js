@@ -41,6 +41,9 @@ var lastScrollPos = 0;
 // display nulls as NAs
 var displayNullsAsNAs = false;
 
+// status text (replaces "Showing x of y...")
+var statusTextOverride = null;
+
 var isHeaderWidthMismatched = function() {
   // find the elements to measure (they may not exist)
   var rs = document.getElementById("rsGridData");
@@ -752,7 +755,6 @@ var initDataTable = function(resCols, data) {
         "render": e.col_type === "numeric" ? renderNumberCell : renderTextCell
       };
     });
-    displayNullsAsNAs = true;
   }
 
   // activate the data table
@@ -775,7 +777,10 @@ var initDataTable = function(resCols, data) {
     "columnDefs": dataTableColumnDefs,
     "ajax": dataTableAjax,
     "data": dataTableData,
-    "columns": dataTableColumns
+    "columns": dataTableColumns,
+    "fnInfoCallback": !statusTextOverride ? null : function(oSettings, iStart, iEnd, iMax, iTotal, sPre) {
+      return statusTextOverride;
+    }
   });
 
   initDataTableLoad();
@@ -988,6 +993,18 @@ window.onDeactivate = function() {
 
 window.setData = function(data) {
   bootstrap(data);
+}
+
+window.setOption = function(option, value) {
+  switch (option)
+  {
+    case "nullsAsNAs":
+      displayNullsAsNAs = value === "true" ? true : false;
+      break;
+    case "status":
+      statusTextOverride = value;
+      break;
+  }
 }
 
 var parsedLocation = parseLocationUrl();
