@@ -44,7 +44,7 @@ public class GridViewer extends Composite
       initWidget(uiBinder.createAndBindUi(this));
    }
    
-   public void setData(JsArray<JsObject> data)
+   public void setData(JsObject data)
    {
       gridViewerFrame_.setData(data);
    }

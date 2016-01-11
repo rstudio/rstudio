@@ -105,10 +105,10 @@ public class DataImport extends Composite
    
    private void refreshPreview()
    {
-      server_.previewDataImport(fileChooserTextBox_.getTextBoxText(), new ServerRequestCallback<JsArray<JsObject>>()
+      server_.previewDataImport(fileChooserTextBox_.getTextBoxText(), new ServerRequestCallback<JsObject>()
       {
          @Override
-         public void onResponseReceived(JsArray<JsObject> response)
+         public void onResponseReceived(JsObject response)
          {
             gridViewer_.setData(response);
          }

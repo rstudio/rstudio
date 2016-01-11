@@ -13,7 +13,10 @@
 #
 #
 
-.rs.addJsonRpcHandler("preview_data_import", function(code)
+.rs.addJsonRpcHandler("preview_data_import", function(path, maxCols = 100, maxFactors = 64)
 {
-  readr::read_csv(code)
+  data <- readr::read_csv(path)
+  columns <- .rs.describeCols(data, maxCols, maxFactors)
+  list(data = readr::read_csv(path),
+  	   columns = columns)
 })

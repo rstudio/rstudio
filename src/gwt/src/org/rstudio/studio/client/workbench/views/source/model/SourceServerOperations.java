@@ -236,5 +236,5 @@ public interface SourceServerOperations extends FilesServerOperations,
          ServerRequestCallback<Void> requestCallback);
 
    public void previewDataImport(String path,
-                                 ServerRequestCallback<JsArray<JsObject>> requestCallback);
+                                 ServerRequestCallback<JsObject> requestCallback);
 }

@@ -4429,7 +4429,7 @@ public class RemoteServer implements Server
 
    @Override
    public void previewDataImport(String path,
-                                 ServerRequestCallback<JsArray<JsObject>> requestCallback)
+                                 ServerRequestCallback<JsObject> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0,  new JSONString(path));

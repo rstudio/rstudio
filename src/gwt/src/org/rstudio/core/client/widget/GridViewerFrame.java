@@ -34,13 +34,13 @@ public class GridViewerFrame extends RStudioFrame
       super.onAttach();
    }
    
-   public void setData(JsArray<JsObject> data)
+   public void setData(JsObject data)
    {
       WindowEx gridViewerFrameWindow = getIFrame().getContentWindow();
       setDataNative(gridViewerFrameWindow, data);
    }
    
-   private final native void setDataNative(WindowEx frameContentWindow, JsArray<JsObject> data) /*-{
+   private final native void setDataNative(WindowEx frameContentWindow, JsObject data) /*-{
       frameContentWindow.setData(data);
    }-*/;
 }

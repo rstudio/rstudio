@@ -101,6 +101,9 @@ var showError = function(msg) {
 
 // simple HTML escaping (avoid XSS in data)
 var escapeHtml = function(html) {
+  if (!html)
+    return "";
+
   // handle special cells
   if (typeof(html) === "number")
     return html.toString();
@@ -278,7 +281,7 @@ var postDrawCallback = function() {
   // server, etc).
   if (isHeaderWidthMismatched()) {
     syncWidth();
-    $.fn.dataTableExt.internal._fnScrollDraw(table.settings()[0]);
+    $.fn.dataTableExt.internal._fnScrollDraw($("#rsGridData").DataTable().settings()[0]);
   }
   window.clearTimeout(loadingTimer);
 };
@@ -668,10 +671,7 @@ var initDataTableLoad = function(result) {
   });
 }
 
-var initDataTableFromUrl = function(result) {
-  // parse result
-  resCols = $.parseJSON(result);
-
+var initDataTable = function(resCols, data) {
   if (resCols.error) {
     showError(cols.error);
     return;
@@ -700,34 +700,13 @@ var initDataTableFromUrl = function(result) {
   }
   var scrollHeight = window.innerHeight - (thead.clientHeight + 2);
 
-  // activate the data table
-  $("#rsGridData").dataTable({
-    "processing": true,
-    "serverSide": true,
-    "autoWidth": false,
-    "pagingType": "full_numbers",
-    "pageLength": 25,
-    "scrollY": scrollHeight + "px",
-    "scrollX": true,
-    "scroller": {
-      "rowHeight": 23,            // sync w/ CSS (scroller auto row height is busted)
-      "loadingIndicator": true,   // show loading indicator when loading
-    },
-    "preDrawCallback": preDrawCallback,
-    "drawCallback": postDrawCallback,
-    "dom": "tiS", 
-    "deferRender": true,
-    "columnDefs": [ {
-      "targets": numberCols,
-      "render": renderNumberCell
-      }, {
-      "targets": textCols,
-      "render": renderTextCell
-      }, {
-      "targets": "_all",
-      "width": "4em"
-      }],
-    "ajax": {
+  var dataTableAjax = null;
+  var dataTableData = null;
+  var dataTableColumnDefs = null;
+  var dataTableColumns = null;
+
+  if (!data) {
+    dataTableAjax = {
       "url": "../grid_data", 
       "type": "POST",
       "data": function(d) {
@@ -748,47 +727,34 @@ var initDataTableFromUrl = function(result) {
             showError("The data could not be displayed.");
           }
         }
-      },
-     }
-  });
-
-  initDataTableLoad();
-};
-
-var initDataTableFromData= function(result) {
-  if (result.length == 0) {
-    showError("No data to display");
-    retunr;
+      }
+     };
+    dataTableColumnDefs = [ {
+        "targets": numberCols,
+        "render": renderNumberCell
+      }, {
+        "targets": textCols,
+        "render": renderTextCell
+      }, {
+        "targets": "_all",
+        "width": "4em"
+    }];
   }
-
-  var cols = Object.keys(result[0]);
-
-  // Assign line numbers:
-  cols.unshift("");
-  result.map(function (e, idx) {
-    var eWithNumber = e;
-    eWithNumber[""] = idx;
-    return eWithNumber + 1;
-  })
-
-  var headerCols = cols.map(function (e) {
-    return {
-      "col_name": e
-    }
-  })
-
-  // add each column
-  var thead = document.getElementById("data_cols");
-  for (var j = 0; j < headerCols.length; j++) {
-    // create table header
-    thead.appendChild(createHeader(j, headerCols[j]));
+  else {
+    dataTableData = data;
+    dataTableColumns = cols.map(function (e, idx) {
+      return {
+        "data": e.col_name,
+        "width": "4em",
+        "render": e.col_type === "numeric" ? renderNumberCell : renderTextCell
+      };
+    });
   }
-  var scrollHeight = window.innerHeight - (thead.clientHeight + 2);
 
   // activate the data table
   $("#rsGridData").dataTable({
     "processing": true,
-    "serverSide": false,
+    "serverSide": dataTableData ? false : true,
     "autoWidth": false,
     "pagingType": "full_numbers",
     "pageLength": 25,
@@ -802,12 +768,10 @@ var initDataTableFromData= function(result) {
     "drawCallback": postDrawCallback,
     "dom": "tiS", 
     "deferRender": true,
-    "data": result,
-    "columns": cols.map(function (e, idx) {
-      return {
-        "data": e
-      };
-    })
+    "columnDefs": dataTableColumnDefs,
+    "ajax": dataTableAjax,
+    "data": dataTableData,
+    "columns": dataTableColumns
   });
 
   initDataTableLoad();
@@ -895,7 +859,7 @@ var bootstrap = function(data) {
       $(document).ready(function() {
         document.body.appendChild(newEle);
         runAfterSizing(function() {
-          initDataTableFromUrl(result);
+          initDataTable($.parseJSON(result));
         });
       });
     });
@@ -904,7 +868,15 @@ var bootstrap = function(data) {
     $(document).ready(function() {
       document.body.appendChild(newEle);
       runAfterSizing(function() {
-        initDataTableFromData(data);
+
+        // Assign line numbers:
+        data.data = data.data.map(function (e, idx) {
+          var eWithNumber = e;
+          eWithNumber[""] = idx + 1;
+          return eWithNumber;
+        })
+
+        initDataTable(data.columns, data.data);
       });
     });
   }
