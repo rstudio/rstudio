@@ -194,6 +194,7 @@ java_library(
         ["src/com/google/gwt/regexp/shared/*.java"],
         exclude = ["**/package-info.java"],
     ),
+    compatible_with = ["//buildenv/target:android"],
     constraints = ["android"],
 )
 
@@ -395,7 +396,9 @@ java_library(
     ] + glob([
         "src/com/google/gwt/user/client/rpc/core/java/util/*_CustomFieldSerializer*.java",
     ]),
+    compatible_with = ["//buildenv/target:android"],
     constraints = [
+        "android",
         "gwt",
         "public",
     ],
@@ -413,6 +416,7 @@ java_library(
         "src/com/google/gwt/core/client/js/JsProperty.java",
         "src/com/google/gwt/core/client/js/JsType.java",
     ],
+    compatible_with = ["//buildenv/target:android"],
     constraints = [
         "android",
     ],
@@ -467,6 +471,7 @@ java_library(
     srcs = [
         "src/com/google/gwt/core/shared/GwtIncompatible.java",
     ],
+    compatible_with = ["//buildenv/target:android"],
     constraints = [
         "android",
     ],
