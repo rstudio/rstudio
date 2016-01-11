@@ -35,7 +35,8 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (data::viewer::initialize)
-      (bind(sourceModuleRFile, "SessionDataImport.R"));
+      (bind(sourceModuleRFile, "SessionDataImport.R"))
+      (bind(sourceModuleRFile, "SessionDataImportV2.R"));
 
    return initBlock.execute();
 }

@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.js.JsObject;
@@ -233,4 +234,7 @@ public interface SourceServerOperations extends FilesServerOperations,
    
    public void setSourceDocumentDirty(String docId, boolean dirty,
          ServerRequestCallback<Void> requestCallback);
+
+   public void previewDataImport(String path,
+                                 ServerRequestCallback<JsArray<JsObject>> requestCallback);
 }
