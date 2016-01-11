@@ -38,6 +38,9 @@ var lastHeight = 0;
 var detachedHandlers = [];
 var lastScrollPos = 0;
 
+// display nulls as NAs
+var displayNullsAsNAs = false;
+
 var isHeaderWidthMismatched = function() {
   // find the elements to measure (they may not exist)
   var rs = document.getElementById("rsGridData");
@@ -130,7 +133,7 @@ var highlightSearchMatch = function(data, search, pos) {
 var renderCellContents = function(data, type, row, meta) {
 
   // usually data is a string; 0 is a special value signifying NA 
-  if (data === 0) {
+  if (data === 0 || (displayNullsAsNAs && data === null)) {
     return '<span class="naCell">NA</span>';
   }
 
@@ -749,6 +752,7 @@ var initDataTable = function(resCols, data) {
         "render": e.col_type === "numeric" ? renderNumberCell : renderTextCell
       };
     });
+    displayNullsAsNAs = true;
   }
 
   // activate the data table

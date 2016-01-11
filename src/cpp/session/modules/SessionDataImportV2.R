@@ -16,7 +16,16 @@
 .rs.addJsonRpcHandler("preview_data_import", function(path, maxCols = 100, maxFactors = 64)
 {
   data <- readr::read_csv(path)
+
   columns <- .rs.describeCols(data, maxCols, maxFactors)
-  list(data = readr::read_csv(path),
-  	   columns = columns)
+
+  cnames <- names(data)
+  size <- nrow(data)
+
+  for(cname in cnames[-1]) {
+    data[[cname]] <- .rs.formatDataColumn(data[[cname]], 1, size)
+  }
+
+  list(data = data,
+       columns = columns)
 })
