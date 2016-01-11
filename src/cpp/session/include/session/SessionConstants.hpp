@@ -77,6 +77,7 @@
 
 #define kReuseSessionsForProjectLinksSettings "reuseSessionsForProjectLinks"
 
+#define kRStudioNoTransformRedirect "X-RStudio-NoTransformRedirect"
 
 #endif // SESSION_CONSTANTS_HPP
 
