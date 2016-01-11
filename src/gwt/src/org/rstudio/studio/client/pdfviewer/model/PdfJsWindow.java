@@ -162,7 +162,7 @@ public class PdfJsWindow extends WindowEx
    
    public final native void openPdf(String path, float scale, 
                                     boolean synctex) /*-{
-      this.PDFView.open(path, scale);
+      this.PDFView.open(path, { "scale": scale });
       var jumpToSource = this.document.getElementById("jumpToSource");
       if (jumpToSource)
       {
