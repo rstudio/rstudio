@@ -17,19 +17,23 @@ package org.rstudio.core.client.widget;
 
 import java.util.Date;
 
+import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
+import org.rstudio.core.client.js.JsObject;
+
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.thirdparty.guava.common.util.concurrent.CycleDetectingLockFactory.WithExplicitOrdering;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.core.client.JsArray;
 
 public class GridViewer extends Composite
 {
    private static GridViewerUiBinder uiBinder = GWT
          .create(GridViewerUiBinder.class);
-   
-   private final String id_;
 
    interface GridViewerUiBinder extends UiBinder<Widget, GridViewer>
    {
@@ -37,40 +41,14 @@ public class GridViewer extends Composite
 
    public GridViewer()
    {
-      id_ = String.valueOf((new Date()).getTime() % 1000);
-      
       initWidget(uiBinder.createAndBindUi(this));
-      initWidgetNative(id_);
    }
-
-   public String onLoadData(String id)
+   
+   public void setData(JsArray<JsObject> data)
    {
-      // Validate this is the correct widget
-      if (id != id_)
-      {
-         return null;
-      }
-      
-      return "sample data";
-   }
-
-   @UiFactory
-   GridViewerFrame makeGridViewerWidget()
-   {
-      GridViewerFrame gridViewer = new GridViewerFrame(id_);
-      return gridViewer;
+      gridViewerFrame_.setData(data);
    }
    
    @UiField
    GridViewerFrame gridViewerFrame_;
-   
-   private final native void initWidgetNative(String id) /*-{
-      var this_ = this;
-      
-      if (!$wnd.onLoadGridViewer) $wnd.onLoadGridViewer = [];
-      
-      $wnd.onLoadGridViewer[id] = $entry(function(id) {
-         return this_.@org.rstudio.core.client.widget.GridViewer::onLoadData(Ljava/lang/String;)(id);
-      });
-   }-*/;
 }

@@ -653,7 +653,22 @@ var parseLocationUrl = function() {
   return parsedLocation;
 }
 
-var initDataTable = function(result) {
+var initDataTableLoad = function(result) {
+  table = $("#rsGridData").DataTable();
+
+  // datatables has a bug wherein it sometimes thinks an LTR browser is RTL if
+  // the LTR browser is at >100% zoom; this causes layout problems, so force
+  // into LTR mode as we don't support RTL here.
+  $.fn.dataTableSettings[0].oBrowser.bScrollbarLeft = false;
+
+  // listen for size changes
+  debouncedDataTableSize();
+  window.addEventListener("resize", function() { 
+    debouncedDataTableSize(); 
+  });
+}
+
+var initDataTableFromUrl = function(result) {
   // parse result
   resCols = $.parseJSON(result);
 
@@ -737,18 +752,65 @@ var initDataTable = function(result) {
      }
   });
 
-  table = $("#rsGridData").DataTable();
+  initDataTableLoad();
+};
 
-  // datatables has a bug wherein it sometimes thinks an LTR browser is RTL if
-  // the LTR browser is at >100% zoom; this causes layout problems, so force
-  // into LTR mode as we don't support RTL here.
-  $.fn.dataTableSettings[0].oBrowser.bScrollbarLeft = false;
+var initDataTableFromData= function(result) {
+  if (result.length == 0) {
+    showError("No data to display");
+    retunr;
+  }
 
-  // listen for size changes
-  debouncedDataTableSize();
-  window.addEventListener("resize", function() { 
-    debouncedDataTableSize(); 
+  var cols = Object.keys(result[0]);
+
+  // Assign line numbers:
+  cols.unshift("");
+  result.map(function (e, idx) {
+    var eWithNumber = e;
+    eWithNumber[""] = idx;
+    return eWithNumber + 1;
+  })
+
+  var headerCols = cols.map(function (e) {
+    return {
+      "col_name": e
+    }
+  })
+
+  // add each column
+  var thead = document.getElementById("data_cols");
+  for (var j = 0; j < headerCols.length; j++) {
+    // create table header
+    thead.appendChild(createHeader(j, headerCols[j]));
+  }
+  var scrollHeight = window.innerHeight - (thead.clientHeight + 2);
+
+  // activate the data table
+  $("#rsGridData").dataTable({
+    "processing": true,
+    "serverSide": false,
+    "autoWidth": false,
+    "pagingType": "full_numbers",
+    "pageLength": 25,
+    "scrollY": scrollHeight + "px",
+    "scrollX": true,
+    "scroller": {
+      "rowHeight": 23,            // sync w/ CSS (scroller auto row height is busted)
+      "loadingIndicator": true,   // show loading indicator when loading
+    },
+    "preDrawCallback": preDrawCallback,
+    "drawCallback": postDrawCallback,
+    "dom": "tiS", 
+    "deferRender": true,
+    "data": result,
+    "columns": cols.map(function (e, idx) {
+      return {
+        "data": e
+      };
+    })
   });
+
+  initDataTableLoad();
 };
 
 var debouncedSearch = debounce(function(text) {
@@ -764,9 +826,7 @@ var loadDataFromUrl = function(callback) {
         data: "show=cols&" + window.location.search.substring(1),
         type: "POST"})
     .done(function(result) {
-      $(document).ready(function() {
-        callback(result);
-      });
+      callback(result);
     })
     .fail(function(jqXHR)
     {
@@ -785,17 +845,6 @@ var loadDataFromUrl = function(callback) {
     }); 
 }
 
-var loadDataFromCallback = function(callback) {
-  var parsedLocation = parseLocationUrl();
-
-  Object.keys(window.parent.onLoadGridViewer).forEach(function(onLoadGridViewerKey){
-    var result = window.parent.onLoadGridViewer[onLoadGridViewerKey](parsedLocation.id);
-    if (result) {
-      // callback();
-    }
-  });
-}
-
 // bootstrapping: 
 // 1. clean up state (we re-bootstrap whenever table structure changes)
 // 2. make the request to get the shape of the data object to be viewed 
@@ -805,7 +854,7 @@ var loadDataFromCallback = function(callback) {
 // 3. wait for the document to be ready
 // 4. wait for the window size to stop changing (RStudio animates tab opening)
 // 5. initialize the data table
-var bootstrap = function() {
+var bootstrap = function(data) {
 
   // dismiss any active popups
   if (dismissActivePopup)
@@ -841,19 +890,24 @@ var bootstrap = function() {
                      "    </tr>" +
                      "</thead>";  
 
-  var parsedLocation = parseLocationUrl();
-
-  var loadDataOperation = loadDataFromUrl;
-  if (parsedLocation && parsedLocation.dataSource === "callback") {
-    loadDataOperation = loadDataFromCallback;
-  }
-
-  loadDataOperation(function(result) {
-    document.body.appendChild(newEle);
-    runAfterSizing(function() {
-      initDataTable(result);
+  if (!data) {
+    loadDataFromUrl(function(result) {
+      $(document).ready(function() {
+        document.body.appendChild(newEle);
+        runAfterSizing(function() {
+          initDataTableFromUrl(result);
+        });
+      });
     });
-  })
+  }
+  else {
+    $(document).ready(function() {
+      document.body.appendChild(newEle);
+      runAfterSizing(function() {
+        initDataTableFromData(data);
+      });
+    });
+  }
 };
 
 // Exports -------------------------------------------------------------------
@@ -956,8 +1010,17 @@ window.onDeactivate = function() {
   scrollBody.off("scroll");
 };
 
+window.setData = function(data) {
+  bootstrap(data);
+}
+
+var parsedLocation = parseLocationUrl();
+var dataMode = parsedLocation && parsedLocation.dataSource ? parsedLocation.dataSource : "server";
+
 // start the first request
-bootstrap();
+if (dataMode === "server") {
+  bootstrap();
+}
 
 })();
 

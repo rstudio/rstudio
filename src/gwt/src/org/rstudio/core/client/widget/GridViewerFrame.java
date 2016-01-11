@@ -16,15 +16,15 @@
 package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.js.JsObject;
+
+import com.google.gwt.core.client.JsArray;
 
 public class GridViewerFrame extends RStudioFrame
 {
-   private final String id_;
-   
-   public GridViewerFrame(String id)
+   public GridViewerFrame()
    {
-      super("grid_resource/gridviewer.html?data_source=callback&id=" + id);
-      id_ = id;
+      super("grid_resource/gridviewer.html?data_source=data");
       
       setSize("100%", "100%");
    }
@@ -34,8 +34,13 @@ public class GridViewerFrame extends RStudioFrame
       super.onAttach();
    }
    
-   public String getId()
+   public void setData(JsArray<JsObject> data)
    {
-      return id_;
+      WindowEx gridViewerFrameWindow = getIFrame().getContentWindow();
+      setDataNative(gridViewerFrameWindow, data);
    }
+   
+   private final native void setDataNative(WindowEx frameContentWindow, JsArray<JsObject> data) /*-{
+      frameContentWindow.setData(data);
+   }-*/;
 }

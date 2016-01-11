@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.widget.FileChooserTextBox;
@@ -24,6 +25,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -65,7 +67,6 @@ public class DataImport extends Composite
       FileChooserTextBox fileChooserTextBox = new FileChooserTextBox("File/URL:", null);
       fileChooserTextBox.setReadOnly(false);
       
-      /*
       fileChooserTextBox.addValueChangeHandler(new ValueChangeHandler<String>()
       {
          @Override
@@ -82,7 +83,7 @@ public class DataImport extends Composite
          {
             refreshPreview();
          }
-      });*/
+      });
       
       return fileChooserTextBox;
    }
@@ -104,12 +105,12 @@ public class DataImport extends Composite
    
    private void refreshPreview()
    {
-      server_.executeRCode("paste0(\"a\", \"b\")", new ServerRequestCallback<String>()
+      server_.previewDataImport(fileChooserTextBox_.getTextBoxText(), new ServerRequestCallback<JsArray<JsObject>>()
       {
          @Override
-         public void onResponseReceived(String response)
+         public void onResponseReceived(JsArray<JsObject> response)
          {
-            Window.alert(response);
+            gridViewer_.setData(response);
          }
          
          @Override
