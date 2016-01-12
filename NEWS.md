@@ -34,6 +34,7 @@
 * Reorganize toolbar commands/menu for improved discoverability
 * Added Run Setup Chunk command
 * Updated embedded pandoc to v1.15.2
+* Update embedded pdf.js to v1.3
 * Support additional options for MS Word (table of contents, keep markdown)
 
 ### Miscellaneous
@@ -126,6 +127,7 @@
 * Don't include H3 (and higher) headers when creating presentation slide preview navigation menu
 * Don't allow long file paths to overflow in message dialogs
 * RPM: Set autreqprov to "no" for both desktop and server
+* Prevent periods from being used in Rmd date field (caused LaTeX errors)
 
 
 
