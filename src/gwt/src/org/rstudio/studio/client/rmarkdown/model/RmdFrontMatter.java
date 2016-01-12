@@ -49,7 +49,14 @@ public class RmdFrontMatter extends JavaScriptObject
       // need to remove for R Markdown. See case 4300 for details, including a
       // link to the issue reported against IE in early 2014 (unresolved as of
       // 3/2015)
-      this.date = (new Date()).toLocaleDateString().replace(/\u200e/g, "");
+      var date = (new Date()).toLocaleDateString().replace(/\u200e/g, "");
+      
+      // Remove periods as they interfere with rendering to PDF.
+      // see: https://github.com/rstudio/rmarkdown/issues/145#issuecomment-47415718
+      date = date.replace(/\./g, " ");
+      date = date.replace(/\s+/g, " ");
+      
+      this.date = date;
    }-*/;
    
    public final native void addResourceFile(String file) /*-{
