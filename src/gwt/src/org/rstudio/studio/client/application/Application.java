@@ -442,14 +442,11 @@ public class Application implements ApplicationEventHandlers
             String nextSessionUrl = event.getNextSessionUrl();
             if (!StringUtil.isNullOrEmpty(nextSessionUrl))
             {
-               // see if we need to forward query string parameters
-               // from an application action (e.g. switch_project)
-               if (ApplicationAction.hasAction())
-               {
-                  String query = ApplicationAction.getRemainingQueryString();
-                  if (query.length() > 0)
-                     nextSessionUrl = nextSessionUrl + "?" + query;
-               }
+               // forward any query string parameters (e.g. the edit_published
+               // parameter might follow an action=switch_project)
+               String query = ApplicationAction.getRemainingQueryString();
+               if (query.length() > 0)
+                  nextSessionUrl = nextSessionUrl + "?" + query;
                
                navigateWindowWithDelay(nextSessionUrl);
             }
