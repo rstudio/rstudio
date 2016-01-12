@@ -15,17 +15,19 @@
 
 .rs.addJsonRpcHandler("preview_data_import", function(path, maxRows, maxCols = 100, maxFactors = 64)
 {
-  data <- readr::read_csv(path, n_max = maxRows)
+  tryCatch({
+    data <- readr::read_csv(path, n_max = maxRows)
+    columns <- .rs.describeCols(data, maxCols, maxFactors)
 
-  columns <- .rs.describeCols(data, maxCols, maxFactors)
+    cnames <- names(data)
+    size <- nrow(data)
 
-  cnames <- names(data)
-  size <- nrow(data)
-
-  for(cname in cnames[-1]) {
-    data[[cname]] <- .rs.formatDataColumn(data[[cname]], 1, size)
-  }
-
-  list(data = data,
-       columns = columns)
+    for(cname in cnames[-1]) {
+      data[[cname]] <- .rs.formatDataColumn(data[[cname]], 1, size)
+    }
+    return(list(data = data,
+                columns = columns))
+  }, error = function(e) {
+     return(list(error = e))
+  })
 })

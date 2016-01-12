@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.js.JsObject;
@@ -28,6 +27,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
@@ -51,7 +51,8 @@ public interface SourceServerOperations extends FilesServerOperations,
                                                 BuildServerOperations,
                                                 PresentationServerOperations,
                                                 LintServerOperations,
-                                                RSConnectServerOperations
+                                                RSConnectServerOperations,
+                                                DataImportServerOperations
 {
    /**
     * Create a new, empty document, without a path but with a unique ID, and
@@ -234,8 +235,4 @@ public interface SourceServerOperations extends FilesServerOperations,
    
    public void setSourceDocumentDirty(String docId, boolean dirty,
          ServerRequestCallback<Void> requestCallback);
-
-   public void previewDataImport(String path,
-                                 int maxRows,
-                                 ServerRequestCallback<JsObject> requestCallback);
 }

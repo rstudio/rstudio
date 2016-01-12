@@ -17,7 +17,7 @@ package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
+import org.rstudio.studio.client.RStudioGinjector;
 
 import com.google.gwt.user.client.ui.Widget;
 
@@ -26,13 +26,14 @@ public class DataImportDialog extends ModalDialog<DataImportOptions>
    private DataImport dataImport_;
    
    public DataImportDialog(String caption,
-                           SourceServerOperations server,
-                           OperationWithInput<DataImportOptions> operation)
+         OperationWithInput<DataImportOptions> operation)
    {
       super(caption, operation);
-      setOkButtonCaption("Import");
       
-      dataImport_ = new DataImport(server);
+      dataImport_ = new DataImport(addProgressIndicator(false));
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      
+      setOkButtonCaption("Import");
    }
 
    @Override

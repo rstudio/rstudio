@@ -18,15 +18,11 @@ package org.rstudio.core.client.widget;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
 
-import com.google.gwt.core.client.JsArray;
-
 public class GridViewerFrame extends RStudioFrame
 {
    public GridViewerFrame()
    {
       super("grid_resource/gridviewer.html?data_source=data");
-      
-      setSize("100%", "100%");
    }
    
    public void onAttach()

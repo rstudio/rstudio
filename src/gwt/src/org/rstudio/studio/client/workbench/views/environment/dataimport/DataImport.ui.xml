@@ -4,14 +4,26 @@
 	xmlns:rs="urn:import:org.rstudio.core.client.widget">
 	<ui:with field='res' type='org.rstudio.core.client.theme.res.ThemeResources'/>
 	<ui:style>
-		.dataPreview {
+		.flexPanel {
+			display: -ms-flexbox;
+			display: -webkit-flex;
+			display: flex;
+			-webkit-flex-direction: column;
+			-ms-flex-direction: column;
+			flex-direction: column;
+		}
+		.gridViewerFrame {
 			margin-top: 10px;
-			width: 100%;
 			border: 1px solid #999;
+			width: 100%;
+			
+			-ms-flex-grow: 1;
+			-webkit-flex-grow: 1;
+			flex-grow: 1;
 		}
 	</ui:style>
-	<g:HTMLPanel>
-		<rs:FileChooserTextBox ui:field="fileChooserTextBox_"/>
-		<rs:GridViewer ui:field="gridViewer_" styleName='{style.dataPreview}'/>
+	<g:HTMLPanel styleName='{style.flexPanel}'>
+		<rs:FileOrUrlChooserTextBox ui:field="fileOrUrlChooserTextBox_"/>
+		<rs:GridViewerFrame ui:field="gridViewer_" styleName='{style.gridViewerFrame}'/>
 	</g:HTMLPanel>
 </ui:UiBinder> 

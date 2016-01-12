@@ -95,11 +95,6 @@ public class TextBoxWithButton extends Composite
    {
       return addHandler(handler, ValueChangeEvent.getType());
    }
-  
-   public HandlerRegistration addTextBoxValueChangeHandler(ChangeHandler handler)
-   {
-      return textBox_.addChangeHandler(handler);
-   }
    
    public void focusButton()
    {
@@ -130,11 +125,6 @@ public class TextBoxWithButton extends Composite
    public String getText()
    {
       return text_;
-   }
-   
-   public String getTextBoxText()
-   {
-      return textBox_.getText();
    }
    
    public void setTextWidth(String width)
@@ -175,7 +165,7 @@ public class TextBoxWithButton extends Composite
    }
 
    private HorizontalPanel inner_;
-   private TextBox textBox_;
+   protected TextBox textBox_;
    private ThemedButton themedButton_;
    private String emptyLabel_;
    private String useDefaultValue_;
