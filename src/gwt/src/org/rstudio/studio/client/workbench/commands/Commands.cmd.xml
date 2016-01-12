@@ -363,7 +363,6 @@ well as menu structures (for main menu and popup menus).
          <menu label="_Import Dataset">
             <cmd refid="importDatasetFromFile"/>
             <cmd refid="importDatasetFromURL"/>
-            <cmd refid="importDatasetFromCSV"/>
          </menu>
          <separator/>
          <cmd refid="installPackage"/>
