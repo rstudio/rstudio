@@ -444,7 +444,7 @@ public class Application implements ApplicationEventHandlers
             {
                // forward any query string parameters (e.g. the edit_published
                // parameter might follow an action=switch_project)
-               String query = ApplicationAction.getRemainingQueryString();
+               String query = ApplicationAction.getQueryStringWithoutAction();
                if (query.length() > 0)
                   nextSessionUrl = nextSessionUrl + "?" + query;
                
@@ -747,13 +747,23 @@ public class Application implements ApplicationEventHandlers
             @Override
             public void run() {
                if (ApplicationAction.isQuit())
+               {
                   commands_.quitSession().execute();
+               }
                else if (ApplicationAction.isNewProject())
+               {
+                  ApplicationAction.removeActionFromUrl();
                   events_.fireEvent(new NewProjectEvent(true, false));
+               }
                else if (ApplicationAction.isOpenProject())
+               {
+                  ApplicationAction.removeActionFromUrl();
                   events_.fireEvent(new OpenProjectEvent(true, false));
+               }
                else if (ApplicationAction.isSwitchProject())
+               {
                   handleSwitchProjectAction();
+               }
             }
          }.schedule(500); 
       }

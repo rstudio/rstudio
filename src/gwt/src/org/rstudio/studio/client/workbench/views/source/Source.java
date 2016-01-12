@@ -52,6 +52,8 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationAction;
+import org.rstudio.studio.client.application.ApplicationUtils;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -917,14 +919,23 @@ public class Source implements InsertSourceHandler,
    
    private void openEditPublishedDocs()
    {
+      // don't do this if we are switching projects (it
+      // will be done after the switch)
+      if (ApplicationAction.isSwitchProject())
+         return;
+      
       // check for edit_published url parameter
+      final String kEditPublished = "edit_published";
       String editPublished = StringUtil.notNull(
-          Window.Location.getParameter("edit_published"));
+          Window.Location.getParameter(kEditPublished));
       
       // this is an appPath which we can call the server
       // to determine source files to edit 
       if (editPublished.length() > 0)
       {
+         // remove it from the url
+         ApplicationUtils.removeQueryParam(kEditPublished);
+         
          server_.getEditPublishedDocs(
             editPublished, 
             new SimpleRequestCallback<JsArrayString>() {
