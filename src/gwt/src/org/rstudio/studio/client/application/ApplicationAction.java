@@ -15,13 +15,12 @@
 
 package org.rstudio.studio.client.application;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIUtils;
 
-import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
 
 public class ApplicationAction
@@ -68,36 +67,16 @@ public class ApplicationAction
           Window.Location.getParameter(ID_PARAMETER));
    }
    
-   public static String getRemainingQueryString()
-   {  
-      // get query params and remove our built in ones
-      Map<String, List<String>> params = Window.Location.getParameterMap();
-      StringBuilder queryString =  new StringBuilder();
-      String prefix = "";
-      for (Map.Entry<String, List<String>> entry : params.entrySet()) {
-         
-         // skip action and id parameters
-         if (entry.getKey().equals(ACTION_PARAMETER) ||
-             entry.getKey().equals(ID_PARAMETER))
-         {
-            continue;
-         }
-         
-         for (String val : entry.getValue()) {
-          queryString.append(prefix)
-              .append(URL.encodeQueryString(entry.getKey()))
-              .append('=');
-          if (val != null) {
-            queryString.append(URL.encodeQueryString(val));
-          }
-          prefix = "&";
-        }
-      }
-     
-      // return string
-      return queryString.toString();
+   public static String getQueryStringWithoutAction()
+   {
+      return ApplicationUtils.getRemainingQueryString(getActionParameters());
    }
    
+   public static void removeActionFromUrl()
+   {
+      ApplicationUtils.removeQueryParams(getActionParameters());
+   }
+    
    private static boolean isAction(String action)
    {
       return action.equals(getAction());
@@ -107,6 +86,14 @@ public class ApplicationAction
    {
       return StringUtil.notNull(
           Window.Location.getParameter(ACTION_PARAMETER));
+   }
+   
+   private static List<String> getActionParameters()
+   {
+      ArrayList<String> params = new ArrayList<String>();
+      params.add(ACTION_PARAMETER);
+      params.add(ID_PARAMETER);
+      return params;
    }
    
    private static final String ACTION_PARAMETER = "action";
