@@ -72,26 +72,30 @@ public class ApplicationAction
    {  
       // get query params and remove our built in ones
       Map<String, List<String>> params = Window.Location.getParameterMap();
-      params.remove(ACTION_PARAMETER);
-      params.remove(ID_PARAMETER);
-      
-      // build the query string
-      StringBuilder url =  new StringBuilder();
+      StringBuilder queryString =  new StringBuilder();
       String prefix = "";
       for (Map.Entry<String, List<String>> entry : params.entrySet()) {
-        for (String val : entry.getValue()) {
-          url.append(prefix)
+         
+         // skip action and id parameters
+         if (entry.getKey().equals(ACTION_PARAMETER) ||
+             entry.getKey().equals(ID_PARAMETER))
+         {
+            continue;
+         }
+         
+         for (String val : entry.getValue()) {
+          queryString.append(prefix)
               .append(URL.encodeQueryString(entry.getKey()))
               .append('=');
           if (val != null) {
-            url.append(URL.encodeQueryString(val));
+            queryString.append(URL.encodeQueryString(val));
           }
           prefix = "&";
         }
       }
      
       // return string
-      return url.toString();
+      return queryString.toString();
    }
    
    private static boolean isAction(String action)
