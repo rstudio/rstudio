@@ -15,9 +15,13 @@
 
 package org.rstudio.studio.client.application;
 
+import java.util.List;
+import java.util.Map;
+
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIUtils;
 
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
 
 public class ApplicationAction
@@ -30,7 +34,7 @@ public class ApplicationAction
    
    public static String addAction(String url, String action)
    {
-      return URIUtils.addQueryParam(url, URL_PARAMETER, action);  
+      return URIUtils.addQueryParam(url, ACTION_PARAMETER, action);  
    }
    
    public static boolean hasAction()
@@ -58,6 +62,38 @@ public class ApplicationAction
       return isAction(SWITCH_PROJECT);
    }
    
+   public static String getId()
+   {
+      return StringUtil.notNull(
+          Window.Location.getParameter(ID_PARAMETER));
+   }
+   
+   public static String getRemainingQueryString()
+   {  
+      // get query params and remove our built in ones
+      Map<String, List<String>> params = Window.Location.getParameterMap();
+      params.remove(ACTION_PARAMETER);
+      params.remove(ID_PARAMETER);
+      
+      // build the query string
+      StringBuilder url =  new StringBuilder();
+      String prefix = "";
+      for (Map.Entry<String, List<String>> entry : params.entrySet()) {
+        for (String val : entry.getValue()) {
+          url.append(prefix)
+              .append(URL.encodeQueryString(entry.getKey()))
+              .append('=');
+          if (val != null) {
+            url.append(URL.encodeQueryString(val));
+          }
+          prefix = "&";
+        }
+      }
+     
+      // return string
+      return url.toString();
+   }
+   
    private static boolean isAction(String action)
    {
       return action.equals(getAction());
@@ -66,9 +102,10 @@ public class ApplicationAction
    private static String getAction()
    {
       return StringUtil.notNull(
-          Window.Location.getParameter(URL_PARAMETER));
+          Window.Location.getParameter(ACTION_PARAMETER));
    }
    
-   private static final String URL_PARAMETER = "action";
+   private static final String ACTION_PARAMETER = "action";
+   private static final String ID_PARAMETER = "id";
    
 }

@@ -439,9 +439,19 @@ public class Application implements ApplicationEventHandlers
          // the R session to fully exit on the server)
          if (event.getSwitchProjects())
          {
-            if (!StringUtil.isNullOrEmpty(event.getNextSessionUrl()))
+            String nextSessionUrl = event.getNextSessionUrl();
+            if (!StringUtil.isNullOrEmpty(nextSessionUrl))
             {
-               navigateWindowWithDelay(event.getNextSessionUrl());
+               // see if we need to forward query string parameters
+               // from an application action (e.g. switch_project)
+               if (ApplicationAction.hasAction())
+               {
+                  String query = ApplicationAction.getRemainingQueryString();
+                  if (query.length() > 0)
+                     nextSessionUrl = nextSessionUrl + "?" + query;
+               }
+               
+               navigateWindowWithDelay(nextSessionUrl);
             }
             else
             {
@@ -754,8 +764,7 @@ public class Application implements ApplicationEventHandlers
    
    private void handleSwitchProjectAction()
    { 
-      String projectId = 
-            StringUtil.notNull(Window.Location.getParameter("id"));
+      String projectId = ApplicationAction.getId();
       if (projectId.length() > 0)
       {
          server_.getProjectFilePath(
