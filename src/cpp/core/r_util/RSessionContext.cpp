@@ -107,7 +107,7 @@ bool isSharedPath(const std::string& projectPath,
    if (::stat(projectDir.absolutePath().c_str(), &st) == 0)
    {
       // consider this project to be shared if we aren't the owner
-      if (st.st_uid != ::getuid())
+      if (st.st_uid != ::geteuid())
       {
          return true;
       }

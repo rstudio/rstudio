@@ -730,7 +730,7 @@ bool ProjectContext::ownedByUser()
       // existing behavior) 
       return true;
    }
-   return st.st_uid == ::getuid();
+   return st.st_uid == ::geteuid();
 #endif
 }
 
