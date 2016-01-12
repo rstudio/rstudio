@@ -266,3 +266,7 @@
 .rs.addApiFunction("registerCommand", function(name, shortcuts, fn, overwrite = TRUE) {
    .rs.registerUserCommand(name, shortcuts, fn, overwrite)
 })
+
+.rs.addApiFunction("askForPassword", function(prompt) {
+   .rs.askForPassword(prompt)
+})
