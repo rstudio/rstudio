@@ -121,8 +121,7 @@ public class JArrayType extends JReferenceType {
 
   @Override
   public boolean canBeReferencedExternally() {
-    return getLeafType().canBeReferencedExternally()
-        && !getLeafType().isJavaLangObject();
+    return getLeafType().canBeReferencedExternally();
   }
 
   @Override

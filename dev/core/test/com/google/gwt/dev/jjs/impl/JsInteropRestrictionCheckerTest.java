@@ -1918,7 +1918,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "  public void f1(boolean a, int b, double c) {}", // primitive types work fine.
         "  public void f2(Boolean a, Double b, String c) {}", // unboxed types work fine.
         "  public void f3(A a) {}", // JsType works fine.
-        "  public void f4(I a) {}", // JsFunction works fine.
+        "  public void f4(I a) {}", // JsType interface works fine.
         "  public void f5(FI a) {}", // JsFunction works fine.
         "  public void f6(C a) {}", // JavaScriptObject works fine.
         "  public void f7(Object a) {}", // Java Object works fine.
@@ -1927,6 +1927,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "  public void f10(A[] a) {}", // array of JsType works fine.
         "  public void f11(FI[] a) {}", // array of JsFunction works fine.
         "  public void f12(C[][] a) {}", // array of JavaScriptObject works fine.
+        "  public void f13(Object[] a) {}", // Object[] works fine.
+        "  public void f14(Object[][] a) {}", // Object[][] works fine.
         "}");
     assertBuggySucceeds();
   }
@@ -1967,8 +1969,6 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "  public long f3(long a) { return 1l; }", // long fails.
         // non-JsType class that implements a JsType interface fails.
         "  public B f4(B a) { return null; }",
-        "  public void f5(Object[][] a) {}", // Object[][] fails.
-        "  public void f6(Object[] a) {}", // Object[] also fails.
         "}");
 
     assertBuggySucceeds(
@@ -1999,11 +1999,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
             + "is not usable by but exposed to JavaScript.",
         "Line 24: [unusable-by-js] Type of parameter 'a' in "
             + "'EntryPoint.B EntryPoint.Buggy.f4(EntryPoint.B)' is not usable by but "
-            + "exposed to JavaScript.",
-        "Line 25: [unusable-by-js] Type of parameter 'a' in "
-            + "'void EntryPoint.Buggy.f5(Object[][])' is not usable by but exposed to JavaScript.",
-        "Line 26: [unusable-by-js] Type of parameter 'a' in "
-            + "'void EntryPoint.Buggy.f6(Object[])' is not usable by but exposed to JavaScript.");
+            + "exposed to JavaScript.");
   }
 
   public void testUnusableByJsAccidentalOverrideSuppressionWarns()
