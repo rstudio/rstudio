@@ -38,6 +38,12 @@ var lastHeight = 0;
 var detachedHandlers = [];
 var lastScrollPos = 0;
 
+// display nulls as NAs
+var displayNullsAsNAs = false;
+
+// status text (replaces "Showing x of y...")
+var statusTextOverride = null;
+
 var isHeaderWidthMismatched = function() {
   // find the elements to measure (they may not exist)
   var rs = document.getElementById("rsGridData");
@@ -101,6 +107,9 @@ var showError = function(msg) {
 
 // simple HTML escaping (avoid XSS in data)
 var escapeHtml = function(html) {
+  if (!html)
+    return "";
+
   // handle special cells
   if (typeof(html) === "number")
     return html.toString();
@@ -127,7 +136,7 @@ var highlightSearchMatch = function(data, search, pos) {
 var renderCellContents = function(data, type, row, meta) {
 
   // usually data is a string; 0 is a special value signifying NA 
-  if (data === 0) {
+  if (data === 0 || (displayNullsAsNAs && data === null)) {
     return '<span class="naCell">NA</span>';
   }
 
@@ -278,7 +287,7 @@ var postDrawCallback = function() {
   // server, etc).
   if (isHeaderWidthMismatched()) {
     syncWidth();
-    $.fn.dataTableExt.internal._fnScrollDraw(table.settings()[0]);
+    $.fn.dataTableExt.internal._fnScrollDraw($("#rsGridData").DataTable().settings()[0]);
   }
   window.clearTimeout(loadingTimer);
 };
@@ -628,10 +637,47 @@ var createHeader = function(idx, col) {
   return th;
 };
 
-var initDataTable = function(result) {
-  // parse result
-  resCols = $.parseJSON(result);
+var parseLocationUrl = function() {
+  var parsedLocation = {};
 
+  parsedLocation.env = parsedLocation.obj = parsedLocation.cacheKey = parsedLocation.id = "";
+
+  var query = window.location.search.substring(1);
+  var queryVars = query.split("&");
+  for (var i = 0; i < queryVars.length; i++) {
+    var queryVar = queryVars[i].split("=");
+    if (queryVar[0] == "env") {
+      parsedLocation.env = queryVar[1];
+    } else if (queryVar[0] == "obj") {
+      parsedLocation.obj = queryVar[1];
+    } else if (queryVar[0] == "cache_key") {
+      parsedLocation.cacheKey = queryVar[1];
+    } else if (queryVar[0] == "data_source") {
+      parsedLocation.dataSource = queryVar[1];
+    } else if (queryVar[0] == "id") {
+      parsedLocation.id = queryVar[1];
+    }
+  }
+
+  return parsedLocation;
+}
+
+var initDataTableLoad = function(result) {
+  table = $("#rsGridData").DataTable();
+
+  // datatables has a bug wherein it sometimes thinks an LTR browser is RTL if
+  // the LTR browser is at >100% zoom; this causes layout problems, so force
+  // into LTR mode as we don't support RTL here.
+  $.fn.dataTableSettings[0].oBrowser.bScrollbarLeft = false;
+
+  // listen for size changes
+  debouncedDataTableSize();
+  window.addEventListener("resize", function() { 
+    debouncedDataTableSize(); 
+  });
+}
+
+var initDataTable = function(resCols, data) {
   if (resCols.error) {
     showError(cols.error);
     return;
@@ -639,19 +685,8 @@ var initDataTable = function(result) {
   cols = resCols;
 
   // look up the query parameters
-  var env = "", obj = "", cacheKey = "";
-  var query = window.location.search.substring(1);
-  var queryVars = query.split("&");
-  for (var i = 0; i < queryVars.length; i++) {
-    var queryVar = queryVars[i].split("=");
-    if (queryVar[0] == "env") {
-      env = queryVar[1];
-    } else if (queryVar[0] == "obj") {
-      obj = queryVar[1];
-    } else if (queryVar[0] == "cache_key") {
-      cacheKey = queryVar[1];
-    }
-  }
+  var parsedLocation = parseLocationUrl();
+  var env = parsedLocation.env, obj = parsedLocation.obj, cacheKey = parsedLocation.cacheKey;
 
   // keep track of which columns are numeric and which are text (we use
   // different renderers for these types)
@@ -671,34 +706,13 @@ var initDataTable = function(result) {
   }
   var scrollHeight = window.innerHeight - (thead.clientHeight + 2);
 
-  // activate the data table
-  $("#rsGridData").dataTable({
-    "processing": true,
-    "serverSide": true,
-    "autoWidth": false,
-    "pagingType": "full_numbers",
-    "pageLength": 25,
-    "scrollY": scrollHeight + "px",
-    "scrollX": true,
-    "scroller": {
-      "rowHeight": 23,            // sync w/ CSS (scroller auto row height is busted)
-      "loadingIndicator": true,   // show loading indicator when loading
-    },
-    "preDrawCallback": preDrawCallback,
-    "drawCallback": postDrawCallback,
-    "dom": "tiS", 
-    "deferRender": true,
-    "columnDefs": [ {
-      "targets": numberCols,
-      "render": renderNumberCell
-      }, {
-      "targets": textCols,
-      "render": renderTextCell
-      }, {
-      "targets": "_all",
-      "width": "4em"
-      }],
-    "ajax": {
+  var dataTableAjax = null;
+  var dataTableData = null;
+  var dataTableColumnDefs = null;
+  var dataTableColumns = null;
+
+  if (!data) {
+    dataTableAjax = {
       "url": "../grid_data", 
       "type": "POST",
       "data": function(d) {
@@ -719,22 +733,57 @@ var initDataTable = function(result) {
             showError("The data could not be displayed.");
           }
         }
-      },
-     }
+      }
+     };
+    dataTableColumnDefs = [ {
+        "targets": numberCols,
+        "render": renderNumberCell
+      }, {
+        "targets": textCols,
+        "render": renderTextCell
+      }, {
+        "targets": "_all",
+        "width": "4em"
+    }];
+  }
+  else {
+    dataTableData = data;
+    dataTableColumns = cols.map(function (e, idx) {
+      return {
+        "data": e.col_name,
+        "width": "4em",
+        "render": e.col_type === "numeric" ? renderNumberCell : renderTextCell
+      };
+    });
+  }
+
+  // activate the data table
+  $("#rsGridData").dataTable({
+    "processing": true,
+    "serverSide": dataTableData ? false : true,
+    "autoWidth": false,
+    "pagingType": "full_numbers",
+    "pageLength": 25,
+    "scrollY": scrollHeight + "px",
+    "scrollX": true,
+    "scroller": {
+      "rowHeight": 23,            // sync w/ CSS (scroller auto row height is busted)
+      "loadingIndicator": true,   // show loading indicator when loading
+    },
+    "preDrawCallback": preDrawCallback,
+    "drawCallback": postDrawCallback,
+    "dom": "tiS", 
+    "deferRender": true,
+    "columnDefs": dataTableColumnDefs,
+    "ajax": dataTableAjax,
+    "data": dataTableData,
+    "columns": dataTableColumns,
+    "fnInfoCallback": !statusTextOverride ? null : function(oSettings, iStart, iEnd, iMax, iTotal, sPre) {
+      return statusTextOverride;
+    }
   });
 
-  table = $("#rsGridData").DataTable();
-
-  // datatables has a bug wherein it sometimes thinks an LTR browser is RTL if
-  // the LTR browser is at >100% zoom; this causes layout problems, so force
-  // into LTR mode as we don't support RTL here.
-  $.fn.dataTableSettings[0].oBrowser.bScrollbarLeft = false;
-
-  // listen for size changes
-  debouncedDataTableSize();
-  window.addEventListener("resize", function() { 
-    debouncedDataTableSize(); 
-  });
+  initDataTableLoad();
 };
 
 var debouncedSearch = debounce(function(text) {
@@ -742,6 +791,32 @@ var debouncedSearch = debounce(function(text) {
     table.search(text).draw();
   }
 }, 100);
+
+var loadDataFromUrl = function(callback) {
+  // call the server to get data shape
+  $.ajax({
+        url: "../grid_data",
+        data: "show=cols&" + window.location.search.substring(1),
+        type: "POST"})
+    .done(function(result) {
+      callback(result);
+    })
+    .fail(function(jqXHR)
+    {
+      if (jqXHR.responseText[0] !== "{")
+        showError(jqXHR.responseText);
+      else
+      {
+        var result = $.parseJSON(jqXHR.responseText);
+
+        if (result.error) {
+          showError(result.error);
+        } else {
+          showError("The object could not be displayed.");
+        }
+      }
+    }); 
+}
 
 // bootstrapping: 
 // 1. clean up state (we re-bootstrap whenever table structure changes)
@@ -752,7 +827,7 @@ var debouncedSearch = debounce(function(text) {
 // 3. wait for the document to be ready
 // 4. wait for the window size to stop changing (RStudio animates tab opening)
 // 5. initialize the data table
-var bootstrap = function() {
+var bootstrap = function(data) {
 
   // dismiss any active popups
   if (dismissActivePopup)
@@ -786,36 +861,34 @@ var bootstrap = function() {
   newEle.innerHTML = "<thead>" +
                      "    <tr id='data_cols'>" +
                      "    </tr>" +
-                     "</thead>";
+                     "</thead>";  
 
-  // call the server to get data shape
-  $.ajax({
-        url: "../grid_data",
-        data: "show=cols&" + window.location.search.substring(1),
-        type: "POST"})
-    .done(function(result) {
+  if (!data) {
+    loadDataFromUrl(function(result) {
       $(document).ready(function() {
         document.body.appendChild(newEle);
         runAfterSizing(function() {
-          initDataTable(result);
+          initDataTable($.parseJSON(result));
         });
       });
-    })
-    .fail(function(jqXHR)
-    {
-      if (jqXHR.responseText[0] !== "{")
-        showError(jqXHR.responseText);
-      else
-      {
-        var result = $.parseJSON(jqXHR.responseText);
+    });
+  }
+  else {
+    $(document).ready(function() {
+      document.body.appendChild(newEle);
+      runAfterSizing(function() {
 
-        if (result.error) {
-          showError(result.error);
-        } else {
-          showError("The object could not be displayed.");
-        }
-      }
-    });  
+        // Assign line numbers:
+        data.data = data.data.map(function (e, idx) {
+          var eWithNumber = e;
+          eWithNumber[""] = idx + 1;
+          return eWithNumber;
+        })
+
+        initDataTable(data.columns, data.data);
+      });
+    });
+  }
 };
 
 // Exports -------------------------------------------------------------------
@@ -918,8 +991,29 @@ window.onDeactivate = function() {
   scrollBody.off("scroll");
 };
 
+window.setData = function(data) {
+  bootstrap(data);
+}
+
+window.setOption = function(option, value) {
+  switch (option)
+  {
+    case "nullsAsNAs":
+      displayNullsAsNAs = value === "true" ? true : false;
+      break;
+    case "status":
+      statusTextOverride = value;
+      break;
+  }
+}
+
+var parsedLocation = parseLocationUrl();
+var dataMode = parsedLocation && parsedLocation.dataSource ? parsedLocation.dataSource : "server";
+
 // start the first request
-bootstrap();
+if (dataMode === "server") {
+  bootstrap();
+}
 
 })();
 

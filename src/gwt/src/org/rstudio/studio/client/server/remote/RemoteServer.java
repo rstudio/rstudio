@@ -4427,6 +4427,17 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "set_following_user", params, callback);
    }
 
+   @Override
+   public void previewDataImport(String path,
+                                 int maxRows,
+                                 ServerRequestCallback<JsObject> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      params.set(1, new JSONNumber(maxRows));
+      sendRequest(RPC_SCOPE, PREVIEW_DATA_IMPORT, params, requestCallback);
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private boolean listeningForEvents_;
@@ -4774,4 +4785,6 @@ public class RemoteServer implements Server
    private static final String GET_SET_REF_CLASS_CALL = "get_set_ref_class_call";
    private static final String TRANSFORM_SNIPPET = "transform_snippet";
    private static final String GET_SNIPPETS = "get_snippets";
+
+   private static final String PREVIEW_DATA_IMPORT = "preview_data_import";
 }

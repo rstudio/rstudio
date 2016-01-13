@@ -102,6 +102,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppComp
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
 import org.rstudio.studio.client.workbench.views.environment.ClearAllDialog;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImport;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportDialog;
 
 @GinModules(RStudioGinModuleOverlay.class)
 public interface RStudioGinjector extends Ginjector
@@ -162,6 +164,8 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(AddinCommandBinding binding);
    void injectMembers(BrowseAddinsDialog dialog);
    void injectMembers(AddinExecutor addinExecutor);
+   void injectMembers(DataImportDialog dataImportDialog);
+   void injectMembers(DataImport dataImport);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
