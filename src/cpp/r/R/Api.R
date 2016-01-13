@@ -243,6 +243,13 @@
    .Call(.rs.routines$rs_getActiveDocumentContext)
 })
 
+.rs.addApiFunction("getActiveProject", function() {
+   .rs.getProjectDirectory()
+})
+
+
+
+
 .rs.addApiFunction("sendToConsole", function(code,
                                              echo = TRUE,
                                              execute = TRUE,
