@@ -230,8 +230,7 @@ class SourceSaver {
         out.close();
       }
     } catch (IOException e) {
-      log.log(TreeLogger.ERROR, "Fatal error emitting artifact: " + newPath, e);
-      throw new UnableToCompleteException();
+      log.log(TreeLogger.WARN, "Error emitting artifact: " + newPath, e);
     }
   }
 }
