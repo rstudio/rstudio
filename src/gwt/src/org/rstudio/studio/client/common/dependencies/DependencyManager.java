@@ -226,8 +226,8 @@ public class DependencyManager implements InstallShinyEvent.Handler
         "Executing addins", 
         // TODO: bump versions and add miniUI when it's on CRAN
         shinyDependenciesArray(
-              "0.11.0", // shiny version
-              "0.2.6"), // htmltools version
+              "0.13.0", // shiny version
+              "0.3"), // htmltools version
         false,
         new CommandWithArg<Boolean>()
         {
