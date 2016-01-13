@@ -32,17 +32,18 @@ public final class Array {
   private static final int TYPE_JAVA_OBJECT = 0;
   private static final int TYPE_JAVA_OBJECT_OR_JSO = 1;
   private static final int TYPE_JSO = 2;
-  private static final int TYPE_NATIVE_ARRAYs = 3;
-  private static final int TYPE_JAVA_LANG_OBJECT = 4;
-  private static final int TYPE_JAVA_LANG_STRING = 5;
-  private static final int TYPE_JAVA_LANG_DOUBLE = 6;
-  private static final int TYPE_JAVA_LANG_BOOLEAN = 7;
-  private static final int TYPE_JS_NATIVE = 8;
-  private static final int TYPE_JS_UNKNOWN_NATIVE = 9;
-  private static final int TYPE_JS_FUNCTION = 10;
-  private static final int TYPE_PRIMITIVE_LONG = 11;
-  private static final int TYPE_PRIMITIVE_NUMBER = 12;
-  private static final int TYPE_PRIMITIVE_BOOLEAN = 13;
+  private static final int TYPE_NATIVE_ARRAY = 3;
+  private static final int TYPE_ARRAY = 4;
+  private static final int TYPE_JAVA_LANG_OBJECT = 5;
+  private static final int TYPE_JAVA_LANG_STRING = 6;
+  private static final int TYPE_JAVA_LANG_DOUBLE = 7;
+  private static final int TYPE_JAVA_LANG_BOOLEAN = 8;
+  private static final int TYPE_JS_NATIVE = 9;
+  private static final int TYPE_JS_UNKNOWN_NATIVE = 10;
+  private static final int TYPE_JS_FUNCTION = 11;
+  private static final int TYPE_PRIMITIVE_LONG = 12;
+  private static final int TYPE_PRIMITIVE_NUMBER = 13;
+  private static final int TYPE_PRIMITIVE_BOOLEAN = 14;
 
   public static <T> T[] stampJavaTypeInfo(Object array, T[] referenceType) {
     if (Array.getElementTypeCategory(referenceType) != TYPE_JS_UNKNOWN_NATIVE) {
@@ -180,6 +181,10 @@ public final class Array {
         return Cast.instanceOfDouble(value);
       case TYPE_JAVA_LANG_BOOLEAN:
         return Cast.instanceOfBoolean(value);
+      case TYPE_ARRAY:
+        return Cast.instanceOfArray(value);
+      case TYPE_JS_FUNCTION:
+        return Cast.instanceOfFunction(value);
       case TYPE_JAVA_OBJECT:
         return Cast.canCast(value, Array.getElementTypeId(array));
       case TYPE_JSO:
@@ -306,6 +311,15 @@ public final class Array {
   static boolean isJavaArray(Object src) {
     return Cast.isArray(src) && Util.hasTypeMarker(src);
   }
+
+  /**
+   * Returns true if {@code src} is a Java array.
+   */
+  static boolean isPrimitiveArray(Object array) {
+    int elementTypeCategory = getElementTypeCategory(array);
+    return elementTypeCategory >= TYPE_PRIMITIVE_LONG
+        && elementTypeCategory <= TYPE_PRIMITIVE_BOOLEAN;
+  };
 
   private Array() {
   }

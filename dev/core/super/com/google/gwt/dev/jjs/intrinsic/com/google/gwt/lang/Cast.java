@@ -93,6 +93,14 @@ final class Cast {
   }
 
   /**
+   * Allow a cast to an java.lang.Object array, accepting also untyped arrays.
+   */
+  static Object castToArray(Object src) {
+    checkType(src == null || instanceOfArray(src));
+    return src;
+  }
+
+  /**
    * Allow a cast to (untyped) array. This case covers single and multidimensional JsType arrays.
    */
   static Object castToNativeArray(Object src) {
@@ -155,6 +163,13 @@ final class Cast {
   static native boolean instanceOfBoolean(Object src) /*-{
     return typeof(src) === "boolean";
   }-*/;
+
+  /**
+   * Returns true if {@code src} is Java object array or an untyped array.
+   */
+  static boolean instanceOfArray(Object src) {
+    return isArray(src) && !Array.isPrimitiveArray(src);
+  }
 
   /**
    * Returns true if {@code src} is an array (native or not).

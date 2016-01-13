@@ -51,16 +51,16 @@ public class ArrayNormalizerTest extends OptimizerTestBase {
   public void testObjectArray() throws Exception {
     optimize("void", "Object[] o = new Object[10];")
         .intoString("Object[] o = Array.initUnidimensionalArray(Object.class, [], " +
-            "/* JRuntimeTypeReference */\"java.lang.Object\", 10, 4, 1);");
+            "/* JRuntimeTypeReference */\"java.lang.Object\", 10, 5, 1);");
     optimize("void", "Object[] o = {null, null, Object.class};")
         .intoString("Object[] o = " +
             "Array.stampJavaTypeInfo(" +
             "Array.getClassLiteralForArray(ClassLiteralHolder.Ljava_lang_Object_2_classLit, 1), " +
-            "[], /* JRuntimeTypeReference */\"java.lang.Object\", 4, [null, null, Object.class]);");
+            "[], /* JRuntimeTypeReference */\"java.lang.Object\", 5, [null, null, Object.class]);");
     optimize("void", "Object[] o = new Object[] {};")
         .intoString("Object[] o = Array.stampJavaTypeInfo(Array.getClassLiteralForArray(" +
             "ClassLiteralHolder.Ljava_lang_Object_2_classLit, 1), [], " +
-            "/* JRuntimeTypeReference */\"java.lang.Object\", 4, []);");
+            "/* JRuntimeTypeReference */\"java.lang.Object\", 5, []);");
   }
 
   public void testNativeJsTypeArray() throws Exception {

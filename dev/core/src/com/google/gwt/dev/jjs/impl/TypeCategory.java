@@ -40,10 +40,11 @@ public enum TypeCategory {
    * initialize to zero vs. null).
    */
 
-  TYPE_JAVA_OBJECT,
+  TYPE_JAVA_OBJECT(""),
   TYPE_JAVA_OBJECT_OR_JSO("AllowJso"),
   TYPE_JSO("Jso"),
   TYPE_NATIVE_ARRAY("NativeArray"),
+  TYPE_ARRAY("Array"),
   TYPE_JAVA_LANG_OBJECT("AllowJso"),
   TYPE_JAVA_LANG_STRING("String"),
   TYPE_JAVA_LANG_DOUBLE("Double"),
@@ -58,7 +59,7 @@ public enum TypeCategory {
   private final String castInstanceOfQualifier;
 
   TypeCategory() {
-    this("");
+    this(null);
   }
 
   TypeCategory(String castInstanceOfQualifier) {
@@ -85,7 +86,9 @@ public enum TypeCategory {
 
     assert type instanceof JReferenceType;
     type = type.getUnderlyingType();
-    if (getJsSpecialType(type) != null) {
+    if (type == program.getTypeJavaLangObjectArray()) {
+      return TypeCategory.TYPE_ARRAY;
+    } else if (getJsSpecialType(type) != null) {
       return getJsSpecialType(type);
     } else if (program.isUntypedArrayType(type)) {
       return TypeCategory.TYPE_NATIVE_ARRAY;

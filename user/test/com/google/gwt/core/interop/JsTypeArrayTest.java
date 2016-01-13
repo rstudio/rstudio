@@ -18,6 +18,7 @@ package com.google.gwt.core.interop;
 import com.google.gwt.core.client.ScriptInjector;
 import com.google.gwt.junit.client.GWTTestCase;
 
+import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
@@ -138,11 +139,7 @@ public class JsTypeArrayTest extends GWTTestCase {
   public void testObjectArray_castFromNative() {
     SimpleJsTypeReturnForMultiDimArray[] array =
         (SimpleJsTypeReturnForMultiDimArray[]) returnObjectArrayFromNative();
-    try {
-      assertNotNull((Object[]) array);
-
-    } catch (ClassCastException expected) {
-    }
+    assertNotNull((Object[]) array);
     assertEquals(3, array.length);
     assertEquals("1", array[0]);
   }
@@ -175,7 +172,7 @@ public class JsTypeArrayTest extends GWTTestCase {
 
   public void testJsTypeArray_instanceOf() {
     Object array = returnJsType3DimFromNative();
-    assertFalse(array instanceof Object[]);
+    assertTrue(array instanceof Object[]);
     assertFalse(array instanceof Double[]);
     assertFalse(array instanceof int[]);
     assertFalse(array instanceof SimpleJsTypeReturnForMultiDimArray);
@@ -184,7 +181,43 @@ public class JsTypeArrayTest extends GWTTestCase {
     assertTrue(array instanceof SimpleJsTypeReturnForMultiDimArray[][][]);
   }
 
+  @JsFunction
+  interface SomeFunction {
+    int m(int i);
+  }
+
+  @JsFunction
+  interface SomeOtherFunction {
+    int m(int i);
+  }
+
+  public void testJsFunctionArray() {
+    Object[] array = new SomeFunction[10];
+
+    array[0] = returnSomeFunction();
+
+    assertTrue(array instanceof SomeFunction[]);
+    assertFalse(array instanceof SomeOtherFunction[]);
+
+    try {
+      SomeOtherFunction[] other = (SomeOtherFunction[]) array;
+      fail("Should have thrown");
+    } catch (ClassCastException expected) {
+    }
+
+    try {
+      array[1] = new Object();
+      fail("Should have thrown");
+    } catch (ArrayStoreException expected) {
+    }
+  }
+
   private native Object returnObjectArrayFromNative() /*-{
     return ["1", "2", "3"];
   }-*/;
+
+  private native Object returnSomeFunction() /*-{
+    return function(a) { return a + 2; };
+  }-*/;
+
 }

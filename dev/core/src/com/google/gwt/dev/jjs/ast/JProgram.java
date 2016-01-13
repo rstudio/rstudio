@@ -331,16 +331,14 @@ public class JProgram extends JNode implements ArrayTypeCreator {
 
   private final Map<JMethod, JMethod> staticToInstanceMap = Maps.newIdentityHashMap();
 
-  private JClassType typeClass;
-
-  private JClassType typeJavaLangObject;
-
   private final Map<String, JDeclaredType> typeNameMap = Maps.newHashMap();
 
   private Map<JField, JType> typesByClassLiteralField;
 
+  private JClassType typeClass;
+  private JClassType typeJavaLangObject;
+  private JArrayType typeJavaLangObjectArray;
   private JClassType typeSpecialClassLiteralHolder;
-
   private JClassType typeSpecialJavaScriptObject;
 
   private JClassType typeString;
@@ -414,6 +412,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     switch (name) {
       case "java.lang.Object":
         typeJavaLangObject = (JClassType) type;
+        typeJavaLangObjectArray = getOrCreateArrayType(type, 1);
         break;
       case "java.lang.String":
         typeString = (JClassType) type;
@@ -1074,6 +1073,10 @@ public class JProgram extends JNode implements ArrayTypeCreator {
 
   public JClassType getTypeJavaLangObject() {
     return typeJavaLangObject;
+  }
+
+  public JArrayType getTypeJavaLangObjectArray() {
+    return typeJavaLangObjectArray;
   }
 
   public JClassType getTypeJavaLangString() {

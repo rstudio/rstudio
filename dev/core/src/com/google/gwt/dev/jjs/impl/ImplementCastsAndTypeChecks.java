@@ -37,7 +37,6 @@ import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
-import java.util.EnumSet;
 import java.util.Map;
 
 /**
@@ -228,17 +227,7 @@ public class ImplementCastsAndTypeChecks {
   private TypeCategory determineTypeCategoryForType(JReferenceType type) {
     TypeCategory typeCategory = TypeCategory.typeCategoryForType(type, program);
 
-    assert EnumSet.of(TypeCategory.TYPE_JSO,
-        TypeCategory.TYPE_JAVA_OBJECT_OR_JSO,
-        TypeCategory.TYPE_NATIVE_ARRAY,
-        TypeCategory.TYPE_JAVA_LANG_OBJECT,
-        TypeCategory.TYPE_JAVA_LANG_STRING,
-        TypeCategory.TYPE_JAVA_LANG_DOUBLE,
-        TypeCategory.TYPE_JAVA_LANG_BOOLEAN,
-        TypeCategory.TYPE_JAVA_OBJECT,
-        TypeCategory.TYPE_JS_UNKNOWN_NATIVE,
-        TypeCategory.TYPE_JS_NATIVE,
-        TypeCategory.TYPE_JS_FUNCTION).contains(typeCategory);
+    assert typeCategory.castInstanceOfQualifier() != null;
 
     return typeCategory;
   }
@@ -298,9 +287,13 @@ public class ImplementCastsAndTypeChecks {
     this.pruneTrivialCasts = pruneTrivialCasts;
 
     for (TypeCategory t : TypeCategory.values()) {
-      String instanceOfMethod = "Cast.instanceOf" + t.castInstanceOfQualifier();
+      String castInstanceOfQualifier = t.castInstanceOfQualifier();
+      if (castInstanceOfQualifier == null) {
+        continue;
+      }
+      String instanceOfMethod = "Cast.instanceOf" + castInstanceOfQualifier;
       instanceOfMethodsByTargetTypeCategory.put(t, program.getIndexedMethod(instanceOfMethod));
-      String castMethod = "Cast.castTo" + t.castInstanceOfQualifier();
+      String castMethod = "Cast.castTo" + castInstanceOfQualifier;
       dynamicCastMethodsByTargetTypeCategory.put(t, program.getIndexedMethod(castMethod));
     }
   }

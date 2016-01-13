@@ -36,7 +36,7 @@ public class ArrayTest extends GWTTestCase {
 
   public void testObjectArray_empty() {
     Object nativeArray = createJsArray(0);
-    assertFalse(nativeArray instanceof Object[]);
+    assertTrue(nativeArray instanceof Object[]);
     assertFalse(nativeArray instanceof Object[][]);
     assertFalse(nativeArray instanceof int[]);
     assertFalse(nativeArray instanceof List[]);
@@ -55,7 +55,7 @@ public class ArrayTest extends GWTTestCase {
   public void testObjectArray_nonEmpty() {
     // Native array is an object array
     Object nativeArray = createJsArray(10);
-    assertFalse(nativeArray instanceof Object[]);
+    assertTrue(nativeArray instanceof Object[]);
     assertFalse(nativeArray instanceof Object[][]);
     assertFalse(nativeArray instanceof int[]);
     assertFalse(nativeArray instanceof List[]);
