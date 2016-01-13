@@ -1,7 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui"
-	xmlns:rs="urn:import:org.rstudio.core.client.widget">
+	xmlns:rs="urn:import:org.rstudio.core.client.widget"
+	xmlns:rsdi="urn:import:org.rstudio.studio.client.workbench.views.environment.dataimport">
 	<ui:with field='res' type='org.rstudio.core.client.theme.res.ThemeResources'/>
 	<ui:style>
 		.flexPanel {
@@ -11,6 +12,10 @@
 			-webkit-flex-direction: column;
 			-ms-flex-direction: column;
 			flex-direction: column;
+		}
+		.flexElement {
+			margin-top: 10px;
+			width: 100%;
 		}
 		.gridViewerFrame {
 			margin-top: 10px;
@@ -25,5 +30,6 @@
 	<g:HTMLPanel styleName='{style.flexPanel}'>
 		<rs:FileOrUrlChooserTextBox ui:field="fileOrUrlChooserTextBox_"/>
 		<rs:GridViewerFrame ui:field="gridViewer_" styleName='{style.gridViewerFrame}'/>
+		<rsdi:DataImportOptionsBase ui:field="dataImportOptionsBase_"  styleName='{style.flexElement}'/>
 	</g:HTMLPanel>
 </ui:UiBinder> 

@@ -93,6 +93,9 @@ public class DataImport extends Composite
    @UiField
    GridViewerFrame gridViewer_;
    
+   @UiField
+   DataImportOptionsBase dataImportOptionsBase_;
+   
    public DataImportOptions getOptions()
    {
       DataImportOptions options = new DataImportOptions();
