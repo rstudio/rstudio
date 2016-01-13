@@ -69,6 +69,7 @@
 
 #define kUserSettingsDir       "user-settings"
 #define kUserSettingsFile      kUserSettingsDir
+#define kContextIdentifier     "contextIdentifier"
 
 #define kServerHomeSetting     "showUserHomePage"
 #define kServerHomeAlways      "always"
