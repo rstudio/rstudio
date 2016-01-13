@@ -222,6 +222,7 @@ if (UNIX)
       system/PosixEnvironment.cpp
       system/PosixFileScanner.cpp
       system/PosixLibraryLoader.cpp
+      system/PosixNfs.cpp
       system/PosixParentProcessMonitor.cpp
       system/PosixOutputCapture.cpp
       system/PosixSched.cpp
