@@ -51,8 +51,7 @@ public interface SourceServerOperations extends FilesServerOperations,
                                                 BuildServerOperations,
                                                 PresentationServerOperations,
                                                 LintServerOperations,
-                                                RSConnectServerOperations,
-                                                DataImportServerOperations
+                                                RSConnectServerOperations
 {
    /**
     * Create a new, empty document, without a path but with a unique ID, and

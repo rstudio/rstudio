@@ -26,7 +26,8 @@ import org.rstudio.core.client.widget.ProgressIndicatorDelay;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
+import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportServerOperations;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -43,7 +44,7 @@ public class DataImport extends Composite
    private static DataImportUiBinder uiBinder = GWT
          .create(DataImportUiBinder.class);
    
-   private SourceServerOperations server_;
+   private DataImportServerOperations server_;
    private final int maxRows_ = 200;
    private ProgressIndicatorDelay progressIndicator_;
    boolean loadingData_;
@@ -64,7 +65,7 @@ public class DataImport extends Composite
    }
    
    @Inject
-   private void initialize(SourceServerOperations server)
+   private void initialize(WorkbenchServerOperations server)
    {
       server_ = server;
    }
@@ -136,6 +137,6 @@ public class DataImport extends Composite
    }-*/;
    
    private final native String getErrorMessage(JsObject data) /*-{
-      return data.error.message.join(' ');
+      return data.message.join(' ');
    }-*/;
 }

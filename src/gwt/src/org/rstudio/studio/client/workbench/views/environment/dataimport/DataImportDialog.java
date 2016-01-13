@@ -34,6 +34,7 @@ public class DataImportDialog extends ModalDialog<DataImportOptions>
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       setOkButtonCaption("Import");
+      setEnterDisabled(true);
    }
 
    @Override

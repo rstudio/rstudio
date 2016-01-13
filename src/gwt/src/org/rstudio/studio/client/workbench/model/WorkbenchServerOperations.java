@@ -54,6 +54,7 @@ import org.rstudio.studio.client.workbench.views.presentation.model.Presentation
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 
 public interface WorkbenchServerOperations extends ConsoleServerOperations,
@@ -92,7 +93,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    LintServerOperations,
                                                    RoxygenServerOperations,
                                                    SnippetServerOperations,
-                                                   AddinsServerOperations
+                                                   AddinsServerOperations,
+                                                   DataImportServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();

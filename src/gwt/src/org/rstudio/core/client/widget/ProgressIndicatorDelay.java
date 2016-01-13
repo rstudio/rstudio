@@ -20,53 +20,70 @@ import com.google.gwt.user.client.Timer;
 public class ProgressIndicatorDelay implements ProgressIndicator
 {
    private ProgressIndicator progressIndicator_;
-   private boolean showing_;
+   private int startDelay_;
+   private boolean showing_ = false;
+   private boolean firstUpdate_ = true;
    
    public ProgressIndicatorDelay(ProgressIndicator progressIndicator)
    {
+      this(progressIndicator, 1000);
+   }
+   
+   public ProgressIndicatorDelay(ProgressIndicator progressIndicator, int startDelay)
+   {
       progressIndicator_ = progressIndicator;
+      startDelay_ = startDelay;
    }
    
    @Override
    public void onProgress(final String status)
    {
       showing_ = true;
-      new Timer()
+      if (firstUpdate_)
       {
-         @Override
-         public void run()
+         firstUpdate_ = false;
+         new Timer()
          {
-            if (showing_)
+            @Override
+            public void run()
             {
-               progressIndicator_.onProgress(status);
+               if (showing_)
+               {
+                  progressIndicator_.onProgress(status);
+               }
             }
-         }
-      }.schedule(1);
+         }.schedule(startDelay_);
+      }
+      else
+      {
+         progressIndicator_.onProgress(status);
+      }
    }
    
    @Override
    public void onCompleted()
    {
-      showing_ = false;
-      new Timer()
-      {
-         @Override
-         public void run()
-         {
-            progressIndicator_.onCompleted();
-         }
-      }.schedule(2000);
+      reset();
+      progressIndicator_.onCompleted();
    }
 
    @Override
    public void onError(String message)
    {
+      reset();
       progressIndicator_.onError(message);
    }
 
    @Override
    public void clearProgress()
    {
+      reset();
       progressIndicator_.clearProgress();
+   }
+   
+   private void reset()
+   {
+      firstUpdate_ = true;
+      showing_ = false;
    }
 }

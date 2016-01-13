@@ -165,7 +165,7 @@ public class TextBoxWithButton extends Composite
    }
 
    private HorizontalPanel inner_;
-   protected TextBox textBox_;
+   private TextBox textBox_;
    private ThemedButton themedButton_;
    private String emptyLabel_;
    private String useDefaultValue_;

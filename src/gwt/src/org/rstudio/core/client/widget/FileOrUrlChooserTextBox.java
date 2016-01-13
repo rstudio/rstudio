@@ -20,6 +20,8 @@ import org.rstudio.core.client.files.FileSystemItem;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -44,7 +46,7 @@ public class FileOrUrlChooserTextBox extends FileChooserTextBox
       final FileChooserTextBox parent = this;
       
       // Register for user driven changes (e.g. after typing on the textbox)
-      return textBox_.addChangeHandler(new ChangeHandler()
+      return getTextBox().addChangeHandler(new ChangeHandler()
       {
          
          @Override
@@ -58,6 +60,6 @@ public class FileOrUrlChooserTextBox extends FileChooserTextBox
    @Override
    public String getText()
    {
-      return textBox_.getText();
+      return getTextBox().getText();
    }
 }
