@@ -26,6 +26,7 @@ import com.google.gwt.user.client.Window;
 public class ApplicationAction
 {
    public static final String QUIT = "quit";
+   public static final String QUIT_TO_HOME = "quit_to_home";
    public static final String NEW_PROJECT = "new_project";
    public static final String OPEN_PROJECT = "open_project";
    public static final String SWITCH_PROJECT = "switch_project";
@@ -43,7 +44,12 @@ public class ApplicationAction
    
    public static boolean isQuit()
    {
-      return isAction(QUIT);
+      return isAction(QUIT) || isQuitToHome();
+   }
+   
+   public static boolean isQuitToHome()
+   {
+      return isAction(QUIT_TO_HOME);
    }
    
    public static boolean isNewProject()

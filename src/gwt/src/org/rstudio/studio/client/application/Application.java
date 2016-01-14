@@ -469,7 +469,7 @@ public class Application implements ApplicationEventHandlers
             // attempt to close the window if this is a quit
             // action (may or may not be able to depending on 
             // how it was created)
-            if (ApplicationAction.isQuit())
+            if (ApplicationAction.isQuit() && !ApplicationAction.isQuitToHome())
             {
                try
                {
