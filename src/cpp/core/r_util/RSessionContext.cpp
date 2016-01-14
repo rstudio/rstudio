@@ -239,15 +239,35 @@ void parseSessionUrl(const std::string& url,
 std::string createSessionUrl(const std::string& hostPageUrl,
                              const SessionScope& scope)
 {
-   // get url without prefix
-   std::string url;
-   parseSessionUrl(hostPageUrl, NULL, NULL, &url);
+   // build scope path for project (e.g. /s/BAF43..../).
+   std::string scopePath = urlPathForSessionScope(scope);
 
-   // build path for project
-   std::string path = urlPathForSessionScope(scope);
+   // determine the host scope path
+   std::string hostScopePath;
+   parseSessionUrl(hostPageUrl, NULL, &hostScopePath, NULL);
 
-   // complete the url and return it
-   return http::URL::complete(url, path);
+   // if we got a scope path then take everything before
+   // it and append our target scope path
+   if (!hostScopePath.empty())
+   {
+      // extract the base url
+      size_t pos = hostPageUrl.find(hostScopePath);
+      std::string baseUrl = hostPageUrl.substr(0, pos);
+
+      // complete the url and return it
+      return baseUrl + scopePath;
+   }
+   else
+   {
+      // completely unexpected that we'd pass a host page url
+      // with no scope path!  log a warning and just complete
+      // against the root of the host page url
+
+      LOG_WARNING_MESSAGE("Attempted to create session url from "
+                          "non prefixed host page " + hostPageUrl);
+
+      return http::URL::complete(hostPageUrl, scopePath);
+   }
 }
 
 
