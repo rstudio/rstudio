@@ -45,12 +45,13 @@ public class DataImportScript
       String var = StringUtil.toRSymbolName(options.getDataName());
       String code =
             var +
-            " <- readr::read_delim(" + 
-                  "\"" + options.getImportLocation() + "\", " + 
-                  "\"" + options.getDelimiter() + "\", " +
-                  "escape_backslash=" + (options.getEscapeBackslash() ? "TRUE" : "FALSE") + "," +
-                  "escape_double=" + (options.getEscapeDouble() ? "TRUE" : "FALSE") + "," +
-                  "col_names=" + (options.getColumnNames() ? "TRUE" : "FALSE") + "," +
+            " <- readr::read_delim(\n" + 
+                  "  \"" + options.getImportLocation() + "\",\n" + 
+                  "  \"" + options.getDelimiter() + "\",\n" +
+                  "  quote=\"" + (options.getQuotes() == "\"" ? "\\\"" : options.getQuotes()) + "\", \n" +
+                  "  escape_backslash=" + (options.getEscapeBackslash() ? "TRUE" : "FALSE") + ",\n" +
+                  "  escape_double=" + (options.getEscapeDouble() ? "TRUE" : "FALSE") + ",\n" +
+                  "  col_names=" + (options.getColumnNames() ? "TRUE" : "FALSE") + ",\n" +
                   ")" + "\n" +
             "View(" + var + ")";
       

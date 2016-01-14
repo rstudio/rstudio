@@ -28,6 +28,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportServerOperations;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -39,7 +40,6 @@ import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -79,6 +79,8 @@ public class DataImport extends Composite
             updateCodePreview();
          }
       });
+      
+      updateCodePreview();
    }
    
    @Inject
@@ -114,7 +116,7 @@ public class DataImport extends Composite
    HTMLPanel optionsHost_;
    
    @UiField
-   TextArea codeArea_;
+   AceEditorWidget codeArea_;
    
    public DataImportOptions getOptions()
    {
@@ -159,7 +161,7 @@ public class DataImport extends Composite
    private void updateCodePreview()
    {
       String codePreview = dataImportOptionsUi_.getCodePreview(getOptions());
-      codeArea_.setText(codePreview);
+      codeArea_.setCode(codePreview);
    }
    
    private final native String toLocaleString(int number) /*-{
