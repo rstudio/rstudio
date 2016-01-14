@@ -17,27 +17,45 @@
 			margin-top: 10px;
 			width: 100%;
 		}
-		.gridViewerLabel {	
+		.importLabel {	
 			margin-top: 10px;
 		}
 		.gridViewerFrame {
 			margin-top: 3px;
 			border: 1px solid #999;
-			width: 100%;
+			max-width: 100%;
 			height: 10px;
 			
 			-ms-flex-grow: 1;
 			-webkit-flex-grow: 1;
+			flex-grow: 4;
+		}
+		.optionsPanel {
+			display: flex;
+			direction: row;
+		}
+		.optionsElement {
 			flex-grow: 1;
 		}
-		.gridViewerFrameElement {
-			
+		.codePanel {
+			flex-grow: 1;
+			display: flex;
+			flex-direction: column;
+		}
+		.codeTextBox {
+			flex-grow: 1;
 		}
 	</ui:style>
 	<g:HTMLPanel styleName='{style.flexPanel}'>
 		<rs:FileOrUrlChooserTextBox ui:field="fileOrUrlChooserTextBox_"/>
-		<g:Label text="Data Preview:" styleName='{style.gridViewerLabel}'/>
+		<g:Label text="Data Preview:" styleName='{style.importLabel}'/>
 		<rs:GridViewerFrame ui:field="gridViewer_" styleName='{style.gridViewerFrame}'/>
-		<g:HTMLPanel ui:field="optionsHost_" styleName='{style.flexElement}'/>
+		<g:HTMLPanel styleName='{style.codePanel}'>
+			<g:Label text="Code Preview:" styleName='{style.importLabel}'/>
+			<g:TextBox styleName='{style.codeTextBox}'/>
+		</g:HTMLPanel>
+		<g:HTMLPanel styleName='{style.optionsPanel}'>
+			<g:HTMLPanel ui:field="optionsHost_" styleName='{style.optionsElement}'/>	
+		</g:HTMLPanel>
 	</g:HTMLPanel>
 </ui:UiBinder> 

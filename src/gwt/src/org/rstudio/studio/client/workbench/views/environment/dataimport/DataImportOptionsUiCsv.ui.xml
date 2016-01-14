@@ -4,42 +4,62 @@
 	xmlns:rs="urn:import:org.rstudio.core.client.widget">
 	<ui:with field='res' type='org.rstudio.core.client.theme.res.ThemeResources'/>
 	<ui:style>
-		.optionElement
-		{
+		.mainPanel {
+			display: flex;
+			flex-direction: column;
+		}
+		.optionElement {
 			display: inline-block;
 			padding: 4px;
 		}
-		.optionsBlock
-		{
+		.optionsBlock {
 			margin-top: 3px;
-			padding: 7px;
-			background-color: #FFF;
-			border: 1px solid #999;
+			padding-left: 7px;
+			display: flex;
+			flex-direction: row;
+		}
+		.optionsColumn {
+			display: flex;
+			flex-direction: column;
+			padding-right: 40px;
+		}
+		.optionsLabel {
+			margin-top: 10px;
+		}
+		.nameTextBox {
+			width: 60%;
 		}
 	</ui:style>
-	<g:HTMLPanel>
-	    <g:Label text="Import Options:"/>
+	<g:HTMLPanel styleName="{style.mainPanel}">
+	    <g:Label text="Name:" styleName="{style.optionsLabel}"/>
+		<g:TextBox ui:field="nameTextBox_" styleName="{style.nameTextBox}"/>
+	    <g:Label text="Import Options:" styleName="{style.optionsLabel}"/>
 		<div class='{style.optionsBlock}'>
-		    <div class='{style.optionElement}'>
-				<g:TextBox ui:field="nameTextBox_"/> Name
+			<div class='{style.optionsColumn}'>
+				<div class='{style.optionElement}'>
+				    Delimiter:
+				    <g:ListBox ui:field="delimiterListBox_" />
+				</div>
+				<div class='{style.optionElement}'>
+				    Quotes:
+				    <g:ListBox ui:field="quotesListBox_" />
+				</div>
 			</div>
-			<div class='{style.optionElement}'>
-			    <g:ListBox ui:field="delimiterListBox_" /> Delimiter
+			<div class='{style.optionsColumn}'>
+				<div class='{style.optionElement}'>
+					<g:CheckBox ui:field="escapeBackslashCheckBox_" text='Escape Backslash'/>
+				</div>
+				<div class='{style.optionElement}'>
+					<g:CheckBox ui:field="escapeDoubleCheckBox_" text='Escape Double'/>
+				</div>
 			</div>
-			<div class='{style.optionElement}'>
-			    <g:ListBox ui:field="quotesListBox_" /> Quotes
-			</div>
-			<div class='{style.optionElement}'>
-				<g:CheckBox ui:field="escapeBackslashCheckBox_" text='Escape Backslash'/>
-			</div>
-			<div class='{style.optionElement}'>
-				<g:CheckBox ui:field="escapeDoubleCheckBox_" text='Escape Double'/>
-			</div>
-			<div class='{style.optionElement}'>
-				<g:CheckBox ui:field="columnNamesCheckBox_" text="Columns Names"/>
-			</div>
-			<div class='{style.optionElement}'>
-				<g:CheckBox ui:field="trimSpacesCheckBox_" text='Trim Spaces'/>
+			<div class='{style.optionsColumn}'>
+				<div class='{style.optionElement}'>
+					<g:CheckBox ui:field="columnNamesCheckBox_" text="Columns Names"/>
+				</div>
+				<div class='{style.optionElement}'>
+					<g:CheckBox ui:field="trimSpacesCheckBox_" text='Trim Spaces'/>
+				</div>
 			</div>
 		</div>
 	</g:HTMLPanel>
