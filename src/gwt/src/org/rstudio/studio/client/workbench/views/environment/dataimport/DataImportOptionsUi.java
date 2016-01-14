@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.user.client.ui.Composite;
 
 public class DataImportOptionsUi extends Composite
@@ -22,5 +23,14 @@ public class DataImportOptionsUi extends Composite
    public DataImportOptions getOptions()
    {
       return new DataImportOptions();
+   }
+   
+   public void addChangeHandler(ChangeHandler changeHandler)
+   {
+   }
+   
+   public String getCodePreview(DataImportOptions options)
+   {
+      return "";
    }
 }

@@ -15,7 +15,18 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.function.Consumer;
+
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -32,15 +43,18 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    interface DataImportOptionsCsvUiBinder extends UiBinder<HTMLPanel, DataImportOptionsUiCsv> {}
 
    HTMLPanel mainPanel_;
+   DataImportScript dataImportScript_;
    
-   public DataImportOptionsUiCsv()
+   public DataImportOptionsUiCsv(DataImportScript dataImportScript)
    {
       super();
       mainPanel_ = uiBinder.createAndBindUi(this);
+      dataImportScript_ = dataImportScript;
       
       initWidget(mainPanel_);
       
       initDefaults();
+      initEvents();
    }
    
    @Override
@@ -53,6 +67,18 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
             escapeDoubleCheckBox_.getValue(),
             columnNamesCheckBox_.getValue(),
             trimSpacesCheckBox_.getValue());
+   }
+   
+   @Override
+   public void addChangeHandler(ChangeHandler changeHandler)
+   {
+      changeHandlers_.add(changeHandler);
+   }
+   
+   @Override
+   public String getCodePreview(DataImportOptions options)
+   {
+      return dataImportScript_.getImportScript(DataImportModes.Csv, options);
    }
    
    void initDefaults()
@@ -68,6 +94,54 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       quotesListBox_.addItem("Single quote (')", "'");
       quotesListBox_.addItem("Double quote (\")", "\"");
       quotesListBox_.addItem("None", "");
+   }
+   
+   void triggerChange()
+   {
+      for (ChangeHandler changeHandler : changeHandlers_) {
+         changeHandler.onChange(null);
+      }
+   }
+   
+   void initEvents()
+   {
+      ValueChangeHandler<String> valueChangeHandler = new ValueChangeHandler<String>()
+      {
+         
+         @Override
+         public void onValueChange(ValueChangeEvent<String> arg0)
+         {
+            triggerChange();
+         }
+      };
+      
+      ChangeHandler changeHandler = new ChangeHandler()
+      {
+         
+         @Override
+         public void onChange(ChangeEvent arg0)
+         {
+            triggerChange();
+         }
+      };
+      
+      ValueChangeHandler<Boolean> booleanValueChangeHandler = new ValueChangeHandler<Boolean>()
+      {
+         
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> arg0)
+         {
+            triggerChange();
+         }
+      };
+      
+      nameTextBox_.addValueChangeHandler(valueChangeHandler);
+      delimiterListBox_.addChangeHandler(changeHandler);
+      quotesListBox_.addChangeHandler(changeHandler);
+      escapeBackslashCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
+      escapeDoubleCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
+      columnNamesCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
+      trimSpacesCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
    }
    
    @UiField
@@ -90,4 +164,6 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    
    @UiField
    CheckBox trimSpacesCheckBox_;
+   
+   List<ChangeHandler> changeHandlers_ = new ArrayList<ChangeHandler>();
 }

@@ -489,16 +489,17 @@ public class EnvironmentPresenter extends BasePresenter
             @Override
             public void execute()
             {
+               final DataImportScript dataImportScript = new DataImportScript();
+               
                view_.bringToFront();
                DataImportDialog dataImportDialog = new DataImportDialog(
-                     new DataImportOptionsUiCsv(),
+                     new DataImportOptionsUiCsv(dataImportScript),
                      "Data Import",
                      new OperationWithInput<DataImportOptions>()
                {
                   @Override
                   public void execute(final DataImportOptions options)
                   {
-                     final DataImportScript dataImportScript = new DataImportScript();
                      String code = dataImportScript.getImportScript(DataImportModes.Csv, options);
                      eventBus_.fireEvent(new SendToConsoleEvent(code, true, true)); 
                   }

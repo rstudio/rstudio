@@ -42,20 +42,27 @@
 			display: flex;
 			flex-direction: column;
 		}
-		.codeTextBox {
+		.codeTextArea {
 			flex-grow: 1;
+			resize: none;
+		}
+		.bottomPanel {
+			display: flex;
+			flex-direction: row;
 		}
 	</ui:style>
 	<g:HTMLPanel styleName='{style.flexPanel}'>
 		<rs:FileOrUrlChooserTextBox ui:field="fileOrUrlChooserTextBox_"/>
 		<g:Label text="Data Preview:" styleName='{style.importLabel}'/>
 		<rs:GridViewerFrame ui:field="gridViewer_" styleName='{style.gridViewerFrame}'/>
-		<g:HTMLPanel styleName='{style.codePanel}'>
-			<g:Label text="Code Preview:" styleName='{style.importLabel}'/>
-			<g:TextBox styleName='{style.codeTextBox}'/>
-		</g:HTMLPanel>
-		<g:HTMLPanel styleName='{style.optionsPanel}'>
-			<g:HTMLPanel ui:field="optionsHost_" styleName='{style.optionsElement}'/>	
-		</g:HTMLPanel>
+		<div class="{style.bottomPanel}">
+			<g:HTMLPanel styleName='{style.optionsPanel}'>
+				<g:HTMLPanel ui:field="optionsHost_" styleName='{style.optionsElement}'/>	
+			</g:HTMLPanel>
+			<g:HTMLPanel styleName='{style.codePanel}'>
+				<g:Label text="Code Preview:" styleName='{style.importLabel}'/>
+				<g:TextArea ui:field="codeArea_" styleName='{style.codeTextArea}'/>
+			</g:HTMLPanel>
+		</div>
 	</g:HTMLPanel>
 </ui:UiBinder> 
