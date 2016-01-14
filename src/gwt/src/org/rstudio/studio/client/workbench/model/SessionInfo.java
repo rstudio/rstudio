@@ -18,6 +18,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.studio.client.application.ApplicationUtils;
 import org.rstudio.studio.client.application.model.RVersionsInfo;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
@@ -422,7 +423,15 @@ public class SessionInfo extends JavaScriptObject
       return this.show_user_home_page;
    }-*/;
    
-   public final native String getUserHomePageUrl() /*-{
+   public final String getUserHomePageUrl()
+   {
+      String url = getUserHomePageUrlNative();
+      if (url != null)
+         url = ApplicationUtils.getHostPageBaseURLWithoutContext(false) + url;
+      return url;
+   }
+   
+   private final native String getUserHomePageUrlNative() /*-{
       return this.user_home_page_url;
    }-*/;
    
