@@ -24,12 +24,34 @@ public class DataImportScript
       
    }
    
-   public String getImportScript(DataImportOptions options)
+   public String getImportScript(DataImportModes mode, DataImportOptions options)
+   {
+      if (options.getDataName().isEmpty())
+      {
+         options.setDataName("dataset");
+      }
+      
+      switch (mode)
+      {
+      case Csv:
+         return getImportScriptCsv((DataImportOptionsCsv)options);
+      default:
+         return "";
+      }
+   }
+   
+   public String getImportScriptCsv(DataImportOptionsCsv options)
    {
       String var = StringUtil.toRSymbolName(options.getDataName());
       String code =
             var +
-            " <- readr::read_csv(\"" + options.getImportLocation() + "\")" + "\n" +
+            " <- readr::read_delim(" + 
+                  "\"" + options.getImportLocation() + "\", " + 
+                  "\"" + options.getDelimiter() + "\", " +
+                  "escape_backslash=" + (options.getEscapeBackslash() ? "TRUE" : "FALSE") + "," +
+                  "escape_double=" + (options.getEscapeDouble() ? "TRUE" : "FALSE") + "," +
+                  "col_names=" + (options.getColumnNames() ? "TRUE" : "FALSE") + "," +
+                  ")" + "\n" +
             "View(" + var + ")";
       
       return code;

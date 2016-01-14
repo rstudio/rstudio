@@ -66,7 +66,9 @@ import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportDialog;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportModes;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptionsUiCsv;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportScript;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettings;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
@@ -489,6 +491,7 @@ public class EnvironmentPresenter extends BasePresenter
             {
                view_.bringToFront();
                DataImportDialog dataImportDialog = new DataImportDialog(
+                     new DataImportOptionsUiCsv(),
                      "Data Import",
                      new OperationWithInput<DataImportOptions>()
                {
@@ -496,7 +499,7 @@ public class EnvironmentPresenter extends BasePresenter
                   public void execute(final DataImportOptions options)
                   {
                      final DataImportScript dataImportScript = new DataImportScript();
-                     String code = dataImportScript.getImportScript(options);
+                     String code = dataImportScript.getImportScript(DataImportModes.Csv, options);
                      eventBus_.fireEvent(new SendToConsoleEvent(code, true, true)); 
                   }
                });

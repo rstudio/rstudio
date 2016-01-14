@@ -17,19 +17,27 @@
 			margin-top: 10px;
 			width: 100%;
 		}
-		.gridViewerFrame {
+		.gridViewerLabel {	
 			margin-top: 10px;
+		}
+		.gridViewerFrame {
+			margin-top: 3px;
 			border: 1px solid #999;
 			width: 100%;
+			height: 10px;
 			
 			-ms-flex-grow: 1;
 			-webkit-flex-grow: 1;
 			flex-grow: 1;
 		}
+		.gridViewerFrameElement {
+			
+		}
 	</ui:style>
 	<g:HTMLPanel styleName='{style.flexPanel}'>
 		<rs:FileOrUrlChooserTextBox ui:field="fileOrUrlChooserTextBox_"/>
+		<g:Label text="Data Preview:" styleName='{style.gridViewerLabel}'/>
 		<rs:GridViewerFrame ui:field="gridViewer_" styleName='{style.gridViewerFrame}'/>
-		<rsdi:DataImportOptionsBase ui:field="dataImportOptionsBase_"  styleName='{style.flexElement}'/>
+		<g:HTMLPanel ui:field="optionsHost_" styleName='{style.flexElement}'/>
 	</g:HTMLPanel>
 </ui:UiBinder> 

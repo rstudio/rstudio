@@ -36,6 +36,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -47,13 +48,14 @@ public class DataImport extends Composite
    private DataImportServerOperations server_;
    private final int maxRows_ = 200;
    private ProgressIndicatorDelay progressIndicator_;
-   boolean loadingData_;
+   private DataImportOptionsUi dataImportOptionsUi_;
    
    interface DataImportUiBinder extends UiBinder<Widget, DataImport>
    {
    }
 
-   public DataImport(ProgressIndicator progressIndicator)
+   public DataImport(DataImportOptionsUi dataImportOptionsUi,
+                     ProgressIndicator progressIndicator)
    {
       progressIndicator_ = new ProgressIndicatorDelay(progressIndicator);
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -62,6 +64,9 @@ public class DataImport extends Composite
       
       Size size = DomMetrics.adjustedElementSizeToDefaultMax();
       setSize(size.width + "px", size.height + "px");
+      
+      dataImportOptionsUi_ = dataImportOptionsUi;
+      optionsHost_.add(dataImportOptionsUi_);
    }
    
    @Inject
@@ -94,12 +99,11 @@ public class DataImport extends Composite
    GridViewerFrame gridViewer_;
    
    @UiField
-   DataImportOptionsBase dataImportOptionsBase_;
+   HTMLPanel optionsHost_;
    
    public DataImportOptions getOptions()
    {
-      DataImportOptions options = new DataImportOptions();
-      options.setDataName("dataset");
+      DataImportOptions options = dataImportOptionsUi_.getOptions();
       options.setImportLocation(fileOrUrlChooserTextBox_.getText());
       
       return options;

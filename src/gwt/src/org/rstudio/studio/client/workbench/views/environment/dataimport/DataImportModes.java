@@ -1,5 +1,5 @@
 /*
- * DataImportOptionsBase.java
+ * DataImportModes.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -15,15 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.DockPanel;
-
-public class DataImportOptionsBase extends Composite
+public enum DataImportModes
 {
-   public final DockPanel defaultElement_ = new DockPanel();
-   
-   public DataImportOptionsBase()
-   {
-      initWidget(defaultElement_);
-   }
+   Csv,
 }

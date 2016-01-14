@@ -15,27 +15,66 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.SpanElement;
-import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.UIObject;
-
-public class DataImportOptionsCsv extends UIObject
+public class DataImportOptionsCsv extends DataImportOptions
 {
-
-   private static DataImportOptionsCsvUiBinder uiBinder = GWT
-         .create(DataImportOptionsCsvUiBinder.class);
-
-   interface DataImportOptionsCsvUiBinder
-         extends UiBinder<Element, DataImportOptionsCsv>
+   public DataImportOptionsCsv(String dataName,
+                               Character delimiter,
+                               String quotes,
+                               Boolean escapeBackslash,
+                               Boolean escapeDouble,
+                               Boolean columnNames,
+                               Boolean trimSpaces)
    {
+      setDataName(dataName);
+      delimiter_ = delimiter;
+      quotes_ = quotes;
+      escapeBackslash_ = escapeBackslash;
+      escapeDouble_ = escapeDouble;
+      columnNames_ = columnNames;
+      trimSpaces_ = trimSpaces;
    }
-
-   public DataImportOptionsCsv(String firstName)
+   
+   public Character getDelimiter()
    {
-      setElement(uiBinder.createAndBindUi(this));
+      return delimiter_;
    }
-
+   
+   public String getQuotes()
+   {
+      return quotes_;
+   }
+   
+   public Boolean getEscapeBackslash()
+   {
+      return escapeBackslash_;
+   }
+   
+   public Boolean getEscapeDouble()
+   {
+      return escapeDouble_;
+   }
+   
+   public Boolean getColumnNames()
+   {
+      return columnNames_;
+   }
+   
+   public Boolean getTrimSpaces()
+   {
+      return trimSpaces_;
+   }
+   
+   String name_;
+   
+   Character delimiter_;
+   
+   String quotes_;
+   
+   Boolean escapeBackslash_;
+   
+   Boolean escapeDouble_;
+   
+   Boolean columnNames_;
+   
+   Boolean trimSpaces_;
 }
