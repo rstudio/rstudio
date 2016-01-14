@@ -991,7 +991,14 @@ Error setSourceDocumentDirty(const json::JsonRpcRequest& request,
 
    // if marking clean, ignore external edits too
    if (!dirty)
-      pDoc->updateLastKnownWriteTime();
+   {
+      // don't move the write time backwards (the intent is to sync an edit
+      // which has just occurred)
+      std::time_t writeTime =
+            module_context::resolveAliasedPath(pDoc->path()).lastWriteTime();
+      if (writeTime > pDoc->lastKnownWriteTime())
+         pDoc->setLastKnownWriteTime(writeTime);
+   }
 
    error = source_database::put(pDoc);
    if (error)
