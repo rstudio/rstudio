@@ -522,16 +522,6 @@ public class Shell implements ConsoleInputHandler,
                      Shell.this.onConsoleClear() ;
                      event.preventDefault() ;
                      break;
-                  case 'A':
-                     event.stopPropagation();
-                     event.preventDefault();
-                     input_.goToLineStart();
-                     break;
-                  case 'E':
-                     event.stopPropagation();
-                     event.preventDefault();
-                     input_.goToLineEnd();
-                     break;
                }
             }
             else if (mod == KeyboardShortcut.ALT)
