@@ -219,7 +219,7 @@ Error getShinyRunCmd(const json::JsonRpcRequest& request,
       runCmd.append(shinyRunPath); 
       runCmd.append("')");
       if (shinyType == modules::shiny::ShinySingleFile)
-         runCmd.append(")");
+         runCmd.append("$value)");
    }
 
    json::Object dataJson;

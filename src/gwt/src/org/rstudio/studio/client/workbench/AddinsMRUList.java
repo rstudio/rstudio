@@ -269,6 +269,8 @@ public class AddinsMRUList implements SessionInitHandler,
       List<KeySequence> keys = keyMap.getBindings(addin.getId());
       if (keys != null && !keys.isEmpty())
          command.setShortcut(new KeyboardShortcut(keys.get(0)));
+      else
+         command.setShortcut(null);
    }
    
    public void add(RAddin addin)

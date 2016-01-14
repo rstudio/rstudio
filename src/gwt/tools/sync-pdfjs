@@ -10,8 +10,9 @@ cd pdfjs
 git clean -dfx
 
 # Use this commit
-git checkout 997096f
+git checkout 944d1e6
 
+npm install
 node make generic singlefile
 cd ..
 

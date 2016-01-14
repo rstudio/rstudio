@@ -97,7 +97,7 @@ QtLocalPeer::QtLocalPeer(QObject* parent, const QString &appId)
         socketName += QLatin1Char('-') + QString::number(sessionId, 16);
     }
 #else
-    socketName += QLatin1Char('-') + QString::number(::getuid(), 16);
+    socketName += QLatin1Char('-') + QString::number(::geteuid(), 16);
 #endif
 
     server = new QLocalServer(this);

@@ -29,7 +29,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Edit
 
 import java.util.ArrayList;
 import java.util.List;
-
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -124,6 +123,8 @@ public class ApplicationCommandManager
       for (String id : bindings.iterableKeys())
       {
          AppCommand command = commands_.getCommandById(id);
+         if (command == null)
+            continue;
          List<KeySequence> keys = bindings.get(id).getKeyBindings();
          resolvedBindings.add(new Pair<List<KeySequence>, AppCommand>(keys, command));
       }

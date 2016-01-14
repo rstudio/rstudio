@@ -34,6 +34,7 @@
 * Reorganize toolbar commands/menu for improved discoverability
 * Added Run Setup Chunk command
 * Updated embedded pandoc to v1.15.2
+* Update embedded pdf.js to v1.3
 * Support additional options for MS Word (table of contents, keep markdown)
 
 ### Miscellaneous
@@ -41,7 +42,6 @@
 * RStudio Addins
     - Register R functions as addins that can interact with the IDE using the rstudioapi package.
     - Accessible from the Addins menu and can be bound to custom keyboard shortcuts
-* Ctrl+A, Ctrl+E now move cursor to beginning, end of line in console on all platforms
 * New Session command (create new R session with same project or working directory)
 * Open project in a new window from the projects recently used menu
 * New Shiny App command for quick creation of Shiny applications
@@ -70,6 +70,7 @@
 * Added ability to zoom panes (e.g. Ctrl+Shift+1 to zoom source pane)
 * Add Console on Left/Right commands for quick relocation of Console
 * Add product and version metadata to Windows installer
+* Add askForPassword function to rstudioapi
 * Improved detection of Msysgit installation location on Windows
 
 ### Server
@@ -126,6 +127,7 @@
 * Don't include H3 (and higher) headers when creating presentation slide preview navigation menu
 * Don't allow long file paths to overflow in message dialogs
 * RPM: Set autreqprov to "no" for both desktop and server
+* Prevent periods from being used in Rmd date field (caused LaTeX errors)
 
 
 

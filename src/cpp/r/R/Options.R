@@ -70,6 +70,8 @@ if (is.null(getOption("shinygadgets.showdialog"))) {
    })
 }
 
+# provide askpass function
+options(askpass = .rs.askForPassword)
 
 # provide restart function
 options(restart = .rs.restartR)
