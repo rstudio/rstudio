@@ -42,7 +42,6 @@
 * RStudio Addins
     - Register R functions as addins that can interact with the IDE using the rstudioapi package.
     - Accessible from the Addins menu and can be bound to custom keyboard shortcuts
-* Ctrl+A, Ctrl+E now move cursor to beginning, end of line in console on all platforms
 * New Session command (create new R session with same project or working directory)
 * Open project in a new window from the projects recently used menu
 * New Shiny App command for quick creation of Shiny applications
