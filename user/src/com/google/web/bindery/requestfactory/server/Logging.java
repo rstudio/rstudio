@@ -63,6 +63,16 @@ public class Logging {
     deobfuscator = StackTraceDeobfuscator.fromFileSystem(dir);
   }
 
+  /**
+   * This function is only for server-side use which is why it's not in the
+   * LoggingRequest interface.
+   *
+   * @param stackTraceDeobfuscator the StackTraceDeobfuscator instance to use
+   */
+  public static void setStackTraceDeobfuscator(StackTraceDeobfuscator stackTraceDeobfuscator) {
+    deobfuscator =  stackTraceDeobfuscator;
+  }
+
   private String id = "";
 
   private Integer version = 0;

@@ -15,11 +15,13 @@
  */
 package com.google.web.bindery.requestfactory.server;
 
+import com.google.gwt.core.server.StackTraceDeobfuscator;
 import com.google.gwt.user.server.rpc.RPCServletUtils;
 import com.google.web.bindery.requestfactory.shared.RequestFactory;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.MalformedURLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -153,7 +155,15 @@ public class RequestFactoryServlet extends HttpServlet {
 
   private void ensureConfig() {
     String symbolMapsDirectory = getServletConfig().getInitParameter("symbolMapsDirectory");
-    if (symbolMapsDirectory != null) {
+    String symbolMapsResourcePath = getServletConfig().getInitParameter("symbolMapsResourcePath");
+    if (symbolMapsResourcePath != null) {
+      try {
+        Logging.setStackTraceDeobfuscator(
+            StackTraceDeobfuscator.fromUrl(getServletContext().getResource(symbolMapsResourcePath)));
+      } catch (MalformedURLException e) {
+        log.log(Level.WARNING, "Failed to get the symbolMaps resource", e);
+      }
+    } else if (symbolMapsDirectory != null) {
       Logging.setSymbolMapsDirectory(symbolMapsDirectory);
     }
   }
