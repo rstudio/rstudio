@@ -8,60 +8,107 @@
 			display: flex;
 			flex-direction: column;
 		}
-		.optionElement {
-			display: inline-block;
-			padding: 4px;
-		}
 		.optionsBlock {
 			margin-top: 3px;
 			padding-left: 7px;
 			display: flex;
-			flex-direction: row;
+			flex-wrap: wrap;
 		}
 		.optionsColumn {
 			display: flex;
 			flex-direction: column;
-			padding-right: 40px;
+			padding-right: 35px;
+			min-width: 150px;
 		}
 		.optionsLabel {
 			margin-top: 10px;
+		}
+		.nameTextBox {
+			width: 100px;
+		}
+		.skipTextBox {
+			width: 50px;
+		}
+		.optionsRow {
+			height: 21px;
+		}
+		.optionsListBox {
+			min-width: 95px;
 		}
 	</ui:style>
 	<g:HTMLPanel styleName="{style.mainPanel}">
 	    <g:Label text="Import Options:" styleName="{style.optionsLabel}"/>
 		<div class="{style.optionsBlock}">
-		    <div class="{style.optionsColumn}">
-		        <div class="{style.optionElement}">
-		        	Name:
-					<g:TextBox ui:field="nameTextBox_" />
-				</div>
-		    </div>
-			<div class="{style.optionsColumn}">
-				<div class="{style.optionElement}">
-				    Delimiter:
-				    <g:ListBox ui:field="delimiterListBox_" />
-				</div>
-				<div class="{style.optionElement}">
-				    Quotes:
-				    <g:ListBox ui:field="quotesListBox_" />
-				</div>
-			</div>
-			<div class="{style.optionsColumn}">
-				<div class="{style.optionElement}">
-					<g:CheckBox ui:field="escapeBackslashCheckBox_" text="Escape Backslash"/>
-				</div>
-				<div class="{style.optionElement}">
-					<g:CheckBox ui:field="escapeDoubleCheckBox_" text="Escape Double"/>
-				</div>
-			</div>
-			<div class="{style.optionsColumn}">
-				<div class="{style.optionElement}">
-					<g:CheckBox ui:field="columnNamesCheckBox_" text="Columns Names"/>
-				</div>
-				<div class="{style.optionElement}">
-					<g:CheckBox ui:field="trimSpacesCheckBox_" text="Trim Spaces"/>
-				</div>
-			</div>
+		    <table class="{style.optionsColumn}">
+	            <tr class="{style.optionsRow}">
+	                <td>Name:</td>
+	                <td>
+	                    <g:TextBox ui:field="nameTextBox_" styleName="{style.nameTextBox}"/>
+	                </td>
+	            </tr>
+	            <tr class="{style.optionsRow}">
+	                <td>Skip:</td>
+	                <td>
+	                    <g:TextBox ui:field="skipTextBox_" styleName="{style.skipTextBox}"/>
+	                </td>
+	            </tr>
+		    </table>
+		    <table class="{style.optionsColumn}">
+			    <tr class="{style.optionsRow}">
+			        <td>Delimiter:</td>
+			        <td>
+			            <g:ListBox ui:field="delimiterListBox_" styleName="{style.optionsListBox}"/>
+			        </td>
+			    </tr>
+			    <tr class="{style.optionsRow}">
+			        <td>Quotes:</td>
+			        <td>
+			            <g:ListBox ui:field="quotesListBox_" styleName="{style.optionsListBox}" />
+			        </td>
+			    </tr>
+			    <tr class="{style.optionsRow}">
+			        <td>Locale:</td>
+			        <td>
+			            <g:ListBox ui:field="localeListBox_" styleName="{style.optionsListBox}" />
+			        </td>
+			    </tr>
+		    </table>
+			<table class="{style.optionsColumn}">
+			    <tr  class="{style.optionsRow}">
+					<td colspan="2">
+						<g:CheckBox ui:field="escapeBackslashCheckBox_" text="Escape Backslash"/>
+					</td>
+				</tr>
+				<tr class="{style.optionsRow}">
+				    <td colspan="2">
+						<g:CheckBox ui:field="escapeDoubleCheckBox_" text="Escape Double"/>
+					</td>
+				</tr>
+				<tr class="{style.optionsRow}">
+					<td>NA:</td>
+					<td>
+					    <g:ListBox ui:field="naListBox_" styleName="{style.optionsListBox}" />
+				    </td>
+				</tr>
+			</table>
+			<table class="{style.optionsColumn}">
+			    <tr class="{style.optionsRow}">
+					<td colspan="2">
+						<g:CheckBox ui:field="columnNamesCheckBox_" text="Columns Names"/>
+					</td>
+				</tr>
+				<tr class="{style.optionsRow}">
+					<td colspan="2">
+						<g:CheckBox ui:field="trimSpacesCheckBox_" text="Trim Spaces"/>
+					</td>
+				</tr>
+				<tr class="{style.optionsRow}">
+					<td>Comment:</td>
+					<td>
+					    <g:ListBox ui:field="commentListBox_" styleName="{style.optionsListBox}" />
+					</td>
+				</tr>
+			</table>
 		</div>
 	</g:HTMLPanel>
 </ui:UiBinder>

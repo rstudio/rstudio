@@ -54,6 +54,9 @@ public class DataImport extends Composite
    private ProgressIndicatorDelay progressIndicator_;
    private DataImportOptionsUi dataImportOptionsUi_;
    
+   private final int minWidth = 350;
+   private final int minHeight = 400;
+   
    interface DataImportUiBinder extends UiBinder<Widget, DataImport>
    {
    }
@@ -67,7 +70,7 @@ public class DataImport extends Composite
       initWidget(uiBinder.createAndBindUi(this));
       
       Size size = DomMetrics.adjustedElementSizeToDefaultMax();
-      setSize(size.width + "px", size.height + "px");
+      setSize(Math.max(minWidth, size.width) + "px", Math.max(minHeight, size.height) + "px");
       
       dataImportOptionsUi_ = dataImportOptionsUi;
       optionsHost_.add(dataImportOptionsUi_);

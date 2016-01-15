@@ -73,6 +73,8 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    
    void initDefaults()
    {
+      skipTextBox_.setText("0");
+      
       columnNamesCheckBox_.setValue(true);
       escapeDoubleCheckBox_.setValue(true);
       
@@ -81,9 +83,15 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       delimiterListBox_.addItem("Tab", "\t");
       delimiterListBox_.addItem("Whitespace", "");
       
-      quotesListBox_.addItem("Single quote (')", "'");
-      quotesListBox_.addItem("Double quote (\")", "\"");
+      quotesListBox_.addItem("Single (')", "'");
+      quotesListBox_.addItem("Double (\")", "\"");
       quotesListBox_.addItem("None", "");
+      
+      localeListBox_.addItem("default");
+      
+      naListBox_.addItem("default");
+      
+      commentListBox_.addItem("default");
    }
    
    void triggerChange()
@@ -136,10 +144,22 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    TextBox nameTextBox_;
    
    @UiField
+   TextBox skipTextBox_;
+   
+   @UiField
    ListBox delimiterListBox_;
    
    @UiField
    ListBox quotesListBox_;
+   
+   @UiField
+   ListBox localeListBox_;
+   
+   @UiField
+   ListBox naListBox_;
+   
+   @UiField
+   ListBox commentListBox_;
    
    @UiField
    CheckBox escapeBackslashCheckBox_;

@@ -42,16 +42,16 @@
 			flex-grow: 1;
 			display: flex;
 			flex-direction: column;
+			min-width: 300px;
 		}
 		.codeTextArea {
-			flex-grow: 1;
 			width: 100%;
-			height: 100px;
+			height: 110px;
 			border: 1px solid #999;
 		}
 		.bottomPanel {
 			display: flex;
-			flex-direction: row;
+			flex-wrap: wrap;
 		}
 	</ui:style>
 	<g:HTMLPanel styleName='{style.flexPanel}'>
