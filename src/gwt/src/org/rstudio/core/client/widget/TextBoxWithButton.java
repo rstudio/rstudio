@@ -158,6 +158,11 @@ public class TextBoxWithButton extends Composite
       return textBox_;
    }
    
+   protected ThemedButton getButton()
+   {
+      return themedButton_;
+   }
+   
    @Override
    public void focus()
    {

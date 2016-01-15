@@ -21,6 +21,7 @@ import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.widget.FileOrUrlChooserTextBox;
 import org.rstudio.core.client.widget.GridViewerFrame;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressIndicatorDelay;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -91,17 +92,14 @@ public class DataImport extends Composite
    
    @UiFactory
    FileOrUrlChooserTextBox makeFileOrUrlChooserTextBox() {
-      FileOrUrlChooserTextBox fileOrUrlChooserTextBox = new FileOrUrlChooserTextBox("File/URL:", null);
-      
-      fileOrUrlChooserTextBox.addValueChangeHandler(new ValueChangeHandler<String>()
+      FileOrUrlChooserTextBox fileOrUrlChooserTextBox = new FileOrUrlChooserTextBox("File/URL:", new Operation()
       {
-         
          @Override
-         public void onValueChange(ValueChangeEvent<String> arg0)
+         public void execute()
          {
             refreshPreview();
          }
-      });
+      }, null);
       
       return fileOrUrlChooserTextBox;
    }

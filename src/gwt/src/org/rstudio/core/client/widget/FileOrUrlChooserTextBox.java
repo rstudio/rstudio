@@ -16,50 +16,133 @@
 package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.RStudioGinjector;
 
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.KeyPressEvent;
-import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Focusable;
 
-public class FileOrUrlChooserTextBox extends FileChooserTextBox
+public class FileOrUrlChooserTextBox extends TextBoxWithButton
 {
-
-   public FileOrUrlChooserTextBox(String label, Focusable focusAfter)
-   {
-      super(label, focusAfter);
-      
-      setReadOnly(false);
-   }
+   private static String browseModeCaption_ = "Browse...";
+   private static String updateModeCaption_ = "Update";
+   private Boolean updateMode_ = false;
+   private String lastTextBoxValue_;
+   private int checkTextBoxInterval_ = 250;
+   private final Operation updateOperation_;
    
-   @Override
-   public HandlerRegistration addValueChangeHandler(ValueChangeHandler<String> handler)
+   public FileOrUrlChooserTextBox(String label, Operation updateOperation, final Focusable focusAfter)
    {
-      // Register for programmatic changes (e.g. while choosing the browse button)
-      super.addValueChangeHandler(handler);
+      super(label, "", browseModeCaption_, null);
       
-      final FileChooserTextBox parent = this;
+      updateOperation_ = updateOperation;
       
-      // Register for user driven changes (e.g. after typing on the textbox)
-      return getTextBox().addChangeHandler(new ChangeHandler()
+      super.addValueChangeHandler(new ValueChangeHandler<String>()
       {
-         
          @Override
-         public void onChange(ChangeEvent arg0)
+         public void onValueChange(ValueChangeEvent<String> arg0)
          {
-            ValueChangeEvent.fire(parent, getText());
+            updateOperation_.execute();
          }
       });
+      
+      addClickHandler(new ClickHandler()
+      {
+         public void onClick(ClickEvent event)
+         {
+            if (updateMode_)
+            {
+               updateOperation_.execute();
+            }
+            else
+            {
+               RStudioGinjector.INSTANCE.getFileDialogs().openFile(
+                     "Choose File",
+                     RStudioGinjector.INSTANCE.getRemoteFileSystemContext(),
+                     FileSystemItem.createFile(getText()),
+                     new ProgressOperationWithInput<FileSystemItem>()
+                     {
+                        public void execute(FileSystemItem input,
+                                            ProgressIndicator indicator)
+                        {
+                           if (input == null)
+                              return;
+   
+                           setText(input.getPath());
+                           preventModeChange();
+                           
+                           indicator.onCompleted();
+                           if (focusAfter != null)
+                              focusAfter.setFocus(true);
+                        }
+                     });
+            }
+         }
+      });
+      
+      setReadOnly(false);
+      
+      checkForTextBoxChange();
    }
    
    @Override
    public String getText()
    {
       return getTextBox().getText();
+   }
+   
+   @Override
+   public void onDetach()
+   {
+      checkTextBoxInterval_ = 0;
+   }
+   
+   private void checkForTextBoxChange()
+   {
+      if (checkTextBoxInterval_ == 0)
+         return;
+      
+      // Check continuously for changes in the textbox to reliably detect changes even when OS pastes text
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            if (lastTextBoxValue_ != null && getTextBox().getText() != lastTextBoxValue_)
+            {
+               switchToUpdateMode(!getTextBox().getText().isEmpty());
+            }
+            
+            lastTextBoxValue_ = getTextBox().getText();
+            checkForTextBoxChange();
+         }
+      }.schedule(checkTextBoxInterval_);
+   }
+   
+   private void preventModeChange()
+   {
+      lastTextBoxValue_ = getTextBox().getText();
+   }
+   
+   private void switchToUpdateMode(Boolean updateMode)
+   {
+      if (updateMode_ != updateMode)
+      {
+         updateMode_ = updateMode;
+         if (updateMode)
+         {
+            getButton().setText(updateModeCaption_);
+         }
+         else
+         {
+            getButton().setText(browseModeCaption_);
+         }
+      }
    }
 }
