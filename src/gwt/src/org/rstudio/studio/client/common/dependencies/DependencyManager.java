@@ -226,6 +226,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
                                     "0.13", // shiny version
                                     "0.3"); // htmltools version
       deps.add(Dependency.cranPackage("miniUI", "0.1.1", true));
+      deps.add(Dependency.cranPackage("rstudioapi", "0.4", true));
       
       withDependencies(   
         "Checking installed packages",
