@@ -72,10 +72,10 @@ public class DataImport extends Composite
       dataImportOptionsUi_ = dataImportOptionsUi;
       optionsHost_.add(dataImportOptionsUi_);
       
-      dataImportOptionsUi_.addChangeHandler(new ChangeHandler()
+      dataImportOptionsUi_.addValueChangeHandler(new ValueChangeHandler<DataImportOptions>()
       {
          @Override
-         public void onChange(ChangeEvent arg0)
+         public void onValueChange(ValueChangeEvent<DataImportOptions> dataImportOptions)
          {
             updateCodePreview();
          }
