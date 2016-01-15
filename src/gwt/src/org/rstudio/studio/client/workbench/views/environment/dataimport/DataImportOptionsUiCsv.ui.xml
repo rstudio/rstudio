@@ -30,7 +30,7 @@
 			width: 50px;
 		}
 		.optionsRow {
-			height: 21px;
+			height: 23px;
 		}
 		.optionsListBox {
 			min-width: 95px;
