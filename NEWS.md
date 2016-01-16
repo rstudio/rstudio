@@ -90,6 +90,7 @@
 * Server Pro: Support for multiple concurrent R sessions per-user
 * Server Pro: Support for running against multiple versions of R
 * Server Pro: Ability to record user console history for audit purposes
+* Server Pro: Home page for navigating to active sessions and recent projects
 * Server Pro: Don't close PAM sessions by default (configurable via an option)
 * Server Pro: Remove Google OpenID auth (deprecated by Google in favor of OAuth)
 * Server Pro: Add option to specify client-id for Graphite metrics back end
