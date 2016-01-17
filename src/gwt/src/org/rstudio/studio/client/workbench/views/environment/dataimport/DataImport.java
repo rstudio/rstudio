@@ -29,11 +29,14 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportServerOperations;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.res.DataImportResources;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -41,6 +44,8 @@ import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -53,6 +58,8 @@ public class DataImport extends Composite
    private final int maxRows_ = 200;
    private ProgressIndicatorDelay progressIndicator_;
    private DataImportOptionsUi dataImportOptionsUi_;
+   private DataImportResources dataImportResources_;
+   private String codePreview_;
    
    private final int minWidth = 350;
    private final int minHeight = 400;
@@ -64,6 +71,8 @@ public class DataImport extends Composite
    public DataImport(DataImportOptionsUi dataImportOptionsUi,
                      ProgressIndicator progressIndicator)
    {
+      dataImportResources_ = GWT.create(DataImportResources.class);
+      
       progressIndicator_ = new ProgressIndicatorDelay(progressIndicator);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -107,6 +116,19 @@ public class DataImport extends Composite
       return fileOrUrlChooserTextBox;
    }
    
+   @UiFactory
+   PushButton makeCopyButton()
+   {
+      return new PushButton(new Image(dataImportResources_.copyImage()), new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent arg0)
+         {
+            copyCodeToClipboard(codePreview_);
+         }
+      });
+   }
+   
    @UiField
    FileOrUrlChooserTextBox fileOrUrlChooserTextBox_;
    
@@ -118,6 +140,9 @@ public class DataImport extends Composite
    
    @UiField
    AceEditorWidget codeArea_;
+   
+   @UiField
+   PushButton copyButton_;
    
    public DataImportOptions getOptions()
    {
@@ -159,10 +184,15 @@ public class DataImport extends Composite
       });
    }
    
+   private String getCodePreview()
+   {
+      return codePreview_;
+   }
+   
    private void updateCodePreview()
    {
-      String codePreview = dataImportOptionsUi_.getCodePreview(getOptions());
-      codeArea_.setCode(codePreview);
+      codePreview_ = dataImportOptionsUi_.getCodePreview(getOptions());
+      codeArea_.setCode(codePreview_);
    }
    
    private final native String toLocaleString(int number) /*-{
@@ -171,5 +201,17 @@ public class DataImport extends Composite
    
    private final native String getErrorMessage(JsObject data) /*-{
       return data.message.join(' ');
+   }-*/;
+   
+   private final native void copyCodeToClipboard(String text) /*-{
+      var copyDiv = document.createElement('div');
+      copyDiv.contentEditable = true;
+      document.body.appendChild(copyDiv);
+      copyDiv.innerHTML = text;
+      copyDiv.unselectable = "off";
+      copyDiv.focus();
+      document.execCommand('SelectAll');
+      document.execCommand("Copy", false, null);
+      document.body.removeChild(copyDiv);
    }-*/;
 }

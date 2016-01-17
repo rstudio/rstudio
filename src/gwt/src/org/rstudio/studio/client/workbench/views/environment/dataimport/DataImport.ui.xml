@@ -4,7 +4,7 @@
 	xmlns:rs="urn:import:org.rstudio.core.client.widget"
 	xmlns:rsdi="urn:import:org.rstudio.studio.client.workbench.views.environment.dataimport"
 	xmlns:rsace="urn:import:org.rstudio.studio.client.workbench.views.source.editors.text">
-	<ui:with field='res' type='org.rstudio.core.client.theme.res.ThemeResources'/>
+	<ui:with field="res" type="org.rstudio.studio.client.workbench.views.environment.dataimport.res.DataImportResources"/>
 	<ui:style>
 		.flexPanel {
 			display: -ms-flexbox;
@@ -53,19 +53,37 @@
 			display: flex;
 			flex-wrap: wrap;
 		}
+		.codeEditArea {
+			display: flex;
+			flex-direction: row;
+		}
+		.copyButton {
+			margin-left: 5px;
+			height: 20px;
+		}
+		.copyButton:active {
+			margin-top: 2px;
+		}
+		.copyButtonNoOutline {
+			outline: none;
+		}
 	</ui:style>
-	<g:HTMLPanel styleName='{style.flexPanel}'>
-		<rs:FileOrUrlChooserTextBox ui:field="fileOrUrlChooserTextBox_"/>
-		<g:Label text="Data Preview:" styleName='{style.importLabel}'/>
-		<rs:GridViewerFrame ui:field="gridViewer_" styleName='{style.gridViewerFrame}'/>
+	<g:HTMLPanel styleName="{style.flexPanel}">
+	    <rs:FileOrUrlChooserTextBox ui:field="fileOrUrlChooserTextBox_"/>
+		<g:Label text="Data Preview:" styleName="{style.importLabel}"/>
+		<rs:GridViewerFrame ui:field="gridViewer_" styleName="{style.gridViewerFrame}"/>
 		<div class="{style.bottomPanel}">
-			<g:HTMLPanel styleName='{style.optionsPanel}'>
-				<g:HTMLPanel ui:field="optionsHost_" styleName='{style.optionsElement}'/>	
+			<g:HTMLPanel styleName="{style.optionsPanel}">
+				<g:HTMLPanel ui:field="optionsHost_" styleName="{style.optionsElement}"/>	
 			</g:HTMLPanel>
-			<g:HTMLPanel styleName='{style.codePanel}'>
-				<g:Label text="Code Preview:" styleName='{style.importLabel}'/>
-				<div class='{style.codeTextArea}'>
-					<rsace:AceEditorWidget ui:field="codeArea_"/>
+			<g:HTMLPanel styleName="{style.codePanel}">
+				<g:Label text="Code Preview:" styleName="{style.importLabel}"/>
+				<div class="{style.codeEditArea}">
+					<div class="{style.codeTextArea}">
+						<rsace:AceEditorWidget ui:field="codeArea_"/>
+					</div>
+					<g:PushButton ui:field="copyButton_" styleName="{style.copyButton}">
+					</g:PushButton>
 				</div>
 			</g:HTMLPanel>
 		</div>
