@@ -868,7 +868,9 @@ var bootstrap = function(data) {
       $(document).ready(function() {
         document.body.appendChild(newEle);
         runAfterSizing(function() {
-          initDataTable($.parseJSON(result));
+          if (result) {
+            initDataTable($.parseJSON(result));
+          }
         });
       });
     });

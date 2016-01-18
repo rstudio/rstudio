@@ -15,6 +15,11 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import com.google.gwt.json.client.JSONBoolean;
+import com.google.gwt.json.client.JSONNumber;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONString;
+
 public class DataImportOptionsCsv extends DataImportOptions
 {
    public DataImportOptionsCsv(String dataName,
@@ -23,7 +28,11 @@ public class DataImportOptionsCsv extends DataImportOptions
                                Boolean escapeBackslash,
                                Boolean escapeDouble,
                                Boolean columnNames,
-                               Boolean trimSpaces)
+                               Boolean trimSpaces,
+                               String locale,
+                               String na,
+                               String comments,
+                               int skip)
    {
       setDataName(dataName);
       delimiter_ = delimiter;
@@ -32,6 +41,10 @@ public class DataImportOptionsCsv extends DataImportOptions
       escapeDouble_ = escapeDouble;
       columnNames_ = columnNames;
       trimSpaces_ = trimSpaces;
+      locale_ = locale;
+      na_ = na;
+      comments_ = comments;
+      skip_ = skip;
    }
    
    public Character getDelimiter()
@@ -64,6 +77,45 @@ public class DataImportOptionsCsv extends DataImportOptions
       return trimSpaces_;
    }
    
+   public String getLocale()
+   {
+      return locale_;
+   }
+   
+   public String getNa()
+   {
+      return na_;
+   }
+   
+   public String getComments()
+   {
+      return comments_;
+   }
+   
+   public int getSkip()
+   {
+      return skip_;
+   }
+   
+   @Override
+   public JSONObject toJSONObject()
+   {
+      JSONObject json = super.toJSONObject();
+      
+      json.put("delimiter", delimiter_ != null ? new JSONString(delimiter_.toString()) : null);
+      json.put("quotes", quotes_ != null ? new JSONString(quotes_) : null);
+      json.put("escapeBackslash", escapeBackslash_ != null ? JSONBoolean.getInstance(escapeBackslash_) : null);
+      json.put("escapeDouble", escapeDouble_ != null ? JSONBoolean.getInstance(escapeDouble_) : null);
+      json.put("columnNames", columnNames_ != null ? JSONBoolean.getInstance(columnNames_) : null);
+      json.put("trimSpaces", trimSpaces_ != null ? JSONBoolean.getInstance(trimSpaces_) : null);
+      json.put("locale", locale_ != null ? new JSONString(locale_) : null);
+      json.put("na", na_ != null ? new JSONString(na_) : null);
+      json.put("comments", comments_ != null ? new JSONString(comments_) : null);
+      json.put("skip", comments_ != null ? new JSONNumber(skip_) : null);
+      
+      return json;
+   }
+   
    String name_;
    
    Character delimiter_;
@@ -77,4 +129,12 @@ public class DataImportOptionsCsv extends DataImportOptions
    Boolean columnNames_;
    
    Boolean trimSpaces_;
+   
+   String locale_;
+   
+   String na_;
+   
+   String comments_;
+   
+   int skip_;
 }

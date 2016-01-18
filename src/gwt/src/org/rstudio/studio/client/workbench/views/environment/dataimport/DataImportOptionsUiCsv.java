@@ -15,8 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
-import java.util.ArrayList;
-import java.util.function.Consumer;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -42,13 +41,11 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    interface DataImportOptionsCsvUiBinder extends UiBinder<HTMLPanel, DataImportOptionsUiCsv> {}
 
    HTMLPanel mainPanel_;
-   DataImportScript dataImportScript_;
    
-   public DataImportOptionsUiCsv(DataImportScript dataImportScript)
+   public DataImportOptionsUiCsv()
    {
       super();
       mainPanel_ = uiBinder.createAndBindUi(this);
-      dataImportScript_ = dataImportScript;
       
       initWidget(mainPanel_);
       
@@ -65,13 +62,17 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
             escapeBackslashCheckBox_.getValue(),
             escapeDoubleCheckBox_.getValue(),
             columnNamesCheckBox_.getValue(),
-            trimSpacesCheckBox_.getValue());
+            trimSpacesCheckBox_.getValue(),
+            localeListBox_.getSelectedValue(),
+            naListBox_.getSelectedValue(),
+            commentListBox_.getSelectedValue(),
+            Integer.parseInt(skipTextBox_.getText()));
    }
    
    @Override
-   public String getCodePreview(DataImportOptions options)
+   public void setAssembleResponse(DataImportAssembleResponse response)
    {
-      return dataImportScript_.getImportScript(DataImportModes.Csv, options);
+      nameTextBox_.setText(response.getDataName());
    }
    
    void initDefaults()
@@ -179,6 +180,10 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       escapeDoubleCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
       columnNamesCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
       trimSpacesCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
+      localeListBox_.addChangeHandler(changeHandler);
+      naListBox_.addChangeHandler(changeHandler);
+      commentListBox_.addChangeHandler(changeHandler);
+      skipTextBox_.addValueChangeHandler(valueChangeHandler);
    }
    
    @UiField

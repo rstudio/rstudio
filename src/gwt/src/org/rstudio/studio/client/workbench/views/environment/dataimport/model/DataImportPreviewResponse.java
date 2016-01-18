@@ -1,5 +1,5 @@
 /*
- * DataImportServerOperations.java
+ * DataImportPreviewResponse.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -15,14 +15,15 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport.model;
 
-import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
+import com.google.gwt.core.client.JavaScriptObject;
 
-public interface DataImportServerOperations
+public class DataImportPreviewResponse extends JavaScriptObject
 {
-   void previewDataImport(DataImportOptions dataImportOptions,
-                          ServerRequestCallback<DataImportPreviewResponse> requestCallback);
+   protected DataImportPreviewResponse()
+   {
+   }
    
-   void assembleDataImport(DataImportOptions dataImportOptions,
-                           ServerRequestCallback<DataImportAssembleResponse> requestCallback);
+   public final native String getErrorMessage() /*-{
+      return this.error ? this.error.message.join(' ') : null;
+   }-*/;
 }

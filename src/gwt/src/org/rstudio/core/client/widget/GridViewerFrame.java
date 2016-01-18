@@ -16,7 +16,8 @@
 package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.core.client.js.JsObject;
+
+import com.google.gwt.core.client.JavaScriptObject;
 
 public class GridViewerFrame extends RStudioFrame
 {
@@ -30,7 +31,7 @@ public class GridViewerFrame extends RStudioFrame
       super.onAttach();
    }
    
-   public void setData(JsObject data)
+   public void setData(JavaScriptObject data)
    {
       WindowEx gridViewerFrameWindow = getIFrame().getContentWindow();
       setDataNative(gridViewerFrameWindow, data);
@@ -42,7 +43,7 @@ public class GridViewerFrame extends RStudioFrame
       setOptionNative(gridViewerFrameWindow, option, value);
    }
    
-   private final native void setDataNative(WindowEx frameContentWindow, JsObject data) /*-{
+   private final native void setDataNative(WindowEx frameContentWindow, JavaScriptObject data) /*-{
       frameContentWindow.setData(data);
    }-*/;
    

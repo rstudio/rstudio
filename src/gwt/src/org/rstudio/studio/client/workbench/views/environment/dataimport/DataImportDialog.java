@@ -21,17 +21,17 @@ import org.rstudio.studio.client.RStudioGinjector;
 
 import com.google.gwt.user.client.ui.Widget;
 
-public class DataImportDialog extends ModalDialog<DataImportOptions>
+public class DataImportDialog extends ModalDialog<String>
 {
    private DataImport dataImport_;
    
-   public DataImportDialog(DataImportOptionsUi dataImportOptionsUi,
+   public DataImportDialog(DataImportModes dataImportMode,
                            String caption,
-                           OperationWithInput<DataImportOptions> operation)
+                           OperationWithInput<String> operation)
    {
       super(caption, operation);
       
-      dataImport_ = new DataImport(dataImportOptionsUi, addProgressIndicator(false));
+      dataImport_ = new DataImport(dataImportMode, addProgressIndicator(false));
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       setOkButtonCaption("Import");
@@ -39,9 +39,9 @@ public class DataImportDialog extends ModalDialog<DataImportOptions>
    }
 
    @Override
-   protected DataImportOptions collectInput()
+   protected String collectInput()
    {
-      return dataImport_.getOptions();
+      return dataImport_.getCode();
    }
 
    @Override

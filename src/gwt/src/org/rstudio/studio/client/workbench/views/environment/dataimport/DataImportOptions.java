@@ -15,10 +15,16 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import com.google.gwt.json.client.JSONNumber;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONString;
+
 public class DataImportOptions
 {
    private String dataName_;
    private String importLocation_;
+   private String code_;
+   private int maxRows_;
    
    public void setDataName(String dataName)
    {
@@ -38,5 +44,36 @@ public class DataImportOptions
    public String getImportLocation()
    {
       return importLocation_;
+   }
+   
+   public String getCode()
+   {
+      return code_;
+   }
+   
+   public int getMaxRows()
+   {
+      return maxRows_;
+   }
+   
+   public void setCode(String code)
+   {
+      code_ = code;
+   }
+   
+   public void setMaxRows(int maxRows)
+   {
+      maxRows_ = maxRows;
+   }
+   
+   public JSONObject toJSONObject()
+   {
+      JSONObject json = new JSONObject();
+      
+      json.put("importLocation", importLocation_ != null ? new JSONString(importLocation_) : null);
+      json.put("dataName", dataName_ != null ? new JSONString(dataName_) : null);
+      json.put("maxRows", maxRows_ > 0 ? new JSONNumber(maxRows_) : null);
+      
+      return json;
    }
 }
