@@ -131,7 +131,7 @@
   importInfo$previewCode <- paste0(
     "readr::",
     functionName,
-    "(\"",
+    "(\n  \"",
     dataImportOptions$importLocation,
     "\"",
     functionParameters,
