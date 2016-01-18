@@ -24,6 +24,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressIndicatorDelay;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
@@ -230,6 +231,7 @@ public class DataImport extends Composite
             codePreview_ = response.getImportCode();
             dataImportOptionsUi_.setAssembleResponse(response);
             codeArea_.setCode(codePreview_);
+            codeArea_.getEditor().getSession().setEditorMode(EditorLanguage.LANG_R.getParserName(), false);
          }
          
          @Override

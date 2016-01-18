@@ -5,18 +5,35 @@
 	<ui:with field="res" type="org.rstudio.core.client.theme.res.ThemeResources"/>
 	<ui:style>
 		.mainPanel {
+			display: -ms-flexbox;
+			display: -webkit-flex;
 			display: flex;
+
+			-webkit-flex-direction: column;
+			-ms-flex-direction: column;
 			flex-direction: column;
 		}
 		.optionsBlock {
 			margin-top: 3px;
 			padding-left: 7px;
+			
+			display: -ms-flexbox;
+			display: -webkit-flex;
 			display: flex;
+
+			-webkit-flex-wrap: wrap;
+			-ms-flex-wrap: wrap;
 			flex-wrap: wrap;
 		}
 		.optionsColumn {
+			display: -ms-flexbox;
+			display: -webkit-flex;
 			display: flex;
+
+			-webkit-flex-direction: column;
+			-ms-flex-direction: column;
 			flex-direction: column;
+
 			padding-right: 35px;
 			min-width: 150px;
 		}

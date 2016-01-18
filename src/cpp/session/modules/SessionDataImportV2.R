@@ -27,11 +27,13 @@
           fileComponents <- unlist(strsplit(basename, ".", fixed = TRUE))
           components <- length(fileComponents)
           if (components >= 1)
-             dataName <- paste(fileComponents[1:components-1], collapse=".")
+          {
+            dataName <- paste(fileComponents[1:components-1])
+          }
         }
       }
     }
-    
+  
   dataName
 })
 
@@ -73,7 +75,7 @@
 
   if (!is.null(dataImportOptions$locale) && dataImportOptions$locale != "")
   {
-    parameters <- paste0(parameters, spacing, "locale = \"", dataImportOptions$locale, "\"")
+    parameters <- paste0(parameters, spacing, "locale = readr::locale(date_names=\"", dataImportOptions$locale, "\")")
   }
 
   if (!is.null(dataImportOptions$na) && dataImportOptions$na != "")
@@ -107,6 +109,11 @@
   if (is.null(dataName) || dataName == "")
   {
     dataName <- "dataset"
+  }
+
+  if (!grepl("^[a-zA-Z]+[a-zA-Z0-9_]*$", dataName) || any(dataName == ls('package:base')))
+  {
+    dataName <- paste0("`", dataName, "`")
   }
 
   functionName <- list()
