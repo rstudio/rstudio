@@ -196,6 +196,7 @@ public class DataImport extends Composite
          {
             if (response.getErrorMessage() != null)
             {
+               gridViewer_.setData(null);
                progressIndicator_.onError(response.getErrorMessage());
                return;
             }
@@ -210,6 +211,7 @@ public class DataImport extends Composite
          @Override
          public void onError(ServerError error)
          {
+            gridViewer_.setData(null);
             progressIndicator_.onError(error.getMessage());
          }
       });

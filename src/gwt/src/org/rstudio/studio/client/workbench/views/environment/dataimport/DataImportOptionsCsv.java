@@ -111,7 +111,7 @@ public class DataImportOptionsCsv extends DataImportOptions
       json.put("locale", locale_ != null ? new JSONString(locale_) : null);
       json.put("na", na_ != null ? new JSONString(na_) : null);
       json.put("comments", comments_ != null ? new JSONString(comments_) : null);
-      json.put("skip", comments_ != null ? new JSONNumber(skip_) : null);
+      json.put("skip", new JSONNumber(skip_));
       
       return json;
    }
