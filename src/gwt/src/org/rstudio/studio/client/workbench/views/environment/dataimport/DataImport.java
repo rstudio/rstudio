@@ -130,6 +130,7 @@ public class DataImport extends Composite
          @Override
          public void execute()
          {
+            dataImportOptionsUi_.clearDataName();
             previewDataImport();
          }
       }, null);

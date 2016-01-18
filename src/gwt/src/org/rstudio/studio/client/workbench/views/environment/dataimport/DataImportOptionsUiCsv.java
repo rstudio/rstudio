@@ -75,6 +75,12 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       nameTextBox_.setText(response.getDataName());
    }
    
+   @Override
+   public void clearDataName()
+   {
+      nameTextBox_.setText("");
+   }
+   
    void initDefaults()
    {
       skipTextBox_.setText("0");

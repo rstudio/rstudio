@@ -38,4 +38,9 @@ public class DataImportOptionsUi extends Composite implements HasValueChangeHand
    {
       
    }
+   
+   public void clearDataName()
+   {
+      
+   }
 }
