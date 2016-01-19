@@ -4432,10 +4432,14 @@ public class RemoteServer implements Server
 
    @Override
    public void previewDataImport(DataImportOptions dataImportOptions,
+                                 int maxCols,
+                                 int maxFactors,
                                  ServerRequestCallback<DataImportPreviewResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, dataImportOptions.toJSONObject());
+      params.set(1, new JSONNumber(maxCols));
+      params.set(2, new JSONNumber(maxFactors));
       sendRequest(RPC_SCOPE, PREVIEW_DATA_IMPORT, params, requestCallback);
    }
    

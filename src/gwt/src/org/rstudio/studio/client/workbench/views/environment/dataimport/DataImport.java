@@ -57,7 +57,10 @@ public class DataImport extends Composite
    private DataImportServerOperations server_;
    private GlobalDisplay globalDisplay_;
    
-   private final int maxRows_ = 200;
+   private final int maxRows_ = 100;
+   private final int maxCols_ = 10000;
+   private final int maxFactors_ = 64;
+   
    private ProgressIndicatorDelay progressIndicator_;
    private DataImportOptionsUi dataImportOptionsUi_;
    private DataImportResources dataImportResources_;
@@ -189,7 +192,7 @@ public class DataImport extends Composite
       previewImportOptions.setMaxRows(maxRows_);
       
       progressIndicator_.onProgress("Retrieving preview data");
-      server_.previewDataImport(previewImportOptions, new ServerRequestCallback<DataImportPreviewResponse>()
+      server_.previewDataImport(previewImportOptions, maxCols_, maxFactors_, new ServerRequestCallback<DataImportPreviewResponse>()
       {
          @Override
          public void onResponseReceived(DataImportPreviewResponse response)

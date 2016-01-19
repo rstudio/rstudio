@@ -21,6 +21,8 @@ import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImpo
 public interface DataImportServerOperations
 {
    void previewDataImport(DataImportOptions dataImportOptions,
+                          int maxCols,
+                          int maxFactors,
                           ServerRequestCallback<DataImportPreviewResponse> requestCallback);
    
    void assembleDataImport(DataImportOptions dataImportOptions,
