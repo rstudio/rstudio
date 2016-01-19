@@ -57,8 +57,8 @@ public class DataImport extends Composite
    private DataImportServerOperations server_;
    private GlobalDisplay globalDisplay_;
    
-   private final int maxRows_ = 100;
-   private final int maxCols_ = 10000;
+   private final int maxRows_ = 50;
+   private final int maxCols_ = 5000;
    private final int maxFactors_ = 64;
    
    private ProgressIndicatorDelay progressIndicator_;
@@ -206,6 +206,8 @@ public class DataImport extends Composite
             
             gridViewer_.setOption("nullsAsNAs", "true");
             gridViewer_.setOption("status", "Previewing first " + toLocaleString(maxRows_) + " entries");
+            gridViewer_.setOption("ordering", "false");
+            
             gridViewer_.setData(response);
             
             progressIndicator_.onCompleted();

@@ -44,6 +44,9 @@ var displayNullsAsNAs = false;
 // status text (replaces "Showing x of y...")
 var statusTextOverride = null;
 
+// enables ordering in the table
+var ordering = true;
+
 var isHeaderWidthMismatched = function() {
   // find the elements to measure (they may not exist)
   var rs = document.getElementById("rsGridData");
@@ -780,7 +783,8 @@ var initDataTable = function(resCols, data) {
     "columns": dataTableColumns,
     "fnInfoCallback": !statusTextOverride ? null : function(oSettings, iStart, iEnd, iMax, iTotal, sPre) {
       return statusTextOverride;
-    }
+    },
+    "ordering": ordering
   });
 
   initDataTableLoad();
@@ -1005,6 +1009,9 @@ window.setOption = function(option, value) {
       break;
     case "status":
       statusTextOverride = value;
+      break;
+    case "ordering":
+      ordering = value === "true" ? true : false;
       break;
   }
 }
