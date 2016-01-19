@@ -86,6 +86,7 @@
 * Attempt to close application window when quitting
 * Track installed client version using git commit hash rather than timestamp
 * Detect minimum user id from /etc/login.defs (can also be specified via option)
+* Save user-specific .RData and .Rhistory if .Ruserdata directory exists
 * Server Pro: Shared Projects (including concurrent multi-user editing)
 * Server Pro: Support for multiple concurrent R sessions per-user
 * Server Pro: Support for running against multiple versions of R

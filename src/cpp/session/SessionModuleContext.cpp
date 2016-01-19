@@ -1440,6 +1440,7 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
        ext == ".rbuildignore" ||
        ext == ".rdata"    ||
        ext == ".rhistory" ||
+       ext == ".ruserdata" ||
        ext == ".renviron" ||
        ext == ".httr-oauth" ||
        ext == ".gitignore")

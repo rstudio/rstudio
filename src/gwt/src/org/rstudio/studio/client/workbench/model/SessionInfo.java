@@ -248,6 +248,10 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean isProjectOwner() /*-{
       return !!this.project_owned_by_user;
    }-*/;
+   
+   public final native String getProjectUserDataDir() /*-{
+      return this.project_user_data_directory;
+   }-*/;
 
    public final native JsArray<ConsoleProcessInfo> getConsoleProcesses() /*-{
       return this.console_processes;
