@@ -15,65 +15,27 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
-import com.google.gwt.json.client.JSONNumber;
-import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.json.client.JSONString;
+import com.google.gwt.core.client.JavaScriptObject;
 
-public class DataImportOptions
+public class DataImportOptions extends JavaScriptObject
 {
-   private String dataName_;
-   private String importLocation_;
-   private String code_;
-   private int maxRows_;
-   
-   public void setDataName(String dataName)
+   protected DataImportOptions()
    {
-      dataName_ = dataName;
    }
    
-   public String getDataName()
-   {
-      return dataName_;
-   }
+   public final static native DataImportOptionsCsv create() /*-{
+      return {};
+   }-*/;
    
-   public void setImportLocation(String importLocation)
-   {
-      importLocation_ = importLocation;
-   }
+   public final native void setDataName(String dataName) /*-{
+      this.dataName = dataName;
+   }-*/;
    
-   public String getImportLocation()
-   {
-      return importLocation_;
-   }
+   public final native void setImportLocation(String importLocation) /*-{
+      this.importLocation = importLocation;
+   }-*/;
    
-   public String getCode()
-   {
-      return code_;
-   }
-   
-   public int getMaxRows()
-   {
-      return maxRows_;
-   }
-   
-   public void setCode(String code)
-   {
-      code_ = code;
-   }
-   
-   public void setMaxRows(int maxRows)
-   {
-      maxRows_ = maxRows;
-   }
-   
-   public JSONObject toJSONObject()
-   {
-      JSONObject json = new JSONObject();
-      
-      json.put("importLocation", importLocation_ != null ? new JSONString(importLocation_) : null);
-      json.put("dataName", dataName_ != null ? new JSONString(dataName_) : null);
-      json.put("maxRows", maxRows_ > 0 ? new JSONNumber(maxRows_) : null);
-      
-      return json;
-   }
+   public final native void setMaxRows(int maxRows) /*-{
+      this.maxRows = maxRows > 0 ? maxRows : null;
+   }-*/;
 }

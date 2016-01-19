@@ -26,7 +26,7 @@ public class DataImportOptionsUi extends Composite implements HasValueChangeHand
 {
    public DataImportOptions getOptions()
    {
-      return new DataImportOptions();
+      return DataImportOptions.create();
    }
 
    public HandlerRegistration addValueChangeHandler(ValueChangeHandler<DataImportOptions> handler)

@@ -56,16 +56,16 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    @Override
    public DataImportOptionsCsv getOptions()
    {
-      return new DataImportOptionsCsv(nameTextBox_.getValue(),
-            delimiterListBox_.getSelectedValue().charAt(0),
-            quotesListBox_.getSelectedValue(),
+      return DataImportOptionsCsv.create(nameTextBox_.getValue(),
+            delimiterListBox_.getSelectedValue(),
+            !quotesListBox_.getSelectedValue().isEmpty() ? quotesListBox_.getSelectedValue() : null,
             escapeBackslashCheckBox_.getValue(),
             escapeDoubleCheckBox_.getValue(),
             columnNamesCheckBox_.getValue(),
             trimSpacesCheckBox_.getValue(),
-            localeListBox_.getSelectedValue(),
-            naListBox_.getSelectedValue(),
-            commentListBox_.getSelectedValue(),
+            !localeListBox_.getSelectedValue().isEmpty() ? localeListBox_.getSelectedValue() : null,
+            !naListBox_.getSelectedValue().isEmpty() ? naListBox_.getSelectedValue() : null,
+            !commentListBox_.getSelectedValue().isEmpty() ? commentListBox_.getSelectedValue() : null,
             Integer.parseInt(skipTextBox_.getText()));
    }
    
@@ -87,6 +87,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       
       columnNamesCheckBox_.setValue(true);
       escapeDoubleCheckBox_.setValue(true);
+      trimSpacesCheckBox_.setValue(true);
       
       delimiterListBox_.addItem("Comma", ",");
       delimiterListBox_.addItem("Semicolon", ";");

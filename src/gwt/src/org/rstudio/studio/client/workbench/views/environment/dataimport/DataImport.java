@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.FileOrUrlChooserTextBox;
 import org.rstudio.core.client.widget.GridViewerFrame;
 import org.rstudio.core.client.widget.Operation;
@@ -150,7 +151,7 @@ public class DataImport extends Composite
          @Override
          public void onClick(ClickEvent arg0)
          {
-            copyCodeToClipboard(codePreview_);
+            DomUtils.copyCodeToClipboard(codePreview_);
          }
       });
    }
@@ -173,7 +174,10 @@ public class DataImport extends Composite
    public DataImportOptions getOptions()
    {
       DataImportOptions options = dataImportOptionsUi_.getOptions();
-      options.setImportLocation(fileOrUrlChooserTextBox_.getText());
+      options.setImportLocation(
+            !fileOrUrlChooserTextBox_.getText().isEmpty() ?
+            fileOrUrlChooserTextBox_.getText() :
+            null);
       
       return options;
    }
@@ -251,17 +255,5 @@ public class DataImport extends Composite
    
    private final native String toLocaleString(int number) /*-{
       return number.toLocaleString ? number.toLocaleString() : number;
-   }-*/;
-   
-   private final native void copyCodeToClipboard(String text) /*-{
-      var copyDiv = document.createElement('div');
-      copyDiv.contentEditable = true;
-      document.body.appendChild(copyDiv);
-      copyDiv.innerHTML = text;
-      copyDiv.unselectable = "off";
-      copyDiv.focus();
-      document.execCommand('SelectAll');
-      document.execCommand("Copy", false, null);
-      document.body.removeChild(copyDiv);
    }-*/;
 }

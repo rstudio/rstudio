@@ -18,13 +18,10 @@ package org.rstudio.core.client.widget;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Focusable;
 
@@ -32,7 +29,7 @@ public class FileOrUrlChooserTextBox extends TextBoxWithButton
 {
    private static String browseModeCaption_ = "Browse...";
    private static String updateModeCaption_ = "Update";
-   private Boolean updateMode_ = false;
+   private boolean updateMode_ = false;
    private String lastTextBoxValue_;
    private int checkTextBoxInterval_ = 250;
    private final Operation updateOperation_;

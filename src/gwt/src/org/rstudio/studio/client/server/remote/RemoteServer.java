@@ -4437,7 +4437,7 @@ public class RemoteServer implements Server
                                  ServerRequestCallback<DataImportPreviewResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, dataImportOptions.toJSONObject());
+      params.set(0, new JSONObject(dataImportOptions));
       params.set(1, new JSONNumber(maxCols));
       params.set(2, new JSONNumber(maxFactors));
       sendRequest(RPC_SCOPE, PREVIEW_DATA_IMPORT, params, requestCallback);
@@ -4448,7 +4448,7 @@ public class RemoteServer implements Server
                                   ServerRequestCallback<DataImportAssembleResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, dataImportOptions.toJSONObject());
+      params.set(0, new JSONObject(dataImportOptions));
       sendRequest(RPC_SCOPE, ASSEMBLE_DATA_IMPORT, params, requestCallback);
    }
 

@@ -17,18 +17,18 @@
 {
   dataName <- dataImportOptions$dataName
 
-  if (is.null(dataName) || dataName == "")
+  if (is.null(dataName) || identical(dataName, ""))
     {
-      if (!is.null(dataImportOptions$importLocation) && dataImportOptions$importLocation != "")
+      if (!is.null(dataImportOptions$importLocation))
       {
-        basename <- basename(dataImportOptions$importLocation)
-        if (length(basename) > 0)
+        locationName <- basename(dataImportOptions$importLocation)
+        if (length(locationName) > 0)
         {
-          fileComponents <- unlist(strsplit(basename, ".", fixed = TRUE))
+          fileComponents <- unlist(strsplit(locationName, ".", fixed = TRUE))
           components <- length(fileComponents)
           if (components >= 1)
           {
-            dataName <- paste(fileComponents[1:components-1])
+            dataName <- paste(fileComponents[1:components-1], collapse = "_")
           }
         }
       }
@@ -37,68 +37,61 @@
   dataName
 })
 
-.rs.addFunction("assemble_data_import_parameters_csv", function(dataImportOptions)
-{
-  parameters <- ""
+.rs.addFunction("assemble_data_import_parameters", function(options, optionTypes, importFunction)
+{ 
+  buildParameter <- function(optionType, optionValue)
+  {
+    if (identical(optionType, NULL)) {
+      return (optionValue)
+    }
+
+    switch(optionType,
+      "character" = {
+        return (paste("\"", optionValue, "\"", sep = ""))
+      },
+      "locale" = {
+        return (paste("readr::locale(date_names=\"", optionValue, "\")", sep = ""))
+      }, {
+        return (optionValue)
+      })
+  }
+
+  # load function definition
+  parameterDefinitions <- formals(importFunction)
+  parameterNames <- names(parameterDefinitions)
+
+  # remove unused parameters
+  options <- Filter(Negate(function(x) is.null(unlist(x))), options)
+
+  # remove default and unused parameters
+  optionsNoDefaults <- list()
+  for (optionName in parameterNames) {
+    if (!identical(NULL, options[[optionName]]) &&
+        !identical(NULL, parameterDefinitions[[optionName]]) &&
+        options[[optionName]] != parameterDefinitions[[optionName]]) {
+      optionsNoDefaults[[optionName]] <- options[[optionName]]
+    }
+  }
+
+  # build parameter string
+  parameters <- list()
+  for (parameterName in parameterNames) {
+    if (identical("symbol", typeof(parameterDefinitions[[parameterName]]))) {
+      if (identical(NULL, optionsNoDefaults[[parameterName]])) {
+        parameters[[parameterName]] <- "NULL"
+      } else {
+        parameters[[parameterName]] <- buildParameter(optionTypes[[parameterName]], optionsNoDefaults[[parameterName]])
+      }
+    } else if (!identical(NULL, optionsNoDefaults[[parameterName]])) {
+      parameters[[parameterName]] <- paste(
+        parameterName,
+        buildParameter(optionTypes[[parameterName]], optionsNoDefaults[[parameterName]]),
+        sep = " = ")
+    }
+  }
+
   spacing <- ",\n  "
-  useCsv <- (!is.null(dataImportOptions$delimiter) && dataImportOptions$delimiter == ",")
-
-  if (!is.null(dataImportOptions$delimiter) && dataImportOptions$delimiter != ",")
-  {
-    parameters <- paste0(parameters, spacing, "delim = \"", dataImportOptions$delimiter, "\"")
-  }
-
-  if (!is.null(dataImportOptions$quotes) && dataImportOptions$quotes != "" && !useCsv)
-  {
-    parameters <- paste0(parameters, spacing, "quote = \"", dataImportOptions$quotes, "\"")
-  }
-
-  if (!is.null(dataImportOptions$escapeBackslash) && !useCsv)
-  {
-    parameters <- paste0(parameters, spacing, "escape_backslash = ", dataImportOptions$escapeBackslash)
-  }
-
-  if (!is.null(dataImportOptions$escapeDouble) && !useCsv)
-  {
-    parameters <- paste0(parameters, spacing, "escape_double = ", dataImportOptions$escapeDouble)
-  }
-
-  if (!is.null(dataImportOptions$columnNames))
-  {
-    parameters <- paste0(parameters, spacing, "col_names = ", dataImportOptions$columnNames)
-  }
-
-  if (!is.null(dataImportOptions$trimSpaces) && useCsv)
-  {
-    parameters <- paste0(parameters, spacing, "trim_ws = ", dataImportOptions$trimSpaces)
-  }
-
-  if (!is.null(dataImportOptions$locale) && dataImportOptions$locale != "")
-  {
-    parameters <- paste0(parameters, spacing, "locale = readr::locale(date_names=\"", dataImportOptions$locale, "\")")
-  }
-
-  if (!is.null(dataImportOptions$na) && dataImportOptions$na != "")
-  {
-    parameters <- paste0(parameters, spacing, "na = \"", dataImportOptions$na, "\"")
-  }
-
-  if (!is.null(dataImportOptions$comments) && dataImportOptions$comments != "")
-  {
-    parameters <- paste0(parameters, spacing, "comments = \"", dataImportOptions$comments, "\"")
-  }
-
-  if (!is.null(dataImportOptions$skip))
-  {
-    parameters <- paste0(parameters, spacing, "skip = ", dataImportOptions$skip)
-  }
-
-  if (!is.null(dataImportOptions$maxRows))
-  {
-    parameters <- paste0(parameters, spacing, "n_max = ", dataImportOptions$maxRows)
-  }
-
-  parameters
+  paste(parameters, collapse = spacing)
 })
 
 .rs.addFunction("assemble_data_import", function(dataImportOptions)
@@ -106,38 +99,63 @@
   importInfo <- list()
 
   dataName <- importInfo$dataName <- .rs.assemble_data_import_name(dataImportOptions)
-  if (is.null(dataName) || dataName == "")
+  if (is.null(dataName) || identical(dataName, ""))
   {
     dataName <- "dataset"
   }
 
   if (!grepl("^[a-zA-Z]+[a-zA-Z0-9_]*$", dataName) || any(dataName == ls('package:base')))
   {
-    dataName <- paste0("`", dataName, "`")
+    dataName <- paste("`", dataName, "`", sep = "")
   }
 
   functionName <- list()
-  if (is.null(dataImportOptions$delimiter) || dataImportOptions$delimiter == ",")
+  functionReference <- readr::read_delim
+  if (is.null(dataImportOptions$delimiter) || identical(dataImportOptions$delimiter, ","))
   {
     functionName <- "read_csv"
+    functionReference <- readr::read_csv
   }
   else
   {
     functionName <- "read_delim"
   }
 
-  functionParameters <- .rs.assemble_data_import_parameters_csv(dataImportOptions)
+  # load parameters
+  options <- list()
+  options[["file"]] <- dataImportOptions$importLocation
+  options[["delim"]] <- dataImportOptions$delimiter
+  options[["quote"]] <- dataImportOptions$quotes
+  options[["escape_backslash"]] <- dataImportOptions$escapeBackslash
+  options[["escape_double"]] <- dataImportOptions$escapeDouble
+  options[["col_names"]] <- dataImportOptions$columnNames
+  options[["trim_ws"]] <- dataImportOptions$trimSpaces
+  options[["locale"]] <- dataImportOptions$locale
+  options[["na"]] <- dataImportOptions$na
+  options[["comment"]] <- dataImportOptions$comments
+  options[["skip"]] <- dataImportOptions$skip
+  options[["n_max"]] <- dataImportOptions$maxRows
 
-  importInfo$previewCode <- paste0(
+  # set special parameter types
+  optionTypes <- list()
+  optionTypes[["file"]] <- "character"
+  optionTypes[["delim"]] <- "character"
+  optionTypes[["quote"]] <- "character"
+  optionTypes[["locale"]] <- "locale"
+  optionTypes[["na"]] <- "character"
+  optionTypes[["comment"]] <- "character"
+
+  functionParameters <- .rs.assemble_data_import_parameters(options, optionTypes, functionReference)
+
+  importInfo$previewCode <- paste(
     "readr::",
     functionName,
-    "(\n  \"",
-    dataImportOptions$importLocation,
-    "\"",
+    "(",
     functionParameters,
-    ")")
+    ")",
+    sep = "")
 
-  importInfo$importCode <- paste0(dataName, " <- ", importInfo$previewCode, "\n", "View(", dataName, ")")
+  importInfo$importCode <- paste(dataName, " <- ", importInfo$previewCode, "\n", "View(", dataName, ")", sep = "")
 
   importInfo
 })
@@ -162,8 +180,8 @@
     cnames <- names(data)
     size <- nrow(data)
 
-    for(cname in cnames) {
-      data[[cname]] <- .rs.formatDataColumn(data[[cname]], 1, size)
+    for(i in 1:ncol(data)) {
+      data[[i]] <- .rs.formatDataColumn(data[[i]], 1, size)
     }
 
     return(list(data = data,
