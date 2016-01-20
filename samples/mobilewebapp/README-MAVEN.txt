@@ -52,17 +52,20 @@ If you prefer to work from the command line, you can use Maven to
 build your project (http://maven.apache.org/). You will also need Java
 1.6 JDK. Maven uses the supplied 'pom.xml' file which describes
 exactly how to build your project. This file has been tested to work
-against Maven 2.2.1. The following assumes 'mvn' is on your command
+against Maven 3.3.1. The following assumes 'mvn' is on your command
 line path. Also, see note below if you have gae.home set in settings.xml.
 
-To run development mode use the Maven GWT Plugin.
+To run development mode use the Maven Plugin for AppEngine and Maven
+Plugin for GWT.
 
-  mvn gwt:run
+  mvn appengine:devserver_start
+  mvn gwt:codeserver
+  mvn appengine:devserver_stop
 
 To compile your project for deployment, just type 'mvn package'.
 
 For a full listing of other goals, visit:
-http://mojo.codehaus.org/gwt-maven-plugin/plugin-info.html
+https://tbroyer.github.io/gwt-maven-plugin/plugin-info.html
 
 -- Important Note:
 

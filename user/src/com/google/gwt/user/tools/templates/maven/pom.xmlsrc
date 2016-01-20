@@ -11,8 +11,6 @@
   <name>@moduleName</name>
   
   <properties>
-    <!-- Convenience property to set the GWT version -->
-    <gwtVersion>@gwtVersion</gwtVersion>
     <!-- Note: GWT needs at least java 1.7 -->
     <maven.compiler.source>1.7</maven.compiler.source>
     <maven.compiler.target>1.7</maven.compiler.target>
@@ -28,7 +26,7 @@
       <dependency>
         <groupId>com.google.gwt</groupId>
         <artifactId>gwt</artifactId>
-        <version>${gwtVersion}</version>
+        <version>@gwtVersion</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -67,37 +65,36 @@
       
       <!-- GWT Maven Plugin-->
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
+        <groupId>net.ltgt.gwt.maven</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
-        <version>${gwtVersion}</version>
+        <version>1.0-rc-6</version>
         <executions>
           <execution>
             <goals>
+              <goal>import-sources</goal>
               <goal>compile</goal>
-            </goals>
-          </execution>
-          <execution>
-            <!-- Run tests through gwt:test, this allows reusing the plugin configuration for GWTTestCases -->
-            <id>gwt-tests</id>
-            <phase>test</phase>
-            <goals>
+              <goal>import-test-sources</goal>
               <goal>test</goal>
             </goals>
           </execution>
         </executions>
-        <!-- Plugin configuration. There are many available options, 
-             see gwt-maven-plugin documentation at codehaus.org --> 
         <configuration>
-          <modules>
-            <module>@moduleName</module>
-          </modules>
-          <!-- URL that should be opened by DevMode (gwt:run). -->
-          <runTarget>@moduleShortName.html</runTarget>
-          <!-- Ask GWT to create the Story of Your Compile (SOYC) (gwt:compile) -->
-          <compileReport>true</compileReport>
-          <compilerMetrics>true</compilerMetrics>
-          <!-- Run tests using HtmlUnit -->
-          <mode>htmlunit</mode>
+          <moduleName>@moduleName</moduleName>
+          <moduleShortName>@moduleShortName</moduleShortName>
+          <failOnError>true</failOnError>
+          <!-- Compiler configuration -->
+          <compilerArgs>
+            <!-- Ask GWT to create the Story of Your Compile (SOYC) (gwt:compile) -->
+            <arg>-compileReport</arg>
+            <arg>-XcompilerMetrics</arg>
+          </compilerArgs>
+          <!-- DevMode configuration -->
+          <warDir>${project.build.directory}/${project.build.finalName}</warDir>
+          <classpathScope>compile+runtime</classpathScope>
+          <!-- URL(s) that should be opened by DevMode (gwt:devmode). -->
+          <startupUrls>
+            <startupUrl>@moduleShortName.html</startupUrl>
+          </startupUrls>
         </configuration>
       </plugin>
 
