@@ -21,9 +21,9 @@
 			display: -webkit-flex;
 			display: flex;
 
-			-webkit-flex-wrap: wrap;
-			-ms-flex-wrap: wrap;
-			flex-wrap: wrap;
+			-webkit-flex-direction: row;
+			-ms-flex-direction: row;
+			flex-direction: row;
 		}
 		.optionsColumn {
 			display: -ms-flexbox;
@@ -34,14 +34,19 @@
 			-ms-flex-direction: column;
 			flex-direction: column;
 
-			padding-right: 35px;
-			min-width: 150px;
+			-ms-flex-grow: 1;
+			-webkit-flex-grow: 1;
+			flex-grow: 1;
+
+			padding-right: 5px;
 		}
 		.optionsLabel {
-			margin-top: 10px;
+			margin-top: 14px;
 		}
 		.nameTextBox {
-			width: 100px;
+			-ms-flex-grow: 1;
+			-webkit-flex-grow: 1;
+			flex-grow: 1;
 		}
 		.skipTextBox {
 			width: 50px;

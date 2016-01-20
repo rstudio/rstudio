@@ -67,7 +67,7 @@ public class DataImport extends Composite
    private DataImportResources dataImportResources_;
    private String codePreview_;
    
-   private final int minWidth = 350;
+   private final int minWidth = 680;
    private final int minHeight = 400;
    
    private final String codePreviewErrorMessage_ = "Code Creation Error";
@@ -113,7 +113,7 @@ public class DataImport extends Composite
    {
       switch (mode)
       {
-      case Csv:
+      case Text:
          return new DataImportOptionsUiCsv();
       }
       
@@ -211,6 +211,7 @@ public class DataImport extends Composite
             gridViewer_.setOption("nullsAsNAs", "true");
             gridViewer_.setOption("status", "Previewing first " + toLocaleString(maxRows_) + " entries");
             gridViewer_.setOption("ordering", "false");
+            gridViewer_.setOption("rowNumbers", "false");
             
             gridViewer_.setData(response);
             
@@ -241,8 +242,9 @@ public class DataImport extends Composite
             
             codePreview_ = response.getImportCode();
             dataImportOptionsUi_.setAssembleResponse(response);
-            codeArea_.setCode(codePreview_);
             codeArea_.getEditor().getSession().setEditorMode(EditorLanguage.LANG_R.getParserName(), false);
+            codeArea_.getEditor().getRenderer().setShowGutter(false);
+            codeArea_.setCode(codePreview_);
          }
          
          @Override

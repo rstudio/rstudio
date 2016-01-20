@@ -17,5 +17,5 @@ package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
 public enum DataImportModes
 {
-   Csv,
+   Text,
 }

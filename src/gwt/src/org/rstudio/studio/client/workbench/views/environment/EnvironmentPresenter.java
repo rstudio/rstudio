@@ -488,7 +488,7 @@ public class EnvironmentPresenter extends BasePresenter
             {
                view_.bringToFront();
                DataImportDialog dataImportDialog = new DataImportDialog(
-                     DataImportModes.Csv,
+                     DataImportModes.Text,
                      "Data Import",
                      new OperationWithInput<String>()
                {

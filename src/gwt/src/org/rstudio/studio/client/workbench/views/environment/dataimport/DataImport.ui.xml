@@ -16,7 +16,7 @@
 			flex-direction: column;
 		}
 		.importLabel {	
-			margin-top: 10px;
+			margin-top: 14px;
 		}
 		.gridViewerFrame {
 			margin-top: 3px;
@@ -32,6 +32,12 @@
 			display: -ms-flexbox;
 			display: -webkit-flex;
 			display: flex;
+
+			-ms-flex-grow: 1;
+			-webkit-flex-grow: 1;
+			flex-grow: 1;
+
+			padding-right: 10px
 		}
 		.optionsElement {
 			-ms-flex-grow: 1;
@@ -54,7 +60,7 @@
 			min-width: 300px;
 		}
 		.codeTextArea {
-			width: literal("calc(100% - 25px)");
+			width: 100%;
 			height: 110px;
 			border: 1px solid #999;
 		}
@@ -67,24 +73,18 @@
 			-webkit-flex-wrap: wrap;
 			flex-wrap: wrap;
 		}
-		.codeEditArea {
-			display: -ms-flexbox;
-			display: -webkit-flex;
-			display: flex;
-
-			-ms-flex-direction: row;
-			-webkit-flex-direction: row;
-			flex-direction: row;
-		}
 		.copyButton {
-			margin-left: 5px;
+			margin-left: auto;
+			margin-top: 9px;
 			height: 20px;
 		}
 		.copyButton:active {
-			margin-top: 2px;
+			top-margin: 11px;
 		}
-		.copyButtonNoOutline {
-			outline: none;
+		.headWithButton {
+			display: -ms-flexbox;
+			display: -webkit-flex;
+			display: flex;
 		}
 	</ui:style>
 	<g:HTMLPanel styleName="{style.flexPanel}">
@@ -96,13 +96,13 @@
 				<g:HTMLPanel ui:field="optionsHost_" styleName="{style.optionsElement}"/>	
 			</g:HTMLPanel>
 			<g:HTMLPanel styleName="{style.codePanel}">
-				<g:Label text="Code Preview:" styleName="{style.importLabel}"/>
-				<div class="{style.codeEditArea}">
-					<div class="{style.codeTextArea}">
-						<rsace:AceEditorWidget ui:field="codeArea_"/>
-					</div>
-					<g:PushButton ui:field="copyButton_" styleName="{style.copyButton}">
+			    <div class="{style.headWithButton}">
+			        <g:Label text="Code Preview:" styleName="{style.importLabel}"/>
+			        <g:PushButton ui:field="copyButton_" styleName="{style.copyButton}">
 					</g:PushButton>
+			    </div>
+				<div class="{style.codeTextArea}">
+					<rsace:AceEditorWidget ui:field="codeArea_"/>
 				</div>
 			</g:HTMLPanel>
 		</div>
