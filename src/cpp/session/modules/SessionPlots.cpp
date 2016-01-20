@@ -745,7 +745,7 @@ void onDetectChanges(module_context::ChangeSource source)
    detectChanges(activatePlots);
 }
 
-void onBackgroundProcessing(bool)
+void onBackgroundProcessing(bool isIdle)
 {
    using namespace rstudio::r::session;
    if (graphics::display().isActiveDevice() && graphics::display().hasChanges())
@@ -761,7 +761,7 @@ void onBackgroundProcessing(bool)
       if ((graphics::display().lastChange() + milliseconds(kChangeWindowMs)) <
            boost::posix_time::microsec_clock::universal_time())
       {
-         detectChanges(true);
+         detectChanges(isIdle); // activate plots only when idle
       }
    }
 }
