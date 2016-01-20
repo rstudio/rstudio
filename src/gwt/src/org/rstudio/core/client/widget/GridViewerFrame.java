@@ -43,11 +43,21 @@ public class GridViewerFrame extends RStudioFrame
       setOptionNative(gridViewerFrameWindow, option, value);
    }
    
+   public void setColumnTypeUIVisible(boolean value)
+   {
+      WindowEx gridViewerFrameWindow = getIFrame().getContentWindow();
+      setColumnTypeUIVisibleNative(gridViewerFrameWindow, value);
+   }
+   
    private final native void setDataNative(WindowEx frameContentWindow, JavaScriptObject data) /*-{
       frameContentWindow.setData(data);
    }-*/;
    
    private final native void setOptionNative(WindowEx frameContentWindow, String option, String value) /*-{
       frameContentWindow.setOption(option, value);
+   }-*/;
+   
+   private final native void setColumnTypeUIVisibleNative(WindowEx frameContentWindow, boolean value) /*-{
+      frameContentWindow.setColumnTypeUIVisible(value);
    }-*/;
 }

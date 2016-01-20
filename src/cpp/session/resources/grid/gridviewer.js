@@ -50,6 +50,9 @@ var ordering = true;
 // show row numbers in index column
 var rowNumbers = true;
 
+// list of calls to defer after table is init (e.g. showing headers)
+var postInitActions = {};
+
 var isHeaderWidthMismatched = function() {
   // find the elements to measure (they may not exist)
   var rs = document.getElementById("rsGridData");
@@ -240,8 +243,10 @@ var sizeDataTable = function(force) {
   }
 
   // apply new size
-  table.settings().scroller().measure(false);
-  table.draw();
+  if (table) {
+    table.settings().scroller().measure(false);
+    table.draw();
+  }
 };
 
 var debouncedDataTableSize = debounce(sizeDataTable, 75);
@@ -524,12 +529,15 @@ var invokeFilterPopup = function (ele, buildPopup, onDismiss, dismissOnClick) {
       dismissPopup(true);
     } else {
       popup = createFilterPopup();
-      buildPopup(popup);
+      var popupInfo = buildPopup(popup);
       document.body.appendChild(popup);
 
       // compute position
-      var top = $(ele).offset().top + 20;
-      var left = $(ele).offset().left - 4;
+      var top = $(ele).offset().top + (!popupInfo ? 20 : popupInfo.top)
+      var left = $(ele).offset().left + (!popupInfo ? -4 : popupInfo.left);
+      if (popupInfo && popupInfo.width) {
+        $(popup).width(popupInfo.width(ele));
+      }
 
       // ensure we're not outside the body
       if (popup.offsetWidth + left > document.body.offsetWidth) {
@@ -542,6 +550,7 @@ var invokeFilterPopup = function (ele, buildPopup, onDismiss, dismissOnClick) {
       document.body.addEventListener("keydown", checkEscDismiss);
       dismissActivePopup = dismissPopup;
     }
+
     evt.preventDefault();
     evt.stopPropagation();
   });
@@ -606,6 +615,67 @@ var createFilterUI = function(idx, col) {
       evt.stopPropagation();
     }
   });
+
+  host.appendChild(val);
+  return host;
+};
+
+var openColumnTypeChooserUI = function(idx, col, ele, onDismiss) {
+  invokeFilterPopup(ele, function(popup) {
+    var columnTypes = [
+      "logical", "integer", "double", "character", "date", "datetime", "number" 
+    ]
+
+    var typeSelect = document.createElement("div");
+    typeSelect.className = "choiceList";
+
+    columnTypes.forEach(function (e) {
+      var option = document.createElement("div");
+      option.className = "choiceListItem";
+      option.textContent = e;
+      typeSelect.appendChild(option);
+    });
+    popup.appendChild(typeSelect);
+
+    return {
+      top: 36,
+      left: -1,
+      width: function(parent) {
+        return $(parent).width() + 20;
+      }
+    };
+  }, onDismiss, false);
+};
+
+var createColumnTypesUI = function(th, idx, col) {
+  var host = document.createElement("div");
+  
+  var setUnfiltered = function() {
+
+  };
+
+  var onDismiss = function() {
+
+  };
+
+  var val = document.createElement("div");
+  val.textContent = "(" + col.col_type + ")";
+  val.className = "columnTypeHeader";
+
+  var initialColumnClick = function(evt) {
+    th.removeEventListener("click", initialColumnClick);
+
+    openColumnTypeChooserUI(idx, col, th, onDismiss);
+
+    var click = document.createEvent("MouseEvents");
+    click.initEvent("click", true, false);
+    th.dispatchEvent(click);
+    evt.preventDefault();
+    evt.stopPropagation();
+  };
+
+  th.className = th.className + " columnClickable";
+  th.addEventListener("click", initialColumnClick);
 
   host.appendChild(val);
   return host;
@@ -685,6 +755,13 @@ var initDataTableLoad = function(result) {
   window.addEventListener("resize", function() { 
     debouncedDataTableSize(); 
   });
+
+  // trigger post-init actions
+  for (actionName in postInitActions) {
+    if (postInitActions[actionName]) {
+      postInitActions[actionName]();
+    }
+  }
 }
 
 var initDataTable = function(resCols, data) {
@@ -911,15 +988,15 @@ var bootstrap = function(data) {
   }
 };
 
-// Exports -------------------------------------------------------------------
-
-// called from RStudio to toggle the filter UI 
-window.setFilterUIVisible = function(visible) {
+var setHeaderUIVisible = function(visible, initialize) {
   var thead = document.getElementById("data_cols");
 
-  // it's possible the dable is getting redrawn right now; if it is, ignore
+  // it's possible the dable is getting redrawn right now; if it is, defer
   // this request.
   if (thead === null || table === null || cols === null) {
+    postInitActions["setHeaderUIVisible"] = visible ? (function() {
+      setHeaderUIVisible(true, initialize);
+    }) : null;
     return false;
   }
 
@@ -931,22 +1008,46 @@ window.setFilterUIVisible = function(visible) {
       dismissActivePopup(true);
   }
   for (var i = 0; i < Math.min(thead.children.length, cols.length); i++) {
-    var col = cols[i];
+    var col = cols[i + (rowNumbers ? 0 : 1)];
     var th = thead.children[i];
-    if (col.col_search_type === "numeric" || 
-        col.col_search_type === "character" ||
-        col.col_search_type === "factor" ||
-        col.col_search_type === "boolean")  {
-      if (visible) {
-        var filter = createFilterUI(i, col);
-        th.appendChild(filter);
-      } else if (th.children.length > 1) {
-        th.removeChild(th.lastChild);
+    if (visible) {
+      var headerElement = initialize(th, col, i);
+      if (headerElement) {
+        th.appendChild(headerElement);
       }
+    } else if (th.children.length > 1) {
+      th.removeChild(th.lastChild);
     }
   }
   sizeDataTable(true);
   return true;
+};
+
+// Exports -------------------------------------------------------------------
+
+// called from RStudio to toggle the filter UI 
+window.setFilterUIVisible = function(visible) {
+  var setFilterUIVisiblePerColumn = function(th, col, i) {
+    if (col.col_search_type === "numeric" || 
+        col.col_search_type === "character" ||
+        col.col_search_type === "factor" ||
+        col.col_search_type === "boolean")  {
+      return createFilterUI(i, col);
+    }
+
+    return null;
+  }
+
+  return setHeaderUIVisible(visible, setFilterUIVisiblePerColumn);
+};
+
+// called from RStudio to toggle the filter UI 
+window.setColumnTypeUIVisible = function(visible) {
+  var setColumnTypeUIVisiblePerColumn = function(th, col, i) {
+    return createColumnTypesUI(th, i, col);
+  }
+
+  return setHeaderUIVisible(visible, setColumnTypeUIVisiblePerColumn);
 };
 
 // called from RStudio when the underlying object changes

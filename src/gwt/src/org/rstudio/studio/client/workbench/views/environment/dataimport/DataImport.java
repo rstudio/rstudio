@@ -214,6 +214,7 @@ public class DataImport extends Composite
             gridViewer_.setOption("rowNumbers", "false");
             
             gridViewer_.setData(response);
+            gridViewer_.setColumnTypeUIVisible(true);
             
             progressIndicator_.onCompleted();
          }
