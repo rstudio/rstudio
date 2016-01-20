@@ -690,6 +690,17 @@ public class Application implements ApplicationEventHandlers
       if (!sessionInfo.getKnitParamsAvailable())
          commands_.knitWithParameters().remove();
          
+      // show the correct set of data import commands
+      if (uiPrefs_.get().useDataImport().getValue())
+      {
+         commands_.importDatasetFromFile().remove();
+         commands_.importDatasetFromURL().remove();
+      }
+      else
+      {
+         commands_.importDatasetFromCSV().remove();
+      }
+      
       // show workbench
       view_.showWorkbenchView(wb.getMainView().asWidget());
       

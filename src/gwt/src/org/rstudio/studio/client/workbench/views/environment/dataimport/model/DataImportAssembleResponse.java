@@ -1,5 +1,5 @@
 /*
- * DataImportOptions.java
+ * DataImportAssembleResponse.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -13,29 +13,29 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.environment.dataimport;
+package org.rstudio.studio.client.workbench.views.environment.dataimport.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class DataImportOptions extends JavaScriptObject
+public class DataImportAssembleResponse extends JavaScriptObject
 {
-   protected DataImportOptions()
+   protected DataImportAssembleResponse()
    {
    }
    
-   public final static native DataImportOptionsCsv create() /*-{
-      return {};
+   public final native String getErrorMessage() /*-{
+      return this.error ? this.error.message.join(' ') : null;
    }-*/;
    
-   public final native void setDataName(String dataName) /*-{
-      this.dataName = dataName;
+   public final native String getPreviewCode() /*-{
+      return this.previewCode ? this.previewCode.join(' ') : null;
    }-*/;
    
-   public final native void setImportLocation(String importLocation) /*-{
-      this.importLocation = importLocation;
+   public final native String getImportCode() /*-{
+      return this.importCode ? this.importCode.join(' ') : null;
    }-*/;
    
-   public final native void setMaxRows(int maxRows) /*-{
-      this.maxRows = maxRows > 0 ? maxRows : null;
+   public final native String getDataName() /*-{
+      return this.dataName ? this.dataName.join(' ') : null;
    }-*/;
 }

@@ -44,6 +44,12 @@ var displayNullsAsNAs = false;
 // status text (replaces "Showing x of y...")
 var statusTextOverride = null;
 
+// enables ordering in the table
+var ordering = true;
+
+// show row numbers in index column
+var rowNumbers = true;
+
 var isHeaderWidthMismatched = function() {
   // find the elements to measure (they may not exist)
   var rs = document.getElementById("rsGridData");
@@ -625,6 +631,10 @@ var createHeader = function(idx, col) {
     th.title += " with " + col.col_vals.length + " levels";
   }
 
+  if (idx === 0) {
+    th.className = "first-child"
+  }
+
   // add the column label, if it has one
   if (col.col_label && col.col_label.length > 0) {
     var label = document.createElement("div");
@@ -744,12 +754,19 @@ var initDataTable = function(resCols, data) {
       }, {
         "targets": "_all",
         "width": "4em"
-    }];
+      }, {
+        "targets": 0,
+        "sClass": "first-child",
+        "width": "4em",
+        "orderable": false
+      }];
   }
   else {
     dataTableData = data;
     dataTableColumns = cols.map(function (e, idx) {
       return {
+        "sClass": (rowNumbers && idx === 0) ? "first-child" : null,
+        "visible": (!rowNumbers && idx === 0) ? false : true,
         "data": e.col_name,
         "width": "4em",
         "render": e.col_type === "numeric" ? renderNumberCell : renderTextCell
@@ -780,7 +797,8 @@ var initDataTable = function(resCols, data) {
     "columns": dataTableColumns,
     "fnInfoCallback": !statusTextOverride ? null : function(oSettings, iStart, iEnd, iMax, iTotal, sPre) {
       return statusTextOverride;
-    }
+    },
+    "ordering": ordering
   });
 
   initDataTableLoad();
@@ -868,7 +886,9 @@ var bootstrap = function(data) {
       $(document).ready(function() {
         document.body.appendChild(newEle);
         runAfterSizing(function() {
-          initDataTable($.parseJSON(result));
+          if (result) {
+            initDataTable($.parseJSON(result));
+          }
         });
       });
     });
@@ -1003,6 +1023,12 @@ window.setOption = function(option, value) {
       break;
     case "status":
       statusTextOverride = value;
+      break;
+    case "ordering":
+      ordering = value === "true" ? true : false;
+      break;
+    case "rowNumbers":
+      rowNumbers = value === "true" ? true : false;
       break;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * DataImportOptions.java
+ * DataImportModes.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -15,27 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
-import com.google.gwt.core.client.JavaScriptObject;
-
-public class DataImportOptions extends JavaScriptObject
+public enum DataImportModes
 {
-   protected DataImportOptions()
-   {
-   }
-   
-   public final static native DataImportOptionsCsv create() /*-{
-      return {};
-   }-*/;
-   
-   public final native void setDataName(String dataName) /*-{
-      this.dataName = dataName;
-   }-*/;
-   
-   public final native void setImportLocation(String importLocation) /*-{
-      this.importLocation = importLocation;
-   }-*/;
-   
-   public final native void setMaxRows(int maxRows) /*-{
-      this.maxRows = maxRows > 0 ? maxRows : null;
-   }-*/;
+   Text,
 }

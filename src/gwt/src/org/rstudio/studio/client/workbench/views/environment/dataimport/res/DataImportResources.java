@@ -1,5 +1,5 @@
 /*
- * DataImportScript.java
+ * DataImportResources.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -13,25 +13,16 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.environment.dataimport;
+package org.rstudio.studio.client.workbench.views.environment.dataimport.res;
 
-import org.rstudio.core.client.StringUtil;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 
-public class DataImportScript
+public interface DataImportResources extends ClientBundle
 {
-   public DataImportScript()
-   {
-      
-   }
+   public static final DataImportResources INSTANCE = GWT.create(DataImportResources.class);
    
-   public String getImportScript(DataImportOptions options)
-   {
-      String var = StringUtil.toRSymbolName(options.getDataName());
-      String code =
-            var +
-            " <- readr::read_csv(\"" + options.getImportLocation() + "\")" + "\n" +
-            "View(" + var + ")";
-      
-      return code;
-   }
+   @Source("copyCodeToClipboard.png")
+   ImageResource copyImage();
 }

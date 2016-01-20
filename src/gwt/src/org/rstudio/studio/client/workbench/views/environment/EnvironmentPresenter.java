@@ -66,8 +66,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportDialog;
-import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
-import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportScript;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportModes;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettings;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialogResult;
@@ -489,15 +488,14 @@ public class EnvironmentPresenter extends BasePresenter
             {
                view_.bringToFront();
                DataImportDialog dataImportDialog = new DataImportDialog(
+                     DataImportModes.Text,
                      "Data Import",
-                     new OperationWithInput<DataImportOptions>()
+                     new OperationWithInput<String>()
                {
                   @Override
-                  public void execute(final DataImportOptions options)
+                  public void execute(final String importCode)
                   {
-                     final DataImportScript dataImportScript = new DataImportScript();
-                     String code = dataImportScript.getImportScript(options);
-                     eventBus_.fireEvent(new SendToConsoleEvent(code, true, true)); 
+                     eventBus_.fireEvent(new SendToConsoleEvent(importCode, true, true)); 
                   }
                });
                

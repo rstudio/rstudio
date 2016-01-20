@@ -15,7 +15,6 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -156,6 +155,11 @@ public class TextBoxWithButton extends Composite
    protected TextBox getTextBox()
    {
       return textBox_;
+   }
+   
+   protected ThemedButton getButton()
+   {
+      return themedButton_;
    }
    
    @Override
