@@ -221,6 +221,7 @@ public class ArrayNormalizer {
       // There is no need to check as the static check already proved the cast is correct.
       return null;
     }
+    // TODO(rluble): native[] setCheck can also be omitted.
     return arrayRef;
   }
 

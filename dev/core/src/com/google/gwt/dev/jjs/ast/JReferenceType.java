@@ -120,10 +120,26 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
   private transient AnalysisDecoratedTypePool analysisDecoratedTypePool = null;
 
   enum AnalysisResult {
-    NULLABLE_NOT_EXACT,
-    NOT_NULLABLE_NOT_EXACT,
-    NULLABLE_EXACT,
-    NOT_NULLABLE_EXACT;
+    NULLABLE_NOT_EXACT(true, false),
+    NOT_NULLABLE_NOT_EXACT(false, false),
+    NULLABLE_EXACT(true, true),
+    NOT_NULLABLE_EXACT(false, true);
+
+    private final boolean isNullable;
+    private final boolean isExact;
+
+    AnalysisResult(boolean isNullable, boolean isExact) {
+      this.isNullable = isNullable;
+      this.isExact = isExact;
+    }
+
+    private boolean isNullable() {
+      return isNullable;
+    }
+
+    private boolean isExact() {
+      return isExact;
+    }
   }
   /**
    * A reference type decorated with the result of static analysis. Only two analysis properties
@@ -278,16 +294,15 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
 
   @Override
   public final boolean canBeNull() {
-    return getAnalysisResult() == AnalysisResult.NULLABLE_EXACT ||
-        getAnalysisResult() == AnalysisResult.NULLABLE_NOT_EXACT;
+    return getAnalysisResult().isNullable();
   }
 
   @Override
   public final boolean canBeSubclass() {
-    boolean canBeSubclass = getAnalysisResult() == AnalysisResult.NULLABLE_NOT_EXACT ||
-        getAnalysisResult() == AnalysisResult.NOT_NULLABLE_NOT_EXACT;
-    assert canBeSubclass || !isJsoType() : "A JSO type can never be EXACT but " + name + " is.";
-    return canBeSubclass;
+    boolean exact = getAnalysisResult().isExact();
+    assert !exact || canBeStrengthenedToExactType() :
+        "A JSO or native type can never be EXACT but " + name + " is.";
+    return !exact;
   }
 
   @Override
@@ -343,10 +358,21 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
     throw new AssertionError("Unknown AnalysisResult " + getAnalysisResult().toString());
   }
 
+  private boolean canBeStrengthenedToExactType() {
+    return !isJsoType() && !canBeImplementedExternally();
+  }
+
+  private boolean canBeStrengthenedToNonNull() {
+    // JSOs can not be strengthened because there is code that assumes that null is a JSO, and
+    // instance methods calls never throw NPE on null.
+    // Some methods like JavaScriptObject.cast() will confuse the compiler, due to modeling the
+    // return type as non-null.
+    return !isJsoType();
+  }
+
   @Override
   public JReferenceType strengthenToNonNull() {
-    if (isJsoType()) {
-      // JSOs can not be strengthened.
+    if (!canBeStrengthenedToNonNull()) {
       return this;
     }
     switch (getAnalysisResult()) {
@@ -364,8 +390,7 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
   }
 
   public JReferenceType strengthenToExact() {
-    if (isJsoType()) {
-      // JSOs can not be strengthened.
+    if (!canBeStrengthenedToExactType()) {
       return this;
     }
     switch (getAnalysisResult()) {
@@ -404,7 +429,7 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
   }
 
   AnalysisResult getAnalysisResult() {
-    if (isFinal() && !isJsoType()) {
+    if (isFinal() && canBeStrengthenedToExactType()) {
       return AnalysisResult.NULLABLE_EXACT;
     }
     return AnalysisResult.NULLABLE_NOT_EXACT;

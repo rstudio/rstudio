@@ -437,8 +437,7 @@ public class TypeTightener {
       //  If possible, try to use a narrower cast
       JReferenceType tighterType = getSingleConcreteType(toType);
       if (tighterType != null && tighterType != toType) {
-        JCastOperation newOp = new JCastOperation(x.getSourceInfo(), tighterType, x.getExpr());
-          ctx.replaceMe(newOp);
+        ctx.replaceMe(new JCastOperation(x.getSourceInfo(), tighterType, x.getExpr()));
       }
     }
 
