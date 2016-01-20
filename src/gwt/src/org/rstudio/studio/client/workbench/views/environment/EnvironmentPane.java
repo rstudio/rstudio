@@ -416,15 +416,9 @@ public class EnvironmentPane extends WorkbenchPane
    {
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       
-      if (prefs_.useDataImport().getValue())
-      {
-         menu.addItem(commands_.importDatasetFromCSV().createMenuItem(false));
-      }
-      else
-      {
-         menu.addItem(commands_.importDatasetFromFile().createMenuItem(false));
-         menu.addItem(commands_.importDatasetFromURL().createMenuItem(false));
-      }
+      menu.addItem(commands_.importDatasetFromCSV().createMenuItem(false));
+      menu.addItem(commands_.importDatasetFromFile().createMenuItem(false));
+      menu.addItem(commands_.importDatasetFromURL().createMenuItem(false));
       
       dataImportButton_ = new ToolbarButton(
               "Import Dataset",
