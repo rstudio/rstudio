@@ -75,6 +75,8 @@ public class DataImport extends Composite
    
    private JavaScriptObject columnDefinitions_;
    
+   private DataImportOptions importOptions_;
+   
    interface DataImportUiBinder extends UiBinder<Widget, DataImport>
    {
    }
@@ -182,14 +184,22 @@ public class DataImport extends Composite
             fileOrUrlChooserTextBox_.getText() :
             null);
       
-      options.setColumnDefinitions(columnDefinitions_);
+      if (columnDefinitions_ != null)
+      {
+         options.setColumnDefinitions(columnDefinitions_);
+      }
       
       return options;
    }
    
    private void previewDataImport()
    {
-      assembleDataImport();
+      DataImportOptions previewImportOptions = getOptions();
+      if (importOptions_ == null || previewImportOptions.getImportLocation() != importOptions_.getImportLocation())
+      {
+         columnDefinitions_ = null;
+      }
+      importOptions_ = previewImportOptions;
       
       if (fileOrUrlChooserTextBox_.getText() == "")
       {
@@ -197,7 +207,8 @@ public class DataImport extends Composite
          return;
       }
       
-      DataImportOptions previewImportOptions = getOptions();
+      assembleDataImport();
+      
       previewImportOptions.setMaxRows(maxRows_);
       
       progressIndicator_.onProgress("Retrieving preview data");
@@ -218,7 +229,10 @@ public class DataImport extends Composite
             gridViewer_.setOption("ordering", "false");
             gridViewer_.setOption("rowNumbers", "false");
             
-            response.assignColumnTypes(columnDefinitions_);
+            if (columnDefinitions_ != null)
+            {
+               response.assignColumnTypes(columnDefinitions_);
+            }
             
             gridViewer_.setData(response);
             gridViewer_.setColumnDefinitionsUIVisible(true, new Operation()

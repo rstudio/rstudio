@@ -35,6 +35,14 @@ public class DataImportOptions extends JavaScriptObject
       this.importLocation = importLocation;
    }-*/;
    
+   public final String getImportLocation() {
+      return new String(getImportLocationNative().toString());
+   }
+   
+   private final native JavaScriptObject getImportLocationNative() /*-{
+      return this.importLocation ? this.importLocation : null;
+   }-*/;
+   
    public final native void setMaxRows(int maxRows) /*-{
       this.maxRows = maxRows > 0 ? maxRows : null;
    }-*/;

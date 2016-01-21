@@ -35,7 +35,7 @@ public class DataImportPreviewResponse extends JavaScriptObject
                return def.name === e.col_name; 
             });
             
-            if (def.originalType) {
+            if (col && def.originalType) {
                col.col_type_original = def.originalType;
                col.col_type_assigned = def.assignedType;
             }
