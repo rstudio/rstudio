@@ -57,7 +57,7 @@
             for(colIdx in seq_along(optionValue)) {
                col <- optionValue[[colIdx]]
 
-               colType <- switch(col$type,
+               colType <- switch(col$assignedType,
                   logical = "readr::col_logical()",
                   integer = "readr::col_integer()",
                   double = "readr::col_double()",

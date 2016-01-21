@@ -635,11 +635,11 @@ var openColumnTypeChooserUI = function(idx, col, ele, onDismiss) {
 
     var setColumnTypeHandler = function(columnType) {
       return function(evt) {
-        cols[idx].col_type_original = !cols[idx].col_type_original ? cols[idx].col_type : cols[idx].col_type_original;
-        cols[idx].col_type = columnType;
+        cols[idx].col_type_original = !cols[idx].col_type_original ? cols[idx].col_type_r : cols[idx].col_type_original;
+        cols[idx].col_type_assigned = columnType;
 
-        if (cols[idx].col_type_original === cols[idx].col_type) {
-          cols[idx].col_type_original = null;
+        if (cols[idx].col_type_original === cols[idx].col_type_assigned) {
+          cols[idx].col_type_assigned = null;
         }
 
         if (onColumnDefsChange) {
@@ -679,7 +679,7 @@ var createColumnTypesUI = function(th, idx, col) {
   };
 
   var val = document.createElement("div");
-  val.textContent = "(" + col.col_type + ")";
+  val.textContent = "(" + (col.col_type_assigned ? col.col_type_assigned : col.col_type_r) + ")";
   val.className = "columnTypeHeader";
 
   var initialColumnClick = function(evt) {
@@ -1082,11 +1082,12 @@ window.setColumnDefinitionsUIVisible = function(visible, onColChange) {
 
 window.getColumnDefinitions = function() {
   var definitions = cols.filter(function(e) {
-      return e.col_type_original;
+      return e.col_type_assigned;
     }).map(function (e) {
       return {
         name: e.col_name,
-        type: e.col_type
+        originalType: e.col_type_original,
+        assignedType: e.col_type_assigned
       }
     });
 

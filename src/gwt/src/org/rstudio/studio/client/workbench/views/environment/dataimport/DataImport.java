@@ -218,6 +218,8 @@ public class DataImport extends Composite
             gridViewer_.setOption("ordering", "false");
             gridViewer_.setOption("rowNumbers", "false");
             
+            response.assignColumnTypes(columnDefinitions_);
+            
             gridViewer_.setData(response);
             gridViewer_.setColumnDefinitionsUIVisible(true, new Operation()
             {
@@ -225,7 +227,7 @@ public class DataImport extends Composite
                public void execute()
                {
                   columnDefinitions_ = gridViewer_.getColumnDefinitions();
-                  assembleDataImport();
+                  previewDataImport();
                }
             });
             

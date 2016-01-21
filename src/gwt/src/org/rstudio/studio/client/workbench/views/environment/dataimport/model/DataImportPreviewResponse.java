@@ -26,4 +26,20 @@ public class DataImportPreviewResponse extends JavaScriptObject
    public final native String getErrorMessage() /*-{
       return this.error ? this.error.message.join(' ') : null;
    }-*/;
+   
+   public final native String assignColumnTypes(JavaScriptObject columnDefinitions) /*-{
+      var columnsRef = this.columns;
+      if (columnDefinitions && columnsRef) {
+         columnDefinitions.forEach(function(def) {
+            var col = columnsRef.find(function(e) {
+               return def.name === e.col_name; 
+            });
+            
+            if (def.originalType) {
+               col.col_type_original = def.originalType;
+               col.col_type_assigned = def.assignedType;
+            }
+         });
+      }
+   }-*/;
 }
