@@ -343,24 +343,33 @@ private:
       // check each line of the emitted output; if it starts with a token
       // indicating rendering is complete, store the remainder of the emitted
       // line as the file we rendered
-      std::string completeMarker("Output created: ");
+      std::vector<std::string> completeMarkers;
+      completeMarkers.push_back("Preview created: ");
+      completeMarkers.push_back("Output created: ");
       std::string renderLine;
       std::stringstream outputStream(allOutput_);
       while (std::getline(outputStream, renderLine))
       {
-         if (boost::algorithm::starts_with(renderLine, completeMarker))
+         bool markerFound = false;
+         BOOST_FOREACH(const std::string& marker, completeMarkers)
          {
-            std::string fileName = renderLine.substr(completeMarker.length());
+            if (boost::algorithm::starts_with(renderLine, marker))
+            {
+               std::string fileName = renderLine.substr(marker.length());
 
-            // trim any whitespace from the end of the filename (on Windows this
-            // includes part of CR-LF)
-            boost::algorithm::trim(fileName);
+               // trim any whitespace from the end of the filename (on Windows
+               // this includes part of CR-LF)
+               boost::algorithm::trim(fileName);
 
-            // if the path looks absolute, use it as-is; otherwise, presume
-            // it to be in the same directory as the input file
-            outputFile_ = targetFile_.parent().complete(fileName);
-            break;
+               // if the path looks absolute, use it as-is; otherwise, presume
+               // it to be in the same directory as the input file
+               outputFile_ = targetFile_.parent().complete(fileName);
+               markerFound = true;
+               break;
+            }
          }
+         if (markerFound)
+            break;
       }
 
       // the process may be terminated normally by the IDE (e.g. to stop the
@@ -719,6 +728,7 @@ bool isRenderRunning()
 // environment variables to initialize
 const char * const kRStudioPandoc = "RSTUDIO_PANDOC";
 const char * const kRmarkdownMathjaxPath = "RMARKDOWN_MATHJAX_PATH";
+const char * const kRMarkdownPreviewDir = "RMARKDOWN_PREVIEW_DIR";
 
 void initEnvironment()
 {
@@ -734,6 +744,24 @@ void initEnvironment()
    if (rmarkdownMathjaxPath.empty())
      rmarkdownMathjaxPath = session::options().mathjaxPath().absolutePath();
    sysSetenv.addParam(kRmarkdownMathjaxPath, rmarkdownMathjaxPath);
+
+   // set RMARKDOWN_PREVIEW_DIR (leave existing value alone)
+   std::string rmarkdownPreviewDir = core::system::getenv(kRMarkdownPreviewDir);
+   if (rmarkdownPreviewDir.empty())
+   {
+      std::string tempDir;
+      Error error = r::exec::RFunction("tempdir").call(&tempDir);
+      if (!error)
+      {
+         Error error = FilePath(tempDir).ensureDirectory();
+         if (!error)
+            sysSetenv.addParam(kRMarkdownPreviewDir, tempDir);
+         else
+            LOG_ERROR(error);
+      }
+      else
+         LOG_ERROR(error);
+   }
 
    // call Sys.setenv
    Error error = sysSetenv.call();
