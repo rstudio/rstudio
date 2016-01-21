@@ -13,6 +13,8 @@
  *
  */
 
+#include <boost/foreach.hpp>
+
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -34,8 +36,9 @@ AsyncRProcess::AsyncRProcess():
 {
 }
 
-void AsyncRProcess::start(const char* rCommand, 
-                          const core::FilePath& workingDir, 
+void AsyncRProcess::start(const char* rCommand,
+                          core::system::Options environment,
+                          const core::FilePath& workingDir,
                           AsyncRProcessOptions rOptions,
                           std::vector<core::FilePath> rSourceFiles)
 {
@@ -146,6 +149,11 @@ void AsyncRProcess::start(const char* rCommand,
    {
       core::system::setenv(&childEnv, "R_LIBS", libPaths);
       options.environment = childEnv;
+   }
+   // forward passed environment variables
+   BOOST_FOREACH(const core::system::Option& var, environment)
+   {
+      core::system::setenv(&childEnv, var.first, var.second);
    }
 
    core::system::ProcessCallbacks cb;

@@ -269,9 +269,18 @@ private:
                              extraParams %
                              renderOptions);
 
+      // environment
+      core::system::Options environment;
+      std::string tempDir;
+      error = r::exec::RFunction("tempdir").call(&tempDir);
+      if (!error)
+         environment.push_back(std::make_pair("RMARKDOWN_PREVIEW_DIR", tempDir));
+      else
+         LOG_ERROR(error);
+
       // start the async R process with the render command
       allOutput_.clear();
-      async_r::AsyncRProcess::start(cmd.c_str(), targetFile_.parent(),
+      async_r::AsyncRProcess::start(cmd.c_str(), environment, targetFile_.parent(),
                                     async_r::R_PROCESS_NO_RDATA);
    }
 
@@ -728,7 +737,6 @@ bool isRenderRunning()
 // environment variables to initialize
 const char * const kRStudioPandoc = "RSTUDIO_PANDOC";
 const char * const kRmarkdownMathjaxPath = "RMARKDOWN_MATHJAX_PATH";
-const char * const kRMarkdownPreviewDir = "RMARKDOWN_PREVIEW_DIR";
 
 void initEnvironment()
 {
@@ -745,16 +753,8 @@ void initEnvironment()
      rmarkdownMathjaxPath = session::options().mathjaxPath().absolutePath();
    sysSetenv.addParam(kRmarkdownMathjaxPath, rmarkdownMathjaxPath);
 
-   // set RMARKDOWN_PREVIEW_DIR
-   std::string tempDir;
-   Error error = r::exec::RFunction("tempdir").call(&tempDir);
-   if (!error)
-      sysSetenv.addParam(kRMarkdownPreviewDir, tempDir);
-   else
-      LOG_ERROR(error);
-
    // call Sys.setenv
-   error = sysSetenv.call();
+   Error error = sysSetenv.call();
    if (error)
       LOG_ERROR(error);
 }
