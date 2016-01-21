@@ -210,6 +210,9 @@ public class AceEditorNative extends JavaScriptObject {
       // We bind 'Ctrl + Shift + P' to run previous code on Windows
       delete this.commands.commandKeyBinding["ctrl-shift-p"];
       
+      // Don't bind 'Cmd+,'
+      delete this.commands.commandKeyBinding["cmd-,"];
+      
       // We bind 'Ctrl + Alt + A' to 'split into lines'
       if (this.commands.platform !== "mac")
          delete this.commands.commandKeyBinding["ctrl-alt-a"];
@@ -315,9 +318,10 @@ public class AceEditorNative extends JavaScriptObject {
       this.onCursorChange();
    }-*/;
 
-   public static native void setInsertMatching(boolean insertMatching) /*-{
-      $wnd.require("mode/auto_brace_insert").setInsertMatching(insertMatching);
-   }-*/;
+   public final void setInsertMatching(boolean value)
+   {
+      getSession().getMode().setInsertMatching(value);
+   }
 
    public static native void setVerticallyAlignFunctionArgs(
          boolean verticallyAlign) /*-{
@@ -444,6 +448,14 @@ public class AceEditorNative extends JavaScriptObject {
       this.commands = commands;
    }-*/;
    
+   public final native void setDragEnabled(boolean enabled) /*-{
+      this.setOption("dragEnabled", enabled);
+   }-*/;
+   
+   public final native boolean dragEnabled() /*-{
+      return this.getOption("dragEnabled");
+   }-*/;
+   
    public final native JsMap<Position> getMarks() /*-{
       
       var marks = {};
@@ -492,6 +504,10 @@ public class AceEditorNative extends JavaScriptObject {
    
    }-*/;
    
+   public static final native void setDefaultInsertMatching(boolean value) /*-{
+      $wnd.require("mode/auto_brace_insert").setInsertMatching(value);
+   }-*/;
+   
    public final static void syncUiPrefs(UIPrefs uiPrefs)
    {
       if (uiPrefsSynced_)
@@ -502,7 +518,7 @@ public class AceEditorNative extends JavaScriptObject {
          @Override
          public void execute(Boolean arg) 
          {
-            setInsertMatching(arg);
+            setDefaultInsertMatching(arg);
          }
       });
       

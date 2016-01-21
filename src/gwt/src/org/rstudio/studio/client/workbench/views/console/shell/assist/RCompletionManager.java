@@ -1798,8 +1798,8 @@ public class RCompletionManager implements CompletionManager
          if (results.length == 1 &&
              completions.token.equals(results[0].name.replaceAll(":*", "")))
          {
-            // For snippets we need to apply the completion
-            if (results[0].type == RCompletionType.SNIPPET)
+            // For snippets we need to apply the completion if explicitly requested
+            if (results[0].type == RCompletionType.SNIPPET && canAutoAccept_)
             {
                snippets_.applySnippet(completions.token, results[0].name);
                return;

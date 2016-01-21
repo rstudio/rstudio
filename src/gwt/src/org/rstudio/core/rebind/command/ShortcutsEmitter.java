@@ -262,7 +262,7 @@ public class ShortcutsEmitter
          return "190";
       if (val.equals("="))
          return "187";
-      if (val.equals("<"))
+      if (val.equals(","))
          return "188";
       if (val.equals("-"))
          return "189";

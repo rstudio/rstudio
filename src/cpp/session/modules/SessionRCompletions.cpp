@@ -456,6 +456,11 @@ SEXP rs_getKnitParamsForDocument(SEXP documentIdSEXP)
    using namespace source_database;
    
    std::string documentId = r::sexp::asString(documentIdSEXP);
+   
+   // Check for empty doc ID (can happen if this is requested e.g. from console)
+   if (documentId.empty())
+      return R_NilValue;
+   
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
    
    Error error = get(documentId, pDoc);
@@ -464,6 +469,9 @@ SEXP rs_getKnitParamsForDocument(SEXP documentIdSEXP)
       LOG_ERROR(error);
       return R_NilValue;
    }
+   
+   if (!pDoc->isRMarkdownDocument())
+      return R_NilValue;
    
    r::exec::RFunction knitParams(".rs.knitParams");
    knitParams.addParam(pDoc->contents());

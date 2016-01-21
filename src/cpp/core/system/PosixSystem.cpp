@@ -166,7 +166,11 @@ Error realPath(const std::string& path, FilePath* pRealPath)
    char buffer[PATH_MAX*2];
    char* realPath = ::realpath(path.c_str(), buffer);
    if (realPath == NULL)
-      return systemError(errno, ERROR_LOCATION);
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", path);
+      return error;
+   }
   *pRealPath = FilePath(realPath);
    return Success();
 }
@@ -431,6 +435,11 @@ void sendSignalToSelf(SignalType signal)
 std::string username()
 {
    return system::getenv("USER");
+}
+
+unsigned int effectiveUserId()
+{
+   return ::geteuid();
 }
 
 FilePath userHomePath(std::string envOverride)

@@ -118,6 +118,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
          @Override
          public void onKeyDown(KeyDownEvent event)
          {
+            // Don't capture keys when a completion popup is visible.
+            if (input_.isPopupVisible())
+               return;
+            
             // If the user hits Page-Up from inside the console input, we need
             // to simulate pageup because focus is not contained in the scroll
             // panel (it's in the hidden textarea that Ace uses under the
@@ -705,7 +709,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       RootPanel.get().remove(widthChecker);
       
       // compute the points per character 
-      int pointsPerCharacter = labelWidth / text.length();
+      float pointsPerCharacter = (float)labelWidth / (float)text.length();
       
       // compute client width
       int clientWidth = getElement().getClientWidth();
@@ -722,8 +726,9 @@ public class ShellWidget extends Composite implements ShellDisplay,
       
       // compute character width (add pad so characters aren't flush to right)
       final int RIGHT_CHARACTER_PAD = 2;
-      int width = (clientWidth / pointsPerCharacter) - RIGHT_CHARACTER_PAD ;
-      
+      int width = Math.round((float)clientWidth / pointsPerCharacter) - 
+            RIGHT_CHARACTER_PAD;
+
       // enforce a minimum width
       final int MINIMUM_WIDTH = 30;
       return Math.max(width, MINIMUM_WIDTH);

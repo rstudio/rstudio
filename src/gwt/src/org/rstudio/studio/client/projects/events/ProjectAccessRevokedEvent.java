@@ -1,7 +1,7 @@
 /*
- * RmdParamsEditEvent.java
+ * ProjectAccessRevokedEvent.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,28 +13,23 @@
  *
  */
 
-package org.rstudio.studio.client.rmarkdown.events;
+package org.rstudio.studio.client.projects.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class RmdParamsEditEvent extends GwtEvent<RmdParamsEditEvent.Handler>
-{  
+public class ProjectAccessRevokedEvent 
+   extends GwtEvent<ProjectAccessRevokedEvent.Handler>
+{
    public interface Handler extends EventHandler
    {
-      void onRmdParamsEdit(RmdParamsEditEvent event);
+      void onProjectAccessRevoked(ProjectAccessRevokedEvent event);
    }
-
-   public RmdParamsEditEvent(String url)
+   
+   public ProjectAccessRevokedEvent()
    {
-      url_ = url;
    }
-
-   public String getUrl()
-   {
-      return url_;
-   }
-    
+   
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -44,10 +39,8 @@ public class RmdParamsEditEvent extends GwtEvent<RmdParamsEditEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onRmdParamsEdit(this);
+      handler.onProjectAccessRevoked(this);
    }
    
-   private final String url_;
-
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

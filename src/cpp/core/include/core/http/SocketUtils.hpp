@@ -27,6 +27,21 @@
 
 namespace rstudio {
 namespace core {
+
+inline bool isShutdownError(const boost::system::error_code& ec)
+{
+   
+#ifdef _WIN32
+   if (ec.value() == WSAENOTSOCK)
+      return true;
+#endif
+   
+   return
+         ec == boost::asio::error::operation_aborted ||
+         ec == boost::asio::error::invalid_argument ||
+         ec == boost::system::errc::bad_file_descriptor;
+}
+
 namespace http {  
 
 template <typename SocketService>

@@ -39,6 +39,7 @@ core::FilePath userLogPath();
 double devicePixelRatio(QMainWindow* pMainWindow);
 
 bool isOSXMavericks();
+bool isCentOS();
 
 void raiseAndActivateWindow(QWidget* pWindow);
 

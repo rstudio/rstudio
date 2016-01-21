@@ -1,7 +1,7 @@
 /*
  * ClientEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -107,6 +107,7 @@ class ClientEvent extends JavaScriptObject
    public static final String RmdShinyDocStarted = "rmd_shiny_doc_started";
    public static final String RSConnectDeploymentOutput = "rsconnect_deployment_output";
    public static final String RSConnectDeploymentCompleted = "rsconnect_deployment_completed";
+   public static final String RSConnectDeploymentFailed = "rsconnect_deployment_failed";
    public static final String UserPrompt = "user_prompt";
    public static final String InstallRtools = "install_r_tools";
    public static final String InstallShiny = "install_shiny";
@@ -124,9 +125,17 @@ class ClientEvent extends JavaScriptObject
    public static final String CollabEditEnded = "collab_edit_ended";
    public static final String ProjectUsersChanged = "project_users_changed";
    public static final String RVersionsChanged = "r_versions_changed";
-   public static final String RmdParamsEdit = "rmd_params_edit";
+   public static final String ShinyGadgetDialog = "shiny_gadget_dialog";
    public static final String RmdParamsReady = "rmd_params_ready";
    public static final String RegisterUserCommand = "register_user_command";
+   public static final String ReplaceRanges = "replace_ranges";
+   public static final String GetActiveDocumentContext = "get_active_document_context";
+   public static final String SendToConsole = "send_to_console";
+   public static final String UserFollowStarted = "user_follow_started";
+   public static final String UserFollowEnded = "user_follow_ended";
+   public static final String ProjectAccessRevoked = "project_access_revoked";
+   public static final String CollabEditSaved = "collab_edit_saved";
+   public static final String AddinRegistryUpdated = "addin_registry_updated";
    
    protected ClientEvent()
    {

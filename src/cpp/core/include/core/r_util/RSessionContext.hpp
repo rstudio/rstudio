@@ -34,7 +34,7 @@
 
 #ifdef _WIN32
 typedef unsigned int uid_t;
-inline uid_t getuid()
+inline uid_t geteuid()
 {
    return 0;
 }
@@ -91,7 +91,7 @@ public:
       if (id.length() == kProjectIdLen)
       {
          id_ = id;
-         userId_ = obfuscatedUserId(::getuid());
+         userId_ = obfuscatedUserId(::geteuid());
       }
       else if (id.length() == (kProjectIdLen + kUserIdLen))
       {
@@ -206,7 +206,11 @@ SessionScopeState validateSessionScope(const SessionScope& scope,
                           const core::FilePath& userHomePath,
                           const core::FilePath& userScratchPath,
                           core::r_util::ProjectIdToFilePath projectIdToFilePath,
+                          bool projectSharingEnabled,
                           std::string* pProjectFilePath);
+
+bool isSharedPath(const std::string& projectPath,
+                  const core::FilePath& userHomePath);
 
 std::string urlPathForSessionScope(const SessionScope& scope);
 

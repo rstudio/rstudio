@@ -127,6 +127,9 @@ Error systemError(int value, const ErrorLocation& location) ;
 Error systemError(int value,
                   const std::string& description,
                   const ErrorLocation& location) ;
+Error systemError(int value,
+                  const Error& cause,
+                  const ErrorLocation& location) ;
 
 Error fileExistsError(const ErrorLocation& location);
 Error fileNotFoundError(const ErrorLocation& location);

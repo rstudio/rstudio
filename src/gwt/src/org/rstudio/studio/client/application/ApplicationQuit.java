@@ -64,7 +64,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -110,11 +109,17 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       void onReadyToQuit(boolean saveChanges);
    }
    
-   
    public void prepareForQuit(final String caption,
                               final QuitContext quitContext)
    {
-      if (workbenchContext_.isServerBusy())
+      prepareForQuit(caption, false, quitContext);
+   }
+   
+   public void prepareForQuit(final String caption,
+                              final boolean forceSaveAll,
+                              final QuitContext quitContext)
+   {
+      if (workbenchContext_.isServerBusy() && !forceSaveAll)
       {
          globalDisplay_.showYesNoMessage(
                MessageDialog.QUESTION,
@@ -124,7 +129,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                   @Override
                   public void execute()
                   {
-                     handleUnsavedChanges(caption, quitContext);
+                     handleUnsavedChanges(caption, forceSaveAll, quitContext);
                   }}, 
                true);
       }
@@ -137,31 +142,29 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                @Override
                public void execute()
                {
-                  handleUnsavedChanges(caption, quitContext);
+                  handleUnsavedChanges(caption, forceSaveAll, quitContext);
                }
             });
          }
          else
          {
-            handleUnsavedChanges(caption, quitContext);
+            handleUnsavedChanges(caption, forceSaveAll, quitContext);
          }
       }
    }
    
-   public static boolean isQuitSession()
+     
+   private void handleUnsavedChanges(String caption, 
+                                     boolean forceSaveAll,
+                                     QuitContext quitContext)
    {
-      return ("1".equals(Window.Location.getParameter("quit")));
-   }
-  
-   
-   private void handleUnsavedChanges(String caption, QuitContext quitContext)
-   {
-      handleUnsavedChanges(saveAction_.getAction(), caption,
+      handleUnsavedChanges(saveAction_.getAction(), caption, forceSaveAll,
             sourceShim_, workbenchContext_, globalEnvTarget_, quitContext);
    }
    
    public static void handleUnsavedChanges(final int saveAction, 
                                      String caption,
+                                     boolean forceSaveAll,
                                      final SourceShim sourceShim,
                                      final WorkbenchContext workbenchContext,
                                      final UnsavedChangesTarget globalEnvTarget,
@@ -171,8 +174,25 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
                                              sourceShim.getUnsavedChanges();
       
+      // force save all
+      if (forceSaveAll)
+      {
+         // save all unsaved documents and then quit
+         sourceShim.handleUnsavedChangesBeforeExit(
+               unsavedSourceDocs,
+               new Command() {
+                  @Override
+                  public void execute()
+                  {
+                     boolean saveChanges = saveAction != SaveAction.NOSAVE;
+                     quitContext.onReadyToQuit(saveChanges);
+                  }
+               });
+         
+         return;
+      }
       // no unsaved changes at all
-      if (saveAction != SaveAction.SAVEASK && unsavedSourceDocs.size() == 0)
+      else if (saveAction != SaveAction.SAVEASK && unsavedSourceDocs.size() == 0)
       {
          // define quit operation
          final Operation quitOperation = new Operation() { public void execute() 
@@ -181,7 +201,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
          }};
         
          // if this is a quit session then we always prompt
-         if (isQuitSession())
+         if (ApplicationAction.isQuit())
          {
             RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
                   MessageDialog.QUESTION,
@@ -636,8 +656,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                if (Desktop.isDesktop())
                {
                   if (Desktop.getFrame().isCocoa() && 
-                      switchToProject_ != null &&
-                      switchToProject_ != "none")
+                      switchToProject_ != null)
                   {
                      // on Cocoa there's an ugly intermittent crash that occurs 
                      // when we reload, so exit this instance and start a new

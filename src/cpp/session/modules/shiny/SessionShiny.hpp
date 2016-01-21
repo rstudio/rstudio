@@ -29,11 +29,32 @@ namespace session {
 namespace modules { 
 namespace shiny {
 
+enum ShinyFileType 
+{
+   // Not a Shiny file
+   ShinyNone,
+
+   // A file in a Shiny directory, such as ui.R, server.R, global.R, etc.
+   ShinyDirectory,
+
+   // A standalone Shiny file with any other name, ending with a call to
+   // shinyApp()
+   ShinySingleFile,
+
+   // A standalone Shiny file that can be executed directly, ending with a 
+   // call to runApp()
+   ShinySingleExecutable,
+
+   // A Shiny R Markdown document 
+   ShinyDocument
+};
+
 bool isShinyRMarkdownDocument(const core::FilePath& filePath);
 
-bool isShinyDocument(const core::FilePath& filePath);
-bool isShinyDocument(const core::FilePath& filePath,
-                     const std::string& contents);
+ShinyFileType getShinyFileType(const core::FilePath& filePath);
+ShinyFileType getShinyFileType(const core::FilePath& filePath,
+                               const std::string& contents);
+ShinyFileType shinyTypeFromExtendedType(const std::string& extendedType);
 
 core::Error initialize();
                        

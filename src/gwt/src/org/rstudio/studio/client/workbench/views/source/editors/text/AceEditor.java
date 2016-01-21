@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -40,6 +41,7 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
@@ -54,9 +56,11 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
@@ -261,6 +265,7 @@ public class AceEditor implements DocDisplay,
    {
       widget_ = new AceEditorWidget();
       snippets_ = new SnippetHelper(this);
+      editorEventListeners_ = new ArrayList<HandlerRegistration>();
       ElementIds.assignElementId(widget_.getElement(),
                                  ElementIds.SOURCE_TEXT_EDITOR);
 
@@ -401,6 +406,20 @@ public class AceEditor implements DocDisplay,
             }
          }
       });
+      
+      widget_.addAttachHandler(new AttachEvent.Handler()
+      {
+         @Override
+         public void onAttachOrDetach(AttachEvent event)
+         {
+            if (!event.isAttached())
+            {
+               for (HandlerRegistration handler : editorEventListeners_)
+                  handler.removeHandler();
+               editorEventListeners_.clear();
+            }
+         }
+      });
    }
    
    public void yankBeforeCursor()
@@ -500,12 +519,14 @@ public class AceEditor implements DocDisplay,
    void initialize(CodeToolsServerOperations server,
                    UIPrefs uiPrefs,
                    CollabEditor collab,
-                   Commands commands)
+                   Commands commands,
+                   EventBus events)
    {
       server_ = server;
       uiPrefs_ = uiPrefs;
       collab_ = collab;
       commands_ = commands;
+      events_ = events;
    }
 
    public TextFileType getFileType()
@@ -692,6 +713,12 @@ public class AceEditor implements DocDisplay,
 
    private void updateKeyboardHandlers()
    {
+      // clear out existing editor handlers (they will be refreshed if necessary)
+      for (HandlerRegistration handler : editorEventListeners_)
+         if (handler != null)
+            handler.removeHandler();
+      editorEventListeners_.clear();
+         
       // save and restore Vim marks as they can be lost when refreshing
       // the keyboard handlers. this is necessary as keyboard handlers are
       // regenerated on each document save, and clearing the Vim handler will
@@ -714,10 +741,36 @@ public class AceEditor implements DocDisplay,
       // add the previewer
       widget_.getEditor().addKeyboardHandler(previewer.getKeyboardHandler());
       
+      // Listen for command execution
+      editorEventListeners_.add(AceEditorNative.addEventListener(
+            widget_.getEditor().getCommandManager(),
+            "afterExec",
+            new CommandWithArg<JavaScriptObject>()
+            {
+               @Override
+               public void execute(JavaScriptObject event)
+               {
+                  events_.fireEvent(new AceAfterCommandExecutedEvent(event));
+               }
+            }));
+      
+      // Listen for keyboard activity
+      editorEventListeners_.add(AceEditorNative.addEventListener(
+            widget_.getEditor(),
+            "keyboardActivity",
+            new CommandWithArg<JavaScriptObject>()
+            {
+               @Override
+               public void execute(JavaScriptObject event)
+               {
+                  events_.fireEvent(new AceKeyboardActivityEvent(event));
+               }
+            }));
+      
       if (useVimMode_)
          widget_.getEditor().setMarks(marks);
    }
-
+   
    public String getCode()
    {
       return getSession().getValue();
@@ -1032,6 +1085,12 @@ public class AceEditor implements DocDisplay,
    {
       int lastRow = getRowCount() - 1;
       return Position.create(lastRow, getLength(lastRow));
+   }
+   
+   @Override
+   public void setInsertMatching(boolean value)
+   {
+      widget_.getEditor().setInsertMatching(value);
    }
    
    @Override
@@ -1872,6 +1931,16 @@ public class AceEditor implements DocDisplay,
    {
       getSession().getSelection().setSelectionRange(
             Range.fromPoints(position, position));
+   }
+   
+   public void goToLineStart()
+   {
+      widget_.getEditor().getCommandManager().exec("gotolinestart", widget_.getEditor());
+   }
+   
+   public void goToLineEnd()
+   {
+      widget_.getEditor().getCommandManager().exec("gotolineend", widget_.getEditor());
    }
 
    @Override
@@ -2728,6 +2797,12 @@ public class AceEditor implements DocDisplay,
       return collab_.hasActiveCollabSession(this);
    }
    
+   @Override
+   public boolean hasFollowingCollabSession()
+   {
+      return collab_.hasFollowingCollabSession(this);
+   }
+   
    public void endCollabSession()
    {
       collab_.endCollabSession(this);
@@ -2810,6 +2885,7 @@ public class AceEditor implements DocDisplay,
    private UIPrefs uiPrefs_;
    private CollabEditor collab_;
    private Commands commands_;
+   private EventBus events_;
    private TextFileType fileType_;
    private boolean passwordMode_;
    private boolean useEmacsKeybindings_ = false;
@@ -2847,40 +2923,48 @@ public class AceEditor implements DocDisplay,
       private int row_ = 0;
       private final Timer timer_;
    }
+   
+   private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
+   {
+      return getLoader(release, null);
+   }
+   
+   private static final ExternalJavaScriptLoader getLoader(StaticDataResource release,
+                                                           StaticDataResource debug)
+   {
+      if (debug == null || !SuperDevMode.isActive())
+         return new ExternalJavaScriptLoader(release.getSafeUri().asString());
+      else
+         return new ExternalJavaScriptLoader(debug.getSafeUri().asString());
+   }
+                                                           
     
    private static final ExternalJavaScriptLoader aceLoader_ =
-         getAceLoader();
+         getLoader(AceResources.INSTANCE.acejs(), AceResources.INSTANCE.acejsUncompressed());
    
-   private static final ExternalJavaScriptLoader getAceLoader()
-   {
-      if (SuperDevMode.isActive())
-         return new ExternalJavaScriptLoader(AceResources.INSTANCE.acejsUncompressed().getSafeUri().asString());
-      else
-         return new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());
-   }
    
    private static final ExternalJavaScriptLoader aceSupportLoader_ =
-         new ExternalJavaScriptLoader(AceResources.INSTANCE.acesupportjs().getSafeUri().asString());
+         getLoader(AceResources.INSTANCE.acesupportjs());
+   
    private static final ExternalJavaScriptLoader vimLoader_ =
-         new ExternalJavaScriptLoader(AceResources.INSTANCE.keybindingVimJs().getSafeUri().asString());
+         getLoader(AceResources.INSTANCE.keybindingVimJs(),
+                   AceResources.INSTANCE.keybindingVimUncompressedJs());
+   
    private static final ExternalJavaScriptLoader emacsLoader_ =
-         new ExternalJavaScriptLoader(AceResources.INSTANCE.keybindingEmacsJs().getSafeUri().asString());
+         getLoader(AceResources.INSTANCE.keybindingEmacsJs(),
+                   AceResources.INSTANCE.keybindingEmacsUncompressedJs());
    
    private static final ExternalJavaScriptLoader extLanguageToolsLoader_ =
-         getExtLanguageToolsLoader();
+         getLoader(AceResources.INSTANCE.extLanguageTools(),
+                   AceResources.INSTANCE.extLanguageToolsUncompressed());
    
-   private static final ExternalJavaScriptLoader getExtLanguageToolsLoader()
-   {
-      if (SuperDevMode.isActive())
-         return new ExternalJavaScriptLoader(AceResources.INSTANCE.extLanguageToolsUncompressed().getSafeUri().asString());
-      else
-         return new ExternalJavaScriptLoader(AceResources.INSTANCE.extLanguageTools().getSafeUri().asString());
-   }
-
    private boolean popupVisible_;
 
    private final DiagnosticsBackgroundPopup diagnosticsBgPopup_;
 
    private long lastCursorChangedTime_;
    private long lastModifiedTime_;
+   private String yankedText_ = null;
+   
+   private final List<HandlerRegistration> editorEventListeners_;
 }

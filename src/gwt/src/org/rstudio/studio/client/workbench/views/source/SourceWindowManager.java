@@ -17,15 +17,7 @@ package org.rstudio.studio.client.workbench.views.source;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.FilePosition;
-import org.rstudio.core.client.JsArrayUtil;
-import org.rstudio.core.client.Pair;
-import org.rstudio.core.client.Point;
-import org.rstudio.core.client.SerializedCommand;
-import org.rstudio.core.client.SerializedCommandQueue;
-import org.rstudio.core.client.Size;
-import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.*;
 import org.rstudio.core.client.dom.WindowCloseMonitor;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -44,6 +36,7 @@ import org.rstudio.studio.client.common.satellite.events.AllSatellitesClosingEve
 import org.rstudio.studio.client.common.satellite.events.SatelliteClosedEvent;
 import org.rstudio.studio.client.common.satellite.events.SatelliteFocusedEvent;
 import org.rstudio.studio.client.common.satellite.model.SatelliteWindowGeometry;
+import org.rstudio.studio.client.events.*;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -57,6 +50,10 @@ import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserCreatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditEndedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.DocFocusedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
@@ -71,6 +68,11 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
@@ -88,7 +90,12 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             DocWindowChangedEvent.Handler,
                                             DocTabClosedEvent.Handler,
                                             AllSatellitesClosingEvent.Handler,
-                                            ShinyApplicationStatusEvent.Handler
+                                            ShinyApplicationStatusEvent.Handler,
+                                            CollabEditStartedEvent.Handler,
+                                            CollabEditEndedEvent.Handler,
+                                            ReplaceRangesDispatchEvent.Handler,
+                                            GetActiveDocumentContextDispatchEvent.Handler,
+                                            DocFocusedEvent.Handler
 {
    @Inject
    public SourceWindowManager(
@@ -115,6 +122,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       if (isMainSourceWindow())
       {
          // most event handlers only make sense on the main window
+         events_.addHandler(ReplaceRangesDispatchEvent.TYPE, this);
+         events_.addHandler(GetActiveDocumentContextDispatchEvent.TYPE, this);
          events_.addHandler(PopoutDocEvent.TYPE, this);
          events_.addHandler(DocTabDragStartedEvent.TYPE, this);
          events_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
@@ -125,6 +134,9 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          events_.addHandler(SatelliteClosedEvent.TYPE, this);
          events_.addHandler(SatelliteFocusedEvent.TYPE, this);
          events_.addHandler(DocTabClosedEvent.TYPE, this);
+         events_.addHandler(CollabEditStartedEvent.TYPE, this);
+         events_.addHandler(CollabEditEndedEvent.TYPE, this);
+         events_.addHandler(DocFocusedEvent.TYPE, this);
 
          JsArray<SourceDocument> docs = 
                session.getSessionInfo().getSourceDocuments();
@@ -168,6 +180,26 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                return updateWindowGeometry();
             }
          };
+         
+         // keep track of whether the main window has focus (helps us infer the
+         // user's perception of the 'active' doc)
+         WindowEx.addFocusHandler(new FocusHandler()
+         {
+            @Override
+            public void onFocus(FocusEvent arg0)
+            {
+               mainWindowFocused_ = true;
+            }
+         });
+         WindowEx.addBlurHandler(new BlurHandler()
+         {
+            
+            @Override
+            public void onBlur(BlurEvent arg0)
+            {
+               mainWindowFocused_ = false;
+            }
+         });
          
          // open this session's source windows
          for (int i = 0; i < docs.length(); i++)
@@ -226,11 +258,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    public static String getSourceWindowId()
    {
       return sourceWindowId(Window.Location.getParameter("view"));
-   }
-   
-   public void setLastFocusedSourceWindowId(String windowId)
-   {
-      lastFocusedSourceWindow_ = windowId;
    }
    
    public String getLastFocusedSourceWindowId()
@@ -452,8 +479,51 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       else
          return getCurrentDocPath(lastFocusedWindow);
    }
+   
+   public String getCurrentDocId()
+   {
+      WindowEx lastFocusedWindow = getLastFocusedSourceWindow();
+      if (lastFocusedWindow == null)
+         return sourceShim_.getCurrentDocId();
+      else
+         return getCurrentDocId(lastFocusedWindow);
+   }
+   
+   public CollabEditStartParams getDocCollabParams(String id)
+   {
+      JsArray<SourceDocument> docs = getSourceDocs();
+      for (int i = 0; i < docs.length(); i++)
+      {
+         if (docs.get(i).getId() == id)
+         {
+            return docs.get(i).getCollabParams();
+         }
+      }
+      return null;
+   }
 
    // Event handlers ----------------------------------------------------------
+   
+   @Override
+   public void onReplaceRangesDispatch(ReplaceRangesDispatchEvent event)
+   {
+      String id = getLastFocusedSourceWindowId();
+      if (StringUtil.isNullOrEmpty(id))
+         events_.fireEvent(event.getEvent());
+      else
+         fireEventToSourceWindow(id, event.getEvent(), false);
+   }
+
+   @Override
+   public void onGetActiveDocumentContextDispatch(GetActiveDocumentContextDispatchEvent event)
+   {
+      String id = getLastFocusedSourceWindowId();
+      if (StringUtil.isNullOrEmpty(id))
+         events_.fireEvent(event.getEvent());
+      else
+         fireEventToSourceWindow(id, event.getEvent(), false);
+   }
+
    @Override
    public void onPopoutDoc(final PopoutDocEvent evt)
    {
@@ -533,18 +603,13 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          {
             closeSourceWindowDocs(sourceWindowId(event.getName()));
          }
-      });
+      }, null);
    }
 
    @Override
    public void onSatelliteFocused(SatelliteFocusedEvent event)
    {
-      if (event.getName().startsWith(SourceSatellite.NAME_PREFIX))
-      {
-         String windowId = sourceWindowId(event.getName());
-         setLastFocusedSourceWindowId(windowId);
-         mostRecentSourceWindow_ = windowId;
-      }
+      mainWindowFocused_ = false;
    }
 
    @Override
@@ -602,6 +667,55 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    public void onShinyApplicationStatus(ShinyApplicationStatusEvent event)
    {
       fireEventToAllSourceWindows(event);
+   }
+
+
+   @Override
+   public void onCollabEditStarted(CollabEditStartedEvent event)
+   {
+      JsArray<SourceDocument> sourceDocs = getSourceDocs();
+      for (int i = 0; i < sourceDocs.length(); i++)
+      {
+         if (sourceDocs.get(i).getPath() == event.getStartParams().getPath())
+         {
+            sourceDocs.get(i).setCollabParams(event.getStartParams());
+            break;
+         }
+      }
+   }
+
+   @Override
+   public void onCollabEditEnded(CollabEditEndedEvent event)
+   {
+      JsArray<SourceDocument> sourceDocs = getSourceDocs();
+      for (int i = 0; i < sourceDocs.length(); i++)
+      {
+         if (sourceDocs.get(i).getPath() == event.getPath())
+         {
+            sourceDocs.get(i).setCollabParams(null);
+            break;
+         }
+      }
+   }
+
+   @Override
+   public void onDocFocused(final DocFocusedEvent event)
+   {
+      // defer to ensure that the containing window gets focus too
+      Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            // ignore this event if it's from main window but the main window
+            // doesn't have focus
+            if (!mainWindowFocused_ && event.isFromMainWindow()) 
+               return;
+            
+            lastFocusedSourceWindow_ = event.isFromMainWindow() ? "" :
+                  sourceWindowId(event.originWindowName());
+         }
+      });
    }
 
    // Private methods ---------------------------------------------------------
@@ -682,7 +796,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                   docId, sourcePosition), 
             size, false, position);
       
-      setLastFocusedSourceWindowId(windowId);
       mostRecentSourceWindow_ = windowId;
       sourceWindows_.put(windowId, ordinal);
    }
@@ -752,6 +865,10 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    
    private final native String getCurrentDocPath(WindowEx satellite) /*-{
       return satellite.rstudioGetCurrentDocPath();
+   }-*/;
+   
+   private final native String getCurrentDocId(WindowEx satellite) /*-{
+      return satellite.rstudioGetCurrentDocId();
    }-*/;
    
    private final native void handleUnsavedChangesBeforeExit(WindowEx satellite, 
@@ -1011,7 +1128,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                      fireEventToSourceWindow(sourceWindowId, 
                            new DocWindowChangedEvent(
                                  sourceDocs.get(i).getId(), sourceWindowId, 
-                                 null, 0),
+                                 null, sourceDocs.get(i).getCollabParams(), 0),
                            true);
                      return new NavigationResult(
                            NavigationResult.RESULT_RELOCATE, 
@@ -1050,7 +1167,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                         getSourceWindowId(), null);
                   events_.fireEventToMainWindow(new DocWindowChangedEvent(
                               sourceDocs.get(i).getId(), sourceWindowId, null, 
-                              0));
+                              sourceDocs.get(i).getCollabParams(), 0));
                   return new NavigationResult(NavigationResult.RESULT_RELOCATE,
                         sourceDocs.get(i).getId());
                }
@@ -1118,6 +1235,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
 
    private String mostRecentSourceWindow_ = "";
    private String lastFocusedSourceWindow_ = "";
+   private boolean mainWindowFocused_ = true;
    
    public final static String SOURCE_WINDOW_ID = "source_window_id";
 }

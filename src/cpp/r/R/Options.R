@@ -41,6 +41,38 @@ if (is.null(getOption("viewer"))) {
    })
 }
 
+# default shinygadgets.showdialog if not already set
+if (is.null(getOption("shinygadgets.showdialog"))) {
+   options(shinygadgets.showdialog = function(caption,
+                                              url,
+                                              width = NULL,
+                                              height = NULL)
+   {
+      if (!is.character(caption) || (length(caption) != 1))
+         stop("caption must be a single element character vector.", call. = FALSE)
+
+      if (!is.character(url) || (length(url) != 1))
+         stop("url must be a single element character vector.", call. = FALSE)
+
+      # default width and height
+      if (is.null(width))
+         width <- 600
+      if (is.null(height))
+         height <- 600
+
+      # validate width and height
+      if (!is.numeric(width) || (length(width) != 1))
+         stop("width must be a single element numeric vector.", call. = FALSE)
+      if (!is.numeric(height) || (length(height) != 1))
+         stop("height must be a single element numeric vector.", call. = FALSE)
+
+      invisible(.Call("rs_showShinyGadgetDialog", caption, url, width, height))
+   })
+}
+
+# provide askpass function
+options(askpass = .rs.askForPassword)
+
 # provide restart function
 options(restart = .rs.restartR)
 

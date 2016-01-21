@@ -82,7 +82,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
    }
 
    @Inject
-   public void initialize(Commands commands,
+   public void initialize(final Commands commands,
                           EventBus events,
                           final Session session,
                           ApplicationServerOperations server, 
@@ -155,6 +155,10 @@ public class DesktopApplicationHeader implements ApplicationHeader
                {
                   Desktop.getFrame().onWorkbenchInitialized(
                         sessionInfo.getScratchDir());
+                  
+                  if (sessionInfo.getDisableCheckForUpdates())
+                     commands.checkForUpdates().remove();
+                  
                   if (!sessionInfo.getDisableCheckForUpdates() &&
                       pUIPrefs_.get().checkForUpdates().getValue())
                   {

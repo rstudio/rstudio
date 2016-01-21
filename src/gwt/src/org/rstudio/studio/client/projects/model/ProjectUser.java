@@ -30,6 +30,10 @@ public class ProjectUser extends JavaScriptObject
       return this.session_id;
    }-*/;
    
+   public final native String getClientId() /*-{
+      return this.client_id;
+   }-*/;
+   
    public final native String getColor() /*-{
       return this.color;
    }-*/;

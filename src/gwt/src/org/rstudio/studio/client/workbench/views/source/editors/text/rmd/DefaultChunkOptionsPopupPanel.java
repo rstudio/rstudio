@@ -159,15 +159,8 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       chunkPreamble_ = extractChunkPreamble(extracted, modeId);
       
       String chunkLabel = extractChunkLabel(extracted);
-      if (StringUtil.isNullOrEmpty(chunkLabel))
-      {
-         tbChunkLabel_.setCueMode(true);
-      }
-      else
-      {
-         tbChunkLabel_.setCueMode(false);
+      if (!StringUtil.isNullOrEmpty(chunkLabel))
          tbChunkLabel_.setText(extractChunkLabel(extracted));
-      }
       
       int firstCommaIndex = extracted.indexOf(',');
       String arguments = extracted.substring(firstCommaIndex + 1);

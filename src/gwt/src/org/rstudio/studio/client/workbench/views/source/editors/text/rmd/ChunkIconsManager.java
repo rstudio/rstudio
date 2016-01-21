@@ -194,27 +194,22 @@ public class ChunkIconsManager
       boolean isDark = themes_.isDark(
             themes_.getEffectiveThemeName(uiPrefs_.theme().getValue()));
       
-      if (isSetupChunk)
-      {
-         Image optionsIcon = createOptionsIcon(isDark, true);
-         toolbarPanel.add(optionsIcon);
-      }
-      else
-      {
-         Image optionsIcon = createOptionsIcon(isDark, false);
-         optionsIcon.getElement().getStyle().setMarginRight(9, Unit.PX);
-         toolbarPanel.add(optionsIcon);
+      Image optionsIcon = createOptionsIcon(isDark, isSetupChunk);
+      optionsIcon.getElement().getStyle().setMarginRight(9, Unit.PX);
+      toolbarPanel.add(optionsIcon);
 
-         // Note that 'run current chunk' currently only operates within Rmd
-         if (editor.getSession().getMode().getId().equals("mode/rmarkdown"))
+      // Note that 'run current chunk' currently only operates within Rmd
+      if (editor.getSession().getMode().getId().equals("mode/rmarkdown"))
+      {
+         if (!isSetupChunk)
          {
             Image runPreviousIcon = createRunPreviousIcon(isDark);
             runPreviousIcon.getElement().getStyle().setMarginRight(8, Unit.PX);
             toolbarPanel.add(runPreviousIcon);
-            
-            Image runIcon = createRunIcon();
-            toolbarPanel.add(runIcon);
          }
+
+         Image runIcon = createRunIcon();
+         toolbarPanel.add(runIcon);
       }
       
       display(toolbarPanel, el);

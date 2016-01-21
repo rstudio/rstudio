@@ -32,6 +32,7 @@ import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
@@ -90,7 +91,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    MarkersServerOperations,
                                                    LintServerOperations,
                                                    RoxygenServerOperations,
-                                                   SnippetServerOperations
+                                                   SnippetServerOperations,
+                                                   AddinsServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();
@@ -114,4 +116,6 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
    
    
    void startShellDialog(ServerRequestCallback<ConsoleProcess> requestCallback);
+   
+   void executeCode(String code, ServerRequestCallback<Void> requestCallback);
 }

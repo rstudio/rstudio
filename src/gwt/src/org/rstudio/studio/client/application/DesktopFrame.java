@@ -151,6 +151,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void setShinyDialogUrl(String url);
    
    boolean isOSXMavericks();
+   boolean isCentOS();
 
    String getScrollingCompensationType();
    

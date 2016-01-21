@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
@@ -47,7 +48,6 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.core.client.command.UserCommandManager.UserCommandResult;
 import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureHeightHandlers;
@@ -104,7 +104,6 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
 import org.rstudio.studio.client.shiny.events.LaunchShinyApplicationEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
@@ -132,6 +131,7 @@ import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper.RmdSelectedTemplate;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceAfterCommandExecutedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -148,6 +148,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.RMarkdownNoParamsDialog;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
+import org.rstudio.studio.client.workbench.views.source.events.CollabExternalEditEvent;
+import org.rstudio.studio.client.workbench.views.source.events.DocFocusedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
@@ -218,6 +220,7 @@ public class TextEditingTarget implements
             RmdOutputFormatChangedEvent.Handler handler);
       
       void setPublishPath(String type, String publishPath);
+      void invokePublish();
       
       void initWidgetSize();
       
@@ -744,6 +747,69 @@ public class TextEditingTarget implements
                         DocTabDragStateChangedEvent.STATE_NONE);
                }
             });
+      
+      events_.addHandler(
+            AceAfterCommandExecutedEvent.TYPE,
+            new AceAfterCommandExecutedEvent.Handler()
+            {
+               @Override
+               public void onAceAfterCommandExecuted(AceAfterCommandExecutedEvent event)
+               {
+                  JavaScriptObject data = event.getCommandData();
+                  if (isIncrementalSearchCommand(data))
+                  {
+                     String message = getIncrementalSearchMessage();
+                     if (StringUtil.isNullOrEmpty(message))
+                     {
+                        view_.getStatusBar().hideMessage();
+                     }
+                     else
+                     {
+                        view_.getStatusBar().showMessage(
+                              getIncrementalSearchMessage(),
+                              2000);
+                     }
+                  }
+               }
+            });
+   }
+   
+   static {
+      initializeIncrementalSearch();
+   }
+   
+   private static final native String initializeIncrementalSearch() /*-{
+      var IncrementalSearch = $wnd.require("ace/incremental_search").IncrementalSearch;
+      (function() {
+         this.message = $entry(function(msg) {
+            @org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget::setIncrementalSearchMessage(Ljava/lang/String;)(msg);
+         });
+         
+      }).call(IncrementalSearch.prototype);
+   }-*/;
+   
+   private static final native boolean isIncrementalSearchCommand(JavaScriptObject data) /*-{
+      var command = data.command;
+      if (command == null)
+         return false;
+         
+      var result =
+         command.name === "iSearch" ||
+         command.name === "iSearchBackwards" ||
+         command.isIncrementalSearchCommand === true;
+         
+      return result;
+   }-*/;
+   
+   private static String sIncrementalSearchMessage_ = null;
+   private static final void setIncrementalSearchMessage(String message)
+   {
+      sIncrementalSearchMessage_ = message;
+   }
+   
+   private static final String getIncrementalSearchMessage()
+   {
+      return sIncrementalSearchMessage_;
    }
    
    private boolean moveCursorToNextSectionOrChunk()
@@ -810,6 +876,38 @@ public class TextEditingTarget implements
    }
    
    @Handler
+   void onGoToStartOfCurrentScope()
+   {
+      docDisplay_.focus();
+      Scope scope = docDisplay_.getCurrentScope();
+      if (scope != null)
+      {
+         Position position = Position.create(
+               scope.getBodyStart().getRow(),
+               scope.getBodyStart().getColumn() + 1);
+         docDisplay_.setCursorPosition(position);
+      }
+   }
+   
+   @Handler
+   void onGoToEndOfCurrentScope()
+   {
+      docDisplay_.focus();
+      Scope scope = docDisplay_.getCurrentScope();
+      if (scope != null)
+      {
+         Position end = scope.getEnd();
+         if (end != null)
+         {
+            Position position = Position.create(
+                  end.getRow(),
+                  Math.max(0, end.getColumn() - 1));
+            docDisplay_.setCursorPosition(position);
+         }
+      }
+   }
+   
+   @Handler
    void onGoToNextSection()
    {
       if (docDisplay_.getFileType().canGoNextPrevSection())
@@ -835,51 +933,6 @@ public class TextEditingTarget implements
       {
          docDisplay_.gotoPageUp();
       }
-   }
-   
-   public void onExecuteUserCommand(final ExecuteUserCommandEvent event)
-   {
-      withSavedDoc(new Command()
-      {
-         @Override
-         public void execute()
-         {
-            Range range = docDisplay_.getSelectionRange();
-            String filePath = StringUtil.notNull(docUpdateSentinel_.getPath());
-            server_.executeUserCommand(
-                  event.getCommandName(),
-                  docDisplay_.getLines(),
-                  filePath,
-                  range.getStart().getRow(),
-                  range.getStart().getColumn(),
-                  range.getEnd().getRow(),
-                  range.getEnd().getColumn(),
-                  new ServerRequestCallback<JsArray<UserCommandResult>>()
-                  {
-                     @Override
-                     public void onResponseReceived(JsArray<UserCommandResult> results)
-                     {
-                        applyUserCommandResult(results);
-                     }
-
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        Debug.logError(error);
-                     }
-                  });
-         }
-      });
-   }
-   
-   private void applyUserCommandResult(JsArray<UserCommandResult> results)
-   {
-      for (int i = 0; i < results.length(); i++)
-      {
-         UserCommandResult result = results.get(i);
-         docDisplay_.replaceRange(result.getRange(), result.getText());
-      }
-
    }
    
    @Override
@@ -1048,7 +1101,7 @@ public class TextEditingTarget implements
                   }
                }, 
                null, // cancelOperation,
-               "Join Edit Session", 
+               "Discard and Join", 
                "Work on a Copy", 
                true  // yesIsDefault
                );
@@ -1226,6 +1279,9 @@ public class TextEditingTarget implements
       {
          public void onFocus(FocusEvent event)
          {
+            // let anyone listening know this doc just got focus
+            events_.fireEvent(new DocFocusedEvent(getPath(), getId()));
+            
             if (queuedCollabParams_ != null)
             {
                // join an in-progress collab session if we aren't already part
@@ -1235,44 +1291,22 @@ public class TextEditingTarget implements
                   beginQueuedCollabSession();
                }
             }
-            else
+
+            // check to see if the file's been saved externally--we do this even
+            // in a collaborative editing session so we can get delete
+            // notifications
+            Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
             {
-               // check to see if the file's been saved externally
-               Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+               public boolean execute()
                {
-                  public boolean execute()
-                  {
-                     if (view_.isAttached())
-                        checkForExternalEdit();
-                     return false;
-                  }
-               }, 500);
-            }
-            
-            // if we're in the main window and we get focus, let the window
-            // manager know (satellite windows are tracked on window activation)
-            if (SourceWindowManager.isMainSourceWindow())
-            {
-               RStudioGinjector.INSTANCE.getSourceWindowManager()
-                                        .setLastFocusedSourceWindowId("");
-            }
-            
-            // only enable 'go to section' commands when docDisplay has focus
-            commands_.goToNextSection().setEnabled(true);
-            commands_.goToPrevSection().setEnabled(true);
+                  if (view_.isAttached())
+                     checkForExternalEdit();
+                  return false;
+               }
+            }, 500);
          }
       });
       
-      docDisplay_.addBlurHandler(new BlurHandler()
-      {
-         @Override
-         public void onBlur(BlurEvent event)
-         {
-            // only enable 'go to section' commands when docDisplay has focus
-            commands_.goToNextSection().setEnabled(false);
-            commands_.goToPrevSection().setEnabled(false);
-         }
-      });
 
       if (fileType_.isR())
       {
@@ -1307,7 +1341,8 @@ public class TextEditingTarget implements
                   // if we're not in function scope, or this is a Shiny file,
                   // set a top-level (aka. Shiny-deferred) breakpoint
                   ScopeFunction innerFunction = null;
-                  if (!extendedType_.equals("shiny")) 
+                  if (extendedType_ == null ||
+                      !extendedType_.startsWith(SourceDocument.XT_SHINY_PREFIX))
                      innerFunction = docDisplay_.getFunctionAtPosition(
                            breakpointPosition, false);
                   if (innerFunction == null || !innerFunction.isFunction() ||
@@ -1434,7 +1469,7 @@ public class TextEditingTarget implements
       
       // for R Markdown docs, populate the popup menu with a list of available
       // formats
-      if (extendedType_.equals("rmarkdown"))
+      if (extendedType_.equals(SourceDocument.XT_RMARKDOWN))
          updateRmdFormatList();
       
       view_.addRmdFormatChangedHandler(new RmdOutputFormatChangedEvent.Handler()
@@ -1998,17 +2033,52 @@ public class TextEditingTarget implements
 
    public boolean onBeforeDismiss()
    {
-      Command closeCommand = new Command() {
+      final Command closeCommand = new Command() 
+      {
          public void execute()
          {
             CloseEvent.fire(TextEditingTarget.this, null);
          }
       };
+      
        
-      if (dirtyState_.getValue())
-         saveWithPrompt(closeCommand, null);
+      final Command promptCommand = new Command() 
+      {
+         public void execute()
+         {
+            if (dirtyState_.getValue())
+               saveWithPrompt(closeCommand, null);
+            else
+               closeCommand.execute();
+         }
+      };
+      
+      if (docDisplay_.hasFollowingCollabSession())
+      {
+         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_WARNING,
+                         getName().getValue() + " - Active Following Session",
+                         "You're actively following another user's cursor " +
+                         "in '" + getName().getValue() + "'.\n\n" +
+                         "If you close this file, you won't see their " + 
+                         "cursor until they edit another file.",
+                         false,
+                         new Operation() 
+                         {
+                            public void execute() 
+                            { 
+                               promptCommand.execute();
+                            }
+                         },
+                         null,
+                         null,
+                         "Close Anyway",
+                         "Cancel",
+                         false);
+      }
       else
-         closeCommand.execute();
+      {
+         promptCommand.execute();
+      }
 
       return false;
    }
@@ -2060,7 +2130,7 @@ public class TextEditingTarget implements
       docUpdateSentinel_.revert(onCompleted);
    }
 
-   private void saveThenExecute(String encodingOverride, final Command command)
+   public void saveThenExecute(String encodingOverride, final Command command)
    {
       checkCompilePdfDependencies();
    
@@ -2297,6 +2367,15 @@ public class TextEditingTarget implements
       if (lineCount < 1)
          return;
       
+      if (docDisplay_.hasActiveCollabSession())
+      {
+         // mutating the code (especially as below where the entire document 
+         // contents are changed) during a save operation inside a collaborative
+         // editing session would require some nuanced orchestration so for now
+         // these preferences don't apply to shared editing sessions
+         return;
+      }
+      
       if (prefs_.stripTrailingWhitespace().getValue() &&
           !fileType_.isMarkdown())
       {
@@ -2359,7 +2438,7 @@ public class TextEditingTarget implements
 
 
 
-   public void onDismiss()
+   public void onDismiss(int dismissType)
    {
       docUpdateSentinel_.stop();
       
@@ -2416,7 +2495,7 @@ public class TextEditingTarget implements
    public void adaptToExtendedFileType(String extendedType)
    {
       view_.adaptToExtendedFileType(extendedType);
-      if (extendedType.equals("rmarkdown"))
+      if (extendedType.equals(SourceDocument.XT_RMARKDOWN))
          updateRmdFormatList();
       extendedType_ = extendedType;
    }
@@ -2714,7 +2793,7 @@ public class TextEditingTarget implements
                          new GitHubViewRequest(file, type)));
       }
    }
-
+   
    @Handler
    void onExtractLocalVariable()
    {
@@ -2977,7 +3056,8 @@ public class TextEditingTarget implements
             {
                events_.fireEventToMainWindow(new DocWindowChangedEvent(
                      getId(), SourceWindowManager.getSourceWindowId(), "",
-                     DocTabDragParams.create(getId(), currentPosition()), 0));
+                     DocTabDragParams.create(getId(), currentPosition()),
+                     docUpdateSentinel_.getDoc().getCollabParams(), 0));
             }
          });
       }
@@ -3209,13 +3289,7 @@ public class TextEditingTarget implements
    @Handler
    void onRsconnectDeploy()
    {
-      if (docUpdateSentinel_ == null)
-         return;
-
-      // only Shiny files get the deploy command, so we can be confident we're
-      // deploying an app here
-      events_.fireEvent(RSConnectActionEvent.DeployAppEvent(
-            docUpdateSentinel_.getPath(), null));
+      view_.invokePublish();
    }
 
    @Handler 
@@ -4104,7 +4178,6 @@ public class TextEditingTarget implements
       }
    }
 
-   @SuppressWarnings("unused")
    private String stangle(String sweaveStr)
    {
       ScopeList chunks = new ScopeList(docDisplay_);
@@ -4140,7 +4213,7 @@ public class TextEditingTarget implements
 
       // If the document being sourced is a Shiny file, run the app instead.
       if (fileType_.isR() && 
-          extendedType_.equals("shiny")) 
+          extendedType_.startsWith(SourceDocument.XT_SHINY_PREFIX))
       {
          runShinyApp();
          return;
@@ -4244,7 +4317,8 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            events_.fireEvent(new LaunchShinyApplicationEvent(getPath()));
+            events_.fireEvent(new LaunchShinyApplicationEvent(getPath(),
+                  getExtendedFileType()));
          }
       }, "Run Shiny Application");
    }
@@ -4326,7 +4400,7 @@ public class TextEditingTarget implements
                                                          extendedType, 
                                                          fileType_);
       
-      if (extendedType == "rmarkdown")
+      if (extendedType == SourceDocument.XT_RMARKDOWN)
          renderRmd();
       else if (fileType_.isRd())
          previewRd();
@@ -5066,16 +5140,6 @@ public class TextEditingTarget implements
       if (getPath() == null)
          return;
       
-      // If we're in a collaborative session, we rely on it to sync contents
-      // (including saved/unsaved state); otherwise we'd need to (a) distinguish
-      // between "external edits" caused by other people in the session saving
-      // the file (already synced) and true external edits from other
-      // programs/processes,  and (b) and figure out what to when > 1 person
-      // gets the "file has changed externally" prompt (even at best this
-      // creates a "last writer wins" race condition)
-      if (docDisplay_ != null && docDisplay_.hasActiveCollabSession())
-         return;
-
       final Invalidation.Token token = externalEditCheckInvalidation_.getInvalidationToken();
 
       server_.checkForExternalEdit(
@@ -5123,6 +5187,18 @@ public class TextEditingTarget implements
                   }
                   else if (response.isModified())
                   {
+                     // If we're in a collaborative session, we need to let it
+                     // reconcile the modification
+                     if (docDisplay_ != null && 
+                         docDisplay_.hasActiveCollabSession() &&
+                         response.getItem() != null)
+                     {
+                        events_.fireEvent(new CollabExternalEditEvent(
+                              getId(), getPath(), 
+                              response.getItem().getLastModifiedNative()));
+                        return;
+                     }
+
                      ignoreDeletes_ = false; // Now we know it exists
 
                      // Use StringUtil.formatDate(response.getLastModified())?

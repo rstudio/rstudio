@@ -40,11 +40,18 @@ var Utils = require("mode/utils");
 
    function isCommentedRow(editor, row)
    {
-      var token = editor.getSession().getTokenAt(row, 0);
-      if (token == null)
-         return false;
+      var tokens = editor.session.getTokens(row);
+      for (var i = 0; i < tokens.length; i++)
+      {
+          var token = tokens[i];
+          if (/^\s*$/.test(token.value))
+             continue;
 
-      return /\bcomment\b/.test(token.type);
+          return /\bcomment\b/.test(token.type);
+      }
+
+      return false;
+
    }
 
    function isExpansionOf(candidate, range)
@@ -262,38 +269,6 @@ var Utils = require("mode/utils");
 
    });
 
-   addExpansionRule("expandLines", false, function(editor, session, selection, range) {
-
-      var startLine = session.getLine(range.start.row);
-      var startRowFirstCharIdx = indexOfFirstNonWhitespaceChar(startLine, 0);
-
-      var endLine = session.getLine(range.end.row);
-      var endRowLastCharIdx = indexOfLastNonWhitespaceChar(endLine, endLine.length);
-
-      if (range.start.column > startRowFirstCharIdx ||
-          range.end.column < endRowLastCharIdx)
-      {
-         var candidate = new Range(
-            range.start.row,
-            startRowFirstCharIdx,
-            range.end.row,
-            endRowLastCharIdx
-         );
-
-         // Avoid single-line selections of just whitespace.
-         if (candidate.start.row === candidate.end.row &&
-             session.getLine(candidate.start.row).trim().length === 0)
-         {
-            return null;
-         }
-
-         return candidate;
-      }
-
-      return null;
-
-   });
-
    addExpansionRule("nonBlankLines", false, function(editor, session, selection, range) {
 
       // Only apply in Markdown mode for now.
@@ -342,7 +317,7 @@ var Utils = require("mode/utils");
       // selection to fill both the start and end rows.
       var iterator = new TokenIterator(session);
       var token = iterator.moveToPosition(range.start);
-      while ((token = iterator.stepBackward()))
+      do
       {
          if (token == null)
             break;
@@ -373,6 +348,7 @@ var Utils = require("mode/utils");
 
          }
       }
+      while ((token = iterator.stepBackward()))
 
       return null;
 

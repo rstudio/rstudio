@@ -100,6 +100,10 @@ public class ShinyFrameHelper
       $wnd.addEventListener(
             "message",
             $entry(function(e) {
+               if (typeof e.data != 'object')
+                  return;
+               if (e.data.type !== 'ShinyFrameEvent')
+                  return;
                thiz.@org.rstudio.studio.client.shiny.ShinyFrameHelper::onMessage(Lcom/google/gwt/core/client/JavaScriptObject;)(e);
             }),
             true);

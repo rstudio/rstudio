@@ -86,7 +86,18 @@ public abstract class HtmlFormModalDialog<T> extends ModalDialogBase
          }    
       });
       addOkButton(okButton);
-      addCancelButton();
+      
+      ThemedButton cancelButton = new ThemedButton("Cancel", new ClickHandler(){
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            formPanel.clear();
+            closeDialog();
+         }
+      });
+      addCancelButton(cancelButton);
+      
+      
           
       formPanel.addSubmitHandler(new SubmitHandler() {
          public void onSubmit(SubmitEvent event) {           

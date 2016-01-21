@@ -135,7 +135,8 @@ std::set<std::string> implicitlyAvailablePackages(const FilePath& filePath,
 {
    std::set<std::string> dependencies;
    
-   if (modules::shiny::isShinyDocument(filePath, contents))
+   if (modules::shiny::getShinyFileType(filePath, contents) != 
+       modules::shiny::ShinyNone)
       dependencies.insert("shiny");
    
    return dependencies;

@@ -39,6 +39,7 @@
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionScopes.hpp>
+#include <session/projects/SessionProjectSharing.hpp>
 
 #include "session-config.h"
 
@@ -210,7 +211,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
         "allow publishing content to external services")
       ("allow-publish",
          value<bool>(&allowPublish_)->default_value(true),
-        "allow publishing content");
+        "allow publishing content")
+      ("allow-presentation-commands",
+         value<bool>(&allowPresentationCommands_)->default_value(false),
+       "allow presentation commands");
 
    // r options
    bool rShellEscape; // no longer works but don't want to break any
@@ -491,6 +495,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       the name of the pipe is in an environment variable. */
    //core::system::unsetenv("RS_SHARED_SECRET");
 
+   // show user home page
+   showUserHomePage_ = core::system::getenv(kRStudioUserHomePage) == "1";
+   core::system::unsetenv(kRStudioUserHomePage);
+
    // multi session
    multiSession_ = (programMode_ == kSessionProgramModeDesktop) ||
                    (core::system::getenv(kRStudioMultiSession) == "1");
@@ -503,17 +511,22 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    initialEnvironmentFileOverride_ = core::system::getenv(kRStudioInitialEnvironment);
    core::system::unsetenv(kRStudioInitialEnvironment);
 
+   // project sharing enabled
+   projectSharingEnabled_ =
+                core::system::getenv(kRStudioDisableProjectSharing).empty();
+
    // initial project (can either be a command line param or via env)
    r_util::SessionScope scope = sessionScope();
    if (!scope.empty())
    {
-      scopeState_ = r_util::validateSessionScope(
+        scopeState_ = r_util::validateSessionScope(
                        scope,
                        userHomePath(),
                        userScratchPath(),
                        session::projectIdToFilePath(userScratchPath(), 
-                                 FilePath(
-                                   getOverlayOption("shared-storage-path"))),
+                                 FilePath(getOverlayOption(
+                                       kSessionSharedStoragePath))),
+                       projectSharingEnabled(),
                        &initialProjectPath_);
    }
    else
@@ -534,6 +547,24 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    // get R versions path
    rVersionsPath_ = core::system::getenv(kRStudioRVersionsPath);
    core::system::unsetenv(kRStudioRVersionsPath);
+
+   // capture default R version environment variables
+   defaultRVersion_ = core::system::getenv(kRStudioDefaultRVersion);
+   core::system::unsetenv(kRStudioDefaultRVersion);
+   defaultRVersionHome_ = core::system::getenv(kRStudioDefaultRVersionHome);
+   core::system::unsetenv(kRStudioDefaultRVersionHome);
+   
+   // capture auth environment variables
+   authMinimumUserId_ = 0;
+   if (programMode_ == kSessionProgramModeServer)
+   {
+      authRequiredUserGroup_ = core::system::getenv(kRStudioRequiredUserGroup);
+      core::system::unsetenv(kRStudioRequiredUserGroup);
+
+      authMinimumUserId_ = safe_convert::stringTo<unsigned int>(
+                              core::system::getenv(kRStudioMinimumUserId), 100);
+      core::system::unsetenv(kRStudioMinimumUserId);
+   }
 
    // return status
    return status;

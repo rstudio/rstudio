@@ -159,7 +159,7 @@ void addInferredSymbols(const FilePath& filePath,
    }
    
    // make 'shiny' implicitly available in shiny documents
-   if (modules::shiny::isShinyDocument(filePath))
+   if (modules::shiny::getShinyFileType(filePath) != modules::shiny::ShinyNone)
    {
       const PackageInformation& completions = pIndex->getPackageInformation("shiny");
       pSymbols->insert(completions.exports.begin(), completions.exports.end());

@@ -106,6 +106,8 @@ public class DocumentOutlineWidget extends Composite
          if (node.isChunk())
          {
             text = node.getChunkLabel();
+            if (StringUtil.isNullOrEmpty(text))
+               text = "(" + node.getLabel().toLowerCase() + ")";
          }
          else if (node.isFunction())
          {
@@ -120,9 +122,6 @@ public class DocumentOutlineWidget extends Composite
          {
             text = node.getLabel();
          }
-
-         if (text.equals(""))
-            text = "(chunk)";
 
          if (label_ == null)
             label_ = new Label(text);

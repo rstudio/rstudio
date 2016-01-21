@@ -534,6 +534,22 @@ bool FilePath::hasTextMimeType() const
           boost::algorithm::ends_with(mimeType, "+xml");
 }
 
+void FilePath::setLastWriteTime(std::time_t time) const
+{
+   try
+   {
+      if (!exists())
+         return;
+      else
+         boost::filesystem::last_write_time(pImpl_->path, time);
+   }
+   catch(const boost::filesystem::filesystem_error& e)
+   {
+      logError(pImpl_->path, e, ERROR_LOCATION) ;
+      return;
+   }
+}
+
 std::time_t FilePath::lastWriteTime() const
 {
    try
@@ -762,6 +778,25 @@ Error FilePath::createDirectory(const std::string& name) const
       error.addProperty("target-dir", name) ;
       return error ;
    }
+}
+
+Error FilePath::ensureFile() const
+{
+   // nothing to do if the file already exists
+   if (exists())
+      return Success();
+
+   // create output stream to ensure file creation
+   boost::shared_ptr<std::ostream> pStream;
+   Error error = open_w(&pStream);
+   if (error)
+      return error;
+
+   // release file handle
+   pStream->flush();
+   pStream.reset(); 
+
+   return Success();
 }
 
 Error FilePath::resetDirectory() const

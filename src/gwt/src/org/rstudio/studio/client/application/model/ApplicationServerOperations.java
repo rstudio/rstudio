@@ -58,6 +58,10 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    // verify current credentials
    void updateCredentials();
    
+   // event listener
+   void stopEventListener();
+   void ensureEventListener();
+   
    // get an application URL
    String getApplicationURL(String pathName);
    
@@ -77,6 +81,7 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    void getNewSessionUrl(String hostPageUrl,
          boolean isProject, 
          String directory,
+         RVersionSpec rVersion,
          ServerRequestCallback<String> callback);
    
    void getActiveSessions(
@@ -85,4 +90,12 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    
    void getAvailableRVersions(
       ServerRequestCallback<JsArray<RVersionSpec>> callback);
+   
+   void getProjectRVersion(
+         String projectDir,
+         ServerRequestCallback<RVersionSpec> callback);
+   
+   void getProjectFilePath(
+         String projectId,
+         ServerRequestCallback<String> callback);
 }

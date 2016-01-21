@@ -93,6 +93,10 @@ public class AceCommandManager extends JavaScriptObject
       return this.commands;
    }-*/;
    
+   public final native boolean exec(String command, AceEditorNative editor) /*-{
+      return this.exec(command, editor);
+   }-*/;
+   
    private static final String toAceStyleShortcutString(KeyCombination keys)
    {
       StringBuilder builder = new StringBuilder();
@@ -201,7 +205,7 @@ public class AceCommandManager extends JavaScriptObject
          "togglerecording", "replaymacro", "passKeysToBrowser",
          "copy", "cut", "cut_or_delete", "paste", "replace",
          "insertstring", "inserttext", "gotoline", "jumptomatching",
-         "backspace", "delete", "togglecomment"
+         "backspace", "delete", "togglecomment", "toggleBlockComment"
       ];
       
       var map = {};

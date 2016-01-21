@@ -31,6 +31,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 
+#include "shiny/SessionShiny.hpp"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -40,22 +42,27 @@ namespace shiny_viewer {
 
 namespace {
 
-// track the current viewed url and path
-std::string s_currentAppUrl;
-std::string s_currentAppPath;
+// track a pending Shiny path launch
+FilePath s_pendingShinyPath;
 
-void enqueStartEvent(const std::string& url, const std::string& path,
+void enqueueStartEvent(const std::string& url, const std::string& path,
                      int viewerType)
 {
-   // record the url and path
-   s_currentAppUrl = module_context::mapUrlPorts(url);
-   s_currentAppPath = path;
+   FilePath shinyPath(path);
+   if (module_context::safeCurrentPath() == shinyPath &&
+       !s_pendingShinyPath.empty())
+   {
+      // when Shiny starts an app from a anonymous expr (e.g. shinyApp(foo)),
+      // it reports the working directory as the app's "path". We sometimes
+      // know which file on disk this app corresponds to, so inject that now.
+      shinyPath = s_pendingShinyPath;
+   }
+   s_pendingShinyPath = FilePath();
 
    // enque the event
    json::Object dataJson;
-   dataJson["url"] = s_currentAppUrl;
-   dataJson["path"] =
-         module_context::createAliasedPath(FilePath(s_currentAppPath));
+   dataJson["url"] = module_context::mapUrlPorts(url);
+   dataJson["path"] = module_context::createAliasedPath(shinyPath);
    dataJson["state"] = "started";
    dataJson["viewer"] = viewerType;
    ClientEvent event(client_events::kShinyViewer, dataJson);
@@ -91,9 +98,9 @@ SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP, SEXP viewerSEXP)
          }
       }
 
-      enqueStartEvent(r::sexp::safeAsString(urlSEXP),
-                      r::sexp::safeAsString(pathSEXP),
-                      viewertype);
+      enqueueStartEvent(r::sexp::safeAsString(urlSEXP),
+                        r::sexp::safeAsString(pathSEXP),
+                        viewertype);
    }
    catch(const r::exec::RErrorException& e)
    {
@@ -143,26 +150,77 @@ Error setShinyViewer(boost::shared_ptr<int> pShinyViewerType,
 Error getShinyRunCmd(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   std::string targetPath;
-   Error error = json::readParams(request.params, &targetPath);
+   std::string targetPath, extendedType;
+   Error error = json::readParams(request.params, &targetPath, &extendedType);
    if (error)
       return error;
 
-   // Consider: if the shiny namespace is attached to the search path, we
-   // don't need to emit "shiny::".
-   std::string runCmd = "shiny::runApp(";
-   std::string dir = module_context::pathRelativeTo(
+   modules::shiny::ShinyFileType shinyType = 
+      modules::shiny::shinyTypeFromExtendedType(extendedType);
+
+   // resolve the file path we were passed; if this .R file belongs to a 
+   // Shiny directory, use the parent
+   FilePath shinyPath = module_context::resolveAliasedPath(targetPath); 
+   if (shinyType == modules::shiny::ShinyDirectory)
+      shinyPath = shinyPath.parent();
+
+   std::string shinyRunPath = module_context::pathRelativeTo(
             module_context::safeCurrentPath(),
-            module_context::resolveAliasedPath(targetPath));
-   if (dir != ".")
+            shinyPath);
+
+   // check to see if Shiny is attached to the search path
+   bool isShinyAttached = false;
+   SEXP namespaces = R_NilValue;
+   r::sexp::Protect protect;
+   error = r::exec::RFunction("search").call(&namespaces, &protect);
+   if (error)
    {
-      // runApp defaults to the current working directory, so don't specify
-      // it unless we need to.
-      runCmd.append("'");
-      runCmd.append(dir);
-      runCmd.append("'");
+      // not fatal; we'll just presume Shiny is not on the path
+      LOG_ERROR(error);
    }
-   runCmd.append(")");
+   else
+   {
+      int len = r::sexp::length(namespaces);
+      for (int i = 0; i < len; i++)
+      {
+         std::string ns = r::sexp::safeAsString(STRING_ELT(namespaces, i), "");
+         if (ns == "package:shiny") 
+         {
+            isShinyAttached = true;
+            break;
+         }
+      }
+   }
+
+   std::string runCmd; 
+   if (shinyType == modules::shiny::ShinyDirectory)
+   {
+      if (!isShinyAttached)
+         runCmd = "shiny::";
+      runCmd.append("runApp(");
+      if (shinyRunPath != ".")
+      {
+         // runApp defaults to the current working directory, so don't specify
+         // it unless we need to.
+         runCmd.append("'");
+         runCmd.append(shinyRunPath);
+         runCmd.append("'");
+      }
+      runCmd.append(")");
+   }
+   else if (shinyType == modules::shiny::ShinySingleFile ||
+            shinyType == modules::shiny::ShinySingleExecutable) 
+   {
+      if (!isShinyAttached)
+         runCmd = "library(shiny); ";
+      if (shinyType == modules::shiny::ShinySingleFile)
+         runCmd.append("print(");
+      runCmd.append("source('");
+      runCmd.append(shinyRunPath); 
+      runCmd.append("')");
+      if (shinyType == modules::shiny::ShinySingleFile)
+         runCmd.append("$value)");
+   }
 
    json::Object dataJson;
    dataJson["run_cmd"] = runCmd;
@@ -190,6 +248,31 @@ Error initShinyViewerPref(boost::shared_ptr<int> pShinyViewerType)
 
    return Success();
 }
+ 
+void onConsoleInput(const std::string& input)
+{
+   boost::smatch match;
+
+   // capture source commands -- note that this doesn't handle quotes in file
+   // names or attempt to balance quote styles, evaluate expressions, etc.
+   // (it will primarily detect the output of getShinyRunCmd but we also want
+   // to catch most user-entered source() expressions)
+   if (boost::regex_search(input, match,
+                 boost::regex("source\\s*\\(\\s*['\"]([^'\"]+)['\"]\\s*\\)")))
+   {
+      // source commands can result in the execution of Shiny app objects, 
+      // which Shiny doesn't map back to the original file; keep track of 
+      // executions so we can do the mapping ourselves (see comments in 
+      // enqueueStartEvent)
+      s_pendingShinyPath = FilePath(
+            module_context::resolveAliasedPath(match[1]));
+   }
+   else
+   {
+      // not a source command
+      s_pendingShinyPath = FilePath();
+   }
+}
 
 } // anonymous namespace
 
@@ -210,6 +293,7 @@ Error initialize()
    methodDefViewer.numArgs = 3;
    r::routines::addCallMethod(methodDefViewer);
 
+   events().onConsoleInput.connect(onConsoleInput);
    userSettings().onChanged.connect(bind(onUserSettingsChanged,
                                          pShinyViewerType));
 

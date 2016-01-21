@@ -1,7 +1,7 @@
 /*
  * SessionSourceDatabase.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -220,6 +220,7 @@ SourceDocument::SourceDocument(const std::string& type)
    created_ = date_time::millisecondsSinceEpoch();
    sourceOnSave_ = false;
    relativeOrder_ = 0;
+   lastContentUpdate_ = date_time::millisecondsSinceEpoch();
 }
    
 
@@ -250,6 +251,7 @@ void SourceDocument::setContents(const std::string& contents)
 {
    contents_ = contents;
    hash_ = hash::crc32Hash(contents_);
+   lastContentUpdate_ = date_time::millisecondsSinceEpoch();
 }
 
 // set contents from file
@@ -271,6 +273,9 @@ Error SourceDocument::setPathAndContents(const std::string& path,
    path_ = path;
    setContents(contents);
    lastKnownWriteTime_ = docPath.lastWriteTime();
+
+   // rewind the last content update to the file's write time
+   lastContentUpdate_ = lastKnownWriteTime_;
 
    return Success();
 }
@@ -351,6 +356,11 @@ void SourceDocument::updateLastKnownWriteTime()
 
    lastKnownWriteTime_ = filePath.lastWriteTime();
 }
+
+void SourceDocument::setLastKnownWriteTime(std::time_t time)
+{
+   lastKnownWriteTime_ = time;
+}
    
 Error SourceDocument::readFromJson(json::Object* pDocJson)
 {
@@ -404,6 +414,10 @@ Error SourceDocument::readFromJson(json::Object* pDocJson)
       json::Value order = docJson["relative_order"];
       relativeOrder_ = !order.is_null() ? order.get_int() : 0;
 
+      json::Value lastContentUpdate = docJson["last_content_update"];
+      lastContentUpdate_ = !lastContentUpdate.is_null() ? 
+                               lastContentUpdate.get_int64() : 0;
+
       json::Value collabServer = docJson["collab_server"];
       collabServer_ = !collabServer.is_null() ? collabServer.get_str() : 
                                                 std::string();
@@ -443,6 +457,9 @@ void SourceDocument::writeToJson(json::Object* pDocJson) const
    jsonDoc["encoding"] = encoding_;
    jsonDoc["collab_server"] = collabServer();
    jsonDoc["source_window"] = sourceWindow_;
+   jsonDoc["last_content_update"] = json::Value(
+         static_cast<boost::int64_t>(lastContentUpdate_));
+
 }
 
 Error SourceDocument::writeToFile(const FilePath& filePath) const

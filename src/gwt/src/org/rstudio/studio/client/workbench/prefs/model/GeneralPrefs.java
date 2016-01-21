@@ -22,7 +22,9 @@ public class GeneralPrefs extends JavaScriptObject
 {
    protected GeneralPrefs() {}
 
-   public static final native GeneralPrefs create(int saveAction,
+   public static final native GeneralPrefs create(String showUserHomePage,
+                                                  boolean reuseSessionsForProjectLinks,
+                                                  int saveAction,
                                                   boolean loadRData,
                                                   boolean rProfileOnResume,
                                                   String initialWorkingDir,
@@ -30,6 +32,8 @@ public class GeneralPrefs extends JavaScriptObject
                                                   boolean restoreProjectRVersion,
                                                   boolean showLastDotValue) /*-{
       var prefs = new Object();
+      prefs.show_user_home_page = showUserHomePage;
+      prefs.reuse_sessions_for_project_links = reuseSessionsForProjectLinks;
       prefs.save_action = saveAction;
       prefs.load_rdata = loadRData;
       prefs.rprofile_on_resume = rProfileOnResume;
@@ -40,6 +44,14 @@ public class GeneralPrefs extends JavaScriptObject
       return prefs ;
    }-*/;
 
+   
+   public native final String getShowUserHomePage() /*-{
+      return this.show_user_home_page;
+   }-*/;
+   
+   public native final boolean getReuseSessionsForProjectLinks() /*-{
+      return this.reuse_sessions_for_project_links;
+   }-*/;
    
    public native final int getSaveAction() /*-{
       return this.save_action;

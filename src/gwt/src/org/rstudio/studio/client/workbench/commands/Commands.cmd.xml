@@ -41,6 +41,7 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="newSourceDoc"/>
             <separator/>
             <cmd refid="newRMarkdownDoc"/>
+            <cmd refid="newRShinyApp"/>
             <separator/>
             <cmd refid="newTextDoc"/>
             <cmd refid="newCppDoc"/>
@@ -387,6 +388,25 @@ well as menu structures (for main menu and popup menus).
          </menu>
          <separator/>
          <cmd refid="showShellDialog"/>
+         <menu label="Addins">
+            <cmd refid="addinsMru0"/>
+            <cmd refid="addinsMru1"/>
+            <cmd refid="addinsMru2"/>
+            <cmd refid="addinsMru3"/>
+            <cmd refid="addinsMru4"/>
+            <cmd refid="addinsMru5"/>
+            <cmd refid="addinsMru6"/>
+            <cmd refid="addinsMru7"/>
+            <cmd refid="addinsMru8"/>
+            <cmd refid="addinsMru9"/>
+            <cmd refid="addinsMru10"/>
+            <cmd refid="addinsMru11"/>
+            <cmd refid="addinsMru12"/>
+            <cmd refid="addinsMru13"/>
+            <cmd refid="addinsMru14"/>
+            <separator/>
+            <cmd refid="browseAddins"/>
+         </menu>
          <separator/>
          <cmd refid="helpKeyboardShortcuts"/>
          <cmd refid="modifyKeyboardShortcuts"/>
@@ -406,16 +426,18 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="helpUsingRStudio"/>
          <cmd refid="rstudioSupport"/>
          <separator/>
-         <cmd refid="markdownHelp"/>
-         <cmd refid="openRoxygenQuickReference"/>
          <menu label="_Cheatsheets">
-            <cmd refid="openDataVisualizationCheatSheet"/>
-            <cmd refid="openPackageDevelopmentCheatSheet"/>
+            <cmd refid="openRStudioIDECheatSheet"/>'
             <cmd refid="openDataWranglingCheatSheet"/>
+            <cmd refid="openDataVisualizationCheatSheet"/>
             <cmd refid="openRMarkdownCheatSheet"/>
             <cmd refid="openRMarkdownReferenceGuide"/>
             <cmd refid="openShinyCheatSheet"/>
+            <cmd refid="openPackageDevelopmentCheatSheet"/>
          </menu>
+         <separator/>
+         <cmd refid="markdownHelp"/>
+         <cmd refid="openRoxygenQuickReference"/>
          <separator/>
          <cmd refid="rstudioAgreement"/>
          <separator/>
@@ -495,14 +517,16 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="findUsages" value="Cmd+Alt+U"/>
          <shortcut refid="findFromSelection" value="Meta+E" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="findFromSelection" value="Ctrl+F3" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="findReplace" value="Meta+F" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="findReplace" value="Cmd+F" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="findNext" value="Cmd+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/>
+         <shortcut refid="findReplace" value="Meta+F"/>
+         <shortcut refid="findReplace" value="Ctrl+F" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="emacs"/>
+         <shortcut refid="findNext" value="Meta+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/>
+         <shortcut refid="findNext" value="Ctrl+G" if="!org.rstudio.core.client.BrowseCap.isWindows()" disableModes="emacs"/>
          <shortcut refid="findNext" value="F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/>
          <shortcut refid="findPrevious" value="Cmd+Shift+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/>
          <shortcut refid="findPrevious" value="Shift+F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/>
          <shortcut refid="replaceAndFind" value="Cmd+Shift+J"/>
          <shortcut refid="goToFileFunction" value="Ctrl+."/>
+         <shortcut refid="goToLine" value="Alt+G" disableModes="default,vim"/>
          <shortcut refid="goToLine" value="Shift+Alt+G" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="goToLine" value="Cmd+Shift+Alt+G" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="jumpTo" value="Shift+Alt+J" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -510,7 +534,6 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="jumpToMatching" value="Ctrl+P" disableModes="emacs"/>
          <shortcut refid="expandToMatching" value="Ctrl+Shift+E" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="expandToMatching" value="Ctrl+Shift+Alt+E" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="splitIntoLines" value="Cmd+Alt+A"/>
          <shortcut refid="toggleDocumentOutline" value="Cmd+Shift+O"/>
          <shortcut value="Ctrl+Alt+Up" title="Add cursor above current cursor"/>
          <shortcut value="Ctrl+Alt+Down" title="Add cursor below current cursor"/>
@@ -520,13 +543,18 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="shrinkSelection" value="Cmd+Alt+Shift+Down" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="goToNextSection" value="Cmd+PageDown"/>
          <shortcut refid="goToPrevSection" value="Cmd+PageUp"/>
+         <shortcut refid="splitIntoLines" value="Ctrl+Alt+A" disableModes="emacs"/>
+         <shortcut refid="goToStartOfCurrentScope" value="Ctrl+Alt+A" disableModes="default,vim"/>
+         <shortcut refid="goToEndOfCurrentScope" value="Ctrl+Alt+E" disableModes="default,vim"/>
          <shortcut value="Cmd+Alt+Up" title="Add cursor above current cursor"/>
          <shortcut value="Cmd+Alt+Down" title="Add cursor below current cursor"/>
          <shortcut value="Ctrl+Alt+Shift+Up" title="Move active cursor up"/>
          <shortcut value="Ctrl+Alt+Shift+Down" title="Move active cursor down"/>
       </shortcutgroup>
-      <shortcutgroup name="Tabs/Panes">
-      
+      <shortcutgroup name="Panes">
+         <shortcut refid="switchFocusSourceConsole" value="Ctrl+X O|Ctrl+X Ctrl+O" disableModes="default,vim"/>
+         <shortcut refid="activateConsole" value="Alt+X" disableModes="default,vim"/>
+         
          <shortcut refid="activateSource" value="Ctrl+1"/>
          <shortcut refid="activateConsole" value="Ctrl+2"/>
          <shortcut refid="activateHelp" value="Ctrl+3"/>
@@ -538,21 +566,12 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="activateViewer" value="Ctrl+9"/>
          <shortcut refid="activateVcs" value="Ctrl+F1"/>
          <shortcut refid="activateBuild" value="Ctrl+F2"/>
-         
-         <shortcut refid="layoutZoomSource" value="Ctrl+Shift+1"/>
-         <shortcut refid="layoutZoomConsole" value="Ctrl+Shift+2"/>
-         <shortcut refid="layoutZoomHelp" value="Ctrl+Shift+3"/>
-         <shortcut refid="layoutZoomHistory" value="Ctrl+Shift+4"/>
-         <shortcut refid="layoutZoomFiles" value="Ctrl+Shift+5"/>
-         <shortcut refid="layoutZoomPlots" value="Ctrl+Shift+6"/>
-         <shortcut refid="layoutZoomPackages" value="Ctrl+Shift+7"/>
-         <shortcut refid="layoutZoomEnvironment" value="Ctrl+Shift+8"/>
-         <shortcut refid="layoutZoomViewer" value="Ctrl+Shift+9"/>
-         <shortcut refid="layoutZoomVcs" value="Ctrl+Shift+F1"/>
-         <shortcut refid="layoutZoomBuild" value="Ctrl+Shift+F2"/>
+
          <shortcut refid="layoutEndZoom" value="Ctrl+Shift+0"/>
-         
+      </shortcutgroup>
+      <shortcutgroup name="Tabs">
          <shortcut refid="switchToTab" value="Ctrl+X B" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="switchToTab" value="Ctrl+X B" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim"/>
          <shortcut refid="switchToTab" value="Ctrl+Shift+."/>
          <shortcut refid="previousTab" value="Ctrl+Alt+Left" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
          <shortcut refid="nextTab" value="Ctrl+Alt+Right" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
@@ -560,19 +579,33 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="nextTab" value="Ctrl+PageDown" if="org.rstudio.core.client.BrowseCap.isLinux()"/>
          <shortcut refid="firstTab" value="Ctrl+Alt+Shift+Left"/>
          <shortcut refid="lastTab" value="Ctrl+Alt+Shift+Right"/>
+         <shortcut refid="previousTab" value="Ctrl+X Left" disableModes="default,vim"/>
          <shortcut refid="previousTab" value="Ctrl+F11"/>
+         <shortcut refid="nextTab" value="Ctrl+X Right" disableModes="default,vim"/>
          <shortcut refid="nextTab" value="Ctrl+F12"/>
          <shortcut refid="firstTab" value="Ctrl+Shift+F11"/>
          <shortcut refid="lastTab" value="Ctrl+Shift+F12"/>
 
       </shortcutgroup>
       <shortcutgroup name="Files">
-         <shortcut refid="saveSourceDoc" value="Cmd+S"/>
+      
+         <shortcut refid="saveSourceDoc" value="Ctrl+X Ctrl+S" disableModes="default,vim"/>
+         <shortcut refid="saveSourceDoc" value="Ctrl+S" disableModes="emacs"/>
+         <shortcut refid="saveSourceDoc" value="Meta+S" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         
          <shortcut refid="saveAllSourceDocs" value="Cmd+Alt+S"/>
+         
+         <shortcut refid="newSourceDoc" value="Ctrl+X Ctrl+N" disableModes="default,vim"/>
          <shortcut refid="newSourceDoc" value="Cmd+Shift+N" if="!org.rstudio.core.client.BrowseCap.isChrome()" title="New R Script"/>
          <shortcut refid="newSourceDoc" value="Cmd+Shift+Alt+N" if="org.rstudio.core.client.BrowseCap.isChrome()" title="New R Script"/>
-         <shortcut refid="openSourceDoc" value="Cmd+O"/>
+         
+         <shortcut refid="openSourceDoc" value="Ctrl+X Ctrl+F" disableModes="default,vim"/>
+         <shortcut refid="openSourceDoc" value="Ctrl+O" disableModes="emacs"/>
+         <shortcut refid="openSourceDoc" value="Meta+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         
+         <shortcut refid="closeSourceDoc" value="Ctrl+X K" disableModes="default,vim"/>
          <shortcut refid="closeSourceDoc" value="Cmd+W" disableModes="emacs"/>
+         
          <shortcut refid="closeOtherSourceDocs" value="Cmd+Shift+Alt+W"/>
          <shortcut refid="closeAllSourceDocs" value="Cmd+Shift+W"/>
          <shortcut refid="findInFiles" value="Cmd+Shift+F"/>
@@ -594,11 +627,13 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="sourceFile" value="Ctrl+Alt+G" title="Source a File..."/>
          <shortcut refid="executeLastCode" value="Cmd+Shift+P"/>
          <shortcut refid="executeCode" value="Cmd+R" if="org.rstudio.core.client.BrowseCap.isWindowsDesktop()" disableModes="vim"/>
+         <shortcut refid="executeCode" value="Ctrl+C Ctrl+N" disableModes="default,vim"/>
          <shortcut refid="executeCode" value="Cmd+Enter"/>
          <shortcut refid="executeCodeWithoutMovingCursor" value="Alt+Enter"/>
          <shortcut refid="executeAllCode" value="Cmd+Alt+R"/>
          <shortcut refid="executeToCurrentLine" value="Cmd+Alt+B"/>
          <shortcut refid="executeFromCurrentLine" value="Cmd+Alt+E"/>
+         <shortcut refid="executeCurrentFunction" value="Ctrl+C Ctrl+F" disableModes="default,vim"/>
          <shortcut refid="executeCurrentFunction" value="Cmd+Alt+F"/>
          <shortcut refid="executeCurrentSection" value="Cmd+Alt+T"/>
          <shortcut refid="executePreviousChunks" value="Cmd+Alt+P"/>
@@ -623,7 +658,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut value="F2" title="Go To Function / File"/>
          <shortcut value="Tab" title="Complete Code" />
          <shortcut refid="quitSession" value="Cmd+Q" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
-         <shortcut refid="restartR" value="Cmd+Shift+0" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="restartR" value="Meta+Shift+0" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="restartR" value="Cmd+Shift+F10"/>
          <shortcut refid="previousPlot" value="Cmd+Shift+PageUp" />
          <shortcut refid="nextPlot" value="Cmd+Shift+PageDown" />
@@ -638,11 +673,32 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="viewerSaveAllAndRefresh" value="Cmd+Shift+F5"/>
          <shortcut refid="helpKeyboardShortcuts" value="Alt+Shift+K"/>
          <shortcut refid="toggleFullScreen" value="Ctrl+Meta+F" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
+         <shortcut refid="showOptions" value="Meta+," if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="projectOptions" value="Shift+Meta+," if="org.rstudio.core.client.BrowseCap.isMacintosh()"/> 
+         <shortcut refid="goToHelp" value="Ctrl+C Ctrl+V" disableModes="default,vim"/>
       </shortcutgroup>
       <shortcutgroup name="Console">
-         <shortcut refid="consoleClear" value="Ctrl+L"/>
+         <shortcut refid="consoleClear" value="Ctrl+L" disableModes="emacs"/>
          <shortcut value="Cmd+Up" title="Popup Command History"/>
       </shortcutgroup>
+
+      <!-- 
+      Shortcuts in this group won't be shown in the quick reference card. 
+       -->
+      <shortcutgroup name="Not Displayed">
+         <shortcut refid="layoutZoomSource" value="Ctrl+Shift+1"/>
+         <shortcut refid="layoutZoomConsole" value="Ctrl+Shift+2"/>
+         <shortcut refid="layoutZoomHelp" value="Ctrl+Shift+3"/>
+         <shortcut refid="layoutZoomHistory" value="Ctrl+Shift+4"/>
+         <shortcut refid="layoutZoomFiles" value="Ctrl+Shift+5"/>
+         <shortcut refid="layoutZoomPlots" value="Ctrl+Shift+6"/>
+         <shortcut refid="layoutZoomPackages" value="Ctrl+Shift+7"/>
+         <shortcut refid="layoutZoomEnvironment" value="Ctrl+Shift+8"/>
+         <shortcut refid="layoutZoomViewer" value="Ctrl+Shift+9"/>
+         <shortcut refid="layoutZoomVcs" value="Ctrl+Shift+F1"/>
+         <shortcut refid="layoutZoomBuild" value="Ctrl+Shift+F2"/>
+      </shortcutgroup>
+         
    </shortcuts>
 
    <!--
@@ -729,7 +785,12 @@ well as menu structures (for main menu and popup menus).
         desc="Create a new R Markdown document"
         rebindable="false"/>
         
-    <cmd id="newRHTMLDoc"
+   <cmd id="newRShinyApp"
+        menuLabel="Shiny _Web App..."
+        desc="Create a new Shiny web application"
+        rebindable="false"/>  
+        
+   <cmd id="newRHTMLDoc"
         menuLabel="R _HTML"
         desc="Create a new R HTML document"
         rebindable="false"/>
@@ -782,8 +843,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="closeSourceDoc"
         label="Close Current Document"
         menuLabel="_Close"
-        enabled="false"
-        preventShortcutWhenDisabled="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
+        enabled="false"/>
         
    <cmd id="closeAllSourceDocs"
         label="Close All Documents"
@@ -1451,6 +1511,12 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         desc="Go to previous section/chunk"
         context="editor"/>
+        
+   <cmd id="goToStartOfCurrentScope"
+        context="editor"/>
+   
+   <cmd id="goToEndOfCurrentScope"
+        context="editor"/>
    
    <cmd id="expandRaggedSelection"
         label="Expand Ragged Selection"
@@ -1480,6 +1546,11 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Authoring R Presentations"
         desc="Guide to using R Markdown"
         context="help"/>
+
+    <cmd id="openRStudioIDECheatSheet"
+         menuLabel="RStudio IDE Cheat Sheet"
+         desc="RStudio IDE cheat sheet"
+         context="help"/>
 
     <cmd id="openDataVisualizationCheatSheet"
          menuLabel="Data Visualization with ggplot2"
@@ -1957,7 +2028,7 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="importDatasetFromFile"
         label="Import Dataset from File..."
-        menuLabel="From _Text File..."
+        menuLabel="From _Local File..."
         windowMode="main"/>
         
    <cmd id="importDatasetFromURL"
@@ -2049,6 +2120,34 @@ well as menu structures (for main menu and popup menus).
         label="Open Shell"
         menuLabel="_Shell..."
         desc="Execute shell commands(s)"
+        windowMode="main"/>
+        
+   <cmd id="addinsMru0" visible="false" rebindable="false"/>
+   <cmd id="addinsMru1" visible="false" rebindable="false"/>
+   <cmd id="addinsMru2" visible="false" rebindable="false"/>
+   <cmd id="addinsMru3" visible="false" rebindable="false"/>
+   <cmd id="addinsMru4" visible="false" rebindable="false"/>
+   <cmd id="addinsMru5" visible="false" rebindable="false"/>
+   <cmd id="addinsMru6" visible="false" rebindable="false"/>
+   <cmd id="addinsMru7" visible="false" rebindable="false"/>
+   <cmd id="addinsMru8" visible="false" rebindable="false"/>
+   <cmd id="addinsMru9" visible="false" rebindable="false"/>
+   <cmd id="addinsMru10" visible="false" rebindable="false"/>
+   <cmd id="addinsMru11" visible="false" rebindable="false"/>
+   <cmd id="addinsMru12" visible="false" rebindable="false"/>
+   <cmd id="addinsMru13" visible="false" rebindable="false"/>
+   <cmd id="addinsMru14" visible="false" rebindable="false"/>
+   
+   <cmd id="clearAddinsMruList"
+        menuLabel="_Clear Recent Addins"
+        desc="Clear recently used addins"
+        windowMode="main"
+        rebindable="false"/>
+        
+   <cmd id="browseAddins"
+        label="Browse Addins"
+        menuLabel="_Browse Addins..."
+        desc="Browse addins"
         windowMode="main"/>
 
    <cmd id="macPreferences"

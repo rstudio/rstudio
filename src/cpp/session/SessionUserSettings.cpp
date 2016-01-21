@@ -28,6 +28,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
+#include <session/SessionConstants.hpp>
 #include <session/projects/ProjectsSettings.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include "modules/SessionErrors.hpp"
@@ -48,7 +49,7 @@ namespace session {
 #define kAgreementPrefix "agreement."
    
 namespace {
-const char * const kContextId ="contextIdentifier";
+const char * const kContextId = kContextIdentifier;
 const char * const kAgreementHash = kAgreementPrefix "agreedToHash";
 const char * const kAutoCreatedProfile = "autoCreatedProfile";
 const char * const kUiPrefs = "uiPrefs";
@@ -193,9 +194,9 @@ Error UserSettings::initialize()
 {
    // calculate settings file path
    FilePath settingsDir = module_context::registerMonitoredUserScratchDir(
-              "user-settings",
+              kUserSettingsDir,
               boost::bind(&UserSettings::onSettingsFileChanged, this, _1));
-   settingsFilePath_ = settingsDir.complete("user-settings");
+   settingsFilePath_ = settingsDir.complete(kUserSettingsFile);
 
    // if it doesn't exist see if we can migrate an old user settings
    if (!settingsFilePath_.exists())
@@ -362,7 +363,10 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
 
    int shinyViewerType = readPref<int>(prefs, "shiny_viewer_type", modules::shiny_viewer::SHINY_VIEWER_WINDOW);
    pShinyViewerType_.reset(new int(shinyViewerType));
-   
+
+   bool enableRSConnectUI = readPref<bool>(prefs, "enable_rstudio_connect", false);
+   pEnableRSConnectUI_.reset(new bool(enableRSConnectUI));
+
    bool lintRFunctionCalls = readPref<bool>(prefs, "diagnostics_in_function_calls", true);
    pLintRFunctionCalls_.reset(new bool(lintRFunctionCalls));
    
@@ -435,6 +439,11 @@ bool UserSettings::handleErrorsInUserCodeOnly() const
 int UserSettings::shinyViewerType() const
 {
    return readUiPref<int>(pShinyViewerType_);
+}
+
+bool UserSettings::enableRSConnectUI() const
+{
+   return readUiPref<bool>(pEnableRSConnectUI_);
 }
 
 bool UserSettings::lintRFunctionCalls() const
@@ -848,6 +857,37 @@ void UserSettings::setLintRFunctionCalls(bool enable)
 {
    settings_.set("lintRFunctionCalls", enable);
 }
+
+bool  UserSettings::usingMingwGcc49() const
+{
+   return settings_.getBool("usingMingwGcc49", false);
+}
+
+void  UserSettings::setUsingMingwGcc49(bool usingMingwGcc49)
+{
+   settings_.set("usingMingwGcc49", usingMingwGcc49);
+}
+
+std::string UserSettings::showUserHomePage() const
+{
+   return settings_.get(kServerHomeSetting, kServerHomeSessions);
+}
+
+void UserSettings::setShowUserHomePage(const std::string& value)
+{
+   settings_.set(kServerHomeSetting, value);
+}
+
+bool UserSettings::reuseSessionsForProjectLinks() const
+{
+   return settings_.getBool(kReuseSessionsForProjectLinksSettings, true);
+}
+
+void UserSettings::setReuseSessionsForProjectLinks(bool reuse)
+{
+   settings_.set(kReuseSessionsForProjectLinksSettings, reuse);
+}
+
 
 } // namespace session
 } // namespace rstudio

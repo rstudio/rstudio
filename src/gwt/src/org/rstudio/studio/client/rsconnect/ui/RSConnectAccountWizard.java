@@ -16,6 +16,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardNavigationPage;
@@ -41,6 +42,36 @@ public class RSConnectAccountWizard
                createIntroPage(showCloudPage) : 
                createSelectorPage(showCloudPage),
             operation);
+      initAuthPage(getFirstPage());
+   }
+   
+   private void initAuthPage(WizardPage<NewRSConnectAccountInput,
+                                         NewRSConnectAccountResult> page)
+   {
+      if (page instanceof NewRSConnectAuthPage)
+      {
+         NewRSConnectAuthPage localPage = (NewRSConnectAuthPage) page;
+         localPage.setOkButtonVisible(new OperationWithInput<Boolean>()
+         {
+            @Override
+            public void execute(Boolean input)
+            {
+               setOkButtonVisible(input);
+            }
+         });
+         return;
+      }
+
+      ArrayList<WizardPage<NewRSConnectAccountInput,
+                           NewRSConnectAccountResult>> subPages = 
+                           page.getSubPages();
+      if (subPages != null)
+      {
+         for (int i = 0; i < subPages.size(); i++)
+         {
+            initAuthPage(subPages.get(i));
+         }
+      }
    }
    
    
@@ -59,30 +90,36 @@ public class RSConnectAccountWizard
                                NewRSConnectAccountResult> createSelectorPage(
                                      boolean showCloudPage)
    {
-      return new WizardNavigationPage<
-         NewRSConnectAccountInput,
-         NewRSConnectAccountResult>(
-               "Choose Account Type", 
-               "Choose Account Type", 
-               "Connect Account", 
-               null, 
-               null, 
-               createPages(showCloudPage));
+      if (showCloudPage)
+      {
+         return new WizardNavigationPage<
+            NewRSConnectAccountInput,
+            NewRSConnectAccountResult>(
+                  "Choose Account Type", 
+                  "Choose Account Type", 
+                  "Connect Account", 
+                  null, 
+                  null, 
+                  createPages());
+      }
+      return new NewRSConnectLocalPage();
    }
    
    protected static ArrayList<WizardPage<NewRSConnectAccountInput, 
-                                         NewRSConnectAccountResult>> createPages(boolean showCloudPage)
+                                         NewRSConnectAccountResult>> createPages()
    {
       ArrayList<WizardPage<NewRSConnectAccountInput, 
                            NewRSConnectAccountResult>> pages =
            new ArrayList<WizardPage<NewRSConnectAccountInput, 
                                     NewRSConnectAccountResult>>();
 
-      if (showCloudPage)
-      {
-         pages.add(new NewRSConnectCloudPage());
-      }
+      pages.add(new NewRSConnectCloudPage());
       pages.add(new NewRSConnectLocalPage());
       return pages;
    }
+   
+   public static final String SERVICE_NAME =  "RStudio Connect (Beta)";
+   public static final String SERVICE_DESCRIPTION = 
+     "RStudio Connect is a new server product from RStudio " +
+     "for secure sharing of applications, reports, and plots.";
 }

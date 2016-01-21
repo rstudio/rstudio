@@ -163,6 +163,9 @@ options(help_type = "html")
    success <- FALSE
    for (i in seq_along(objects))
    {
+      if (!identical(class(object), class(objects[[i]])))
+         next
+      
       # Once again, 'ignore.environment' is not available in older R's
       # identical, so construct and eval a call to 'base::identical'.
       formals <- as.list(formals(base::identical))
@@ -252,11 +255,11 @@ options(help_type = "html")
                    .rs.acCompletionTypes$S4_METHOD))
    {
       # Try getting methods for the method from the associated package
-      if (!is.null(help <- .rs.getHelp(paste(what, "-methods"), from)))
+      if (!is.null(help <- .rs.getHelp(paste(what, "methods", sep = "-"), from)))
          return(help)
       
       # Try getting help from anywhere
-      if (!is.null(help <- .rs.getHelp(what)))
+      if (!is.null(help <- .rs.getHelp(what, from)))
          return(help)
       
       # Give up

@@ -87,4 +87,8 @@ public class Mode extends JavaScriptObject
       this.setHighlightRFunctionCalls && this.setHighlightRFunctionCalls(show);
    }-*/;
    
+   public native final void setInsertMatching(boolean value) /*-{
+      this.insertMatching = value;
+   }-*/;
+   
 }

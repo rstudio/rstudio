@@ -118,6 +118,10 @@ public class JsArrayUtil
          ab.push(b.get(i));
       return ab;
    }
+   
+   public static final native <T extends JavaScriptObject> JsArray<T> copy(JsArray<T> object) /*-{
+      return object.slice();
+   }-*/;
 
    public static JsArrayString copy(JsArrayString array)
    {

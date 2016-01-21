@@ -157,6 +157,11 @@ public class KeyboardShortcut
          keyCombinations_.add(new KeyCombination(keyCode, modifiers));
       }
       
+      public KeySequence(List<KeyCombination> keyList)
+      {
+         keyCombinations_ = new ArrayList<KeyCombination>(keyList);
+      }
+      
       public static KeySequence fromShortcutString(String shortcut)
       {
          KeySequence sequence = new KeySequence();
@@ -181,11 +186,11 @@ public class KeyboardShortcut
             int keyCode = 0;
             if (sc.endsWith("-"))
             {
-               keyCode = '-';
+               keyCode = KeyboardHelper.KEY_HYPHEN;
             }
             else if (sc.endsWith("+"))
             {
-               keyCode = '+';
+               keyCode = 187;
             }
             else
             {
@@ -319,6 +324,11 @@ public class KeyboardShortcut
          return true;
       }
       
+      public List<KeyCombination> getData()
+      {
+         return keyCombinations_;
+      }
+      
       private final List<KeyCombination> keyCombinations_;
    }
    
@@ -355,20 +365,12 @@ public class KeyboardShortcut
       groupName_ = groupName;
       order_ = ORDER++;
       title_ = title;
-      if (disableModes.length() > 0)
-      {
-         String[] disableModeList = disableModes.split(",");
-         for (String disableMode: disableModeList)
-         {
-            if (disableMode.equals("vim"))
-               disableModes_ |= MODE_VIM;
-            else if (disableMode.equals("emacs"))
-               disableModes_ |= MODE_EMACS;
-            else
-               assert false :
-                  "Unexpected 'disableModes' mode (" + disableMode + ")";
-         }
-      }
+      disableModes_ = ShortcutManager.parseDisableModes(disableModes);
+   }
+   
+   public int getDisableModes()
+   {
+      return disableModes_;
    }
    
    public KeySequence getKeySequence()
@@ -468,6 +470,7 @@ public class KeyboardShortcut
    public static final int SHIFT = 8;
    
    public static final int MODE_NONE = 0;
-   public static final int MODE_VIM = 1;
-   public static final int MODE_EMACS = 2;
+   public static final int MODE_DEFAULT = 1;
+   public static final int MODE_VIM = 2;
+   public static final int MODE_EMACS = 4;
 }

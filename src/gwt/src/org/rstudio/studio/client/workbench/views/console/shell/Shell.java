@@ -24,6 +24,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -40,6 +41,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.ConsoleEditorProvider;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientInitState;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -93,7 +95,8 @@ public class Shell implements ConsoleInputHandler,
                 Session session,
                 Commands commands,
                 UIPrefs uiPrefs, 
-                ErrorManager errorManager)
+                ErrorManager errorManager,
+                ConsoleEditorProvider tracker)
    {
       super() ;
 
@@ -108,6 +111,16 @@ public class Shell implements ConsoleInputHandler,
       historyManager_ = new CommandLineHistory(input_);
       browseHistoryManager_ = new CommandLineHistory(input_);
       prefs_ = uiPrefs;
+      tracker.setConsoleEditor(input_);
+      
+      prefs_.surroundSelection().bind(new CommandWithArg<String>()
+      {
+         @Override
+         public void execute(String value)
+         {
+            ((DocDisplay) input_).setSurroundSelectionPref(value);
+         }
+      });
 
       inputAnimator_ = new ShellInputAnimator(view_.getInputEditorDisplay());
       

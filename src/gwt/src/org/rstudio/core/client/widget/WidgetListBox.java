@@ -41,10 +41,11 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 // A list box that can contain arbitrary GWT widgets as options.
@@ -72,6 +73,7 @@ public class WidgetListBox<T extends Widget>
       String selectedItem();
       String anyItem();
       String listPanel();
+      String scrollPanel();
       String outerPanel();
       String emptyMessage();
    }
@@ -88,12 +90,22 @@ public class WidgetListBox<T extends Widget>
       resources_ = GWT.create(Resources.class);
       style_ = resources_.listStyle();
       style_.ensureInjected();
-      panel_ = new FlowPanel();
-      add(panel_);
-      panel_.addStyleName(style_.listPanel());
+
+      // add styles to our own widget
       addStyleName(style_.outerPanel());
+
+      // create the panel that will host the widgets
+      panel_ = new VerticalPanel();
+      panel_.addStyleName(style_.listPanel());
+
+      // wrap in a scroll panel
+      scrollPanel_ = new ScrollPanel();
+      scrollPanel_.add(panel_);
+      scrollPanel_.addStyleName(style_.scrollPanel());
+      add(scrollPanel_);
+     
       emptyTextLabel_ = new Label();
-      emptyTextLabel_.addStyleName(style_.listPanel());
+      emptyTextLabel_.addStyleName(style_.scrollPanel());
       emptyTextLabel_.addStyleName(style_.emptyMessage());
    }
 
@@ -268,7 +280,7 @@ public class WidgetListBox<T extends Widget>
       if (emptyTextLabel_.getParent() == this && items_.size() > 0)
       {
          clear();
-         add(panel_);
+         add(scrollPanel_);
       }
       else if (emptyTextLabel_.getParent() != this && items_.size() == 0)
       {
@@ -279,7 +291,8 @@ public class WidgetListBox<T extends Widget>
    
    private int selectedIdx_ = 0;
 
-   private FlowPanel panel_;
+   private ScrollPanel scrollPanel_;
+   private VerticalPanel panel_;
    private Label emptyTextLabel_;
    private List<HTMLPanel> options_ = new ArrayList<HTMLPanel>();
    private List<T> items_ = new ArrayList<T>();

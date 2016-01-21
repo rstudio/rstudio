@@ -37,12 +37,17 @@ public class SessionCountChangedEvent extends GwtEvent<SessionCountChangedEvent.
    
    public SessionCountChangedEvent(Data data)
    {
-      data_ = data;
+      count_ = data.getCount();
+   }
+   
+   public SessionCountChangedEvent(int count)
+   {
+      count_ = count;
    }
    
    public int getCount()
    {
-      return data_.getCount();
+      return count_;
    }
    
    @Override
@@ -57,5 +62,5 @@ public class SessionCountChangedEvent extends GwtEvent<SessionCountChangedEvent.
       return TYPE;
    }
    
-   private final Data data_;
+   private final int count_;
 }

@@ -310,7 +310,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       events_.fireEventToMainWindow(new DocWindowChangedEvent(
             getId(), SourceWindowManager.getSourceWindowId(), "",
-            DocTabDragParams.create(getId(), currentPosition()), 0));
+            DocTabDragParams.create(getId(), currentPosition()), null, 0));
    }
    
    @Override
@@ -581,7 +581,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
 
    @Override
-   public void onDismiss()
+   public void onDismiss(int dismissType)
    {
       while (releaseOnDismiss_.size() > 0)
          releaseOnDismiss_.remove(0).removeHandler();

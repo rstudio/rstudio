@@ -65,7 +65,7 @@ public class FileTypeRegistry
 
    public static final TextFileType DCF =
          new TextFileType("dcf", "DCF", EditorLanguage.LANG_DCF, ".dcf",
-                          ICONS.iconText(), false, false, false, false, false,
+                          ICONS.iconDCF(), false, false, false, false, false,
                           false, false, false, false, false, false, false, false);
    
    public static final TextFileType STAN = new StanFileType();
@@ -289,13 +289,13 @@ public class FileTypeRegistry
       register("README", TEXT, icons.iconText());
       register(".gitignore", TEXT, icons.iconText());
       register(".Rbuildignore", TEXT, icons.iconText());
-      register("packrat.lock", DCF, icons.iconText());
+      register("packrat.lock", DCF, icons.iconDCF());
       register("*.r", R, icons.iconRdoc());
       register("*.q", R, icons.iconRdoc());
       register("*.s", R, icons.iconRdoc());
       register(".rprofile", R, icons.iconRprofile());
       register("Rprofile.site", R, icons.iconRprofile());
-      register("DESCRIPTION", DCF, icons.iconText());
+      register("DESCRIPTION", DCF, icons.iconDCF());
       register("INDEX", TEXT, icons.iconText());
       register("LICENCE", TEXT, icons.iconText());
       register("MD5", TEXT, icons.iconText());
@@ -317,7 +317,7 @@ public class FileTypeRegistry
       register("Makefile.win", MAKEFILE, icons.iconMakefile());
       register("Makevars", MAKEFILE, icons.iconMakefile());
       register("Makevars.win", MAKEFILE, icons.iconMakefile());
-      register("TUTORIAL", DCF, icons.iconText());
+      register("TUTORIAL", DCF, icons.iconDCF());
       register("NAMESPACE", NAMESPACE, icons.iconText());
       register("*.rhistory", RHISTORY, icons.iconRhistory());
       register("*.rproj", RPROJECT, icons.iconRproject());
@@ -355,7 +355,7 @@ public class FileTypeRegistry
       register("*.rdata", RDATA, icons.iconRdata());
       register("*.rda", RDATA, icons.iconRdata());
       register("*.Rproj", RPROJECT, icons.iconRproject());
-      register("*.dcf", DCF, icons.iconText());
+      register("*.dcf", DCF, icons.iconDCF());
       register("*.mmd", MERMAID, icons.iconMermaid());
       register("*.gv", GRAPHVIZ, icons.iconGraphviz());
       register("*.dot", GRAPHVIZ, icons.iconGraphviz());

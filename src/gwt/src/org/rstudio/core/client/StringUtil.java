@@ -235,6 +235,11 @@ public class StringUtil
       return indent + str.replaceAll("\n", "\n" + indent);
    }
    
+   public static String join(String delimiter, String... strings)
+   {
+      return join(strings, delimiter);
+   }
+   
    public static String join(String[] collection, String delim)
    {
       return join(Arrays.asList(collection), delim);
@@ -996,6 +1001,18 @@ public class StringUtil
    public static final String getIndent(String line)
    {
       return RE_INDENT.match(line, 0).getGroup(0);
+   }
+   
+   public static final String truncate(String string, int targetLength, String suffix)
+   {
+      if (string.length() <= targetLength)
+         return string;
+      
+      int truncatedSize = targetLength - suffix.length();
+      if (truncatedSize < 0)
+         return string;
+      
+      return string.substring(0, truncatedSize) + suffix;
    }
    
    public static final HashMap<String, String> COMPLEMENTS =

@@ -225,6 +225,18 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          this.printScopeTree();
       };
 
+      function $getChunkCount(node) {
+         count = node.isChunk() ? 1 : 0;
+         var children = node.$children || [];
+         for (var i = 0; i < children.length; i++)
+            count += $getChunkCount(children[i]);
+         return count;
+      }
+
+      this.getChunkCount = function(count) {
+         return $getChunkCount(this.$root);
+      };
+
       this.getTopLevelScopeCount = function() {
          return this.$root.$children.length;
       };

@@ -33,6 +33,8 @@ public class ShinyDisconnectNotifier
       $wnd.addEventListener(
             "message",
             $entry(function(e) {
+               if (typeof e.data != 'string')
+                  return;
                thiz.@org.rstudio.studio.client.shiny.ShinyDisconnectNotifier::onMessage(Ljava/lang/String;Ljava/lang/String;)(e.data, e.origin);
             }),
             true);

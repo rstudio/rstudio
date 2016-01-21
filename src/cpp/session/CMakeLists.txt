@@ -107,6 +107,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionPath.cpp
    modules/SessionPlots.cpp
    modules/SessionProfiler.cpp
+   modules/SessionRAddins.cpp
    modules/SessionRCompletions.cpp
    modules/SessionRHooks.cpp
    modules/SessionRParser.cpp
@@ -404,7 +405,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
       # static Pandoc binaries (see dependencies/common/install-pandoc)
       set(PANDOC_EXTENSION_DIR "/static")
    endif()
-   set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.15.0.6${PANDOC_EXTENSION_DIR}")
+   set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.15.2${PANDOC_EXTENSION_DIR}")
    file(GLOB PANDOC_FILES "${PANDOC_BIN}/pandoc*")
    install(FILES ${PANDOC_FILES}
            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
@@ -468,7 +469,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
               DESTINATION  ${RSTUDIO_INSTALL_BIN})
 
 
-      install(PROGRAMS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/sumatra/2.4/SumatraPDF.exe"
+      install(PROGRAMS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/sumatra/3.1.1/SumatraPDF.exe"
               DESTINATION  "${RSTUDIO_INSTALL_BIN}/sumatra")
       install(FILES resources/sumatrapdfrestrict.ini
                DESTINATION  "${RSTUDIO_INSTALL_BIN}/sumatra")

@@ -287,7 +287,7 @@ public class ProfilerEditingTarget implements EditingTarget
       presenter_.attatch(doc_,  view_);
    }
    
-   public void onDismiss()
+   public void onDismiss(int dismissType)
    {  
       presenter_.detach();
    }

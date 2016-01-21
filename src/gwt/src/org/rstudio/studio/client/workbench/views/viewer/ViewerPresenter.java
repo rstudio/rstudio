@@ -512,6 +512,8 @@ public class ViewerPresenter extends BasePresenter
       $wnd.addEventListener(
             "message",
             $entry(function(e) {
+               if (typeof e.data != 'string')
+                  return;
                thiz.@org.rstudio.studio.client.workbench.views.viewer.ViewerPresenter::onMessage(Ljava/lang/String;Ljava/lang/String;)(e.data, e.origin);
             }),
             true);

@@ -23,19 +23,20 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
+import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
@@ -156,16 +157,20 @@ public class PublishingPreferencesPane extends PreferencesPane
          @Override
          public void onClick(ClickEvent arg0)
          {
-            deps_.withRSConnect("Viewing publish accounts", false, null, new Command() 
+            deps_.withRSConnect("Viewing publish accounts", false, null, 
+                                new CommandWithArg<Boolean>() 
             {
                @Override
-               public void execute()
+               public void execute(Boolean succeeded)
                {
-                  // refresh the account list to show the accounts
-                  accountList_.refreshAccountList();
-                  
-                  // remove the "missing package" UI
-                  missingPkgPanel.setVisible(false);
+                  if (succeeded)
+                  {
+                     // refresh the account list to show the accounts
+                     accountList_.refreshAccountList();
+                     
+                     // remove the "missing package" UI
+                     missingPkgPanel.setVisible(false);
+                  }
                }
             });
          }
@@ -176,17 +181,28 @@ public class PublishingPreferencesPane extends PreferencesPane
       missingPkgPanel.getElement().getStyle().setMarginBottom(20, Unit.PX);
       add(missingPkgPanel);
       
+      final CheckBox chkEnableRSConnect = checkboxPref("Enable publishing to RStudio Connect (Beta)",
+            uiPrefs_.enableRStudioConnect());
+      final HorizontalPanel rsconnectPanel = checkBoxWithHelp(chkEnableRSConnect, 
+                                                        "rstudio_connect");
+      lessSpaced(rsconnectPanel);
+      
       add(headerLabel("Settings"));
-      CheckBox chkEnablePublishing = checkboxPref("Enable publishing apps and documents", 
+      CheckBox chkEnablePublishing = checkboxPref("Enable publishing documents and apps", 
             uiPrefs_.showPublishUi());
       chkEnablePublishing.addValueChangeHandler(new ValueChangeHandler<Boolean>(){
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
             reloadRequired_ = true;
+            rsconnectPanel.setVisible(
+                  RSConnect.showRSConnectUI() && event.getValue());
          }
       });
       add(chkEnablePublishing);
+      
+      if (RSConnect.showRSConnectUI())
+         add(rsconnectPanel);
       
       server_.hasOrphanedAccounts(new ServerRequestCallback<Int>()
       {
@@ -297,10 +313,11 @@ public class PublishingPreferencesPane extends PreferencesPane
       }
       else
       {
-         deps_.withRSConnect("Connecting a publishing account", false, null, new Command() 
+         deps_.withRSConnect("Connecting a publishing account", false, null,
+                             new CommandWithArg<Boolean>() 
          {
             @Override
-            public void execute()
+            public void execute(Boolean succeeded)
             {
                // refresh the account list in case there are accounts already on
                // the system (e.g. package was installed at one point and some

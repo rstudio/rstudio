@@ -45,6 +45,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.VimMark
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutput;
+import org.rstudio.studio.client.workbench.views.source.events.SaveFailedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SaveInitiatedEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -366,6 +369,19 @@ public class DocUpdateSentinel
          changesPending_ = false;
          return false;
       }
+      
+
+      try
+      {
+         if (path != null)
+         {
+            eventBus_.fireEvent(new SaveInitiatedEvent(path, getId()));
+         }
+      }
+      catch(Exception e)
+      {
+         Debug.logException(e);
+      }
 
       server_.saveDocumentDiff(
             sourceDoc_.getId(),
@@ -386,6 +402,17 @@ public class DocUpdateSentinel
                   Debug.logError(error);
                   if (progress != null)
                      progress.onError(error.getUserMessage());
+                  try
+                  {
+                     if (path != null)
+                     {
+                        eventBus_.fireEvent(new SaveFailedEvent(path, getId()));
+                     }
+                  }
+                  catch(Exception e)
+                  {
+                     Debug.logException(e);
+                  }
                   changesPending_ = false;
                }
 
@@ -422,6 +449,9 @@ public class DocUpdateSentinel
                      }
                      if (progress != null)
                         progress.onCompleted();
+                     
+                     // let anyone interested know we just saved 
+                     eventBus_.fireEvent(new SaveFileEvent());
                   }
                   else if (!hash.equals(sourceDoc_.getHash()))
                   {

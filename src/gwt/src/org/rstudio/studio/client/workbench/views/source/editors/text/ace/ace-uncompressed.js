@@ -31261,6 +31261,10 @@ var KeyBinding = function(editor) {
             if (success)
                 break;
         }
+
+        if (success)
+            this.$editor._signal("keyboardActivity", toExecute);
+
         return success;
     };
 
@@ -31271,8 +31275,10 @@ var KeyBinding = function(editor) {
 
     this.onTextInput = function(text) {
         var success = this.$callKeyboardHandlers(-1, text);
-        if (!success)
+        if (!success) {
+            this.$editor._signal("keyboardActivity", {command: "insertstring", args: text});
             this.$editor.commands.exec("insertstring", this.$editor, text);
+        }
     };
 
 }).call(KeyBinding.prototype);

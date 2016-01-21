@@ -224,34 +224,44 @@ public class Help extends BasePresenter implements ShowHelpHandler
          return helpUrl;
    }
    
+   void onOpenRStudioIDECheatSheet()
+   {
+      openCheatSheet("ide_cheat_sheet");
+   }
+   
    void onOpenDataVisualizationCheatSheet()
    {
-      globalDisplay_.openRStudioLink("data_visualization_cheat_sheet");
+      openCheatSheet("data_visualization_cheat_sheet");
    }
    
    void onOpenPackageDevelopmentCheatSheet()
    {
-      globalDisplay_.openRStudioLink("package_development_cheat_sheet");
+      openCheatSheet("package_development_cheat_sheet");
    }
    
    void onOpenDataWranglingCheatSheet()
    {
-      globalDisplay_.openRStudioLink("data_wrangling_cheat_sheet");
+      openCheatSheet("data_wrangling_cheat_sheet");
    }
    
    void onOpenRMarkdownCheatSheet()
    {
-      globalDisplay_.openRStudioLink("r_markdown_cheat_sheet");
+      openCheatSheet("r_markdown_cheat_sheet");
    }
    
    void onOpenRMarkdownReferenceGuide()
    {
-      globalDisplay_.openRStudioLink("r_markdown_reference_guide");
+      openCheatSheet("r_markdown_reference_guide");
    }
    
    void onOpenShinyCheatSheet()
    {
-      globalDisplay_.openRStudioLink("shiny_cheat_sheet");
+      openCheatSheet("shiny_cheat_sheet");
+   }
+   
+   private void openCheatSheet(String name)
+   {
+      globalDisplay_.openRStudioLink(name, false);
    }
    
    void onOpenRoxygenQuickReference()

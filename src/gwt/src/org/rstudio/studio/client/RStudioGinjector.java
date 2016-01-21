@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;
 
+import org.rstudio.core.client.command.AddinCommandBinding;
 import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.command.ShortcutManager;
@@ -63,10 +64,14 @@ import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFramePane;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFrameSatellite;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
+import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
+import org.rstudio.studio.client.shiny.ui.ShinyGadgetDialog;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.vcs.VCSApplication;
+import org.rstudio.studio.client.workbench.BrowseAddinsDialog;
+import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -79,6 +84,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletio
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.source.DocsMenu;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
+import org.rstudio.studio.client.workbench.views.source.NewShinyWebApplication;
 import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
 import org.rstudio.studio.client.workbench.views.source.SourceWindow;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
@@ -153,6 +159,11 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(FileBacked<?> object);
    void injectMembers(TextEditingTargetNotebook notebook);
    void injectMembers(WindowFrame frame);
+   void injectMembers(ShinyGadgetDialog dialog);
+   void injectMembers(NewShinyWebApplication dialog);
+   void injectMembers(AddinCommandBinding binding);
+   void injectMembers(BrowseAddinsDialog dialog);
+   void injectMembers(AddinExecutor addinExecutor);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
@@ -183,4 +194,5 @@ public interface RStudioGinjector extends Ginjector
    SatelliteManager getSatelliteManager();
    SourceWindowManager getSourceWindowManager();
    SourceWindow getSourceWindow();
+   Server getServer();
 }

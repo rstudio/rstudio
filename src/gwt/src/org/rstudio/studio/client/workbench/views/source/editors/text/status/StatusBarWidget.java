@@ -24,6 +24,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.widget.IsWidgetWithHeight;
@@ -46,6 +47,15 @@ public class StatusBarWidget extends Composite
       
       panel_.setCellWidth(scope_, "100%");
       panel_.setCellWidth(message_, "100%");
+      
+      hideTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            hideMessage();
+         }
+      };
       
       // The message widget should initially be hidden, but be shown in lieu of
       // the scope tree when requested.
@@ -157,9 +167,17 @@ public class StatusBarWidget extends Composite
       setScopeType(scopeType_);
    }
    
-   public void hideMessage()
+   @Override
+   public void showMessage(String message)
    {
-      endMessage();
+      initMessage(message);
+   }
+   
+   @Override
+   public void showMessage(String message, int timeMs)
+   {
+      initMessage(message);
+      hideTimer_.schedule(timeMs);
    }
    
    @Override
@@ -188,6 +206,12 @@ public class StatusBarWidget extends Composite
          }
       });
    }
+   
+   @Override
+   public void hideMessage()
+   {
+      endMessage();
+   }
 
    @UiField StatusBarElementWidget position_;
    @UiField StatusBarElementWidget scope_;
@@ -204,6 +228,7 @@ public class StatusBarWidget extends Composite
    
    public static Resources RES = GWT.create(Resources.class);
    private final HorizontalPanel panel_;
+   private final Timer hideTimer_;
    
    private int height_;
    private HandlerRegistration handler_;

@@ -17,20 +17,31 @@ package org.rstudio.core.client.command;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Pair;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.KeyMap.CommandBinding;
+import org.rstudio.core.client.command.KeyMap.KeyMapType;
+import org.rstudio.core.client.command.KeyboardShortcut.KeyCombination;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
+import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.user.client.Command;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
@@ -55,30 +66,67 @@ public class ShortcutManager implements NativePreviewHandler,
          @Override
          public void run()
          {
-            resetKeyBuffer();
+            keyBuffer_.clear();
          }
       };
       
+      shortcutInfo_ = new ArrayList<ShortcutInfo>();
+      defaultBindings_ = new ArrayList<Pair<KeySequence, AppCommandBinding>>();
+      
+      // Initialize the key maps. We use a LinkedHashMap so that insertion
+      // order can be preserved.
+      keyMaps_ = new LinkedHashMap<KeyMapType, KeyMap>();
+      for (KeyMapType type : KeyMapType.values())
+         keyMaps_.put(type, new KeyMap());
+      
+      // Defer injection because the ShortcutManager is constructed
+      // very eagerly (to allow for codegen stuff in ShortcutsEmitter
+      // to work)
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          @Override
          public void execute()
          {
             RStudioGinjector.INSTANCE.injectMembers(ShortcutManager.this);
+            events_.addHandler(
+                  AceKeyboardActivityEvent.TYPE,
+                  new AceKeyboardActivityEvent.Handler()
+                  {
+                     @Override
+                     public void onAceKeyboardActivity(AceKeyboardActivityEvent event)
+                     {
+                        if (!event.isChainEvent())
+                           keyBuffer_.clear();
+                     }
+                  });
          }
       });
       
+      // NOTE: Because this class is used as a singleton and is never
+      // destroyed it's not necessary to manage lifetime of this event handler
       Event.addNativePreviewHandler(this);
+      addPostViewHandler();
    }
+   
+   private native final void addPostViewHandler() /*-{
+      var self = this;
+      $doc.body.addEventListener("keydown", $entry(function(evt) {
+         self.@org.rstudio.core.client.command.ShortcutManager::swallowEvents(Ljava/lang/Object;)(evt);
+      }));
+   }-*/;
    
    @Inject
    private void initialize(ApplicationCommandManager appCommands,
                            EditorCommandManager editorCommands,
-                           UserCommandManager userCommands)
+                           UserCommandManager userCommands,
+                           AddinsCommandManager addins,
+                           EventBus events)
    {
       appCommands_ = appCommands;
       editorCommands_ = editorCommands;
       userCommands_ = userCommands;
+      addins_ = addins;
+      events_ = events;
    }
 
    public boolean isEnabled()
@@ -101,24 +149,6 @@ public class ShortcutManager implements NativePreviewHandler,
             closed_ = true;
          }
       };
-   }
-   
-   public void addCustomBinding(KeySequence keys, AppCommand command)
-   {
-      KeyboardShortcut shortcut = new KeyboardShortcut(keys);
-      if (!customBindings_.containsKey(shortcut))
-         customBindings_.put(shortcut, new ArrayList<AppCommand>());
-      
-      ArrayList<AppCommand> commands = customBindings_.get(shortcut);
-      commands.add(command);
-      
-      maskedCommands_.put(command, true);
-   }
-   
-   public void clearCustomBindings()
-   {
-      customBindings_.clear();
-      maskedCommands_.clear();
    }
    
    public void register(int modifiers, 
@@ -159,100 +189,79 @@ public class ShortcutManager implements NativePreviewHandler,
       register(keys, command, "", "", "");
    }
    
+   // Registering a keyboard shortcut needs to perform two actions:
+   //
+   // 1. Register information about a particular command; e.g. the name,
+   //    description, and so on. This is done to help power UI (e.g. menu
+   //    labels, shortcut quick ref, and so on).
+   //
+   // 2. Actually bind a command to a particular key sequence. This binding
+   //    might only be active in certain contexts (e.g. in Emacs mode), and
+   //
+   // Note that the above two actions are separate since some commands we
+   // register are only done for documentation / powering the UI. Ie, some
+   // shortcuts might be created entirely so that they can power UI, without
+   // actually directly becoming part of the command system.
    public void register(KeySequence keys,
                         AppCommand command,
                         String groupName,
                         String title,
                         String disableModes)
    {
-   
-      KeyboardShortcut shortcut = 
-            new KeyboardShortcut(keys, groupName, title, disableModes);
+      // Register the keyboard shortcut information.
+      KeyboardShortcut shortcut = new KeyboardShortcut(keys, groupName, title, disableModes);
+      shortcutInfo_.add(new ShortcutInfo(shortcut, command));
       
-      if (command == null)
+      // Bind the command in the application key map.
+      if (command != null)
       {
-         // If the shortcut is unbound, check to see whether there's another
-         // unbound shortcut with the same title; replace it if there is.
-         boolean existingShortcut = false;
-         for (int i = 0; i < unboundShortcuts_.size(); i++) {
-            if (unboundShortcuts_.get(i).getTitle().equals(title)) {
-               unboundShortcuts_.set(i, shortcut);
-               existingShortcut = true;
-               break;
-            }
-         }
-         if (!existingShortcut)
-            unboundShortcuts_.add(shortcut);
-      }
-      else
-      {
-         ArrayList<AppCommand> commands;
-         if (commands_.containsKey(shortcut)) 
-         {
-            // already have a command for this shortcut; add this one
-            commands = commands_.get(shortcut);
-         }
-         else 
-         {
-            // no commands yet, make a new list
-            commands = new ArrayList<AppCommand>();
-            commands_.put(shortcut, commands);
-         }
-         commands.add(command);
-
+         // Setting the shortcut on the command just registers this binding as the
+         // default shortcut for the command. This allows UI (e.g. menu items) to easily
+         // look up and display an active shortcut, without displaying _all_ active shortcuts.
          command.setShortcut(shortcut);
+         
+         // Add the command into the keymap, ensuring it can be executed on the associated
+         // keypress.
+         KeyMap appKeyMap = keyMaps_.get(KeyMapType.APPLICATION);
+         AppCommandBinding binding = new AppCommandBinding(command, disableModes, false);
+         appKeyMap.addBinding(keys, binding);
+         
+         // Cache the binding (so we can reset later if required)
+         defaultBindings_.add(new Pair<KeySequence, AppCommandBinding>(keys, binding));
       }
+   }
+   
+   public void resetAppCommandBindings()
+   {
+      KeyMap map = new KeyMap();
+      for (Pair<KeySequence, AppCommandBinding> pair : defaultBindings_)
+         map.addBinding(pair.first, pair.second);
+      keyMaps_.put(KeyMapType.APPLICATION, map);
+   }
+   
+   public static int parseDisableModes(String disableModes)
+   {
+      int mode = KeyboardShortcut.MODE_NONE;
       
-      if (shortcut.isModalShortcut())
+      if (StringUtil.isNullOrEmpty(disableModes))
+         return mode;
+      
+      String[] splat = disableModes.split(",");
+      for (String item : splat)
       {
-         modalShortcuts_.add(shortcut);
+         if (item.equals("default"))
+            mode |= KeyboardShortcut.MODE_DEFAULT;
+         else if (item.equals("vim"))
+            mode |= KeyboardShortcut.MODE_VIM;
+         else if (item.equals("emacs"))
+            mode |= KeyboardShortcut.MODE_EMACS;
+         else
+            assert false: "Unrecognized 'disableModes' value '" + item + "'";
       }
+      
+      return mode;
    }
    
-   private void resetKeyBuffer()
-   {
-      keyBuffer_.clear();
-   }
-   
-   private boolean cancel(NativeEvent event, boolean returnValue)
-   {
-      event.stopPropagation();
-      event.preventDefault();
-      return returnValue;
-   }
-   
-   // Returns 'true' if the keyBuffer was reset, or is already empty.
-   private boolean updateKeyBuffer(NativeEvent event)
-   {
-      if (keyBuffer_.isEmpty())
-         return true;
-      
-      if (!isEnabled())
-         return false;
-      
-      // We need to let the Ace editor see prefix matches.
-      if (editorCommands_.hasPrefix(keyBuffer_))
-         return false;
-      
-      // If we have a prefix match, keep the keybuffer alive, but
-      // cancel the event (so nobody else attempts to handle it).
-      for (KeyboardShortcut shortcut : commands_.keySet())
-         if (shortcut.startsWith(keyBuffer_, true))
-            return cancel(event, false);
-      
-      for (KeyboardShortcut shortcut : customBindings_.keySet())
-         if (shortcut.startsWith(keyBuffer_, true))
-            return cancel(event, false);
-      
-      for (KeyboardShortcut shortcut : userCommands_.getKeyboardShortcuts())
-         if (shortcut.startsWith(keyBuffer_, true))
-            return cancel(event, false);
-      
-      // Otherwise, clear the keybuffer.
-      resetKeyBuffer();
-      return true;
-   }
-
    public void onKeyDown(NativeKeyDownEvent evt)
    {
       if (evt.isCanceled())
@@ -262,11 +271,7 @@ public class ShortcutManager implements NativePreviewHandler,
       if (handleKeyDown(evt.getEvent()))
       {
          evt.cancel();
-         resetKeyBuffer();
-      }
-      else
-      {
-         updateKeyBuffer(evt.getEvent());
+         events_.fireEvent(new RStudioCommandExecutedFromShortcutEvent());
       }
    }
 
@@ -281,11 +286,7 @@ public class ShortcutManager implements NativePreviewHandler,
          if (handleKeyDown(event.getNativeEvent()))
          {
             event.cancel();
-            resetKeyBuffer();
-         }
-         else
-         {
-            updateKeyBuffer(event.getNativeEvent());
+            events_.fireEvent(new RStudioCommandExecutedFromShortcutEvent());
          }
       }
    }
@@ -295,58 +296,34 @@ public class ShortcutManager implements NativePreviewHandler,
       editorMode_ = editorMode;
    }
    
+   public int getEditorMode()
+   {
+      return editorMode_;
+   }
+   
    public List<ShortcutInfo> getActiveShortcutInfo()
    {
-      List<ShortcutInfo> info = new ArrayList<ShortcutInfo>();
+      // Filter out commands disabled due to the current editor mode.
+      // Also only retain the first discovered binding for a particular command.
+      final Set<String> encounteredShortcuts = new HashSet<String>();
       
-      HashMap<Command, ShortcutInfo> infoMap = 
-            new HashMap<Command, ShortcutInfo>();
-      ArrayList<KeyboardShortcut> shortcuts = 
-            new ArrayList<KeyboardShortcut>();
-      
-      // Create a ShortcutInfo for each unbound shortcut
-      for (KeyboardShortcut shortcut: unboundShortcuts_)
+      List<ShortcutInfo> filtered = new ArrayList<ShortcutInfo>();
+      for (int i = 0, n = shortcutInfo_.size(); i < n; i++)
       {
-         info.add(new ShortcutInfo(shortcut, null));
-      }
-
-      // Sort the shortcuts as they were presented in Commands.cmd.xml
-      for (KeyboardShortcut ks: commands_.keySet())
-      {
-         shortcuts.add(ks);
-      }
-      Collections.sort(shortcuts, new Comparator<KeyboardShortcut>()
-      {
-         @Override
-         public int compare(KeyboardShortcut o1, KeyboardShortcut o2)
-         {
-            return o1.getOrder() - o2.getOrder();
-         }
-      });
-
-      // Create a ShortcutInfo for each command (a command may have multiple
-      // shortcut bindings)
-      for (KeyboardShortcut shortcut: shortcuts)
-      {
-         // skip shortcuts inaccessible due to editor mode
-         if (shortcut.isModeDisabled(editorMode_))
+         ShortcutInfo object = shortcutInfo_.get(n - i - 1);
+         if (encounteredShortcuts.contains(object.getDescription()))
             continue;
          
-         AppCommand command = commands_.get(shortcut).get(0);
-         if (infoMap.containsKey(command))
+         boolean isEnabled = (object.getDisableModes() & editorMode_) == 0;
+         if (isEnabled)
          {
-            infoMap.get(command).addShortcut(shortcut);
-         }
-         else
-         {
-            ShortcutInfo shortcutInfo = new ShortcutInfo(shortcut, command);
-            info.add(shortcutInfo);
-            infoMap.put(command, shortcutInfo);
+            encounteredShortcuts.add(object.getDescription());
+            filtered.add(object);
          }
       }
-      // Sort the commands back into the order in which they were created 
-      // (reading them out of the keyset mangles the original order)
-      Collections.sort(info, new Comparator<ShortcutInfo>()
+      
+      // Sort in order declared in Commands.cmd.xml
+      Collections.sort(filtered, new Comparator<ShortcutInfo>()
       {
          @Override
          public int compare(ShortcutInfo o1, ShortcutInfo o2)
@@ -354,121 +331,149 @@ public class ShortcutManager implements NativePreviewHandler,
             return o1.getOrder() - o2.getOrder();
          }
       });
-      return info;
+      
+      return filtered;
    }
-
-   private boolean handleKeyDown(NativeEvent e)
+   
+   private boolean handleKeyDown(NativeEvent event)
    {
-      // Don't dispatch on bare modifier keypresses.
-      if (KeyboardHelper.isModifierKey(e.getKeyCode()))
+      // Bail if the shortcut manager is not enabled (e.g.
+      // we disable it temporarily when interacting with
+      // modal dialogs)
+      if (!isEnabled())
          return false;
       
-      keyBuffer_.add(e);
-      KeyboardShortcut shortcut = new KeyboardShortcut(keyBuffer_);
-
-      // Check for disabled modal shortcuts if we're modal
-      if (editorMode_ > 0)
+      // Don't dispatch on bare modifier keypresses.
+      if (KeyboardHelper.isModifierKey(event.getKeyCode()))
+         return false;
+      
+      // Escape key should always clear the keybuffer.
+      if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
       {
-         for (KeyboardShortcut modalShortcut: modalShortcuts_)
-         {
-            if (modalShortcut.equals(shortcut) &&
-                modalShortcut.isModeDisabled(editorMode_))
-            {
-               return false;
-            }
-         }
+         keyBuffer_.clear();
+         return false;
       }
       
-      // Check for user-defined commands.
-      if (userCommands_.dispatch(shortcut))
-         return true;
+      KeyCombination keyCombination = new KeyCombination(event);
+      keyBuffer_.add(keyCombination);
       
-      // Check for custom bindings for RStudio AppCommands.
-      if (dispatch(shortcut, customBindings_, e))
-         return true;
+      // Loop through all active key maps, and attempt to find an active
+      // binding. 'pending' is used to indicate whether there are any bindings
+      // following the current state of the keybuffer.
+      boolean pending = false;
+      for (Map.Entry<KeyMapType, KeyMap> entry : keyMaps_.entrySet())
+      {
+         KeyMap map = entry.getValue();
+         CommandBinding binding = map.getActiveBinding(keyBuffer_);
+         if (binding != null)
+         {
+            keyBuffer_.clear();
+            event.stopPropagation();
+            binding.execute();
+            return true;
+         }
+         
+         if (map.isPrefix(keyBuffer_))
+            pending = true;
+      }
       
-      // Check for RStudio AppCommands.
-      if (dispatch(shortcut, commands_, e, maskedCommands_))
-         return true;
+      if (!(pending || isPrefixForEditor(keyCombination)))
+         keyBuffer_.clear();
+      
+      // Assume that a keypress without a modifier key clears the keybuffer.
+      // This disallows binding of commands in a way like '<SPC> a a', which
+      // kind of stinks, but helps ensure that we don't get a stale keybuffer.
+      // This code could be removed if we could reliably detect whether an
+      // underlying editor instance handled the key combination, but there seem
+      // to be cased where Ace doesn't report handling a keypress (e.g. arrow keys,
+      // 'I', and some other cases)
+      if (!keyBuffer_.isEmpty())
+      {
+         KeyCombination keys = keyBuffer_.get(keyBuffer_.size() - 1);
+         if (keys.getModifier() == KeyboardShortcut.NONE)
+            keyBuffer_.clear();
+      }
       
       return false;
-      
    }
    
-   private boolean dispatch(KeyboardShortcut shortcut,
-                            Map<KeyboardShortcut, ArrayList<AppCommand>> bindings,
-                            NativeEvent event)
+   // TODO: In a perfect world, this function does not exist and
+   // instead we populate an editor key map based on the current state
+   // of the Ace editor, which we could check for prefix matches.
+   // For now, we'll just hard code the prefix
+   // keys used in the default keymaps for Emacs.
+   private boolean isPrefixForEditor(KeyCombination keys)
    {
-      return dispatch(shortcut, bindings, event, null);
-   }
-   
-   private boolean dispatch(KeyboardShortcut shortcut,
-                            Map<KeyboardShortcut, ArrayList<AppCommand>> bindings,
-                            NativeEvent event,
-                            Map<AppCommand, Boolean> maskedCommandsMap)
-   {
-      if (!bindings.containsKey(shortcut) || bindings.get(shortcut) == null) 
-         return false;
-      
-      AppCommand command = null;
-      for (int i = 0; i < bindings.get(shortcut).size(); i++) 
+      if (editorMode_ == KeyboardShortcut.MODE_EMACS)
       {
-         command = bindings.get(shortcut).get(i);
-         if (command != null)
+         if (keys.isCtrlPressed())
          {
-            boolean enabled = isEnabled() && command.isEnabled();
-            
-            // some commands want their keyboard shortcut to pass through 
-            // to the browser when they are disabled (e.g. Cmd+W)
-            if (!enabled && !command.preventShortcutWhenDisabled())
-               return false;
-            
-            // if we've remapped an AppCommand to a new binding, it's
-            // implicitly disabled
-            if (maskedCommandsMap != null && maskedCommandsMap.containsKey(command))
+            int keyCode = keys.getKeyCode();
+            return keyCode == KeyCodes.KEY_C ||
+                   keyCode == KeyCodes.KEY_X;
+         }
+      }
+      
+      return false;
+   }
+   
+   private void swallowEvents(Object object)
+   {
+      NativeEvent event = (NativeEvent) object;
+      
+      // If the keybuffer is a prefix key sequence, swallow
+      // the event. This ensures that the system doesn't 'beep'
+      // when seeing unhandled keys.
+      if (!keyBuffer_.isEmpty())
+      {
+         for (Map.Entry<KeyMapType, KeyMap> entry : keyMaps_.entrySet())
+         {
+            if (entry.getValue().isPrefix(keyBuffer_))
             {
-               command = null;
-               continue;
-            }
-            
-            event.preventDefault();
-
-            // if this command is enabled, execute it and stop looking  
-            if (enabled) 
-            {
-               command.executeFromShortcut();
-               break;
+               event.stopPropagation();
+               event.preventDefault();
+               return;
             }
          }
       }
-
-      return command != null;
+      
+      // Suppress save / quit events from reaching the browser
+      KeyCombination keys = new KeyCombination(event);
+      int keyCode = keys.getKeyCode();
+      int modifiers = keys.getModifier();
+      
+      boolean isSaveQuitKey =
+            keyCode == KeyCodes.KEY_S ||
+            keyCode == KeyCodes.KEY_W;
+      
+      boolean isSaveQuitModifier = BrowseCap.isMacintosh() ?
+            modifiers == KeyboardShortcut.META :
+            modifiers == KeyboardShortcut.CTRL;
+      
+      if (isSaveQuitKey && isSaveQuitModifier)
+         event.preventDefault();
+   }
+   
+   public KeyMap getKeyMap(KeyMapType type)
+   {
+      return keyMaps_.get(type);
    }
    
    private int disableCount_ = 0;
-   private int editorMode_ = KeyboardShortcut.MODE_NONE;
+   private int editorMode_ = KeyboardShortcut.MODE_DEFAULT;
    
    private final KeySequence keyBuffer_;
    private final Timer keyTimer_;
    
-   private final Map<KeyboardShortcut, ArrayList<AppCommand>> commands_ =
-         new HashMap<KeyboardShortcut, ArrayList<AppCommand>>();
-   
-   private final Map<KeyboardShortcut, ArrayList<AppCommand>> customBindings_ =
-         new HashMap<KeyboardShortcut, ArrayList<AppCommand>>();
-   
-   private final Map<AppCommand, Boolean> maskedCommands_ =
-         new HashMap<AppCommand, Boolean>();
-   
-   private List<KeyboardShortcut> unboundShortcuts_ =
-         new ArrayList<KeyboardShortcut>();
-   
-   private List<KeyboardShortcut> modalShortcuts_ =
-         new ArrayList<KeyboardShortcut>();
+   private final Map<KeyMapType, KeyMap> keyMaps_;
+   private final List<ShortcutInfo> shortcutInfo_;
+   private final List<Pair<KeySequence, AppCommandBinding>> defaultBindings_;
    
    // Injected ----
    private UserCommandManager userCommands_;
    private EditorCommandManager editorCommands_;
-   @SuppressWarnings("unused") private ApplicationCommandManager appCommands_;
+   private ApplicationCommandManager appCommands_;
+   private AddinsCommandManager addins_;
+   private EventBus events_;
    
 }

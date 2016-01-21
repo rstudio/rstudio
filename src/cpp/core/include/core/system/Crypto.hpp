@@ -28,11 +28,11 @@ namespace crypto {
       
 void initialize();   
 
-core::Error HMAC_SHA1(const std::string& data, 
+core::Error HMAC_SHA2(const std::string& data,
                       const std::string& key,
                       std::vector<unsigned char>* pHMAC);
 
-core::Error HMAC_SHA1(const std::string& data, 
+core::Error HMAC_SHA2(const std::string& data,
                       const std::vector<unsigned char>& key,
                       std::vector<unsigned char>* pHMAC);   
    

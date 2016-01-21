@@ -23,6 +23,7 @@
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
@@ -80,6 +81,22 @@ double devicePixelRatio(QMainWindow* pMainWindow)
 bool isOSXMavericks()
 {
    return false;
+}
+
+// NOTE: also RHEL
+bool isCentOS()
+{
+   FilePath redhatRelease("/etc/redhat-release");
+   if (!redhatRelease.exists())
+      return false;
+
+   std::string contents;
+   Error error = readStringFromFile(redhatRelease, &contents);
+   if (error)
+      return false;
+
+   return contents.find("CentOS") != std::string::npos ||
+          contents.find("Red Hat Enterprise Linux") != std::string::npos;
 }
 
 void enableFullscreenMode(QMainWindow* pMainWindow, bool primary)

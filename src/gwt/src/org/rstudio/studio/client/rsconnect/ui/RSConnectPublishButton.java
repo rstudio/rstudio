@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.EnabledChangedHandler;
@@ -32,6 +33,8 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
+import org.rstudio.studio.client.rmarkdown.model.RmdOutputInfo;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
@@ -125,30 +128,9 @@ public class RSConnectPublishButton extends Composite
       getElement().getStyle().setMarginRight(4, Unit.PX);    
    }
    
-   private void onPublishButtonClick()
-   {
-      // if the publish button is clicked without the droplist ever being 
-      // invoked, then we need to grab the list of existing deployments to
-      // determine what the default one will be.
-      if (defaultRec_ == null && populatedPath_ == null)
-      {
-         rebuildPopupMenu(new ToolbarPopupMenu.DynamicPopupMenuCallback()
-         {
-            @Override
-            public void onPopupMenu(ToolbarPopupMenu menu)
-            {
-               onPublishRecordClick(defaultRec_);
-            }
-         });
-      }
-      else
-      {
-         onPublishRecordClick(defaultRec_);
-      }
-   }
-   
    @Inject
    public void initialize(RSConnectServerOperations server,
+         RMarkdownServerOperations rmdServer,
          EventBus events, 
          Commands commands,
          GlobalDisplay display,
@@ -157,6 +139,7 @@ public class RSConnectPublishButton extends Composite
          PlotPublishMRUList plotMru)
    {
       server_ = server;
+      rmdServer_ = rmdServer;
       events_ = events;
       commands_ = commands;
       display_ = display;
@@ -234,8 +217,12 @@ public class RSConnectPublishButton extends Composite
    
    public void setShinyPreview(ShinyApplicationParams params)
    {
+      String ext = params.getPath() == null ? "" :
+            FileSystemItem.getExtensionFromPath(params.getPath()).toLowerCase();
       setContentPath(params.getPath(), "");
-      setContentType(RSConnect.CONTENT_TYPE_APP);
+      setContentType(ext == ".r" ?
+                        RSConnect.CONTENT_TYPE_APP_SINGLE :
+                        RSConnect.CONTENT_TYPE_APP);
    }
    
    public void setHtmlPreview(HTMLPreviewResult params)
@@ -276,7 +263,8 @@ public class RSConnectPublishButton extends Composite
       {
          // moving to a document type: get its deployment status 
          if (contentType == RSConnect.CONTENT_TYPE_DOCUMENT ||
-             contentType == RSConnect.CONTENT_TYPE_APP)
+             contentType == RSConnect.CONTENT_TYPE_APP ||
+             contentType == RSConnect.CONTENT_TYPE_APP_SINGLE)
             populateDeployments(true);
          
          // moving to a raw HTML type: erase the deployment list
@@ -362,8 +350,35 @@ public class RSConnectPublishButton extends Composite
    {
       return anyRmdRenderPending_;
    }
+   
+   public void invokePublish()
+   {
+      onPublishButtonClick();
+   }
 
    // Private methods --------------------------------------------------------
+   
+   private void onPublishButtonClick()
+   {
+      // if the publish button is clicked without the droplist ever being 
+      // invoked, then we need to grab the list of existing deployments to
+      // determine what the default one will be.
+      if (defaultRec_ == null && populatedPath_ == null)
+      {
+         rebuildPopupMenu(new ToolbarPopupMenu.DynamicPopupMenuCallback()
+         {
+            @Override
+            public void onPopupMenu(ToolbarPopupMenu menu)
+            {
+               onPublishRecordClick(defaultRec_);
+            }
+         });
+      }
+      else
+      {
+         onPublishRecordClick(defaultRec_);
+      }
+   }
    
    private void populateDeployments(final boolean force)
    {
@@ -420,21 +435,20 @@ public class RSConnectPublishButton extends Composite
          }
          break;
       case RSConnect.CONTENT_TYPE_APP:
+      case RSConnect.CONTENT_TYPE_APP_SINGLE:
          // Shiny application
          events_.fireEvent(RSConnectActionEvent.DeployAppEvent(
-               contentPath_, previous));
+               contentPath_, contentType_, previous));
          break;
       case RSConnect.CONTENT_TYPE_DOCUMENT:
          if (docPreview_ == null || 
              (docPreview_.isStatic() && 
-              StringUtil.isNullOrEmpty(docPreview_.getOutputFile())))
+              StringUtil.isNullOrEmpty(docPreview_.getOutputFile()) &&
+              docPreview_.getSourceFile() != null))
          {
-            // if the doc hasn't been rendered, go render it and come back when
-            // we're finished
-            publishAfterRmdRender_ = previous;
-            rmdRenderPending_ = true;
-            anyRmdRenderPending_ = true;
-            commands_.knitDocument().execute();
+            // if the doc has been saved but not been rendered, go render it and
+            // come back when we're finished
+            renderThenPublish(contentPath_, previous);
          }
          else
          {
@@ -609,7 +623,8 @@ public class RSConnectPublishButton extends Composite
          // show the menu for Shiny documents
          return !docPreview_.isStatic();
       }
-      else if (contentType_ == RSConnect.CONTENT_TYPE_APP)
+      else if (contentType_ == RSConnect.CONTENT_TYPE_APP ||
+               contentType_ == RSConnect.CONTENT_TYPE_APP_SINGLE)
       {
          // show the menu for Shiny apps
          return true;
@@ -648,7 +663,8 @@ public class RSConnectPublishButton extends Composite
            publishHtmlSource_ == null)
          return false;
       
-      if (contentType_ == RSConnect.CONTENT_TYPE_APP && 
+      if ((contentType_ == RSConnect.CONTENT_TYPE_APP ||
+           contentType_ == RSConnect.CONTENT_TYPE_APP_SINGLE) && 
           StringUtil.isNullOrEmpty(contentPath_))
          return false;
 
@@ -705,7 +721,8 @@ public class RSConnectPublishButton extends Composite
       }
    
       // if this is a Shiny application and an .R file is being invoked, check
-      // for deployments of its parent path
+      // for deployments of its parent path (single-file apps have
+      // CONTENT_TYPE_APP_SINGLE and their own deployment records)
       String contentPath = contentPath_;
       if (contentType_ == RSConnect.CONTENT_TYPE_APP &&
           StringUtil.getExtension(contentPath_).equalsIgnoreCase("r")) {
@@ -737,11 +754,66 @@ public class RSConnectPublishButton extends Composite
       });
    }
    
+   // for static content only: perform a just-in-time render if necessary and
+   // then publish the content
+   private void renderThenPublish(final String target,
+         final RSConnectDeploymentRecord previous)
+   {
+      // prevent re-entrancy
+      if (rmdInfoPending_)
+         return;
+      
+      final Command renderCommand = new Command() 
+      {
+         @Override
+         public void execute()
+         {
+            publishAfterRmdRender_ = previous;
+            rmdRenderPending_ = true;
+            anyRmdRenderPending_ = true;
+            commands_.knitDocument().execute();
+         }
+      };
+      
+      rmdInfoPending_ = true;
+      rmdServer_.getRmdOutputInfo(target, 
+            new ServerRequestCallback<RmdOutputInfo>()
+      {
+         @Override
+         public void onResponseReceived(RmdOutputInfo response)
+         {
+            if (response.isCurrent())
+            {
+               RenderedDocPreview preview = new RenderedDocPreview(
+                     target, response.getOutputFile(), true);
+               events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
+                     preview, previous));
+            }
+            else
+            {
+               renderCommand.execute();
+            }
+            rmdInfoPending_ = false;
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            // if we failed to figure out whether we need to do a re-render, 
+            // assume one is necessary
+            Debug.logError(error);
+            renderCommand.execute();
+            rmdInfoPending_ = false;
+         }
+      });
+   }
+
    private final ToolbarButton publishButton_;
    private final DeploymentPopupMenu publishMenu_;
    private ToolbarButton publishMenuButton_;
 
    private RSConnectServerOperations server_;
+   private RMarkdownServerOperations rmdServer_;
    private EventBus events_;
    private Commands commands_;
    private GlobalDisplay display_;
@@ -761,6 +833,7 @@ public class RSConnectPublishButton extends Composite
    private boolean manuallyHidden_ = false;
    private boolean visible_ = false;
    private boolean rmdRenderPending_ = false;
+   private boolean rmdInfoPending_ = false;
    private RSConnectDeploymentRecord publishAfterRmdRender_ = null;
    
    private final AppCommand boundCommand_;

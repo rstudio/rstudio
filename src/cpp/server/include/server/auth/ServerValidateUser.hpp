@@ -27,12 +27,14 @@ namespace auth {
 bool validateUser(
   const std::string& username,
   const std::string& requiredGroup,
-  bool groupFailureWarning);
+  unsigned int minimumUserId,
+  bool failureWarning);
 
 inline bool validateUser(const std::string& username)
 {
    return validateUser(username,
                        server::options().authRequiredUserGroup(),
+                       server::options().authMinimumUserId(),
                        true);
 }
 
