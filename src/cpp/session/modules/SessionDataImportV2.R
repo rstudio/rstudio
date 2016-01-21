@@ -67,7 +67,7 @@
                   numeric = "readr::col_number()"
                )
 
-               colParams[[colIdx]] <- paste(col$name, " = ", colType, sep="")
+               colParams[[colIdx]] <- paste("\"", col$name, "\" = ", colType, sep="")
             }
             colParam <- (paste(colParams, collapse = ",\n      ", sep = ""))
             return (paste("readr::cols(\n      ", colParam, ")", sep = ""))
