@@ -745,24 +745,6 @@ void initEnvironment()
      rmarkdownMathjaxPath = session::options().mathjaxPath().absolutePath();
    sysSetenv.addParam(kRmarkdownMathjaxPath, rmarkdownMathjaxPath);
 
-   // set RMARKDOWN_PREVIEW_DIR (leave existing value alone)
-   std::string rmarkdownPreviewDir = core::system::getenv(kRMarkdownPreviewDir);
-   if (rmarkdownPreviewDir.empty())
-   {
-      std::string tempDir;
-      Error error = r::exec::RFunction("tempdir").call(&tempDir);
-      if (!error)
-      {
-         Error error = FilePath(tempDir).ensureDirectory();
-         if (!error)
-            sysSetenv.addParam(kRMarkdownPreviewDir, tempDir);
-         else
-            LOG_ERROR(error);
-      }
-      else
-         LOG_ERROR(error);
-   }
-
    // call Sys.setenv
    Error error = sysSetenv.call();
    if (error)
@@ -794,6 +776,25 @@ std::string onDetectRmdSourceType(
       }
    }
    return std::string();
+}
+
+void onDeferredInit(bool)
+{
+   // set RMARKDOWN_PREVIEW_DIR
+   std::string tempDir;
+   Error error = r::exec::RFunction("tempdir").call(&tempDir);
+   if (!error)
+   {
+      r::exec::RFunction sysSetenv("Sys.setenv");
+      sysSetenv.addParam(kRMarkdownPreviewDir, tempDir);
+      error = sysSetenv.call();
+      if (error)
+         LOG_ERROR(error);
+   }
+   else
+   {
+      LOG_ERROR(error);
+   }
 }
 
 void onClientInit()
@@ -1161,6 +1162,7 @@ Error initialize()
 
    module_context::events().onDetectSourceExtendedType
                                         .connect(onDetectRmdSourceType);
+   module_context::events().onDeferredInit.connect(onDeferredInit);
    module_context::events().onClientInit.connect(onClientInit);
 
    ExecBlock initBlock;
