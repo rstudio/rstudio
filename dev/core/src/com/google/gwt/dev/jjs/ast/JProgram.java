@@ -515,9 +515,16 @@ public class JProgram extends JNode implements ArrayTypeCreator {
       return JReferenceType.NULL_TYPE;
     }
 
-    if (thisType.canBeNull()  != thatType.canBeNull()) {
-      // If either is non-nullable, the result should be non-nullable.
-      return strengthenType(thisType.strengthenToNonNull(), thatType.strengthenToNonNull());
+    if (!thisType.canBeNull() || !thatType.canBeNull()) {
+      JReferenceType thisTypeNonNull = thisType.strengthenToNonNull();
+      JReferenceType thatTypeNonNull = thatType.strengthenToNonNull();
+      // .strengthenToNonNull does not guarantee that the resulting type is non null (e.g. JSOs).
+
+      // If either is non-nullable, the result should be non-nullable, unless it is a type that
+      // can not be made non-nullable, like a JSO.
+      if (thisType != thisTypeNonNull || thatType != thatTypeNonNull) {
+        return strengthenType(thisTypeNonNull, thatTypeNonNull);
+      }
     }
 
     if (typeOracle.castSucceedsTrivially(thisType, thatType)) {

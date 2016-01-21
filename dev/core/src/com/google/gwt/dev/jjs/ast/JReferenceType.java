@@ -325,7 +325,7 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
   }
 
   public JReferenceType weakenToNonExact() {
-    if (getUnderlyingType() == this || !getUnderlyingType().canBeSubclass()) {
+    if (getUnderlyingType() == this) {
       // Underlying types cannot be weakened.
       return this;
     }
@@ -343,7 +343,12 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
     throw new AssertionError("Unknown AnalysisResult " + getAnalysisResult().toString());
   }
 
+  @Override
   public JReferenceType strengthenToNonNull() {
+    if (isJsoType()) {
+      // JSOs can not be strengthened.
+      return this;
+    }
     switch (getAnalysisResult()) {
       case NULLABLE_NOT_EXACT:
         return getAnalysisDecoratedTypePool().getAnalysisDecoratedType(
@@ -360,7 +365,7 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
 
   public JReferenceType strengthenToExact() {
     if (isJsoType()) {
-      // JSOs can not be strengthened to EXACT.
+      // JSOs can not be strengthened.
       return this;
     }
     switch (getAnalysisResult()) {

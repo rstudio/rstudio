@@ -30,7 +30,8 @@ public abstract class OptimizationTestBase extends GWTTestCase {
   public static void assertFunctionMatches(String functionDef, String pattern) {
     String content = getFunctionContent(functionDef);
     String regex = createRegex(pattern);
-    assertTrue("content: " + content, content.matches(regex));
+    assertTrue("content: \"" + content + "\" does not match pattern: " + regex,
+        content.matches(regex));
   }
 
   private static String getFunctionContent(String functionDef) {
@@ -45,9 +46,11 @@ public abstract class OptimizationTestBase extends GWTTestCase {
   }
 
   private static String createRegex(String pattern) {
-    for (char toBeEscaped : ".[]+".toCharArray()) {
+    for (char toBeEscaped : ".[](){}+=?".toCharArray()) {
       pattern = pattern.replace("" + toBeEscaped, "\\" + toBeEscaped);
     }
+    pattern = pattern.replace("\\(\\)", "(\\(\\))?"); // to account for the removal of ()
+                                                      // in new operations.
     pattern = pattern.replace("<obf>", "[\\w$_]+");
     return pattern + ";?";
   }

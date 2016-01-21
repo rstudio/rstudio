@@ -837,6 +837,21 @@ public class JsoTest extends GWTTestCase {
     assertTrue(i == (I) (trueFn() ? finalJso2 : (JavaScriptObject) null));
   }
 
+  /**
+   *
+   * Test that nullability optimizations don't break the assumption that null is considered a JSO.
+   */
+  public void testNonNullableOptimization() {
+    // TODO(rluble): fix semantics to be more coherent by adding a nullness check for devirtualized
+    // methods in draft mode.
+    JavaScriptObject nullJso =  (trueFn() ? null : JavaScriptObject.createArray());
+    // This statement should throw NPE (at least in draft mode) but it does not due to JSO
+    // devirtualization. These semantics are exploited in GWT standard library. Improvemnts and
+    // fixes to optimization passes might break these assumptions.
+    JSO1 someJso = nullJso.cast();
+    assertTrue(someJso == null);
+  }
+
   private boolean trueFn() {
     return true;
   }
