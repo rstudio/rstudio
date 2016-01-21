@@ -51,6 +51,26 @@
          },
          "locale" = {
             return (paste("readr::locale(date_names=\"", optionValue, "\")", sep = ""))
+         },
+         "columnDefinitions" = {
+            colParams <- ""
+            for(colIdx in seq_along(optionValue)) {
+               col <- optionValue[[colIdx]]
+
+               colType <- switch(col$type,
+                  logical = "readr::col_logical()",
+                  integer = "readr::col_integer()",
+                  double = "readr::col_double()",
+                  character = "readr::col_character()",
+                  date = "readr::col_date()",
+                  datetime = "readr::col_datetime()",
+                  numeric = "readr::col_number()"
+               )
+
+               colParams[[colIdx]] <- paste(col$name, " = ", colType, sep="")
+            }
+            colParam <- (paste(colParams, collapse = ",\n      ", sep = ""))
+            return (paste("readr::cols(\n      ", colParam, ")", sep = ""))
          }, {
             return (optionValue)
          })
@@ -67,8 +87,7 @@
    optionsNoDefaults <- list()
    for (optionName in parameterNames) {
       if (!identical(NULL, options[[optionName]]) &&
-            !identical(NULL, parameterDefinitions[[optionName]]) &&
-            options[[optionName]] != parameterDefinitions[[optionName]]) {
+            !identical(options[[optionName]], parameterDefinitions[[optionName]])) {
          optionsNoDefaults[[optionName]] <- options[[optionName]]
       }
    }
@@ -132,6 +151,7 @@
    options[["comment"]] <- dataImportOptions$comments
    options[["skip"]] <- dataImportOptions$skip
    options[["n_max"]] <- dataImportOptions$maxRows
+   options[["col_types"]] <- dataImportOptions$columnDefinitions
 
    # set special parameter types
    optionTypes <- list()
@@ -141,6 +161,7 @@
    optionTypes[["locale"]] <- "locale"
    optionTypes[["na"]] <- "character"
    optionTypes[["comment"]] <- "character"
+   optionTypes[["col_types"]] <- "columnDefinitions"
 
    functionParameters <- .rs.assemble_data_import_parameters(options, optionTypes, functionReference)
 

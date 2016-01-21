@@ -53,6 +53,9 @@ var rowNumbers = true;
 // list of calls to defer after table is init (e.g. showing headers)
 var postInitActions = {};
 
+// callback to manage column definition changes
+var onColumnDefsChange;
+
 var isHeaderWidthMismatched = function() {
   // find the elements to measure (they may not exist)
   var rs = document.getElementById("rsGridData");
@@ -483,6 +486,7 @@ var createBooleanFilterUI = function(idx, col, onDismiss) {
       opt.textContent = values[logical];
       opt.className = "choiceListItem";
       opt.addEventListener("click", setBoolValHandler(values[logical]));
+
       list.appendChild(opt);
     }
     popup.appendChild(list);
@@ -623,16 +627,35 @@ var createFilterUI = function(idx, col) {
 var openColumnTypeChooserUI = function(idx, col, ele, onDismiss) {
   invokeFilterPopup(ele, function(popup) {
     var columnTypes = [
-      "logical", "integer", "double", "character", "date", "datetime", "number" 
+      "logical", "integer", "double", "character", "date", "datetime", "numeric" 
     ]
 
     var typeSelect = document.createElement("div");
     typeSelect.className = "choiceList";
 
+    var setColumnTypeHandler = function(columnType) {
+      return function(evt) {
+        cols[idx].col_type_original = !cols[idx].col_type_original ? cols[idx].col_type : cols[idx].col_type_original;
+        cols[idx].col_type = columnType;
+
+        if (cols[idx].col_type_original === cols[idx].col_type) {
+          cols[idx].col_type_original = null;
+        }
+
+        if (onColumnDefsChange) {
+          onColumnDefsChange();
+        }
+
+        window.setColumnDefinitionsUIVisible(false);
+        window.setColumnDefinitionsUIVisible(true);
+      };
+    };
+
     columnTypes.forEach(function (e) {
       var option = document.createElement("div");
       option.className = "choiceListItem";
       option.textContent = e;
+      option.addEventListener("click", setColumnTypeHandler(e));
       typeSelect.appendChild(option);
     });
     popup.appendChild(typeSelect);
@@ -649,10 +672,7 @@ var openColumnTypeChooserUI = function(idx, col, ele, onDismiss) {
 
 var createColumnTypesUI = function(th, idx, col) {
   var host = document.createElement("div");
-  
-  var setUnfiltered = function() {
-
-  };
+  host.className = "columnTypeWrapper";
 
   var onDismiss = function() {
 
@@ -702,7 +722,7 @@ var createHeader = function(idx, col) {
   }
 
   if (idx === 0) {
-    th.className = "first-child"
+    th.className = "first-child";
   }
 
   // add the column label, if it has one
@@ -988,7 +1008,7 @@ var bootstrap = function(data) {
   }
 };
 
-var setHeaderUIVisible = function(visible, initialize) {
+var setHeaderUIVisible = function(visible, initialize, hide) {
   var thead = document.getElementById("data_cols");
 
   // it's possible the dable is getting redrawn right now; if it is, defer
@@ -1001,17 +1021,17 @@ var setHeaderUIVisible = function(visible, initialize) {
   }
 
   if (!visible) {
-    // clear all the filter data
-    table.columns().search("");
+    hide(thead);
     // close any popup
     if (dismissActivePopup)
       dismissActivePopup(true);
   }
   for (var i = 0; i < Math.min(thead.children.length, cols.length); i++) {
-    var col = cols[i + (rowNumbers ? 0 : 1)];
+    var colIdx = i + (rowNumbers ? 0 : 1)
+    var col = cols[colIdx];
     var th = thead.children[i];
     if (visible) {
-      var headerElement = initialize(th, col, i);
+      var headerElement = initialize(th, col, colIdx);
       if (headerElement) {
         th.appendChild(headerElement);
       }
@@ -1038,17 +1058,40 @@ window.setFilterUIVisible = function(visible) {
     return null;
   }
 
-  return setHeaderUIVisible(visible, setFilterUIVisiblePerColumn);
+  var hideFilterUI = function() {
+    // clear all the filter data
+    table.columns().search("");
+  }
+
+  return setHeaderUIVisible(visible, setFilterUIVisiblePerColumn, hideFilterUI);
 };
 
 // called from RStudio to toggle the filter UI 
-window.setColumnTypeUIVisible = function(visible) {
-  var setColumnTypeUIVisiblePerColumn = function(th, col, i) {
+window.setColumnDefinitionsUIVisible = function(visible, onColChange) {
+  var setColumnDefinitionsUIVisiblePerColumn = function(th, col, i) {
     return createColumnTypesUI(th, i, col);
   }
 
-  return setHeaderUIVisible(visible, setColumnTypeUIVisiblePerColumn);
+  var hideColumnTypeUI = function(thead) {
+    $(".columnTypeWrapper").remove();
+  }
+
+  onColumnDefsChange = onColChange ? onColChange : onColumnDefsChange;
+  return setHeaderUIVisible(visible, setColumnDefinitionsUIVisiblePerColumn, hideColumnTypeUI);
 };
+
+window.getColumnDefinitions = function() {
+  var definitions = cols.filter(function(e) {
+      return e.col_type_original;
+    }).map(function (e) {
+      return {
+        name: e.col_name,
+        type: e.col_type
+      }
+    });
+
+  return definitions;
+}
 
 // called from RStudio when the underlying object changes
 window.refreshData = function(structureChanged, sizeChanged) {

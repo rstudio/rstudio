@@ -43,10 +43,16 @@ public class GridViewerFrame extends RStudioFrame
       setOptionNative(gridViewerFrameWindow, option, value);
    }
    
-   public void setColumnTypeUIVisible(boolean value)
+   public void setColumnDefinitionsUIVisible(boolean value, Operation onColumnDefsChange)
    {
       WindowEx gridViewerFrameWindow = getIFrame().getContentWindow();
-      setColumnTypeUIVisibleNative(gridViewerFrameWindow, value);
+      setColumnDefinitionsUIVisibleNative(gridViewerFrameWindow, value, onColumnDefsChange);
+   }
+   
+   public JavaScriptObject getColumnDefinitions()
+   {
+      WindowEx gridViewerFrameWindow = getIFrame().getContentWindow();
+      return getColumnDefinitions(gridViewerFrameWindow);
    }
    
    private final native void setDataNative(WindowEx frameContentWindow, JavaScriptObject data) /*-{
@@ -57,7 +63,16 @@ public class GridViewerFrame extends RStudioFrame
       frameContentWindow.setOption(option, value);
    }-*/;
    
-   private final native void setColumnTypeUIVisibleNative(WindowEx frameContentWindow, boolean value) /*-{
-      frameContentWindow.setColumnTypeUIVisible(value);
+   private final native void setColumnDefinitionsUIVisibleNative(WindowEx frameContentWindow, boolean value, Operation onColumnDefsChange) /*-{
+      frameContentWindow.setColumnDefinitionsUIVisible(
+         value,
+         $entry(function () {
+            onColumnDefsChange.@org.rstudio.core.client.widget.Operation::execute()()
+         })
+      );
+   }-*/;
+   
+   private final native JavaScriptObject getColumnDefinitions(WindowEx frameContentWindow) /*-{
+      return frameContentWindow.getColumnDefinitions();
    }-*/;
 }

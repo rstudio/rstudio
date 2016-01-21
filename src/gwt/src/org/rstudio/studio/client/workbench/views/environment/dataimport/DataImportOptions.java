@@ -38,4 +38,8 @@ public class DataImportOptions extends JavaScriptObject
    public final native void setMaxRows(int maxRows) /*-{
       this.maxRows = maxRows > 0 ? maxRows : null;
    }-*/;
+   
+   public final native void setColumnDefinitions(JavaScriptObject columnDefinitions) /*-{
+      this.columnDefinitions = columnDefinitions;
+   }-*/;
 }

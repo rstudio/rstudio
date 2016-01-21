@@ -36,6 +36,7 @@ import org.rstudio.studio.client.workbench.views.environment.dataimport.res.Data
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -71,6 +72,8 @@ public class DataImport extends Composite
    private final int minHeight = 400;
    
    private final String codePreviewErrorMessage_ = "Code Creation Error";
+   
+   private JavaScriptObject columnDefinitions_;
    
    interface DataImportUiBinder extends UiBinder<Widget, DataImport>
    {
@@ -179,6 +182,8 @@ public class DataImport extends Composite
             fileOrUrlChooserTextBox_.getText() :
             null);
       
+      options.setColumnDefinitions(columnDefinitions_);
+      
       return options;
    }
    
@@ -214,7 +219,15 @@ public class DataImport extends Composite
             gridViewer_.setOption("rowNumbers", "false");
             
             gridViewer_.setData(response);
-            gridViewer_.setColumnTypeUIVisible(true);
+            gridViewer_.setColumnDefinitionsUIVisible(true, new Operation()
+            {
+               @Override
+               public void execute()
+               {
+                  columnDefinitions_ = gridViewer_.getColumnDefinitions();
+                  assembleDataImport();
+               }
+            });
             
             progressIndicator_.onCompleted();
          }
