@@ -18,6 +18,7 @@ package java.lang;
 import static javaemul.internal.InternalPreconditions.checkCriticalArgument;
 
 import java.io.Serializable;
+import java.lang.String.NativeRegExp;
 
 /**
  * Wraps a native <code>char</code> as an object.
@@ -227,8 +228,12 @@ public final class Character implements Comparable<Character>, Serializable {
   /*
    * TODO: correct Unicode handling.
    */
-  public static native boolean isDigit(char c) /*-{
-    return (null != String.fromCharCode(c).match(/\d/));
+  public static boolean isDigit(char c) {
+    return String.valueOf(c).nativeMatches(digitRegex());
+  }
+
+  private static native NativeRegExp digitRegex() /*-{
+    return /\d/;
   }-*/;
 
   public static boolean isHighSurrogate(char ch) {
@@ -238,15 +243,23 @@ public final class Character implements Comparable<Character>, Serializable {
   /*
    * TODO: correct Unicode handling.
    */
-  public static native boolean isLetter(char c) /*-{
-    return (null != String.fromCharCode(c).match(/[A-Z]/i));
+  public static boolean isLetter(char c) {
+    return String.valueOf(c).nativeMatches(leterRegex());
+  }
+
+  private static native NativeRegExp leterRegex() /*-{
+    return /[A-Z]/i;
   }-*/;
 
   /*
    * TODO: correct Unicode handling.
    */
-  public static native boolean isLetterOrDigit(char c) /*-{
-    return (null != String.fromCharCode(c).match(/[A-Z\d]/i));
+  public static boolean isLetterOrDigit(char c) {
+    return String.valueOf(c).nativeMatches(leterOrDigitRegex());
+  }
+
+  private static native NativeRegExp leterOrDigitRegex() /*-{
+    return /[A-Z\d]/i;
   }-*/;
 
   /*
@@ -282,15 +295,17 @@ public final class Character implements Comparable<Character>, Serializable {
   }
 
   public static boolean isWhitespace(char ch) {
-    return isWhitespace((int) ch);
+    return String.valueOf(ch).nativeMatches(whitespaceRegex());
+  }
+
+  public static boolean isWhitespace(int codePoint) {
+    return String.fromCodePoint(codePoint).nativeMatches(whitespaceRegex());
   }
 
   // The regex would just be /\s/, but browsers handle non-breaking spaces inconsistently. Also,
   // the Java definition includes separators.
-  public static native boolean isWhitespace(int codePoint) /*-{
-    return (null !== String.fromCharCode(codePoint).match(
-      /[\t-\r \u1680\u180E\u2000-\u2006\u2008-\u200A\u2028\u2029\u205F\u3000\uFEFF]|[\x1C-\x1F]/
-    ));
+  private static native NativeRegExp whitespaceRegex() /*-{
+    return /[\t-\r \u1680\u180E\u2000-\u2006\u2008-\u200A\u2028\u2029\u205F\u3000\uFEFF]|[\x1C-\x1F]/;
   }-*/;
 
   public static boolean isSupplementaryCodePoint(int codePoint) {
@@ -381,17 +396,17 @@ public final class Character implements Comparable<Character>, Serializable {
     return MIN_SUPPLEMENTARY_CODE_POINT + ((highSurrogate & 1023) << 10) + (lowSurrogate & 1023);
   }
 
-  public static native char toLowerCase(char c) /*-{
-    return String.fromCharCode(c).toLowerCase().charCodeAt(0);
-  }-*/;
+  public static char toLowerCase(char c) {
+    return String.valueOf(c).toLowerCase().charAt(0);
+  }
 
   public static String toString(char x) {
     return String.valueOf(x);
   }
 
-  public static native char toUpperCase(char c) /*-{
-    return String.fromCharCode(c).toUpperCase().charCodeAt(0);
-  }-*/;
+  public static char toUpperCase(char c) {
+    return String.valueOf(c).toUpperCase().charAt(0);
+  }
 
   public static Character valueOf(char c) {
     if (c < 128) {

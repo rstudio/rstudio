@@ -16,6 +16,8 @@
 package java.lang;
 
 import javaemul.internal.JsUtils;
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsType;
 
 /**
  * Math utility methods and constants.
@@ -62,29 +64,29 @@ public final class Math {
     return x < 0 ? -x : x;
   }
 
-  public static native double acos(double x) /*-{
-    return Math.acos(x);
-  }-*/;
+  public static double acos(double x) {
+    return NativeMath.acos(x);
+  }
 
-  public static native double asin(double x) /*-{
-    return Math.asin(x);
-  }-*/;
+  public static double asin(double x) {
+    return NativeMath.asin(x);
+  }
 
-  public static native double atan(double x) /*-{
-    return Math.atan(x);
-  }-*/;
+  public static double atan(double x) {
+    return NativeMath.atan(x);
+  }
 
-  public static native double atan2(double y, double x) /*-{
-    return Math.atan2(y, x);
-  }-*/;
+  public static double atan2(double y, double x) {
+    return NativeMath.atan2(y, x);
+  }
 
   public static double cbrt(double x) {
     return Math.pow(x, 1.0 / 3.0);
   }
 
-  public static native double ceil(double x) /*-{
-    return Math.ceil(x);
-  }-*/;
+  public static double ceil(double x) {
+    return NativeMath.ceil(x);
+  }
 
   public static double copySign(double magnitude, double sign) {
     if (sign < 0) {
@@ -98,17 +100,17 @@ public final class Math {
     return (float) (copySign((double) magnitude, (double) sign));
   }
 
-  public static native double cos(double x) /*-{
-    return Math.cos(x);
-  }-*/;
+  public static double cos(double x) {
+    return NativeMath.cos(x);
+  }
 
   public static double cosh(double x) {
     return (Math.exp(x) + Math.exp(-x)) / 2.0;
   }
 
-  public static native double exp(double x) /*-{
-    return Math.exp(x);
-  }-*/;
+  public static double exp(double x) {
+    return NativeMath.exp(x);
+  }
 
   public static double expm1(double d) {
     if (d == 0.0 || Double.isNaN(d)) {
@@ -123,21 +125,21 @@ public final class Math {
     return exp(d) + 1.0d;
   }
 
-  public static native double floor(double x) /*-{
-    return Math.floor(x);
-  }-*/;
+  public static double floor(double x) {
+    return NativeMath.floor(x);
+  }
 
   public static double hypot(double x, double y) {
     return sqrt(x * x + y * y);
   }
 
-  public static native double log(double x) /*-{
-    return Math.log(x);
-  }-*/;
+  public static double log(double x) {
+    return NativeMath.log(x);
+  }
 
-  public static native double log10(double x) /*-{
-    return Math.log(x) * Math.LOG10E;
-  }-*/;
+  public static double log10(double x) {
+    return NativeMath.log(x) * NativeMath.LOG10E;
+  }
 
   public static double log1p(double x) {
     return Math.log(x + 1.0d);
@@ -175,13 +177,13 @@ public final class Math {
     return x < y ? x : y;
   }
 
-  public static native double pow(double x, double exp) /*-{
-    return Math.pow(x, exp);
-  }-*/;
+  public static double pow(double x, double exp) {
+    return NativeMath.pow(x, exp);
+  }
 
-  public static native double random() /*-{
-    return Math.random();
-  }-*/;
+  public static double random() {
+    return NativeMath.random();
+  }
 
   public static double rint(double d) {
     if (Double.isNaN(d)) {
@@ -196,11 +198,11 @@ public final class Math {
   }
 
   public static long round(double x) {
-    return (long) round0(x);
+    return (long) NativeMath.round(x);
   }
 
   public static int round(float x) {
-    double roundedValue = round0(x);
+    double roundedValue = NativeMath.round(x);
     return unsafeCastToInt(roundedValue);
   }
 
@@ -252,21 +254,21 @@ public final class Math {
     }
   }
 
-  public static native double sin(double x) /*-{
-    return Math.sin(x);
-  }-*/;
+  public static double sin(double x) {
+    return NativeMath.sin(x);
+  }
 
   public static double sinh(double x) {
     return (Math.exp(x) - Math.exp(-x)) / 2.0d;
   }
 
-  public static native double sqrt(double x) /*-{
-    return Math.sqrt(x);
-  }-*/;
+  public static double sqrt(double x) {
+    return NativeMath.sqrt(x);
+  }
 
-  public static native double tan(double x) /*-{
-    return Math.tan(x);
-  }-*/;
+  public static double tan(double x) {
+    return NativeMath.tan(x);
+  }
 
   public static double tanh(double x) {
     if (x == JsUtils.getInfinity()) {
@@ -287,7 +289,23 @@ public final class Math {
     return x * PI_OVER_180;
   }
 
-  private static native double round0(double x) /*-{
-    return Math.round(x);
-  }-*/;
+  @JsType(isNative = true, name = "Math", namespace = JsPackage.GLOBAL)
+  private static class NativeMath {
+    public static double LOG10E;
+    public static native double acos(double x);
+    public static native double asin(double x);
+    public static native double atan(double x);
+    public static native double atan2(double y, double x);
+    public static native double ceil(double x);
+    public static native double cos(double x);
+    public static native double exp(double x);
+    public static native double floor(double x);
+    public static native double log(double x);
+    public static native double pow(double x, double exp);
+    public static native double random();
+    public static native double round(double x);
+    public static native double sin(double x);
+    public static native double sqrt(double x);
+    public static native double tan(double x);
+  }
 }

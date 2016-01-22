@@ -108,8 +108,7 @@ public class Throwable implements Serializable {
     // Replace newlines with spaces so that we don't confuse the parser
     // below which splits on newlines, and will otherwise try to parse
     // the error message as part of the stack trace.
-    // TODO: use string.asNativeString.replace instead when available.
-    String message = detailMessage == null ? null : detailMessage.replace('\n', ' ');
+    String message = detailMessage == null ? null : detailMessage.nativeReplaceAll("\n", " ");
     String errorMessage = toString(message);
 
     setBackingJsObject(fixIE(createError(errorMessage)));

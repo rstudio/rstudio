@@ -31,7 +31,7 @@ public class ArrayHelper {
    * Unlike clone, this method returns a copy of the array that is not type marked. This is only
    * safe for temp arrays as returned array will not do any type checks.
    */
-  public static native Object unsafeClone(Object array, int fromIndex, int toIndex) /*-{
+  public static native Object[] unsafeClone(Object array, int fromIndex, int toIndex) /*-{
     return array.slice(fromIndex, toIndex);
   }-*/;
 
