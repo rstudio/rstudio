@@ -112,6 +112,11 @@ public class LineWidget extends JavaScriptObject
    public final native <T> T getData() /*-{
       return this.data;
    }-*/;
+
+   
+   public final native void setHtml(String html) /*-{
+      return this.html;
+   }-*/;
    
    public final native void setData(JavaScriptObject data) /*-{
       this.data = data;

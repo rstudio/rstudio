@@ -4166,6 +4166,21 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void executeInlineChunk(String file, String chunkId, String options,
+         String content, ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(file));
+      params.set(1, new JSONString(chunkId));
+      params.set(2, new JSONString(options));
+      params.set(3, new JSONString(content));
+      sendRequest(RPC_SCOPE,
+            "execute_inline_chunk",
+            params,
+            requestCallback);
+   }
+
+   @Override
    public void getRmdOutputInfo(String input,
          ServerRequestCallback<RmdOutputInfo> requestCallback)
    {

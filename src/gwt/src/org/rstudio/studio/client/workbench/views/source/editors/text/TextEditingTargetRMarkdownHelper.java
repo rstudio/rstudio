@@ -771,6 +771,12 @@ public class TextEditingTargetRMarkdownHelper
       });
    }
    
+   public void executeInlineChunk(String file, String chunkId, String options, 
+         String content)
+   {
+      server_.executeInlineChunk(file, chunkId, options, content, 
+            new SimpleRequestCallback<Void>());
+   }
    
    // Private methods ---------------------------------------------------------
    

@@ -15,9 +15,11 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -25,6 +27,7 @@ import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
@@ -41,9 +44,11 @@ import com.google.gwt.dom.client.Style;
 import com.google.inject.Inject;
 
 public class TextEditingTargetNotebook 
-               implements EditorThemeStyleChangedEvent.Handler
+               implements EditorThemeStyleChangedEvent.Handler,
+                          RmdChunkOutputEvent.Handler
 {
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
+                                    TextEditingTargetRMarkdownHelper rmdHelper,
                                     DocDisplay docDisplay,
                                     DocUpdateSentinel docUpdateSentinel,
                                     SourceDocument document)
@@ -51,6 +56,7 @@ public class TextEditingTargetNotebook
       docDisplay_ = docDisplay;
       docUpdateSentinel_ = docUpdateSentinel;  
       initialChunkOutputs_ = document.getChunkOutput();
+      rmdHelper_ = rmdHelper;
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       // single shot rendering of chunk output line widgets
@@ -82,9 +88,6 @@ public class TextEditingTargetNotebook
             }
          }
       });
-      
-      
-      
    }
    
    @Inject
@@ -92,6 +95,8 @@ public class TextEditingTargetNotebook
    {
       events_ = events;
       uiPrefs_ = uiPrefs;
+      
+      events_.addHandler(RmdChunkOutputEvent.TYPE, this);
    }
      
    public void executeChunk(Scope chunk, String code)
@@ -101,19 +106,21 @@ public class TextEditingTargetNotebook
       
       // get the row that ends the chunk
       int row = chunk.getEnd().getRow();
+
+      ChunkOutput chunkOutput;
       
       // if there is an existing widget just modify it in place
       LineWidget existingWidget = docDisplay_.getLineWidgetForRow(row);
       if (existingWidget != null && 
           existingWidget.getType().equals(ChunkOutput.LINE_WIDGET_TYPE))
       {
-         setChunkOutput(existingWidget.getElement());
-         docDisplay_.onLineWidgetChanged(existingWidget);
+         chunkOutput = existingWidget.getData();
       }
       // otherwise create a new one
       else
       {
-         ChunkOutput chunkOutput = ChunkOutput.create(row, 1, true, "ref");
+         chunkOutput = ChunkOutput.create(row, 1, true, 
+               StringUtil.makeRandomId(12), "ref");
         
          LineWidget widget = LineWidget.create(
                                ChunkOutput.LINE_WIDGET_TYPE,
@@ -123,11 +130,13 @@ public class TextEditingTargetNotebook
          widget.setFixedWidth(true);
          docDisplay_.addLineWidget(widget);
       }
+
+      rmdHelper_.executeInlineChunk(docUpdateSentinel_.getPath(), 
+            chunkOutput.getChunkId(), "", code);
       
       // still execute in console
       events_.fireEvent(new SendToConsoleEvent(code, true, false, false));
    }
-   
    
    @Override
    public void onEditorThemeStyleChanged(EditorThemeStyleChangedEvent event)
@@ -145,6 +154,23 @@ public class TextEditingTargetNotebook
       }
    }
    
+   @Override
+   public void onRmdChunkOutput(RmdChunkOutputEvent event)
+   {
+      // find the line widget to update
+      JsArray<LineWidget> widgets = docDisplay_.getLineWidgets();
+      for (int i = 0; i < widgets.length(); i++)
+      {
+         ChunkOutput output = widgets.get(i).getData();
+         if (event.getOutput().getFile() == docUpdateSentinel_.getPath() &&
+             event.getOutput().getChunkId() == output.getChunkId())
+         {
+            widgets.get(i).setHtml(event.getOutput().getHtml());
+            break;
+         }
+      }
+   }
+
    private void maximizeSourcePaneIfNecessary()
    {
       if (SourceWindowManager.isMainSourceWindow())
@@ -211,6 +237,7 @@ public class TextEditingTargetNotebook
    
    private JsArray<ChunkOutput> initialChunkOutputs_;
    
+   private final TextEditingTargetRMarkdownHelper rmdHelper_;
    private final DocDisplay docDisplay_;
    @SuppressWarnings("unused")
    private final DocUpdateSentinel docUpdateSentinel_;

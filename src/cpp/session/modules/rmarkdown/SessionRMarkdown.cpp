@@ -1115,6 +1115,29 @@ SEXP rs_paramsFileForRmd(SEXP fileSEXP)
 }
 
 
+Error executeInlineChunk(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse*)
+{
+   std::string file, chunkId, options, content;
+   Error error = json::readParams(request.params, &file, &chunkId, &options, 
+         &content);
+   if (error)
+      return error;
+
+   // this RPC enqueues a client event to show chunk output rather than
+   // returning it directly for symmetry with other methods of updating chunk
+   // output (such as deserialization from caching and collaborative editing)
+   json::Object chunkOutput;
+   chunkOutput["html"] = "<em>Output of chunk " + chunkId + " at " + 
+      boost::lexical_cast<std::string>(date_time::millisecondsSinceEpoch()) +
+      " </em>";
+   chunkOutput["chunk_id"] = chunkId;
+   chunkOutput["file"] = file;
+   ClientEvent event(client_events::kRmdRenderStarted, chunkOutput);
+   module_context::enqueClientEvent(event);
+
+   return Success();
+}
 
 } // anonymous namespace
 
@@ -1163,6 +1186,7 @@ Error initialize()
       (bind(registerRpcMethod, "create_rmd_from_template", createRmdFromTemplate))
       (bind(registerRpcMethod, "get_rmd_template", getRmdTemplate))
       (bind(registerRpcMethod, "prepare_for_rmd_chunk_execution", prepareForRmdChunkExecution))
+      (bind(registerRpcMethod, "execute_inline_chunk", executeInlineChunk))
       (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));
 

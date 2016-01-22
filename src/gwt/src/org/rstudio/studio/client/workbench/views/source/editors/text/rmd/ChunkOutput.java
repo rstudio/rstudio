@@ -28,18 +28,21 @@ public class ChunkOutput extends JavaScriptObject
    public static native final ChunkOutput create(int row,
                                                  int rowCount,
                                                  boolean visible,
+                                                 String chunkId,
                                                  String htmlRef) /*-{
       return {
         row: row,
         row_count: rowCount,
         visible: visible,
+        chunk_id: chunkId,
         html_ref: htmlRef 
       };
    }-*/;
    
    public final ChunkOutput withRow(int row)
    {
-      return ChunkOutput.create(row, getRowCount(), getVisible(), getHtmlRef());
+      return ChunkOutput.create(row, getRowCount(), getVisible(), getChunkId(), 
+            getHtmlRef());
    }
    
    public native final int getRow()  /*-{
@@ -57,6 +60,11 @@ public class ChunkOutput extends JavaScriptObject
    public native final String getHtmlRef() /*-{
       return this.html_ref;
    }-*/;
+
+   public native final String getChunkId() /*-{
+      return this.chunk_id;
+   }-*/;
+   
    
    public final boolean equalTo(ChunkOutput other)
    {
