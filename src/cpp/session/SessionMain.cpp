@@ -145,6 +145,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/overlay/SessionOverlay.hpp"
 #include "modules/presentation/SessionPresentation.hpp"
 #include "modules/rmarkdown/SessionRMarkdown.hpp"
+#include "modules/rmarkdown/SessionRmdNotebook.hpp"
 #include "modules/shiny/SessionShiny.hpp"
 #include "modules/viewer/SessionViewer.hpp"
 #include "modules/SessionDiagnostics.hpp"
@@ -1763,6 +1764,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::profiler::initialize)
       (modules::viewer::initialize)
       (modules::rmarkdown::initialize)
+      (modules::rmarkdown::notebook::initialize)
       (modules::rpubs::initialize)
       (modules::shiny::initialize)
       (modules::source::initialize)

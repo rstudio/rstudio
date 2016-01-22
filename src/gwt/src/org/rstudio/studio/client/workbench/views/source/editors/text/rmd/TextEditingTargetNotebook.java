@@ -157,18 +157,24 @@ public class TextEditingTargetNotebook
    @Override
    public void onRmdChunkOutput(RmdChunkOutputEvent event)
    {
+      // ignore if not targeted at this document
+      if (event.getOutput().getFile() != docUpdateSentinel_.getPath())
+         return;
+
       // find the line widget to update
       JsArray<LineWidget> widgets = docDisplay_.getLineWidgets();
       for (int i = 0; i < widgets.length(); i++)
       {
          ChunkOutput output = widgets.get(i).getData();
-         if (event.getOutput().getFile() == docUpdateSentinel_.getPath() &&
-             event.getOutput().getChunkId() == output.getChunkId())
+         if (event.getOutput().getChunkId() == output.getChunkId())
          {
-            widgets.get(i).setHtml(event.getOutput().getHtml());
+            widgets.get(i).getElement().setInnerHTML(
+                  event.getOutput().getHtml());
+            docDisplay_.onLineWidgetChanged(widgets.get(i));
             break;
          }
       }
+      
    }
 
    private void maximizeSourcePaneIfNecessary()
@@ -216,13 +222,8 @@ public class TextEditingTargetNotebook
       div.addClassName(ThemeStyles.INSTANCE.selectableText());
       setChunkOutputStyle(div);
       div.getStyle().setOpacity(1.0);
-      setChunkOutput(div);
+      div.setInnerHTML(chunkOutput.getHtmlRef());
       return div;
-   }
-   
-   private void setChunkOutput(Element div)
-   {
-      div.setInnerText(Document.get().createUniqueId());
    }
    
    private void setChunkOutputStyle(Element div)
@@ -233,13 +234,10 @@ public class TextEditingTargetNotebook
       }
    }
    
-  
-   
    private JsArray<ChunkOutput> initialChunkOutputs_;
    
    private final TextEditingTargetRMarkdownHelper rmdHelper_;
    private final DocDisplay docDisplay_;
-   @SuppressWarnings("unused")
    private final DocUpdateSentinel docUpdateSentinel_;
    
    private EventBus events_;
