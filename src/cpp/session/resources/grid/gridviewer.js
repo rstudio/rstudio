@@ -668,7 +668,7 @@ var openColumnTypeChooserUI = function(idx, col, ele, onDismiss) {
     popup.appendChild(typeSelect);
 
     return {
-      top: 36,
+      top: 39,
       left: -1,
       width: function(parent) {
         return $(parent).width() + 20;
@@ -866,7 +866,12 @@ var initDataTable = function(resCols, data) {
       }];
   }
   else {
-    dataTableData = data[0];
+    // Create an empty array of data tto be use as a map in the callback
+    dataTableData = [];
+    for (i = 0; i < data[0].length; i++) {
+      dataTableData.push(i);
+    }
+
     dataTableColumns = cols.map(function (e, idx) {
       return {
         "sClass": (rowNumbers && idx === 0) ? "first-child" : null,

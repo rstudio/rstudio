@@ -36,7 +36,8 @@ public class DataImportOptions extends JavaScriptObject
    }-*/;
    
    public final String getImportLocation() {
-      return new String(getImportLocationNative().toString());
+      JavaScriptObject locaiton = getImportLocationNative();
+      return locaiton != null ? new String(locaiton.toString()) : null;
    }
    
    private final native JavaScriptObject getImportLocationNative() /*-{

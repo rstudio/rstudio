@@ -201,13 +201,13 @@ public class DataImport extends Composite
       }
       importOptions_ = previewImportOptions;
       
+      assembleDataImport();
+      
       if (fileOrUrlChooserTextBox_.getText() == "")
       {
          gridViewer_.setData(null);
          return;
       }
-      
-      assembleDataImport();
       
       previewImportOptions.setMaxRows(maxRows_);
       

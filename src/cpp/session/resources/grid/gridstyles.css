@@ -320,12 +320,16 @@ div.DTS div.DTS_Loading.showLoading {
 .columnTypeHeader {
     font-weight: normal;
     font-style: italic;
-    color: #abacad;
-    float: right;
+    margin-top: 3px;
 }
 
 .columnClickable {
     cursor: pointer;
     background: url("datatables/images/header_expand.png") no-repeat right top;
+    background-position-y: 16px;
     padding-right: 15px !important;
+}
+
+.columnTypeWrapper {
+    text-align: right;
 }

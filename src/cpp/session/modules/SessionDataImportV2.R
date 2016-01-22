@@ -109,8 +109,7 @@
       }
    }
 
-   spacing <- ",\n   "
-   paste(parameters, collapse = spacing)
+   paste(parameters, collapse = ",")
 })
 
 .rs.addFunction("assemble_data_import", function(dataImportOptions)
@@ -173,7 +172,28 @@
       ")",
       sep = "")
 
-   importInfo$importCode <- paste(dataName, " <- ", importInfo$previewCode, "\n", "View(", dataName, ")", sep = "")
+   importInfo$importCode <- paste(
+      lapply(
+         c(
+            paste(dataName, " <- ", importInfo$previewCode, sep = ""),
+            paste("View(", dataName, ")", sep = "")
+         ),
+         function(e) {
+            paste(
+               deparse(
+                  eval(
+                     parse(
+                        text = paste("quote(", e, ")", sep = "")
+                     )
+                  ),
+                  width.cutoff = 40
+               ),
+               collapse = "\n"
+            )
+         }
+      ),
+      collapse = "\n"
+   )
 
    importInfo
 })
