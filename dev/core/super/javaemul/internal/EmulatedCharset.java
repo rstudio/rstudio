@@ -16,10 +16,6 @@
 package javaemul.internal;
 
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CharsetEncoder;
-
-import javaemul.internal.annotations.GwtIncompatible;
 
 /**
  * Provides Charset implementations.
@@ -202,22 +198,4 @@ public abstract class EmulatedCharset extends Charset {
   public abstract byte[] getBytes(String string);
 
   public abstract char[] decodeString(byte[] bytes, int ofs, int len);
-
-  /* Following methods are included to keep the package compilable with javac */
-
-  @GwtIncompatible
-  public CharsetEncoder newEncoder() {
-    throw new UnsupportedOperationException();
-  }
-
-  @GwtIncompatible
-  public CharsetDecoder newDecoder() {
-    throw new UnsupportedOperationException();
-  }
-
-  @GwtIncompatible
-  public boolean contains(Charset cs) {
-    throw new UnsupportedOperationException();
-  }
 }
-

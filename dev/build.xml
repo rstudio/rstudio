@@ -176,7 +176,7 @@
   <target name="compiler.standalone"
           description="Validates that the standalone gwt-compiler project can build.">
     <mkdir dir="${javac.out}"/>
-    <gwt.javac srcdir="core/super" excludes="com/google/gwt/dev/jjs/intrinsic/"/>
+    <gwt.javac srcdir="core/super" excludes="com/google/gwt/dev/jjs/intrinsic/,**/EmulatedCharset.java"/>
     <gwt.javac srcdir="core/src">
       <include name="com/google/gwt/core/ext/**"/>
       <include name="com/google/gwt/core/linker/**"/>
