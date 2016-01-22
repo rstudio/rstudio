@@ -273,6 +273,8 @@ public class DataImport extends Composite
             codePreview_ = response.getImportCode();
             dataImportOptionsUi_.setAssembleResponse(response);
             codeArea_.getEditor().getSession().setEditorMode(EditorLanguage.LANG_R.getParserName(), false);
+            codeArea_.getEditor().getSession().setUseWrapMode(true);
+            codeArea_.getEditor().getSession().setWrapLimitRange(20, 120);
             codeArea_.getEditor().getRenderer().setShowGutter(false);
             codeArea_.setCode(codePreview_);
          }

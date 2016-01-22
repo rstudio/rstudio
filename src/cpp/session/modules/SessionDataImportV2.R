@@ -37,7 +37,7 @@
    dataName
 })
 
-.rs.addFunction("assemble_data_import_parameters", function(options, optionTypes, importFunction)
+.rs.addFunction("assemble_data_import_parameters", function(options, optionTypes, importFunction, dataImportOptions)
 { 
    buildParameter <- function(optionType, optionValue)
    {
@@ -58,19 +58,31 @@
                col <- optionValue[[colIdx]]
 
                colType <- switch(col$assignedType,
-                  logical = "readr::col_logical()",
-                  integer = "readr::col_integer()",
-                  double = "readr::col_double()",
-                  character = "readr::col_character()",
                   date = "readr::col_date()",
+                  skip = "readr::col_skip()",
+                  time = "readr::col_time()",
+                  double = "readr::col_double()",
+                  factor = "readr::col_factor()",
+                  numeric = "readr::col_numeric()",
+                  integer = "readr::col_integer()",
+                  logical = "readr::col_logical()",
+                  numeric = "readr::col_numeric()",
                   datetime = "readr::col_datetime()",
-                  numeric = "readr::col_number()"
+                  character = "readr::col_character()",
+                  euroDouble = "readr::col_euro_double()",
+                  "readr::col_guess()"
                )
 
                colParams[[colIdx]] <- paste("\"", col$name, "\" = ", colType, sep="")
             }
             colParam <- (paste(colParams, collapse = ",\n      ", sep = ""))
-            return (paste("readr::cols(\n      ", colParam, ")", sep = ""))
+
+            colsConstructor <- "cols";
+            if (!identical(dataImportOptions$columnsOnly, NULL)) {
+               colsConstructor <- "cols_only"
+            }
+
+            return (paste("readr::", colsConstructor, "(\n", colParam, ")", sep = ""))
          }, {
             return (optionValue)
          })
@@ -162,7 +174,7 @@
    optionTypes[["comment"]] <- "character"
    optionTypes[["col_types"]] <- "columnDefinitions"
 
-   functionParameters <- .rs.assemble_data_import_parameters(options, optionTypes, functionReference)
+   functionParameters <- .rs.assemble_data_import_parameters(options, optionTypes, functionReference, dataImportOptions)
 
    importInfo$previewCode <- paste(
       "readr::",
@@ -210,6 +222,16 @@
 .rs.addJsonRpcHandler("preview_data_import", function(dataImportOptions, maxCols = 100, maxFactors = 64)
 {
    tryCatch({
+
+      # while previewing data, always return a column even if it will be skipped
+      if (!identical(dataImportOptions$columnDefinitions, NULL))
+      {
+         dataImportOptions$columnDefinitions <- Filter(function (e) {
+               !(identical(e$assignedType, "skip") || identical(e$assignedType, "only"))
+            },
+            dataImportOptions$columnDefinitions
+         )
+      }
 
       importInfo <- .rs.assemble_data_import(dataImportOptions)
       data <- eval(parse(text=importInfo$previewCode))

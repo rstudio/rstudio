@@ -634,8 +634,20 @@ var createFilterUI = function(idx, col) {
 var openColumnTypeChooserUI = function(idx, col, ele, onDismiss) {
   invokeFilterPopup(ele, function(popup) {
     var columnTypes = [
-      "logical", "integer", "double", "character", "date", "datetime", "numeric" 
-    ]
+      { text: "date", value: "date" },
+      { text: "skip", value: "skip" },
+      { text: "time", value: "time" },
+      { text: "double", value: "double" },
+      { text: "factor", value: "factor" },
+      { text: "numeric", value: "numeric" },
+      { text: "integer", value: "integer" },
+      { text: "logical", value: "logical" },
+      { text: "numeric", value: "numeric" },
+      { text: "datetime", value: "datetime" },
+      { text: "character", value: "character" },
+      { text: "euroDouble", value: "euroDouble" },
+      { text: "only", value: "only" }
+    ];
 
     var typeSelect = document.createElement("div");
     typeSelect.className = "choiceList";
@@ -661,8 +673,8 @@ var openColumnTypeChooserUI = function(idx, col, ele, onDismiss) {
     columnTypes.forEach(function (e) {
       var option = document.createElement("div");
       option.className = "choiceListItem";
-      option.textContent = e;
-      option.addEventListener("click", setColumnTypeHandler(e));
+      option.textContent = e.text;
+      option.addEventListener("click", setColumnTypeHandler(e.value));
       typeSelect.appendChild(option);
     });
     popup.appendChild(typeSelect);

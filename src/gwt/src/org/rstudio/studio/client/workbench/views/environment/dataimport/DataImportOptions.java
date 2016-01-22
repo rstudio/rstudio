@@ -50,5 +50,9 @@ public class DataImportOptions extends JavaScriptObject
    
    public final native void setColumnDefinitions(JavaScriptObject columnDefinitions) /*-{
       this.columnDefinitions = columnDefinitions;
+      
+      this.columnsOnly = columnDefinitions.find(function (e) {
+         return e.assignedType == "only"
+      }) ? true : false;
    }-*/;
 }

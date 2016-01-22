@@ -65,6 +65,7 @@
 			width: 100%;
 			height: 110px;
 			border: 1px solid #999;
+			background-color: #FFF;
 		}
 		.bottomPanel {
 			display: -ms-flexbox;
@@ -88,23 +89,34 @@
 			display: -webkit-flex;
 			display: flex;
 		}
+		.textEditor {
+			width: literal("calc(100% - 6px)");
+			height: literal("calc(100% - 6px)");
+			margin: 3px 3px 3px 3px;
+		}
 	</ui:style>
 	<g:HTMLPanel styleName="{style.flexPanel}">
 	    <rs:FileOrUrlChooserTextBox ui:field="fileOrUrlChooserTextBox_"/>
 		<g:Label text="Data Preview:" styleName="{style.importLabel}"/>
-		<rs:GridViewerFrame ui:field="gridViewer_" styleName="{style.gridViewerFrame}"/>
+		<rs:GridViewerFrame ui:field="gridViewer_"
+		    				styleName="{style.gridViewerFrame}"/>
 		<div class="{style.bottomPanel}">
 			<g:HTMLPanel styleName="{style.optionsPanel}">
-				<g:HTMLPanel ui:field="optionsHost_" styleName="{style.optionsElement}"/>	
+				<g:HTMLPanel ui:field="optionsHost_"
+				    		 styleName="{style.optionsElement}"/>	
 			</g:HTMLPanel>
 			<g:HTMLPanel styleName="{style.codePanel}">
 			    <div class="{style.headWithButton}">
-			        <g:Label text="Code Preview:" styleName="{style.importLabel}"/>
-			        <g:PushButton ui:field="copyButton_" styleName="{style.copyButton}">
+			        <g:Label text="Code Preview:"
+			            	 styleName="{style.importLabel}"/>
+			        <g:PushButton ui:field="copyButton_"
+			                      styleName="{style.copyButton}">
 					</g:PushButton>
 			    </div>
 				<div class="{style.codeTextArea}">
-					<rsace:AceEditorWidget ui:field="codeArea_"/>
+				    <div class="{style.textEditor}">
+						<rsace:AceEditorWidget ui:field="codeArea_"/>
+					</div>
 				</div>
 			</g:HTMLPanel>
 		</div>

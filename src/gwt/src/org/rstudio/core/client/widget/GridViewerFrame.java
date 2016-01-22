@@ -43,10 +43,15 @@ public class GridViewerFrame extends RStudioFrame
       setOptionNative(gridViewerFrameWindow, option, value);
    }
    
-   public void setColumnDefinitionsUIVisible(boolean value, Operation onColumnDefsChange)
+   public void setColumnDefinitionsUIVisible(
+      boolean value, 
+      Operation onColumnDefsChange)
    {
       WindowEx gridViewerFrameWindow = getIFrame().getContentWindow();
-      setColumnDefinitionsUIVisibleNative(gridViewerFrameWindow, value, onColumnDefsChange);
+      setColumnDefinitionsUIVisibleNative(
+            gridViewerFrameWindow,
+            value,
+            onColumnDefsChange);
    }
    
    public JavaScriptObject getColumnDefinitions()
@@ -55,15 +60,24 @@ public class GridViewerFrame extends RStudioFrame
       return getColumnDefinitions(gridViewerFrameWindow);
    }
    
-   private final native void setDataNative(WindowEx frameContentWindow, JavaScriptObject data) /*-{
+   private final native void setDataNative(
+      WindowEx frameContentWindow,
+      JavaScriptObject data) /*-{
       frameContentWindow.setData(data);
    }-*/;
    
-   private final native void setOptionNative(WindowEx frameContentWindow, String option, String value) /*-{
+   private final native void setOptionNative(
+      WindowEx frameContentWindow,
+      String option,
+      String value) /*-{
       frameContentWindow.setOption(option, value);
    }-*/;
    
-   private final native void setColumnDefinitionsUIVisibleNative(WindowEx frameContentWindow, boolean value, Operation onColumnDefsChange) /*-{
+   private final native void setColumnDefinitionsUIVisibleNative(
+      WindowEx frameContentWindow,
+      boolean value,
+      Operation
+      onColumnDefsChange) /*-{
       frameContentWindow.setColumnDefinitionsUIVisible(
          value,
          $entry(function () {
@@ -72,7 +86,8 @@ public class GridViewerFrame extends RStudioFrame
       );
    }-*/;
    
-   private final native JavaScriptObject getColumnDefinitions(WindowEx frameContentWindow) /*-{
+   private final native JavaScriptObject getColumnDefinitions(
+     WindowEx frameContentWindow) /*-{
       return frameContentWindow.getColumnDefinitions();
    }-*/;
 }
