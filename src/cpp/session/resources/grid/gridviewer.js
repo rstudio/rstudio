@@ -34,6 +34,9 @@ var cachedFilterValues = [];
 // the height of the table at the last time we adjusted it to fit its window
 var lastHeight = 0;
 
+// the table header height of the table at the last time we adjusted it to fit
+var lastHeaderHeight = 0;
+
 // scroll handlers; these are detached when the data viewer is hidden 
 var detachedHandlers = [];
 var lastScrollPos = 0;
@@ -230,12 +233,16 @@ var sizeDataTable = function(force) {
     return;
   }
 
+  var thead = document.getElementById("data_cols");
+  var theadHeight = thead ? thead.clientHeight : 0;
+
   // ignore if height hasn't changed
-  if (lastHeight === window.innerHeight && !force) {
+  if (lastHeight === window.innerHeight && lastHeaderHeight === theadHeight && !force) {
     return;
   }
   
   lastHeight = window.innerHeight;
+  lastHeaderHeight = theadHeight;
 
   // adjust scroll body height accordingly
   var scrollBody = $(".dataTables_scrollBody");
@@ -859,12 +866,14 @@ var initDataTable = function(resCols, data) {
       }];
   }
   else {
-    dataTableData = data;
+    dataTableData = data[0];
     dataTableColumns = cols.map(function (e, idx) {
       return {
         "sClass": (rowNumbers && idx === 0) ? "first-child" : null,
         "visible": (!rowNumbers && idx === 0) ? false : true,
-        "data": e.col_name,
+        "data": function (row, type, set, meta) {
+          return (meta.col == 0 ? meta.row : data[meta.col-1][meta.row]);
+        },
         "width": "4em",
         "render": e.col_type === "numeric" ? renderNumberCell : renderTextCell
       };
@@ -955,6 +964,7 @@ var bootstrap = function(data) {
   cachedSearch = "";
   cachedFilterValues = [];
   lastHeight = 0;
+  lastHeaderHeight = 0;
   lastScrollPos = 0;
   detachedHandlers = [];
 

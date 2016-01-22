@@ -202,8 +202,8 @@
          data[[i]] <- .rs.formatDataColumn(data[[i]], 1, size)
       }
 
-      return(list(data = data,
-                        columns = columns))
+      return(list(data = unname(data),
+                  columns = columns))
    }, error = function(e) {
       return(list(error = e))
    })
