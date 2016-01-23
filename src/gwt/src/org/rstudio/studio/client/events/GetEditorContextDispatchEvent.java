@@ -1,5 +1,5 @@
 /*
- * GetActiveDocumentContextDispatchEvent.java
+ * GetEditorContextDispatchEvent.java
  *
  * Copyright (C) 2009-13 by RStudio, Inc.
  *
@@ -20,24 +20,24 @@ import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
 @JavaScriptSerializable
-public class GetActiveDocumentContextDispatchEvent extends CrossWindowEvent<GetActiveDocumentContextDispatchEvent.Handler>
+public class GetEditorContextDispatchEvent extends CrossWindowEvent<GetEditorContextDispatchEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onGetActiveDocumentContextDispatch(GetActiveDocumentContextDispatchEvent event);
+      void onGetEditorContextDispatch(GetEditorContextDispatchEvent event);
    }
    
-   public GetActiveDocumentContextDispatchEvent()
+   public GetEditorContextDispatchEvent()
    {
       this(null);
    }
    
-   public GetActiveDocumentContextDispatchEvent(GetActiveDocumentContextEvent event)
+   public GetEditorContextDispatchEvent(GetEditorContextEvent event)
    {
       event_ = event;
    }
    
-   public GetActiveDocumentContextEvent getEvent()
+   public GetEditorContextEvent getEvent()
    {
       return event_;
    }
@@ -48,7 +48,7 @@ public class GetActiveDocumentContextDispatchEvent extends CrossWindowEvent<GetA
       return false;
    }
    
-   private final GetActiveDocumentContextEvent event_;
+   private final GetEditorContextEvent event_;
    
    // Boilerplate ----
    
@@ -61,7 +61,7 @@ public class GetActiveDocumentContextDispatchEvent extends CrossWindowEvent<GetA
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onGetActiveDocumentContextDispatch(this);
+      handler.onGetEditorContextDispatch(this);
    }
    
    public static final Type<Handler> TYPE = new Type<Handler>();

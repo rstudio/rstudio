@@ -72,17 +72,21 @@ namespace workbench {
 
 namespace {
 
-module_context::WaitForMethodFunction s_waitForActiveDocumentContext;
+module_context::WaitForMethodFunction s_waitForEditorContext;
 
-SEXP rs_getActiveDocumentContext()
+SEXP rs_getEditorContext(SEXP typeSEXP)
 {
+   int type = r::sexp::asInteger(typeSEXP);
+   
    // prepare context event
-   ClientEvent activeDocumentContextEvent(client_events::kGetActiveDocumentContext);
+   json::Object eventData;
+   eventData["type"] = type;
+   ClientEvent editorContextEvent(client_events::kGetEditorContext, eventData);
    
    // wait for event to complete
    json::JsonRpcRequest request;
    
-   bool succeeded = s_waitForActiveDocumentContext(&request, activeDocumentContextEvent);
+   bool succeeded = s_waitForEditorContext(&request, editorContextEvent);
    if (!succeeded)
       return R_NilValue;
    
@@ -1006,10 +1010,9 @@ Error initialize()
    
    // register waitForMethod for active document context
    using namespace module_context;
-   s_waitForActiveDocumentContext =
-         registerWaitForMethod("get_active_document_context_completed");
+   s_waitForEditorContext = registerWaitForMethod("get_editor_context_completed");
    
-   RS_REGISTER_CALL_METHOD(rs_getActiveDocumentContext, 0);
+   RS_REGISTER_CALL_METHOD(rs_getEditorContext, 1);
    
    // complete initialization
    using boost::bind;

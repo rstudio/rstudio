@@ -239,8 +239,21 @@
    invisible(data)
 })
 
+# NOTE: Kept for backwards compatibility.
 .rs.addApiFunction("getActiveDocumentContext", function() {
-   .Call(.rs.routines$rs_getActiveDocumentContext)
+   .Call(.rs.routines$rs_getEditorContext, 0L)
+})
+
+.rs.addApiFunction("getLastActiveEditorContext", function() {
+   .Call(.rs.routines$rs_getEditorContext, 0L)
+})
+
+.rs.addApiFunction("getConsoleEditorContext", function() {
+   .Call(.rs.routines$rs_getEditorContext, 1L)
+})
+
+.rs.addApiFunction("getSourceEditorContext", function() {
+   .Call(.rs.routines$rs_getEditorContext, 2L)
 })
 
 .rs.addApiFunction("getActiveProject", function() {

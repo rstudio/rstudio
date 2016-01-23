@@ -139,7 +139,7 @@ extern const int kShinyGadgetDialog;
 extern const int kRmdParamsReady;
 extern const int kRegisterUserCommand;
 extern const int kReplaceRanges;
-extern const int kGetActiveDocumentContext;
+extern const int kGetEditorContext;
 extern const int kSendToConsole;
 extern const int kUserFollowStarted;
 extern const int kUserFollowEnded;

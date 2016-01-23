@@ -1,5 +1,5 @@
 /*
- * GetActiveDocumentContextEvent.java
+ * GetEditorContextEvent.java
  *
  * Copyright (C) 2009-13 by RStudio, Inc.
  *
@@ -23,9 +23,21 @@ import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 @JavaScriptSerializable
-public class GetActiveDocumentContextEvent
-   extends CrossWindowEvent<GetActiveDocumentContextEvent.Handler>
+public class GetEditorContextEvent extends CrossWindowEvent<GetEditorContextEvent.Handler>
 {
+   public static class Data extends JavaScriptObject
+   {
+      protected Data() {}
+      
+      public static final native Data create() /*-{
+         return {
+            "type": 0
+         };
+      }-*/;
+      
+      public final native int getType() /*-{ return this["type"]; }-*/;
+   }
+   
    public static class DocumentSelection extends JavaScriptObject
    {
       protected DocumentSelection() {}
@@ -39,11 +51,11 @@ public class GetActiveDocumentContextEvent
       }-*/;
    }
    
-   public static class Data extends JavaScriptObject
+   public static class SelectionData extends JavaScriptObject
    {
-      protected Data() {}
+      protected SelectionData() {}
       
-      public static final native Data create()
+      public static final native SelectionData create()
       /*-{
          return {
             "id": "",
@@ -53,10 +65,10 @@ public class GetActiveDocumentContextEvent
          };
       }-*/;
       
-      public static final native Data create(String id,
-                                             String path,
-                                             String contents,
-                                             JsArray<DocumentSelection> selection)
+      public static final native SelectionData create(String id,
+                                                      String path,
+                                                      String contents,
+                                                      JsArray<DocumentSelection> selection)
       /*-{
          return {
             "id": id,
@@ -72,9 +84,32 @@ public class GetActiveDocumentContextEvent
       public final native DocumentSelection getSelection() /*-{ return this["selection"]; }-*/;
    }
    
+   public GetEditorContextEvent()
+   {
+      this(Data.create());
+   }
+   
+   public GetEditorContextEvent(Data data)
+   {
+      data_ = data;
+   }
+   
+   public Data getData()
+   {
+      return data_;
+   }
+   
+   private final Data data_;
+   
+   public static final int TYPE_ACTIVE_EDITOR  = 0;
+   public static final int TYPE_CONSOLE_EDITOR = 1;
+   public static final int TYPE_SOURCE_EDITOR  = 2;
+   
+   // Boilerplate ----
+   
    public interface Handler extends EventHandler
    {
-      void onGetActiveDocumentContext(GetActiveDocumentContextEvent event);
+      void onGetEditorContext(GetEditorContextEvent event);
    }
    
    @Override
@@ -86,7 +121,7 @@ public class GetActiveDocumentContextEvent
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onGetActiveDocumentContext(this);
+      handler.onGetEditorContext(this);
    }
    
    public static final Type<Handler> TYPE = new Type<Handler>();

@@ -49,8 +49,8 @@ import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.common.synctex.events.SynctexEditFileEvent;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
-import org.rstudio.studio.client.events.GetActiveDocumentContextDispatchEvent;
-import org.rstudio.studio.client.events.GetActiveDocumentContextEvent;
+import org.rstudio.studio.client.events.GetEditorContextDispatchEvent;
+import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.events.ReplaceRangesDispatchEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
@@ -720,10 +720,11 @@ public class ClientEventDispatcher
             ReplaceRangesEvent payload = new ReplaceRangesEvent(data);
             eventBus_.fireEvent(new ReplaceRangesDispatchEvent(payload));
          }
-         else if (type.equals(ClientEvent.GetActiveDocumentContext))
+         else if (type.equals(ClientEvent.GetEditorContext))
          {
-            GetActiveDocumentContextEvent payload = new GetActiveDocumentContextEvent();
-            eventBus_.fireEvent(new GetActiveDocumentContextDispatchEvent(payload));
+            GetEditorContextEvent.Data data = event.getData();
+            GetEditorContextEvent payload = new GetEditorContextEvent(data);
+            eventBus_.fireEvent(new GetEditorContextDispatchEvent(payload));
          }
          else if (type.equals(ClientEvent.SendToConsole))
          {

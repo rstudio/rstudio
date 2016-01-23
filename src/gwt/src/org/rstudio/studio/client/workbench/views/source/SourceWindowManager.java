@@ -94,7 +94,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             CollabEditStartedEvent.Handler,
                                             CollabEditEndedEvent.Handler,
                                             ReplaceRangesDispatchEvent.Handler,
-                                            GetActiveDocumentContextDispatchEvent.Handler,
+                                            GetEditorContextDispatchEvent.Handler,
                                             DocFocusedEvent.Handler
 {
    @Inject
@@ -123,7 +123,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       {
          // most event handlers only make sense on the main window
          events_.addHandler(ReplaceRangesDispatchEvent.TYPE, this);
-         events_.addHandler(GetActiveDocumentContextDispatchEvent.TYPE, this);
+         events_.addHandler(GetEditorContextDispatchEvent.TYPE, this);
          events_.addHandler(PopoutDocEvent.TYPE, this);
          events_.addHandler(DocTabDragStartedEvent.TYPE, this);
          events_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
@@ -515,7 +515,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    }
 
    @Override
-   public void onGetActiveDocumentContextDispatch(GetActiveDocumentContextDispatchEvent event)
+   public void onGetEditorContextDispatch(GetEditorContextDispatchEvent event)
    {
       String id = getLastFocusedSourceWindowId();
       if (StringUtil.isNullOrEmpty(id))

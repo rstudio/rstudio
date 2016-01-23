@@ -138,7 +138,7 @@ const int kRmdParamsReady = 113;
 const int kRegisterUserCommand = 114;
 const int kRmdRSConnectDeploymentFailed = 115;
 const int kReplaceRanges = 117;
-const int kGetActiveDocumentContext = 118;
+const int kGetEditorContext = 118;
 const int kSendToConsole = 119;
 const int kUserFollowStarted = 120;
 const int kUserFollowEnded = 121;
@@ -380,8 +380,8 @@ std::string ClientEvent::typeName() const
          return "register_user_command";
       case client_events::kReplaceRanges:
          return "replace_ranges";
-      case client_events::kGetActiveDocumentContext:
-         return "get_active_document_context";
+      case client_events::kGetEditorContext:
+         return "get_editor_context";
       case client_events::kSendToConsole:
          return "send_to_console";
       case client_events::kUserFollowStarted:
