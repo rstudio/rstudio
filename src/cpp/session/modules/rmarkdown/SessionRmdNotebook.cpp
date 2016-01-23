@@ -16,8 +16,10 @@
 #include "SessionRmdNotebook.hpp"
 
 #include <r/RJson.hpp>
+#include <r/RExec.hpp>
 
 #include <core/Exec.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/json/JsonRpc.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -32,6 +34,14 @@ namespace notebook {
 
 namespace {
 
+FilePath chunkOutputPath(const FilePath& file, 
+                         const std::string& chunkId)
+{
+   return file.parent().childPath(file.stem() + ".rnb.cached")
+                       .childPath(chunkId)
+                       .childPath("contents.html");
+}
+
 Error executeInlineChunk(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse*)
 {
@@ -41,16 +51,30 @@ Error executeInlineChunk(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   // ensure we have a place to put the output
+   FilePath chunkOutput = chunkOutputPath(FilePath(file), chunkId);
+   error = chunkOutput.parent().ensureDirectory();
+   if (error)
+      return error;
+
+   // render the contents to the cached folder, then extract the contents
+   error = r::exec::RFunction(".rs.executeSingleChunk", options, content,
+         chunkOutput.absolutePath()).call();
+   if (error)
+      return error;
+   std::string html;
+   error = core::readStringFromFile(chunkOutput, &html);
+   if (error)
+      return error;
+
    // this RPC enqueues a client event to show chunk output rather than
    // returning it directly for symmetry with other methods of updating chunk
    // output (such as deserialization from caching and collaborative editing)
-   json::Object chunkOutput;
-   chunkOutput["html"] = "<em>Output of chunk " + chunkId + " at " + 
-      boost::lexical_cast<std::string>(date_time::millisecondsSinceEpoch()) +
-      " </em>";
-   chunkOutput["chunk_id"] = chunkId;
-   chunkOutput["file"] = file;
-   ClientEvent event(client_events::kChunkOutput, chunkOutput);
+   json::Object output;
+   output["html"] = html;
+   output["chunk_id"] = chunkId;
+   output["file"] = file;
+   ClientEvent event(client_events::kChunkOutput, output);
    module_context::enqueClientEvent(event);
 
    return Success();
@@ -66,7 +90,8 @@ Error initialize()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "execute_inline_chunk", executeInlineChunk));
+      (bind(registerRpcMethod, "execute_inline_chunk", executeInlineChunk))
+      (bind(module_context::sourceModuleRFile, "SessionRmdNotebook.R"));
 
    return initBlock.execute();
 }

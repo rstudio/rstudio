@@ -13,4 +13,20 @@
 #
 #
 
-
+.rs.addFunction("executeSingleChunk", function(options, content, outputFile) 
+{
+  # create a temporary file stub to send to R Markdown
+  chunkFile <- tempfile(fileext = ".Rmd")
+  chunk <- paste(paste("```{r", options, "echo=FALSE}"), 
+                 content,
+                 "```\n", 
+                 sep = "\n");
+  writeLines(chunk, con = chunkFile)
+  on.exit(unlink(chunkFile), add = TRUE)
+                 
+  # render the stub to the given file
+  rmarkdown::render(input = chunkFile, 
+                    output_format = rmarkdown::html_fragment(),
+                    output_file = outputFile,
+                    encoding = "UTF-8")
+})
