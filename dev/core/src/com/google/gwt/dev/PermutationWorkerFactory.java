@@ -297,7 +297,6 @@ public abstract class PermutationWorkerFactory {
         Class<? extends PermutationWorkerFactory> clazz = Class.forName(
             className).asSubclass(PermutationWorkerFactory.class);
         PermutationWorkerFactory factory = clazz.newInstance();
-        factory.init(logger);
         mutableFactories.add(factory);
         if (logger.isLoggable(TreeLogger.SPAM)) {
           logger.log(TreeLogger.SPAM, "Added PermutationWorkerFactory "
@@ -375,11 +374,6 @@ public abstract class PermutationWorkerFactory {
    */
   public abstract Collection<PermutationWorker> getWorkers(TreeLogger logger,
       UnifiedAst unifiedAst, int numWorkers) throws UnableToCompleteException;
-
-  /**
-   * Initialize the PermutationWorkerFactory.
-   */
-  public abstract void init(TreeLogger logger) throws UnableToCompleteException;
 
   /**
    * Indicates if the PermutationWorkers created by the factory consume

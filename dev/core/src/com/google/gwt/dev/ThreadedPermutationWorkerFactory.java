@@ -100,11 +100,6 @@ public class ThreadedPermutationWorkerFactory extends PermutationWorkerFactory {
   }
 
   @Override
-  public void init(TreeLogger logger) throws UnableToCompleteException {
-    logger.log(TreeLogger.SPAM, "Initializing ThreadedPermutationWorkerFactory");
-  }
-
-  @Override
   public boolean isLocal() {
     return true;
   }

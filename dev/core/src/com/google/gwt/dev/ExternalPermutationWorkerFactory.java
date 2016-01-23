@@ -347,11 +347,12 @@ public class ExternalPermutationWorkerFactory extends PermutationWorkerFactory {
     }
   }
 
-  private ServerSocket sock;
+  private ServerSocket sock = null;
 
   @Override
   public Collection<PermutationWorker> getWorkers(TreeLogger logger,
       UnifiedAst unifiedAst, int numWorkers) throws UnableToCompleteException {
+    ensureSocket(logger);
     File astFile;
     try {
       astFile = File.createTempFile("externalPermutationWorkerFactory", ".ser");
@@ -379,7 +380,14 @@ public class ExternalPermutationWorkerFactory extends PermutationWorkerFactory {
   }
 
   @Override
-  public void init(TreeLogger logger) throws UnableToCompleteException {
+  public boolean isLocal() {
+    return true;
+  }
+
+  private synchronized void ensureSocket(TreeLogger logger) throws UnableToCompleteException {
+    if (sock != null) {
+      return;
+    }
     try {
       sock = new ServerSocket();
       /*
@@ -396,10 +404,5 @@ public class ExternalPermutationWorkerFactory extends PermutationWorkerFactory {
       logger.log(TreeLogger.ERROR, "Unable to create socket", e);
       throw new UnableToCompleteException();
     }
-  }
-
-  @Override
-  public boolean isLocal() {
-    return true;
   }
 }
