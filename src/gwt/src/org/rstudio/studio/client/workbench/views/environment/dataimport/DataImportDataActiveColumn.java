@@ -1,5 +1,5 @@
 /*
- * DataImportPreviewResponse.java
+ * DataImportDataActiveColumn.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -13,17 +13,34 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.environment.dataimport.model;
+package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class DataImportPreviewResponse extends JavaScriptObject
+public class DataImportDataActiveColumn extends JavaScriptObject
 {
-   protected DataImportPreviewResponse()
+   protected DataImportDataActiveColumn()
    {
+      
    }
    
-   public final native String getErrorMessage() /*-{
-      return this.error ? this.error.message.join(' ') : null;
+   public final native int getTop() /*-{
+      return this.top;
+   }-*/;
+   
+   public final native int getLeft() /*-{
+      return this.left;
+   }-*/;
+   
+   public final native int getWidth() /*-{
+      return this.width;
+   }-*/;
+   
+   public final native int getIndex() /*-{
+      return this.index;
+   }-*/;
+   
+   public final native String getName() /*-{
+      return this.name;
    }-*/;
 }

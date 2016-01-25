@@ -16,6 +16,7 @@
 package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportDataActiveColumn;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
@@ -45,19 +46,21 @@ public class GridViewerFrame extends RStudioFrame
    
    public void setColumnDefinitionsUIVisible(
       boolean value, 
-      Operation onColumnDefsChange)
+      Operation onColumnOpen,
+      Operation onColumnDismiss)
    {
       WindowEx gridViewerFrameWindow = getIFrame().getContentWindow();
       setColumnDefinitionsUIVisibleNative(
             gridViewerFrameWindow,
             value,
-            onColumnDefsChange);
+            onColumnOpen,
+            onColumnDismiss);
    }
    
-   public JavaScriptObject getColumnDefinitions()
+   public DataImportDataActiveColumn getActiveColumn()
    {
       WindowEx gridViewerFrameWindow = getIFrame().getContentWindow();
-      return getColumnDefinitions(gridViewerFrameWindow);
+      return getActiveColumn(gridViewerFrameWindow);
    }
    
    private final native void setDataNative(
@@ -76,18 +79,21 @@ public class GridViewerFrame extends RStudioFrame
    private final native void setColumnDefinitionsUIVisibleNative(
       WindowEx frameContentWindow,
       boolean value,
-      Operation
-      onColumnDefsChange) /*-{
+      Operation onColumnOpen,
+      Operation onColumnDismiss) /*-{
       frameContentWindow.setColumnDefinitionsUIVisible(
          value,
          $entry(function () {
-            onColumnDefsChange.@org.rstudio.core.client.widget.Operation::execute()()
+            onColumnOpen.@org.rstudio.core.client.widget.Operation::execute()()
+         }),
+         $entry(function () {
+            onColumnDismiss.@org.rstudio.core.client.widget.Operation::execute()()
          })
       );
    }-*/;
    
-   private final native JavaScriptObject getColumnDefinitions(
-     WindowEx frameContentWindow) /*-{
-      return frameContentWindow.getColumnDefinitions();
+   private final native DataImportDataActiveColumn getActiveColumn(
+      WindowEx frameContentWindow) /*-{
+      return frameContentWindow.getActiveColumn();
    }-*/;
 }

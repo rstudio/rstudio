@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -36,6 +37,15 @@ public class DataImportDialog extends ModalDialog<String>
       
       setOkButtonCaption("Import");
       setEnterDisabled(true);
+   }
+   
+   @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+      
+      String zIndexStyle = DomUtils.getComputedStyles(getElement()).getZIndex();
+      dataImport_.setZIndex(zIndexStyle != "" ? Integer.parseInt(zIndexStyle) : null);
    }
 
    @Override

@@ -56,8 +56,18 @@ var rowNumbers = true;
 // list of calls to defer after table is init (e.g. showing headers)
 var postInitActions = {};
 
-// callback to manage column definition changes
-var onColumnDefsChange;
+// callback to trigger column options
+var onColumnOpen;
+
+// callback to dismiss column options
+var onColumnDismiss;
+
+// reference to the column being opened
+var columnsPopup = null;
+
+// Active column properties
+var activeColumnInfo = {
+};
 
 var isHeaderWidthMismatched = function() {
   // find the elements to measure (they may not exist)
@@ -631,90 +641,42 @@ var createFilterUI = function(idx, col) {
   return host;
 };
 
-var openColumnTypeChooserUI = function(idx, col, ele, onDismiss) {
-  invokeFilterPopup(ele, function(popup) {
-    var columnTypes = [
-      { text: "date", value: "date" },
-      { text: "skip", value: "skip" },
-      { text: "time", value: "time" },
-      { text: "double", value: "double" },
-      { text: "factor", value: "factor" },
-      { text: "numeric", value: "numeric" },
-      { text: "integer", value: "integer" },
-      { text: "logical", value: "logical" },
-      { text: "numeric", value: "numeric" },
-      { text: "datetime", value: "datetime" },
-      { text: "character", value: "character" },
-      { text: "euroDouble", value: "euroDouble" },
-      { text: "only", value: "only" }
-    ];
-
-    var typeSelect = document.createElement("div");
-    typeSelect.className = "choiceList";
-
-    var setColumnTypeHandler = function(columnType) {
-      return function(evt) {
-        cols[idx].col_type_original = !cols[idx].col_type_original ? cols[idx].col_type_r : cols[idx].col_type_original;
-        cols[idx].col_type_assigned = columnType;
-
-        if (cols[idx].col_type_original === cols[idx].col_type_assigned) {
-          cols[idx].col_type_assigned = null;
-        }
-
-        if (onColumnDefsChange) {
-          onColumnDefsChange();
-        }
-
-        window.setColumnDefinitionsUIVisible(false);
-        window.setColumnDefinitionsUIVisible(true);
-      };
-    };
-
-    columnTypes.forEach(function (e) {
-      var option = document.createElement("div");
-      option.className = "choiceListItem";
-      option.textContent = e.text;
-      option.addEventListener("click", setColumnTypeHandler(e.value));
-      typeSelect.appendChild(option);
-    });
-    popup.appendChild(typeSelect);
-
-    return {
-      top: 39,
-      left: -1,
-      width: function(parent) {
-        return $(parent).width() + 20;
-      }
-    };
-  }, onDismiss, false);
-};
-
 var createColumnTypesUI = function(th, idx, col) {
   var host = document.createElement("div");
   host.className = "columnTypeWrapper";
 
-  var onDismiss = function() {
+  var checkLightDismiss = function(evt) {
+    if (columnsPopup && onColumnDismiss && !columnsPopup.contains(evt.target))
+      onColumnDismiss();
+  };
 
+  var checkEscDismiss = function(evt) {
+    if (evt.keyCode === 27) {
+      if (onColumnDismiss)
+        onColumnDismiss();
+    }
   };
 
   var val = document.createElement("div");
-  val.textContent = "(" + (col.col_type_assigned ? col.col_type_assigned : col.col_type_r) + ")";
+  val.textContent = "(" + (col.col_type ? col.col_type : col.col_type_r) + ")";
   val.className = "columnTypeHeader";
 
-  var initialColumnClick = function(evt) {
-    th.removeEventListener("click", initialColumnClick);
-
-    openColumnTypeChooserUI(idx, col, th, onDismiss);
-
-    var click = document.createEvent("MouseEvents");
-    click.initEvent("click", true, false);
-    th.dispatchEvent(click);
-    evt.preventDefault();
-    evt.stopPropagation();
-  };
-
   th.className = th.className + " columnClickable";
-  th.addEventListener("click", initialColumnClick);
+  th.addEventListener("click", function() {
+    columnsPopup = th;
+    activeColumnInfo = {
+      left: $(host).offset().left - 5,
+      top: $(host).offset().top + 19,
+      width: $(th).outerWidth() - 1,
+      index: idx,
+      name: col.col_name
+    };
+    if (onColumnOpen)
+      onColumnOpen();
+  });
+
+  document.body.addEventListener("click", checkLightDismiss);
+  document.body.addEventListener("keydown", checkEscDismiss);
 
   host.appendChild(val);
   return host;
@@ -1094,7 +1056,7 @@ window.setFilterUIVisible = function(visible) {
 };
 
 // called from RStudio to toggle the filter UI 
-window.setColumnDefinitionsUIVisible = function(visible, onColChange) {
+window.setColumnDefinitionsUIVisible = function(visible, onColOpen, onColDismiss) {
   var setColumnDefinitionsUIVisiblePerColumn = function(th, col, i) {
     return createColumnTypesUI(th, i, col);
   }
@@ -1103,23 +1065,11 @@ window.setColumnDefinitionsUIVisible = function(visible, onColChange) {
     $(".columnTypeWrapper").remove();
   }
 
-  onColumnDefsChange = onColChange ? onColChange : onColumnDefsChange;
+  onColumnOpen = onColOpen ? onColOpen : onColumnOpen;
+  onColumnDismiss = onColDismiss ? onColDismiss : onColumnDismiss;
+
   return setHeaderUIVisible(visible, setColumnDefinitionsUIVisiblePerColumn, hideColumnTypeUI);
 };
-
-window.getColumnDefinitions = function() {
-  var definitions = cols.filter(function(e) {
-      return e.col_type_assigned;
-    }).map(function (e) {
-      return {
-        name: e.col_name,
-        originalType: e.col_type_original,
-        assignedType: e.col_type_assigned
-      }
-    });
-
-  return definitions;
-}
 
 // called from RStudio when the underlying object changes
 window.refreshData = function(structureChanged, sizeChanged) {
@@ -1203,6 +1153,10 @@ window.setOption = function(option, value) {
       rowNumbers = value === "true" ? true : false;
       break;
   }
+}
+
+window.getActiveColumn = function() {
+  return activeColumnInfo;
 }
 
 var parsedLocation = parseLocationUrl();

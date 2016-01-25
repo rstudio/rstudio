@@ -36,9 +36,14 @@ public class DataImportOptions extends JavaScriptObject
    }-*/;
    
    public final String getImportLocation() {
-      JavaScriptObject locaiton = getImportLocationNative();
-      return locaiton != null ? new String(locaiton.toString()) : null;
+      JavaScriptObject location = getImportLocationNative();
+      return location != null ? new String(location.toString()) : null;
    }
+   
+   public final native void setOptions(JavaScriptObject options) /*-{
+      this.importLocation = options.importLocation;
+      this.columnDefinitions = options.columnDefinitions;
+   }-*/;
    
    private final native JavaScriptObject getImportLocationNative() /*-{
       return this.importLocation ? this.importLocation : null;
@@ -48,11 +53,17 @@ public class DataImportOptions extends JavaScriptObject
       this.maxRows = maxRows > 0 ? maxRows : null;
    }-*/;
    
-   public final native void setColumnDefinitions(JavaScriptObject columnDefinitions) /*-{
-      this.columnDefinitions = columnDefinitions;
-      
-      this.columnsOnly = columnDefinitions.find(function (e) {
-         return e.assignedType == "only"
-      }) ? true : false;
+   public final native void resetColumnDefinitions() /*-{
+      this.columnDefinitions = null;
+   }-*/;
+   
+   public final native void setColumnType(String name, String assignedType) /*-{
+      if (!this.columnDefinitions) {
+         this.columnDefinitions = {};
+      };
+      this.columnDefinitions[name] = {
+         assignedType: assignedType,
+         name: name
+      };
    }-*/;
 }

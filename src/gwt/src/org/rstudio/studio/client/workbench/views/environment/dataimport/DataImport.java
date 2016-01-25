@@ -21,6 +21,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.FileOrUrlChooserTextBox;
 import org.rstudio.core.client.widget.GridViewerFrame;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressIndicatorDelay;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -36,7 +37,6 @@ import org.rstudio.studio.client.workbench.views.environment.dataimport.res.Data
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -73,15 +73,17 @@ public class DataImport extends Composite
    
    private final String codePreviewErrorMessage_ = "Code Creation Error";
    
-   private JavaScriptObject columnDefinitions_;
-   
    private DataImportOptions importOptions_;
+   
+   private Integer zIndex_;
+   
+   private DataImportColumnTypesMenu columnTypesMenu_;
    
    interface DataImportUiBinder extends UiBinder<Widget, DataImport>
    {
    }
 
-   public DataImport(DataImportModes dataImportMode,
+   public <T> DataImport(DataImportModes dataImportMode,
                      ProgressIndicator progressIndicator)
    {
       dataImportResources_ = GWT.create(DataImportResources.class);
@@ -94,7 +96,11 @@ public class DataImport extends Composite
       Size size = DomMetrics.adjustedElementSizeToDefaultMax();
       setSize(Math.max(minWidth, size.width) + "px", Math.max(minHeight, size.height) + "px");
       
+      columnTypesMenu_ = new DataImportColumnTypesMenu();
+      
       dataImportOptionsUi_ = getOptionsUiForMode(dataImportMode);
+      importOptions_ = getOptions();
+      
       optionsHost_.add(dataImportOptionsUi_);
       
       dataImportOptionsUi_.addValueChangeHandler(new ValueChangeHandler<DataImportOptions>()
@@ -112,6 +118,11 @@ public class DataImport extends Composite
    public String getCode()
    {
       return codePreview_;
+   }
+   
+   public void setZIndex(Integer zIndex)
+   {
+      zIndex_ = zIndex;
    }
    
    private DataImportOptionsUi getOptionsUiForMode(DataImportModes mode)
@@ -135,15 +146,22 @@ public class DataImport extends Composite
    
    @UiFactory
    FileOrUrlChooserTextBox makeFileOrUrlChooserTextBox() {
-      FileOrUrlChooserTextBox fileOrUrlChooserTextBox = new FileOrUrlChooserTextBox("File/URL:", new Operation()
-      {
-         @Override
-         public void execute()
-         {
-            dataImportOptionsUi_.clearDataName();
-            previewDataImport();
-         }
-      }, null);
+      FileOrUrlChooserTextBox fileOrUrlChooserTextBox = new FileOrUrlChooserTextBox(
+            "File/URL:",
+            new Operation()
+            {
+               @Override
+               public void execute()
+               {
+                  importOptions_.setImportLocation(
+                     !fileOrUrlChooserTextBox_.getText().isEmpty() ?
+                     fileOrUrlChooserTextBox_.getText() :
+                     null);
+                  dataImportOptionsUi_.clearDataName();
+                  previewDataImport();
+               }
+            },
+            null);
       
       return fileOrUrlChooserTextBox;
    }
@@ -179,14 +197,10 @@ public class DataImport extends Composite
    public DataImportOptions getOptions()
    {
       DataImportOptions options = dataImportOptionsUi_.getOptions();
-      options.setImportLocation(
-            !fileOrUrlChooserTextBox_.getText().isEmpty() ?
-            fileOrUrlChooserTextBox_.getText() :
-            null);
       
-      if (columnDefinitions_ != null)
+      if (importOptions_ != null)
       {
-         options.setColumnDefinitions(columnDefinitions_);
+         options.setOptions(importOptions_);
       }
       
       return options;
@@ -195,11 +209,10 @@ public class DataImport extends Composite
    private void previewDataImport()
    {
       DataImportOptions previewImportOptions = getOptions();
-      if (importOptions_ == null || previewImportOptions.getImportLocation() != importOptions_.getImportLocation())
+      if (previewImportOptions.getImportLocation() != importOptions_.getImportLocation())
       {
-         columnDefinitions_ = null;
+         importOptions_.resetColumnDefinitions();
       }
-      importOptions_ = previewImportOptions;
       
       assembleDataImport();
       
@@ -212,7 +225,8 @@ public class DataImport extends Composite
       previewImportOptions.setMaxRows(maxRows_);
       
       progressIndicator_.onProgress("Retrieving preview data");
-      server_.previewDataImport(previewImportOptions, maxCols_, maxFactors_, new ServerRequestCallback<DataImportPreviewResponse>()
+      server_.previewDataImport(previewImportOptions, maxCols_, maxFactors_,
+            new ServerRequestCallback<DataImportPreviewResponse>()
       {
          @Override
          public void onResponseReceived(DataImportPreviewResponse response)
@@ -225,14 +239,10 @@ public class DataImport extends Composite
             }
             
             gridViewer_.setOption("nullsAsNAs", "true");
-            gridViewer_.setOption("status", "Previewing first " + toLocaleString(maxRows_) + " entries");
+            gridViewer_.setOption("status",
+                  "Previewing first " + toLocaleString(maxRows_) + " entries");
             gridViewer_.setOption("ordering", "false");
             gridViewer_.setOption("rowNumbers", "false");
-            
-            if (columnDefinitions_ != null)
-            {
-               response.assignColumnTypes(columnDefinitions_);
-            }
             
             gridViewer_.setData(response);
             gridViewer_.setColumnDefinitionsUIVisible(true, new Operation()
@@ -240,8 +250,36 @@ public class DataImport extends Composite
                @Override
                public void execute()
                {
-                  columnDefinitions_ = gridViewer_.getColumnDefinitions();
-                  previewDataImport();
+                  final DataImportDataActiveColumn column = gridViewer_.getActiveColumn();
+                  
+                  columnTypesMenu_.setOnChange(new OperationWithInput<String>()
+                  {
+                     @Override
+                     public void execute(String input)
+                     {
+                        importOptions_.setColumnType(column.getName(), input);
+                        columnTypesMenu_.hide();
+                        previewDataImport();
+                     }
+                  });
+                  
+                  columnTypesMenu_.setPopupPosition(
+                        gridViewer_.getAbsoluteLeft() + column.getLeft(),
+                        gridViewer_.getAbsoluteTop() +column.getTop());
+                  
+                  columnTypesMenu_.setSize(column.getWidth() + "px", "");
+                  
+                  columnTypesMenu_.getElement().getStyle().setZIndex(
+                        zIndex_ != null ? zIndex_ + 1000 : 2000);
+                  
+                  columnTypesMenu_.show();
+               }
+            }, new Operation()
+            {
+               @Override
+               public void execute()
+               {
+                  columnTypesMenu_.hide();
                }
             });
             
@@ -259,7 +297,8 @@ public class DataImport extends Composite
    
    private void assembleDataImport()
    {
-      server_.assembleDataImport(getOptions(), new ServerRequestCallback<DataImportAssembleResponse>()
+      server_.assembleDataImport(getOptions(),
+            new ServerRequestCallback<DataImportAssembleResponse>()
       {
          @Override
          public void onResponseReceived(DataImportAssembleResponse response)
@@ -272,7 +311,8 @@ public class DataImport extends Composite
             
             codePreview_ = response.getImportCode();
             dataImportOptionsUi_.setAssembleResponse(response);
-            codeArea_.getEditor().getSession().setEditorMode(EditorLanguage.LANG_R.getParserName(), false);
+            codeArea_.getEditor().getSession().setEditorMode(
+                  EditorLanguage.LANG_R.getParserName(), false);
             codeArea_.getEditor().getSession().setUseWrapMode(true);
             codeArea_.getEditor().getSession().setWrapLimitRange(20, 120);
             codeArea_.getEditor().getRenderer().setShowGutter(false);
