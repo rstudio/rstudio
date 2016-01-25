@@ -134,7 +134,7 @@
       dataName <- "dataset"
    }
 
-   dataName <- gsub("[\\._]+", "_", c(make.names(dataName)), perl=TRUE)
+   dataName <- tolower(gsub("[\\._]+", "_", c(make.names(dataName)), perl=TRUE))
 
    functionName <- list()
    functionReference <- readr::read_delim
