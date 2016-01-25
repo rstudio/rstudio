@@ -77,7 +77,12 @@ public class DataImportOptions extends JavaScriptObject
       this.columnDefinitions = null;
    }-*/;
    
-   public final native void setColumnType(String name, String assignedType) /*-{
+   public final void setColumnType(String name, String assignedType) {
+      setColumnDefinition(name, assignedType, null);
+   }
+   
+   public final native void setColumnDefinition(
+      String name, String assignedType, String parseString) /*-{
       if (!this.columnDefinitions) {
          this.columnDefinitions = {};
       };
@@ -87,6 +92,7 @@ public class DataImportOptions extends JavaScriptObject
       
       this.columnDefinitions[name].assignedType = assignedType;
       this.columnDefinitions[name].name = name;
+      this.columnDefinitions[name].parseString = parseString;
    }-*/;
    
    public final native String getColumnType(String name) /*-{

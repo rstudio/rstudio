@@ -62,19 +62,32 @@
                {
                   colType <- "readr::col_guess()"
 
+                  parseString <- "";
+                  if (!identical(col$parseString, NULL))
+                  {
+                     if (identical(col$assignedType, "factor"))
+                     {
+                        parseString <- paste("levels = ", col$parseString, sep = "")
+                     }
+                     else
+                     {
+                        parseString <- paste("format = \"", col$parseString, "\"", sep = "")
+                     }
+                  }
+
                   if (!identical(col$assignedType, NULL))
                   {
                      colType <- switch(col$assignedType,
-                        date = "readr::col_date()",
+                        date = paste("readr::col_date(", parseString, ")", sep = ""),
                         skip = "readr::col_skip()",
-                        time = "readr::col_time()",
+                        time = paste("readr::col_time(", parseString, ")", sep = ""),
                         double = "readr::col_double()",
-                        factor = "readr::col_factor()",
+                        factor = paste("readr::col_factor(", parseString, ")", sep = ""),
                         numeric = "readr::col_numeric()",
                         integer = "readr::col_integer()",
                         logical = "readr::col_logical()",
                         numeric = "readr::col_numeric()",
-                        datetime = "readr::col_datetime()",
+                        dateTime = paste("readr::col_datetime(", parseString, ")", sep = ""),
                         character = "readr::col_character()",
                         euroDouble = "readr::col_euro_double()"
                      )

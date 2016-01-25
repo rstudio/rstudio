@@ -195,6 +195,134 @@ public class DataImport extends Composite
    @UiField
    PushButton copyButton_;
    
+   private void promptForParseString(
+      String title,
+      String parseString,
+      final Operation complete,
+      final String columnName,
+      final String columnType)
+   {
+      globalDisplay_.promptForText(
+         title,
+         "Please enter the format string",
+         parseString,
+         new OperationWithInput<String>()
+         {
+            @Override
+            public void execute(final String formatString)
+            {
+               importOptions_.setColumnDefinition(columnName, columnType, formatString);
+               complete.execute();
+            }
+         });
+   }
+   
+   private Operation onColumnMenuShow()
+   {
+      final Operation completeAndPreview = new Operation()
+      {
+         @Override
+         public void execute()
+         {
+            previewDataImport();
+         }
+      };
+      
+      return new Operation()
+      {
+         @Override
+         public void execute()
+         {
+            final DataImportDataActiveColumn column = gridViewer_.getActiveColumn();
+            
+            columnTypesMenu_.setOnChange(new OperationWithInput<String>()
+            {
+               @Override
+               public void execute(final String input)
+               {
+                  columnTypesMenu_.hide();
+                  
+                  if (input == "guess")
+                  {
+                     importOptions_.setColumnType(column.getName(), null);
+                     completeAndPreview.execute();
+                  }
+                  else if (input == "date")
+                  {
+                     promptForParseString(
+                        "Date Format", "%m/%d/%Y", completeAndPreview, column.getName(), input);
+                  }
+                  else if (input == "time")
+                  {
+                     promptForParseString(
+                        "Time Format", "%H:%M", completeAndPreview, column.getName(), input);
+                  }
+                  else if (input == "dateTime")
+                  {
+                     promptForParseString(
+                        "Date and Time Format", "%m/%d/%Y %H:%M", completeAndPreview, column.getName(), input);
+                  }
+                  else if (input == "factor")
+                  {
+                     promptForParseString(
+                        "Factors", "c()", completeAndPreview, column.getName(), input);
+                  }
+                  else
+                  {
+                     importOptions_.setColumnType(column.getName(), input);
+                     completeAndPreview.execute();
+                  }
+               }
+            }, new OperationWithInput<String>()
+            {
+               @Override
+               public void execute(String input)
+               {
+                  if (input == "include") {
+                     importOptions_.setOnlyColumn(column.getName(), false);
+                     if (importOptions_.getColumnType(column.getName()) == "skip") {
+                        importOptions_.setColumnType(column.getName(), null);
+                     }
+                  }
+                  
+                  if (input == "only") {
+                     importOptions_.setOnlyColumn(column.getName(), true);
+                  }
+                  
+                  if (input == "skip") {
+                     importOptions_.setOnlyColumn(column.getName(), false);
+                     importOptions_.setColumnType(column.getName(), "skip");
+                  }
+                  
+                  columnTypesMenu_.hide();
+                  previewDataImport();
+               }
+            });
+            
+            columnTypesMenu_.setPopupPosition(
+                  gridViewer_.getAbsoluteLeft() + column.getLeft(),
+                  gridViewer_.getAbsoluteTop() +column.getTop());
+            
+            columnTypesMenu_.setSize(column.getWidth() + "px", "");
+            
+            columnTypesMenu_.getElement().getStyle().setZIndex(
+                  zIndex_ != null ? zIndex_ + 1000 : 2000);
+            
+            boolean columnOnly = importOptions_.getColumnOnly(column.getName());
+            String columnType = importOptions_.getColumnType(column.getName());
+            
+            columnTypesMenu_.resetSelected();
+            columnTypesMenu_.setSelected(columnType != null ? columnType : "guess");
+            if (columnOnly)
+            {
+               columnTypesMenu_.setSelected("only");
+            }
+            
+            columnTypesMenu_.show();
+         }
+      };
+   }
+   
    public DataImportOptions getOptions()
    {
       DataImportOptions options = dataImportOptionsUi_.getOptions();
@@ -248,78 +376,7 @@ public class DataImport extends Composite
             assignColumnDefinitions(response, importOptions_.getColumnDefinitions());
             
             gridViewer_.setData(response);
-            gridViewer_.setColumnDefinitionsUIVisible(true, new Operation()
-            {
-               @Override
-               public void execute()
-               {
-                  final DataImportDataActiveColumn column = gridViewer_.getActiveColumn();
-                  
-                  columnTypesMenu_.setOnChange(new OperationWithInput<String>()
-                  {
-                     @Override
-                     public void execute(String input)
-                     {
-                        if (input == "guess")
-                        {
-                           importOptions_.setColumnType(column.getName(), null);
-                        }
-                        else
-                        {
-                           importOptions_.setColumnType(column.getName(), input);
-                        }
-                        
-                        columnTypesMenu_.hide();
-                        previewDataImport();
-                     }
-                  }, new OperationWithInput<String>()
-                  {
-                     @Override
-                     public void execute(String input)
-                     {
-                        if (input == "include") {
-                           importOptions_.setOnlyColumn(column.getName(), false);
-                           if (importOptions_.getColumnType(column.getName()) == "skip") {
-                              importOptions_.setColumnType(column.getName(), null);
-                           }
-                        }
-                        
-                        if (input == "only") {
-                           importOptions_.setOnlyColumn(column.getName(), true);
-                        }
-                        
-                        if (input == "skip") {
-                           importOptions_.setOnlyColumn(column.getName(), false);
-                           importOptions_.setColumnType(column.getName(), "skip");
-                        }
-                        
-                        columnTypesMenu_.hide();
-                        previewDataImport();
-                     }
-                  });
-                  
-                  columnTypesMenu_.setPopupPosition(
-                        gridViewer_.getAbsoluteLeft() + column.getLeft(),
-                        gridViewer_.getAbsoluteTop() +column.getTop());
-                  
-                  columnTypesMenu_.setSize(column.getWidth() + "px", "");
-                  
-                  columnTypesMenu_.getElement().getStyle().setZIndex(
-                        zIndex_ != null ? zIndex_ + 1000 : 2000);
-                  
-                  boolean columnOnly = importOptions_.getColumnOnly(column.getName());
-                  String columnType = importOptions_.getColumnType(column.getName());
-                  
-                  columnTypesMenu_.resetSelected();
-                  columnTypesMenu_.setSelected(columnType != null ? columnType : "guess");
-                  if (columnOnly)
-                  {
-                     columnTypesMenu_.setSelected("only");
-                  }
-                  
-                  columnTypesMenu_.show();
-               }
-            }, new Operation()
+            gridViewer_.setColumnDefinitionsUIVisible(true, onColumnMenuShow(), new Operation()
             {
                @Override
                public void execute()
