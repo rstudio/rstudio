@@ -150,4 +150,9 @@ public class Debug
       consoleEl.appendChild(Document.get().createBRElement());
       consoleEl.setScrollTop(Integer.MAX_VALUE);
    }
+   
+   public static native void breakpoint() /*-{
+      debugger;
+   }-*/;
+      
 }
