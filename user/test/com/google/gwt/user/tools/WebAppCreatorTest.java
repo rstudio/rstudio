@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -77,9 +77,10 @@ public class WebAppCreatorTest extends TestCase {
     assertFileExists("src/com/foo/client/Hello.java");
     assertFileExists("src/com/foo/shared/FieldVerifier.java");
     assertFileExists("src/com/foo/server/GreetingServiceImpl.java");
-    assertFileDoesNotExist("HelloTest-dev.launch");
-    assertFileDoesNotExist("HelloTest-prod.launch");
+    assertFileDoesNotExist("HelloSuite-dev.launch");
+    assertFileDoesNotExist("HelloSuite-prod.launch");
     assertFileDoesNotExist("test/com/foo/HelloJUnit.gwt.xml");
+    assertFileDoesNotExist("test/com/foo/HelloSuite.java");
     assertFileDoesNotExist("test/com/foo/client/HelloTest.java");
   }
 
@@ -93,8 +94,8 @@ public class WebAppCreatorTest extends TestCase {
     assertFileExists("build.xml");
     assertFileExists("README.txt");
     assertFileExists("Hello.launch");
-    assertFileExists("HelloTest-dev.launch");
-    assertFileExists("HelloTest-prod.launch");
+    assertFileExists("HelloSuite-dev.launch");
+    assertFileExists("HelloSuite-prod.launch");
     assertFileExists("war/Hello.html");
     assertFileExists("war/Hello.css");
     assertFileExists("war/WEB-INF/web.xml");
@@ -105,6 +106,7 @@ public class WebAppCreatorTest extends TestCase {
     assertFileExists("src/com/foo/shared/FieldVerifier.java");
     assertFileExists("src/com/foo/server/GreetingServiceImpl.java");
     assertFileExists("test/com/foo/HelloJUnit.gwt.xml");
+    assertFileExists("test/com/foo/HelloSuite.java");
     assertFileExists("test/com/foo/client/HelloTest.java");
   }
 
@@ -148,8 +150,8 @@ public class WebAppCreatorTest extends TestCase {
     assertFileDoesNotExist("build.xml");
     assertFileExists("README.txt");
     assertFileExists("Hello.launch");
-    assertFileExists("HelloTest-dev.launch");
-    assertFileExists("HelloTest-prod.launch");
+    assertFileExists("HelloSuite-dev.launch");
+    assertFileExists("HelloSuite-prod.launch");
     assertFileExists("war/Hello.html");
     assertFileExists("war/Hello.css");
     assertFileExists("war/WEB-INF/web.xml");
@@ -160,6 +162,7 @@ public class WebAppCreatorTest extends TestCase {
     assertFileExists("src/com/foo/shared/FieldVerifier.java");
     assertFileExists("src/com/foo/server/GreetingServiceImpl.java");
     assertFileExists("test/com/foo/HelloJUnit.gwt.xml");
+    assertFileExists("test/com/foo/HelloSuite.java");
     assertFileExists("test/com/foo/client/HelloTest.java");
   }
 
@@ -174,8 +177,8 @@ public class WebAppCreatorTest extends TestCase {
     assertFileExists("build.xml");
     assertFileExists("README.txt");
     assertFileDoesNotExist("Hello.launch");
-    assertFileDoesNotExist("HelloTest-dev.launch");
-    assertFileDoesNotExist("HelloTest-prod.launch");
+    assertFileDoesNotExist("HelloSuite-dev.launch");
+    assertFileDoesNotExist("HelloSuite-prod.launch");
     assertFileExists("war/Hello.html");
     assertFileExists("war/Hello.css");
     assertFileExists("war/WEB-INF/web.xml");
@@ -186,6 +189,7 @@ public class WebAppCreatorTest extends TestCase {
     assertFileExists("src/com/foo/shared/FieldVerifier.java");
     assertFileExists("src/com/foo/server/GreetingServiceImpl.java");
     assertFileExists("test/com/foo/HelloJUnit.gwt.xml");
+    assertFileExists("test/com/foo/HelloSuite.java");
     assertFileExists("test/com/foo/client/HelloTest.java");
   }
 
@@ -207,6 +211,7 @@ public class WebAppCreatorTest extends TestCase {
     assertFileExists("src/main/webapp/Hello.html");
     assertFileExists("src/main/webapp/Hello.css");
     assertFileExists("src/main/webapp/WEB-INF/web.xml");
+    assertFileExists("src/test/java/com/foo/HelloSuite.java");
     assertFileExists("src/test/java/com/foo/client/HelloTest.java");
     assertFileExists("src/test/java/com/foo/HelloJUnit.gwt.xml");
   }
@@ -251,8 +256,8 @@ public class WebAppCreatorTest extends TestCase {
     assertFileDoesNotExist("build.xml");
     assertFileDoesNotExist("README.txt");
     assertFileExists("Hello.launch");
-    assertFileExists("HelloTest-dev.launch");
-    assertFileExists("HelloTest-prod.launch");
+    assertFileExists("HelloSuite-dev.launch");
+    assertFileExists("HelloSuite-prod.launch");
     assertFileDoesNotExist("war/Hello.html");
     assertFileDoesNotExist("war/Hello.css");
     assertFileDoesNotExist("war/WEB-INF/web.xml");
@@ -263,6 +268,7 @@ public class WebAppCreatorTest extends TestCase {
     assertFileDoesNotExist("src/com/foo/shared/FieldVerifier.java");
     assertFileDoesNotExist("src/com/foo/server/GreetingServiceImpl.java");
     assertFileDoesNotExist("test/com/foo/HelloJUnit.gwt.xml");
+    assertFileDoesNotExist("test/com/foo/HelloSuite.java");
     assertFileDoesNotExist("test/com/foo/client/HelloTest.java");
   }
 
