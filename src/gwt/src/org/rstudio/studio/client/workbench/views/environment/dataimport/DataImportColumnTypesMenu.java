@@ -19,6 +19,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -32,12 +33,20 @@ public class DataImportColumnTypesMenu extends PopupPanel
    private static DataImportColumnTypesMenuUiBinder uiBinder = GWT
          .create(DataImportColumnTypesMenuUiBinder.class);
 
-   private OperationWithInput<String> onChange_;
+   private OperationWithInput<String> onTypeChange_;
+   private OperationWithInput<String> onSelectionChange_;
    
    interface DataImportColumnTypesMenuUiBinder
          extends UiBinder<Widget, DataImportColumnTypesMenu>
    {
    }
+   
+   interface DataImportColumnTypesMenuCss extends CssResource {
+      String entry();
+      String entrySelected();
+   }
+   
+   @UiField DataImportColumnTypesMenuCss style;
 
    public DataImportColumnTypesMenu()
    {
@@ -45,18 +54,76 @@ public class DataImportColumnTypesMenu extends PopupPanel
       setWidget(uiBinder.createAndBindUi(this));
    }
    
-   public void setOnChange(OperationWithInput<String> onChange)
+   public void setOnChange(
+      OperationWithInput<String> onTypeChange,
+      OperationWithInput<String> onSelectionChange)
    {
-      onChange_ = onChange;
+      onTypeChange_ = onTypeChange;
+      onSelectionChange_ = onSelectionChange;
    }
    
-   @UiField
-   Label skip_;
-   
-   @UiHandler("skip_")
-   void onSkipClick(ClickEvent e)
+   public void resetSelected()
    {
-      onChange_.execute("skip");
+      include_.setStyleName(style.entrySelected());
+      skip_.setStyleName(style.entry());
+      only_.setStyleName(style.entry());
+      guess_.setStyleName(style.entry());
+      character_.setStyleName(style.entry());
+      double_.setStyleName(style.entry());
+      integer_.setStyleName(style.entry());
+      numeric_.setStyleName(style.entry());
+      logical_.setStyleName(style.entry());
+      date_.setStyleName(style.entry());
+      time_.setStyleName(style.entry());
+      dateTime_.setStyleName(style.entry());
+      factor_.setStyleName(style.entry());
+   }
+   
+   public void setSelected(String entry)
+   {
+      switch (entry)
+      {
+      case "skip":
+         include_.setStyleName(style.entry());
+         only_.setStyleName(style.entry());
+         skip_.setStyleName(style.entrySelected());
+         break;
+      case "only":
+         include_.setStyleName(style.entry());
+         only_.setStyleName(style.entrySelected());
+         skip_.setStyleName(style.entry());
+         break;
+      case "guess":
+         guess_.setStyleName(style.entrySelected());
+         break;
+      case "character":
+         character_.setStyleName(style.entrySelected());
+         break;
+      case "double":
+         double_.setStyleName(style.entrySelected());
+         break;
+      case "integer":
+         integer_.setStyleName(style.entrySelected());
+         break;
+      case "numeric":
+         numeric_.setStyleName(style.entrySelected());
+         break;
+      case "logical":
+         logical_.setStyleName(style.entrySelected());
+         break;
+      case "date":
+         date_.setStyleName(style.entrySelected());
+         break;
+      case "time":
+         time_.setStyleName(style.entrySelected());
+         break;
+      case "datetime":
+         dateTime_.setStyleName(style.entrySelected());
+         break;
+      case "factor":
+         factor_.setStyleName(style.entrySelected());
+         break;
+      }
    }
    
    @UiField
@@ -65,7 +132,34 @@ public class DataImportColumnTypesMenu extends PopupPanel
    @UiHandler("include_")
    void onIncludeClick(ClickEvent e)
    {
-      onChange_.execute("include");
+      onSelectionChange_.execute("include");
+   }
+   
+   @UiField
+   Label skip_;
+   
+   @UiHandler("skip_")
+   void onSkipClick(ClickEvent e)
+   {
+      onSelectionChange_.execute("skip");
+   }
+   
+   @UiField
+   Label only_;
+   
+   @UiHandler("only_")
+   void onOnlyClick(ClickEvent e)
+   {
+      onSelectionChange_.execute("only");
+   }
+   
+   @UiField
+   Label  guess_;
+   
+   @UiHandler("guess_")
+   void onGuessClick(ClickEvent e)
+   {
+      onTypeChange_.execute("guess");
    }
    
    @UiField
@@ -74,7 +168,7 @@ public class DataImportColumnTypesMenu extends PopupPanel
    @UiHandler("character_")
    void onCharacterClick(ClickEvent e)
    {
-      onChange_.execute("character");
+      onTypeChange_.execute("character");
    }
    
    @UiField
@@ -83,7 +177,7 @@ public class DataImportColumnTypesMenu extends PopupPanel
    @UiHandler("double_")
    void onDoubleClick(ClickEvent e)
    {
-      onChange_.execute("double");
+      onTypeChange_.execute("double");
    }
    
    @UiField
@@ -92,7 +186,7 @@ public class DataImportColumnTypesMenu extends PopupPanel
    @UiHandler("integer_")
    void onIntegerClick(ClickEvent e)
    {
-      onChange_.execute("integer");
+      onTypeChange_.execute("integer");
    }
    
    @UiField
@@ -101,7 +195,7 @@ public class DataImportColumnTypesMenu extends PopupPanel
    @UiHandler("numeric_")
    void onNumericClick(ClickEvent e)
    {
-      onChange_.execute("numeric");
+      onTypeChange_.execute("numeric");
    }
    
    @UiField
@@ -110,7 +204,7 @@ public class DataImportColumnTypesMenu extends PopupPanel
    @UiHandler("logical_")
    void onLogicalClick(ClickEvent e)
    {
-      onChange_.execute("logical");
+      onTypeChange_.execute("logical");
    }
    
    @UiField
@@ -119,7 +213,7 @@ public class DataImportColumnTypesMenu extends PopupPanel
    @UiHandler("date_")
    void onDateClick(ClickEvent e)
    {
-      onChange_.execute("date");
+      onTypeChange_.execute("date");
    }
    
    @UiField
@@ -128,7 +222,7 @@ public class DataImportColumnTypesMenu extends PopupPanel
    @UiHandler("time_")
    void onTimeClick(ClickEvent e)
    {
-      onChange_.execute("time");
+      onTypeChange_.execute("time");
    }
    
    @UiField
@@ -137,7 +231,7 @@ public class DataImportColumnTypesMenu extends PopupPanel
    @UiHandler("dateTime_")
    void onDateTimeClick(ClickEvent e)
    {
-      onChange_.execute("dateTime");
+      onTypeChange_.execute("dateTime");
    }
    
    @UiField
@@ -146,6 +240,6 @@ public class DataImportColumnTypesMenu extends PopupPanel
    @UiHandler("factor_")
    void onFactorClick(ClickEvent e)
    {
-      onChange_.execute("factor");
+      onTypeChange_.execute("factor");
    }
 }

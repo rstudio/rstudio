@@ -78,7 +78,7 @@
 			<table class="{style.optionsColumn}">
 			    <tr class="{style.optionsRow}">
 					<td colspan="2">
-						<g:CheckBox ui:field="columnNamesCheckBox_" text="First row as column names"/>
+						<g:CheckBox ui:field="columnNamesCheckBox_" text="First Row as Names"/>
 					</td>
 				</tr>
 				<tr class="{style.optionsRow}">

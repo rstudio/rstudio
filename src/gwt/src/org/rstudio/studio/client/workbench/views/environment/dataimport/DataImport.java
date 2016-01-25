@@ -37,6 +37,7 @@ import org.rstudio.studio.client.workbench.views.environment.dataimport.res.Data
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -244,6 +245,8 @@ public class DataImport extends Composite
             gridViewer_.setOption("ordering", "false");
             gridViewer_.setOption("rowNumbers", "false");
             
+            assignColumnDefinitions(response, importOptions_.getColumnDefinitions());
+            
             gridViewer_.setData(response);
             gridViewer_.setColumnDefinitionsUIVisible(true, new Operation()
             {
@@ -257,7 +260,39 @@ public class DataImport extends Composite
                      @Override
                      public void execute(String input)
                      {
-                        importOptions_.setColumnType(column.getName(), input);
+                        if (input == "guess")
+                        {
+                           importOptions_.setColumnType(column.getName(), null);
+                        }
+                        else
+                        {
+                           importOptions_.setColumnType(column.getName(), input);
+                        }
+                        
+                        columnTypesMenu_.hide();
+                        previewDataImport();
+                     }
+                  }, new OperationWithInput<String>()
+                  {
+                     @Override
+                     public void execute(String input)
+                     {
+                        if (input == "include") {
+                           importOptions_.setOnlyColumn(column.getName(), false);
+                           if (importOptions_.getColumnType(column.getName()) == "skip") {
+                              importOptions_.setColumnType(column.getName(), null);
+                           }
+                        }
+                        
+                        if (input == "only") {
+                           importOptions_.setOnlyColumn(column.getName(), true);
+                        }
+                        
+                        if (input == "skip") {
+                           importOptions_.setOnlyColumn(column.getName(), false);
+                           importOptions_.setColumnType(column.getName(), "skip");
+                        }
+                        
                         columnTypesMenu_.hide();
                         previewDataImport();
                      }
@@ -271,6 +306,16 @@ public class DataImport extends Composite
                   
                   columnTypesMenu_.getElement().getStyle().setZIndex(
                         zIndex_ != null ? zIndex_ + 1000 : 2000);
+                  
+                  boolean columnOnly = importOptions_.getColumnOnly(column.getName());
+                  String columnType = importOptions_.getColumnType(column.getName());
+                  
+                  columnTypesMenu_.resetSelected();
+                  columnTypesMenu_.setSelected(columnType != null ? columnType : "guess");
+                  if (columnOnly)
+                  {
+                     columnTypesMenu_.setSelected("only");
+                  }
                   
                   columnTypesMenu_.show();
                }
@@ -329,5 +374,30 @@ public class DataImport extends Composite
    
    private final native String toLocaleString(int number) /*-{
       return number.toLocaleString ? number.toLocaleString() : number;
+   }-*/;
+   
+   public final native void assignColumnDefinitions(
+      JavaScriptObject response, 
+      JavaScriptObject definitions) /*-{
+      if (!definitions)
+         return;
+         
+      var hasOnlyColumns = Object.keys(definitions).some(function(key) {
+         return definitions[key].only;
+      });
+         
+      Object.keys(response.columns).forEach(function(key) {
+         var col = response.columns[key];
+         if (definitions[col.col_name]) {
+            col.col_type_assigned = definitions[col.col_name].assignedType;
+            if (col.col_type_assigned == "skip")
+            {
+               col.col_disabled = true;
+            }
+         }
+         if (hasOnlyColumns) {
+            col.col_disabled = !definitions[col.col_name] || !definitions[col.col_name].only;
+         }
+      });
    }-*/;
 }

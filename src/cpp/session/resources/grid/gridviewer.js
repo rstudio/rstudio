@@ -658,21 +658,31 @@ var createColumnTypesUI = function(th, idx, col) {
   };
 
   var val = document.createElement("div");
-  val.textContent = "(" + (col.col_type ? col.col_type : col.col_type_r) + ")";
+  val.textContent = "(" + (col.col_type_assigned ? col.col_type_assigned : col.col_type_r) + ")";
   val.className = "columnTypeHeader";
 
   th.className = th.className + " columnClickable";
-  th.addEventListener("click", function() {
-    columnsPopup = th;
-    activeColumnInfo = {
-      left: $(host).offset().left - 5,
-      top: $(host).offset().top + 19,
-      width: $(th).outerWidth() - 1,
-      index: idx,
-      name: col.col_name
-    };
-    if (onColumnOpen)
-      onColumnOpen();
+  th.addEventListener("click", function(evt) {
+    if (columnsPopup == null || columnsPopup != th) {
+      columnsPopup = th;
+      activeColumnInfo = {
+        left: $(host).offset().left - 5,
+        top: $(host).offset().top + 19,
+        width: $(th).outerWidth() - 1,
+        index: idx,
+        name: col.col_name
+      };
+      if (onColumnOpen)
+        onColumnOpen();
+
+      evt.preventDefault();
+      evt.stopPropagation();
+    }
+    else {
+      columnsPopup = null;
+      if (onColumnDismiss)
+        onColumnDismiss();
+    }
   });
 
   document.body.addEventListener("click", checkLightDismiss);
@@ -847,8 +857,13 @@ var initDataTable = function(resCols, data) {
     }
 
     dataTableColumns = cols.map(function (e, idx) {
+      var className = (rowNumbers && idx === 0) ? "first-child" : null;
+      if (e.col_disabled) {
+        className = "disabledColumn";
+      }
+
       return {
-        "sClass": (rowNumbers && idx === 0) ? "first-child" : null,
+        "sClass": className,
         "visible": (!rowNumbers && idx === 0) ? false : true,
         "data": function (row, type, set, meta) {
           return (meta.col == 0 ? meta.row : data[meta.col-1][meta.row]);

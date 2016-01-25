@@ -333,3 +333,7 @@ table.dataTable thead th.columnClickable {
 .columnTypeWrapper {
     text-align: right;
 }
+
+.disabledColumn {
+    background-color: #f7f8f9;
+}

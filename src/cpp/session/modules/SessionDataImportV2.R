@@ -53,32 +53,44 @@
             return (paste("readr::locale(date_names=\"", optionValue, "\")", sep = ""))
          },
          "columnDefinitions" = {
-            colParams <- ""
+            colParams <- c()
             for(colIdx in seq_along(optionValue)) {
                col <- optionValue[[colIdx]]
 
-               colType <- switch(col$assignedType,
-                  date = "readr::col_date()",
-                  skip = "readr::col_skip()",
-                  time = "readr::col_time()",
-                  double = "readr::col_double()",
-                  factor = "readr::col_factor()",
-                  numeric = "readr::col_numeric()",
-                  integer = "readr::col_integer()",
-                  logical = "readr::col_logical()",
-                  numeric = "readr::col_numeric()",
-                  datetime = "readr::col_datetime()",
-                  character = "readr::col_character()",
-                  euroDouble = "readr::col_euro_double()",
-                  "readr::col_guess()"
-               )
+               if ((!dataImportOptions$columnsOnly && !identical(col$assignedType, NULL)) || 
+                  identical(col$only, TRUE))
+               {
+                  colType <- "readr::col_guess()"
 
-               colParams[[colIdx]] <- paste("\"", col$name, "\" = ", colType, sep="")
+                  if (!identical(col$assignedType, NULL))
+                  {
+                     colType <- switch(col$assignedType,
+                        date = "readr::col_date()",
+                        skip = "readr::col_skip()",
+                        time = "readr::col_time()",
+                        double = "readr::col_double()",
+                        factor = "readr::col_factor()",
+                        numeric = "readr::col_numeric()",
+                        integer = "readr::col_integer()",
+                        logical = "readr::col_logical()",
+                        numeric = "readr::col_numeric()",
+                        datetime = "readr::col_datetime()",
+                        character = "readr::col_character()",
+                        euroDouble = "readr::col_euro_double()"
+                     )
+                  }
+
+                  colParams[[colIdx]] <- paste("\"", col$name, "\" = ", colType, sep="")
+               }
             }
+
+            if (length(colParams) == 0)
+               return (NULL)
+
             colParam <- (paste(colParams, collapse = ",\n      ", sep = ""))
 
             colsConstructor <- "cols";
-            if (!identical(dataImportOptions$columnsOnly, NULL)) {
+            if (identical(dataImportOptions$columnsOnly, TRUE)) {
                colsConstructor <- "cols_only"
             }
 
@@ -114,12 +126,18 @@
             parameters[[parameterName]] <- buildParameter(optionTypes[[parameterName]], optionsNoDefaults[[parameterName]])
          }
       } else if (!identical(NULL, optionsNoDefaults[[parameterName]])) {
-         parameters[[parameterName]] <- paste(
-            parameterName,
-            buildParameter(optionTypes[[parameterName]], optionsNoDefaults[[parameterName]]),
-            sep = " = ")
+         assembledParameter <- buildParameter(optionTypes[[parameterName]], optionsNoDefaults[[parameterName]])
+         if (!identical(assembledParameter, NULL)) {
+            parameters[[parameterName]] <- paste(
+               parameterName,
+               assembledParameter,
+               sep = " = ")
+         }
       }
    }
+
+   # remove empty parameters
+   parameters <- Filter(Negate(function(x) is.null(unlist(x))), parameters)
 
    paste(parameters, collapse = ",")
 })
@@ -224,6 +242,7 @@
    tryCatch({
 
       # while previewing data, always return a column even if it will be skipped
+      dataImportOptions$columnsOnly = FALSE;
       if (!identical(dataImportOptions$columnDefinitions, NULL))
       {
          dataImportOptions$columnDefinitions <- Filter(function (e) {

@@ -41,8 +41,24 @@ public class DataImportOptions extends JavaScriptObject
    }
    
    public final native void setOptions(JavaScriptObject options) /*-{
-      this.importLocation = options.importLocation;
-      this.columnDefinitions = options.columnDefinitions;
+      var this_ = this;
+      this_.importLocation = options.importLocation;
+      
+      if (options.columnDefinitions) {
+         Object.keys(options.columnDefinitions).forEach(function(key) {
+            var e = options.columnDefinitions[key];
+            if (e.assignedType || e.only || e.skip) {
+               if (!this_.columnDefinitions) {
+                  this_.columnDefinitions = {};
+               }
+               this_.columnDefinitions[key] = e;
+            }
+         });
+      
+         this.columnsOnly = Object.keys(options.columnDefinitions).some(function(key) {
+            return options.columnDefinitions[key].only;
+         });
+      }
    }-*/;
    
    private final native JavaScriptObject getImportLocationNative() /*-{
@@ -53,6 +69,10 @@ public class DataImportOptions extends JavaScriptObject
       this.maxRows = maxRows > 0 ? maxRows : null;
    }-*/;
    
+   public final native JavaScriptObject getColumnDefinitions() /*-{
+      return this.columnDefinitions;
+   }-*/;
+   
    public final native void resetColumnDefinitions() /*-{
       this.columnDefinitions = null;
    }-*/;
@@ -61,9 +81,38 @@ public class DataImportOptions extends JavaScriptObject
       if (!this.columnDefinitions) {
          this.columnDefinitions = {};
       };
-      this.columnDefinitions[name] = {
-         assignedType: assignedType,
-         name: name
+      if (!this.columnDefinitions[name]) {
+         this.columnDefinitions[name] = {};
       };
+      
+      this.columnDefinitions[name].assignedType = assignedType;
+      this.columnDefinitions[name].name = name;
+   }-*/;
+   
+   public final native String getColumnType(String name) /*-{
+      if (!this.columnDefinitions || !this.columnDefinitions[name]) {
+         return null;
+      };
+      
+      return this.columnDefinitions[name].assignedType;
+   }-*/;
+   
+   public final native void setOnlyColumn(String name, boolean only) /*-{
+      if (!this.columnDefinitions) {
+         this.columnDefinitions = {};
+      };
+      if (!this.columnDefinitions[name]) {
+         this.columnDefinitions[name] = {};
+      };
+      
+      this.columnDefinitions[name].only = only ? only : null;
+      this.columnDefinitions[name].name = name;
+   }-*/;
+   
+   public final native boolean getColumnOnly(String name) /*-{
+      if (!this.columnDefinitions || !this.columnDefinitions[name])
+         return false;
+         
+      return this.columnDefinitions[name].only;
    }-*/;
 }
