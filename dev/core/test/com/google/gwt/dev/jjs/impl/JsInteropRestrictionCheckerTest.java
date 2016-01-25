@@ -1905,7 +1905,6 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
   }
 
   public void testUsableByJsTypesSucceeds() throws Exception {
-    addSnippetImport("jsinterop.annotations.JsExport");
     addSnippetImport("jsinterop.annotations.JsType");
     addSnippetImport("jsinterop.annotations.JsFunction");
     addSnippetImport("com.google.gwt.core.client.JavaScriptObject");
