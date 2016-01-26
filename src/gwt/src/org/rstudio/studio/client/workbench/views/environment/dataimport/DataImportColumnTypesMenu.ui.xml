@@ -38,6 +38,9 @@
 	.entry:hover {
 		background-color: #bce0fc;
 	}
+	.entrySelected:hover {
+		background-color: #bce0fc;
+	}
 	</ui:style>
 	<g:HTMLPanel styleName="{style.mainPanel}">
 		<g:HTMLPanel styleName="{style.sectionPanel}">

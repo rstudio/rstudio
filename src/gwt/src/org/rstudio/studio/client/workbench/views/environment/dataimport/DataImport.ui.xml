@@ -42,6 +42,10 @@
 			padding-right: 10px
 		}
 		.optionsElement {
+			display: -ms-flexbox;
+			display: -webkit-flex;
+			display: flex;
+
 			-ms-flex-grow: 1;
 			-webkit-flex-grow: 1;
 			flex-grow: 1;
@@ -66,6 +70,7 @@
 			height: 110px;
 			border: 1px solid #999;
 			background-color: #FFF;
+			margin-top: 3px;
 		}
 		.bottomPanel {
 			display: -ms-flexbox;

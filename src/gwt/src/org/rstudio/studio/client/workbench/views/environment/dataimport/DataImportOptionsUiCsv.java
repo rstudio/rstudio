@@ -102,7 +102,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       columnNamesCheckBox_.setValue(true);
       trimSpacesCheckBox_.setValue(true);
       
-      escapeListBox_.addItem("none", "");
+      escapeListBox_.addItem("None", "");
       escapeListBox_.addItem("Backslash", escapeBackslash_);
       escapeListBox_.addItem("Double", escapeDouble_);
       escapeListBox_.addItem("Both", escapeBoth_);
@@ -112,18 +112,18 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       delimiterListBox_.addItem("Tab", "\t");
       delimiterListBox_.addItem("Whitespace", "");
       
-      quotesListBox_.addItem("default", "");
+      quotesListBox_.addItem("Default", "");
       quotesListBox_.addItem("Single (')", "'");
       quotesListBox_.addItem("Double (\")", "\\\"");
       quotesListBox_.addItem("None", "");
       
-      naListBox_.addItem("default", "");
+      naListBox_.addItem("Default", "");
       naListBox_.addItem("NA", "NA");
       naListBox_.addItem("null", "null");
       naListBox_.addItem("0", "0");
       naListBox_.addItem("empty", "empty");
       
-      commentListBox_.addItem("default", "");
+      commentListBox_.addItem("Default", "");
       commentListBox_.addItem("#", "#");
       commentListBox_.addItem("%", "%");
       commentListBox_.addItem("//", "//");
@@ -155,7 +155,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
          "yo","zgh","zh","zu"
       };
       
-      localeListBox_.addItem("default", "");
+      localeListBox_.addItem("Default", "");
       for(String lang : langs) {
          localeListBox_.addItem(lang, lang);
       }
