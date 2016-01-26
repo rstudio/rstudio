@@ -1472,28 +1472,21 @@ assign(x = ".rs.acCompletionTypes",
    .Call(.rs.routines$rs_isBrowserActive)
 })
 
-.rs.addFunction("getActiveFrame", function(n = 0L)
+# NOTE: This function attempts to find an active frame (if
+# any) in the current caller's context, which may be a
+# function environment if we're currently in the debugger,
+# and just the .GlobalEnv otherwise. Because the
+# '.rs.rpc.get_completions' call gets its own set of 'stack
+# frames', we must poke into 'sys.frames()' and get the last
+# frame not part of that stack. In practice, this means
+# discarding the current frame, as well as any extra frames
+# from the caller (hence, the 'offset' argument). Of course,
+# when there is no debug frame active, we just want to draw
+# our completions from the global environment.
+.rs.addFunction("getActiveFrame", function(offset = 1L)
 {
-   # We need to skip the following frames:
-   # 1. The frame created by the .Call,
-   # 2. The current frame from this function call,
-   # 3. The browser call (if necessary).
-   offset <- 2L
-   if (.rs.isBrowserActive())
-      offset <- offset + 1L
-   
-   # We also need to further munge this if JIT compilation is
-   # active. It looks like it can optimize out a frame somewhere?
-   if ("compiler" %in% loadedNamespaces())
-   {
-      tryCatch({
-         compilerLevel <- compiler::getCompilerOption("optimize")
-         if (compilerLevel == 2)
-            offset <- offset - 1L
-      }, error = function(e) NULL)
-   }
-   
-   .Call(.rs.routines$rs_getActiveFrame, as.integer(n) + offset)
+   frames <- c(.GlobalEnv, sys.frames())
+   frames[[length(frames) - 1L - offset]]
 })
 
 .rs.addFunction("getCompletionsNativeRoutine", function(token, interface)
@@ -1650,7 +1643,7 @@ assign(x = ".rs.acCompletionTypes",
       on.exit(.rs.removeKnitrParamsObject(), add = TRUE)
    
    # Get the currently active frame
-   envir <- .rs.getActiveFrame(1L)
+   envir <- .rs.getActiveFrame()
    
    filePath <- suppressWarnings(.rs.normalizePath(filePath))
    
