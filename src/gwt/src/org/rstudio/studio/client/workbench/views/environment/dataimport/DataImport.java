@@ -156,6 +156,11 @@ public class DataImport extends Composite
                @Override
                public void execute()
                {
+                  if (fileOrUrlChooserTextBox_.getText() != importOptions_.getImportLocation())
+                  {
+                     importOptions_.resetColumnDefinitions();
+                  }
+                  
                   importOptions_.setImportLocation(
                      !fileOrUrlChooserTextBox_.getText().isEmpty() ?
                      fileOrUrlChooserTextBox_.getText() :
@@ -342,10 +347,6 @@ public class DataImport extends Composite
    private void previewDataImport()
    {
       DataImportOptions previewImportOptions = getOptions();
-      if (previewImportOptions.getImportLocation() != importOptions_.getImportLocation())
-      {
-         importOptions_.resetColumnDefinitions();
-      }
       
       assembleDataImport();
       
