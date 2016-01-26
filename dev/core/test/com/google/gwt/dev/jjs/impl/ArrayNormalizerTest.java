@@ -29,8 +29,8 @@ public class ArrayNormalizerTest extends OptimizerTestBase {
     Result result =
         optimize("void", "A[] a = new A[1]; a[1] = new A();");
     result.intoString(
-        "EntryPoint$A[] a = Array.initUnidimensionalArray(EntryPoint$A.class, [], " +
-            "/* JRuntimeTypeReference */\"test.EntryPoint$A\", 1, 0, 1);",
+        "EntryPoint$A[] a = Array.initUnidimensionalArray(EntryPoint$A.class, [], "
+            + "/* JRuntimeTypeReference */\"test.EntryPoint$A\", 1, 0, 1);",
         "a[1] = new EntryPoint$A();");
   }
 
@@ -41,26 +41,28 @@ public class ArrayNormalizerTest extends OptimizerTestBase {
     Result result =
         optimize("void", "A[] a = new A[1]; a = new B[1]; a[1] = new A();");
     result.intoString(
-        "EntryPoint$A[] a = Array.initUnidimensionalArray(EntryPoint$A.class, [], " +
-            "/* JRuntimeTypeReference */\"test.EntryPoint$A\", 1, 0, 1);",
-        "a = Array.initUnidimensionalArray(EntryPoint$B.class, [], " +
-            "/* JRuntimeTypeReference */\"test.EntryPoint$B\", 1, 0, 1);",
+        "EntryPoint$A[] a = Array.initUnidimensionalArray(EntryPoint$A.class, [], "
+            + "/* JRuntimeTypeReference */\"test.EntryPoint$A\", 1, 0, 1);",
+        "a = Array.initUnidimensionalArray(EntryPoint$B.class, [], "
+            + "/* JRuntimeTypeReference */\"test.EntryPoint$B\", 1, 0, 1);",
         "Array.setCheck(a, 1, new EntryPoint$A());");
   }
 
   public void testObjectArray() throws Exception {
     optimize("void", "Object[] o = new Object[10];")
-        .intoString("Object[] o = Array.initUnidimensionalArray(Object.class, [], " +
-            "/* JRuntimeTypeReference */\"java.lang.Object\", 10, 5, 1);");
+        .intoString("Object[] o = Array.initUnidimensionalArray(Object.class, [], "
+            + "/* JRuntimeTypeReference */\"java.lang.Object\", 10, "
+            + TypeCategory.TYPE_JAVA_LANG_OBJECT.ordinal() + ", 1);");
     optimize("void", "Object[] o = {null, null, Object.class};")
-        .intoString("Object[] o = " +
-            "Array.stampJavaTypeInfo(" +
-            "Array.getClassLiteralForArray(ClassLiteralHolder.Ljava_lang_Object_2_classLit, 1), " +
-            "[], /* JRuntimeTypeReference */\"java.lang.Object\", 5, [null, null, Object.class]);");
+        .intoString("Object[] o = Array.stampJavaTypeInfo("
+            + "Array.getClassLiteralForArray(ClassLiteralHolder.Ljava_lang_Object_2_classLit, 1), "
+            + "[], /* JRuntimeTypeReference */\"java.lang.Object\", "
+            + TypeCategory.TYPE_JAVA_LANG_OBJECT.ordinal() + ", [null, null, Object.class]);");
     optimize("void", "Object[] o = new Object[] {};")
-        .intoString("Object[] o = Array.stampJavaTypeInfo(Array.getClassLiteralForArray(" +
-            "ClassLiteralHolder.Ljava_lang_Object_2_classLit, 1), [], " +
-            "/* JRuntimeTypeReference */\"java.lang.Object\", 5, []);");
+        .intoString("Object[] o = Array.stampJavaTypeInfo(Array.getClassLiteralForArray("
+            + "ClassLiteralHolder.Ljava_lang_Object_2_classLit, 1), [], "
+            + "/* JRuntimeTypeReference */\"java.lang.Object\", "
+            + TypeCategory.TYPE_JAVA_LANG_OBJECT.ordinal() + ", []);");
   }
 
   public void testNativeJsTypeArray() throws Exception {

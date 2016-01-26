@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.javac.JsInteropUtil;
+import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -45,6 +46,7 @@ public enum TypeCategory {
   TYPE_JSO("Jso"),
   TYPE_NATIVE_ARRAY("NativeArray"),
   TYPE_ARRAY("Array"),
+  TYPE_JSO_ARRAY("JsoArray", true, false),
   TYPE_JAVA_LANG_OBJECT("AllowJso", true, false),
   TYPE_JAVA_LANG_STRING("String"),
   TYPE_JAVA_LANG_DOUBLE("Double"),
@@ -104,6 +106,8 @@ public enum TypeCategory {
     type = type.getUnderlyingType();
     if (type == program.getTypeJavaLangObjectArray()) {
       return TypeCategory.TYPE_ARRAY;
+    } else if (isJsoArray(type)) {
+      return TypeCategory.TYPE_JSO_ARRAY;
     } else if (getJsSpecialType(type) != null) {
       return getJsSpecialType(type);
     } else if (program.isUntypedArrayType(type)) {
@@ -149,5 +153,14 @@ public enum TypeCategory {
         return TypeCategory.TYPE_JAVA_LANG_STRING;
     }
     return null;
+  }
+
+  private static boolean isJsoArray(JType type) {
+    if (!type.isArrayType()) {
+      return false;
+    }
+
+    JArrayType arrayType = (JArrayType) type;
+    return arrayType.getLeafType().isJsoType();
   }
 }

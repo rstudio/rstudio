@@ -101,6 +101,14 @@ final class Cast {
   }
 
   /**
+   * Allow a cast to an array of Jsos, accepting also untyped arrays.
+   */
+  static Object castToJsoArray(Object src, JavaScriptObject dstId) {
+    checkType(src == null || instanceOfJsoArray(src, dstId));
+    return src;
+  }
+
+  /**
    * Allow a cast to (untyped) array. This case covers single and multidimensional JsType arrays.
    */
   static Object castToNativeArray(Object src) {
@@ -168,6 +176,13 @@ final class Cast {
    */
   static boolean instanceOfArray(Object src) {
     return isArray(src) && !Array.isPrimitiveArray(src);
+  }
+
+  /**
+   * Returns true if {@code src} is Java object array or an untyped array.
+   */
+  static boolean instanceOfJsoArray(Object src, JavaScriptObject dstId) {
+    return canCast(src, dstId) || !Util.hasTypeMarker(src) && isArray(src);
   }
 
   /**
@@ -353,6 +368,7 @@ final class Cast {
   @HasNoSideEffects
   static native Class<?> getClass(Object array) /*-{
     return array.@java.lang.Object::___clazz
+        || Array.isArray(array) && @JavaScriptObject[]::class
         || @JavaScriptObject::class;
   }-*/;
 }

@@ -34,16 +34,17 @@ public final class Array {
   private static final int TYPE_JSO = 2;
   private static final int TYPE_NATIVE_ARRAY = 3;
   private static final int TYPE_ARRAY = 4;
-  private static final int TYPE_JAVA_LANG_OBJECT = 5;
-  private static final int TYPE_JAVA_LANG_STRING = 6;
-  private static final int TYPE_JAVA_LANG_DOUBLE = 7;
-  private static final int TYPE_JAVA_LANG_BOOLEAN = 8;
-  private static final int TYPE_JS_NATIVE = 9;
-  private static final int TYPE_JS_UNKNOWN_NATIVE = 10;
-  private static final int TYPE_JS_FUNCTION = 11;
-  private static final int TYPE_PRIMITIVE_LONG = 12;
-  private static final int TYPE_PRIMITIVE_NUMBER = 13;
-  private static final int TYPE_PRIMITIVE_BOOLEAN = 14;
+  private static final int TYPE_JSO_ARRAY = 5;
+  private static final int TYPE_JAVA_LANG_OBJECT = 6;
+  private static final int TYPE_JAVA_LANG_STRING = 7;
+  private static final int TYPE_JAVA_LANG_DOUBLE = 8;
+  private static final int TYPE_JAVA_LANG_BOOLEAN = 9;
+  private static final int TYPE_JS_NATIVE = 10;
+  private static final int TYPE_JS_UNKNOWN_NATIVE = 11;
+  private static final int TYPE_JS_FUNCTION = 12;
+  private static final int TYPE_PRIMITIVE_LONG = 13;
+  private static final int TYPE_PRIMITIVE_NUMBER = 14;
+  private static final int TYPE_PRIMITIVE_BOOLEAN = 15;
 
   public static <T> T[] stampJavaTypeInfo(Object array, T[] referenceType) {
     if (Array.getElementTypeCategory(referenceType) != TYPE_JS_UNKNOWN_NATIVE) {

@@ -43,7 +43,7 @@ public class ArrayTest extends GWTTestCase {
     assertFalse(nativeArray instanceof Object[][]);
     assertFalse(nativeArray instanceof int[]);
     assertFalse(nativeArray instanceof List[]);
-    assertTrue(nativeArray.getClass() == JavaScriptObject.class);
+    assertTrue(nativeArray.getClass() == JavaScriptObject[].class);
 
     Object objectArray = new Object[0];
     assertTrue(objectArray instanceof Object[]);
