@@ -26,4 +26,8 @@ public class DataImportPreviewResponse extends JavaScriptObject
    public final native String getErrorMessage() /*-{
       return this.error ? this.error.message.join(' ') : null;
    }-*/;
+   
+   public final native int getParsingErrors() /*-{
+      return this.parsingErrors;
+   }-*/;
 }

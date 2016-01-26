@@ -373,7 +373,9 @@ public class DataImport extends Composite
             
             gridViewer_.setOption("nullsAsNAs", "true");
             gridViewer_.setOption("status",
-                  "Previewing first " + toLocaleString(maxRows_) + " entries");
+                  "Previewing first " + toLocaleString(maxRows_) + 
+                  " entries. " + Integer.toString(response.getParsingErrors()) +
+                  " parsing errors.");
             gridViewer_.setOption("ordering", "false");
             gridViewer_.setOption("rowNumbers", "false");
             

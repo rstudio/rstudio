@@ -280,6 +280,7 @@
       importInfo <- .rs.assemble_data_import(dataImportOptions)
       data <- eval(parse(text=importInfo$previewCode))
       columns <- .rs.describeCols(data, maxCols, maxFactors)
+      parsingErrors <-length(readr::problems(data)$row)
 
       cnames <- names(data)
       size <- nrow(data)
@@ -289,7 +290,8 @@
       }
 
       return(list(data = unname(data),
-                  columns = columns))
+                  columns = columns,
+                  parsingErrors = parsingErrors))
    }, error = function(e) {
       return(list(error = e))
    })
