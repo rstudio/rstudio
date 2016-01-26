@@ -37,8 +37,8 @@
    dataName
 })
 
-.rs.addFunction("assemble_data_import_parameters", function(options, optionTypes, importFunction, dataImportOptions)
-{ 
+.rs.addFunction("assemble_data_import_parameters", function(options, optionTypes, importFunction, dataImportOptions, ns)
+{
    buildParameter <- function(optionType, optionValue)
    {
       if (identical(optionType, NULL)) {
@@ -50,7 +50,7 @@
             return (paste("\"", optionValue, "\"", sep = ""))
          },
          "locale" = {
-            return (paste("readr::locale(date_names=\"", optionValue, "\")", sep = ""))
+            return (paste(ns, "locale(date_names=\"", optionValue, "\")", sep = ""))
          },
          "columnDefinitions" = {
             colParams <- c()
@@ -60,7 +60,7 @@
                if ((!dataImportOptions$columnsOnly && !identical(col$assignedType, NULL)) || 
                   identical(col$only, TRUE))
                {
-                  colType <- "readr::col_guess()"
+                  colType <- paste(ns, "col_guess()", sep = "")
 
                   parseString <- "";
                   if (!identical(col$parseString, NULL))
@@ -78,18 +78,18 @@
                   if (!identical(col$assignedType, NULL))
                   {
                      colType <- switch(col$assignedType,
-                        date = paste("readr::col_date(", parseString, ")", sep = ""),
-                        skip = "readr::col_skip()",
-                        time = paste("readr::col_time(", parseString, ")", sep = ""),
-                        double = "readr::col_double()",
-                        factor = paste("readr::col_factor(", parseString, ")", sep = ""),
-                        numeric = "readr::col_numeric()",
-                        integer = "readr::col_integer()",
-                        logical = "readr::col_logical()",
-                        numeric = "readr::col_numeric()",
-                        dateTime = paste("readr::col_datetime(", parseString, ")", sep = ""),
-                        character = "readr::col_character()",
-                        euroDouble = "readr::col_euro_double()"
+                        date = paste(ns, "col_date(", parseString, ")", sep = ""),
+                        skip = paste(ns, "col_skip()", sep = ""),
+                        time = paste(ns, "col_time(", parseString, ")", sep = ""),
+                        double = paste(ns, "col_double()", sep = ""),
+                        factor = paste(ns, "col_factor(", parseString, ")", sep = ""),
+                        numeric = paste(ns, "col_numeric()", sep = ""),
+                        integer = paste(ns, "col_integer()", sep = ""),
+                        logical = paste(ns, "col_logical()", sep = ""),
+                        numeric = paste(ns, "col_numeric()", sep = ""),
+                        dateTime = paste(ns, "col_datetime(", parseString, ")", sep = ""),
+                        character = paste(ns, "col_character()", sep = ""),
+                        euroDouble = paste(ns, "col_euro_double()", sep = "")
                      )
                   }
 
@@ -100,14 +100,14 @@
             if (length(colParams) == 0)
                return (NULL)
 
-            colParam <- (paste(colParams, collapse = ",\n      ", sep = ""))
+            colParam <- (paste(colParams, collapse = ",", sep = ""))
 
             colsConstructor <- "cols";
             if (identical(dataImportOptions$columnsOnly, TRUE)) {
                colsConstructor <- "cols_only"
             }
 
-            return (paste("readr::", colsConstructor, "(\n", colParam, ")", sep = ""))
+            return (paste(ns, colsConstructor, "(\n", colParam, ")", sep = ""))
          }, {
             return (optionValue)
          })
@@ -205,20 +205,32 @@
    optionTypes[["comment"]] <- "character"
    optionTypes[["col_types"]] <- "columnDefinitions"
 
-   functionParameters <- .rs.assemble_data_import_parameters(options, optionTypes, functionReference, dataImportOptions)
+   functionParameters <- .rs.assemble_data_import_parameters(options, optionTypes, functionReference, dataImportOptions, "readr::")
+   functionParametersNoNs <- .rs.assemble_data_import_parameters(options, optionTypes, functionReference, dataImportOptions, "")
 
-   importInfo$previewCode <- paste(
+   previewCode <- paste(
       "readr::",
       functionName,
       "(",
       functionParameters,
       ")",
       sep = "")
+   previewCodeNoNs <- paste(
+      functionName,
+      "(",
+      functionParametersNoNs,
+      ")",
+      sep = "")
+
+   importInfo$previewCode <- paste(
+      previewCode,
+      sep = "")
 
    importInfo$importCode <- paste(
       lapply(
          c(
-            paste(dataName, " <- ", importInfo$previewCode, sep = ""),
+            "library(readr)",
+            paste(dataName, " <- ", previewCodeNoNs, sep = ""),
             paste("View(", dataName, ")", sep = "")
          ),
          function(e) {

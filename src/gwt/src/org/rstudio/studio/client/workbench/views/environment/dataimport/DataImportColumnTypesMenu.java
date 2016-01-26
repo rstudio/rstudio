@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.widget.OperationWithInput;
 
 import com.google.gwt.core.client.GWT;
@@ -36,6 +38,30 @@ public class DataImportColumnTypesMenu extends PopupPanel
    private OperationWithInput<String> onTypeChange_;
    private OperationWithInput<String> onSelectionChange_;
    
+   class MenuItem
+   {
+      private String name_;
+      private Widget widget_;
+      
+      public MenuItem(String name, Widget widget)
+      {
+         name_ = name;
+         widget_ = widget;
+      }
+      
+      String getName()
+      {
+         return name_;
+      }
+      
+      Widget getWidget()
+      {
+         return widget_;
+      }
+   }
+   
+   private ArrayList<MenuItem> menuItems_;
+   
    interface DataImportColumnTypesMenuUiBinder
          extends UiBinder<Widget, DataImportColumnTypesMenu>
    {
@@ -52,6 +78,21 @@ public class DataImportColumnTypesMenu extends PopupPanel
    {
       super(true);
       setWidget(uiBinder.createAndBindUi(this));
+      
+      menuItems_ = new ArrayList<MenuItem>();
+      menuItems_.add(new MenuItem("include", (Widget)include_));
+      menuItems_.add(new MenuItem("skip", (Widget)skip_));
+      menuItems_.add(new MenuItem("only", (Widget)only_));
+      menuItems_.add(new MenuItem("guess", (Widget)guess_));
+      menuItems_.add(new MenuItem("character", (Widget)character_));
+      menuItems_.add(new MenuItem("douleb", (Widget)double_));
+      menuItems_.add(new MenuItem("integer", (Widget)integer_));
+      menuItems_.add(new MenuItem("numeric", (Widget)numeric_));
+      menuItems_.add(new MenuItem("logical", (Widget)logical_));
+      menuItems_.add(new MenuItem("date", (Widget)date_));
+      menuItems_.add(new MenuItem("time", (Widget)time_));
+      menuItems_.add(new MenuItem("dateTime", (Widget)dateTime_));
+      menuItems_.add(new MenuItem("factor", (Widget)factor_));
    }
    
    public void setOnChange(
@@ -64,65 +105,38 @@ public class DataImportColumnTypesMenu extends PopupPanel
    
    public void resetSelected()
    {
+      for (final MenuItem elem : menuItems_)
+      {
+         elem.getWidget().setStyleName(style.entry());
+      };
+      
       include_.setStyleName(style.entrySelected());
-      skip_.setStyleName(style.entry());
-      only_.setStyleName(style.entry());
-      guess_.setStyleName(style.entry());
-      character_.setStyleName(style.entry());
-      double_.setStyleName(style.entry());
-      integer_.setStyleName(style.entry());
-      numeric_.setStyleName(style.entry());
-      logical_.setStyleName(style.entry());
-      date_.setStyleName(style.entry());
-      time_.setStyleName(style.entry());
-      dateTime_.setStyleName(style.entry());
-      factor_.setStyleName(style.entry());
    }
    
    public void setSelected(String entry)
    {
-      switch (entry)
+      
+      if (entry == "skip")
       {
-      case "skip":
          include_.setStyleName(style.entry());
          only_.setStyleName(style.entry());
          skip_.setStyleName(style.entrySelected());
-         break;
-      case "only":
+      }
+      else if (entry == "only")
+      {
          include_.setStyleName(style.entry());
          only_.setStyleName(style.entrySelected());
          skip_.setStyleName(style.entry());
-         break;
-      case "guess":
-         guess_.setStyleName(style.entrySelected());
-         break;
-      case "character":
-         character_.setStyleName(style.entrySelected());
-         break;
-      case "double":
-         double_.setStyleName(style.entrySelected());
-         break;
-      case "integer":
-         integer_.setStyleName(style.entrySelected());
-         break;
-      case "numeric":
-         numeric_.setStyleName(style.entrySelected());
-         break;
-      case "logical":
-         logical_.setStyleName(style.entrySelected());
-         break;
-      case "date":
-         date_.setStyleName(style.entrySelected());
-         break;
-      case "time":
-         time_.setStyleName(style.entrySelected());
-         break;
-      case "datetime":
-         dateTime_.setStyleName(style.entrySelected());
-         break;
-      case "factor":
-         factor_.setStyleName(style.entrySelected());
-         break;
+      }
+      else
+      {
+         for (final MenuItem elem : menuItems_)
+         {
+            if (entry == elem.getName())
+            {
+               elem.getWidget().setStyleName(style.entrySelected());
+            }
+         }
       }
    }
    
