@@ -866,7 +866,7 @@ var initDataTable = function(resCols, data) {
         "sClass": className,
         "visible": (!rowNumbers && idx === 0) ? false : true,
         "data": function (row, type, set, meta) {
-          return (meta.col == 0 ? meta.row : data[meta.col-1][meta.row]);
+          return (meta.col == 0 ? meta.row : (data ? data[meta.col-1][meta.row] : null));
         },
         "width": "4em",
         "render": e.col_type === "numeric" ? renderNumberCell : renderTextCell
@@ -1000,11 +1000,19 @@ var bootstrap = function(data) {
       runAfterSizing(function() {
 
         // Assign line numbers:
-        data.data = data.data.map(function (e, idx) {
-          var eWithNumber = e;
-          eWithNumber[""] = idx + 1;
-          return eWithNumber;
-        })
+        if (data.data) {
+          data.data = data.data.map(function (e, idx) {
+            var eWithNumber = e;
+            eWithNumber[""] = idx + 1;
+            return eWithNumber;
+          })
+        }
+        else {
+          data.data = {}
+          data.data = [
+            []
+          ];
+        }
 
         initDataTable(data.columns, data.data);
       });

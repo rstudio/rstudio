@@ -80,6 +80,8 @@ public class DataImport extends Composite
    
    private DataImportColumnTypesMenu columnTypesMenu_;
    
+   private DataImportPreviewResponse lastSuccessfulResponse_;
+   
    interface DataImportUiBinder extends UiBinder<Widget, DataImport>
    {
    }
@@ -344,6 +346,14 @@ public class DataImport extends Composite
       return options;
    }
    
+   private void setGridViewerData(DataImportPreviewResponse response)
+   {
+      gridViewer_.setOption("nullsAsNAs", "true");
+      gridViewer_.setOption("ordering", "false");
+      gridViewer_.setOption("rowNumbers", "false");
+      gridViewer_.setData(response);
+   }
+   
    private void previewDataImport()
    {
       DataImportOptions previewImportOptions = getOptions();
@@ -367,22 +377,23 @@ public class DataImport extends Composite
          {
             if (response.getErrorMessage() != null)
             {
-               gridViewer_.setData(null);
+               response.setColumnDefinitions(lastSuccessfulResponse_);
+               setGridViewerData(response);
                progressIndicator_.onError(response.getErrorMessage());
                return;
             }
             
-            gridViewer_.setOption("nullsAsNAs", "true");
+            lastSuccessfulResponse_ = response;
+            
             gridViewer_.setOption("status",
                   "Previewing first " + toLocaleString(maxRows_) + 
                   " entries. " + Integer.toString(response.getParsingErrors()) +
                   " parsing errors.");
-            gridViewer_.setOption("ordering", "false");
-            gridViewer_.setOption("rowNumbers", "false");
+            
             
             assignColumnDefinitions(response, importOptions_.getColumnDefinitions());
             
-            gridViewer_.setData(response);
+            setGridViewerData(response);
             gridViewer_.setColumnDefinitionsUIVisible(true, onColumnMenuShow(), new Operation()
             {
                @Override
