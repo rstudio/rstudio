@@ -12,6 +12,10 @@
 			-webkit-flex-direction: column;
 			-ms-flex-direction: column;
 			flex-direction: column;
+
+			-ms-flex-grow: 1;
+			-webkit-flex-grow: 1;
+			flex-grow: 1;
 		}
 		.optionsBlock {
 			margin-top: 3px;
@@ -24,6 +28,16 @@
 			-webkit-flex-direction: row;
 			-ms-flex-direction: row;
 			flex-direction: row;
+
+			-ms-flex-grow: 1;
+			-webkit-flex-grow: 1;
+			flex-grow: 1;
+
+			border: 1px solid #999;
+			background-color: #F7F8F9;
+			padding-top: 10px;
+			padding-left: 10px;
+			padding-bottom: 3px;
 		}
 		.optionsColumn {
 			display: -ms-flexbox;
@@ -75,6 +89,18 @@
 	                </td>
 	            </tr>
 		    </table>
+			<table class="{style.optionsColumn}">
+			    <tr class="{style.optionsRow}">
+					<td colspan="2">
+						<g:CheckBox ui:field="columnNamesCheckBox_" text="First Row as Names"/>
+					</td>
+				</tr>
+				<tr class="{style.optionsRow}">
+					<td colspan="2">
+						<g:CheckBox ui:field="trimSpacesCheckBox_" text="Trim Spaces"/>
+					</td>
+				</tr>
+			</table>
 		    <table class="{style.optionsColumn}">
 			    <tr class="{style.optionsRow}">
 			        <td>Delimiter:</td>
@@ -96,32 +122,10 @@
 			    </tr>
 		    </table>
 			<table class="{style.optionsColumn}">
-			    <tr  class="{style.optionsRow}">
-					<td colspan="2">
-						<g:CheckBox ui:field="escapeBackslashCheckBox_" text="Escape Backslash"/>
-					</td>
-				</tr>
-				<tr class="{style.optionsRow}">
-				    <td colspan="2">
-						<g:CheckBox ui:field="escapeDoubleCheckBox_" text="Escape Double"/>
-					</td>
-				</tr>
-				<tr class="{style.optionsRow}">
-					<td>NA:</td>
-					<td>
-					    <g:ListBox ui:field="naListBox_" styleName="{style.optionsListBox}" />
-				    </td>
-				</tr>
-			</table>
-			<table class="{style.optionsColumn}">
 			    <tr class="{style.optionsRow}">
-					<td colspan="2">
-						<g:CheckBox ui:field="columnNamesCheckBox_" text="Columns Names"/>
-					</td>
-				</tr>
-				<tr class="{style.optionsRow}">
-					<td colspan="2">
-						<g:CheckBox ui:field="trimSpacesCheckBox_" text="Trim Spaces"/>
+					<td>Escape:</td>
+					<td>
+					    <g:ListBox ui:field="escapeListBox_" styleName="{style.optionsListBox}" />
 					</td>
 				</tr>
 				<tr class="{style.optionsRow}">
@@ -129,6 +133,12 @@
 					<td>
 					    <g:ListBox ui:field="commentListBox_" styleName="{style.optionsListBox}" />
 					</td>
+				</tr>
+				<tr class="{style.optionsRow}">
+					<td>NA:</td>
+					<td>
+					    <g:ListBox ui:field="naListBox_" styleName="{style.optionsListBox}" />
+				    </td>
 				</tr>
 			</table>
 		</div>

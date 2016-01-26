@@ -21,6 +21,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.FileOrUrlChooserTextBox;
 import org.rstudio.core.client.widget.GridViewerFrame;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressIndicatorDelay;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -36,6 +37,7 @@ import org.rstudio.studio.client.workbench.views.environment.dataimport.res.Data
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -72,11 +74,17 @@ public class DataImport extends Composite
    
    private final String codePreviewErrorMessage_ = "Code Creation Error";
    
+   private DataImportOptions importOptions_;
+   
+   private Integer zIndex_;
+   
+   private DataImportColumnTypesMenu columnTypesMenu_;
+   
    interface DataImportUiBinder extends UiBinder<Widget, DataImport>
    {
    }
 
-   public DataImport(DataImportModes dataImportMode,
+   public <T> DataImport(DataImportModes dataImportMode,
                      ProgressIndicator progressIndicator)
    {
       dataImportResources_ = GWT.create(DataImportResources.class);
@@ -89,7 +97,11 @@ public class DataImport extends Composite
       Size size = DomMetrics.adjustedElementSizeToDefaultMax();
       setSize(Math.max(minWidth, size.width) + "px", Math.max(minHeight, size.height) + "px");
       
+      columnTypesMenu_ = new DataImportColumnTypesMenu();
+      
       dataImportOptionsUi_ = getOptionsUiForMode(dataImportMode);
+      importOptions_ = getOptions();
+      
       optionsHost_.add(dataImportOptionsUi_);
       
       dataImportOptionsUi_.addValueChangeHandler(new ValueChangeHandler<DataImportOptions>()
@@ -107,6 +119,11 @@ public class DataImport extends Composite
    public String getCode()
    {
       return codePreview_;
+   }
+   
+   public void setZIndex(Integer zIndex)
+   {
+      zIndex_ = zIndex;
    }
    
    private DataImportOptionsUi getOptionsUiForMode(DataImportModes mode)
@@ -130,15 +147,22 @@ public class DataImport extends Composite
    
    @UiFactory
    FileOrUrlChooserTextBox makeFileOrUrlChooserTextBox() {
-      FileOrUrlChooserTextBox fileOrUrlChooserTextBox = new FileOrUrlChooserTextBox("File/URL:", new Operation()
-      {
-         @Override
-         public void execute()
-         {
-            dataImportOptionsUi_.clearDataName();
-            previewDataImport();
-         }
-      }, null);
+      FileOrUrlChooserTextBox fileOrUrlChooserTextBox = new FileOrUrlChooserTextBox(
+            "File/URL:",
+            new Operation()
+            {
+               @Override
+               public void execute()
+               {
+                  importOptions_.setImportLocation(
+                     !fileOrUrlChooserTextBox_.getText().isEmpty() ?
+                     fileOrUrlChooserTextBox_.getText() :
+                     null);
+                  dataImportOptionsUi_.clearDataName();
+                  previewDataImport();
+               }
+            },
+            null);
       
       return fileOrUrlChooserTextBox;
    }
@@ -171,19 +195,154 @@ public class DataImport extends Composite
    @UiField
    PushButton copyButton_;
    
+   private void promptForParseString(
+      String title,
+      String parseString,
+      final Operation complete,
+      final String columnName,
+      final String columnType)
+   {
+      globalDisplay_.promptForText(
+         title,
+         "Please enter the format string",
+         parseString,
+         new OperationWithInput<String>()
+         {
+            @Override
+            public void execute(final String formatString)
+            {
+               importOptions_.setColumnDefinition(columnName, columnType, formatString);
+               complete.execute();
+            }
+         });
+   }
+   
+   private Operation onColumnMenuShow()
+   {
+      final Operation completeAndPreview = new Operation()
+      {
+         @Override
+         public void execute()
+         {
+            previewDataImport();
+         }
+      };
+      
+      return new Operation()
+      {
+         @Override
+         public void execute()
+         {
+            final DataImportDataActiveColumn column = gridViewer_.getActiveColumn();
+            
+            columnTypesMenu_.setOnChange(new OperationWithInput<String>()
+            {
+               @Override
+               public void execute(final String input)
+               {
+                  columnTypesMenu_.hide();
+                  
+                  if (input == "guess")
+                  {
+                     importOptions_.setColumnType(column.getName(), null);
+                     completeAndPreview.execute();
+                  }
+                  else if (input == "date")
+                  {
+                     promptForParseString(
+                        "Date Format", "%m/%d/%Y", completeAndPreview, column.getName(), input);
+                  }
+                  else if (input == "time")
+                  {
+                     promptForParseString(
+                        "Time Format", "%H:%M", completeAndPreview, column.getName(), input);
+                  }
+                  else if (input == "dateTime")
+                  {
+                     promptForParseString(
+                        "Date and Time Format", "%m/%d/%Y %H:%M", completeAndPreview, column.getName(), input);
+                  }
+                  else if (input == "factor")
+                  {
+                     promptForParseString(
+                        "Factors", "c()", completeAndPreview, column.getName(), input);
+                  }
+                  else
+                  {
+                     importOptions_.setColumnType(column.getName(), input);
+                     completeAndPreview.execute();
+                  }
+               }
+            }, new OperationWithInput<String>()
+            {
+               @Override
+               public void execute(String input)
+               {
+                  if (input == "include") {
+                     importOptions_.setOnlyColumn(column.getName(), false);
+                     if (importOptions_.getColumnType(column.getName()) == "skip") {
+                        importOptions_.setColumnType(column.getName(), null);
+                     }
+                  }
+                  
+                  if (input == "only") {
+                     importOptions_.setOnlyColumn(column.getName(), true);
+                  }
+                  
+                  if (input == "skip") {
+                     importOptions_.setOnlyColumn(column.getName(), false);
+                     importOptions_.setColumnType(column.getName(), "skip");
+                  }
+                  
+                  columnTypesMenu_.hide();
+                  previewDataImport();
+               }
+            });
+            
+            columnTypesMenu_.setPopupPosition(
+                  gridViewer_.getAbsoluteLeft() + column.getLeft(),
+                  gridViewer_.getAbsoluteTop() +column.getTop());
+            
+            columnTypesMenu_.setSize(column.getWidth() + "px", "");
+            
+            columnTypesMenu_.getElement().getStyle().setZIndex(
+                  zIndex_ != null ? zIndex_ + 1000 : 2000);
+            
+            boolean columnOnly = importOptions_.getColumnOnly(column.getName());
+            String columnType = importOptions_.getColumnType(column.getName());
+            
+            columnTypesMenu_.resetSelected();
+            columnTypesMenu_.setSelected(columnType != null ? columnType : "guess");
+            if (columnOnly)
+            {
+               columnTypesMenu_.setSelected("only");
+            }
+            
+            columnTypesMenu_.show();
+         }
+      };
+   }
+   
    public DataImportOptions getOptions()
    {
       DataImportOptions options = dataImportOptionsUi_.getOptions();
-      options.setImportLocation(
-            !fileOrUrlChooserTextBox_.getText().isEmpty() ?
-            fileOrUrlChooserTextBox_.getText() :
-            null);
+      
+      if (importOptions_ != null)
+      {
+         options.setOptions(importOptions_);
+      }
       
       return options;
    }
    
    private void previewDataImport()
    {
+      DataImportOptions previewImportOptions = getOptions();
+      if (previewImportOptions.getImportLocation() != importOptions_.getImportLocation())
+      {
+         importOptions_.resetColumnDefinitions();
+      }
+      
       assembleDataImport();
       
       if (fileOrUrlChooserTextBox_.getText() == "")
@@ -192,11 +351,11 @@ public class DataImport extends Composite
          return;
       }
       
-      DataImportOptions previewImportOptions = getOptions();
       previewImportOptions.setMaxRows(maxRows_);
       
       progressIndicator_.onProgress("Retrieving preview data");
-      server_.previewDataImport(previewImportOptions, maxCols_, maxFactors_, new ServerRequestCallback<DataImportPreviewResponse>()
+      server_.previewDataImport(previewImportOptions, maxCols_, maxFactors_,
+            new ServerRequestCallback<DataImportPreviewResponse>()
       {
          @Override
          public void onResponseReceived(DataImportPreviewResponse response)
@@ -209,11 +368,22 @@ public class DataImport extends Composite
             }
             
             gridViewer_.setOption("nullsAsNAs", "true");
-            gridViewer_.setOption("status", "Previewing first " + toLocaleString(maxRows_) + " entries");
+            gridViewer_.setOption("status",
+                  "Previewing first " + toLocaleString(maxRows_) + " entries");
             gridViewer_.setOption("ordering", "false");
             gridViewer_.setOption("rowNumbers", "false");
             
+            assignColumnDefinitions(response, importOptions_.getColumnDefinitions());
+            
             gridViewer_.setData(response);
+            gridViewer_.setColumnDefinitionsUIVisible(true, onColumnMenuShow(), new Operation()
+            {
+               @Override
+               public void execute()
+               {
+                  columnTypesMenu_.hide();
+               }
+            });
             
             progressIndicator_.onCompleted();
          }
@@ -229,7 +399,8 @@ public class DataImport extends Composite
    
    private void assembleDataImport()
    {
-      server_.assembleDataImport(getOptions(), new ServerRequestCallback<DataImportAssembleResponse>()
+      server_.assembleDataImport(getOptions(),
+            new ServerRequestCallback<DataImportAssembleResponse>()
       {
          @Override
          public void onResponseReceived(DataImportAssembleResponse response)
@@ -242,7 +413,10 @@ public class DataImport extends Composite
             
             codePreview_ = response.getImportCode();
             dataImportOptionsUi_.setAssembleResponse(response);
-            codeArea_.getEditor().getSession().setEditorMode(EditorLanguage.LANG_R.getParserName(), false);
+            codeArea_.getEditor().getSession().setEditorMode(
+                  EditorLanguage.LANG_R.getParserName(), false);
+            codeArea_.getEditor().getSession().setUseWrapMode(true);
+            codeArea_.getEditor().getSession().setWrapLimitRange(20, 120);
             codeArea_.getEditor().getRenderer().setShowGutter(false);
             codeArea_.setCode(codePreview_);
          }
@@ -257,5 +431,30 @@ public class DataImport extends Composite
    
    private final native String toLocaleString(int number) /*-{
       return number.toLocaleString ? number.toLocaleString() : number;
+   }-*/;
+   
+   public final native void assignColumnDefinitions(
+      JavaScriptObject response, 
+      JavaScriptObject definitions) /*-{
+      if (!definitions)
+         return;
+         
+      var hasOnlyColumns = Object.keys(definitions).some(function(key) {
+         return definitions[key].only;
+      });
+         
+      Object.keys(response.columns).forEach(function(key) {
+         var col = response.columns[key];
+         if (definitions[col.col_name]) {
+            col.col_type_assigned = definitions[col.col_name].assignedType;
+            if (col.col_type_assigned == "skip")
+            {
+               col.col_disabled = true;
+            }
+         }
+         if (hasOnlyColumns) {
+            col.col_disabled = !definitions[col.col_name] || !definitions[col.col_name].only;
+         }
+      });
    }-*/;
 }

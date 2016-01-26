@@ -317,3 +317,23 @@ div.DTS div.DTS_Loading.showLoading {
     display: block;
 }
 
+.columnTypeHeader {
+    font-weight: normal;
+    font-style: italic;
+    margin-top: 3px;
+}
+
+table.dataTable thead th.columnClickable {
+    cursor: pointer;
+    background: url("datatables/images/header_expand.png") no-repeat right top;
+    background-position-y: 16px;
+    padding-right: 15px;
+}
+
+.columnTypeWrapper {
+    text-align: right;
+}
+
+.disabledColumn {
+    background-color: #f7f8f9;
+}

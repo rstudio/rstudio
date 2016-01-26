@@ -34,6 +34,9 @@ var cachedFilterValues = [];
 // the height of the table at the last time we adjusted it to fit its window
 var lastHeight = 0;
 
+// the table header height of the table at the last time we adjusted it to fit
+var lastHeaderHeight = 0;
+
 // scroll handlers; these are detached when the data viewer is hidden 
 var detachedHandlers = [];
 var lastScrollPos = 0;
@@ -49,6 +52,22 @@ var ordering = true;
 
 // show row numbers in index column
 var rowNumbers = true;
+
+// list of calls to defer after table is init (e.g. showing headers)
+var postInitActions = {};
+
+// callback to trigger column options
+var onColumnOpen;
+
+// callback to dismiss column options
+var onColumnDismiss;
+
+// reference to the column being opened
+var columnsPopup = null;
+
+// Active column properties
+var activeColumnInfo = {
+};
 
 var isHeaderWidthMismatched = function() {
   // find the elements to measure (they may not exist)
@@ -224,12 +243,16 @@ var sizeDataTable = function(force) {
     return;
   }
 
+  var thead = document.getElementById("data_cols");
+  var theadHeight = thead ? thead.clientHeight : 0;
+
   // ignore if height hasn't changed
-  if (lastHeight === window.innerHeight && !force) {
+  if (lastHeight === window.innerHeight && lastHeaderHeight === theadHeight && !force) {
     return;
   }
   
   lastHeight = window.innerHeight;
+  lastHeaderHeight = theadHeight;
 
   // adjust scroll body height accordingly
   var scrollBody = $(".dataTables_scrollBody");
@@ -240,8 +263,10 @@ var sizeDataTable = function(force) {
   }
 
   // apply new size
-  table.settings().scroller().measure(false);
-  table.draw();
+  if (table) {
+    table.settings().scroller().measure(false);
+    table.draw();
+  }
 };
 
 var debouncedDataTableSize = debounce(sizeDataTable, 75);
@@ -478,6 +503,7 @@ var createBooleanFilterUI = function(idx, col, onDismiss) {
       opt.textContent = values[logical];
       opt.className = "choiceListItem";
       opt.addEventListener("click", setBoolValHandler(values[logical]));
+
       list.appendChild(opt);
     }
     popup.appendChild(list);
@@ -524,12 +550,15 @@ var invokeFilterPopup = function (ele, buildPopup, onDismiss, dismissOnClick) {
       dismissPopup(true);
     } else {
       popup = createFilterPopup();
-      buildPopup(popup);
+      var popupInfo = buildPopup(popup);
       document.body.appendChild(popup);
 
       // compute position
-      var top = $(ele).offset().top + 20;
-      var left = $(ele).offset().left - 4;
+      var top = $(ele).offset().top + (!popupInfo ? 20 : popupInfo.top)
+      var left = $(ele).offset().left + (!popupInfo ? -4 : popupInfo.left);
+      if (popupInfo && popupInfo.width) {
+        $(popup).width(popupInfo.width(ele));
+      }
 
       // ensure we're not outside the body
       if (popup.offsetWidth + left > document.body.offsetWidth) {
@@ -542,6 +571,7 @@ var invokeFilterPopup = function (ele, buildPopup, onDismiss, dismissOnClick) {
       document.body.addEventListener("keydown", checkEscDismiss);
       dismissActivePopup = dismissPopup;
     }
+
     evt.preventDefault();
     evt.stopPropagation();
   });
@@ -611,6 +641,57 @@ var createFilterUI = function(idx, col) {
   return host;
 };
 
+var createColumnTypesUI = function(th, idx, col) {
+  var host = document.createElement("div");
+  host.className = "columnTypeWrapper";
+
+  var checkLightDismiss = function(evt) {
+    if (columnsPopup && onColumnDismiss && !columnsPopup.contains(evt.target))
+      onColumnDismiss();
+  };
+
+  var checkEscDismiss = function(evt) {
+    if (evt.keyCode === 27) {
+      if (onColumnDismiss)
+        onColumnDismiss();
+    }
+  };
+
+  var val = document.createElement("div");
+  val.textContent = "(" + (col.col_type_assigned ? col.col_type_assigned : col.col_type_r) + ")";
+  val.className = "columnTypeHeader";
+
+  th.className = th.className + " columnClickable";
+  th.addEventListener("click", function(evt) {
+    if (columnsPopup == null || columnsPopup != th) {
+      columnsPopup = th;
+      activeColumnInfo = {
+        left: $(host).offset().left - 5,
+        top: $(host).offset().top + 19,
+        width: $(th).outerWidth() - 1,
+        index: idx,
+        name: col.col_name
+      };
+      if (onColumnOpen)
+        onColumnOpen();
+
+      evt.preventDefault();
+      evt.stopPropagation();
+    }
+    else {
+      columnsPopup = null;
+      if (onColumnDismiss)
+        onColumnDismiss();
+    }
+  });
+
+  document.body.addEventListener("click", checkLightDismiss);
+  document.body.addEventListener("keydown", checkEscDismiss);
+
+  host.appendChild(val);
+  return host;
+};
+
 var createFilterPopup = function() {
   var filterUI = document.createElement("div");
   filterUI.className = "filterPopup";
@@ -632,7 +713,7 @@ var createHeader = function(idx, col) {
   }
 
   if (idx === 0) {
-    th.className = "first-child"
+    th.className = "first-child";
   }
 
   // add the column label, if it has one
@@ -685,6 +766,13 @@ var initDataTableLoad = function(result) {
   window.addEventListener("resize", function() { 
     debouncedDataTableSize(); 
   });
+
+  // trigger post-init actions
+  for (actionName in postInitActions) {
+    if (postInitActions[actionName]) {
+      postInitActions[actionName]();
+    }
+  }
 }
 
 var initDataTable = function(resCols, data) {
@@ -762,12 +850,24 @@ var initDataTable = function(resCols, data) {
       }];
   }
   else {
-    dataTableData = data;
+    // Create an empty array of data tto be use as a map in the callback
+    dataTableData = [];
+    for (i = 0; i < data[0].length; i++) {
+      dataTableData.push(i);
+    }
+
     dataTableColumns = cols.map(function (e, idx) {
+      var className = (rowNumbers && idx === 0) ? "first-child" : null;
+      if (e.col_disabled) {
+        className = "disabledColumn";
+      }
+
       return {
-        "sClass": (rowNumbers && idx === 0) ? "first-child" : null,
+        "sClass": className,
         "visible": (!rowNumbers && idx === 0) ? false : true,
-        "data": e.col_name,
+        "data": function (row, type, set, meta) {
+          return (meta.col == 0 ? meta.row : data[meta.col-1][meta.row]);
+        },
         "width": "4em",
         "render": e.col_type === "numeric" ? renderNumberCell : renderTextCell
       };
@@ -858,6 +958,7 @@ var bootstrap = function(data) {
   cachedSearch = "";
   cachedFilterValues = [];
   lastHeight = 0;
+  lastHeaderHeight = 0;
   lastScrollPos = 0;
   detachedHandlers = [];
 
@@ -911,42 +1012,78 @@ var bootstrap = function(data) {
   }
 };
 
-// Exports -------------------------------------------------------------------
-
-// called from RStudio to toggle the filter UI 
-window.setFilterUIVisible = function(visible) {
+var setHeaderUIVisible = function(visible, initialize, hide) {
   var thead = document.getElementById("data_cols");
 
-  // it's possible the dable is getting redrawn right now; if it is, ignore
+  // it's possible the dable is getting redrawn right now; if it is, defer
   // this request.
   if (thead === null || table === null || cols === null) {
+    postInitActions["setHeaderUIVisible"] = visible ? (function() {
+      setHeaderUIVisible(true, initialize);
+    }) : null;
     return false;
   }
 
   if (!visible) {
-    // clear all the filter data
-    table.columns().search("");
+    hide(thead);
     // close any popup
     if (dismissActivePopup)
       dismissActivePopup(true);
   }
   for (var i = 0; i < Math.min(thead.children.length, cols.length); i++) {
-    var col = cols[i];
+    var colIdx = i + (rowNumbers ? 0 : 1)
+    var col = cols[colIdx];
     var th = thead.children[i];
-    if (col.col_search_type === "numeric" || 
-        col.col_search_type === "character" ||
-        col.col_search_type === "factor" ||
-        col.col_search_type === "boolean")  {
-      if (visible) {
-        var filter = createFilterUI(i, col);
-        th.appendChild(filter);
-      } else if (th.children.length > 1) {
-        th.removeChild(th.lastChild);
+    if (visible) {
+      var headerElement = initialize(th, col, colIdx);
+      if (headerElement) {
+        th.appendChild(headerElement);
       }
+    } else if (th.children.length > 1) {
+      th.removeChild(th.lastChild);
     }
   }
   sizeDataTable(true);
   return true;
+};
+
+// Exports -------------------------------------------------------------------
+
+// called from RStudio to toggle the filter UI 
+window.setFilterUIVisible = function(visible) {
+  var setFilterUIVisiblePerColumn = function(th, col, i) {
+    if (col.col_search_type === "numeric" || 
+        col.col_search_type === "character" ||
+        col.col_search_type === "factor" ||
+        col.col_search_type === "boolean")  {
+      return createFilterUI(i, col);
+    }
+
+    return null;
+  }
+
+  var hideFilterUI = function() {
+    // clear all the filter data
+    table.columns().search("");
+  }
+
+  return setHeaderUIVisible(visible, setFilterUIVisiblePerColumn, hideFilterUI);
+};
+
+// called from RStudio to toggle the filter UI 
+window.setColumnDefinitionsUIVisible = function(visible, onColOpen, onColDismiss) {
+  var setColumnDefinitionsUIVisiblePerColumn = function(th, col, i) {
+    return createColumnTypesUI(th, i, col);
+  }
+
+  var hideColumnTypeUI = function(thead) {
+    $(".columnTypeWrapper").remove();
+  }
+
+  onColumnOpen = onColOpen ? onColOpen : onColumnOpen;
+  onColumnDismiss = onColDismiss ? onColDismiss : onColumnDismiss;
+
+  return setHeaderUIVisible(visible, setColumnDefinitionsUIVisiblePerColumn, hideColumnTypeUI);
 };
 
 // called from RStudio when the underlying object changes
@@ -1031,6 +1168,10 @@ window.setOption = function(option, value) {
       rowNumbers = value === "true" ? true : false;
       break;
   }
+}
+
+window.getActiveColumn = function() {
+  return activeColumnInfo;
 }
 
 var parsedLocation = parseLocationUrl();
