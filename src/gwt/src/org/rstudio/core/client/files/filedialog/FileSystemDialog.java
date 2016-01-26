@@ -190,6 +190,14 @@ public abstract class FileSystemDialog extends ModalDialogBase
    public void showModal()
    {
       super.showModal();
+      
+      // Modal dialogs always open with zindex of 1001 for the dialog and 1000
+      // for the glass. Therefore, when opening this file dialog inside a modal,
+      // the glass element fails to cover the existing modal. Setting the zIndex
+      // higher than the average modal fixes this issues.
+      getGlassElement().getStyle().setZIndex(2000);
+      getElement().getStyle().setZIndex(2001);
+      
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          public void execute()

@@ -307,8 +307,10 @@ public class DataImport extends Composite
             
             columnTypesMenu_.setSize(column.getWidth() + "px", "");
             
-            columnTypesMenu_.getElement().getStyle().setZIndex(
-                  zIndex_ != null ? zIndex_ + 1000 : 2000);
+            if (zIndex_ != null)
+            {
+               columnTypesMenu_.getElement().getStyle().setZIndex(zIndex_);
+            }
             
             boolean columnOnly = importOptions_.getColumnOnly(column.getName());
             String columnType = importOptions_.getColumnType(column.getName());
