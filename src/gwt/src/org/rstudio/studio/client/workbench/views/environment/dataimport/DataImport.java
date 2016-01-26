@@ -97,6 +97,8 @@ public class DataImport extends Composite
       Size size = DomMetrics.adjustedElementSizeToDefaultMax();
       setSize(Math.max(minWidth, size.width) + "px", Math.max(minHeight, size.height) + "px");
       
+      setCodeAreaDefaults();
+      
       columnTypesMenu_ = new DataImportColumnTypesMenu();
       
       dataImportOptionsUi_ = getOptionsUiForMode(dataImportMode);
@@ -397,6 +399,15 @@ public class DataImport extends Composite
       });
    }
    
+   private void setCodeAreaDefaults()
+   {
+      codeArea_.getEditor().getSession().setEditorMode(
+            EditorLanguage.LANG_R.getParserName(), false);
+      codeArea_.getEditor().getSession().setUseWrapMode(true);
+      codeArea_.getEditor().getSession().setWrapLimitRange(20, 120);
+      codeArea_.getEditor().getRenderer().setShowGutter(false);
+   }
+   
    private void assembleDataImport()
    {
       server_.assembleDataImport(getOptions(),
@@ -413,11 +424,7 @@ public class DataImport extends Composite
             
             codePreview_ = response.getImportCode();
             dataImportOptionsUi_.setAssembleResponse(response);
-            codeArea_.getEditor().getSession().setEditorMode(
-                  EditorLanguage.LANG_R.getParserName(), false);
-            codeArea_.getEditor().getSession().setUseWrapMode(true);
-            codeArea_.getEditor().getSession().setWrapLimitRange(20, 120);
-            codeArea_.getEditor().getRenderer().setShowGutter(false);
+            setCodeAreaDefaults();
             codeArea_.setCode(codePreview_);
          }
          
