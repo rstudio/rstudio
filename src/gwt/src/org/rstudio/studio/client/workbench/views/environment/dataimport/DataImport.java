@@ -160,6 +160,7 @@ public class DataImport extends Composite
                {
                   if (fileOrUrlChooserTextBox_.getText() != importOptions_.getImportLocation())
                   {
+                     lastSuccessfulResponse_ = null;
                      importOptions_.resetColumnDefinitions();
                   }
                   
