@@ -68,11 +68,16 @@ int main(int argc, char * const argv[])
          return inappropriateUsage(ERROR_LOCATION);
       else if (::isatty(STDOUT_FILENO))
          return inappropriateUsage(ERROR_LOCATION);
-      else if (argc != 2)
+      else if (argc != 2 && argc != 3)
          return inappropriateUsage(ERROR_LOCATION);
 
       // read username from command line
       std::string username(argv[1]);
+
+      std::string service("rstudio");
+      if (argc == 3) {
+        service = argv[2];
+      }
 
       // read password (up to 200 chars in length)
       std::string password;
@@ -94,8 +99,8 @@ int main(int argc, char * const argv[])
       }
 
       // verify password
-      if (core::system::PAM("rstudio", false).login(username,
-                                                    password) == PAM_SUCCESS)
+      core::system::PAM pam(service, false);
+      if (pam.login(username, password) == PAM_SUCCESS)
          return EXIT_SUCCESS;
       else
          return EXIT_FAILURE;
