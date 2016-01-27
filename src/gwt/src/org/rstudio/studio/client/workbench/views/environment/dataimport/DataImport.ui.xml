@@ -18,17 +18,26 @@
 			margin-bottom: 7px;
 		}
 		.importLabel {	
-			margin-top: 14px;
+			margin-top: 12px;
+			margin-right: 5px;
+			margin-left: 5px;
+		}
+		.topImportLabel {	
+			margin-top: 6px;
+			margin-right: 5px;
+			margin-left: 5px;
 		}
 		.gridViewerFrame {
 			margin-top: 3px;
 			border: 1px solid #999;
-			width: 100%;
+			width: literal("calc(100% - 10px)");
 			height: 10px;
 			
 			-ms-flex-grow: 4;
 			-webkit-flex-grow: 4;
 			flex-grow: 4;
+			margin-right: 5px;
+			margin-left: 5px;
 		}
 		.optionsPanel {
 			display: -ms-flexbox;
@@ -38,8 +47,6 @@
 			-ms-flex-grow: 1;
 			-webkit-flex-grow: 1;
 			flex-grow: 1;
-
-			padding-right: 10px
 		}
 		.optionsElement {
 			display: -ms-flexbox;
@@ -66,11 +73,14 @@
 			min-width: 300px;
 		}
 		.codeTextArea {
-			width: 100%;
+			width: literal("calc(100% - 10px)");
 			height: 110px;
 			border: 1px solid #999;
 			background-color: #FFF;
 			margin-top: 3px;
+
+			margin-right: 5px;
+			margin-left: 5px;
 		}
 		.bottomPanel {
 			display: -ms-flexbox;
@@ -84,6 +94,7 @@
 		.copyButton {
 			margin-left: auto;
 			margin-top: 9px;
+			margin-right: 5px;
 			height: 20px;
 		}
 		.copyButton:active {
@@ -99,9 +110,14 @@
 			height: literal("calc(100% - 6px)");
 			margin: 3px 3px 3px 3px;
 		}
+		.fileChooser {
+			margin-right: 5px;
+			margin-left: 5px;
+		}
 	</ui:style>
 	<g:HTMLPanel styleName="{style.flexPanel}">
-	    <rs:FileOrUrlChooserTextBox ui:field="fileOrUrlChooserTextBox_"/>
+	    <rs:FileOrUrlChooserTextBox ui:field="fileOrUrlChooserTextBox_"
+	        						styleName="{style.fileChooser}"/>
 		<g:Label text="Data Preview:" styleName="{style.importLabel}"/>
 		<rs:GridViewerFrame ui:field="gridViewer_"
 		    				styleName="{style.gridViewerFrame}"/>

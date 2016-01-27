@@ -18,6 +18,7 @@ package org.rstudio.core.client.widget;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -39,6 +40,8 @@ public class FileOrUrlChooserTextBox extends TextBoxWithButton
       super(label, "", browseModeCaption_, null);
       
       updateOperation_ = updateOperation;
+      
+      getTextBox().getElement().getStyle().setHeight(22, Unit.PX);
       
       super.addValueChangeHandler(new ValueChangeHandler<String>()
       {
