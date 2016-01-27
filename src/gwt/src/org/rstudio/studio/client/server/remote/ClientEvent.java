@@ -137,6 +137,7 @@ class ClientEvent extends JavaScriptObject
    public static final String CollabEditSaved = "collab_edit_saved";
    public static final String AddinRegistryUpdated = "addin_registry_updated";
    public static final String ChunkOutput = "chunk_output";
+   public static final String ChunkOutputFinished = "chunk_output_finished";
    
    protected ClientEvent()
    {

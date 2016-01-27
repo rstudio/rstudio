@@ -147,6 +147,7 @@ extern const int kProjectAccessRevoked;
 extern const int kCollabEditSaved;
 extern const int kAddinRegistryUpdated;
 extern const int kChunkOutput;
+extern const int kChunkOutputFinished;
 }
    
 class ClientEvent

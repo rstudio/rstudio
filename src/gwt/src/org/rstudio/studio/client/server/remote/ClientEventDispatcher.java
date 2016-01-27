@@ -65,6 +65,7 @@ import org.rstudio.studio.client.projects.model.OpenProjectError;
 import org.rstudio.studio.client.projects.model.ProjectUser;
 import org.rstudio.studio.client.rmarkdown.events.ShinyGadgetDialogEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
+import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdParamsReadyEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderOutputEvent;
@@ -760,6 +761,11 @@ public class ClientEventDispatcher
          {
             RmdChunkOutput data = event.getData();
             eventBus_.fireEvent(new RmdChunkOutputEvent(data));
+         }
+         else if (type.equals(ClientEvent.ChunkOutputFinished))
+         {
+            RmdChunkOutputFinishedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new RmdChunkOutputFinishedEvent(data));
          }
          else
          {

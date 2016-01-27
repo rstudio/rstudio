@@ -4184,6 +4184,19 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void refreshChunkOutput(String docId, String requestId,
+         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(docId));
+      params.set(1, new JSONString(requestId));
+      sendRequest(RPC_SCOPE,
+            "refresh_chunk_output",
+            params,
+            requestCallback);
+   }
+
+   @Override
    public void getRmdOutputInfo(String input,
          ServerRequestCallback<RmdOutputInfo> requestCallback)
    {

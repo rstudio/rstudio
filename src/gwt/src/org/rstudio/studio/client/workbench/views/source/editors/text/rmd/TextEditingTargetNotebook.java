@@ -20,6 +20,9 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
+import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -45,7 +48,8 @@ import com.google.inject.Inject;
 
 public class TextEditingTargetNotebook 
                implements EditorThemeStyleChangedEvent.Handler,
-                          RmdChunkOutputEvent.Handler
+                          RmdChunkOutputEvent.Handler,
+                          RmdChunkOutputFinishedEvent.Handler
 {
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
                                     TextEditingTargetRMarkdownHelper rmdHelper,
@@ -86,19 +90,25 @@ public class TextEditingTargetNotebook
                editingTarget.addEditorThemeStyleChangedHandler(
                                              TextEditingTargetNotebook.this);
             }
+            
+            // load initial chunk output from server
+            loadInitialChunkOutput();
          }
       });
    }
    
    @Inject
-   public void initialize(EventBus events, UIPrefs uiPrefs)
+   public void initialize(EventBus events, UIPrefs uiPrefs,
+         RMarkdownServerOperations server)
    {
       events_ = events;
       uiPrefs_ = uiPrefs;
+      server_ = server;
       
       events_.addHandler(RmdChunkOutputEvent.TYPE, this);
+      events_.addHandler(RmdChunkOutputFinishedEvent.TYPE, this);
    }
-     
+   
    public void executeChunk(Scope chunk, String code)
    {
       // maximize the source window if it's paired with the console
@@ -174,9 +184,29 @@ public class TextEditingTargetNotebook
             break;
          }
       }
-      
    }
 
+   @Override
+   public void onRmdChunkOutputFinished(RmdChunkOutputFinishedEvent event)
+   {
+      if (event.getData().getRequestId() == Integer.toHexString(requestId_)) 
+      {
+         state_ = STATE_INITIALIZED;
+      }
+   }
+
+   private void loadInitialChunkOutput()
+   {
+      if (state_ != STATE_NONE)
+         return;
+      
+      state_ = STATE_INITIALIZING;
+      requestId_ = nextRequestId_++;
+      server_.refreshChunkOutput(docUpdateSentinel_.getId(), 
+            Integer.toHexString(requestId_), 
+            new VoidServerRequestCallback());
+   }
+     
    private void maximizeSourcePaneIfNecessary()
    {
       if (SourceWindowManager.isMainSourceWindow())
@@ -239,9 +269,24 @@ public class TextEditingTargetNotebook
    private final TextEditingTargetRMarkdownHelper rmdHelper_;
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel docUpdateSentinel_;
-   
+
+   private RMarkdownServerOperations server_;
    private EventBus events_;
    private UIPrefs uiPrefs_;
    
    private Style editorStyle_;
+
+   private static int nextRequestId_ = 0;
+   private int requestId_ = 0;
+   
+   private int state_ = STATE_NONE;
+
+   // no chunk state
+   private final static int STATE_NONE = 0;
+   
+   // synchronizing chunk state from server
+   private final static int STATE_INITIALIZING = 0;
+   
+   // chunk state synchronized
+   private final static int STATE_INITIALIZED = 0;
 }

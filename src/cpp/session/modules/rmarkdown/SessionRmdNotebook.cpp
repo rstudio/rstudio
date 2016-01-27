@@ -15,6 +15,8 @@
 
 #include "SessionRmdNotebook.hpp"
 
+#include <boost/foreach.hpp>
+
 #include <r/RJson.hpp>
 #include <r/RExec.hpp>
 
@@ -42,6 +44,27 @@ FilePath chunkOutputPath(const FilePath& file,
                        .childPath("contents.html");
 }
 
+Error enqueueChunkOutput(const FilePath& file, 
+                         const std::string& chunkId)
+{
+   // read the chunk HTML from the file
+   std::string html;
+   Error error = core::readStringFromFile(
+         chunkOutputPath(file, chunkId), &html);
+   if (error)
+      return error;
+
+   // and write it back out
+   json::Object output;
+   output["html"] = html;
+   output["chunk_id"] = chunkId;
+   output["file"] = file.absolutePath();
+   ClientEvent event(client_events::kChunkOutput, output);
+   module_context::enqueClientEvent(event);
+
+   return Success();
+}
+
 Error executeInlineChunk(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse*)
 {
@@ -62,19 +85,47 @@ Error executeInlineChunk(const json::JsonRpcRequest& request,
          chunkOutput.absolutePath()).call();
    if (error)
       return error;
-   std::string html;
-   error = core::readStringFromFile(chunkOutput, &html);
+
+   error = enqueueChunkOutput(FilePath(file), chunkId);
+
+   return Success();
+}
+
+Error refreshChunkOutput(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse*)
+{
+   std::string docId, requestId;
+   Error error = json::readParams(request.params, &docId, &requestId);
    if (error)
       return error;
 
-   // this RPC enqueues a client event to show chunk output rather than
-   // returning it directly for symmetry with other methods of updating chunk
-   // output (such as deserialization from caching and collaborative editing)
-   json::Object output;
-   output["html"] = html;
-   output["chunk_id"] = chunkId;
-   output["file"] = file;
-   ClientEvent event(client_events::kChunkOutput, output);
+   // get the source document 
+   boost::shared_ptr<source_database::SourceDocument> pSourceDoc;
+   error = source_database::get(docId, pSourceDoc);
+   if (error)
+      return error;
+   if (!pSourceDoc)
+      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
+
+   // find all the chunks and play them back to the client
+   json::Array chunkOutputs = pSourceDoc->chunkOutput();
+   BOOST_FOREACH(const json::Value& chunkOutput, chunkOutputs)
+   {
+      if (chunkOutput.type() != json::ObjectType)
+         continue;
+      std::string chunkId;
+      if (json::readObject(chunkOutput.get_obj(), "chunk_id", &chunkId) ==
+            Success()) 
+      {
+         // ignore errors here (it's okay if some chunks don't have output)
+         enqueueChunkOutput(FilePath(pSourceDoc->path()), chunkId);
+      }
+   }
+
+   json::Object result;
+   result["doc_id"] = docId;
+   result["request_id"] = requestId;
+   ClientEvent event(client_events::kChunkOutputFinished, result);
    module_context::enqueClientEvent(event);
 
    return Success();
@@ -87,10 +138,11 @@ Error initialize()
 {
    using boost::bind;
    using namespace module_context;
-
+   
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "execute_inline_chunk", executeInlineChunk))
+      (bind(registerRpcMethod, "refresh_chunk_output", refreshChunkOutput))
       (bind(module_context::sourceModuleRFile, "SessionRmdNotebook.R"));
 
    return initBlock.execute();
