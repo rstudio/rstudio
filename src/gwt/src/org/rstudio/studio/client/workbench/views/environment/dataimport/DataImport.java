@@ -388,9 +388,10 @@ public class DataImport extends Composite
             
             gridViewer_.setOption("status",
                   "Previewing first " + toLocaleString(maxRows_) + 
-                  " entries. " + Integer.toString(response.getParsingErrors()) +
-                  " parsing errors.");
-            
+                  " entries. " + (
+                        response.getParsingErrors() > 0 ?
+                        Integer.toString(response.getParsingErrors()) + " parsing errors." : "")
+                  );
             
             assignColumnDefinitions(response, importOptions_.getColumnDefinitions());
             
