@@ -137,6 +137,9 @@ import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
 import org.rstudio.studio.client.workbench.views.environment.model.DataPreviewResult;
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
@@ -4447,6 +4450,28 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "set_following_user", params, callback);
    }
 
+   @Override
+   public void previewDataImport(DataImportOptions dataImportOptions,
+                                 int maxCols,
+                                 int maxFactors,
+                                 ServerRequestCallback<DataImportPreviewResponse> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(dataImportOptions));
+      params.set(1, new JSONNumber(maxCols));
+      params.set(2, new JSONNumber(maxFactors));
+      sendRequest(RPC_SCOPE, PREVIEW_DATA_IMPORT, params, requestCallback);
+   }
+   
+   @Override
+   public void assembleDataImport(DataImportOptions dataImportOptions,
+                                  ServerRequestCallback<DataImportAssembleResponse> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(dataImportOptions));
+      sendRequest(RPC_SCOPE, ASSEMBLE_DATA_IMPORT, params, requestCallback);
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private boolean listeningForEvents_;
@@ -4794,4 +4819,7 @@ public class RemoteServer implements Server
    private static final String GET_SET_REF_CLASS_CALL = "get_set_ref_class_call";
    private static final String TRANSFORM_SNIPPET = "transform_snippet";
    private static final String GET_SNIPPETS = "get_snippets";
+
+   private static final String PREVIEW_DATA_IMPORT = "preview_data_import";
+   private static final String ASSEMBLE_DATA_IMPORT = "assemble_data_import";
 }

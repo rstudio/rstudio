@@ -72,6 +72,7 @@
                 else 
                   as.character(idx)
     col_type <- "unknown"
+    col_type_r <- "unknown"
     col_min <- 0
     col_max <- 0
     col_vals <- ""
@@ -91,6 +92,7 @@
     if (length(x[[idx]]) > 0 && length(x[[idx]][1]) == 1)
     {
       val <- x[[idx]][1]
+      col_type_r <- typeof(val)
       if (is.factor(val))
       {
         col_type <- "factor"
@@ -142,7 +144,8 @@
       col_max         = .rs.scalar(col_max),
       col_search_type = .rs.scalar(col_search_type),
       col_label       = .rs.scalar(col_label),
-      col_vals        = col_vals
+      col_vals        = col_vals,
+      col_type_r      = .rs.scalar(col_type_r)
     )
   })
   c(list(list(
@@ -152,7 +155,8 @@
       col_max         = .rs.scalar(0),
       col_search_type = .rs.scalar("none"),
       col_label       = .rs.scalar(""),
-      col_vals        = ""
+      col_vals        = "",
+      col_type_r      = .rs.scalar("")
     )), colAttrs)
 })
 

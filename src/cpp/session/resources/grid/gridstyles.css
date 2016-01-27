@@ -40,14 +40,14 @@ th {
     text-align: left; 
 }
 
-th, table.dataTable tbody td:first-child {
+th, td.first-child {
     font-size: 11px;
     color: #555555;
     background-color: #f7f8f9;
     font-weight: bold;
 }
 
-table.dataTable tbody td:first-child {
+td.first-child {
     text-align: right; 
 }
 
@@ -58,11 +58,11 @@ table.dataTable thead td {
     border-right: 1px solid #cfd4d8;
 }
 
-table.dataTable thead th:first-child {
-    background: none;
+th.first-child {
+    background: none !important;
 }
 
-table.dataTable th div:first-child {
+th.first-child div {
     margin-right: 12px;
 }
 
@@ -317,3 +317,23 @@ div.DTS div.DTS_Loading.showLoading {
     display: block;
 }
 
+.columnTypeHeader {
+    font-weight: normal;
+    font-style: italic;
+    margin-top: 3px;
+}
+
+table.dataTable thead th.columnClickable {
+    cursor: pointer;
+    background: url("datatables/images/header_expand.png") no-repeat right top;
+    background-position-y: 16px;
+    padding-right: 15px;
+}
+
+.columnTypeWrapper {
+    text-align: right;
+}
+
+.disabledColumn {
+    background-color: #f7f8f9;
+}

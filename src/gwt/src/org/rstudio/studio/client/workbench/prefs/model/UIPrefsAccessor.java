@@ -393,6 +393,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("use_roxygen", false);
    }
    
+   public PrefValue<Boolean> useDataImport()
+   {
+      return bool("use_dataimport", false);
+   }
+   
    public static final String PDF_PREVIEW_NONE = "none";
    public static final String PDF_PREVIEW_RSTUDIO = "rstudio";
    public static final String PDF_PREVIEW_DESKTOP_SYNCTEX = "desktop-synctex";

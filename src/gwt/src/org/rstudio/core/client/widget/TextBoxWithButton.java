@@ -94,7 +94,6 @@ public class TextBoxWithButton extends Composite
    {
       return addHandler(handler, ValueChangeEvent.getType());
    }
-  
    
    public void focusButton()
    {
@@ -156,6 +155,11 @@ public class TextBoxWithButton extends Composite
    protected TextBox getTextBox()
    {
       return textBox_;
+   }
+   
+   protected ThemedButton getButton()
+   {
+      return themedButton_;
    }
    
    @Override
