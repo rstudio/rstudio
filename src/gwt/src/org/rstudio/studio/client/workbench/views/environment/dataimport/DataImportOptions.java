@@ -23,7 +23,7 @@ public class DataImportOptions extends JavaScriptObject
    {
    }
    
-   public final static native DataImportOptionsCsv create() /*-{
+   public static native DataImportOptions create() /*-{
       return {};
    }-*/;
    
@@ -43,6 +43,7 @@ public class DataImportOptions extends JavaScriptObject
    public final native void setOptions(JavaScriptObject options) /*-{
       var this_ = this;
       this_.importLocation = options.importLocation;
+      this_.mode = options.mode;
       
       if (options.columnDefinitions) {
          Object.keys(options.columnDefinitions).forEach(function(key) {

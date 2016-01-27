@@ -51,7 +51,7 @@
 	            <tr>
 	                <td>Name:</td>
 	                <td>
-	                    <g:TextBox styleName="{style.nameTextBox}"/>
+	                    <g:TextBox ui:field="nameTextBox_" styleName="{style.nameTextBox}"/>
 	                </td>
 	            </tr>
 	        </table>

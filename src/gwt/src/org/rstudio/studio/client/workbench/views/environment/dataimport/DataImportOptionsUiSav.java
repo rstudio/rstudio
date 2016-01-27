@@ -15,8 +15,12 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 public class DataImportOptionsUiSav extends DataImportOptionsUi
@@ -38,6 +42,21 @@ public class DataImportOptionsUiSav extends DataImportOptionsUi
    @Override
    public DataImportOptionsSav getOptions()
    {
-      return DataImportOptionsSav.create("test");
+      return DataImportOptionsSav.create(nameTextBox_.getValue());
    }
+   
+   @Override
+   public void setAssembleResponse(DataImportAssembleResponse response)
+   {
+      nameTextBox_.setText(response.getDataName());
+   }
+   
+   @Override
+   public void clearDataName()
+   {
+      nameTextBox_.setText("");
+   }
+   
+   @UiField
+   TextBox nameTextBox_;
 }

@@ -355,6 +355,18 @@ public class DataImport extends Composite
       gridViewer_.setOption("ordering", "false");
       gridViewer_.setOption("rowNumbers", "false");
       gridViewer_.setData(response);
+      
+      if (response.supportsColumnOperations())
+      {
+         gridViewer_.setColumnDefinitionsUIVisible(true, onColumnMenuShow(), new Operation()
+         {
+            @Override
+            public void execute()
+            {
+               columnTypesMenu_.hide();
+            }
+         });
+      }
    }
    
    private void previewDataImport()
@@ -398,14 +410,6 @@ public class DataImport extends Composite
             assignColumnDefinitions(response, importOptions_.getColumnDefinitions());
             
             setGridViewerData(response);
-            gridViewer_.setColumnDefinitionsUIVisible(true, onColumnMenuShow(), new Operation()
-            {
-               @Override
-               public void execute()
-               {
-                  columnTypesMenu_.hide();
-               }
-            });
             
             progressIndicator_.onCompleted();
          }
