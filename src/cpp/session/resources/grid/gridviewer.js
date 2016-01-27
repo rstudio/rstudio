@@ -1008,7 +1008,6 @@ var bootstrap = function(data) {
           })
         }
         else {
-          data.data = {}
           data.data = [
             []
           ];
