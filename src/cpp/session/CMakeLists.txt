@@ -151,6 +151,7 @@ set (SESSION_SOURCE_FILES
    modules/presentation/Tutorial.cpp
    modules/presentation/TutorialInstaller.cpp
    modules/rmarkdown/SessionRMarkdown.cpp
+   modules/rmarkdown/SessionRmdNotebook.cpp
    modules/rmarkdown/RMarkdownPresentation.cpp
    modules/shiny/SessionShiny.cpp
    modules/tex/SessionCompilePdf.cpp
