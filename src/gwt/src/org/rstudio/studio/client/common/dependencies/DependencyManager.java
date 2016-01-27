@@ -304,6 +304,39 @@ public class DependencyManager implements InstallShinyEvent.Handler
       return deps.toArray(new Dependency[deps.size()]);
    }
    
+   public void withDataImportSAV(String userAction, final Command command)
+   {
+     withDependencies(
+        "Preparing Import from SAV",
+        userAction, 
+        dataImportSavDependenciesArray(), 
+        false,
+        new CommandWithArg<Boolean>()
+        {
+           @Override
+           public void execute(Boolean succeeded)
+           {
+              if (succeeded)
+                 command.execute();
+           }
+        }
+     );
+   }
+   
+   private ArrayList<Dependency> dataImportSavDependencies()
+   {
+      ArrayList<Dependency> deps = new ArrayList<Dependency>();
+      deps.add(Dependency.cranPackage("haven", "0.2.0"));
+      deps.add(Dependency.cranPackage("Rcpp", "0.11.4"));
+      return deps;
+   }
+   
+   private Dependency[] dataImportSavDependenciesArray()
+   {
+      ArrayList<Dependency> deps = dataImportSavDependencies();
+      return deps.toArray(new Dependency[deps.size()]);
+   }
+   
    private void withDependencies(String progressCaption,
                                  final String userAction,
                                  final CommandWith2Args<String,Command> userPrompt,

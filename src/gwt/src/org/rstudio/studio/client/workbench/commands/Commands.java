@@ -267,6 +267,7 @@ public abstract class
    public abstract AppCommand importDatasetFromFile();
    public abstract AppCommand importDatasetFromURL();
    public abstract AppCommand importDatasetFromCSV();
+   public abstract AppCommand importDatasetFromSAV();
 
    // Environment
    public abstract AppCommand activateEnvironment();

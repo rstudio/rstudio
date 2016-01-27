@@ -699,6 +699,7 @@ public class Application implements ApplicationEventHandlers
       else
       {
          commands_.importDatasetFromCSV().remove();
+         commands_.importDatasetFromSAV().remove();
       }
       
       // show workbench

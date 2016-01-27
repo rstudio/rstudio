@@ -476,20 +476,20 @@ public class EnvironmentPresenter extends BasePresenter
                  }
               });
    }
-
-   void onImportDatasetFromCSV()
+   
+   Command getImportDatasetCommandFromMode(
+      final DataImportModes dataImportMode,
+      final String dialogTitle)
    {
-      final String action = "Preparing data import";
-      dependencyManager_.withDataImportCSV(
-         action, 
+      return 
          new Command() {
             @Override
             public void execute()
             {
                view_.bringToFront();
                DataImportDialog dataImportDialog = new DataImportDialog(
-                     DataImportModes.Text,
-                     "Data Import",
+                     dataImportMode,
+                     dialogTitle,
                      new OperationWithInput<String>()
                {
                   @Override
@@ -501,7 +501,27 @@ public class EnvironmentPresenter extends BasePresenter
                
                dataImportDialog.showModal();
             }
-      });
+         };
+   }
+
+   void onImportDatasetFromCSV()
+   {
+      dependencyManager_.withDataImportCSV(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.Text,
+                  "Import Text Data")
+      );
+   }
+   
+   void onImportDatasetFromSAV()
+   {
+      dependencyManager_.withDataImportSAV(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.Statistics,
+                  "Import Statistical Data")
+      );
    }
 
    public void onOpenDataFile(OpenDataFileEvent event)
@@ -946,4 +966,6 @@ public class EnvironmentPresenter extends BasePresenter
    private String functionEnvName_;
    private Timer requeryContextTimer_;
    private SearchPathFunctionDefinition searchFunction_;
+   
+   final String dataImportDependecyUserAction_ = "Preparing data import";
 }

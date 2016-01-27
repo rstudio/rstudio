@@ -48,6 +48,8 @@ public class EnvironmentTab extends DelayLoadWorkbenchTab<EnvironmentPresenter>
       @Handler
       public abstract void onImportDatasetFromCSV();
       @Handler
+      public abstract void onImportDatasetFromSAV();
+      @Handler
       public abstract void onClearWorkspace();
 
       abstract void initialize(EnvironmentContextData environmentState);

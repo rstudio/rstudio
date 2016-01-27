@@ -136,6 +136,8 @@ public class DataImport extends Composite
       {
       case Text:
          return new DataImportOptionsUiCsv();
+      case Statistics:
+         return new DataImportOptionsUiSav();
       }
       
       return null;

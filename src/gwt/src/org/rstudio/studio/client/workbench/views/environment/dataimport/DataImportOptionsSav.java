@@ -1,5 +1,5 @@
 /*
- * DataImportModes.java
+ * DataImportOptionsSav.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -15,8 +15,15 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
-public enum DataImportModes
+public class DataImportOptionsSav extends DataImportOptions
 {
-   Text,
-   Statistics,
+   protected DataImportOptionsSav()
+   {
+   }
+   
+   public final static native DataImportOptionsSav create(String dataName) /*-{
+      return {
+         "dataName": dataName
+      }
+   }-*/;
 }
