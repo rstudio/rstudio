@@ -50,7 +50,7 @@
             return (paste("\"", optionValue, "\"", sep = ""))
          },
          "locale" = {
-            return (paste(ns, "locale(date_names=\"", optionValue, "\")", sep = ""))
+            return (paste(ns, "locale(encoding=\"", optionValue, "\")", sep = ""))
          },
          "columnDefinitions" = {
             colParams <- c()

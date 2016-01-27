@@ -32,6 +32,8 @@ public class DataImportPreviewResponse extends JavaScriptObject
    }-*/;
    
    public final native void setColumnDefinitions(DataImportPreviewResponse response) /*-{
-      return this.columns = response.columns;
+      if (response) {
+         return this.columns = response.columns;
+      }
    }-*/;
 }

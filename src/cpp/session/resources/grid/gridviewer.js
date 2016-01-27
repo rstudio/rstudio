@@ -1014,7 +1014,9 @@ var bootstrap = function(data) {
           ];
         }
 
-        initDataTable(data.columns, data.data);
+        if (data.columns) {
+          initDataTable(data.columns, data.data);
+        }
       });
     });
   }
