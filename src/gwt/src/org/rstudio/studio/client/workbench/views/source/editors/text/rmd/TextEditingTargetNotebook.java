@@ -59,7 +59,7 @@ public class TextEditingTargetNotebook
    {
       docDisplay_ = docDisplay;
       docUpdateSentinel_ = docUpdateSentinel;  
-      initialChunkOutputs_ = document.getChunkOutput();
+      initialChunkDefs_ = document.getChunkDefs();
       rmdHelper_ = rmdHelper;
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -71,28 +71,28 @@ public class TextEditingTargetNotebook
          @Override
          public void onRenderFinished(RenderFinishedEvent event)
          {
-            if (initialChunkOutputs_ != null)
+            if (initialChunkDefs_ != null)
             {
-               for (int i = 0; i<initialChunkOutputs_.length(); i++)
+               for (int i = 0; i<initialChunkDefs_.length(); i++)
                {
-                  ChunkOutput chunkOutput = initialChunkOutputs_.get(i);
+                  ChunkDefinition chunkOutput = initialChunkDefs_.get(i);
                   LineWidget widget = LineWidget.create(
-                        ChunkOutput.LINE_WIDGET_TYPE,
+                        ChunkDefinition.LINE_WIDGET_TYPE,
                         chunkOutput.getRow(), 
                         elementForChunkOutput(chunkOutput), 
                         chunkOutput);
                   widget.setFixedWidth(true);
                   docDisplay_.addLineWidget(widget);
                }
-               initialChunkOutputs_ = null;
+               initialChunkDefs_ = null;
                
                // sync to editor style changes
                editingTarget.addEditorThemeStyleChangedHandler(
                                              TextEditingTargetNotebook.this);
+
+               // load initial chunk output from server
+               loadInitialChunkOutput();
             }
-            
-            // load initial chunk output from server
-            loadInitialChunkOutput();
          }
       });
    }
@@ -117,23 +117,23 @@ public class TextEditingTargetNotebook
       // get the row that ends the chunk
       int row = chunk.getEnd().getRow();
 
-      ChunkOutput chunkOutput;
+      ChunkDefinition chunkOutput;
       
       // if there is an existing widget just modify it in place
       LineWidget existingWidget = docDisplay_.getLineWidgetForRow(row);
       if (existingWidget != null && 
-          existingWidget.getType().equals(ChunkOutput.LINE_WIDGET_TYPE))
+          existingWidget.getType().equals(ChunkDefinition.LINE_WIDGET_TYPE))
       {
          chunkOutput = existingWidget.getData();
       }
       // otherwise create a new one
       else
       {
-         chunkOutput = ChunkOutput.create(row, 1, true, 
+         chunkOutput = ChunkDefinition.create(row, 1, true, 
                StringUtil.makeRandomId(12), "ref");
         
          LineWidget widget = LineWidget.create(
-                               ChunkOutput.LINE_WIDGET_TYPE,
+                               ChunkDefinition.LINE_WIDGET_TYPE,
                                row, 
                                elementForChunkOutput(chunkOutput), 
                                chunkOutput);
@@ -159,7 +159,7 @@ public class TextEditingTargetNotebook
       for (int i=0; i<lineWidgets.length(); i++)
       {
          LineWidget lineWidget = lineWidgets.get(i);
-         if (lineWidget.getType().equals(ChunkOutput.LINE_WIDGET_TYPE))
+         if (lineWidget.getType().equals(ChunkDefinition.LINE_WIDGET_TYPE))
             setChunkOutputStyle(lineWidget.getElement());
       }
    }
@@ -175,7 +175,7 @@ public class TextEditingTargetNotebook
       JsArray<LineWidget> widgets = docDisplay_.getLineWidgets();
       for (int i = 0; i < widgets.length(); i++)
       {
-         ChunkOutput output = widgets.get(i).getData();
+         ChunkDefinition output = widgets.get(i).getData();
          if (event.getOutput().getChunkId() == output.getChunkId())
          {
             widgets.get(i).getElement().setInnerHTML(
@@ -246,7 +246,7 @@ public class TextEditingTargetNotebook
    }
    
    
-   private DivElement elementForChunkOutput(ChunkOutput chunkOutput)
+   private DivElement elementForChunkOutput(ChunkDefinition chunkOutput)
    {
       DivElement div = Document.get().createDivElement();
       div.addClassName(ThemeStyles.INSTANCE.selectableText());
@@ -264,7 +264,7 @@ public class TextEditingTargetNotebook
       }
    }
    
-   private JsArray<ChunkOutput> initialChunkOutputs_;
+   private JsArray<ChunkDefinition> initialChunkDefs_;
    
    private final TextEditingTargetRMarkdownHelper rmdHelper_;
    private final DocDisplay docDisplay_;

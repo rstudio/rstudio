@@ -49,7 +49,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasF
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasLineWidgetsChangedHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasRenderFinishedHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutput;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -352,7 +352,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    JsArray<LineWidget> getLineWidgets();
    LineWidget getLineWidgetForRow(int row);
    
-   JsArray<ChunkOutput> getChunkOutput();
+   JsArray<ChunkDefinition> getChunkDefs();
 
    Position getDocumentEnd();
    

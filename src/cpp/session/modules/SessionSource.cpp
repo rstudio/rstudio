@@ -14,6 +14,7 @@
  */
 
 #include "SessionSource.hpp"
+#include "rmarkdown/SessionRmdNotebook.hpp"
 
 #include <string>
 #include <map>
@@ -72,6 +73,15 @@ void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
    // derive the extended type property
    (*pDocJson)["extended_type"] = module_context::events()
                                    .onDetectSourceExtendedType(pDoc);
+
+   // amend with chunk definitions 
+   json::Value chunkDefs;
+   Error error = rmarkdown::notebook::getChunkDefs(
+         module_context::resolveAliasedPath(pDoc->path()), 
+         &chunkDefs);
+   if (error)
+      LOG_ERROR(error);
+   (*pDocJson)["chunk_definitions"] = chunkDefs;
 }
 
 void detectExtendedType(boost::shared_ptr<SourceDocument> pDoc)
@@ -219,9 +229,10 @@ Error openDocument(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // return the doc
+   // create JSON representation of doc
    json::Object jsonDoc;
    writeDocToJson(pDoc, &jsonDoc);
+
    pResponse->setResult(jsonDoc);
 
    return Success();
@@ -271,9 +282,12 @@ Error saveDocumentCore(const std::string& contents,
    }
 
    bool hasChunkOutput = json::isType<json::Array>(jsonChunkOutput);
-   if (hasChunkOutput)
+   if (hasChunkOutput && hasPath)
    {
-      pDoc->setChunkOutput(jsonChunkOutput.get_array());
+      error = rmarkdown::notebook::setChunkDefs(fullDocPath,
+            jsonChunkOutput.get_array());
+      if (error)
+         LOG_ERROR(error);
    }
 
    // handle document (varies depending upon whether we have a path)

@@ -157,7 +157,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationRPubsSource;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutput;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
@@ -1536,7 +1536,7 @@ public class RemoteServer implements Server
                             String fileType,
                             String encoding,
                             String foldSpec,
-                            JsArray<ChunkOutput> chunkOutput,
+                            JsArray<ChunkDefinition> chunkOutput,
                             String contents,
                             ServerRequestCallback<String> requestCallback)
    {
@@ -1556,7 +1556,7 @@ public class RemoteServer implements Server
                                 String fileType,
                                 String encoding,
                                 String foldSpec,
-                                JsArray<ChunkOutput> chunkOutput,
+                                JsArray<ChunkDefinition> chunkOutput,
                                 String replacement,
                                 int offset,
                                 int length,

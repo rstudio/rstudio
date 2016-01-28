@@ -408,9 +408,6 @@ Error SourceDocument::readFromJson(json::Object* pDocJson)
       json::Value folds = docJson["folds"];
       folds_ = !folds.is_null() ? folds.get_str() : std::string();
 
-      json::Value chunkOutput = docJson["chunk_output"];
-      chunkOutput_ = !chunkOutput.is_null() ? chunkOutput.get_array() : json::Array();
-
       json::Value order = docJson["relative_order"];
       relativeOrder_ = !order.is_null() ? order.get_int() : 0;
 
@@ -451,7 +448,6 @@ void SourceDocument::writeToJson(json::Object* pDocJson) const
    jsonDoc["relative_order"] = relativeOrder();
    jsonDoc["properties"] = properties();
    jsonDoc["folds"] = folds();
-   jsonDoc["chunk_output"] = chunkOutput();
    jsonDoc["lastKnownWriteTime"] = json::Value(
          static_cast<boost::int64_t>(lastKnownWriteTime_));
    jsonDoc["encoding"] = encoding_;

@@ -1,7 +1,7 @@
 /*
- * ChunkOutput.java
+ * ChunkDefinition.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,15 +17,15 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
-public class ChunkOutput extends JavaScriptObject
+public class ChunkDefinition extends JavaScriptObject
 {
    public static final String LINE_WIDGET_TYPE = "ChunkOutput";
    
-   protected ChunkOutput()
+   protected ChunkDefinition()
    {
    }
    
-   public static native final ChunkOutput create(int row,
+   public static native final ChunkDefinition create(int row,
                                                  int rowCount,
                                                  boolean visible,
                                                  String chunkId,
@@ -39,9 +39,9 @@ public class ChunkOutput extends JavaScriptObject
       };
    }-*/;
    
-   public final ChunkOutput withRow(int row)
+   public final ChunkDefinition withRow(int row)
    {
-      return ChunkOutput.create(row, getRowCount(), getVisible(), getChunkId(), 
+      return ChunkDefinition.create(row, getRowCount(), getVisible(), getChunkId(), 
             getHtmlRef());
    }
    
@@ -66,7 +66,7 @@ public class ChunkOutput extends JavaScriptObject
    }-*/;
    
    
-   public final boolean equalTo(ChunkOutput other)
+   public final boolean equalTo(ChunkDefinition other)
    {
       return getRow() == other.getRow() &&
              getRowCount() == other.getRowCount() &&
@@ -75,8 +75,8 @@ public class ChunkOutput extends JavaScriptObject
    }
    
    
-   public final static boolean equalTo(JsArray<ChunkOutput> a, 
-                                       JsArray<ChunkOutput> b)
+   public final static boolean equalTo(JsArray<ChunkDefinition> a, 
+                                       JsArray<ChunkDefinition> b)
    {
       if (a.length() != b.length())
          return false;

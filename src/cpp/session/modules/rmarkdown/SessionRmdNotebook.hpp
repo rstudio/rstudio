@@ -17,9 +17,12 @@
 #ifndef SESSION_RMARKDOWN_NOTEBOOK_HPP
 #define SESSION_RMARKDOWN_NOTEBOOK_HPP
 
+#include <core/json/Json.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
+   class FilePath;
 }
 }
  
@@ -30,6 +33,11 @@ namespace rmarkdown {
 namespace notebook {
 
 core::Error initialize();
+
+core::Error getChunkDefs(const core::FilePath& file, core::json::Value* pDefs);
+
+core::Error setChunkDefs(const core::FilePath& file, 
+                         const core::json::Array& pDefs);
 
 } // namespace notebook
 } // namespace rmarkdown

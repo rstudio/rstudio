@@ -44,7 +44,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.Fold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.VimMarks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutput;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFailedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveInitiatedEvent;
@@ -341,8 +341,8 @@ public class DocUpdateSentinel
       final String foldSpec = Fold.encode(Fold.flatten(docDisplay_.getFolds()));
       String oldFoldSpec = sourceDoc_.getFoldSpec();
       
-      final JsArray<ChunkOutput> chunkOutput = docDisplay_.getChunkOutput();
-      JsArray<ChunkOutput> oldChunkOutput = sourceDoc_.getChunkOutput();
+      final JsArray<ChunkDefinition> chunkOutput = docDisplay_.getChunkDefs();
+      JsArray<ChunkDefinition> oldChunkDefs = sourceDoc_.getChunkDefs();
       
       //String patch = DiffMatchPatch.diff(oldContents, newContents);
       SubstringDiff diff = new SubstringDiff(oldContents, newContents);
@@ -351,7 +351,7 @@ public class DocUpdateSentinel
       // wasteful, it causes the server to think the document is dirty.
       if (path == null && fileType == null && diff.isEmpty()
           && foldSpec.equals(oldFoldSpec) 
-          && ChunkOutput.equalTo(chunkOutput, oldChunkOutput))
+          && ChunkDefinition.equalTo(chunkOutput, oldChunkDefs))
       {
          changesPending_ = false;
          return false;
@@ -432,7 +432,7 @@ public class DocUpdateSentinel
                         // can use them for change detection the next
                         // time around
                         sourceDoc_.setFoldSpec(foldSpec);
-                        sourceDoc_.setChunkOutput(chunkOutput);
+                        sourceDoc_.setChunkDefs(chunkOutput);
                         
                         onSuccessfulUpdate(newContents,
                                            newHash,
