@@ -255,20 +255,4 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    
    @UiField
    CheckBox trimSpacesCheckBox_;
-   
-   private final HandlerManager handlerManager_ = new HandlerManager(this);
-
-   @Override
-   public HandlerRegistration addValueChangeHandler(ValueChangeHandler<DataImportOptions> handler)
-   {
-      return handlerManager_.addHandler(
-            ValueChangeEvent.getType(),
-            handler);
-   }
-   
-   @Override
-   public void fireEvent(GwtEvent<?> event)
-   {
-      handlerManager_.fireEvent(event);
-   }
 }

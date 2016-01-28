@@ -21,10 +21,15 @@ public class DataImportOptionsSav extends DataImportOptions
    {
    }
    
-   public final static native DataImportOptionsSav create(String dataName) /*-{
+   public final static native DataImportOptionsSav create(
+      String dataName,
+      String modelLocation,
+      String format) /*-{
       return {
          "mode": "statistics",
-         "dataName": dataName
+         "dataName": dataName,
+         "modelLocation": modelLocation,
+         "format": format
       }
    }-*/;
 }

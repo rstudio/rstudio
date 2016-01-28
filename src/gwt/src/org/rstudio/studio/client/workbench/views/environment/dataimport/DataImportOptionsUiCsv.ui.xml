@@ -18,9 +18,6 @@
 			flex-grow: 1;
 		}
 		.optionsBlock {
-			margin-top: 3px;
-			padding-left: 7px;
-			
 			display: -ms-flexbox;
 			display: -webkit-flex;
 			display: flex;
@@ -39,6 +36,7 @@
 			padding-left: 10px;
 			padding-bottom: 3px;
 
+			margin-top: 3px;
 			margin-right: 5px;
 			margin-left: 5px;
 		}

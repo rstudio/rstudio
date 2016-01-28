@@ -18,7 +18,10 @@ package org.rstudio.studio.client.workbench.views.environment.dataimport;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
 
@@ -31,7 +34,9 @@ public class DataImportOptionsUi extends Composite implements HasValueChangeHand
 
    public HandlerRegistration addValueChangeHandler(ValueChangeHandler<DataImportOptions> handler)
    {
-      return null;
+      return handlerManager_.addHandler(
+            ValueChangeEvent.getType(),
+            handler);
    }
    
    public void setAssembleResponse(DataImportAssembleResponse response)
@@ -42,5 +47,18 @@ public class DataImportOptionsUi extends Composite implements HasValueChangeHand
    public void clearDataName()
    {
       
+   }
+   
+   public void setImportLocation(String importLocation)
+   {
+      
+   }
+   
+   private final HandlerManager handlerManager_ = new HandlerManager(this);
+   
+   @Override
+   public void fireEvent(GwtEvent<?> event)
+   {
+      handlerManager_.fireEvent(event);
    }
 }

@@ -18,7 +18,6 @@ package org.rstudio.studio.client.workbench.views.environment.dataimport;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.widget.FileOrUrlChooserTextBox;
 import org.rstudio.core.client.widget.GridViewerFrame;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -152,31 +151,31 @@ public class DataImport extends Composite
    }
    
    @UiFactory
-   FileOrUrlChooserTextBox makeFileOrUrlChooserTextBox() {
-      FileOrUrlChooserTextBox fileOrUrlChooserTextBox = new FileOrUrlChooserTextBox(
-            "File/URL:",
+   DataImportFileChooser makeFileOrUrlChooserTextBox() {
+      DataImportFileChooser dataImportFileChooser = new DataImportFileChooser(
             new Operation()
             {
                @Override
                public void execute()
                {
-                  if (fileOrUrlChooserTextBox_.getText() != importOptions_.getImportLocation())
+                  if (dataImportFileChooser_.getText() != importOptions_.getImportLocation())
                   {
                      lastSuccessfulResponse_ = null;
                      importOptions_.resetColumnDefinitions();
                   }
                   
                   importOptions_.setImportLocation(
-                     !fileOrUrlChooserTextBox_.getText().isEmpty() ?
-                     fileOrUrlChooserTextBox_.getText() :
+                     !dataImportFileChooser_.getText().isEmpty() ?
+                           dataImportFileChooser_.getText() :
                      null);
                   dataImportOptionsUi_.clearDataName();
+                  dataImportOptionsUi_.setImportLocation(dataImportFileChooser_.getText());
                   previewDataImport();
                }
             },
-            null);
+            true);
       
-      return fileOrUrlChooserTextBox;
+      return dataImportFileChooser;
    }
    
    @UiFactory
@@ -193,7 +192,7 @@ public class DataImport extends Composite
    }
    
    @UiField
-   FileOrUrlChooserTextBox fileOrUrlChooserTextBox_;
+   DataImportFileChooser dataImportFileChooser_;
    
    @UiField
    GridViewerFrame gridViewer_;
@@ -375,7 +374,7 @@ public class DataImport extends Composite
       
       assembleDataImport();
       
-      if (fileOrUrlChooserTextBox_.getText() == "")
+      if (dataImportFileChooser_.getText() == "")
       {
          gridViewer_.setData(null);
          return;

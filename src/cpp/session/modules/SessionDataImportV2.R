@@ -218,14 +218,26 @@
          # load parameters
          options <- list()
          options[["path"]] <- dataImportOptions$importLocation
+         options[["b7dat"]] <- dataImportOptions$importLocation
+         options[["b7cat"]] <- dataImportOptions$modelLocation
+
+         havenFunction <- switch(dataImportOptions$format,
+            "sav" = list(name = "read_sav", ref = haven::read_sav),
+            "dta" = list(name = "read_dta", ref = haven::read_dta),
+            "por" = list(name = "read_por", ref = haven::read_por),
+            "sas" = list(name = "read_sas", ref = haven::read_sas),
+            "stata" = list(name = "read_stata", ref = haven::read_stata)
+         )
 
          # set special parameter types
          optionTypes <- list()
          optionTypes[["path"]] <- "character"
+         optionTypes[["b7dat"]] <- "character"
+         optionTypes[["b7cat"]] <- "character"
 
          return(list(
-            name = "read_sav",
-            reference = haven::read_sav,
+            name = havenFunction$name,
+            reference = havenFunction$ref,
             package = "haven",
             options = options,
             optionTypes = optionTypes,

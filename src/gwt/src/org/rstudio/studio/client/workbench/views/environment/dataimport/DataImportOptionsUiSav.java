@@ -15,11 +15,18 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -37,12 +44,28 @@ public class DataImportOptionsUiSav extends DataImportOptionsUi
    public DataImportOptionsUiSav()
    {
       initWidget(uiBinder.createAndBindUi(this));
+      
+      initDefaults();
+      initEvents();
+   }
+   
+   void initDefaults()
+   {
+      formatListBox_.addItem("SAV", "sav");
+      formatListBox_.addItem("DTA", "dta");
+      formatListBox_.addItem("POR", "por");
+      formatListBox_.addItem("SAS", "sas");
+      formatListBox_.addItem("Stata", "stata");
    }
    
    @Override
    public DataImportOptionsSav getOptions()
    {
-      return DataImportOptionsSav.create(nameTextBox_.getValue());
+      return DataImportOptionsSav.create(
+         nameTextBox_.getValue(),
+         fileChooser_.getText(),
+         formatListBox_.getSelectedValue()
+      );
    }
    
    @Override
@@ -57,6 +80,75 @@ public class DataImportOptionsUiSav extends DataImportOptionsUi
       nameTextBox_.setText("");
    }
    
+   @Override
+   public void setImportLocation(String importLocation)
+   {
+      String[] components = importLocation.split("\\.");
+      if (components.length > 0)
+      {
+         String extension = components[components.length - 1].toLowerCase();
+         for (int idx = 0; idx < formatListBox_.getItemCount(); idx++)
+         {
+            if (formatListBox_.getValue(idx) == extension)
+            {
+               formatListBox_.setSelectedIndex(idx);
+            }
+         }
+      }
+   }
+   
+   @UiFactory
+   DataImportFileChooser makeLocationChooser()
+   {
+      DataImportFileChooser dataImportFileChooser = new DataImportFileChooser(
+         new Operation()
+         {
+            @Override
+            public void execute()
+            {
+               triggerChange();
+            }
+         },
+         false);
+      
+      return dataImportFileChooser;
+   }
+   
+   void triggerChange()
+   {
+      ValueChangeEvent.fire(this, getOptions());
+   }
+   
+   void initEvents()
+   {
+      ValueChangeHandler<String> valueChangeHandler = new ValueChangeHandler<String>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> arg0)
+         {
+            triggerChange();
+         }
+      };
+      
+      ChangeHandler changeHandler = new ChangeHandler()
+      {
+         @Override
+         public void onChange(ChangeEvent arg0)
+         {
+            triggerChange();
+         }
+      };
+      
+      nameTextBox_.addValueChangeHandler(valueChangeHandler);
+      formatListBox_.addChangeHandler(changeHandler);
+   }
+   
    @UiField
    TextBox nameTextBox_;
+   
+   @UiField
+   ListBox formatListBox_;
+   
+   @UiField
+   DataImportFileChooser fileChooser_;
 }

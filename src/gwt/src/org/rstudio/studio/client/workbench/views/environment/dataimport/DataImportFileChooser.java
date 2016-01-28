@@ -1,5 +1,5 @@
 /*
- * FileOrUrlChooserTextBox.java
+ * DataImportFileChooser.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -13,20 +13,29 @@
  *
  */
 
-package org.rstudio.core.client.widget;
+package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.Focusable;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.Widget;
 
-public class FileOrUrlChooserTextBox extends TextBoxWithButton
+public class DataImportFileChooser extends Composite
 {
    private static String browseModeCaption_ = "Browse...";
    private static String updateModeCaption_ = "Update";
@@ -35,24 +44,36 @@ public class FileOrUrlChooserTextBox extends TextBoxWithButton
    private int checkTextBoxInterval_ = 250;
    private final Operation updateOperation_;
    
-   public FileOrUrlChooserTextBox(String label, Operation updateOperation, final Focusable focusAfter)
+   private static DataImportFileChooserUiBinder uiBinder = GWT
+         .create(DataImportFileChooserUiBinder.class);
+   
+   interface DataImportFileChooserUiBinder
+         extends UiBinder<Widget, DataImportFileChooser>
    {
-      super(label, "", browseModeCaption_, null);
+   }
+   
+   public DataImportFileChooser(Operation updateOperation,
+                                boolean growTextbox)
+   {  
+      initWidget(uiBinder.createAndBindUi(this));
       
       updateOperation_ = updateOperation;
       
-      getTextBox().getElement().getStyle().setHeight(22, Unit.PX);
+      if (growTextbox)
+      {
+         locationTextBox_.getElement().getStyle().setHeight(22, Unit.PX);
+         locationTextBox_.getElement().getStyle().setMarginTop(0, Unit.PX);
+      }
       
-      super.addValueChangeHandler(new ValueChangeHandler<String>()
+      locationTextBox_.addValueChangeHandler(new ValueChangeHandler<String>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<String> arg0)
          {
-            updateOperation_.execute();
          }
       });
       
-      addClickHandler(new ClickHandler()
+      actionButton_.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
          {
@@ -74,27 +95,24 @@ public class FileOrUrlChooserTextBox extends TextBoxWithButton
                            if (input == null)
                               return;
    
-                           setText(input.getPath());
+                           locationTextBox_.setText(input.getPath());
                            preventModeChange();
                            
                            indicator.onCompleted();
-                           if (focusAfter != null)
-                              focusAfter.setFocus(true);
+                           
+                           updateOperation_.execute();
                         }
                      });
             }
          }
       });
       
-      setReadOnly(false);
-      
       checkForTextBoxChange();
    }
    
-   @Override
    public String getText()
    {
-      return getTextBox().getText();
+      return locationTextBox_.getText();
    }
    
    @Override
@@ -102,6 +120,12 @@ public class FileOrUrlChooserTextBox extends TextBoxWithButton
    {
       checkTextBoxInterval_ = 0;
    }
+   
+   @UiField
+   TextBox locationTextBox_;
+   
+   @UiField
+   ThemedButton actionButton_;
    
    private void checkForTextBoxChange()
    {
@@ -114,12 +138,12 @@ public class FileOrUrlChooserTextBox extends TextBoxWithButton
          @Override
          public void run()
          {
-            if (lastTextBoxValue_ != null && getTextBox().getText() != lastTextBoxValue_)
+            if (lastTextBoxValue_ != null && locationTextBox_.getText() != lastTextBoxValue_)
             {
-               switchToUpdateMode(!getTextBox().getText().isEmpty());
+               switchToUpdateMode(!locationTextBox_.getText().isEmpty());
             }
             
-            lastTextBoxValue_ = getTextBox().getText();
+            lastTextBoxValue_ = locationTextBox_.getText();
             checkForTextBoxChange();
          }
       }.schedule(checkTextBoxInterval_);
@@ -127,7 +151,7 @@ public class FileOrUrlChooserTextBox extends TextBoxWithButton
    
    private void preventModeChange()
    {
-      lastTextBoxValue_ = getTextBox().getText();
+      lastTextBoxValue_ = locationTextBox_.getText();
    }
    
    private void switchToUpdateMode(Boolean updateMode)
@@ -137,11 +161,11 @@ public class FileOrUrlChooserTextBox extends TextBoxWithButton
          updateMode_ = updateMode;
          if (updateMode)
          {
-            getButton().setText(updateModeCaption_);
+            actionButton_.setText(updateModeCaption_);
          }
          else
          {
-            getButton().setText(browseModeCaption_);
+            actionButton_.setText(browseModeCaption_);
          }
       }
    }
