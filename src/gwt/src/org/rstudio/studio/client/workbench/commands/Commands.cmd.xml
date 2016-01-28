@@ -2068,12 +2068,12 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="importDatasetFromSAS"
         label="Import Dataset from SAS..."
-        menuLabel="From _SAS..."
+        menuLabel="From S_AS..."
         windowMode="main"/>
 
    <cmd id="importDatasetFromStata"
         label="Import Dataset from Stata..."
-        menuLabel="From _Stata..."
+        menuLabel="From S_tata..."
         windowMode="main"/>
 
    <cmd id="importDatasetFromXLS"
@@ -2102,8 +2102,8 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
 
    <cmd id="importDatasetFromMongo"
-        label="Import Dataset from Mongo..."
-        menuLabel="From _Mongo..."
+        label="Import Dataset from Mongo DB..."
+        menuLabel="From _Mongo DB..."
         windowMode="main"/>
 
    <cmd id="refreshWorkspace"
