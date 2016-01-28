@@ -43,6 +43,7 @@ import com.google.gwt.dev.jjs.ast.JUnaryOperation;
 import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 
 import java.util.Collections;
@@ -289,6 +290,9 @@ public class ImplementJsVarargs {
       varargsParameter = Iterables.getLast(x.getParams());
       varargsIndex = x.getParams().size() - 1;
 
+      // JsVarargs parameter can be assumend not null in the implementing method
+      varargsParameter.setType(varargsParameter.getType().strengthenToNonNull());
+
       argumentsCopyVariable = null;
       switch (needsVarargsProcessing(x)) {
         case GENERAL_ACCESS:
@@ -360,6 +364,7 @@ public class ImplementJsVarargs {
 
       SourceInfo sourceInfo = varargsParameter.getSourceInfo();
       JBlock preamble = new JBlock(sourceInfo);
+      JArrayType varargsArrayType = (JArrayType) varargsParameter.getType().getUnderlyingType();
 
       // (1) varargs_ = new VarArgsType[varargs.length - varArgsParameterIndex]
       JExpression lengthMinusVarargsIndex = varargsIndex == 0
@@ -368,10 +373,9 @@ public class ImplementJsVarargs {
               new JArrayLength(sourceInfo, varargsParameter.createRef(sourceInfo)),
               new JIntLiteral(sourceInfo, varargsIndex));
       JNewArray arrayVariable = JNewArray.createArrayWithDimensionExpressions(sourceInfo,
-              (JArrayType) varargsParameter.getType(),
-              Collections.singletonList(lengthMinusVarargsIndex));
+          varargsArrayType, Collections.singletonList(lengthMinusVarargsIndex));
       arrayVariable.getLeafTypeClassLiteral().setField(
-          program.getClassLiteralField(((JArrayType) varargsParameter.getType()).getLeafType()));
+          program.getClassLiteralField(varargsArrayType.getLeafType()));
       preamble.addStmt(new JDeclarationStatement(
           sourceInfo, argumentsCopyVariable.createRef(sourceInfo), arrayVariable));
 
@@ -385,7 +389,7 @@ public class ImplementJsVarargs {
       JBlock block = new JBlock(sourceInfo);
       block.addStmt(new JBinaryOperation(
           sourceInfo,
-          ((JArrayType) varargsParameter.getType()).getElementType(),
+          varargsArrayType.getElementType(),
           JBinaryOperator.ASG,
           new JArrayRef(sourceInfo, replacer.replace(varargsParameter.createRef(sourceInfo)),
               index.createRef(sourceInfo)),
@@ -437,10 +441,20 @@ public class ImplementJsVarargs {
         JNewArray varargArray = (JNewArray) varargArgument;
         if (varargArray.getInitializers() != null) {
           x.setArg(varargIndex, ArrayNormalizer.getInitializerArray(varargArray));
+          madeChanges();
           return;
         }
       }
-      // Passed as an array to varargs method.
+
+      SourceInfo varargsArgumentsourceInfo = varargArgument.getSourceInfo();
+      if (varargArgument.getType().canBeNull()) {
+        // varargsArgument => Array.ensureNotNull(varargsArgument)
+        x.setArg(varargIndex, new JMethodCall(varargsArgumentsourceInfo, null,
+            program.getIndexedMethod(RuntimeConstants.ARRAY_ENSURE_NOT_NULL), varargArgument));
+      }
+
+      // Passed as an array to varargs method will result in an apply call, in which case hoist the
+      // qualifier to make sure it is only evaluated once.
       JExpression instance = x.getInstance();
       if (x.getTarget().needsDynamicDispatch() && !x.isStaticDispatchOnly()
           && instance != null && !(instance instanceof JVariableRef)) {

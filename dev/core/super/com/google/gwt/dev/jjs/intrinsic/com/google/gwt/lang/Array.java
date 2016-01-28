@@ -16,6 +16,7 @@
 package com.google.gwt.lang;
 
 import static javaemul.internal.InternalPreconditions.checkArrayType;
+import static javaemul.internal.InternalPreconditions.checkNotNull;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
@@ -321,6 +322,10 @@ public final class Array {
     return elementTypeCategory >= TYPE_PRIMITIVE_LONG
         && elementTypeCategory <= TYPE_PRIMITIVE_BOOLEAN;
   };
+
+  public static Object ensureNotNull(Object array) {
+    return checkNotNull(array);
+  }
 
   private Array() {
   }

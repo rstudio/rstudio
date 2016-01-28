@@ -73,6 +73,7 @@ public class JavaAstConstructor {
           "      int elementTypeId, int elementTypeCategory, Object array) { }",
           "  static <T> Class<T> getClassLiteralForArray() { return null; }",
           "  public static boolean isJavaArray(Object o) { return false; }",
+          "  static Object ensureNotNull(Object o) { return null; }",
           "}"
       );
     }

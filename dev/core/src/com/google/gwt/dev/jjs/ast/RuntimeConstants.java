@@ -24,6 +24,7 @@ public class RuntimeConstants {
   public static final String ASYNC_FRAGMENT_LOADER_ON_LOAD = "AsyncFragmentLoader.onLoad";
   public static final String ASYNC_FRAGMENT_LOADER_RUN_ASYNC = "AsyncFragmentLoader.runAsync";
 
+  public static final String ARRAY_ENSURE_NOT_NULL = "Array.ensureNotNull";
   public static final String ARRAY_GET_CLASS_LITERAL_FOR_ARRAY = "Array.getClassLiteralForArray";
   public static final String ARRAY_INITIALIZE_UNIDIMENSIONAL_ARRAY = "Array.initUnidimensionalArray";
   public static final String ARRAY_INITIALIZE_MULTIDIMENSIONAL_ARRAY = "Array.initMultidimensionalArray";

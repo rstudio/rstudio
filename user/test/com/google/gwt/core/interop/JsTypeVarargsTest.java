@@ -20,6 +20,7 @@ import static jsinterop.annotations.JsPackage.GLOBAL;
 import com.google.gwt.core.client.ScriptInjector;
 import com.google.gwt.junit.client.GWTTestCase;
 
+import javaemul.internal.annotations.DoNotInline;
 import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsMethod;
 import jsinterop.annotations.JsPackage;
@@ -54,28 +55,50 @@ public class JsTypeVarargsTest extends GWTTestCase {
   }-*/;
 
   @JsMethod
-  public static native int varargsMethod1(Object... varargs) /*-{
+  @DoNotInline
+  public static native int varargsLengthThruArguments(Object... varargs) /*-{
     return arguments.length;
   }-*/;
 
   @JsMethod
-  public static int varargsMethod2(Object... varargs) {
+  @DoNotInline
+  public static int varargsLength(Object... varargs) {
+    return varargs.length;
+  }
+
+  @JsMethod
+  @DoNotInline
+  public static int stringVarargsLength(String... varargs) {
+    return varargs.length;
+  }
+
+  @JsMethod
+  @DoNotInline
+  public static int stringVarargsLengthV2(int i,  String... varargs) {
     return varargs.length;
   }
 
   @JsMethod(namespace = JsPackage.GLOBAL)
-  public static Object varargsMethod3(int slot, Object... varargs) {
+  @DoNotInline
+  public static Object getVarargsSlot(int slot, Object... varargs) {
     return varargs[slot];
   }
 
   @JsMethod(namespace = JsPackage.GLOBAL)
-  public static Object[] varargsMethod4(int slot, Object... varargs) {
+  @DoNotInline
+  public static Object[] clrearVarargsSlot(int slot, Object... varargs) {
     varargs[slot] = null;
     return varargs;
   }
 
-  private static native Object callVarargsMethod3FromJSNI() /*-{
-    return $global.varargsMethod3(2, "1", "2", "3", "4");
+  @JsMethod(namespace = JsPackage.GLOBAL)
+  @DoNotInline
+  public static Class<?> getVarargsArrayClass(String... varargs) {
+    return varargs.getClass();
+  }
+
+  private static native Object callGetVarargsSlotUsingJsName() /*-{
+    return $global.getVarargsSlot(2, "1", "2", "3", "4");
   }-*/;
 
   @JsType(isNative = true, namespace = GLOBAL, name = "Object")
@@ -108,7 +131,7 @@ public class JsTypeVarargsTest extends GWTTestCase {
   static class SubSubclassNativeWithVarargsConstructor
       extends SubclassNativeWithVarargsConstructor {
     SubSubclassNativeWithVarargsConstructor() {
-      super(0, null);
+      super(0, new Object[0]);
     }
 
     Object varargsMethod(int i, Object... args) {
@@ -121,15 +144,60 @@ public class JsTypeVarargsTest extends GWTTestCase {
   }
 
   public void testVarargsCall_regularMethods() {
-    assertEquals(3, varargsMethod1("A", "B", "C"));
-    assertEquals(4, varargsMethod2("A", "B", "C", "D"));
-    assertEquals(2, varargsMethod1(new NativeJsType[]{null, null}));
-    assertEquals(5, varargsMethod2(new NativeJsType[]{null, null, null, null, null}));
-    assertEquals("C", varargsMethod3(2, "A", "B", "C", "D"));
-    assertEquals("3", callVarargsMethod3FromJSNI());
-    assertNull(varargsMethod4(1, "A", "B", "C")[1]);
-    assertEquals("A", varargsMethod4(1, "A", "B", "C")[0]);
-    assertEquals(3, varargsMethod4(1, "A", "B", "C").length);
+    assertEquals(3, varargsLengthThruArguments("A", "B", "C"));
+    assertEquals(4, varargsLength("A", "B", "C", "D"));
+    assertEquals(2, varargsLengthThruArguments(new NativeJsType[]{null, null}));
+    assertEquals(5, varargsLength(new NativeJsType[]{null, null, null, null, null}));
+    assertEquals("C", getVarargsSlot(2, "A", "B", "C", "D"));
+    assertEquals("3", callGetVarargsSlotUsingJsName());
+    assertNull(clrearVarargsSlot(1, "A", "B", "C")[1]);
+    assertEquals("A", clrearVarargsSlot(1, "A", "B", "C")[0]);
+    assertEquals(3, clrearVarargsSlot(1, "A", "B", "C").length);
+    assertSame(String[].class, getVarargsArrayClass("A", "B", "C"));
+  }
+  public void testVarargsCall_edgeCases() {
+    assertSame(String[].class, getVarargsArrayClass());
+    assertSame(String[].class, getVarargsArrayClass(new String[0]));
+    assertSame(String[].class, getVarargsArrayClass((String) null));
+    try {
+      assertSame(String[].class, getVarargsArrayClass(null));
+      fail("Should have thrown exception");
+    } catch (NullPointerException expected) {
+    }
+    try {
+      assertSame(String[].class, getVarargsArrayClass((String[]) null));
+      fail("Should have thrown exception");
+    } catch (NullPointerException expected) {
+    }
+
+    assertEquals(0, stringVarargsLength());
+    assertEquals(0, stringVarargsLength(new String[0]));
+    assertEquals(1, stringVarargsLength((String) null));
+    try {
+      assertEquals(0, stringVarargsLength(null));
+      fail("Should have thrown exception");
+    } catch (NullPointerException expected) {
+    }
+    try {
+      assertEquals(0, stringVarargsLength((String[]) null));
+      fail("Should have thrown exception");
+    } catch (NullPointerException expected) {
+    }
+
+    // Test with an additional parameter as it results in a slightly different call site.
+    assertEquals(0, stringVarargsLengthV2(0));
+    assertEquals(0, stringVarargsLengthV2(0, new String[0]));
+    assertEquals(1, stringVarargsLengthV2(0, (String) null));
+    try {
+      assertEquals(0, stringVarargsLengthV2(0, null));
+      fail("Should have thrown exception");
+    } catch (NullPointerException expected) {
+    }
+    try {
+      assertEquals(0, stringVarargsLengthV2(0, (String[]) null));
+      fail("Should have thrown exception");
+    } catch (NullPointerException expected) {
+    }
   }
 
   public void testVarargsCall_constructors() {
@@ -220,7 +288,8 @@ public class JsTypeVarargsTest extends GWTTestCase {
     return obj;
   }
   public void testVarargsCall_sideEffectingInstance() {
-    SubclassNativeWithVarargsConstructor object = new SubclassNativeWithVarargsConstructor(0, null);
+    SubclassNativeWithVarargsConstructor object =
+        new SubclassNativeWithVarargsConstructor(0, new Object[0]);
     sideEffectCount = 0;
     Object[] params = new Object[] { object, null };
     assertSame(object, doSideEffect(object).varargsMethod(0, params));
