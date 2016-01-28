@@ -41,21 +41,34 @@ public class DataImportOptionsUiSav extends DataImportOptionsUi
    {
    }
 
-   public DataImportOptionsUiSav()
+   public DataImportOptionsUiSav(DataImportModes mode)
    {
       initWidget(uiBinder.createAndBindUi(this));
       
-      initDefaults();
+      initDefaults(mode);
       initEvents();
    }
    
-   void initDefaults()
+   void initDefaults(DataImportModes mode)
    {
       formatListBox_.addItem("SAV", "sav");
       formatListBox_.addItem("DTA", "dta");
       formatListBox_.addItem("POR", "por");
       formatListBox_.addItem("SAS", "sas");
       formatListBox_.addItem("Stata", "stata");
+      
+      switch(mode)
+      {
+      case SAS:
+         formatListBox_.setSelectedIndex(3);
+         break;
+      case Stata:
+         formatListBox_.setSelectedIndex(4);
+         break;
+      default:
+         formatListBox_.setSelectedIndex(0);
+         break;
+      }
    }
    
    @Override
@@ -112,11 +125,6 @@ public class DataImportOptionsUiSav extends DataImportOptionsUi
          false);
       
       return dataImportFileChooser;
-   }
-   
-   void triggerChange()
-   {
-      ValueChangeEvent.fire(this, getOptions());
    }
    
    void initEvents()

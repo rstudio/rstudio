@@ -54,6 +54,11 @@ public class DataImportOptionsUi extends Composite implements HasValueChangeHand
       
    }
    
+   void triggerChange()
+   {
+      ValueChangeEvent.fire(this, getOptions());
+   }
+   
    private final HandlerManager handlerManager_ = new HandlerManager(this);
    
    @Override

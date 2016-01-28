@@ -30,4 +30,22 @@ public class ApplicationUtils
       return pattern.replaceAll(url, replaceWith);
    }
    
+   // Returns:
+   // < 0 if version1 is earlier than version 2
+   // 0 if version1 and version2 are the same 
+   // > 0 if version1 is later than version 2
+   public static int compareVersions(String version1, String version2)
+   {
+      String[] v1parts = version1.split(".");
+      String[] v2parts = version2.split(".");
+      int numParts = Math.min(v1parts.length, v2parts.length);
+      for (int i = 0; i < numParts; i++)
+      {
+         int result = Integer.parseInt(v1parts[i]) - 
+                      Integer.parseInt(v2parts[i]);
+         if (result != 0)
+            return result;
+      }
+      return 0;
+   }
 }

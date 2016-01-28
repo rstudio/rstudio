@@ -135,8 +135,22 @@ public class DataImport extends Composite
       {
       case Text:
          return new DataImportOptionsUiCsv();
-      case Statistics:
-         return new DataImportOptionsUiSav();
+      case SAV:
+      case SAS:
+      case Stata:
+         return new DataImportOptionsUiSav(mode);
+      case XLS:
+         return new DataImportOptionsUiXls();
+      case XML:
+         return new DataImportOptionsUiXml();
+      case JSON:
+         return new DataImportOptionsUiJson();
+      case ODBC:
+         return new DataImportOptionsUiOdbc();
+      case JDBC:
+         return new DataImportOptionsUiJdbc();
+      case Mongo:
+         return new DataImportOptionsUiMongo();
       }
       
       return null;

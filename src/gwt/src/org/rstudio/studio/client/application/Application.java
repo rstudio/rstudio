@@ -695,11 +695,41 @@ public class Application implements ApplicationEventHandlers
       {
          commands_.importDatasetFromFile().remove();
          commands_.importDatasetFromURL().remove();
+         
+         String rVersion = sessionInfo.getRVersionsInfo().getRVersion();
+         if (ApplicationUtils.compareVersions(rVersion, "3.0.2") < 0)
+         {
+            commands_.importDatasetFromCSV().setEnabled(false);
+         }
+         if (ApplicationUtils.compareVersions(rVersion, "3.1.0") < 0)
+         {
+            commands_.importDatasetFromSAV().setEnabled(false);
+            commands_.importDatasetFromSAS().setEnabled(false);
+            commands_.importDatasetFromStata().setEnabled(false);
+            
+            commands_.importDatasetFromXML().setEnabled(false);
+         }
+         if (ApplicationUtils.compareVersions(rVersion, "3.0.0") < 0)
+         {
+            commands_.importDatasetFromODBC().setEnabled(false);
+         }
+         if (ApplicationUtils.compareVersions(rVersion, "2.4.0") < 0)
+         {
+            commands_.importDatasetFromJDBC().setEnabled(false);
+         }
       }
       else
       {
          commands_.importDatasetFromCSV().remove();
          commands_.importDatasetFromSAV().remove();
+         commands_.importDatasetFromSAS().remove();
+         commands_.importDatasetFromStata().remove();
+         commands_.importDatasetFromXLS().remove();
+         commands_.importDatasetFromXML().remove();
+         commands_.importDatasetFromJSON().remove();
+         commands_.importDatasetFromJDBC().remove();
+         commands_.importDatasetFromODBC().remove();
+         commands_.importDatasetFromMongo().remove();
       }
       
       // show workbench
@@ -827,7 +857,6 @@ public class Application implements ApplicationEventHandlers
    {
       navigateWindowTo("auth-sign-in");
    }
-   
    
    private final ApplicationView view_ ;
    private final GlobalDisplay globalDisplay_ ;

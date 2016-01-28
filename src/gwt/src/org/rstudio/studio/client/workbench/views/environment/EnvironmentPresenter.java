@@ -519,8 +519,88 @@ public class EnvironmentPresenter extends BasePresenter
       dependencyManager_.withDataImportSAV(
             dataImportDependecyUserAction_, 
             getImportDatasetCommandFromMode(
-                  DataImportModes.Statistics,
+                  DataImportModes.SAV,
                   "Import Statistical Data")
+      );
+   }
+
+   void onImportDatasetFromSAS()
+   {
+      dependencyManager_.withDataImportSAV(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.SAS,
+                  "Import Statistical Data")
+      );
+   }
+
+   void onImportDatasetFromStata()
+   {
+      dependencyManager_.withDataImportSAV(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.Stata,
+                  "Import Statistical Data")
+      );
+   }
+
+   void onImportDatasetFromXLS()
+   {
+      dependencyManager_.withDataImportXLS(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.XLS,
+                  "Import Excel Data")
+      );
+   }
+
+   void onImportDatasetFromXML()
+   {
+      dependencyManager_.withDataImportXML(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.XML,
+                  "Import XML Data")
+      );
+   }
+
+   void onImportDatasetFromJSON()
+   {
+      dependencyManager_.withDataImportJSON(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.JSON,
+                  "Import JSON Data")
+      );
+   }
+
+   void onImportDatasetFromJDBC()
+   {
+      dependencyManager_.withDataImportJDBC(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.JDBC,
+                  "Import from JDBC")
+      );
+   }
+
+   void onImportDatasetFromODBC()
+   {
+      dependencyManager_.withDataImportODBC(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.ODBC,
+                  "Import from ODBC")
+      );
+   }
+
+   void onImportDatasetFromMongo()
+   {
+      dependencyManager_.withDataImportMongo(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.Mongo,
+                  "Import from Mongo DB")
       );
    }
 

@@ -1,5 +1,5 @@
 /*
- * DataImportModes.java
+ * DataImportOptionsMongo.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -15,16 +15,17 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
-public enum DataImportModes
+public class DataImportOptionsMongo extends DataImportOptions
 {
-   Text,
-   SAV,
-   SAS,
-   Stata,
-   XLS,
-   XML,
-   JSON,
-   JDBC,
-   ODBC,
-   Mongo,
+   protected DataImportOptionsMongo()
+   {
+   }
+   
+   public final static native DataImportOptionsMongo create(
+      String dataName) /*-{
+         return {
+            "mode": "mongo",
+            "dataName": dataName
+       }
+   }-*/;
 }

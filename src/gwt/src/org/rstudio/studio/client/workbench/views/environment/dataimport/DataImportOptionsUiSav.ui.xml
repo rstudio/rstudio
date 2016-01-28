@@ -2,84 +2,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui"
 	xmlns:rsdi="urn:import:org.rstudio.studio.client.workbench.views.environment.dataimport">
-	<ui:style>
-		.mainPanel {
-			display: -ms-flexbox;
-			display: -webkit-flex;
-			display: flex;
-
-			-webkit-flex-direction: column;
-			-ms-flex-direction: column;
-			flex-direction: column;
-
-			-ms-flex-grow: 1;
-			-webkit-flex-grow: 1;
-			flex-grow: 1;
-
-			min-width: 300px;
-		}
-		.optionsBlock {
-			border: 1px solid #999;
-			background-color: #F7F8F9;
-			padding-top: 12px;
-			padding-left: 16px;
-			padding-bottom: 3px;
-			padding-right: 6px;
-
-			display: -ms-flexbox;
-			display: -webkit-flex;
-			display: flex;
-
-			-webkit-flex-direction: column;
-			-ms-flex-direction: column;
-			flex-direction: column;
-
-			-ms-flex-grow: 1;
-			-webkit-flex-grow: 1;
-			flex-grow: 1;
-
-			margin-top: 3px;
-			margin-right: 5px;
-			margin-left: 5px;
-		}
-		.optionsLabel {
-			margin-top: 14px;
-
-			margin-left: 5px;
-			margin-right: 5px;
-		}
-		.optionsRow {
-			display: -ms-flexbox;
-			display: -webkit-flex;
-			display: flex;
-
-			-webkit-flex-direction: row;
-			-ms-flex-direction: row;
-			flex-direction: row;
-
-			-ms-flex-grow: 1;
-			-webkit-flex-grow: 1;
-			flex-grow: 1;
-
-			height: 24px;
-			margin-right: 10px;
-		}
-		.optionLabel {
-			width: 54px;
-		}
-		.nameLabel {
-			margin-top: 3px;
-		}
-		.nameTextBox {
-			height: 22px;
-
-			-ms-flex-grow: 1;
-			-webkit-flex-grow: 1;
-			flex-grow: 1;
-
-			padding-left: 5px;
-			padding-right: 5px;
-		}
+	<ui:style src="res/DataImportStyles.css"
+    	type="org.rstudio.studio.client.workbench.views.environment.dataimport.res.DataImportResources.Style">
 		.modelLabel {
 			margin-top: 6px;
 		}
