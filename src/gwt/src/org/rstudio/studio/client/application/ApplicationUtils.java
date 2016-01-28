@@ -36,8 +36,8 @@ public class ApplicationUtils
    // > 0 if version1 is later than version 2
    public static int compareVersions(String version1, String version2)
    {
-      String[] v1parts = version1.split(".");
-      String[] v2parts = version2.split(".");
+      String[] v1parts = version1.split("\\.");
+      String[] v2parts = version2.split("\\.");
       int numParts = Math.min(v1parts.length, v2parts.length);
       for (int i = 0; i < numParts; i++)
       {

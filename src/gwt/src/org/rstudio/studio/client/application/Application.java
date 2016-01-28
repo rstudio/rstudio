@@ -699,23 +699,23 @@ public class Application implements ApplicationEventHandlers
          String rVersion = sessionInfo.getRVersionsInfo().getRVersion();
          if (ApplicationUtils.compareVersions(rVersion, "3.0.2") < 0)
          {
-            commands_.importDatasetFromCSV().setEnabled(false);
+            commands_.importDatasetFromCSV().setVisible(false);
          }
          if (ApplicationUtils.compareVersions(rVersion, "3.1.0") < 0)
          {
-            commands_.importDatasetFromSAV().setEnabled(false);
-            commands_.importDatasetFromSAS().setEnabled(false);
-            commands_.importDatasetFromStata().setEnabled(false);
+            commands_.importDatasetFromSAV().setVisible(false);
+            commands_.importDatasetFromSAS().setVisible(false);
+            commands_.importDatasetFromStata().setVisible(false);
             
-            commands_.importDatasetFromXML().setEnabled(false);
+            commands_.importDatasetFromXML().setVisible(false);
          }
          if (ApplicationUtils.compareVersions(rVersion, "3.0.0") < 0)
          {
-            commands_.importDatasetFromODBC().setEnabled(false);
+            commands_.importDatasetFromODBC().setVisible(false);
          }
          if (ApplicationUtils.compareVersions(rVersion, "2.4.0") < 0)
          {
-            commands_.importDatasetFromJDBC().setEnabled(false);
+            commands_.importDatasetFromJDBC().setVisible(false);
          }
       }
       else
