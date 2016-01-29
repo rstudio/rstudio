@@ -58,7 +58,7 @@ FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
       folder = path.parent();
    }
 
-   return folder.childPath(stem + ".rnb.cached");
+   return folder.childPath(stem + ".Rnb.cached");
 }
 
 
@@ -181,7 +181,7 @@ bool copyCacheItem(const FilePath& from,
 {
 
    std::string relativePath = path.relativePath(from);
-   FilePath target = from.complete(relativePath);
+   FilePath target = to.complete(relativePath);
 
    Error error = path.isDirectory() ?
                      target.ensureDirectory() :
@@ -198,22 +198,29 @@ Error copyCache(const FilePath& from, const FilePath& to)
    if (error)
       return error;
 
-   return to.childrenRecursive(
+   return from.childrenRecursive(
              boost::bind(copyCacheItem, from, to, _2));
+}
+
+void onDocRemoved(const std::string& docId)
+{
+   // check to see if this document was an unsaved notebook, and clean up its
+   // cache folder if so
+   FilePath cacheFolder = chunkCacheFolder("", docId);
+   Error error = cacheFolder.removeIfExists();
+   if (error)
+      LOG_ERROR(error);
 }
 
 void onDocRenamed(const std::string& oldPath, 
                   boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   std::cerr << "doc rename: " << oldPath << " -> " << pDoc->path() << std::endl;
    // compute cache folders and ignore if we can't safely adjust them
    FilePath oldCacheDir = chunkCacheFolder(oldPath, pDoc->id());
    FilePath newCacheDir = chunkCacheFolder(pDoc->path(), pDoc->id());
    if (!oldCacheDir.exists() || newCacheDir.exists())
       return;
 
-
-   std::cerr << "promote cache " << oldCacheDir << " -> " << newCacheDir << std::endl;
 
    // if the doc was previously unsaved, we can just move the whole folder 
    // to its newly saved location
@@ -285,9 +292,8 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   // TODO: when a doc is removed, we need to remove its cached chunks if 
-   // it was never saved
    source_database::events().onDocRenamed.connect(onDocRenamed);
+   source_database::events().onDocRemoved.connect(onDocRemoved);
    
    ExecBlock initBlock;
    initBlock.addFunctions()
