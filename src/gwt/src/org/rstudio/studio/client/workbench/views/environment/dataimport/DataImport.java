@@ -18,7 +18,6 @@ package org.rstudio.studio.client.workbench.views.environment.dataimport;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.widget.FileOrUrlChooserTextBox;
 import org.rstudio.core.client.widget.GridViewerFrame;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -136,6 +135,22 @@ public class DataImport extends Composite
       {
       case Text:
          return new DataImportOptionsUiCsv();
+      case SAV:
+      case SAS:
+      case Stata:
+         return new DataImportOptionsUiSav(mode);
+      case XLS:
+         return new DataImportOptionsUiXls();
+      case XML:
+         return new DataImportOptionsUiXml();
+      case JSON:
+         return new DataImportOptionsUiJson();
+      case ODBC:
+         return new DataImportOptionsUiOdbc();
+      case JDBC:
+         return new DataImportOptionsUiJdbc();
+      case Mongo:
+         return new DataImportOptionsUiMongo();
       }
       
       return null;
@@ -150,31 +165,31 @@ public class DataImport extends Composite
    }
    
    @UiFactory
-   FileOrUrlChooserTextBox makeFileOrUrlChooserTextBox() {
-      FileOrUrlChooserTextBox fileOrUrlChooserTextBox = new FileOrUrlChooserTextBox(
-            "File/URL:",
+   DataImportFileChooser makeFileOrUrlChooserTextBox() {
+      DataImportFileChooser dataImportFileChooser = new DataImportFileChooser(
             new Operation()
             {
                @Override
                public void execute()
                {
-                  if (fileOrUrlChooserTextBox_.getText() != importOptions_.getImportLocation())
+                  if (dataImportFileChooser_.getText() != importOptions_.getImportLocation())
                   {
                      lastSuccessfulResponse_ = null;
                      importOptions_.resetColumnDefinitions();
                   }
                   
                   importOptions_.setImportLocation(
-                     !fileOrUrlChooserTextBox_.getText().isEmpty() ?
-                     fileOrUrlChooserTextBox_.getText() :
+                     !dataImportFileChooser_.getText().isEmpty() ?
+                           dataImportFileChooser_.getText() :
                      null);
                   dataImportOptionsUi_.clearDataName();
+                  dataImportOptionsUi_.setImportLocation(dataImportFileChooser_.getText());
                   previewDataImport();
                }
             },
-            null);
+            true);
       
-      return fileOrUrlChooserTextBox;
+      return dataImportFileChooser;
    }
    
    @UiFactory
@@ -191,7 +206,7 @@ public class DataImport extends Composite
    }
    
    @UiField
-   FileOrUrlChooserTextBox fileOrUrlChooserTextBox_;
+   DataImportFileChooser dataImportFileChooser_;
    
    @UiField
    GridViewerFrame gridViewer_;
@@ -353,6 +368,18 @@ public class DataImport extends Composite
       gridViewer_.setOption("ordering", "false");
       gridViewer_.setOption("rowNumbers", "false");
       gridViewer_.setData(response);
+      
+      if (response.supportsColumnOperations())
+      {
+         gridViewer_.setColumnDefinitionsUIVisible(true, onColumnMenuShow(), new Operation()
+         {
+            @Override
+            public void execute()
+            {
+               columnTypesMenu_.hide();
+            }
+         });
+      }
    }
    
    private void previewDataImport()
@@ -361,7 +388,7 @@ public class DataImport extends Composite
       
       assembleDataImport();
       
-      if (fileOrUrlChooserTextBox_.getText() == "")
+      if (dataImportFileChooser_.getText() == "")
       {
          gridViewer_.setData(null);
          return;
@@ -396,14 +423,6 @@ public class DataImport extends Composite
             assignColumnDefinitions(response, importOptions_.getColumnDefinitions());
             
             setGridViewerData(response);
-            gridViewer_.setColumnDefinitionsUIVisible(true, onColumnMenuShow(), new Operation()
-            {
-               @Override
-               public void execute()
-               {
-                  columnTypesMenu_.hide();
-               }
-            });
             
             progressIndicator_.onCompleted();
          }

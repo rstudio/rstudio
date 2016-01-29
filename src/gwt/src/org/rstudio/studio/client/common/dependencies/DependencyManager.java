@@ -304,6 +304,234 @@ public class DependencyManager implements InstallShinyEvent.Handler
       return deps.toArray(new Dependency[deps.size()]);
    }
    
+   public void withDataImportSAV(String userAction, final Command command)
+   {
+     withDependencies(
+        "Preparing Import from SPSS, SAS and Stata",
+        userAction, 
+        dataImportSavDependenciesArray(), 
+        false,
+        new CommandWithArg<Boolean>()
+        {
+           @Override
+           public void execute(Boolean succeeded)
+           {
+              if (succeeded)
+                 command.execute();
+           }
+        }
+     );
+   }
+   
+   private ArrayList<Dependency> dataImportSavDependencies()
+   {
+      ArrayList<Dependency> deps = new ArrayList<Dependency>();
+      deps.add(Dependency.cranPackage("haven", "0.2.0"));
+      deps.add(Dependency.cranPackage("Rcpp", "0.11.4"));
+      return deps;
+   }
+   
+   private Dependency[] dataImportSavDependenciesArray()
+   {
+      ArrayList<Dependency> deps = dataImportSavDependencies();
+      return deps.toArray(new Dependency[deps.size()]);
+   }
+
+   public void withDataImportXLS(String userAction, final Command command)
+   {
+     withDependencies(
+        "Preparing Import from Excel",
+        userAction, 
+        dataImportXlsDependenciesArray(), 
+        false,
+        new CommandWithArg<Boolean>()
+        {
+           @Override
+           public void execute(Boolean succeeded)
+           {
+              if (succeeded)
+                 command.execute();
+           }
+        }
+     );
+   }
+   
+   private ArrayList<Dependency> dataImportXlsDependencies()
+   {
+      ArrayList<Dependency> deps = new ArrayList<Dependency>();
+      deps.add(Dependency.cranPackage("readxl", "0.1.0"));
+      deps.add(Dependency.cranPackage("Rcpp", "0.11.5"));
+      return deps;
+   }
+   
+   private Dependency[] dataImportXlsDependenciesArray()
+   {
+      ArrayList<Dependency> deps = dataImportXlsDependencies();
+      return deps.toArray(new Dependency[deps.size()]);
+   }
+
+   public void withDataImportXML(String userAction, final Command command)
+   {
+     withDependencies(
+        "Preparing Import from XML",
+        userAction, 
+        dataImportXmlDependenciesArray(), 
+        false,
+        new CommandWithArg<Boolean>()
+        {
+           @Override
+           public void execute(Boolean succeeded)
+           {
+              if (succeeded)
+                 command.execute();
+           }
+        }
+     );
+   }
+   
+   private ArrayList<Dependency> dataImportXmlDependencies()
+   {
+      ArrayList<Dependency> deps = new ArrayList<Dependency>();
+      deps.add(Dependency.cranPackage("xml2", "0.1.2"));
+      return deps;
+   }
+   
+   private Dependency[] dataImportXmlDependenciesArray()
+   {
+      ArrayList<Dependency> deps = dataImportXmlDependencies();
+      return deps.toArray(new Dependency[deps.size()]);
+   }
+
+   public void withDataImportJSON(String userAction, final Command command)
+   {
+     withDependencies(
+        "Preparing Import from JSON",
+        userAction, 
+        dataImportJsonDependenciesArray(), 
+        false,
+        new CommandWithArg<Boolean>()
+        {
+           @Override
+           public void execute(Boolean succeeded)
+           {
+              if (succeeded)
+                 command.execute();
+           }
+        }
+     );
+   }
+   
+   private ArrayList<Dependency> dataImportJsonDependencies()
+   {
+      ArrayList<Dependency> deps = new ArrayList<Dependency>();
+      deps.add(Dependency.cranPackage("jsonlite", "0.9.19"));
+      return deps;
+   }
+   
+   private Dependency[] dataImportJsonDependenciesArray()
+   {
+      ArrayList<Dependency> deps = dataImportJsonDependencies();
+      return deps.toArray(new Dependency[deps.size()]);
+   }
+
+   public void withDataImportJDBC(String userAction, final Command command)
+   {
+     withDependencies(
+        "Preparing Import from JDBC",
+        userAction, 
+        dataImportJdbcDependenciesArray(), 
+        false,
+        new CommandWithArg<Boolean>()
+        {
+           @Override
+           public void execute(Boolean succeeded)
+           {
+              if (succeeded)
+                 command.execute();
+           }
+        }
+     );
+   }
+   
+   private ArrayList<Dependency> dataImportJdbcDependencies()
+   {
+      ArrayList<Dependency> deps = new ArrayList<Dependency>();
+      deps.add(Dependency.cranPackage("RJDBC", "0.2-5"));
+      deps.add(Dependency.cranPackage("rJava", "0.4-15"));
+      return deps;
+   }
+   
+   private Dependency[] dataImportJdbcDependenciesArray()
+   {
+      ArrayList<Dependency> deps = dataImportJdbcDependencies();
+      return deps.toArray(new Dependency[deps.size()]);
+   }
+
+   public void withDataImportODBC(String userAction, final Command command)
+   {
+     withDependencies(
+        "Preparing Import from ODBC",
+        userAction, 
+        dataImportOdbcDependenciesArray(), 
+        false,
+        new CommandWithArg<Boolean>()
+        {
+           @Override
+           public void execute(Boolean succeeded)
+           {
+              if (succeeded)
+                 command.execute();
+           }
+        }
+     );
+   }
+   
+   private ArrayList<Dependency> dataImportOdbcDependencies()
+   {
+      ArrayList<Dependency> deps = new ArrayList<Dependency>();
+      deps.add(Dependency.cranPackage("RODBC", "1.3-12"));
+      return deps;
+   }
+   
+   private Dependency[] dataImportOdbcDependenciesArray()
+   {
+      ArrayList<Dependency> deps = dataImportOdbcDependencies();
+      return deps.toArray(new Dependency[deps.size()]);
+   }
+
+   public void withDataImportMongo(String userAction, final Command command)
+   {
+     withDependencies(
+        "Preparing Import from Mongo DB",
+        userAction, 
+        dataImportMongoDependenciesArray(), 
+        false,
+        new CommandWithArg<Boolean>()
+        {
+           @Override
+           public void execute(Boolean succeeded)
+           {
+              if (succeeded)
+                 command.execute();
+           }
+        }
+     );
+   }
+   
+   private ArrayList<Dependency> dataImportMongoDependencies()
+   {
+      ArrayList<Dependency> deps = new ArrayList<Dependency>();
+      deps.add(Dependency.cranPackage("mongolite", "0.8"));
+      deps.add(Dependency.cranPackage("jsonlite", "0.9.16"));
+      return deps;
+   }
+   
+   private Dependency[] dataImportMongoDependenciesArray()
+   {
+      ArrayList<Dependency> deps = dataImportMongoDependencies();
+      return deps.toArray(new Dependency[deps.size()]);
+   }
+   
    private void withDependencies(String progressCaption,
                                  final String userAction,
                                  final CommandWith2Args<String,Command> userPrompt,

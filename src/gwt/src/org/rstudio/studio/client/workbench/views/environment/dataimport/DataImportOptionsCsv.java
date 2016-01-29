@@ -33,6 +33,7 @@ public class DataImportOptionsCsv extends DataImportOptions
                                                           String comments,
                                                           int skip) /*-{
       return {
+         "mode": "text",
          "dataName": dataName,
          "delimiter": delimiter,
          "quotes": quotes,

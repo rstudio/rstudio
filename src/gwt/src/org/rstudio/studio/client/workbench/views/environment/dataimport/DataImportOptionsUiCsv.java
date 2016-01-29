@@ -28,9 +28,6 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -177,11 +174,6 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
      
    }
    
-   void triggerChange()
-   {
-      ValueChangeEvent.fire(this, getOptions());
-   }
-   
    void initEvents()
    {
       ValueChangeHandler<String> valueChangeHandler = new ValueChangeHandler<String>()
@@ -255,20 +247,4 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    
    @UiField
    CheckBox trimSpacesCheckBox_;
-   
-   private final HandlerManager handlerManager_ = new HandlerManager(this);
-
-   @Override
-   public HandlerRegistration addValueChangeHandler(ValueChangeHandler<DataImportOptions> handler)
-   {
-      return handlerManager_.addHandler(
-            ValueChangeEvent.getType(),
-            handler);
-   }
-   
-   @Override
-   public void fireEvent(GwtEvent<?> event)
-   {
-      handlerManager_.fireEvent(event);
-   }
 }

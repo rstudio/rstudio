@@ -476,20 +476,20 @@ public class EnvironmentPresenter extends BasePresenter
                  }
               });
    }
-
-   void onImportDatasetFromCSV()
+   
+   Command getImportDatasetCommandFromMode(
+      final DataImportModes dataImportMode,
+      final String dialogTitle)
    {
-      final String action = "Preparing data import";
-      dependencyManager_.withDataImportCSV(
-         action, 
+      return 
          new Command() {
             @Override
             public void execute()
             {
                view_.bringToFront();
                DataImportDialog dataImportDialog = new DataImportDialog(
-                     DataImportModes.Text,
-                     "Data Import",
+                     dataImportMode,
+                     dialogTitle,
                      new OperationWithInput<String>()
                {
                   @Override
@@ -501,7 +501,107 @@ public class EnvironmentPresenter extends BasePresenter
                
                dataImportDialog.showModal();
             }
-      });
+         };
+   }
+
+   void onImportDatasetFromCSV()
+   {
+      dependencyManager_.withDataImportCSV(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.Text,
+                  "Import Text Data")
+      );
+   }
+   
+   void onImportDatasetFromSAV()
+   {
+      dependencyManager_.withDataImportSAV(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.SAV,
+                  "Import Statistical Data")
+      );
+   }
+
+   void onImportDatasetFromSAS()
+   {
+      dependencyManager_.withDataImportSAV(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.SAS,
+                  "Import Statistical Data")
+      );
+   }
+
+   void onImportDatasetFromStata()
+   {
+      dependencyManager_.withDataImportSAV(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.Stata,
+                  "Import Statistical Data")
+      );
+   }
+
+   void onImportDatasetFromXLS()
+   {
+      dependencyManager_.withDataImportXLS(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.XLS,
+                  "Import Excel Data")
+      );
+   }
+
+   void onImportDatasetFromXML()
+   {
+      dependencyManager_.withDataImportXML(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.XML,
+                  "Import XML Data")
+      );
+   }
+
+   void onImportDatasetFromJSON()
+   {
+      dependencyManager_.withDataImportJSON(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.JSON,
+                  "Import JSON Data")
+      );
+   }
+
+   void onImportDatasetFromJDBC()
+   {
+      dependencyManager_.withDataImportJDBC(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.JDBC,
+                  "Import from JDBC")
+      );
+   }
+
+   void onImportDatasetFromODBC()
+   {
+      dependencyManager_.withDataImportODBC(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.ODBC,
+                  "Import from ODBC")
+      );
+   }
+
+   void onImportDatasetFromMongo()
+   {
+      dependencyManager_.withDataImportMongo(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.Mongo,
+                  "Import from Mongo DB")
+      );
    }
 
    public void onOpenDataFile(OpenDataFileEvent event)
@@ -946,4 +1046,6 @@ public class EnvironmentPresenter extends BasePresenter
    private String functionEnvName_;
    private Timer requeryContextTimer_;
    private SearchPathFunctionDefinition searchFunction_;
+   
+   final String dataImportDependecyUserAction_ = "Preparing data import";
 }

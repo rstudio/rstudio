@@ -36,4 +36,8 @@ public class DataImportPreviewResponse extends JavaScriptObject
          return this.columns = response.columns;
       }
    }-*/;
+   
+   public final native boolean supportsColumnOperations() /*-{
+      return this.supportsColumnOperations == true;
+   }-*/;
 }

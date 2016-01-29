@@ -23,7 +23,7 @@
 			margin-left: 5px;
 		}
 		.topImportLabel {	
-			margin-top: 6px;
+			margin-top: 0px;
 			margin-right: 5px;
 			margin-left: 5px;
 		}
@@ -58,9 +58,9 @@
 			flex-grow: 1;
 		}
 		.codePanel {
-			-ms-flex-grow: 1;
-			-webkit-flex-grow: 1;
-			flex-grow: 1;
+			-ms-flex-grow: 10;
+			-webkit-flex-grow: 10;
+			flex-grow: 10;
 
 			display: -ms-flexbox;
 			display: -webkit-flex;
@@ -111,12 +111,21 @@
 			margin: 3px 3px 3px 3px;
 		}
 		.fileChooser {
+			display: -ms-flexbox;
+			display: -webkit-flex;
+			display: flex;
+
+			-webkit-flex-direction: row;
+			-ms-flex-direction: row;
+			flex-direction: row;
+
 			margin-right: 5px;
 			margin-left: 5px;
 		}
 	</ui:style>
 	<g:HTMLPanel styleName="{style.flexPanel}">
-	    <rs:FileOrUrlChooserTextBox ui:field="fileOrUrlChooserTextBox_"
+	    <g:Label text="File/Url:" styleName="{style.topImportLabel}"/>
+	    <rsdi:DataImportFileChooser ui:field="dataImportFileChooser_"
 	        						styleName="{style.fileChooser}"/>
 		<g:Label text="Data Preview:" styleName="{style.importLabel}"/>
 		<rs:GridViewerFrame ui:field="gridViewer_"

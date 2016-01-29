@@ -695,10 +695,64 @@ public class Application implements ApplicationEventHandlers
       {
          commands_.importDatasetFromFile().remove();
          commands_.importDatasetFromURL().remove();
+         
+         commands_.importDatasetFromCSV().setVisible(false);
+         commands_.importDatasetFromSAV().setVisible(false);
+         commands_.importDatasetFromSAS().setVisible(false);
+         commands_.importDatasetFromStata().setVisible(false);
+         commands_.importDatasetFromXML().setVisible(false);
+         commands_.importDatasetFromODBC().setVisible(false);
+         commands_.importDatasetFromJDBC().setVisible(false);
+         
+         try
+         {
+            String rVersion = sessionInfo.getRVersionsInfo().getRVersion();
+            if (ApplicationUtils.compareVersions(rVersion, "3.0.2") >= 0)
+            {
+               commands_.importDatasetFromCSV().setVisible(true);
+            }
+            if (ApplicationUtils.compareVersions(rVersion, "3.1.0") >= 0)
+            {
+               commands_.importDatasetFromSAV().setVisible(true);
+               commands_.importDatasetFromSAS().setVisible(true);
+               commands_.importDatasetFromStata().setVisible(true);
+               
+               commands_.importDatasetFromXML().setVisible(true);
+            }
+            if (ApplicationUtils.compareVersions(rVersion, "3.0.0") >= 0)
+            {
+               commands_.importDatasetFromODBC().setVisible(true);
+            }
+            if (ApplicationUtils.compareVersions(rVersion, "2.4.0") >= 0)
+            {
+               commands_.importDatasetFromJDBC().setVisible(true);
+            }
+         }
+         catch (Exception e)
+         {
+         }
+         
+         
+         // Removing data import dialogs that are NYI
+         commands_.importDatasetFromXLS().remove();
+         commands_.importDatasetFromXML().remove();
+         commands_.importDatasetFromJSON().remove();
+         commands_.importDatasetFromJDBC().remove();
+         commands_.importDatasetFromODBC().remove();
+         commands_.importDatasetFromMongo().remove();
       }
       else
       {
          commands_.importDatasetFromCSV().remove();
+         commands_.importDatasetFromSAV().remove();
+         commands_.importDatasetFromSAS().remove();
+         commands_.importDatasetFromStata().remove();
+         commands_.importDatasetFromXLS().remove();
+         commands_.importDatasetFromXML().remove();
+         commands_.importDatasetFromJSON().remove();
+         commands_.importDatasetFromJDBC().remove();
+         commands_.importDatasetFromODBC().remove();
+         commands_.importDatasetFromMongo().remove();
       }
       
       // show workbench
@@ -826,7 +880,6 @@ public class Application implements ApplicationEventHandlers
    {
       navigateWindowTo("auth-sign-in");
    }
-   
    
    private final ApplicationView view_ ;
    private final GlobalDisplay globalDisplay_ ;
