@@ -26,7 +26,7 @@ import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 
 /**
- * Tests JsType functionality.
+ * Tests native JsType functionality.
  */
 @SuppressWarnings("cast")
 public class NativeJsTypeTest extends GWTTestCase {
@@ -66,10 +66,11 @@ public class NativeJsTypeTest extends GWTTestCase {
   public void testClassLiterals() {
     assertEquals(JavaScriptObject.class, MyNativeJsType.class);
     assertEquals(JavaScriptObject.class, MyNativeJsTypeInterface.class);
-    assertEquals(JavaScriptObject.class, MyNativeJsType[].class);
-    assertEquals(JavaScriptObject.class, MyNativeJsTypeInterface[].class);
-    assertEquals(JavaScriptObject.class, MyNativeJsType[][].class);
-    assertEquals(JavaScriptObject.class, MyNativeJsTypeInterface[][].class);
+    assertEquals(JavaScriptObject[].class, MyNativeJsType[].class);
+    assertEquals(JavaScriptObject[].class, MyNativeJsTypeInterface[].class);
+    assertEquals(JavaScriptObject[].class, MyNativeJsType[][].class);
+    assertEquals(JavaScriptObject[].class, MyNativeJsTypeInterface[][].class);
+    assertEquals(JavaScriptObject[].class, JavaScriptObject.createArray().getClass());
   }
 
   public void testGetClass() {
