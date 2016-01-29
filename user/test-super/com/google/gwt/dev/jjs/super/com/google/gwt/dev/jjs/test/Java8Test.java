@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsOverlay;
 import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
@@ -1346,7 +1347,7 @@ public class Java8Test extends GWTTestCase {
     }
   }
 
-  public void testNativeJsTypeWithStaticIntializer() {
+  public void testNativeJsTypeWithStaticInitializer() {
     assertEquals(3, NativeJsTypeInterfaceWithStaticInitializationAndFieldAccess.object);
     assertEquals(
         4, NativeJsTypeInterfaceWithStaticInitializationAndStaticOverlayMethod.getObject());
@@ -1356,4 +1357,21 @@ public class Java8Test extends GWTTestCase {
     assertEquals(7, NativeJsTypeInterfaceWithComplexStaticInitialization.object);
     assertEquals(9, new JavaTypeImplementingNativeJsTypeInterceWithDefaultMethod().getObject());
   }
+
+  @JsFunction
+  interface VarargsFunction {
+    String f(int i, String... args);
+  }
+
+  private static native String callFromJSNI(VarargsFunction f) /*-{
+    return f(2, "a", "b", "c");
+  }-*/;
+
+  public void testJsVarargsLambda() {
+    VarargsFunction function = (i, args) -> args[i];
+    assertSame("b", function.f(1, "a", "b", "c"));
+    assertSame("c", callFromJSNI(function));
+    String[] pars = new String[] {"a", "b", "c"};
+    assertSame("a", function.f(0, pars));
+ }
 }

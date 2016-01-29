@@ -260,7 +260,11 @@ public class Java8Test extends GWTTestCase {
     assertFalse(isGwtSourceLevel8());
   }
 
-  public void testNativeJsTypeWithStaticIntializer() {
+  public void testNativeJsTypeWithStaticInitializer() {
+    assertFalse(isGwtSourceLevel8());
+  }
+
+  public void testJsVarargsLambda() {
     assertFalse(isGwtSourceLevel8());
   }
 
