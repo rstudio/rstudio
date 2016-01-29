@@ -25,7 +25,6 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
-import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
@@ -142,10 +141,7 @@ public class TextEditingTargetNotebook
       }
 
       rmdHelper_.executeInlineChunk(docUpdateSentinel_.getPath(), 
-            chunkOutput.getChunkId(), "", code);
-      
-      // still execute in console
-      events_.fireEvent(new SendToConsoleEvent(code, true, false, false));
+            docUpdateSentinel_.getId(), chunkOutput.getChunkId(), "", code);
    }
    
    @Override
@@ -168,7 +164,7 @@ public class TextEditingTargetNotebook
    public void onRmdChunkOutput(RmdChunkOutputEvent event)
    {
       // ignore if not targeted at this document
-      if (event.getOutput().getFile() != docUpdateSentinel_.getPath())
+      if (event.getOutput().getDocId() != docUpdateSentinel_.getId())
          return;
 
       // find the line widget to update
@@ -180,6 +176,10 @@ public class TextEditingTargetNotebook
          {
             widgets.get(i).getElement().setInnerHTML(
                   event.getOutput().getHtml());
+            
+            // TODO: this call causes the element to be measured to determine
+            // the number of screen rows it consumes, but the element may not 
+            // yet be at its final height if the HTML isn't done rendering
             docDisplay_.onLineWidgetChanged(widgets.get(i));
             break;
          }
@@ -202,7 +202,9 @@ public class TextEditingTargetNotebook
       
       state_ = STATE_INITIALIZING;
       requestId_ = nextRequestId_++;
-      server_.refreshChunkOutput(docUpdateSentinel_.getId(), 
+      server_.refreshChunkOutput(
+            docUpdateSentinel_.getPath(),
+            docUpdateSentinel_.getId(), 
             Integer.toHexString(requestId_), 
             new VoidServerRequestCallback());
    }

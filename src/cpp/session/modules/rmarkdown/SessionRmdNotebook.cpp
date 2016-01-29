@@ -28,6 +28,7 @@
 #include <core/json/JsonRpc.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionSourceDatabase.hpp>
 
 #define kChunkDefs "chunk_definitions"
 
@@ -41,30 +42,50 @@ namespace notebook {
 
 namespace {
 
-FilePath chunkCacheFolder(const FilePath& file)
+FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
 {
-   return file.parent().childPath(file.stem() + ".rnb.cached");
+   FilePath folder;
+   std::string stem;
+   if (docPath.empty()) 
+   {
+      folder = module_context::userScratchPath().childPath("unsaved-notebooks");
+      stem = docId;
+   }
+   else
+   {
+      FilePath path = module_context::resolveAliasedPath(docPath);
+      stem = path.stem();
+      folder = path.parent();
+   }
+
+   return folder.childPath(stem + ".rnb.cached");
 }
 
-FilePath chunkDefinitionsPath(const FilePath& file) 
+
+FilePath chunkDefinitionsPath(
+      const std::string& docPath, const std::string& docId)
 {
-   return chunkCacheFolder(file).childPath("chunks.json");
+   return chunkCacheFolder(docPath, docId).childPath("chunks.json");
 }
 
-FilePath chunkOutputPath(const FilePath& file, 
-                         const std::string& chunkId)
+FilePath chunkOutputPath(
+      const std::string& docPath, const std::string& docId,
+      const std::string& chunkId)
 {
-   return chunkCacheFolder(file).childPath(chunkId).childPath("contents.html");
+   return chunkCacheFolder(docPath, docId)
+                          .childPath(chunkId)
+                          .childPath("contents.html");
 }
 
 
-Error enqueueChunkOutput(const FilePath& file, 
-                         const std::string& chunkId)
+Error enqueueChunkOutput(
+      const std::string& docPath, const std::string& docId,
+      const std::string& chunkId)
 {
    // read the chunk HTML from the file
    std::string html;
    Error error = core::readStringFromFile(
-         chunkOutputPath(file, chunkId), &html);
+         chunkOutputPath(docPath, docId, chunkId), &html);
    if (error)
       return error;
 
@@ -72,7 +93,7 @@ Error enqueueChunkOutput(const FilePath& file,
    json::Object output;
    output["html"] = html;
    output["chunk_id"] = chunkId;
-   output["file"] = module_context::createAliasedPath(FileInfo(file));
+   output["doc_id"] = docId;
    ClientEvent event(client_events::kChunkOutput, output);
    module_context::enqueClientEvent(event);
 
@@ -82,15 +103,14 @@ Error enqueueChunkOutput(const FilePath& file,
 Error executeInlineChunk(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse*)
 {
-   std::string file, chunkId, options, content;
-   Error error = json::readParams(request.params, &file, &chunkId, &options, 
-         &content);
+   std::string docPath, docId, chunkId, options, content;
+   Error error = json::readParams(request.params, &docPath, &docId, &chunkId, 
+         &options, &content);
    if (error)
       return error;
-   FilePath path = module_context::resolveAliasedPath(file);
 
    // ensure we have a place to put the output
-   FilePath chunkOutput = chunkOutputPath(path, chunkId);
+   FilePath chunkOutput = chunkOutputPath(docPath, docId, chunkId);
    error = chunkOutput.parent().ensureDirectory();
    if (error)
       return error;
@@ -101,13 +121,13 @@ Error executeInlineChunk(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   error = enqueueChunkOutput(path, chunkId);
+   error = enqueueChunkOutput(docPath, docId, chunkId);
 
    return Success();
 }
 
-void replayChunkOutputs(const FilePath& file, const std::string& requestId,
-      const json::Array& chunkOutputs) 
+void replayChunkOutputs(const std::string& docPath, const std::string& docId,
+      const std::string& requestId, const json::Array& chunkOutputs) 
 {
    // find all the chunks and play them back to the client
    BOOST_FOREACH(const json::Value& chunkOutput, chunkOutputs)
@@ -115,20 +135,16 @@ void replayChunkOutputs(const FilePath& file, const std::string& requestId,
       if (chunkOutput.type() != json::ObjectType)
          continue;
       std::string chunkId;
-      std::cerr << "attempting to replay chunk ";
-      json::write(chunkOutput, std::cerr);
-      std::cerr << std::endl;
       if (json::readObject(chunkOutput.get_obj(), "chunk_id", &chunkId) ==
             Success()) 
       {
          // ignore errors here (it's okay if some chunks don't have output)
-         enqueueChunkOutput(file, chunkId);
+         enqueueChunkOutput(docPath, docId, chunkId);
       }
    }
 
-   std::cerr << "done with chunks for req " << requestId << std::endl;
    json::Object result;
-   result["path"] = file.absolutePath();
+   result["path"] = docPath;
    result["request_id"] = requestId;
    ClientEvent event(client_events::kChunkOutputFinished, result);
    module_context::enqueClientEvent(event);
@@ -138,38 +154,83 @@ Error refreshChunkOutput(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse*)
 {
    // extract path to doc to be refreshed
-   std::string docId, requestId;
-   Error error = json::readParams(request.params, &docId, &requestId);
+   std::string docPath, docId, requestId;
+   Error error = json::readParams(request.params, &docPath, &docId, &requestId);
    if (error)
       return error;
-   boost::shared_ptr<source_database::SourceDocument> pDoc(
-         new source_database::SourceDocument());
-   error = source_database::get(docId, pDoc);
-   if (error)
-      return error;
-   if (!pDoc)
-      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
-   FilePath path = module_context::resolveAliasedPath(pDoc->path());
 
    json::Object result;
    json::Value chunkDefs; 
-   error = getChunkDefs(path, &chunkDefs);
+   error = getChunkDefs(docPath, docId, &chunkDefs);
 
    // schedule the work to play back the chunks (we don't do it synchronously
    // so the RPC can return immediately)
    if (!error && chunkDefs.type() == json::ArrayType) 
    {
       module_context::scheduleDelayedWork(boost::posix_time::milliseconds(10), 
-            boost::bind(replayChunkOutputs, path, requestId, 
+            boost::bind(replayChunkOutputs, docPath, docId, requestId, 
                         chunkDefs.get_array()));
    }
 
    return Success();
 }
 
+bool copyCacheItem(const FilePath& from,
+                   const FilePath& to,
+                   const FilePath& path)
+{
+
+   std::string relativePath = path.relativePath(from);
+   FilePath target = from.complete(relativePath);
+
+   Error error = path.isDirectory() ?
+                     target.ensureDirectory() :
+                     path.copy(target);
+   if (error)
+      LOG_ERROR(error);
+
+   return true;
+}
+
+Error copyCache(const FilePath& from, const FilePath& to)
+{
+   Error error = to.ensureDirectory();
+   if (error)
+      return error;
+
+   return to.childrenRecursive(
+             boost::bind(copyCacheItem, from, to, _2));
+}
+
+void onDocRenamed(const std::string& oldPath, 
+                  boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   std::cerr << "doc rename: " << oldPath << " -> " << pDoc->path() << std::endl;
+   // compute cache folders and ignore if we can't safely adjust them
+   FilePath oldCacheDir = chunkCacheFolder(oldPath, pDoc->id());
+   FilePath newCacheDir = chunkCacheFolder(pDoc->path(), pDoc->id());
+   if (!oldCacheDir.exists() || newCacheDir.exists())
+      return;
+
+
+   std::cerr << "promote cache " << oldCacheDir << " -> " << newCacheDir << std::endl;
+
+   // if the doc was previously unsaved, we can just move the whole folder 
+   // to its newly saved location
+   if (oldPath.empty())
+   {
+      oldCacheDir.move(newCacheDir);
+      return;
+   }
+
+   Error error = copyCache(oldCacheDir, newCacheDir);
+   if (error)
+      LOG_ERROR(error);
+}
+
 } // anonymous namespace
 
-Error setChunkDefs(const FilePath& file, 
+Error setChunkDefs(const std::string& docPath, const std::string& docId,
                    const json::Array& pDefs)
 {
    // create JSON object wrapping 
@@ -177,7 +238,7 @@ Error setChunkDefs(const FilePath& file,
    chunkDefs[kChunkDefs] = pDefs;
 
    // ensure we have a place to write the sidecar file
-   FilePath defFile = chunkDefinitionsPath(file);
+   FilePath defFile = chunkDefinitionsPath(docPath, docId);
    Error error = defFile.parent().ensureDirectory();
    if (error)
       return error;
@@ -185,15 +246,14 @@ Error setChunkDefs(const FilePath& file,
    // write to the sidecar file
    std::ostringstream oss;
    json::write(chunkDefs, oss);
-   std::cerr << "writing chunk defs to " << defFile.absolutePath() << ": " << oss.str() << std::endl;
    return writeStringToFile(defFile, oss.str());
 }
 
-Error getChunkDefs(const FilePath& file, core::json::Value* pDefs)
+Error getChunkDefs(const std::string& docPath, const std::string& docId,
+                   core::json::Value* pDefs)
 {
    Error error;
-   FilePath defs = chunkDefinitionsPath(file);
-   std::cerr << "checking for chunk defs @ " << defs.absolutePath() << std::endl;
+   FilePath defs = chunkDefinitionsPath(docPath, docId);
    if (!defs.exists())
       return Success();
 
@@ -224,6 +284,10 @@ Error initialize()
 {
    using boost::bind;
    using namespace module_context;
+
+   // TODO: when a doc is removed, we need to remove its cached chunks if 
+   // it was never saved
+   source_database::events().onDocRenamed.connect(onDocRenamed);
    
    ExecBlock initBlock;
    initBlock.addFunctions()

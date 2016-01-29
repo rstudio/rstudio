@@ -4169,14 +4169,16 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void executeInlineChunk(String file, String chunkId, String options,
-         String content, ServerRequestCallback<Void> requestCallback)
+   public void executeInlineChunk(String docPath, String docId, String chunkId, 
+         String options, String content, 
+         ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(file));
-      params.set(1, new JSONString(chunkId));
-      params.set(2, new JSONString(options));
-      params.set(3, new JSONString(content));
+      params.set(0, new JSONString(docPath == null ? "" : docPath));
+      params.set(1, new JSONString(docId));
+      params.set(2, new JSONString(chunkId));
+      params.set(3, new JSONString(options));
+      params.set(4, new JSONString(content));
       sendRequest(RPC_SCOPE,
             "execute_inline_chunk",
             params,
@@ -4184,12 +4186,13 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void refreshChunkOutput(String docId, String requestId,
-         ServerRequestCallback<Void> requestCallback)
+   public void refreshChunkOutput(String docPath, String docId, 
+         String requestId, ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(docId));
-      params.set(1, new JSONString(requestId));
+      params.set(0, new JSONString(docPath == null ? "" : docPath));
+      params.set(1, new JSONString(docId));
+      params.set(2, new JSONString(requestId));
       sendRequest(RPC_SCOPE,
             "refresh_chunk_output",
             params,

@@ -76,8 +76,7 @@ void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
 
    // amend with chunk definitions 
    json::Value chunkDefs;
-   Error error = rmarkdown::notebook::getChunkDefs(
-         module_context::resolveAliasedPath(pDoc->path()), 
+   Error error = rmarkdown::notebook::getChunkDefs(pDoc->path(), pDoc->id(),
          &chunkDefs);
    if (error)
       LOG_ERROR(error);
@@ -247,15 +246,16 @@ Error saveDocumentCore(const std::string& contents,
                        boost::shared_ptr<SourceDocument> pDoc)
 {
    // check whether we have a path and if we do get/resolve its value
-   std::string path;
+   std::string oldPath, path;
    FilePath fullDocPath;
    bool hasPath = json::isType<std::string>(jsonPath);
    if (hasPath)
    {
+      oldPath = pDoc->path();
       path = jsonPath.get_str();
       fullDocPath = module_context::resolveAliasedPath(path);
    }
-   
+
    // update dirty state: dirty if there was no path AND the new contents
    // are different from the old contents (and was thus a content autosave
    // as distinct from a fold-spec or scroll-position/selection autosave)
@@ -282,9 +282,9 @@ Error saveDocumentCore(const std::string& contents,
    }
 
    bool hasChunkOutput = json::isType<json::Array>(jsonChunkOutput);
-   if (hasChunkOutput && hasPath)
+   if (hasChunkOutput)
    {
-      error = rmarkdown::notebook::setChunkDefs(fullDocPath,
+      error = rmarkdown::notebook::setChunkDefs(pDoc->path(), pDoc->id(),
             jsonChunkOutput.get_array());
       if (error)
          LOG_ERROR(error);
@@ -346,6 +346,12 @@ Error saveDocumentCore(const std::string& contents,
 
       // save could change the extended type of the file so check it
       detectExtendedType(pDoc);
+
+      // if we changed the path, notify other modules
+      if (oldPath != pDoc->path())
+      {
+         source_database::events().onDocRenamed(oldPath, pDoc);
+      }
    }
 
    // always update the contents so it holds the original UTF-8 data

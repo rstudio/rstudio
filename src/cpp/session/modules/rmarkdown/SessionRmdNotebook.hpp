@@ -34,10 +34,11 @@ namespace notebook {
 
 core::Error initialize();
 
-core::Error getChunkDefs(const core::FilePath& file, core::json::Value* pDefs);
+core::Error getChunkDefs(const std::string& docPath, const std::string& docId, 
+      core::json::Value* pDefs);
 
-core::Error setChunkDefs(const core::FilePath& file, 
-                         const core::json::Array& pDefs);
+core::Error setChunkDefs(const std::string& docPath, const std::string& docId, 
+      const core::json::Array& pDefs);
 
 } // namespace notebook
 } // namespace rmarkdown

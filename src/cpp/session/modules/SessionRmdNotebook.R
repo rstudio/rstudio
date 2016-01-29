@@ -25,8 +25,10 @@
   on.exit(unlink(chunkFile), add = TRUE)
                  
   # render the stub to the given file
-  rmarkdown::render(input = chunkFile, 
-                    output_format = rmarkdown::html_fragment(),
-                    output_file = outputFile,
-                    encoding = "UTF-8")
+  capture.output(rmarkdown::render(input = chunkFile, 
+                                   output_format = rmarkdown::html_fragment(),
+                                   output_file = outputFile,
+                                   encoding = "UTF-8",
+                                   quiet = TRUE))
+  invisible(NULL)
 })
