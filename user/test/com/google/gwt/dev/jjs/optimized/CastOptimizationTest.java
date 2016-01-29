@@ -21,6 +21,7 @@ import com.google.gwt.junit.Platform;
 
 import java.util.Random;
 
+import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 
 /**
@@ -38,6 +39,26 @@ public class CastOptimizationTest extends OptimizationTestBase {
 
   private static class JsoTestObject extends JavaScriptObject implements DualJsoTestInterface {
     protected JsoTestObject() { }
+  }
+
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+  static class NativeObject {
+  }
+
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Function")
+  static class NativeFunction {
+  }
+
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Array")
+  static class NativeArray {
+  }
+
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Number")
+  static class NativeNumber {
+  }
+
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "String")
+  static class NativeString {
   }
 
   private static Object field;
@@ -86,6 +107,22 @@ public class CastOptimizationTest extends OptimizationTestBase {
     return ((String) field);
   }
 
+  public static NativeFunction castNativeFunction() {
+    return ((NativeFunction) field);
+  }
+
+  public static NativeObject castNativeObject() {
+    return ((NativeObject) field);
+  }
+
+  public static NativeArray castNativeArray() {
+    return ((NativeArray) field);
+  }
+
+  public static NativeNumber castNativeNumber() {
+    return ((NativeNumber) field);
+  }
+
   private static native String getGeneratedCastFunctionDefinition() /*-{
     return function() {
       @CastOptimizationTest::castOp()();
@@ -93,6 +130,10 @@ public class CastOptimizationTest extends OptimizationTestBase {
       @CastOptimizationTest::castOpDualJso()();
       @CastOptimizationTest::castOpJsType()();
       @CastOptimizationTest::castOpString()();
+      @CastOptimizationTest::castNativeFunction()();
+      @CastOptimizationTest::castNativeNumber()();
+      @CastOptimizationTest::castNativeArray()();
+      @CastOptimizationTest::castNativeObject()();
     }.toString();
   }-*/;
 

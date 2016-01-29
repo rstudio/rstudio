@@ -18,9 +18,11 @@ package com.google.gwt.core.interop;
 import static jsinterop.annotations.JsPackage.GLOBAL;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.interop.JsTypeSpecialTypesTest.SomeFunctionalInterface;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import javaemul.internal.annotations.DoNotInline;
+import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsOverlay;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
@@ -205,5 +207,133 @@ public class NativeJsTypeTest extends GWTTestCase {
         new Integer(4), NativeJsTypeWithStaticInitializationAndStaticOverlayMethod.getObject());
      assertEquals(new Integer(5),
          new NativeJsTypeWithStaticInitializationAndInstanceOverlayMethod().getObject());
+  }
+
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Function")
+  static class NativeFunction {
+  }
+
+  private static native Object createFunction() /*-{
+    return function() {};
+   }-*/;
+
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Array")
+  static class NativeArray {
+  }
+
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Number")
+  static class NativeNumber {
+  }
+
+  private static native Object createNumber() /*-{
+    return 1;
+  }-*/;
+
+  private static native Object createBoxedNumber() /*-{
+    return new Number(1);
+  }-*/;
+
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "String")
+  static class NativeString {
+  }
+
+  private static native Object createBoxedString() /*-{
+    return new String("hello");
+  }-*/;
+
+  @JsFunction
+  interface SomeFunctionInterface {
+    void m();
+  }
+
+  static class SomeFunction implements SomeFunctionInterface {
+    public void m() {
+    }
+  }
+
+  public void testSpecialNativeInstanceOf() {
+    Object aJsFunction = new SomeFunction();
+    // True cases.
+    assertTrue(aJsFunction instanceof NativeFunction);
+    assertTrue(aJsFunction instanceof SomeFunctionalInterface);
+    // False cases.
+    assertFalse(aJsFunction instanceof NativeObject);
+    assertFalse(aJsFunction instanceof NativeArray);
+    assertFalse(aJsFunction instanceof NativeNumber);
+    assertFalse(aJsFunction instanceof NativeString);
+
+    Object anotherFunction = createFunction();
+    // True cases.
+    assertTrue(anotherFunction instanceof NativeFunction);
+    assertTrue(anotherFunction instanceof SomeFunctionalInterface);
+    // False cases.
+    assertFalse(anotherFunction instanceof NativeObject);
+    assertFalse(anotherFunction instanceof NativeArray);
+    assertFalse(anotherFunction instanceof NativeNumber);
+    assertFalse(anotherFunction instanceof NativeString);
+
+    Object aString = "Hello";
+    // True cases.
+    assertTrue(aString instanceof NativeString);
+    // False cases.
+    assertFalse(aString instanceof NativeFunction);
+    assertFalse(aString instanceof NativeObject);
+    assertFalse(aString instanceof NativeArray);
+    assertFalse(aString instanceof NativeNumber);
+
+    Object aBoxedString = createBoxedString();
+    // True cases.
+    // Note that boxed strings are (surprisingly) not strings but objects.
+    assertTrue(aBoxedString instanceof NativeObject);
+    // False cases.
+    assertFalse(aBoxedString instanceof NativeFunction);
+    assertFalse(aBoxedString instanceof NativeArray);
+    assertFalse(aBoxedString instanceof NativeNumber);
+    assertFalse(aBoxedString instanceof NativeString);
+
+    Object anArray = new String[0];
+    // True cases.
+    assertTrue(anArray instanceof NativeArray);
+    assertTrue(anArray instanceof NativeObject);
+    // False cases.
+    assertFalse(anArray instanceof NativeFunction);
+    assertFalse(anArray instanceof NativeNumber);
+    assertFalse(anArray instanceof NativeString);
+
+    Object aNativeArray = JavaScriptObject.createArray();
+    // True cases.
+    assertTrue(aNativeArray instanceof NativeArray);
+    assertTrue(anArray instanceof NativeObject);
+    // False cases.
+    assertFalse(aNativeArray instanceof NativeFunction);
+    assertFalse(aNativeArray instanceof NativeNumber);
+    assertFalse(aNativeArray instanceof NativeString);
+
+    Object aNumber = new Double(3);
+    // True cases.
+    assertTrue(aNumber instanceof NativeNumber);
+    // False cases.
+    assertFalse(aNumber instanceof NativeArray);
+    assertFalse(aNumber instanceof NativeObject);
+    assertFalse(aNumber instanceof NativeFunction);
+    assertFalse(aNumber instanceof NativeString);
+
+    Object anotherNumber = createNumber();
+    // True cases.
+    assertTrue(anotherNumber instanceof NativeNumber);
+    // False cases.
+    assertFalse(anotherNumber instanceof NativeArray);
+    assertFalse(anotherNumber instanceof NativeObject);
+    assertFalse(anotherNumber instanceof NativeFunction);
+    assertFalse(anotherNumber instanceof NativeString);
+
+    Object aBoxedNumber = createBoxedNumber();
+    // True cases.
+    assertTrue(aBoxedNumber instanceof NativeObject);
+    // False cases.
+    assertFalse(aBoxedNumber instanceof NativeNumber);
+    assertFalse(aBoxedNumber instanceof NativeArray);
+    assertFalse(aBoxedNumber instanceof NativeFunction);
+    assertFalse(aBoxedNumber instanceof NativeString);
   }
 }

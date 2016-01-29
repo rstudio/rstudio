@@ -111,8 +111,8 @@ final class Cast {
   /**
    * Allow a cast to (untyped) array. This case covers single and multidimensional JsType arrays.
    */
-  static Object castToNativeArray(Object src) {
-    checkType(src == null || instanceOfNativeArray(src));
+  static Object castToJsArray(Object src) {
+    checkType(src == null || instanceOfJsArray(src));
     return src;
   }
 
@@ -137,6 +137,14 @@ final class Cast {
    */
   static Object castToFunction(Object src) {
     checkType(src == null || isFunction(src));
+    return src;
+  }
+
+  /**
+   * Allow a dynamic cast to a native GLOBAL.Object if it is JavaScript object.
+   */
+  static Object castToJsObject(Object src) {
+    checkType(src == null || isJsObject(src));
     return src;
   }
 
@@ -188,7 +196,7 @@ final class Cast {
   /**
    * Returns true if {@code src} is an array (native or not).
    */
-  static boolean instanceOfNativeArray(Object src) {
+  static boolean instanceOfJsArray(Object src) {
     return isArray(src);
   }
 
@@ -220,11 +228,23 @@ final class Cast {
   }
 
   /**
+   * Returns true if the object is a JS object.
+   */
+  static boolean instanceOfJsObject(Object src) {
+    return (src != null) && isJsObject(src);
+  }
+
+  /**
    * Returns whether the Object is a function.
    */
   @HasNoSideEffects
   private static native boolean isFunction(Object src)/*-{
     return typeof(src) === "function";
+  }-*/;
+
+  @HasNoSideEffects
+  private static native boolean isJsObject(Object src)/*-{
+    return typeof(src) === "object";
   }-*/;
 
   @HasNoSideEffects

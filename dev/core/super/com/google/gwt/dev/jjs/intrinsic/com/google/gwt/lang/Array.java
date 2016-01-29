@@ -33,19 +33,21 @@ public final class Array {
   private static final int TYPE_JAVA_OBJECT = 0;
   private static final int TYPE_JAVA_OBJECT_OR_JSO = 1;
   private static final int TYPE_JSO = 2;
-  private static final int TYPE_NATIVE_ARRAY = 3;
-  private static final int TYPE_ARRAY = 4;
-  private static final int TYPE_JSO_ARRAY = 5;
-  private static final int TYPE_JAVA_LANG_OBJECT = 6;
-  private static final int TYPE_JAVA_LANG_STRING = 7;
-  private static final int TYPE_JAVA_LANG_DOUBLE = 8;
-  private static final int TYPE_JAVA_LANG_BOOLEAN = 9;
-  private static final int TYPE_JS_NATIVE = 10;
-  private static final int TYPE_JS_UNKNOWN_NATIVE = 11;
-  private static final int TYPE_JS_FUNCTION = 12;
-  private static final int TYPE_PRIMITIVE_LONG = 13;
-  private static final int TYPE_PRIMITIVE_NUMBER = 14;
-  private static final int TYPE_PRIMITIVE_BOOLEAN = 15;
+  private static final int TYPE_ARRAY = 3;
+  private static final int TYPE_JSO_ARRAY = 4;
+  private static final int TYPE_JAVA_LANG_OBJECT = 5;
+  private static final int TYPE_JAVA_LANG_STRING = 6;
+  private static final int TYPE_JAVA_LANG_DOUBLE = 7;
+  private static final int TYPE_JAVA_LANG_BOOLEAN = 8;
+  private static final int TYPE_JS_NATIVE = 9;
+  private static final int TYPE_JS_UNKNOWN_NATIVE = 10;
+  private static final int TYPE_JS_FUNCTION = 11;
+  private static final int TYPE_JS_OBJECT = 12;
+  private static final int TYPE_JS_ARRAY = 13;
+  // Primitive types must be consecutive.
+  private static final int TYPE_PRIMITIVE_LONG = 14;
+  private static final int TYPE_PRIMITIVE_NUMBER = 15;
+  private static final int TYPE_PRIMITIVE_BOOLEAN = 16;
 
   public static <T> T[] stampJavaTypeInfo(Object array, T[] referenceType) {
     if (Array.getElementTypeCategory(referenceType) != TYPE_JS_UNKNOWN_NATIVE) {
@@ -187,6 +189,8 @@ public final class Array {
         return Cast.instanceOfArray(value);
       case TYPE_JS_FUNCTION:
         return Cast.instanceOfFunction(value);
+      case TYPE_JS_OBJECT:
+        return Cast.instanceOfJsObject(value);
       case TYPE_JAVA_OBJECT:
         return Cast.canCast(value, Array.getElementTypeId(array));
       case TYPE_JSO:

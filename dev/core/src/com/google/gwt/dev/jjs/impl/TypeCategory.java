@@ -44,7 +44,6 @@ public enum TypeCategory {
   TYPE_JAVA_OBJECT("", true, false),
   TYPE_JAVA_OBJECT_OR_JSO("AllowJso", true, false),
   TYPE_JSO("Jso"),
-  TYPE_NATIVE_ARRAY("NativeArray"),
   TYPE_ARRAY("Array"),
   TYPE_JSO_ARRAY("JsoArray", true, false),
   TYPE_JAVA_LANG_OBJECT("AllowJso", true, false),
@@ -54,6 +53,9 @@ public enum TypeCategory {
   TYPE_JS_NATIVE("Native", false, true),
   TYPE_JS_UNKNOWN_NATIVE("UnknownNative"),
   TYPE_JS_FUNCTION("Function"),
+  TYPE_JS_OBJECT("JsObject"),
+  TYPE_JS_ARRAY("JsArray"),
+  // Primitive types are meant to be consecutive.
   TYPE_PRIMITIVE_LONG,
   TYPE_PRIMITIVE_NUMBER,
   TYPE_PRIMITIVE_BOOLEAN;
@@ -111,7 +113,7 @@ public enum TypeCategory {
     } else if (getJsSpecialType(type) != null) {
       return getJsSpecialType(type);
     } else if (program.isUntypedArrayType(type)) {
-      return TypeCategory.TYPE_NATIVE_ARRAY;
+      return TypeCategory.TYPE_JS_ARRAY;
     } else if (type == program.getTypeJavaLangObject()) {
       return TypeCategory.TYPE_JAVA_LANG_OBJECT;
     } else if (program.getRepresentedAsNativeTypesDispatchMap().containsKey(type)) {
@@ -142,11 +144,11 @@ public enum TypeCategory {
 
     switch (classType.getJsName()) {
       case "Object":
-        return TypeCategory.TYPE_JAVA_LANG_OBJECT;
+        return TypeCategory.TYPE_JS_OBJECT;
       case "Function":
         return TypeCategory.TYPE_JS_FUNCTION;
       case "Array":
-        return TypeCategory.TYPE_NATIVE_ARRAY;
+        return TypeCategory.TYPE_JS_ARRAY;
       case "Number":
         return TypeCategory.TYPE_JAVA_LANG_DOUBLE;
       case "String":
