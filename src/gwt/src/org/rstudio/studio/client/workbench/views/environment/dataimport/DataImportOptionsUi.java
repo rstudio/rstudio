@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
 
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -44,7 +45,12 @@ public class DataImportOptionsUi extends Composite implements HasValueChangeHand
       
    }
    
-   public void clearDataName()
+   public void setPreviewResponse(DataImportPreviewResponse response)
+   {
+   
+   }
+   
+   public void clearOptions()
    {
       
    }

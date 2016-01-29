@@ -43,6 +43,11 @@
 	margin-right: 5px;
 	margin-left: 5px;
 }
+.optionsDirectionRow {
+	-webkit-flex-direction: row;
+	-ms-flex-direction: row;
+	flex-direction: row;
+}
 .optionsRow {
 	display: -ms-flexbox;
 	display: -webkit-flex;

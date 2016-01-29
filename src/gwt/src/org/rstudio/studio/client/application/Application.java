@@ -732,9 +732,7 @@ public class Application implements ApplicationEventHandlers
          {
          }
          
-         
          // Removing data import dialogs that are NYI
-         commands_.importDatasetFromXLS().remove();
          commands_.importDatasetFromXML().remove();
          commands_.importDatasetFromJSON().remove();
          commands_.importDatasetFromJDBC().remove();

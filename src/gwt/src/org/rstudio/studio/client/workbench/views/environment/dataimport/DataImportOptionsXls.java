@@ -22,10 +22,19 @@ public class DataImportOptionsXls extends DataImportOptions
    }
    
    public final static native DataImportOptionsXls create(
-      String dataName) /*-{
+      String dataName,
+      String sheet,
+      int skip,
+      boolean colNames,
+      String na
+      ) /*-{
          return {
             "mode": "xls",
-            "dataName": dataName
+            "dataName": dataName,
+            "sheet": sheet,
+            "skip": skip,
+            "columnNames": colNames,
+            "na": na
        }
    }-*/;
 }

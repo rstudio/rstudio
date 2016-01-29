@@ -40,4 +40,8 @@ public class DataImportPreviewResponse extends JavaScriptObject
    public final native boolean supportsColumnOperations() /*-{
       return this.supportsColumnOperations == true;
    }-*/;
+   
+   public final native String[] getSupportedColumnTypes() /*-{
+      return this.options && this.options.columnTypes ? this.options.columnTypes : [];
+   }-*/;
 }

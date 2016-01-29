@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class DataImportOptions extends JavaScriptObject
@@ -45,15 +47,17 @@ public class DataImportOptions extends JavaScriptObject
       this_.importLocation = options.importLocation;
       this_.mode = options.mode;
       
+      if (!this_.columnDefinitions) {
+         this_.columnDefinitions = {};
+      }
+      
       if (options.columnDefinitions) {
          Object.keys(options.columnDefinitions).forEach(function(key) {
             var e = options.columnDefinitions[key];
-            if (e.assignedType || e.only || e.skip) {
-               if (!this_.columnDefinitions) {
-                  this_.columnDefinitions = {};
-               }
-               this_.columnDefinitions[key] = e;
+            if (!this_.columnDefinitions) {
+               this_.columnDefinitions = {};
             }
+            this_.columnDefinitions[key] = e;
          });
       
          this.columnsOnly = Object.keys(options.columnDefinitions).some(function(key) {
@@ -121,5 +125,26 @@ public class DataImportOptions extends JavaScriptObject
          return false;
          
       return this.columnDefinitions[name].only;
+   }-*/;
+   
+   public final native void setBaseColumnDefinitions(DataImportPreviewResponse response) /*-{
+      var this_ = this;
+      if (!response.columns) {
+         return;
+      }
+      
+      if (!this_.columnDefinitions) {
+         this_.columnDefinitions = {};
+      }
+      
+      Object.keys(response.columns).forEach(function(key, index) {
+         if (!this_.columnDefinitions[response.columns[key].col_name]) {
+            this_.columnDefinitions[response.columns[key].col_name] = {
+               index: index,
+               name: response.columns[key].col_name,
+               assignedType: null
+            };
+         }
+      });
    }-*/;
 }
