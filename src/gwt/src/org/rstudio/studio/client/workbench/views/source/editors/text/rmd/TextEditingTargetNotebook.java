@@ -129,7 +129,7 @@ public class TextEditingTargetNotebook
       else
       {
          chunkOutput = ChunkDefinition.create(row, 1, true, 
-               StringUtil.makeRandomId(12), "ref");
+               StringUtil.makeRandomId(12));
         
          LineWidget widget = LineWidget.create(
                                ChunkDefinition.LINE_WIDGET_TYPE,
@@ -254,7 +254,6 @@ public class TextEditingTargetNotebook
       div.addClassName(ThemeStyles.INSTANCE.selectableText());
       setChunkOutputStyle(div);
       div.getStyle().setOpacity(1.0);
-      div.setInnerHTML(chunkOutput.getHtmlRef());
       return div;
    }
    

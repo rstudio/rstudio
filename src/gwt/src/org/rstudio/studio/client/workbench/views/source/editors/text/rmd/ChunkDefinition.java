@@ -28,21 +28,19 @@ public class ChunkDefinition extends JavaScriptObject
    public static native final ChunkDefinition create(int row,
                                                  int rowCount,
                                                  boolean visible,
-                                                 String chunkId,
-                                                 String htmlRef) /*-{
+                                                 String chunkId) /*-{
       return {
         row: row,
         row_count: rowCount,
         visible: visible,
-        chunk_id: chunkId,
-        html_ref: htmlRef 
+        chunk_id: chunkId
       };
    }-*/;
    
    public final ChunkDefinition withRow(int row)
    {
-      return ChunkDefinition.create(row, getRowCount(), getVisible(), getChunkId(), 
-            getHtmlRef());
+      return ChunkDefinition.create(row, getRowCount(), getVisible(), 
+            getChunkId());
    }
    
    public native final int getRow()  /*-{
@@ -57,10 +55,6 @@ public class ChunkDefinition extends JavaScriptObject
       return this.visible;
    }-*/;   
    
-   public native final String getHtmlRef() /*-{
-      return this.html_ref;
-   }-*/;
-
    public native final String getChunkId() /*-{
       return this.chunk_id;
    }-*/;
@@ -71,7 +65,7 @@ public class ChunkDefinition extends JavaScriptObject
       return getRow() == other.getRow() &&
              getRowCount() == other.getRowCount() &&
              getVisible() == other.getVisible() &&
-             getHtmlRef() == other.getHtmlRef();
+             getChunkId() == other.getChunkId();
    }
    
    
