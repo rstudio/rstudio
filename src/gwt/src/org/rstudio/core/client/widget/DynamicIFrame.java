@@ -24,7 +24,20 @@ import org.rstudio.core.client.dom.WindowEx;
 
 public abstract class DynamicIFrame extends Frame
 {
+   public DynamicIFrame(String url)
+   {
+      super(url);
+      url_ = url;
+      pollForLoad();
+   }
+   
    public DynamicIFrame()
+   {
+      url_ = null;
+      pollForLoad();
+   }
+   
+   private void pollForLoad()
    {
       // wait for the window object to become available
       final Scheduler.RepeatingCommand loadFrame = new Scheduler.RepeatingCommand()
@@ -32,7 +45,11 @@ public abstract class DynamicIFrame extends Frame
          @Override
          public boolean execute()
          {
-            if (getIFrame() == null || getWindow() == null || getDocument() == null)
+            if (url_ != "about:blank" &&
+                getDocument().getURL() == "about:blank")
+               return true;
+            if (getIFrame() == null || getWindow() == null || 
+                getDocument() == null || getDocument().getBody() == null)
                return true;
             onFrameLoaded();
             return false;
@@ -71,4 +88,6 @@ public abstract class DynamicIFrame extends Frame
    {
       return getWindow().getDocument();
    }
+   
+   private final String url_;
 }

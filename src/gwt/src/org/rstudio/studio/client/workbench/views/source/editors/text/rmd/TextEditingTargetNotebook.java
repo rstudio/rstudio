@@ -15,7 +15,9 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -26,6 +28,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputFrame;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
@@ -43,6 +46,7 @@ import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.inject.Inject;
 
 public class TextEditingTargetNotebook 
@@ -171,16 +175,32 @@ public class TextEditingTargetNotebook
       JsArray<LineWidget> widgets = docDisplay_.getLineWidgets();
       for (int i = 0; i < widgets.length(); i++)
       {
-         ChunkDefinition output = widgets.get(i).getData();
+         final LineWidget widget = widgets.get(i);
+         ChunkDefinition output = widget.getData();
          if (event.getOutput().getChunkId() == output.getChunkId())
          {
-            widgets.get(i).getElement().setInnerHTML(
-                  event.getOutput().getHtml());
+            ChunkOutputFrame frame = new ChunkOutputFrame(
+                  event.getOutput().getUrl(), 
+                  new ChunkOutputFrame.Host()
+                  {
+                     @Override
+                     public void onOutputLoaded(int height, int width)
+                     {
+                        Debug.devlog("frame loaded: " + height);
+                        IFrameElementEx frame = 
+                              widget.getElement().getFirstChildElement().cast();
+                        frame.getStyle().setHeight(Math.min(
+                              MAX_CHUNK_HEIGHT, height), Unit.PX);
+                        docDisplay_.onLineWidgetChanged(widget);
+                     }
+                  });
+            frame.getElement().getStyle().setWidth(100, Unit.PCT);
+            widget.getElement().removeAllChildren();
+            widget.getElement().appendChild(frame.getElement());
             
             // TODO: this call causes the element to be measured to determine
             // the number of screen rows it consumes, but the element may not 
             // yet be at its final height if the HTML isn't done rendering
-            docDisplay_.onLineWidgetChanged(widgets.get(i));
             break;
          }
       }
@@ -290,4 +310,6 @@ public class TextEditingTargetNotebook
    
    // chunk state synchronized
    private final static int STATE_INITIALIZED = 0;
+   
+   private final static int MAX_CHUNK_HEIGHT = 500;
 }

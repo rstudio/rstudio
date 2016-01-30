@@ -29,7 +29,7 @@ public class RmdChunkOutput extends JavaScriptObject
       return this.doc_id;
    }-*/;
 
-   public final native String getHtml() /*-{
-      return this.html;
+   public final native String getUrl() /*-{
+      return this.url;
    }-*/;
 }

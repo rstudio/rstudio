@@ -85,17 +85,9 @@ Error enqueueChunkOutput(
       const std::string& docPath, const std::string& docId,
       const std::string& chunkId)
 {
-   // read the chunk HTML from the file
-   std::string html;
-   Error error = core::readStringFromFile(
-         chunkOutputPath(docPath, docId, chunkId), &html);
-   if (error)
-      return error;
-
-   // and write it back out
    json::Object output;
-   output["html"] = "<iframe src=\"" kChunkOutputPath "/" + docId + "/" + 
-      chunkId + "/" kChunkContentFile "\" />";
+   output["url"] = kChunkOutputPath "/" + docId + "/" + chunkId + 
+                   "/" kChunkContentFile;
    output["chunk_id"] = chunkId;
    output["doc_id"] = docId;
    ClientEvent event(client_events::kChunkOutput, output);
