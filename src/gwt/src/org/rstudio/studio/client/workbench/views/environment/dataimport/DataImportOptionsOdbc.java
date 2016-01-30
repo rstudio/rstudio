@@ -1,5 +1,5 @@
 /*
- * DataImportModes.java
+ * DataImportOptionsOdbc.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -15,16 +15,17 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
-public enum DataImportModes
+public class DataImportOptionsOdbc extends DataImportOptions
 {
-   Text,
-   SAV,
-   SAS,
-   Stata,
-   XLS,
-   XML,
-   JSON,
-   JDBC,
-   ODBC,
-   Mongo,
+   protected DataImportOptionsOdbc()
+   {
+   }
+   
+   public final static native DataImportOptionsOdbc create(
+      String dataName) /*-{
+         return {
+            "mode": "odbc",
+            "dataName": dataName
+       }
+   }-*/;
 }

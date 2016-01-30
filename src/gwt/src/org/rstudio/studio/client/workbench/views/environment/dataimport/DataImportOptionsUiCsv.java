@@ -15,22 +15,26 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
+import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.inject.Inject;
 
 public class DataImportOptionsUiCsv extends DataImportOptionsUi
 {
@@ -46,6 +50,9 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
 
    HTMLPanel mainPanel_;
    
+   SourceServerOperations sourceServer_;
+   
+   @Inject
    public DataImportOptionsUiCsv()
    {
       super();
@@ -53,8 +60,17 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       
       initWidget(mainPanel_);
       
-      initDefaults();
       initEvents();
+      
+      RStudioGinjector.INSTANCE.injectMembers(this);
+   }
+   
+   @Inject
+   private void initialize(SourceServerOperations sourceServer)
+   {
+      sourceServer_ = sourceServer;
+      
+      initDefaults();
    }
    
    private boolean isBackslashValue(String value)
@@ -137,33 +153,25 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       commentListBox_.addItem("\\", "\\");
       commentListBox_.addItem("*>", "*>");
       
-      String langs[] = {
-         "af","agq","ak","am","ar","as","asa","az","bas","be","bem","bez",
-         "bg","bm","bn","bo","br","brx","bs","ca","cgg","chr","cs","cy","da",
-         "dav","de","dje","dsb","dua","dyo","dz","ebu","ee","el","en","eo",
-         "es","et","eu","ewo","fa","ff","fi","fil","fo","fr","fur","fy","ga",
-         "gd","gl","gsw","gu","guz","gv","ha","haw","he","hi","hr","hsb","hu",
-         "hy","id","ig","ii","is","it","ja","jgo","jmc","ka","kab","kam","kde",
-         "kea","khq","ki","kk","kkj","kl","kln","km","kn","ko","kok","ks","ksb",
-         "ksf","ksh","kw","ky","lag","lb","lg","lkt","ln","lo","lt","lu","luo",
-         "luy","lv","mas","mer","mfe","mg","mgh","mgo","mk","ml","mn","mr","ms",
-         "mt","mua","my","naq","nb","nd","ne","nl","nmg","nn","nnh","nus","nyn",
-         "om","or","os","pa","pl","ps","pt","qu","rm","rn","ro","rof","ru","rw",
-         "rwk","sah","saq","sbp","se","seh","ses","sg","shi","si","sk","sl",
-         "smn","sn","so","sq","sr","sv","sw","ta","te","teo","th","ti","to","tr",
-         "twq","tzm","ug","uk","ur","uz","vai","vi","vun","wae","xog","yav","yi",
-         "yo","zgh","zh","zu"
-      };
-      
       localeListBox_.addItem("Default", "");
-      for(String lang : langs) {
-         localeListBox_.addItem(lang, lang);
-      }
-   }
-   
-   void triggerChange()
-   {
-      ValueChangeEvent.fire(this, getOptions());
+      sourceServer_.iconvlist(new ServerRequestCallback<IconvListResult>()
+      {
+         @Override
+         public void onResponseReceived(IconvListResult result)
+         {
+            JsArrayString encodings = result.getAll();
+            for (int i = 0; i < encodings.length(); i++)
+            {
+               localeListBox_.addItem(encodings.get(i), encodings.get(i));
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+         }
+      });
+     
    }
    
    void initEvents()
@@ -239,20 +247,4 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    
    @UiField
    CheckBox trimSpacesCheckBox_;
-   
-   private final HandlerManager handlerManager_ = new HandlerManager(this);
-
-   @Override
-   public HandlerRegistration addValueChangeHandler(ValueChangeHandler<DataImportOptions> handler)
-   {
-      return handlerManager_.addHandler(
-            ValueChangeEvent.getType(),
-            handler);
-   }
-   
-   @Override
-   public void fireEvent(GwtEvent<?> event)
-   {
-      handlerManager_.fireEvent(event);
-   }
 }

@@ -26,4 +26,18 @@ public class DataImportPreviewResponse extends JavaScriptObject
    public final native String getErrorMessage() /*-{
       return this.error ? this.error.message.join(' ') : null;
    }-*/;
+   
+   public final native int getParsingErrors() /*-{
+      return this.parsingErrors;
+   }-*/;
+   
+   public final native void setColumnDefinitions(DataImportPreviewResponse response) /*-{
+      if (response) {
+         return this.columns = response.columns;
+      }
+   }-*/;
+   
+   public final native boolean supportsColumnOperations() /*-{
+      return this.supportsColumnOperations == true;
+   }-*/;
 }

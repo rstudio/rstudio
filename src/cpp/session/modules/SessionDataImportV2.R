@@ -37,8 +37,14 @@
    dataName
 })
 
-.rs.addFunction("assemble_data_import_parameters", function(options, optionTypes, importFunction, dataImportOptions, ns)
+.rs.addFunction("assemble_data_import_parameters", function(options, optionTypes, importFunction, dataImportOptions, package)
 {
+   ns <- ""
+   if (!identical(package, NULL))
+   {
+      ns <- paste(package, "::", sep = "")
+   }
+
    buildParameter <- function(optionType, optionValue)
    {
       if (identical(optionType, NULL)) {
@@ -50,7 +56,7 @@
             return (paste("\"", optionValue, "\"", sep = ""))
          },
          "locale" = {
-            return (paste(ns, "locale(date_names=\"", optionValue, "\")", sep = ""))
+            return (paste(ns, "locale(encoding=\"", optionValue, "\")", sep = ""))
          },
          "columnDefinitions" = {
             colParams <- c()
@@ -159,6 +165,87 @@
 {
    importInfo <- list()
 
+   functionInfoFromOptions <- list(
+      "text" = function() {
+         functionName <- ""
+         functionReference <- readr::read_delim
+         if (is.null(dataImportOptions$delimiter) || identical(dataImportOptions$delimiter, ","))
+         {
+            functionName <- "read_csv"
+            functionReference <- readr::read_csv
+         }
+         else
+         {
+            functionName <- "read_delim"
+         }
+
+         # load parameters
+         options <- list()
+         options[["file"]] <- dataImportOptions$importLocation
+         options[["delim"]] <- dataImportOptions$delimiter
+         options[["quote"]] <- dataImportOptions$quotes
+         options[["escape_backslash"]] <- dataImportOptions$escapeBackslash
+         options[["escape_double"]] <- dataImportOptions$escapeDouble
+         options[["col_names"]] <- dataImportOptions$columnNames
+         options[["trim_ws"]] <- dataImportOptions$trimSpaces
+         options[["locale"]] <- dataImportOptions$locale
+         options[["na"]] <- dataImportOptions$na
+         options[["comment"]] <- dataImportOptions$comments
+         options[["skip"]] <- dataImportOptions$skip
+         options[["n_max"]] <- dataImportOptions$maxRows
+         options[["col_types"]] <- dataImportOptions$columnDefinitions
+
+         # set special parameter types
+         optionTypes <- list()
+         optionTypes[["file"]] <- "character"
+         optionTypes[["delim"]] <- "character"
+         optionTypes[["quote"]] <- "character"
+         optionTypes[["locale"]] <- "locale"
+         optionTypes[["na"]] <- "character"
+         optionTypes[["comment"]] <- "character"
+         optionTypes[["col_types"]] <- "columnDefinitions"
+
+         return(list(
+            name = functionName,
+            reference = functionReference,
+            package = "readr",
+            options = options,
+            optionTypes = optionTypes,
+            supportsColumnOperations = TRUE
+         ))
+      },
+      "statistics" = function() {
+         # load parameters
+         options <- list()
+         options[["path"]] <- dataImportOptions$importLocation
+         options[["b7dat"]] <- dataImportOptions$importLocation
+         options[["b7cat"]] <- dataImportOptions$modelLocation
+
+         havenFunction <- switch(dataImportOptions$format,
+            "sav" = list(name = "read_sav", ref = haven::read_sav),
+            "dta" = list(name = "read_dta", ref = haven::read_dta),
+            "por" = list(name = "read_por", ref = haven::read_por),
+            "sas" = list(name = "read_sas", ref = haven::read_sas),
+            "stata" = list(name = "read_stata", ref = haven::read_stata)
+         )
+
+         # set special parameter types
+         optionTypes <- list()
+         optionTypes[["path"]] <- "character"
+         optionTypes[["b7dat"]] <- "character"
+         optionTypes[["b7cat"]] <- "character"
+
+         return(list(
+            name = havenFunction$name,
+            reference = havenFunction$ref,
+            package = "haven",
+            options = options,
+            optionTypes = optionTypes,
+            supportsColumnOperations = FALSE
+         ))
+      }
+   )
+
    dataName <- importInfo$dataName <- .rs.assemble_data_import_name(dataImportOptions)
    if (is.null(dataName) || identical(dataName, ""))
    {
@@ -167,56 +254,23 @@
 
    dataName <- tolower(gsub("[\\._]+", "_", c(make.names(dataName)), perl=TRUE))
 
-   functionName <- list()
-   functionReference <- readr::read_delim
-   if (is.null(dataImportOptions$delimiter) || identical(dataImportOptions$delimiter, ","))
-   {
-      functionName <- "read_csv"
-      functionReference <- readr::read_csv
-   }
-   else
-   {
-      functionName <- "read_delim"
-   }
+   functionInfo <- functionInfoFromOptions[dataImportOptions$mode][[1]]()
+   options <- functionInfo$options
+   optionTypes <- functionInfo$optionTypes
 
-   # load parameters
-   options <- list()
-   options[["file"]] <- dataImportOptions$importLocation
-   options[["delim"]] <- dataImportOptions$delimiter
-   options[["quote"]] <- dataImportOptions$quotes
-   options[["escape_backslash"]] <- dataImportOptions$escapeBackslash
-   options[["escape_double"]] <- dataImportOptions$escapeDouble
-   options[["col_names"]] <- dataImportOptions$columnNames
-   options[["trim_ws"]] <- dataImportOptions$trimSpaces
-   options[["locale"]] <- dataImportOptions$locale
-   options[["na"]] <- dataImportOptions$na
-   options[["comment"]] <- dataImportOptions$comments
-   options[["skip"]] <- dataImportOptions$skip
-   options[["n_max"]] <- dataImportOptions$maxRows
-   options[["col_types"]] <- dataImportOptions$columnDefinitions
-
-   # set special parameter types
-   optionTypes <- list()
-   optionTypes[["file"]] <- "character"
-   optionTypes[["delim"]] <- "character"
-   optionTypes[["quote"]] <- "character"
-   optionTypes[["locale"]] <- "locale"
-   optionTypes[["na"]] <- "character"
-   optionTypes[["comment"]] <- "character"
-   optionTypes[["col_types"]] <- "columnDefinitions"
-
-   functionParameters <- .rs.assemble_data_import_parameters(options, optionTypes, functionReference, dataImportOptions, "readr::")
-   functionParametersNoNs <- .rs.assemble_data_import_parameters(options, optionTypes, functionReference, dataImportOptions, "")
+   functionParameters <- .rs.assemble_data_import_parameters(options, optionTypes, functionInfo$reference, dataImportOptions, functionInfo$package)
+   functionParametersNoNs <- .rs.assemble_data_import_parameters(options, optionTypes, functionInfo$reference, dataImportOptions, NULL)
 
    previewCode <- paste(
-      "readr::",
-      functionName,
+      functionInfo$package,
+      "::",
+      functionInfo$name,
       "(",
       functionParameters,
       ")",
       sep = "")
    previewCodeNoNs <- paste(
-      functionName,
+      functionInfo$name,
       "(",
       functionParametersNoNs,
       ")",
@@ -229,7 +283,12 @@
    importInfo$importCode <- paste(
       lapply(
          c(
-            "library(readr)",
+            paste(
+               "library(",
+               functionInfo$package,
+               ")",
+               sep = ""
+            ),
             paste(dataName, " <- ", previewCodeNoNs, sep = ""),
             paste("View(", dataName, ")", sep = "")
          ),
@@ -249,6 +308,8 @@
       ),
       collapse = "\n"
    )
+
+   importInfo$supportsColumnOperations = functionInfo$supportsColumnOperations
 
    importInfo
 })
@@ -280,6 +341,7 @@
       importInfo <- .rs.assemble_data_import(dataImportOptions)
       data <- eval(parse(text=importInfo$previewCode))
       columns <- .rs.describeCols(data, maxCols, maxFactors)
+      parsingErrors <-length(readr::problems(data)$row)
 
       cnames <- names(data)
       size <- nrow(data)
@@ -289,7 +351,9 @@
       }
 
       return(list(data = unname(data),
-                  columns = columns))
+                  columns = columns,
+                  supportsColumnOperations = importInfo$supportsColumnOperations,
+                  parsingErrors = parsingErrors))
    }, error = function(e) {
       return(list(error = e))
    })

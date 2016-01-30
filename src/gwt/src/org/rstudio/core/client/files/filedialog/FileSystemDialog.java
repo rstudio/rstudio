@@ -190,6 +190,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
    public void showModal()
    {
       super.showModal();
+      
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          public void execute()

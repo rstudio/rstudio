@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.environment.dataimport.res;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 
 public interface DataImportResources extends ClientBundle
@@ -25,4 +26,7 @@ public interface DataImportResources extends ClientBundle
    
    @Source("copyCodeToClipboard.png")
    ImageResource copyImage();
+   
+   interface Style extends CssResource {
+   }
 }
