@@ -69,6 +69,10 @@ const char * const SourceDocument::SourceDocumentTypeCpp       = "cpp";
 
 namespace {
 
+// cached mapping of document id to document path (facilitates efficient path
+// lookup)
+std::map<std::string, std::string> s_idToPath;
+
 struct PropertiesDatabase
 {
    FilePath path;
@@ -700,6 +704,18 @@ Error removeAll()
    return Success();
 }
 
+Error getPath(const std::string& id, std::string* pPath)
+{
+   std::map<std::string, std::string>::iterator it = s_idToPath.find(id);
+   if (it == s_idToPath.end())
+   {
+      return systemError(boost::system::errc::no_such_file_or_directory,
+                         ERROR_LOCATION);
+   }
+   *pPath = it->second;
+   return Success();
+}
+
 namespace {
 
 void onQuit()
@@ -716,6 +732,24 @@ void onShutdown(bool)
       LOG_ERROR(error);
 }
 
+void onDocUpdated(boost::shared_ptr<SourceDocument> pDoc)
+{
+   s_idToPath[pDoc->id()] = pDoc->path();
+}
+
+void onDocRemoved(const std::string& id)
+{
+   std::map<std::string, std::string>::iterator it = s_idToPath.find(id);
+   if (it != s_idToPath.end())
+      s_idToPath.erase(it);
+}
+
+void onDocRenamed(const std::string &, 
+                  boost::shared_ptr<SourceDocument> pDoc)
+{
+   s_idToPath[pDoc->id()] = pDoc->path();
+}
+
 } // anonymous namespace
 
 Events& events()
@@ -726,12 +760,14 @@ Events& events()
 
 Error initialize()
 {
-   
-   
    // provision a source database directory
    Error error = supervisor::attachToSourceDatabase(&s_sourceDBPath);
    if (error)
       return error;
+
+   events().onDocUpdated.connect(onDocUpdated);
+   events().onDocRemoved.connect(onDocRemoved);
+   events().onDocRenamed.connect(onDocRenamed);
 
    // signup for the quit and shutdown events
    module_context::events().onQuit.connect(onQuit);

@@ -26,7 +26,8 @@
                  
   # render the stub to the given file
   capture.output(rmarkdown::render(input = chunkFile, 
-                                   output_format = rmarkdown::html_fragment(),
+                                   output_format = rmarkdown::html_fragment(
+                                     self_contained = FALSE),
                                    output_file = outputFile,
                                    encoding = "UTF-8",
                                    quiet = TRUE))

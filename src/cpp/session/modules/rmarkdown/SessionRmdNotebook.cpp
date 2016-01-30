@@ -24,13 +24,16 @@
 
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/Algorithm.hpp>
 #include <core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 
-#define kChunkDefs "chunk_definitions"
+#define kChunkDefs        "chunk_definitions"
+#define kChunkOutputPath  "chunk_output"
+#define kChunkContentFile "contents.html"
 
 using namespace rstudio::core;
 
@@ -74,7 +77,7 @@ FilePath chunkOutputPath(
 {
    return chunkCacheFolder(docPath, docId)
                           .childPath(chunkId)
-                          .childPath("contents.html");
+                          .childPath(kChunkContentFile);
 }
 
 
@@ -91,7 +94,8 @@ Error enqueueChunkOutput(
 
    // and write it back out
    json::Object output;
-   output["html"] = html;
+   output["html"] = "<iframe src=\"" kChunkOutputPath "/" + docId + "/" + 
+      chunkId + "/" kChunkContentFile "\" />";
    output["chunk_id"] = chunkId;
    output["doc_id"] = docId;
    ClientEvent event(client_events::kChunkOutput, output);
@@ -221,7 +225,6 @@ void onDocRenamed(const std::string& oldPath,
    if (!oldCacheDir.exists() || newCacheDir.exists())
       return;
 
-
    // if the doc was previously unsaved, we can just move the whole folder 
    // to its newly saved location
    if (oldPath.empty())
@@ -233,6 +236,35 @@ void onDocRenamed(const std::string& oldPath,
    Error error = copyCache(oldCacheDir, newCacheDir);
    if (error)
       LOG_ERROR(error);
+}
+
+Error handleChunkOutputRequest(const http::Request& request,
+                               http::Response* pResponse)
+{
+   // uri format is: /chunk_output/<doc-id>/<chunk-id>/path...
+   
+   // split URI into pieces, extract the chunk and document ID, and remove that
+   // part of the URI
+   std::vector<std::string> parts = algorithm::split(request.uri(), "/");
+   if (parts.size() < 5) 
+      return Success();
+   std::string docId = parts[2];
+   std::string chunkId = parts[3];
+   for (int i = 0; i < 4; i++)
+      parts.erase(parts.begin());
+
+   std::string path;
+   Error error = source_database::getPath(docId, &path);
+   if (error)
+      return error;
+   FilePath target = chunkCacheFolder(path, docId).complete(chunkId).complete(
+         algorithm::join(parts, "/"));
+
+   // TODO: for shared resources, go ahead and let them be cached
+   pResponse->setNoCacheHeaders();
+   pResponse->setFile(target, request);
+
+   return Success();
 }
 
 } // anonymous namespace
@@ -299,6 +331,8 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "execute_inline_chunk", executeInlineChunk))
       (bind(registerRpcMethod, "refresh_chunk_output", refreshChunkOutput))
+      (bind(registerUriHandler, "/" kChunkOutputPath, 
+            handleChunkOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRmdNotebook.R"));
 
    return initBlock.execute();
