@@ -81,6 +81,8 @@ public class DataImport extends Composite
    
    private DataImportPreviewResponse lastSuccessfulResponse_;
    
+   private final DataImportModes dataImportMode_;
+   
    interface DataImportUiBinder extends UiBinder<Widget, DataImport>
    {
    }
@@ -89,7 +91,8 @@ public class DataImport extends Composite
                      ProgressIndicator progressIndicator)
    {
       dataImportResources_ = GWT.create(DataImportResources.class);
-      
+      dataImportMode_ = dataImportMode;
+
       progressIndicator_ = new ProgressIndicatorDelay(progressIndicator);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -182,7 +185,7 @@ public class DataImport extends Composite
                      !dataImportFileChooser_.getText().isEmpty() ?
                            dataImportFileChooser_.getText() :
                      null);
-                  dataImportOptionsUi_.clearDataName();
+                  dataImportOptionsUi_.clearOptions();
                   dataImportOptionsUi_.setImportLocation(dataImportFileChooser_.getText());
                   previewDataImport();
                }
@@ -242,7 +245,7 @@ public class DataImport extends Composite
          });
    }
    
-   private Operation onColumnMenuShow()
+   private Operation onColumnMenuShow(final DataImportPreviewResponse response)
    {
       final Operation completeAndPreview = new Operation()
       {
@@ -274,8 +277,16 @@ public class DataImport extends Composite
                   }
                   else if (input == "date")
                   {
-                     promptForParseString(
-                        "Date Format", "%m/%d/%Y", completeAndPreview, column.getName(), input);
+                     if (dataImportMode_ == DataImportModes.Text)
+                     {
+                        promptForParseString(
+                              "Date Format", "%m/%d/%Y", completeAndPreview, column.getName(), input);
+                     }
+                     else
+                     {
+                        importOptions_.setColumnType(column.getName(), input);
+                        completeAndPreview.execute();
+                     }
                   }
                   else if (input == "time")
                   {
@@ -312,6 +323,9 @@ public class DataImport extends Composite
                   
                   if (input == "only") {
                      importOptions_.setOnlyColumn(column.getName(), true);
+                     if (importOptions_.getColumnType(column.getName()) == "skip") {
+                        importOptions_.setColumnType(column.getName(), null);
+                     }
                   }
                   
                   if (input == "skip") {
@@ -345,6 +359,8 @@ public class DataImport extends Composite
                columnTypesMenu_.setSelected("only");
             }
             
+            columnTypesMenu_.setVisibleColumns(response.getSupportedColumnTypes());
+            
             columnTypesMenu_.show();
          }
       };
@@ -369,9 +385,9 @@ public class DataImport extends Composite
       gridViewer_.setOption("rowNumbers", "false");
       gridViewer_.setData(response);
       
-      if (response.supportsColumnOperations())
+      if (response.getSupportedColumnTypes() != null && response.getSupportedColumnTypes().length > 0)
       {
-         gridViewer_.setColumnDefinitionsUIVisible(true, onColumnMenuShow(), new Operation()
+         gridViewer_.setColumnDefinitionsUIVisible(true, onColumnMenuShow(response), new Operation()
          {
             @Override
             public void execute()
@@ -411,7 +427,13 @@ public class DataImport extends Composite
                return;
             }
             
+            // Set the column definitions to allow subsequent calls to assemble
+            // generate preview code based on data.
+            importOptions_.setBaseColumnDefinitions(response);
+            
             lastSuccessfulResponse_ = response;
+            
+            dataImportOptionsUi_.setPreviewResponse(response);
             
             gridViewer_.setOption("status",
                   "Previewing first " + toLocaleString(maxRows_) + 

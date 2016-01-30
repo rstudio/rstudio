@@ -88,7 +88,7 @@ public class DataImportOptionsUiSav extends DataImportOptionsUi
    }
    
    @Override
-   public void clearDataName()
+   public void clearOptions()
    {
       nameTextBox_.setText("");
    }

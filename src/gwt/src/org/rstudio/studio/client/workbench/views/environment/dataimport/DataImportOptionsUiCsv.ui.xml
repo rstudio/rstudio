@@ -69,6 +69,8 @@
 		.skipTextBox {
 			width: 50px;
 			text-align: right;
+			padding-left: 5px;
+			padding-right: 5px;
 		}
 		.optionsRow {
 			height: 23px;

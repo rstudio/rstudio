@@ -58,12 +58,12 @@
          "locale" = {
             return (paste(ns, "locale(encoding=\"", optionValue, "\")", sep = ""))
          },
-         "columnDefinitions" = {
+         "columnDefinitionsReadR" = {
             colParams <- c()
             for(colIdx in seq_along(optionValue)) {
                col <- optionValue[[colIdx]]
 
-               if ((!dataImportOptions$columnsOnly && !identical(col$assignedType, NULL)) || 
+               if ((!identical(dataImportOptions$columnsOnly, TRUE) && !identical(col$assignedType, NULL)) || 
                   identical(col$only, TRUE))
                {
                   colType <- paste(ns, "col_guess()", sep = "")
@@ -92,14 +92,13 @@
                         numeric = paste(ns, "col_numeric()", sep = ""),
                         integer = paste(ns, "col_integer()", sep = ""),
                         logical = paste(ns, "col_logical()", sep = ""),
-                        numeric = paste(ns, "col_numeric()", sep = ""),
                         dateTime = paste(ns, "col_datetime(", parseString, ")", sep = ""),
                         character = paste(ns, "col_character()", sep = ""),
                         euroDouble = paste(ns, "col_euro_double()", sep = "")
                      )
                   }
 
-                  colParams[[colIdx]] <- paste("\"", col$name, "\" = ", colType, sep="")
+                  colParams[[col$name]] <- paste("\"", col$name, "\" = ", colType, sep="")
                }
             }
 
@@ -114,6 +113,43 @@
             }
 
             return (paste(ns, colsConstructor, "(\n", colParam, ")", sep = ""))
+         },
+         "columnDefinitionsReadXl" = {
+            colParams <- c()
+
+            hasAssignedType <- function(x) {
+               !identical(x$assignedType, NULL)
+            }
+
+            if (!any(hasAssignedType(optionValue)))
+               return (NULL)
+
+            colsByIndex <- list()
+            for(col in optionValue) {
+               colsByIndex[[col$index + 1]] <- col
+            }
+
+            for(colIdx in seq(from=1, to=length(optionValue) - 1)) {
+               col <- colsByIndex[[colIdx + 1]]
+
+               colParams[[colIdx]] <- "\"text\""
+               if (!identical(col$assignedType, NULL))
+               {
+                  colParams[[colIdx]] <- switch(col$assignedType,
+                     numeric = "\"numeric\"",
+                     date = "\"date\"",
+                     character = "\"text\"",
+                     skip = "\"blank\""
+                  )
+               }
+            }
+
+            if (length(colParams) == 0)
+               return (NULL)
+
+            colParam <- (paste(colParams, collapse = ",", sep = ""))
+
+            return (paste(ns, "c", "(\n", colParam, ")", sep = ""))
          }, {
             return (optionValue)
          })
@@ -203,15 +239,15 @@
          optionTypes[["locale"]] <- "locale"
          optionTypes[["na"]] <- "character"
          optionTypes[["comment"]] <- "character"
-         optionTypes[["col_types"]] <- "columnDefinitions"
+         optionTypes[["col_types"]] <- "columnDefinitionsReadR"
 
          return(list(
             name = functionName,
             reference = functionReference,
             package = "readr",
+            paramsPackage = "readr",
             options = options,
-            optionTypes = optionTypes,
-            supportsColumnOperations = TRUE
+            optionTypes = optionTypes
          ))
       },
       "statistics" = function() {
@@ -240,8 +276,33 @@
             reference = havenFunction$ref,
             package = "haven",
             options = options,
-            optionTypes = optionTypes,
-            supportsColumnOperations = FALSE
+            optionTypes = optionTypes
+         ))
+      },
+      "xls" = function() {
+         # load parameters
+         options <- list()
+         options[["path"]] <- dataImportOptions$importLocation
+         options[["sheet"]] <- dataImportOptions$sheet
+         options[["na"]] <- dataImportOptions$na
+         options[["col_names"]] <- dataImportOptions$columnNames
+         options[["skip"]] <- dataImportOptions$skip
+         options[["col_types"]] <- dataImportOptions$columnDefinitions
+
+         # set special parameter types
+         optionTypes <- list()
+         optionTypes[["path"]] <- "character"
+         optionTypes[["sheet"]] <- "character"
+         optionTypes[["na"]] <- "character"
+         optionTypes[["col_types"]] <- "columnDefinitionsReadXl"
+
+         return(list(
+            name = "read_excel",
+            reference = readxl::read_excel,
+            package = "readxl",
+            paramsPackage = NULL,
+            options = options,
+            optionTypes = optionTypes
          ))
       }
    )
@@ -254,11 +315,11 @@
 
    dataName <- tolower(gsub("[\\._]+", "_", c(make.names(dataName)), perl=TRUE))
 
-   functionInfo <- functionInfoFromOptions[dataImportOptions$mode][[1]]()
+   functionInfo <- functionInfoFromOptions[[dataImportOptions$mode]]()
    options <- functionInfo$options
    optionTypes <- functionInfo$optionTypes
 
-   functionParameters <- .rs.assemble_data_import_parameters(options, optionTypes, functionInfo$reference, dataImportOptions, functionInfo$package)
+   functionParameters <- .rs.assemble_data_import_parameters(options, optionTypes, functionInfo$reference, dataImportOptions, functionInfo$paramsPackage)
    functionParametersNoNs <- .rs.assemble_data_import_parameters(options, optionTypes, functionInfo$reference, dataImportOptions, NULL)
 
    previewCode <- paste(
@@ -309,8 +370,6 @@
       collapse = "\n"
    )
 
-   importInfo$supportsColumnOperations = functionInfo$supportsColumnOperations
-
    importInfo
 })
 
@@ -326,16 +385,83 @@
 .rs.addJsonRpcHandler("preview_data_import", function(dataImportOptions, maxCols = 100, maxFactors = 64)
 {
    tryCatch({
+      beforeImportFromOptions <- list(
+         "text" = function() {
+            # while previewing data, always return a column even if it will be skipped
+            dataImportOptions$columnsOnly = FALSE;
+            if (!identical(dataImportOptions$columnDefinitions, NULL))
+            {
+               dataImportOptions$columnDefinitions <<- Filter(function (e) {
+                     !(identical(e$assignedType, "skip") || identical(e$assignedType, "only"))
+                  },
+                  dataImportOptions$columnDefinitions
+               )
+            }
+         },
+         "xls" = function() {
+            # while previewing data, always return a column even if it will be skipped
+            if (!identical(dataImportOptions$columnDefinitions, NULL))
+            {
+               dataImportOptions$columnDefinitions <<- lapply(
+                  dataImportOptions$columnDefinitions,
+                  function (e) {
+                     if (identical(e$assignedType, "skip")) {
+                        e$assignedType <- "character"
+                     }
+                     e
+                  }
+               )
+            }
+         }
+      )
 
-      # while previewing data, always return a column even if it will be skipped
-      dataImportOptions$columnsOnly = FALSE;
-      if (!identical(dataImportOptions$columnDefinitions, NULL))
+      optionsInfoFromOptions <- list(
+         "text" = function() {
+            return(list(
+               columnTypes = c("guess",
+                               "date",
+                               "time",
+                               "double",
+                               "factor",
+                               "numeric",
+                               "integer",
+                               "logical",
+                               "dateTime",
+                               "character",
+                               "include",
+                               "only",
+                               "skip")
+            ))
+         },
+         "statistics" = function() {
+            return(list(
+               columnTypes = list()
+            ))
+         },
+         "xls" = function() {
+            sheets <- list()
+            if (!identical(sheets, NULL)) {
+               sheets <- tryCatch({
+                  readxl::excel_sheets(path = dataImportOptions$importLocation)
+               }, error = function(e) {
+                  list()
+               })
+            }
+
+            return(list(
+               sheets = sheets,
+               columnTypes = c("numeric",
+                               "date",
+                               "character",
+                               "include",
+                               "skip")
+            ))
+         }
+      )
+
+      if (dataImportOptions$mode %in% names(beforeImportFromOptions))
       {
-         dataImportOptions$columnDefinitions <- Filter(function (e) {
-               !(identical(e$assignedType, "skip") || identical(e$assignedType, "only"))
-            },
-            dataImportOptions$columnDefinitions
-         )
+         beforeImportFromOptions[[dataImportOptions$mode]]()
       }
 
       importInfo <- .rs.assemble_data_import(dataImportOptions)
@@ -350,9 +476,11 @@
          data[[i]] <- .rs.formatDataColumn(data[[i]], 1, size)
       }
 
+      options <- optionsInfoFromOptions[[dataImportOptions$mode]]()
+
       return(list(data = unname(data),
                   columns = columns,
-                  supportsColumnOperations = importInfo$supportsColumnOperations,
+                  options = options,
                   parsingErrors = parsingErrors))
    }, error = function(e) {
       return(list(error = e))
