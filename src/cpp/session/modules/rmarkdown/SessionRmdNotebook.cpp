@@ -33,7 +33,7 @@
 
 #define kChunkDefs        "chunk_definitions"
 #define kChunkOutputPath  "chunk_output"
-#define kChunkContentFile "contents.html"
+#define kChunkLibDir      "chunk-lib"
 
 using namespace rstudio::core;
 
@@ -76,8 +76,7 @@ FilePath chunkOutputPath(
       const std::string& chunkId)
 {
    return chunkCacheFolder(docPath, docId)
-                          .childPath(chunkId)
-                          .childPath(kChunkContentFile);
+                          .childPath(chunkId + ".html");
 }
 
 
@@ -86,8 +85,7 @@ Error enqueueChunkOutput(
       const std::string& chunkId)
 {
    json::Object output;
-   output["url"] = kChunkOutputPath "/" + docId + "/" + chunkId + 
-                   "/" kChunkContentFile;
+   output["url"] = kChunkOutputPath "/" + docId + "/" + chunkId + ".html";
    output["chunk_id"] = chunkId;
    output["doc_id"] = docId;
    ClientEvent event(client_events::kChunkOutput, output);
@@ -111,8 +109,16 @@ Error executeInlineChunk(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   // ensure we have a library path
+   FilePath chunkLibDir = chunkCacheFolder(docPath, docId).complete(
+         kChunkLibDir);
+   error = chunkLibDir.ensureDirectory();
+   if (error)
+      return error;
+
    // render the contents to the cached folder, then extract the contents
    error = r::exec::RFunction(".rs.executeSingleChunk", options, content,
+         chunkLibDir.absolutePath(),
          chunkOutput.absolutePath()).call();
    if (error)
       return error;
@@ -233,28 +239,34 @@ void onDocRenamed(const std::string& oldPath,
 Error handleChunkOutputRequest(const http::Request& request,
                                http::Response* pResponse)
 {
-   // uri format is: /chunk_output/<doc-id>/<chunk-id>/path...
+   // uri format is: /chunk_output/<doc-id>/...
    
    // split URI into pieces, extract the chunk and document ID, and remove that
    // part of the URI
    std::vector<std::string> parts = algorithm::split(request.uri(), "/");
-   if (parts.size() < 5) 
+   if (parts.size() < 4) 
       return Success();
    std::string docId = parts[2];
-   std::string chunkId = parts[3];
-   for (int i = 0; i < 4; i++)
+   for (int i = 0; i < 3; i++)
       parts.erase(parts.begin());
 
    std::string path;
    Error error = source_database::getPath(docId, &path);
    if (error)
       return error;
-   FilePath target = chunkCacheFolder(path, docId).complete(chunkId).complete(
+   FilePath target = chunkCacheFolder(path, docId).complete(
          algorithm::join(parts, "/"));
 
-   // TODO: for shared resources, go ahead and let them be cached
-   pResponse->setNoCacheHeaders();
-   pResponse->setFile(target, request);
+   // if a reference to the chunk library folder, we can reuse the contents
+   if (parts[0] == kChunkLibDir)
+   {
+      pResponse->setCacheableFile(target, request);
+   }
+   else
+   {
+      pResponse->setNoCacheHeaders();
+      pResponse->setFile(target, request);
+   }
 
    return Success();
 }

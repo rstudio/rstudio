@@ -13,7 +13,8 @@
 #
 #
 
-.rs.addFunction("executeSingleChunk", function(options, content, outputFile) 
+.rs.addFunction("executeSingleChunk", function(options, content, libDir, 
+                                               outputFile) 
 {
   # create a temporary file stub to send to R Markdown
   chunkFile <- tempfile(fileext = ".Rmd")
@@ -30,7 +31,8 @@
                                      theme = NULL,
                                      highlight = NULL,
                                      template = NULL, 
-                                     self_contained = FALSE),
+                                     self_contained = FALSE,
+                                     lib_dir = libDir),
                                    output_file = outputFile,
                                    encoding = "UTF-8",
                                    quiet = TRUE))
