@@ -33,7 +33,7 @@
 
 #define kChunkDefs        "chunk_definitions"
 #define kChunkOutputPath  "chunk_output"
-#define kChunkLibDir      "chunk-lib"
+#define kChunkLibDir      "lib"
 
 using namespace rstudio::core;
 
@@ -128,10 +128,9 @@ Error executeInlineChunk(const json::JsonRpcRequest& request,
    return Success();
 }
 
-void replayChunkOutputs(const std::string& docPath, const std::string& docId,
-      const std::string& requestId, const json::Array& chunkOutputs) 
+void extractChunkIds(const json::Array& chunkOutputs, 
+                     std::vector<std::string> *pIds)
 {
-   // find all the chunks and play them back to the client
    BOOST_FOREACH(const json::Value& chunkOutput, chunkOutputs)
    {
       if (chunkOutput.type() != json::ObjectType)
@@ -140,9 +139,21 @@ void replayChunkOutputs(const std::string& docPath, const std::string& docId,
       if (json::readObject(chunkOutput.get_obj(), "chunk_id", &chunkId) ==
             Success()) 
       {
-         // ignore errors here (it's okay if some chunks don't have output)
-         enqueueChunkOutput(docPath, docId, chunkId);
+         pIds->push_back(chunkId);
       }
+   }
+}
+
+void replayChunkOutputs(const std::string& docPath, const std::string& docId,
+      const std::string& requestId, const json::Array& chunkOutputs) 
+{
+   std::vector<std::string> chunkIds;
+   extractChunkIds(chunkOutputs, &chunkIds);
+
+   // find all the chunks and play them back to the client
+   BOOST_FOREACH(const std::string& chunkId, chunkIds)
+   {
+      enqueueChunkOutput(docPath, docId, chunkId);
    }
 
    json::Object result;
@@ -271,20 +282,60 @@ Error handleChunkOutputRequest(const http::Request& request,
    return Success();
 }
 
+// given and old and new set of chunk definitions, cleans up all the chunks
+// files in the old set but not in the new set
+void cleanChunks(const FilePath& cacheDir,
+                 const json::Array &oldDefs, 
+                 const json::Array &newDefs)
+{
+   Error error;
+   std::vector<std::string> oldIds, newIds;
+
+   // extract chunk IDs from JSON objects
+   extractChunkIds(oldDefs, &oldIds);
+   extractChunkIds(newDefs, &newIds);
+
+   // compute the set of stale IDs
+   std::vector<std::string> staleIds;
+   std::sort(oldIds.begin(), oldIds.end());
+   std::sort(newIds.begin(), newIds.end());
+   std::set_difference(oldIds.begin(), oldIds.end(),
+                       newIds.begin(), newIds.end(), 
+                       std::back_inserter(staleIds));
+
+   BOOST_FOREACH(const std::string& staleId, staleIds)
+   {
+      // clean chunk HTML if present
+      cacheDir.complete(staleId + ".html").removeIfExists();
+      cacheDir.complete(staleId + "_files").removeIfExists();
+   }
+}
+
 } // anonymous namespace
 
 Error setChunkDefs(const std::string& docPath, const std::string& docId,
-                   const json::Array& pDefs)
+                   const json::Array& newDefs)
 {
    // create JSON object wrapping 
    json::Object chunkDefs;
-   chunkDefs[kChunkDefs] = pDefs;
+   chunkDefs[kChunkDefs] = newDefs;
 
    // ensure we have a place to write the sidecar file
    FilePath defFile = chunkDefinitionsPath(docPath, docId);
    Error error = defFile.parent().ensureDirectory();
    if (error)
       return error;
+
+   // get the old set of chunk IDs so we can clean up any not in the new set 
+   // of chunks
+   std::vector<std::string> chunkIds;
+   json::Value oldDefs;
+   error = getChunkDefs(docPath, docId, &oldDefs);
+   if (error)
+      LOG_ERROR(error);
+   else if (oldDefs.type() == json::ArrayType)
+      cleanChunks(chunkCacheFolder(docPath, docId),
+                  oldDefs.get_array(), newDefs);
 
    // write to the sidecar file
    std::ostringstream oss;
