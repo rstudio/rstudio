@@ -45,11 +45,11 @@ public abstract class DynamicIFrame extends Frame
          @Override
          public boolean execute()
          {
-            if (url_ != "about:blank" &&
-                getDocument().getURL() == "about:blank")
-               return true;
             if (getIFrame() == null || getWindow() == null || 
-                getDocument() == null || getDocument().getBody() == null)
+                getDocument() == null)
+               return true;
+            if (url_ != null && getDocument().getURL() == "about:blank" || 
+                                getDocument().getBody() == null)
                return true;
             onFrameLoaded();
             return false;

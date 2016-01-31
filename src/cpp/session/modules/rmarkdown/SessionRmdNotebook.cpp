@@ -252,8 +252,8 @@ Error handleChunkOutputRequest(const http::Request& request,
 {
    // uri format is: /chunk_output/<doc-id>/...
    
-   // split URI into pieces, extract the chunk and document ID, and remove that
-   // part of the URI
+   // split URI into pieces, extract the document ID, and remove that part of
+   // the URI
    std::vector<std::string> parts = algorithm::split(request.uri(), "/");
    if (parts.size() < 4) 
       return Success();
@@ -268,13 +268,15 @@ Error handleChunkOutputRequest(const http::Request& request,
    FilePath target = chunkCacheFolder(path, docId).complete(
          algorithm::join(parts, "/"));
 
-   // if a reference to the chunk library folder, we can reuse the contents
    if (parts[0] == kChunkLibDir)
    {
+      // if a reference to the chunk library folder, we can reuse the contents
       pResponse->setCacheableFile(target, request);
    }
    else
    {
+      // otherwise, we don't want the output to be cached (so we get fresh
+      // chunk output every time)
       pResponse->setNoCacheHeaders();
       pResponse->setFile(target, request);
    }
@@ -305,9 +307,13 @@ void cleanChunks(const FilePath& cacheDir,
 
    BOOST_FOREACH(const std::string& staleId, staleIds)
    {
-      // clean chunk HTML if present
-      cacheDir.complete(staleId + ".html").removeIfExists();
+      // clean chunk HTML and supporting files if present
+      error = cacheDir.complete(staleId + ".html").removeIfExists();
+      if (error)
+         LOG_ERROR(error);
       cacheDir.complete(staleId + "_files").removeIfExists();
+      if (error)
+         LOG_ERROR(error);
    }
 }
 
