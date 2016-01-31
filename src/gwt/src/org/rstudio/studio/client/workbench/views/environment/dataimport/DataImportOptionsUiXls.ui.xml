@@ -3,13 +3,66 @@
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
 	<ui:style src="res/DataImportStyles.css"
     	type="org.rstudio.studio.client.workbench.views.environment.dataimport.res.DataImportResources.Style">
+	.optionsColumn {
+		padding-left: 5px;
+		padding-right: 5px;
+	}
+	.columnNamesCheckBox_ {
+	}
+	.optionsListBox {
+	}
+	.skipTextBox {
+		width: 65px;
+		padding-left: 5px;
+		padding-right: 5px;
+	}
+	.optionsGrowListBox {
+		display: -ms-flexbox;
+		display: -webkit-flex;
+		display: flex;
+
+		-ms-flex-grow: 1;
+		-webkit-flex-grow: 1;
+		flex-grow: 1;
+	}
+	.naLabel {
+		padding-right: 5px;
+	}
+	.naListBox {
+		width: 80px;
+	}
+	.firstRow {
+		margin-bottom: 6px;
+	}
+	.otherRow {
+		margin-bottom: 4px;
+	}
     </ui:style>
 	<g:HTMLPanel styleName="{style.mainPanel}">
 	    <g:Label text="Import Options:" styleName="{style.optionsLabel}"/>
-	    <div class="{style.optionsBlock}">
-		    <div class="{style.optionsRow}">
-		        <div class="{style.optionLabel} {style.nameLabel}">Name:</div>
-		        <g:TextBox ui:field="nameTextBox_" styleName="{style.nameTextBox}"/>
+	    <div class="{style.optionsBlock} {style.optionsDirectionRow}">
+	        <div class="{style.optionsColumn}">
+			    <div class="{style.optionsRow} {style.firstRow}">
+			        <div class="{style.optionLabel} {style.nameLabel}">Name:</div>
+			        <g:TextBox ui:field="nameTextBox_" styleName="{style.nameTextBox}"/>
+			    </div>
+			    <div class="{style.optionsRow} {style.otherRow}">
+			        <div class="{style.optionLabel}">Sheet:</div>
+			        <g:ListBox ui:field="sheetListBox_" styleName="{style.optionsGrowListBox}"/>
+			    </div>
+			    <div class="{style.optionsRow} {style.otherRow}">
+			        <div class="{style.optionLabel}">Skip:</div>
+			        <g:TextBox ui:field="skipTextBox_" styleName="{style.skipTextBox}"/>
+			    </div>
+		    </div>
+		    <div class="{style.optionsColumn}">
+			    <div class="{style.optionsRow} {style.firstRow}">
+			        <g:CheckBox ui:field="columnNamesCheckBox_" text="First Row as Names"/>
+			    </div>
+			    <div class="{style.optionsRow} {style.otherRow}">
+					<div class="{style.naLabel}">NA:</div>
+					<g:ListBox ui:field="naListBox_" styleName="{style.naListBox}"/>
+				</div>
 		    </div>
 	    </div>
 	</g:HTMLPanel>

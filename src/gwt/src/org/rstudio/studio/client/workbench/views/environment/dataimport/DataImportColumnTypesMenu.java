@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.rstudio.core.client.widget.OperationWithInput;
 
@@ -61,6 +62,7 @@ public class DataImportColumnTypesMenu extends PopupPanel
    }
    
    private ArrayList<MenuItem> menuItems_;
+   private HashMap<String, MenuItem> menuItemsMap_;
    
    interface DataImportColumnTypesMenuUiBinder
          extends UiBinder<Widget, DataImportColumnTypesMenu>
@@ -79,13 +81,15 @@ public class DataImportColumnTypesMenu extends PopupPanel
       super(true);
       setWidget(uiBinder.createAndBindUi(this));
       
+      menuItemsMap_ = new HashMap<String, MenuItem>();
+      
       menuItems_ = new ArrayList<MenuItem>();
       menuItems_.add(new MenuItem("include", (Widget)include_));
       menuItems_.add(new MenuItem("skip", (Widget)skip_));
       menuItems_.add(new MenuItem("only", (Widget)only_));
       menuItems_.add(new MenuItem("guess", (Widget)guess_));
       menuItems_.add(new MenuItem("character", (Widget)character_));
-      menuItems_.add(new MenuItem("douleb", (Widget)double_));
+      menuItems_.add(new MenuItem("double", (Widget)double_));
       menuItems_.add(new MenuItem("integer", (Widget)integer_));
       menuItems_.add(new MenuItem("numeric", (Widget)numeric_));
       menuItems_.add(new MenuItem("logical", (Widget)logical_));
@@ -93,6 +97,11 @@ public class DataImportColumnTypesMenu extends PopupPanel
       menuItems_.add(new MenuItem("time", (Widget)time_));
       menuItems_.add(new MenuItem("dateTime", (Widget)dateTime_));
       menuItems_.add(new MenuItem("factor", (Widget)factor_));
+      
+      for (int idx = 0; idx < menuItems_.size(); idx++)
+      {
+         menuItemsMap_.put(menuItems_.get(idx).getName(), menuItems_.get(idx));
+      }
    }
    
    public void setOnChange(
@@ -111,6 +120,19 @@ public class DataImportColumnTypesMenu extends PopupPanel
       };
       
       include_.setStyleName(style.entrySelected());
+   }
+   
+   public void setVisibleColumns(String[] columnNames)
+   {
+      for (final MenuItem elem : menuItems_)
+      {
+         elem.getWidget().setVisible(false);
+      };
+      
+      for (final String columnName : columnNames)
+      {
+         menuItemsMap_.get(columnName).getWidget().setVisible(true);
+      };
    }
    
    public void setSelected(String entry)
