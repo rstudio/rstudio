@@ -437,6 +437,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // show improved data import dialog
          useDataImport().setGlobalValue(
                newUiPrefs.useDataImport().getGlobalValue());
+
+         // show profiler
+         showProfiler().setGlobalValue(
+               newUiPrefs.showProfiler().getGlobalValue());
       }
       else if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
       {
