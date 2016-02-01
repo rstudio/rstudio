@@ -528,6 +528,11 @@ public class UIPrefsAccessor extends Prefs
    {
       return bool("show_unnamed_chunks_in_document_outline", true);
    }
+
+   public PrefValue<Boolean> showProfiler()
+   {
+      return bool("show_profiler", false);
+   }
    
    private String getDefaultPdfPreview()
    {

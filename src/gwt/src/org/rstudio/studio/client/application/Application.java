@@ -768,6 +768,14 @@ public class Application implements ApplicationEventHandlers
          commands_.zoomIn().remove();
          commands_.zoomOut().remove();
       }
+
+      // show the correct set of data import commands
+      if (!uiPrefs_.get().showProfiler().getValue())
+      {
+          commands_.showProfiler().remove();
+          commands_.startProfiler().remove();
+          commands_.stopProfiler().remove();
+      }
       
       // show new session when appropriate
       if (!Desktop.isDesktop())
