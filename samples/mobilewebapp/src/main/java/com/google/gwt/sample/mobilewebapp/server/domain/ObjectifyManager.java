@@ -15,27 +15,19 @@
  */
 package com.google.gwt.sample.mobilewebapp.server.domain;
 
+import com.googlecode.objectify.Objectify;
 import com.googlecode.objectify.ObjectifyService;
-import com.googlecode.objectify.util.DAOBase;
 
 /**
- * Factory for creating EntityManager.
+ * Manager for registering @com.googlecode.objectify.annotation.Entity.
  */
-public final class EMF extends DAOBase {
-
-  private static EMF singleton;
+public final class ObjectifyManager {
 
   static {
     ObjectifyService.register(Task.class);
   }
 
-  public static EMF get() {
-    if (singleton == null) {
-      singleton = new EMF();
-    }
-    return singleton;
-  }
-
-  protected EMF() {
+  public static Objectify ofy() {
+    return ObjectifyService.ofy();
   }
 }

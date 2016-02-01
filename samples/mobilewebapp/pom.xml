@@ -22,7 +22,7 @@
     <maven.compiler.target>1.7</maven.compiler.target>
 
     <!-- App Engine properties -->
-    <appengine.version>1.9.30</appengine.version>
+    <appengine.version>1.9.40</appengine.version>
     <appengine.application.version>1</appengine.application.version>
 
     <!-- Don't let your Mac use a crazy non-standard encoding -->
@@ -138,11 +138,11 @@
       <version>${appengine.version}</version>
     </dependency>
 
-    <!-- Objectify for persistence. It uses the stock javax.persistence annotations -->
+    <!-- Objectify for persistence -->
     <dependency>
       <groupId>com.googlecode.objectify</groupId>
       <artifactId>objectify</artifactId>
-      <version>3.0</version>
+      <version>5.1.13</version>
     </dependency>
     <dependency>
       <groupId>javax.persistence</groupId>
@@ -241,10 +241,6 @@
   </build>
 
   <repositories>
-    <repository>
-      <id>objectify-appengine</id>
-      <url>http://objectify-appengine.googlecode.com/svn/maven</url>
-    </repository>
     <repository>
       <id>google-snapshots</id>
       <url>https://oss.sonatype.org/content/repositories/google-snapshots/</url>

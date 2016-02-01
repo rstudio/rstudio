@@ -42,9 +42,21 @@
     -->
     <filter-class>com.google.gwt.sample.gaerequest.server.GaeAuthFilter</filter-class>
   </filter>
+  <filter>
+    <!--
+      Objectify requires a filter to clean up any thread-local transaction contexts and pending 
+      asynchronous operations that remain at the end of a request.
+    -->
+    <filter-name>ObjectifyFilter</filter-name>
+    <filter-class>com.googlecode.objectify.ObjectifyFilter</filter-class>
+  </filter>
   <filter-mapping>
     <filter-name>GaeAuthFilter</filter-name>
     <url-pattern>/gwtRequest/*</url-pattern>
+  </filter-mapping>
+  <filter-mapping>
+    <filter-name>ObjectifyFilter</filter-name>
+    <url-pattern>/*</url-pattern>
   </filter-mapping>
 
   <!-- Default page to serve -->
