@@ -395,7 +395,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Boolean> useDataImport()
    {
-      return bool("use_dataimport", false);
+      return bool("use_dataimport", true);
    }
    
    public static final String PDF_PREVIEW_NONE = "none";
