@@ -907,4 +907,22 @@ public class DomUtils
       document.execCommand("Copy", false, null);
       document.body.removeChild(copyDiv);
    }-*/;
+   
+   public static final native String extractCssValue(String selector, 
+         String propertyName) /*-{
+      var sheets = document.styleSheets;
+      for (var i = 0; i < sheets.length; i++) 
+      {
+         var rules = sheets[i].cssRules;
+         for (var j = 0; j < rules.length; j++) 
+         {
+            if (rules[j].selector === selector) 
+            {
+               if (rules[j].style[propertyName])
+                  return rules[j].style[propertyName];
+            }
+         }
+      }
+      return "";
+   }-*/;
 }

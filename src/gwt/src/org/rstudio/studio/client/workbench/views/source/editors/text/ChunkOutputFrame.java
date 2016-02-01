@@ -14,30 +14,24 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.DynamicIFrame;
+
+import com.google.gwt.user.client.Command;
 
 public class ChunkOutputFrame extends DynamicIFrame
 {
-   public interface Host
+   void loadUrl(String url, Command onCompleted)
    {
-      void onOutputLoaded(int height, int width);
-      // TODO: add event forwarding
-   }
-
-   public ChunkOutputFrame(String url, Host host)
-   {
-      super(url);
-      host_ = host;
+      onCompleted_ = onCompleted;
+      super.setUrl(url);
    }
 
    @Override
    protected void onFrameLoaded()
    {
-      host_.onOutputLoaded(
-            getDocument().getScrollHeight(),
-            getDocument().getScrollWidth());
+      if (onCompleted_ != null)
+         onCompleted_.execute();
    }
    
-   private Host host_;
+   private Command onCompleted_;
 }

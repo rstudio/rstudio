@@ -37,7 +37,15 @@ public abstract class DynamicIFrame extends Frame
       pollForLoad();
    }
    
-   private void pollForLoad()
+   @Override
+   public void setUrl(String url)
+   {
+      url_ = url;
+      super.setUrl(url);
+      pollForLoad();
+   }
+   
+   protected void pollForLoad()
    {
       // wait for the window object to become available
       final Scheduler.RepeatingCommand loadFrame = new Scheduler.RepeatingCommand()
@@ -71,23 +79,22 @@ public abstract class DynamicIFrame extends Frame
       });
    }
 
-   protected abstract void onFrameLoaded();
-   
-
-   protected IFrameElementEx getIFrame()
+   public IFrameElementEx getIFrame()
    {
       return getElement().cast();
    }
 
-   protected WindowEx getWindow()
+   public WindowEx getWindow()
    {
       return getIFrame().getContentWindow();
    }
 
-   protected final Document getDocument()
+   public final Document getDocument()
    {
       return getWindow().getDocument();
    }
    
-   private final String url_;
+   protected abstract void onFrameLoaded();
+
+   private String url_;
 }
