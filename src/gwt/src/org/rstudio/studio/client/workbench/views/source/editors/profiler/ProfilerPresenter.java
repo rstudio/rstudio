@@ -14,21 +14,16 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 
-import java.util.HashMap;
-
 import org.rstudio.core.client.HandlerRegistrations;
-import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
- 
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.user.client.ui.HasValue;
+
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -37,8 +32,6 @@ public class ProfilerPresenter
 { 
    public interface Display
    {
-      HasValue<Integer> getPropA();
-      HasValue<Boolean> getPropB();
    }
 
    @Inject
@@ -57,36 +50,6 @@ public class ProfilerPresenter
    
    public void attatch(SourceDocument doc, Display view)
    {
-      // save references to doc and view
-      doc_ = doc;
-      view_ = view;
-      
-      // initialize view
-      ProfilerContents contents = getContents();
-      view_.getPropA().setValue(contents.getPropA());
-      view_.getPropB().setValue(contents.getPropB());
-      
-      // subscribe to value changes on the view to save contents 
-      // to the server whenenver it's modfied
-      handlerRegistrations_.add(view_.getPropA()
-                  .addValueChangeHandler(new ValueChangeHandler<Integer>() {
-         @Override
-         public void onValueChange(ValueChangeEvent<Integer> event)
-         {
-            contentsUpdater_.nudge();           
-         }
-         
-      }));
-      
-      handlerRegistrations_.add(view_.getPropB()
-                 .addValueChangeHandler(new ValueChangeHandler<Boolean>() {
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
-         {
-            contentsUpdater_.nudge();
-         }
-      }));
-      
       // enable commands for stopped state
       enableStoppedCommands();
    }
@@ -96,10 +59,6 @@ public class ProfilerPresenter
       // unsubscribe from view
       handlerRegistrations_.removeHandler();
       
-      // null out references to doc and view
-      doc_ = null;
-      view_ = null;
-      
       // disable all commands
       disableAllCommands();
    }
@@ -107,18 +66,31 @@ public class ProfilerPresenter
    @Handler
    public void onStartProfiler()
    {
-     
       // manage commands
       enableStartedCommands();
+      
+      server_.startProfiling(new ServerRequestCallback<ProfileOperationResponse>()
+      {
+         @Override
+         public void onError(ServerError error)
+         {
+         }
+      });
    }
    
    @Handler
    public void onStopProfiler()
    {
-     
-      
       // manage commands
       enableStoppedCommands();
+      
+      server_.stopProfiling(new ServerRequestCallback<ProfileOperationResponse>()
+      {
+         @Override
+         public void onError(ServerError error)
+         {
+         }
+      });
    }
    
    private void disableAllCommands()
@@ -133,48 +105,13 @@ public class ProfilerPresenter
       commands_.startProfiler().setEnabled(false);
       commands_.stopProfiler().setEnabled(true);
    }
+   
    private void enableStoppedCommands()
    {
       commands_.startProfiler().setEnabled(true);
       commands_.stopProfiler().setEnabled(false);   
    }
    
-   // create a time buffered command for updating profiler contents (ensures
-   // that we save no more frequently than every 100ms even in the face of
-   // many changes over a short time)
-   private TimeBufferedCommand contentsUpdater_ = new TimeBufferedCommand(100) {
-
-      @Override
-      protected void performAction(boolean shouldSchedulePassive)
-      {         
-         // tab might have been closed in the meantime, check for this first
-         if (doc_ == null || view_ == null)
-            return;
-         
-         // update document properties if they've changed
-         ProfilerContents contents = ProfilerContents.create(
-                                           view_.getPropA().getValue(),
-                                           view_.getPropB().getValue());
-         if (!contents.equalTo(getContents()))
-         {
-            HashMap<String, String> props = new HashMap<String, String>();
-            contents.fillProperties(props);
-            server_.modifyDocumentProperties(doc_.getId(),
-                                             props,
-                                             new VoidServerRequestCallback());
-         }  
-      }
-   };
-   
-   // typed access to underlying document properties
-   private ProfilerContents getContents()
-   {
-      return (ProfilerContents)doc_.getProperties().cast();
-   }
-   
-   
-   private SourceDocument doc_ = null;
-   private Display view_ = null;
    private final ProfilerServerOperations server_;
    private final Commands commands_;
    private final HandlerRegistrations handlerRegistrations_ = 

@@ -156,6 +156,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationRPubsSource;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
@@ -4519,6 +4520,20 @@ public class RemoteServer implements Server
       params.set(0, new JSONObject(dataImportOptions));
       sendRequest(RPC_SCOPE, ASSEMBLE_DATA_IMPORT, params, requestCallback);
    }
+   
+   @Override
+   public void startProfiling(ServerRequestCallback<ProfileOperationResponse> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      sendRequest(RPC_SCOPE, START_PROFILING, params, requestCallback);
+   }
+
+   @Override
+   public void stopProfiling(ServerRequestCallback<ProfileOperationResponse> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      sendRequest(RPC_SCOPE, STOP_PROFILING, params, requestCallback);
+   }
 
    @Override
    public void previewDataImportAsync(DataImportOptions dataImportOptions,
@@ -4892,4 +4907,7 @@ public class RemoteServer implements Server
    private static final String ASSEMBLE_DATA_IMPORT = "assemble_data_import";
    private static final String PREVIEW_DATA_IMPORT_ASYNC = "preview_data_import_async";
    private static final String PREVIEW_DATA_IMPORT_ASYNC_ABORT = "preview_data_import_async_abort";
+
+   private static final String START_PROFILING = "start_profiling";
+   private static final String STOP_PROFILING = "stop_profiling";
 }

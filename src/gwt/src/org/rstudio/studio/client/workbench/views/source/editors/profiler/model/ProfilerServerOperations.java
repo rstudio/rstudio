@@ -14,14 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.profiler.model;
 
-import java.util.HashMap;
-
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 
 
 public interface ProfilerServerOperations
 {
-   void modifyDocumentProperties(String id, HashMap<String, String> properties,
-         ServerRequestCallback<Void> requestCallback);
+   void startProfiling(ServerRequestCallback<ProfileOperationResponse> requestCallback);
+   
+   void stopProfiling(ServerRequestCallback<ProfileOperationResponse> requestCallback);
 }

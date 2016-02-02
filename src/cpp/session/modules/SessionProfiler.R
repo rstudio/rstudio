@@ -1,7 +1,7 @@
 #
 # SessionProfiler.R
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-16 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -13,4 +13,24 @@
 #
 #
 
+.rs.addJsonRpcHandler("start_profiling", function()
+{
+   tryCatch({
+   	  dirName <- tempfile("profiles-cache")
+   	  dir.create(dirName)
 
+      Rprof(filename = paste(dirName, "temp.rprof", sep = "/"))
+   }, error = function(e) {
+      return(list(error = e))
+   })
+})
+
+.rs.addJsonRpcHandler("stop_profiling", function()
+{
+   tryCatch({
+      Rprof(NULL)
+      return (NULL)
+   }, error = function(e) {
+      return(list(error = e))
+   })
+})
