@@ -1,7 +1,7 @@
 /*
- * ProfilerContents.java
+ * ProfileOperationResponse.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,24 +12,14 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
 package org.rstudio.studio.client.workbench.views.source.editors.profiler.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class ProfilerContents extends JavaScriptObject
+public class ProfileOperationResponse extends JavaScriptObject
 {
-   protected ProfilerContents()
+   protected ProfileOperationResponse()
    {
    }
-
-   public static final ProfilerContents createDefault()
-   {
-      return create();
-   }
-   
-   public static final native ProfilerContents create() /*-{
-      var contents = new Object();
-
-      return contents;
-   }-*/;
 }
