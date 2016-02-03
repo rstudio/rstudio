@@ -1229,7 +1229,7 @@ assign(x = ".rs.acCompletionTypes",
                                                    excludeOtherCompletions = FALSE,
                                                    quote = !appendColons)
 {
-   allPackages <- Reduce(union, lapply(.libPaths(), list.files))
+   allPackages <- Reduce(union, lapply(.libPaths(), .rs.listDirs))
    
    # Not sure why 'DESCRIPTION' might show up here, but let's take it out
    allPackages <- setdiff(allPackages, "DESCRIPTION")
