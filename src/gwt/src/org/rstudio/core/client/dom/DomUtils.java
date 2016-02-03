@@ -908,21 +908,19 @@ public class DomUtils
       document.body.removeChild(copyDiv);
    }-*/;
    
-   public static final native String extractCssValue(String selector, 
+   public static final native String extractCssValue(String className, 
          String propertyName) /*-{
-      var sheets = document.styleSheets;
-      for (var i = 0; i < sheets.length; i++) 
-      {
-         var rules = sheets[i].cssRules;
-         for (var j = 0; j < rules.length; j++) 
-         {
-            if (rules[j].selector === selector) 
-            {
-               if (rules[j].style[propertyName])
-                  return rules[j].style[propertyName];
-            }
-         }
-      }
-      return "";
+      // A more elegant way of performing this would be to iterate through the
+      // document's styleSheet collection, but unfortunately browsers don't 
+      // expose the cssRules in all cases 
+      var ele = $doc.createElement("div");
+      ele.style.display = "none";
+      ele.style.opacity = "0";
+      ele.className = className;
+      $doc.body.appendChild(ele);
+      var computed = $wnd.getComputedStyle(ele);
+      var result = computed[propertyName] || "";
+      $doc.body.removeChild(ele);
+      return result;
    }-*/;
 }

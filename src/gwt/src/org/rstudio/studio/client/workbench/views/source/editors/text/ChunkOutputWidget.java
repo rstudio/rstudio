@@ -51,9 +51,9 @@ public class ChunkOutputWidget extends Composite
          readHighlightColor();
       
       // give ourselves a frame border
-      if (StringUtil.isNullOrEmpty(s_outlineColor))
+      if (!StringUtil.isNullOrEmpty(s_outlineColor))
       {
-         Style frameStyle = frame_.getElement().getStyle();
+         Style frameStyle = getElement().getStyle();
          frameStyle.setBorderColor(s_outlineColor);
       }
       
@@ -91,9 +91,8 @@ public class ChunkOutputWidget extends Composite
    
    public static void readHighlightColor()
    {
-      s_outlineColor = DomUtils.extractCssValue(
-            ".ace_print-margin", "backgroundColor");
-      Debug.devlog("read highlight color: " + s_outlineColor);
+      s_outlineColor = DomUtils.extractCssValue("ace_print-margin", 
+            "backgroundColor");
    }
    
    public static void invalidateHighlightColor()
