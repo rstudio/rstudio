@@ -1229,11 +1229,21 @@ assign(x = ".rs.acCompletionTypes",
                                                    excludeOtherCompletions = FALSE,
                                                    quote = !appendColons)
 {
+   # List all directories within the .libPaths()
    allPackages <- Reduce(union, lapply(.libPaths(), .rs.listDirs))
    
    # Not sure why 'DESCRIPTION' might show up here, but let's take it out
    allPackages <- setdiff(allPackages, "DESCRIPTION")
    
+   # Also remove any '00LOCK' directories -- these might be leftovers
+   # from earlier failed package installations
+   if (length(allPackages))
+   {
+      isLockDir <- substring(allPackages, 1, 6) == "00LOCK"
+      allPackages <- allPackages[!isLockDir]
+   }
+   
+   # Construct our completions, and we're done
    completions <- .rs.selectFuzzyMatches(allPackages, token)
    .rs.makeCompletions(token = token,
                        results = if (appendColons && length(completions))
