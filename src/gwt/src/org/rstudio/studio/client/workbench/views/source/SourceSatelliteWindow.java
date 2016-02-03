@@ -24,6 +24,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -33,6 +34,7 @@ import org.rstudio.studio.client.projects.ProjectMRUList;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.buildtools.BuildCommands;
+import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams;
 
 @Singleton
@@ -51,6 +53,7 @@ public class SourceSatelliteWindow extends SatelliteWindow
                                 CodeSearchLauncher launcher)
    {
       super(pEventBus, pFSManager);
+      pEventBus_ = pEventBus;
       pPresenter_ = pPresenter;
       pWindowManager_ = pWindowManager;
       pSourceWindow_ = pSourceWindow;
@@ -104,6 +107,13 @@ public class SourceSatelliteWindow extends SatelliteWindow
          pProjectMRUList_.get();
       }
       
+      // initialize working directory
+      if (!StringUtil.isNullOrEmpty(windowParams.getWorkingDir())) 
+      {
+         pEventBus_.get().fireEvent(new WorkingDirChangedEvent(
+               windowParams.getWorkingDir()));
+      }
+      
       // make it fill the containing layout panel
       Widget presWidget = appPresenter.asWidget();
       mainPanel.add(presWidget);
@@ -122,6 +132,7 @@ public class SourceSatelliteWindow extends SatelliteWindow
       return this;
    }
    
+   private final Provider<EventBus> pEventBus_;
    private final Provider<SourceSatellitePresenter> pPresenter_;
    private final Provider<SourceWindowManager> pWindowManager_;
    private final Provider<SourceWindow> pSourceWindow_;

@@ -3130,6 +3130,7 @@ int main (int argc, char * const argv[])
            
       // ensure we aren't being started as a low (priviliged) account
       if (serverMode &&
+          !options.verifyInstallation() &&
           core::system::currentUserIsPrivilleged(options.authMinimumUserId()))
       {
          Error error = systemError(boost::system::errc::permission_denied,

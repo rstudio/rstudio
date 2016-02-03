@@ -148,13 +148,13 @@ void AsyncRProcess::start(const char* rCommand,
    if (!libPaths.empty())
    {
       core::system::setenv(&childEnv, "R_LIBS", libPaths);
-      options.environment = childEnv;
    }
    // forward passed environment variables
    BOOST_FOREACH(const core::system::Option& var, environment)
    {
       core::system::setenv(&childEnv, var.first, var.second);
    }
+   options.environment = childEnv;
 
    core::system::ProcessCallbacks cb;
    using namespace module_context;

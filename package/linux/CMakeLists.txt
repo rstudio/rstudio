@@ -66,8 +66,8 @@ elseif(RSTUDIO_DESKTOP)
   set(RPM_POSTINST postinst-desktop.sh.in)
   set(RPM_POSTRM postrm-desktop.sh.in)
 
-  # depend on libjpeg62 (for Qt 4.8 jpeg plugin)
-  set(RSTUDIO_DEBIAN_DEPENDS "libjpeg62, libedit2, ")
+  # deb dependencies
+  set(RSTUDIO_DEBIAN_DEPENDS "libjpeg62, libedit2, libgstreamer0.10-0, libgstreamer-plugins-base0.10-0, ")
   
   # rpm dependencies
   set(RSTUDIO_RPM_DEPENDS "gstreamer, gstreamer-plugins-base, ")

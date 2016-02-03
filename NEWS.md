@@ -125,6 +125,7 @@
 * Fix issue with rstudioapi previewRd function when path included spaces
 * R 3.3: Don't call setInternet2 or use --internet2 flag for child R processes
 * Linux, Windows: ensure native printer used (don't default to PDF printing)
+* Linux: Install on Debian Sid and Ubuntu 16.04 via addition of libgstreamer-0.10 dependencies
 * Prevent spurious navigation when user cancels from the file upload dialog
 * Don't include H3 (and higher) headers when creating presentation slide preview navigation menu
 * Don't allow long file paths to overflow in message dialogs
