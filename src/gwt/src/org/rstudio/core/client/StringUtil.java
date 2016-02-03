@@ -1018,7 +1018,7 @@ public class StringUtil
    public static final String makeRandomId(int length) 
    {
       String alphanum = "0123456789abcdefghijklmnopqrstuvwxyz";
-      String id = "w";
+      String id = "";
       for (int i = 0; i < length; i++)
       {
          id += alphanum.charAt((int)(Math.random() * alphanum.length()));

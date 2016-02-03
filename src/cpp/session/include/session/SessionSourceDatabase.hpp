@@ -163,7 +163,6 @@ private:
    std::string collabServer_;
    std::string sourceWindow_;
    core::json::Object properties_;
-   core::json::Array chunkOutput_;
    
 public:
    

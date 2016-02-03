@@ -32,8 +32,11 @@
 #include <session/SessionSourceDatabase.hpp>
 
 #define kChunkDefs        "chunk_definitions"
-#define kChunkOutputPath  "chunk_output"
+#define kChunkDocId       "doc_id"
+#define kChunkId          "chunk_id"
 #define kChunkLibDir      "lib"
+#define kChunkOutputPath  "chunk_output"
+#define kChunkUrl         "url"
 
 using namespace rstudio::core;
 
@@ -45,17 +48,45 @@ namespace notebook {
 
 namespace {
 
+// A notebook .Rmd is accompanied by a sidecar .Rnb.cached folder, which has
+// the following structure:
+//
+// - foo.Rmd
+// + foo.Rnd.cached
+//   - chunks.json
+//   - cwiaiw9i4f0.html
+//   + cwiaiw9i4f0_files
+//     - plot.png
+//   - c0aj9vhk0cz.html
+//   + lib
+//     + htmlwidgets
+//       - htmlwidget.js
+// 
+// That is:
+// - each chunk has an ID and is represented by a single, self-contained HTML
+//   file, with a separate folder for dependencies
+// - dependencies of each chunk are in a folder alongside the chunk
+// - the special file "chunks.json" indicates the location of the chunks
+//   in the source .Rmd
+// - the special folder "lib" is used for shared libraries (e.g. scripts upon
+//   which several htmlwidget chunks depend)
+
+
 FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
 {
    FilePath folder;
    std::string stem;
    if (docPath.empty()) 
    {
+      // the doc hasn't been saved, so keep its chunk output in the scratch
+      // path
       folder = module_context::userScratchPath().childPath("unsaved-notebooks");
       stem = docId;
    }
    else
    {
+      // the doc has been saved, so keep its chunk output alongside the doc
+      // itself
       FilePath path = module_context::resolveAliasedPath(docPath);
       stem = path.stem();
       folder = path.parent();
@@ -85,9 +116,9 @@ Error enqueueChunkOutput(
       const std::string& chunkId)
 {
    json::Object output;
-   output["url"] = kChunkOutputPath "/" + docId + "/" + chunkId + ".html";
-   output["chunk_id"] = chunkId;
-   output["doc_id"] = docId;
+   output[kChunkUrl] = kChunkOutputPath "/" + docId + "/" + chunkId + ".html";
+   output[kChunkId] = chunkId;
+   output[kChunkDocId] = docId;
    ClientEvent event(client_events::kChunkOutput, output);
    module_context::enqueClientEvent(event);
 
@@ -116,7 +147,7 @@ Error executeInlineChunk(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // render the contents to the cached folder, then extract the contents
+   // render the contents to the cached folder
    error = r::exec::RFunction(".rs.executeSingleChunk", options, content,
          chunkLibDir.absolutePath(),
          chunkOutput.absolutePath()).call();
@@ -136,7 +167,7 @@ void extractChunkIds(const json::Array& chunkOutputs,
       if (chunkOutput.type() != json::ObjectType)
          continue;
       std::string chunkId;
-      if (json::readObject(chunkOutput.get_obj(), "chunk_id", &chunkId) ==
+      if (json::readObject(chunkOutput.get_obj(), kChunkId, &chunkId) ==
             Success()) 
       {
          pIds->push_back(chunkId);
@@ -163,6 +194,7 @@ void replayChunkOutputs(const std::string& docPath, const std::string& docId,
    module_context::enqueClientEvent(event);
 }
 
+// called by the client to inject output into a recently opened document 
 Error refreshChunkOutput(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse*)
 {

@@ -824,7 +824,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    
    private String createSourceWindowId()
    {
-      return StringUtil.makeRandomId(12);
+      return "w" + StringUtil.makeRandomId(12);
    }
    
    private static String sourceWindowId(String input)

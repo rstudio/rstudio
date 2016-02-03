@@ -18,9 +18,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 import java.util.HashMap;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -31,7 +29,6 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputFrame;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
@@ -46,8 +43,6 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.dom.client.DivElement;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -140,7 +135,7 @@ public class TextEditingTargetNotebook
       else
       {
          chunkDef = ChunkDefinition.create(row, 1, true, 
-               StringUtil.makeRandomId(12));
+               "c" + StringUtil.makeRandomId(12));
         
          widget = LineWidget.create(
                                ChunkDefinition.LINE_WIDGET_TYPE,
@@ -270,7 +265,7 @@ public class TextEditingTargetNotebook
                if (!outputWidgets_.containsKey(chunkId))
                   return;
                outputWidgets_.get(chunkId).getElement().getStyle().setHeight(
-                     arg.intValue(), Unit.PX);
+                     Math.min(arg.intValue(), MAX_CHUNK_HEIGHT), Unit.PX);
                if (!lineWidgets_.containsKey(chunkId))
                   return;
                docDisplay_.onLineWidgetChanged(lineWidgets_.get(chunkId));
