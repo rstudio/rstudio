@@ -17,17 +17,10 @@
       margin-right: 25px;
    }
    
-   .contentFrame
-   {
-      width: 100%;
-      height: 100%;
-   }
    </ui:style>
-   <g:HTMLPanel styleName="{style.frame}">
+   <g:HTMLPanel styleName="{style.frame}" ui:field="root_">
      <g:Image styleName="{style.interrupt}" 
               ui:field="interrupt_"
               visible="false"></g:Image>
-     <txt:ChunkOutputFrame styleName="{style.contentFrame}" 
-                           ui:field="frame_"></txt:ChunkOutputFrame>
    </g:HTMLPanel>
 </ui:UiBinder> 

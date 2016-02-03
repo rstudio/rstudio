@@ -159,14 +159,11 @@ public class TextEditingTargetNotebook
    {
       // update cached style 
       editorStyle_ = event.getStyle();
+      ChunkOutputWidget.cacheEditorStyle(editorStyle_);
       
-      // update existing widgets
-      JsArray<LineWidget> lineWidgets = docDisplay_.getLineWidgets();
-      for (int i=0; i<lineWidgets.length(); i++)
+      for (ChunkOutputWidget widget: outputWidgets_.values())
       {
-         LineWidget lineWidget = lineWidgets.get(i);
-         if (lineWidget.getType().equals(ChunkDefinition.LINE_WIDGET_TYPE))
-            setChunkOutputStyle(lineWidget.getElement());
+         widget.applyCachedEditorStyle();
       }
    }
    
@@ -283,6 +280,7 @@ public class TextEditingTargetNotebook
       if (editorStyle_ != null)
       {
          div.getStyle().setBackgroundColor(editorStyle_.getBackgroundColor());
+         div.getStyle().setColor(editorStyle_.getColor());
       }
    }
    
