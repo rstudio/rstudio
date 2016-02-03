@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -24,6 +25,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.P
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -37,15 +39,17 @@ public class ProfilerPresenter
    @Inject
    public ProfilerPresenter(ProfilerServerOperations server,
                             Binder binder,
-                            Commands commands)
+                            Commands commands,
+                            DependencyManager dependencyManager)
    {
       server_ = server;
       commands_ = commands;
+      dependencyManager_ = dependencyManager;
+      
       binder.bind(commands, this);
       
-      // default profiler commands to disabled until we are attached
-      // to a document and view
-      disableAllCommands();
+      // by default, one can always start profiling
+      enableStoppedCommands();
    }
    
    public void attatch(SourceDocument doc, Display view)
@@ -66,14 +70,21 @@ public class ProfilerPresenter
    @Handler
    public void onStartProfiler()
    {
-      // manage commands
-      enableStartedCommands();
-      
-      server_.startProfiling(new ServerRequestCallback<ProfileOperationResponse>()
+      dependencyManager_.withProfvis(profilerDependecyUserAction_, new Command()
       {
          @Override
-         public void onError(ServerError error)
+         public void execute()
          {
+            // manage commands
+            enableStartedCommands();
+            
+            server_.startProfiling(new ServerRequestCallback<ProfileOperationResponse>()
+            {
+               @Override
+               public void onError(ServerError error)
+               {
+               }
+            });
          }
       });
    }
@@ -114,8 +125,10 @@ public class ProfilerPresenter
    
    private final ProfilerServerOperations server_;
    private final Commands commands_;
+   private final DependencyManager dependencyManager_;
    private final HandlerRegistrations handlerRegistrations_ = 
                                              new HandlerRegistrations();
+   final String profilerDependecyUserAction_ = "Preparing profiler";
    
    public interface Binder extends CommandBinder<Commands, ProfilerPresenter> {}
 }

@@ -542,6 +542,38 @@ public class DependencyManager implements InstallShinyEvent.Handler
       ArrayList<Dependency> deps = dataImportMongoDependencies();
       return deps.toArray(new Dependency[deps.size()]);
    }
+
+   public void withProfvis(String userAction, final Command command)
+   {
+     withDependencies(
+        "Preparing Profiler",
+        userAction, 
+        profvisDependenciesArray(), 
+        false,
+        new CommandWithArg<Boolean>()
+        {
+           @Override
+           public void execute(Boolean succeeded)
+           {
+              if (succeeded)
+                 command.execute();
+           }
+        }
+     );
+   }
+   
+   private ArrayList<Dependency> profvisDependencies()
+   {
+      ArrayList<Dependency> deps = new ArrayList<Dependency>();
+      deps.add(Dependency.embeddedPackage("profvis"));
+      return deps;
+   }
+   
+   private Dependency[] profvisDependenciesArray()
+   {
+      ArrayList<Dependency> deps = profvisDependencies();
+      return deps.toArray(new Dependency[deps.size()]);
+   }
    
    private void withDependencies(String progressCaption,
                                  final String userAction,
