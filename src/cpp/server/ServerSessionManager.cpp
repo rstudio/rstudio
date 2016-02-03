@@ -126,6 +126,15 @@ core::system::ProcessConfig sessionProcessConfig(
    core::system::setenv(&environment,
                         kRStudioDefaultRVersionHome,
                         rVersion.homeDir().absolutePath());
+
+   // forward the auth options
+   core::system::setenv(&environment,
+                        kRStudioRequiredUserGroup,
+                        options.authRequiredUserGroup());
+   core::system::setenv(&environment,
+                        kRStudioMinimumUserId,
+                        safe_convert::numberToString(
+                                 options.authMinimumUserId()));
    
    // add monitor shared secret
    environment.push_back(std::make_pair(kMonitorSharedSecretEnvVar,

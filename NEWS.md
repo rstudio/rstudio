@@ -34,6 +34,7 @@
 * Reorganize toolbar commands/menu for improved discoverability
 * Added Run Setup Chunk command
 * Updated embedded pandoc to v1.15.2
+* Update embedded pdf.js to v1.3
 * Support additional options for MS Word (table of contents, keep markdown)
 
 ### Miscellaneous
@@ -41,7 +42,6 @@
 * RStudio Addins
     - Register R functions as addins that can interact with the IDE using the rstudioapi package.
     - Accessible from the Addins menu and can be bound to custom keyboard shortcuts
-* Ctrl+A, Ctrl+E now move cursor to beginning, end of line in console on all platforms
 * New Session command (create new R session with same project or working directory)
 * Open project in a new window from the projects recently used menu
 * New Shiny App command for quick creation of Shiny applications
@@ -70,6 +70,7 @@
 * Added ability to zoom panes (e.g. Ctrl+Shift+1 to zoom source pane)
 * Add Console on Left/Right commands for quick relocation of Console
 * Add product and version metadata to Windows installer
+* Add askForPassword function to rstudioapi
 * Improved detection of Msysgit installation location on Windows
 
 ### Server
@@ -84,10 +85,13 @@
 * Use more resilient file locking mechanism for compatibility with NFS volumes
 * Attempt to close application window when quitting
 * Track installed client version using git commit hash rather than timestamp
+* Detect minimum user id from /etc/login.defs (can also be specified via option)
+* Save user-specific .RData and .Rhistory if .Ruserdata directory exists
 * Server Pro: Shared Projects (including concurrent multi-user editing)
 * Server Pro: Support for multiple concurrent R sessions per-user
 * Server Pro: Support for running against multiple versions of R
 * Server Pro: Ability to record user console history for audit purposes
+* Server Pro: Home page for navigating to active sessions and recent projects
 * Server Pro: Don't close PAM sessions by default (configurable via an option)
 * Server Pro: Remove Google OpenID auth (deprecated by Google in favor of OAuth)
 * Server Pro: Add option to specify client-id for Graphite metrics back end
@@ -117,13 +121,16 @@
 * Prevent crash when canceling out of q() prompt on Windows
 * OS X: Fix crash which could occur when focusing text boxes with placeholders
 * OS X: Viewer now correctly recognizes session temp dir even when prefixed by /private
+* OS X: Word document preview now correctly reloads for newer versions of Office
 * Fix issue with rstudioapi previewRd function when path included spaces
 * R 3.3: Don't call setInternet2 or use --internet2 flag for child R processes
 * Linux, Windows: ensure native printer used (don't default to PDF printing)
+* Linux: Install on Debian Sid and Ubuntu 16.04 via addition of libgstreamer-0.10 dependencies
 * Prevent spurious navigation when user cancels from the file upload dialog
 * Don't include H3 (and higher) headers when creating presentation slide preview navigation menu
 * Don't allow long file paths to overflow in message dialogs
 * RPM: Set autreqprov to "no" for both desktop and server
+* Prevent periods from being used in Rmd date field (caused LaTeX errors)
 
 
 

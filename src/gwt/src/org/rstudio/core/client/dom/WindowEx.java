@@ -89,6 +89,10 @@ public class WindowEx extends JavaScriptObject
    public final native void replaceLocationHref(String helpURL) /*-{
       this.location.replace(helpURL) ;
    }-*/;
+   
+   public final native void replaceHistoryState(String url) /*-{
+      this.history.replaceState({}, "", url);
+   }-*/;
 
    public final Point getScrollPosition()
    {

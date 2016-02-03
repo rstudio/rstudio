@@ -7,12 +7,15 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsMap;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.AddinsMRUList;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 public class Addins
@@ -96,11 +99,15 @@ public class Addins
       @Inject
       private void initialize(AddinsServerOperations server,
                               EventBus events,
+                              GlobalDisplay globalDisplay,
+                              WorkbenchContext workbenchContext,
                               AddinsMRUList mruList,
                               DependencyManager dependencyManager)
       {
          server_ = server;
          events_ = events;
+         globalDisplay_ = globalDisplay;
+         workbenchContext_ = workbenchContext;
          mruList_ = mruList;
          dependencyManager_ = dependencyManager;
       }
@@ -115,15 +122,31 @@ public class Addins
          
          if (addin.isInteractive())
          {
-            dependencyManager_.withShinyAddins(new Command() {
-
-               @Override
-               public void execute()
-               {
-                  String code = addin.getPackage() + ":::" + addin.getBinding() + "()";
-                  events_.fireEvent(new SendToConsoleEvent(code, true, false, false));
-               }
-            });
+            // check if we are executing
+            if (workbenchContext_.isServerBusy())
+            {
+               globalDisplay_.showMessage(
+                  MessageDialog.WARNING, 
+                  addin.getName(),   
+                  "Unable to execute " + addin.getName() + 
+                  " addin\n(R session is currently busy)");
+            }
+            else
+            {
+               dependencyManager_.withShinyAddins(new Command() {
+   
+                  @Override
+                  public void execute()
+                  {
+                     String code = addin.getPackage() + ":::" + 
+                                   addin.getBinding() + "()";
+                     events_.fireEvent(new SendToConsoleEvent(code, 
+                                                              true, 
+                                                              false, 
+                                                              false));
+                  }
+               });
+            }
          }
          else
          {
@@ -140,6 +163,8 @@ public class Addins
       // Injected ----
       private AddinsServerOperations server_;
       private EventBus events_;
+      private GlobalDisplay globalDisplay_;
+      private WorkbenchContext workbenchContext_;
       private AddinsMRUList mruList_;
       private DependencyManager dependencyManager_;
    }

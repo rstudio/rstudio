@@ -179,7 +179,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
          @Override
          public String getValue(RAddin addin)
          {
-            return StringUtil.truncate(addin.getName(), 25, "...");
+            return StringUtil.truncate(addin.getName(), 120, "...");
          }
       };
       nameColumn_.setSortable(true);

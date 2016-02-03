@@ -636,9 +636,6 @@
   if (!exists(".rs.CachedDataEnv")) 
     return(invisible(NULL))
 
-  # create the cache directory if it doesn't already exist
-  dir.create(cacheDir, recursive = TRUE, showWarnings = FALSE, mode = "0700")
-
   # save each active cache file from the cache environment
   lapply(ls(.rs.CachedDataEnv), function(cacheKey) {
     save(list = cacheKey, 

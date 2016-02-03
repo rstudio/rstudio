@@ -15,9 +15,17 @@
 
 package org.rstudio.studio.client.application;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.regex.Pattern;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.http.client.URL;
+import com.google.gwt.user.client.Window;
 
 
 public class ApplicationUtils
@@ -47,5 +55,58 @@ public class ApplicationUtils
             return result;
       }
       return 0;
+   }
+   
+   public static String getRemainingQueryString(List<String> removeKeys)
+   {  
+      Map<String, List<String>> params = Window.Location.getParameterMap();
+      StringBuilder queryString =  new StringBuilder();
+      String prefix = "";
+      for (Map.Entry<String, List<String>> entry : params.entrySet()) {
+         
+         // skip keys we are supposed to remove
+         if (removeKeys.contains(entry.getKey()))
+            continue;
+         
+         for (String val : entry.getValue()) {
+          queryString.append(prefix)
+              .append(URL.encodeQueryString(entry.getKey()))
+              .append('=');
+          if (val != null) {
+            queryString.append(URL.encodeQueryString(val));
+          }
+          prefix = "&";
+        }
+      }
+     
+      // return string
+      return queryString.toString();
+   }
+   
+   public static void removeQueryParam(String param)
+   {
+      ArrayList<String> params = new ArrayList<String>();
+      params.add(param);
+      removeQueryParams(params);
+   }
+   
+   public static void removeQueryParams(List<String> removeKeys)
+   {
+      // determine the new URL
+      String url = GWT.getHostPageBaseURL();
+      String queryString = getRemainingQueryString(removeKeys);
+      if (queryString.length() > 0)
+         url = url + "?" + queryString;
+      
+      // replace history state (try/catch in case the browser doesn't
+      // support this or has it disabled)
+      try
+      {
+         WindowEx.get().replaceHistoryState(url);
+      }
+      catch(Exception e)
+      {
+         Debug.logException(e);
+      }
    }
 }

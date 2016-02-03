@@ -554,6 +554,18 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    defaultRVersionHome_ = core::system::getenv(kRStudioDefaultRVersionHome);
    core::system::unsetenv(kRStudioDefaultRVersionHome);
    
+   // capture auth environment variables
+   authMinimumUserId_ = 0;
+   if (programMode_ == kSessionProgramModeServer)
+   {
+      authRequiredUserGroup_ = core::system::getenv(kRStudioRequiredUserGroup);
+      core::system::unsetenv(kRStudioRequiredUserGroup);
+
+      authMinimumUserId_ = safe_convert::stringTo<unsigned int>(
+                              core::system::getenv(kRStudioMinimumUserId), 100);
+      core::system::unsetenv(kRStudioMinimumUserId);
+   }
+
    // return status
    return status;
 }

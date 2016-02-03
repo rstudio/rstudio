@@ -28,6 +28,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
+#include <session/SessionConstants.hpp>
 #include <session/projects/ProjectsSettings.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include "modules/SessionErrors.hpp"
@@ -48,7 +49,7 @@ namespace session {
 #define kAgreementPrefix "agreement."
    
 namespace {
-const char * const kContextId ="contextIdentifier";
+const char * const kContextId = kContextIdentifier;
 const char * const kAgreementHash = kAgreementPrefix "agreedToHash";
 const char * const kAutoCreatedProfile = "autoCreatedProfile";
 const char * const kUiPrefs = "uiPrefs";

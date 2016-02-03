@@ -152,7 +152,9 @@ public:
 
    int saveActionDefault() const { return saveActionDefault_; }
 
-   unsigned int minimumUserId() const { return 100; }
+   unsigned int authMinimumUserId() const { return authMinimumUserId_; }
+
+   std::string authRequiredUserGroup() const { return authRequiredUserGroup_; }
 
    bool showHelpHome() const { return showHelpHome_; }
 
@@ -512,6 +514,8 @@ private:
    bool rProfileOnResumeDefault_;
    int saveActionDefault_;
    bool standalone_;
+   std::string authRequiredUserGroup_;
+   unsigned int authMinimumUserId_;
    bool showHelpHome_;
    bool showUserHomePage_;
 

@@ -148,7 +148,7 @@ inline std::string toFilePath(const core::r_util::ProjectId& projectId,
 
    // see if the project came from another user
    bool fromOtherUser = !projectId.userId().empty() &&
-            projectId.userId() != core::r_util::obfuscatedUserId(::getuid());
+            projectId.userId() != core::r_util::obfuscatedUserId(::geteuid());
 
    // if it did, use the fully qualified name; otherwise, use just the project
    // ID (our own projects are stored unqualified in the map)
@@ -271,7 +271,7 @@ inline core::r_util::ProjectId toProjectId(const std::string& projectDir,
 #ifndef _WIN32
    struct stat st;
    if (::stat(projectDir.c_str(), &st) == 0 &&
-       st.st_uid != ::getuid())
+       st.st_uid != ::geteuid())
    {
       // if we already found an ID but it doesn't contain any user information
       // (just a raw project ID), we need to do some fixup

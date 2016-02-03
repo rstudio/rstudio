@@ -243,6 +243,13 @@
    .Call(.rs.routines$rs_getActiveDocumentContext)
 })
 
+.rs.addApiFunction("getActiveProject", function() {
+   .rs.getProjectDirectory()
+})
+
+
+
+
 .rs.addApiFunction("sendToConsole", function(code,
                                              echo = TRUE,
                                              execute = TRUE,
@@ -263,6 +270,6 @@
    invisible(data)
 })
 
-.rs.addApiFunction("registerCommand", function(name, shortcuts, fn, overwrite = TRUE) {
-   .rs.registerUserCommand(name, shortcuts, fn, overwrite)
+.rs.addApiFunction("askForPassword", function(prompt) {
+   .rs.askForPassword(prompt)
 })

@@ -211,7 +211,13 @@ Error copyTemplateFile(const std::string& templateFileName,
                       const FilePath& target)
 {
    FilePath templatePath = shinyTemplatePath(templateFileName);
-   return templatePath.copy(target);
+   Error error = templatePath.copy(target);
+   if (!error)
+   {
+      // account for existing permissions on source template file
+      module_context::events().onPermissionsChanged(target);
+   }
+   return error;
 }
 
 Error createShinyApp(const json::JsonRpcRequest& request,

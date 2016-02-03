@@ -43,6 +43,10 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionContentUrls.hpp>
 
+#ifndef _WIN32
+#include <core/system/FileMode.hpp>
+#endif
+
 #define kGridResource "grid_resource"
 #define kViewerCacheDir "viewer-cache"
 #define kGridResourceLocation "/" kGridResource "/"
@@ -922,6 +926,38 @@ void onDetectChanges(module_context::ChangeSource source)
    }
 }
 
+void onClientInit()
+{
+   // ensure the viewer cache directory exists--we create this eagerly on 
+   // client init (rather than on-demand) so we have time to correct its 
+   // permissions 
+   FilePath cacheDir(viewerCacheDir());
+   if (cacheDir.exists())
+      return;
+
+   Error error = cacheDir.ensureDirectory();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+#ifndef _WIN32
+   // tighten permissions on viewer cache directory
+   error = core::system::changeFileMode(
+            cacheDir,  core::system::UserReadWriteExecuteMode);
+   if (error)
+   {
+      // not fatal, log and continue
+      LOG_ERROR(error);
+   }
+   else
+   {
+      module_context::events().onPermissionsChanged(cacheDir);
+   }
+#endif
+}
+
 } // anonymous namespace
    
 Error initialize()
@@ -937,6 +973,7 @@ Error initialize()
 
    module_context::events().onShutdown.connect(onShutdown);
    module_context::events().onDetectChanges.connect(onDetectChanges);
+   module_context::events().onClientInit.connect(onClientInit);
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
 
    using boost::bind;

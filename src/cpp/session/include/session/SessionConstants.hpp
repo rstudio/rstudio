@@ -28,6 +28,8 @@
 #define kRStudioSessionScopeProject       "RSTUDIO_SESSION_SCOPE_PROJECT"
 #define kRStudioSessionScopeId            "RSTUDIO_SESSION_SCOPE_ID"
 #define kRStudioSessionRoute              "RSTUDIO_SESSION_ROUTE"
+#define kRStudioRequiredUserGroup         "RSTUDIO_REQUIRED_USER_GROUP"
+#define kRStudioMinimumUserId             "RSTUDIO_MINIMUM_USER_ID"
 
 #define kRStudioDefaultRVersion           "RSTUDIO_DEFAULT_R_VERSION"
 #define kRStudioDefaultRVersionHome       "RSTUDIO_DEFAULT_R_VERSION_HOME"
@@ -67,6 +69,7 @@
 
 #define kUserSettingsDir       "user-settings"
 #define kUserSettingsFile      kUserSettingsDir
+#define kContextIdentifier     "contextIdentifier"
 
 #define kServerHomeSetting     "showUserHomePage"
 #define kServerHomeAlways      "always"
@@ -75,6 +78,7 @@
 
 #define kReuseSessionsForProjectLinksSettings "reuseSessionsForProjectLinks"
 
+#define kRStudioNoTransformRedirect "X-RStudio-NoTransformRedirect"
 
 #endif // SESSION_CONSTANTS_HPP
 

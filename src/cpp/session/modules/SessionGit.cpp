@@ -2562,6 +2562,7 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
       filesToIgnore.push_back(".Rproj.user");
       filesToIgnore.push_back(".Rhistory");
       filesToIgnore.push_back(".RData");
+      filesToIgnore.push_back(".Ruserdata");
 
       // if this is a package dir with a src directory then
       // also ignore native code build artifacts

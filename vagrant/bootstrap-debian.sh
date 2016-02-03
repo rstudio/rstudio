@@ -24,8 +24,9 @@ apt-get install -y libssh2-1-dev
 apt-get install -y curl 
 apt-get install -y libcurl4-openssl-dev
 
-# install GNU debugger
+# install GNU debugger and a JDK
 apt-get install -y gdb
+apt-get install -y openjdk-7-jdk
 
 # create SSH key if needed
 if [ ! -f /rstudio/vagrant/vagrant_key_rsa ]; then

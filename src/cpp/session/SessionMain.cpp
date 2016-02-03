@@ -366,6 +366,36 @@ FilePath getInitialWorkingDirectory()
    }
 }
 
+FilePath getProjectUserDataDir(const ErrorLocation& location)
+{
+   // get the project directory
+   FilePath projectDir = projects::projectContext().directory();
+
+   // presume that the project dir is the data dir then check
+   // for a .Ruserdata directory as an alternative
+   FilePath dataDir = projectDir;
+
+   FilePath ruserdataDir = projectDir.childPath(".Ruserdata");
+   if (ruserdataDir.exists())
+   {
+      // create user-specific subdirectory if necessary
+      FilePath userDir = ruserdataDir.childPath(core::system::username());
+      Error error = userDir.ensureDirectory();
+      if (!error)
+      {
+         dataDir = userDir;
+      }
+      else
+      {
+         core::log::logError(error, location);
+      }
+   }
+
+   // return the data dir
+   return dataDir;
+}
+
+
 
 void handleClientInit(const boost::function<void()>& initFunction,
                       boost::shared_ptr<HttpConnection> ptrConnection)
@@ -492,6 +522,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
          projects::projectContext().supportsSharing();
       sessionInfo["project_owned_by_user"] = 
          projects::projectContext().ownedByUser();
+      sessionInfo["project_user_data_directory"] =
+       module_context::createAliasedPath(getProjectUserDataDir(ERROR_LOCATION));
+
    }
    else
    {
@@ -500,6 +533,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["project_open_docs"] = json::Value();
       sessionInfo["project_supports_sharing"] = false;
       sessionInfo["project_owned_by_user"] = false;
+      sessionInfo["project_user_data_directory"] = json::Value();
    }
 
    sessionInfo["system_encoding"] = std::string(::locale2charset(NULL));
@@ -2587,10 +2621,10 @@ void detectParentTermination()
 // NOTE: mirrors behavior of WorkbenchContext.getREnvironmentPath on the client
 FilePath rEnvironmentDir()
 {
-   // for projects we always use the project directory
+   // for projects
    if (projects::projectContext().hasProject())
    {
-      return projects::projectContext().directory();
+      return getProjectUserDataDir(ERROR_LOCATION);
    }
 
    // for desktop the current path
@@ -2643,10 +2677,10 @@ bool restoreWorkspaceOption()
 
 FilePath rHistoryDir()
 {
-   // for projects we always use the project directory
+   // for projects
    if (projects::projectContext().hasProject())
    {
-      return projects::projectContext().directory();
+      return getProjectUserDataDir(ERROR_LOCATION);
    }
 
    // for server we use the default working directory
@@ -3094,10 +3128,18 @@ int main (int argc, char * const argv[])
            
       // ensure we aren't being started as a low (priviliged) account
       if (serverMode &&
-          core::system::currentUserIsPrivilleged(options.minimumUserId()))
+          !options.verifyInstallation() &&
+          core::system::currentUserIsPrivilleged(options.authMinimumUserId()))
       {
          Error error = systemError(boost::system::errc::permission_denied,
                                    ERROR_LOCATION);
+         boost::format fmt("User '%1%' has id %2%, which is lower than the "
+                           "minimum user id of %3% (this is controlled by "
+                           "the the auth-minimum-user-id rserver option)");
+         std::string msg = boost::str(fmt % core::system::username()
+                                          % core::system::effectiveUserId()
+                                          % options.authMinimumUserId());
+         error.addProperty("message", msg);
          return sessionExitFailure(error, ERROR_LOCATION);
       }
 

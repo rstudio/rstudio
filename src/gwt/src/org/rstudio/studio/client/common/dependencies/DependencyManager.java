@@ -221,13 +221,17 @@ public class DependencyManager implements InstallShinyEvent.Handler
    
    public void withShinyAddins(final Command command)
    {
-     withDependencies(   
+      // define dependencies
+      ArrayList<Dependency> deps = shinyDependencies(
+                                    "0.13", // shiny version
+                                    "0.3"); // htmltools version
+      deps.add(Dependency.cranPackage("miniUI", "0.1.1", true));
+      deps.add(Dependency.cranPackage("rstudioapi", "0.4", true));
+      
+      withDependencies(   
         "Checking installed packages",
         "Executing addins", 
-        // TODO: bump versions and add miniUI when it's on CRAN
-        shinyDependenciesArray(
-              "0.11.0", // shiny version
-              "0.2.6"), // htmltools version
+        deps.toArray(new Dependency[deps.size()]),
         false,
         new CommandWithArg<Boolean>()
         {

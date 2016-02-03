@@ -793,6 +793,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             SourceWindowParams.create(
                   ordinal,
                   pWorkbenchContext_.get().createWindowTitle(),
+                  pWorkbenchContext_.get().getCurrentWorkingDir().getPath(),
                   docId, sourcePosition), 
             size, false, position);
       
