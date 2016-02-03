@@ -395,7 +395,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Boolean> useDataImport()
    {
-      return bool("use_dataimport", false);
+      return bool("use_dataimport", true);
    }
    
    public static final String PDF_PREVIEW_NONE = "none";
@@ -532,6 +532,11 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> showUnnamedEntriesInDocumentOutline()
    {
       return bool("show_unnamed_chunks_in_document_outline", true);
+   }
+
+   public PrefValue<Boolean> showProfiler()
+   {
+      return bool("show_profiler", false);
    }
    
    private String getDefaultPdfPreview()
