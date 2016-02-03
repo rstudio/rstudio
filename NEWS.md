@@ -5,9 +5,9 @@
 * Import dataset from text via readr
 * Import dataset from Excel via readxl
 * Import dataset from SAS, SPSS, and Stata via haven
-* Preview before import using data viewer
-* Explicitly set column types for import
-* Code preview / capture for import
+* Support to preview data while importing datasets
+* Support to explicitly set column types while importing datasets
+* Support to preview and copy code while importing datasets
 
 ### Bug Fixes
 
