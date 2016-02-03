@@ -18,6 +18,10 @@ package com.google.gwt.dev.js.ast;
 
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.JsUtils;
+import com.google.gwt.dev.js.ast.JsVars.JsVar;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
+
+import java.util.Set;
 
 /**
  * Verifies that the JavaScript AST and the map are consistent.
@@ -28,6 +32,68 @@ public class JavaScriptVerifier {
     if (!JavaScriptVerifier.class.desiredAssertionStatus()) {
       return;
     }
+    verifyTopLevelMethodMapping(jsProgram, map);
+    verifyGlobalNameOrdering(jsProgram, map);
+  }
+
+  private static void verifyGlobalNameOrdering(JsProgram jsProgram, final JavaToJavaScriptMap map) {
+    final Set<JsName> declaredEntities = Sets.newHashSet();
+    new JsVisitor() {
+      @Override
+      public boolean visit(JsFunction x, JsContext ctx) {
+        declaredEntities.add(x.getName());
+        // Do not examine function bodies.
+        return false;
+      }
+    }.accept(jsProgram);
+
+    new JsVisitor() {
+      @Override
+      public boolean visit(JsFunction x, JsContext ctx) {
+        // Do not examine function bodies.
+        return false;
+      }
+
+      @Override
+      public boolean visit(JsVars x, JsContext ctx) {
+        for (JsVar var : x) {
+          declaredEntities.add(var.getName());
+        }
+        return true;
+      }
+
+      @Override
+      public boolean visit(JsBinaryOperation x, JsContext ctx) {
+        if (x.getOperator().isAssignment()) {
+          JsNameRef nameRef = (JsNameRef) x.getArg1();
+          if (nameRef.getQualifier() == null) {
+            declaredEntities.add(nameRef.getName());
+          }
+        }
+        return true;
+      }
+
+      @Override
+      public boolean visit(JsObjectLiteral x, JsContext ctx) {
+        for (JsPropertyInitializer propertyInitializer : x.getPropertyInitializers()) {
+          accept(propertyInitializer.getValueExpr());
+        }
+        return false;
+      }
+
+      @Override
+      public void endVisit(JsNameRef x, JsContext ctx) {
+        if (x.getQualifier() != null || !x.getName().isObfuscatable()) {
+          return;
+        }
+        assert declaredEntities.contains(x.getName()) : x.getName() + " reference found before " +
+            " definition.";
+        map.nameToField(x.getName());
+      }
+    }.accept(jsProgram);
+  }
+
+  public static void verifyTopLevelMethodMapping(JsProgram jsProgram, JavaToJavaScriptMap map) {
     for (JsProgramFragment fragment : jsProgram.getFragments()) {
       for (JsStatement statement : fragment.getGlobalBlock().getStatements()) {
         JsFunction function = JsUtils.isFunctionDeclaration(statement);

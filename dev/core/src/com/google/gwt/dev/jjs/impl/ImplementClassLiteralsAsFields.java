@@ -328,7 +328,8 @@ public class ImplementClassLiteralsAsFields {
         return;
       }
 
-      JsniMethodBody newBody = new JsniMethodBody(jsniMethodBody.getSourceInfo(), jsniMethodBody.getFunc(),
+      JsniMethodBody newBody =
+          new JsniMethodBody(jsniMethodBody.getSourceInfo(), jsniMethodBody.getFunc(),
           Lists.newArrayList(newClassRefs), jsniMethodBody.getJsniFieldRefs(),
           jsniMethodBody.getJsniMethodRefs(), jsniMethodBody.getUsedStrings());
 
@@ -356,7 +357,8 @@ public class ImplementClassLiteralsAsFields {
   private ImplementClassLiteralsAsFields(JProgram program, boolean shouldOptimize) {
     this.program = program;
     this.typeClassLiteralHolder = program.getTypeClassLiteralHolder();
-    this.classLiteralHolderClinitBody = (JMethodBody) typeClassLiteralHolder.getClinitMethod().getBody();
+    this.classLiteralHolderClinitBody =
+        (JMethodBody) typeClassLiteralHolder.getClinitMethod().getBody();
     this.shouldOptimize = shouldOptimize;
     assert program.getDeclaredTypes().contains(typeClassLiteralHolder);
   }
@@ -365,7 +367,17 @@ public class ImplementClassLiteralsAsFields {
     if (!(type instanceof JClassType) ||  ((JClassType) type).getSuperClass() == null) {
       return JNullLiteral.INSTANCE;
     }
-    return createDependentClassLiteral(info, ((JClassType) type).getSuperClass());
+
+    JClassType superClass = ((JClassType) type).getSuperClass();
+
+    if (superClass.isJsNative()) {
+      // Class object for subclasses of native JsType will return Object.class as their super class
+      // class literal; this is done so that in invariant that "super" class literals are literals
+      // of a actual superclass.
+      superClass = program.getTypeJavaLangObject();
+    }
+
+    return createDependentClassLiteral(info, superClass);
   }
 
   private JClassLiteral createDependentClassLiteral(SourceInfo info, JType type) {

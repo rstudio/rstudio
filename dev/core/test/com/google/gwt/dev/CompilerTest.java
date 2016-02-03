@@ -1028,7 +1028,7 @@ public class CompilerTest extends ArgProcessorTestBase {
         Lists.newArrayList(moduleResource, testEntryPoint, someJsFunction,
             jsFunctionInterfaceImplementation, someInterface),
         new MinimalRebuildCache(), emptySet, JsOutputOption.DETAILED);
-    // Make sure the referenced class literals ends up beign included in the resulting JS.
+    // Make sure the referenced class literals ends up being included in the resulting JS.
     String classliteralHolderVarName =
         JjsUtils.mangleMemberName("com.google.gwt.lang.ClassLiteralHolder",
             JjsUtils.classLiteralFieldNameFromJavahTypeSignatureName(
@@ -1420,6 +1420,55 @@ public class CompilerTest extends ArgProcessorTestBase {
 
   public void testDeterministicBuild_Optimized() throws UnableToCompleteException, IOException {
     assertDeterministicBuild(HELLO_MODULE, 9);
+  }
+
+  public void testSuccessfulCompile_jsoClassLiteralOrder() throws Exception {
+    // Crafted resource to make sure the a native subclass is compiled before the JSO class,
+    // In the case of native sublcasses the class hierarchy does not match the class literal
+    // hierarchy.
+    MockJavaResource nativeClassAndSubclass =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.MyNativeSubclass",
+            "package com.foo;",
+            "import jsinterop.annotations.JsType;",
+            "@JsType(isNative=true)",
+            "class NativeClass {",
+            "}",
+            "public class MyNativeSubclass extends NativeClass {",
+            "}");
+
+    MockJavaResource testEntryPoint =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.MyEntryPoint",
+            "package com.foo;",
+            "import com.foo.MyNativeSubclass;",
+            "public class MyEntryPoint extends MyNativeSubclass {",
+            "  public void onModuleLoad() {",
+            "    Object o = new Object();",
+            "    if (MyNativeSubclass.class.getName() == null) ",
+            "      o = new MyNativeSubclass();",
+            // Make .clazz reachable so that class literals are emmitted with the respective
+            // classses.
+            "    o.getClass();",
+            "  }",
+            "}");
+
+    MockResource moduleResource =
+        JavaResourceBase.createMockResource(
+            "com/foo/MyEntryPoint.gwt.xml",
+            "<module>",
+            "  <source path=''/>",
+            "  <entry-point class='com.foo.MyEntryPoint'/>",
+            "</module>");
+
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    // Make sure it compiles successfully with no assertions
+    compilerOptions.setEnableAssertions(true);
+    compilerOptions.setGenerateJsInteropExports(true);
+    compilerOptions.setOutput(JsOutputOption.PRETTY);
+    compilerOptions.setOptimizationLevel(9);
+    assertCompileSucceeds(compilerOptions, testEntryPoint.getTypeName(),
+        Lists.newArrayList(moduleResource, nativeClassAndSubclass, testEntryPoint));
   }
 
   // TODO(stalcup): add recompile tests for file deletion.
@@ -2243,6 +2292,64 @@ public class CompilerTest extends ArgProcessorTestBase {
         nonJsoFooResource), classNameToGenerateResource, modifiedClassNameToGenerateResource,
         stringSet("com.foo.TestEntryPoint", "com.foo.HasCustomContent",
             "com.foo.FooReplacementTwo"), outputOption);
+  }
+
+  private void assertCompileSucceeds(CompilerOptions options, String moduleName,
+      List<MockResource> applicationResources) throws Exception {
+    File compileWorkDir = Utility.makeTemporaryDirectory(null, moduleName);
+    final CompilerOptionsImpl compilerOptions = new CompilerOptionsImpl(options);
+    PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
+    logger.setMaxDetail(TreeLogger.ERROR);
+
+    String oldPersistentUnitCacheValue =
+        System.setProperty(UnitCacheSingleton.GWT_PERSISTENTUNITCACHE, "false");
+    try {
+
+      File applicationDir = Files.createTempDir();
+      Thread.sleep(1001);
+      // We might be reusing the same application dir but we want to make sure that the output dir
+      // is clean to avoid confusion when returning the output JS.
+      File outputDir = new File(applicationDir.getPath() + File.separator + moduleName);
+      if (outputDir.exists()) {
+        Util.recursiveDelete(outputDir, true);
+      }
+
+      // Fake out the resource loader to read resources both from the normal classpath as well as
+      // this new application directory.
+      ResourceLoader resourceLoader = ResourceLoaders.forClassLoader(Thread.currentThread());
+      resourceLoader =
+          ResourceLoaders.forPathAndFallback(ImmutableList.of(applicationDir), resourceLoader);
+
+      // Setup options to perform a per-file compile, output to this new application directory and
+      // compile the given module.
+      compilerOptions.setGenerateJsInteropExports(true);
+      compilerOptions.setWarDir(applicationDir);
+      compilerOptions.setModuleNames(ImmutableList.of(moduleName));
+
+      // Write the Java/XML/etc resources that make up the test application.
+      for (MockResource applicationResource : applicationResources) {
+        writeResourceTo(applicationResource, applicationDir);
+      }
+
+      // Cause the module to be cached with a reference to the prefixed resource loader so that the
+      // compile process will see those resources.
+      ModuleDefLoader.clearModuleCache();
+      ModuleDefLoader.loadFromResources(logger, moduleName, resourceLoader, true);
+
+      options.addModuleName(moduleName);
+      options.setWarDir(new File(compileWorkDir, "war"));
+      options.setExtraDir(new File(compileWorkDir, "extra"));
+
+      // Run the compiler once here.
+      new Compiler(options).run(logger);
+    } finally {
+      Util.recursiveDelete(compileWorkDir, false);
+      if (oldPersistentUnitCacheValue == null) {
+        System.clearProperty(UnitCacheSingleton.GWT_PERSISTENTUNITCACHE);
+      } else {
+        System.setProperty(UnitCacheSingleton.GWT_PERSISTENTUNITCACHE, oldPersistentUnitCacheValue);
+      }
+    }
   }
 
   private void assertDeterministicBuild(String topLevelModule, int optimizationLevel)
