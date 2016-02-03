@@ -65,5 +65,8 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 
 install rsconnect master
 
+# temporary pointer to profvis until cran transition
+install profvis master
+
 # back to install-dir
 cd $INSTALL_DIR
