@@ -577,12 +577,19 @@ SEXP callHandler(const std::string& path,
    pProtect->add(argsSEXP);
 
    // form the call expression
-   SEXP callSEXP;
-   pProtect->add(callSEXP = Rf_lang3(
+   SEXP innerCallSEXP;
+   pProtect->add(innerCallSEXP = Rf_lang3(
          Rf_install("try"),
          Rf_lcons( (handlerSource(path)), argsSEXP),
          trueSEXP));
-   SET_TAG(CDR(CDR(callSEXP)), Rf_install("silent"));
+   SET_TAG(CDR(CDR(innerCallSEXP)), Rf_install("silent"));
+   
+   // suppress warnings
+   SEXP suppressWarningsSEXP;
+   pProtect->add(suppressWarningsSEXP = r::sexp::findFunction("suppressWarnings", "base"));
+   
+   SEXP callSEXP;
+   pProtect->add(callSEXP = Rf_lang2(suppressWarningsSEXP, innerCallSEXP));
 
    // execute and return
    SEXP resultSEXP;
