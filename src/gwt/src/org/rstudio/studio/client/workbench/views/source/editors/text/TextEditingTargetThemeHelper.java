@@ -57,10 +57,11 @@ public class TextEditingTargetThemeHelper
                            EditorThemeStyleChangedEvent.Handler handler)
    {
       // if we already have a style then call the handler back right away
-      if (currentStyle_ != null)
+      if (currentStyle_ != null && currentContent_ != null)
       {
          EditorThemeStyleChangedEvent event = 
-                        new EditorThemeStyleChangedEvent(currentStyle_);
+                        new EditorThemeStyleChangedEvent(currentContent_,
+                              currentStyle_);
          handler.onEditorThemeStyleChanged(event);
       }
       
@@ -81,12 +82,15 @@ public class TextEditingTargetThemeHelper
       
       Element content = aceContentElements[0];
       currentStyle_ = DomUtils.getComputedStyles(content);
+      currentContent_ = content;
       
       // call all registered handlers
-      handlers_.fireEvent(new EditorThemeStyleChangedEvent(currentStyle_));
+      handlers_.fireEvent(new EditorThemeStyleChangedEvent(content, 
+            currentStyle_));
    }
    
    private HandlerManager handlers_ = new HandlerManager(this);
    
    private Style currentStyle_;
+   private Element currentContent_;
 }

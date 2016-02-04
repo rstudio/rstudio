@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.events;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -25,9 +26,10 @@ public class EditorThemeStyleChangedEvent extends GwtEvent<EditorThemeStyleChang
       void onEditorThemeStyleChanged(EditorThemeStyleChangedEvent event);
    }
    
-   public EditorThemeStyleChangedEvent(Style style)
+   public EditorThemeStyleChangedEvent(Element editorContent, Style style)
    {
       style_ = style;
+      editorContent_ = editorContent;
    }
    
    public Style getStyle()
@@ -35,7 +37,13 @@ public class EditorThemeStyleChangedEvent extends GwtEvent<EditorThemeStyleChang
       return style_;
    }
    
+   public Element getEditorContent()
+   {
+      return editorContent_;
+   }
+   
    private final Style style_;
+   private final Element editorContent_;
 
    @Override
    public Type<Handler> getAssociatedType()

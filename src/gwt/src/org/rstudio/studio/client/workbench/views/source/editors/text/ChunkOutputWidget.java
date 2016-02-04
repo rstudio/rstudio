@@ -15,11 +15,14 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -86,6 +89,7 @@ public class ChunkOutputWidget extends Composite
       if (state_ == CHUNK_EXECUTING)
          return;
       state_ = CHUNK_EXECUTING;
+      getElement().getStyle().setBackgroundColor(s_busyColor);
       interrupt_.setVisible(true);
    }
    
@@ -105,12 +109,17 @@ public class ChunkOutputWidget extends Composite
       }
    }
    
-   public static void cacheEditorStyle(Style editorStyle)
+   public static void cacheEditorStyle(Element editorContainer, 
+         Style editorStyle)
    {
       s_backgroundColor = editorStyle.getBackgroundColor();
       s_color = editorStyle.getColor();
       s_outlineColor = DomUtils.extractCssValue("ace_print-margin", 
             "backgroundColor");
+      JsArrayString classes = JsArrayString.createArray().cast();
+      classes.push("ace_marker-layer");
+      classes.push("ace_foreign_line");
+      s_busyColor = DomUtils.extractCssValue(classes, "backgroundColor");
    }
    
    public static boolean isEditorStyleCached()
@@ -132,6 +141,7 @@ public class ChunkOutputWidget extends Composite
    private static String s_outlineColor    = null;
    private static String s_backgroundColor = null;
    private static String s_color           = null;
+   private static String s_busyColor       = null;
    
    public final static int CHUNK_EMPTY     = 0;
    public final static int CHUNK_EXECUTING = 1;
