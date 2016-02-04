@@ -3942,7 +3942,13 @@ public class TextEditingTarget implements
    }
    
    public void executePreviousChunks(final Position position)
-   {  
+   {
+      if (prefs_.showRmdChunkOutputInline().getGlobalValue())
+      {
+         executePreviousChunksNotebookMode(position);
+         return;
+      }
+      
       // HACK: This is just to force the entire function tree to be built.
       // It's the easiest way to make sure getCurrentScope() returns
       // a Scope with an end.
@@ -3988,6 +3994,19 @@ public class TextEditingTarget implements
       {
          events_.fireEvent(new SendToConsoleEvent(code, true));
       }
+   }
+   
+   public void executePreviousChunksNotebookMode(Position position)
+   {
+      // HACK: This is just to force the entire function tree to be built.
+      // It's the easiest way to make sure getCurrentScope() returns
+      // a Scope with an end.
+      docDisplay_.getScopeTree();
+      
+      // execute the previous chunks
+      Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks(position);
+      for (Scope scope : previousScopes)
+         executeSweaveChunk(scope, false);
    }
    
    @Handler
