@@ -13,23 +13,42 @@
 #
 #
 
-.rs.addJsonRpcHandler("start_profiling", function()
+.rs.addJsonRpcHandler("start_profiling", function(profilerOptions)
 {
    tryCatch({
-   	  dirName <- tempfile("profiles-cache")
-   	  dir.create(dirName)
+   	fileName <- tempfile(fileext = ".rprof", tmpdir = "~/RStudio/temp")
 
-      Rprof(filename = paste(dirName, "temp.rprof", sep = "/"))
+      Rprof(filename = fileName, line.profiling = TRUE)
+
+      return(list(
+         fileName = fileName
+      ))
    }, error = function(e) {
       return(list(error = e))
    })
 })
 
-.rs.addJsonRpcHandler("stop_profiling", function()
+.rs.addJsonRpcHandler("stop_profiling", function(profilerOptions)
 {
    tryCatch({
       Rprof(NULL)
-      return (NULL)
+      
+      return(list(
+         fileName = profilerOptions$fileName
+      ))
+   }, error = function(e) {
+      return(list(error = e))
+   })
+})
+
+.rs.addJsonRpcHandler("open_profile", function(profilerOptions)
+{
+   tryCatch({
+      profvis <- profvis::profvis(prof_input = profilerOptions$fileName)
+
+      return(list(
+         profvis = profvis
+      ))
    }, error = function(e) {
       return(list(error = e))
    })

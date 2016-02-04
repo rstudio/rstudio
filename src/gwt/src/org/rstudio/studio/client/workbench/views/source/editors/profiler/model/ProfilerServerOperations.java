@@ -19,7 +19,9 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public interface ProfilerServerOperations
 {
-   void startProfiling(ServerRequestCallback<ProfileOperationResponse> requestCallback);
+   void startProfiling(ProfileOperationRequest profilerRequest,
+                       ServerRequestCallback<ProfileOperationResponse> requestCallback);
    
-   void stopProfiling(ServerRequestCallback<ProfileOperationResponse> requestCallback);
+   void stopProfiling(ProfileOperationRequest profilerRequest,
+                      ServerRequestCallback<ProfileOperationResponse> requestCallback);
 }

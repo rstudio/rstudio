@@ -17,10 +17,16 @@ package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
+import org.rstudio.studio.client.common.filetypes.ProfilerType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -30,8 +36,24 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class ProfilerPresenter
-{ 
+public class ProfilerPresenter implements OpenProfileEvent.Handler
+{
+   private final ProfilerServerOperations server_;
+   private final Commands commands_;
+   private final DependencyManager dependencyManager_;
+   private final HandlerRegistrations handlerRegistrations_ = new HandlerRegistrations();
+   private final GlobalDisplay globalDisplay_;
+   private final EventBus eventBus_;
+   private final RemoteFileSystemContext fileSystemContext_;
+   
+   final String profilerDependecyUserAction_ = "Preparing profiler";
+   
+   private ProfileOperationResponse response_ = null;
+
+   public interface Binder extends CommandBinder<Commands, ProfilerPresenter>
+   {
+   }
+   
    public interface Display
    {
    }
@@ -40,33 +62,41 @@ public class ProfilerPresenter
    public ProfilerPresenter(ProfilerServerOperations server,
                             Binder binder,
                             Commands commands,
-                            DependencyManager dependencyManager)
+                            DependencyManager dependencyManager,
+                            GlobalDisplay globalDisplay,
+                            EventBus eventBus,
+                            RemoteFileSystemContext fileSystemContext)
    {
       server_ = server;
       commands_ = commands;
       dependencyManager_ = dependencyManager;
+      globalDisplay_ = globalDisplay;
+      eventBus_ = eventBus;
+      fileSystemContext_ = fileSystemContext;
+      
+      eventBus.addHandler(OpenProfileEvent.TYPE, this);
       
       binder.bind(commands, this);
-      
+
       // by default, one can always start profiling
       enableStoppedCommands();
    }
-   
+
    public void attatch(SourceDocument doc, Display view)
    {
       // enable commands for stopped state
       enableStoppedCommands();
    }
-   
+
    public void detach()
    {
       // unsubscribe from view
       handlerRegistrations_.removeHandler();
-      
+
       // disable all commands
       disableAllCommands();
    }
-   
+
    @Handler
    public void onStartProfiler()
    {
@@ -77,58 +107,96 @@ public class ProfilerPresenter
          {
             // manage commands
             enableStartedCommands();
-            
-            server_.startProfiling(new ServerRequestCallback<ProfileOperationResponse>()
+
+            ProfileOperationRequest request = ProfileOperationRequest
+                  .create("");
+            server_.startProfiling(request,
+                  new ServerRequestCallback<ProfileOperationResponse>()
             {
+               @Override
+               public void onResponseReceived(ProfileOperationResponse response)
+               {
+                  if (response.getErrorMessage() != null)
+                  {
+                     globalDisplay_.showErrorMessage("Profiler Error",
+                           response.getErrorMessage());
+                     return;
+                  }
+
+                  response_ = response;
+               }
+
                @Override
                public void onError(ServerError error)
                {
+                  globalDisplay_.showErrorMessage("Failed to Stop Profiler",
+                        error.getMessage());
                }
             });
          }
       });
    }
-   
+
    @Handler
    public void onStopProfiler()
    {
       // manage commands
       enableStoppedCommands();
-      
-      server_.stopProfiling(new ServerRequestCallback<ProfileOperationResponse>()
-      {
-         @Override
-         public void onError(ServerError error)
-         {
-         }
-      });
+
+      ProfileOperationRequest request = ProfileOperationRequest
+            .create(response_.getFileName());
+
+      server_.stopProfiling(request,
+            new ServerRequestCallback<ProfileOperationResponse>()
+            {
+               @Override
+               public void onResponseReceived(ProfileOperationResponse response)
+               {
+                  if (response.getErrorMessage() != null)
+                  {
+                     globalDisplay_.showErrorMessage("Profiler Error",
+                           response.getErrorMessage());
+                     return;
+                  }
+
+                  ProfilerType profilerType = new ProfilerType();
+                  FileSystemItem item = fileSystemContext_.itemForName(
+                        response.getFileName(),
+                        true,
+                        false);
+                  
+                  profilerType.openFile(item, eventBus_);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  globalDisplay_.showErrorMessage("Failed to Stop Profiler",
+                        error.getMessage());
+               }
+            });
    }
-   
+
    private void disableAllCommands()
    {
       commands_.startProfiler().setEnabled(false);
       commands_.stopProfiler().setEnabled(false);
    }
-   
-   
+
    private void enableStartedCommands()
    {
       commands_.startProfiler().setEnabled(false);
       commands_.stopProfiler().setEnabled(true);
    }
-   
+
    private void enableStoppedCommands()
    {
       commands_.startProfiler().setEnabled(true);
-      commands_.stopProfiler().setEnabled(false);   
+      commands_.stopProfiler().setEnabled(false);
    }
-   
-   private final ProfilerServerOperations server_;
-   private final Commands commands_;
-   private final DependencyManager dependencyManager_;
-   private final HandlerRegistrations handlerRegistrations_ = 
-                                             new HandlerRegistrations();
-   final String profilerDependecyUserAction_ = "Preparing profiler";
-   
-   public interface Binder extends CommandBinder<Commands, ProfilerPresenter> {}
+
+   @Override
+   public void onOpenProfileEvent(OpenProfileEvent event)
+   {
+   }
 }

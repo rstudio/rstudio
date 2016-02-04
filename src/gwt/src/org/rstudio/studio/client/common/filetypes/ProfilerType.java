@@ -14,20 +14,32 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.OpenProfileEvent;
 
 public class ProfilerType extends EditableFileType
 {
    public ProfilerType()
    {
-      super("r_profiler", "R Profiler",
+      super("r_prof", "R Profiler",
             FileIconResources.INSTANCE.iconRdoc());
+   }
+   
+   @Override
+   public void openFile(FileSystemItem file,
+                        FilePosition position,
+                        int navMethod,
+                        EventBus eventBus)
+   {
+      eventBus.fireEvent(new OpenProfileEvent(file.getPath()));
    }
 
    @Override
    public void openFile(FileSystemItem file, EventBus eventBus)
    {
-      assert false : "Profiler doesn't operate on filesystem files";
+      openFile(file, null, NavigationMethods.DEFAULT, eventBus);
    }
 }

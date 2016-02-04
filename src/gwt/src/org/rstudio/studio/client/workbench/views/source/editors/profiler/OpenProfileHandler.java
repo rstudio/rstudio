@@ -1,5 +1,5 @@
 /*
- * ProfileOperationResponse.java
+ * OpenProfileHandler.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -13,21 +13,11 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.source.editors.profiler.model;
+package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.event.shared.EventHandler;
 
-public class ProfileOperationResponse extends JavaScriptObject
+public interface OpenProfileHandler extends EventHandler
 {
-   protected ProfileOperationResponse()
-   {
-   }
-   
-   public final native String getErrorMessage() /*-{
-      return this.error ? this.error.message.join(' ') : null;
-   }-*/;
-   
-   public final native String getFileName() /*-{
-      return this.fileName ? this.fileName.join(' ') : null;
-   }-*/;
+   void onOpenProfile(String onOpenProfile);
 }

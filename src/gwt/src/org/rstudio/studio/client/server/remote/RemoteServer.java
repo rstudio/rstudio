@@ -156,6 +156,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationRPubsSource;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
@@ -4520,16 +4521,20 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void startProfiling(ServerRequestCallback<ProfileOperationResponse> requestCallback)
+   public void startProfiling(ProfileOperationRequest profilerRequest,
+                              ServerRequestCallback<ProfileOperationResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(profilerRequest));
       sendRequest(RPC_SCOPE, START_PROFILING, params, requestCallback);
    }
 
    @Override
-   public void stopProfiling(ServerRequestCallback<ProfileOperationResponse> requestCallback)
+   public void stopProfiling(ProfileOperationRequest profilerRequest,
+                             ServerRequestCallback<ProfileOperationResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(profilerRequest));
       sendRequest(RPC_SCOPE, STOP_PROFILING, params, requestCallback);
    }
 
