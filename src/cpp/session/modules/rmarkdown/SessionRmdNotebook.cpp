@@ -360,6 +360,13 @@ Error setChunkDefs(const std::string& docPath, const std::string& docId,
 
    // ensure we have a place to write the sidecar file
    FilePath defFile = chunkDefinitionsPath(docPath, docId);
+
+   // if there are no old chunk definitions and we aren't adding any new ones,
+   // no work to do
+   if (!defFile.exists() && newDefs.size() < 1) 
+      return Success();
+
+   // we're going to write something; make sure the parent folder exists
    Error error = defFile.parent().ensureDirectory();
    if (error)
       return error;
