@@ -263,26 +263,19 @@ public class TextEditingTargetNotebook
                if (!outputWidgets_.containsKey(chunkId))
                   return;
                outputWidgets_.get(chunkId).getElement().getStyle().setHeight(
-                     Math.min(arg.intValue(), MAX_CHUNK_HEIGHT), Unit.PX);
+                     Math.max(MIN_CHUNK_HEIGHT, 
+                          Math.min(arg.intValue(), MAX_CHUNK_HEIGHT)), Unit.PX);
                if (!lineWidgets_.containsKey(chunkId))
                   return;
                docDisplay_.onLineWidgetChanged(lineWidgets_.get(chunkId));
             }
          });
          widget.getElement().addClassName(ThemeStyles.INSTANCE.selectableText());
-         setChunkOutputStyle(widget.getElement());
+         widget.getElement().getStyle().setHeight(MIN_CHUNK_HEIGHT, Unit.PX);
          outputWidgets_.put(def.getChunkId(), widget);
       }
+      
       return widget.getElement();
-   }
-   
-   private void setChunkOutputStyle(Element div)
-   {
-      if (editorStyle_ != null)
-      {
-         div.getStyle().setBackgroundColor(editorStyle_.getBackgroundColor());
-         div.getStyle().setColor(editorStyle_.getColor());
-      }
    }
    
    private JsArray<ChunkDefinition> initialChunkDefs_;
@@ -313,5 +306,6 @@ public class TextEditingTargetNotebook
    // chunk state synchronized
    private final static int STATE_INITIALIZED = 0;
    
+   private final static int MIN_CHUNK_HEIGHT = 75;
    private final static int MAX_CHUNK_HEIGHT = 750;
 }
