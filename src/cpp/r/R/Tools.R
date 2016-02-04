@@ -639,3 +639,34 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 .rs.addFunction("rVersionString", function() {
    as.character(getRversion())
 })
+
+.rs.addFunction("listDirs", function(dir = ".", full.names = TRUE, recursive = FALSE)
+{
+   # Normalize directory path
+   if (!file.exists(dir))
+      return(character())
+   dir <- normalizePath(dir, winslash = "/", mustWork = TRUE)
+   
+   # Shortcut if we have 'list.dirs'.
+   if (exists("list.dirs", envir = .BaseNamespaceEnv))
+      return(list.dirs(dir, full.names = full.names, recursive = recursive))
+   
+   
+   # Otherwise, use 'list.files' and filter results.
+   hasIncludeDirs <- "include.dirs" %in% names(formals(base::list.files))
+   args <- if (hasIncludeDirs)
+   {
+      list(path = dir,
+           full.names = full.names,
+           recursive = recursive,
+           include.dirs = TRUE)
+   }
+   else
+   {
+      list(path = dir,
+           full.names = full.names,
+           recursive = recursive)
+   }
+   
+   do.call(base::list.files, args)
+})
