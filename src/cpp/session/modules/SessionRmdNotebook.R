@@ -13,7 +13,9 @@
 #
 #
 
-.rs.addFunction("executeSingleChunk", function(options, content, libDir, 
+.rs.addFunction("executeSingleChunk", function(options,
+                                               content,
+                                               libDir,
                                                outputFile) 
 {
   # create a temporary file stub to send to R Markdown
@@ -24,6 +26,11 @@
                  sep = "\n");
   writeLines(chunk, con = chunkFile)
   on.exit(unlink(chunkFile), add = TRUE)
+  
+  # render chunks directly in .GlobalEnv
+  # TODO: use .rs.getActiveFrame()? use sandbox env
+  # that has .GlobalEnv as parent?
+  envir <- .GlobalEnv
                  
   # render the stub to the given file
   capture.output(rmarkdown::render(input = chunkFile, 
@@ -35,6 +42,7 @@
                                      lib_dir = libDir),
                                    output_file = outputFile,
                                    encoding = "UTF-8",
+                                   envir = envir,
                                    quiet = TRUE))
   invisible(NULL)
 })
