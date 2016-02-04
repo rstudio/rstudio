@@ -757,9 +757,9 @@ assign(x = ".rs.acCompletionTypes",
          getNamespaceExports(namespace)
       else
       {
-         # Take advantage of 'sorted' argument if 
-         # available -- we only want to sort a filtered
-         # subset
+         # Take advantage of 'sorted' argument if available,
+         # as we only want to sort a filtered subset and will
+         # sort again later
          arguments <- list()
          arguments[["name"]] <- namespace
          arguments[["all.names"]] <- TRUE
@@ -769,9 +769,49 @@ assign(x = ".rs.acCompletionTypes",
          do.call(objects, arguments)
       }
       
-      completions <- sort(.rs.selectFuzzyMatches(objectNames, token))
-      objects <- mget(completions, envir = namespace, inherits = TRUE)
-      type <- vapply(objects, FUN.VALUE = numeric(1), USE.NAMES = FALSE, .rs.getCompletionType)
+      # For `::`, we also want to grab items in the 'lazydata' environment
+      # within the namespace.
+      lazydata <- new.env(parent = emptyenv())
+      dataNames <- character()
+      if (exportsOnly && exists(".__NAMESPACE__.", envir = namespace))
+      {
+         .__NAMESPACE__. <- get(".__NAMESPACE__.", envir = namespace)
+         if (exists("lazydata", envir = .__NAMESPACE__.))
+         {
+            lazydata  <- get("lazydata", envir = .__NAMESPACE__.)
+            dataNames <- objects(lazydata, all.names = TRUE)
+         }
+      }
+      
+      # Filter our results
+      objectNames <- .rs.selectFuzzyMatches(objectNames, token)
+      dataNames   <- .rs.selectFuzzyMatches(dataNames, token)
+      
+      # Collect the object types
+      objectTypes <- vapply(
+         mget(objectNames, envir = namespace, inherits = TRUE),
+         FUN.VALUE = numeric(1),
+         USE.NAMES = FALSE,
+         .rs.getCompletionType
+      )
+      
+      # Let 'lazydata' be lazy -- don't force evaluation.
+      dataTypes <- rep(.rs.acCompletionTypes$DATAFRAME, length(dataNames))
+      
+      # Construct a data.frame to hold our results (because we'll
+      # need to re-sort our items)
+      df <- data.frame(
+         names = c(objectNames, dataNames),
+         types = c(objectTypes, dataTypes),
+         stringsAsFactors = FALSE
+      )
+      
+      # Sort by 'names'
+      df <- df[order(df$names), ]
+      
+      # Construct the completion result
+      completions <- df$names
+      type <- df$types
       
       result <- .rs.makeCompletions(
          token = token,
