@@ -15,8 +15,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
@@ -97,11 +95,13 @@ public class ChunkOutputWidget extends Composite
          return;
       Style frameStyle = getElement().getStyle();
       frameStyle.setBorderColor(s_outlineColor);
+      frameStyle.setBackgroundColor(s_backgroundColor);
       if (state_ == CHUNK_RENDERED)
       {
          Style bodyStyle = frame_.getDocument().getBody().getStyle();
-         bodyStyle.setBackgroundColor(s_backgroundColor);
          bodyStyle.setColor(s_color);
+         bodyStyle.setMargin(0, Unit.PX);
+         bodyStyle.setPadding(0, Unit.PX);
       }
    }
    

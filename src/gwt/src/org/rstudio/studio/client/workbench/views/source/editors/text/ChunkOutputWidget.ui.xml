@@ -14,7 +14,9 @@
    .frame
    {
       border: 1px solid #e5e5e5;
-      margin-right: 25px;
+      margin-right: 20px;
+      padding-left: 10px;
+      transition: background-color 500ms ease;
    }
    
    </ui:style>
