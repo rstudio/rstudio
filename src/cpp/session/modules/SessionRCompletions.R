@@ -1016,10 +1016,10 @@ assign(x = ".rs.acCompletionTypes",
                   type <- numeric(length(names))
                   for (i in seq_along(names))
                   {
-                     type[[i]] <- tryCatch(
+                     type[[i]] <- suppressWarnings(tryCatch(
                         .rs.getCompletionType(eval(call("@", quote(object), names[[i]]))),
                         error = function(e) .rs.acCompletionTypes$UNKNOWN
-                     )
+                     ))
                   }
                }
             }, error = function(e) NULL
@@ -1105,10 +1105,10 @@ assign(x = ".rs.acCompletionTypes",
             type <- numeric(length(names))
             for (i in seq_along(names))
             {
-               type[[i]] <- tryCatch(
+               type[[i]] <- suppressWarnings(tryCatch(
                   .rs.getCompletionType(eval(call("$", quote(object), names[[i]]))),
                   error = function(e) .rs.acCompletionTypes$UNKNOWN
-               )
+               ))
             }
          }
       }
