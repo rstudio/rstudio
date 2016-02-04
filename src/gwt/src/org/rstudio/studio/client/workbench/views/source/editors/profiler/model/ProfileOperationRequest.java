@@ -1,5 +1,5 @@
 /*
- * ProfileOperationResponse.java
+ * ProfileOperationRequest.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -17,17 +17,16 @@ package org.rstudio.studio.client.workbench.views.source.editors.profiler.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class ProfileOperationResponse extends JavaScriptObject
+public class ProfileOperationRequest extends JavaScriptObject
 {
-   protected ProfileOperationResponse()
+   protected ProfileOperationRequest()
    {
    }
    
-   public final native String getErrorMessage() /*-{
-      return this.error ? this.error.message.join(' ') : null;
-   }-*/;
-   
-   public final native String getFileName() /*-{
-      return this.fileName ? this.fileName.join(' ') : null;
+   public final native static ProfileOperationRequest create(String fileName) /*-{
+      var request = new Object();
+      request.fileName = fileName ;
+      
+      return request;
    }-*/;
 }
