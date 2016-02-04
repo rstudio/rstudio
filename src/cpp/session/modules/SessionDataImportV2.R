@@ -53,6 +53,8 @@
 
       switch(optionType,
          "character" = {
+            optionValue <- gsub("\\", "\\\\", optionValue, fixed = TRUE)
+            optionValue <- gsub("\"", "\\\"", optionValue, fixed = TRUE)
             return (paste("\"", optionValue, "\"", sep = ""))
          },
          "locale" = {
@@ -121,7 +123,7 @@
                !identical(x$assignedType, NULL)
             }
 
-            if (!any(hasAssignedType(optionValue)))
+            if (!any(unlist(lapply(optionValue, hasAssignedType), use.names = FALSE)))
                return (NULL)
 
             colsByIndex <- list()
@@ -388,7 +390,7 @@
       beforeImportFromOptions <- list(
          "text" = function() {
             # while previewing data, always return a column even if it will be skipped
-            dataImportOptions$columnsOnly = FALSE;
+            dataImportOptions$columnsOnly <<- FALSE;
             if (!identical(dataImportOptions$columnDefinitions, NULL))
             {
                dataImportOptions$columnDefinitions <<- Filter(function (e) {
