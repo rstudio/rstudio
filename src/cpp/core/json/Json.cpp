@@ -14,6 +14,7 @@
  */
 
 #include <core/json/Json.hpp>
+#include <core/json/JsonRpc.hpp>
 
 #include <cstdlib>
 #include <sstream>
@@ -153,6 +154,56 @@ std::string write(const Value& value)
 std::string writeFormatted(const Value& value)
 {
    return json_spirit::write_formatted(value);
+}
+
+Error writeCsv(const Array& array, std::ostream& os)
+{
+   std::size_t nrow = array.size();
+   if (nrow == 0)
+      return Success();
+   
+   Value value;
+   Object object;
+   
+   for (std::size_t i = 0; i < nrow; ++i)
+   {
+      // get array element as object
+      value = array[i];
+      if (!isType<Object>(value))
+         return Error(errc::ParamInvalid, ERROR_LOCATION);
+      object = value.get_obj();
+      
+      if (object.size() == 0)
+         continue;
+      
+      Object::const_iterator it;
+
+      // first object: write names
+      if (i == 0)
+      {
+         it = object.begin();
+         json::write(it->first, os);
+         for (++it; it != object.end(); ++it)
+         {
+            os << ",";
+            json::write(it->first, os);
+         }
+         os << "\n";
+      }
+
+      // write values
+      it = object.begin();
+      json::write(it->second, os);
+      for (++it; it != object.end(); ++it)
+      {
+         os << ",";
+         json::write(it->second, os);
+      }
+      os << "\n";
+   }
+   
+   return Success();
+   
 }
 
 } // namespace json

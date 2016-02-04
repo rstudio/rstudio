@@ -214,6 +214,10 @@ void writeFormatted(const Value& value, std::ostream& os);
 std::string write(const Value& value);
 std::string writeFormatted(const Value& value);
 
+// write an array of objects of integral types to CSV
+// e.g. [{"a": 1}, {"a": 2}, {"a"}: 3}]
+Error writeCsv(const Array& array, std::ostream& os);
+
 } // namespace json
 } // namespace core
 } // namespace rstudio

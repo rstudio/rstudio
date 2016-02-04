@@ -97,10 +97,12 @@ FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
 }
 
 
-FilePath chunkDefinitionsPath(
-      const std::string& docPath, const std::string& docId)
+FilePath chunkDefinitionsPath(const std::string& docPath,
+                              const std::string& docId,
+                              const std::string& fileExt)
 {
-   return chunkCacheFolder(docPath, docId).childPath("chunks.json");
+   std::string fileName = std::string() + "chunks." + fileExt;
+   return chunkCacheFolder(docPath, docId).childPath(fileName);
 }
 
 FilePath chunkOutputPath(
@@ -368,7 +370,7 @@ Error setChunkDefs(const std::string& docPath, const std::string& docId,
    chunkDefs[kChunkDefs] = newDefs;
 
    // ensure we have a place to write the sidecar file
-   FilePath defFile = chunkDefinitionsPath(docPath, docId);
+   FilePath defFile = chunkDefinitionsPath(docPath, docId, "json");
 
    // if there are no old chunk definitions and we aren't adding any new ones,
    // no work to do
@@ -392,16 +394,44 @@ Error setChunkDefs(const std::string& docPath, const std::string& docId,
                   oldDefs.get_array(), newDefs);
 
    // write to the sidecar file
-   std::ostringstream oss;
-   json::write(chunkDefs, oss);
-   return writeStringToFile(defFile, oss.str());
+   {
+      std::ostringstream oss;
+      json::write(chunkDefs, oss);
+      error = writeStringToFile(defFile, oss.str());
+      if (error)
+      {
+         LOG_ERROR(error);
+         return error;
+      }
+   }
+   
+   // write to csv file as well (easier reading by R tooling)
+   {
+      FilePath csvDefFile = chunkDefinitionsPath(docPath, docId, "csv");
+      std::ostringstream oss;
+      error = json::writeCsv(newDefs, oss);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return error;
+      }
+      
+      error = writeStringToFile(csvDefFile, oss.str());
+      if (error)
+      {
+         LOG_ERROR(error);
+         return error;
+      }
+   }
+   
+   return Success();
 }
 
 Error getChunkDefs(const std::string& docPath, const std::string& docId,
                    core::json::Value* pDefs)
 {
    Error error;
-   FilePath defs = chunkDefinitionsPath(docPath, docId);
+   FilePath defs = chunkDefinitionsPath(docPath, docId, "json");
    if (!defs.exists())
       return Success();
 
