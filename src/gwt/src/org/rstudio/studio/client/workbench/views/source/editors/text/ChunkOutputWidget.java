@@ -104,8 +104,6 @@ public class ChunkOutputWidget extends Composite
       {
          Style bodyStyle = frame_.getDocument().getBody().getStyle();
          bodyStyle.setColor(s_color);
-         bodyStyle.setMargin(0, Unit.PX);
-         bodyStyle.setPadding(0, Unit.PX);
       }
    }
    

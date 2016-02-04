@@ -16,6 +16,7 @@
 .rs.addFunction("executeSingleChunk", function(options,
                                                content,
                                                libDir,
+                                               headerFile,
                                                outputFile) 
 {
   # create a temporary file stub to send to R Markdown
@@ -39,6 +40,8 @@
                                      highlight = NULL,
                                      template = NULL, 
                                      self_contained = FALSE,
+                                     includes = list(
+                                       in_header = headerFile),
                                      lib_dir = libDir),
                                    output_file = outputFile,
                                    encoding = "UTF-8",

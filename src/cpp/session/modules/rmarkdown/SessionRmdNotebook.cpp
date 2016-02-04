@@ -30,6 +30,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
+#include <session/SessionOptions.hpp>
 
 #define kChunkDefs        "chunk_definitions"
 #define kChunkDocId       "doc_id"
@@ -128,9 +129,9 @@ Error enqueueChunkOutput(
 Error executeInlineChunk(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse*)
 {
-   std::string docPath, docId, chunkId, options, content;
+   std::string docPath, docId, chunkId, chunkOptions, content;
    Error error = json::readParams(request.params, &docPath, &docId, &chunkId, 
-         &options, &content);
+         &chunkOptions, &content);
    if (error)
       return error;
 
@@ -147,9 +148,13 @@ Error executeInlineChunk(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   FilePath headerHtml = options().rResourcesPath().complete("notebook").
+      complete("in_header.html");
+
    // render the contents to the cached folder
-   error = r::exec::RFunction(".rs.executeSingleChunk", options, content,
+   error = r::exec::RFunction(".rs.executeSingleChunk", chunkOptions, content,
          chunkLibDir.absolutePath(),
+         headerHtml.absolutePath(),
          chunkOutput.absolutePath()).call();
    if (error)
       return error;
@@ -354,6 +359,10 @@ void cleanChunks(const FilePath& cacheDir,
 Error setChunkDefs(const std::string& docPath, const std::string& docId,
                    const json::Array& newDefs)
 {
+   // TODO: if changes are made to a file but those changes are not saved, 
+   // it causes the chunk state to get out of sync the next time the chunk
+   // file is loaded
+  
    // create JSON object wrapping 
    json::Object chunkDefs;
    chunkDefs[kChunkDefs] = newDefs;
