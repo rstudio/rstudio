@@ -109,14 +109,8 @@ if (is.na(Sys.getenv("DISPLAY", NA)))
 # to manually make sure that the DISPLAY environment variable exists and that
 # the .Platform$GUI is not "unknown"
 
+# never allow graphical menus
+options(profvis.output_path = NULL)
 
-
-
-
-
-
-
-
-
-
-
+# never allow graphical menus
+options(profvis.keep_output = TRUE)
