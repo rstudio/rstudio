@@ -107,6 +107,7 @@ import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataHandler;
+import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
 import org.rstudio.studio.client.workbench.views.source.NewShinyWebApplication.Result;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager.NavigationResult;
@@ -169,7 +170,8 @@ public class Source implements InsertSourceHandler,
                              PopoutDocEvent.Handler,
                              DocWindowChangedEvent.Handler,
                              DocTabDragInitiatedEvent.Handler,
-                             PopoutDocInitiatedEvent.Handler
+                             PopoutDocInitiatedEvent.Handler,
+                             DebugModeChangedEvent.Handler
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -536,6 +538,7 @@ public class Source implements InsertSourceHandler,
       events.addHandler(DocWindowChangedEvent.TYPE, this);
       events.addHandler(DocTabDragInitiatedEvent.TYPE, this);
       events.addHandler(PopoutDocInitiatedEvent.TYPE, this);
+      events.addHandler(DebugModeChangedEvent.TYPE, this);
       
       events.addHandler(
             ReplaceRangesEvent.TYPE,
@@ -1818,6 +1821,16 @@ public class Source implements InsertSourceHandler,
             disownDoc(e.getDocId());
          }
       });
+   }
+   
+   @Override
+   public void onDebugModeChanged(DebugModeChangedEvent evt)
+   {
+      // when debugging ends, always disengage any active debug highlights
+      if (!evt.debugging() && activeEditor_ != null)
+      {
+         activeEditor_.endDebugHighlighting();
+      }
    }
    
    @Override
@@ -3154,6 +3167,9 @@ public class Source implements InsertSourceHandler,
          }
          else if (isDebugSelectionPending())
          {
+            // we're debugging, so send focus to the console instead of the 
+            // editor
+            commands_.activateConsole().execute();
             clearPendingDebugSelection();
          }
       }
