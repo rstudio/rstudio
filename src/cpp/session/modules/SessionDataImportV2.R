@@ -53,6 +53,8 @@
 
       switch(optionType,
          "character" = {
+            optionValue <- gsub("\\", "\\\\", optionValue, fixed = TRUE)
+            optionValue <- gsub("\"", "\\\"", optionValue, fixed = TRUE)
             return (paste("\"", optionValue, "\"", sep = ""))
          },
          "locale" = {
