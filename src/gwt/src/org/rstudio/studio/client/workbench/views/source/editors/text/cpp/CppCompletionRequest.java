@@ -67,7 +67,8 @@ public class CppCompletionRequest
       
       Position pos = completionPosition_.getPosition();
       
-      server_.getCppCompletions(docPath, 
+      server_.getCppCompletions(docDisplay_.getLine(pos.getRow()),
+                                docPath, 
                                 pos.getRow() + 1, 
                                 pos.getColumn() + 1, 
                                 completionPosition_.getUserText(),

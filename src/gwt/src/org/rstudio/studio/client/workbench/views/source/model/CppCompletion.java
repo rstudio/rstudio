@@ -59,6 +59,8 @@ public class CppCompletion extends JavaScriptObject
    public static final int ENUM_VALUE = 9;
    public static final int KEYWORD = 10;
    public static final int MACRO = 11;
+   public static final int FILE = 12;
+   public static final int DIRECTORY = 13;
    
    public static final int SNIPPET = 99;
    
@@ -94,6 +96,10 @@ public class CppCompletion extends JavaScriptObject
          return icons.macro();
       case SNIPPET:
          return icons.snippet();
+      case FILE:
+         return icons.file();
+      case DIRECTORY:
+         return icons.folder();
       default:
          return icons.keyword();
       }

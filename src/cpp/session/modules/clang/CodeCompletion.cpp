@@ -17,7 +17,12 @@
 
 #include <iostream>
 
+#include <core/Debug.hpp>
 #include <core/Error.hpp>
+#include <core/system/Process.hpp>
+#include <core/RegexUtils.hpp>
+
+#include <r/RExec.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -65,6 +70,8 @@ const int kCompletionEnum = 8;
 const int kCompletionEnumValue = 9;
 const int kCompletionKeyword = 10;
 const int kCompletionMacro = 11;
+const int kCompletionFile = 12;
+const int kCompletionDirectory = 13;
 
 int completionType(CXCursorKind kind)
 {
@@ -154,6 +161,177 @@ core::json::Object toJson(const CodeCompleteResult& result)
    return resultJson;
 }
 
+void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
+{
+   core::system::ProcessOptions processOptions;
+   processOptions.redirectStdErrToStdOut = true;
+   
+   // get the CXX compiler by asking R
+   std::string compilerPath;
+   {
+      core::system::ProcessResult result;
+      std::string cmd = "R CMD config CXX";
+      Error error = core::system::runCommand(cmd, processOptions, &result);
+      if (error)
+         LOG_ERROR(error);
+      else if (result.exitStatus != EXIT_SUCCESS)
+         LOG_ERROR_MESSAGE("Error querying CXX compiler: " + result.stdOut);
+      else
+         compilerPath = string_utils::trimWhitespace(result.stdOut);
+   }
+   if (compilerPath.empty())
+      return;
+   
+   // ask the compiler what the system include paths are (note that both
+   // gcc and clang accept the same command)
+   std::string includePathOutput;
+   {
+      core::system::ProcessResult result;
+      std::string cmd = compilerPath + " -E -x c++ - -v < /dev/null";
+      Error error = core::system::runCommand(cmd, processOptions, &result);
+      if (error)
+         LOG_ERROR(error);
+      else if (result.exitStatus != EXIT_SUCCESS)
+         LOG_ERROR_MESSAGE("Error retrieving system include paths: " + result.stdOut);
+      else
+         includePathOutput = string_utils::trimWhitespace(result.stdOut);
+   }
+   if (includePathOutput.empty())
+      return;
+   
+   // strip out the include paths from the output
+   std::string startString = "#include <...> search starts here:";
+   std::string endString   = "End of search list.";
+   
+   std::string::size_type startPos = includePathOutput.find(startString);
+   if (startPos == std::string::npos)
+      return;
+   
+   std::string::size_type endPos = includePathOutput.find(endString, startPos);
+   if (endPos == std::string::npos)
+      return;
+   
+   std::string includePathsString = string_utils::trimWhitespace(
+            string_utils::substring(includePathOutput,
+                                    startPos + startString.size(),
+                                    endPos));
+   
+   // TODO: framework paths can be included here; how should we handle?
+   
+   // Split on newlines, and trim whitespace for each
+   std::vector<std::string> includePaths = core::algorithm::split(includePathsString, "\n");
+   for (std::size_t i = 0, n = includePaths.size(); i < n; ++i)
+      includePaths[i] = string_utils::trimWhitespace(includePaths[i]);
+   
+   *pIncludePaths = includePaths;
+}
+
+json::Object jsonHeaderCompletionResult(const std::string& name,
+                                        int completionType)
+{
+   json::Object completionJson;
+   completionJson["type"]       = completionType;
+   completionJson["typed_text"] = name;
+   
+   json::Array textJson;
+   json::Object objectJson;
+   objectJson["text"]    = "<File '" + name + "'>"; 
+   objectJson["comment"] = "";
+   textJson.push_back(objectJson);
+   completionJson["text"] = textJson;
+
+   return completionJson;
+}
+
+Error getSystemHeaderCompletions(const std::string& token,
+                                 const std::string& parentDir,
+                                 const core::json::JsonRpcRequest& request,
+                                 core::json::JsonRpcResponse* pResponse)
+{
+   // TODO: parse Rcpp::depends?
+   
+   // discover the system headers
+   std::vector<std::string> includePaths;
+   discoverSystemIncludePaths(&includePaths);
+   
+   // loop through header include paths and return paths that match token
+   json::Array completionsJson;
+   
+   BOOST_FOREACH(const std::string& path, includePaths)
+   {
+      FilePath includePath(path);
+      if (!includePath.exists())
+         continue;
+      
+      std::vector<FilePath> children;
+      Error error = includePath.complete(parentDir).children(&children);
+      if (error)
+         LOG_ERROR(error);
+      
+      BOOST_FOREACH(const FilePath& childPath, children)
+      {
+         std::string name = childPath.filename();
+         if (string_utils::isSubsequence(name, token))
+         {
+            int type = childPath.isDirectory() ? kCompletionDirectory : kCompletionFile;
+            completionsJson.push_back(jsonHeaderCompletionResult(name, type));
+         }
+      }
+   }
+   
+   // construct completion result
+   json::Object resultJson;
+   resultJson["completions"] = completionsJson;
+   pResponse->setResult(resultJson);
+   return Success();
+}
+
+Error getLocalHeaderCompletions(const std::string& token,
+                                const std::string& parentDir,
+                                const core::json::JsonRpcRequest& request,
+                                core::json::JsonRpcResponse* pResponse)
+{
+   return Success();
+}
+
+Error getHeaderCompletions(std::string line,
+                           int column,
+                           const core::json::JsonRpcRequest& request,
+                           core::json::JsonRpcResponse* pResponse)
+{
+   // trim line to cursor position
+   line = line.substr(0, column + 2);
+   
+   // extract portion of the path that the user has produced
+   std::string::size_type idx = line.find_first_of("<\"");
+   if (idx == std::string::npos)
+      return Success();
+   
+   bool isSystemHeader = line[idx] == '<';
+   std::string pathString = line.substr(idx + 1);
+   
+   // split path into 'parentDir' + 'token', e.g.
+   //
+   //    #include <foo/bar/ba
+   //              ^^^^^^^|^^
+   std::string parentDir, token;
+   std::string::size_type pathDelimIdx = pathString.find_last_of("/");
+   if (pathDelimIdx == std::string::npos)
+   {
+      token = pathString;
+   }
+   else
+   {
+      parentDir = pathString.substr(0, pathDelimIdx);
+      token     = pathString.substr(pathDelimIdx + 1);
+   }
+   
+   if (isSystemHeader)
+      return getSystemHeaderCompletions(token, parentDir, request, pResponse);
+   else
+      return getLocalHeaderCompletions(token, parentDir, request, pResponse);
+}
+
 
 } // anonymous namespace
 
@@ -161,16 +339,26 @@ core::json::Object toJson(const CodeCompleteResult& result)
 Error getCppCompletions(const core::json::JsonRpcRequest& request,
                         core::json::JsonRpcResponse* pResponse)
 {
+   // empty response by default
+   pResponse->setResult(json::Value());
+   
    // get params
-   std::string docPath, userText;
-   int line, column;
+   std::string line, docPath, userText;
+   int row, column;
    Error error = json::readParams(request.params,
-                                  &docPath,
                                   &line,
+                                  &docPath,
+                                  &row,
                                   &column,
                                   &userText);
    if (error)
       return error;
+   
+   // if it looks like we're requesting autocompletions for an '#include'
+   // statement, take a separate completion path
+   static const boost::regex reInclude("^#\\s*include");
+   if (regex_utils::textMatches(line, reInclude, true, true))
+      return getHeaderCompletions(line, column, request, pResponse);
 
    // resolve the docPath if it's aliased
    FilePath filePath = module_context::resolveAliasedPath(docPath);
@@ -184,7 +372,7 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
       std::string lastTypedText;
       json::Array completionsJson;
       boost::shared_ptr<CodeCompleteResults> pResults =
-                              tu.codeCompleteAt(filename, line, column);
+                              tu.codeCompleteAt(filename, row, column);
       if (!pResults->empty())
       {
          // get results
@@ -226,11 +414,6 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
       json::Object resultJson;
       resultJson["completions"] = completionsJson;
       pResponse->setResult(resultJson);
-   }
-   else
-   {
-      // set null result indicating this file doesn't support completions
-      pResponse->setResult(json::Value());
    }
 
    return Success();
