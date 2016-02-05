@@ -546,9 +546,13 @@ public class RemoteServer implements Server
    }
 
    public void consoleInput(String consoleInput,
+                            String consoleId,
                             ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, CONSOLE_INPUT, consoleInput, requestCallback);
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(consoleInput));
+      params.set(1, new JSONString(consoleId));
+      sendRequest(RPC_SCOPE, CONSOLE_INPUT, params, requestCallback);
    }
    
    public void resetConsoleActions(ServerRequestCallback<Void> requestCallback)

@@ -1501,25 +1501,39 @@ void addToConsoleInputBuffer(const rstudio::r::session::RConsoleInput& consoleIn
       std::string line(*lineIter);
 
       // add to buffer
-      s_consoleInputBuffer.push(line);
+      s_consoleInputBuffer.push(rstudio::r::session::RConsoleInput(
+               consoleInput.console, line));
    }
 }
 
 // extract console input -- can be either null (user hit escape) or a string
 Error extractConsoleInput(const json::JsonRpcRequest& request)
 {
-   if (request.params.size() == 1)
+   if (request.params.size() == 2)
    {
+      // ensure the caller specified the requesting console
+      std::string console;
+      if (request.params[1].type() == json::StringType)
+      {
+         console = request.params[1].get_str();
+      }
+      else
+      {
+         return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
+      }
+
+      // extract the requesting console
       if (request.params[0].is_null())
       {
-         addToConsoleInputBuffer(rstudio::r::session::RConsoleInput());
+         addToConsoleInputBuffer(rstudio::r::session::RConsoleInput(console));
          return Success();
       }
       else if (request.params[0].type() == json::StringType)
       {
          // get console input to return to R
          std::string text = request.params[0].get_str();
-         addToConsoleInputBuffer(rstudio::r::session::RConsoleInput(text));
+         addToConsoleInputBuffer(rstudio::r::session::RConsoleInput(console, 
+                  text));
 
          // return success
          return Success();
@@ -1950,6 +1964,15 @@ void setExecuting(bool executing)
    module_context::activeSession().setExecuting(executing);
 }
 
+void enqueueConsoleInput(const rstudio::r::session::RConsoleInput& input)
+{
+   json::Object data;
+   data[kConsoleText] = input.text + "\n";
+   data[kConsoleId]   = input.console;
+   ClientEvent inputEvent(kConsoleWriteInput, data);
+   rsession::clientEventQueue().add(inputEvent);
+}
+
 bool rConsoleRead(const std::string& prompt,
                   bool addToHistory,
                   rstudio::r::session::RConsoleInput* pConsoleInput)
@@ -1997,7 +2020,7 @@ bool rConsoleRead(const std::string& prompt,
       if (error)
       {
          LOG_ERROR(error);
-         *pConsoleInput = rstudio::r::session::RConsoleInput("");
+         *pConsoleInput = rstudio::r::session::RConsoleInput("", "");
       }
       *pConsoleInput = s_consoleInputBuffer.front();
       s_consoleInputBuffer.pop();
@@ -2015,8 +2038,10 @@ bool rConsoleRead(const std::string& prompt,
 
    ClientEvent promptEvent(kConsoleWritePrompt, prompt);
    rsession::clientEventQueue().add(promptEvent);
-   ClientEvent inputEvent(kConsoleWriteInput, pConsoleInput->text + "\n");
-   rsession::clientEventQueue().add(inputEvent);
+   enqueueConsoleInput(*pConsoleInput);
+
+   // ensure that output resulting from this input goes to the correct console
+   rsession::clientEventQueue().setActiveConsole(pConsoleInput->console);
 
    // always return true (returning false causes the process to exit)
    return true;

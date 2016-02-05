@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.console.events;
 
+import org.rstudio.studio.client.workbench.views.console.model.ConsoleText;
+
 import com.google.gwt.event.shared.GwtEvent;
 
 public class ConsoleWriteOutputEvent extends GwtEvent<ConsoleWriteOutputHandler>
@@ -21,14 +23,19 @@ public class ConsoleWriteOutputEvent extends GwtEvent<ConsoleWriteOutputHandler>
    public static final GwtEvent.Type<ConsoleWriteOutputHandler> TYPE =
       new GwtEvent.Type<ConsoleWriteOutputHandler>();
     
-   public ConsoleWriteOutputEvent(String output)
+   public ConsoleWriteOutputEvent(ConsoleText output)
    {
       output_ = output;
    }
    
    public String getOutput()
    {
-      return output_;
+      return output_.getText();
+   }
+
+   public String getConsole()
+   {
+      return output_.getConsole();
    }
    
    @Override
@@ -43,6 +50,6 @@ public class ConsoleWriteOutputEvent extends GwtEvent<ConsoleWriteOutputHandler>
       return TYPE;
    }
    
-   private final String output_;
+   private final ConsoleText output_;
 }
 

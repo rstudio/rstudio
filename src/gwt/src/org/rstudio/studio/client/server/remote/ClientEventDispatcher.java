@@ -99,6 +99,7 @@ import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEve
 import org.rstudio.studio.client.workbench.views.console.events.*;
 import org.rstudio.studio.client.workbench.views.console.model.ConsolePrompt;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleResetHistory;
+import org.rstudio.studio.client.workbench.views.console.model.ConsoleText;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.model.DataView;
 import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
@@ -199,12 +200,12 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.ConsoleOutput))
          {
-            String output = event.getData();
+            ConsoleText output = event.getData();
             eventBus_.fireEvent(new ConsoleWriteOutputEvent(output));
          }
          else if (type.equals(ClientEvent.ConsoleError))
          {
-            String error = event.getData();
+            ConsoleText error = event.getData();
             eventBus_.fireEvent(new ConsoleWriteErrorEvent(error));
          }
          else if (type.equals(ClientEvent.ConsoleWritePrompt))
@@ -214,7 +215,7 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.ConsoleWriteInput))
          {
-            String input = event.getData();
+            ConsoleText input = event.getData();
             eventBus_.fireEvent(new ConsoleWriteInputEvent(input));
          }
          else if (type.equals(ClientEvent.ConsolePrompt))
