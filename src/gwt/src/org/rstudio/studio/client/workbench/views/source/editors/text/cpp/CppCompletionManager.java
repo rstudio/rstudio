@@ -80,7 +80,7 @@ public class CppCompletionManager implements CompletionManager
          public void onRequestCppCompletions(RequestCppCompletionsEvent event)
          {
             terminateCompletionRequest();
-            suggestCompletions(true, false);
+            suggestCompletions(false, false);
          }
       });
    }
