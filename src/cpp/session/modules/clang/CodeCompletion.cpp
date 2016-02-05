@@ -411,7 +411,7 @@ Error getSystemHeaderCompletions(const std::string& token,
       BOOST_FOREACH(const FilePath& childPath, children)
       {
          std::string name = childPath.filename();
-         if (string_utils::isSubsequence(name, token))
+         if (string_utils::isSubsequence(name, token, true))
          {
             int type = childPath.isDirectory() ? kCompletionDirectory : kCompletionFile;
             completionsJson.push_back(jsonHeaderCompletionResult(name, type));
