@@ -19,6 +19,7 @@
 
 #include <core/Debug.hpp>
 #include <core/Error.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/system/Process.hpp>
 #include <core/RegexUtils.hpp>
 
@@ -266,11 +267,6 @@ void discoverRPackageIncludePaths(std::vector<std::string>* pIncludePaths)
    }
 }
 
-void discoverRcppDependsIncludePaths(std::vector<std::string>* pIncludePaths)
-{
-   // TODO
-}
-
 FilePath findPackageRoot(FilePath filePath)
 {
    while (!filePath.empty())
@@ -304,6 +300,44 @@ FilePath findPackagePath(const std::string& pkgName,
 FilePath findPackagePath(const std::string& pkgName)
 {
    return findPackagePath(pkgName, module_context::getLibPaths());
+}
+
+void discoverRcppDependsIncludePaths(const FilePath& filePath,
+                                     std::vector<std::string>* pIncludePaths)
+{
+   // TODO: pass id down from server and use source database rather than
+   // reading the file in
+   std::string contents;
+   Error error = core::readStringFromFile(filePath, &contents);
+   if (error)
+      LOG_ERROR(error);
+   
+   static const boost::regex reRcppDepends("//\\s*\\[\\[Rcpp::depends\\((.*?)\\)\\]\\]");
+   boost::sregex_iterator it(contents.begin(), contents.end(), reRcppDepends);
+   boost::sregex_iterator end;
+   
+   for (; it != end; ++it)
+   {
+      const boost::smatch& match = *it;
+      if (match.size() < 2)
+         continue;
+      
+      const std::string& entry = match[1];
+      std::vector<std::string> splat = core::algorithm::split(entry, ",");
+      BOOST_FOREACH(const std::string& el, splat)
+      {
+         std::string pkg = string_utils::trimWhitespace(el);
+         FilePath pkgPath = findPackagePath(pkg);
+         if (!pkgPath.exists())
+            continue;
+         
+         FilePath includePath = pkgPath.complete("include");
+         if (!includePath.exists())
+            continue;
+         
+         pIncludePaths->push_back(includePath.absolutePath());
+      }
+   }
 }
 
 std::vector<std::string> parseLinkingTo(const std::string& linkingTo)
@@ -379,7 +413,7 @@ Error getSystemHeaderCompletions(const std::string& token,
    discoverRPackageIncludePaths(&includePaths);
    
    // add Rcpp::depends pkgs
-   discoverRcppDependsIncludePaths(&includePaths);
+   discoverRcppDependsIncludePaths(filePath, &includePaths);
    
    // add 'inst/include' if in R package
    discoverInstIncludePath(filePath, &includePaths);
@@ -432,7 +466,7 @@ Error getLocalHeaderCompletions(const std::string& token,
                                 const core::json::JsonRpcRequest& request,
                                 core::json::JsonRpcResponse* pResponse)
 {
-   // TODO
+   // TODO -- list files + dirs
    return Success();
 }
 
