@@ -308,8 +308,9 @@ Error getSystemHeaderCompletions(const std::string& token,
 {
    // TODO: parse LinkingTo, etc. for files within package
    
-   // discover the system headers
    std::vector<std::string> includePaths;
+   
+   // discover the system headers
    discoverSystemIncludePaths(&includePaths);
    
    // add R package include paths in library
@@ -320,6 +321,12 @@ Error getSystemHeaderCompletions(const std::string& token,
    
    // add 'inst/include' if in R package
    discoverInstIncludePath(filePath, &includePaths);
+   
+   // add R's own 'include' dir
+   FilePath rHome = module_context::resolveAliasedPath(module_context::rHomeDir());
+   FilePath rIncludePath = rHome.complete("include");
+   if (rIncludePath.exists())
+      includePaths.push_back(rIncludePath.absolutePath());
    
    // loop through header include paths and return paths that match token
    json::Array completionsJson;
