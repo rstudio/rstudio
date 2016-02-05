@@ -87,6 +87,7 @@ public class WidgetListBox<T extends Widget>
    public WidgetListBox()
    {
       super();
+      
       resources_ = GWT.create(Resources.class);
       style_ = resources_.listStyle();
       style_.ensureInjected();
@@ -107,12 +108,7 @@ public class WidgetListBox<T extends Widget>
       emptyTextLabel_ = new Label();
       emptyTextLabel_.addStyleName(style_.scrollPanel());
       emptyTextLabel_.addStyleName(style_.emptyMessage());
-   }
-
-   @Override 
-   protected void onLoad()
-   {
-      super.onLoad();
+      
       addKeyDownHandler(new KeyDownHandler()
       {
          @Override

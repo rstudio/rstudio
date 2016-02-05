@@ -1424,12 +1424,24 @@ var RCodeModel = function(session, tokenizer,
 
             if (tokenCursor.isAtStartOfNewExpression(false))
             {
-               if (currentValue === "{")
+               if (currentValue === "{" ||
+                   currentValue === "[" ||
+                   currentValue === "(")
+               {
                   continuationIndent = tab;
+               }
 
                return this.$getIndent(
                   this.$doc.getLine(tokenCursor.$row)
                ) + continuationIndent;
+            }
+
+            if (currentValue === "(" &&
+                tokenCursor.isAtStartOfNewExpression(true))
+            {
+               return this.$getIndent(
+                  this.$doc.getLine(tokenCursor.$row)
+               ) + tab;
             }
              
             // Walk over matching braces ('()', '{}', '[]')

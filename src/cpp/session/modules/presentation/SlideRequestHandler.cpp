@@ -327,6 +327,7 @@ bool performKnit(const FilePath& rmdPath,
                      "render_markdown(); "
                      "knit('%2%', output = '%3%', encoding='%4%');");
    std::string encoding = projects::projectContext().defaultEncoding();
+   if(encoding.empty()) encoding = "UTF-8";
    std::string cmd = boost::str(
       fmt % string_utils::utf8ToSystem(rmdPath.stem())
           % string_utils::utf8ToSystem(rmdPath.filename())

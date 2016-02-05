@@ -757,9 +757,9 @@ assign(x = ".rs.acCompletionTypes",
          getNamespaceExports(namespace)
       else
       {
-         # Take advantage of 'sorted' argument if 
-         # available -- we only want to sort a filtered
-         # subset
+         # Take advantage of 'sorted' argument if available,
+         # as we only want to sort a filtered subset and will
+         # sort again later
          arguments <- list()
          arguments[["name"]] <- namespace
          arguments[["all.names"]] <- TRUE
@@ -769,9 +769,49 @@ assign(x = ".rs.acCompletionTypes",
          do.call(objects, arguments)
       }
       
-      completions <- sort(.rs.selectFuzzyMatches(objectNames, token))
-      objects <- mget(completions, envir = namespace, inherits = TRUE)
-      type <- vapply(objects, FUN.VALUE = numeric(1), USE.NAMES = FALSE, .rs.getCompletionType)
+      # For `::`, we also want to grab items in the 'lazydata' environment
+      # within the namespace.
+      lazydata <- new.env(parent = emptyenv())
+      dataNames <- character()
+      if (exportsOnly && exists(".__NAMESPACE__.", envir = namespace))
+      {
+         .__NAMESPACE__. <- get(".__NAMESPACE__.", envir = namespace)
+         if (exists("lazydata", envir = .__NAMESPACE__.))
+         {
+            lazydata  <- get("lazydata", envir = .__NAMESPACE__.)
+            dataNames <- objects(lazydata, all.names = TRUE)
+         }
+      }
+      
+      # Filter our results
+      objectNames <- .rs.selectFuzzyMatches(objectNames, token)
+      dataNames   <- .rs.selectFuzzyMatches(dataNames, token)
+      
+      # Collect the object types
+      objectTypes <- vapply(
+         mget(objectNames, envir = namespace, inherits = TRUE),
+         FUN.VALUE = numeric(1),
+         USE.NAMES = FALSE,
+         .rs.getCompletionType
+      )
+      
+      # Let 'lazydata' be lazy -- don't force evaluation.
+      dataTypes <- rep(.rs.acCompletionTypes$DATAFRAME, length(dataNames))
+      
+      # Construct a data.frame to hold our results (because we'll
+      # need to re-sort our items)
+      df <- data.frame(
+         names = c(objectNames, dataNames),
+         types = c(objectTypes, dataTypes),
+         stringsAsFactors = FALSE
+      )
+      
+      # Sort by 'names'
+      df <- df[order(df$names), ]
+      
+      # Construct the completion result
+      completions <- df$names
+      type <- df$types
       
       result <- .rs.makeCompletions(
          token = token,
@@ -1016,10 +1056,10 @@ assign(x = ".rs.acCompletionTypes",
                   type <- numeric(length(names))
                   for (i in seq_along(names))
                   {
-                     type[[i]] <- tryCatch(
+                     type[[i]] <- suppressWarnings(tryCatch(
                         .rs.getCompletionType(eval(call("@", quote(object), names[[i]]))),
                         error = function(e) .rs.acCompletionTypes$UNKNOWN
-                     )
+                     ))
                   }
                }
             }, error = function(e) NULL
@@ -1105,10 +1145,10 @@ assign(x = ".rs.acCompletionTypes",
             type <- numeric(length(names))
             for (i in seq_along(names))
             {
-               type[[i]] <- tryCatch(
+               type[[i]] <- suppressWarnings(tryCatch(
                   .rs.getCompletionType(eval(call("$", quote(object), names[[i]]))),
                   error = function(e) .rs.acCompletionTypes$UNKNOWN
-               )
+               ))
             }
          }
       }
@@ -1229,11 +1269,21 @@ assign(x = ".rs.acCompletionTypes",
                                                    excludeOtherCompletions = FALSE,
                                                    quote = !appendColons)
 {
-   allPackages <- Reduce(union, lapply(.libPaths(), list.files))
+   # List all directories within the .libPaths()
+   allPackages <- Reduce(union, lapply(.libPaths(), .rs.listDirs))
    
    # Not sure why 'DESCRIPTION' might show up here, but let's take it out
    allPackages <- setdiff(allPackages, "DESCRIPTION")
    
+   # Also remove any '00LOCK' directories -- these might be leftovers
+   # from earlier failed package installations
+   if (length(allPackages))
+   {
+      isLockDir <- substring(allPackages, 1, 6) == "00LOCK"
+      allPackages <- allPackages[!isLockDir]
+   }
+   
+   # Construct our completions, and we're done
    completions <- .rs.selectFuzzyMatches(allPackages, token)
    .rs.makeCompletions(token = token,
                        results = if (appendColons && length(completions))
@@ -1472,28 +1522,21 @@ assign(x = ".rs.acCompletionTypes",
    .Call(.rs.routines$rs_isBrowserActive)
 })
 
-.rs.addFunction("getActiveFrame", function(n = 0L)
+# NOTE: This function attempts to find an active frame (if
+# any) in the current caller's context, which may be a
+# function environment if we're currently in the debugger,
+# and just the .GlobalEnv otherwise. Because the
+# '.rs.rpc.get_completions' call gets its own set of 'stack
+# frames', we must poke into 'sys.frames()' and get the last
+# frame not part of that stack. In practice, this means
+# discarding the current frame, as well as any extra frames
+# from the caller (hence, the 'offset' argument). Of course,
+# when there is no debug frame active, we just want to draw
+# our completions from the global environment.
+.rs.addFunction("getActiveFrame", function(offset = 1L)
 {
-   # We need to skip the following frames:
-   # 1. The frame created by the .Call,
-   # 2. The current frame from this function call,
-   # 3. The browser call (if necessary).
-   offset <- 2L
-   if (.rs.isBrowserActive())
-      offset <- offset + 1L
-   
-   # We also need to further munge this if JIT compilation is
-   # active. It looks like it can optimize out a frame somewhere?
-   if ("compiler" %in% loadedNamespaces())
-   {
-      tryCatch({
-         compilerLevel <- compiler::getCompilerOption("optimize")
-         if (compilerLevel == 2)
-            offset <- offset - 1L
-      }, error = function(e) NULL)
-   }
-   
-   .Call(.rs.routines$rs_getActiveFrame, as.integer(n) + offset)
+   frames <- c(.GlobalEnv, sys.frames())
+   frames[[length(frames) - 1L - offset]]
 })
 
 .rs.addFunction("getCompletionsNativeRoutine", function(token, interface)
@@ -1650,7 +1693,7 @@ assign(x = ".rs.acCompletionTypes",
       on.exit(.rs.removeKnitrParamsObject(), add = TRUE)
    
    # Get the currently active frame
-   envir <- .rs.getActiveFrame(1L)
+   envir <- .rs.getActiveFrame()
    
    filePath <- suppressWarnings(.rs.normalizePath(filePath))
    

@@ -87,6 +87,7 @@ git merge \
     origin/patch/bundle-snippets \
     origin/patch/cmd-click-multi-select \
     origin/bugfix/firefox-fractional-height \
+    origin/patch/autocomplete-popup-blur \
     -m "merge branches"
 
 # Need to merge separately to handle merge conflicts

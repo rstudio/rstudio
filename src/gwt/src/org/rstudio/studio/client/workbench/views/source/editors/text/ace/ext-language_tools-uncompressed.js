@@ -461,14 +461,7 @@ var Autocomplete = function() {
     };
 
     this.blurListener = function(e) {
-        var el = document.activeElement;
-        var text = this.editor.textInput.getElement()
-        if (el != text && el.parentNode != this.popup.container
-            && el != this.tooltipNode && e.relatedTarget != this.tooltipNode
-            && e.relatedTarget != text
-        ) {
-            this.detach();
-        }
+        this.detach();
     };
 
     this.mousedownListener = function(e) {

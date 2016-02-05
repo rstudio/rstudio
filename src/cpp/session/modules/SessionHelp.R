@@ -409,13 +409,8 @@ options(help_type = "html")
    dirpath <- dirname(path)
    pkgname <- basename(dirpath)
    
-   html = tools:::httpd(paste("/library/", 
-                              pkgname, 
-                              "/html/", 
-                              basename(file),
-                              ".html", sep=""),
-                        NULL,
-                        NULL)$payload
+   query <- paste("/library/", pkgname, "/html/", basename(file), ".html", sep = "")
+   html <- suppressWarnings(tools:::httpd(query, NULL, NULL))$payload
    
    match = suppressWarnings(regexpr('<body>.*</body>', html))
    if (match < 0)
