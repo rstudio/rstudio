@@ -285,6 +285,66 @@ FilePath findPackageRoot(FilePath filePath)
    return FilePath();
 }
 
+FilePath findPackagePath(const std::string& pkgName,
+                         const std::vector<FilePath>& libPaths)
+{
+   BOOST_FOREACH(const FilePath& libPath, libPaths)
+   {
+      if (!libPath.exists())
+         continue;
+      
+      FilePath pkgPath = libPath.complete(pkgName);
+      if (pkgPath.exists())
+         return pkgPath;
+   }
+   
+   return FilePath();
+}
+
+FilePath findPackagePath(const std::string& pkgName)
+{
+   return findPackagePath(pkgName, module_context::getLibPaths());
+}
+
+std::vector<std::string> parseLinkingTo(const std::string& linkingTo)
+{
+   static const boost::regex reLinkingTo(std::string() +
+         "^\\s*"       // initial whitespace
+         "(\\S*?)"     // package name
+         "\\s*"        // whitespace after
+         "(?:\\("      // begin optional capture group
+         "([^\\)]*?)"  // version (in parens)
+         "\\))"        // closing paren + closing group
+         "\\s*$"       // ending whitespace
+   );
+         
+   std::vector<std::string> result;
+   
+   // split on commas
+   std::vector<std::string> splat = core::algorithm::split(linkingTo, ",");
+   
+   // loop over our split pieces and extract packages
+   BOOST_FOREACH(const std::string& el, splat)
+   {
+      boost::smatch match;
+      if (boost::regex_match(el, match, reLinkingTo))
+      {
+         std::string pkgName = match[0];
+         FilePath pkgPath = findPackagePath(pkgName);
+         if (pkgPath.exists())
+         {
+            FilePath includePath = pkgPath.complete("include");
+            if (includePath.exists())
+            {
+               result.push_back(includePath.absolutePath());
+            }
+         }
+      }
+   }
+   
+   return result;
+}
+
 void discoverInstIncludePath(const FilePath& filePath,
                              std::vector<std::string>* pIncludePaths)
 {
@@ -295,9 +355,13 @@ void discoverInstIncludePath(const FilePath& filePath,
    if (!pkgPath.exists())
       return;
    
+   // add 'inst/include path
    FilePath instIncludePath = pkgPath.complete("inst/include");
    if (instIncludePath.exists())
       pIncludePaths->push_back(instIncludePath.absolutePath());
+   
+   // add paths to LinkingTo packages
+   std::string linkingTo = projects::projectContext().packageInfo().linkingTo();
 }
 
 Error getSystemHeaderCompletions(const std::string& token,
@@ -306,8 +370,6 @@ Error getSystemHeaderCompletions(const std::string& token,
                                  const core::json::JsonRpcRequest& request,
                                  core::json::JsonRpcResponse* pResponse)
 {
-   // TODO: parse LinkingTo, etc. for files within package
-   
    std::vector<std::string> includePaths;
    
    // discover the system headers
@@ -375,14 +437,10 @@ Error getLocalHeaderCompletions(const std::string& token,
 }
 
 Error getHeaderCompletions(std::string line,
-                           int column,
                            const FilePath& filePath,
                            const core::json::JsonRpcRequest& request,
                            core::json::JsonRpcResponse* pResponse)
 {
-   // trim line to cursor position
-   line = line.substr(0, column + 2);
-   
    // extract portion of the path that the user has produced
    std::string::size_type idx = line.find_first_of("<\"");
    if (idx == std::string::npos)
@@ -406,6 +464,8 @@ Error getHeaderCompletions(std::string line,
       parentDir = pathString.substr(0, pathDelimIdx);
       token     = pathString.substr(pathDelimIdx + 1);
    }
+   
+   std::cout << "Token: '" << token << "'\n";
    
    if (isSystemHeader)
       return getSystemHeaderCompletions(token, parentDir, filePath, request, pResponse);
@@ -442,7 +502,7 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
    // statement, take a separate completion path
    static const boost::regex reInclude("^\\s*#+\\s*include");
    if (regex_utils::textMatches(line, reInclude, true, true))
-      return getHeaderCompletions(line, column, filePath, request, pResponse);
+      return getHeaderCompletions(line, filePath, request, pResponse);
 
    // get the translation unit and do the code completion
    std::string filename = filePath.absolutePath();

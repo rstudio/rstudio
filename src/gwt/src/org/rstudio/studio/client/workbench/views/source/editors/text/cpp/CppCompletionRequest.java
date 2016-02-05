@@ -20,6 +20,7 @@ import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -30,6 +31,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.events.RequestCppCompletionsEvent;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
@@ -65,21 +67,25 @@ public class CppCompletionRequest
       onTerminated_ = onTerminated;
       snippets_ = new SnippetHelper((AceEditor) docDisplay, docPath);
       
-      Position pos = completionPosition_.getPosition();
+      // Get the current line (up to the cursor position)
+      Position cursorPos = docDisplay_.getCursorPosition();
+      String line = docDisplay_.getLine(cursorPos.getRow()).substring(0, cursorPos.getColumn());
       
-      server_.getCppCompletions(docDisplay_.getLine(pos.getRow()),
+      Position completionPos = completionPosition_.getPosition();
+      server_.getCppCompletions(line,
                                 docPath, 
-                                pos.getRow() + 1, 
-                                pos.getColumn() + 1, 
+                                completionPos.getRow() + 1, 
+                                completionPos.getColumn() + 1, 
                                 completionPosition_.getUserText(),
                                 this);
    }
 
    @Inject
-   void initialize(CppServerOperations server, UIPrefs uiPrefs)
+   void initialize(CppServerOperations server, UIPrefs uiPrefs, EventBus events)
    {
       server_ = server;
       uiPrefs_ = uiPrefs;
+      events_ = events;
    }
    
    public boolean isExplicit()
@@ -393,6 +399,18 @@ public class CppCompletionRequest
          else
             insertText = insertText + "(";
       }
+      else if (completion.getType() == CppCompletion.DIRECTORY)
+      {
+         insertText += "/";
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               events_.fireEvent(new RequestCppCompletionsEvent());
+            }
+         });
+      }
       
       docDisplay_.setFocus(true); 
       docDisplay_.setSelection(getReplacementSelection());
@@ -439,6 +457,7 @@ public class CppCompletionRequest
    
    private CppCompletionPopupMenu popup_;
    private JsArray<CppCompletion> completions_;
+   private EventBus events_;
    
    private boolean terminated_ = false;
    private Command onTerminated_ = null;
