@@ -17,15 +17,11 @@ package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
-import org.rstudio.studio.client.common.filetypes.ProfilerType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
@@ -36,15 +32,13 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class ProfilerPresenter implements OpenProfileEvent.Handler
+public class ProfilerPresenter
 {
    private final ProfilerServerOperations server_;
    private final Commands commands_;
    private final DependencyManager dependencyManager_;
    private final HandlerRegistrations handlerRegistrations_ = new HandlerRegistrations();
    private final GlobalDisplay globalDisplay_;
-   private final EventBus eventBus_;
-   private final RemoteFileSystemContext fileSystemContext_;
    
    final String profilerDependecyUserAction_ = "Preparing profiler";
    
@@ -63,18 +57,12 @@ public class ProfilerPresenter implements OpenProfileEvent.Handler
                             Binder binder,
                             Commands commands,
                             DependencyManager dependencyManager,
-                            GlobalDisplay globalDisplay,
-                            EventBus eventBus,
-                            RemoteFileSystemContext fileSystemContext)
+                            GlobalDisplay globalDisplay)
    {
       server_ = server;
       commands_ = commands;
       dependencyManager_ = dependencyManager;
       globalDisplay_ = globalDisplay;
-      eventBus_ = eventBus;
-      fileSystemContext_ = fileSystemContext;
-      
-      eventBus.addHandler(OpenProfileEvent.TYPE, this);
       
       binder.bind(commands, this);
 
@@ -158,14 +146,6 @@ public class ProfilerPresenter implements OpenProfileEvent.Handler
                            response.getErrorMessage());
                      return;
                   }
-
-                  ProfilerType profilerType = new ProfilerType();
-                  FileSystemItem item = fileSystemContext_.itemForName(
-                        response.getFileName(),
-                        true,
-                        false);
-                  
-                  profilerType.openFile(item, eventBus_);
                }
 
                @Override
@@ -193,10 +173,5 @@ public class ProfilerPresenter implements OpenProfileEvent.Handler
    {
       commands_.startProfiler().setEnabled(true);
       commands_.stopProfiler().setEnabled(false);
-   }
-
-   @Override
-   public void onOpenProfileEvent(OpenProfileEvent event)
-   {
    }
 }

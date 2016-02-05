@@ -2600,11 +2600,6 @@ well as menu structures (for main menu and popup menus).
         desc="Break when any unhandled error occurs"
         checkable="true"
         rebindable="false"/>
-
-   <cmd id="showProfiler"
-        menuLabel= "_Profiler"
-        desc="Show the R code profiler"
-        rebindable="false"/>
         
    <cmd id="startProfiler"
         menuLabel="Start Profiling"

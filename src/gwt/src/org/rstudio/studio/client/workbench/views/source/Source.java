@@ -116,7 +116,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
-import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.OpenProfileEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -172,7 +172,8 @@ public class Source implements InsertSourceHandler,
                              DocWindowChangedEvent.Handler,
                              DocTabDragInitiatedEvent.Handler,
                              PopoutDocInitiatedEvent.Handler,
-                             DebugModeChangedEvent.Handler
+                             DebugModeChangedEvent.Handler,
+                             OpenProfileEvent.Handler
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -648,6 +649,8 @@ public class Source implements InsertSourceHandler,
                   }
                }
             });
+      
+      events.addHandler(OpenProfileEvent.TYPE, this);
 
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
       Event.addNativePreviewHandler(new NativePreviewHandler()
@@ -1063,14 +1066,15 @@ public class Source implements InsertSourceHandler,
             });
    }
    
-   @Handler
-   public void onShowProfiler()
+   public void onShowProfiler(OpenProfileEvent event)
    {
+      String profilePath = event.getFilePath();
+      
       // first try to activate existing
       for (int idx = 0; idx < editors_.size(); idx++)
       {
          String path = editors_.get(idx).getPath();
-         if (ProfilerEditingTarget.PATH.equals(path))
+         if (profilePath.equals(path))
          {
             ensureVisible(false);
             view_.selectTab(idx);
@@ -1083,7 +1087,7 @@ public class Source implements InsertSourceHandler,
       server_.newDocument(
             FileTypeRegistry.PROFILER.getTypeId(),
             null,
-            (JsObject) ProfilerContents.createDefault().cast(),
+            (JsObject) ProfilerContents.create(profilePath).cast(),
             new SimpleRequestCallback<SourceDocument>("Show Profiler")
             {
                @Override
@@ -4012,6 +4016,11 @@ public class Source implements InsertSourceHandler,
                         nativeEvent);
                }
             });
+   }
+   
+   public void onOpenProfileEvent(OpenProfileEvent event)
+   {
+      onShowProfiler(event);
    }
    
    private void inEditorForPath(String path, 
