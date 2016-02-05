@@ -271,7 +271,7 @@ void discoverRcppDependsIncludePaths(std::vector<std::string>* pIncludePaths)
    // TODO
 }
 
-FilePath findPackageRoot(const FilePath& filePath)
+FilePath findPackageRoot(FilePath filePath)
 {
    while (!filePath.empty())
    {
