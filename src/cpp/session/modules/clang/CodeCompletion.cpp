@@ -465,8 +465,6 @@ Error getHeaderCompletions(std::string line,
       token     = pathString.substr(pathDelimIdx + 1);
    }
    
-   std::cout << "Token: '" << token << "'\n";
-   
    if (isSystemHeader)
       return getSystemHeaderCompletions(token, parentDir, filePath, request, pResponse);
    else

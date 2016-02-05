@@ -424,6 +424,26 @@ public class CppCompletionRequest
          pos = Position.create(pos.getRow(), pos.getColumn() - 1);
          docDisplay_.setSelectionRange(Range.fromPoints(pos, pos));
       }
+      else if (completion.getType() == CppCompletion.FILE)
+      {
+         char ch = docDisplay_.getCharacterAtCursor();
+         
+         // if there is a '>' or '"' following the cursor, move over it
+         if (ch == '>' || ch == '"')
+         {
+            docDisplay_.moveCursorForward();
+         }
+         
+         // otherwise, insert the corresponding closing character
+         else
+         {
+            String line = docDisplay_.getCurrentLine();
+            if (line.contains("<"))
+               docDisplay_.insertCode(">");
+            else if (line.contains("\""))
+               docDisplay_.insertCode("\"");
+         }
+      }
       
       if (completion.hasParameters() &&
           uiPrefs_.showSignatureTooltips().getValue())
