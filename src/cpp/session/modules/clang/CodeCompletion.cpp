@@ -223,7 +223,10 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
    for (std::size_t i = 0, n = includePaths.size(); i < n; ++i)
       includePaths[i] = string_utils::trimWhitespace(includePaths[i]);
    
-   *pIncludePaths = includePaths;
+   pIncludePaths->insert(
+            pIncludePaths->end(),
+            includePaths.begin(),
+            includePaths.end());
 }
 
 json::Object jsonHeaderCompletionResult(const std::string& name,
@@ -243,16 +246,44 @@ json::Object jsonHeaderCompletionResult(const std::string& name,
    return completionJson;
 }
 
+void discoverRPackageIncludePaths(std::vector<std::string>* pIncludePaths)
+{
+   std::vector<std::string> rPkgs;
+   rPkgs.push_back("Rcpp");
+   
+   std::vector<FilePath> libPaths = module_context::getLibPaths();
+   BOOST_FOREACH(const std::string& rPkg, rPkgs)
+   {
+      BOOST_FOREACH(const FilePath& libPath, libPaths)
+      {
+         FilePath pkgPath = libPath.complete(rPkg + "/include");
+         if (pkgPath.exists())
+         {
+            pIncludePaths->push_back(pkgPath.absolutePath());
+            break;
+         }
+      }
+   }
+   
+   // TODO: add 'inst/include' path if the source file exists within
+   // a project directory (e.g. 'src/')
+}
+
 Error getSystemHeaderCompletions(const std::string& token,
                                  const std::string& parentDir,
                                  const core::json::JsonRpcRequest& request,
                                  core::json::JsonRpcResponse* pResponse)
 {
-   // TODO: parse Rcpp::depends?
+   // TODO: parse Rcpp::depends
+   // TODO: parse LinkingTo, etc. for files within package
+   
    
    // discover the system headers
    std::vector<std::string> includePaths;
    discoverSystemIncludePaths(&includePaths);
+   
+   // add R package include paths in library
+   discoverRPackageIncludePaths(&includePaths);
    
    // loop through header include paths and return paths that match token
    json::Array completionsJson;
@@ -263,8 +294,12 @@ Error getSystemHeaderCompletions(const std::string& token,
       if (!includePath.exists())
          continue;
       
+      FilePath targetPath = includePath.complete(parentDir);
+      if (!targetPath.exists())
+         continue;
+      
       std::vector<FilePath> children;
-      Error error = includePath.complete(parentDir).children(&children);
+      Error error = targetPath.children(&children);
       if (error)
          LOG_ERROR(error);
       
@@ -291,6 +326,7 @@ Error getLocalHeaderCompletions(const std::string& token,
                                 const core::json::JsonRpcRequest& request,
                                 core::json::JsonRpcResponse* pResponse)
 {
+   // TODO
    return Success();
 }
 
