@@ -128,6 +128,7 @@ public class SourceVimCommands
       
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("badd", "bad", callback);
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("edit", "e", callback);
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("tabedit", "tabe", callback);
       
    }-*/;
    
