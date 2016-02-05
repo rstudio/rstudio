@@ -36,6 +36,7 @@ import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
@@ -47,8 +48,6 @@ import java.util.HashSet;
 
 public class ProfilerEditingTarget implements EditingTarget
 {
-   public static final String PATH = "profiler://";
-   
    @Inject
    public ProfilerEditingTarget(ProfilerPresenter presenter,
                                 Commands commands,
@@ -83,11 +82,6 @@ public class ProfilerEditingTarget implements EditingTarget
    public String getTitle()
    {
       return "Profiler";
-   }
-
-   public String getPath()
-   {
-      return PATH;
    }
    
    public String getContext()
@@ -284,7 +278,7 @@ public class ProfilerEditingTarget implements EditingTarget
       // initialize doc, view, and presenter
       doc_ = document;
       view_ = new ProfilerEditingTargetWidget(commands_);
-      presenter_.attatch(doc_,  view_);
+      presenter_.attatch(doc_, view_);
    }
    
    public void onDismiss(int dismissType)
@@ -341,6 +335,16 @@ public class ProfilerEditingTarget implements EditingTarget
    public void fireEvent(GwtEvent<?> event)
    {
       assert false : "Not implemented";
+   }
+   
+   public String getPath()
+   {
+      return getContents().getPath();
+   }
+   
+   private ProfilerContents getContents()
+   {
+      return doc_.getProperties().cast();
    }
    
    private SourceDocument doc_;

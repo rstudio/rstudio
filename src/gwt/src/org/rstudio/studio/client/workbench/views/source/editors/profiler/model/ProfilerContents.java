@@ -21,15 +21,15 @@ public class ProfilerContents extends JavaScriptObject
    protected ProfilerContents()
    {
    }
-
-   public static final ProfilerContents createDefault()
-   {
-      return create();
-   }
    
-   public static final native ProfilerContents create() /*-{
+   public static final native ProfilerContents create(
+      String path) /*-{
       var contents = new Object();
-
+      contents.path = path;
       return contents;
+   }-*/;
+   
+   public final native String getPath() /*-{
+      return this.path;
    }-*/;
 }
