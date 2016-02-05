@@ -20,6 +20,14 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include <core/Error.hpp>
+#include <core/Exec.hpp>
+
+#include <r/RSexp.hpp>
+#include <r/RRoutines.hpp>
+#include <r/RUtil.hpp>
+#include <r/ROptions.hpp>
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -29,17 +37,27 @@ namespace profiler {
 
 namespace {
       
+SEXP rs_profilesPath()
+{
+	r::sexp::Protect rProtect;
+	return r::sexp::create(std::string("~/RStudio/temp"), &rProtect);
+}
 
-
-
-   
 } // anonymous namespace
    
 Error initialize()
 {  
    ExecBlock initBlock ;
+   
    initBlock.addFunctions()
       (boost::bind(module_context::sourceModuleRFile, "SessionProfiler.R"));
+
+   // register rs_profilesPath
+   r::routines::registerCallMethod(
+            "rs_profilesPath",
+            (DL_FUNC) rs_profilesPath,
+            0);
+
    return initBlock.execute();
 
 }

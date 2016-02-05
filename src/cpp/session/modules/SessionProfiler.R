@@ -16,7 +16,8 @@
 .rs.addJsonRpcHandler("start_profiling", function(profilerOptions)
 {
    tryCatch({
-   	fileName <- tempfile(fileext = ".rprof", tmpdir = "~/RStudio/temp")
+      tempPath <- .Call("rs_profilesPath")
+   	fileName <- tempfile(fileext = ".rprof", tmpdir = tempPath)
 
       Rprof(filename = fileName, line.profiling = TRUE)
 
