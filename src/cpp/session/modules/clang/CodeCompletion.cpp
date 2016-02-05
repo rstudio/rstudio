@@ -264,19 +264,49 @@ void discoverRPackageIncludePaths(std::vector<std::string>* pIncludePaths)
          }
       }
    }
+}
+
+void discoverRcppDependsIncludePaths(std::vector<std::string>* pIncludePaths)
+{
+   // TODO
+}
+
+FilePath findPackageRoot(const FilePath& filePath)
+{
+   while (!filePath.empty())
+   {
+      FilePath descPath = filePath.complete("DESCRIPTION");
+      if (descPath.exists())
+         return filePath;
+      
+      filePath = filePath.parent();
+   }
    
-   // TODO: add 'inst/include' path if the source file exists within
-   // a project directory (e.g. 'src/')
+   return FilePath();
+}
+
+void discoverInstIncludePath(const FilePath& filePath,
+                             std::vector<std::string>* pIncludePaths)
+{
+   if (!filePath.exists())
+      return;
+   
+   FilePath pkgPath = findPackageRoot(filePath);
+   if (!pkgPath.exists())
+      return;
+   
+   FilePath instIncludePath = pkgPath.complete("inst/include");
+   if (instIncludePath.exists())
+      pIncludePaths->push_back(instIncludePath.absolutePath());
 }
 
 Error getSystemHeaderCompletions(const std::string& token,
                                  const std::string& parentDir,
+                                 const FilePath& filePath,
                                  const core::json::JsonRpcRequest& request,
                                  core::json::JsonRpcResponse* pResponse)
 {
-   // TODO: parse Rcpp::depends
    // TODO: parse LinkingTo, etc. for files within package
-   
    
    // discover the system headers
    std::vector<std::string> includePaths;
@@ -284,6 +314,12 @@ Error getSystemHeaderCompletions(const std::string& token,
    
    // add R package include paths in library
    discoverRPackageIncludePaths(&includePaths);
+   
+   // add Rcpp::depends pkgs
+   discoverRcppDependsIncludePaths(&includePaths);
+   
+   // add 'inst/include' if in R package
+   discoverInstIncludePath(filePath, &includePaths);
    
    // loop through header include paths and return paths that match token
    json::Array completionsJson;
@@ -323,6 +359,7 @@ Error getSystemHeaderCompletions(const std::string& token,
 
 Error getLocalHeaderCompletions(const std::string& token,
                                 const std::string& parentDir,
+                                const FilePath& filePath,
                                 const core::json::JsonRpcRequest& request,
                                 core::json::JsonRpcResponse* pResponse)
 {
@@ -332,6 +369,7 @@ Error getLocalHeaderCompletions(const std::string& token,
 
 Error getHeaderCompletions(std::string line,
                            int column,
+                           const FilePath& filePath,
                            const core::json::JsonRpcRequest& request,
                            core::json::JsonRpcResponse* pResponse)
 {
@@ -363,9 +401,9 @@ Error getHeaderCompletions(std::string line,
    }
    
    if (isSystemHeader)
-      return getSystemHeaderCompletions(token, parentDir, request, pResponse);
+      return getSystemHeaderCompletions(token, parentDir, filePath, request, pResponse);
    else
-      return getLocalHeaderCompletions(token, parentDir, request, pResponse);
+      return getLocalHeaderCompletions(token, parentDir, filePath, request, pResponse);
 }
 
 
@@ -390,14 +428,14 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
    if (error)
       return error;
    
-   // if it looks like we're requesting autocompletions for an '#include'
-   // statement, take a separate completion path
-   static const boost::regex reInclude("^#\\s*include");
-   if (regex_utils::textMatches(line, reInclude, true, true))
-      return getHeaderCompletions(line, column, request, pResponse);
-
    // resolve the docPath if it's aliased
    FilePath filePath = module_context::resolveAliasedPath(docPath);
+
+   // if it looks like we're requesting autocompletions for an '#include'
+   // statement, take a separate completion path
+   static const boost::regex reInclude("^\\s*#+\\s*include");
+   if (regex_utils::textMatches(line, reInclude, true, true))
+      return getHeaderCompletions(line, column, filePath, request, pResponse);
 
    // get the translation unit and do the code completion
    std::string filename = filePath.absolutePath();
