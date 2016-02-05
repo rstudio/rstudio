@@ -69,6 +69,10 @@ var CStyleBehaviour = function(codeModel) {
          var cursorRightChar = line[cursor.column];
          if (cursorRightChar == rightChar) {
 
+            // TODO: Workaround for 'findMatchingBracket' failing for '<>'
+            if (rightChar === '>')
+               return { text: '', selection: [1, 1] };
+
             var matchPos = session.findMatchingBracket({
                row: cursor.row,
                column: cursor.column + 1
