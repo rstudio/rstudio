@@ -550,8 +550,8 @@ public class RemoteServer implements Server
                             ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(consoleInput));
-      params.set(1, new JSONString(consoleId));
+      params.set(0, new JSONString(consoleId));
+      params.set(1, new JSONString(consoleInput));
       sendRequest(RPC_SCOPE, CONSOLE_INPUT, params, requestCallback);
    }
    

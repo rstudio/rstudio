@@ -1502,7 +1502,7 @@ void addToConsoleInputBuffer(const rstudio::r::session::RConsoleInput& consoleIn
 
       // add to buffer
       s_consoleInputBuffer.push(rstudio::r::session::RConsoleInput(
-               consoleInput.console, line));
+               line, consoleInput.console));
    }
 }
 

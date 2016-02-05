@@ -24,10 +24,12 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
+import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
+import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -51,7 +53,8 @@ import com.google.inject.Inject;
 public class TextEditingTargetNotebook 
                implements EditorThemeStyleChangedEvent.Handler,
                           RmdChunkOutputEvent.Handler,
-                          RmdChunkOutputFinishedEvent.Handler
+                          RmdChunkOutputFinishedEvent.Handler,
+                          SendToChunkConsoleEvent.Handler
 {
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
                                     TextEditingTargetRMarkdownHelper rmdHelper,
@@ -104,14 +107,17 @@ public class TextEditingTargetNotebook
    
    @Inject
    public void initialize(EventBus events, UIPrefs uiPrefs,
-         RMarkdownServerOperations server)
+         RMarkdownServerOperations server,
+         ConsoleServerOperations console)
    {
       events_ = events;
       uiPrefs_ = uiPrefs;
       server_ = server;
+      console_ = console;
       
       events_.addHandler(RmdChunkOutputEvent.TYPE, this);
       events_.addHandler(RmdChunkOutputFinishedEvent.TYPE, this);
+      events_.addHandler(SendToChunkConsoleEvent.TYPE, this);
    }
    
    public void executeChunk(Scope chunk, String code)
@@ -122,30 +128,8 @@ public class TextEditingTargetNotebook
       // get the row that ends the chunk
       int row = chunk.getEnd().getRow();
 
-      ChunkDefinition chunkDef;
-      
-      // if there is an existing widget just modify it in place
-      LineWidget widget = docDisplay_.getLineWidgetForRow(row);
-      if (widget != null && 
-          widget.getType().equals(ChunkDefinition.LINE_WIDGET_TYPE))
-      {
-         chunkDef = widget.getData();
-      }
-      // otherwise create a new one
-      else
-      {
-         chunkDef = ChunkDefinition.create(row, 1, true, 
-               "c" + StringUtil.makeRandomId(12));
-        
-         widget = LineWidget.create(
-                               ChunkDefinition.LINE_WIDGET_TYPE,
-                               row, 
-                               elementForChunkDef(chunkDef), 
-                               chunkDef);
-         widget.setFixedWidth(true);
-         docDisplay_.addLineWidget(widget);
-         lineWidgets_.put(chunkDef.getChunkId(), widget);
-      }
+      // find or create a matching chunk definition 
+      ChunkDefinition chunkDef = getChunkDefAtRow(row);
 
       // let the chunk widget know it's started executing
       outputWidgets_.get(chunkDef.getChunkId()).setChunkExecuting();
@@ -166,6 +150,24 @@ public class TextEditingTargetNotebook
       {
          widget.applyCachedEditorStyle();
       }
+   }
+   
+   @Override
+   public void onSendToChunkConsole(SendToChunkConsoleEvent event)
+   {
+      // not for our doc
+      if (event.getDocId() != docUpdateSentinel_.getId())
+         return;
+      
+      // create or update the chunk at the given row
+      ChunkDefinition chunkDef = getChunkDefAtRow(event.getRow());
+      
+      // execute the input
+      console_.consoleInput(event.getCode(), chunkDef.getChunkId(), 
+            new VoidServerRequestCallback());
+      
+      outputWidgets_.get(chunkDef.getChunkId()).showConsoleCode(
+            event.getCode());
    }
    
    @Override
@@ -255,7 +257,7 @@ public class TextEditingTargetNotebook
       }
       else
       {
-         widget = new ChunkOutputWidget(new CommandWithArg<Integer>()
+         widget = new ChunkOutputWidget(chunkId, new CommandWithArg<Integer>()
          {
             @Override
             public void execute(Integer arg)
@@ -278,6 +280,35 @@ public class TextEditingTargetNotebook
       return widget.getElement();
    }
    
+   private ChunkDefinition getChunkDefAtRow(int row)
+   {
+      ChunkDefinition chunkDef;
+      
+      // if there is an existing widget just modify it in place
+      LineWidget widget = docDisplay_.getLineWidgetForRow(row);
+      if (widget != null && 
+          widget.getType().equals(ChunkDefinition.LINE_WIDGET_TYPE))
+      {
+         chunkDef = widget.getData();
+      }
+      // otherwise create a new one
+      else
+      {
+         chunkDef = ChunkDefinition.create(row, 1, true, 
+               "c" + StringUtil.makeRandomId(12));
+        
+         widget = LineWidget.create(
+                               ChunkDefinition.LINE_WIDGET_TYPE,
+                               row, 
+                               elementForChunkDef(chunkDef), 
+                               chunkDef);
+         widget.setFixedWidth(true);
+         docDisplay_.addLineWidget(widget);
+         lineWidgets_.put(chunkDef.getChunkId(), widget);
+      }
+      return chunkDef;
+   }
+   
    private JsArray<ChunkDefinition> initialChunkDefs_;
    private HashMap<String, ChunkOutputWidget> outputWidgets_;
    private HashMap<String, LineWidget> lineWidgets_;
@@ -287,6 +318,7 @@ public class TextEditingTargetNotebook
    private final DocUpdateSentinel docUpdateSentinel_;
 
    private RMarkdownServerOperations server_;
+   private ConsoleServerOperations console_;
    private EventBus events_;
    private UIPrefs uiPrefs_;
    

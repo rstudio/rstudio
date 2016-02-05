@@ -16,9 +16,20 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
+import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorHandler;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputHandler;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
@@ -34,6 +45,10 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkOutputWidget extends Composite
+                               implements ConsoleWriteOutputHandler,
+                                          ConsoleWriteErrorHandler,
+                                          ConsolePromptHandler,
+                                          ConsoleWriteInputHandler
 {
 
    private static ChunkOutputWidgetUiBinder uiBinder = GWT
@@ -45,8 +60,10 @@ public class ChunkOutputWidget extends Composite
       
    }
 
-   public ChunkOutputWidget(CommandWithArg<Integer> onRenderCompleted)
+   public ChunkOutputWidget(String chunkId,
+         CommandWithArg<Integer> onRenderCompleted)
    {
+      chunkId_ = chunkId;
       initWidget(uiBinder.createAndBindUi(this));
       applyCachedEditorStyle();
       
@@ -84,10 +101,54 @@ public class ChunkOutputWidget extends Composite
       state_ = CHUNK_RENDERING;
    }
    
+   @Override
+   public void onConsoleWriteOutput(ConsoleWriteOutputEvent event)
+   {
+      if (state_ != CONSOLE_EXECUTING || event.getConsole() != chunkId_)
+         return;
+      renderConsoleOutput(event.getOutput(), null);
+   }
+   
+   @Override
+   public void onConsoleWriteError(ConsoleWriteErrorEvent event)
+   {
+      if (state_ != CONSOLE_EXECUTING || event.getConsole() != chunkId_)
+         return;
+      renderConsoleOutput(event.getError(), 
+            RStudioGinjector.INSTANCE.getUIPrefs().getThemeErrorClass());
+   }
+   
+   @Override
+   public void onConsoleWriteInput(ConsoleWriteInputEvent event)
+   {
+      if (state_ != CONSOLE_EXECUTING || event.getConsole() != chunkId_)
+         return;
+      renderConsoleOutput("> " + event.getInput(), "ace_keyword");
+   }
+
+   @Override
+   public void onConsolePrompt(ConsolePromptEvent event)
+   {
+      if (state_ != CONSOLE_EXECUTING)
+         return;
+      state_ = CONSOLE_READY;
+      unregisterConsoleEvents();
+      getElement().getStyle().setBackgroundColor(s_backgroundColor);
+   }
+
+   private void renderConsoleOutput(String text, String clazz)
+   {
+      vconsole_.submitAndRender(text, clazz,
+            console_.getElement());
+      onRenderCompleted_.execute(console_.getElement().getOffsetHeight());
+   }
+
    public void setChunkExecuting()
    {
       if (state_ == CHUNK_EXECUTING)
          return;
+      if (state_ == CONSOLE_READY)
+         destroyConsole();
       state_ = CHUNK_EXECUTING;
       getElement().getStyle().setBackgroundColor(s_busyColor);
       interrupt_.setVisible(true);
@@ -107,6 +168,23 @@ public class ChunkOutputWidget extends Composite
       }
    }
    
+   public void showConsoleCode(String code)
+   {
+      if (state_ != CONSOLE_READY &&
+          state_ != CONSOLE_EXECUTING)
+      {
+         initConsole();
+         state_ = CONSOLE_READY;
+      }
+      if (state_ == CONSOLE_READY)
+      {
+         getElement().getStyle().setBackgroundColor(s_busyColor);
+         registerConsoleEvents();
+         state_ = CONSOLE_EXECUTING;
+      }
+      onRenderCompleted_.execute(console_.getElement().getOffsetHeight());
+   }
+   
    public static void cacheEditorStyle(Element editorContainer, 
          Style editorStyle)
    {
@@ -120,6 +198,50 @@ public class ChunkOutputWidget extends Composite
       s_busyColor = DomUtils.extractCssValue(classes, "backgroundColor");
    }
    
+   private void initConsole()
+   {
+      if (vconsole_ == null)
+         vconsole_ = new VirtualConsole();
+      if (console_ == null)
+      {
+         console_ = new PreWidget();
+         console_.getElement().getStyle().setMarginTop(0, Unit.PX);
+      }
+      // remove the frame if it exists
+      if (frame_ != null)
+         frame_.removeFromParent();
+      
+      // attach the console
+      root_.add(console_);
+   }
+   
+   private void destroyConsole()
+   {
+      vconsole_.clear();
+      console_.removeFromParent();
+      console_ = null;
+   }
+   
+   private void registerConsoleEvents()
+   {
+      EventBus events = RStudioGinjector.INSTANCE.getEventBus();
+      events.addHandler(ConsoleWriteOutputEvent.TYPE, this);
+      events.addHandler(ConsoleWriteErrorEvent.TYPE, this);
+      events.addHandler(ConsoleWriteInputEvent.TYPE, this);
+      events.addHandler(ConsolePromptEvent.TYPE, this);
+      Debug.devlog("register console events");
+   }
+
+   private void unregisterConsoleEvents()
+   {
+      EventBus events = RStudioGinjector.INSTANCE.getEventBus();
+      events.removeHandler(ConsoleWriteOutputEvent.TYPE, this);
+      events.removeHandler(ConsoleWriteErrorEvent.TYPE, this);
+      events.removeHandler(ConsoleWriteInputEvent.TYPE, this);
+      events.removeHandler(ConsolePromptEvent.TYPE, this);
+      Debug.devlog("unregister console events");
+   }
+   
    public static boolean isEditorStyleCached()
    {
       return s_backgroundColor != null &&
@@ -131,18 +253,23 @@ public class ChunkOutputWidget extends Composite
    @UiField HTMLPanel root_;
    
    private ChunkOutputFrame frame_;
+   private PreWidget console_;
+   private VirtualConsole vconsole_;
    
    private int state_ = CHUNK_EMPTY;
    
    private CommandWithArg<Integer> onRenderCompleted_;
+   private final String chunkId_;
 
    private static String s_outlineColor    = null;
    private static String s_backgroundColor = null;
    private static String s_color           = null;
    private static String s_busyColor       = null;
    
-   public final static int CHUNK_EMPTY     = 0;
-   public final static int CHUNK_EXECUTING = 1;
-   public final static int CHUNK_RENDERING = 2;
-   public final static int CHUNK_RENDERED  = 3;
+   public final static int CHUNK_EMPTY       = 0;
+   public final static int CHUNK_EXECUTING   = 1;
+   public final static int CHUNK_RENDERING   = 2;
+   public final static int CHUNK_RENDERED    = 3;
+   public final static int CONSOLE_READY     = 4;
+   public final static int CONSOLE_EXECUTING = 5;
 }

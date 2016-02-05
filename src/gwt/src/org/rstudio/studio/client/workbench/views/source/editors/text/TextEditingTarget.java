@@ -404,7 +404,6 @@ public class TextEditingTarget implements
       dirtyState_ = new DirtyState(docDisplay_, false);
       lintManager_ = new LintManager(this, cppCompletionContext_);
       prefs_ = prefs;
-      codeExecution_ = new EditingTargetCodeExecution(docDisplay_, this);
       compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
       rmarkdownHelper_ = new TextEditingTargetRMarkdownHelper();
       cppHelper_ = new TextEditingTargetCppHelper(cppCompletionContext_, 
@@ -1166,7 +1165,8 @@ public class TextEditingTarget implements
       id_ = document.getId();
       fileContext_ = fileContext;
       fileType_ = (TextFileType) type;
-      
+      codeExecution_ = new EditingTargetCodeExecution(docDisplay_, getId(), 
+            this);
       extendedType_ = document.getExtendedType();
       extendedType_ = rmarkdownHelper_.detectExtendedType(document.getContents(),
                                                           extendedType_, 
@@ -5756,7 +5756,7 @@ public class TextEditingTarget implements
    // Prevents external edit checks from happening too soon after each other
    private final IntervalTracker externalEditCheckInterval_ =
          new IntervalTracker(1000, true);
-   private final EditingTargetCodeExecution codeExecution_;
+   private EditingTargetCodeExecution codeExecution_;
    
    private SourcePosition debugStartPos_ = null;
    private SourcePosition debugEndPos_ = null;
