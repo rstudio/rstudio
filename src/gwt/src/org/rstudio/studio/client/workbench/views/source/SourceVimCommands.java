@@ -37,6 +37,31 @@ public class SourceVimCommands
          })(i);
       }
       
+      var nextTab = $entry(function(cm, args, vim) {
+         source.@org.rstudio.studio.client.workbench.views.source.Source::onNextTab()();
+      });
+     
+      Vim.defineAction("selectNextTab", nextTab);
+      Vim.mapCommand({
+         keys: "gt",
+         type: "action",
+         action: "selectNextTab",
+         isEdit: false,
+         context: "normal"
+      });
+
+      var prevTab = $entry(function(cm, args, vim) {
+         source.@org.rstudio.studio.client.workbench.views.source.Source::onPreviousTab()();
+      });
+     
+      Vim.defineAction("selectPreviousTab", prevTab);
+      Vim.mapCommand({
+         keys: "gT",
+         type: "action",
+         action: "selectPreviousTab",
+         isEdit: false,
+         context: "normal"
+      });
    }-*/;
    
    public native final void selectNextTab(Source source) /*-{
