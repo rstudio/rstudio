@@ -439,6 +439,11 @@ Error getSystemHeaderCompletions(const std::string& token,
    if (rIncludePath.exists())
       includePaths.push_back(rIncludePath.absolutePath());
    
+   // remove dupes
+   std::sort(includePaths.begin(), includePaths.end());
+   includePaths.erase(std::unique(includePaths.begin(), includePaths.end()),
+                      includePaths.end());
+   
    // loop through header include paths and return paths that match token
    json::Array completionsJson;
    
