@@ -344,7 +344,7 @@ public class CppCompletionRequest
          @Override
          public void onClose(CloseEvent<PopupPanel> event)
          {
-            popup_ = null; 
+            closeCompletionPopup();
             terminated_ = true;
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
