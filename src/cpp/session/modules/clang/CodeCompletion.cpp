@@ -230,6 +230,8 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
       
       core::system::ProcessResult result;
       std::string cmd = compilerPath + " -E -x c++ - -v < " + devNull;
+      
+      // TODO: this needs to execute with Rtools on the PATH
       Error error = core::system::runCommand(cmd, processOptions, &result);
       if (error)
          LOG_ERROR(error);
