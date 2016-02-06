@@ -167,12 +167,24 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
    core::system::ProcessOptions processOptions;
    processOptions.redirectStdErrToStdOut = true;
    
+   // resolve R CMD location for shell command
+   FilePath rBinDir;
+   Error error = module_context::rBinDir(&rBinDir);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   
+   shell_utils::ShellCommand rCmd = module_context::rCmd(rBinDir);
+   
    // get the CXX compiler by asking R
    std::string compilerPath;
    {
       core::system::ProcessResult result;
-      std::string cmd = "R CMD config CXX";
-      Error error = core::system::runCommand(cmd, processOptions, &result);
+      rCmd << "config";
+      rCmd << "CXX";
+      Error error = core::system::runCommand(rCmd, processOptions, &result);
       if (error)
          LOG_ERROR(error);
       else if (result.exitStatus != EXIT_SUCCESS)
