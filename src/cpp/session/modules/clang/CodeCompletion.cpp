@@ -302,15 +302,17 @@ FilePath findPackagePath(const std::string& pkgName)
    return findPackagePath(pkgName, module_context::getLibPaths());
 }
 
-void discoverRcppDependsIncludePaths(const FilePath& filePath,
+void discoverRcppDependsIncludePaths(const std::string& docId,
                                      std::vector<std::string>* pIncludePaths)
 {
-   // TODO: pass id down from server and use source database rather than
-   // reading the file in
-   std::string contents;
-   Error error = core::readStringFromFile(filePath, &contents);
+   using namespace source_database;
+   
+   // read document contents from source db
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
+   Error error = get(docId, pDoc);
    if (error)
       LOG_ERROR(error);
+   std::string contents = pDoc->contents();
    
    static const boost::regex reRcppDepends("//\\s*\\[\\[Rcpp::depends\\((.*?)\\)\\]\\]");
    boost::sregex_iterator it(contents.begin(), contents.end(), reRcppDepends);
@@ -413,6 +415,7 @@ void discoverInstIncludePath(const FilePath& filePath,
 Error getSystemHeaderCompletions(const std::string& token,
                                  const std::string& parentDir,
                                  const FilePath& filePath,
+                                 const std::string& docId,
                                  const core::json::JsonRpcRequest& request,
                                  core::json::JsonRpcResponse* pResponse)
 {
@@ -425,7 +428,7 @@ Error getSystemHeaderCompletions(const std::string& token,
    discoverRPackageIncludePaths(&includePaths);
    
    // add Rcpp::depends pkgs
-   discoverRcppDependsIncludePaths(filePath, &includePaths);
+   discoverRcppDependsIncludePaths(docId, &includePaths);
    
    // add 'inst/include' if in R package
    discoverInstIncludePath(filePath, &includePaths);
@@ -484,6 +487,7 @@ Error getLocalHeaderCompletions(const std::string& token,
 
 Error getHeaderCompletions(std::string line,
                            const FilePath& filePath,
+                           const std::string& docId,
                            const core::json::JsonRpcRequest& request,
                            core::json::JsonRpcResponse* pResponse)
 {
@@ -512,7 +516,7 @@ Error getHeaderCompletions(std::string line,
    }
    
    if (isSystemHeader)
-      return getSystemHeaderCompletions(token, parentDir, filePath, request, pResponse);
+      return getSystemHeaderCompletions(token, parentDir, filePath, docId, request, pResponse);
    else
       return getLocalHeaderCompletions(token, parentDir, filePath, request, pResponse);
 }
@@ -547,7 +551,7 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
    // statement, take a separate completion path
    static const boost::regex reInclude("^\\s*#+\\s*include");
    if (regex_utils::textMatches(line, reInclude, true, true))
-      return getHeaderCompletions(line, filePath, request, pResponse);
+      return getHeaderCompletions(line, filePath, docId, request, pResponse);
 
    // get the translation unit and do the code completion
    std::string filename = filePath.absolutePath();
