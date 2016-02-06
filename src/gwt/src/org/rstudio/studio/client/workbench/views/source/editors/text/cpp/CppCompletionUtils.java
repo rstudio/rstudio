@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.regex.Pattern;

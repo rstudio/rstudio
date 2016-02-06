@@ -528,11 +528,12 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
    pResponse->setResult(json::Value());
    
    // get params
-   std::string line, docPath, userText;
+   std::string line, docPath, docId, userText;
    int row, column;
    Error error = json::readParams(request.params,
                                   &line,
                                   &docPath,
+                                  &docId,
                                   &row,
                                   &column,
                                   &userText);

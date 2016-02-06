@@ -52,6 +52,7 @@ public class CppCompletionRequest
                            extends ServerRequestCallback<CppCompletionResult>
 {
    public CppCompletionRequest(String docPath,
+                               String docId,
                                CompletionPosition completionPosition,
                                DocDisplay docDisplay, 
                                Invalidation.Token token,
@@ -73,7 +74,8 @@ public class CppCompletionRequest
       
       Position completionPos = completionPosition_.getPosition();
       server_.getCppCompletions(line,
-                                docPath, 
+                                docPath,
+                                docId,
                                 completionPos.getRow() + 1, 
                                 completionPos.getColumn() + 1, 
                                 completionPosition_.getUserText(),

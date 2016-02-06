@@ -629,6 +629,7 @@ public class RemoteServer implements Server
    public void getCppCompletions(
                   String line,
                   String docPath,
+                  String docId,
                   int row, 
                   int column,
                   String userText,
@@ -637,9 +638,10 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(line));
       params.set(1, new JSONString(docPath));
-      params.set(2, new JSONNumber(row));
-      params.set(3, new JSONNumber(column));
-      params.set(4,  new JSONString(userText));
+      params.set(2, new JSONString(docId));
+      params.set(3, new JSONNumber(row));
+      params.set(4, new JSONNumber(column));
+      params.set(5,  new JSONString(userText));
       sendRequest(RPC_SCOPE, GET_CPP_COMPLETIONS, params, requestCallback);
    }
    

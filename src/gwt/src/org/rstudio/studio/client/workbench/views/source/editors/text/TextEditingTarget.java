@@ -5291,13 +5291,14 @@ public class TextEditingTarget implements
       }
 
       @Override
-      public void withUpdatedDoc(final CommandWithArg<String> onUpdated)
+      public void withUpdatedDoc(final CommandWith2Args<String, String> onUpdated)
       {
          docUpdateSentinel_.withSavedDoc(new Command() {
             @Override
             public void execute()
             {
-               onUpdated.execute(docUpdateSentinel_.getPath());
+               onUpdated.execute(docUpdateSentinel_.getPath(),
+                                 docUpdateSentinel_.getId());
             }
          });
 
@@ -5308,9 +5309,9 @@ public class TextEditingTarget implements
       {
          if (isCompletionEnabled())
          {
-            withUpdatedDoc(new CommandWithArg<String>() {
+            withUpdatedDoc(new CommandWith2Args<String, String>() {
                @Override
-               public void execute(String docPath)
+               public void execute(String docPath, String docId)
                {
                   Position pos = docDisplay_.getSelectionStart();
                   

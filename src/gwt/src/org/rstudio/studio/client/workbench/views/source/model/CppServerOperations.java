@@ -37,6 +37,7 @@ public interface CppServerOperations extends BuildServerOperations
    void getCppCompletions(
                 String line,
                 String docPath, 
+                String docId,
                 int row, 
                 int column,
                 String userText,

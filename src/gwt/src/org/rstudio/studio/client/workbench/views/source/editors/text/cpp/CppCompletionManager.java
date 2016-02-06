@@ -16,8 +16,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 
-import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -410,16 +409,17 @@ public class CppCompletionManager implements CompletionManager
       final Invalidation.Token invalidationToken = 
             completionRequestInvalidation_.getInvalidationToken();
       
-      completionContext_.withUpdatedDoc(new CommandWithArg<String>() {
+      completionContext_.withUpdatedDoc(new CommandWith2Args<String, String>() {
 
          @Override
-         public void execute(String docPath)
+         public void execute(String docPath, String docId)
          {
             if (invalidationToken.isInvalid())
                return;
             
             request_ = new CppCompletionRequest(
                docPath,
+               docId,
                completionPosition,
                docDisplay_,
                invalidationToken,
