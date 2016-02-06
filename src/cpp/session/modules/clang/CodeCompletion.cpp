@@ -349,7 +349,7 @@ std::vector<LinkingToEntry> parseLinkingTo(const std::string& linkingTo)
          "\\s*"        // whitespace after
          "(?:\\("      // begin optional capture group
          "([^\\)]*?)"  // version (in parens)
-         "\\))"        // closing paren + closing group
+         "\\))?"       // closing paren + closing group
          "\\s*$"       // ending whitespace
    );
          
@@ -369,6 +369,7 @@ std::vector<LinkingToEntry> parseLinkingTo(const std::string& linkingTo)
             entry.first = match[1];
          if (match.size() >= 3)
             entry.second = match[2];
+         
          result.push_back(entry);
       }
    }
