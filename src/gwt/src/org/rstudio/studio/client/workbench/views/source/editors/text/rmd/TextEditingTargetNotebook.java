@@ -48,6 +48,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 public class TextEditingTargetNotebook 
@@ -271,6 +272,14 @@ public class TextEditingTargetNotebook
                   return;
                docDisplay_.onLineWidgetChanged(lineWidgets_.get(chunkId));
             }
+         },
+         new Command()
+         {
+            @Override
+            public void execute()
+            {
+               removeChunk(chunkId);
+            }
          });
          widget.getElement().addClassName(ThemeStyles.INSTANCE.selectableText());
          widget.getElement().getStyle().setHeight(MIN_CHUNK_HEIGHT, Unit.PX);
@@ -307,6 +316,20 @@ public class TextEditingTargetNotebook
          lineWidgets_.put(chunkDef.getChunkId(), widget);
       }
       return chunkDef;
+   }
+   
+   private void removeChunk(String chunkId)
+   {
+      LineWidget widget = lineWidgets_.get(chunkId);
+      if (widget == null)
+         return;
+      
+      // remove the widget from the document
+      docDisplay_.removeLineWidget(widget);
+      
+      // remove it from our internal cache
+      lineWidgets_.remove(chunkId);
+      outputWidgets_.remove(chunkId);
    }
    
    private JsArray<ChunkDefinition> initialChunkDefs_;

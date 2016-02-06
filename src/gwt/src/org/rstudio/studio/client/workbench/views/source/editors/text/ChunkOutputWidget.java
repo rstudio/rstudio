@@ -36,9 +36,14 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
@@ -61,7 +66,8 @@ public class ChunkOutputWidget extends Composite
    }
 
    public ChunkOutputWidget(String chunkId,
-         CommandWithArg<Integer> onRenderCompleted)
+         CommandWithArg<Integer> onRenderCompleted,
+         final Command onChunkCleared)
    {
       chunkId_ = chunkId;
       initWidget(uiBinder.createAndBindUi(this));
@@ -69,6 +75,45 @@ public class ChunkOutputWidget extends Composite
       
       onRenderCompleted_ = onRenderCompleted;
       
+      interrupt_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent arg0)
+         {
+            // TODO: fire interrupt event
+         }
+      });
+      
+      DOM.sinkEvents(clear_.getElement(), 
+            Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT);
+      DOM.setEventListener(clear_.getElement(), new EventListener()
+      {
+         @Override
+         public void onBrowserEvent(Event evt)
+         {
+            switch(DOM.eventGetType(evt))
+            {
+            case Event.ONCLICK:
+               Debug.devlog("clear was clicked!");
+               if (state_ == CONSOLE_READY ||
+                   state_ == CONSOLE_EXECUTING)
+               {
+                  destroyConsole();
+               }
+               onChunkCleared.execute();
+               break;
+
+            case Event.ONMOUSEOVER:
+               clear_.getElement().getStyle().setOpacity(1);
+               break;
+            
+            case Event.ONMOUSEOUT:
+               clear_.getElement().getStyle().clearOpacity();
+               break;
+            };
+         }
+      });
+
       interrupt_.setResource(RStudioGinjector.INSTANCE.getCommands()
             .interruptR().getImageResource());
    }
@@ -93,11 +138,11 @@ public class ChunkOutputWidget extends Composite
                return;
             state_ = CHUNK_RENDERED;
             applyCachedEditorStyle();
+            showReadyState();
             onRenderCompleted_.execute(
                   frame_.getDocument().getDocumentElement().getScrollHeight());
          };
       });
-      interrupt_.setVisible(false);
       state_ = CHUNK_RENDERING;
    }
    
@@ -133,7 +178,7 @@ public class ChunkOutputWidget extends Composite
          return;
       state_ = CONSOLE_READY;
       unregisterConsoleEvents();
-      getElement().getStyle().setBackgroundColor(s_backgroundColor);
+      showReadyState();
    }
 
    private void renderConsoleOutput(String text, String clazz)
@@ -150,8 +195,7 @@ public class ChunkOutputWidget extends Composite
       if (state_ == CONSOLE_READY)
          destroyConsole();
       state_ = CHUNK_EXECUTING;
-      getElement().getStyle().setBackgroundColor(s_busyColor);
-      interrupt_.setVisible(true);
+      showBusyState();
    }
    
    public void applyCachedEditorStyle()
@@ -160,7 +204,6 @@ public class ChunkOutputWidget extends Composite
          return;
       Style frameStyle = getElement().getStyle();
       frameStyle.setBorderColor(s_outlineColor);
-      frameStyle.setBackgroundColor(s_backgroundColor);
       if (state_ == CHUNK_RENDERED)
       {
          Style bodyStyle = frame_.getDocument().getBody().getStyle();
@@ -178,7 +221,7 @@ public class ChunkOutputWidget extends Composite
       }
       if (state_ == CONSOLE_READY)
       {
-         getElement().getStyle().setBackgroundColor(s_busyColor);
+         showBusyState();
          registerConsoleEvents();
          state_ = CONSOLE_EXECUTING;
       }
@@ -229,7 +272,6 @@ public class ChunkOutputWidget extends Composite
       events.addHandler(ConsoleWriteErrorEvent.TYPE, this);
       events.addHandler(ConsoleWriteInputEvent.TYPE, this);
       events.addHandler(ConsolePromptEvent.TYPE, this);
-      Debug.devlog("register console events");
    }
 
    private void unregisterConsoleEvents()
@@ -239,7 +281,6 @@ public class ChunkOutputWidget extends Composite
       events.removeHandler(ConsoleWriteErrorEvent.TYPE, this);
       events.removeHandler(ConsoleWriteInputEvent.TYPE, this);
       events.removeHandler(ConsolePromptEvent.TYPE, this);
-      Debug.devlog("unregister console events");
    }
    
    public static boolean isEditorStyleCached()
@@ -249,7 +290,22 @@ public class ChunkOutputWidget extends Composite
              s_outlineColor != null;
    }
    
+   private void showBusyState()
+   {
+      getElement().getStyle().setBackgroundColor(s_busyColor);
+      clear_.setVisible(false);
+      interrupt_.setVisible(true);
+   }
+
+   private void showReadyState()
+   {
+      getElement().getStyle().setBackgroundColor(s_backgroundColor);
+      clear_.setVisible(true);
+      interrupt_.setVisible(false);
+   }
+   
    @UiField Image interrupt_;
+   @UiField Image clear_;
    @UiField HTMLPanel root_;
    
    private ChunkOutputFrame frame_;
