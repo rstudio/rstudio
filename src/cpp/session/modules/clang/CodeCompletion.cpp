@@ -272,6 +272,7 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
 }
 
 json::Object jsonHeaderCompletionResult(const std::string& name,
+                                        const std::string& source,
                                         int completionType)
 {
    json::Object completionJson;
@@ -280,8 +281,8 @@ json::Object jsonHeaderCompletionResult(const std::string& name,
    
    json::Array textJson;
    json::Object objectJson;
-   objectJson["text"]    = "<File '" + name + "'>"; 
-   objectJson["comment"] = "";
+   objectJson["text"]    = name;
+   objectJson["comment"] = source;
    textJson.push_back(objectJson);
    completionJson["text"] = textJson;
 
@@ -336,7 +337,9 @@ Error getSystemHeaderCompletions(const std::string& token,
          if (string_utils::isSubsequence(name, token, true))
          {
             int type = childPath.isDirectory() ? kCompletionDirectory : kCompletionFile;
-            completionsJson.push_back(jsonHeaderCompletionResult(name, type));
+            completionsJson.push_back(jsonHeaderCompletionResult(name,
+                                                                 childPath.absolutePath(),
+                                                                 type));
          }
          
          discoveredEntries.insert(name);
