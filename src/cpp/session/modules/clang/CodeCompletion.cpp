@@ -28,6 +28,7 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include "RCompilationDatabase.hpp"
 #include "RSourceIndex.hpp"
 #include "Diagnostics.hpp"
 
@@ -162,6 +163,27 @@ core::json::Object toJson(const CodeCompleteResult& result)
    return resultJson;
 }
 
+void discoverTranslationUnitIncludePaths(const FilePath& filePath,
+                                         std::vector<std::string>* pIncludePaths)
+{
+   std::vector<std::string> args =
+         rCompilationDatabase().compileArgsForTranslationUnit(
+            filePath.absolutePathNative(), false);
+   
+   BOOST_FOREACH(const std::string& arg, args)
+   {
+      if (boost::algorithm::starts_with(arg, "-I"))
+      {
+         // skip RStudio's libclang builtin header paths
+         if (arg.find("libclang/builtin-headers") != std::string::npos)
+            continue;
+         
+         pIncludePaths->push_back(
+                  string_utils::strippedOfQuotes(arg.substr(2)));
+      }
+   }
+}
+
 void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
 {
    core::system::ProcessOptions processOptions;
@@ -266,171 +288,6 @@ json::Object jsonHeaderCompletionResult(const std::string& name,
    return completionJson;
 }
 
-void discoverRPackageIncludePaths(std::vector<std::string>* pIncludePaths)
-{
-   std::vector<std::string> rPkgs;
-   rPkgs.push_back("Rcpp");
-   
-   std::vector<FilePath> libPaths = module_context::getLibPaths();
-   BOOST_FOREACH(const std::string& rPkg, rPkgs)
-   {
-      BOOST_FOREACH(const FilePath& libPath, libPaths)
-      {
-         FilePath pkgPath = libPath.complete(rPkg + "/include");
-         if (pkgPath.exists())
-         {
-            pIncludePaths->push_back(pkgPath.absolutePath());
-            break;
-         }
-      }
-   }
-}
-
-FilePath findPackageRoot(FilePath filePath)
-{
-   while (!filePath.empty())
-   {
-      FilePath descPath = filePath.complete("DESCRIPTION");
-      if (descPath.exists())
-         return filePath;
-      
-      filePath = filePath.parent();
-   }
-   
-   return FilePath();
-}
-
-FilePath findPackagePath(const std::string& pkgName,
-                         const std::vector<FilePath>& libPaths)
-{
-   BOOST_FOREACH(const FilePath& libPath, libPaths)
-   {
-      if (!libPath.exists())
-         continue;
-      
-      FilePath pkgPath = libPath.complete(pkgName);
-      if (pkgPath.exists())
-         return pkgPath;
-   }
-   
-   return FilePath();
-}
-
-FilePath findPackagePath(const std::string& pkgName)
-{
-   return findPackagePath(pkgName, module_context::getLibPaths());
-}
-
-void discoverRcppDependsIncludePaths(const std::string& docId,
-                                     std::vector<std::string>* pIncludePaths)
-{
-   using namespace source_database;
-   
-   // read document contents from source db
-   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
-   Error error = get(docId, pDoc);
-   if (error)
-      LOG_ERROR(error);
-   std::string contents = pDoc->contents();
-   
-   static const boost::regex reRcppDepends("//\\s*\\[\\[Rcpp::depends\\((.*?)\\)\\]\\]");
-   boost::sregex_iterator it(contents.begin(), contents.end(), reRcppDepends);
-   boost::sregex_iterator end;
-   
-   for (; it != end; ++it)
-   {
-      const boost::smatch& match = *it;
-      if (match.size() < 2)
-         continue;
-      
-      const std::string& entry = match[1];
-      std::vector<std::string> splat = core::algorithm::split(entry, ",");
-      BOOST_FOREACH(const std::string& el, splat)
-      {
-         std::string pkg = string_utils::trimWhitespace(el);
-         FilePath pkgPath = findPackagePath(pkg);
-         if (!pkgPath.exists())
-            continue;
-         
-         FilePath includePath = pkgPath.complete("include");
-         if (!includePath.exists())
-            continue;
-         
-         pIncludePaths->push_back(includePath.absolutePath());
-      }
-   }
-}
-
-typedef std::pair<std::string, std::string> LinkingToEntry;
-std::vector<LinkingToEntry> parseLinkingTo(const std::string& linkingTo)
-{
-   static const boost::regex reLinkingTo(std::string() +
-         "^\\s*"       // initial whitespace
-         "(\\S*?)"     // package name
-         "\\s*"        // whitespace after
-         "(?:\\("      // begin optional capture group
-         "([^\\)]*?)"  // version (in parens)
-         "\\))?"       // closing paren + closing group
-         "\\s*$"       // ending whitespace
-   );
-         
-   std::vector<LinkingToEntry> result;
-   
-   // split on commas
-   std::vector<std::string> splat = core::algorithm::split(linkingTo, ",");
-   
-   // loop over our split pieces and extract packages
-   BOOST_FOREACH(const std::string& el, splat)
-   {
-      boost::smatch match;
-      if (boost::regex_match(el, match, reLinkingTo))
-      {
-         LinkingToEntry entry;
-         if (match.size() >= 2)
-            entry.first = match[1];
-         if (match.size() >= 3)
-            entry.second = match[2];
-         
-         result.push_back(entry);
-      }
-   }
-   
-   return result;
-}
-
-void discoverInstIncludePath(const FilePath& filePath,
-                             std::vector<std::string>* pIncludePaths)
-{
-   if (!filePath.exists())
-      return;
-   
-   FilePath pkgPath = findPackageRoot(filePath);
-   if (!pkgPath.exists())
-      return;
-   
-   // add 'inst/include path
-   FilePath instIncludePath = pkgPath.complete("inst/include");
-   if (instIncludePath.exists())
-      pIncludePaths->push_back(instIncludePath.absolutePath());
-   
-   // add paths to LinkingTo packages
-   std::string linkingTo = projects::projectContext().packageInfo().linkingTo();
-   std::vector<LinkingToEntry> entries = parseLinkingTo(linkingTo);
-   BOOST_FOREACH(const LinkingToEntry& entry, entries)
-   {
-      // attempt to resolve pkg path
-      FilePath pkgPath = findPackagePath(entry.first);
-      if (!pkgPath.exists())
-         continue;
-      
-      FilePath includePath = pkgPath.complete("include");
-      if (!includePath.exists())
-         continue;
-      
-      pIncludePaths->push_back(includePath.absolutePath());
-   }
-}
-
 Error getSystemHeaderCompletions(const std::string& token,
                                  const std::string& parentDir,
                                  const FilePath& filePath,
@@ -443,20 +300,8 @@ Error getSystemHeaderCompletions(const std::string& token,
    // discover the system headers
    discoverSystemIncludePaths(&includePaths);
    
-   // add R package include paths in library
-   discoverRPackageIncludePaths(&includePaths);
-   
-   // add Rcpp::depends pkgs
-   discoverRcppDependsIncludePaths(docId, &includePaths);
-   
-   // add 'inst/include' if in R package
-   discoverInstIncludePath(filePath, &includePaths);
-   
-   // add R's own 'include' dir
-   FilePath rHome = module_context::resolveAliasedPath(module_context::rHomeDir());
-   FilePath rIncludePath = rHome.complete("include");
-   if (rIncludePath.exists())
-      includePaths.push_back(rIncludePath.absolutePath());
+   // discover TU-related include paths
+   discoverTranslationUnitIncludePaths(filePath, &includePaths);
    
    // remove dupes
    std::sort(includePaths.begin(), includePaths.end());
