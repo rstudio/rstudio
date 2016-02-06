@@ -445,6 +445,7 @@ Error getSystemHeaderCompletions(const std::string& token,
                       includePaths.end());
    
    // loop through header include paths and return paths that match token
+   std::set<std::string> discoveredEntries;
    json::Array completionsJson;
    
    BOOST_FOREACH(const std::string& path, includePaths)
@@ -465,11 +466,16 @@ Error getSystemHeaderCompletions(const std::string& token,
       BOOST_FOREACH(const FilePath& childPath, children)
       {
          std::string name = childPath.filename();
+         if (discoveredEntries.count(name))
+            continue;
+         
          if (string_utils::isSubsequence(name, token, true))
          {
             int type = childPath.isDirectory() ? kCompletionDirectory : kCompletionFile;
             completionsJson.push_back(jsonHeaderCompletionResult(name, type));
          }
+         
+         discoveredEntries.insert(name);
       }
    }
    
