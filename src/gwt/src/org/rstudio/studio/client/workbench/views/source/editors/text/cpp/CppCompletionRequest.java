@@ -20,7 +20,6 @@ import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -31,7 +30,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.events.RequestCppCompletionsEvent;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
@@ -57,6 +55,7 @@ public class CppCompletionRequest
                                DocDisplay docDisplay, 
                                Invalidation.Token token,
                                boolean explicit,
+                               CppCompletionManager manager,
                                Command onTerminated)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -65,6 +64,7 @@ public class CppCompletionRequest
       completionPosition_ = completionPosition;
       invalidationToken_ = token;
       explicit_ = explicit;
+      manager_ = manager;
       onTerminated_ = onTerminated;
       snippets_ = new SnippetHelper((AceEditor) docDisplay, docPath);
       
@@ -83,11 +83,10 @@ public class CppCompletionRequest
    }
 
    @Inject
-   void initialize(CppServerOperations server, UIPrefs uiPrefs, EventBus events)
+   void initialize(CppServerOperations server, UIPrefs uiPrefs)
    {
       server_ = server;
       uiPrefs_ = uiPrefs;
-      events_ = events;
    }
    
    public boolean isExplicit()
@@ -409,7 +408,7 @@ public class CppCompletionRequest
             @Override
             public void execute()
             {
-               events_.fireEvent(new RequestCppCompletionsEvent());
+               manager_.codeCompletion();
             }
          });
       }
@@ -471,6 +470,7 @@ public class CppCompletionRequest
   
    private final DocDisplay docDisplay_; 
    private final boolean explicit_;
+   private final CppCompletionManager manager_;
    private final Invalidation.Token invalidationToken_;
    
    private final SnippetHelper snippets_;
@@ -479,7 +479,6 @@ public class CppCompletionRequest
    
    private CppCompletionPopupMenu popup_;
    private JsArray<CppCompletion> completions_;
-   private EventBus events_;
    
    private boolean terminated_ = false;
    private Command onTerminated_ = null;

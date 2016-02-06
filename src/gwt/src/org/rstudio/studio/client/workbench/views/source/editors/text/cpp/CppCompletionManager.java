@@ -21,7 +21,6 @@ import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -32,7 +31,6 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
-import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.events.RequestCppCompletionsEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.CppSourceLocation;
@@ -75,40 +73,17 @@ public class CppCompletionManager implements CompletionManager
             terminateCompletionRequest();
          }
       });
-      
-      docDisplay_.addBlurHandler(new BlurHandler()
-      {
-         @Override
-         public void onBlur(BlurEvent event)
-         {
-            terminateCompletionRequest();
-            hideCompletionPopup();
-         }
-      });
-      
-      events_.addHandler(RequestCppCompletionsEvent.TYPE, new RequestCppCompletionsEvent.Handler()
-      {
-         @Override
-         public void onRequestCppCompletions(RequestCppCompletionsEvent event)
-         {
-            terminateCompletionRequest();
-            if (docDisplay_.isFocused())
-               suggestCompletions(false, false);
-         }
-      });
    }
  
    @Inject
    void initialize(CppServerOperations server, 
                    FileTypeRegistry fileTypeRegistry,
-                   UIPrefs uiPrefs,
-                   EventBus events)
+                   UIPrefs uiPrefs)
    {
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
       uiPrefs_ = uiPrefs;
       suggestionTimer_ = new SuggestionTimer(this, uiPrefs_);
-      events_ = events;
    }
    
    // close the completion popup (if any)
@@ -436,6 +411,7 @@ public class CppCompletionManager implements CompletionManager
                docDisplay_,
                invalidationToken,
                explicit,
+               CppCompletionManager.this,
                new Command() {
                   @Override
                   public void execute()
@@ -524,7 +500,6 @@ public class CppCompletionManager implements CompletionManager
    private final CppCompletionContext completionContext_;
    private CppCompletionRequest request_;
    private SuggestionTimer suggestionTimer_;
-   private EventBus events_;
    private final InitCompletionFilter initFilter_ ;
    private final CompletionManager rCompletionManager_;
    private final Invalidation completionRequestInvalidation_ = new Invalidation();

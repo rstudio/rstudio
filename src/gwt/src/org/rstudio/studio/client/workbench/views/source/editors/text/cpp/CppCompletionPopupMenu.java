@@ -1,7 +1,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
