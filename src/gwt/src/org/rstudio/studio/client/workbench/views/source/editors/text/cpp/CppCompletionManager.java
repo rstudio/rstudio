@@ -40,6 +40,8 @@ import org.rstudio.studio.client.workbench.views.source.model.CppSourceLocation;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -51,9 +53,7 @@ public class CppCompletionManager implements CompletionManager
 {
    public void onPaste(PasteEvent event)
    {
-      CppCompletionPopupMenu popup = getCompletionPopup();
-      if (popup != null)
-         popup.hide();
+      hideCompletionPopup();
    }
    
    public CppCompletionManager(DocDisplay docDisplay,
@@ -67,11 +67,22 @@ public class CppCompletionManager implements CompletionManager
       completionContext_ = completionContext;
       rCompletionManager_ = rCompletionManager;
       snippets_ = new SnippetHelper((AceEditor) docDisplay_, completionContext.getDocPath());
+      
       docDisplay_.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
          {
             terminateCompletionRequest();
+         }
+      });
+      
+      docDisplay_.addBlurHandler(new BlurHandler()
+      {
+         @Override
+         public void onBlur(BlurEvent event)
+         {
+            terminateCompletionRequest();
+            hideCompletionPopup();
          }
       });
       
@@ -81,7 +92,8 @@ public class CppCompletionManager implements CompletionManager
          public void onRequestCppCompletions(RequestCppCompletionsEvent event)
          {
             terminateCompletionRequest();
-            suggestCompletions(false, false);
+            if (docDisplay_.isFocused())
+               suggestCompletions(false, false);
          }
       });
    }
@@ -474,6 +486,13 @@ public class CppCompletionManager implements CompletionManager
       CppCompletionPopupMenu popup = request_ != null ?
             request_.getCompletionPopup() : null;
       return popup;
+   }
+   
+   private void hideCompletionPopup()
+   {
+      CppCompletionPopupMenu popup = getCompletionPopup();
+      if (popup != null)
+         popup.hide();
    }
    
    private boolean isCompletionPopupVisible()
