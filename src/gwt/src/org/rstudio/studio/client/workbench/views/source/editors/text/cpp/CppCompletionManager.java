@@ -17,7 +17,9 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
+import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -269,10 +271,17 @@ public class CppCompletionManager implements CompletionManager
          }
          
          // tab accepts the current selection (popup handles Enter)
-         else if (event.getKeyCode() == KeyCodes.KEY_TAB)
+         else if (keyCode == KeyCodes.KEY_TAB)
          {
             popup.acceptSelected();
             return true;
+         }
+         
+         // allow '.' when showing file completions
+         else if (popup.getCompletionPosition().getScope() == CompletionPosition.Scope.File &&
+                  KeyboardHelper.isPeriodKeycode(keyCode))
+         {
+            return false;
          }
          
          // non c++ identifier keys (that aren't navigational) close the popup

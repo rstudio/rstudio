@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -84,10 +86,21 @@ public class CppCompletionUtils
                
       // walk backwards across C++ identifer symbols 
       int col = inputCol;
-      while ((col >= 0) && 
-            CppCompletionUtils.isCppIdentifierChar(line.charAt(col)))
+      if (isInclude)
       {
-         col--;
+         while (col >= 0 &&
+               !StringUtil.isOneOf(line.charAt(col), '/', '<', '"'))
+         {
+            col--;
+         }
+      }
+      else
+      {
+         while ((col >= 0) && 
+               CppCompletionUtils.isCppIdentifierChar(line.charAt(col)))
+         {
+            col--;
+         }
       }
      
       // record source position
