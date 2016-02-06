@@ -13,6 +13,7 @@
 
 * Update C++ unit testing library (catch) to v1.3.3 (fix gcc >=5 compilation errors)
 * Implement gt/gT bindings in Vim mode to switch to next/previous tab
+* Always provide file completions for top-level current directory
 
 ### Bug Fixes
 
