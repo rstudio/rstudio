@@ -1146,7 +1146,10 @@ assign(x = ".rs.acCompletionTypes",
             for (i in seq_along(names))
             {
                type[[i]] <- suppressWarnings(tryCatch(
-                  .rs.getCompletionType(eval(call("$", quote(object), names[[i]]))),
+                  if (is.environment(object) && bindingIsActive(names[[i]], object))
+                     .rs.acCompletionTypes$UNKNOWN
+                  else
+                     .rs.getCompletionType(eval(call("$", quote(object), names[[i]]))),
                   error = function(e) .rs.acCompletionTypes$UNKNOWN
                ))
             }
