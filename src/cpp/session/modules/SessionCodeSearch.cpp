@@ -654,12 +654,7 @@ public:
       Entry parentEntry(core::toFileInfo(parentPath));
       EntryTree::iterator parentItr = pEntries_->find(parentEntry);
       if (parentItr == pEntries_->end())
-      {
-         std::stringstream ss;
-         ss << "Expected node '" << parentPath.absolutePath() << "' in index tree but none found";
-         LOG_ERROR_MESSAGE(ss.str());
          return;
-      }
       
       EntryTree::iterator it = parentItr.begin();
       EntryTree::iterator end = parentItr.end();
@@ -701,12 +696,7 @@ public:
       Entry parentEntry(core::toFileInfo(parentPath));
       EntryTree::iterator parentItr = pEntries_->find(parentEntry);
       if (parentItr == pEntries_->end())
-      {
-         std::stringstream ss;
-         ss << "Expected node '" << parentPath.absolutePath() << "' in index tree but none found";
-         LOG_ERROR_MESSAGE(ss.str());
          return;
-      }
 
       EntryTree::iterator it = parentItr.begin();
       EntryTree::iterator end = parentItr.end();
