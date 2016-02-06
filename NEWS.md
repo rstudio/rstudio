@@ -9,8 +9,9 @@
 * Explicitly set column types while importing datasets
 * Preview and copy code while importing datasets
 
-### Miscellaneous
+### C / C++
 
+* Provide autocompletion for system headers in `#include`
 * Update C++ unit testing library (catch) to v1.3.3 (fix gcc >=5 compilation errors)
 
 ### Bug Fixes
