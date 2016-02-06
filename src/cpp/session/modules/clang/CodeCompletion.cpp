@@ -200,7 +200,20 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
    std::string includePathOutput;
    {
       core::system::ProcessResult result;
-      std::string cmd = compilerPath + " -E -x c++ - -v < /dev/null";
+      shell_utils::ShellCommand cmd;
+      cmd << compilerPath;
+      cmd << "-E";
+      cmd << "-x";
+      cmd << "c++";
+      cmd << "-";
+      cmd << "-v";
+      cmd << "<";
+#ifdef _WIN32
+      cmd << "NUL";
+#else
+      cmd << "/dev/null";
+#endif
+      
       Error error = core::system::runCommand(cmd, processOptions, &result);
       if (error)
          LOG_ERROR(error);
