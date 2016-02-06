@@ -199,21 +199,15 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
    // gcc and clang accept the same command)
    std::string includePathOutput;
    {
-      core::system::ProcessResult result;
-      shell_utils::ShellCommand cmd;
-      cmd << compilerPath;
-      cmd << "-E";
-      cmd << "-x";
-      cmd << "c++";
-      cmd << "-";
-      cmd << "-v";
-      cmd << "<";
-#ifdef _WIN32
-      cmd << "NUL";
+      std::string devNull;
+#ifndef _WIN32
+      devNull = "/dev/null";
 #else
-      cmd << "/dev/null";
+      devNull = "NUL";
 #endif
       
+      core::system::ProcessResult result;
+      std::string cmd = compilerPath + " -E -x c++ - -v < " + devNull;
       Error error = core::system::runCommand(cmd, processOptions, &result);
       if (error)
          LOG_ERROR(error);
