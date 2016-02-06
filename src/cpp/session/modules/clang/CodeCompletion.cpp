@@ -340,7 +340,8 @@ void discoverRcppDependsIncludePaths(const FilePath& filePath,
    }
 }
 
-std::vector<std::string> parseLinkingTo(const std::string& linkingTo)
+typedef std::pair<std::string, std::string> LinkingToEntry;
+std::vector<LinkingToEntry> parseLinkingTo(const std::string& linkingTo)
 {
    static const boost::regex reLinkingTo(std::string() +
          "^\\s*"       // initial whitespace
@@ -352,7 +353,7 @@ std::vector<std::string> parseLinkingTo(const std::string& linkingTo)
          "\\s*$"       // ending whitespace
    );
          
-   std::vector<std::string> result;
+   std::vector<LinkingToEntry> result;
    
    // split on commas
    std::vector<std::string> splat = core::algorithm::split(linkingTo, ",");
@@ -363,16 +364,12 @@ std::vector<std::string> parseLinkingTo(const std::string& linkingTo)
       boost::smatch match;
       if (boost::regex_match(el, match, reLinkingTo))
       {
-         std::string pkgName = match[0];
-         FilePath pkgPath = findPackagePath(pkgName);
-         if (pkgPath.exists())
-         {
-            FilePath includePath = pkgPath.complete("include");
-            if (includePath.exists())
-            {
-               result.push_back(includePath.absolutePath());
-            }
-         }
+         LinkingToEntry entry;
+         if (match.size() >= 2)
+            entry.first = match[1];
+         if (match.size() >= 3)
+            entry.second = match[2];
+         result.push_back(entry);
       }
    }
    
@@ -396,6 +393,20 @@ void discoverInstIncludePath(const FilePath& filePath,
    
    // add paths to LinkingTo packages
    std::string linkingTo = projects::projectContext().packageInfo().linkingTo();
+   std::vector<LinkingToEntry> entries = parseLinkingTo(linkingTo);
+   BOOST_FOREACH(const LinkingToEntry& entry, entries)
+   {
+      // attempt to resolve pkg path
+      FilePath pkgPath = findPackagePath(entry.first);
+      if (!pkgPath.exists())
+         continue;
+      
+      FilePath includePath = pkgPath.complete("include");
+      if (!includePath.exists())
+         continue;
+      
+      pIncludePaths->push_back(includePath.absolutePath());
+   }
 }
 
 Error getSystemHeaderCompletions(const std::string& token,
