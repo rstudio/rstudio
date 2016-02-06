@@ -12,6 +12,11 @@ REM Remove Rtools from path
 CALL SET PATH=%PATH:C:\Rtools\bin=%
 CALL SET PATH=%PATH:C:\Rtools\gcc-4.6.3\bin=%
 
+REM Remove Git from PATH (otherwise cmake complains about
+REM finding 'sh.exe')
+CALL set PATH=%PATH:C:\Program Files (x86)\Git\bin=%
+CALL set PATH=%PATH:C:\Program Files\Git\bin=%
+
 REM Establish build dir
 set BUILD_DIR=build
 IF "%CMAKE_BUILD_TYPE%" == "" set CMAKE_BUILD_TYPE=Release
