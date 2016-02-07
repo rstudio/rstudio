@@ -36,21 +36,44 @@ namespace modules {
 namespace profiler {
 
 namespace {
-      
+
+#define kProfilesCacheDir "profiles-cache"
+#define kProfilesUrlPath "profiles"
+
+std::string profilesCacheDir() 
+{
+   return module_context::scopedScratchPath().childPath(kProfilesCacheDir)
+      .absolutePath();
+}
+
 SEXP rs_profilesPath()
 {
 	r::sexp::Protect rProtect;
-	return r::sexp::create(std::string("~/RStudio/temp"), &rProtect);
+	return r::sexp::create(profilesCacheDir(), &rProtect);
 }
 
 } // anonymous namespace
-   
+
+void handleProfilerResReq(const http::Request& request,
+                            http::Response* pResponse)
+{
+   //std::string localPath(profilesCacheDir());
+   //std::string localPath("/Users/javierluraschi/.rstudio/profiles-cache/");
+   std::string resourceName = http::util::pathAfterPrefix(request, "/" kProfilesUrlPath "/");
+
+   core::FilePath profilesPath = core::FilePath(profilesCacheDir());
+   core::FilePath profileResource = profilesPath.childPath(resourceName);
+
+   pResponse->setCacheableFile(profileResource, request);
+}
+
 Error initialize()
 {  
    ExecBlock initBlock ;
    
    initBlock.addFunctions()
-      (boost::bind(module_context::sourceModuleRFile, "SessionProfiler.R"));
+      (boost::bind(module_context::sourceModuleRFile, "SessionProfiler.R"))
+      (boost::bind(module_context::registerUriHandler, "/" kProfilesUrlPath "/", handleProfilerResReq));
 
    // register rs_profilesPath
    r::routines::registerCallMethod(
@@ -61,8 +84,6 @@ Error initialize()
    return initBlock.execute();
 
 }
-   
-
 
 } // namespace profiler
 } // namespace modules

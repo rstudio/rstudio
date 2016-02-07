@@ -17,6 +17,8 @@
 {
    tryCatch({
       tempPath <- .Call("rs_profilesPath")
+      dir.create(tempPath, recursive = TRUE)
+      
    	fileName <- tempfile(fileext = ".rprof", tmpdir = tempPath)
 
       Rprof(filename = fileName, line.profiling = TRUE)
@@ -47,8 +49,12 @@
    tryCatch({
       profvis <- profvis::profvis(prof_input = profilerOptions$fileName)
 
+      tempPath <- .Call("rs_profilesPath")
+      htmlFile <- tempfile(fileext = ".html", tmpdir = tempPath)
+      htmlwidgets::saveWidget(profvis, htmlFile)
+
       return(list(
-         profvis = profvis
+         htmlFile = paste("profiles/", basename(htmlFile), sep = "") 
       ))
    }, error = function(e) {
       return(list(error = e))
