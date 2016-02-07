@@ -4558,6 +4558,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, PREVIEW_DATA_IMPORT_ASYNC_ABORT, params, requestCallback);
    }
 
+   public void openProfile(ProfileOperationRequest profilerRequest,
+                           ServerRequestCallback<ProfileOperationResponse> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(profilerRequest));
+      sendRequest(RPC_SCOPE, OPEN_PROFILE, params, requestCallback);
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private boolean listeningForEvents_;
@@ -4913,4 +4921,5 @@ public class RemoteServer implements Server
 
    private static final String START_PROFILING = "start_profiling";
    private static final String STOP_PROFILING = "stop_profiling";
+   private static final String OPEN_PROFILE = "open_profile";
 }

@@ -24,4 +24,7 @@ public interface ProfilerServerOperations
    
    void stopProfiling(ProfileOperationRequest profilerRequest,
                       ServerRequestCallback<ProfileOperationResponse> requestCallback);
+
+   void openProfile(ProfileOperationRequest profilerRequest,
+                    ServerRequestCallback<ProfileOperationResponse> requestCallback);
 }

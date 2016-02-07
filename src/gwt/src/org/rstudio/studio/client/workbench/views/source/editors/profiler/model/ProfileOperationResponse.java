@@ -30,4 +30,8 @@ public class ProfileOperationResponse extends JavaScriptObject
    public final native String getFileName() /*-{
       return this.fileName ? this.fileName.join(' ') : null;
    }-*/;
+   
+   public final native String getHtmlFile() /*-{
+      return this.htmlFile ? this.htmlFile.join(' ') : null;
+   }-*/;
 }

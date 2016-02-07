@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 
 import com.google.gwt.user.client.ui.Composite;
-
+import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -28,6 +28,8 @@ public class ProfilerEditingTargetWidget extends Composite
                                          implements ProfilerPresenter.Display
               
 {
+   private Frame profilePage_;
+   
    public ProfilerEditingTargetWidget(Commands commands)
    {
       VerticalPanel panel = new VerticalPanel();
@@ -37,8 +39,15 @@ public class ProfilerEditingTargetWidget extends Composite
                                           createToolbar(commands), 
                                           panel);
 
+      profilePage_ = new Frame();
+      profilePage_.setWidth("100%");
+      profilePage_.setHeight("100%");
+      
+      panel.add(profilePage_);
+      panel.setWidth("100%");
+      panel.setHeight("100%");
+      
       initWidget(mainPanel);
-
    }
 
    private Toolbar createToolbar(Commands commands)
@@ -53,5 +62,10 @@ public class ProfilerEditingTargetWidget extends Composite
    public Widget asWidget()
    {
       return this;
+   }
+   
+   public void showProfilePage(String path)
+   {
+      profilePage_.setUrl(path);
    }
 }
