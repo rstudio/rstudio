@@ -12,6 +12,8 @@
 ### Miscellaneous
 
 * Update C++ unit testing library (catch) to v1.3.3 (fix gcc >=5 compilation errors)
+* Implement gt/gT bindings in Vim mode to switch to next/previous tab
+* Always provide file completions for top-level current directory
 
 ### Bug Fixes
 
@@ -28,5 +30,7 @@
 * Suppress httpd warnings on invalid help queries 
 * Correct syntax highlighting for operator << in C++ mode
 * Fix highlighting in R mode for numbers with only a trailing decimal (e.g. '1.')
+* Ensure that SparkR DataFrames appear as data in environment pane
+* Avoid firing active bindings in completion system
 
 

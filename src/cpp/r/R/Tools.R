@@ -670,3 +670,50 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    
    do.call(base::list.files, args)
 })
+
+.rs.addFunction("listFilesFuzzy", function(directory, token)
+{
+   pattern <- if (nzchar(token))
+      paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(token)), sep = "")
+   
+   # Manually construct a call to `list.files` which should work across
+   # versions of R >= 2.11.
+   formals <- as.list(formals(base::list.files))
+   
+   formals$path <- directory
+   formals$pattern <- pattern
+   formals$all.files <- TRUE
+   formals$full.names <- TRUE
+   
+   # NOTE: not available in older versions of R, but defaults to FALSE
+   # with newer versions.
+   if ("include.dirs" %in% names(formals))
+      formals[["include.dirs"]] <- TRUE
+   
+   # NOTE: not available with older versions of R, but defaults to FALSE
+   if ("no.." %in% names(formals))
+      formals[["no.."]] <- TRUE
+   
+   # Generate the call, and evaluate it.
+   result <- do.call(base::list.files, formals)
+   
+   # Clean up duplicated '/'.
+   absolutePaths <- gsub("/+", "/", result)
+   
+   # Remove un-needed `.` paths. These paths will look like
+   #
+   #     <path>/.
+   #     <path>/..
+   #
+   # This is only unnecessary if we couldn't use 'no..'.
+   if (!("no.." %in% names(formals)))
+   {
+      absolutePaths <- grep("/\\.+$",
+                            absolutePaths,
+                            invert = TRUE,
+                            value = TRUE)
+   }
+   
+   absolutePaths
+})
+
