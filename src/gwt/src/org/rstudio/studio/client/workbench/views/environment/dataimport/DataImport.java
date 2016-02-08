@@ -350,7 +350,7 @@ public class DataImport extends Composite
             
             columnTypesMenu_.setPopupPosition(
                   gridViewer_.getAbsoluteLeft() + column.getLeft(),
-                  gridViewer_.getAbsoluteTop() +column.getTop());
+                  gridViewer_.getAbsoluteTop() + column.getTop());
             
             columnTypesMenu_.setSize(column.getWidth() + "px", "");
             

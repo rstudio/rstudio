@@ -667,7 +667,7 @@ var createColumnTypesUI = function(th, idx, col) {
       columnsPopup = th;
       activeColumnInfo = {
         left: $(host).offset().left - 5,
-        top: $(host).offset().top + 19,
+        top: $(host).parent().height() + 11,
         width: $(th).outerWidth() - 1,
         index: idx,
         name: col.col_name
