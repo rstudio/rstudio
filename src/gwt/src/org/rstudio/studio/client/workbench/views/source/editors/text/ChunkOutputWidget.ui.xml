@@ -24,7 +24,7 @@
    
    .clear
    {
-      opacity: 0.7;
+      opacity: 0.0;
       transition: opacity 500ms ease;
    }
    </ui:style>

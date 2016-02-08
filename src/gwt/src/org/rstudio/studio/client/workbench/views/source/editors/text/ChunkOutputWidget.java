@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.PreWidget;
@@ -84,8 +83,7 @@ public class ChunkOutputWidget extends Composite
          }
       });
       
-      DOM.sinkEvents(clear_.getElement(), 
-            Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT);
+      DOM.sinkEvents(clear_.getElement(), Event.ONCLICK);
       DOM.setEventListener(clear_.getElement(), new EventListener()
       {
          @Override
@@ -94,7 +92,6 @@ public class ChunkOutputWidget extends Composite
             switch(DOM.eventGetType(evt))
             {
             case Event.ONCLICK:
-               Debug.devlog("clear was clicked!");
                if (state_ == CONSOLE_READY ||
                    state_ == CONSOLE_EXECUTING)
                {
@@ -102,15 +99,37 @@ public class ChunkOutputWidget extends Composite
                }
                onChunkCleared.execute();
                break;
-
-            case Event.ONMOUSEOVER:
-               clear_.getElement().getStyle().setOpacity(1);
-               break;
-            
-            case Event.ONMOUSEOUT:
-               clear_.getElement().getStyle().clearOpacity();
-               break;
             };
+         }
+      });
+      
+      DOM.sinkEvents(root_.getElement(), Event.ONMOUSEOVER | Event.ONMOUSEOUT);
+      DOM.setEventListener(root_.getElement(), new EventListener()
+      {
+         @Override
+         public void onBrowserEvent(Event evt)
+         {
+            if (state_ == CONSOLE_READY || state_ == CHUNK_RENDERED)
+            {
+               switch(DOM.eventGetType(evt))
+               {
+                  case Event.ONMOUSEOVER:
+                     if (Element.as(evt.getEventTarget()) == 
+                         clear_.getElement())
+                        clear_.getElement().getStyle().setOpacity(1);
+                     else 
+                        clear_.getElement().getStyle().setOpacity(0.5);
+                     break;
+                  
+                  case Event.ONMOUSEOUT:
+                     if (Element.as(evt.getEventTarget()) == 
+                         clear_.getElement())
+                        clear_.getElement().getStyle().setOpacity(0.5);
+                     else
+                        clear_.getElement().getStyle().clearOpacity();
+                     break;
+               }
+            }
          }
       });
 
