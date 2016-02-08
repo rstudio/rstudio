@@ -96,9 +96,7 @@
 			margin-top: 9px;
 			margin-right: 5px;
 			height: 20px;
-		}
-		.copyButton:active {
-			top-margin: 11px;
+			cursor: pointer;
 		}
 		.headWithButton {
 			display: -ms-flexbox;
