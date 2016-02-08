@@ -78,6 +78,9 @@
 		.optionsListBox {
 			width: 95px;
 		}
+		input:disabled+label {
+			color: #999;
+		}
 	</ui:style>
 	<g:HTMLPanel styleName="{style.mainPanel}">
 	    <g:Label text="Import Options:" styleName="{style.optionsLabel}"/>
