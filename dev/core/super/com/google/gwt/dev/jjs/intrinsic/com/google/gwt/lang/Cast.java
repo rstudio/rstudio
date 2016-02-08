@@ -249,6 +249,7 @@ final class Cast {
 
   @HasNoSideEffects
   static boolean isJavaScriptObject(Object src) {
+    // TODO(rluble): should return false to for plain arrays.
     return isJsObjectOrFunction(src) && !Util.hasTypeMarker(src);
   }
 

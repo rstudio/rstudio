@@ -94,9 +94,21 @@ public class JArrayType extends JReferenceType {
     return elementType.isFinal();
   }
 
+  // Returns true only for c.g.g.c.JavaScriptObject
+  private boolean isJavaScriptObject(JType elementType) {
+    if (!(elementType instanceof JClassType)) {
+      return false;
+    }
+
+    JClassType classType = (JClassType) elementType;
+    return classType.isJsoType() && !classType.getSuperClass().isJsoType();
+  }
+
   @Override
   public boolean canBeImplementedExternally() {
-    return getLeafType().canBeImplementedExternally();
+    return getLeafType().canBeImplementedExternally()
+        // JSO[] is considered implemented by native arrays.
+        || isJavaScriptObject(getElementType());
   }
 
   @Override
