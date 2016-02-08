@@ -329,6 +329,11 @@ table.dataTable thead th.columnClickable {
 
 table.dataTable thead th.columnClickable div {
     padding-right: 15px;
+
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 table.dataTable thead th.columnClickable .columnTypeWrapper {
