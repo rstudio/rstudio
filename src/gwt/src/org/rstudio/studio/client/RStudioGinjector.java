@@ -100,6 +100,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
+import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
 import org.rstudio.studio.client.workbench.views.environment.ClearAllDialog;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImport;
@@ -168,6 +169,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(DataImportDialog dataImportDialog);
    void injectMembers(DataImport dataImport);
    void injectMembers(DataImportOptionsUiCsv dataImport);
+   void injectMembers(CppCompletion completion);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
