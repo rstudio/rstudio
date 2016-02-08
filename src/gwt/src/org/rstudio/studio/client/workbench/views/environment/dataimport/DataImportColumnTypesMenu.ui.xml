@@ -42,9 +42,12 @@
 	.entrySelected:hover {
 		background-color: #bce0fc;
 	}
+	.errorMessage {
+		padding: 10px;
+	}
 	</ui:style>
 	<g:HTMLPanel styleName="{style.mainPanel}">
-		<g:HTMLPanel styleName="{style.sectionPanel}">
+		<g:HTMLPanel ui:field="typesPanel_" styleName="{style.sectionPanel}">
 		    <g:Label text="Guess" styleName="{style.entry}" ui:field="guess_"/>
 			<g:Label text="Character" styleName="{style.entry}" ui:field="character_"/>
 			<g:Label text="Double" styleName="{style.entry}" ui:field="double_"/>
@@ -56,10 +59,13 @@
 			<g:Label text="DateTime" styleName="{style.entry}" ui:field="dateTime_"/>
 			<g:Label text="Factor" styleName="{style.entry}" ui:field="factor_"/>
 		</g:HTMLPanel>
-	    <g:HTMLPanel styleName="{style.sectionPanel}">
+	    <g:HTMLPanel ui:field="includePanel_" styleName="{style.sectionPanel}">
 	        <g:Label text="Include" styleName="{style.entry}" ui:field="include_"/>
 			<g:Label text="Skip" styleName="{style.entry}" ui:field="skip_"/>
 			<g:Label text="Only" styleName="{style.entry}" ui:field="only_"/>
+		</g:HTMLPanel>
+		<g:HTMLPanel styleName="{style.sectionPanel}">
+		    <g:Label styleName="{style.errorMessage}" ui:field="error_"/>
 		</g:HTMLPanel>
 	</g:HTMLPanel>
 </ui:UiBinder> 
