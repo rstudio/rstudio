@@ -852,11 +852,13 @@ var initDataTable = function(resCols, data) {
   else {
     // Create an empty array of data tto be use as a map in the callback
     dataTableData = [];
-    for (i = 0; i < data[0].length; i++) {
-      dataTableData.push(i);
+    if (data.length > 0) {
+      for (i = 0; i < data[0].length; i++) {
+        dataTableData.push(i);
+      }
     }
 
-    dataTableColumns = cols.map(function (e, idx) {
+    dataTableColumns = resCols.length > 0 ? cols.map(function (e, idx) {
       var className = (rowNumbers && idx === 0) ? "first-child" : null;
       if (e.col_disabled) {
         className = "disabledColumn";
@@ -871,7 +873,7 @@ var initDataTable = function(resCols, data) {
         "width": "4em",
         "render": e.col_type === "numeric" ? renderNumberCell : renderTextCell
       };
-    });
+    }) : [{}];
   }
 
   // activate the data table
