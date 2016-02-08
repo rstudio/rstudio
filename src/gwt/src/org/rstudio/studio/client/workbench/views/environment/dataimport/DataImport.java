@@ -372,7 +372,7 @@ public class DataImport extends Composite
             columnTypesMenu_.setVisibleColumns(response.getSupportedColumnTypes());
             
             if (column.getName().isEmpty()) {
-               columnTypesMenu_.setError("Only named columns can support column operations.");
+               columnTypesMenu_.setError("Only named columns support column operations.");
                columnTypesMenu_.setWidth("200px");
             }
             

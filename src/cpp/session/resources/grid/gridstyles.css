@@ -325,6 +325,7 @@ div.DTS div.DTS_Loading.showLoading {
 
 table.dataTable thead th.columnClickable {
     cursor: pointer;
+    vertical-align: bottom;
 }
 
 table.dataTable thead th.columnClickable div {
