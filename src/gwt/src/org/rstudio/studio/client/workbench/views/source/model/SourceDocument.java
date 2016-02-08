@@ -132,8 +132,8 @@ public class SourceDocument extends JavaScriptObject
       return this.chunk_definitions || [];
    }-*/;
    
-   public native final void setChunkDefs(JsArray<ChunkDefinition> chunkOutput) /*-{
-      this.chunk_output = chunkOutput;
+   public native final void setChunkDefs(JsArray<ChunkDefinition> chunkDefs) /*-{
+      this.chunk_definitions = chunkDefs;
    }-*/;
    
    public final String getSourceWindowId() 
