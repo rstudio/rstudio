@@ -103,6 +103,8 @@ public class DataImportColumnTypesMenu extends PopupPanel
       {
          menuItemsMap_.put(menuItems_.get(idx).getName(), menuItems_.get(idx));
       }
+      
+      errorPanel_.setVisible(false);
    }
    
    public void setOnChange(
@@ -124,7 +126,7 @@ public class DataImportColumnTypesMenu extends PopupPanel
       
       typesPanel_.setVisible(true);
       includePanel_.setVisible(true);
-      error_.setVisible(false);
+      errorPanel_.setVisible(false);
    }
    
    public void setVisibleColumns(String[] columnNames)
@@ -170,7 +172,7 @@ public class DataImportColumnTypesMenu extends PopupPanel
    public void setError(String error)
    {
       error_.setText(error);
-      error_.setVisible(true);
+      errorPanel_.setVisible(true);
       typesPanel_.setVisible(false);
       includePanel_.setVisible(false);
    }
@@ -297,6 +299,9 @@ public class DataImportColumnTypesMenu extends PopupPanel
    
    @UiField
    HTMLPanel includePanel_;
+   
+   @UiField
+   HTMLPanel errorPanel_;
    
    @UiField
    Label error_;

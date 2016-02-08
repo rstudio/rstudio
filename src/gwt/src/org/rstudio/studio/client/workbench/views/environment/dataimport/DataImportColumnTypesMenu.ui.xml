@@ -59,12 +59,12 @@
 			<g:Label text="DateTime" styleName="{style.entry}" ui:field="dateTime_"/>
 			<g:Label text="Factor" styleName="{style.entry}" ui:field="factor_"/>
 		</g:HTMLPanel>
-	    <g:HTMLPanel ui:field="includePanel_" styleName="{style.sectionPanel}">
+	    <g:HTMLPanel ui:field="includePanel_">
 	        <g:Label text="Include" styleName="{style.entry}" ui:field="include_"/>
 			<g:Label text="Skip" styleName="{style.entry}" ui:field="skip_"/>
 			<g:Label text="Only" styleName="{style.entry}" ui:field="only_"/>
 		</g:HTMLPanel>
-		<g:HTMLPanel styleName="{style.sectionPanel}">
+		<g:HTMLPanel ui:field="errorPanel_">
 		    <g:Label styleName="{style.errorMessage}" ui:field="error_"/>
 		</g:HTMLPanel>
 	</g:HTMLPanel>

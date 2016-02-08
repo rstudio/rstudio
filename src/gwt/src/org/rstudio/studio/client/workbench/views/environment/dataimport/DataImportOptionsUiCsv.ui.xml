@@ -65,6 +65,8 @@
 			-ms-flex-grow: 1;
 			-webkit-flex-grow: 1;
 			flex-grow: 1;
+			padding-left: 5px;
+			padding-right: 5px;
 		}
 		.skipTextBox {
 			width: 50px;
