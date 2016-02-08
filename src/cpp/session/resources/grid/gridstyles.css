@@ -325,13 +325,25 @@ div.DTS div.DTS_Loading.showLoading {
 
 table.dataTable thead th.columnClickable {
     cursor: pointer;
-    background: url("datatables/images/header_expand.png") no-repeat right top;
-    background-position-y: 16px;
+}
+
+table.dataTable thead th.columnClickable div {
     padding-right: 15px;
+}
+
+table.dataTable thead th.columnClickable .columnTypeWrapper {
+    background: url("datatables/images/header_expand.png") no-repeat right top;
+    background-position-y: -5px;
+    padding-right: 15px;
+}
+
+table.dataTable thead th.columnClickable .columnTypeHeader {
+    padding-right: 0px;
 }
 
 .columnTypeWrapper {
     text-align: right;
+    padding-right: 0px;
 }
 
 .disabledColumn {
