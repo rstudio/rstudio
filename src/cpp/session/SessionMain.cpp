@@ -1532,8 +1532,8 @@ Error extractConsoleInput(const json::JsonRpcRequest& request)
       {
          // get console input to return to R
          std::string text = request.params[0].get_str();
-         addToConsoleInputBuffer(rstudio::r::session::RConsoleInput(console, 
-                  text));
+         addToConsoleInputBuffer(rstudio::r::session::RConsoleInput(text, 
+                  console));
 
          // return success
          return Success();
