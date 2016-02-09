@@ -34,6 +34,7 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.debugging.DebugCommander;
 import org.rstudio.studio.client.common.debugging.DebugCommander.DebugMode;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
@@ -134,7 +135,9 @@ public class EnvironmentPresenter extends BasePresenter
                                RemoteFileSystemContext fsContext,
                                Session session,
                                SourceShim sourceShim,
-                               DebugCommander debugCommander)
+                               DebugCommander debugCommander,
+                               DependencyManager dependencyManager,
+                               FileTypeRegistry fileTypeRegistry)
    {
       super(view);
       binder.bind(commands, this);
@@ -155,6 +158,9 @@ public class EnvironmentPresenter extends BasePresenter
       sourceShim_ = sourceShim;
       debugCommander_ = debugCommander;
       session_ = session;
+      dependencyManager_ = dependencyManager;
+      fileTypeRegistry_ = fileTypeRegistry;
+      
       requeryContextTimer_ = new Timer()
       {
          @Override
@@ -278,10 +284,12 @@ public class EnvironmentPresenter extends BasePresenter
                   event.getColumnNumber());
             FileSystemItem destFile = FileSystemItem.createFile(
                   event.getFileName());
-            eventBus_.fireEvent(new OpenSourceFileEvent(destFile, pos,
-                                   FileTypeRegistry.R,
-                                   NavigationMethods.DEFAULT));
-         }
+            eventBus_.fireEvent(new OpenSourceFileEvent(
+                  destFile,
+                  pos,
+                  fileTypeRegistry_.getTextTypeForFile(destFile),
+                  NavigationMethods.DEFAULT));
+            }
       });
       
       new JSObjectStateValue(
@@ -899,6 +907,8 @@ public class EnvironmentPresenter extends BasePresenter
    private final SourceShim sourceShim_;
    private final DebugCommander debugCommander_;
    private final Session session_;
+   private final DependencyManager dependencyManager_;
+   private final FileTypeRegistry fileTypeRegistry_;
    
    private int contextDepth_;
    private boolean refreshingView_;
