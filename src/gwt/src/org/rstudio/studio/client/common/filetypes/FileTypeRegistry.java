@@ -497,8 +497,12 @@ public class FileTypeRegistry
       else
       {
          FileType fileType = getTypeForFile(file);
-         if (fileType != null && !(fileType instanceof TextFileType))
+         if (fileType != null
+            && !(fileType instanceof TextFileType) 
+            && !(fileType instanceof ProfilerType))
+         {
             fileType = TEXT;
+         }
 
          if (fileType != null)
             fileType.openFile(file,
