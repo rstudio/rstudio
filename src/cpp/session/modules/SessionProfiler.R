@@ -35,6 +35,8 @@
 {
    tryCatch({
       Rprof(NULL)
+
+      invisible(.Call("rs_fileEdit", c(profilerOptions$fileName)))
       
       return(list(
          fileName = profilerOptions$fileName
