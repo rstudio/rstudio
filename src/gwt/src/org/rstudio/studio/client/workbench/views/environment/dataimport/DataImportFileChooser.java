@@ -121,6 +121,11 @@ public class DataImportFileChooser extends Composite
       checkTextBoxInterval_ = 0;
    }
    
+   public void setFocus()
+   {
+      locationTextBox_.setFocus(true);
+   }
+   
    @UiField
    TextBox locationTextBox_;
    

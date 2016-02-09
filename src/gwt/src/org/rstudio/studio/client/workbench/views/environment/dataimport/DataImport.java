@@ -37,6 +37,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWi
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -120,6 +122,14 @@ public class DataImport extends Composite
       });
       
       assembleDataImport();
+      
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         public void execute()
+         {
+            dataImportFileChooser_.setFocus(); 
+         }
+      });
    }
    
    public String getCode()
@@ -191,7 +201,7 @@ public class DataImport extends Composite
                }
             },
             true);
-      
+         
       return dataImportFileChooser;
    }
    
@@ -340,7 +350,7 @@ public class DataImport extends Composite
             
             columnTypesMenu_.setPopupPosition(
                   gridViewer_.getAbsoluteLeft() + column.getLeft(),
-                  gridViewer_.getAbsoluteTop() +column.getTop());
+                  gridViewer_.getAbsoluteTop() + column.getTop());
             
             columnTypesMenu_.setSize(column.getWidth() + "px", "");
             
@@ -360,6 +370,11 @@ public class DataImport extends Composite
             }
             
             columnTypesMenu_.setVisibleColumns(response.getSupportedColumnTypes());
+            
+            if (column.getName().isEmpty()) {
+               columnTypesMenu_.setError("Only named columns support column operations.");
+               columnTypesMenu_.setWidth("200px");
+            }
             
             columnTypesMenu_.show();
          }

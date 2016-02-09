@@ -468,7 +468,12 @@
 
       importInfo <- .rs.assemble_data_import(dataImportOptions)
       data <- eval(parse(text=importInfo$previewCode))
-      columns <- .rs.describeCols(data, maxCols, maxFactors)
+
+      columns <- list()
+      if (ncol(data)) {
+         columns <- .rs.describeCols(data, maxCols, maxFactors)
+      }
+      
       parsingErrors <-length(readr::problems(data)$row)
 
       cnames <- names(data)

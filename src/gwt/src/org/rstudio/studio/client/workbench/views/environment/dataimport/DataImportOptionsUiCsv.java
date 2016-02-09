@@ -172,6 +172,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
          }
       });
      
+      updateEnabled();
    }
    
    void initEvents()
@@ -182,6 +183,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
          @Override
          public void onValueChange(ValueChangeEvent<String> arg0)
          {
+            updateEnabled();
             triggerChange();
          }
       };
@@ -192,6 +194,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
          @Override
          public void onChange(ChangeEvent arg0)
          {
+            updateEnabled();
             triggerChange();
          }
       };
@@ -202,6 +205,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> arg0)
          {
+            updateEnabled();
             triggerChange();
          }
       };
@@ -216,6 +220,22 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       naListBox_.addChangeHandler(changeHandler);
       commentListBox_.addChangeHandler(changeHandler);
       skipTextBox_.addValueChangeHandler(valueChangeHandler);
+   }
+   
+   void updateEnabled()
+   {
+      if (delimiterListBox_.getSelectedValue() == ",")
+      {
+         trimSpacesCheckBox_.setEnabled(true);
+         escapeListBox_.getElement().setAttribute("disabled", "disabled");
+         quotesListBox_.getElement().setAttribute("disabled", "disabled");         
+      }
+      else
+      {
+         trimSpacesCheckBox_.setEnabled(false);
+         escapeListBox_.getElement().removeAttribute("disabled");
+         quotesListBox_.getElement().removeAttribute("disabled");
+      }
    }
    
    @UiField
