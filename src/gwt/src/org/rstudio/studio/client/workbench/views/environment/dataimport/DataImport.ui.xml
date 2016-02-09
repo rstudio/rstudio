@@ -98,6 +98,13 @@
 			height: 20px;
 			cursor: pointer;
 		}
+		.interruptButton {
+			margin-left: auto;
+			margin-top: 9px;
+			margin-right: 5px;
+			height: 20px;
+			cursor: pointer;
+		}
 		.headWithButton {
 			display: -ms-flexbox;
 			display: -webkit-flex;
@@ -126,6 +133,9 @@
 	    <rsdi:DataImportFileChooser ui:field="dataImportFileChooser_"
 	        						styleName="{style.fileChooser}"/>
 		<g:Label text="Data Preview:" styleName="{style.importLabel}"/>
+		<g:PushButton ui:field="interruprButton_"
+			          styleName="{style.interruptButton}">
+		</g:PushButton>
 		<rs:GridViewerFrame ui:field="gridViewer_"
 		    				styleName="{style.gridViewerFrame}"/>
 		<div class="{style.bottomPanel}">

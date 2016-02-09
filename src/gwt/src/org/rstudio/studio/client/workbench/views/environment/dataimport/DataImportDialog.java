@@ -19,6 +19,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationInterrupt;
 
 import com.google.gwt.user.client.ui.Widget;
 

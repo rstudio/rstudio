@@ -4518,6 +4518,19 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, ASSEMBLE_DATA_IMPORT, params, requestCallback);
    }
 
+   @Override
+   public void previewDataImportAsync(DataImportOptions dataImportOptions,
+                                      int maxCols,
+                                      int maxFactors,
+                                      ServerRequestCallback<DataImportPreviewResponse> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      //params.set(0, new JSONObject(dataImportOptions));
+      //params.set(1, new JSONNumber(maxCols));
+      //params.set(2, new JSONNumber(maxFactors));
+      sendRequest(RPC_SCOPE, PREVIEW_DATA_IMPORT_ASYNC, params, requestCallback);
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private boolean listeningForEvents_;
@@ -4868,4 +4881,5 @@ public class RemoteServer implements Server
 
    private static final String PREVIEW_DATA_IMPORT = "preview_data_import";
    private static final String ASSEMBLE_DATA_IMPORT = "assemble_data_import";
+   private static final String PREVIEW_DATA_IMPORT_ASYNC = "preview_data_import_async";
 }

@@ -24,10 +24,13 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressIndicatorDelay;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
@@ -43,6 +46,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
@@ -85,15 +89,20 @@ public class DataImport extends Composite
    
    private final DataImportModes dataImportMode_;
    
+   private ApplicationInterrupt applicationInterrupt_;
+   
    interface DataImportUiBinder extends UiBinder<Widget, DataImport>
    {
    }
 
    public <T> DataImport(DataImportModes dataImportMode,
-                     ProgressIndicator progressIndicator)
+                         ProgressIndicator progressIndicator)
    {
       dataImportResources_ = GWT.create(DataImportResources.class);
       dataImportMode_ = dataImportMode;
+      
+      copyButton_ = makeCopyButton();
+      interruprButton_ = makeInterruptButton();
 
       progressIndicator_ = new ProgressIndicatorDelay(progressIndicator);
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -171,10 +180,12 @@ public class DataImport extends Composite
    
    @Inject
    private void initialize(WorkbenchServerOperations server,
-                           GlobalDisplay globalDisplay)
+                           GlobalDisplay globalDisplay,
+                           ApplicationInterrupt applicationInterrupt)
    {
       server_ = server;
       globalDisplay_ = globalDisplay;
+      applicationInterrupt_ = applicationInterrupt;
    }
    
    @UiFactory
@@ -205,7 +216,6 @@ public class DataImport extends Composite
       return dataImportFileChooser;
    }
    
-   @UiFactory
    PushButton makeCopyButton()
    {
       return new PushButton(new Image(dataImportResources_.copyImage()), new ClickHandler()
@@ -214,6 +224,73 @@ public class DataImport extends Composite
          public void onClick(ClickEvent arg0)
          {
             DomUtils.copyCodeToClipboard(codePreview_);
+         }
+      });
+   }
+   
+   PushButton makeInterruptButton()
+   {
+      final Commands commands = RStudioGinjector.INSTANCE.getCommands();
+      ImageResource stopImage = commands.interruptR().getImageResource();
+   
+      return new PushButton(new Image(stopImage), new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent arg0)
+         {
+            // commands.interruptR().execute();
+            
+            server_.previewDataImportAsync(getOptions(), 0, 0, new ServerRequestCallback<DataImportPreviewResponse>()
+            {
+               @Override
+               public void onResponseReceived(DataImportPreviewResponse response)
+               {
+                  if (response.getErrorMessage() != null)
+                  {
+                     response.setColumnDefinitions(lastSuccessfulResponse_);
+                     setGridViewerData(response);
+                     progressIndicator_.onError(response.getErrorMessage());
+                     return;
+                  }
+                  
+                  // Set the column definitions to allow subsequent calls to assemble
+                  // generate preview code based on data.
+                  importOptions_.setBaseColumnDefinitions(response);
+                  
+                  lastSuccessfulResponse_ = response;
+                  
+                  dataImportOptionsUi_.setPreviewResponse(response);
+                  
+                  gridViewer_.setOption("status",
+                        "Previewing first " + toLocaleString(maxRows_) + 
+                        " entries. " + (
+                              response.getParsingErrors() > 0 ?
+                              Integer.toString(response.getParsingErrors()) + " parsing errors." : "")
+                        );
+                  
+                  assignColumnDefinitions(response, importOptions_.getColumnDefinitions());
+                  
+                  setGridViewerData(response);
+                  
+                  progressIndicator_.onCompleted();
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  gridViewer_.setData(null);
+                  progressIndicator_.onError(error.getMessage());
+               }
+            });
+            
+            /*server_.interrupt(new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onError(ServerError error)
+               {
+               }
+            });
+            */
          }
       });
    }
@@ -230,8 +307,11 @@ public class DataImport extends Composite
    @UiField
    AceEditorWidget codeArea_;
    
-   @UiField
+   @UiField(provided=true)
    PushButton copyButton_;
+   
+   @UiField(provided=true)
+   PushButton interruprButton_;
    
    private void promptForParseString(
       String title,

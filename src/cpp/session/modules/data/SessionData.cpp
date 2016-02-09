@@ -18,6 +18,7 @@
 #include <core/Exec.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionAsyncRProcess.hpp>
 
 #include "DataViewer.hpp"
 
@@ -25,22 +26,87 @@ using namespace rstudio::core ;
 
 namespace rstudio {
 namespace session {
-namespace modules { 
+namespace modules {
 namespace data {
+
+class AsyncDataPreviewRProcess : public async_r::AsyncRProcess
+{
+public:
+   static boost::shared_ptr<AsyncDataPreviewRProcess> create(
+           const json::JsonRpcFunctionContinuation& continuation)
+   {
+      boost::shared_ptr<AsyncDataPreviewRProcess> pDataPreview(
+                  new AsyncDataPreviewRProcess(continuation));
+      pDataPreview->start();
+      return pDataPreview;
+   }
+
+   void terminateProcess()
+   {
+      async_r::AsyncRProcess::terminate();
+   }
+
+private:
+   AsyncDataPreviewRProcess(const json::JsonRpcFunctionContinuation& continuation) :
+       continuation_(continuation)
+   {
+   }
+
+   void start()
+   {
+       core::system::Options environment;
+
+       std::string cmd = ""
+               "asyncFile <- \"/tmp/async.RData\" \n"
+               "asyncData <- list(4, 8, 15, 16, 23, 42) \n"
+               "save(asyncData, file = asyncFile)";
+
+       async_r::AsyncRProcess::start(cmd.c_str(), FilePath(), async_r::R_PROCESS_VANILLA);
+   }
+
+   void onCompleted(int exitStatus)
+   {
+      json::Object jsonResponse;
+      jsonResponse["success"] = "true";
+
+      json::JsonRpcResponse response;
+      response.setResult(jsonResponse);
+      continuation_(Success(), &response);
+   }
+
+   const json::JsonRpcFunctionContinuation continuation_;
+};
+
+boost::shared_ptr<AsyncDataPreviewRProcess> s_pActiveDataPreview;
+
+void getPreviewDataImportAsync(
+        const json::JsonRpcRequest& request,
+        const json::JsonRpcFunctionContinuation& continuation)
+{
+    if (s_pActiveDataPreview &&
+        s_pActiveDataPreview->isRunning())
+    {
+    }
+    else
+    {
+       s_pActiveDataPreview = AsyncDataPreviewRProcess::create(continuation);
+    }
+}
 
 Error initialize()
 {
    using boost::bind;
    using namespace session::module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (data::viewer::initialize)
       (bind(sourceModuleRFile, "SessionDataImport.R"))
-      (bind(sourceModuleRFile, "SessionDataImportV2.R"));
+      (bind(sourceModuleRFile, "SessionDataImportV2.R"))
+      (bind(registerAsyncRpcMethod, "preview_data_import_async", getPreviewDataImportAsync));
 
    return initBlock.execute();
 }
-   
+
 } // namespace data
 } // namespace modules
 } // namesapce session
