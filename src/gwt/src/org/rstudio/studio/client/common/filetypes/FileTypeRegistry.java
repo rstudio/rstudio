@@ -297,7 +297,7 @@ public class FileTypeRegistry
       register("*.r", R, icons.iconRdoc());
       register("*.q", R, icons.iconRdoc());
       register("*.s", R, icons.iconRdoc());
-      register("*.rprof", PROFILER, icons.iconRprofile());
+      register("Rprofile.site", R, icons.iconRprofile());
       register("DESCRIPTION", DCF, icons.iconDCF());
       register("INDEX", TEXT, icons.iconText());
       register("LICENCE", TEXT, icons.iconText());
@@ -393,6 +393,7 @@ public class FileTypeRegistry
       register("*.rs", RUST, icons.iconRust());
       register("*.scala", SCALA, icons.iconScala());
       register("*.snippets", SNIPPETS, icons.iconSnippets());
+      register("*.rprof", PROFILER, icons.iconRprofile());
 
       registerIcon(".jpg", icons.iconPng());
       registerIcon(".jpeg", icons.iconPng());
