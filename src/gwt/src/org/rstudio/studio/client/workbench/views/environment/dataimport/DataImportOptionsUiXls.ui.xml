@@ -15,6 +15,7 @@
 		width: 65px;
 		padding-left: 5px;
 		padding-right: 5px;
+		text-align: right;
 	}
 	.optionsGrowListBox {
 		display: -ms-flexbox;

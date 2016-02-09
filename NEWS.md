@@ -17,6 +17,7 @@
 
 ### Bug Fixes
 
+* Diagnostics: fix false positive errors with '{' following function calls
 * Ensure that modal dialogs capture all input even in the presence of multiple modals
 * Filter out "00LOCK" directories from package name completions
 * Provide completions for 'lazydata' objects within namespaces

@@ -897,15 +897,15 @@ public class DomUtils
    }-*/;
    
    public static final native void copyCodeToClipboard(String text) /*-{
-      var copyDiv = document.createElement('div');
-      copyDiv.contentEditable = true;
-      document.body.appendChild(copyDiv);
-      copyDiv.innerHTML = text;
-      copyDiv.unselectable = "off";
-      copyDiv.focus();
+      var copyElem = document.createElement('pre');
+      copyElem.contentEditable = true;
+      document.body.appendChild(copyElem);
+      copyElem.innerHTML = text;
+      copyElem.unselectable = "off";
+      copyElem.focus();
       document.execCommand('SelectAll');
       document.execCommand("Copy", false, null);
-      document.body.removeChild(copyDiv);
+      document.body.removeChild(copyElem);
    }-*/;
    
    public static final String extractCssValue(String className, 

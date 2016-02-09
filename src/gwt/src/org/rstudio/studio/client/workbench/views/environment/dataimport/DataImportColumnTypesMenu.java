@@ -26,6 +26,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -102,6 +103,8 @@ public class DataImportColumnTypesMenu extends PopupPanel
       {
          menuItemsMap_.put(menuItems_.get(idx).getName(), menuItems_.get(idx));
       }
+      
+      errorPanel_.setVisible(false);
    }
    
    public void setOnChange(
@@ -120,6 +123,10 @@ public class DataImportColumnTypesMenu extends PopupPanel
       };
       
       include_.setStyleName(style.entrySelected());
+      
+      typesPanel_.setVisible(true);
+      includePanel_.setVisible(true);
+      errorPanel_.setVisible(false);
    }
    
    public void setVisibleColumns(String[] columnNames)
@@ -160,6 +167,14 @@ public class DataImportColumnTypesMenu extends PopupPanel
             }
          }
       }
+   }
+   
+   public void setError(String error)
+   {
+      error_.setText(error);
+      errorPanel_.setVisible(true);
+      typesPanel_.setVisible(false);
+      includePanel_.setVisible(false);
    }
    
    @UiField
@@ -278,4 +293,16 @@ public class DataImportColumnTypesMenu extends PopupPanel
    {
       onTypeChange_.execute("factor");
    }
+   
+   @UiField
+   HTMLPanel typesPanel_;
+   
+   @UiField
+   HTMLPanel includePanel_;
+   
+   @UiField
+   HTMLPanel errorPanel_;
+   
+   @UiField
+   Label error_;
 }
