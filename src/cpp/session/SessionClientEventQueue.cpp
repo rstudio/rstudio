@@ -54,8 +54,9 @@ ClientEventQueue::ClientEventQueue()
 {
 }
 
-void ClientEventQueue::setActiveConsole(const std::string& console)
+bool ClientEventQueue::setActiveConsole(const std::string& console)
 {
+   bool changed = false;
    LOCK_MUTEX(*pMutex_)
    {
       if (activeConsole_ != console)
@@ -65,9 +66,11 @@ void ClientEventQueue::setActiveConsole(const std::string& console)
          
          // switch to the new one
          activeConsole_ = console;
+         changed = true;
       }
    }
    END_LOCK_MUTEX
+   return changed;
 }
 
 void ClientEventQueue::add(const ClientEvent& event)

@@ -2041,7 +2041,10 @@ bool rConsoleRead(const std::string& prompt,
    enqueueConsoleInput(*pConsoleInput);
 
    // ensure that output resulting from this input goes to the correct console
-   rsession::clientEventQueue().setActiveConsole(pConsoleInput->console);
+   if (rsession::clientEventQueue().setActiveConsole(pConsoleInput->console))
+   {
+      module_context::events().onActiveConsoleChanged(pConsoleInput->console);
+   }
 
    // always return true (returning false causes the process to exit)
    return true;

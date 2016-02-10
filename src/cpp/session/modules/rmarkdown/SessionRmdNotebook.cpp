@@ -27,6 +27,8 @@
 #include <core/Algorithm.hpp>
 #include <core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/text/CsvParser.hpp>
+#include <core/StringUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
@@ -38,6 +40,12 @@
 #define kChunkLibDir      "lib"
 #define kChunkOutputPath  "chunk_output"
 #define kChunkUrl         "url"
+#define kChunkConsole     "console"
+
+#define kChunkTypeNone    0
+#define kChunkTypeOutput  1
+#define kChunkTypeConsole 2
+
 
 using namespace rstudio::core;
 
@@ -49,6 +57,12 @@ namespace notebook {
 
 namespace {
 
+// the ID of the doc / chunk currently executing console commands (if any)
+std::string s_consoleChunkId, s_consoleDocId, s_activeConsole;
+
+// whether we're currently connected to console events
+bool s_consoleConnected = false;
+
 // A notebook .Rmd is accompanied by a sidecar .Rnb.cached folder, which has
 // the following structure:
 //
@@ -59,14 +73,16 @@ namespace {
 //   + cwiaiw9i4f0_files
 //     - plot.png
 //   - c0aj9vhk0cz.html
+//   - cjz0958jgzh.csv
 //   + lib
 //     + htmlwidgets
 //       - htmlwidget.js
 // 
 // That is:
-// - each chunk has an ID and is represented by a single, self-contained HTML
-//   file, with a separate folder for dependencies
-// - dependencies of each chunk are in a folder alongside the chunk
+// - each chunk has an ID and is represented by one of the following:
+//   - an HTML file (.html) with accompanying dependencies indicating
+//     chunk output, or 
+//   - a CSV file (.csv) indicating console output
 // - the special file "chunks.json" indicates the location of the chunks
 //   in the source .Rmd
 // - the special folder "lib" is used for shared libraries (e.g. scripts upon
@@ -113,13 +129,83 @@ FilePath chunkOutputPath(
                           .childPath(chunkId + ".html");
 }
 
+FilePath chunkConsolePath(
+      const std::string& docPath, const std::string& docId, 
+      const std::string& chunkId)
+   
+{
+   return chunkCacheFolder(docPath, docId)
+                          .childPath(chunkId + ".csv");
+}
+
+Error chunkConsoleContents(const std::string& docPath, const std::string& docId, 
+      const std::string& chunkId, json::Array* pArray)
+{
+   std::string contents;
+   FilePath consoleFile = chunkConsolePath(docPath, docId, chunkId);
+   Error error = readStringFromFile(consoleFile, &contents);
+   if (error)
+      return error;
+
+   // parse each line of the CSV file
+   std::pair<std::vector<std::string>, std::string::iterator> line;
+   line = text::parseCsvLine(contents.begin(), contents.end());
+   while (!line.first.empty())
+   {
+      if (line.first.size() > 2)
+      {
+         json::Array output;
+         output.push_back(safe_convert::stringTo<int>(line.first[0], 
+               module_context::ConsoleOutputNormal));
+         output.push_back(line.first[1]);
+         pArray->push_back(output);
+      }
+      // read next line
+      line = text::parseCsvLine(line.second, contents.end());
+   }
+
+   return Success();
+}
+
 
 Error enqueueChunkOutput(
       const std::string& docPath, const std::string& docId,
       const std::string& chunkId)
 {
+   Error error;
+   FilePath outputPath = chunkOutputPath(docPath, docId, chunkId);
+   FilePath consolePath = chunkConsolePath(docPath, docId, chunkId);
+
+   unsigned chunkType = kChunkTypeNone;
+   if (outputPath.exists() && !consolePath.exists())
+   {
+      chunkType = kChunkTypeOutput;
+   } 
+   else if (consolePath.exists() && !outputPath.exists())
+   {
+      chunkType = kChunkTypeConsole;
+   }
+   else if (outputPath.exists() && consolePath.exists())
+   {
+      // pick the more recent one if we have both
+      if (outputPath.lastWriteTime() > consolePath.lastWriteTime())
+         chunkType = kChunkTypeOutput;
+      else
+         chunkType = kChunkTypeConsole;
+   }
    json::Object output;
-   output[kChunkUrl] = kChunkOutputPath "/" + docId + "/" + chunkId + ".html";
+   if (chunkType == kChunkTypeOutput)
+   {
+      output[kChunkUrl] = kChunkOutputPath "/" + docId + "/" + chunkId + ".html";
+   }
+   else if (chunkType == kChunkTypeConsole)
+   {
+      json::Array consoleOutput;
+      error = chunkConsoleContents(docPath, docId, chunkId, &consoleOutput);
+      if (error)
+         LOG_ERROR(error);
+      output[kChunkConsole] = consoleOutput;
+   }
    output[kChunkId] = chunkId;
    output[kChunkDocId] = docId;
    ClientEvent event(client_events::kChunkOutput, output);
@@ -203,7 +289,7 @@ void replayChunkOutputs(const std::string& docPath, const std::string& docId,
 
 // called by the client to inject output into a recently opened document 
 Error refreshChunkOutput(const json::JsonRpcRequest& request,
-                     json::JsonRpcResponse*)
+                         json::JsonRpcResponse*)
 {
    // extract path to doc to be refreshed
    std::string docPath, docId, requestId;
@@ -286,6 +372,73 @@ void onDocRenamed(const std::string& oldPath,
       LOG_ERROR(error);
 }
 
+void disconnectConsole();
+
+void onConsolePrompt(const std::string& )
+{
+   if (s_consoleConnected)
+      disconnectConsole();
+}
+
+void onConsoleOutput(module_context::ConsoleOutputType type, 
+      const std::string& output)
+{
+   if (!s_consoleConnected || s_consoleChunkId.empty() || output.empty())
+      return;
+
+   std::string path;
+   Error error = source_database::getPath(s_consoleDocId, &path);
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+
+   FilePath outputCsv = chunkConsolePath(
+         module_context::resolveAliasedPath(path).absolutePath(), 
+         s_consoleDocId, s_consoleChunkId);
+
+   std::vector<std::string> vals; 
+   vals.push_back(safe_convert::numberToString(type));
+   vals.push_back(output);
+   error = core::writeStringToFile(outputCsv, 
+         text::encodeCsvLine(vals) + "\n", 
+         string_utils::LineEndingPassthrough, false);
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+}
+
+void disconnectConsole()
+{
+   module_context::events().onConsoleOutput.disconnect(onConsolePrompt);
+   module_context::events().onConsoleOutput.disconnect(onConsoleOutput);
+   s_consoleConnected = false;
+}
+
+void connectConsole()
+{
+   module_context::events().onConsolePrompt.connect(onConsolePrompt);
+   module_context::events().onConsoleOutput.connect(onConsoleOutput);
+   s_consoleConnected = true;
+}
+
+void onActiveConsoleChanged(const std::string& consoleId)
+{
+   s_activeConsole = consoleId;
+   if (consoleId == s_consoleChunkId)
+   {
+      if (s_consoleConnected) 
+         return;
+      connectConsole();
+   }
+   else if (s_consoleConnected)
+   {
+      // some other console is connected; disconnect ours
+      disconnectConsole();
+   }
+}
+
 Error handleChunkOutputRequest(const http::Request& request,
                                http::Response* pResponse)
 {
@@ -323,6 +476,24 @@ Error handleChunkOutputRequest(const http::Request& request,
    return Success();
 }
 
+// called by the client to set the active chunk console
+Error setChunkConsole(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse*)
+{
+
+   std::string docId, chunkId;
+   Error error = json::readParams(request.params, &docId, &chunkId);
+   if (error)
+      return error;
+
+   s_consoleChunkId = chunkId;
+   s_consoleDocId = docId;
+   if (s_activeConsole == chunkId)
+      connectConsole();
+
+   return Success();
+}
+
 // given and old and new set of chunk definitions, cleans up all the chunks
 // files in the old set but not in the new set
 void cleanChunks(const FilePath& cacheDir,
@@ -350,7 +521,10 @@ void cleanChunks(const FilePath& cacheDir,
       error = cacheDir.complete(staleId + ".html").removeIfExists();
       if (error)
          LOG_ERROR(error);
-      cacheDir.complete(staleId + "_files").removeIfExists();
+      error = cacheDir.complete(staleId + "_files").removeIfExists();
+      if (error)
+         LOG_ERROR(error);
+      error = cacheDir.complete(staleId + ".csv").removeIfExists();
       if (error)
          LOG_ERROR(error);
    }
@@ -361,10 +535,6 @@ void cleanChunks(const FilePath& cacheDir,
 Error setChunkDefs(const std::string& docPath, const std::string& docId,
                    const json::Array& newDefs)
 {
-   // TODO: if changes are made to a file but those changes are not saved, 
-   // it causes the chunk state to get out of sync the next time the chunk
-   // file is loaded
-  
    // create JSON object wrapping 
    json::Object chunkDefs;
    chunkDefs[kChunkDefs] = newDefs;
@@ -465,11 +635,15 @@ Error initialize()
 
    source_database::events().onDocRenamed.connect(onDocRenamed);
    source_database::events().onDocRemoved.connect(onDocRemoved);
-   
+
+   module_context::events().onActiveConsoleChanged.connect(
+         onActiveConsoleChanged);
+
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "execute_inline_chunk", executeInlineChunk))
       (bind(registerRpcMethod, "refresh_chunk_output", refreshChunkOutput))
+      (bind(registerRpcMethod, "set_chunk_console", setChunkConsole))
       (bind(registerUriHandler, "/" kChunkOutputPath, 
             handleChunkOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRmdNotebook.R"));

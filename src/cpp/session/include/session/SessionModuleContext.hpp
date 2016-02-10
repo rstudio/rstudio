@@ -314,6 +314,7 @@ struct Events : boost::noncopyable
    boost::signal<void ()>                    onBeforeExecute;
    boost::signal<void(const std::string&)>   onConsolePrompt;
    boost::signal<void(const std::string&)>   onConsoleInput;
+   boost::signal<void(const std::string&)>   onActiveConsoleChanged;
    boost::signal<void (ConsoleOutputType, const std::string&)>
                                              onConsoleOutput;
    boost::signal<void (ChangeSource)>        onDetectChanges;

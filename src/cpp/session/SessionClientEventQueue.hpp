@@ -64,8 +64,9 @@ public:
    // has an event been added since the specified time
    bool eventAddedSince(const boost::posix_time::ptime& time);
 
-   // set the active console to be attached to console events
-   void setActiveConsole(const std::string& console);
+   // set the active console to be attached to console events; returns true if
+   // the active console changed
+   bool setActiveConsole(const std::string& console);
       
 private:   
    void flushPendingConsoleOutput();

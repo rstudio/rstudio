@@ -26,7 +26,10 @@ import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
@@ -154,18 +157,34 @@ public class TextEditingTargetNotebook
    }
    
    @Override
-   public void onSendToChunkConsole(SendToChunkConsoleEvent event)
+   public void onSendToChunkConsole(final SendToChunkConsoleEvent event)
    {
       // not for our doc
       if (event.getDocId() != docUpdateSentinel_.getId())
          return;
       
       // create or update the chunk at the given row
-      ChunkDefinition chunkDef = getChunkDefAtRow(event.getRow());
+      final ChunkDefinition chunkDef = getChunkDefAtRow(event.getRow());
       
-      // execute the input
-      console_.consoleInput(event.getCode(), chunkDef.getChunkId(), 
-            new VoidServerRequestCallback());
+      // have the server start recording output from this chunk
+      server_.setChunkConsole(docUpdateSentinel_.getId(), 
+            chunkDef.getChunkId(), new ServerRequestCallback<Void>()
+      {
+         @Override
+         public void onResponseReceived(Void v)
+         {
+            // execute the input
+            console_.consoleInput(event.getCode(), chunkDef.getChunkId(), 
+                  new VoidServerRequestCallback());
+         }
+         @Override
+         public void onError(ServerError error)
+         {
+            RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                  "Chunk Execution Error", error.getMessage());
+            
+         }
+      });
       
       outputWidgets_.get(chunkDef.getChunkId()).showConsoleCode(
             event.getCode());
