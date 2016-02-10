@@ -58,6 +58,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -2683,6 +2684,63 @@ public class Source implements InsertSourceHandler,
                }
             });  
    }
+   
+   private void openNotebook(final FileSystemItem rnbFile,
+                             final TextFileType fileType,
+                             final ResultCallback<EditingTarget, ServerError> resultCallback)
+   {
+      // construct path to .Rmd
+      String rnbPath = rnbFile.getPath();
+      String rmdPath = FilePathUtils.filePathSansExtension(rnbPath) + ".Rmd";
+      final FileSystemItem rmdFile = FileSystemItem.createFile(rmdPath);
+      
+      // if we already have associated .Rmd file open, then just edit it
+      // TODO: should we perform conflict resolution here as well?
+      if (openFileAlreadyOpen(rmdFile, resultCallback))
+         return;
+      
+      EditingTarget target = editingTargetSource_.getEditingTarget(fileType);
+      
+      // ask the server to extract the .Rmd, then open that
+      server_.extractRmdFromNotebook(
+            rnbPath,
+            rmdPath,
+            new ServerRequestCallback<Boolean>()
+            {
+               @Override
+               public void onResponseReceived(Boolean success)
+               {
+                  openFileFromServer(rmdFile, FileTypeRegistry.RMARKDOWN, resultCallback);
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+   }
+   
+   private boolean openFileAlreadyOpen(final FileSystemItem file,
+                                       final ResultCallback<EditingTarget, ServerError> resultCallback)
+   {
+      // check to see if any local editors have the file open
+      for (int i = 0; i < editors_.size(); i++)
+      {
+         EditingTarget target = editors_.get(i);
+         String thisPath = target.getPath();
+         if (thisPath != null
+             && thisPath.equalsIgnoreCase(file.getPath()))
+         {
+            view_.selectTab(i);
+            pMruList_.get().add(thisPath);
+            if (resultCallback != null)
+               resultCallback.onSuccess(target);
+            return true;
+         }
+      }
+      return false;
+   }
 
    // top-level wrapper for opening files. takes care of:
    //  - making sure the view is visible
@@ -2696,6 +2754,12 @@ public class Source implements InsertSourceHandler,
                          final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
       ensureVisible(true);
+      
+      if (fileType.isRNotebook())
+      {
+         openNotebook(file, fileType, resultCallback);
+         return;
+      }
 
       if (file == null)
       {
@@ -2703,21 +2767,8 @@ public class Source implements InsertSourceHandler,
          return;
       }
 
-      // check to see if any local editors have the file open
-      for (int i = 0; i < editors_.size(); i++)
-      {
-         EditingTarget target = editors_.get(i);
-         String thisPath = target.getPath();
-         if (thisPath != null
-             && thisPath.equalsIgnoreCase(file.getPath()))
-         {
-            view_.selectTab(i);
-            pMruList_.get().add(thisPath);
-            if (resultCallback != null)
-               resultCallback.onSuccess(target);
-            return;
-         }
-      }
+      if (openFileAlreadyOpen(file, resultCallback))
+         return;
       
       EditingTarget target = editingTargetSource_.getEditingTarget(fileType);
 

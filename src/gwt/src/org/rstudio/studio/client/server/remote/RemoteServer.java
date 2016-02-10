@@ -1793,6 +1793,17 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, ICONVLIST, requestCallback);      
    }
+   
+   @Override
+   public void extractRmdFromNotebook(String inputPath,
+                                      String outputPath,
+                                      ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(inputPath));
+      params.set(1, new JSONString(outputPath));
+      sendRequest(RPC_SCOPE, "extract_rmd_from_notebook", params, requestCallback);
+   }
 
    @Override
    public void createNotebook(

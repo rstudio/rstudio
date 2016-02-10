@@ -13,6 +13,30 @@
 #
 #
 
+.rs.addJsonRpcHandler("extract_rmd_from_notebook", function(input, output)
+{
+   if (!file.exists(input))
+      stop("No file at path '", input, "'.")
+   
+   extract_rmd <- function(input) {
+      contents <- readLines(input, warn = FALSE)
+      reDocument <- '<!-- rnb-document-source (\\S+) -->'
+      idx <- grep(reDocument, contents, perl = TRUE)
+      if (!length(idx))
+         stop("Failed to extract document source.")
+      
+      rmdEncoded <- sub(reDocument, "\\1", contents[idx])
+      caTools::base64decode(rmdEncoded, character())
+   }
+   
+   # read and decode the .Rmd
+   rmdContents <- extract_rmd(input)
+   cat(rmdContents, file = output, sep = "\n")
+   
+   # return success to server
+   .rs.scalar(file.exists(output))
+})
+
 .rs.addFunction("executeSingleChunk", function(options,
                                                content,
                                                libDir,

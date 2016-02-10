@@ -237,4 +237,8 @@ public interface SourceServerOperations extends FilesServerOperations,
    
    public void setSourceDocumentDirty(String docId, boolean dirty,
          ServerRequestCallback<Void> requestCallback);
+   
+   public void extractRmdFromNotebook(String inputPath,
+                                      String outputPath,
+                                      ServerRequestCallback<Boolean> requestCallback);
 }
