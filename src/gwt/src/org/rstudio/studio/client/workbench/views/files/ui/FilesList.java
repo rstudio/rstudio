@@ -34,6 +34,7 @@ import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.ImageResourceCell;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -73,6 +74,8 @@ public class FilesList extends Composite
          selectionModel_, 
          DefaultSelectionEventManager.<FileSystemItem> createCheckboxManager());
       filesCellTable_.setWidth("100%", false);
+      
+      filesCellTable_.getElement().getStyle().setWhiteSpace(WhiteSpace.NOWRAP);
       
       // hook-up data provider 
       dataProvider_.addDataDisplay(filesCellTable_);
