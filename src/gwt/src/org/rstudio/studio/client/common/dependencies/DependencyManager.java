@@ -263,7 +263,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
       deps.add(Dependency.cranPackage("xtable", "1.7"));
       deps.add(Dependency.cranPackage("digest", "0.6"));
       deps.add(Dependency.cranPackage("R6", "2.0"));
-      deps.add(Dependency.cranPackage("htmltools", htmltoolsVersion, true));
+      deps.add(Dependency.cranPackage("htmltools", htmltoolsVersion));
       deps.add(Dependency.cranPackage("shiny", shinyVersion, true));
       return deps;
          }
