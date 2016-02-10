@@ -166,4 +166,12 @@ public class Renderer extends JavaScriptObject
       this.alignCursor(position, ratio);
    }-*/;
    
+   public final native void setScrollPastEnd(boolean value) /*-{
+      this.$scrollPastEnd = value;
+   }-*/;
+   
+   public final native boolean getScrollPastEnd() /*-{
+      return !!this.$scrollPastEnd;
+   }-*/;
+   
 }
