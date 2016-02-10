@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dom.builder.shared;
 
+import com.google.gwt.safehtml.shared.annotations.IsTrustedResourceUri;
+
 /**
  * Builds an script element.
  */
@@ -33,12 +35,12 @@ public interface ScriptBuilder extends ElementBuilderBase<ScriptBuilder> {
 
   /**
    * URI designating an external script.
-   * 
+   *
    * @see <a
    *      href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/scripts.html#adef-src-SCRIPT">W3C
    *      HTML Specification</a>
    */
-  ScriptBuilder src(String src);
+  ScriptBuilder src(@IsTrustedResourceUri String src);
 
   /**
    * The content type of the script language.

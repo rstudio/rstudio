@@ -28,6 +28,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
+import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeUriCastCheck;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 
@@ -98,7 +99,7 @@ public final class DisclosurePanel extends Composite implements
    * access.
    */
   private final class ClickableHeader extends SimplePanel {
-
+    @SuppressIsSafeUriCastCheck //TODO(bangert): refactor away setproperty.
     private ClickableHeader() {
       // Anchor is used to allow keyboard access.
       super(DOM.createAnchor());

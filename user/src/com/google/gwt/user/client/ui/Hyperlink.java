@@ -27,6 +27,7 @@ import com.google.gwt.i18n.shared.HasDirectionEstimator;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
+import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeUriCastCheck;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.History;
@@ -345,6 +346,7 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
    * @param targetHistoryToken the new history token, which may not be null (use
    *          {@link Anchor} instead if you don't need history processing)
    */
+  @SuppressIsSafeUriCastCheck //TODO(bangert): Refactor setPropertyString
   public void setTargetHistoryToken(String targetHistoryToken) {
     assert targetHistoryToken != null
       : "targetHistoryToken must not be null, consider using Anchor instead";

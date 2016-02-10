@@ -17,6 +17,7 @@ package com.google.gwt.dom.builder.client;
 
 import com.google.gwt.dom.builder.shared.LinkBuilder;
 import com.google.gwt.dom.client.LinkElement;
+import com.google.gwt.safehtml.shared.annotations.IsTrustedResourceUri;
 
 /**
  * DOM-based implementation of {@link LinkBuilder}.
@@ -35,7 +36,7 @@ public class DomLinkBuilder extends DomElementBuilderBase<LinkBuilder, LinkEleme
   }
 
   @Override
-  public LinkBuilder href(String href) {
+  public LinkBuilder href(@IsTrustedResourceUri String href) {
     assertCanAddAttribute().setHref(href);
     return this;
   }

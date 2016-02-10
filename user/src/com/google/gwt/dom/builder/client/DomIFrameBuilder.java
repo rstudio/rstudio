@@ -20,6 +20,7 @@ import com.google.gwt.dom.builder.shared.IFrameBuilder;
 import com.google.gwt.dom.client.IFrameElement;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
 
 /**
  * DOM-based implementation of {@link IFrameBuilder}.
@@ -84,7 +85,7 @@ public class DomIFrameBuilder extends DomElementBuilderBase<IFrameBuilder, IFram
   }
 
   @Override
-  public IFrameBuilder src(String src) {
+  public IFrameBuilder src(@IsSafeUri String src) {
     assertCanAddAttribute().setSrc(src);
     return this;
   }

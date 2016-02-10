@@ -35,6 +35,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.VerticalAlign;
 import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
 
 /**
  * Builds the style attribute on an element.
@@ -282,15 +283,15 @@ public interface StylesBuilder {
    * ensure that the provided value string won't cause a security issue if
    * included in a style attribute.
    * </p>
-   * 
+   *
    * <p>
    * For details and constraints, see
    * {@link com.google.gwt.safecss.shared.SafeStyles}.
    * </p>
-   * 
+   *
    * @return this {@link StylesBuilder}
    */
-  StylesBuilder trustedBackgroundImage(String value);
+  StylesBuilder trustedBackgroundImage(@IsSafeUri String value);
 
   /**
    * <p>

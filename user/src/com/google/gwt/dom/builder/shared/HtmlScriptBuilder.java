@@ -16,6 +16,7 @@
 package com.google.gwt.dom.builder.shared;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsTrustedResourceUri;
 
 /**
  * HTML-based implementation of {@link ScriptBuilder}.
@@ -43,7 +44,7 @@ public class HtmlScriptBuilder extends HtmlElementBuilderBase<ScriptBuilder> imp
   }
 
   @Override
-  public ScriptBuilder src(String src) {
+  public ScriptBuilder src(@IsTrustedResourceUri String src) {
     return trustedAttribute("src", src);
   }
 

@@ -16,6 +16,7 @@
 package com.google.gwt.dom.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
 
 /**
  * Provides programmatic access to properties of the style object.
@@ -1863,7 +1864,7 @@ public class Style extends JavaScriptObject {
   /**
    * Set the background-image css property.
    */
-  public final void setBackgroundImage(String value) {
+  public final void setBackgroundImage(@IsSafeUri String value) {
     setProperty(STYLE_BACKGROUND_IMAGE, value);
   }
 

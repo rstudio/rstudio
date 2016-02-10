@@ -15,6 +15,8 @@
  */
 package com.google.gwt.safehtml.shared;
 
+import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
+
 /**
  * A string wrapped as an object of type {@link SafeUri}.
  * 
@@ -26,17 +28,17 @@ package com.google.gwt.safehtml.shared;
  * just like String.equals() and String.hashCode().
  */
 class SafeUriString implements SafeUri {
-  private String uri;
+  @IsSafeUri private String uri;
 
   /**
    * Constructs a {@link SafeUriString} from a string. Callers are responsible
    * for ensuring that the string passed as the argument to this constructor
    * satisfies the constraints of the contract imposed by the {@link SafeUri}
    * interface.
-   * 
+   *
    * @param uri the string to be wrapped as a {@link SafeUri}
    */
-  SafeUriString(String uri) {
+  SafeUriString(@IsSafeUri String uri) {
     if (uri == null) {
       throw new NullPointerException("uri is null");
     }
@@ -53,6 +55,7 @@ class SafeUriString implements SafeUri {
   /**
    * {@inheritDoc}
    */
+  @IsSafeUri
   public String asString() {
     return uri;
   }

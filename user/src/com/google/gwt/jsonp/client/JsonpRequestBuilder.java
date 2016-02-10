@@ -16,6 +16,7 @@
 package com.google.gwt.jsonp.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.safehtml.shared.annotations.IsTrustedResourceUri;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 /**
@@ -129,15 +130,18 @@ public class JsonpRequestBuilder {
     return timeout;
   }
 
-  public JsonpRequest<Boolean> requestBoolean(String url, AsyncCallback<Boolean> callback) {
+  public JsonpRequest<Boolean> requestBoolean(
+      @IsTrustedResourceUri String url, AsyncCallback<Boolean> callback) {
     return send(url, callback, false);
   }
 
-  public JsonpRequest<Double> requestDouble(String url, AsyncCallback<Double> callback) {
+  public JsonpRequest<Double> requestDouble(
+      @IsTrustedResourceUri String url, AsyncCallback<Double> callback) {
     return send(url, callback, false);
   }
 
-  public JsonpRequest<Integer> requestInteger(String url, AsyncCallback<Integer> callback) {
+  public JsonpRequest<Integer> requestInteger(
+      @IsTrustedResourceUri String url, AsyncCallback<Integer> callback) {
     return send(url, callback, true);
   }
 
@@ -145,19 +149,20 @@ public class JsonpRequestBuilder {
    * Sends a JSONP request and expects a JavaScript object as a result. The caller can either use
    * {@link com.google.gwt.json.client.JSONObject} to parse it, or use a JavaScript overlay class.
    */
-  public <T extends JavaScriptObject> JsonpRequest<T> requestObject(String url,
-      AsyncCallback<T> callback) {
+  public <T extends JavaScriptObject> JsonpRequest<T> requestObject(
+      @IsTrustedResourceUri String url, AsyncCallback<T> callback) {
     return send(url, callback, false);
   }
 
-  public JsonpRequest<String> requestString(String url, AsyncCallback<String> callback) {
+  public JsonpRequest<String> requestString(
+      @IsTrustedResourceUri String url, AsyncCallback<String> callback) {
     return send(url, callback, false);
   }
 
   /**
    * Sends a JSONP request and does not expect any results.
    */
-  public void send(String url) {
+  public void send(@IsTrustedResourceUri String url) {
     send(url, null, false);
   }
 
@@ -165,7 +170,7 @@ public class JsonpRequestBuilder {
    * Sends a JSONP request, does not expect any result, but still allows to be notified when the
    * request has been executed on the server.
    */
-  public JsonpRequest<Void> send(String url, AsyncCallback<Void> callback) {
+  public JsonpRequest<Void> send(@IsTrustedResourceUri String url, AsyncCallback<Void> callback) {
     return send(url, callback, false);
   }
 
@@ -196,7 +201,8 @@ public class JsonpRequestBuilder {
     this.timeout = timeout;
   }
 
-  private <T> JsonpRequest<T> send(String url, AsyncCallback<T> callback, boolean expectInteger) {
+  private <T> JsonpRequest<T> send(
+      @IsTrustedResourceUri String url, AsyncCallback<T> callback, boolean expectInteger) {
     JsonpRequest<T> request;
     if (predeterminedId != null) {
       request = new JsonpRequest<T>(callback, timeout, expectInteger, callbackParam,

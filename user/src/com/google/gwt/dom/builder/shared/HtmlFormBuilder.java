@@ -16,6 +16,7 @@
 package com.google.gwt.dom.builder.shared;
 
 import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
 
 /**
  * HTML-based implementation of {@link FormBuilder}.
@@ -37,7 +38,7 @@ public class HtmlFormBuilder extends HtmlElementBuilderBase<FormBuilder> impleme
   }
 
   @Override
-  public FormBuilder action(String action) {
+  public FormBuilder action(@IsSafeUri String action) {
     return trustedAttribute("action", action);
   }
 

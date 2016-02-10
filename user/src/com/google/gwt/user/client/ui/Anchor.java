@@ -26,6 +26,7 @@ import com.google.gwt.i18n.shared.HasDirectionEstimator;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
 import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
 
 /**
@@ -222,7 +223,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    * @param html the anchor's html
    * @param href the url to which it will link
    */
-  public Anchor(SafeHtml html, String href) {
+  public Anchor(SafeHtml html, @IsSafeUri String href) {
     this(html.asString(), true, href);
   }
 
@@ -243,7 +244,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    * @param dir the html's direction
    * @param href the url to which it will link
    */
-  public Anchor(SafeHtml html, Direction dir, String href) {
+  public Anchor(SafeHtml html, Direction dir, @IsSafeUri String href) {
     this(html.asString(), true, dir, href);
   }
 
@@ -267,8 +268,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    *          {@link #DEFAULT_DIRECTION_ESTIMATOR} can be used.
    * @param href the url to which it will link
    */
-  public Anchor(SafeHtml html, DirectionEstimator directionEstimator,
-      String href) {
+  public Anchor(SafeHtml html, DirectionEstimator directionEstimator, @IsSafeUri String href) {
     this(html.asString(), true, directionEstimator, href);
   }
 
@@ -293,7 +293,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    * @param href the url to which it will link
    */
   @SuppressIsSafeHtmlCastCheck
-  public Anchor(String text, String href) {
+  public Anchor(String text, @IsSafeUri String href) {
     this(text, false, href);
   }
 
@@ -305,7 +305,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    * @param href the url to which it will link
    */
   @SuppressIsSafeHtmlCastCheck
-  public Anchor(String text, Direction dir, String href) {
+  public Anchor(String text, Direction dir, @IsSafeUri String href) {
     this(text, false, dir, href);
   }
 
@@ -319,7 +319,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    * @param href the url to which it will link
    */
   @SuppressIsSafeHtmlCastCheck
-  public Anchor(String text, DirectionEstimator directionEstimator, String href) {
+  public Anchor(String text, DirectionEstimator directionEstimator, @IsSafeUri String href) {
     this(text, false, directionEstimator, href);
   }
 
@@ -330,7 +330,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    * @param asHTML <code>true</code> to treat the specified text as html
    * @param href the url to which it will link
    */
-  public Anchor(@IsSafeHtml String text, boolean asHTML, String href) {
+  public Anchor(@IsSafeHtml String text, boolean asHTML, @IsSafeUri String href) {
     this();
     directionalTextHelper.setTextOrHtml(text, asHTML);
     setHref(href);
@@ -346,7 +346,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    * @param target the target frame (e.g. "_blank" to open the link in a new
    *          window)
    */
-  public Anchor(SafeHtml html, String href, String target) {
+  public Anchor(SafeHtml html, @IsSafeUri String href, String target) {
     this(html.asString(), true, href, target);
   }
 
@@ -373,7 +373,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    *          window)
    */
   @SuppressIsSafeHtmlCastCheck
-  public Anchor(String text, String href, String target) {
+  public Anchor(String text, @IsSafeUri String href, String target) {
     this(text, false, href, target);
   }
 
@@ -388,7 +388,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    * @param target the target frame (e.g. "_blank" to open the link in a new
    *          window)
    */
-  public Anchor(@IsSafeHtml String text, boolean asHtml, String href, String target) {
+  public Anchor(@IsSafeHtml String text, boolean asHtml, @IsSafeUri String href, String target) {
     this(text, asHtml, href);
     setTarget(target);
   }
@@ -414,7 +414,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    * @param dir the text's direction
    * @param href the url to which it will link
    */
-  private Anchor(@IsSafeHtml String text, boolean asHTML, Direction dir, String href) {
+  private Anchor(@IsSafeHtml String text, boolean asHTML, Direction dir, @IsSafeUri String href) {
     this();
     directionalTextHelper.setTextOrHtml(text, dir, asHTML);
     setHref(href);
@@ -431,7 +431,10 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    * @param href the url to which it will link
    */
   private Anchor(
-      @IsSafeHtml String text, boolean asHTML, DirectionEstimator directionEstimator, String href) {
+      @IsSafeHtml String text,
+      boolean asHTML,
+      DirectionEstimator directionEstimator,
+      @IsSafeUri String href) {
     this();
     directionalTextHelper.setDirectionEstimator(directionEstimator);
     directionalTextHelper.setTextOrHtml(text, asHTML);
@@ -570,7 +573,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    *
    * @param href the anchor's href
    */
-  public void setHref(String href) {
+  public void setHref(@IsSafeUri String href) {
     getAnchorElement().setHref(href);
   }
 

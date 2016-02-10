@@ -16,6 +16,7 @@
 package com.google.gwt.dom.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.safehtml.shared.annotations.IsTrustedResourceUri;
 
 /**
  * The LINK element specifies a link to an external resource, and defines this
@@ -155,10 +156,10 @@ public class LinkElement extends Element {
 
   /**
    * The URI of the linked resource.
-   * 
+   *
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href">W3C HTML Specification</a>
    */
-  public final native void setHref(String href) /*-{
+  public final native void setHref(@IsTrustedResourceUri String href) /*-{
      this.href = href;
    }-*/;
 

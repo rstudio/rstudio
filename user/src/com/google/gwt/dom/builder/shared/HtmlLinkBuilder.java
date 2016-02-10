@@ -14,6 +14,7 @@
  * the License.
  */
 package com.google.gwt.dom.builder.shared;
+import com.google.gwt.safehtml.shared.annotations.IsTrustedResourceUri;
 
 /**
  * HTML-based implementation of {@link LinkBuilder}.
@@ -30,7 +31,7 @@ public class HtmlLinkBuilder extends HtmlElementBuilderBase<LinkBuilder> impleme
   }
 
   @Override
-  public LinkBuilder href(String href) {
+  public LinkBuilder href(@IsTrustedResourceUri String href) {
     return trustedAttribute("href", href);
   }
 

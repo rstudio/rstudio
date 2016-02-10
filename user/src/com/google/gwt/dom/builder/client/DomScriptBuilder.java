@@ -18,6 +18,7 @@ package com.google.gwt.dom.builder.client;
 import com.google.gwt.dom.builder.shared.ScriptBuilder;
 import com.google.gwt.dom.client.ScriptElement;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.annotations.IsTrustedResourceUri;
 
 /**
  * DOM-based implementation of {@link ScriptBuilder}.
@@ -46,7 +47,7 @@ public class DomScriptBuilder extends DomElementBuilderBase<ScriptBuilder, Scrip
   }
 
   @Override
-  public ScriptBuilder src(String src) {
+  public ScriptBuilder src(@IsTrustedResourceUri String src) {
     assertCanAddAttribute().setSrc(src);
     return this;
   }

@@ -24,6 +24,7 @@ import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.annotations.IsTrustedResourceUri;
 
 /**
  * A widget that wraps an IFRAME element, which can contain an arbitrary web
@@ -78,10 +79,10 @@ public class Frame extends Widget implements HasLoadHandlers {
 
   /**
    * Creates a frame that displays the resource at the specified URL.
-   * 
+   *
    * @param url the URL of the resource to be displayed
    */
-  public Frame(String url) {
+  public Frame(@IsTrustedResourceUri String url) {
     this();
     setUrl(url);
   }
@@ -119,19 +120,19 @@ public class Frame extends Widget implements HasLoadHandlers {
 
   /**
    * Sets the URL of the resource to be displayed within the frame.
-   * 
+   *
    * @param url the frame's new URL
    */
-  public void setUrl(String url) {
+  public void setUrl(@IsTrustedResourceUri String url) {
     getFrameElement().setSrc(url);
   }
 
   /**
    * Sets the URL of the resource to be displayed within the frame.
-   * 
+   *
    * @param url the frame's new URL
    */
-  public void setUrl(SafeUri url) {
+  public void setUrl(@IsTrustedResourceUri SafeUri url) {
     getFrameElement().setSrc(url);
   }
 

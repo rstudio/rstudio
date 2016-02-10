@@ -16,6 +16,7 @@
 package com.google.gwt.dom.builder.shared;
 
 import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
 
 /**
  * HTML-based implementation of {@link AnchorBuilder}.
@@ -38,7 +39,7 @@ public class HtmlAnchorBuilder extends HtmlElementBuilderBase<AnchorBuilder> imp
   }
 
   @Override
-  public AnchorBuilder href(String href) {
+  public AnchorBuilder href(@IsSafeUri String href) {
     return trustedAttribute("href", href);
   }
 

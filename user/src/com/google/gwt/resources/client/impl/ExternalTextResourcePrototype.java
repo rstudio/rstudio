@@ -27,6 +27,7 @@ import com.google.gwt.resources.client.ResourceCallback;
 import com.google.gwt.resources.client.ResourceException;
 import com.google.gwt.resources.client.TextResource;
 import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.annotations.SuppressIsTrustedResourceUriCastCheck;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 /**
@@ -157,8 +158,8 @@ public class ExternalTextResourcePrototype implements ExternalTextResource {
   /**
    * Possibly fire off an HTTPRequest for the text resource.
    */
-  public void getText(ResourceCallback<TextResource> callback)
-      throws ResourceException {
+  @SuppressIsTrustedResourceUriCastCheck
+  public void getText(ResourceCallback<TextResource> callback) throws ResourceException {
 
     // If we've already parsed the JSON bundle, short-circuit.
     if (cache[index] != null) {

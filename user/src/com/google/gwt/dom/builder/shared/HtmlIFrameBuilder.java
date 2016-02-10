@@ -17,6 +17,7 @@ package com.google.gwt.dom.builder.shared;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
 
 /**
  * HTML-based implementation of {@link IFrameBuilder}.
@@ -74,7 +75,7 @@ public class HtmlIFrameBuilder extends HtmlElementBuilderBase<IFrameBuilder> imp
   }
 
   @Override
-  public IFrameBuilder src(String src) {
+  public IFrameBuilder src(@IsSafeUri String src) {
     return trustedAttribute("src", src);
   }
 

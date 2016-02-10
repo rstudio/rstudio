@@ -27,6 +27,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.impl.FormPanelImpl;
 import com.google.gwt.user.client.ui.impl.FormPanelImplHost;
@@ -517,7 +518,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
    *
    * @param url the form's action
    */
-  public void setAction(String url) {
+  public void setAction(@IsSafeUri String url) {
     getFormElement().setAction(url);
   }
 

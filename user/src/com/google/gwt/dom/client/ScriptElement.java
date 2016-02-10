@@ -16,6 +16,7 @@
 package com.google.gwt.dom.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.safehtml.shared.annotations.IsTrustedResourceUri;
 
 /**
  * Script statements.
@@ -117,10 +118,10 @@ public class ScriptElement extends Element {
 
   /**
    * URI designating an external script.
-   * 
+   *
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/scripts.html#adef-src-SCRIPT">W3C HTML Specification</a>
    */
-  public final native void setSrc(String src) /*-{
+  public final native void setSrc(@IsTrustedResourceUri String src) /*-{
      this.src = src;
    }-*/;
 

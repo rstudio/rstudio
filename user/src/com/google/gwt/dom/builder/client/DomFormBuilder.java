@@ -18,6 +18,7 @@ package com.google.gwt.dom.builder.client;
 import com.google.gwt.dom.builder.shared.FormBuilder;
 import com.google.gwt.dom.client.FormElement;
 import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
 
 /**
  * DOM-based implementation of {@link FormBuilder}.
@@ -42,7 +43,7 @@ public class DomFormBuilder extends DomElementBuilderBase<FormBuilder, FormEleme
   }
 
   @Override
-  public FormBuilder action(String action) {
+  public FormBuilder action(@IsSafeUri String action) {
     assertCanAddAttribute().setAction(action);
     return this;
   }

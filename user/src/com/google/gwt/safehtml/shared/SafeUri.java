@@ -15,6 +15,8 @@
  */
 package com.google.gwt.safehtml.shared;
 
+import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
+
 /**
  * An object that implements this interface encapsulates a URI that is
  * guaranteed to be safe to use (with respect to potential Cross-Site-Scripting
@@ -64,6 +66,7 @@ public interface SafeUri {
    *
    * @return the contents as a String
    */
+  @IsSafeUri
   String asString();
 
   /**

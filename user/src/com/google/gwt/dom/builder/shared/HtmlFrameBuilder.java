@@ -16,6 +16,8 @@
 package com.google.gwt.dom.builder.shared;
 
 import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.annotations.IsTrustedResourceUri;
+import com.google.gwt.safehtml.shared.annotations.SuppressIsTrustedResourceUriCastCheck;
 
 /**
  * HTML-based implementation of {@link FrameBuilder}.
@@ -67,12 +69,13 @@ public class HtmlFrameBuilder extends HtmlElementBuilderBase<FrameBuilder> imple
   }
 
   @Override
-  public FrameBuilder src(SafeUri src) {
+  @SuppressIsTrustedResourceUriCastCheck
+  public FrameBuilder src(@IsTrustedResourceUri SafeUri src) {
     return src(src.asString());
   }
 
   @Override
-  public FrameBuilder src(String src) {
+  public FrameBuilder src(@IsTrustedResourceUri String src) {
     return trustedAttribute("src", src);
   }
 }

@@ -17,6 +17,7 @@ package com.google.gwt.dom.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
 
 /**
  * The FORM element encompasses behavior similar to a collection and an element.
@@ -170,7 +171,7 @@ public class FormElement extends Element {
    *
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-action">W3C HTML Specification</a>
    */
-  public final native void setAction(String action) /*-{
+  public final native void setAction(@IsSafeUri String action) /*-{
     this.action = action;
   }-*/;
 

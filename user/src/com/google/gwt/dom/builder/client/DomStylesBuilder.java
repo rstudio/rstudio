@@ -39,6 +39,7 @@ import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
 
 import java.util.Locale;
 
@@ -404,7 +405,7 @@ class DomStylesBuilder implements StylesBuilder {
   }
 
   @Override
-  public StylesBuilder trustedBackgroundImage(String value) {
+  public StylesBuilder trustedBackgroundImage(@IsSafeUri String value) {
     delegate.assertCanAddStyleProperty().setBackgroundImage(value);
     return this;
   }
