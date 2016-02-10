@@ -156,6 +156,7 @@
    rmarkdown::render(input = inputFile,
                      output_format = outputFormat,
                      output_file = output,
+                     output_options = list(self_contained = TRUE),
                      encoding = "UTF-8",
                      envir = envir,
                      quiet = TRUE)
