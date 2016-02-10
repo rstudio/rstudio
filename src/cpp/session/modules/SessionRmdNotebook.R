@@ -50,3 +50,78 @@
   invisible(NULL)
 })
 
+.rs.addFunction("createNotebook", function(rmdFile)
+{
+   find_chunks <- function(contents) {
+      chunkStarts <- grep("^\\s*```{", contents, perl = TRUE)
+      chunkEnds <- grep("^\\s*```\\s*$", contents, perl = TRUE)
+      chunkRanges <- Map(list, start = chunkStarts, end = chunkEnds)
+      lapply(chunkRanges, function(range) {
+         list(start = range$start,
+              end = range$end,
+              header = contents[range$start],
+              contents = contents[(range$start + 1):(range$end - 1)])
+      })
+   }
+   
+   chunk_annotation <- function(name, index, row) {
+      sprintf("\n\n<!-- rnb-chunk-%s-%s %s -->\n\n", name, index, row)
+   }
+   
+   rmdFile <- normalizePath(rmdFile, winslash = "/", mustWork = TRUE)
+   contents <- readLines(rmdFile, warn = FALSE)
+   
+   # inject placeholders so we can track chunk locations after render
+   # ensure that the comments are surrounded by newlines, as otherwise
+   # strange render errors can occur
+   modified <- contents
+   chunks <- find_chunks(modified)
+   for (i in seq_along(chunks)) {
+      startIdx <- chunks[[i]]$start
+      modified[startIdx] <- paste(
+         chunk_annotation("start", i, startIdx),
+         modified[startIdx],
+         sep = ""
+      )
+      
+      endIdx <- chunks[[i]]$end
+      modified[endIdx] <- paste(
+         modified[endIdx],
+         chunk_annotation("end", i, endIdx),
+         sep = ""
+      )
+   }
+   
+   # inject base64-encoded document into document
+   # (i heard you like documents, so i put a document in your document)
+   partitioned <- rmarkdown:::partition_yaml_front_matter(modified)
+   encoded <- caTools::base64encode(paste(c(contents, ""), collapse = "\n"))
+   injected <- c(
+      partitioned$front_matter,
+      "",
+      sprintf("<!-- rnb-document-source %s -->", encoded),
+      "",
+      partitioned$body
+   )
+   
+   # write out file and prepare for render
+   inputFile <- tempfile("rnb-input-file-", fileext = ".Rmd")
+   writeLines(injected, inputFile)
+   
+   # render the document
+   outputFormat <- rmarkdown::html_document()
+   
+   #outputFile <- tempfile("r-notebook-", fileext = ".html")
+   outputFile <- file.path("/tmp/r-notebook/r-notebook.html")
+   if (!file.exists(dirname(outputFile)))
+      dir.create(dirname(outputFile), recursive = TRUE)
+   
+   rmarkdown::render(input = inputFile,
+                     output_format = outputFormat,
+                     output_file = outputFile,
+                     encoding = "UTF-8",
+                     quiet = TRUE)
+   
+   invisible(outputFile)
+   
+})
