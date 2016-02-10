@@ -50,7 +50,7 @@
   invisible(NULL)
 })
 
-.rs.addFunction("createNotebook", function(rmdFile)
+.rs.addFunction("createNotebook", function(input, output = NULL, envir = .GlobalEnv)
 {
    find_chunks <- function(contents) {
       chunkStarts <- grep("^\\s*```{", contents, perl = TRUE)
@@ -68,8 +68,8 @@
       sprintf("\n\n<!-- rnb-chunk-%s-%s %s -->\n\n", name, index, row)
    }
    
-   rmdFile <- normalizePath(rmdFile, winslash = "/", mustWork = TRUE)
-   contents <- readLines(rmdFile, warn = FALSE)
+   input <- normalizePath(input, winslash = "/", mustWork = TRUE)
+   contents <- readLines(input, warn = FALSE)
    
    # inject placeholders so we can track chunk locations after render
    # ensure that the comments are surrounded by newlines, as otherwise
@@ -111,17 +111,19 @@
    # render the document
    outputFormat <- rmarkdown::html_document()
    
-   #outputFile <- tempfile("r-notebook-", fileext = ".html")
-   outputFile <- file.path("/tmp/r-notebook/r-notebook.html")
-   if (!file.exists(dirname(outputFile)))
-      dir.create(dirname(outputFile), recursive = TRUE)
+   if (is.null(output))
+      output <- paste(tools::file_path_sans_ext(input), "Rnb", sep = ".")
+   
+   if (!file.exists(dirname(output)))
+      dir.create(dirname(output), recursive = TRUE)
    
    rmarkdown::render(input = inputFile,
                      output_format = outputFormat,
-                     output_file = outputFile,
+                     output_file = output,
                      encoding = "UTF-8",
+                     envir = envir,
                      quiet = TRUE)
    
-   invisible(outputFile)
+   invisible(output)
    
 })
