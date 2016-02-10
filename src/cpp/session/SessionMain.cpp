@@ -2036,15 +2036,15 @@ bool rConsoleRead(const std::string& prompt,
    // we are about to return input to r so set the flag indicating that state
    setExecuting(true);
 
-   ClientEvent promptEvent(kConsoleWritePrompt, prompt);
-   rsession::clientEventQueue().add(promptEvent);
-   enqueueConsoleInput(*pConsoleInput);
-
    // ensure that output resulting from this input goes to the correct console
    if (rsession::clientEventQueue().setActiveConsole(pConsoleInput->console))
    {
       module_context::events().onActiveConsoleChanged(pConsoleInput->console);
    }
+
+   ClientEvent promptEvent(kConsoleWritePrompt, prompt);
+   rsession::clientEventQueue().add(promptEvent);
+   enqueueConsoleInput(*pConsoleInput);
 
    // always return true (returning false causes the process to exit)
    return true;

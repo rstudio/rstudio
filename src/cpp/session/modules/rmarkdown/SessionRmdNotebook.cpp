@@ -42,10 +42,13 @@
 #define kChunkUrl         "url"
 #define kChunkConsole     "console"
 
+#define kChunkConsoleInput  0
+#define kChunkConsoleOutput 1
+#define kChunkConsoleError  3
+
 #define kChunkTypeNone    0
 #define kChunkTypeOutput  1
 #define kChunkTypeConsole 2
-
 
 using namespace rstudio::core;
 
@@ -380,8 +383,7 @@ void onConsolePrompt(const std::string& )
       disconnectConsole();
 }
 
-void onConsoleOutput(module_context::ConsoleOutputType type, 
-      const std::string& output)
+void onConsoleText(int type, const std::string& output)
 {
    if (!s_consoleConnected || s_consoleChunkId.empty() || output.empty())
       return;
@@ -409,10 +411,25 @@ void onConsoleOutput(module_context::ConsoleOutputType type,
    }
 }
 
+void onConsoleOutput(module_context::ConsoleOutputType type, 
+      const std::string& output)
+{
+   if (type == module_context::ConsoleOutputNormal)
+      onConsoleText(kChunkConsoleOutput, output);
+   else
+      onConsoleText(kChunkConsoleError, output);
+}
+
+void onConsoleInput(const std::string& input)
+{
+   onConsoleText(kChunkConsoleInput, input);
+}
+
 void disconnectConsole()
 {
-   module_context::events().onConsoleOutput.disconnect(onConsolePrompt);
+   module_context::events().onConsolePrompt.disconnect(onConsolePrompt);
    module_context::events().onConsoleOutput.disconnect(onConsoleOutput);
+   module_context::events().onConsoleInput.disconnect(onConsoleInput);
    s_consoleConnected = false;
 }
 
@@ -420,6 +437,7 @@ void connectConsole()
 {
    module_context::events().onConsolePrompt.connect(onConsolePrompt);
    module_context::events().onConsoleOutput.connect(onConsoleOutput);
+   module_context::events().onConsoleInput.connect(onConsoleInput);
    s_consoleConnected = true;
 }
 

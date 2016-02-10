@@ -152,6 +152,15 @@ public class ChunkOutputWidget extends Composite
       }
    }
    
+   private String classOfOutput(int type)
+   {
+      if (type == CONSOLE_ERROR)
+        return RStudioGinjector.INSTANCE.getUIPrefs().getThemeErrorClass();
+      else if (type == CONSOLE_INPUT)
+        return "ace_keyword";
+      return null;
+   }
+   
    private void showConsoleOutput(JsArray<JsArrayEx> output)
    {
       initConsole();
@@ -160,10 +169,11 @@ public class ChunkOutputWidget extends Composite
       {
          if (output.get(i).length() < 2)
             continue;
-         vconsole_.submit(output.get(i).getString(1), 
-               output.get(i).getInt(0) == 0 ? 
-                  null : 
-                  RStudioGinjector.INSTANCE.getUIPrefs().getThemeErrorClass());
+         vconsole_.submit(
+               (output.get(i).getInt(0) == CONSOLE_INPUT ? 
+                     "> " + output.get(i).getString(1)  + "\n" :
+                     output.get(i).getString(1)), 
+               classOfOutput(output.get(i).getInt(0)));
       }
       vconsole_.redraw(console_.getElement());
       onRenderCompleted_.execute(console_.getElement().getOffsetHeight());
@@ -208,7 +218,7 @@ public class ChunkOutputWidget extends Composite
    {
       if (state_ != CONSOLE_EXECUTING || event.getConsole() != chunkId_)
          return;
-      renderConsoleOutput(event.getOutput(), null);
+      renderConsoleOutput(event.getOutput(), classOfOutput(CONSOLE_OUTPUT));
    }
    
    @Override
@@ -216,8 +226,7 @@ public class ChunkOutputWidget extends Composite
    {
       if (state_ != CONSOLE_EXECUTING || event.getConsole() != chunkId_)
          return;
-      renderConsoleOutput(event.getError(), 
-            RStudioGinjector.INSTANCE.getUIPrefs().getThemeErrorClass());
+      renderConsoleOutput(event.getError(), classOfOutput(CONSOLE_ERROR));
    }
    
    @Override
@@ -225,7 +234,8 @@ public class ChunkOutputWidget extends Composite
    {
       if (state_ != CONSOLE_EXECUTING || event.getConsole() != chunkId_)
          return;
-      renderConsoleOutput("> " + event.getInput(), "ace_keyword");
+      renderConsoleOutput("> " + event.getInput(), 
+            classOfOutput(CONSOLE_INPUT));
    }
 
    @Override
@@ -391,4 +401,8 @@ public class ChunkOutputWidget extends Composite
    public final static int CHUNK_RENDERED    = 3;
    public final static int CONSOLE_READY     = 4;
    public final static int CONSOLE_EXECUTING = 5;
+   
+   public final static int CONSOLE_INPUT  = 0;
+   public final static int CONSOLE_OUTPUT = 1;
+   public final static int CONSOLE_ERROR  = 2;
 }
