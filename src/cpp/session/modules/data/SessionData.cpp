@@ -19,6 +19,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncRProcess.hpp>
+#include <r/session/RSessionUtils.hpp>
 
 #include "DataViewer.hpp"
 
@@ -52,29 +53,76 @@ private:
    {
    }
 
+   FilePath pathFromModulesSource(std::string sourceFile)
+   {
+      FilePath modulesPath = session::options().modulesRSourcePath();
+      FilePath srcPath = modulesPath.complete(sourceFile);
+
+      return srcPath;
+   }
+
+   FilePath pathFromSource(std::string sourceFile)
+   {
+      FilePath sourcesPath = session::options().coreRSourcePath();
+      FilePath srcPath = sourcesPath.complete(sourceFile);
+
+      return srcPath;
+   }
+
    void start()
    {
-       core::system::Options environment;
+      // std::string cmd = "saveSomeData()";
 
        std::string cmd = ""
-               "asyncFile <- \"/tmp/async.RData\" \n"
-               "asyncData <- list(4, 8, 15, 16, 23, 42) \n"
-               "save(asyncData, file = asyncFile)";
+         "asyncFile <- \"/tmp/async.RData\"; "
+         "asyncData <- list(4, 8, 15, 16, 23, 42); "
+         "save(asyncData, file = asyncFile)";
 
-       async_r::AsyncRProcess::start(cmd.c_str(), FilePath(), async_r::R_PROCESS_VANILLA);
+
+      std::vector<core::FilePath> sources;
+      sources.push_back(pathFromSource("Tools.R"));
+      sources.push_back(pathFromModulesSource("ModuleTools.R"));
+      sources.push_back(pathFromModulesSource("SessionDataViewer.R"));
+      sources.push_back(pathFromModulesSource("SessionDataImportV2.R"));
+      sources.push_back(pathFromModulesSource("SessionDataImportAsync.R"));
+
+      async_r::AsyncRProcess::start(cmd.c_str(), FilePath(), async_r::R_PROCESS_VANILLA, sources);
    }
 
    void onCompleted(int exitStatus)
    {
+      if (errors_.size() > 0)
+      {
+          json::Object jsonError;
+          jsonError["message"] = json::toJsonArray(errors_);
+
+          json::Object jsonErrorResponse;
+          jsonErrorResponse["error"] = jsonError;
+
+          json::JsonRpcResponse response;
+          response.setResult(jsonErrorResponse);
+
+          continuation_(Success(), &response);
+
+          return;
+      }
+
       json::Object jsonResponse;
       jsonResponse["success"] = "true";
 
       json::JsonRpcResponse response;
       response.setResult(jsonResponse);
+
       continuation_(Success(), &response);
    }
 
+   void onStderr(const std::string& output)
+   {
+      errors_.push_back(output);
+   }
+
    const json::JsonRpcFunctionContinuation continuation_;
+   std::vector<std::string> errors_;
 };
 
 boost::shared_ptr<AsyncDataPreviewRProcess> s_pActiveDataPreview;
@@ -83,14 +131,14 @@ void getPreviewDataImportAsync(
         const json::JsonRpcRequest& request,
         const json::JsonRpcFunctionContinuation& continuation)
 {
-    if (s_pActiveDataPreview &&
-        s_pActiveDataPreview->isRunning())
-    {
-    }
-    else
-    {
-       s_pActiveDataPreview = AsyncDataPreviewRProcess::create(continuation);
-    }
+   if (s_pActiveDataPreview &&
+      s_pActiveDataPreview->isRunning())
+   {
+   }
+   else
+   {
+      s_pActiveDataPreview = AsyncDataPreviewRProcess::create(continuation);
+   }
 }
 
 Error initialize()
