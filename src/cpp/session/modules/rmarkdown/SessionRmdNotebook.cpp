@@ -152,7 +152,7 @@ Error chunkConsoleContents(const std::string& docPath, const std::string& docId,
    line = text::parseCsvLine(contents.begin(), contents.end());
    while (!line.first.empty())
    {
-      if (line.first.size() > 2)
+      if (line.first.size() > 1)
       {
          json::Array output;
          output.push_back(safe_convert::stringTo<int>(line.first[0], 

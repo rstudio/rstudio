@@ -15,8 +15,10 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -31,6 +33,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInpu
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
@@ -139,6 +142,41 @@ public class ChunkOutputWidget extends Composite
 
    public void showChunkOutput(RmdChunkOutput output)
    {
+      if (StringUtil.isNullOrEmpty(output.getUrl()))
+      {
+         showConsoleOutput(output.getConsole());
+      }
+      else
+      {
+         showHtmlOutput(output.getUrl());
+      }
+   }
+   
+   private void showConsoleOutput(JsArray<JsArrayEx> output)
+   {
+      initConsole();
+      
+      for (int i = 0; i < output.length(); i++)
+      {
+         if (output.get(i).length() < 2)
+            continue;
+         vconsole_.submit(output.get(i).getString(1), 
+               output.get(i).getInt(0) == 0 ? 
+                  null : 
+                  RStudioGinjector.INSTANCE.getUIPrefs().getThemeErrorClass());
+      }
+      vconsole_.redraw(console_.getElement());
+      onRenderCompleted_.execute(console_.getElement().getOffsetHeight());
+      
+      state_ = CONSOLE_READY;
+   }
+   
+   private void showHtmlOutput(String url)
+   {
+      // destroy console if necessary
+      if (state_ == CONSOLE_READY)
+         destroyConsole();
+      
       // clean up old frame if needed
       if (frame_ != null)
          frame_.removeFromParent();
@@ -148,7 +186,7 @@ public class ChunkOutputWidget extends Composite
       frame_.getElement().getStyle().setWidth(100, Unit.PCT);
       root_.add(frame_);
 
-      frame_.loadUrl(output.getUrl(), new Command() 
+      frame_.loadUrl(url, new Command() 
       {
          @Override
          public void execute()
@@ -264,10 +302,16 @@ public class ChunkOutputWidget extends Composite
    {
       if (vconsole_ == null)
          vconsole_ = new VirtualConsole();
+      else
+         vconsole_.clear();
       if (console_ == null)
       {
          console_ = new PreWidget();
          console_.getElement().getStyle().setMarginTop(0, Unit.PX);
+      }
+      else
+      {
+         console_.getElement().setInnerHTML("");
       }
       // remove the frame if it exists
       if (frame_ != null)

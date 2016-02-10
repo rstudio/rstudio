@@ -14,7 +14,10 @@
  */
 package org.rstudio.studio.client.rmarkdown.model;
 
+import org.rstudio.core.client.js.JsArrayEx;
+
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
 public class RmdChunkOutput extends JavaScriptObject
 {
@@ -30,6 +33,10 @@ public class RmdChunkOutput extends JavaScriptObject
    }-*/;
 
    public final native String getUrl() /*-{
-      return this.url;
+      return this.url || "";
+   }-*/;
+   
+   public final native JsArray<JsArrayEx> getConsole() /*-{
+      return this.console || [];
    }-*/;
 }
