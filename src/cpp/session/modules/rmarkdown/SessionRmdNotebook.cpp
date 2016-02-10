@@ -217,44 +217,6 @@ Error enqueueChunkOutput(
    return Success();
 }
 
-Error executeInlineChunk(const json::JsonRpcRequest& request,
-                         json::JsonRpcResponse*)
-{
-   std::string docPath, docId, chunkId, chunkOptions, content;
-   Error error = json::readParams(request.params, &docPath, &docId, &chunkId, 
-         &chunkOptions, &content);
-   if (error)
-      return error;
-
-   // ensure we have a place to put the output
-   FilePath chunkOutput = chunkOutputPath(docPath, docId, chunkId);
-   error = chunkOutput.parent().ensureDirectory();
-   if (error)
-      return error;
-
-   // ensure we have a library path
-   FilePath chunkLibDir = chunkCacheFolder(docPath, docId).complete(
-         kChunkLibDir);
-   error = chunkLibDir.ensureDirectory();
-   if (error)
-      return error;
-
-   FilePath headerHtml = options().rResourcesPath().complete("notebook").
-      complete("in_header.html");
-
-   // render the contents to the cached folder
-   error = r::exec::RFunction(".rs.executeSingleChunk", chunkOptions, content,
-         chunkLibDir.absolutePath(),
-         headerHtml.absolutePath(),
-         chunkOutput.absolutePath()).call();
-   if (error)
-      return error;
-
-   error = enqueueChunkOutput(docPath, docId, chunkId);
-
-   return Success();
-}
-
 void extractChunkIds(const json::Array& chunkOutputs, 
                      std::vector<std::string> *pIds)
 {
@@ -383,13 +345,14 @@ void onConsolePrompt(const std::string& )
       disconnectConsole();
 }
 
-void onConsoleText(int type, const std::string& output)
+void onConsoleText(const std::string& docId, const std::string& chunkId,
+                   int type, const std::string& output, bool truncate)
 {
-   if (!s_consoleConnected || s_consoleChunkId.empty() || output.empty())
+   if (output.empty())
       return;
 
    std::string path;
-   Error error = source_database::getPath(s_consoleDocId, &path);
+   Error error = source_database::getPath(docId, &path);
    if (error)
    {
       LOG_ERROR(error);
@@ -397,14 +360,14 @@ void onConsoleText(int type, const std::string& output)
 
    FilePath outputCsv = chunkConsolePath(
          module_context::resolveAliasedPath(path).absolutePath(), 
-         s_consoleDocId, s_consoleChunkId);
+         docId, chunkId);
 
    std::vector<std::string> vals; 
    vals.push_back(safe_convert::numberToString(type));
    vals.push_back(output);
    error = core::writeStringToFile(outputCsv, 
          text::encodeCsvLine(vals) + "\n", 
-         string_utils::LineEndingPassthrough, false);
+         string_utils::LineEndingPassthrough, truncate);
    if (error)
    {
       LOG_ERROR(error);
@@ -415,14 +378,17 @@ void onConsoleOutput(module_context::ConsoleOutputType type,
       const std::string& output)
 {
    if (type == module_context::ConsoleOutputNormal)
-      onConsoleText(kChunkConsoleOutput, output);
+      onConsoleText(s_consoleDocId, s_consoleChunkId, kChunkConsoleOutput, 
+                    output, false);
    else
-      onConsoleText(kChunkConsoleError, output);
+      onConsoleText(s_consoleDocId, s_consoleChunkId, kChunkConsoleError, 
+                    output, false);
 }
 
 void onConsoleInput(const std::string& input)
 {
-   onConsoleText(kChunkConsoleInput, input);
+   onConsoleText(s_consoleDocId, s_consoleChunkId, kChunkConsoleInput, input, 
+         false);
 }
 
 void disconnectConsole()
@@ -508,6 +474,54 @@ Error setChunkConsole(const json::JsonRpcRequest& request,
    s_consoleDocId = docId;
    if (s_activeConsole == chunkId)
       connectConsole();
+
+   return Success();
+}
+
+// called by client to execute a single chunk in a document
+Error executeInlineChunk(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse*)
+{
+   std::string docPath, docId, chunkId, chunkOptions, content;
+   Error error = json::readParams(request.params, &docPath, &docId, &chunkId, 
+         &chunkOptions, &content);
+   if (error)
+      return error;
+
+   // ensure we have a place to put the output
+   FilePath chunkOutput = chunkOutputPath(docPath, docId, chunkId);
+   error = chunkOutput.parent().ensureDirectory();
+   if (error)
+      return error;
+
+   // ensure we have a library path
+   FilePath chunkLibDir = chunkCacheFolder(docPath, docId).complete(
+         kChunkLibDir);
+   error = chunkLibDir.ensureDirectory();
+   if (error)
+      return error;
+
+   FilePath headerHtml = options().rResourcesPath().complete("notebook").
+      complete("in_header.html");
+
+   // render the contents to the cached folder
+   std::string errorMsg;
+   error = r::exec::RFunction(".rs.executeSingleChunk", chunkOptions, content,
+         chunkLibDir.absolutePath(),
+         headerHtml.absolutePath(),
+         chunkOutput.absolutePath()).call(&errorMsg);
+   if (error)
+      return error;
+
+   // if an error message was returned, show a console error instead of the
+   // output
+   if (!errorMsg.empty())
+   {
+      chunkOutput.removeIfExists();
+      onConsoleText(docId, chunkId, kChunkConsoleError, errorMsg, true);
+   }
+
+   error = enqueueChunkOutput(docPath, docId, chunkId);
 
    return Success();
 }

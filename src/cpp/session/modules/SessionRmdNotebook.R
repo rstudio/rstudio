@@ -70,20 +70,27 @@
   envir <- .GlobalEnv
                  
   # render the stub to the given file
-  capture.output(rmarkdown::render(input = chunkFile, 
-                                   output_format = rmarkdown::html_document(
-                                     theme = NULL,
-                                     highlight = NULL,
-                                     template = NULL, 
-                                     self_contained = FALSE,
-                                     includes = list(
-                                       in_header = headerFile),
-                                     lib_dir = libDir),
-                                   output_file = outputFile,
-                                   encoding = "UTF-8",
-                                   envir = envir,
-                                   quiet = TRUE))
-  invisible(NULL)
+  errorMessage <- ""
+  tryCatch({
+    capture.output(rmarkdown::render(
+      input = chunkFile, 
+      output_format = rmarkdown::html_document(
+        theme = NULL,
+        highlight = NULL,
+        template = NULL, 
+        self_contained = FALSE,
+        includes = list(
+          in_header = headerFile),
+        lib_dir = libDir),
+      output_file = outputFile,
+      encoding = "UTF-8",
+      envir = envir,
+      quiet = TRUE))
+  }, error = function(e) {
+    errorMessage <<- e$message
+  })
+
+  invisible(errorMessage)
 })
 
 .rs.addFunction("createNotebook", function(input, output = NULL, envir = .GlobalEnv)

@@ -175,9 +175,10 @@ public class ChunkOutputWidget extends Composite
                      output.get(i).getString(1)), 
                classOfOutput(output.get(i).getInt(0)));
       }
+      if (state_ == CHUNK_EXECUTING)
+         showReadyState();
       vconsole_.redraw(console_.getElement());
       onRenderCompleted_.execute(console_.getElement().getOffsetHeight());
-      
       state_ = CONSOLE_READY;
    }
    
@@ -317,6 +318,7 @@ public class ChunkOutputWidget extends Composite
       if (console_ == null)
       {
          console_ = new PreWidget();
+         console_.getElement().removeAttribute("tabIndex");
          console_.getElement().getStyle().setMarginTop(0, Unit.PX);
       }
       else
