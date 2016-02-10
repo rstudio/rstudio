@@ -31,6 +31,18 @@
    
    # read and decode the .Rmd
    rmdContents <- extract_rmd(input)
+   
+   # if the output file already exists, check to see which is newer
+   if (file.exists(output)) {
+      inputInfo  <- file.info(input)
+      outputInfo <- file.info(output)
+      
+      # don't overwrite if the .Rmd is newer than the .Rnb
+      if (outputInfo$mtime > inputInfo$mtime)
+         return(.rs.scalar(FALSE))
+   }
+   
+   # write the extracted Rmd contents
    cat(rmdContents, file = output, sep = "\n")
    
    # return success to server
