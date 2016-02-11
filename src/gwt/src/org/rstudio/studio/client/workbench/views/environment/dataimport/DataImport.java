@@ -124,6 +124,11 @@ public class DataImport extends Composite
          public void onValueChange(ValueChangeEvent<DataImportOptions> dataImportOptions)
          {
             previewDataImport();
+            
+            if (dataImportMode_ == DataImportModes.XLS)
+            {
+               resetColumnDefinitions();
+            }
          }
       });
       
@@ -196,7 +201,7 @@ public class DataImport extends Composite
                   if (dataImportFileChooser_.getText() != importOptions_.getImportLocation())
                   {
                      lastSuccessfulResponse_ = null;
-                     importOptions_.resetColumnDefinitions();
+                     resetColumnDefinitions();
                   }
                   
                   importOptions_.setImportLocation(
@@ -253,6 +258,11 @@ public class DataImport extends Composite
             });
          }
       });
+   }
+   
+   void resetColumnDefinitions()
+   {
+      importOptions_.resetColumnDefinitions();
    }
    
    @UiField
