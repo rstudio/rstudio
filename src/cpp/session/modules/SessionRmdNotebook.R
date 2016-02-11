@@ -15,38 +15,35 @@
 
 .rs.addJsonRpcHandler("extract_rmd_from_notebook", function(input, output)
 {
-   if (!file.exists(input))
-      stop("No file at path '", input, "'.")
-   
-   extract_rmd <- function(input) {
-      contents <- readLines(input, warn = FALSE)
-      reDocument <- '<!-- rnb-document-source (\\S+) -->'
-      idx <- grep(reDocument, contents, perl = TRUE)
-      if (!length(idx))
-         stop("Failed to extract document source.")
-      
-      rmdEncoded <- sub(reDocument, "\\1", contents[idx])
-      caTools::base64decode(rmdEncoded, character())
-   }
-   
-   # read and decode the .Rmd
-   rmdContents <- extract_rmd(input)
-   
-   # if the output file already exists, check to see which is newer
+   # if 'output' already exists, compare file write times to determine
+   # whether we really want to overwrite a pre-existing .Rmd
    if (file.exists(output)) {
       inputInfo  <- file.info(input)
       outputInfo <- file.info(output)
       
-      # don't overwrite if the .Rmd is newer than the .Rnb
       if (outputInfo$mtime > inputInfo$mtime)
-         return(.rs.scalar(FALSE))
+         stop("'", output, "' exists and is newer than '", input, "'")
    }
    
-   # write the extracted Rmd contents
-   cat(rmdContents, file = output, sep = "\n")
+   contents <- .rs.extractFromNotebook("rnb-document-source", input)
+   cat(contents, file = output, sep = "\n")
    
-   # return success to server
-   .rs.scalar(file.exists(output))
+   .rs.scalar(TRUE)
+})
+
+.rs.addFunction("extractFromNotebook", function(tag, rnbPath)
+{
+   if (!file.exists(rnbPath))
+      stop("no file at path '", rnbPath, "'")
+   
+   contents <- readLines(rnbPath, warn = FALSE)
+   reDocument <- paste('<!--', tag, '(\\S+) -->')
+   idx <- grep(reDocument, contents, perl = TRUE)
+   if (!length(idx))
+      stop("no encoded content with tag '", tag, "' in '", rnbPath, "'")
+   
+   rmdEncoded <- sub(reDocument, "\\1", contents[idx])
+   caTools::base64decode(rmdEncoded, character())
 })
 
 .rs.addFunction("executeSingleChunk", function(options,
@@ -135,14 +132,28 @@
       )
    }
    
+   # generate base64 encoded version of original document
+   docEncoded <- caTools::base64encode(paste(c(contents, ""), collapse = "\n"))
+   
+   # render a GitHub-flavored version of document, for injection
+   ghOutput <- tempfile("rnb-gh-file-", fileext = ".md")
+   ghRendered <- rmarkdown::render(input = input,
+                                   output_format = rmarkdown::github_document(),
+                                   output_file = ghOutput,
+                                   envir = envir,
+                                   quiet = TRUE)
+   ghContents <- readLines(ghOutput, warn = FALSE)
+   ghEncoded <- caTools::base64encode(paste(c(ghContents, ""), collapse = "\n"))
+   
+   
    # inject base64-encoded document into document
    # (i heard you like documents, so i put a document in your document)
-   partitioned <- rmarkdown:::partition_yaml_front_matter(modified)
-   encoded <- caTools::base64encode(paste(c(contents, ""), collapse = "\n"))
+   partitioned <- rmarkdown:::partition_yaml_front_matter(contents)
    injected <- c(
       partitioned$front_matter,
       "",
-      sprintf("<!-- rnb-document-source %s -->", encoded),
+      sprintf('<!-- rnb-document-source %s -->', docEncoded),
+      sprintf('<!-- rnb-github-md %s -->', ghEncoded),
       "",
       partitioned$body
    )
