@@ -65,27 +65,32 @@
             for(colIdx in seq_along(optionValue)) {
                col <- optionValue[[colIdx]]
 
-               if ((!identical(dataImportOptions$columnsOnly, TRUE) && !identical(col$assignedType, NULL)) || 
-                  identical(col$only, TRUE))
+               col_only = col$only[[1]]
+               col_parseString = col$parseString[[1]]
+               col_assignedType = col$assignedType[[1]]
+               col_name = col$name[[1]]
+
+               if ((!identical(dataImportOptions$columnsOnly, TRUE) && !identical(col_assignedType, NULL)) || 
+                  identical(col_only, TRUE))
                {
                   colType <- paste(ns, "col_guess()", sep = "")
 
                   parseString <- "";
-                  if (!identical(col$parseString, NULL))
+                  if (!identical(col_parseString, NULL))
                   {
-                     if (identical(col$assignedType, "factor"))
+                     if (identical(col_assignedType, "factor"))
                      {
-                        parseString <- paste("levels = ", col$parseString, sep = "")
+                        parseString <- paste("levels = ", col_parseString, sep = "")
                      }
                      else
                      {
-                        parseString <- paste("format = \"", col$parseString, "\"", sep = "")
+                        parseString <- paste("format = \"", col_parseString, "\"", sep = "")
                      }
                   }
 
-                  if (!identical(col$assignedType, NULL))
+                  if (!identical(col_assignedType, NULL))
                   {
-                     colType <- switch(col$assignedType,
+                     colType <- switch(col_assignedType,
                         date = paste(ns, "col_date(", parseString, ")", sep = ""),
                         skip = paste(ns, "col_skip()", sep = ""),
                         time = paste(ns, "col_time(", parseString, ")", sep = ""),
@@ -100,7 +105,7 @@
                      )
                   }
 
-                  colParams[[col$name]] <- paste("\"", col$name, "\" = ", colType, sep="")
+                  colParams[[col_name]] <- paste("\"", col_name, "\" = ", colType, sep="")
                }
             }
 
@@ -126,8 +131,9 @@
             if (!any(unlist(lapply(optionValue, hasAssignedType), use.names = FALSE)))
                return (NULL)
 
-            colsByIndex <- list()
-            for(col in optionValue) {
+             colsByIndex <- list()
+            for (colIdx in 1:length(optionValue)) {
+               col <- optionValue[[colIdx]]
                colsByIndex[[col$index + 1]] <- col
             }
 
