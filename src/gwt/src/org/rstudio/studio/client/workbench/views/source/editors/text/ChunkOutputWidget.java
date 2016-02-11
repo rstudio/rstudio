@@ -42,6 +42,7 @@ import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
@@ -67,6 +68,11 @@ public class ChunkOutputWidget extends Composite
          extends UiBinder<Widget, ChunkOutputWidget>
    {
       
+   }
+   
+   public interface ChunkStyle extends CssResource
+   {
+      String overflowY();
    }
 
    public ChunkOutputWidget(String chunkId,
@@ -184,6 +190,7 @@ public class ChunkOutputWidget extends Composite
       // scroll to the bottom
       console_.getElement().setScrollTop(console_.getElement().getScrollHeight());
       state_ = CONSOLE_READY;
+      setOverflowStyle();
    }
    
    private void showHtmlOutput(String url)
@@ -211,6 +218,7 @@ public class ChunkOutputWidget extends Composite
             state_ = CHUNK_RENDERED;
             applyCachedEditorStyle();
             showReadyState();
+            setOverflowStyle();
             Element doc = frame_.getDocument().getDocumentElement();
             int height = doc.getScrollHeight();
             if (doc.getScrollWidth() > doc.getOffsetWidth())
@@ -257,6 +265,7 @@ public class ChunkOutputWidget extends Composite
       if (state_ != CONSOLE_EXECUTING)
          return;
       state_ = CONSOLE_READY;
+      setOverflowStyle();
       unregisterConsoleEvents();
       showReadyState();
    }
@@ -394,9 +403,37 @@ public class ChunkOutputWidget extends Composite
       interrupt_.setVisible(false);
    }
    
+   private void setOverflowStyle()
+   {
+      Element ele;
+      if (state_ == CONSOLE_READY)
+      {
+         ele = console_.getElement();
+      }
+      else if (state_ == CHUNK_RENDERED)
+      {
+         ele = frame_.getDocument().getDocumentElement();
+      }
+      else
+      {
+         return;
+      }
+      boolean hasOverflow = ele.getScrollHeight() > ele.getOffsetHeight();
+      if (hasOverflow && !root_.getElement().hasClassName(style.overflowY()))
+      {
+         root_.getElement().addClassName(style.overflowY());
+      }
+      else if (!hasOverflow && 
+               root_.getElement().hasClassName(style.overflowY()))
+      {
+         root_.getElement().removeClassName(style.overflowY());
+      }
+   }
+   
    @UiField Image interrupt_;
    @UiField Image clear_;
    @UiField HTMLPanel root_;
+   @UiField ChunkStyle style;
    
    private ChunkOutputFrame frame_;
    private PreWidget console_;

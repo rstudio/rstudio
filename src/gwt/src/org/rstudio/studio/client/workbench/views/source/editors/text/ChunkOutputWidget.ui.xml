@@ -5,13 +5,19 @@
    
    <ui:with field="res" type="org.rstudio.core.client.theme.res.ThemeResources"/>
 
-   <ui:style>
+   <ui:style type="org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget.ChunkStyle">
    .interrupt, .clear
    {
       position: absolute;
       top: 5px;
       right: 5px;
       cursor: pointer;
+   }
+   
+   .overflowY .interrupt, 
+   .overflowY .clear
+   {
+      right: 25px;
    }
 
    .frame
