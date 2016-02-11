@@ -467,7 +467,10 @@
       }
 
       importInfo <- .rs.assemble_data_import(dataImportOptions)
-      data <- eval(parse(text=importInfo$previewCode))
+
+      data <- suppressWarnings(
+         eval(parse(text=importInfo$previewCode))
+      )
 
       columns <- list()
       if (ncol(data)) {

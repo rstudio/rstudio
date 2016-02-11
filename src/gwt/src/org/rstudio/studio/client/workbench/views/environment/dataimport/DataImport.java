@@ -99,7 +99,7 @@ public class DataImport extends Composite
       dataImportMode_ = dataImportMode;
       
       copyButton_ = makeCopyButton();
-      interruprButton_ = makeInterruptButton();
+      interruptButton_ = makeInterruptButton();
 
       progressIndicator_ = new ProgressIndicatorDelay(progressIndicator);
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -136,6 +136,8 @@ public class DataImport extends Composite
             dataImportFileChooser_.setFocus(); 
          }
       });
+      
+      interruptButton_.setVisible(false);
    }
    
    public String getCode()
@@ -260,7 +262,7 @@ public class DataImport extends Composite
    PushButton copyButton_;
    
    @UiField(provided=true)
-   PushButton interruprButton_;
+   PushButton interruptButton_;
    
    private void promptForParseString(
       String title,
@@ -456,13 +458,23 @@ public class DataImport extends Composite
       
       previewImportOptions.setMaxRows(maxRows_);
       
-      progressIndicator_.onProgress("Retrieving preview data");
+      progressIndicator_.onProgress("Retrieving preview data", new Operation()
+      {
+         @Override
+         public void execute()
+         {
+            interruptButton_.setVisible(true);
+         }
+      });
+      
       server_.previewDataImportAsync(previewImportOptions, maxCols_, maxFactors_,
             new ServerRequestCallback<DataImportPreviewResponse>()
       {
          @Override
          public void onResponseReceived(DataImportPreviewResponse response)
          {
+            interruptButton_.setVisible(false);
+            
             if (response.getErrorMessage() != null)
             {
                response.setColumnDefinitions(lastSuccessfulResponse_);
@@ -496,6 +508,8 @@ public class DataImport extends Composite
          @Override
          public void onError(ServerError error)
          {
+            interruptButton_.setVisible(false);
+            
             gridViewer_.setData(null);
             progressIndicator_.onError(error.getMessage());
          }

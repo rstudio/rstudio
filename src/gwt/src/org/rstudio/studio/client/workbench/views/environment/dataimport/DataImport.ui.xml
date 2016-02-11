@@ -98,7 +98,29 @@
 			height: 20px;
 			cursor: pointer;
 		}
+		.dataPreviewHeader {
+			display: -ms-flexbox;
+			display: -webkit-flex;
+			display: flex;
+
+			-webkit-flex-direction: row;
+			-ms-flex-direction: row;
+			flex-direction: row;
+		}
+		.dataPreviewLabel {	
+			display: -ms-flexbox;
+			display: -webkit-flex;
+			display: flex;
+
+			margin-top: 12px;
+			margin-right: 5px;
+			margin-left: 5px;
+		}
 		.interruptButton {
+			display: -ms-flexbox;
+			display: -webkit-flex;
+			display: flex;
+
 			margin-left: auto;
 			margin-top: 9px;
 			margin-right: 5px;
@@ -132,10 +154,12 @@
 	    <g:Label text="File/Url:" styleName="{style.topImportLabel}"/>
 	    <rsdi:DataImportFileChooser ui:field="dataImportFileChooser_"
 	        						styleName="{style.fileChooser}"/>
-		<g:Label text="Data Preview:" styleName="{style.importLabel}"/>
-		<g:PushButton ui:field="interruprButton_"
-			          styleName="{style.interruptButton}">
-		</g:PushButton>
+	    <g:HTMLPanel styleName="{style.dataPreviewHeader}">
+			<g:Label text="Data Preview:" styleName="{style.dataPreviewLabel}"/>
+			<g:PushButton ui:field="interruptButton_"
+			          	  styleName="{style.interruptButton}">
+			</g:PushButton>
+	    </g:HTMLPanel>
 		<rs:GridViewerFrame ui:field="gridViewer_"
 		    				styleName="{style.gridViewerFrame}"/>
 		<div class="{style.bottomPanel}">
