@@ -131,7 +131,7 @@ public class WindowEx extends JavaScriptObject
       this.resizeTo(width, height);
    }-*/;
 
-   public final native Document getDocument() /*-{
+   public final native DocumentEx getDocument() /*-{
       return this.document;
    }-*/;
    

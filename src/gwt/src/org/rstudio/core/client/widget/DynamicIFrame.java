@@ -16,9 +16,9 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.ui.Frame;
 
+import org.rstudio.core.client.dom.DocumentEx;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 
@@ -56,8 +56,11 @@ public abstract class DynamicIFrame extends Frame
             if (getIFrame() == null || getWindow() == null || 
                 getDocument() == null)
                return true;
+            // if we have a URL, make sure we have a body and the document the
+            // URL refers to is fully loaded
             if (url_ != null && getDocument().getURL() == "about:blank" || 
-                                getDocument().getBody() == null)
+                    getDocument().getBody() == null ||
+                    getDocument().getReadyState() != DocumentEx.STATE_COMPLETE)
                return true;
             onFrameLoaded();
             return false;
@@ -89,7 +92,7 @@ public abstract class DynamicIFrame extends Frame
       return getIFrame().getContentWindow();
    }
 
-   public final Document getDocument()
+   public final DocumentEx getDocument()
    {
       return getWindow().getDocument();
    }
