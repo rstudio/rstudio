@@ -34,10 +34,11 @@ class AsyncDataPreviewRProcess : public async_r::AsyncRProcess
 {
 public:
    static boost::shared_ptr<AsyncDataPreviewRProcess> create(
+           const json::JsonRpcRequest& request,
            const json::JsonRpcFunctionContinuation& continuation)
    {
       boost::shared_ptr<AsyncDataPreviewRProcess> pDataPreview(
-                  new AsyncDataPreviewRProcess(continuation));
+                  new AsyncDataPreviewRProcess(request, continuation));
       pDataPreview->start();
       return pDataPreview;
    }
@@ -48,8 +49,11 @@ public:
    }
 
 private:
-   AsyncDataPreviewRProcess(const json::JsonRpcFunctionContinuation& continuation) :
-       continuation_(continuation)
+   AsyncDataPreviewRProcess(
+           const json::JsonRpcRequest& request,
+           const json::JsonRpcFunctionContinuation& continuation) :
+       continuation_(continuation),
+       request_(request)
    {
    }
 
@@ -71,20 +75,18 @@ private:
 
    void start()
    {
-      // std::string cmd = "saveSomeData()";
+      std::ostringstream jsonStream;
+      json::Value requestValue = request_.params;
+      json::write(requestValue, jsonStream);
+      std::string jsonData = jsonStream.str();
 
-       std::string cmd = ""
-         "asyncFile <- \"/tmp/async.RData\"; "
-         "asyncData <- list(4, 8, 15, 16, 23, 42); "
-         "save(asyncData, file = asyncFile)";
-
+      std::string cmd = ".rs.preview_data_import_async('" + jsonData + "')";
 
       std::vector<core::FilePath> sources;
       sources.push_back(pathFromSource("Tools.R"));
       sources.push_back(pathFromModulesSource("ModuleTools.R"));
       sources.push_back(pathFromModulesSource("SessionDataViewer.R"));
       sources.push_back(pathFromModulesSource("SessionDataImportV2.R"));
-      sources.push_back(pathFromModulesSource("SessionDataImportAsync.R"));
 
       async_r::AsyncRProcess::start(cmd.c_str(), FilePath(), async_r::R_PROCESS_VANILLA, sources);
    }
@@ -93,27 +95,32 @@ private:
    {
       if (errors_.size() > 0)
       {
-          json::Object jsonError;
-          jsonError["message"] = json::toJsonArray(errors_);
+         json::Object jsonError;
+         jsonError["message"] = json::toJsonArray(errors_);
 
-          json::Object jsonErrorResponse;
-          jsonErrorResponse["error"] = jsonError;
+         json::Object jsonErrorResponse;
+         jsonErrorResponse["error"] = jsonError;
 
-          json::JsonRpcResponse response;
-          response.setResult(jsonErrorResponse);
+         json::JsonRpcResponse response;
+         response.setResult(jsonErrorResponse);
 
-          continuation_(Success(), &response);
+         continuation_(Success(), &response);
 
-          return;
+         return;
       }
 
-      json::Object jsonResponse;
-      jsonResponse["success"] = "true";
+      json::Value jsonResponse;
+      json::parse(output_, &jsonResponse);
 
       json::JsonRpcResponse response;
       response.setResult(jsonResponse);
 
       continuation_(Success(), &response);
+   }
+
+   void onStdout(const std::string& output)
+   {
+      output_ += output;
    }
 
    void onStderr(const std::string& output)
@@ -122,7 +129,9 @@ private:
    }
 
    const json::JsonRpcFunctionContinuation continuation_;
+   json::JsonRpcRequest request_;
    std::vector<std::string> errors_;
+   std::string output_;
 };
 
 boost::shared_ptr<AsyncDataPreviewRProcess> s_pActiveDataPreview;
@@ -132,12 +141,12 @@ void getPreviewDataImportAsync(
         const json::JsonRpcFunctionContinuation& continuation)
 {
    if (s_pActiveDataPreview &&
-      s_pActiveDataPreview->isRunning())
+       s_pActiveDataPreview->isRunning())
    {
    }
    else
    {
-      s_pActiveDataPreview = AsyncDataPreviewRProcess::create(continuation);
+      s_pActiveDataPreview = AsyncDataPreviewRProcess::create(request, continuation);
    }
 }
 

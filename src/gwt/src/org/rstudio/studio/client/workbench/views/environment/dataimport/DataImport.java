@@ -24,7 +24,6 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressIndicatorDelay;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.server.ServerError;
@@ -88,8 +87,6 @@ public class DataImport extends Composite
    private DataImportPreviewResponse lastSuccessfulResponse_;
    
    private final DataImportModes dataImportMode_;
-   
-   private ApplicationInterrupt applicationInterrupt_;
    
    interface DataImportUiBinder extends UiBinder<Widget, DataImport>
    {
@@ -180,12 +177,10 @@ public class DataImport extends Composite
    
    @Inject
    private void initialize(WorkbenchServerOperations server,
-                           GlobalDisplay globalDisplay,
-                           ApplicationInterrupt applicationInterrupt)
+                           GlobalDisplay globalDisplay)
    {
       server_ = server;
       globalDisplay_ = globalDisplay;
-      applicationInterrupt_ = applicationInterrupt;
    }
    
    @UiFactory
@@ -238,59 +233,13 @@ public class DataImport extends Composite
          @Override
          public void onClick(ClickEvent arg0)
          {
-            // commands.interruptR().execute();
-            
-            server_.previewDataImportAsync(getOptions(), 0, 0, new ServerRequestCallback<DataImportPreviewResponse>()
-            {
-               @Override
-               public void onResponseReceived(DataImportPreviewResponse response)
-               {
-                  if (response.getErrorMessage() != null)
-                  {
-                     response.setColumnDefinitions(lastSuccessfulResponse_);
-                     setGridViewerData(response);
-                     progressIndicator_.onError(response.getErrorMessage());
-                     return;
-                  }
-                  
-                  // Set the column definitions to allow subsequent calls to assemble
-                  // generate preview code based on data.
-                  importOptions_.setBaseColumnDefinitions(response);
-                  
-                  lastSuccessfulResponse_ = response;
-                  
-                  dataImportOptionsUi_.setPreviewResponse(response);
-                  
-                  gridViewer_.setOption("status",
-                        "Previewing first " + toLocaleString(maxRows_) + 
-                        " entries. " + (
-                              response.getParsingErrors() > 0 ?
-                              Integer.toString(response.getParsingErrors()) + " parsing errors." : "")
-                        );
-                  
-                  assignColumnDefinitions(response, importOptions_.getColumnDefinitions());
-                  
-                  setGridViewerData(response);
-                  
-                  progressIndicator_.onCompleted();
-               }
-               
-               @Override
-               public void onError(ServerError error)
-               {
-                  gridViewer_.setData(null);
-                  progressIndicator_.onError(error.getMessage());
-               }
-            });
-            
-            /*server_.interrupt(new ServerRequestCallback<Void>()
+            server_.interrupt(new ServerRequestCallback<Void>()
             {
                @Override
                public void onError(ServerError error)
                {
                }
             });
-            */
          }
       });
    }
@@ -508,7 +457,7 @@ public class DataImport extends Composite
       previewImportOptions.setMaxRows(maxRows_);
       
       progressIndicator_.onProgress("Retrieving preview data");
-      server_.previewDataImport(previewImportOptions, maxCols_, maxFactors_,
+      server_.previewDataImportAsync(previewImportOptions, maxCols_, maxFactors_,
             new ServerRequestCallback<DataImportPreviewResponse>()
       {
          @Override

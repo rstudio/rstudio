@@ -493,3 +493,18 @@
       return(list(error = e))
    })
 })
+
+.rs.addFunction("preview_data_import_async", function(jsonData)
+{
+   tryCatch({
+      params = jsonlite::fromJSON(jsonData)
+      result <- .rs.rpc.preview_data_import(
+         params[[1]],
+         maxCols = params[[2]],
+         maxFactors = params[[3]])
+
+      return(jsonlite::toJSON(result, force = TRUE))
+   }, error = function(e) {
+      return(jsonlite::toJSON(list(error = e), force = TRUE))
+   })
+})
