@@ -6,7 +6,7 @@
    <ui:with field="res" type="org.rstudio.core.client.theme.res.ThemeResources"/>
 
    <ui:style type="org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget.ChunkStyle">
-   .interrupt, .clear
+   .interrupt, .clear, .busy
    {
       position: absolute;
       top: 5px;
@@ -16,6 +16,7 @@
    
    .overflowY .interrupt, 
    .overflowY .clear
+   .overflowY .busy
    {
       right: 25px;
    }
@@ -41,6 +42,9 @@
               resource="{res.removePackage}"></g:Image>
      <g:Image styleName="{style.interrupt}" 
               ui:field="interrupt_"
+              visible="false"></g:Image>
+     <g:Image styleName="{style.busy}" 
+              ui:field="busy_"
               visible="false"></g:Image>
    </g:HTMLPanel>
 </ui:UiBinder> 

@@ -19,8 +19,10 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsArrayEx;
+import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationInterrupt.InterruptHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.shell.ShellWidget;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
@@ -85,12 +87,26 @@ public class ChunkOutputWidget extends Composite
       
       onRenderCompleted_ = onRenderCompleted;
       
-      interrupt_.addClickHandler(new ClickHandler()
+      DOM.sinkEvents(interrupt_.getElement(), Event.ONCLICK);
+      DOM.setEventListener(interrupt_.getElement(), new EventListener()
       {
          @Override
-         public void onClick(ClickEvent arg0)
+         public void onBrowserEvent(Event evt)
          {
-            // TODO: fire interrupt event
+            switch(DOM.eventGetType(evt))
+            {
+            case Event.ONCLICK:
+               RStudioGinjector.INSTANCE.getApplicationInterrupt().interruptR(
+                     new InterruptHandler()
+                     {
+                        @Override
+                        public void onInterruptFinished()
+                        {
+                           completeInterrupt();
+                        }
+                     });
+               break;
+            };
          }
       });
       
@@ -146,6 +162,7 @@ public class ChunkOutputWidget extends Composite
 
       interrupt_.setResource(RStudioGinjector.INSTANCE.getCommands()
             .interruptR().getImageResource());
+      busy_.setResource(CoreResources.INSTANCE.progress_gray());
    }
 
    public void showChunkOutput(RmdChunkOutput output)
@@ -311,9 +328,9 @@ public class ChunkOutputWidget extends Composite
       }
       if (state_ == CONSOLE_READY)
       {
-         showBusyState();
          registerConsoleEvents();
          state_ = CONSOLE_EXECUTING;
+         showBusyState();
       }
       onRenderCompleted_.execute(console_.getElement().getOffsetHeight());
    }
@@ -393,7 +410,8 @@ public class ChunkOutputWidget extends Composite
    {
       getElement().getStyle().setBackgroundColor(s_busyColor);
       clear_.setVisible(false);
-      interrupt_.setVisible(true);
+      interrupt_.setVisible(state_ == CONSOLE_EXECUTING);
+      busy_.setVisible(state_ == CHUNK_EXECUTING);
    }
 
    private void showReadyState()
@@ -401,6 +419,7 @@ public class ChunkOutputWidget extends Composite
       getElement().getStyle().setBackgroundColor(s_backgroundColor);
       clear_.setVisible(true);
       interrupt_.setVisible(false);
+      busy_.setVisible(false);
    }
    
    private void setOverflowStyle()
@@ -430,8 +449,26 @@ public class ChunkOutputWidget extends Composite
       }
    }
    
+   private void completeInterrupt()
+   {
+      if (state_ == CONSOLE_EXECUTING)
+      {
+         state_ = CONSOLE_READY;
+      }
+      else if (state_ == CHUNK_EXECUTING)
+      {
+         state_ = CHUNK_RENDERED;
+      }
+      else
+      {
+         return;
+      }
+      showReadyState();
+   }
+   
    @UiField Image interrupt_;
    @UiField Image clear_;
+   @UiField Image busy_;
    @UiField HTMLPanel root_;
    @UiField ChunkStyle style;
    
