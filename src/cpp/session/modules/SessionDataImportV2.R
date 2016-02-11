@@ -131,7 +131,7 @@
             if (!any(unlist(lapply(optionValue, hasAssignedType), use.names = FALSE)))
                return (NULL)
 
-             colsByIndex <- list()
+            colsByIndex <- list()
             for (colIdx in 1:length(optionValue)) {
                col <- optionValue[[colIdx]]
                colsByIndex[[col$index + 1]] <- col
