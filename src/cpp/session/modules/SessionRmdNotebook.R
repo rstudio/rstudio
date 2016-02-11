@@ -137,11 +137,13 @@
    
    # render a GitHub-flavored version of document, for injection
    ghOutput <- tempfile("rnb-gh-file-", fileext = ".md")
-   ghRendered <- rmarkdown::render(input = input,
-                                   output_format = rmarkdown::github_document(),
-                                   output_file = ghOutput,
-                                   envir = envir,
-                                   quiet = TRUE)
+   ghFormat <- rmarkdown::github_document(html_preview = FALSE)
+   rmarkdown::render(input = input,
+                     output_format = ghFormat,
+                     output_file = ghOutput,
+                     output_options = list(self_contained = TRUE),
+                     envir = envir,
+                     quiet = TRUE)
    ghContents <- readLines(ghOutput, warn = FALSE)
    ghEncoded <- caTools::base64encode(paste(c(ghContents, ""), collapse = "\n"))
    
