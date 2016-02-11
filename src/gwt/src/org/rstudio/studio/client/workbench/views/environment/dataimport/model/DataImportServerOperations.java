@@ -35,4 +35,6 @@ public interface DataImportServerOperations
                                ServerRequestCallback<DataImportPreviewResponse> requestCallback);
    
    void interrupt(ServerRequestCallback<Void> requestCallback);
+   
+   void previewDataImportAsyncAbort(ServerRequestCallback<Void> requestCallback);
 }

@@ -93,10 +93,22 @@ private:
 
    void onCompleted(int exitStatus)
    {
-      if (errors_.size() > 0)
+      if (terminationRequested())
+      {
+          // If the user requested to terminate this request, there is no need to
+          // trigger an error event.
+          return;
+      }
+
+      if (errors_.size() > 0 || exitStatus != EXIT_SUCCESS)
       {
          json::Object jsonError;
-         jsonError["message"] = json::toJsonArray(errors_);
+
+         jsonError["message"] = "The operation failed to complete.";
+         if (errors_.size() > 0)
+         {
+            jsonError["message"] = json::toJsonArray(errors_);
+         }
 
          json::Object jsonErrorResponse;
          jsonErrorResponse["error"] = jsonError;
@@ -150,6 +162,18 @@ void getPreviewDataImportAsync(
    }
 }
 
+Error abortPreviewDataImportAsync(const json::JsonRpcRequest& request,
+                                 json::JsonRpcResponse* pResponse)
+{
+   if (s_pActiveDataPreview &&
+       s_pActiveDataPreview->isRunning())
+   {
+      s_pActiveDataPreview->terminate();
+   }
+
+   return Success();
+}
+
 Error initialize()
 {
    using boost::bind;
@@ -159,7 +183,8 @@ Error initialize()
       (data::viewer::initialize)
       (bind(sourceModuleRFile, "SessionDataImport.R"))
       (bind(sourceModuleRFile, "SessionDataImportV2.R"))
-      (bind(registerAsyncRpcMethod, "preview_data_import_async", getPreviewDataImportAsync));
+      (bind(registerAsyncRpcMethod, "preview_data_import_async", getPreviewDataImportAsync))
+      (bind(registerRpcMethod, "preview_data_import_async_abort", abortPreviewDataImportAsync));
 
    return initBlock.execute();
 }

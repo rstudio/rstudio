@@ -79,6 +79,8 @@ protected:
 
    virtual void onCompleted(int exitStatus) = 0;
 
+   bool terminationRequested();
+
 private:
    void onProcessCompleted(int exitStatus);
    bool isRunning_;

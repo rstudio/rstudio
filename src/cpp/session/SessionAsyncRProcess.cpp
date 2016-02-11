@@ -200,6 +200,11 @@ bool AsyncRProcess::onContinue()
    return !terminationRequested_;
 }
 
+bool AsyncRProcess::terminationRequested()
+{
+   return terminationRequested_;
+}
+
 void AsyncRProcess::onProcessCompleted(int exitStatus)
 {
    markCompleted();

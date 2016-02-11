@@ -235,11 +235,20 @@ public class DataImport extends Composite
          @Override
          public void onClick(ClickEvent arg0)
          {
-            server_.interrupt(new ServerRequestCallback<Void>()
+            progressIndicator_.clearProgress();
+            
+            server_.previewDataImportAsyncAbort(new ServerRequestCallback<Void>()
             {
+               @Override
+               public void onResponseReceived(Void empty)
+               {
+                  interruptButton_.setVisible(false);
+               }
+               
                @Override
                public void onError(ServerError error)
                {
+                  progressIndicator_.onError(error.getMessage());
                }
             });
          }
