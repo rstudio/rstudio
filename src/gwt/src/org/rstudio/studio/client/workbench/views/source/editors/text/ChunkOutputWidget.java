@@ -38,6 +38,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -176,10 +177,12 @@ public class ChunkOutputWidget extends Composite
                      output.get(i).getString(1)), 
                classOfOutput(output.get(i).getInt(0)));
       }
-      if (state_ == CHUNK_EXECUTING)
+      if (state_ == CHUNK_EXECUTING || state_ == CHUNK_EMPTY)
          showReadyState();
       vconsole_.redraw(console_.getElement());
       onRenderCompleted_.execute(console_.getElement().getOffsetHeight());
+      // scroll to the bottom
+      console_.getElement().setScrollTop(console_.getElement().getScrollHeight());
       state_ = CONSOLE_READY;
    }
    
@@ -262,6 +265,7 @@ public class ChunkOutputWidget extends Composite
    {
       vconsole_.submitAndRender(text, clazz,
             console_.getElement());
+      console_.getElement().setScrollTop(console_.getElement().getScrollHeight());
       onRenderCompleted_.execute(console_.getElement().getOffsetHeight());
    }
 
@@ -329,6 +333,8 @@ public class ChunkOutputWidget extends Composite
          console_ = new PreWidget();
          console_.getElement().removeAttribute("tabIndex");
          console_.getElement().getStyle().setMarginTop(0, Unit.PX);
+         console_.getElement().getStyle().setPropertyPx("maxHeight", 500);
+         console_.getElement().getStyle().setOverflowY(Overflow.AUTO);
       }
       else
       {
