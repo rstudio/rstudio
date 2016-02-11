@@ -596,35 +596,13 @@ Error setChunkDefs(const std::string& docPath, const std::string& docId,
       cleanChunks(chunkCacheFolder(docPath, docId),
                   oldDefs.get_array(), newDefs);
 
-   // write to the sidecar file
+   std::ostringstream oss;
+   json::write(chunkDefs, oss);
+   error = writeStringToFile(defFile, oss.str());
+   if (error)
    {
-      std::ostringstream oss;
-      json::write(chunkDefs, oss);
-      error = writeStringToFile(defFile, oss.str());
-      if (error)
-      {
-         LOG_ERROR(error);
-         return error;
-      }
-   }
-   
-   // write to csv file as well (easier reading by R tooling)
-   {
-      FilePath csvDefFile = chunkDefinitionsPath(docPath, docId, "csv");
-      std::ostringstream oss;
-      error = json::writeCsv(newDefs, oss);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return error;
-      }
-      
-      error = writeStringToFile(csvDefFile, oss.str());
-      if (error)
-      {
-         LOG_ERROR(error);
-         return error;
-      }
+      LOG_ERROR(error);
+      return error;
    }
    
    return Success();
