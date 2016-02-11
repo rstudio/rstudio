@@ -281,6 +281,9 @@ Error saveDocumentCore(const std::string& contents,
       pDoc->setFolds(jsonFoldSpec.get_str());
    }
 
+   // note that it's entirely possible for the chunk output to be null if the
+   // document is unrendered (in which case we want to leave the chunk output
+   // as-is)
    bool hasChunkOutput = json::isType<json::Array>(jsonChunkOutput);
    if (hasChunkOutput)
    {

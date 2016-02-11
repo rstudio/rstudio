@@ -2855,6 +2855,11 @@ public class AceEditor implements DocDisplay,
    @Override
    public JsArray<ChunkDefinition> getChunkDefs()
    {
+      // chunk definitions are populated at render time, so don't return any
+      // if we haven't rendered yet
+      if (!isRendered())
+         return null;
+      
       JsArray<ChunkDefinition> chunks = JsArray.createArray().cast();
       JsArray<LineWidget> lineWidgets = getLineWidgets();
       for (int i = 0; i<lineWidgets.length(); i++)
@@ -2870,6 +2875,12 @@ public class AceEditor implements DocDisplay,
       return chunks;
    }
    
+
+   @Override
+   public boolean isRendered()
+   {
+      return widget_.isRendered();
+   }
    
    private void fireLineWidgetsChanged()
    {

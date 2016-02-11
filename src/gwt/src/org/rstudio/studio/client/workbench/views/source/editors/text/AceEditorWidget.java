@@ -247,6 +247,7 @@ public class AceEditorWidget extends Composite
                public void execute(Void event)
                {
                   fireEvent(new RenderFinishedEvent());
+                  isRendered_ = true;
                   events_.fireEvent(new AfterAceRenderEvent(AceEditorWidget.this.getEditor()));
                }
             }));
@@ -1035,11 +1036,17 @@ public class AceEditorWidget extends Composite
       return editor_.getLineWidgetManager();
    }
    
+   public boolean isRendered()
+   {
+      return isRendered_;
+   }
+
    private final AceEditorNative editor_;
    private final HandlerManager capturingHandlers_;
    private final List<HandlerRegistration> aceEventHandlers_;
    private boolean initToEmptyString_ = true;
    private boolean inOnChangeHandler_ = false;
+   private boolean isRendered_ = false;
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
    
    private ArrayList<AnchoredAceAnnotation> annotations_ =
@@ -1049,6 +1056,4 @@ public class AceEditorWidget extends Composite
    private EventBus events_;
    private ChunkIconsManager chunkIconsManager_;
    private Commands commands_ = RStudioGinjector.INSTANCE.getCommands();
-   
-   
 }

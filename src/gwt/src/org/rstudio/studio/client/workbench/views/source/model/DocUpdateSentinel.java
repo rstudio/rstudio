@@ -341,7 +341,7 @@ public class DocUpdateSentinel
       final String foldSpec = Fold.encode(Fold.flatten(docDisplay_.getFolds()));
       String oldFoldSpec = sourceDoc_.getFoldSpec();
       
-      final JsArray<ChunkDefinition> chunkOutput = docDisplay_.getChunkDefs();
+      final JsArray<ChunkDefinition> newChunkDefs = docDisplay_.getChunkDefs();
       JsArray<ChunkDefinition> oldChunkDefs = sourceDoc_.getChunkDefs();
       
       //String patch = DiffMatchPatch.diff(oldContents, newContents);
@@ -351,7 +351,8 @@ public class DocUpdateSentinel
       // wasteful, it causes the server to think the document is dirty.
       if (path == null && fileType == null && diff.isEmpty()
           && foldSpec.equals(oldFoldSpec) 
-          && ChunkDefinition.equalTo(chunkOutput, oldChunkDefs))
+          && (newChunkDefs == null || 
+              ChunkDefinition.equalTo(newChunkDefs, oldChunkDefs)))
       {
          changesPending_ = false;
          return false;
@@ -389,7 +390,7 @@ public class DocUpdateSentinel
             fileType,
             encoding,
             foldSpec,
-            chunkOutput,
+            newChunkDefs,
             diff.getReplacement(),
             diff.getOffset(),
             diff.getLength(),
@@ -428,11 +429,11 @@ public class DocUpdateSentinel
                         if (!thisChangeTracker.hasChanged())
                            changeTracker_.reset();
                         
-                        // update the foldSpec and chunkOutput so we 
+                        // update the foldSpec and newChunkDefs so we 
                         // can use them for change detection the next
                         // time around
                         sourceDoc_.setFoldSpec(foldSpec);
-                        sourceDoc_.setChunkDefs(chunkOutput);
+                        sourceDoc_.setChunkDefs(newChunkDefs);
                         
                         onSuccessfulUpdate(newContents,
                                            newHash,
@@ -469,7 +470,7 @@ public class DocUpdateSentinel
                            fileType,
                            encoding,
                            foldSpec,
-                           chunkOutput,
+                           newChunkDefs,
                            newContents,
                            this);
                   }
