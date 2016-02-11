@@ -720,7 +720,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
          // however, we know there will eventually be a scrollbar so we 
          // should offset by an estimated amount
          // (is there a more accurate way to estimate this?)
-         final int ESTIMATED_SCROLLBAR_WIDTH = 19;
          clientWidth -= ESTIMATED_SCROLLBAR_WIDTH;
       }
       
@@ -802,4 +801,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private boolean clearErrors_ = false;
 
    private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;
+
+   public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;
 }

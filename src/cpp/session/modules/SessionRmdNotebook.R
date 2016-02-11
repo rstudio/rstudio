@@ -87,7 +87,7 @@
       envir = envir,
       quiet = TRUE))
   }, error = function(e) {
-    errorMessage <<- e$message
+    errorMessage <<- paste("Error:", e$message)
   })
 
   invisible(errorMessage)

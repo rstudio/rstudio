@@ -518,7 +518,8 @@ Error executeInlineChunk(const json::JsonRpcRequest& request,
    if (!errorMsg.empty())
    {
       chunkOutput.removeIfExists();
-      onConsoleText(docId, chunkId, kChunkConsoleError, errorMsg, true);
+      onConsoleText(docId, chunkId, kChunkConsoleError, errorMsg + "\n", 
+            true);
    }
 
    error = enqueueChunkOutput(docPath, docId, chunkId);

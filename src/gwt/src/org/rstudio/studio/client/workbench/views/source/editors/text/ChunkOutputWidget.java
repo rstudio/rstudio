@@ -22,6 +22,7 @@ import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.shell.ShellWidget;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
@@ -207,8 +208,16 @@ public class ChunkOutputWidget extends Composite
             state_ = CHUNK_RENDERED;
             applyCachedEditorStyle();
             showReadyState();
-            onRenderCompleted_.execute(
-                  frame_.getDocument().getDocumentElement().getScrollHeight());
+            Element doc = frame_.getDocument().getDocumentElement();
+            int height = doc.getScrollHeight();
+            if (doc.getScrollWidth() > doc.getOffsetWidth())
+            {
+               // if there's a horizontal scrollbar we need to allocate space
+               // for it (otherwise the horizontal scrollbar will overflow and
+               // cause a vertical scrollbar too)
+               height += ShellWidget.ESTIMATED_SCROLLBAR_WIDTH;
+            }
+            onRenderCompleted_.execute(height);
          };
       });
       state_ = CHUNK_RENDERING;
