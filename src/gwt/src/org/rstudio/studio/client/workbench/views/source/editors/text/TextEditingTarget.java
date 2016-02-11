@@ -3106,12 +3106,15 @@ public class TextEditingTarget implements
                isCommentAction = true;
          }
          
-         if (!looksLikeRoxygen)
+         if (docDisplay_.getFileType().isRmd())
          {
-            if (trimmed.startsWith("@"))
-               looksLikeRoxygen = true;
-            else if (trimmed.startsWith("#'"))
-               looksLikeRoxygen = true;
+            if (!looksLikeRoxygen)
+            {
+               if (trimmed.startsWith("@"))
+                  looksLikeRoxygen = true;
+               else if (trimmed.startsWith("#'"))
+                  looksLikeRoxygen = true;
+            }
          }
       }
       
