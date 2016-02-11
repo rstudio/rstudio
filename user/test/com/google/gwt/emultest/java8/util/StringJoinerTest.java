@@ -13,8 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.emultest.java.util;
+package com.google.gwt.emultest.java8.util;
 
+import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.StringJoiner;
@@ -73,7 +74,7 @@ public class StringJoinerTest extends GWTTestCase {
     try {
       joiner.merge(null);
       fail("NullPointerException must be thrown if other joiner is null");
-    } catch (NullPointerException e) {
+    } catch (NullPointerException | JavaScriptException e) {
       // expected
     }
   }
