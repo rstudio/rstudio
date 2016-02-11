@@ -152,10 +152,7 @@ public class RCompletionToolTip extends CppCompletionToolTip
             // if we are showing left then adjust
             int adjustedLeft = left;
             if (showLeft)
-            {
-               adjustedLeft = getAbsoluteLeft() -
-                     offsetWidth - H_PAD;
-            }
+               adjustedLeft = left - offsetWidth - H_PAD;
 
             setPopupPosition(adjustedLeft, top - getOffsetHeight() - V_PAD);
          }
