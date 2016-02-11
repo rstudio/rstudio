@@ -181,7 +181,6 @@ public class EditingPreferencesPane extends PreferencesPane
       rMarkdownLabel.getElement().getStyle().setPaddingTop(14, Unit.PX);
       displayPanel.add(rMarkdownLabel);
       displayPanel.add(checkboxPref("Show inline toolbar for R code chunks", prefs_.showInlineToolbarForRCodeChunks()));
-      displayPanel.add(checkboxPref("Show R chunk execution output within editor", prefs_.showRmdChunkOutputInline()));
       displayPanel.add(checkboxPref("Show document outline by default", prefs_.showDocumentOutlineRmd()));
       displayPanel.add(checkboxPref("Show unnamed entries in document outline", prefs_.showUnnamedEntriesInDocumentOutline()));
       rmdViewerMode_ = new SelectWidget(
