@@ -31,6 +31,11 @@
    .rs.scalar(TRUE)
 })
 
+.rs.addFunction("withChangedExtension", function(path, ext)
+{
+   paste(tools::file_path_sans_ext(path), ext, sep = ".")
+})
+
 .rs.addFunction("extractFromNotebook", function(tag, rnbPath)
 {
    if (!file.exists(rnbPath))
@@ -102,7 +107,36 @@
   invisible(errorMessage)
 })
 
-.rs.addFunction("createNotebook", function(input, output = NULL, envir = .GlobalEnv)
+.rs.addFunction("injectHTMLComments", function(contents,
+                                               location,
+                                               inject)
+{
+   # find the injection location
+   idx <- NULL
+   for (i in seq_along(contents))
+   {
+      if (contents[[i]] == location)
+      {
+         idx <- i
+         break
+      }
+   }
+   
+   if (is.null(idx))
+      stop("failed to find injection location '", location, "'")
+   
+   # generate injection strings
+   injection <- paste(vapply(seq_along(inject), FUN.VALUE = character(1), function(i) {
+      sprintf('<!-- %s %s -->', names(inject)[i], inject[[i]])
+   }), collapse = "\n")
+   
+   contents[[idx]] <- paste(contents[[idx]], injection, "", sep = "\n")
+   contents
+})
+
+.rs.addFunction("createNotebook", function(inputFile,
+                                           outputFile = NULL,
+                                           envir = .GlobalEnv)
 {
    find_chunks <- function(contents) {
       chunkStarts <- grep("^\\s*```{", contents, perl = TRUE)
@@ -120,79 +154,81 @@
       sprintf("\n\n<!-- rnb-chunk-%s-%s %s -->\n\n", name, index, row)
    }
    
-   input <- normalizePath(input, winslash = "/", mustWork = TRUE)
-   contents <- readLines(input, warn = FALSE)
+   # resolve input, output paths
+   inputFile <- normalizePath(inputFile, winslash = "/", mustWork = TRUE)
+   if (is.null(outputFile))
+      outputFile <- .rs.withChangedExtension(inputFile, "Rnb")
+   
+   rmdContents <- readLines(inputFile, warn = FALSE)
    
    # inject placeholders so we can track chunk locations after render
    # ensure that the comments are surrounded by newlines, as otherwise
    # strange render errors can occur
-   modified <- contents
-   chunks <- find_chunks(modified)
-   for (i in seq_along(chunks)) {
-      startIdx <- chunks[[i]]$start
-      modified[startIdx] <- paste(
+   rmdModified <- rmdContents
+   rmdChunks <- find_chunks(rmdModified)
+   for (i in seq_along(rmdChunks)) {
+      startIdx <- rmdChunks[[i]]$start
+      rmdModified[startIdx] <- paste(
          chunk_annotation("start", i, startIdx),
-         modified[startIdx],
+         rmdModified[startIdx],
          sep = ""
       )
       
-      endIdx <- chunks[[i]]$end
-      modified[endIdx] <- paste(
-         modified[endIdx],
+      endIdx <- rmdChunks[[i]]$end
+      rmdModified[endIdx] <- paste(
+         rmdModified[endIdx],
          chunk_annotation("end", i, endIdx),
          sep = ""
       )
    }
    
-   # generate base64 encoded version of original document
-   docEncoded <- caTools::base64encode(paste(c(contents, ""), collapse = "\n"))
-   
-   # render a GitHub-flavored version of document, for injection
-   ghOutput <- tempfile("rnb-gh-file-", fileext = ".md")
-   ghFormat <- rmarkdown::github_document(html_preview = FALSE)
-   rmarkdown::render(input = input,
-                     output_format = ghFormat,
-                     output_file = ghOutput,
-                     output_options = list(self_contained = TRUE),
-                     envir = envir,
-                     quiet = TRUE)
-   ghContents <- readLines(ghOutput, warn = FALSE)
-   ghEncoded <- caTools::base64encode(paste(c(ghContents, ""), collapse = "\n"))
-   
-   
-   # inject base64-encoded document into document
-   # (i heard you like documents, so i put a document in your document)
-   partitioned <- rmarkdown:::partition_yaml_front_matter(contents)
-   injected <- c(
-      partitioned$front_matter,
-      "",
-      sprintf('<!-- rnb-document-source %s -->', docEncoded),
-      sprintf('<!-- rnb-github-md %s -->', ghEncoded),
-      "",
-      partitioned$body
-   )
-   
    # write out file and prepare for render
-   inputFile <- tempfile("rnb-input-file-", fileext = ".Rmd")
-   writeLines(injected, inputFile)
+   renderInput  <- tempfile("rnb-render-input-", fileext = ".Rmd")
+   renderOutput <- tempfile("rnb-render-output", fileext = ".Rnb")
+   writeLines(rmdModified, renderInput)
+   on.exit(unlink(renderInput), add = TRUE)
+   on.exit(unlink(renderOutput), add = TRUE)
    
    # render the document
-   outputFormat <- rmarkdown::html_document()
+   outputFormat <- rmarkdown::html_document(self_contained = TRUE,
+                                            keep_md = TRUE)
    
-   if (is.null(output))
-      output <- paste(tools::file_path_sans_ext(input), "Rnb", sep = ".")
+   if (is.null(renderOutput))
+      renderOutput <- paste(tools::file_path_sans_ext(renderInput), "rnb", sep = ".")
    
-   if (!file.exists(dirname(output)))
-      dir.create(dirname(output), recursive = TRUE)
+   if (!file.exists(dirname(renderOutput)))
+      dir.create(dirname(renderOutput), recursive = TRUE)
    
-   rmarkdown::render(input = inputFile,
+   rmarkdown::render(input = renderInput,
                      output_format = outputFormat,
-                     output_file = output,
+                     output_file = renderOutput,
                      output_options = list(self_contained = TRUE),
                      encoding = "UTF-8",
                      envir = envir,
                      quiet = TRUE)
    
-   invisible(output)
+   # read the rendered file
+   rnbContents <- readLines(renderOutput, warn = FALSE)
+   
+   # generate base64-encoded versions of .Rmd source, .md sidecar
+   rmdContents <- readChar(inputFile, file.info(inputFile)$size, TRUE)
+   rmdEncoded <- caTools::base64encode(paste(rmdContents, collapse = "\n"))
+   
+   mdPath <- .rs.withChangedExtension(renderOutput, "md")
+   mdContents <- readChar(mdPath, file.info(mdPath)$size, TRUE)
+   mdEncoded  <- caTools::base64encode(mdContents)
+   
+   # inject document contents into rendered file
+   # (i heard you like documents, so i put a document in your document)
+   rnbContents <- .rs.injectHTMLComments(
+      rnbContents,
+      "<head>",
+      list("rnb-document-source" = rmdEncoded,
+           "rnb-github-md"       = mdEncoded)
+   )
+   
+   # write our .Rnb to file and we're done!
+   cat(rnbContents, file = outputFile, sep = "\n")
+   invisible(outputFile)
    
 })
