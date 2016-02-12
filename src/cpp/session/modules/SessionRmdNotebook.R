@@ -37,11 +37,23 @@
       stop("no file at path '", rnbPath, "'")
    
    contents <- readLines(rnbPath, warn = FALSE)
-   reDocument <- paste('<!--', tag, '(\\S+) -->')
-   idx <- grep(reDocument, contents, perl = TRUE)
+   
+   # find the line hosting the encoded content
+   marker <- paste('<!--', tag)
+   idx <- NULL
+   for (i in seq_along(contents))
+   {
+      if (.rs.startsWith(contents[[i]], marker))
+      {
+         idx <- i
+         break
+      }
+   }
+   
    if (!length(idx))
       stop("no encoded content with tag '", tag, "' in '", rnbPath, "'")
-   
+      
+   reDocument <- paste('<!--', tag, '(\\S+) -->')
    rmdEncoded <- sub(reDocument, "\\1", contents[idx])
    caTools::base64decode(rmdEncoded, character())
 })
