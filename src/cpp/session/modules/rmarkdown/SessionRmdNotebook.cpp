@@ -71,7 +71,7 @@ bool s_consoleConnected = false;
 // the following structure:
 //
 // - foo.Rmd
-// + foo.Rnd.cached
+// + .foo.Rnd.cached
 //   - chunks.json
 //   - cwiaiw9i4f0.html
 //   + cwiaiw9i4f0_files
@@ -97,6 +97,7 @@ FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
 {
    FilePath folder;
    std::string stem;
+
    if (docPath.empty()) 
    {
       // the doc hasn't been saved, so keep its chunk output in the scratch
@@ -109,7 +110,13 @@ FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
       // the doc has been saved, so keep its chunk output alongside the doc
       // itself
       FilePath path = module_context::resolveAliasedPath(docPath);
-      stem = path.stem();
+
+#ifndef _WIN32
+      // on non-Windows, use unix hidden folder 
+      stem = ".";
+#endif
+
+      stem += path.stem();
       folder = path.parent();
    }
 
@@ -506,9 +513,24 @@ Error executeInlineChunk(const json::JsonRpcRequest& request,
 
    // ensure we have a place to put the output
    FilePath chunkOutput = chunkOutputPath(docPath, docId, chunkId);
-   error = chunkOutput.parent().ensureDirectory();
-   if (error)
-      return error;
+   if (!chunkOutput.parent().exists())
+   {
+      error = chunkOutput.parent().ensureDirectory();
+      if (error)
+         return error;
+#ifdef _WIN32
+      // on Windows, mark the directory hidden after creating it
+      if (!docPath.empty())
+      {
+         error = core::sytem::makeFileHidden(chunkOutput.parent());
+         if (error)
+         {
+            // non-fatal
+            LOG_ERROR(error)
+         }
+      }
+#endif
+   }
 
    // ensure we have a library path
    FilePath chunkLibDir = chunkCacheFolder(docPath, docId).complete(
