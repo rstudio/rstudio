@@ -197,9 +197,7 @@ assign(x = ".rs.acCompletionTypes",
                                                quote = FALSE,
                                                directoriesOnly = FALSE)
 {
-   projectPath <- .rs.getProjectDirectory()
-   hasFileMonitor <- .rs.hasFileMonitor()
-   path <- suppressWarnings(.rs.normalizePath(path))
+   path <- suppressWarnings(.rs.normalizePath(path, winslash = "/"))
    
    ## Separate the token into a 'directory' prefix, and a 'name' prefix. We need
    ## to prefix the prefix as we will need to prepend it onto completions for
@@ -261,7 +259,8 @@ assign(x = ".rs.acCompletionTypes",
    # If the directory lies within a folder that we're monitoring
    # for indexing, use that.
    cacheable <- TRUE
-   usingFileMonitor <- .rs.hasFileMonitor() &&
+   usingFileMonitor <-
+      .rs.hasFileMonitor() &&
       .rs.startsWith(directory, projDirEndsWithSlash)
    
    absolutePaths <- character()
