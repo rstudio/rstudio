@@ -1,7 +1,7 @@
 /*
  * RSession.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -103,9 +103,9 @@ struct RInitInfo
       
 struct RConsoleInput
 {
-   RConsoleInput(const std::string& console) : cancel(true), console(console) {}
-   RConsoleInput(const std::string& text, const std::string& console) : 
-                 cancel(false), text(text), console(console) {}
+   explicit RConsoleInput(const std::string& console) : cancel(true), console(console) {}
+   explicit RConsoleInput(const std::string& text, const std::string& console) : 
+                          cancel(false), text(text), console(console) {}
    bool cancel ;
    std::string text;
    std::string console;

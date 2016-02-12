@@ -760,6 +760,11 @@ void onDocRenamed(const std::string &,
    s_idToPath[pDoc->id()] = pDoc->path();
 }
 
+void onRemoveAll()
+{
+   s_idToPath.clear();
+}
+
 } // anonymous namespace
 
 Events& events()
@@ -778,6 +783,7 @@ Error initialize()
    events().onDocUpdated.connect(onDocUpdated);
    events().onDocRemoved.connect(onDocRemoved);
    events().onDocRenamed.connect(onDocRenamed);
+   events().onRemoveAll.connect(onRemoveAll);
 
    // signup for the quit and shutdown events
    module_context::events().onQuit.connect(onQuit);

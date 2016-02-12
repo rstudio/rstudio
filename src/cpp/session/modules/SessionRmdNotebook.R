@@ -15,6 +15,9 @@
 
 .rs.addJsonRpcHandler("extract_rmd_from_notebook", function(input, output)
 {
+  if (Encoding(input) == "unknown") Encoding(input) <- "UTF-8"
+  if (Encoding(output) == "unknown") Encoding(output) <- "UTF-8"
+
    # if 'output' already exists, compare file write times to determine
    # whether we really want to overwrite a pre-existing .Rmd
    if (file.exists(output)) {
@@ -69,6 +72,11 @@
                                                headerFile,
                                                outputFile) 
 {
+  # presume paths are UTF-8 encoded unless specified otherwise
+  if (Encoding(libDir) == "unknown") Encoding(libDir) <- "UTF-8"
+  if (Encoding(headerFile) == "unknown") Encoding(headerFile) <- "UTF-8"
+  if (Encoding(outputFile) == "unknown") Encoding(outputFile) <- "UTF-8"
+
   # create a temporary file stub to send to R Markdown
   chunkFile <- tempfile(fileext = ".Rmd")
   chunk <- paste(paste("```{r", options, "echo=FALSE}"),

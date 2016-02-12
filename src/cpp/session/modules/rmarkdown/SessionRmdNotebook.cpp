@@ -464,14 +464,13 @@ Error handleChunkOutputRequest(const http::Request& request,
    if (parts[0] == kChunkLibDir)
    {
       // if a reference to the chunk library folder, we can reuse the contents
+      // (let the browser cache the file)
       pResponse->setCacheableFile(target, request);
    }
    else
    {
-      // otherwise, we don't want the output to be cached (so we get fresh
-      // chunk output every time)
-      pResponse->setNoCacheHeaders();
-      pResponse->setFile(target, request);
+      // otherwise, use ETag cache 
+      pResponse->setCacheableBody(target, request);
    }
 
    return Success();
