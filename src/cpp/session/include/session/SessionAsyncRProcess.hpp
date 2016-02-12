@@ -71,6 +71,7 @@ public:
    bool isRunning();
    void terminate();
    void markCompleted();
+   bool terminationRequested();
 
 protected:
    virtual bool onContinue();
@@ -78,8 +79,6 @@ protected:
    virtual void onStderr(const std::string& output);
 
    virtual void onCompleted(int exitStatus) = 0;
-
-   bool terminationRequested();
 
 private:
    void onProcessCompleted(int exitStatus);

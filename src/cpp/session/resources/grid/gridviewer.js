@@ -853,7 +853,7 @@ var initDataTable = function(resCols, data) {
     // Create an empty array of data tto be use as a map in the callback
     dataTableData = [];
     if (data.length > 0) {
-      for (i = 0; i < data.length; i++) {
+      for (i = 0; i < data[0].length; i++) {
         dataTableData.push(i);
       }
     }
@@ -868,7 +868,7 @@ var initDataTable = function(resCols, data) {
         "sClass": className,
         "visible": (!rowNumbers && idx === 0) ? false : true,
         "data": function (row, type, set, meta) {
-          return (meta.col == 0 ? meta.row : (data ? data[meta.row][meta.col-1] : null));
+          return (meta.col == 0 ? meta.row : (data ? data[meta.col-1][meta.row] : null));
         },
         "width": "4em",
         "render": e.col_type === "numeric" ? renderNumberCell : renderTextCell

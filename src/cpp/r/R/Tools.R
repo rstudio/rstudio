@@ -717,3 +717,11 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    absolutePaths
 })
 
+.rs.addFunction("callWithRDS", function(functionName, inputLocation, outputLocation)
+{
+   params = readRDS(inputLocation)
+   result <- do.call(functionName, params)
+
+   saveRDS(file = outputLocation, object = result)
+})
+

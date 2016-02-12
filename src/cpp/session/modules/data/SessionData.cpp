@@ -16,10 +16,15 @@
 #include "SessionData.hpp"
 
 #include <core/Exec.hpp>
+ 
+#include <r/RExec.hpp>
+#include <r/RErrorCategory.hpp>
+#include <r/RJson.hpp>
+#include <r/RSourceManager.hpp>
+#include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncRProcess.hpp>
-#include <r/session/RSessionUtils.hpp>
 
 #include "DataViewer.hpp"
 
@@ -41,11 +46,6 @@ public:
                   new AsyncDataPreviewRProcess(request, continuation));
       pDataPreview->start();
       return pDataPreview;
-   }
-
-   void terminateProcess()
-   {
-      async_r::AsyncRProcess::terminate();
    }
 
 private:
@@ -73,14 +73,36 @@ private:
       return srcPath;
    }
 
+   Error saveRDS(const json::JsonRpcRequest& request)
+   {
+      r::sexp::Protect rProtect;
+      r::exec::RFunction rFunction("saveRDS");
+
+      rFunction.addParam(request.params);
+      rFunction.addParam("file", inputLocation_);
+
+      SEXP resultSEXP;
+      return rFunction.call(&resultSEXP, &rProtect);
+   }
+
    void start()
    {
-      std::ostringstream jsonStream;
-      json::Value requestValue = request_.params;
-      json::write(requestValue, jsonStream);
-      std::string jsonData = jsonStream.str();
+      inputLocation_ = module_context::tempFile("input", "rds").absolutePath();
+      outputLocation_ = module_context::tempFile("output", "rds").absolutePath();
 
-      std::string cmd = ".rs.preview_data_import_async('" + jsonData + "')";
+      Error err = saveRDS(request_);
+      if (err)
+      {
+         continuationWithError("Failed to prepare the operation.");
+         return;
+      }
+
+      std::string cmd = std::string(".rs.callWithRDS(") +
+        "\".rs.rpc.preview_data_import\", \"" +
+      	inputLocation_ +
+      	"\", \"" + 
+      	outputLocation_ +
+      	"\")";
 
       std::vector<core::FilePath> sources;
       sources.push_back(pathFromSource("Tools.R"));
@@ -91,40 +113,72 @@ private:
       async_r::AsyncRProcess::start(cmd.c_str(), FilePath(), async_r::R_PROCESS_VANILLA, sources);
    }
 
+   Error readRDS(SEXP* pResult)
+   {
+       r::sexp::Protect rProtect;
+       r::exec::RFunction rFunction("readRDS");
+
+       rFunction.addParam(outputLocation_);
+       rFunction.call(pResult, &rProtect);
+
+       return Success();
+   }
+
+   void continuationWithError(const char* message)
+   {
+      json::Object jsonError;
+
+      jsonError["message"] = message;
+      if (errors_.size() > 0)
+      {
+         jsonError["message"] = json::toJsonArray(errors_);
+      }
+
+      json::Object jsonErrorResponse;
+      jsonErrorResponse["error"] = jsonError;
+
+      json::JsonRpcResponse response;
+      response.setResult(jsonErrorResponse);
+
+      continuation_(Success(), &response);
+   }
+
    void onCompleted(int exitStatus)
    {
       if (terminationRequested())
       {
-          // If the user requested to terminate this request, there is no need to
-          // trigger an error event.
-          return;
+          json::JsonRpcResponse response;
+          continuation_(Success(), &response);
       }
-
+      
       if (errors_.size() > 0 || exitStatus != EXIT_SUCCESS)
       {
-         json::Object jsonError;
+         continuationWithError("The operation failed to complete.");
+         return;
+      }
 
-         jsonError["message"] = "The operation failed to complete.";
-         if (errors_.size() > 0)
-         {
-            jsonError["message"] = json::toJsonArray(errors_);
-         }
-
-         json::Object jsonErrorResponse;
-         jsonErrorResponse["error"] = jsonError;
-
-         json::JsonRpcResponse response;
-         response.setResult(jsonErrorResponse);
-
-         continuation_(Success(), &response);
+      SEXP resultSEXP;;
+      Error error = readRDS(&resultSEXP);
+      if (error)
+      {
+         continuationWithError("Failed to complete the operation.");
+         return;
       }
       else
       {
          json::Value jsonResponse;
          json::parse(output_, &jsonResponse);
 
+         core::json::Value resultValue;
+         error = r::json::jsonValueFromObject(resultSEXP, &resultValue);
+         if (error)
+         {
+            continuationWithError("Failed to parse result from the operation execution.");
+            return;
+         }
+
          json::JsonRpcResponse response;
-         response.setResult(jsonResponse);
+         response.setResult(resultValue);
 
          continuation_(Success(), &response);
       }
@@ -144,21 +198,26 @@ private:
    json::JsonRpcRequest request_;
    std::vector<std::string> errors_;
    std::string output_;
+
+   std::string inputLocation_;
+   std::string outputLocation_;
 };
 
 boost::shared_ptr<AsyncDataPreviewRProcess> s_pActiveDataPreview;
 
-void getPreviewDataImportAsync(
+bool getPreviewDataImportAsync(
         const json::JsonRpcRequest& request,
         const json::JsonRpcFunctionContinuation& continuation)
 {
    if (s_pActiveDataPreview &&
        s_pActiveDataPreview->isRunning())
    {
+      return true;
    }
    else
    {
       s_pActiveDataPreview = AsyncDataPreviewRProcess::create(request, continuation);
+      return false;
    }
 }
 

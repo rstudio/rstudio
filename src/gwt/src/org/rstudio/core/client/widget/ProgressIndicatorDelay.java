@@ -38,7 +38,13 @@ public class ProgressIndicatorDelay implements ProgressIndicator
    @Override
    public void onProgress(final String status)
    {
-      onProgress(status, null);
+      onProgress(status, new Operation()
+      {
+         @Override
+         public void execute()
+         {
+         }
+      });
    }
    
    @Override

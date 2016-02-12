@@ -65,10 +65,10 @@
             for(colIdx in seq_along(optionValue)) {
                col <- optionValue[[colIdx]]
 
-               col_only = col$only[[1]]
-               col_parseString = col$parseString[[1]]
-               col_assignedType = col$assignedType[[1]]
-               col_name = col$name[[1]]
+               col_only <- col$only[[1]]
+               col_parseString <- col$parseString[[1]]
+               col_assignedType <- col$assignedType[[1]]
+               col_name <- col$name[[1]]
 
                if ((!identical(dataImportOptions$columnsOnly, TRUE) && !identical(col_assignedType, NULL)) || 
                   identical(col_only, TRUE))
@@ -132,7 +132,7 @@
                return (NULL)
 
             colsByIndex <- list()
-            for (colIdx in 1:length(optionValue)) {
+            for (colIdx in seq_along(optionValue)) {
                col <- optionValue[[colIdx]]
                colsByIndex[[col$index + 1]] <- col
             }
@@ -503,17 +503,3 @@
    })
 })
 
-.rs.addFunction("preview_data_import_async", function(jsonData)
-{
-   tryCatch({
-      params = jsonlite::fromJSON(jsonData)
-      result <- .rs.rpc.preview_data_import(
-         params[[1]],
-         maxCols = params[[2]],
-         maxFactors = params[[3]])
-
-      return(jsonlite::toJSON(result, force = TRUE))
-   }, error = function(e) {
-      return(jsonlite::toJSON(list(error = e), force = TRUE))
-   })
-})

@@ -63,12 +63,8 @@ void AsyncRProcess::start(const char* rCommand,
             session::options().coreRSourcePath();
       
       const core::FilePath rTools =  rPath.childPath("Tools.R");
-      const core::FilePath sessionCodeTools = modulesPath.childPath("SessionCodeTools.R");
-      const core::FilePath sessionRCompletions = modulesPath.childPath("SessionRCompletions.R");
       
       rSourceFiles.push_back(rTools);
-      rSourceFiles.push_back(sessionCodeTools);
-      rSourceFiles.push_back(sessionRCompletions);
    }
 
    // args
