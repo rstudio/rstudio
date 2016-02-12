@@ -716,6 +716,16 @@ Error getPath(const std::string& id, std::string* pPath)
    return Success();
 }
 
+Error getPath(const std::string& id, core::FilePath* pPath)
+{
+   std::string path;
+   Error error = getPath(id, &path);
+   if (error) 
+      return error;
+   *pPath = module_context::resolveAliasedPath(path);
+   return Success();
+}
+
 namespace {
 
 void onQuit()

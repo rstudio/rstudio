@@ -369,15 +369,14 @@ void onConsoleText(const std::string& docId, const std::string& chunkId,
    if (output.empty())
       return;
 
-   std::string path;
+   FilePath path;
    Error error = source_database::getPath(docId, &path);
    if (error)
    {
       LOG_ERROR(error);
    }
 
-   FilePath outputCsv = chunkConsolePath(
-         module_context::resolveAliasedPath(path).absolutePath(), 
+   FilePath outputCsv = chunkConsolePath(path.absolutePath(), 
          docId, chunkId);
 
    std::vector<std::string> vals; 

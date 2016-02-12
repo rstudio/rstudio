@@ -95,7 +95,6 @@ private:
    
   IDMap idMap_;
   FilePathMap filePathMap_;
-  std::map<std::string, core::FilePath> idToFilePathMap_;
   
 };
 
