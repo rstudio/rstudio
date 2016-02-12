@@ -737,7 +737,7 @@ void onDocUpdated(boost::shared_ptr<SourceDocument> pDoc)
    s_idToPath[pDoc->id()] = pDoc->path();
 }
 
-void onDocRemoved(const std::string& id)
+void onDocRemoved(const std::string& id, const std::string& path)
 {
    std::map<std::string, std::string>::iterator it = s_idToPath.find(id);
    if (it != s_idToPath.end())

@@ -77,7 +77,7 @@ void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
    // amend with chunk definitions 
    json::Value chunkDefs;
    Error error = rmarkdown::notebook::getChunkDefs(pDoc->path(), pDoc->id(),
-         &chunkDefs);
+         NULL, &chunkDefs);
    if (error)
       LOG_ERROR(error);
    (*pDocJson)["chunk_definitions"] = chunkDefs;
@@ -287,8 +287,10 @@ Error saveDocumentCore(const std::string& contents,
    bool hasChunkOutput = json::isType<json::Array>(jsonChunkOutput);
    if (hasChunkOutput)
    {
+      time_t docTime = pDoc->dirty() ? std::time(NULL) : 
+                                       pDoc->lastKnownWriteTime();
       error = rmarkdown::notebook::setChunkDefs(pDoc->path(), pDoc->id(),
-            jsonChunkOutput.get_array());
+            docTime, jsonChunkOutput.get_array());
       if (error)
          LOG_ERROR(error);
    }
@@ -693,12 +695,16 @@ Error closeDocument(const json::JsonRpcRequest& request,
    Error error = json::readParam(request.params, 0, &id);
    if (error)
       return error ;
+
+   // get the path (it's okay if this fails, unsaved docs don't have a path)
+   std::string path;
+   source_database::getPath(id, &path);
    
    error = source_database::remove(id);
    if (error)
       return error;
 
-   source_database::events().onDocRemoved(id);
+   source_database::events().onDocRemoved(id, path);
 
    return Success();
 }

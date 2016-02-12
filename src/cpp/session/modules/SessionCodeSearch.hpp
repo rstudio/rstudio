@@ -68,7 +68,7 @@ public:
       return boost::shared_ptr<RSourceIndex>();
    }
    
-   void remove(const std::string& id);
+   void remove(const std::string& id, const std::string& path);
    void removeAll();
 
    std::vector< boost::shared_ptr<RSourceIndex> > indexes()

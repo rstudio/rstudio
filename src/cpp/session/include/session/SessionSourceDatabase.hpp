@@ -193,11 +193,11 @@ core::Error getPath(const std::string& id, std::string* pPath);
 // source database events
 struct Events : boost::noncopyable
 {
-   boost::signal<void(boost::shared_ptr<SourceDocument>)> onDocUpdated;
+   boost::signal<void(boost::shared_ptr<SourceDocument>)>      onDocUpdated;
    boost::signal<void(const std::string&,
-                      boost::shared_ptr<SourceDocument>)> onDocRenamed;
-   boost::signal<void(const std::string&)>                onDocRemoved;
-   boost::signal<void()>                                  onRemoveAll;
+                      boost::shared_ptr<SourceDocument>)>      onDocRenamed;
+   boost::signal<void(const std::string&, const std::string&)> onDocRemoved;
+   boost::signal<void()>                                       onRemoveAll;
 };
 
 Events& events();

@@ -147,7 +147,7 @@ void onSourceDocUpdated(boost::shared_ptr<IdToFile> pIdToFile,
 }
 
 void onSourceDocRemoved(boost::shared_ptr<IdToFile> pIdToFile,
-                        const std::string& id)
+                        const std::string& id, const std::string&)
 {
    // get the filename for this id
    IdToFile::iterator it = pIdToFile->find(id);
@@ -273,7 +273,7 @@ Error initialize()
    source_database::events().onDocUpdated.connect(
              boost::bind(onSourceDocUpdated, pIdToFile, _1));
    source_database::events().onDocRemoved.connect(
-             boost::bind(onSourceDocRemoved, pIdToFile, _1));
+             boost::bind(onSourceDocRemoved, pIdToFile, _1, _2));
    source_database::events().onRemoveAll.connect(
              boost::bind(onAllSourceDocsRemoved, pIdToFile));
 
