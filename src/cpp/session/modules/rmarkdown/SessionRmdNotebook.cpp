@@ -262,7 +262,7 @@ void replayChunkOutputs(const std::string& docPath, const std::string& docId,
 
 // called by the client to inject output into a recently opened document 
 Error refreshChunkOutput(const json::JsonRpcRequest& request,
-                         json::JsonRpcResponse*)
+                         json::JsonRpcResponse* pResponse)
 {
    // extract path to doc to be refreshed
    std::string docPath, docId, requestId;
@@ -274,11 +274,10 @@ Error refreshChunkOutput(const json::JsonRpcRequest& request,
    json::Value chunkDefs; 
    error = getChunkDefs(docPath, docId, NULL, &chunkDefs);
 
-   // schedule the work to play back the chunks (we don't do it synchronously
-   // so the RPC can return immediately)
+   // schedule the work to play back the chunks
    if (!error && chunkDefs.type() == json::ArrayType) 
    {
-      module_context::scheduleDelayedWork(boost::posix_time::milliseconds(10), 
+      pResponse->setAfterResponse(
             boost::bind(replayChunkOutputs, docPath, docId, requestId, 
                         chunkDefs.get_array()));
    }
@@ -343,6 +342,9 @@ void onDocRemoved(const std::string& docId, const std::string& docPath)
 void onDocRenamed(const std::string& oldPath, 
                   boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
+   Error error;
+   bool removeOldDir = false;
+
    // compute cache folders and ignore if we can't safely adjust them
    FilePath oldCacheDir = chunkCacheFolder(oldPath, pDoc->id());
    FilePath newCacheDir = chunkCacheFolder(pDoc->path(), pDoc->id());
@@ -353,13 +355,29 @@ void onDocRenamed(const std::string& oldPath,
    // to its newly saved location
    if (oldPath.empty())
    {
-      oldCacheDir.move(newCacheDir);
-      return;
+      error = oldCacheDir.move(newCacheDir);
+      if (error) 
+      {
+         // if we can't move the cache to the new location, we'll fall back to
+         // copy/remove
+         removeOldDir = true;
+      }
+      else
+         return;
    }
 
-   Error error = copyCache(oldCacheDir, newCacheDir);
+   error = copyCache(oldCacheDir, newCacheDir);
    if (error)
+   {
       LOG_ERROR(error);
+   }
+   else if (removeOldDir) 
+   {
+      // remove old dir if we couldn't move the folder above
+      error = oldCacheDir.remove();
+      if (error)
+         LOG_ERROR(error);
+   }
 }
 
 void disconnectConsole();
