@@ -1,7 +1,7 @@
 /*
  * DomUtils.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -906,5 +906,37 @@ public class DomUtils
       document.execCommand('SelectAll');
       document.execCommand("Copy", false, null);
       document.body.removeChild(copyElem);
+   }-*/;
+   
+   public static final String extractCssValue(String className, 
+         String propertyName)
+   {
+      JsArrayString classes = JsArrayString.createArray().cast();
+      classes.push(className);
+      return extractCssValue(classes, propertyName);
+   }
+   
+   public static final native String extractCssValue(JsArrayString className, 
+         String propertyName) /*-{
+      // A more elegant way of performing this would be to iterate through the
+      // document's styleSheet collection, but unfortunately browsers don't 
+      // expose the cssRules in all cases 
+      var ele = null, parent = null, root = null;
+      for (var i = 0; i < className.length; i++)
+      {
+         ele = $doc.createElement("div");
+         ele.style.display = "none";
+         ele.className = className[i];
+         if (parent != null)
+            parent.appendChild(ele);
+         parent = ele;
+         if (root == null) 
+            root = ele;
+      }
+      $doc.body.appendChild(root);
+      var computed = $wnd.getComputedStyle(ele);
+      var result = computed[propertyName] || "";
+      $doc.body.removeChild(root);
+      return result;
    }-*/;
 }

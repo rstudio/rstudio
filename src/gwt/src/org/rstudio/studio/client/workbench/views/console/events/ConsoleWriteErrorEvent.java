@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.console.events;
 
+import org.rstudio.studio.client.workbench.views.console.model.ConsoleText;
+
 import com.google.gwt.event.shared.GwtEvent;
 
 public class ConsoleWriteErrorEvent extends GwtEvent<ConsoleWriteErrorHandler>
@@ -21,14 +23,19 @@ public class ConsoleWriteErrorEvent extends GwtEvent<ConsoleWriteErrorHandler>
    public static final GwtEvent.Type<ConsoleWriteErrorHandler> TYPE =
       new GwtEvent.Type<ConsoleWriteErrorHandler>();
     
-   public ConsoleWriteErrorEvent(String error)
+   public ConsoleWriteErrorEvent(ConsoleText error)
    {
       error_ = error;
    }
    
    public String getError()
    {
-      return error_;
+      return error_.getText();
+   }
+   
+   public String getConsole()
+   {
+      return error_.getConsole();
    }
    
    @Override
@@ -43,5 +50,5 @@ public class ConsoleWriteErrorEvent extends GwtEvent<ConsoleWriteErrorHandler>
       return TYPE;
    }
    
-   private final String error_;
+   private final ConsoleText error_;
 }

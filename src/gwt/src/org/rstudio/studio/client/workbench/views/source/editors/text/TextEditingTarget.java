@@ -140,6 +140,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.VimMark
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar.HideMessageHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
@@ -403,7 +404,6 @@ public class TextEditingTarget implements
       dirtyState_ = new DirtyState(docDisplay_, false);
       lintManager_ = new LintManager(this, cppCompletionContext_);
       prefs_ = prefs;
-      codeExecution_ = new EditingTargetCodeExecution(docDisplay_, this);
       compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
       rmarkdownHelper_ = new TextEditingTargetRMarkdownHelper();
       cppHelper_ = new TextEditingTargetCppHelper(cppCompletionContext_, 
@@ -1157,7 +1157,7 @@ public class TextEditingTarget implements
          docDisplay_.navigateToPosition(toSourcePosition(jumpTo), true);
    }
 
-   public void initialize(SourceDocument document,
+   public void initialize(final SourceDocument document,
                           FileSystemContext fileContext,
                           FileType type,
                           Provider<String> defaultNameProvider)
@@ -1165,11 +1165,14 @@ public class TextEditingTarget implements
       id_ = document.getId();
       fileContext_ = fileContext;
       fileType_ = (TextFileType) type;
-      
+      codeExecution_ = new EditingTargetCodeExecution(docDisplay_, getId(), 
+            this);
       extendedType_ = document.getExtendedType();
       extendedType_ = rmarkdownHelper_.detectExtendedType(document.getContents(),
                                                           extendedType_, 
                                                           fileType_);
+      
+      themeHelper_ = new TextEditingTargetThemeHelper(this, events_);
       
       view_ = new TextEditingTargetWidget(this,
                                           commands_,
@@ -1190,6 +1193,10 @@ public class TextEditingTarget implements
             events_);
       
       roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
+      
+      notebook_ = new TextEditingTargetNotebook(
+                              this, rmarkdownHelper_, 
+                              docDisplay_, docUpdateSentinel_, document);   
       
       // ensure that Makefile and Makevars always use tabs
       name_.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -1438,6 +1445,7 @@ public class TextEditingTarget implements
       
       spelling_ = new TextEditingTargetSpelling(docDisplay_, 
                                                 docUpdateSentinel_);
+      
 
       // show/hide the debug toolbar when the dirty state changes. (note:
       // this doesn't yet handle the case where the user saves the document,
@@ -1950,6 +1958,12 @@ public class TextEditingTarget implements
    public HandlerRegistration addCloseHandler(CloseHandler<java.lang.Void> handler)
    {
       return handlers_.addHandler(CloseEvent.getType(), handler);
+   }
+   
+   public HandlerRegistration addEditorThemeStyleChangedHandler(
+                        EditorThemeStyleChangedEvent.Handler handler)
+   {
+      return themeHelper_.addEditorThemeStyleChangedHandler(handler);
    }
 
    public void fireEvent(GwtEvent<?> event)
@@ -3013,6 +3027,7 @@ public class TextEditingTarget implements
                {
                   if (docs.get(i).getId() == getId())
                   {
+                     docs.get(i).setChunkDefs(docDisplay_.getChunkDefs());
                      docs.get(i).setContents(docDisplay_.getCode());
                      docs.get(i).setDirty(dirtyState_.getValue());
                      break;
@@ -3931,7 +3946,13 @@ public class TextEditingTarget implements
    }
    
    public void executePreviousChunks(final Position position)
-   {  
+   {
+      if (prefs_.showRmdChunkOutputInline().getGlobalValue())
+      {
+         executePreviousChunksNotebookMode(position);
+         return;
+      }
+      
       // HACK: This is just to force the entire function tree to be built.
       // It's the easiest way to make sure getCurrentScope() returns
       // a Scope with an end.
@@ -3977,6 +3998,19 @@ public class TextEditingTarget implements
       {
          events_.fireEvent(new SendToConsoleEvent(code, true));
       }
+   }
+   
+   public void executePreviousChunksNotebookMode(Position position)
+   {
+      // HACK: This is just to force the entire function tree to be built.
+      // It's the easiest way to make sure getCurrentScope() returns
+      // a Scope with an end.
+      docDisplay_.getScopeTree();
+      
+      // execute the previous chunks
+      Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks(position);
+      for (Scope scope : previousScopes)
+         executeSweaveChunk(scope, false);
    }
    
    @Handler
@@ -4047,8 +4081,16 @@ public class TextEditingTarget implements
             {
                codeExecution_.setLastExecuted(range.getStart(), range.getEnd());
                String code = scopeHelper_.getSweaveChunkText(chunk);
-               events_.fireEvent(new SendToConsoleEvent(code, true));
-               docDisplay_.collapseSelection(true);
+               if (fileType_.isRmd() && 
+                   prefs_.showRmdChunkOutputInline().getValue())
+               {
+                  notebook_.executeChunk(chunk, code);
+               }
+               else
+               {
+                  events_.fireEvent(new SendToConsoleEvent(code, true));
+               }
+               docDisplay_.collapseSelection(true);   
             }
          }
       };
@@ -5700,11 +5742,13 @@ public class TextEditingTarget implements
    private final TextEditingTargetCppHelper cppHelper_;
    private final TextEditingTargetPresentationHelper presentationHelper_;
    private final TextEditingTargetReformatHelper reformatHelper_;
+   private TextEditingTargetThemeHelper themeHelper_;
    private RoxygenHelper roxygenHelper_;
    private boolean ignoreDeletes_;
    private boolean forceSaveCommandActive_ = false;
    private final TextEditingTargetScopeHelper scopeHelper_;
    private TextEditingTargetSpelling spelling_;
+   private TextEditingTargetNotebook notebook_;
    private BreakpointManager breakpointManager_;
    private final LintManager lintManager_;
    private final TextEditingTargetRenameHelper renameHelper_;
@@ -5716,7 +5760,7 @@ public class TextEditingTarget implements
    // Prevents external edit checks from happening too soon after each other
    private final IntervalTracker externalEditCheckInterval_ =
          new IntervalTracker(1000, true);
-   private final EditingTargetCodeExecution codeExecution_;
+   private EditingTargetCodeExecution codeExecution_;
    
    private SourcePosition debugStartPos_ = null;
    private SourcePosition debugEndPos_ = null;

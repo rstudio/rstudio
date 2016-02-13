@@ -93,6 +93,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spellin
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
@@ -195,6 +196,13 @@ public class AceEditor implements DocDisplay,
          {
             @Override
             public void onFoldChange(FoldChangeEvent event)
+            {
+               changed_ = true;
+            }
+         });
+         AceEditor.this.addLineWidgetsChangedHandler(new org.rstudio.studio.client.workbench.views.source.editors.text.events.LineWidgetsChangedEvent.Handler() {
+            @Override
+            public void onLineWidgetsChanged(LineWidgetsChangedEvent event)
             {
                changed_ = true;
             }
@@ -2322,6 +2330,12 @@ public class AceEditor implements DocDisplay,
    {
       return handlers_.addHandler(FoldChangeEvent.TYPE, handler);
    }
+   
+   public HandlerRegistration addLineWidgetsChangedHandler(
+                           LineWidgetsChangedEvent.Handler handler)
+   {
+      return handlers_.addHandler(LineWidgetsChangedEvent.TYPE, handler);
+   }
 
    public HandlerRegistration addRenderFinishedHandler(RenderFinishedEvent.Handler handler)
    {
@@ -2790,6 +2804,74 @@ public class AceEditor implements DocDisplay,
       return snippets_.onInsertSnippet();
    }
    
+   @Override
+   public void addLineWidget(LineWidget widget)
+   {
+      widget_.getLineWidgetManager().addLineWidget(widget);
+      fireLineWidgetsChanged();
+   }
+   
+   @Override
+   public void removeLineWidget(LineWidget widget)
+   {
+      widget_.getLineWidgetManager().removeLineWidget(widget);
+      fireLineWidgetsChanged();
+   }
+   
+   @Override
+   public void onLineWidgetChanged(LineWidget widget)
+   {
+      widget_.getLineWidgetManager().onWidgetChanged(widget);
+      fireLineWidgetsChanged();
+   }
+   
+   @Override
+   public JsArray<LineWidget> getLineWidgets()
+   {
+      return widget_.getLineWidgetManager().getLineWidgets();
+   }
+   
+   @Override
+   public LineWidget getLineWidgetForRow(int row)
+   {
+      return widget_.getLineWidgetManager().getLineWidgetForRow(row);
+   }
+   
+   @Override
+   public JsArray<ChunkDefinition> getChunkDefs()
+   {
+      // chunk definitions are populated at render time, so don't return any
+      // if we haven't rendered yet
+      if (!isRendered())
+         return null;
+      
+      JsArray<ChunkDefinition> chunks = JsArray.createArray().cast();
+      JsArray<LineWidget> lineWidgets = getLineWidgets();
+      for (int i = 0; i<lineWidgets.length(); i++)
+      {
+         LineWidget lineWidget = lineWidgets.get(i);
+         if (lineWidget.getType().equals(ChunkDefinition.LINE_WIDGET_TYPE))
+         {
+            ChunkDefinition chunk = lineWidget.getData();
+            chunks.push(chunk.withRow(lineWidget.getRow()));
+         }
+      }
+      
+      return chunks;
+   }
+   
+
+   @Override
+   public boolean isRendered()
+   {
+      return widget_.isRendered();
+   }
+   
+   private void fireLineWidgetsChanged()
+   {
+      AceEditor.this.fireEvent(new LineWidgetsChangedEvent());
+   }
+   
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
@@ -2856,5 +2938,4 @@ public class AceEditor implements DocDisplay,
    private String yankedText_ = null;
    
    private final List<HandlerRegistration> editorEventListeners_;
-
 }

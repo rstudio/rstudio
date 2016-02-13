@@ -37,6 +37,17 @@ public class AceEditorNative extends JavaScriptObject {
    public native final Renderer getRenderer() /*-{
       return this.renderer;
    }-*/;
+   
+   public native final LineWidgetManager getLineWidgetManager() /*-{
+      var session = this.getSession();
+      if (!session.widgetManager) 
+      {
+         var LineWidgets = $wnd.require("ace/line_widgets").LineWidgets;
+         session.widgetManager = new LineWidgets(session);
+         session.widgetManager.attach(this);
+      }
+      return session.widgetManager;
+   }-*/; 
 
    public native final void resize() /*-{
       this.resize();

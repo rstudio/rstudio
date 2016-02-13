@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -43,6 +44,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.Fold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.VimMarks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFailedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveInitiatedEvent;
@@ -338,14 +340,19 @@ public class DocUpdateSentinel
 
       final String foldSpec = Fold.encode(Fold.flatten(docDisplay_.getFolds()));
       String oldFoldSpec = sourceDoc_.getFoldSpec();
-
+      
+      final JsArray<ChunkDefinition> newChunkDefs = docDisplay_.getChunkDefs();
+      JsArray<ChunkDefinition> oldChunkDefs = sourceDoc_.getChunkDefs();
+      
       //String patch = DiffMatchPatch.diff(oldContents, newContents);
       SubstringDiff diff = new SubstringDiff(oldContents, newContents);
 
       // Don't auto-save when there are no changes. In addition to being
       // wasteful, it causes the server to think the document is dirty.
       if (path == null && fileType == null && diff.isEmpty()
-          && foldSpec.equals(oldFoldSpec))
+          && foldSpec.equals(oldFoldSpec) 
+          && (newChunkDefs == null || 
+              ChunkDefinition.equalTo(newChunkDefs, oldChunkDefs)))
       {
          changesPending_ = false;
          return false;
@@ -383,6 +390,7 @@ public class DocUpdateSentinel
             fileType,
             encoding,
             foldSpec,
+            newChunkDefs,
             diff.getReplacement(),
             diff.getOffset(),
             diff.getLength(),
@@ -420,7 +428,13 @@ public class DocUpdateSentinel
                      {
                         if (!thisChangeTracker.hasChanged())
                            changeTracker_.reset();
-
+                        
+                        // update the foldSpec and newChunkDefs so we 
+                        // can use them for change detection the next
+                        // time around
+                        sourceDoc_.setFoldSpec(foldSpec);
+                        sourceDoc_.setChunkDefs(newChunkDefs);
+                        
                         onSuccessfulUpdate(newContents,
                                            newHash,
                                            path,
@@ -456,6 +470,7 @@ public class DocUpdateSentinel
                            fileType,
                            encoding,
                            foldSpec,
+                           newChunkDefs,
                            newContents,
                            this);
                   }

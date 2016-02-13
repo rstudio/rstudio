@@ -927,7 +927,7 @@ void RSourceIndexes::initialize()
    source_database::events().onDocUpdated.connect(
        boost::bind(&RSourceIndexes::update, this, _1));
    source_database::events().onDocRemoved.connect(
-       boost::bind(&RSourceIndexes::remove, this, _1));
+       boost::bind(&RSourceIndexes::remove, this, _1, _2));
    source_database::events().onRemoveAll.connect(
        boost::bind(&RSourceIndexes::removeAll, this));
 }
@@ -965,26 +965,25 @@ void RSourceIndexes::update(const boost::shared_ptr<SourceDocument>& pDoc)
    
    // create aliases
    filePathMap_[filePath.absolutePath()] = pIndex;
-   idToFilePathMap_[pDoc->id()] = filePath;
    
    // kick off an update if necessary
    r_packages::AsyncPackageInformationProcess::update();
 }
 
-void RSourceIndexes::remove(const std::string& id)
+void RSourceIndexes::remove(const std::string& id, const std::string&)
 {
-   FilePath filePath = idToFilePathMap_[id];
-   
    idMap_.erase(id);
-   filePathMap_.erase(filePath.absolutePath());
-   idToFilePathMap_.erase(id);
+
+   FilePath filePath;
+   Error error = source_database::getPath(id, &filePath);
+   if (!error)
+      filePathMap_.erase(filePath.absolutePath());
 }
 
 void RSourceIndexes::removeAll()
 {
    idMap_.clear();
    filePathMap_.clear();
-   idToFilePathMap_.clear();
 }
 
 RSourceIndexes& rSourceIndex()

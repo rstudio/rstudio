@@ -157,6 +157,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationRPubsSource;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
@@ -545,9 +546,15 @@ public class RemoteServer implements Server
    }
 
    public void consoleInput(String consoleInput,
+                            String consoleId,
                             ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, CONSOLE_INPUT, consoleInput, requestCallback);
+      JSONArray params = new JSONArray();
+      params.set(0, consoleInput == null ? JSONNull.getInstance() :
+         new JSONString(consoleInput));
+      params.set(1, consoleId == null? JSONNull.getInstance() :
+         new JSONString(consoleId));
+      sendRequest(RPC_SCOPE, CONSOLE_INPUT, params, requestCallback);
    }
    
    public void resetConsoleActions(ServerRequestCallback<Void> requestCallback)
@@ -1535,6 +1542,7 @@ public class RemoteServer implements Server
                             String fileType,
                             String encoding,
                             String foldSpec,
+                            JsArray<ChunkDefinition> chunkDefs,
                             String contents,
                             ServerRequestCallback<String> requestCallback)
    {
@@ -1544,7 +1552,8 @@ public class RemoteServer implements Server
       params.set(2, fileType == null ? JSONNull.getInstance() : new JSONString(fileType));
       params.set(3, encoding == null ? JSONNull.getInstance() : new JSONString(encoding));
       params.set(4, new JSONString(StringUtil.notNull(foldSpec)));
-      params.set(5, new JSONString(contents));
+      params.set(5, chunkDefs == null ? JSONNull.getInstance() : new JSONObject(chunkDefs));
+      params.set(6, new JSONString(contents));
       sendRequest(RPC_SCOPE, SAVE_DOCUMENT, params, requestCallback);
    }
 
@@ -1553,6 +1562,7 @@ public class RemoteServer implements Server
                                 String fileType,
                                 String encoding,
                                 String foldSpec,
+                                JsArray<ChunkDefinition> chunkDefs,
                                 String replacement,
                                 int offset,
                                 int length,
@@ -1565,10 +1575,11 @@ public class RemoteServer implements Server
       params.set(2, fileType == null ? JSONNull.getInstance() : new JSONString(fileType));
       params.set(3, encoding == null ? JSONNull.getInstance() : new JSONString(encoding));
       params.set(4, new JSONString(StringUtil.notNull(foldSpec)));
-      params.set(5, new JSONString(replacement));
-      params.set(6, new JSONNumber(offset));
-      params.set(7, new JSONNumber(length));
-      params.set(8, new JSONString(hash));
+      params.set(5, chunkDefs == null ? JSONNull.getInstance() : new JSONObject(chunkDefs));
+      params.set(6, new JSONString(replacement));
+      params.set(7, new JSONNumber(offset));
+      params.set(8, new JSONNumber(length));
+      params.set(9, new JSONString(hash));
       sendRequest(RPC_SCOPE, SAVE_DOCUMENT_DIFF, params, requestCallback);
    }
 
@@ -1781,6 +1792,17 @@ public class RemoteServer implements Server
    public void iconvlist(ServerRequestCallback<IconvListResult> requestCallback)
    {
       sendRequest(RPC_SCOPE, ICONVLIST, requestCallback);      
+   }
+   
+   @Override
+   public void extractRmdFromNotebook(String inputPath,
+                                      String outputPath,
+                                      ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(inputPath));
+      params.set(1, new JSONString(outputPath));
+      sendRequest(RPC_SCOPE, "extract_rmd_from_notebook", params, requestCallback);
    }
 
    @Override
@@ -4163,6 +4185,50 @@ public class RemoteServer implements Server
                   requestCallback);
    }
    
+   @Override
+   public void executeInlineChunk(String docPath, String docId, String chunkId, 
+         String options, String content, 
+         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(docPath == null ? "" : docPath));
+      params.set(1, new JSONString(docId));
+      params.set(2, new JSONString(chunkId));
+      params.set(3, new JSONString(options));
+      params.set(4, new JSONString(content));
+      sendRequest(RPC_SCOPE,
+            "execute_inline_chunk",
+            params,
+            requestCallback);
+   }
+
+   @Override
+   public void refreshChunkOutput(String docPath, String docId, 
+         String requestId, ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(docPath == null ? "" : docPath));
+      params.set(1, new JSONString(docId));
+      params.set(2, new JSONString(requestId));
+      sendRequest(RPC_SCOPE,
+            "refresh_chunk_output",
+            params,
+            requestCallback);
+   }
+
+   @Override
+   public void setChunkConsole(String docId, String chunkId,
+         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(docId));
+      params.set(1, new JSONString(chunkId));
+      sendRequest(RPC_SCOPE,
+            "set_chunk_console",
+            params,
+            requestCallback);
+   }
+
    @Override
    public void getRmdOutputInfo(String input,
          ServerRequestCallback<RmdOutputInfo> requestCallback)

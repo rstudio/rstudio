@@ -96,10 +96,7 @@ EmbeddedLibrary embeddedLibClang()
    return embedded;
 }
 
-typedef std::map<std::string,std::string> IdToFile;
-
-void onSourceDocUpdated(boost::shared_ptr<IdToFile> pIdToFile,
-                        boost::shared_ptr<source_database::SourceDocument> pDoc)
+void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    // ignore if the file doesn't have a path
    if (pDoc->path().empty())
@@ -108,9 +105,6 @@ void onSourceDocUpdated(boost::shared_ptr<IdToFile> pIdToFile,
    // resolve to a full path
    FilePath docPath = module_context::resolveAliasedPath(pDoc->path());
    std::string filename = docPath.absolutePath();
-
-   // track the mapping between id and filename
-   (*pIdToFile)[pDoc->id()] = filename;
 
    // verify that it's a C/C++ file
    if (!SourceIndex::isSourceFile(filename))
@@ -146,29 +140,23 @@ void onSourceDocUpdated(boost::shared_ptr<IdToFile> pIdToFile,
    }
 }
 
-void onSourceDocRemoved(boost::shared_ptr<IdToFile> pIdToFile,
-                        const std::string& id)
+void onSourceDocRemoved(const std::string& id, const std::string& path)
 {
-   // get the filename for this id
-   IdToFile::iterator it = pIdToFile->find(id);
-   if (it != pIdToFile->end())
-   {
-      // remove from unsaved files
-      rSourceIndex().unsavedFiles().remove(it->second);
+   // resolve source database path
+   std::string resolvedPath = 
+      module_context::resolveAliasedPath(path).absolutePath();
 
-      // remove the translation unit
-      rSourceIndex().removeTranslationUnit(it->second);
+   // remove from unsaved files
+   rSourceIndex().unsavedFiles().remove(resolvedPath);
 
-      // remove the id from the map
-      pIdToFile->erase(it);
-   }
+   // remove the translation unit
+   rSourceIndex().removeTranslationUnit(resolvedPath);
 }
 
-void onAllSourceDocsRemoved(boost::shared_ptr<IdToFile> pIdToFile)
+void onAllSourceDocsRemoved()
 {
    rSourceIndex().unsavedFiles().removeAll();
    rSourceIndex().removeAllTranslationUnits();
-   pIdToFile->clear();
 }
 
 bool cppIndexingDisabled()
@@ -265,17 +253,11 @@ Error initialize()
    if (error)
       return error;
 
-   // keep a map of id to filename for source database event forwarding
-   boost::shared_ptr<IdToFile> pIdToFile = boost::make_shared<IdToFile>();
-
    // subscribe to source docs events for maintaining the unsaved files list
    // main source index and the unsaved files list)
-   source_database::events().onDocUpdated.connect(
-             boost::bind(onSourceDocUpdated, pIdToFile, _1));
-   source_database::events().onDocRemoved.connect(
-             boost::bind(onSourceDocRemoved, pIdToFile, _1));
-   source_database::events().onRemoveAll.connect(
-             boost::bind(onAllSourceDocsRemoved, pIdToFile));
+   source_database::events().onDocUpdated.connect(onSourceDocUpdated);
+   source_database::events().onDocRemoved.connect(onSourceDocRemoved);
+   source_database::events().onRemoveAll.connect(onAllSourceDocsRemoved);
 
    return Success();
 }
