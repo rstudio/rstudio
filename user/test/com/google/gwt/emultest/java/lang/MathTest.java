@@ -97,6 +97,70 @@ public class MathTest extends GWTTestCase {
     assertEquals(Double.POSITIVE_INFINITY, v);
   }
 
+  public void testMax() {
+    assertEquals(2d, Math.max(1d, 2d));
+    assertEquals(2d, Math.max(2d, 1d));
+    assertEquals(0d, Math.max(-0d, 0d));
+    assertEquals(0d, Math.max(0d, -0d));
+    assertEquals(1d, Math.max(-1d, 1d));
+    assertEquals(1d, Math.max(1d, -1d));
+    assertEquals(-1d, Math.max(-1d, -2d));
+    assertEquals(-1d, Math.max(-2d, -1d));
+    assertTrue(Double.isNaN(Math.max(Double.NaN, 1d)));
+    assertTrue(Double.isNaN(Math.max(1d, Double.NaN)));
+    assertTrue(Double.isNaN(Math.max(Double.NaN, Double.POSITIVE_INFINITY)));
+    assertTrue(Double.isNaN(Math.max(Double.POSITIVE_INFINITY, Double.NaN)));
+    assertTrue(Double.isNaN(Math.max(Double.NaN, Double.NEGATIVE_INFINITY)));
+    assertTrue(Double.isNaN(Math.max(Double.NEGATIVE_INFINITY, Double.NaN)));
+
+    assertEquals(2f, Math.max(1f, 2f));
+    assertEquals(2f, Math.max(2f, 1f));
+    assertEquals(0f, Math.max(-0f, 0f));
+    assertEquals(0f, Math.max(0f, -0f));
+    assertEquals(1f, Math.max(-1f, 1f));
+    assertEquals(1f, Math.max(1f, -1f));
+    assertEquals(-1f, Math.max(-1f, -2f));
+    assertEquals(-1f, Math.max(-2f, -1f));
+    assertTrue(Float.isNaN(Math.max(Float.NaN, 1f)));
+    assertTrue(Float.isNaN(Math.max(1f, Float.NaN)));
+    assertTrue(Float.isNaN(Math.max(Float.NaN, Float.POSITIVE_INFINITY)));
+    assertTrue(Float.isNaN(Math.max(Float.POSITIVE_INFINITY, Float.NaN)));
+    assertTrue(Float.isNaN(Math.max(Float.NaN, Float.NEGATIVE_INFINITY)));
+    assertTrue(Float.isNaN(Math.max(Float.NEGATIVE_INFINITY, Float.NaN)));
+  }
+
+  public void testMin() {
+    assertEquals(1d, Math.min(1d, 2d));
+    assertEquals(1d, Math.min(2d, 1d));
+    assertEquals(-0d, Math.min(-0d, 0d));
+    assertEquals(-0d, Math.min(0d, -0d));
+    assertEquals(-1d, Math.min(-1d, 1d));
+    assertEquals(-1d, Math.min(1d, -1d));
+    assertEquals(-2d, Math.min(-1d, -2d));
+    assertEquals(-2d, Math.min(-2d, -1d));
+    assertTrue(Double.isNaN(Math.min(Double.NaN, 1d)));
+    assertTrue(Double.isNaN(Math.min(1d, Double.NaN)));
+    assertTrue(Double.isNaN(Math.min(Double.NaN, Double.POSITIVE_INFINITY)));
+    assertTrue(Double.isNaN(Math.min(Double.POSITIVE_INFINITY, Double.NaN)));
+    assertTrue(Double.isNaN(Math.min(Double.NaN, Double.NEGATIVE_INFINITY)));
+    assertTrue(Double.isNaN(Math.min(Double.NEGATIVE_INFINITY, Double.NaN)));
+
+    assertEquals(1f, Math.min(1f, 2f));
+    assertEquals(1f, Math.min(2f, 1f));
+    assertEquals(-0f, Math.min(-0f, 0f));
+    assertEquals(-0f, Math.min(0f, -0f));
+    assertEquals(-1f, Math.min(-1f, 1f));
+    assertEquals(-1f, Math.min(1f, -1f));
+    assertEquals(-2f, Math.min(-1f, -2f));
+    assertEquals(-2f, Math.min(-2f, -1f));
+    assertTrue(Float.isNaN(Math.min(Float.NaN, 1f)));
+    assertTrue(Float.isNaN(Math.min(1f, Float.NaN)));
+    assertTrue(Float.isNaN(Math.min(Float.NaN, Float.POSITIVE_INFINITY)));
+    assertTrue(Float.isNaN(Math.min(Float.POSITIVE_INFINITY, Float.NaN)));
+    assertTrue(Float.isNaN(Math.min(Float.NaN, Float.NEGATIVE_INFINITY)));
+    assertTrue(Float.isNaN(Math.min(Float.NEGATIVE_INFINITY, Float.NaN)));
+  }
+
   public void testLog() {
     double v = Math.log(Math.E);
     assertEquals(1.0, v, 1e-15);

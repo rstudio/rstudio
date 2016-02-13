@@ -146,11 +146,11 @@ public final class Math {
   }
 
   public static double max(double x, double y) {
-    return x > y ? x : y;
+    return NativeMath.max(x, y);
   }
 
   public static float max(float x, float y) {
-    return x > y ? x : y;
+    return (float) NativeMath.max(x, y);
   }
 
   public static int max(int x, int y) {
@@ -162,11 +162,11 @@ public final class Math {
   }
 
   public static double min(double x, double y) {
-    return x < y ? x : y;
+    return NativeMath.min(x, y);
   }
 
   public static float min(float x, float y) {
-    return x < y ? x : y;
+    return (float) NativeMath.min(x, y);
   }
 
   public static int min(int x, int y) {
@@ -301,6 +301,8 @@ public final class Math {
     public static native double exp(double x);
     public static native double floor(double x);
     public static native double log(double x);
+    public static native double max(double x, double y);
+    public static native double min(double x, double y);
     public static native double pow(double x, double exp);
     public static native double random();
     public static native double round(double x);
