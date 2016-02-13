@@ -449,7 +449,8 @@ void connectConsole()
    s_consoleConnected = true;
 }
 
-void onActiveConsoleChanged(const std::string& consoleId)
+void onActiveConsoleChanged(const std::string& consoleId, 
+                            const std::string& text)
 {
    s_activeConsole = consoleId;
    if (consoleId == s_consoleChunkId)
@@ -457,6 +458,8 @@ void onActiveConsoleChanged(const std::string& consoleId)
       if (s_consoleConnected) 
          return;
       connectConsole();
+      onConsoleText(s_consoleDocId, s_consoleChunkId, kChunkConsoleInput, 
+            text, false);
    }
    else if (s_consoleConnected)
    {

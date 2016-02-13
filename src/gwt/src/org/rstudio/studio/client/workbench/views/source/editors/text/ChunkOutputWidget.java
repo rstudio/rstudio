@@ -316,6 +316,7 @@ public class ChunkOutputWidget extends Composite
          Style bodyStyle = frame_.getDocument().getBody().getStyle();
          bodyStyle.setColor(s_color);
       }
+      getElement().getStyle().setBackgroundColor(s_backgroundColor);
    }
    
    public void showConsoleCode(String code)

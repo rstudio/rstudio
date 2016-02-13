@@ -2039,7 +2039,8 @@ bool rConsoleRead(const std::string& prompt,
    // ensure that output resulting from this input goes to the correct console
    if (rsession::clientEventQueue().setActiveConsole(pConsoleInput->console))
    {
-      module_context::events().onActiveConsoleChanged(pConsoleInput->console);
+      module_context::events().onActiveConsoleChanged(pConsoleInput->console,
+            pConsoleInput->text);
    }
 
    ClientEvent promptEvent(kConsoleWritePrompt, prompt);
