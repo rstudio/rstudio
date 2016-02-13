@@ -171,27 +171,19 @@ var Range = require("ace/range").Range;
       }
    };
 
-   var updateTimerId;
-   var lastTokenizedRow = 0;
-
    /**
     * Eagerly tokenize up to the specified row, using the tokenizer
-    * attached to the associated session, but defer rendering the
-    * associated tokens.
+    * attached to the associated session.
     */
    this.tokenizeUpToRow = function(maxRow)
    {
       var tokenizer = this.$session.bgTokenizer;
-      lastTokenizedRow = Math.min(lastTokenizedRow, tokenizer.currentLine);
+      var lastTokenizedRow = tokenizer.currentLine;
       maxRow = Math.max(maxRow, this.$session.getLength() - 1);
       for (var i = lastTokenizedRow; i <= maxRow; i++)
          tokenizer.$tokenizeRow(i);
 
-      clearTimeout(updateTimerId);
-      updateTimerId = setTimeout(function() {
-         tokenizer.fireUpdateEvent(lastTokenizedRow, maxRow);
-         lastTokenizedRow = maxRow;
-      }, 700);
+      tokenizer.fireUpdateEvent(lastTokenizedRow, maxRow);
    };
 
    /**
