@@ -29,6 +29,7 @@
 #include <core/json/JsonRpc.hpp>
 #include <core/text/CsvParser.hpp>
 #include <core/StringUtils.hpp>
+#include <core/system/System.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
@@ -543,11 +544,11 @@ Error executeInlineChunk(const json::JsonRpcRequest& request,
       // on Windows, mark the directory hidden after creating it
       if (!docPath.empty())
       {
-         error = core::sytem::makeFileHidden(chunkOutput.parent());
+         error = core::system::makeFileHidden(chunkOutput.parent());
          if (error)
          {
             // non-fatal
-            LOG_ERROR(error)
+            LOG_ERROR(error);
          }
       }
 #endif

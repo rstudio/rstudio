@@ -17,6 +17,7 @@
 #ifndef SESSION_RMARKDOWN_NOTEBOOK_HPP
 #define SESSION_RMARKDOWN_NOTEBOOK_HPP
 
+#include <ctime>
 #include <core/json/Json.hpp>
 
 namespace rstudio {
