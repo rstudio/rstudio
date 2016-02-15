@@ -117,17 +117,17 @@ private:
          response.setResult(jsonErrorResponse);
 
          continuation_(Success(), &response);
-
-         return;
       }
+      else
+      {
+         json::Value jsonResponse;
+         json::parse(output_, &jsonResponse);
 
-      json::Value jsonResponse;
-      json::parse(output_, &jsonResponse);
+         json::JsonRpcResponse response;
+         response.setResult(jsonResponse);
 
-      json::JsonRpcResponse response;
-      response.setResult(jsonResponse);
-
-      continuation_(Success(), &response);
+         continuation_(Success(), &response);
+      }
    }
 
    void onStdout(const std::string& output)
