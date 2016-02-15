@@ -34,12 +34,15 @@ import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.events.BeginCopyEvent;
+import org.rstudio.studio.client.events.EndCopyEvent;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.Event;
@@ -49,7 +52,9 @@ import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
 public class ShortcutManager implements NativePreviewHandler,
-                                        NativeKeyDownHandler
+                                        NativeKeyDownHandler,
+                                        BeginCopyEvent.Handler,
+                                        EndCopyEvent.Handler
 {
    public interface Handle
    {
@@ -99,6 +104,9 @@ public class ShortcutManager implements NativePreviewHandler,
                            keyBuffer_.clear();
                      }
                   });
+            
+            events_.addHandler(BeginCopyEvent.TYPE, ShortcutManager.this);
+            events_.addHandler(EndCopyEvent.TYPE, ShortcutManager.this);
          }
       });
       
@@ -106,6 +114,16 @@ public class ShortcutManager implements NativePreviewHandler,
       // destroyed it's not necessary to manage lifetime of this event handler
       Event.addNativePreviewHandler(this);
       addPostViewHandler();
+   }
+   
+   public void onBeginCopy(BeginCopyEvent event)
+   {
+      isCopyEvent_ = true;
+   }
+   
+   public void onEndCopy(EndCopyEvent event)
+   {
+      isCopyEvent_ = false;
    }
    
    private native final void addPostViewHandler() /*-{
@@ -377,7 +395,7 @@ public class ShortcutManager implements NativePreviewHandler,
             pending = true;
       }
       
-      if (!(pending || isPrefixForEditor(keyCombination)))
+      if (!(pending || isPrefixForEditor(keyCombination, event)))
          keyBuffer_.clear();
       
       // Assume that a keypress without a modifier key clears the keybuffer.
@@ -402,15 +420,21 @@ public class ShortcutManager implements NativePreviewHandler,
    // of the Ace editor, which we could check for prefix matches.
    // For now, we'll just hard code the prefix
    // keys used in the default keymaps for Emacs.
-   private boolean isPrefixForEditor(KeyCombination keys)
+   private boolean isPrefixForEditor(KeyCombination keys, NativeEvent event)
    {
+      // Check to see if the event target was Ace.
+      Element target = Element.as(event.getEventTarget());
+      if (target != null && target.hasClassName("ace_text-input"))
+         return false;
+
+      // Ace was the target of this event -- swallow
+      // C-c and C-v.
       if (editorMode_ == KeyboardShortcut.MODE_EMACS)
       {
          if (keys.isCtrlPressed())
          {
             int keyCode = keys.getKeyCode();
-            return keyCode == KeyCodes.KEY_C ||
-                   keyCode == KeyCodes.KEY_X;
+            return keyCode == KeyCodes.KEY_C || keyCode == KeyCodes.KEY_X;
          }
       }
       
@@ -420,6 +444,10 @@ public class ShortcutManager implements NativePreviewHandler,
    private void swallowEvents(Object object)
    {
       NativeEvent event = (NativeEvent) object;
+      
+      // Don't swallow copy events.
+      if (isCopyEvent_)
+         return;
       
       // If the keybuffer is a prefix key sequence, swallow
       // the event. This ensures that the system doesn't 'beep'
@@ -468,6 +496,8 @@ public class ShortcutManager implements NativePreviewHandler,
    private final Map<KeyMapType, KeyMap> keyMaps_;
    private final List<ShortcutInfo> shortcutInfo_;
    private final List<Pair<KeySequence, AppCommandBinding>> defaultBindings_;
+   
+   private boolean isCopyEvent_ = false;
    
    // Injected ----
    private UserCommandManager userCommands_;

@@ -45,8 +45,7 @@ import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
-import org.rstudio.studio.client.events.BeginPasteEvent;
-import org.rstudio.studio.client.events.EndPasteEvent;
+import org.rstudio.studio.client.events.*;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
@@ -73,7 +72,9 @@ public class AceEditorWidget extends Composite
       implements RequiresResize,
                  HasValueChangeHandlers<Void>,
                  HasFoldChangeHandlers,
-                 HasAllKeyHandlers
+                 HasAllKeyHandlers,
+                 BeginPasteEvent.Handler,
+                 EndPasteEvent.Handler
 {
    
    public AceEditorWidget()
@@ -267,29 +268,12 @@ public class AceEditorWidget extends Composite
          }
       });
       
-      events_.addHandler(
-            BeginPasteEvent.TYPE,
-            new BeginPasteEvent.Handler()
-            {
-               
-               @Override
-               public void onBeginPaste(BeginPasteEvent event)
-               {
-                  maybeUnmapCtrlV();
-               }
-            });
-      
-      events_.addHandler(
-            EndPasteEvent.TYPE,
-            new EndPasteEvent.Handler()
-            {
-               
-               @Override
-               public void onEndPaste(EndPasteEvent event)
-               {
-                  maybeRemapCtrlV();
-               }
-            });
+      if (!hasPasteHandlers_)
+      {
+         events_.addHandler(BeginPasteEvent.TYPE, this);
+         events_.addHandler(EndPasteEvent.TYPE, this);
+         hasPasteHandlers_ = true;
+      }
       
       events_.addHandler(
             RStudioCommandExecutedFromShortcutEvent.TYPE,
@@ -303,6 +287,16 @@ public class AceEditorWidget extends Composite
             });
    }
    
+   public void onBeginPaste(BeginPasteEvent event)
+   {
+      maybeUnmapCtrlV();
+   }
+
+   public void onEndPaste(EndPasteEvent event)
+   {
+      maybeRemapCtrlV();
+   }
+   
    // When the 'keyBinding' field is initialized (the field holding all keyboard
    // handlers for an Ace editor), an associated '$data' element is used to store
    // information on keys (to allow for keyboard chaining, and so on). We refresh
@@ -314,6 +308,8 @@ public class AceEditorWidget extends Composite
    }-*/;
    
    private static native final void maybeUnmapCtrlV() /*-{
+      
+      // Handle Vim mapping
       var Vim = $wnd.require("ace/keyboard/vim").handler;
       var keymap = Vim.defaultKeymap;
       for (var i = 0; i < keymap.length; i++) {
@@ -322,9 +318,17 @@ public class AceEditorWidget extends Composite
             break;
          }
       }
+      
+      // Handle Emacs mapping
+      var Emacs = $wnd.require("ace/keyboard/emacs").handler;
+      var bindings = Emacs.commandKeyBinding;
+      bindings["<DISABLED:c-v>"] = bindings["c-v"];
+      delete bindings["c-v"];
    }-*/;
    
    private static native final void maybeRemapCtrlV() /*-{
+      
+      // Handle Vim mapping
       var Vim = $wnd.require("ace/keyboard/vim").handler;
       var keymap = Vim.defaultKeymap;
       for (var i = 0; i < keymap.length; i++) {
@@ -333,6 +337,12 @@ public class AceEditorWidget extends Composite
             break;
          }
       }
+      
+      // Handle Emacs mapping
+      var Emacs = $wnd.require("ace/keyboard/emacs").handler;
+      var bindings = Emacs.commandKeyBinding;
+      bindings["c-v"] = bindings["<DISABLED:c-v>"];
+      delete bindings["<DISABLED:c-v>"];
    }-*/;
    
    @Inject
@@ -1057,4 +1067,6 @@ public class AceEditorWidget extends Composite
    private EventBus events_;
    private ChunkIconsManager chunkIconsManager_;
    private Commands commands_ = RStudioGinjector.INSTANCE.getCommands();
+   
+   private static boolean hasPasteHandlers_ = false;
 }

@@ -37,7 +37,9 @@ import org.rstudio.studio.client.application.ui.ApplicationHeader;
 import org.rstudio.studio.client.application.ui.GlobalToolbar;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
+import org.rstudio.studio.client.events.BeginCopyEvent;
 import org.rstudio.studio.client.events.BeginPasteEvent;
+import org.rstudio.studio.client.events.EndCopyEvent;
 import org.rstudio.studio.client.events.EndPasteEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -220,6 +222,25 @@ public class DesktopApplicationHeader implements ApplicationHeader
    @Handler
    void onCopyDummy()
    {
+      eventBus_.fireEvent(new BeginCopyEvent());
+      keyListener_ = Event.addNativePreviewHandler(new NativePreviewHandler()
+      {
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent arg0)
+         {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  eventBus_.fireEvent(new EndCopyEvent());
+                  keyListener_.removeHandler();
+                  keyListener_ = null;
+               }
+            });
+         }
+      });
+      
       Desktop.getFrame().clipboardCopy();
    }
 
