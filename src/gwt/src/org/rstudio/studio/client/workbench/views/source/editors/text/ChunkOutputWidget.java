@@ -26,6 +26,7 @@ import org.rstudio.studio.client.application.ApplicationInterrupt.InterruptHandl
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.shell.ShellWidget;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
+import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorEvent;
@@ -303,6 +304,16 @@ public class ChunkOutputWidget extends Composite
          destroyConsole();
       state_ = CHUNK_EXECUTING;
       showBusyState();
+   }
+   
+   public void showServerError(ServerError error)
+   {
+      // consider: less obtrusive error message 
+      RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+            "Chunk Execution Error", error.getMessage());
+      
+      // treat as an interrupt (don't clear output)
+      completeInterrupt();
    }
    
    public void applyCachedEditorStyle()

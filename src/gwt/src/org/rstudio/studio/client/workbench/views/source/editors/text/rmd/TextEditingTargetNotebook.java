@@ -133,13 +133,22 @@ public class TextEditingTargetNotebook
       int row = chunk.getEnd().getRow();
 
       // find or create a matching chunk definition 
-      ChunkDefinition chunkDef = getChunkDefAtRow(row);
+      final ChunkDefinition chunkDef = getChunkDefAtRow(row);
 
       // let the chunk widget know it's started executing
       outputWidgets_.get(chunkDef.getChunkId()).setChunkExecuting();
 
       rmdHelper_.executeInlineChunk(docUpdateSentinel_.getPath(), 
-            docUpdateSentinel_.getId(), chunkDef.getChunkId(), "", code);
+            docUpdateSentinel_.getId(), chunkDef.getChunkId(), "", code,
+            new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onError(ServerError error)
+               {
+                  outputWidgets_.get(chunkDef.getChunkId())
+                                .showServerError(error);
+               }
+            });
    }
    
    @Override
