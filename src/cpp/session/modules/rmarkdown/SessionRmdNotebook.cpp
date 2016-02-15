@@ -218,6 +218,9 @@ Error enqueueChunkOutput(
          LOG_ERROR(error);
       output[kChunkConsole] = consoleOutput;
    }
+   // note that if we find that this chunk has no output we can display, we
+   // should still send it to the client, which will clean it up correctly, and
+   // omit it in its next set of updated chunk definitions
    output[kChunkId] = chunkId;
    output[kChunkDocId] = docId;
    ClientEvent event(client_events::kChunkOutput, output);

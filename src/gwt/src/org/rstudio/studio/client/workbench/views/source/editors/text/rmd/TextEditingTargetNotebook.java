@@ -196,6 +196,14 @@ public class TextEditingTargetNotebook
       // ignore if not targeted at this document
       if (event.getOutput().getDocId() != docUpdateSentinel_.getId())
          return;
+      
+      // if nothing at all was returned, this means the chunk doesn't exist on
+      // the server, so clean it up here.
+      if (event.getOutput().isEmpty())
+      {
+         removeChunk(event.getOutput().getChunkId());
+         return;
+      }
 
       // show output in matching chunk
       String chunkId = event.getOutput().getChunkId();

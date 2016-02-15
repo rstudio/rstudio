@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
-import org.rstudio.core.client.dom.DocumentEx;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.resources.CoreResources;
