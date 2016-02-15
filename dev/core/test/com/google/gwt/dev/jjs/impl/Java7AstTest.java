@@ -30,7 +30,7 @@ public class Java7AstTest extends JJSTestBase {
   // of nodes.
   @Override
   public void setUp() {
-    sourceLevel = SourceLevel.JAVA7;
+    sourceLevel = SourceLevel.JAVA8;
     addAll(JavaResourceBase.AUTOCLOSEABLE, Java7MockResources.TEST_RESOURCE,
         Java7MockResources.EXCEPTION1, Java7MockResources.EXCEPTION2);
   }

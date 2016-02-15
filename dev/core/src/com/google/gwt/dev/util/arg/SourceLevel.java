@@ -19,14 +19,10 @@ import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.util.tools.Utility;
 
 /**
- * Java source level compatibility constants. Java versions range from 1.0 to 1.7. Versions 1.6 and
- * 1.7 are also referred as 6 and 7 respectively.
- *
- * Both names can be used indistinctly.
+ * Java source level compatibility constants.
  */
 public enum SourceLevel {
   // Source levels must appear in ascending order for the default setting logic to work.
-  JAVA7("1.7", "7"),
   JAVA8("1.8", "8");
 
   /**
@@ -79,7 +75,7 @@ public enum SourceLevel {
   }
 
   private static SourceLevel getJvmBestMatchingSourceLevel() {
-    // If everything fails set default to JAVA7.
+    // If everything fails set default to JAVA8.
     String javaSpecLevel = System.getProperty("java.specification.version");
     return getBestMatchingVersion(javaSpecLevel);
   }
@@ -97,10 +93,10 @@ public enum SourceLevel {
         }
       }
     } catch (IllegalArgumentException e) {
-      // If the version can not be parsed fallback to JAVA7.
+      // If the version can not be parsed fallback to JAVA8.
     }
-    // If everything fails set default to JAVA7.
-    return JAVA7;
+    // If everything fails set default to JAVA8.
+    return JAVA8;
   }
 }
 

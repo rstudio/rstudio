@@ -868,7 +868,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     assertProcessSuccess(argProcessor, new String[] {"-logLevel", "DEBUG", "-style",
         "PRETTY", "-ea", "-gen", "myGen",
         "-war", "myWar", "-workDir", "myWork", "-extra", "myExtra", "-incremental",
-        "-localWorkers", "2", "-sourceLevel", "1.7", "c.g.g.h.H", "my.Module"});
+        "-localWorkers", "2", "-sourceLevel", "1.8", "c.g.g.h.H", "my.Module"});
 
     assertEquals(new File("myGen").getAbsoluteFile(),
         options.getGenDir().getAbsoluteFile());
@@ -888,7 +888,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     assertTrue(options.shouldRemoveDuplicateFunctions());
     assertTrue(options.isIncrementalCompileEnabled());
 
-    assertEquals(SourceLevel.JAVA7, options.getSourceLevel());
+    assertEquals(SourceLevel.JAVA8, options.getSourceLevel());
 
     assertEquals(2, options.getModuleNames().size());
     assertEquals("c.g.g.h.H", options.getModuleNames().get(0));
@@ -948,19 +948,19 @@ public class CompilerTest extends ArgProcessorTestBase {
   }
 
   public void testSourceLevelSelection() {
-    assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.4"));
-    assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.5"));
-    assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.6"));
-    assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.6_26"));
+    assertEquals(SourceLevel.JAVA8, SourceLevel.getBestMatchingVersion("1.4"));
+    assertEquals(SourceLevel.JAVA8, SourceLevel.getBestMatchingVersion("1.5"));
+    assertEquals(SourceLevel.JAVA8, SourceLevel.getBestMatchingVersion("1.6"));
+    assertEquals(SourceLevel.JAVA8, SourceLevel.getBestMatchingVersion("1.6_26"));
 
-    assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.7"));
+    assertEquals(SourceLevel.JAVA8, SourceLevel.getBestMatchingVersion("1.7"));
     assertEquals(SourceLevel.JAVA8, SourceLevel.getBestMatchingVersion("1.8"));
     assertEquals(SourceLevel.JAVA8, SourceLevel.getBestMatchingVersion("1.9"));
 
-    // not proper version strings => default to JAVA7.
-    assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.6u3"));
-    assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.6b3"));
-    assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.7b3"));
+    // not proper version strings => default to JAVA8.
+    assertEquals(SourceLevel.JAVA8, SourceLevel.getBestMatchingVersion("1.6u3"));
+    assertEquals(SourceLevel.JAVA8, SourceLevel.getBestMatchingVersion("1.6b3"));
+    assertEquals(SourceLevel.JAVA8, SourceLevel.getBestMatchingVersion("1.7b3"));
   }
 
   /**
