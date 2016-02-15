@@ -91,8 +91,17 @@
   # that has .GlobalEnv as parent?
   envir <- .GlobalEnv
                  
+  # begin capturing the error stream (and clean up when we're done)
+  errorFile <- tempfile()
+  on.exit(unlink(errorFile), add = TRUE)
+  errorCon <- file(errorFile, open = "wt")
+  sink(errorCon, type = "message")
+  on.exit(sink(type = "message"), add = TRUE)
+  on.exit(close(errorCon), add = TRUE)
+
   # render the stub to the given file
   errorMessage <- ""
+  errorText <- ""
   tryCatch({
     capture.output(rmarkdown::render(
       input = chunkFile, 
@@ -109,10 +118,15 @@
       envir = envir,
       quiet = TRUE))
   }, error = function(e) {
+    # capture any error message returned
     errorMessage <<- paste("Error:", e$message)
+
+    # flush the error stream and send it as well
+    errorText <<- paste(readLines(errorFile), collapse = "\n")
   })
 
-  invisible(errorMessage)
+  list(message = errorMessage, 
+       text    = errorText)
 })
 
 .rs.addFunction("injectHTMLComments", function(contents,

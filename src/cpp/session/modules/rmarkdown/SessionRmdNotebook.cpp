@@ -568,21 +568,30 @@ Error executeInlineChunk(const json::JsonRpcRequest& request,
       complete("in_header.html");
 
    // render the contents to the cached folder
-   std::string errorMsg;
+   r::sexp::Protect protect;
+   SEXP err;
    error = r::exec::RFunction(".rs.executeSingleChunk", chunkOptions, content,
          chunkLibDir.absolutePath(),
          headerHtml.absolutePath(),
-         chunkOutput.absolutePath()).call(&errorMsg);
+         chunkOutput.absolutePath()).call(&err, &protect);
    if (error)
       return error;
 
    // if an error message was returned, show a console error instead of the
    // output
-   if (!errorMsg.empty())
+   std::string errorMsg;
+   if (r::sexp::getNamedListElement(err, "message", &errorMsg) == Success() &&
+       !errorMsg.empty())
    {
       chunkOutput.removeIfExists();
       onConsoleText(docId, chunkId, kChunkConsoleError, errorMsg + "\n", 
             true);
+
+      // consider: the "text" member of the list element contains the contents
+      // of stderr, which may include message such as "Quitting from lines 2-4"
+      // which could be used to help the user pinpoint the source of the
+      // problem (although these messages currently just point at the current
+      // chunk so not helpful without some additional plumbing) 
    }
 
    error = enqueueChunkOutput(docPath, docId, chunkId);
