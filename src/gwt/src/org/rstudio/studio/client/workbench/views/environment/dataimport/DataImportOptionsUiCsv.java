@@ -154,23 +154,18 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       commentListBox_.addItem("*>", "*>");
       
       localeListBox_.addItem("Default", "");
-      sourceServer_.iconvlist(new ServerRequestCallback<IconvListResult>()
-      {
-         @Override
-         public void onResponseReceived(IconvListResult result)
-         {
-            JsArrayString encodings = result.getAll();
-            for (int i = 0; i < encodings.length(); i++)
-            {
-               localeListBox_.addItem(encodings.get(i), encodings.get(i));
-            }
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-         }
-      });
+      localeListBox_.addItem("ASCII", "ASCII");
+      localeListBox_.addItem("UTF-16", "UTF-16");
+      localeListBox_.addItem("UTF-16BE", "UTF-16BE");
+      localeListBox_.addItem("UTF-16LE", "UTF-16LE");
+      localeListBox_.addItem("UTF-32", "UTF-32");
+      localeListBox_.addItem("UTF-32BE", "UTF-32BE");
+      localeListBox_.addItem("UTF-32LE", "UTF-32LE");
+      localeListBox_.addItem("UTF-7", "UTF-7");
+      localeListBox_.addItem("UTF-8", "UTF-8");
+      localeListBox_.addItem("UTF-8-MAC", "UTF-8-MAC");
+      localeListBox_.addItem("UTF8", "UTF8");
+      localeListBox_.addItem("UTF8-MAC", "UTF8-MAC");
      
       updateEnabled();
    }
