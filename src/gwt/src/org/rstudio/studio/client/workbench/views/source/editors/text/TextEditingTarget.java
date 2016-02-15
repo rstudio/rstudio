@@ -1174,7 +1174,16 @@ public class TextEditingTarget implements
       
       themeHelper_ = new TextEditingTargetThemeHelper(this, events_);
       
+      docUpdateSentinel_ = new DocUpdateSentinel(
+            server_,
+            docDisplay_,
+            document,
+            globalDisplay_.getProgressIndicator("Save File"),
+            dirtyState_,
+            events_);
+      
       view_ = new TextEditingTargetWidget(this,
+                                          docUpdateSentinel_,
                                           commands_,
                                           prefs_,
                                           fileTypeRegistry_,
@@ -1184,19 +1193,10 @@ public class TextEditingTarget implements
                                           events_,
                                           session_);
       
-      docUpdateSentinel_ = new DocUpdateSentinel(
-            server_,
-            docDisplay_,
-            document,
-            globalDisplay_.getProgressIndicator("Save File"),
-            dirtyState_,
-            events_);
-      
       roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
       
-      notebook_ = new TextEditingTargetNotebook(
-                              this, rmarkdownHelper_, 
-                              docDisplay_, docUpdateSentinel_, document);   
+      notebook_ = new TextEditingTargetNotebook(this, rmarkdownHelper_,
+                              docDisplay_, docUpdateSentinel_, document);
       
       // ensure that Makefile and Makevars always use tabs
       name_.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -4082,7 +4082,7 @@ public class TextEditingTarget implements
                codeExecution_.setLastExecuted(range.getStart(), range.getEnd());
                String code = scopeHelper_.getSweaveChunkText(chunk);
                if (fileType_.isRmd() && 
-                   prefs_.showRmdChunkOutputInline().getValue())
+                   docDisplay_.showChunkOutputInline())
                {
                   notebook_.executeChunk(chunk, code);
                }

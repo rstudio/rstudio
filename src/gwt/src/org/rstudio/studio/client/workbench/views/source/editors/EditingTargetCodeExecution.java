@@ -120,7 +120,7 @@ public class EditingTargetCodeExecution
       }
       
       // if we're in a chunk with in-line output, execute it there instead
-      if (prefs_.showRmdChunkOutputInline().getValue())
+      if (docDisplay_.showChunkOutputInline())
       {
          Scope scope = docDisplay_.getCurrentChunk(range.getStart());
          if (scope != null)

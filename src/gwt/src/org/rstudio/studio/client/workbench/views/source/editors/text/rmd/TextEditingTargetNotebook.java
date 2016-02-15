@@ -51,6 +51,8 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
@@ -73,6 +75,35 @@ public class TextEditingTargetNotebook
       lineWidgets_ = new HashMap<String, LineWidget>();
       rmdHelper_ = rmdHelper;
       RStudioGinjector.INSTANCE.injectMembers(this);
+      
+      // initialize the display's default output mode 
+      String outputType = 
+            document.getProperties().getAsString(CHUNK_OUTPUT_TYPE);
+      if (!outputType.isEmpty() && outputType != "undefined")
+      {
+         // if the document property is set, apply it directly
+         docDisplay_.setShowChunkOutputInline(
+               outputType == CHUNK_OUTPUT_INLINE);
+      }
+      else
+      {
+         // otherwise, use the global preference to set the value
+         docDisplay_.setShowChunkOutputInline(
+            RStudioGinjector.INSTANCE.getUIPrefs()
+                                     .showRmdChunkOutputInline().getValue());
+      }
+      
+      // listen for future changes to the preference and sync accordingly
+      docUpdateSentinel_.addPropertyValueChangeHandler(CHUNK_OUTPUT_TYPE, 
+            new ValueChangeHandler<String>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            docDisplay_.setShowChunkOutputInline(
+                  event.getValue() == CHUNK_OUTPUT_INLINE);
+         }
+      });
       
       // single shot rendering of chunk output line widgets
       // (we wait until after the first render to ensure that
@@ -399,4 +430,8 @@ public class TextEditingTargetNotebook
    
    private final static int MIN_CHUNK_HEIGHT = 75;
    private final static int MAX_CHUNK_HEIGHT = 750;
+   
+   public final static String CHUNK_OUTPUT_TYPE    = "chunk_output_type";
+   public final static String CHUNK_OUTPUT_INLINE  = "inline";
+   public final static String CHUNK_OUTPUT_CONSOLE = "console";
 }

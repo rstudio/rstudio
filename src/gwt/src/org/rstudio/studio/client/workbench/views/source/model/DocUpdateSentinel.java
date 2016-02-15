@@ -33,6 +33,7 @@ import org.rstudio.core.client.patch.SubstringDiff;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.ValueChangeHandlerManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -111,6 +112,8 @@ public class DocUpdateSentinel
       dirtyState_ = dirtyState;
       eventBus_ = events;
       changeTracker_ = docDisplay.getChangeTracker();
+      propertyChangeHandlers_ = 
+            new HashMap<String, ValueChangeHandlerManager<String>>();
 
       bufferedCommand_ = new TimeBufferedCommand(2000)
       {
@@ -601,6 +604,17 @@ public class DocUpdateSentinel
    {
       modifyProperties(properties, null);
    }
+   
+   public HandlerRegistration addPropertyValueChangeHandler(
+         final String propertyName,
+         final ValueChangeHandler<String> handler)
+   {
+      if (!propertyChangeHandlers_.containsKey(propertyName))
+            propertyChangeHandlers_.put(
+                  propertyName, new ValueChangeHandlerManager<String>(this));
+      return propertyChangeHandlers_.get(propertyName).addValueChangeHandler(
+            handler);
+   }
 
    private void applyProperties(JsObject properties,
                                 HashMap<String, String> newProperties)
@@ -611,6 +625,12 @@ public class DocUpdateSentinel
             properties.unset(entry.getKey());
          else
             properties.setString(entry.getKey(), entry.getValue());
+         if (propertyChangeHandlers_.containsKey(entry.getKey()))
+         {
+            ValueChangeEvent.fire(
+                  propertyChangeHandlers_.get(entry.getKey()), 
+                  entry.getValue());
+         }
       }
    }
    
@@ -708,4 +728,6 @@ public class DocUpdateSentinel
    private final TimeBufferedCommand bufferedCommand_;
    private final HandlerRegistration closeHandlerReg_;
    private HandlerRegistration lastChanceSaveHandlerReg_;
+   private final HashMap<String, ValueChangeHandlerManager<String>> 
+                 propertyChangeHandlers_;
 }

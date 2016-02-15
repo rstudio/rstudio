@@ -2878,6 +2878,18 @@ public class AceEditor implements DocDisplay,
       return widget_.isRendered();
    }
    
+   @Override
+   public boolean showChunkOutputInline()
+   {
+      return showChunkOutputInline_;
+   }
+   
+   @Override
+   public void setShowChunkOutputInline(boolean show)
+   {
+      showChunkOutputInline_ = show;
+   }
+   
    private void fireLineWidgetsChanged()
    {
       AceEditor.this.fireEvent(new LineWidgetsChangedEvent());
@@ -2905,6 +2917,7 @@ public class AceEditor implements DocDisplay,
    private Integer executionLine_ = null;
    private boolean valueChangeSuppressed_ = false;
    private AceInfoBar infoBar_;
+   private boolean showChunkOutputInline_ = false;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {

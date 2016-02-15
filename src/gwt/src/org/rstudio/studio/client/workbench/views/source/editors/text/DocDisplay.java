@@ -354,6 +354,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    JsArray<LineWidget> getLineWidgets();
    LineWidget getLineWidgetForRow(int row);
    
+   boolean showChunkOutputInline();
+   void setShowChunkOutputInline(boolean show);
    JsArray<ChunkDefinition> getChunkDefs();
 
    Position getDocumentEnd();
