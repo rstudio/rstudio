@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.core.client.dom.DocumentEx;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.resources.CoreResources;
@@ -38,12 +39,11 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInpu
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -236,6 +236,7 @@ public class ChunkOutputWidget extends Composite
             applyCachedEditorStyle();
             showReadyState();
             setOverflowStyle();
+            injectEmptyText(frame_.getDocument().getBody());
             Element doc = frame_.getDocument().getDocumentElement();
             int height = doc.getScrollHeight();
             if (doc.getScrollWidth() > doc.getOffsetWidth())
@@ -465,6 +466,18 @@ public class ChunkOutputWidget extends Composite
          return;
       }
       showReadyState();
+   }
+   
+   private void injectEmptyText(BodyElement body)
+   {
+      // if the chunk has empty content, show something so the user doesn't
+      // just see a blank box
+      if (body.getInnerHTML().trim().isEmpty())
+      {
+         body.setInnerHTML("<div class=\"emptyText\">" +
+               "Chunk did not produce output." +
+               "</div>");
+      }
    }
    
    @UiField Image interrupt_;
