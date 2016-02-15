@@ -41,7 +41,8 @@ public class ProgressIndicatorDelay implements ProgressIndicator
       onProgress(status, null);
    }
    
-   public void onProgress(final String status, final Operation onShowProgress)
+   @Override
+   public void onProgress(final String status, final Operation onCancel)
    {
       showing_ = true;
       if (firstUpdate_)
@@ -54,16 +55,14 @@ public class ProgressIndicatorDelay implements ProgressIndicator
             {
                if (showing_)
                {
-                  progressIndicator_.onProgress(status);
-                  onShowProgress.execute();;
+                  progressIndicator_.onProgress(status, onCancel);
                }
             }
          }.schedule(startDelay_);
       }
       else
       {
-         progressIndicator_.onProgress(status);
-         onShowProgress.execute();
+         progressIndicator_.onProgress(status, onCancel);
       }
    }
    

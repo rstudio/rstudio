@@ -30,6 +30,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.patch.SubstringDiff;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -152,6 +153,10 @@ public class DocUpdateSentinel
                      {
                      }
                      
+                     public void onProgress(String message, Operation onCancel)
+                     {
+                     }
+                     
                      public void clearProgress()
                      {
                         // alternate way to signal completion. safe to quit
@@ -195,6 +200,7 @@ public class DocUpdateSentinel
             }
    
             @Override public void onProgress(String message) {}
+            @Override public void onProgress(String message, Operation onCancel) {}
             @Override public void onError(String message) {}
             @Override public void clearProgress() {}
          });
@@ -249,8 +255,13 @@ public class DocUpdateSentinel
       {
          public void onProgress(String message)
          {
+            onProgress(message, null);
+         }
+         
+         public void onProgress(String message, Operation onCancel)
+         {
             if (progress != null)
-               progress.onProgress(message);
+               progress.onProgress(message, onCancel);
          }
          
          public void clearProgress()

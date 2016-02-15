@@ -241,6 +241,11 @@ public class TextEditingTarget implements
 
       public void onProgress(String message)
       {
+         onProgress(message, null);
+      }
+
+      public void onProgress(String message, Operation onCancel)
+      {
       }
       
       public void clearProgress()

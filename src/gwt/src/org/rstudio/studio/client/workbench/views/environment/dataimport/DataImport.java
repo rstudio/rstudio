@@ -29,7 +29,6 @@ import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
@@ -45,7 +44,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
@@ -99,7 +97,6 @@ public class DataImport extends Composite
       dataImportMode_ = dataImportMode;
       
       copyButton_ = makeCopyButton();
-      interruptButton_ = makeInterruptButton();
 
       progressIndicator_ = new ProgressIndicatorDelay(progressIndicator);
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -141,8 +138,6 @@ public class DataImport extends Composite
             dataImportFileChooser_.setFocus(); 
          }
       });
-      
-      interruptButton_.setVisible(false);
    }
    
    public String getCode()
@@ -230,36 +225,6 @@ public class DataImport extends Composite
       });
    }
    
-   PushButton makeInterruptButton()
-   {
-      final Commands commands = RStudioGinjector.INSTANCE.getCommands();
-      ImageResource stopImage = commands.interruptR().getImageResource();
-   
-      return new PushButton(new Image(stopImage), new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent arg0)
-         {
-            progressIndicator_.clearProgress();
-            
-            server_.previewDataImportAsyncAbort(new ServerRequestCallback<Void>()
-            {
-               @Override
-               public void onResponseReceived(Void empty)
-               {
-                  interruptButton_.setVisible(false);
-               }
-               
-               @Override
-               public void onError(ServerError error)
-               {
-                  progressIndicator_.onError(error.getMessage());
-               }
-            });
-         }
-      });
-   }
-   
    void resetColumnDefinitions()
    {
       importOptions_.resetColumnDefinitions();
@@ -279,9 +244,6 @@ public class DataImport extends Composite
    
    @UiField(provided=true)
    PushButton copyButton_;
-   
-   @UiField(provided=true)
-   PushButton interruptButton_;
    
    private void promptForParseString(
       String title,
@@ -482,7 +444,21 @@ public class DataImport extends Composite
          @Override
          public void execute()
          {
-            interruptButton_.setVisible(true);
+            progressIndicator_.clearProgress();
+            
+            server_.previewDataImportAsyncAbort(new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onResponseReceived(Void empty)
+               {
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  progressIndicator_.onError(error.getMessage());
+               }
+            });
          }
       });
       
@@ -492,8 +468,6 @@ public class DataImport extends Composite
          @Override
          public void onResponseReceived(DataImportPreviewResponse response)
          {
-            interruptButton_.setVisible(false);
-            
             if (response.getErrorMessage() != null)
             {
                response.setColumnDefinitions(lastSuccessfulResponse_);
@@ -527,8 +501,6 @@ public class DataImport extends Composite
          @Override
          public void onError(ServerError error)
          {
-            interruptButton_.setVisible(false);
-            
             gridViewer_.setData(null);
             progressIndicator_.onError(error.getMessage());
          }
