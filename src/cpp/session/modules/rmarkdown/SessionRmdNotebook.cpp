@@ -94,6 +94,11 @@ bool s_consoleConnected = false;
 //   which several htmlwidget chunks depend)
 
 
+FilePath unsavedNotebookCache()
+{
+   return module_context::scopedScratchPath().childPath("unsaved-notebooks");
+}
+
 FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
 {
    FilePath folder;
@@ -103,7 +108,7 @@ FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
    {
       // the doc hasn't been saved, so keep its chunk output in the scratch
       // path
-      folder = module_context::userScratchPath().childPath("unsaved-notebooks");
+      folder = unsavedNotebookCache();
       stem = docId;
    }
    else
@@ -486,12 +491,20 @@ Error handleChunkOutputRequest(const http::Request& request,
    for (int i = 0; i < 3; i++)
       parts.erase(parts.begin());
 
+   // attempt to get the path -- ignore failure (doc may be unsaved and
+   // therefore won't have a path)
    std::string path;
-   Error error = source_database::getPath(docId, &path);
-   if (error)
-      return error;
+   source_database::getPath(docId, &path);
+
    FilePath target = chunkCacheFolder(path, docId).complete(
          algorithm::join(parts, "/"));
+
+   // ensure the target exists 
+   if (!target.exists())
+   {
+      pResponse->setNotFoundError(request.uri());
+      return Success();
+   }
 
    if (parts[0] == kChunkLibDir)
    {
