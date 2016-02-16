@@ -20,8 +20,10 @@ import java.util.HashMap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
@@ -100,8 +102,7 @@ public class TextEditingTargetNotebook
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
          {
-            docDisplay_.setShowChunkOutputInline(
-                  event.getValue() == CHUNK_OUTPUT_INLINE);
+            changeOutputMode(event.getValue());
          }
       });
       
@@ -397,6 +398,49 @@ public class TextEditingTargetNotebook
       // remove it from our internal cache
       lineWidgets_.remove(chunkId);
       outputWidgets_.remove(chunkId);
+   }
+   
+   private void removeAllChunks()
+   {
+      docDisplay_.removeAllLineWidgets();
+      lineWidgets_.clear();
+      outputWidgets_.clear();
+   }
+   
+   private void changeOutputMode(String mode)
+   {
+      docDisplay_.setShowChunkOutputInline(mode == CHUNK_OUTPUT_INLINE);
+
+      // if we don't have any inline output, we're done
+      if (lineWidgets_.size() == 0 || mode != CHUNK_OUTPUT_CONSOLE)
+         return;
+      
+      // if we do have inline output, offer to clean it up
+      RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
+            GlobalDisplay.MSG_QUESTION, 
+            "Remove Inline Chunk Output", 
+            "Do you want to clear all the existing chunk output from your " + 
+            "notebook?", false, 
+            new Operation()
+            {
+               @Override
+               public void execute()
+               {
+                  removeAllChunks();
+               }
+            }, 
+            new Operation()
+            {
+               @Override
+               public void execute()
+               {
+                  // no action necessary
+               }
+            }, 
+            null, 
+            "Remove Output", 
+            "Keep Output", 
+            false);
    }
    
    private JsArray<ChunkDefinition> initialChunkDefs_;

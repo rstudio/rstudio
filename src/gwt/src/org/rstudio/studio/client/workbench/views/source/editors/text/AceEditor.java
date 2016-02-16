@@ -2830,6 +2830,13 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
+   public void removeAllLineWidgets()
+   {
+      widget_.getLineWidgetManager().removeAllLineWidgets();
+      fireLineWidgetsChanged();
+   }
+   
+   @Override
    public void onLineWidgetChanged(LineWidget widget)
    {
       widget_.getLineWidgetManager().onWidgetChanged(widget);
