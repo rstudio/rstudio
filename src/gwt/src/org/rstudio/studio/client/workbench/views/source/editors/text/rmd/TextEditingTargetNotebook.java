@@ -46,6 +46,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.MaximizeSourceWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -65,7 +66,8 @@ public class TextEditingTargetNotebook
                implements EditorThemeStyleChangedEvent.Handler,
                           RmdChunkOutputEvent.Handler,
                           RmdChunkOutputFinishedEvent.Handler,
-                          SendToChunkConsoleEvent.Handler
+                          SendToChunkConsoleEvent.Handler, 
+                          ChunkChangeEvent.Handler
 {
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
                                     TextEditingTargetRMarkdownHelper rmdHelper,
@@ -157,6 +159,7 @@ public class TextEditingTargetNotebook
       events_.addHandler(RmdChunkOutputEvent.TYPE, this);
       events_.addHandler(RmdChunkOutputFinishedEvent.TYPE, this);
       events_.addHandler(SendToChunkConsoleEvent.TYPE, this);
+      events_.addHandler(ChunkChangeEvent.TYPE, this);
    }
    
    public void executeChunk(Scope chunk, String code)
@@ -245,7 +248,9 @@ public class TextEditingTargetNotebook
       // the server, so clean it up here.
       if (event.getOutput().isEmpty())
       {
-         removeChunk(event.getOutput().getChunkId());
+         events_.fireEvent(new ChunkChangeEvent(
+               docUpdateSentinel_.getId(), event.getOutput().getChunkId(), 0, 
+               ChunkChangeEvent.CHANGE_REMOVE));
          return;
       }
 
@@ -263,6 +268,32 @@ public class TextEditingTargetNotebook
       if (event.getData().getRequestId() == Integer.toHexString(requestId_)) 
       {
          state_ = STATE_INITIALIZED;
+      }
+   }
+
+   @Override
+   public void onChunkChange(ChunkChangeEvent event)
+   {
+      if (event.getDocId() != docUpdateSentinel_.getId())
+         return;
+      
+      switch(event.getChangeType())
+      {
+         case ChunkChangeEvent.CHANGE_CREATE:
+            ChunkDefinition chunkDef = ChunkDefinition.create(event.getRow(), 
+                  1, true, event.getChunkId());
+            LineWidget widget = LineWidget.create(
+                                  ChunkDefinition.LINE_WIDGET_TYPE,
+                                  event.getRow(), 
+                                  elementForChunkDef(chunkDef), 
+                                  chunkDef);
+            widget.setFixedWidth(true);
+            docDisplay_.addLineWidget(widget);
+            lineWidgets_.put(chunkDef.getChunkId(), widget);
+            break;
+         case ChunkChangeEvent.CHANGE_REMOVE:
+            removeChunk(event.getChunkId());
+            break;
       }
    }
 
@@ -349,7 +380,9 @@ public class TextEditingTargetNotebook
             @Override
             public void execute()
             {
-               removeChunk(chunkId);
+               events_.fireEvent(new ChunkChangeEvent(
+                     docUpdateSentinel_.getId(), chunkId, 0, 
+                     ChunkChangeEvent.CHANGE_REMOVE));
             }
          });
          widget.getElement().addClassName(ThemeStyles.INSTANCE.selectableText());
@@ -376,19 +409,18 @@ public class TextEditingTargetNotebook
       {
          chunkDef = ChunkDefinition.create(row, 1, true, 
                "c" + StringUtil.makeRandomId(12));
-        
-         widget = LineWidget.create(
-                               ChunkDefinition.LINE_WIDGET_TYPE,
-                               row, 
-                               elementForChunkDef(chunkDef), 
-                               chunkDef);
-         widget.setFixedWidth(true);
-         docDisplay_.addLineWidget(widget);
-         lineWidgets_.put(chunkDef.getChunkId(), widget);
+         
+         events_.fireEvent(new ChunkChangeEvent(
+               docUpdateSentinel_.getId(), chunkDef.getChunkId(), row, 
+               ChunkChangeEvent.CHANGE_CREATE));
+         
       }
       return chunkDef;
    }
    
+   // NOTE: this implements chunk removal locally; prefer firing a
+   // ChunkChangeEvent if you're removing a chunk so appropriate hooks are
+   // invoked elsewhere
    private void removeChunk(final String chunkId)
    {
       final LineWidget widget = lineWidgets_.get(chunkId);
