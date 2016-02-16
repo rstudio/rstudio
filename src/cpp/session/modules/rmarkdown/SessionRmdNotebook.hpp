@@ -18,6 +18,7 @@
 #define SESSION_RMARKDOWN_NOTEBOOK_HPP
 
 #include <ctime>
+#include <boost/signals.hpp>
 #include <core/json/Json.hpp>
 
 namespace rstudio {
@@ -40,6 +41,21 @@ core::Error getChunkDefs(const std::string& docPath, const std::string& docId,
 
 core::Error setChunkDefs(const std::string& docPath, const std::string& docId, 
       std::time_t docTime, const core::json::Array& defs);
+
+struct Events : boost::noncopyable
+{
+   // Document {0}, chunk {1} execution completed
+   boost::signal<void(const std::string&, const std::string&)> 
+                onChunkExecCompleted;
+
+   // Document {0}, chunk {1} had console output of type {2} and text
+   // {3}
+   boost::signal<void(const std::string&, const std::string&, int, 
+                const std::string&)>
+                onChunkConsoleOutput;
+};
+
+Events& events();
 
 } // namespace notebook
 } // namespace rmarkdown

@@ -423,6 +423,8 @@ void onConsoleText(const std::string& docId, const std::string& chunkId,
    {
       LOG_ERROR(error);
    }
+
+   events().onChunkConsoleOutput(docId, chunkId, type, output);
 }
 
 void onConsoleOutput(module_context::ConsoleOutputType type, 
@@ -475,6 +477,21 @@ void onActiveConsoleChanged(const std::string& consoleId,
       // some other console is connected; disconnect ours
       disconnectConsole();
    }
+}
+
+void onChunkExecCompleted(const std::string& docId, 
+                          const std::string& chunkId)
+{
+   std::string path;
+   Error error = source_database::getPath(docId, &path);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   error = enqueueChunkOutput(path, docId, chunkId);
+   if (error)
+      LOG_ERROR(error);
 }
 
 Error handleChunkOutputRequest(const http::Request& request,
@@ -607,7 +624,8 @@ Error executeInlineChunk(const json::JsonRpcRequest& request,
       // chunk so not helpful without some additional plumbing) 
    }
 
-   error = enqueueChunkOutput(docPath, docId, chunkId);
+   // emit chunk output to client
+   events().onChunkExecCompleted(docId, chunkId);
 
    return Success();
 }
@@ -753,6 +771,12 @@ Error getChunkDefs(const std::string& docPath, const std::string& docId,
    return Success();
 }
 
+Events& events()
+{
+   static Events instance;
+   return instance;
+}
+
 Error initialize()
 {
    using boost::bind;
@@ -763,6 +787,8 @@ Error initialize()
 
    module_context::events().onActiveConsoleChanged.connect(
          onActiveConsoleChanged);
+
+   events().onChunkExecCompleted.connect(onChunkExecCompleted);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
