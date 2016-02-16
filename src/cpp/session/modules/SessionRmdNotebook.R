@@ -104,7 +104,7 @@
   errorText <- ""
   tryCatch({
     capture.output(rmarkdown::render(
-      input = chunkFile, 
+      input = normalizePath(chunkFile, winslash = "/"), 
       output_format = rmarkdown::html_document(
         theme = NULL,
         highlight = NULL,
@@ -113,7 +113,7 @@
         includes = list(
           in_header = headerFile),
         lib_dir = libDir),
-      output_file = outputFile,
+      output_file = normalizePath(outputFile, winslash = "/"),
       encoding = "UTF-8",
       envir = envir,
       quiet = TRUE))
