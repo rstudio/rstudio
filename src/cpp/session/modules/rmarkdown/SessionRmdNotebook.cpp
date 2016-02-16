@@ -34,6 +34,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionOptions.hpp>
+#include <session/SessionUserSettings.hpp>
 
 #define kChunkDefs         "chunk_definitions"
 #define kChunkDocWriteTime "doc_write_time"
@@ -96,10 +97,11 @@ bool s_consoleConnected = false;
 
 FilePath unsavedNotebookCache()
 {
-   return module_context::scopedScratchPath().childPath("unsaved-notebooks");
+   return module_context::sessionScratchPath().childPath("unsaved-notebooks");
 }
 
-FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
+FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId,
+      const std::string& contextId)
 {
    FilePath folder;
    std::string stem;
@@ -123,12 +125,17 @@ FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
 #endif
 
       stem += path.stem();
+      stem += "-" + contextId;
       folder = path.parent();
    }
 
    return folder.childPath(stem + ".Rnb.cached");
 }
 
+FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
+{
+   return chunkCacheFolder(docPath, docId, userSettings().contextId());
+}
 
 FilePath chunkDefinitionsPath(const std::string& docPath,
                               const std::string& docId,
