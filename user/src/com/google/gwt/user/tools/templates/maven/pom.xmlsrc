@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <!-- POM file generated with GWT webAppCreator -->
@@ -9,11 +9,14 @@
   <packaging>war</packaging>
   <version>1.0-SNAPSHOT</version>
   <name>@moduleName</name>
-  
+
   <properties>
-    <!-- Note: GWT needs at least java 1.7 -->
-    <maven.compiler.source>1.7</maven.compiler.source>
-    <maven.compiler.target>1.7</maven.compiler.target>
+
+    <!-- Setting maven.compiler.source to something different to 1.8
+         needs that you configure the sourceLevel in gwt-maven-plugin since
+         GWT compiler 2.8 requires 1.8 (see gwt-maven-plugin block below) -->
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
 
     <!-- Don't let your Mac use a crazy non-standard encoding -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -56,13 +59,13 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-  
+
   <build>
     <!-- Output classes directly into the webapp, so that IDEs and "mvn process-classes" update them in DevMode -->
     <outputDirectory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</outputDirectory>
 
     <plugins>
-      
+
       <!-- GWT Maven Plugin-->
       <plugin>
         <groupId>net.ltgt.gwt.maven</groupId>
@@ -82,6 +85,9 @@
           <moduleName>@moduleName</moduleName>
           <moduleShortName>@moduleShortName</moduleShortName>
           <failOnError>true</failOnError>
+          <!-- GWT compiler 2.8 requires 1.8, hence define sourceLevel here if you use
+               a different source language for java compilation -->
+          <sourceLevel>1.8</sourceLevel>
           <!-- Compiler configuration -->
           <compilerArgs>
             <!-- Ask GWT to create the Story of Your Compile (SOYC) (gwt:compile) -->

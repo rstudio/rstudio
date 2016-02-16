@@ -15,7 +15,9 @@
     <!-- Convenience property to set the GWT version -->
     <gwt.version>2.8.0-SNAPSHOT</gwt.version>
 
-    <!-- GWT needs at least java 1.7 -->
+    <!-- Setting maven.compiler.source to something different to 1.8
+         needs that you configure the sourceLevel in gwt-maven-plugin since
+         GWT 2.8 requires 1.8 (see gwt-maven-plugin block below) -->
     <maven.compiler.source>1.7</maven.compiler.source>
     <maven.compiler.target>1.7</maven.compiler.target>
 
@@ -129,6 +131,10 @@
           <moduleName>com.google.gwt.sample.dynatablerf.DynaTableRf</moduleName>
           <moduleShortName>DynaTableRf</moduleShortName>
           <failOnError>true</failOnError>
+          <!-- GWT and Java Compilers might not use the same source language.
+               GWT 2.8 requires 1.8, hence define sourceLevel here if you use
+               a different source language for java compilation -->
+          <sourceLevel>1.8</sourceLevel>
           <!-- Compiler configuration -->
           <compilerArgs>
             <!-- Ask GWT to create the Story of Your Compile (SOYC) (gwt:compile) -->
