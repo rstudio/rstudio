@@ -113,7 +113,7 @@
         includes = list(
           in_header = headerFile),
         lib_dir = libDir),
-      output_file = normalizePath(outputFile, winslash = "/"),
+      output_file = normalizePath(outputFile, winslash = "/", mustWork = FALSE),
       encoding = "UTF-8",
       envir = envir,
       quiet = TRUE))
