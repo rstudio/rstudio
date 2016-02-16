@@ -147,4 +147,8 @@ public class DataImportOptions extends JavaScriptObject
          }
       });
    }-*/;
+   
+   public final native void setLocalFiles(JavaScriptObject localFiles) /*-{
+      this.localFiles = localFiles;
+   }-*/;
 }
