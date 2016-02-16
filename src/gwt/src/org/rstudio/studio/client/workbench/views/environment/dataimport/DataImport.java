@@ -456,6 +456,7 @@ public class DataImport extends Composite
                public void execute()
                {
                   progressIndicator_.clearProgress();
+                  localFiles_ = null;
                   
                   server_.previewDataImportAsyncAbort(new ServerRequestCallback<Void>()
                   {

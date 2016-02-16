@@ -239,7 +239,7 @@
       importFromUrl <- pathIsUrl(options[[resource]])
       cacheDataCode <- list()
 
-      localFile <- options$localFiles[[resource]]
+      localFile <- unlist(options$localFiles[[resource]])
 
       if (importFromUrl)
       {
