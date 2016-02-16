@@ -386,8 +386,10 @@ public class DataImport extends Composite
             
             columnTypesMenu_.setVisibleColumns(response.getSupportedColumnTypes());
             
-            if (column.getName().isEmpty()) {
-               columnTypesMenu_.setError("Only named columns support column operations.");
+            if (someColumnsHaveNoName(lastSuccessfulResponse_)) {
+               columnTypesMenu_.setError(
+                     "All columns must have names in order to " +
+                     "perform column operations.");
                columnTypesMenu_.setWidth("200px");
             }
             
@@ -516,6 +518,7 @@ public class DataImport extends Composite
                @Override
                public void onError(ServerError error)
                {
+                  localFiles_ = null;
                   gridViewer_.setData(null);
                   progressIndicator_.onError(error.getMessage());
                }
@@ -596,6 +599,15 @@ public class DataImport extends Composite
          if (hasOnlyColumns) {
             col.col_disabled = !definitions[col.col_name] || !definitions[col.col_name].only;
          }
+      });
+   }-*/;
+   
+   public final native boolean someColumnsHaveNoName(JavaScriptObject response) /*-{   
+      if (!response.columns)
+         return false;
+      
+      return response.columns.some(function(column) {
+         return !column.col_name && column.col_type != 'rownames';
       });
    }-*/;
 }
