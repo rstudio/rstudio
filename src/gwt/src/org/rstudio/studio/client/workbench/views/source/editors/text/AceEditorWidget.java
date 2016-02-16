@@ -73,8 +73,7 @@ public class AceEditorWidget extends Composite
                  HasValueChangeHandlers<Void>,
                  HasFoldChangeHandlers,
                  HasAllKeyHandlers,
-                 BeginPasteEvent.Handler,
-                 EndPasteEvent.Handler
+                 EditEvent.Handler
 {
    
    public AceEditorWidget()
@@ -268,11 +267,10 @@ public class AceEditorWidget extends Composite
          }
       });
       
-      if (!hasPasteHandlers_)
+      if (!hasEditHandlers_)
       {
-         events_.addHandler(BeginPasteEvent.TYPE, this);
-         events_.addHandler(EndPasteEvent.TYPE, this);
-         hasPasteHandlers_ = true;
+         events_.addHandler(EditEvent.TYPE, this);
+         hasEditHandlers_ = true;
       }
       
       events_.addHandler(
@@ -287,16 +285,6 @@ public class AceEditorWidget extends Composite
             });
    }
    
-   public void onBeginPaste(BeginPasteEvent event)
-   {
-      maybeUnmapCtrlV();
-   }
-
-   public void onEndPaste(EndPasteEvent event)
-   {
-      maybeRemapCtrlV();
-   }
-   
    // When the 'keyBinding' field is initialized (the field holding all keyboard
    // handlers for an Ace editor), an associated '$data' element is used to store
    // information on keys (to allow for keyboard chaining, and so on). We refresh
@@ -307,14 +295,43 @@ public class AceEditorWidget extends Composite
       keyBinding.$data = {editor: editor};
    }-*/;
    
-   private static native final void maybeUnmapCtrlV() /*-{
+   public void onEdit(EditEvent edit)
+   {
+      if (edit.isBeforeEdit())
+         maybeUnmap(edit.getType());
+      else
+         maybeRemap(edit.getType());
+   }
+   
+   private final void maybeUnmap(int type)
+   {
+      if (type == EditEvent.TYPE_COPY)
+         maybeUnmapImpl("<C-c>", "c-c");
+      else if (type == EditEvent.TYPE_CUT)
+         maybeUnmapImpl("<C-x>", "c-x");
+      else if (type == EditEvent.TYPE_PASTE)
+         maybeUnmapImpl("<C-v>", "c-v");
+   }
+   
+   private final void maybeRemap(int type)
+   {
+      if (type == EditEvent.TYPE_COPY)
+         maybeRemapImpl("<C-c>", "c-c");
+      else if (type == EditEvent.TYPE_CUT)
+         maybeRemapImpl("<C-x>", "c-x");
+      else if (type == EditEvent.TYPE_PASTE)
+         maybeRemapImpl("<C-v>", "c-v");
+   }
+   
+   private static final native void maybeUnmapImpl(String vimKeys, String emacsKeys)
+   /*-{
       
       // Handle Vim mapping
       var Vim = $wnd.require("ace/keyboard/vim").handler;
       var keymap = Vim.defaultKeymap;
       for (var i = 0; i < keymap.length; i++) {
-         if (keymap[i].keys === "<C-v>") {
-            keymap[i].keys = "<DISABLED:C-v>";
+         if (keymap[i].keys === vimKeys) {
+            keymap[i].keys = "DISABLED:" + vimKeys;
             break;
          }
       }
@@ -322,18 +339,21 @@ public class AceEditorWidget extends Composite
       // Handle Emacs mapping
       var Emacs = $wnd.require("ace/keyboard/emacs").handler;
       var bindings = Emacs.commandKeyBinding;
-      bindings["<DISABLED:c-v>"] = bindings["c-v"];
+      bindings["DISABLED:" + emacsKeys] = bindings[emacsKeys];
       delete bindings["c-v"];
+      
+      
    }-*/;
    
-   private static native final void maybeRemapCtrlV() /*-{
+   private static final native void maybeRemapImpl(String vimKeys, String emacsKeys)
+   /*-{
       
       // Handle Vim mapping
       var Vim = $wnd.require("ace/keyboard/vim").handler;
       var keymap = Vim.defaultKeymap;
       for (var i = 0; i < keymap.length; i++) {
-         if (keymap[i].keys === "<DISABLED:C-v>") {
-            keymap[i].keys = "<C-v>";
+         if (keymap[i].keys === "DISABLED:" + vimKeys) {
+            keymap[i].keys = vimKeys;
             break;
          }
       }
@@ -341,8 +361,8 @@ public class AceEditorWidget extends Composite
       // Handle Emacs mapping
       var Emacs = $wnd.require("ace/keyboard/emacs").handler;
       var bindings = Emacs.commandKeyBinding;
-      bindings["c-v"] = bindings["<DISABLED:c-v>"];
-      delete bindings["<DISABLED:c-v>"];
+      bindings[emacsKeys] = bindings["DISABLED:" + emacsKeys];
+      delete bindings["DISABLED:" + emacsKeys];
    }-*/;
    
    @Inject
@@ -1068,5 +1088,5 @@ public class AceEditorWidget extends Composite
    private ChunkIconsManager chunkIconsManager_;
    private Commands commands_ = RStudioGinjector.INSTANCE.getCommands();
    
-   private static boolean hasPasteHandlers_ = false;
+   private static boolean hasEditHandlers_ = false;
 }

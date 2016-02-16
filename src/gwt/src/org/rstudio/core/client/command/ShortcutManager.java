@@ -34,8 +34,6 @@ import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.events.BeginCopyEvent;
-import org.rstudio.studio.client.events.EndCopyEvent;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
@@ -52,9 +50,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
 public class ShortcutManager implements NativePreviewHandler,
-                                        NativeKeyDownHandler,
-                                        BeginCopyEvent.Handler,
-                                        EndCopyEvent.Handler
+                                        NativeKeyDownHandler
 {
    public interface Handle
    {
@@ -104,9 +100,6 @@ public class ShortcutManager implements NativePreviewHandler,
                            keyBuffer_.clear();
                      }
                   });
-            
-            events_.addHandler(BeginCopyEvent.TYPE, ShortcutManager.this);
-            events_.addHandler(EndCopyEvent.TYPE, ShortcutManager.this);
          }
       });
       
@@ -114,16 +107,6 @@ public class ShortcutManager implements NativePreviewHandler,
       // destroyed it's not necessary to manage lifetime of this event handler
       Event.addNativePreviewHandler(this);
       addPostViewHandler();
-   }
-   
-   public void onBeginCopy(BeginCopyEvent event)
-   {
-      isCopyEvent_ = true;
-   }
-   
-   public void onEndCopy(EndCopyEvent event)
-   {
-      isCopyEvent_ = false;
    }
    
    private native final void addPostViewHandler() /*-{
@@ -441,12 +424,44 @@ public class ShortcutManager implements NativePreviewHandler,
       return false;
    }
    
+   private static final native boolean isContentEditable(Element element) /*-{
+      return !!element.isContentEditable;
+   }-*/;
+   
+   private boolean isEditableElement(Element element)
+   {
+      return isContentEditable(element)  ||
+             element.hasTagName("input") ||
+             element.hasTagName("textarea");
+   }
+   
+   private boolean isEditKeyCombination(NativeEvent event)
+   {
+      int targetModifier = BrowseCap.isMacintosh()
+            ? KeyboardShortcut.META
+            : KeyboardShortcut.CTRL;
+      
+      int keyCode = event.getKeyCode();
+      int modifier = KeyboardShortcut.getModifierValue(event);
+      if (modifier == targetModifier && (
+            keyCode == KeyCodes.KEY_X ||
+            keyCode == KeyCodes.KEY_C ||
+            keyCode == KeyCodes.KEY_V))
+      {
+         return true;
+      }
+      
+      return false;
+   }
+   
    private void swallowEvents(Object object)
    {
       NativeEvent event = (NativeEvent) object;
       
-      // Don't swallow copy events.
-      if (isCopyEvent_)
+      // Allow edit keybindings to pass through when an input
+      // element has focus.
+      Element target = Element.as(event.getEventTarget());
+      if (isEditableElement(target) && isEditKeyCombination(event))
          return;
       
       // If the keybuffer is a prefix key sequence, swallow
@@ -496,8 +511,6 @@ public class ShortcutManager implements NativePreviewHandler,
    private final Map<KeyMapType, KeyMap> keyMaps_;
    private final List<ShortcutInfo> shortcutInfo_;
    private final List<Pair<KeySequence, AppCommandBinding>> defaultBindings_;
-   
-   private boolean isCopyEvent_ = false;
    
    // Injected ----
    private UserCommandManager userCommands_;
