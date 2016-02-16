@@ -147,13 +147,8 @@ private:
    {
       if (terminationRequested())
       {
-          json::JsonRpcResponse response;
-          continuation_(Success(), &response);
-      }
-      
-      if (errors_.size() > 0 || exitStatus != EXIT_SUCCESS)
-      {
-         continuationWithError("The operation failed to complete.");
+         json::JsonRpcResponse response;
+         continuation_(Success(), &response);
          return;
       }
 
@@ -166,9 +161,6 @@ private:
       }
       else
       {
-         json::Value jsonResponse;
-         json::parse(output_, &jsonResponse);
-
          core::json::Value resultValue;
          error = r::json::jsonValueFromObject(resultSEXP, &resultValue);
          if (error)
