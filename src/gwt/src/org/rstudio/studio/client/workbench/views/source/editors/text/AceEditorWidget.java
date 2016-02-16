@@ -340,7 +340,7 @@ public class AceEditorWidget extends Composite
       var Emacs = $wnd.require("ace/keyboard/emacs").handler;
       var bindings = Emacs.commandKeyBinding;
       bindings["DISABLED:" + emacsKeys] = bindings[emacsKeys];
-      delete bindings["c-v"];
+      delete bindings[emacsKeys];
       
       
    }-*/;

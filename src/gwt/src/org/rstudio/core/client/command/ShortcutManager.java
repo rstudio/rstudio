@@ -36,6 +36,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
 
 import com.google.gwt.core.client.Scheduler;
@@ -401,18 +402,15 @@ public class ShortcutManager implements NativePreviewHandler,
    // TODO: In a perfect world, this function does not exist and
    // instead we populate an editor key map based on the current state
    // of the Ace editor, which we could check for prefix matches.
-   // For now, we'll just hard code the prefix
-   // keys used in the default keymaps for Emacs.
    private boolean isPrefixForEditor(KeyCombination keys, NativeEvent event)
    {
       // Check to see if the event target was Ace.
       Element target = Element.as(event.getEventTarget());
-      if (target != null && target.hasClassName("ace_text-input"))
+      AceEditorNative editor = AceEditorNative.getEditor(target);
+      if (editor == null)
          return false;
 
-      // Ace was the target of this event -- swallow
-      // C-c and C-v.
-      if (editorMode_ == KeyboardShortcut.MODE_EMACS)
+      if (editor.isEmacsModeOn())
       {
          if (keys.isCtrlPressed())
          {
@@ -458,11 +456,17 @@ public class ShortcutManager implements NativePreviewHandler,
    {
       NativeEvent event = (NativeEvent) object;
       
-      // Allow edit keybindings to pass through when an input
-      // element has focus.
+      // Allow edit keybindings to pass through when an
+      // editable element is the target of the event.
       Element target = Element.as(event.getEventTarget());
-      if (isEditableElement(target) && isEditKeyCombination(event))
+      AceEditorNative editor = AceEditorNative.getEditor(target);
+      if ((editor == null || !editor.isEmacsModeOn()) &&
+          isEditableElement(target) &&
+          isEditKeyCombination(event))
+      {
+         keyBuffer_.clear();
          return;
+      }
       
       // If the keybuffer is a prefix key sequence, swallow
       // the event. This ensures that the system doesn't 'beep'
