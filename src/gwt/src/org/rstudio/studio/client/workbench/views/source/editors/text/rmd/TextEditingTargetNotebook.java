@@ -15,10 +15,12 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -56,6 +58,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 public class TextEditingTargetNotebook 
@@ -386,18 +389,28 @@ public class TextEditingTargetNotebook
       return chunkDef;
    }
    
-   private void removeChunk(String chunkId)
+   private void removeChunk(final String chunkId)
    {
-      LineWidget widget = lineWidgets_.get(chunkId);
+      final LineWidget widget = lineWidgets_.get(chunkId);
       if (widget == null)
          return;
       
-      // remove the widget from the document
-      docDisplay_.removeLineWidget(widget);
-      
-      // remove it from our internal cache
-      lineWidgets_.remove(chunkId);
-      outputWidgets_.remove(chunkId);
+      ArrayList<Widget> widgets = new ArrayList<Widget>();
+      widgets.add(outputWidgets_.get(chunkId));
+      FadeOutAnimation anim = new FadeOutAnimation(widgets, new Command()
+      {
+         @Override
+         public void execute()
+         {
+            // remove the widget from the document
+            docDisplay_.removeLineWidget(widget);
+            
+            // remove it from our internal cache
+            lineWidgets_.remove(chunkId);
+            outputWidgets_.remove(chunkId);
+         }
+      });
+      anim.run(400);
    }
    
    private void removeAllChunks()
