@@ -297,6 +297,7 @@ public class FileTypeRegistry
       register("*.r", R, icons.iconRdoc());
       register("*.q", R, icons.iconRdoc());
       register("*.s", R, icons.iconRdoc());
+      register(".rprofile", R, icons.iconRprofile());
       register("Rprofile.site", R, icons.iconRprofile());
       register("DESCRIPTION", DCF, icons.iconDCF());
       register("INDEX", TEXT, icons.iconText());
