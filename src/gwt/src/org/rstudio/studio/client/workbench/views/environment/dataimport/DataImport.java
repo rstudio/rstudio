@@ -86,6 +86,8 @@ public class DataImport extends Composite
    
    private final DataImportModes dataImportMode_;
    
+   private JavaScriptObject localFiles_;
+   
    interface DataImportUiBinder extends UiBinder<Widget, DataImport>
    {
    }
@@ -129,7 +131,7 @@ public class DataImport extends Composite
          }
       });
       
-      assembleDataImport();
+      assembleDataImport(null);
       
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
@@ -177,6 +179,30 @@ public class DataImport extends Composite
       return null;
    }
    
+   private String enhancePreviewErrorMessage(String error)
+   {
+      String headerMessage = "";
+      
+      switch (dataImportMode_)
+      {
+      case Text:
+         headerMessage = "Is this a valid CSV file?\n\n";
+         break;
+      case SAV:
+      case SAS:
+      case Stata:
+         headerMessage =  "Is this a valid SPSS, SAS or STATA file?\n\n";
+         break;
+      case XLS:
+         headerMessage =  "Is this a valid Excel file?\n\n";
+         break;
+      default:
+         break;
+      }
+      
+      return headerMessage + error;
+   }
+   
    @Inject
    private void initialize(WorkbenchServerOperations server,
                            GlobalDisplay globalDisplay)
@@ -196,6 +222,7 @@ public class DataImport extends Composite
                   if (dataImportFileChooser_.getText() != importOptions_.getImportLocation())
                   {
                      lastSuccessfulResponse_ = null;
+                     localFiles_ = null;
                      resetColumnDefinitions();
                   }
                   
@@ -383,8 +410,10 @@ public class DataImport extends Composite
             
             columnTypesMenu_.setVisibleColumns(response.getSupportedColumnTypes());
             
-            if (column.getName().isEmpty()) {
-               columnTypesMenu_.setError("Only named columns support column operations.");
+            if (someColumnsHaveNoName(lastSuccessfulResponse_)) {
+               columnTypesMenu_.setError(
+                     "All columns must have names in order to " +
+                     "perform column operations.");
                columnTypesMenu_.setWidth("200px");
             }
             
@@ -400,6 +429,11 @@ public class DataImport extends Composite
       if (importOptions_ != null)
       {
          options.setOptions(importOptions_);
+      }
+      
+      if (localFiles_ != null)
+      {
+         options.setLocalFiles(localFiles_);
       }
       
       return options;
@@ -427,87 +461,98 @@ public class DataImport extends Composite
    
    private void previewDataImport()
    {
-      DataImportOptions previewImportOptions = getOptions();
-      
-      assembleDataImport();
-      
-      if (dataImportFileChooser_.getText() == "")
-      {
-         gridViewer_.setData(null);
-         return;
-      }
-      
-      previewImportOptions.setMaxRows(maxRows_);
-      
-      progressIndicator_.onProgress("Retrieving preview data...", new Operation()
+      Operation previewDataImportOperation = new Operation()
       {
          @Override
          public void execute()
          {
-            progressIndicator_.clearProgress();
+            DataImportOptions previewImportOptions = getOptions();
             
-            server_.previewDataImportAsyncAbort(new ServerRequestCallback<Void>()
+            if (dataImportFileChooser_.getText() == "")
+            {
+               gridViewer_.setData(null);
+               return;
+            }
+            
+            previewImportOptions.setMaxRows(maxRows_);
+            
+            progressIndicator_.onProgress("Retrieving preview data...", new Operation()
             {
                @Override
-               public void onResponseReceived(Void empty)
+               public void execute()
                {
+                  progressIndicator_.clearProgress();
+                  localFiles_ = null;
+                  
+                  server_.previewDataImportAsyncAbort(new ServerRequestCallback<Void>()
+                  {
+                     @Override
+                     public void onResponseReceived(Void empty)
+                     {
+                     }
+                     
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        progressIndicator_.onError(error.getMessage());
+                     }
+                  });
+               }
+            });
+            
+            server_.previewDataImportAsync(previewImportOptions, maxCols_, maxFactors_,
+                  new ServerRequestCallback<DataImportPreviewResponse>()
+            {
+               @Override
+               public void onResponseReceived(DataImportPreviewResponse response)
+               {
+                  if (response == null || response.getErrorMessage() != null)
+                  {
+                     if (response != null)
+                     {
+                        setGridViewerData(response);
+                        response.setColumnDefinitions(lastSuccessfulResponse_);
+                        progressIndicator_.onError(
+                              enhancePreviewErrorMessage(response.getErrorMessage())
+                        );
+                     }
+                     return;
+                  }
+                  
+                  // Set the column definitions to allow subsequent calls to assemble
+                  // generate preview code based on data.
+                  importOptions_.setBaseColumnDefinitions(response);
+                  
+                  lastSuccessfulResponse_ = response;
+                  
+                  dataImportOptionsUi_.setPreviewResponse(response);
+                  
+                  gridViewer_.setOption("status",
+                        "Previewing first " + toLocaleString(maxRows_) + 
+                        " entries. " + (
+                              response.getParsingErrors() > 0 ?
+                              Integer.toString(response.getParsingErrors()) + " parsing errors." : "")
+                        );
+                  
+                  assignColumnDefinitions(response, importOptions_.getColumnDefinitions());
+                  
+                  setGridViewerData(response);
+                  
+                  progressIndicator_.onCompleted();
                }
                
                @Override
                public void onError(ServerError error)
                {
+                  localFiles_ = null;
+                  gridViewer_.setData(null);
                   progressIndicator_.onError(error.getMessage());
                }
             });
          }
-      });
+      };
       
-      server_.previewDataImportAsync(previewImportOptions, maxCols_, maxFactors_,
-            new ServerRequestCallback<DataImportPreviewResponse>()
-      {
-         @Override
-         public void onResponseReceived(DataImportPreviewResponse response)
-         {
-            if (response == null || response.getErrorMessage() != null)
-            {
-               if (response != null)
-               {
-                  setGridViewerData(response);
-                  response.setColumnDefinitions(lastSuccessfulResponse_);
-                  progressIndicator_.onError(response.getErrorMessage());
-               }
-               return;
-            }
-            
-            // Set the column definitions to allow subsequent calls to assemble
-            // generate preview code based on data.
-            importOptions_.setBaseColumnDefinitions(response);
-            
-            lastSuccessfulResponse_ = response;
-            
-            dataImportOptionsUi_.setPreviewResponse(response);
-            
-            gridViewer_.setOption("status",
-                  "Previewing first " + toLocaleString(maxRows_) + 
-                  " entries. " + (
-                        response.getParsingErrors() > 0 ?
-                        Integer.toString(response.getParsingErrors()) + " parsing errors." : "")
-                  );
-            
-            assignColumnDefinitions(response, importOptions_.getColumnDefinitions());
-            
-            setGridViewerData(response);
-            
-            progressIndicator_.onCompleted();
-         }
-         
-         @Override
-         public void onError(ServerError error)
-         {
-            gridViewer_.setData(null);
-            progressIndicator_.onError(error.getMessage());
-         }
-      });
+      assembleDataImport(previewDataImportOperation);
    }
    
    private void setCodeAreaDefaults()
@@ -519,7 +564,7 @@ public class DataImport extends Composite
       codeArea_.getEditor().getRenderer().setShowGutter(false);
    }
    
-   private void assembleDataImport()
+   private void assembleDataImport(final Operation onComplete)
    {
       server_.assembleDataImport(getOptions(),
             new ServerRequestCallback<DataImportAssembleResponse>()
@@ -535,8 +580,15 @@ public class DataImport extends Composite
             
             codePreview_ = response.getImportCode();
             dataImportOptionsUi_.setAssembleResponse(response);
+            localFiles_ = response.getLocalFiles();
+            
             setCodeAreaDefaults();
             codeArea_.setCode(codePreview_);
+            
+            if (onComplete != null)
+            {
+               onComplete.execute();
+            }
          }
          
          @Override
@@ -573,6 +625,15 @@ public class DataImport extends Composite
          if (hasOnlyColumns) {
             col.col_disabled = !definitions[col.col_name] || !definitions[col.col_name].only;
          }
+      });
+   }-*/;
+   
+   public final native boolean someColumnsHaveNoName(JavaScriptObject response) /*-{   
+      if (!response.columns)
+         return false;
+      
+      return response.columns.some(function(column) {
+         return !column.col_name && column.col_type != 'rownames';
       });
    }-*/;
 }

@@ -37,8 +37,14 @@
    dataName
 })
 
-.rs.addFunction("assemble_data_import_parameters", function(options, optionTypes, importFunction, dataImportOptions, package)
+.rs.addFunction("assemble_data_import_parameters", function(params)
 {
+   options <- params$options
+   optionTypes <- params$optionTypes
+   importFunction <- params$importFunction
+   dataImportOptions <- params$dataImportOptions
+   package <- params$package
+
    ns <- ""
    if (!identical(package, NULL))
    {
@@ -140,7 +146,22 @@
             for(colIdx in seq(from=1, to=length(optionValue) - 1)) {
                col <- colsByIndex[[colIdx + 1]]
 
-               colParams[[colIdx]] <- "\"text\""
+               if (!identical(col$rType, NULL)) {
+                  colParams[[colIdx]] <- switch(col$rType,
+                     "date" = "date",
+                     "time" = "date",
+                     "double" = "numeric",
+                     "factor" = "character",
+                     "numeric" = "numeric",
+                     "integer" = "numeric",
+                     "logical" = "numeric",
+                     "dateTime" = "date",
+                     "character" = "text",
+                     "\"text\""
+                  )
+                  colParams[[colIdx]] <- paste("\"", colParams[[colIdx]], "\"", sep = "")
+               }
+
                if (!identical(col$assignedType, NULL))
                {
                   colParams[[colIdx]] <- switch(col$assignedType,
@@ -209,6 +230,70 @@
 {
    importInfo <- list()
 
+   pathIsUrl <- function(path) {
+      if (identical(path, NULL)) FALSE else grepl("://", path)
+   }
+
+   cacheOrFileFromOptions <- function(options, resource = "importLocation") {
+      if (!pathIsUrl(options[[resource]]) ||
+          identical(options$cacheVariableNames[[resource]], NULL))
+         dataImportOptions[[resource]]
+      else
+         options$cacheVariableNames[[resource]]
+   }
+
+   cacheTypeOrFileTypeFromOptions <- function(options, resource = "importLocation") {
+      if (!pathIsUrl(options[[resource]]) ||
+          identical(options$cacheVariableNames[[resource]], NULL))
+         "character"
+      else
+         "symbol"
+   }
+
+   cacheCodeFromOptions <- function(options, functionInfo, resource) {
+      importFromUrl <- pathIsUrl(options[[resource]])
+      cacheDataCode <- list()
+
+      localFile <- unlist(options$localFiles[[resource]])
+
+      if (importFromUrl)
+      {
+         if (identical(localFile, NULL))
+         {
+            localFile <- tempfile(
+               tmpdir = dirname(tempdir()),
+               fileext = functionInfo$cacheFileExtension
+            )
+         }
+
+         cacheVariableName <- options$cacheVariableNames[[resource]]
+
+         cacheDataCode <- append(
+            cacheDataCode,
+            paste(cacheVariableName, " <- \"", localFile, "\"", sep = "")
+         )
+
+         cacheDataCode <- append(cacheDataCode, list(
+            paste(
+               "if(!file.exists(",
+               cacheVariableName,
+               ")) ",
+               "download.file(\"",
+               options[[resource]],
+               "\", ",
+               cacheVariableName,
+               ")",
+               sep = ""
+            )
+         ))
+      }
+
+      list(
+         code = cacheDataCode,
+         localFile = localFile
+      )
+   }
+
    functionInfoFromOptions <- list(
       "text" = function() {
          functionName <- ""
@@ -225,7 +310,7 @@
 
          # load parameters
          options <- list()
-         options[["file"]] <- dataImportOptions$importLocation
+         options[["file"]] <- cacheOrFileFromOptions(dataImportOptions)
          options[["delim"]] <- dataImportOptions$delimiter
          options[["quote"]] <- dataImportOptions$quotes
          options[["escape_backslash"]] <- dataImportOptions$escapeBackslash
@@ -241,7 +326,7 @@
 
          # set special parameter types
          optionTypes <- list()
-         optionTypes[["file"]] <- "character"
+         optionTypes[["file"]] <- cacheTypeOrFileTypeFromOptions(dataImportOptions)
          optionTypes[["delim"]] <- "character"
          optionTypes[["quote"]] <- "character"
          optionTypes[["locale"]] <- "locale"
@@ -255,15 +340,16 @@
             package = "readr",
             paramsPackage = "readr",
             options = options,
-            optionTypes = optionTypes
+            optionTypes = optionTypes,
+            cacheFileExtension = ".txt"
          ))
       },
       "statistics" = function() {
          # load parameters
          options <- list()
-         options[["path"]] <- dataImportOptions$importLocation
-         options[["b7dat"]] <- dataImportOptions$importLocation
-         options[["b7cat"]] <- dataImportOptions$modelLocation
+         options[["path"]] <- cacheOrFileFromOptions(dataImportOptions)
+         options[["b7dat"]] <- cacheOrFileFromOptions(dataImportOptions)
+         options[["b7cat"]] <- cacheOrFileFromOptions(dataImportOptions, "modelLocation")
 
          havenFunction <- switch(dataImportOptions$format,
             "sav" = list(name = "read_sav", ref = haven::read_sav),
@@ -275,22 +361,23 @@
 
          # set special parameter types
          optionTypes <- list()
-         optionTypes[["path"]] <- "character"
-         optionTypes[["b7dat"]] <- "character"
-         optionTypes[["b7cat"]] <- "character"
+         optionTypes[["path"]] <- cacheTypeOrFileTypeFromOptions(dataImportOptions)
+         optionTypes[["b7dat"]] <- cacheTypeOrFileTypeFromOptions(dataImportOptions)
+         optionTypes[["b7cat"]] <- cacheTypeOrFileTypeFromOptions(dataImportOptions, "modelLocation")
 
          return(list(
             name = havenFunction$name,
             reference = havenFunction$ref,
             package = "haven",
             options = options,
-            optionTypes = optionTypes
+            optionTypes = optionTypes,
+            cacheFileExtension = ".dat"
          ))
       },
       "xls" = function() {
          # load parameters
          options <- list()
-         options[["path"]] <- dataImportOptions$importLocation
+         options[["path"]] <- cacheOrFileFromOptions(dataImportOptions)
          options[["sheet"]] <- dataImportOptions$sheet
          options[["na"]] <- dataImportOptions$na
          options[["col_names"]] <- dataImportOptions$columnNames
@@ -299,7 +386,7 @@
 
          # set special parameter types
          optionTypes <- list()
-         optionTypes[["path"]] <- "character"
+         optionTypes[["path"]] <- cacheTypeOrFileTypeFromOptions(dataImportOptions)
          optionTypes[["sheet"]] <- "character"
          optionTypes[["na"]] <- "character"
          optionTypes[["col_types"]] <- "columnDefinitionsReadXl"
@@ -310,7 +397,8 @@
             package = "readxl",
             paramsPackage = NULL,
             options = options,
-            optionTypes = optionTypes
+            optionTypes = optionTypes,
+            cacheFileExtension = ".xls"
          ))
       }
    )
@@ -323,12 +411,36 @@
 
    dataName <- tolower(gsub("[\\._]+", "_", c(make.names(dataName)), perl=TRUE))
 
+   dataImportOptions$cacheVariableNames <- list()
+   dataImportOptions$cacheVariableNames$importLocation <- paste(dataName, "_file", sep = "")
+   dataImportOptions$cacheVariableNames$modelLocation <- paste(dataName, "_model_file", sep = "")
+   if (identical(dataImportOptions$localFiles, NULL)) {
+      dataImportOptions$localFiles <- list()
+   }
+
    functionInfo <- functionInfoFromOptions[[dataImportOptions$mode]]()
    options <- functionInfo$options
    optionTypes <- functionInfo$optionTypes
 
-   functionParameters <- .rs.assemble_data_import_parameters(options, optionTypes, functionInfo$reference, dataImportOptions, functionInfo$paramsPackage)
-   functionParametersNoNs <- .rs.assemble_data_import_parameters(options, optionTypes, functionInfo$reference, dataImportOptions, NULL)
+   importLocationCache <- cacheCodeFromOptions(dataImportOptions, functionInfo, "importLocation")
+   modelLocationCache <- cacheCodeFromOptions(dataImportOptions, functionInfo, "modelLocation")
+
+   importInfo$localFiles <- list(
+      importLocation = importLocationCache$localFile,
+      modelLocation = modelLocationCache$localFile
+   )
+
+   paramOptions <- list(
+      options = options,
+      optionTypes = optionTypes,
+      importFunction = functionInfo$reference,
+      dataImportOptions = dataImportOptions,
+      package = functionInfo$paramsPackage
+   )
+
+   functionParameters <- .rs.assemble_data_import_parameters(paramOptions)
+   paramOptions$package <- NULL
+   functionParametersNoNs <- .rs.assemble_data_import_parameters(paramOptions)
 
    previewCode <- paste(
       functionInfo$package,
@@ -345,22 +457,30 @@
       ")",
       sep = "")
 
+   previewCodeExpressions <- list()
+   previewCodeExpressions <- append(previewCodeExpressions, importLocationCache$code)
+   previewCodeExpressions <- append(previewCodeExpressions, modelLocationCache$code)
+   previewCodeExpressions <- append(previewCodeExpressions, previewCode)
+
    importInfo$previewCode <- paste(
-      previewCode,
-      sep = "")
+      previewCodeExpressions,
+      collapse = "\n")
+
+   importCodeExpressions <- c(paste(
+      "library(",
+      functionInfo$package,
+      ")",
+      sep = ""
+   ))
+
+   importCodeExpressions <- append(importCodeExpressions, importLocationCache$code)
+   importCodeExpressions <- append(importCodeExpressions, modelLocationCache$code)
+   importCodeExpressions <- append(importCodeExpressions, paste(dataName, " <- ", previewCodeNoNs, sep = ""))
+   importCodeExpressions <- append(importCodeExpressions, paste("View(", dataName, ")", sep = ""))
 
    importInfo$importCode <- paste(
       lapply(
-         c(
-            paste(
-               "library(",
-               functionInfo$package,
-               ")",
-               sep = ""
-            ),
-            paste(dataName, " <- ", previewCodeNoNs, sep = ""),
-            paste("View(", dataName, ")", sep = "")
-         ),
+         importCodeExpressions,
          function(e) {
             paste(
                deparse(
@@ -487,6 +607,11 @@
 
       cnames <- names(data)
       size <- nrow(data)
+
+      if (!identical(dataImportOptions$maxRows, NULL) && size > dataImportOptions$maxRows) {
+         data <- head(data, dataImportOptions$maxRows)
+         size <- nrow(data)
+      }
 
       for(i in seq_along(data)) {
          data[[i]] <- .rs.formatDataColumn(data[[i]], 1, size)
