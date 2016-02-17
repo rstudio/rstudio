@@ -71,12 +71,6 @@ public class DocPropMenuItem extends CheckableMenuItem
       docUpdate_.modifyProperties(props, new ProgressIndicator()
       {
          @Override
-         public void onProgress(String message)
-         {
-            
-         }
-         
-         @Override
          public void onError(String message)
          {
             RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
@@ -92,7 +86,16 @@ public class DocPropMenuItem extends CheckableMenuItem
          @Override
          public void clearProgress()
          {
+         }
 
+         @Override
+         public void onProgress(String message, Operation onCancel)
+         {
+         }
+
+         @Override
+         public void onProgress(String message)
+         {
          }
       });
    }

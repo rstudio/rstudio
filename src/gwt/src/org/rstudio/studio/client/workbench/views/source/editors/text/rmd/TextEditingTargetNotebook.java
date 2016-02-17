@@ -317,6 +317,8 @@ public class TextEditingTargetNotebook
       {
          // see if the Source and Console are paired
          PaneConfig paneConfig = uiPrefs_.paneConfig().getValue();
+         if (paneConfig == null)
+            paneConfig = PaneConfig.createDefault();
          if (hasSourceAndConsolePaired(paneConfig.getPanes()))
          {
             events_.fireEvent(new MaximizeSourceWindowEvent());
