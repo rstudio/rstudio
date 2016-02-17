@@ -76,21 +76,26 @@
   </macrodef>
 
   <target name="test.dev.htmlunit" if="generated" depends="compile.tests"
+          unless="test.dev.htmlunit.disable"
           description="Run tests with HtmlUnit in dev mode">
     <run-tests output="${junit.out}/dev" args="${test.args} -devMode" classes="**/AllTests.class"/>
   </target>
 
   <target name="test.web.htmlunit" if="generated" depends="compile.tests"
+          unless="test.web.htmlunit.disable"
           description="Run tests with HtmlUnit in prod mode">
     <run-tests output="${junit.out}/web" args="${test.args} -prod" classes="**/AllTests.class"/>
   </target>
 
   <target name="test.nongwt" if="generated" depends="compile.tests"
+          unless="test.nongwt.disable"
           description="Run tests in the JVM">
     <run-tests output="${junit.out}/nongwt" args="" classes="**/*JreTest.class"/>
   </target>
 
-  <target name="test" description="Run tests">
+  <target name="test"
+          unless="test.elemental.disable"
+          description="Run all Elemental tests">
     <antcall target="test.nongwt" />
     <antcall target="test.web.htmlunit" />
     <antcall target="test.dev.htmlunit" />
@@ -109,8 +114,6 @@
         <jvmarg value="-Xmx512M" />
         <module />
         <arg value="-strict" />
-        <arg value="-sourceLevel" />
-        <arg value="${javac.source}" />
         <arg value="-out" />
         <arg value="${project.build}/bin" />
       </java>

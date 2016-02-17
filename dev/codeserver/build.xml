@@ -48,7 +48,9 @@
     </gwt.jar>
   </target>
 
-  <target name="test" depends="build, compile.tests" description="Run tests">
+  <target name="test" depends="build, compile.tests"
+          unless="test.codeserver.disable"
+          description="Run tests">
     <mkdir dir="${junit.out}/codeserver" />
     <fileset id="tests" dir="${javac.junit.out}"
         includes="**/*Test.class" />

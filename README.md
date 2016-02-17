@@ -24,7 +24,7 @@
 
  - You need the [GWT tools repository](https://github.com/gwtproject/tools/)
    checked out and up-to-date. By default it is expected to be found at `../tools`.
-   You can override the default location using the GWT_TOOLS environment variable 
+   You can override the default location using the GWT_TOOLS environment variable
    or passing `-Dgwt.tools=` argument to ant.
 
  - To create the SDK distribution files run:
@@ -89,29 +89,29 @@
 
    `$ ( cd user && ant test -Dtest.emma.htmlunit.disable=true ; cd .. )`
 
-    Module         | Task                   | Property to skip
-    -------------- | ---------------------- | ----------------
-    dev            | test                   | test.dev.disable
-    codeserver     | test                   | test.codeserver.disable
-    user           | test                   | test.user.disable
-    user           | test.nongwt            | test.nongwt.disable
-    user           | test.dev.htmlunit      | test.dev.htmlunit.disable
-    user           | test.web.htmlunit      | test.web.htmlunit.disable
-    user           | test.draft.htmlunit    | test.draft.htmlunit.disable
-    user           | test.nometa.htmlunit   | test.nometa.htmlunit.disable
-    user           | test.emma.htmlunit     | test.emma.htmlunit.disable
-    user           | test.coverage.htmlunit | test.coverage.htmlunit.disable
-    user           | test.dev.selenium      | test.dev.selenium.disable
-    user           | test.web.selenium      | test.web.selenium.disable
-    user           | test.draft.selenium    | test.draft.selenium.disable
-    user           | test.nometa.selenium   | test.nometa.selenium.disable
-    user           | test.emma.selenium     | test.emma.selenium.disable
-    requestfactory | test                   |
-    elemental      | test                   |
-    elemental      | test.nongwt            |
-    elemental      | test.dev.htmlunit      |
-    elemental      | test.web.htmlunit      |
-    tools          | test                   |
+    Module         | Task                   | Property to skip               | Description
+    -------------- | ---------------------- | ------------------------------ | ----------------------
+    dev            | test                   | test.dev.disable               | GWT compiler & dev libraries
+    codeserver     | test                   | test.codeserver.disable        | SuperDevMode server
+    user           | test                   | test.user.disable              | GWT user API and JRE emulation
+    user           | test.nongwt            | test.nongwt.disable            | Run tests that not require GWTTestCase
+    user           | test.dev.htmlunit      | test.dev.htmlunit.disable      | Run dev-mode tests with HtmlUnit
+    user           | test.web.htmlunit      | test.web.htmlunit.disable      | Run web-mode tests with HtmlUnit
+    user           | test.draft.htmlunit    | test.draft.htmlunit.disable    | Run draft compiled HtmlUnit tests
+    user           | test.nometa.htmlunit   | test.nometa.htmlunit.disable   | Run -XdisableClassMetadata tests with HtmlUnit
+    user           | test.emma.htmlunit     | test.emma.htmlunit.disable     | Run emma tests with HtmlUnit
+    user           | test.coverage.htmlunit | test.coverage.htmlunit.disable | Run tests for coverage support
+    user           | test.dev.selenium      | test.dev.selenium.disable      | Run dev-mode tests using Selenium RC servers
+    user           | test.web.selenium      | test.web.selenium.disable      | Run web tests using Selenium RC servers
+    user           | test.draft.selenium    | test.draft.selenium.disable    | Run draft compiled tests using Selenium RC servers
+    user           | test.nometa.selenium   | test.nometa.selenium.disable   | Run -XdisableClassMetadata tests using Selenium RC servers
+    user           | test.emma.selenium     | test.emma.selenium.disable     | Run emma tests with Selenium RC servers
+    requestfactory | test                   | test.requestfactory.disable    | Request Factory library
+    elemental      | test                   | test.elemental.disable         | Elemental library
+    elemental      | test.nongwt            | test.nongwt.disable            | Run elemental tests that not require GWTTestCase
+    elemental      | test.dev.htmlunit      | test.dev.htmlunit.disable      | Run elemental dev-mode tests with HtmlUnit
+    elemental      | test.web.htmlunit      | test.web.htmlunit.disable      | Run elemental web-mode tests with HtmlUnit
+    tools          | test                   | test.tools.disable             | Some tools used in GWT development
 
    Additionally you can utilize some variables to filter which test to run in each task:
 
@@ -193,7 +193,12 @@
       or
 
    ```
-   $ ant user -Dtarget=test -Dtest.dev.disable=true \
+   $ ant user -Dtarget=test
+          -Dtest.dev.disable=true \
+          -Dtest.codeserver.disable=true \
+          -Dtest.requestfactory.disable=true \
+          -Dtest.elemental.disable=true \
+          -Dtest.tools.disable=true \
           -Dtest.dev.htmlunit.disable=true \
           -Dtest.web.htmlunit.disable=true \
           -Dtest.coverage.htmlunit.disable=true \

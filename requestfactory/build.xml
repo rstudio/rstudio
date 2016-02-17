@@ -82,7 +82,9 @@
   </target>
 
   <!-- This target requires classes from ../build/{dev,user}/bin-test -->
-  <target name="requestfactory-test" description="Build RequestFactory test source/class jar">
+  <target name="requestfactory-test"
+          unless="test.requestfactory.disable"
+          description="Build RequestFactory test source/class jar">
     <requestfactory-jar target="test" />
     <requestfactory-jar target="test-src" />
   </target>

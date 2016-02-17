@@ -31,7 +31,9 @@
     </antcall>
   </target>
 
-  <target name="test" depends="build" description="Test each subfolder">
+  <target name="test" depends="build"
+          unless="test.tools.disable"
+          description="Test each subfolder">
     <antcall target="-do">
       <param name="target" value="test" />
     </antcall>
