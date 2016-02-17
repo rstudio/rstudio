@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.source.editors.text;
+package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.regex.Match;
@@ -24,6 +24,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DisplayChunkOptionsEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunksEvent;
@@ -277,7 +278,7 @@ public class ChunkIconsManager
                                    ChunkIconsManager manager, Element element) 
    /*-{
       element.addEventListener("click", $entry(function(evt) {
-         manager.@org.rstudio.studio.client.workbench.views.source.editors.text.ChunkIconsManager::fireExecutePreviousChunksEvent(Ljava/lang/Object;)(evt);
+         manager.@org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager::fireExecutePreviousChunksEvent(Ljava/lang/Object;)(evt);
       }));
    }-*/;
 
@@ -286,7 +287,7 @@ public class ChunkIconsManager
                                                                   Element element) 
    /*-{
       element.addEventListener("click", $entry(function(evt) {
-         manager.@org.rstudio.studio.client.workbench.views.source.editors.text.ChunkIconsManager::fireExecuteChunkEvent(Ljava/lang/Object;)(evt);
+         manager.@org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager::fireExecuteChunkEvent(Ljava/lang/Object;)(evt);
       }));
    }-*/;
    
@@ -294,7 +295,7 @@ public class ChunkIconsManager
                                                                  Element element) 
    /*-{
       element.addEventListener("click", $entry(function(evt) {
-         manager.@org.rstudio.studio.client.workbench.views.source.editors.text.ChunkIconsManager::fireDisplayChunkOptionsEvent(Ljava/lang/Object;)(evt);
+         manager.@org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager::fireDisplayChunkOptionsEvent(Ljava/lang/Object;)(evt);
       }));
    }-*/;
    

@@ -1115,7 +1115,6 @@ SEXP rs_paramsFileForRmd(SEXP fileSEXP)
 }
 
 
-
 } // anonymous namespace
 
 bool knitParamsAvailable()

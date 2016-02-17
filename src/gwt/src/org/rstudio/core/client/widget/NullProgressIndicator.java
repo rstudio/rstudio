@@ -26,6 +26,11 @@ public class NullProgressIndicator implements ProgressIndicator
    }
 
    @Override
+   public void onProgress(String message, Operation onCancel)
+   {
+   }
+
+   @Override
    public void onCompleted()
    {
    }
@@ -41,5 +46,4 @@ public class NullProgressIndicator implements ProgressIndicator
    public void clearProgress()
    {
    }
-
 }

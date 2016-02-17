@@ -31,6 +31,7 @@ import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.LocalRepositoriesWidget;
 import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
 import org.rstudio.studio.client.application.Application;
+import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.ProjectPopupMenu;
 import org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader;
@@ -91,8 +92,6 @@ import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkIconsManager;
-import org.rstudio.studio.client.workbench.views.source.editors.text.SetupChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCppHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
@@ -101,6 +100,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppComp
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.SetupChunkOptionsPopupPanel;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
 import org.rstudio.studio.client.workbench.views.environment.ClearAllDialog;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImport;
@@ -160,6 +162,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(EditorCommandManager manager);
    void injectMembers(ApplicationCommandManager manager);
    void injectMembers(FileBacked<?> object);
+   void injectMembers(TextEditingTargetNotebook notebook);
    void injectMembers(WindowFrame frame);
    void injectMembers(ShinyGadgetDialog dialog);
    void injectMembers(NewShinyWebApplication dialog);
@@ -174,6 +177,7 @@ public interface RStudioGinjector extends Ginjector
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
    Application getApplication() ;
+   ApplicationInterrupt getApplicationInterrupt();
    VCSApplication getVCSApplication();
    HTMLPreviewApplication getHTMLPreviewApplication();
    ShinyApplicationSatellite getShinyApplicationSatellite();

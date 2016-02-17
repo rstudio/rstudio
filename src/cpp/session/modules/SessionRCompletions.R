@@ -197,9 +197,7 @@ assign(x = ".rs.acCompletionTypes",
                                                quote = FALSE,
                                                directoriesOnly = FALSE)
 {
-   projectPath <- .rs.getProjectDirectory()
-   hasFileMonitor <- .rs.hasFileMonitor()
-   path <- suppressWarnings(.rs.normalizePath(path))
+   path <- suppressWarnings(.rs.normalizePath(path, winslash = "/"))
    
    ## Separate the token into a 'directory' prefix, and a 'name' prefix. We need
    ## to prefix the prefix as we will need to prepend it onto completions for
@@ -261,9 +259,11 @@ assign(x = ".rs.acCompletionTypes",
    # If the directory lies within a folder that we're monitoring
    # for indexing, use that.
    cacheable <- TRUE
-   usingFileMonitor <- .rs.hasFileMonitor() &&
+   usingFileMonitor <-
+      .rs.hasFileMonitor() &&
       .rs.startsWith(directory, projDirEndsWithSlash)
    
+   absolutePaths <- character()
    if (usingFileMonitor)
    {
       if (directoriesOnly)
@@ -275,51 +275,7 @@ assign(x = ".rs.acCompletionTypes",
       absolutePaths <- index$paths
    }
    
-   # Otherwise, result to a listing of just the current directory.
-   else
-   {
-      pattern <- if (nzchar(tokenName))
-         paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(tokenName)), sep = "")
-      
-      # Manually construct a call to `list.files` which should work across
-      # versions of R >= 2.11.
-      formals <- as.list(formals(base::list.files))
-      
-      formals$path <- directory
-      formals$pattern <- pattern
-      formals$all.files <- TRUE
-      formals$full.names <- TRUE
-      
-      # NOTE: not available in older versions of R, but defaults to FALSE
-      # with newer versions.
-      if ("include.dirs" %in% names(formals))
-         formals[["include.dirs"]] <- TRUE
-      
-      # NOTE: not available with older versions of R, but defaults to FALSE
-      if ("no.." %in% names(formals))
-         formals[["no.."]] <- TRUE
-      
-      # Generate the call, and evaluate it.
-      result <- do.call(base::list.files, formals)
-      
-      # Clean up duplicated '/'.
-      absolutePaths <- gsub("/+", "/", result)
-      
-      # Remove un-needed `.` paths. These paths will look like
-      #
-      #     <path>/.
-      #     <path>/..
-      #
-      # This is only unnecessary if we couldn't use 'no..'.
-      if (!("no.." %in% names(formals)))
-      {
-         absolutePaths <- grep("/\\.+$",
-                               absolutePaths,
-                               invert = TRUE,
-                               value = TRUE)
-      }
-      
-   }
+   absolutePaths <- sort(union(absolutePaths, .rs.listFilesFuzzy(directory, tokenName)))
    
    ## Bail out early if we didn't get any completions.
    if (!length(absolutePaths))
@@ -1146,7 +1102,10 @@ assign(x = ".rs.acCompletionTypes",
             for (i in seq_along(names))
             {
                type[[i]] <- suppressWarnings(tryCatch(
-                  .rs.getCompletionType(eval(call("$", quote(object), names[[i]]))),
+                  if (is.environment(object) && bindingIsActive(names[[i]], object))
+                     .rs.acCompletionTypes$UNKNOWN
+                  else
+                     .rs.getCompletionType(eval(call("$", quote(object), names[[i]]))),
                   error = function(e) .rs.acCompletionTypes$UNKNOWN
                ))
             }
@@ -1270,7 +1229,9 @@ assign(x = ".rs.acCompletionTypes",
                                                    quote = !appendColons)
 {
    # List all directories within the .libPaths()
-   allPackages <- Reduce(union, lapply(.libPaths(), .rs.listDirs))
+   allPackages <- Reduce(union, lapply(.libPaths(), function(libPath) {
+      .rs.listDirs(libPath, full.names = FALSE, recursive = FALSE)
+   }))
    
    # Not sure why 'DESCRIPTION' might show up here, but let's take it out
    allPackages <- setdiff(allPackages, "DESCRIPTION")

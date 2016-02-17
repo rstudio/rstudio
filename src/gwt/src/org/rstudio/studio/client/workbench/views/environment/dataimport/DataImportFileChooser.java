@@ -110,6 +110,12 @@ public class DataImportFileChooser extends Composite
       checkForTextBoxChange();
    }
    
+   public void setEnabled(boolean enabled)
+   {
+      locationTextBox_.setEnabled(enabled);
+      actionButton_.setEnabled(enabled);
+   }
+   
    public String getText()
    {
       return locationTextBox_.getText();
@@ -119,6 +125,11 @@ public class DataImportFileChooser extends Composite
    public void onDetach()
    {
       checkTextBoxInterval_ = 0;
+   }
+   
+   public void setFocus()
+   {
+      locationTextBox_.setFocus(true);
    }
    
    @UiField

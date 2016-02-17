@@ -151,6 +151,7 @@ set (SESSION_SOURCE_FILES
    modules/presentation/Tutorial.cpp
    modules/presentation/TutorialInstaller.cpp
    modules/rmarkdown/SessionRMarkdown.cpp
+   modules/rmarkdown/SessionRmdNotebook.cpp
    modules/rmarkdown/RMarkdownPresentation.cpp
    modules/shiny/SessionShiny.cpp
    modules/tex/SessionCompilePdf.cpp
@@ -426,6 +427,10 @@ if (NOT RSTUDIO_SESSION_WIN64)
 
    # help resources
    install(DIRECTORY "resources/help_resources"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+
+   # notebook resources
+   install(DIRECTORY "resources/notebook"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # install libclang

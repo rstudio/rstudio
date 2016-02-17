@@ -1,4 +1,4 @@
-package org.rstudio.studio.client.workbench.views.source.editors.text;
+package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import com.google.gwt.user.client.Command;
 

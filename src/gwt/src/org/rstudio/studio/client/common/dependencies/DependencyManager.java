@@ -263,7 +263,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
       deps.add(Dependency.cranPackage("xtable", "1.7"));
       deps.add(Dependency.cranPackage("digest", "0.6"));
       deps.add(Dependency.cranPackage("R6", "2.0"));
-      deps.add(Dependency.cranPackage("htmltools", htmltoolsVersion, true));
+      deps.add(Dependency.cranPackage("htmltools", htmltoolsVersion));
       deps.add(Dependency.cranPackage("shiny", shinyVersion, true));
       return deps;
          }
@@ -299,6 +299,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
       ArrayList<Dependency> deps = new ArrayList<Dependency>();
       deps.add(Dependency.cranPackage("readr", "0.2.2"));
       deps.add(Dependency.cranPackage("Rcpp", "0.11.5"));
+      deps.add(Dependency.cranPackage("jsonlite", "0.9.16"));
       return deps;
    }
    
@@ -332,6 +333,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
       ArrayList<Dependency> deps = new ArrayList<Dependency>();
       deps.add(Dependency.cranPackage("haven", "0.2.0"));
       deps.add(Dependency.cranPackage("Rcpp", "0.11.4"));
+      deps.add(Dependency.cranPackage("jsonlite", "0.9.16"));
       return deps;
    }
    
@@ -365,6 +367,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
       ArrayList<Dependency> deps = new ArrayList<Dependency>();
       deps.add(Dependency.cranPackage("readxl", "0.1.0"));
       deps.add(Dependency.cranPackage("Rcpp", "0.11.5"));
+      deps.add(Dependency.cranPackage("jsonlite", "0.9.16"));
       return deps;
    }
    
@@ -397,6 +400,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
    {
       ArrayList<Dependency> deps = new ArrayList<Dependency>();
       deps.add(Dependency.cranPackage("xml2", "0.1.2"));
+      deps.add(Dependency.cranPackage("jsonlite", "0.9.16"));
       return deps;
    }
    
@@ -462,6 +466,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
       ArrayList<Dependency> deps = new ArrayList<Dependency>();
       deps.add(Dependency.cranPackage("RJDBC", "0.2-5"));
       deps.add(Dependency.cranPackage("rJava", "0.4-15"));
+      deps.add(Dependency.cranPackage("jsonlite", "0.9.16"));
       return deps;
    }
    
@@ -494,6 +499,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
    {
       ArrayList<Dependency> deps = new ArrayList<Dependency>();
       deps.add(Dependency.cranPackage("RODBC", "1.3-12"));
+      deps.add(Dependency.cranPackage("jsonlite", "0.9.16"));
       return deps;
    }
    
@@ -526,6 +532,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
    {
       ArrayList<Dependency> deps = new ArrayList<Dependency>();
       deps.add(Dependency.cranPackage("mongolite", "0.8"));
+      deps.add(Dependency.cranPackage("jsonlite", "0.9.16"));
       deps.add(Dependency.cranPackage("jsonlite", "0.9.16"));
       return deps;
    }

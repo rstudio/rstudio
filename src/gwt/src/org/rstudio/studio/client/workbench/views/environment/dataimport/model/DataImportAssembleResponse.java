@@ -38,4 +38,8 @@ public class DataImportAssembleResponse extends JavaScriptObject
    public final native String getDataName() /*-{
       return this.dataName ? this.dataName.join(' ') : null;
    }-*/;
+   
+   public final native JavaScriptObject getLocalFiles() /*-{
+      return this.localFiles;
+   }-*/;
 }

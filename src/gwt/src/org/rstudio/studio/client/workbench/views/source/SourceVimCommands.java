@@ -38,7 +38,7 @@ public class SourceVimCommands
       }
       
       var nextTab = $entry(function(cm, args, vim) {
-         source.@org.rstudio.studio.client.workbench.views.source.Source::onNextTab()();
+         source.@org.rstudio.studio.client.workbench.views.source.Source::nextTabWithWrap()();
       });
      
       Vim.defineAction("selectNextTab", nextTab);
@@ -51,7 +51,7 @@ public class SourceVimCommands
       });
 
       var prevTab = $entry(function(cm, args, vim) {
-         source.@org.rstudio.studio.client.workbench.views.source.Source::onPreviousTab()();
+         source.@org.rstudio.studio.client.workbench.views.source.Source::prevTabWithWrap()();
       });
      
       Vim.defineAction("selectPreviousTab", prevTab);

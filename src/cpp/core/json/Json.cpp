@@ -14,6 +14,7 @@
  */
 
 #include <core/json/Json.hpp>
+#include <core/json/JsonRpc.hpp>
 
 #include <cstdlib>
 #include <sstream>

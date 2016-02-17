@@ -14,6 +14,7 @@
  */
 
 #include "SessionSource.hpp"
+#include "rmarkdown/SessionRmdNotebook.hpp"
 
 #include <string>
 #include <map>
@@ -72,6 +73,14 @@ void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
    // derive the extended type property
    (*pDocJson)["extended_type"] = module_context::events()
                                    .onDetectSourceExtendedType(pDoc);
+
+   // amend with chunk definitions 
+   json::Value chunkDefs;
+   Error error = rmarkdown::notebook::getChunkDefs(pDoc->path(), pDoc->id(),
+         NULL, &chunkDefs);
+   if (error)
+      LOG_ERROR(error);
+   (*pDocJson)["chunk_definitions"] = chunkDefs;
 }
 
 void detectExtendedType(boost::shared_ptr<SourceDocument> pDoc)
@@ -219,9 +228,10 @@ Error openDocument(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // return the doc
+   // create JSON representation of doc
    json::Object jsonDoc;
    writeDocToJson(pDoc, &jsonDoc);
+
    pResponse->setResult(jsonDoc);
 
    return Success();
@@ -232,18 +242,20 @@ Error saveDocumentCore(const std::string& contents,
                        const json::Value& jsonType,
                        const json::Value& jsonEncoding,
                        const json::Value& jsonFoldSpec,
+                       const json::Value& jsonChunkOutput,
                        boost::shared_ptr<SourceDocument> pDoc)
 {
    // check whether we have a path and if we do get/resolve its value
-   std::string path;
+   std::string oldPath, path;
    FilePath fullDocPath;
    bool hasPath = json::isType<std::string>(jsonPath);
    if (hasPath)
    {
+      oldPath = pDoc->path();
       path = jsonPath.get_str();
       fullDocPath = module_context::resolveAliasedPath(path);
    }
-   
+
    // update dirty state: dirty if there was no path AND the new contents
    // are different from the old contents (and was thus a content autosave
    // as distinct from a fold-spec or scroll-position/selection autosave)
@@ -267,6 +279,20 @@ Error saveDocumentCore(const std::string& contents,
    if (hasFoldSpec)
    {
       pDoc->setFolds(jsonFoldSpec.get_str());
+   }
+
+   // note that it's entirely possible for the chunk output to be null if the
+   // document is unrendered (in which case we want to leave the chunk output
+   // as-is)
+   bool hasChunkOutput = json::isType<json::Array>(jsonChunkOutput);
+   if (hasChunkOutput)
+   {
+      time_t docTime = pDoc->dirty() ? std::time(NULL) : 
+                                       pDoc->lastKnownWriteTime();
+      error = rmarkdown::notebook::setChunkDefs(pDoc->path(), pDoc->id(),
+            docTime, jsonChunkOutput.get_array());
+      if (error)
+         LOG_ERROR(error);
    }
 
    // handle document (varies depending upon whether we have a path)
@@ -325,6 +351,12 @@ Error saveDocumentCore(const std::string& contents,
 
       // save could change the extended type of the file so check it
       detectExtendedType(pDoc);
+
+      // if we changed the path, notify other modules
+      if (oldPath != pDoc->path())
+      {
+         source_database::events().onDocRenamed(oldPath, pDoc);
+      }
    }
 
    // always update the contents so it holds the original UTF-8 data
@@ -339,13 +371,14 @@ Error saveDocument(const json::JsonRpcRequest& request,
 {
    // params
    std::string id, contents;
-   json::Value jsonPath, jsonType, jsonEncoding, jsonFoldSpec;
+   json::Value jsonPath, jsonType, jsonEncoding, jsonFoldSpec, jsonChunkOutput;
    Error error = json::readParams(request.params, 
                                   &id, 
                                   &jsonPath, 
                                   &jsonType, 
                                   &jsonEncoding,
                                   &jsonFoldSpec,
+                                  &jsonChunkOutput,
                                   &contents);
    if (error)
       return error ;
@@ -357,7 +390,7 @@ Error saveDocument(const json::JsonRpcRequest& request,
       return error ;
    
    error = saveDocumentCore(contents, jsonPath, jsonType, jsonEncoding,
-                            jsonFoldSpec, pDoc);
+                            jsonFoldSpec, jsonChunkOutput, pDoc);
    if (error)
       return error;
    
@@ -378,7 +411,7 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
 
    // unique id and jsonPath (can be null for auto-save)
    std::string id;
-   json::Value jsonPath, jsonType, jsonEncoding, jsonFoldSpec;
+   json::Value jsonPath, jsonType, jsonEncoding, jsonFoldSpec, jsonChunkOutput;
    
    // This is a chunk of text that should be inserted into the
    // current document. It replaces the subrange [offset, offset+length).
@@ -397,6 +430,7 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
                                   &jsonType,
                                   &jsonEncoding,
                                   &jsonFoldSpec,
+                                  &jsonChunkOutput,
                                   &replacement,
                                   &offset,
                                   &length,
@@ -437,7 +471,7 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
       contents.insert(rangeBegin, replacement.begin(), replacement.end());
       
       error = saveDocumentCore(contents, jsonPath, jsonType, jsonEncoding,
-                               jsonFoldSpec, pDoc);
+                               jsonFoldSpec, jsonChunkOutput, pDoc);
       if (error)
          return error;
       
@@ -661,12 +695,16 @@ Error closeDocument(const json::JsonRpcRequest& request,
    Error error = json::readParam(request.params, 0, &id);
    if (error)
       return error ;
+
+   // get the path (it's okay if this fails, unsaved docs don't have a path)
+   std::string path;
+   source_database::getPath(id, &path);
    
    error = source_database::remove(id);
    if (error)
       return error;
 
-   source_database::events().onDocRemoved(id);
+   source_database::events().onDocRemoved(id, path);
 
    return Success();
 }

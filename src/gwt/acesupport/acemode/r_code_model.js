@@ -758,10 +758,7 @@ var RCodeModel = function(session, tokenizer,
       // Nudge the maxRow ahead a bit -- some functions may request
       // the tree to be built up to a particular row, but we want to
       // build a bit further ahead in case some lookahead is required.
-      maxRow = Math.min(
-         maxRow + 30,
-         this.$doc.getLength() - 1
-      );
+      maxRow = Math.min(maxRow + 30, this.$doc.getLength() - 1);
 
       // Check if the scope tree has already been built up to this row.
       var scopeRow = this.$scopes.parsePos.row;
@@ -778,9 +775,18 @@ var RCodeModel = function(session, tokenizer,
       // of the tree that have been already built.
       var iterator = new TokenIterator(this.$session);
 
+      // Tokenize eagerly up to the desired row. Note that we have to tokenize
+      // in two places -- the internal Ace tokenizer (whose tokens are used by
+      // the token iterator here), and also the R code model's tokenizer (which
+      // maintains its own set of R tokens used for indentation). In a perfect
+      // world, we wouldn't maintain a separate set of tokens for our R code
+      // model, but ...
+      iterator.tokenizeUpToRow(maxRow);
+      this.$tokenizeUpToRow(maxRow);
+      
+
       var row = this.$scopes.parsePos.row;
       var column = this.$scopes.parsePos.column;
-
       iterator.moveToPosition({row: row, column: column}, true);
 
       var token = iterator.getCurrentToken();
@@ -793,7 +799,7 @@ var RCodeModel = function(session, tokenizer,
       var value = token.value;
       var type = token.type;
       var position = iterator.getCurrentTokenPosition();
-      
+
       do
       {
          // Bail if we've stepped past the max row.

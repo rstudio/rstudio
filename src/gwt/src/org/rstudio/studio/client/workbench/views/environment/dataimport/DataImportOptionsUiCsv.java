@@ -16,14 +16,10 @@
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
-import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -126,7 +122,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       delimiterListBox_.addItem("Comma", ",");
       delimiterListBox_.addItem("Semicolon", ";");
       delimiterListBox_.addItem("Tab", "\t");
-      delimiterListBox_.addItem("Whitespace", "");
+      delimiterListBox_.addItem("Whitespace", " ");
       
       quotesListBox_.addItem("Default", "");
       quotesListBox_.addItem("Single (')", "'");
@@ -154,24 +150,20 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       commentListBox_.addItem("*>", "*>");
       
       localeListBox_.addItem("Default", "");
-      sourceServer_.iconvlist(new ServerRequestCallback<IconvListResult>()
-      {
-         @Override
-         public void onResponseReceived(IconvListResult result)
-         {
-            JsArrayString encodings = result.getAll();
-            for (int i = 0; i < encodings.length(); i++)
-            {
-               localeListBox_.addItem(encodings.get(i), encodings.get(i));
-            }
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-         }
-      });
+      localeListBox_.addItem("ASCII", "ASCII");
+      localeListBox_.addItem("UTF-16", "UTF-16");
+      localeListBox_.addItem("UTF-16BE", "UTF-16BE");
+      localeListBox_.addItem("UTF-16LE", "UTF-16LE");
+      localeListBox_.addItem("UTF-32", "UTF-32");
+      localeListBox_.addItem("UTF-32BE", "UTF-32BE");
+      localeListBox_.addItem("UTF-32LE", "UTF-32LE");
+      localeListBox_.addItem("UTF-7", "UTF-7");
+      localeListBox_.addItem("UTF-8", "UTF-8");
+      localeListBox_.addItem("UTF-8-MAC", "UTF-8-MAC");
+      localeListBox_.addItem("UTF8", "UTF8");
+      localeListBox_.addItem("UTF8-MAC", "UTF8-MAC");
      
+      updateEnabled();
    }
    
    void initEvents()
@@ -182,6 +174,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
          @Override
          public void onValueChange(ValueChangeEvent<String> arg0)
          {
+            updateEnabled();
             triggerChange();
          }
       };
@@ -192,6 +185,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
          @Override
          public void onChange(ChangeEvent arg0)
          {
+            updateEnabled();
             triggerChange();
          }
       };
@@ -202,6 +196,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> arg0)
          {
+            updateEnabled();
             triggerChange();
          }
       };
@@ -216,6 +211,22 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       naListBox_.addChangeHandler(changeHandler);
       commentListBox_.addChangeHandler(changeHandler);
       skipTextBox_.addValueChangeHandler(valueChangeHandler);
+   }
+   
+   void updateEnabled()
+   {
+      if (delimiterListBox_.getSelectedValue() == ",")
+      {
+         trimSpacesCheckBox_.setEnabled(true);
+         escapeListBox_.getElement().setAttribute("disabled", "disabled");
+         quotesListBox_.getElement().setAttribute("disabled", "disabled");         
+      }
+      else
+      {
+         trimSpacesCheckBox_.setEnabled(false);
+         escapeListBox_.getElement().removeAttribute("disabled");
+         quotesListBox_.getElement().removeAttribute("disabled");
+      }
    }
    
    @UiField

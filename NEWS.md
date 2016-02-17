@@ -13,9 +13,17 @@
 
 * Provide autocompletion for system headers in `#include`
 * Update C++ unit testing library (catch) to v1.3.3 (fix gcc >=5 compilation errors)
+* Implement gt/gT bindings in Vim mode to switch to next/previous tab
+* Always provide file completions for top-level current directory
+* Prevent wrapping of text in Files pane display
 
 ### Bug Fixes
 
+* Autocompletion: avoid errors when retrieving completions in debugger
+* Diagnostics: fix false positive errors with '{' following function calls
+* Avoid over-eager re-rendering + tokenization of documents
+* Fix block commenting of Sweave chunks
+* Emacs mode: C-f now moves the cursor forward instead of opening Find dialog
 * Ensure that modal dialogs capture all input even in the presence of multiple modals
 * Filter out "00LOCK" directories from package name completions
 * Provide completions for 'lazydata' objects within namespaces
@@ -29,5 +37,7 @@
 * Suppress httpd warnings on invalid help queries 
 * Correct syntax highlighting for operator << in C++ mode
 * Fix highlighting in R mode for numbers with only a trailing decimal (e.g. '1.')
+* Ensure that SparkR DataFrames appear as data in environment pane
+* Avoid firing active bindings in completion system
 
 

@@ -514,6 +514,11 @@ public class UIPrefsAccessor extends Prefs
       return object("preferred_publish_account");
    }
    
+   public PrefValue<Boolean> showRmdChunkOutputInline()
+   {
+      return bool("show_rmd_chunk_output_inline", false);
+   }
+   
    public PrefValue<Integer> preferredDocumentOutlineWidth()
    {
       return integer("preferred_document_outline_width", 110);

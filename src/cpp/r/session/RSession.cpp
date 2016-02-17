@@ -711,7 +711,7 @@ int RReadConsole (const char *pmt,
 
       // get the next input
       bool addToHistory = (hist == 1);
-      RConsoleInput consoleInput;
+      RConsoleInput consoleInput("");
       if ( s_callbacks.consoleRead(promptString, addToHistory, &consoleInput) )
       {
          // add prompt to console actions (we do this after consoleRead
