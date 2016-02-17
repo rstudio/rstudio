@@ -47,6 +47,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWid
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
+import org.rstudio.studio.client.workbench.views.source.events.ChunkContextChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.MaximizeSourceWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -67,7 +68,8 @@ public class TextEditingTargetNotebook
                           RmdChunkOutputEvent.Handler,
                           RmdChunkOutputFinishedEvent.Handler,
                           SendToChunkConsoleEvent.Handler, 
-                          ChunkChangeEvent.Handler
+                          ChunkChangeEvent.Handler,
+                          ChunkContextChangeEvent.Handler
 {
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
                                     TextEditingTargetRMarkdownHelper rmdHelper,
@@ -160,6 +162,7 @@ public class TextEditingTargetNotebook
       events_.addHandler(RmdChunkOutputFinishedEvent.TYPE, this);
       events_.addHandler(SendToChunkConsoleEvent.TYPE, this);
       events_.addHandler(ChunkChangeEvent.TYPE, this);
+      events_.addHandler(ChunkContextChangeEvent.TYPE, this);
    }
    
    public void executeChunk(Scope chunk, String code)
@@ -188,6 +191,8 @@ public class TextEditingTargetNotebook
                }
             });
    }
+   
+   // Event handlers ----------------------------------------------------------
    
    @Override
    public void onEditorThemeStyleChanged(EditorThemeStyleChangedEvent event)
@@ -297,6 +302,25 @@ public class TextEditingTargetNotebook
       }
    }
 
+   @Override
+   public void onChunkContextChange(ChunkContextChangeEvent event)
+   {
+      contextId_ = event.getContextId();
+      if (docDisplay_.isRendered())
+      {
+         // if the doc is already up, clean it out and replace the contents
+         removeAllChunks();
+         populateChunkDefs(event.getChunkDefs());
+      }
+      else
+      {
+         // otherwise, just queue up for when we do render
+         initialChunkDefs_ = event.getChunkDefs();
+      }
+   }
+   
+   // Private methods --------------------------------------------------------
+   
    private void loadInitialChunkOutput()
    {
       if (state_ != STATE_NONE)
@@ -307,6 +331,7 @@ public class TextEditingTargetNotebook
       server_.refreshChunkOutput(
             docUpdateSentinel_.getPath(),
             docUpdateSentinel_.getId(), 
+            contextId_,
             Integer.toHexString(requestId_), 
             new VoidServerRequestCallback());
    }
@@ -490,6 +515,22 @@ public class TextEditingTargetNotebook
             false);
    }
    
+   private void populateChunkDefs(JsArray<ChunkDefinition> defs)
+   {
+      for (int i = 0; i < defs.length(); i++)
+      {
+         ChunkDefinition chunkOutput = defs.get(i);
+         LineWidget widget = LineWidget.create(
+               ChunkDefinition.LINE_WIDGET_TYPE,
+               chunkOutput.getRow(), 
+               elementForChunkDef(chunkOutput), 
+               chunkOutput);
+         lineWidgets_.put(chunkOutput.getChunkId(), widget);
+         widget.setFixedWidth(true);
+         docDisplay_.addLineWidget(widget);
+      }
+   }
+   
    private JsArray<ChunkDefinition> initialChunkDefs_;
    private HashMap<String, ChunkOutputWidget> outputWidgets_;
    private HashMap<String, LineWidget> lineWidgets_;
@@ -507,6 +548,7 @@ public class TextEditingTargetNotebook
 
    private static int nextRequestId_ = 0;
    private int requestId_ = 0;
+   private String contextId_ = "";
    
    private int state_ = STATE_NONE;
 

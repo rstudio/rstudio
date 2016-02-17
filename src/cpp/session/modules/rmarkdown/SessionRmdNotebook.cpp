@@ -139,10 +139,10 @@ FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
 
 FilePath chunkDefinitionsPath(const std::string& docPath,
                               const std::string& docId,
-                              const std::string& fileExt)
+                              const std::string& contextId)
 {
-   std::string fileName = std::string() + "chunks." + fileExt;
-   return chunkCacheFolder(docPath, docId).childPath(fileName);
+   std::string fileName = std::string() + "chunks.json";
+   return chunkCacheFolder(docPath, docId, contextId).childPath(fileName);
 }
 
 FilePath chunkOutputPath(
@@ -279,19 +279,75 @@ void replayChunkOutputs(const std::string& docPath, const std::string& docId,
    module_context::enqueClientEvent(event);
 }
 
+Error getChunkDefs(const std::string& docPath, const std::string& docId,
+                   const std::string& contextId, time_t *pDocTime, 
+                   core::json::Value* pDefs)
+{
+   Error error;
+   FilePath defs = chunkDefinitionsPath(docPath, docId, contextId);
+   if (!defs.exists())
+      return Success();
+
+   // read the defs file 
+   std::string contents;
+   error = readStringFromFile(defs, &contents);
+   if (error)
+      return error;
+
+   // pull out the contents
+   json::Value defContents;
+   if (!json::parse(contents, &defContents) || 
+       defContents.type() != json::ObjectType)
+      return Error(json::errc::ParseError, ERROR_LOCATION);
+
+   // extract the chunk definitions
+   if (pDefs)
+   {
+      json::Array chunkDefs;
+      error = json::readObject(defContents.get_obj(), kChunkDefs, &chunkDefs);
+      if (error)
+         return error;
+
+      // return to caller
+      *pDefs = chunkDefs;
+   }
+
+   // extract the doc write time 
+   if (pDocTime)
+   {
+      json::Object::iterator it = 
+         defContents.get_obj().find(kChunkDocWriteTime);
+      if (it != defContents.get_obj().end() &&
+          it->second.type() == json::IntegerType)
+      {
+         *pDocTime = static_cast<std::time_t>(it->second.get_int64());
+      }
+      else
+      {
+         return Error(json::errc::ParamMissing, ERROR_LOCATION);
+      }
+   }
+   return Success();
+}
+
 // called by the client to inject output into a recently opened document 
 Error refreshChunkOutput(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
    // extract path to doc to be refreshed
-   std::string docPath, docId, requestId;
-   Error error = json::readParams(request.params, &docPath, &docId, &requestId);
+   std::string docPath, docId, contextId, requestId;
+   Error error = json::readParams(request.params, &docPath, &docId, &contextId,
+         &requestId);
    if (error)
       return error;
 
+   // use our own context ID if none supplied
+   if (contextId.empty())
+      contextId = userSettings().contextId();
+
    json::Object result;
    json::Value chunkDefs; 
-   error = getChunkDefs(docPath, docId, NULL, &chunkDefs);
+   error = getChunkDefs(docPath, docId, contextId, NULL, &chunkDefs);
 
    // schedule the work to play back the chunks
    if (!error && chunkDefs.type() == json::ArrayType) 
@@ -336,7 +392,8 @@ void onDocRemoved(const std::string& docId, const std::string& docPath)
    Error error;
 
    FilePath cacheFolder = chunkCacheFolder(docPath, docId);
-   FilePath defFile = chunkDefinitionsPath(docPath, docId, "json");
+   FilePath defFile = chunkDefinitionsPath(docPath, docId, 
+         userSettings().contextId());
    if (!docPath.empty() && defFile.exists())
    {
       // for saved documents, we want to keep the cache folder around even when
@@ -344,7 +401,8 @@ void onDocRemoved(const std::string& docId, const std::string& docPath)
       // of sync.
       FilePath docFile = module_context::resolveAliasedPath(docPath);
       std::time_t writeTime;
-      error = getChunkDefs(docPath, docId, &writeTime, NULL);
+      error = getChunkDefs(docPath, docId, userSettings().contextId(),
+            &writeTime, NULL);
 
       if (writeTime <= docFile.lastWriteTime())
       {
@@ -689,7 +747,8 @@ Error setChunkDefs(const std::string& docPath, const std::string& docId,
    chunkDefs[kChunkDocWriteTime] = static_cast<boost::int64_t>(docTime);
 
    // ensure we have a place to write the sidecar file
-   FilePath defFile = chunkDefinitionsPath(docPath, docId, "json");
+   FilePath defFile = chunkDefinitionsPath(docPath, docId, 
+         userSettings().contextId());
 
    // if there are no old chunk definitions and we aren't adding any new ones,
    // no work to do
@@ -706,7 +765,8 @@ Error setChunkDefs(const std::string& docPath, const std::string& docId,
    std::vector<std::string> chunkIds;
    json::Value oldDefs;
    std::string oldContent;
-   error = getChunkDefs(docPath, docId, NULL, &oldDefs);
+   error = getChunkDefs(docPath, docId, userSettings().contextId(), NULL, 
+         &oldDefs);
    if (error)
       LOG_ERROR(error);
    else if (oldDefs.type() == json::ArrayType)
@@ -736,51 +796,8 @@ Error setChunkDefs(const std::string& docPath, const std::string& docId,
 Error getChunkDefs(const std::string& docPath, const std::string& docId,
                    time_t *pDocTime, core::json::Value* pDefs)
 {
-   Error error;
-   FilePath defs = chunkDefinitionsPath(docPath, docId, "json");
-   if (!defs.exists())
-      return Success();
-
-   // read the defs file 
-   std::string contents;
-   error = readStringFromFile(defs, &contents);
-   if (error)
-      return error;
-
-   // pull out the contents
-   json::Value defContents;
-   if (!json::parse(contents, &defContents) || 
-       defContents.type() != json::ObjectType)
-      return Error(json::errc::ParseError, ERROR_LOCATION);
-
-   // extract the chunk definitions
-   if (pDefs)
-   {
-      json::Array chunkDefs;
-      error = json::readObject(defContents.get_obj(), kChunkDefs, &chunkDefs);
-      if (error)
-         return error;
-
-      // return to caller
-      *pDefs = chunkDefs;
-   }
-
-   // extract the doc write time 
-   if (pDocTime)
-   {
-      json::Object::iterator it = 
-         defContents.get_obj().find(kChunkDocWriteTime);
-      if (it != defContents.get_obj().end() &&
-          it->second.type() == json::IntegerType)
-      {
-         *pDocTime = static_cast<std::time_t>(it->second.get_int64());
-      }
-      else
-      {
-         return Error(json::errc::ParamMissing, ERROR_LOCATION);
-      }
-   }
-   return Success();
+   return getChunkDefs(docPath, docId, userSettings().contextId(), 
+                       pDocTime, pDefs);
 }
 
 Events& events()
