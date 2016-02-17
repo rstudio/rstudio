@@ -97,6 +97,12 @@ public class DocPropMenuItem extends CheckableMenuItem
          public void onProgress(String message)
          {
          }
+
+         @Override
+         public void onProgress(String message, Operation onCancel)
+         {
+
+         }
       });
    }
    
