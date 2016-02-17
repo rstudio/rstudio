@@ -260,7 +260,10 @@
       {
          if (identical(localFile, NULL))
          {
-            localFile <- tempfile(fileext = functionInfo$cacheFileExtension)
+            localFile <- tempfile(
+               tmpdir = dirname(tempdir()),
+               fileext = functionInfo$cacheFileExtension
+            )
          }
 
          cacheVariableName <- options$cacheVariableNames[[resource]]
@@ -604,7 +607,7 @@
 
       cnames <- names(data)
       size <- nrow(data)
-      
+
       if (!identical(dataImportOptions$maxRows, NULL) && size > dataImportOptions$maxRows) {
          data <- head(data, dataImportOptions$maxRows)
          size <- nrow(data)
