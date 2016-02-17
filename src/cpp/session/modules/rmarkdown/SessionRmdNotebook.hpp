@@ -44,8 +44,9 @@ core::Error setChunkDefs(const std::string& docPath, const std::string& docId,
 
 struct Events : boost::noncopyable
 {
-   // Document {0}, chunk {1} execution completed
-   boost::signal<void(const std::string&, const std::string&)> 
+   // Document {0}, chunk {1} from context id {3} execution completed
+   boost::signal<void(const std::string&, const std::string&,
+                      const std::string&)> 
                 onChunkExecCompleted;
 
    // Document {0}, chunk {1} had console output of type {2} and text

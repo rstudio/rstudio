@@ -147,26 +147,28 @@ FilePath chunkDefinitionsPath(const std::string& docPath,
 
 FilePath chunkOutputPath(
       const std::string& docPath, const std::string& docId,
-      const std::string& chunkId)
+      const std::string& chunkId, const std::string& contextId)
+
 {
-   return chunkCacheFolder(docPath, docId)
+   return chunkCacheFolder(docPath, docId, contextId)
                           .childPath(chunkId + ".html");
 }
 
 FilePath chunkConsolePath(
       const std::string& docPath, const std::string& docId, 
-      const std::string& chunkId)
+      const std::string& chunkId, const std::string& contextId)
    
 {
-   return chunkCacheFolder(docPath, docId)
+   return chunkCacheFolder(docPath, docId, contextId)
                           .childPath(chunkId + ".csv");
 }
 
 Error chunkConsoleContents(const std::string& docPath, const std::string& docId, 
-      const std::string& chunkId, json::Array* pArray)
+      const std::string& chunkId, const std::string& contextId,
+      json::Array* pArray)
 {
    std::string contents;
-   FilePath consoleFile = chunkConsolePath(docPath, docId, chunkId);
+   FilePath consoleFile = chunkConsolePath(docPath, docId, chunkId, contextId);
    Error error = readStringFromFile(consoleFile, &contents);
    if (error)
       return error;
@@ -194,11 +196,11 @@ Error chunkConsoleContents(const std::string& docPath, const std::string& docId,
 
 Error enqueueChunkOutput(
       const std::string& docPath, const std::string& docId,
-      const std::string& chunkId)
+      const std::string& chunkId, const std::string& contextId)
 {
    Error error;
-   FilePath outputPath = chunkOutputPath(docPath, docId, chunkId);
-   FilePath consolePath = chunkConsolePath(docPath, docId, chunkId);
+   FilePath outputPath = chunkOutputPath(docPath, docId, chunkId, contextId);
+   FilePath consolePath = chunkConsolePath(docPath, docId, chunkId, contextId);
 
    unsigned chunkType = kChunkTypeNone;
    if (outputPath.exists() && !consolePath.exists())
@@ -225,7 +227,8 @@ Error enqueueChunkOutput(
    else if (chunkType == kChunkTypeConsole)
    {
       json::Array consoleOutput;
-      error = chunkConsoleContents(docPath, docId, chunkId, &consoleOutput);
+      error = chunkConsoleContents(docPath, docId, chunkId, contextId,
+            &consoleOutput);
       if (error)
          LOG_ERROR(error);
       output[kChunkConsole] = consoleOutput;
@@ -266,7 +269,7 @@ void replayChunkOutputs(const std::string& docPath, const std::string& docId,
    // find all the chunks and play them back to the client
    BOOST_FOREACH(const std::string& chunkId, chunkIds)
    {
-      enqueueChunkOutput(docPath, docId, chunkId);
+      enqueueChunkOutput(docPath, docId, chunkId, userSettings().contextId());
    }
 
    json::Object result;
@@ -418,7 +421,7 @@ void onConsoleText(const std::string& docId, const std::string& chunkId,
    }
 
    FilePath outputCsv = chunkConsolePath(path.absolutePath(), 
-         docId, chunkId);
+         docId, chunkId, userSettings().contextId());
 
    std::vector<std::string> vals; 
    vals.push_back(safe_convert::numberToString(type));
@@ -487,7 +490,8 @@ void onActiveConsoleChanged(const std::string& consoleId,
 }
 
 void onChunkExecCompleted(const std::string& docId, 
-                          const std::string& chunkId)
+                          const std::string& chunkId,
+                          const std::string& contextId)
 {
    std::string path;
    Error error = source_database::getPath(docId, &path);
@@ -496,7 +500,7 @@ void onChunkExecCompleted(const std::string& docId,
       LOG_ERROR(error);
       return;
    }
-   error = enqueueChunkOutput(path, docId, chunkId);
+   error = enqueueChunkOutput(path, docId, chunkId, contextId);
    if (error)
       LOG_ERROR(error);
 }
@@ -574,7 +578,8 @@ Error executeInlineChunk(const json::JsonRpcRequest& request,
       return error;
 
    // ensure we have a place to put the output
-   FilePath chunkOutput = chunkOutputPath(docPath, docId, chunkId);
+   FilePath chunkOutput = chunkOutputPath(docPath, docId, chunkId,
+         userSettings().contextId());
    if (!chunkOutput.parent().exists())
    {
       error = chunkOutput.parent().ensureDirectory();
@@ -632,7 +637,7 @@ Error executeInlineChunk(const json::JsonRpcRequest& request,
    }
 
    // emit chunk output to client
-   events().onChunkExecCompleted(docId, chunkId);
+   events().onChunkExecCompleted(docId, chunkId, userSettings().contextId());
 
    return Success();
 }
