@@ -71,6 +71,7 @@ public:
    bool isRunning();
    void terminate();
    void markCompleted();
+   bool terminationRequested();
 
 protected:
    virtual bool onContinue();

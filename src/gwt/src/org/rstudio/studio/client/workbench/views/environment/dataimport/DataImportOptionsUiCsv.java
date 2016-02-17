@@ -126,7 +126,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       delimiterListBox_.addItem("Comma", ",");
       delimiterListBox_.addItem("Semicolon", ";");
       delimiterListBox_.addItem("Tab", "\t");
-      delimiterListBox_.addItem("Whitespace", "");
+      delimiterListBox_.addItem("Whitespace", " ");
       
       quotesListBox_.addItem("Default", "");
       quotesListBox_.addItem("Single (')", "'");

@@ -28,6 +28,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
@@ -90,10 +91,12 @@ public class DataImport extends Composite
    }
 
    public <T> DataImport(DataImportModes dataImportMode,
-                     ProgressIndicator progressIndicator)
+                         ProgressIndicator progressIndicator)
    {
       dataImportResources_ = GWT.create(DataImportResources.class);
       dataImportMode_ = dataImportMode;
+      
+      copyButton_ = makeCopyButton();
 
       progressIndicator_ = new ProgressIndicatorDelay(progressIndicator);
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -118,6 +121,11 @@ public class DataImport extends Composite
          public void onValueChange(ValueChangeEvent<DataImportOptions> dataImportOptions)
          {
             previewDataImport();
+            
+            if (dataImportMode_ == DataImportModes.XLS)
+            {
+               resetColumnDefinitions();
+            }
          }
       });
       
@@ -188,7 +196,7 @@ public class DataImport extends Composite
                   if (dataImportFileChooser_.getText() != importOptions_.getImportLocation())
                   {
                      lastSuccessfulResponse_ = null;
-                     importOptions_.resetColumnDefinitions();
+                     resetColumnDefinitions();
                   }
                   
                   importOptions_.setImportLocation(
@@ -205,7 +213,6 @@ public class DataImport extends Composite
       return dataImportFileChooser;
    }
    
-   @UiFactory
    PushButton makeCopyButton()
    {
       return new PushButton(new Image(dataImportResources_.copyImage()), new ClickHandler()
@@ -216,6 +223,11 @@ public class DataImport extends Composite
             DomUtils.copyCodeToClipboard(codePreview_);
          }
       });
+   }
+   
+   void resetColumnDefinitions()
+   {
+      importOptions_.resetColumnDefinitions();
    }
    
    @UiField
@@ -230,7 +242,7 @@ public class DataImport extends Composite
    @UiField
    AceEditorWidget codeArea_;
    
-   @UiField
+   @UiField(provided=true)
    PushButton copyButton_;
    
    private void promptForParseString(
@@ -427,18 +439,43 @@ public class DataImport extends Composite
       
       previewImportOptions.setMaxRows(maxRows_);
       
-      progressIndicator_.onProgress("Retrieving preview data");
-      server_.previewDataImport(previewImportOptions, maxCols_, maxFactors_,
+      progressIndicator_.onProgress("Retrieving preview data...", new Operation()
+      {
+         @Override
+         public void execute()
+         {
+            progressIndicator_.clearProgress();
+            
+            server_.previewDataImportAsyncAbort(new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onResponseReceived(Void empty)
+               {
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  progressIndicator_.onError(error.getMessage());
+               }
+            });
+         }
+      });
+      
+      server_.previewDataImportAsync(previewImportOptions, maxCols_, maxFactors_,
             new ServerRequestCallback<DataImportPreviewResponse>()
       {
          @Override
          public void onResponseReceived(DataImportPreviewResponse response)
          {
-            if (response.getErrorMessage() != null)
+            if (response == null || response.getErrorMessage() != null)
             {
-               response.setColumnDefinitions(lastSuccessfulResponse_);
-               setGridViewerData(response);
-               progressIndicator_.onError(response.getErrorMessage());
+               if (response != null)
+               {
+                  setGridViewerData(response);
+                  response.setColumnDefinitions(lastSuccessfulResponse_);
+                  progressIndicator_.onError(response.getErrorMessage());
+               }
                return;
             }
             

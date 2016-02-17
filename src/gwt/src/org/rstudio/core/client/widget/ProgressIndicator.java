@@ -17,6 +17,7 @@ package org.rstudio.core.client.widget;
 public interface ProgressIndicator
 {
    void onProgress(String message);
+   void onProgress(String message, Operation onCancel);
    void onCompleted();
    void onError(String message);
    void clearProgress();
