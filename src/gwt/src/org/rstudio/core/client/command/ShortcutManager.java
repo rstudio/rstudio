@@ -134,7 +134,7 @@ public class ShortcutManager implements NativePreviewHandler,
    
    private void onNativeEditEvent(Object object)
    {
-	   keyBuffer_.clear();
+      keyBuffer_.clear();
    }
    
    @Inject
