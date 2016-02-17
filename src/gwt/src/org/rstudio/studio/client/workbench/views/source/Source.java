@@ -1752,25 +1752,13 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onPreviousTab()
    {
-      if (view_.getTabCount() == 0)
-         return;
-
-      ensureVisible(false);
-      int index = getPhysicalTabIndex();
-      if (index >= 1)
-         setPhysicalTabIndex(index - 1);
+      switchToTab(-1, false);
    }
 
    @Handler
    public void onNextTab()
    {
-      if (view_.getTabCount() == 0)
-         return;
-
-      ensureVisible(false);
-      int index = getPhysicalTabIndex();
-      if (index < view_.getTabCount() - 1)
-         setPhysicalTabIndex(index + 1);
+      switchToTab(1, false);
    }
 
    @Handler
@@ -1782,6 +1770,41 @@ public class Source implements InsertSourceHandler,
       ensureVisible(false);
       if (view_.getTabCount() > 0)
          setPhysicalTabIndex(view_.getTabCount() - 1);
+   }
+   
+   public void nextTabWithWrap()
+   {
+      switchToTab(1, true);
+   }
+
+   public void prevTabWithWrap()
+   {
+      switchToTab(-1, true);
+   }
+   
+   private void switchToTab(int delta, boolean wrap)
+   {
+      if (view_.getTabCount() == 0)
+         return;
+      
+      ensureVisible(false);
+
+      int targetIndex = getPhysicalTabIndex() + delta;
+      if (targetIndex > (view_.getTabCount() - 1))
+      {
+         if (wrap)
+            targetIndex = 0;
+         else
+            return;
+      }
+      else if (targetIndex < 0)
+      {
+         if (wrap)
+            targetIndex = view_.getTabCount() - 1;
+         else
+            return;
+      }
+      setPhysicalTabIndex(targetIndex);
    }
    
    @Handler
