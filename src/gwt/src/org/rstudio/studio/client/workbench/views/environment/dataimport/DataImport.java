@@ -179,6 +179,30 @@ public class DataImport extends Composite
       return null;
    }
    
+   private String enhancePreviewErrorMessage(String error)
+   {
+      String headerMessage = "";
+      
+      switch (dataImportMode_)
+      {
+      case Text:
+         headerMessage = "Is this a valid CSV file?\n\n";
+         break;
+      case SAV:
+      case SAS:
+      case Stata:
+         headerMessage =  "Is this a valid SPSS, SAS or STATA file?\n\n";
+         break;
+      case XLS:
+         headerMessage =  "Is this a valid Excel file?\n\n";
+         break;
+      default:
+         break;
+      }
+      
+      return headerMessage + error;
+   }
+   
    @Inject
    private void initialize(WorkbenchServerOperations server,
                            GlobalDisplay globalDisplay)
@@ -488,7 +512,9 @@ public class DataImport extends Composite
                      {
                         setGridViewerData(response);
                         response.setColumnDefinitions(lastSuccessfulResponse_);
-                        progressIndicator_.onError(response.getErrorMessage());
+                        progressIndicator_.onError(
+                              enhancePreviewErrorMessage(response.getErrorMessage())
+                        );
                      }
                      return;
                   }
