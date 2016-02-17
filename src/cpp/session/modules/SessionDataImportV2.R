@@ -146,7 +146,22 @@
             for(colIdx in seq(from=1, to=length(optionValue) - 1)) {
                col <- colsByIndex[[colIdx + 1]]
 
-               colParams[[colIdx]] <- "\"text\""
+               if (!identical(col$rType, NULL)) {
+                  colParams[[colIdx]] <- switch(col$rType,
+                     "date" = "date",
+                     "time" = "date",
+                     "double" = "numeric",
+                     "factor" = "character",
+                     "numeric" = "numeric",
+                     "integer" = "numeric",
+                     "logical" = "numeric",
+                     "dateTime" = "date",
+                     "character" = "text",
+                     "\"text\""
+                  )
+                  colParams[[colIdx]] <- paste("\"", colParams[[colIdx]], "\"", sep = "")
+               }
+
                if (!identical(col$assignedType, NULL))
                {
                   colParams[[colIdx]] <- switch(col$assignedType,

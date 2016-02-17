@@ -142,7 +142,8 @@ public class DataImportOptions extends JavaScriptObject
             this_.columnDefinitions[response.columns[key].col_name] = {
                index: index,
                name: response.columns[key].col_name,
-               assignedType: null
+               assignedType: null,
+               rType: response.columns[key].col_type_r
             };
          }
       });
