@@ -57,8 +57,6 @@ SEXP rs_profilesPath()
 void handleProfilerResReq(const http::Request& request,
                             http::Response* pResponse)
 {
-   //std::string localPath(profilesCacheDir());
-   //std::string localPath("/Users/javierluraschi/.rstudio/profiles-cache/");
    std::string resourceName = http::util::pathAfterPrefix(request, "/" kProfilesUrlPath "/");
 
    core::FilePath profilesPath = core::FilePath(profilesCacheDir());
