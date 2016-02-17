@@ -17,7 +17,9 @@
 {
    tryCatch({
       tempPath <- .Call("rs_profilesPath")
-      dir.create(tempPath, recursive = TRUE)
+      if (!dir.exists(tempPath)) {
+         dir.create(tempPath, recursive = TRUE)
+      }
       
    	fileName <- tempfile(fileext = ".rprof", tmpdir = tempPath)
 
