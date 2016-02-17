@@ -182,7 +182,7 @@ std::string getLastFunction(const std::string& fileContents)
       functionEndPos--;
 
    // now work backward again to find the function name 
-   size_t functionStartPos = functionEndPos - 1;
+   size_t functionStartPos = functionEndPos;
    for (size_t i = functionEndPos; i > 0; i--)
    {
       char ch = contents.at(i);
