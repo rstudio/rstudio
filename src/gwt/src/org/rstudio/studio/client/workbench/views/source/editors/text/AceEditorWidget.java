@@ -298,32 +298,32 @@ public class AceEditorWidget extends Composite
    public void onEdit(EditEvent edit)
    {
       if (edit.isBeforeEdit())
-         maybeUnmap(edit.getType());
+         unmapForEdit(edit.getType());
       else
-         maybeRemap(edit.getType());
+         remapForEdit(edit.getType());
    }
    
-   private final void maybeUnmap(int type)
+   private final void unmapForEdit(int type)
    {
       if (type == EditEvent.TYPE_COPY)
-         maybeUnmapImpl("<C-c>", "c-c");
+         unmapForEditImpl("<C-c>", "c-c");
       else if (type == EditEvent.TYPE_CUT)
-         maybeUnmapImpl("<C-x>", "c-x");
+         unmapForEditImpl("<C-x>", "c-x");
       else if (type == EditEvent.TYPE_PASTE)
-         maybeUnmapImpl("<C-v>", "c-v");
+         unmapForEditImpl("<C-v>", "c-v");
    }
    
-   private final void maybeRemap(int type)
+   private final void remapForEdit(int type)
    {
       if (type == EditEvent.TYPE_COPY)
-         maybeRemapImpl("<C-c>", "c-c");
+         remapForEditImpl("<C-c>", "c-c");
       else if (type == EditEvent.TYPE_CUT)
-         maybeRemapImpl("<C-x>", "c-x");
+         remapForEditImpl("<C-x>", "c-x");
       else if (type == EditEvent.TYPE_PASTE)
-         maybeRemapImpl("<C-v>", "c-v");
+         remapForEditImpl("<C-v>", "c-v");
    }
    
-   private static final native void maybeUnmapImpl(String vimKeys, String emacsKeys)
+   private static final native void unmapForEditImpl(String vimKeys, String emacsKeys)
    /*-{
       
       // Handle Vim mapping
@@ -345,7 +345,7 @@ public class AceEditorWidget extends Composite
       
    }-*/;
    
-   private static final native void maybeRemapImpl(String vimKeys, String emacsKeys)
+   private static final native void remapForEditImpl(String vimKeys, String emacsKeys)
    /*-{
       
       // Handle Vim mapping
@@ -361,8 +361,10 @@ public class AceEditorWidget extends Composite
       // Handle Emacs mapping
       var Emacs = $wnd.require("ace/keyboard/emacs").handler;
       var bindings = Emacs.commandKeyBinding;
-      bindings[emacsKeys] = bindings["DISABLED:" + emacsKeys];
-      delete bindings["DISABLED:" + emacsKeys];
+      if (bindings["DISABLED:" + emacsKeys] != null) {
+         bindings[emacsKeys] = bindings["DISABLED:" + emacsKeys];
+         delete bindings["DISABLED:" + emacsKeys];
+      }
    }-*/;
    
    @Inject

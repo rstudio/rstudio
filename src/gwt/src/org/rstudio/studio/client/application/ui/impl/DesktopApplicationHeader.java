@@ -194,6 +194,11 @@ public class DesktopApplicationHeader implements ApplicationHeader
       toolbar_.focusGoToFunction();
    }
 
+   private void fireEditEvent(final int type)
+   {
+      eventBus_.fireEvent(new EditEvent(true, type));
+   }
+   
    @Handler
    void onUndoDummy()
    {
@@ -204,19 +209,6 @@ public class DesktopApplicationHeader implements ApplicationHeader
    void onRedoDummy()
    {
       Desktop.getFrame().redo(isFocusInAceInstance());
-   }
-   
-   private void fireEditEvent(final int type)
-   {
-      eventBus_.fireEvent(new EditEvent(true, type));
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         @Override
-         public void execute()
-         {
-            eventBus_.fireEvent(new EditEvent(false, type));
-         }
-      });
    }
 
    @Handler
