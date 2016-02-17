@@ -18,7 +18,10 @@
 
 ### Bug Fixes
 
+* Autocompletion: avoid errors when retrieving completions in debugger
 * Diagnostics: fix false positive errors with '{' following function calls
+* Avoid over-eager re-rendering + tokenization of documents
+* Fix block commenting of Sweave chunks
 * Emacs mode: C-f now moves the cursor forward instead of opening Find dialog
 * Ensure that modal dialogs capture all input even in the presence of multiple modals
 * Filter out "00LOCK" directories from package name completions
