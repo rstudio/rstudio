@@ -604,6 +604,11 @@
 
       cnames <- names(data)
       size <- nrow(data)
+      
+      if (!identical(dataImportOptions$maxRows, NULL) && size > dataImportOptions$maxRows) {
+         data <- head(data, dataImportOptions$maxRows)
+         size <- nrow(data)
+      }
 
       for(i in seq_along(data)) {
          data[[i]] <- .rs.formatDataColumn(data[[i]], 1, size)
