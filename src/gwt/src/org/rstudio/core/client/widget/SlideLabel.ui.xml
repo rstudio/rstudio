@@ -19,7 +19,7 @@
                            <div class="{res.style.content}" ui:field="content_" />
                         </td>
                         <td class="{res.style.cancelColumn}">
-                           <g:Label styleName="{res.style.cancelLabel}" ui:field="cancel_">Cancel</g:Label>
+                           <rs:SmallButton styleName="{res.style.cancelButton}" ui:field="cancel_" text="Cancel"/>
                         </td>
                      </tr>
                   </table>

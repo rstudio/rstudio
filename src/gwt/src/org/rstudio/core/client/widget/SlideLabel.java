@@ -30,7 +30,6 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.resources.CoreResources;
@@ -84,7 +83,7 @@ public class SlideLabel extends Composite
       String SE();
       
       String cancelColumn();
-      String cancelLabel();
+      String cancelButton();
    }
 
    public static Command show(String label,
@@ -297,7 +296,7 @@ public class SlideLabel extends Composite
    @UiField
    ImageElement progress_;
    @UiField
-   Label cancel_;
+   SmallButton cancel_;
 
    private Animation currentAnimation_;
    private Timer currentAutoHideTimer_;

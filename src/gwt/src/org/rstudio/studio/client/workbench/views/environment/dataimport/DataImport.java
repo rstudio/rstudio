@@ -439,7 +439,7 @@ public class DataImport extends Composite
       
       previewImportOptions.setMaxRows(maxRows_);
       
-      progressIndicator_.onProgress("Retrieving preview data", new Operation()
+      progressIndicator_.onProgress("Retrieving preview data...", new Operation()
       {
          @Override
          public void execute()
@@ -468,11 +468,14 @@ public class DataImport extends Composite
          @Override
          public void onResponseReceived(DataImportPreviewResponse response)
          {
-            if (response.getErrorMessage() != null)
+            if (response == null || response.getErrorMessage() != null)
             {
-               response.setColumnDefinitions(lastSuccessfulResponse_);
-               setGridViewerData(response);
-               progressIndicator_.onError(response.getErrorMessage());
+               if (response != null)
+               {
+                  setGridViewerData(response);
+                  response.setColumnDefinitions(lastSuccessfulResponse_);
+                  progressIndicator_.onError(response.getErrorMessage());
+               }
                return;
             }
             

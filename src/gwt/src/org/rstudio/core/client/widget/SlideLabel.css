@@ -51,9 +51,9 @@
 .cancelColumn {
 	padding-left: 6px;
 }
-.cancelLabel {
-	border-left: solid 1px #A7ABB4;
-	cursor: pointer;
-	padding-left: 6px;
-	color: #00E;
+.cancelButton {
+	margin-top: 1px;
+	border: 0px;
+	padding: 0px;
+	background: none;
 }
