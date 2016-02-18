@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.server.ServerError;
@@ -32,13 +33,14 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class ProfilerPresenter
+public class ProfilerPresenter implements RprofEvent.Handler
 {
    private final ProfilerServerOperations server_;
    private final Commands commands_;
    private final DependencyManager dependencyManager_;
    private final HandlerRegistrations handlerRegistrations_ = new HandlerRegistrations();
    private final GlobalDisplay globalDisplay_;
+   private final EventBus events_;
    
    final String profilerDependecyUserAction_ = "Preparing profiler";
    
@@ -57,23 +59,37 @@ public class ProfilerPresenter
                             Binder binder,
                             Commands commands,
                             DependencyManager dependencyManager,
-                            GlobalDisplay globalDisplay)
+                            GlobalDisplay globalDisplay,
+                            EventBus events)
    {
       server_ = server;
       commands_ = commands;
       dependencyManager_ = dependencyManager;
       globalDisplay_ = globalDisplay;
+      events_ = events;
       
       binder.bind(commands, this);
 
       // by default, one can always start profiling
       enableStoppedCommands();
+      
+      events_.addHandler(RprofEvent.TYPE, this);
+   }
+   
+   public void onRprofEvent(RprofEvent event)
+   {
+      if (event.getStarted())
+      {
+         enableStartedCommands();
+      }
+      else
+      {
+         enableStoppedCommands();
+      }
    }
 
    public void attatch(SourceDocument doc, Display view)
    {
-      // enable commands for stopped state
-      enableStoppedCommands();
    }
 
    public void detach()
@@ -90,9 +106,6 @@ public class ProfilerPresenter
          @Override
          public void execute()
          {
-            // manage commands
-            enableStartedCommands();
-
             ProfileOperationRequest request = ProfileOperationRequest
                   .create("");
             server_.startProfiling(request,
@@ -152,12 +165,6 @@ public class ProfilerPresenter
                         error.getMessage());
                }
             });
-   }
-
-   private void disableAllCommands()
-   {
-      commands_.startProfiler().setEnabled(false);
-      commands_.stopProfiler().setEnabled(false);
    }
 
    private void enableStartedCommands()

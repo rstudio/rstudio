@@ -16,8 +16,8 @@
 .rs.addJsonRpcHandler("start_profiling", function(profilerOptions)
 {
    tryCatch({
-      tempPath <- .Call("rs_profilesPath")
-      if (!dir.exists(tempPath)) {
+      tempPath <- .Call(.rs.routines$rs_profilesPath)
+      if (!.rs.dirExists(tempPath)) {
          dir.create(tempPath, recursive = TRUE)
       }
       
@@ -38,7 +38,7 @@
    tryCatch({
       Rprof(NULL)
 
-      invisible(.Call("rs_fileEdit", c(profilerOptions$fileName)))
+      invisible(.Call(.rs.routines$rs_fileEdit, c(profilerOptions$fileName)))
       
       return(list(
          fileName = profilerOptions$fileName
@@ -53,7 +53,7 @@
    tryCatch({
       profvis <- profvis::profvis(prof_input = profilerOptions$fileName)
 
-      tempPath <- .Call("rs_profilesPath")
+      tempPath <- .Call(.rs.routines$rs_profilesPath)
       htmlFile <- tempfile(fileext = ".html", tmpdir = tempPath)
       htmlwidgets::saveWidget(profvis, htmlFile)
 
@@ -63,4 +63,17 @@
    }, error = function(e) {
       return(list(error = e))
    })
+})
+
+.rs.registerNotifyHook("Rprof", "utils", function(...) 
+{
+   args <- c(...)
+   if (!identical(args, NULL))
+   {
+      .rs.enqueClientEvent("rprof_started");
+   }
+   else
+   {
+      .rs.enqueClientEvent("rprof_stopped");
+   }
 })

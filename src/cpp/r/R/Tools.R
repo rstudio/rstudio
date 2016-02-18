@@ -397,7 +397,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 })
 
 # replacing an internal R function
-.rs.addFunction( "registerReplaceHook", function(name, package, hook)
+.rs.addFunction( "registerReplaceHook", function(name, package, hook, keepOriginal)
 {
    hookFactory <- function(original) function(...) .rs.callAs(name,
                                                              hook, 
@@ -725,6 +725,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    saveRDS(file = outputLocation, object = result)
 })
 
+<<<<<<< 42c7056428b873dd41d7c039803e7de622e89c2c
 .rs.addFunction("readFile", function(file)
 {
    readChar(file, file.info(file)$size, TRUE)
@@ -789,3 +790,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    paste(tools::file_path_sans_ext(path), ext, sep = ".")
 })
 
+.rs.addFunction("dirExists", function(path)
+{
+   utils::file_test('-d', path)
+})
