@@ -66,7 +66,7 @@ public final class Long extends Number implements Comparable<Long> {
     if (high != 0) {
       return ((long) Integer.highestOneBit(high)) << 32;
     } else {
-      return Integer.highestOneBit((int) i);
+      return Integer.highestOneBit((int) i) & 0xFFFFFFFFL;
     }
   }
 

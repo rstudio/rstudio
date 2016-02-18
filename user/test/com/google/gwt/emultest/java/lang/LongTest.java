@@ -55,6 +55,7 @@ public class LongTest extends GWTTestCase {
     assertEquals(Long.MIN_VALUE, Long.highestOneBit(-256));
     assertEquals(1, Long.highestOneBit(1));
     assertEquals(0x80, Long.highestOneBit(0x88));
+    assertEquals(1L << 31, Long.highestOneBit(1L << 31));
     assertEquals(0x4000000000000000L, Long.highestOneBit(Long.MAX_VALUE));
   }
 
