@@ -8,6 +8,8 @@
 * Preview data while importing datasets
 * Explicitly set column types while importing datasets
 * Preview and copy code while importing datasets
+* Enable data import preview to be cancelled
+* Enable data import to cache web files
 
 ### Miscellaneous
 

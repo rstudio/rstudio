@@ -219,10 +219,12 @@ public class DataImport extends Composite
                @Override
                public void execute()
                {
+                  // Invalidate cached files, click update to refresh stale files
+                  localFiles_ = null;
+                  
                   if (dataImportFileChooser_.getText() != importOptions_.getImportLocation())
                   {
                      lastSuccessfulResponse_ = null;
-                     localFiles_ = null;
                      resetColumnDefinitions();
                   }
                   
