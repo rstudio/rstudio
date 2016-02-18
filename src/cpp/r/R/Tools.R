@@ -725,7 +725,6 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    saveRDS(file = outputLocation, object = result)
 })
 
-<<<<<<< 42c7056428b873dd41d7c039803e7de622e89c2c
 .rs.addFunction("readFile", function(file)
 {
    readChar(file, file.info(file)$size, TRUE)
