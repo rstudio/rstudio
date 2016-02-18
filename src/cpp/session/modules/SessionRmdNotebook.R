@@ -32,9 +32,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    contents <- .rs.extractFromNotebook("rnb-document-source", input)
    cat(contents, file = output, sep = "\n")
 
-   # populate the cache folder with the chunk output
-   .Call("rs_populateNotebookCache", input)
-   
    .rs.scalar(TRUE)
 })
 

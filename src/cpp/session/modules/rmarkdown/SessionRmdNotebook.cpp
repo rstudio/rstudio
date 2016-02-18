@@ -458,6 +458,43 @@ void onDocRenamed(const std::string& oldPath,
    }
 }
 
+void onDocAdded(const std::string& id)
+{
+   std::string path;
+   Error error = source_database::getPath(id, &path);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // ignore empty paths and non-R Markdown files
+   if (path.empty())
+      return;
+   FilePath docPath = module_context::resolveAliasedPath(path);
+   if (docPath.extensionLowerCase() != ".rmd")
+      return;
+
+   FilePath cachePath = chunkCacheFolder(path, id);
+   FilePath nbPath = docPath.parent().complete(docPath.stem() + ".Rnb");
+
+   if (!cachePath.exists() && nbPath.exists())
+   {
+      // we have a saved representation, but no cache -- populate the cache
+      // from the saved representation
+      error = parseRnb(nbPath, cachePath);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+   }
+
+   // TODO: consider write times of document, cache, and .Rnb -- are there
+   // combinations which would suggest we should overwrite the cache with the
+   // contents of the notebook?
+}
+
 void disconnectConsole();
 
 void onConsolePrompt(const std::string& )
@@ -859,6 +896,7 @@ Error initialize()
 
    source_database::events().onDocRenamed.connect(onDocRenamed);
    source_database::events().onDocRemoved.connect(onDocRemoved);
+   source_database::events().onDocAdded.connect(onDocAdded);
 
    module_context::events().onActiveConsoleChanged.connect(
          onActiveConsoleChanged);

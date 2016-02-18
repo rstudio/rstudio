@@ -199,6 +199,7 @@ struct Events : boost::noncopyable
    boost::signal<void(boost::shared_ptr<SourceDocument>)>      onDocUpdated;
    boost::signal<void(const std::string&,
                       boost::shared_ptr<SourceDocument>)>      onDocRenamed;
+   boost::signal<void(const std::string&)>                     onDocAdded;
    boost::signal<void(const std::string&, const std::string&)> onDocRemoved;
    boost::signal<void()>                                       onRemoveAll;
 };
