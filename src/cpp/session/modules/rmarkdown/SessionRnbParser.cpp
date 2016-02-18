@@ -19,6 +19,8 @@
 #include <core/FileSerializer.hpp>
 #include <core/SafeConvert.hpp>
 
+#include <session/SessionOptions.hpp>
+
 #include <boost/regex.hpp>
 
 using namespace rstudio::core;
@@ -35,15 +37,26 @@ core::Error saveChunkHtml(const std::string& chunkId,
                           const std::string& body, 
                           const FilePath& cacheFolder)
 {
+   // open the chunk HTML file for writing
    FilePath target = cacheFolder.complete(chunkId + ".html");
    boost::shared_ptr<std::ostream> pStream;
    Error error = target.open_w(&pStream, true);
    if (error)
       return error;
+
+   // extract chunk header includes
+   FilePath headerHtml = options().rResourcesPath().complete("notebook").
+      complete("in_header.html");
+   std::string headerContents;
+   error = readStringFromFile(headerHtml, &headerContents);
+   if (error)
+      return error;
+
    *pStream << 
       "<html>\n"
-      "<head>\n"
+      "<head>\n" <<
       // TODO: insert dependent scripts
+      headerContents << 
       "</head>\n"
       "<body>\n" <<
       body <<
