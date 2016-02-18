@@ -80,9 +80,6 @@ public class ProfilerPresenter
    {
       // unsubscribe from view
       handlerRegistrations_.removeHandler();
-
-      // disable all commands
-      disableAllCommands();
    }
 
    @Handler
