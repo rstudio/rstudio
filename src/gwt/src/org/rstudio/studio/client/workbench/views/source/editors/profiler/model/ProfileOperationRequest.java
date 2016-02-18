@@ -1,7 +1,7 @@
 /*
- * ProfilerContents.java
+ * ProfileOperationRequest.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,24 +12,21 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
 package org.rstudio.studio.client.workbench.views.source.editors.profiler.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class ProfilerContents extends JavaScriptObject
+public class ProfileOperationRequest extends JavaScriptObject
 {
-   protected ProfilerContents()
+   protected ProfileOperationRequest()
    {
    }
    
-   public static final native ProfilerContents create(
-      String path) /*-{
-      var contents = new Object();
-      contents.path = path;
-      return contents;
-   }-*/;
-   
-   public final native String getPath() /*-{
-      return this.path;
+   public final native static ProfileOperationRequest create(String fileName) /*-{
+      var request = new Object();
+      request.fileName = fileName ;
+      
+      return request;
    }-*/;
 }

@@ -25,6 +25,7 @@ install()
 PACKAGE=$1
 PACKAGE_DIR=$PACKAGE
 PACKAGE_VERSION=$2
+PACKAGE_BUILD_OPTIONS=$3
 
 # git clone if necessary
 if [ ! -d "$PACKAGE_DIR" ]
@@ -53,7 +54,7 @@ EOF
 cd ..
 PACKAGE_ARCHIVE_PATTERN="$PACKAGE*.tar.gz"
 rm -f $PACKAGE_ARCHIVE_PATTERN
-R CMD build $PACKAGE
+R CMD build $PACKAGE_BUILD_OPTIONS $PACKAGE
 
 # modify filename to include SHA1
 PACKAGE_ARCHIVE=`ls $PACKAGE_ARCHIVE_PATTERN`
@@ -64,6 +65,9 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 }
 
 install rsconnect master
+
+# temporary pointer to profvis until cran transition
+install profvis master --no-build-vignettes
 
 # back to install-dir
 cd $INSTALL_DIR

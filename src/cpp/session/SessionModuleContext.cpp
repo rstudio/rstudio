@@ -141,6 +141,10 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kSendToConsole;
       else if (name == "get_active_document_context")
          type = session::client_events::kGetActiveDocumentContext;
+      else if (name == "rprof_started")
+        type = session::client_events::kRprofStarted;
+      else if (name == "rprof_stopped")
+        type = session::client_events::kRprofStopped;
 
       if (type != -1)
       {

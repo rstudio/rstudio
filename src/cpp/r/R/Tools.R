@@ -397,7 +397,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 })
 
 # replacing an internal R function
-.rs.addFunction( "registerReplaceHook", function(name, package, hook)
+.rs.addFunction( "registerReplaceHook", function(name, package, hook, keepOriginal)
 {
    hookFactory <- function(original) function(...) .rs.callAs(name,
                                                              hook, 
@@ -789,3 +789,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    paste(tools::file_path_sans_ext(path), ext, sep = ".")
 })
 
+.rs.addFunction("dirExists", function(path)
+{
+   utils::file_test('-d', path)
+})
