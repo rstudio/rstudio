@@ -19,9 +19,12 @@
 #include <core/FileSerializer.hpp>
 #include <core/SafeConvert.hpp>
 
+#include <core/system/Crypto.hpp>
+
 #include <session/SessionOptions.hpp>
 
 #include <boost/regex.hpp>
+#include <boost/foreach.hpp>
 
 using namespace rstudio::core;
 
@@ -33,7 +36,74 @@ namespace notebook {
 
 namespace {
 
+core::Error saveChunkScripts(const std::string& contents, 
+                             const FilePath& cacheFolder,
+                             std::string* pHeader)
+{
+   const char* dataMarker = "data:application/x-javascript;base64,";
+   std::vector<std::string> scripts;
+   Error error = extractScriptTags(contents, &scripts);
+   if (error)
+      return error;
+
+   // ensure we have a folder to save scripts to
+   cacheFolder.complete(kChunkLibDir).ensureDirectory();
+
+   int scriptId = 0;
+   BOOST_FOREACH(const std::string& script, scripts)
+   {
+      // move to next ID
+      scriptId++;
+
+      // ignore non-self-contained scripts
+      if (script.substr(0, strlen(dataMarker)) != dataMarker)
+      {
+         LOG_WARNING_MESSAGE("Skipping non-self-contained script: " +
+               script.substr(0, std::max(strlen(dataMarker), 
+                                         static_cast<size_t>(256))));
+         continue;
+      }
+
+      // decode the script contents
+      std::vector<unsigned char> scriptContents;
+      error = core::system::crypto::base64Decode(script.substr(strlen(dataMarker), 
+               std::string::npos), &scriptContents);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+
+      // associate with library file
+      std::string id = safe_convert::numberToString(scriptId);
+      FilePath libFile = cacheFolder.complete(kChunkLibDir).complete(
+            "script" + id + ".js");
+      boost::shared_ptr<std::ostream> pStream;
+      error = libFile.open_w(&pStream, true);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+
+      // output script contents to library file
+      try
+      {
+         pStream->write(reinterpret_cast<char*>(&scriptContents[0]), 
+                        scriptContents.size());
+      }
+      CATCH_UNEXPECTED_EXCEPTION
+
+      // append to header
+      pHeader->append("<script src=\"" kChunkLibDir "/" + libFile.filename() +
+                      "\"></script>\n");
+   }
+
+   return Success();
+}
+
 core::Error saveChunkHtml(const std::string& chunkId,
+                          const std::string& header,
                           const std::string& body, 
                           const FilePath& cacheFolder)
 {
@@ -45,12 +115,15 @@ core::Error saveChunkHtml(const std::string& chunkId,
       return error;
 
    // extract chunk header includes
+   std::string headerContents;
    FilePath headerHtml = options().rResourcesPath().complete("notebook").
       complete("in_header.html");
-   std::string headerContents;
    error = readStringFromFile(headerHtml, &headerContents);
    if (error)
       return error;
+
+   // append caller specified header
+   headerContents.append(header);
 
    *pStream << 
       "<html>\n"
@@ -67,6 +140,7 @@ core::Error saveChunkHtml(const std::string& chunkId,
 }
 
 core::Error extractChunks(const std::string& contents,
+                          const std::string& headerContents,
                           const FilePath& docPath,
                           const FilePath& cacheFolder)
 {
@@ -88,7 +162,12 @@ core::Error extractChunks(const std::string& contents,
       else if (match.str(1) == "end")
       {
          if (id != ordinal) 
+         {
+            LOG_WARNING_MESSAGE("Unexpected chunk marker: " + match.str(0) + 
+                  " (expected terminator " + safe_convert::numberToString(id) + 
+                  ")");
             continue;
+         }
 
          // create the chunk definition
          std::string chunkId("rnbchunk" + match.str(2));
@@ -101,6 +180,7 @@ core::Error extractChunks(const std::string& contents,
 
          // save the chunk contents
          error = saveChunkHtml(chunkId, 
+               headerContents,
                std::string(start, match[0].first),
                cacheFolder);
          if (error)
@@ -127,7 +207,11 @@ core::Error parseRnb(const core::FilePath& rnbFile,
    error = ensureCacheFolder(cacheFolder);
    if (error)
       return error;
-   error = extractChunks(contents, rnbFile, cacheFolder);
+   std::string header;
+   error = saveChunkScripts(contents, cacheFolder, &header);
+   if (error)
+      return error;
+   error = extractChunks(contents, header, rnbFile, cacheFolder);
    if (error) 
       return error;
 

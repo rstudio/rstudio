@@ -42,7 +42,6 @@
 #define kChunkDocWriteTime "doc_write_time"
 #define kChunkDocId        "doc_id"
 #define kChunkId           "chunk_id"
-#define kChunkLibDir       "lib"
 #define kChunkOutputPath   "chunk_output"
 #define kChunkUrl          "url"
 #define kChunkConsole      "console"
@@ -820,6 +819,32 @@ Error ensureCacheFolder(const FilePath& folder)
    }
 #endif
    return error;
+}
+
+Error extractScriptTags(const std::string& contents, 
+                        std::vector<std::string>* pScripts)
+{
+   std::string::const_iterator pos = contents.begin(); 
+
+   // Not robust to all formulations of <script> (e.g. doesn't allow for
+   // attributes between the tag and src, or single-quoted/unquoted
+   // attributes), but we only need to parse canonical Pandoc output
+   boost::regex re("<\\s*script\\s*src\\s*=\\s*\"([^\"]+)\"\\s*/?\\s*>",
+                   boost::regex::icase);
+
+   // Iterate over all matches 
+   boost::smatch match;
+   while (boost::regex_search(pos, contents.end(), match, re, 
+                              boost::match_default))
+   {
+      // record script src contents
+      pScripts->push_back(match.str(1));
+
+      // continue search from end of match
+      pos = match[0].second;
+   }
+
+   return Success();
 }
 
 Events& events()
