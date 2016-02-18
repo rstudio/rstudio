@@ -39,6 +39,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
@@ -56,18 +57,19 @@ import java.util.HashSet;
 public class ProfilerEditingTarget implements EditingTarget
 {
    @Inject
-   public ProfilerEditingTarget(
-      ProfilerPresenter presenter,
-      Commands commands,
-      EventBus events,
-      ProfilerServerOperations server,
-      GlobalDisplay globalDisplay)
+   public ProfilerEditingTarget(ProfilerPresenter presenter,
+                                Commands commands,
+                                EventBus events,
+                                ProfilerServerOperations server,
+                                GlobalDisplay globalDisplay,
+                                Provider<SourceWindowManager> pSourceWindowManager)
    {
       presenter_ = presenter;
       commands_ = commands;
       events_ = events;
       server_ = server;
       globalDisplay_ = globalDisplay;
+      pSourceWindowManager_ = pSourceWindowManager;
    }
 
    public String getId()
@@ -128,13 +130,13 @@ public class ProfilerEditingTarget implements EditingTarget
    {
       return new HashSet<AppCommand>();
    }
-
+   
    @Override
    public boolean canCompilePdf()
    {
       return false;
    }
-
+   
    @Override
    public void verifyCppPrerequisites()
    {
@@ -163,6 +165,7 @@ public class ProfilerEditingTarget implements EditingTarget
 
    public void onActivate()
    {
+      pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
    }
 
    public void onDeactivate()
@@ -178,8 +181,11 @@ public class ProfilerEditingTarget implements EditingTarget
    @Override
    public void recordCurrentNavigationPosition()
    {
-      events_.fireEvent(new SourceNavigationEvent(SourceNavigation
-            .create(getId(), getPath(), SourcePosition.create(0, 0))));
+      events_.fireEvent(new SourceNavigationEvent(
+            SourceNavigation.create(
+            getId(), 
+            getPath(), 
+            SourcePosition.create(0, 0))));
    }
 
    @Override
@@ -187,10 +193,11 @@ public class ProfilerEditingTarget implements EditingTarget
                                   boolean recordCurrent)
    {
    }
-
+   
    @Override
    public void navigateToPosition(SourcePosition position,
-                                  boolean recordCurrent, boolean highlightLine)
+                                  boolean recordCurrent,
+                                  boolean highlightLine)
    {
    }
 
@@ -225,7 +232,8 @@ public class ProfilerEditingTarget implements EditingTarget
 
    @Override
    public void highlightDebugLocation(SourcePosition startPos,
-                                      SourcePosition endPos, boolean executing)
+                                      SourcePosition endPos,
+                                      boolean executing)
    {
    }
 
@@ -281,7 +289,8 @@ public class ProfilerEditingTarget implements EditingTarget
    }
 
    public void initialize(SourceDocument document,
-                          FileSystemContext fileContext, FileType type,
+                          FileSystemContext fileContext,
+                          FileType type,
                           Provider<String> defaultNameProvider)
    {
       // initialize doc, view, and presenter
@@ -398,4 +407,5 @@ public class ProfilerEditingTarget implements EditingTarget
    private final Commands commands_;
    private final ProfilerServerOperations server_;
    private final GlobalDisplay globalDisplay_;
+   private Provider<SourceWindowManager> pSourceWindowManager_;
 }

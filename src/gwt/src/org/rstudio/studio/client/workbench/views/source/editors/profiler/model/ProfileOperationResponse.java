@@ -24,14 +24,14 @@ public class ProfileOperationResponse extends JavaScriptObject
    }
    
    public final native String getErrorMessage() /*-{
-      return this.error ? this.error.message.join(' ') : null;
+      return this.error;
    }-*/;
    
    public final native String getFileName() /*-{
-      return this.fileName ? this.fileName.join(' ') : null;
+      return this.fileName;
    }-*/;
    
    public final native String getHtmlFile() /*-{
-      return this.htmlFile ? this.htmlFile.join(' ') : null;
+      return this.htmlFile;
    }-*/;
 }

@@ -26,10 +26,10 @@
       Rprof(filename = fileName, line.profiling = TRUE)
 
       return(list(
-         fileName = fileName
+         fileName = .rs.scalar(fileName)
       ))
    }, error = function(e) {
-      return(list(error = e))
+      return(list(error = .rs.scalar(e)))
    })
 })
 
@@ -44,10 +44,10 @@
       }
 
       return(list(
-         fileName = profilerOptions$fileName
+         fileName = .rs.scalar(profilerOptions$fileName)
       ))
    }, error = function(e) {
-      return(list(error = e))
+      return(list(error = .rs.scalar(e)))
    })
 })
 
@@ -61,10 +61,10 @@
       htmlwidgets::saveWidget(profvis, htmlFile)
 
       return(list(
-         htmlFile = paste("profiles/", basename(htmlFile), sep = "") 
+         htmlFile = .rs.scalar(paste("profiles/", basename(htmlFile), sep = ""))
       ))
    }, error = function(e) {
-      return(list(error = e))
+      return(list(error = .rs.scalar(e)))
    })
 })
 

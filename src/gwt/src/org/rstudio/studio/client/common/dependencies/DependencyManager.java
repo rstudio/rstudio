@@ -548,7 +548,9 @@ public class DependencyManager implements InstallShinyEvent.Handler
      withDependencies(
         "Preparing Profiler",
         userAction, 
-        profvisDependenciesArray(), 
+        new Dependency[] {
+           Dependency.embeddedPackage("profvis")
+        }, 
         false,
         new CommandWithArg<Boolean>()
         {
@@ -560,19 +562,6 @@ public class DependencyManager implements InstallShinyEvent.Handler
            }
         }
      );
-   }
-   
-   private ArrayList<Dependency> profvisDependencies()
-   {
-      ArrayList<Dependency> deps = new ArrayList<Dependency>();
-      deps.add(Dependency.embeddedPackage("profvis"));
-      return deps;
-   }
-   
-   private Dependency[] profvisDependenciesArray()
-   {
-      ArrayList<Dependency> deps = profvisDependencies();
-      return deps.toArray(new Dependency[deps.size()]);
    }
    
    private void withDependencies(String progressCaption,

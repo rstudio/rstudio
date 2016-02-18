@@ -62,6 +62,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class TextEditingTargetNotebook 
                implements EditorThemeStyleChangedEvent.Handler,
@@ -151,12 +152,14 @@ public class TextEditingTargetNotebook
    @Inject
    public void initialize(EventBus events, UIPrefs uiPrefs,
          RMarkdownServerOperations server,
-         ConsoleServerOperations console)
+         ConsoleServerOperations console,
+         Provider<SourceWindowManager> pSourceWindowManager)
    {
       events_ = events;
       uiPrefs_ = uiPrefs;
       server_ = server;
       console_ = console;
+      pSourceWindowManager_ = pSourceWindowManager;
       
       events_.addHandler(RmdChunkOutputEvent.TYPE, this);
       events_.addHandler(RmdChunkOutputFinishedEvent.TYPE, this);
@@ -168,7 +171,7 @@ public class TextEditingTargetNotebook
    public void executeChunk(Scope chunk, String code)
    {
       // maximize the source window if it's paired with the console
-      maximizeSourcePaneIfNecessary();
+      pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
       
       // get the row that ends the chunk
       int row = chunk.getEnd().getRow();
@@ -335,47 +338,6 @@ public class TextEditingTargetNotebook
             Integer.toHexString(requestId_), 
             new VoidServerRequestCallback());
    }
-     
-   private void maximizeSourcePaneIfNecessary()
-   {
-      if (SourceWindowManager.isMainSourceWindow())
-      {
-         // see if the Source and Console are paired
-         PaneConfig paneConfig = uiPrefs_.paneConfig().getValue();
-         if (paneConfig == null)
-            paneConfig = PaneConfig.createDefault();
-         if (hasSourceAndConsolePaired(paneConfig.getPanes()))
-         {
-            events_.fireEvent(new MaximizeSourceWindowEvent());
-         }  
-      }
-   }
-   
-   private boolean hasSourceAndConsolePaired(JsArrayString panes)
-   {
-      // default config
-      if (panes == null)
-         return true;
-      
-      // if there aren't 4 panes this is a configuration we
-      // don't recognize
-      if (panes.length() != 4)
-         return false;
-      
-      // check for paired config
-      return hasSourceAndConsolePaired(panes.get(0), panes.get(1)) ||
-             hasSourceAndConsolePaired(panes.get(2), panes.get(3));
-   }
-   
-   private boolean hasSourceAndConsolePaired(String pane1, String pane2)
-   {
-      return (pane1.equals(PaneConfig.SOURCE) &&
-              pane2.equals(PaneConfig.CONSOLE))
-                 ||
-             (pane1.equals(PaneConfig.CONSOLE) &&
-              pane2.equals(PaneConfig.SOURCE));
-   }
-   
    
    private Element elementForChunkDef(final ChunkDefinition def)
    {
@@ -538,6 +500,7 @@ public class TextEditingTargetNotebook
    private final TextEditingTargetRMarkdownHelper rmdHelper_;
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel docUpdateSentinel_;
+   private Provider<SourceWindowManager> pSourceWindowManager_;
 
    private RMarkdownServerOperations server_;
    private ConsoleServerOperations console_;

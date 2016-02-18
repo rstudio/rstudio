@@ -73,11 +73,7 @@ Error initialize()
       (boost::bind(module_context::sourceModuleRFile, "SessionProfiler.R"))
       (boost::bind(module_context::registerUriHandler, "/" kProfilesUrlPath "/", handleProfilerResReq));
 
-   // register rs_profilesPath
-   r::routines::registerCallMethod(
-            "rs_profilesPath",
-            (DL_FUNC) rs_profilesPath,
-            0);
+   RS_REGISTER_CALL_METHOD(rs_profilesPath, 0);
 
    return initBlock.execute();
 
