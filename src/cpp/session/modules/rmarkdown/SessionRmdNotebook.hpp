@@ -36,6 +36,8 @@ namespace notebook {
 
 core::Error initialize();
 
+core::Error ensureCacheFolder(const core::FilePath& cacheFolder);
+
 core::Error getChunkDefs(const std::string& docPath, const std::string& docId, 
       std::time_t *pDocTime, core::json::Value* pDefs);
 
@@ -49,8 +51,7 @@ struct Events : boost::noncopyable
                       const std::string&)> 
                 onChunkExecCompleted;
 
-   // Document {0}, chunk {1} had console output of type {2} and text
-   // {3}
+   // Document {0}, chunk {1} had console output of type {2} and text {3}
    boost::signal<void(const std::string&, const std::string&, int, 
                 const std::string&)>
                 onChunkConsoleOutput;

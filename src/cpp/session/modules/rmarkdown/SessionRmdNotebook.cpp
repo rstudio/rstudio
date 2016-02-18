@@ -14,6 +14,7 @@
  */
 
 #include "SessionRmdNotebook.hpp"
+#include "SessionRnbParser.hpp"
 
 #include <iostream>
 
@@ -21,6 +22,7 @@
 
 #include <r/RJson.hpp>
 #include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
 
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
@@ -640,21 +642,9 @@ Error executeInlineChunk(const json::JsonRpcRequest& request,
          userSettings().contextId());
    if (!chunkOutput.parent().exists())
    {
-      error = chunkOutput.parent().ensureDirectory();
+      error = ensureCacheFolder(chunkOutput.parent());
       if (error)
          return error;
-#ifdef _WIN32
-      // on Windows, mark the directory hidden after creating it
-      if (!docPath.empty())
-      {
-         error = core::system::makeFileHidden(chunkOutput.parent());
-         if (error)
-         {
-            // non-fatal
-            LOG_ERROR(error);
-         }
-      }
-#endif
    }
 
    // ensure we have a library path
@@ -736,6 +726,20 @@ void cleanChunks(const FilePath& cacheDir,
    }
 }
 
+SEXP rs_populateNotebookCache(SEXP fileSEXP)
+{
+   std::string file = r::sexp::safeAsString(fileSEXP);
+   FilePath cacheFolder = 
+      chunkCacheFolder(file, "", userSettings().contextId());
+   Error error = parseRnb(module_context::resolveAliasedPath(file), 
+                          cacheFolder);
+   if (error) 
+      LOG_ERROR(error);
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(cacheFolder.absolutePath(), &rProtect);
+}
+
 } // anonymous namespace
 
 Error setChunkDefs(const std::string& docPath, const std::string& docId,
@@ -756,7 +760,7 @@ Error setChunkDefs(const std::string& docPath, const std::string& docId,
       return Success();
 
    // we're going to write something; make sure the parent folder exists
-   Error error = defFile.parent().ensureDirectory();
+   Error error = ensureCacheFolder(defFile.parent());
    if (error)
       return error;
 
@@ -800,12 +804,29 @@ Error getChunkDefs(const std::string& docPath, const std::string& docId,
                        pDocTime, pDefs);
 }
 
+
+Error ensureCacheFolder(const FilePath& folder)
+{
+   Error error = folder.ensureDirectory();
+   if (error)
+      return error;
+#ifdef _WIN32
+   // on Windows, mark the directory hidden after creating it
+   error = core::system::makeFileHidden(chunkOutput.parent());
+   if (error)
+   {
+      // non-fatal
+      LOG_ERROR(error);
+   }
+#endif
+   return error;
+}
+
 Events& events()
 {
    static Events instance;
    return instance;
 }
-
 Error initialize()
 {
    using boost::bind;
@@ -818,6 +839,12 @@ Error initialize()
          onActiveConsoleChanged);
 
    events().onChunkExecCompleted.connect(onChunkExecCompleted);
+
+   R_CallMethodDef methodDef ;
+   methodDef.name = "rs_populateNotebookCache";
+   methodDef.fun = (DL_FUNC)rs_populateNotebookCache ;
+   methodDef.numArgs = 1;
+   r::routines::addCallMethod(methodDef);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
