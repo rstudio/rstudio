@@ -435,8 +435,8 @@ public class UiBinderParser {
       fieldType = (JClassType) importType;
     }
 
-    FieldWriter fieldWriter = fieldManager.registerField(FieldWriterType.IMPORTED,
-        fieldType, constantName);
+    FieldWriter fieldWriter = fieldManager.registerField(fieldType,
+        constantName);
     fieldWriter.setInitializer(rawFieldName);
   }
 

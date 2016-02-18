@@ -709,11 +709,6 @@
   <gwt:HTML ui:field='htmlWithComputedSafeHtml'><ui:safehtml from="{constants.getSafeHtml}" /></gwt:HTML>
   <gwt:HTML ui:field='htmlWithComputedText'><ui:text from="{constants.getText}" /></gwt:HTML>
   <gwt:Label ui:field='labelWithComputedText'><ui:text from="{constants.getText}"/></gwt:Label>
-  <gwt:Label ui:field="labelWithImportedText"><ui:text from="{InterfaceConst.someValue}" /></gwt:Label>
-
-  <ui:import field='com.google.gwt.uibinder.test.client.Constants.InterfaceConst'>
-    Test import parsing order
-  </ui:import>
 
      <element-with-tagname ui:field='myElementWithTagName'/>
      <js-element-type ui:field='myJsElementType'/>
