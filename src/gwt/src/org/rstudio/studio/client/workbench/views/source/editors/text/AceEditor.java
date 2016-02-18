@@ -42,7 +42,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.MathUtil;
@@ -2930,7 +2929,6 @@ public class AceEditor implements DocDisplay,
             @Override
             public void run()
             {
-               Debug.logToConsole("Tokenizing up to row: " + row_);
                if (row_ >= editor.getRowCount())
                   return;
                
