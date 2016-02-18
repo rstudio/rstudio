@@ -38,8 +38,11 @@
    tryCatch({
       Rprof(NULL)
 
-      invisible(.Call(.rs.routines$rs_fileEdit, c(profilerOptions$fileName)))
-      
+      if (!identical(profilerOptions$fileName, NULL))
+      {
+         invisible(.Call(.rs.routines$rs_fileEdit, c(profilerOptions$fileName)))
+      }
+
       return(list(
          fileName = profilerOptions$fileName
       ))

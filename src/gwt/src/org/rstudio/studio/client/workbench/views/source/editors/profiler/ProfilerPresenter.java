@@ -138,12 +138,10 @@ public class ProfilerPresenter implements RprofEvent.Handler
    @Handler
    public void onStopProfiler()
    {
-      // manage commands
-      enableStoppedCommands();
-
       ProfileOperationRequest request = ProfileOperationRequest
-            .create(response_.getFileName());
+            .create(response_ != null ? response_.getFileName() : null);
 
+      response_ = null;
       server_.stopProfiling(request,
             new ServerRequestCallback<ProfileOperationResponse>()
             {
