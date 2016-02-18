@@ -812,7 +812,7 @@ Error ensureCacheFolder(const FilePath& folder)
       return error;
 #ifdef _WIN32
    // on Windows, mark the directory hidden after creating it
-   error = core::system::makeFileHidden(chunkOutput.parent());
+   error = core::system::makeFileHidden(folder);
    if (error)
    {
       // non-fatal
