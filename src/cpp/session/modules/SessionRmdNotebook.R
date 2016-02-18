@@ -12,6 +12,7 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 #
+assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addJsonRpcHandler("extract_rmd_from_notebook", function(input, output)
 {
@@ -32,11 +33,6 @@
    cat(contents, file = output, sep = "\n")
    
    .rs.scalar(TRUE)
-})
-
-.rs.addFunction("withChangedExtension", function(path, ext)
-{
-   paste(tools::file_path_sans_ext(path), ext, sep = ".")
 })
 
 .rs.addFunction("extractFromNotebook", function(tag, rnbPath)
@@ -252,5 +248,246 @@
    # write our .Rnb to file and we're done!
    cat(rnbContents, file = outputFile, sep = "\n")
    invisible(outputFile)
+   
+})
+
+.rs.addFunction("readRnbCache", function(rmdPath, cachePath)
+{
+   if (Encoding(rmdPath) == "unknown")   Encoding(rmdPath) <- "UTF-8"
+   if (Encoding(cachePath) == "unknown") Encoding(cachePath) <- "UTF-8"
+   
+   if (!file.exists(rmdPath))
+      stop("No file at path '", rmdPath, "'")
+   
+   if (!file.exists(cachePath))
+      stop("No cache directory at path '", cachePath, "'")
+   
+   rmdPath <- .rs.normalizePath(rmdPath, winslash = "/", mustWork = TRUE)
+   cachePath <- normalizePath(cachePath, winslash = "/", mustWork = TRUE)
+   rmdContents <- suppressWarnings(readLines(rmdPath))
+   
+   # Begin collecting the units that form the Rnb data structure
+   rnbData <- list()
+   
+   # store reference to source path
+   rnbData[["source_path"]] <- rmdPath
+   rnbData[["cache_path"]]  <- cachePath
+   
+   # Keep the original source data
+   rnbData[["contents"]] <- rmdContents
+   
+   # Read the chunk information
+   chunkInfoPath <- file.path(cachePath, "chunks.json")
+   chunkInfo <- .rs.fromJSON(.rs.readFile(chunkInfoPath))
+   rnbData[["chunk_info"]] <- chunkInfo
+   
+   # Collect all of the HTML files, alongside their dependencies
+   htmlFiles <- list.files(cachePath, pattern = "html$", full.names = TRUE)
+   chunkData <- lapply(htmlFiles, function(file) {
+      dependenciesDir <- paste(tools::file_path_sans_ext(file), "files", sep = "_")
+      dependenciesFiles <- list.files(dependenciesDir, full.names = TRUE, recursive = TRUE)
+      list(
+         html = .rs.readFile(file),
+         deps = lapply(dependenciesFiles, .rs.readFile)
+      )
+   })
+   names(chunkData) <- tools::file_path_sans_ext(basename(htmlFiles))
+   rnbData[["chunk_data"]] <- chunkData
+   
+   # Read in the 'libs' directory.
+   rnbData[["lib"]] <- list()
+   
+   libDir <- file.path(cachePath, "lib")
+   if (file.exists(libDir)) {
+      owd <- setwd(libDir)
+      libFiles <- list.files(libDir, recursive = TRUE)
+      libData <- lapply(libFiles, .rs.readFile)
+      names(libData) <- libFiles
+      rnbData[["lib"]] <- libData
+      setwd(owd)
+   }
+   
+   rnbData
+})
+
+.rs.addFunction("maskChunks", function(contents, chunkInfo)
+{
+   # TODO: Mask the chunks in the document, so that we can render with pandoc
+   # without actually rendering chunks -- after render, we inject the HTML
+   # from the .Rnb cache back into the document.
+   
+   # masked <- contents
+   # chunkDefns <- chunkInfo$chunk_definitions
+   # for (i in seq_along(chunkDefns)) {
+   #    
+   #    start <- chunkDefns[[]]
+   #    start <- chunkInfo[["row"]][[i]] - 1
+   #    end   <- start + chunkInfo[["row_count"]][[i]] + 1
+   #    id    <- chunkInfo[["chunk_id"]][[i]]
+   #    
+   #    masked <- c(
+   #       masked[1:(start - 1)],
+   #       paste('<!-- rnb-chunk-id', id, '-->'),
+   #       masked[(end + 1):length(masked)]
+   #    )
+   # }
+   # 
+   # masked
+})
+
+.rs.addFunction("injectBase64Data", function(html, chunkId, rnbData)
+{
+   # we'll be calling pandoc in the cache dir, so make sure
+   # we save our original dir
+   owd <- getwd()
+   on.exit(setwd(owd), add = TRUE)
+   setwd(rnbData$cache_path)
+   
+   # use pandoc to render the HTML fragment, thereby injecting
+   # base64-encoded dependencies
+   input  <- "rnb-base64-inject-input.html"
+   output <- "rnb-base64-inject-output.html"
+   
+   cat(html, file = input, sep = "\n")
+   opts <- c("--self-contained")
+   rmarkdown:::pandoc_convert(input, output = output, options = opts)
+   
+   result <- .rs.readFile(output)
+   .rs.extractHTMLBodyElement(result)
+})
+
+.rs.addFunction("extractHTMLBodyElement", function(html)
+{
+   begin <- regexpr('<body[^>]*>', html, perl = TRUE)
+   end   <- regexpr('</body>', html, perl = TRUE)
+   
+   contents <- substring(html, begin + attr(begin, "match.length"), end - 1)
+   .rs.trimWhitespace(contents)
+})
+
+.rs.addFunction("rnbFillChunk", function(rnbData, chunkId)
+{
+   builder <- .rs.stringBuilder()
+   chunkInfo <- rnbData$chunk_info[rnbData$chunk_info$chunk_id == chunkId, ]
+   chunkData <- rnbData$chunk_data[[chunkId]]
+   
+   # parse the chunk header as we'll need to interleave
+   # that information within the output
+   pattern <- paste(
+      "^\\s*```+{",
+      "(\\w+)",
+      "\\s*",
+      "([^}]*)",
+      "}\\s*$",
+      sep = ""
+   )
+   
+   chunkHeader <- rnbData$contents[chunkInfo$row - 1]
+   matches <- .rs.regexMatches(pattern, chunkHeader)
+   
+   chunkClass   <- matches[[1]]
+   chunkOptions <- matches[[2]]
+   
+   startIdx <- chunkInfo$row
+   endIdx   <- chunkInfo$row + chunkInfo$row_count - 1
+   visible  <- chunkInfo$visible
+   
+   builder$appendf('<div class="%s_chunk" data-chunk-id="%s" data-chunk-options="%s">',
+                   chunkClass,
+                   chunkId,
+                   chunkOptions)
+   builder$indent()
+   
+   # Input code
+   builder$appendf('<code class="%s_input">', chunkClass)
+   builder$indent()
+   builder$append(rnbData$contents[startIdx:endIdx])
+   builder$unindent()
+   builder$append('</code>')
+   
+   # Output code
+   bodyContent <- .rs.extractHTMLBodyElement(chunkData$html)
+   bodyContent <- .rs.injectBase64Data(bodyContent, chunkId, rnbData)
+   builder$appendf('<div class="%s_output" visible="%s">', chunkClass, visible)
+   builder$indent()
+   builder$append(bodyContent)
+   builder$unindent()
+   builder$append('</div>')
+   
+   builder$unindent()
+   builder$append('</div>')
+   
+   builder$data()
+})
+
+.rs.addFunction("rnbFillChunks", function(html, rnbData)
+{
+   filled <- html
+   for (i in seq_along(filled)) {
+      line <- filled[[i]]
+      if (.rs.startsWith(line, '<!-- rnb-chunk-id') && .rs.endsWith(line, '-->')) {
+         chunkId <- sub('<!-- rnb-chunk-id\\s*(\\S+)\\s*-->', '\\1', line)
+         chunkData <- rnbData$chunk_data[[chunkId]]
+         if (is.null(chunkData))
+            stop("no chunk with id '", chunkId, "'")
+         
+         filled[[i]] <- paste(.rs.rnbFillChunk(rnbData, chunkId), collapse = "\n")
+      }
+   }
+   filled
+})
+
+.rs.addFunction("createNotebookFromCache", function(rnbData)
+{
+   # first, render our .Rmd to transform markdown to html
+   contents <- rnbData$contents
+   chunkInfo <- rnbData$chunk_info
+   
+   # mask out chunks (replace with placeholders w/id)
+   masked <- .rs.maskChunks(contents, chunkInfo)
+   
+   # use pandoc to convert md to html
+   input  <- tempfile("rnb-tempfile-input", fileext = ".md")
+   output <- tempfile("rnb-tempfile-output", fileext = ".html")
+   cat(masked, file = input, sep = "\n")
+   rmarkdown:::pandoc_convert(input = input, output = output)
+   
+   # read the HTML
+   html <- readLines(output)
+   
+   # replace chunk placeholders with their actual data
+   html <- .rs.rnbFillChunks(html, rnbData)
+   
+   # extract yaml header
+   frontMatter <- rmarkdown:::partition_yaml_front_matter(contents)$front_matter
+   yaml <- rmarkdown:::parse_yaml_front_matter(frontMatter)
+   
+   # begin building our output file
+   builder <- .rs.stringBuilder()
+   
+   builder$append('<html>')
+   
+   # write header output
+   builder$append('<head>')
+   builder$indent()
+   builder$append(sprintf('<meta name="r-notebook-version" content="%s" />', .rs.notebookVersion))
+   builder$append(sprintf('<title>%s</title>', yaml$title))
+   builder$append('<script type="text/yaml">')
+   builder$indent()
+   builder$append(frontMatter[2:(length(frontMatter) - 1)])
+   builder$unindent()
+   builder$append('</script>')
+   builder$unindent()
+   builder$append('</head>')
+   
+   # write body output
+   builder$append('<body>')
+   builder$append(html)
+   builder$append('</body>')
+   
+   # close html
+   builder$append('</html>')
+   
+   unlist(builder$data())
    
 })
