@@ -291,7 +291,6 @@ public class DocumentOutlineWidget extends Composite
       
       docUpdateTimer_ = new Timer()
       {
-         
          @Override
          public void run()
          {

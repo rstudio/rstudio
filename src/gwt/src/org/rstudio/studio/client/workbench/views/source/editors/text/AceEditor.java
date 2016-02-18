@@ -273,7 +273,8 @@ public class AceEditor implements DocDisplay,
 
       completionManager_ = new NullCompletionManager();
       diagnosticsBgPopup_ = new DiagnosticsBackgroundPopup(this);
-      scopeTimer_ = new ScopeTimer(this);
+      if (hasScopeTree())
+         scopeTimer_ = new ScopeTimer(this);
       
       RStudioGinjector.INSTANCE.injectMembers(this);
 
@@ -2049,12 +2050,12 @@ public class AceEditor implements DocDisplay,
          getScopeTree();
    }
    
-   public void buildScopeTreeUpToRow(int row)
+   public int buildScopeTreeUpToRow(int row)
    {
       if (!hasScopeTree())
-         return;
+         return 0;
       
-      getSession().getMode().getRCodeModel().buildScopeTreeUpToRow(row);
+      return getSession().getMode().getRCodeModel().buildScopeTreeUpToRow(row);
    }
 
    public JsArray<Scope> getScopeTree()
@@ -2934,7 +2935,7 @@ public class AceEditor implements DocDisplay,
                   return;
                
                row_ += 200;
-               editor.buildScopeTreeUpToRow(row_);
+               row_ = editor.buildScopeTreeUpToRow(row_);
                timer_.schedule(DELAY_MS);
             }
          };
@@ -2982,7 +2983,7 @@ public class AceEditor implements DocDisplay,
    private boolean valueChangeSuppressed_ = false;
    private AceInfoBar infoBar_;
    private boolean showChunkOutputInline_ = false;
-   private final ScopeTimer scopeTimer_;
+   private ScopeTimer scopeTimer_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {

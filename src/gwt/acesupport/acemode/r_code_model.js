@@ -1073,6 +1073,7 @@ var RCodeModel = function(session, tokenizer,
          row: rowTokenizedUpTo, column: -1
       };
 
+      return rowTokenizedUpTo;
    };
 
    this.$getFoldToken = function(session, foldStyle, row) {
