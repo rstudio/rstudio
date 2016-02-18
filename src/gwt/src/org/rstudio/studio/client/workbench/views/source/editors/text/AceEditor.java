@@ -43,6 +43,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
+import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
@@ -1841,6 +1842,12 @@ public class AceEditor implements DocDisplay,
    public HandlerRegistration addEditorFocusHandler(FocusHandler handler)
    {
       return widget_.addFocusHandler(handler);
+   }
+   
+   public int getSuggestedScopeUpdateDelay()
+   {
+      int nrow = getRowCount();
+      return MathUtil.clamp(nrow / 20, 0, 700);
    }
 
    public Scope getCurrentScope()
