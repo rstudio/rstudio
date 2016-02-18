@@ -35,12 +35,14 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.MathUtil;
@@ -271,6 +273,7 @@ public class AceEditor implements DocDisplay,
 
       completionManager_ = new NullCompletionManager();
       diagnosticsBgPopup_ = new DiagnosticsBackgroundPopup(this);
+      scopeTimer_ = new ScopeTimer(this);
       
       RStudioGinjector.INSTANCE.injectMembers(this);
 
@@ -1849,7 +1852,7 @@ public class AceEditor implements DocDisplay,
       int nrow = getRowCount();
       return MathUtil.clamp(nrow / 20, 0, 700);
    }
-
+   
    public Scope getCurrentScope()
    {
       return getSession().getMode().getCodeModel().getCurrentScope(
@@ -2044,6 +2047,14 @@ public class AceEditor implements DocDisplay,
       // Builds the scope tree as a side effect
       if (hasScopeTree())
          getScopeTree();
+   }
+   
+   public void buildScopeTreeUpToRow(int row)
+   {
+      if (!hasScopeTree())
+         return;
+      
+      getSession().getMode().getRCodeModel().buildScopeTreeUpToRow(row);
    }
 
    public JsArray<Scope> getScopeTree()
@@ -2909,6 +2920,45 @@ public class AceEditor implements DocDisplay,
       AceEditor.this.fireEvent(new LineWidgetsChangedEvent());
    }
    
+   private static class ScopeTimer
+   {
+      public ScopeTimer(final AceEditor editor)
+      {
+         timer_ = new Timer()
+         {
+            @Override
+            public void run()
+            {
+               Debug.logToConsole("Tokenizing up to row: " + row_);
+               if (row_ >= editor.getRowCount())
+                  return;
+               
+               row_ += 200;
+               editor.buildScopeTreeUpToRow(row_);
+               timer_.schedule(DELAY_MS);
+            }
+         };
+         
+         row_ = 0;
+         
+         editor.addCursorChangedHandler(new CursorChangedHandler()
+         {
+            @Override
+            public void onCursorChanged(CursorChangedEvent event)
+            {
+               int row = event.getPosition().getRow();
+               row_ = row;
+               timer_.schedule(editor.getSuggestedScopeUpdateDelay() / 2);
+            }
+         });
+      }
+      
+      private final Timer timer_;
+      private int row_;
+      
+      private static final int DELAY_MS = 10;
+   }
+   
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
@@ -2932,6 +2982,7 @@ public class AceEditor implements DocDisplay,
    private boolean valueChangeSuppressed_ = false;
    private AceInfoBar infoBar_;
    private boolean showChunkOutputInline_ = false;
+   private final ScopeTimer scopeTimer_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {
