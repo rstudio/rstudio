@@ -2722,8 +2722,6 @@ public class Source implements InsertSourceHandler,
       if (openFileAlreadyOpen(rmdFile, resultCallback))
          return;
       
-      EditingTarget target = editingTargetSource_.getEditingTarget(fileType);
-      
       // ask the server to extract the .Rmd, then open that
       server_.extractRmdFromNotebook(
             rnbPath,
