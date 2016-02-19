@@ -123,7 +123,9 @@ public class CodeModel extends JavaScriptObject
    }-*/;
    
    public native final int buildScopeTreeUpToRow(int row) /*-{
-      return this.$buildScopeTreeUpToRow && this.$buildScopeTreeUpToRow(row);
+      if (typeof this.$buildScopeTreeUpToRow !== "function")
+         return 0;
+      return this.$buildScopeTreeUpToRow(row);
    }-*/;
    
 }
