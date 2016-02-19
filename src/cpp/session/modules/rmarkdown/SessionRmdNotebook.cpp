@@ -589,14 +589,12 @@ void onChunkExecCompleted(const std::string& docId,
                           const std::string& chunkId,
                           const std::string& contextId)
 {
+   // attempt to get the path of the doc (this may fail if the document does
+   // not yet exist)
    std::string path;
-   Error error = source_database::getPath(docId, &path);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-   error = enqueueChunkOutput(path, docId, chunkId, contextId);
+   source_database::getPath(docId, &path);
+
+   Error error = enqueueChunkOutput(path, docId, chunkId, contextId);
    if (error)
       LOG_ERROR(error);
 }
