@@ -1030,6 +1030,10 @@ public class StringUtil
       return $wnd.encodeURI(string);
    }-*/;
    
+   public static final native String normalizeNewLines(String string) /*-{
+      return string.replace(/\r\n|\n\r|\r/g, "\n");
+   }-*/;
+   
    public static final HashMap<String, String> COMPLEMENTS =
          makeComplementsMap();
    
