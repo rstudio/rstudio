@@ -35,6 +35,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -43,6 +44,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
+import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
@@ -270,6 +272,8 @@ public class AceEditor implements DocDisplay,
 
       completionManager_ = new NullCompletionManager();
       diagnosticsBgPopup_ = new DiagnosticsBackgroundPopup(this);
+      if (hasScopeTree())
+         scopeTimer_ = new ScopeTimer(this);
       
       RStudioGinjector.INSTANCE.injectMembers(this);
 
@@ -1845,7 +1849,13 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.addFocusHandler(handler);
    }
-
+   
+   public int getSuggestedScopeUpdateDelay()
+   {
+      int nrow = getRowCount();
+      return MathUtil.clamp(nrow / 20, 0, 700);
+   }
+   
    public Scope getCurrentScope()
    {
       return getSession().getMode().getCodeModel().getCurrentScope(
@@ -2040,6 +2050,14 @@ public class AceEditor implements DocDisplay,
       // Builds the scope tree as a side effect
       if (hasScopeTree())
          getScopeTree();
+   }
+   
+   public int buildScopeTreeUpToRow(int row)
+   {
+      if (!hasScopeTree())
+         return 0;
+      
+      return getSession().getMode().getRCodeModel().buildScopeTreeUpToRow(row);
    }
 
    public JsArray<Scope> getScopeTree()
@@ -2905,6 +2923,43 @@ public class AceEditor implements DocDisplay,
       AceEditor.this.fireEvent(new LineWidgetsChangedEvent());
    }
    
+   private static class ScopeTimer
+   {
+      public ScopeTimer(final AceEditor editor)
+      {
+         timer_ = new Timer()
+         {
+            @Override
+            public void run()
+            {
+               if (row_ >= editor.getRowCount())
+                  return;
+               
+               row_ += ROWS_TOKENIZED_PER_ITERATION;
+               row_ = editor.buildScopeTreeUpToRow(row_);
+               timer_.schedule(DELAY_MS);
+            }
+         };
+         
+         editor.addCursorChangedHandler(new CursorChangedHandler()
+         {
+            @Override
+            public void onCursorChanged(CursorChangedEvent event)
+            {
+               int row = event.getPosition().getRow();
+               row_ = row;
+               timer_.schedule(editor.getSuggestedScopeUpdateDelay() / 2);
+            }
+         });
+      }
+      
+      private final Timer timer_;
+      private int row_ = 0;
+      
+      private static final int DELAY_MS = 5;
+      private static final int ROWS_TOKENIZED_PER_ITERATION = 50;
+   }
+   
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
@@ -2928,6 +2983,7 @@ public class AceEditor implements DocDisplay,
    private boolean valueChangeSuppressed_ = false;
    private AceInfoBar infoBar_;
    private boolean showChunkOutputInline_ = false;
+   private ScopeTimer scopeTimer_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {
