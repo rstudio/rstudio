@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -24,7 +25,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
@@ -68,6 +71,14 @@ import java.util.HashSet;
 
 public class ProfilerEditingTarget implements EditingTarget
 {
+   interface MyCommandBinder
+   extends CommandBinder<Commands, ProfilerEditingTarget>
+   {
+   }
+   
+   private static final MyCommandBinder commandBinder =
+         GWT.create(MyCommandBinder.class);
+      
    @Inject
    public ProfilerEditingTarget(ProfilerPresenter presenter,
                                 Commands commands,
@@ -188,11 +199,24 @@ public class ProfilerEditingTarget implements EditingTarget
    public void onActivate()
    {
       pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
+      
+      // If we're already hooked up for some reason, unhook. 
+      // This shouldn't happen though.
+      if (commandHandlerReg_ != null)
+      {
+         Debug.log("Warning: onActivate called twice without intervening onDeactivate");
+         commandHandlerReg_.removeHandler();
+         commandHandlerReg_ = null;
+      }
+      commandHandlerReg_ = commandBinder.bind(commands_, this);
    }
 
    public void onDeactivate()
    {
       recordCurrentNavigationPosition();
+      
+      commandHandlerReg_.removeHandler();
+      commandHandlerReg_ = null;
    }
 
    @Override
@@ -554,4 +578,6 @@ public class ProfilerEditingTarget implements EditingTarget
    private DocUpdateSentinel docUpdateSentinel_;
    
    private ProfilerType fileType_ = new ProfilerType();
+   
+   private HandlerRegistration commandHandlerReg_;
 }
