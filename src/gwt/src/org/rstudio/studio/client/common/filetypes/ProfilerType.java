@@ -14,10 +14,14 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
+import java.util.HashSet;
+
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.OpenProfileEvent;
 
 public class ProfilerType extends EditableFileType
@@ -41,5 +45,18 @@ public class ProfilerType extends EditableFileType
    public void openFile(FileSystemItem file, EventBus eventBus)
    {
       openFile(file, null, NavigationMethods.DEFAULT, eventBus);
+   }
+
+   public HashSet<AppCommand> getSupportedCommands(Commands commands)
+   {
+      HashSet<AppCommand> results = new HashSet<AppCommand>();
+      results.add(commands.saveSourceDocAs());
+
+      return results;
+   }
+   
+   public String getDefaultExtension()
+   {
+      return "Rprof";
    }
 }
