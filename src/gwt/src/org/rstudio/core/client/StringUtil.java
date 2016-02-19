@@ -1026,6 +1026,10 @@ public class StringUtil
       return id;
    }
    
+   public static final native String encodeURI(String string) /*-{
+      return $wnd.encodeURI(string);
+   }-*/;
+   
    public static final HashMap<String, String> COMPLEMENTS =
          makeComplementsMap();
    
