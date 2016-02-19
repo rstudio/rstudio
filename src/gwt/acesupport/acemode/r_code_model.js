@@ -763,7 +763,7 @@ var RCodeModel = function(session, tokenizer,
       // Check if the scope tree has already been built up to this row.
       var scopeRow = this.$scopes.parsePos.row;
       if (scopeRow >= maxRow)
-          return;
+          return scopeRow;
 
       // We explicitly use a TokenIterator rather than a TokenCursor here.
       // We want to iterate over all token types here (including non-R code)
@@ -793,7 +793,7 @@ var RCodeModel = function(session, tokenizer,
       
       // If this failed, give up.
       if (token == null)
-         return;
+         return row;
 
       // Grab local state that we'll use when building the scope tree.
       var value = token.value;
