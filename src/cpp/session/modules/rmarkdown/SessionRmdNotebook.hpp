@@ -46,8 +46,10 @@ core::Error getChunkDefs(const std::string& docPath, const std::string& docId,
 core::Error setChunkDefs(const std::string& docPath, const std::string& docId, 
       std::time_t docTime, const core::json::Array& defs);
 
-core::Error extractScriptTags(const std::string& contents,
-                              std::vector<std::string>* pScripts);
+core::Error extractTagAttrs(const std::string& tag,
+                            const std::string& attr,
+                            const std::string& contents,
+                            std::vector<std::string>* pValues);
 
 struct Events : boost::noncopyable
 {

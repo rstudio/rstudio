@@ -18,6 +18,7 @@
 
 #include <core/FileSerializer.hpp>
 #include <core/SafeConvert.hpp>
+#include <core/http/Util.hpp>
 
 #include <core/system/Crypto.hpp>
 
@@ -25,6 +26,7 @@
 
 #include <boost/regex.hpp>
 #include <boost/foreach.hpp>
+#include <boost/format.hpp>
 
 using namespace rstudio::core;
 
@@ -36,67 +38,125 @@ namespace notebook {
 
 namespace {
 
-core::Error saveChunkScripts(const std::string& contents, 
+// define parameters for extracting scripts and stylesheets from the .Rnb HTML
+struct extractDef
+{
+   const char* tag;
+   const char* attr;
+   const char* mimeType;
+   const char* extension;
+   const char* fmt;
+};
+
+struct extractDef extractDefs[2] = 
+{ { "script", "src",  "application/x-javascript", "js",  
+    "<script src=\"%1%\"></script>\n" },
+  { "link",   "href", "text/css",                 "css",
+    "<link href=\"%1%\" rel=\"stylesheet\" type=\"text/css\" />\n" } };
+
+core::Error saveChunkResources(const std::string& contents, 
                              const FilePath& cacheFolder,
                              std::string* pHeader)
 {
-   const char* dataMarker = "data:application/x-javascript;base64,";
-   std::vector<std::string> scripts;
-   Error error = extractScriptTags(contents, &scripts);
-   if (error)
-      return error;
+   const char* dataBase64 = "base64";
+   const char* dataUtf8   = "charset=utf-8";
 
    // ensure we have a folder to save scripts to
    cacheFolder.complete(kChunkLibDir).ensureDirectory();
 
    int scriptId = 0;
-   BOOST_FOREACH(const std::string& script, scripts)
+   for (unsigned i = 0; i < sizeof(extractDefs) / sizeof(extractDefs[0]); i++)
    {
-      // move to next ID
-      scriptId++;
+      const struct extractDef& extract = extractDefs[i];
 
-      // ignore non-self-contained scripts
-      if (script.substr(0, strlen(dataMarker)) != dataMarker)
-      {
-         LOG_WARNING_MESSAGE("Skipping non-self-contained script: " +
-               script.substr(0, std::max(strlen(dataMarker), 
-                                         static_cast<size_t>(256))));
-         continue;
-      }
+      // form the MIME type to extract
+      std::string dataMarker("data:");
+      dataMarker.append(extract.mimeType);
+      dataMarker.append(";");
 
-      // decode the script contents
-      std::vector<unsigned char> scriptContents;
-      error = core::system::crypto::base64Decode(script.substr(strlen(dataMarker), 
-               std::string::npos), &scriptContents);
+      // enumerate values from file
+      std::vector<std::string> values;
+      Error error = extractTagAttrs(extract.tag, extract.attr, contents, 
+                                    &values);
       if (error)
-      {
-         LOG_ERROR(error);
-         continue;
-      }
+         return error;
 
-      // associate with library file
-      std::string id = safe_convert::numberToString(scriptId);
-      FilePath libFile = cacheFolder.complete(kChunkLibDir).complete(
-            "script" + id + ".js");
-      boost::shared_ptr<std::ostream> pStream;
-      error = libFile.open_w(&pStream, true);
-      if (error)
+      BOOST_FOREACH(const std::string& value, values)
       {
-         LOG_ERROR(error);
-         continue;
-      }
+         // move to next ID
+         scriptId++;
 
-      // output script contents to library file
-      try
-      {
-         pStream->write(reinterpret_cast<char*>(&scriptContents[0]), 
-                        scriptContents.size());
-      }
-      CATCH_UNEXPECTED_EXCEPTION
+         // ignore non-self-contained scripts
+         if (value.substr(0, dataMarker.length()) != dataMarker)
+         {
+            LOG_WARNING_MESSAGE("Skipping non-self-contained value: " +
+                  value.substr(0, std::min(value.length(),
+                                           static_cast<size_t>(256))));
+            continue;
+         }
 
-      // append to header
-      pHeader->append("<script src=\"" kChunkLibDir "/" + libFile.filename() +
-                      "\"></script>\n");
+         // associate with library file
+         std::string id = safe_convert::numberToString(scriptId);
+         FilePath libFile = cacheFolder.complete(kChunkLibDir).complete(
+               "rnb-resource-" + id + "." + extract.extension);
+
+         // ascertain encoding type
+         if (value.substr(dataMarker.length(), strlen(dataBase64)) == 
+             dataBase64)
+         {
+            // base64 encoded data -- open raw connection and decode
+            boost::shared_ptr<std::ostream> pStream;
+            error = libFile.open_w(&pStream, true);
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+
+            std::vector<unsigned char> valueContents;
+            error = core::system::crypto::base64Decode(value.substr(
+                     dataMarker.length() + strlen(dataBase64) + 1, 
+                     std::string::npos), &valueContents);
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+
+            try
+            {
+               pStream->write(reinterpret_cast<char*>(&valueContents[0]), 
+                              valueContents.size());
+            }
+            CATCH_UNEXPECTED_EXCEPTION
+         }
+         else if (value.substr(dataMarker.length(), strlen(dataUtf8)) ==
+                  dataUtf8)
+         {
+            // URL encoded data -- decode and write as string
+            std::string decoded = http::util::urlDecode(value.substr(
+                     dataMarker.length() + strlen(dataUtf8) + 1, 
+                     std::string::npos));
+            error = core::writeStringToFile(libFile, decoded);
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+         }
+         else
+         {
+            LOG_WARNING_MESSAGE("Unrecognized encoded value: " +
+                  value.substr(0, std::min(value.length(),
+                                           static_cast<size_t>(256))));
+            continue;
+         }
+
+         // append to header
+         boost::format fmt(extract.fmt);
+         pHeader->append(
+               boost::str(fmt % (kChunkLibDir "/" + libFile.filename())));
+      }
    }
 
    return Success();
@@ -208,7 +268,7 @@ core::Error parseRnb(const core::FilePath& rnbFile,
    if (error)
       return error;
    std::string header;
-   error = saveChunkScripts(contents, cacheFolder, &header);
+   error = saveChunkResources(contents, cacheFolder, &header);
    if (error)
       return error;
    error = extractChunks(contents, header, rnbFile, cacheFolder);

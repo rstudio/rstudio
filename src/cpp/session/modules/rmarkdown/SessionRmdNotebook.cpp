@@ -858,16 +858,18 @@ Error ensureCacheFolder(const FilePath& folder)
    return error;
 }
 
-Error extractScriptTags(const std::string& contents, 
-                        std::vector<std::string>* pScripts)
+Error extractTagAttrs(const std::string& tag,
+                      const std::string& attr,
+                      const std::string& contents, 
+                      std::vector<std::string>* pValues)
 {
    std::string::const_iterator pos = contents.begin(); 
 
-   // Not robust to all formulations of <script> (e.g. doesn't allow for
-   // attributes between the tag and src, or single-quoted/unquoted
-   // attributes), but we only need to parse canonical Pandoc output
-   boost::regex re("<\\s*script\\s*src\\s*=\\s*\"([^\"]+)\"\\s*/?\\s*>",
-                   boost::regex::icase);
+   // Not robust to all formulations (e.g. doesn't allow for attributes between
+   // the tag and attr, or single-quoted/unquoted attributes), but we only need
+   // to parse canonical Pandoc output
+   boost::regex re("<\\s*" + tag + "\\s*" + attr + 
+                   "\\s*=\\s*\"([^\"]+)\"[^>]*>", boost::regex::icase);
 
    // Iterate over all matches 
    boost::smatch match;
@@ -875,7 +877,7 @@ Error extractScriptTags(const std::string& contents,
                               boost::match_default))
    {
       // record script src contents
-      pScripts->push_back(match.str(1));
+      pValues->push_back(match.str(1));
 
       // continue search from end of match
       pos = match[0].second;
