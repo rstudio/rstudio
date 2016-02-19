@@ -83,13 +83,13 @@ class InternalStringMap<K, V> implements Iterable<Entry<K, V>> {
   @Override
   public Iterator<Entry<K, V>> iterator() {
     return new Iterator<Map.Entry<K,V>>() {
-      InternalJsIterator<V> entries = backingMap.entries();
-      InternalJsIteratorEntry<V> current = entries.next();
-      InternalJsIteratorEntry<V> last;
+      InternalJsMap.Iterator<V> entries = backingMap.entries();
+      InternalJsMap.IteratorEntry<V> current = entries.next();
+      InternalJsMap.IteratorEntry<V> last;
 
       @Override
       public boolean hasNext() {
-        return !current.done();
+        return !current.done;
       }
       @Override
       public Entry<K, V> next() {
@@ -104,7 +104,8 @@ class InternalStringMap<K, V> implements Iterable<Entry<K, V>> {
     };
   }
 
-  private Entry<K, V> newMapEntry(final InternalJsIteratorEntry<V> entry, final int lastValueMod) {
+  private Entry<K, V> newMapEntry(final InternalJsMap.IteratorEntry<V> entry,
+      final int lastValueMod) {
     return new AbstractMapEntry<K, V>() {
       @SuppressWarnings("unchecked")
       @Override

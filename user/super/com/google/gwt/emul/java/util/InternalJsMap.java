@@ -15,16 +15,43 @@
  */
 package java.util;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import javaemul.internal.JsUtils;
+import jsinterop.annotations.JsOverlay;
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsType;
 
-class InternalJsMap<V> extends JavaScriptObject {
-  protected InternalJsMap() { }
-  public final native V get(int key) /*-{ return this.get(key); }-*/;
-  public final native V get(String key) /*-{ return this.get(key); }-*/;
-  public final native void set(int key, V value) /*-{ this.set(key, value); }-*/;
-  public final native void set(String key, V value) /*-{ this.set(key, value); }-*/;
-  // Calls delete via brackets to be workable with polyfills
-  public final native void delete(int key) /*-{ this['delete'](key); }-*/;
-  public final native void delete(String key) /*-{ this['delete'](key); }-*/;
-  public final native InternalJsIterator<V> entries() /*-{ return this.entries(); }-*/;
+// TODO(goktug): These classes should be interfaces with defender methods instead.
+@JsType(isNative = true, name = "Object", namespace = JsPackage.GLOBAL)
+class InternalJsMap<V> {
+
+  @JsType(isNative = true, name = "Object", namespace = JsPackage.GLOBAL)
+  static class Iterator<V> {
+    public native IteratorEntry<V> next();
+  }
+
+  @JsType(isNative = true, name = "Object", namespace = JsPackage.GLOBAL)
+  static class IteratorEntry<V> {
+    private Object[] value;
+    public boolean done;
+    @JsOverlay
+    public final String getKey() { return JsUtils.unsafeCastToString(value[0]); }
+    @JsOverlay
+    public final V getValue() { return (V) value[1]; }
+  }
+
+  public native V get(int key);
+  public native V get(String key);
+  public native void set(int key, V value);
+  public native void set(String key, V value);
+  @JsOverlay
+  public final void delete(int key) { JsHelper.delete(this, key); }
+  @JsOverlay
+  public final void delete(String key) { JsHelper.delete(this, key); }
+  public native Iterator<V> entries();
+
+  // Calls to delete are via brackets to be compatible with old browsers where delete is keyword.
+  private static class JsHelper {
+    static native void delete(InternalJsMap obj, int key) /*-{ obj["delete"](key); }-*/;
+    static native void delete(InternalJsMap obj, String key) /*-{ obj["delete"](key); }-*/;
+  }
 }
