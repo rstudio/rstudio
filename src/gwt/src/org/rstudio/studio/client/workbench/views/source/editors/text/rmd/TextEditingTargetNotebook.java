@@ -17,6 +17,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
@@ -34,8 +36,6 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
@@ -48,12 +48,10 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Rend
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkContextChangeEvent;
-import org.rstudio.studio.client.workbench.views.source.events.MaximizeSourceWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -72,6 +70,17 @@ public class TextEditingTargetNotebook
                           ChunkChangeEvent.Handler,
                           ChunkContextChangeEvent.Handler
 {
+   private class ChunkExecQueueUnit
+   {
+      public ChunkExecQueueUnit(String chunkIdIn, String codeIn)
+      {
+         chunkId = chunkIdIn;
+         code = codeIn;
+      }
+      public String chunkId;
+      public String code;
+   };
+
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
                                     TextEditingTargetRMarkdownHelper rmdHelper,
                                     DocDisplay docDisplay,
@@ -84,6 +93,7 @@ public class TextEditingTargetNotebook
       outputWidgets_ = new HashMap<String, ChunkOutputWidget>();
       lineWidgets_ = new HashMap<String, LineWidget>();
       rmdHelper_ = rmdHelper;
+      chunkExecQueue_ = new LinkedList<ChunkExecQueueUnit>();
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       // initialize the display's default output mode 
@@ -150,13 +160,12 @@ public class TextEditingTargetNotebook
    }
    
    @Inject
-   public void initialize(EventBus events, UIPrefs uiPrefs,
+   public void initialize(EventBus events, 
          RMarkdownServerOperations server,
          ConsoleServerOperations console,
          Provider<SourceWindowManager> pSourceWindowManager)
    {
       events_ = events;
-      uiPrefs_ = uiPrefs;
       server_ = server;
       console_ = console;
       pSourceWindowManager_ = pSourceWindowManager;
@@ -179,18 +188,49 @@ public class TextEditingTargetNotebook
       // find or create a matching chunk definition 
       final ChunkDefinition chunkDef = getChunkDefAtRow(row);
 
-      // let the chunk widget know it's started executing
-      outputWidgets_.get(chunkDef.getChunkId()).setChunkExecuting();
+      // check to see if this chunk is already in the execution queue--if so
+      // just update the code and leave it queued
+      for (ChunkExecQueueUnit unit: chunkExecQueue_)
+      {
+         if (unit.chunkId == chunkDef.getChunkId())
+         {
+            unit.code = code;
+            return;
+         }
+      }
 
+      // put it in the queue 
+      chunkExecQueue_.add(new ChunkExecQueueUnit(chunkDef.getChunkId(), code));
+      
+      // TODO: decorate chunk in some way so that it's clear the chunk is 
+      // queued for execution
+      
+      // initiate queue processing
+      processChunkExecQueue();
+   }
+   
+   private void processChunkExecQueue()
+   {
+      if (chunkExecQueue_.isEmpty() || executingChunk_ != null)
+         return;
+      
+      // begin chunk execution
+      final ChunkExecQueueUnit unit = chunkExecQueue_.remove();
+      executingChunk_ = unit;
+      
+      // let the chunk widget know it's started executing
+      outputWidgets_.get(unit.chunkId).setChunkExecuting();
       rmdHelper_.executeInlineChunk(docUpdateSentinel_.getPath(), 
-            docUpdateSentinel_.getId(), chunkDef.getChunkId(), "", code,
+            docUpdateSentinel_.getId(), unit.chunkId, "", unit.code,
             new ServerRequestCallback<Void>()
             {
                @Override
                public void onError(ServerError error)
                {
-                  outputWidgets_.get(chunkDef.getChunkId())
+                  executingChunk_ = null;
+                  outputWidgets_.get(unit.chunkId)
                                 .showServerError(error);
+                  processChunkExecQueue();
                }
             });
    }
@@ -252,6 +292,11 @@ public class TextEditingTargetNotebook
       if (event.getOutput().getDocId() != docUpdateSentinel_.getId())
          return;
       
+      // mark chunk execution as finished
+      if (executingChunk_ != null &&
+          event.getOutput().getChunkId() == executingChunk_.chunkId)
+         executingChunk_ = null;
+
       // if nothing at all was returned, this means the chunk doesn't exist on
       // the server, so clean it up here.
       if (event.getOutput().isEmpty())
@@ -268,6 +313,9 @@ public class TextEditingTargetNotebook
       {
          outputWidgets_.get(chunkId).showChunkOutput(event.getOutput());
       }
+      
+      // process next chunk in execution queue
+      processChunkExecQueue();
    }
 
    @Override
@@ -496,6 +544,8 @@ public class TextEditingTargetNotebook
    private JsArray<ChunkDefinition> initialChunkDefs_;
    private HashMap<String, ChunkOutputWidget> outputWidgets_;
    private HashMap<String, LineWidget> lineWidgets_;
+   private Queue<ChunkExecQueueUnit> chunkExecQueue_;
+   private ChunkExecQueueUnit executingChunk_;
    
    private final TextEditingTargetRMarkdownHelper rmdHelper_;
    private final DocDisplay docDisplay_;
@@ -505,7 +555,6 @@ public class TextEditingTargetNotebook
    private RMarkdownServerOperations server_;
    private ConsoleServerOperations console_;
    private EventBus events_;
-   private UIPrefs uiPrefs_;
    
    private Style editorStyle_;
 

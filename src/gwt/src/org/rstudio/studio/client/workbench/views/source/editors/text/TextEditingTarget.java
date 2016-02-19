@@ -3958,7 +3958,7 @@ public class TextEditingTarget implements
    
    public void executePreviousChunks(final Position position)
    {
-      if (prefs_.showRmdChunkOutputInline().getGlobalValue())
+      if (docDisplay_.showChunkOutputInline())
       {
          executePreviousChunksNotebookMode(position);
          return;
