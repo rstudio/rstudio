@@ -1247,7 +1247,6 @@ public class AceEditor implements DocDisplay,
    {
       Selection selection = getSession().getSelection();
       String oldValue = getSession().getTextRange(selection.getRange());
-      value = StringUtil.normalizeNewLines(value);
 
       replaceSelection(value);
 
@@ -1387,6 +1386,7 @@ public class AceEditor implements DocDisplay,
 
    public void replaceSelection(String code)
    {
+      code = StringUtil.normalizeNewLines(code);
       Range selRange = getSession().getSelection().getRange();
       Position position = getSession().replace(selRange, code);
       Range range = Range.fromPoints(selRange.getStart(), position);
