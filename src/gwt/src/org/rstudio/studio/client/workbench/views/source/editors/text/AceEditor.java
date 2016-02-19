@@ -302,7 +302,7 @@ public class AceEditor implements DocDisplay,
                completionManager_.onPaste(event);
 
             final Position start = getSelectionStart();
-
+            
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                @Override
@@ -790,6 +790,9 @@ public class AceEditor implements DocDisplay,
       // bug in 0.95. We can choose to remove this when 0.95 ships, hopefully
       // any documents that would be affected by this will be gone by then.
       code = code.replaceAll("\u001B", "");
+      
+      // Normalize newlines -- convert all of '\r', '\r\n', '\n\r' to '\n'.
+      code = StringUtil.normalizeNewLines(code);
 
       final AceEditorNative ed = widget_.getEditor();
 
@@ -855,14 +858,13 @@ public class AceEditor implements DocDisplay,
 
    public void insertCode(String code, boolean blockMode)
    {
-      widget_.getEditor().insert(code);
+      widget_.getEditor().insert(StringUtil.normalizeNewLines(code));
    }
 
    public String getCode(Position start, Position end)
    {
       return getSession().getTextRange(Range.fromPoints(start, end));
    }
-
 
    @Override
    public InputEditorSelection search(String needle,
@@ -1384,6 +1386,7 @@ public class AceEditor implements DocDisplay,
 
    public void replaceSelection(String code)
    {
+      code = StringUtil.normalizeNewLines(code);
       Range selRange = getSession().getSelection().getRange();
       Position position = getSession().replace(selRange, code);
       Range range = Range.fromPoints(selRange.getStart(), position);
