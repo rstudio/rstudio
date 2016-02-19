@@ -29,7 +29,7 @@
          fileName = .rs.scalar(fileName)
       ))
    }, error = function(e) {
-      return(list(error = .rs.scalar(e)))
+      return(list(error = .rs.scalar(e$message)))
    })
 })
 
@@ -47,7 +47,7 @@
          fileName = .rs.scalar(profilerOptions$fileName)
       ))
    }, error = function(e) {
-      return(list(error = .rs.scalar(e)))
+      return(list(error = .rs.scalar(e$message)))
    })
 })
 
@@ -64,7 +64,7 @@
          htmlFile = .rs.scalar(paste("profiles/", basename(htmlFile), sep = ""))
       ))
    }, error = function(e) {
-      return(list(error = .rs.scalar(e)))
+      return(list(error = .rs.scalar(e$message)))
    })
 })
 
