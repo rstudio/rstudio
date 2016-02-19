@@ -69,8 +69,6 @@ install rsconnect master
 # temporary pointer to profvis until cran transition
 if R CMD build --help | grep --quiet no-build-vignettes; then
 	install profvis master --no-build-vignettes
-else
-	install profvis master --no-vignettes
 fi 
 
 # back to install-dir
