@@ -2932,13 +2932,11 @@ public class AceEditor implements DocDisplay,
                if (row_ >= editor.getRowCount())
                   return;
                
-               row_ += 200;
+               row_ += ROWS_TOKENIZED_PER_ITERATION;
                row_ = editor.buildScopeTreeUpToRow(row_);
                timer_.schedule(DELAY_MS);
             }
          };
-         
-         row_ = 0;
          
          editor.addCursorChangedHandler(new CursorChangedHandler()
          {
@@ -2953,9 +2951,10 @@ public class AceEditor implements DocDisplay,
       }
       
       private final Timer timer_;
-      private int row_;
+      private int row_ = 0;
       
-      private static final int DELAY_MS = 10;
+      private static final int DELAY_MS = 5;
+      private static final int ROWS_TOKENIZED_PER_ITERATION = 50;
    }
    
    private static final int DEBUG_CONTEXT_LINES = 2;
