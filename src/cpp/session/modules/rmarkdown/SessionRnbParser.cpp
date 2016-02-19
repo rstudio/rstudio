@@ -16,11 +16,10 @@
 #include "SessionRmdNotebook.hpp"
 #include "SessionRnbParser.hpp"
 
+#include <core/Base64.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/http/Util.hpp>
-
-#include <core/system/Crypto.hpp>
 
 #include <session/SessionOptions.hpp>
 
@@ -101,54 +100,39 @@ core::Error saveChunkResources(const std::string& contents,
                "rnb-resource-" + id + "." + extract.extension);
 
          // ascertain encoding type
+         std::string decoded;
          if (value.substr(dataMarker.length(), strlen(dataBase64)) == 
              dataBase64)
          {
-            // base64 encoded data -- open raw connection and decode
-            boost::shared_ptr<std::ostream> pStream;
-            error = libFile.open_w(&pStream, true);
-            if (error)
-            {
-               LOG_ERROR(error);
-               continue;
-            }
-
-            std::vector<unsigned char> valueContents;
-            error = core::system::crypto::base64Decode(value.substr(
+            error = base64::decode(value.substr(
                      dataMarker.length() + strlen(dataBase64) + 1, 
-                     std::string::npos), &valueContents);
+                     std::string::npos), &decoded);
             if (error)
             {
                LOG_ERROR(error);
                continue;
             }
-
-            try
-            {
-               pStream->write(reinterpret_cast<char*>(&valueContents[0]), 
-                              valueContents.size());
-            }
-            CATCH_UNEXPECTED_EXCEPTION
          }
          else if (value.substr(dataMarker.length(), strlen(dataUtf8)) ==
                   dataUtf8)
          {
             // URL encoded data -- decode and write as string
-            std::string decoded = http::util::urlDecode(value.substr(
+            decoded = http::util::urlDecode(value.substr(
                      dataMarker.length() + strlen(dataUtf8) + 1, 
                      std::string::npos));
-            error = core::writeStringToFile(libFile, decoded);
-            if (error)
-            {
-               LOG_ERROR(error);
-               continue;
-            }
          }
          else
          {
             LOG_WARNING_MESSAGE("Unrecognized encoded value: " +
                   value.substr(0, std::min(value.length(),
                                            static_cast<size_t>(256))));
+            continue;
+         }
+
+         error = core::writeStringToFile(libFile, decoded);
+         if (error)
+         {
+            LOG_ERROR(error);
             continue;
          }
 
