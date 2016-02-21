@@ -59,7 +59,7 @@ public class ModelUtils {
       return (T) maybeParameterized.isRawType().getBaseType();
     }
     if (maybeParameterized.isWildcard() != null) {
-      return (T) maybeParameterized.isWildcard().getBaseType();
+      return ensureBaseType((T) maybeParameterized.isWildcard().getBaseType());
     }
     return maybeParameterized;
   }

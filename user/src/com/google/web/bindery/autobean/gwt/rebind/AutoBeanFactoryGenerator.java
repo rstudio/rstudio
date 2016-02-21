@@ -481,6 +481,9 @@ public class AutoBeanFactoryGenerator extends Generator {
     sw.indent();
     for (AutoBeanMethod method : type.getMethods()) {
       JMethod jmethod = method.getMethod();
+      if (jmethod.isStatic()) {
+        continue;
+      }
       String methodName = jmethod.getName();
       JParameter[] parameters = jmethod.getParameters();
       if (isObjectMethodImplementedByShim(jmethod)) {
@@ -508,9 +511,9 @@ public class AutoBeanFactoryGenerator extends Generator {
            * The getter call will ensure that any non-value return type is
            * definitely wrapped by an AutoBean instance.
            */
-          sw.println("%s toReturn = %s.this.getWrapped().%s();", ModelUtils
-              .getQualifiedBaseSourceName(jmethod.getReturnType()), type.getSimpleSourceName(),
-              methodName);
+          String getValueType = ModelUtils.getQualifiedBaseSourceName(jmethod.getReturnType());
+          sw.println("%s toReturn = (%s) %s.this.getWrapped().%s();", getValueType, getValueType,
+              type.getSimpleSourceName(), methodName);
 
           // Non-value types might need to be wrapped
           writeReturnWrapper(sw, type, method);
@@ -539,10 +542,10 @@ public class AutoBeanFactoryGenerator extends Generator {
             sw.println("%s.this.call(\"%s\", null%s %s);", type.getSimpleSourceName(), methodName,
                 arguments.length() > 0 ? "," : "", arguments);
           } else {
-            // Type toReturn = getWrapped().doFoo(params);
-            sw.println("%s toReturn = %s.this.getWrapped().%s(%s);", ModelUtils.ensureBaseType(
-                jmethod.getReturnType()).getQualifiedSourceName(), type.getSimpleSourceName(),
-                methodName, arguments);
+            // Type toReturn = (Type) getWrapped().doFoo(params);
+            String callValueType = ModelUtils.ensureBaseType(jmethod.getReturnType()).getQualifiedSourceName();
+            sw.println("%s toReturn = (%s) %s.this.getWrapped().%s(%s);", callValueType, callValueType,
+                type.getSimpleSourceName(), methodName, arguments);
             // Non-value types might need to be wrapped
             writeReturnWrapper(sw, type, method);
             // call("doFoo", toReturn, params);

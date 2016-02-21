@@ -150,7 +150,7 @@ public class AutoBeanFactoryModel {
           continue;
         }
       } else {
-        poison("Unexpecetd parameters in method %s", method.getName());
+        poison("Unexpected parameters in method %s", method.getName());
         continue;
       }
 
