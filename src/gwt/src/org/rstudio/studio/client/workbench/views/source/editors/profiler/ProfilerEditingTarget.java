@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -33,7 +34,6 @@ import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -56,16 +56,13 @@ import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.P
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
-import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
+import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
-import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
-import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
-import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import java.util.HashSet;
 
@@ -89,8 +86,7 @@ public class ProfilerEditingTarget implements EditingTarget
                                 FileDialogs fileDialogs,
                                 RemoteFileSystemContext fileContext,
                                 WorkbenchContext workbenchContext,
-                                DocDisplay docDisplay,
-                                SourceServerOperations sourceServer)
+                                EventBus eventBus)
    {
       presenter_ = presenter;
       commands_ = commands;
@@ -101,8 +97,7 @@ public class ProfilerEditingTarget implements EditingTarget
       fileDialogs_ = fileDialogs;
       fileContext_ = fileContext;
       workbenchContext_ = workbenchContext;
-      docDisplay_ = docDisplay;
-      sourceServer_ = sourceServer;
+      eventBus_ = eventBus;
    }
 
    public String getId()
@@ -343,15 +338,6 @@ public class ProfilerEditingTarget implements EditingTarget
       doc_ = document;
       view_ = new ProfilerEditingTargetWidget(commands_);
       presenter_.attatch(doc_, view_);
-      dirtyState_ = new DirtyState(docDisplay_, false);
-      
-      docUpdateSentinel_ = new DocUpdateSentinel(
-         sourceServer_,
-         docDisplay_,
-         document,
-         globalDisplay_.getProgressIndicator("Save File"),
-         dirtyState_,
-         events_);
 
       buildHtmlPath();
    }
@@ -476,39 +462,35 @@ public class ProfilerEditingTarget implements EditingTarget
             new ProgressOperationWithInput<FileSystemItem>()
             {
                public void execute(final FileSystemItem saveItem,
-                                   ProgressIndicator indicator)
+                                   final ProgressIndicator indicator)
                {
                   if (saveItem == null)
                      return;
 
-                  try
-                  {
-                     workbenchContext_.setDefaultFileDialogDir(
-                           saveItem.getParentPath());
-                     
-                     final Command saveCommand = new Command() {
+                  workbenchContext_.setDefaultFileDialogDir(
+                        saveItem.getParentPath());
+                  
+                  final String toPath = saveItem.getPath();
+                  server_.copyProfile(
+                     getPath(),
+                     toPath,
+                     new ServerRequestCallback<JavaScriptObject>() {
+                        @Override
+                        public void onResponseReceived(JavaScriptObject response)
+                        {
+                           eventBus_.fireEvent(new FileEditEvent(saveItem));
+                           
+                           indicator.onCompleted();
+                        }
 
                         @Override
-                        public void execute()
+                        public void onError(ServerError error)
                         {
-                           docUpdateSentinel_.save(
-                                 saveItem.getPath(),
-                                 fileType_.getTypeId(),
-                                 null,
-                                 new SaveProfileProgressIndicator(executeOnSuccess));
+                           indicator.onCompleted();
+                           globalDisplay_.showErrorMessage("Failed to Save Profile",
+                                 error.getMessage());
                         }
- 
-                     };
-                     
-                     saveCommand.execute();
-                  }
-                  catch (Exception e)
-                  {
-                     indicator.onError(e.toString());
-                     return;
-                  }
-
-                  indicator.onCompleted();
+                  });
                }
             });
    }
@@ -523,40 +505,6 @@ public class ProfilerEditingTarget implements EditingTarget
       };
    }
    
-   private class SaveProfileProgressIndicator implements ProgressIndicator
-   {
-
-      public SaveProfileProgressIndicator(Command executeOnSuccess)
-      {
-         executeOnSuccess_ = executeOnSuccess;
-      }
-
-      public void onProgress(String message)
-      {
-         onProgress(message, null);
-      }
-
-      public void onProgress(String message, Operation onCancel)
-      {
-      }
-      
-      public void clearProgress()
-      {
-      }
-
-      public void onCompleted()
-      {
-         executeOnSuccess_.execute();
-      }
-
-      public void onError(final String message)
-      {
-         globalDisplay_.showErrorMessage("Error Saving File", message);
-      }
-      
-      private Command executeOnSuccess_;
-   }
-
    private SourceDocument doc_;
    private ProfilerEditingTargetWidget view_;
    private final ProfilerPresenter presenter_;
@@ -571,11 +519,7 @@ public class ProfilerEditingTarget implements EditingTarget
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fileContext_;
    private final WorkbenchContext workbenchContext_;
-   private final DocDisplay docDisplay_;
-   private final SourceServerOperations sourceServer_;
-   
-   private DirtyState dirtyState_;
-   private DocUpdateSentinel docUpdateSentinel_;
+   private final EventBus eventBus_;
    
    private ProfilerType fileType_ = new ProfilerType();
    

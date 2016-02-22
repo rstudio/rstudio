@@ -68,6 +68,18 @@
    })
 })
 
+.rs.addJsonRpcHandler("copy_profile", function(fromPath, toPath)
+{
+   tryCatch({
+      file.copy(fromPath, toPath, overwrite = TRUE)
+
+      return(list(
+      ))
+   }, error = function(e) {
+      return(list(error = .rs.scalar(e$message)))
+   })
+})
+
 .rs.registerNotifyHook("Rprof", "utils", function(...) 
 {
    args <- c(...)
