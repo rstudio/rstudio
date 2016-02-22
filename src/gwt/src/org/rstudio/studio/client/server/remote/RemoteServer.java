@@ -4554,6 +4554,15 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void previewDataImportClean(DataImportOptions dataImportOptions, 
+                                      ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(dataImportOptions));
+      sendRequest(RPC_SCOPE, PREVIEW_DATA_IMPORT_CLEAN, params, requestCallback);
+   }
+
+   @Override
    public void previewDataImportAsyncAbort(ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();

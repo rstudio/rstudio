@@ -662,3 +662,17 @@
    })
 })
 
+.rs.addJsonRpcHandler("preview_data_import_clean", function(dataImportOptions)
+{
+   tryCatch({
+      if (!identical(dataImportOptions$localFiles, NULL))
+      {
+         lapply(dataImportOptions$localFiles, function (e) {
+            file.remove(paste(e));
+         })
+         dataImportOptions
+      }
+   }, error = function(e) {
+      return(list(error = e))
+   })
+})

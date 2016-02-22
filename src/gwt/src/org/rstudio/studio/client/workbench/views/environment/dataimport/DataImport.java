@@ -220,7 +220,7 @@ public class DataImport extends Composite
                public void execute()
                {
                   // Invalidate cached files, click update to refresh stale files
-                  localFiles_ = null;
+                  cleanPreviewResources();
                   
                   if (dataImportFileChooser_.getText() != importOptions_.getImportLocation())
                   {
@@ -441,6 +441,29 @@ public class DataImport extends Composite
       return options;
    }
    
+   @Override
+   public void onDetach()
+   {
+      cleanPreviewResources();
+      super.onDetach();
+   }
+   
+   private void cleanPreviewResources()
+   {
+      if (localFiles_ != null)
+      {
+         server_.previewDataImportClean(getOptions(), new ServerRequestCallback<Void>()
+         {
+            @Override
+            public void onError(ServerError error)
+            {
+            }
+         });
+      }
+      
+      localFiles_ = null;
+   }
+   
    private void setGridViewerData(DataImportPreviewResponse response)
    {
       gridViewer_.setOption("nullsAsNAs", "true");
@@ -484,7 +507,7 @@ public class DataImport extends Composite
                public void execute()
                {
                   progressIndicator_.clearProgress();
-                  localFiles_ = null;
+                  cleanPreviewResources();
                   
                   server_.previewDataImportAsyncAbort(new ServerRequestCallback<Void>()
                   {
@@ -551,7 +574,7 @@ public class DataImport extends Composite
                @Override
                public void onError(ServerError error)
                {
-                  localFiles_ = null;
+                  cleanPreviewResources();
                   gridViewer_.setData(null);
                   progressIndicator_.onError(error.getMessage());
                }
