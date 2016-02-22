@@ -34,12 +34,14 @@ import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ReadOnlyValue;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileType;
@@ -47,6 +49,7 @@ import org.rstudio.studio.client.common.filetypes.ProfilerType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -63,7 +66,9 @@ import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationE
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class ProfilerEditingTarget implements EditingTarget
@@ -86,7 +91,8 @@ public class ProfilerEditingTarget implements EditingTarget
                                 FileDialogs fileDialogs,
                                 RemoteFileSystemContext fileContext,
                                 WorkbenchContext workbenchContext,
-                                EventBus eventBus)
+                                EventBus eventBus,
+                                SourceServerOperations sourceServer)
    {
       presenter_ = presenter;
       commands_ = commands;
@@ -98,6 +104,7 @@ public class ProfilerEditingTarget implements EditingTarget
       fileContext_ = fileContext;
       workbenchContext_ = workbenchContext;
       eventBus_ = eventBus;
+      sourceServer_ = sourceServer;
    }
 
    public String getId()
@@ -194,6 +201,29 @@ public class ProfilerEditingTarget implements EditingTarget
    public void onActivate()
    {
       pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
+      
+      if (!htmlPathInitialized_) {
+         htmlPathInitialized_ = true;
+         
+         String htmlPath = getContents().getHtmlPath();
+         if (htmlPath == null)
+         {
+            buildHtmlPath(new OperationWithInput<String>()
+            {
+               @Override
+               public void execute(String newHtmlPath)
+               {
+                  persistHtmlPath(newHtmlPath);
+                  view_.showProfilePage(newHtmlPath);
+               }
+               
+            });
+         }
+         else
+         {
+            view_.showProfilePage(htmlPath);
+         }
+      }
       
       // If we're already hooked up for some reason, unhook. 
       // This shouldn't happen though.
@@ -338,8 +368,6 @@ public class ProfilerEditingTarget implements EditingTarget
       doc_ = document;
       view_ = new ProfilerEditingTargetWidget(commands_);
       presenter_.attatch(doc_, view_);
-
-      buildHtmlPath();
    }
 
    public void onDismiss(int dismissType)
@@ -414,7 +442,7 @@ public class ProfilerEditingTarget implements EditingTarget
       return doc_.getProperties().cast();
    }
 
-   private void buildHtmlPath()
+   private void buildHtmlPath(final OperationWithInput<String> continuation)
    {
       ProfileOperationRequest request = ProfileOperationRequest
             .create(getPath());
@@ -432,7 +460,7 @@ public class ProfilerEditingTarget implements EditingTarget
                   return;
                }
                
-               view_.showProfilePage(response.getHtmlFile());
+               continuation.execute(response.getHtmlFile());
             }
 
             @Override
@@ -440,8 +468,34 @@ public class ProfilerEditingTarget implements EditingTarget
             {
                globalDisplay_.showErrorMessage("Failed to Open Profile",
                      error.getMessage());
+               
+               continuation.execute(null);
             }
          });
+   }
+   
+   private void persistHtmlPath(String htmlPath)
+   {
+      HashMap<String, String> props = new HashMap<String, String>();
+      props.put("htmlPath", htmlPath);
+      
+      sourceServer_.modifyDocumentProperties(
+         doc_.getId(),
+         props,
+         new SimpleRequestCallback<Void>("Error")
+         {
+            @Override
+            public void onResponseReceived(Void response)
+            {
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               globalDisplay_.showErrorMessage("Failed to Save Profile Properties",
+                     error.getMessage());
+            }
+      });
    }
 
    private void saveNewFile(final String suggestedPath,
@@ -514,6 +568,7 @@ public class ProfilerEditingTarget implements EditingTarget
    private final EventBus events_;
    private final Commands commands_;
    private final ProfilerServerOperations server_;
+   private final SourceServerOperations sourceServer_;
    private final GlobalDisplay globalDisplay_;
    private Provider<SourceWindowManager> pSourceWindowManager_;
    private final FileDialogs fileDialogs_;
@@ -524,4 +579,6 @@ public class ProfilerEditingTarget implements EditingTarget
    private ProfilerType fileType_ = new ProfilerType();
    
    private HandlerRegistration commandHandlerReg_;
+   
+   private boolean htmlPathInitialized_;
 }
