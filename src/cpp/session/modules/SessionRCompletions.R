@@ -863,6 +863,19 @@ assign(x = ".rs.acCompletionTypes",
       type     <- type[order]
    }
    
+   # Avoid generating too many completions
+   limit <- 2000
+   if (length(results) > limit)
+   {
+      cacheable <- FALSE
+      idx <- seq_len(limit)
+      
+      results  <- results[idx]
+      packages <- packages[idx]
+      quote    <- quote[idx]
+      type     <- type[idx]
+   }
+   
    list(token = token,
         results = results,
         packages = packages,
