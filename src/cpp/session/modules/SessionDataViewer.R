@@ -450,8 +450,11 @@
   # cached environment
   cacheFile <- file.path(cacheDir, paste(cacheKey, "Rdata", sep = "."))
   if (file.exists(cacheFile))
-  { 
-    load(cacheFile, envir = .rs.CachedDataEnv)
+  {
+    status <- try(load(cacheFile, envir = .rs.CachedDataEnv), silent = TRUE)
+    if (inherits(status, "try-error"))
+       return(NULL)
+     
     if (exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
       return(get(cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE))
   }
