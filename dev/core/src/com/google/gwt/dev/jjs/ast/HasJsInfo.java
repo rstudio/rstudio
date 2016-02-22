@@ -30,7 +30,12 @@ public interface HasJsInfo extends HasJsName {
     /**
      * Not a js member.
      */
-    NONE,
+    NONE {
+      @Override
+      public String computeName(JMember member) {
+          return null;
+      }
+    },
     /**
      * A JsConstructor.
      */

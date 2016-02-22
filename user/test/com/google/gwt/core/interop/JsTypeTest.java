@@ -514,4 +514,32 @@ public class JsTypeTest extends GWTTestCase {
     assertEquals("foo", callFunction(instance, "foo", null));
     assertEquals("bar", callFunction(instance, "bar", null));
   }
+
+  static class ClassWithJsMethod {
+    @JsMethod(name = "name")
+    public String className() {
+      return ClassWithJsMethod.class.getName();
+    }
+  }
+
+  static class ClassWithJsMethodInheritingName extends ClassWithJsMethod {
+    @JsMethod
+    public String className() {
+      return ClassWithJsMethodInheritingName.class.getName();
+    }
+  }
+
+  private native String callName(Object o) /*-{
+    return o.name();
+  }-*/;
+
+  public void testInheritName() {
+    ClassWithJsMethod object = new ClassWithJsMethod();
+    assertEquals(ClassWithJsMethod.class.getName(), object.className());
+    assertEquals(ClassWithJsMethod.class.getName(), callName(object));
+
+    object = new ClassWithJsMethodInheritingName();
+    assertEquals(ClassWithJsMethodInheritingName.class.getName(), object.className());
+    assertEquals(ClassWithJsMethodInheritingName.class.getName(), callName(object));
+  }
 }

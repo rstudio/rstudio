@@ -109,6 +109,48 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
             + "cannot both use the same JavaScript name 'doIt'.");
   }
 
+  public void testOverrideNoNameSucceeds() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsIgnore");
+    addSnippetImport("jsinterop.annotations.JsMethod");
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetClassDecl(
+        "public static class Parent {",
+        "  @JsMethod(name = \"a\")",
+        "  public void ma() {}",
+        "  @JsMethod(name = \"b\")",
+        "  public void mb() {}",
+        "}",
+        "@JsType",
+        "public static class Child1 extends Parent {",
+        "  public void ma() {}",
+        "  public void mb() {}",
+        "}",
+        "public static class Child2 extends Parent {",
+        "  @JsMethod",
+        "  public void ma() {}",
+        "  @JsMethod",
+        "  public void mb() {}",
+        "}",
+        "public static class Child3 extends Parent {",
+        "  public void ma() {}",
+        "  public void mb() {}",
+        "}",
+        "@JsType",
+        "public static class Child4 extends Parent {",
+        "  @JsIgnore",
+        "  public void ma() {}",
+        "  @JsIgnore",
+        "  public void mb() {}",
+        "}",
+        "public static class Buggy extends Parent {",
+        "  Child1 c1;",
+        "  Child2 c2;",
+        "  Child3 c3;",
+        "  Child4 c4;",
+        "}");
+
+    assertBuggySucceeds();
+  }
   public void testCollidingFieldExportsFails() throws Exception {
     addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetClassDecl(

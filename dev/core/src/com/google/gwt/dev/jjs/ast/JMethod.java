@@ -65,7 +65,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
   @Override
   public void setJsMemberInfo(JsMemberType type, String namespace, String name, boolean exported) {
     this.jsMemberType = type;
-    this.jsName = name != null ? name : type.computeName(this);
+    this.jsName = name;
     this.jsNamespace = namespace;
     this.exported = exported;
   }
@@ -172,14 +172,15 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
   @Override
   public String getQualifiedJsName() {
     String namespace = getJsNamespace();
-    if (jsName.isEmpty()) {
+    String actualJsName = getJsName();
+    if (actualJsName.isEmpty()) {
       assert !needsDynamicDispatch();
       return namespace;
     } else if (JsInteropUtil.isGlobal(namespace)) {
       assert !needsDynamicDispatch();
-      return jsName;
+      return actualJsName;
     } else {
-      return namespace + (isStatic() ? "." : ".prototype.") + jsName;
+      return namespace + (isStatic() ? "." : ".prototype.") + actualJsName;
     }
   }
 
@@ -190,11 +191,11 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
         return method.jsName;
       }
     }
-    return null;
+    return getJsMemberType().computeName(this);
   }
 
   public boolean isJsConstructor() {
-    return isConstructor() && jsName != null;
+    return getJsMemberType() == JsMemberType.CONSTRUCTOR;
   }
 
   /**
