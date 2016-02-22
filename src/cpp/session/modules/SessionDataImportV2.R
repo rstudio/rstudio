@@ -235,7 +235,9 @@
    }
 
    cacheOrFileFromOptions <- function(options, resource = "importLocation") {
-      if (!pathIsUrl(options[[resource]]) ||
+      canCacheData <- identical(options$canCacheData, TRUE)
+
+      if (!canCacheData || !pathIsUrl(options[[resource]]) ||
           identical(options$cacheVariableNames[[resource]], NULL))
          dataImportOptions[[resource]]
       else
@@ -243,7 +245,9 @@
    }
 
    cacheTypeOrFileTypeFromOptions <- function(options, resource = "importLocation") {
-      if (!pathIsUrl(options[[resource]]) ||
+      canCacheData <- identical(options$canCacheData, TRUE)
+
+      if (!canCacheData || !pathIsUrl(options[[resource]]) ||
           identical(options$cacheVariableNames[[resource]], NULL))
          "character"
       else
@@ -255,29 +259,51 @@
       cacheDataCode <- list()
 
       localFile <- unlist(options$localFiles[[resource]])
+      canCacheData <- identical(options$canCacheData, TRUE)
+      cacheDataWorkingDir <- !identical(options$cacheDataWorkingDir, NULL) && options$cacheDataWorkingDir == TRUE
 
-      if (importFromUrl)
+      if (importFromUrl && canCacheData)
       {
-         if (identical(localFile, NULL))
+         cacheVariableName <- options$cacheVariableNames[[resource]]
+
+         if (cacheDataWorkingDir)
          {
-            localFile <- tempfile(
-               tmpdir = dirname(tempdir()),
-               fileext = functionInfo$cacheFileExtension
+            cacheDataCode <- append(
+               cacheDataCode,
+               paste(
+                  cacheVariableName,
+                  " <- tempfile(tmpdir = getwd(), fileext = \"",
+                  functionInfo$cacheFileExtension,
+                  "\")",
+                  sep = "")
+            )
+         }
+         else
+         {
+            if (identical(localFile, NULL))
+            {
+               localFile <- tempfile(
+                  tmpdir = dirname(tempdir()),
+                  fileext = functionInfo$cacheFileExtension
+               )
+            }
+
+            cacheDataCode <- append(
+               cacheDataCode,
+               paste(cacheVariableName, " <- \"", localFile, "\"", sep = "")
             )
          }
 
-         cacheVariableName <- options$cacheVariableNames[[resource]]
 
-         cacheDataCode <- append(
-            cacheDataCode,
-            paste(cacheVariableName, " <- \"", localFile, "\"", sep = "")
-         )
+         downloadCondition <- ''
+         if (canCacheData && !cacheDataWorkingDir)
+         {
+            downloadCondition <- paste("if(!file.exists(", cacheVariableName, ")) ", sep = "")
+         }
 
          cacheDataCode <- append(cacheDataCode, list(
             paste(
-               "if(!file.exists(",
-               cacheVariableName,
-               ")) ",
+               downloadCondition,
                "download.file(\"",
                options[[resource]],
                "\", ",
@@ -425,10 +451,13 @@
    importLocationCache <- cacheCodeFromOptions(dataImportOptions, functionInfo, "importLocation")
    modelLocationCache <- cacheCodeFromOptions(dataImportOptions, functionInfo, "modelLocation")
 
-   importInfo$localFiles <- list(
-      importLocation = importLocationCache$localFile,
-      modelLocation = modelLocationCache$localFile
-   )
+   if (identical(dataImportOptions$canCacheData, TRUE))
+   {
+      importInfo$localFiles <- list(
+         importLocation = importLocationCache$localFile,
+         modelLocation = modelLocationCache$localFile
+      )
+   }
 
    paramOptions <- list(
       options = options,
@@ -504,6 +533,9 @@
 .rs.addJsonRpcHandler("assemble_data_import", function(dataImportOptions)
 {
    tryCatch({
+      dataImportOptions$canCacheData <- dataImportOptions$mode == "xls"
+      dataImportOptions$cacheDataWorkingDir <- dataImportOptions$mode == "xls"
+
       return (.rs.assemble_data_import(dataImportOptions))
    }, error = function(e) {
       return(list(error = e))
@@ -592,6 +624,7 @@
          beforeImportFromOptions[[dataImportOptions$mode]]()
       }
 
+      dataImportOptions$canCacheData <- TRUE
       importInfo <- .rs.assemble_data_import(dataImportOptions)
 
       data <- suppressWarnings(
@@ -622,7 +655,8 @@
       return(list(data = unname(data),
                   columns = columns,
                   options = options,
-                  parsingErrors = parsingErrors))
+                  parsingErrors = parsingErrors,
+                  localFiles = importInfo$localFiles))
    }, error = function(e) {
       return(list(error = e))
    })

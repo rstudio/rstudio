@@ -528,6 +528,11 @@ public class DataImport extends Composite
                   lastSuccessfulResponse_ = response;
                   
                   dataImportOptionsUi_.setPreviewResponse(response);
+
+                  if (response.getLocalFiles() != null)
+                  {
+                     localFiles_ = response.getLocalFiles();
+                  }
                   
                   gridViewer_.setOption("status",
                         "Previewing first " + toLocaleString(maxRows_) + 
@@ -582,7 +587,10 @@ public class DataImport extends Composite
             
             codePreview_ = response.getImportCode();
             dataImportOptionsUi_.setAssembleResponse(response);
-            localFiles_ = response.getLocalFiles();
+            if (response.getLocalFiles() != null)
+            {
+               localFiles_ = response.getLocalFiles();
+            }
             
             setCodeAreaDefaults();
             codeArea_.setCode(codePreview_);
