@@ -171,6 +171,10 @@ var Range = require("ace/range").Range;
       }
    };
 
+   var updateTimerId;
+   var renderStart = 0;
+   var renderEnd   = 0;
+
    /**
     * Eagerly tokenize up to the specified row, using the tokenizer
     * attached to the associated session.
@@ -178,12 +182,19 @@ var Range = require("ace/range").Range;
    this.tokenizeUpToRow = function(maxRow)
    {
       var tokenizer = this.$session.bgTokenizer;
-      var lastTokenizedRow = tokenizer.currentLine;
-      maxRow = Math.max(maxRow, this.$session.getLength() - 1);
-      for (var i = lastTokenizedRow; i <= maxRow; i++)
+
+      renderStart = Math.min(renderStart, tokenizer.currentLine);
+      renderEnd   = Math.max(renderEnd, maxRow);
+
+      for (var i = tokenizer.currentLine; i <= maxRow; i++)
          tokenizer.$tokenizeRow(i);
 
-      tokenizer.fireUpdateEvent(lastTokenizedRow, maxRow);
+      clearTimeout(updateTimerId);
+      updateTimerId = setTimeout(function() {
+         tokenizer.fireUpdateEvent(renderStart, renderEnd);
+         renderStart = renderEnd;
+         renderEnd = 0;
+      }, 700);
    };
 
    /**
