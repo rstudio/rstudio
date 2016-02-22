@@ -272,11 +272,11 @@ public class AceEditor implements DocDisplay,
 
       completionManager_ = new NullCompletionManager();
       diagnosticsBgPopup_ = new DiagnosticsBackgroundPopup(this);
-      if (hasScopeTree())
-         scopeTimer_ = new ScopeTimer(this);
       
       RStudioGinjector.INSTANCE.injectMembers(this);
-
+      
+      backgroundTokenizer_ = new BackgroundTokenizer(this);
+      
       widget_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
          public void onValueChange(ValueChangeEvent<Void> evt)
@@ -2365,6 +2365,16 @@ public class AceEditor implements DocDisplay,
    {
       return handlers_.addHandler(LineWidgetsChangedEvent.TYPE, handler);
    }
+   
+   public boolean isScopeTreeReady()
+   {
+      return !backgroundTokenizer_.isRunning();
+   }
+   
+   public HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler)
+   {
+      return handlers_.addHandler(ScopeTreeReadyEvent.TYPE, handler);
+   }
 
    public HandlerRegistration addRenderFinishedHandler(RenderFinishedEvent.Handler handler)
    {
@@ -2920,41 +2930,73 @@ public class AceEditor implements DocDisplay,
       AceEditor.this.fireEvent(new LineWidgetsChangedEvent());
    }
    
-   private static class ScopeTimer
+   private static class BackgroundTokenizer
    {
-      public ScopeTimer(final AceEditor editor)
+      public BackgroundTokenizer(final AceEditor editor)
       {
+         editor_ = editor;
+         
          timer_ = new Timer()
          {
             @Override
             public void run()
             {
-               if (row_ >= editor.getRowCount())
+               // Stop our timer if we've tokenized up to the end of the document.
+               if (row_ >= editor_.getRowCount())
+               {
+                  // If the timer was triggered by a document change event,
+                  // then fire an event signaling that we have a new scope
+                  // tree ready.
+                  if (mutated_)
+                  {
+                     editor_.fireEvent(new ScopeTreeReadyEvent(
+                           editor_.getScopeTree(),
+                           editor_.getCurrentScope()));
+                     mutated_ = false;
+                  }
                   return;
+               }
                
                row_ += ROWS_TOKENIZED_PER_ITERATION;
-               row_ = editor.buildScopeTreeUpToRow(row_);
+               row_ = Math.max(row_, editor.buildScopeTreeUpToRow(row_));
                timer_.schedule(DELAY_MS);
             }
          };
          
-         editor.addCursorChangedHandler(new CursorChangedHandler()
+         editor_.addDocumentChangedHandler(new DocumentChangedEvent.Handler()
+         {
+            @Override
+            public void onDocumentChanged(DocumentChangedEvent event)
+            {
+               mutated_ = true;
+               row_ = event.getEvent().getRange().getStart().getRow();
+               timer_.schedule(editor_.getSuggestedScopeUpdateDelay() / 2);
+            }
+         });
+         
+         // We signal on cursor change as well so that the background
+         // tokenization pauses while the user is scrolling or typing.
+         editor_.addCursorChangedHandler(new CursorChangedHandler()
          {
             @Override
             public void onCursorChanged(CursorChangedEvent event)
             {
-               int row = event.getPosition().getRow();
-               row_ = row;
-               timer_.schedule(editor.getSuggestedScopeUpdateDelay() / 2);
+               row_ = event.getPosition().getRow();
+               timer_.schedule(editor_.getSuggestedScopeUpdateDelay() / 2);
             }
          });
       }
       
-      private final Timer timer_;
-      private int row_ = 0;
+      public boolean isRunning() { return mutated_; }
       
-      private static final int DELAY_MS = 5;
-      private static final int ROWS_TOKENIZED_PER_ITERATION = 50;
+      private final AceEditor editor_;
+      private final Timer timer_;
+      
+      private int row_ = 0;
+      private boolean mutated_ = true;
+      
+      private static final int DELAY_MS = 0;
+      private static final int ROWS_TOKENIZED_PER_ITERATION = 1000;
    }
    
    private static final int DEBUG_CONTEXT_LINES = 2;
@@ -2980,7 +3022,7 @@ public class AceEditor implements DocDisplay,
    private boolean valueChangeSuppressed_ = false;
    private AceInfoBar infoBar_;
    private boolean showChunkOutputInline_ = false;
-   private ScopeTimer scopeTimer_;
+   private BackgroundTokenizer backgroundTokenizer_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {

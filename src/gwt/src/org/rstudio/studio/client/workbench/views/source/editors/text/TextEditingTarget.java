@@ -422,14 +422,6 @@ public class TextEditingTarget implements
       docDisplay_.setCppCompletionContext(cppCompletionContext_);
       docDisplay_.setRCompletionContext(rContext_);
       scopeHelper_ = new TextEditingTargetScopeHelper(docDisplay_);
-      scopeTimer_ = new Timer()
-      {
-         @Override
-         public void run()
-         {
-            doUpdateCurrentScope();
-         }
-      };
       
       addRecordNavigationPositionHandler(releaseOnDismiss_, 
                                          docDisplay_, 
@@ -594,6 +586,15 @@ public class TextEditingTarget implements
          public void onFindRequested(FindRequestedEvent event)
          {
             view_.showFindReplace(event.getDefaultForward());
+         }
+      });
+      
+      docDisplay_.addScopeTreeReadyHandler(new ScopeTreeReadyEvent.Handler()
+      {
+         @Override
+         public void onScopeTreeReady(ScopeTreeReadyEvent event)
+         {
+            updateCurrentScope();
          }
       });
       
@@ -1627,11 +1628,13 @@ public class TextEditingTarget implements
          public void onCursorChanged(CursorChangedEvent event)
          {
             updateStatusBarPosition();
+            if (docDisplay_.isScopeTreeReady())
+               updateCurrentScope();
+               
          }
       });
       updateStatusBarPosition();
       updateStatusBarLanguage();
-
       
       // build file type menu dynamically (so it can change according
       // to whether e.g. knitr is installed)
@@ -1829,8 +1832,6 @@ public class TextEditingTarget implements
       statusBar_.getLanguage().setValue(fileType_.getLabel());
       boolean canShowScope = fileType_.canShowScopeTree();
       statusBar_.setScopeVisible(canShowScope);
-      if (canShowScope)
-         updateCurrentScope();
    }
 
    private void updateStatusBarPosition()
@@ -1838,18 +1839,13 @@ public class TextEditingTarget implements
       Position pos = docDisplay_.getCursorPosition();
       statusBar_.getPosition().setValue((pos.getRow() + 1) + ":" +
                                         (pos.getColumn() + 1));
-      
-      if (fileType_.canShowScopeTree())
-         updateCurrentScope();
    }
   
    private void updateCurrentScope()
    {
-      scopeTimer_.schedule(docDisplay_.getSuggestedScopeUpdateDelay());
-   }
-   
-   private void doUpdateCurrentScope()
-   {
+      if (fileType_ == null || !fileType_.canShowScopeTree())
+         return;
+      
       // special handing for presentations since we extract
       // the slide structure in a different manner than 
       // the editor scope trees
@@ -5764,7 +5760,6 @@ public class TextEditingTarget implements
    private final LintManager lintManager_;
    private final TextEditingTargetRenameHelper renameHelper_;
    private CollabEditStartParams queuedCollabParams_;
-   private final Timer scopeTimer_;
    
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =

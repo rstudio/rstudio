@@ -48,6 +48,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasD
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasFoldChangeHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasLineWidgetsChangedHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasRenderFinishedHandlers;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
@@ -197,6 +198,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    HandlerRegistration addFindRequestedHandler(FindRequestedEvent.Handler handler);
    
    HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
+   
+   boolean isScopeTreeReady();
+   HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler);
    
    Position getCursorPosition();
    void setCursorPosition(Position position);
