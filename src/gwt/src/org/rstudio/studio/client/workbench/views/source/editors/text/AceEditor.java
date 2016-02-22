@@ -2944,16 +2944,9 @@ public class AceEditor implements DocDisplay,
                // Stop our timer if we've tokenized up to the end of the document.
                if (row_ >= editor_.getRowCount())
                {
-                  // If the timer was triggered by a document change event,
-                  // then fire an event signaling that we have a new scope
-                  // tree ready.
-                  if (mutated_)
-                  {
-                     editor_.fireEvent(new ScopeTreeReadyEvent(
-                           editor_.getScopeTree(),
-                           editor_.getCurrentScope()));
-                     mutated_ = false;
-                  }
+                  editor_.fireEvent(new ScopeTreeReadyEvent(
+                        editor_.getScopeTree(),
+                        editor_.getCurrentScope()));
                   return;
                }
                
@@ -2968,20 +2961,8 @@ public class AceEditor implements DocDisplay,
             @Override
             public void onDocumentChanged(DocumentChangedEvent event)
             {
-               mutated_ = true;
                row_ = event.getEvent().getRange().getStart().getRow();
-               timer_.schedule(editor_.getSuggestedScopeUpdateDelay());
-            }
-         });
-         
-         // We signal on cursor change as well so that the background
-         // tokenization pauses while the user is scrolling or typing.
-         editor_.addCursorChangedHandler(new CursorChangedHandler()
-         {
-            @Override
-            public void onCursorChanged(CursorChangedEvent event)
-            {
-               timer_.schedule(editor_.getSuggestedScopeUpdateDelay());
+               timer_.schedule(DELAY_MS);
             }
          });
       }
@@ -2995,10 +2976,9 @@ public class AceEditor implements DocDisplay,
       private final Timer timer_;
       
       private int row_ = 0;
-      private boolean mutated_ = true;
       
-      private static final int DELAY_MS = 0;
-      private static final int ROWS_TOKENIZED_PER_ITERATION = 1000;
+      private static final int DELAY_MS = 5;
+      private static final int ROWS_TOKENIZED_PER_ITERATION = 200;
    }
    
    private static final int DEBUG_CONTEXT_LINES = 2;
