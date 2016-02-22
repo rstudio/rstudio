@@ -199,7 +199,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
    
-   boolean isScopeTreeReady();
+   boolean isScopeTreeReady(int row);
    HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler);
    
    Position getCursorPosition();

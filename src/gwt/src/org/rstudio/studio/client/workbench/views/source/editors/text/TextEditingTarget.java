@@ -1628,7 +1628,7 @@ public class TextEditingTarget implements
          public void onCursorChanged(CursorChangedEvent event)
          {
             updateStatusBarPosition();
-            if (docDisplay_.isScopeTreeReady())
+            if (docDisplay_.isScopeTreeReady(event.getPosition().getRow()))
                updateCurrentScope();
                
          }

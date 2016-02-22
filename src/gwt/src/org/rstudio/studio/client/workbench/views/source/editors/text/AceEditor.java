@@ -2366,9 +2366,9 @@ public class AceEditor implements DocDisplay,
       return handlers_.addHandler(LineWidgetsChangedEvent.TYPE, handler);
    }
    
-   public boolean isScopeTreeReady()
+   public boolean isScopeTreeReady(int row)
    {
-      return !backgroundTokenizer_.isRunning();
+      return backgroundTokenizer_.isReady(row);
    }
    
    public HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler)
@@ -2970,7 +2970,7 @@ public class AceEditor implements DocDisplay,
             {
                mutated_ = true;
                row_ = event.getEvent().getRange().getStart().getRow();
-               timer_.schedule(editor_.getSuggestedScopeUpdateDelay() / 2);
+               timer_.schedule(editor_.getSuggestedScopeUpdateDelay());
             }
          });
          
@@ -2981,13 +2981,15 @@ public class AceEditor implements DocDisplay,
             @Override
             public void onCursorChanged(CursorChangedEvent event)
             {
-               row_ = event.getPosition().getRow();
-               timer_.schedule(editor_.getSuggestedScopeUpdateDelay() / 2);
+               timer_.schedule(editor_.getSuggestedScopeUpdateDelay());
             }
          });
       }
       
-      public boolean isRunning() { return mutated_; }
+      public boolean isReady(int row)
+      {
+         return row < row_;
+      }
       
       private final AceEditor editor_;
       private final Timer timer_;

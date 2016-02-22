@@ -260,7 +260,7 @@ public class DocumentOutlineWidget extends Composite
          @Override
          public void onCursorChanged(CursorChangedEvent event)
          {
-            if (target_.getDocDisplay().isScopeTreeReady())
+            if (target_.getDocDisplay().isScopeTreeReady(event.getPosition().getRow()))
             {
                currentScope_ = target_.getDocDisplay().getCurrentScope();
                resetTreeStyles();
