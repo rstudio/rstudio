@@ -83,10 +83,11 @@ void ClientEventQueue::add(const ClientEvent& event)
          if (event.data().type() == json::StringType)
             pendingConsoleOutput_ += event.data().get_str();
       }
-      else if (event.type() == client_events::kConsoleWriteError)
+      else if (event.type() == client_events::kConsoleWriteError &&
+               event.data().type() == json::StringType)
       {
-         if (event.data().type() == json::StringType)
-            enqueueClientOutputEvent(event.type(), event.data().get_str());
+         flushPendingConsoleOutput();
+         enqueueClientOutputEvent(event.type(), event.data().get_str());
       }
       else
       {
