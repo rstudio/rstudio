@@ -291,10 +291,10 @@
                cacheDataCode,
                paste(
                   cacheVariableName,
-                  " <- file.path(getwd(), \"",
+                  " <- \"",
                   options$dataName,
                   functionInfo$cacheFileExtension,
-                  "\")",
+                  "\"",
                   sep = "")
             )
          }
