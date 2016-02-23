@@ -68,4 +68,9 @@ public class ProfilerEditingTargetWidget extends Composite
    {
       profilePage_.setUrl(path);
    }
+   
+   public String getUrl()
+   {
+      return profilePage_.getUrl();
+   }
 }

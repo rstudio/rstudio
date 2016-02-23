@@ -68,8 +68,10 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 public class ProfilerEditingTarget implements EditingTarget
 {
@@ -430,6 +432,14 @@ public class ProfilerEditingTarget implements EditingTarget
    {
       return getContents().getPath();
    }
+   
+   public void onMessage(String data, String origin)
+   {
+      if (view_.getUrl().startsWith(origin))
+      {
+         
+      }
+   }
 
    @Handler
    void onSaveSourceDocAs()
@@ -559,6 +569,26 @@ public class ProfilerEditingTarget implements EditingTarget
       };
    }
    
+   private static void onGLobalMessage(String data, String origin)
+   {  
+      if ("gotosource".equals(data))
+      {
+         for (ProfilerEditingTarget profilerEditingTarget : allProfilerEditingTargets_)
+         {
+            profilerEditingTarget.onMessage(data, origin);
+         }
+      }
+   }
+
+   private native static void initializeEvents() /*-{  
+      var handler = $entry(function(e) {
+         if (typeof e.data != 'string')
+            return;
+         @org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfileEditingTarget::onGLobalMessage(Ljava/lang/String;Ljava/lang/String;)(e.data, e.origin);
+      });
+      $wnd.addEventListener("message", handler, true);
+   }-*/;
+   
    private SourceDocument doc_;
    private ProfilerEditingTargetWidget view_;
    private final ProfilerPresenter presenter_;
@@ -581,4 +611,7 @@ public class ProfilerEditingTarget implements EditingTarget
    private HandlerRegistration commandHandlerReg_;
    
    private boolean htmlPathInitialized_;
+   
+   private static List<ProfilerEditingTarget> allProfilerEditingTargets_ = 
+         new ArrayList<ProfilerEditingTarget>();
 }
