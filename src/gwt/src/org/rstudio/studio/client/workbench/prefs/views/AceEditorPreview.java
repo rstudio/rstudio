@@ -156,7 +156,10 @@ public class AceEditorPreview extends DynamicIFrame
       if (!isFrameLoaded_)
          return;
 
-      FontSizer.setNormalFontSize(getDocument(), fontSize_ * zoomLevel_);
+      if (zoomLevel_ == null)
+         FontSizer.setNormalFontSize(getDocument(),  fontSize_);
+      else
+         FontSizer.setNormalFontSize(getDocument(), fontSize_ * zoomLevel_);
    }
 
    public void setFont(String font)
@@ -186,7 +189,8 @@ public class AceEditorPreview extends DynamicIFrame
       if (!isFrameLoaded_)
          return;
       
-      setFontSize(fontSize_);
+      if (fontSize_ != null)
+         setFontSize(fontSize_);
    }
  
    private LinkElement currentStyleLink_;
