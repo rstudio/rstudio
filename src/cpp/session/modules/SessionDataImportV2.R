@@ -272,6 +272,18 @@
       if (importFromUrl && canCacheData)
       {
          cacheVariableName <- options$cacheVariableNames[[resource]]
+         cacheUrlName <- options$cacheUrlNames[[resource]]
+         downloadResource <- options[[resource]]
+
+         cacheDataCode <- append(
+            cacheDataCode,
+            paste(
+               cacheUrlName,
+               " <- \"",
+               downloadResource,
+               "\"",
+               sep = "")
+         )
 
          if (cacheDataWorkingDir)
          {
@@ -312,9 +324,9 @@
          cacheDataCode <- append(cacheDataCode, list(
             paste(
                downloadCondition,
-               "download.file(\"",
-               options[[resource]],
-               "\", ",
+               "download.file(",
+               cacheUrlName,
+               ", ",
                cacheVariableName,
                ")",
                sep = ""
@@ -446,9 +458,14 @@
    dataName <- tolower(gsub("[\\._]+", "_", c(make.names(dataName)), perl=TRUE))
    importInfo$dataName <- dataImportOptions$dataName <- dataName
 
+   dataImportOptions$cacheUrlNames <- list()
+   dataImportOptions$cacheUrlNames$importLocation <- paste("url", sep = "")
+   dataImportOptions$cacheUrlNames$modelLocation <- paste("modelurl", sep = "")
+
    dataImportOptions$cacheVariableNames <- list()
-   dataImportOptions$cacheVariableNames$importLocation <- paste(dataName, "_file", sep = "")
-   dataImportOptions$cacheVariableNames$modelLocation <- paste(dataName, "_model_file", sep = "")
+   dataImportOptions$cacheVariableNames$importLocation <- paste("destfile", sep = "")
+   dataImportOptions$cacheVariableNames$modelLocation <- paste("modelfile", sep = "")
+
    if (identical(dataImportOptions$localFiles, NULL)) {
       dataImportOptions$localFiles <- list()
    }
