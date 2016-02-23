@@ -156,7 +156,7 @@ public class AceEditorPreview extends DynamicIFrame
       if (!isFrameLoaded_)
          return;
 
-      FontSizer.setNormalFontSize(getDocument(), fontSize);
+      FontSizer.setNormalFontSize(getDocument(), fontSize_ * zoomLevel_);
    }
 
    public void setFont(String font)
@@ -185,33 +185,9 @@ public class AceEditorPreview extends DynamicIFrame
       zoomLevel_ = zoomLevel;
       if (!isFrameLoaded_)
          return;
-   
-      final String STYLE_EL_ID = "__rstudio_zoom_level";
-      Document document = getDocument();
-
-      Element oldStyle = document.getElementById(STYLE_EL_ID);
-
-      StyleElement style = document.createStyleElement();
-      style.setAttribute("type", "text/css");
-      String zoom = Double.toString(zoomLevel);
-      style.setInnerText(".ace_line {\n" +
-                         "  -webkit-transform: scale(" + zoom + ");\n" +
-                         "}");
-
-      document.getBody().appendChild(style);
-
-      if (oldStyle != null)
-         oldStyle.removeFromParent();
-
-      style.setId(STYLE_EL_ID);
+      
+      setFontSize(fontSize_);
    }
-   
-   public void reload()
-   {
-      getWindow().reload();
-   }
-   
- 
  
    private LinkElement currentStyleLink_;
    private boolean isFrameLoaded_;
