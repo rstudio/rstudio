@@ -43,5 +43,6 @@
 * Ensure that SparkR DataFrames appear as data in environment pane
 * Avoid firing active bindings in completion system
 * Avoid perturbing RNG state when invoking View()
+* Fix unlinked directories in Files pane when other users' folders are browseable
 
 
