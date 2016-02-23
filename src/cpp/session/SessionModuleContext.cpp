@@ -336,6 +336,16 @@ SEXP rs_restartR(SEXP afterRestartSEXP)
    return R_NilValue;
 }
 
+SEXP rs_generateShortUuid()
+{
+   // generate a short uuid -- we make this available in R code so that it's
+   // possible to create random identifiers without perturbing the state of the
+   // RNG that R uses
+   std::string uuid = core::system::generateShortenedUuid();
+   r::sexp::Protect rProtect;
+   return r::sexp::create(uuid, &rProtect);
+}
+
 } // anonymous namespace
 
 
@@ -2208,6 +2218,11 @@ Error initialize()
             "rs_setUsingMingwGcc49",
             (DL_FUNC)rs_setUsingMingwGcc49,
             1);
+
+   r::routines::registerCallMethod(
+            "rs_generateShortUuid",
+            (DL_FUNC)rs_generateShortUuid, 
+            0);
    
    // initialize monitored scratch dir
    initializeMonitoredUserScratchDir();

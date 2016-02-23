@@ -42,5 +42,6 @@
 * Fix highlighting in R mode for numbers with only a trailing decimal (e.g. '1.')
 * Ensure that SparkR DataFrames appear as data in environment pane
 * Avoid firing active bindings in completion system
+* Avoid perturbing RNG state when invoking View()
 
 

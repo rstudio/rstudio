@@ -594,7 +594,7 @@
 
 .rs.addFunction("addCachedData", function(obj, objName) 
 {
-   cacheKey <- paste(sample(c(letters, 0:9), 10, replace = TRUE), collapse = "")
+   cacheKey <- .Call(.rs.routines$rs_generateShortUuid)
    .rs.assignCachedData(cacheKey, obj, objName)
    cacheKey
 })
