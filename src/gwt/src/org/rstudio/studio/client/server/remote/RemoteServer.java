@@ -4554,6 +4554,15 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void previewDataImportClean(DataImportOptions dataImportOptions, 
+                                      ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(dataImportOptions));
+      sendRequest(RPC_SCOPE, PREVIEW_DATA_IMPORT_CLEAN, params, requestCallback);
+   }
+
+   @Override
    public void previewDataImportAsyncAbort(ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -4920,6 +4929,7 @@ public class RemoteServer implements Server
    private static final String ASSEMBLE_DATA_IMPORT = "assemble_data_import";
    private static final String PREVIEW_DATA_IMPORT_ASYNC = "preview_data_import_async";
    private static final String PREVIEW_DATA_IMPORT_ASYNC_ABORT = "preview_data_import_async_abort";
+   private static final String PREVIEW_DATA_IMPORT_CLEAN = "preview_data_import_clean";
 
    private static final String START_PROFILING = "start_profiling";
    private static final String STOP_PROFILING = "stop_profiling";

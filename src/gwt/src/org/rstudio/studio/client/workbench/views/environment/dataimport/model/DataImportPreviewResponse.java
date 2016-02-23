@@ -44,4 +44,8 @@ public class DataImportPreviewResponse extends JavaScriptObject
    public final native String[] getSupportedColumnTypes() /*-{
       return this.options && this.options.columnTypes ? this.options.columnTypes : [];
    }-*/;
+   
+   public final native JavaScriptObject getLocalFiles() /*-{
+      return this.localFiles;
+   }-*/;
 }
