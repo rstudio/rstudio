@@ -196,7 +196,14 @@
    for (optionName in parameterNames) {
       if (!identical(NULL, options[[optionName]]) &&
             !identical(options[[optionName]], parameterDefinitions[[optionName]])) {
-         optionsNoDefaults[[optionName]] <- options[[optionName]]
+         if (is.numeric(options[[optionName]]) && is.numeric(parameterDefinitions[[optionName]])) {
+            if (!isTRUE(all.equal(options[[optionName]], parameterDefinitions[[optionName]]))) {
+               optionsNoDefaults[[optionName]] <- options[[optionName]]
+            }
+         }
+         else {
+            optionsNoDefaults[[optionName]] <- options[[optionName]]
+         }
       }
    }
 
@@ -272,7 +279,8 @@
                cacheDataCode,
                paste(
                   cacheVariableName,
-                  " <- tempfile(tmpdir = getwd(), fileext = \"",
+                  " <- file.path(getwd(), \"",
+                  options$dataName,
                   functionInfo$cacheFileExtension,
                   "\")",
                   sep = "")
@@ -298,7 +306,7 @@
          downloadCondition <- ''
          if (canCacheData && !cacheDataWorkingDir)
          {
-            downloadCondition <- paste("if(!file.exists(", cacheVariableName, ")) ", sep = "")
+            downloadCondition <- paste("if (!file.exists(", cacheVariableName, ")) ", sep = "")
          }
 
          cacheDataCode <- append(cacheDataCode, list(
@@ -429,13 +437,14 @@
       }
    )
 
-   dataName <- importInfo$dataName <- .rs.assemble_data_import_name(dataImportOptions)
+   dataName <- .rs.assemble_data_import_name(dataImportOptions)
    if (is.null(dataName) || identical(dataName, ""))
    {
       dataName <- "dataset"
    }
 
    dataName <- tolower(gsub("[\\._]+", "_", c(make.names(dataName)), perl=TRUE))
+   importInfo$dataName <- dataImportOptions$dataName <- dataName
 
    dataImportOptions$cacheVariableNames <- list()
    dataImportOptions$cacheVariableNames$importLocation <- paste(dataName, "_file", sep = "")
