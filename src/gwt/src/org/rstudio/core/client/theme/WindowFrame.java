@@ -15,12 +15,15 @@
 package org.rstudio.core.client.theme;
 
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Float;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
+
+import java.util.HashMap;
 
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
@@ -103,7 +106,16 @@ public class WindowFrame extends Composite
       frame_.setWidgetRightWidth(minimize,
                                  ShadowBorder.RIGHT_SHADOW_WIDTH + 25, Style.Unit.PX,
                                  14, Style.Unit.PX);
-
+      
+      buttonsArea_ = new FlowPanel();
+      
+      // Without z-index, the header widget will obscure the context button
+      // if the former is set after the latter.
+      buttonsArea_.getElement().getStyle().setZIndex(10);
+      
+      frame_.add(buttonsArea_);
+      frame_.setWidgetRightWidth(buttonsArea_, 48, Unit.PX, 100, Unit.PX);
+      
       initWidget(frame_);
    }
    
@@ -290,23 +302,24 @@ public class WindowFrame extends Composite
       }
    }
 
-   public void setContextButton(Widget button, int width, int height)
+   public void setContextButton(Widget button, int width, int height, int position)
    {
-      if (contextButton_ != null)
+      if (contextButtons_.containsKey(position) && contextButtons_.get(position) != null)
       {
-         contextButton_.removeFromParent();
-         contextButton_ = null;
+         contextButtons_.get(position).removeFromParent();
+         contextButtons_.put(position, null);
       }
 
       if (button != null)
       {
-         contextButton_ = button;
-         frame_.add(button);
-         frame_.setWidgetRightWidth(button, 48, Unit.PX, width, Unit.PX);
-         frame_.setWidgetTopHeight(button, 3, Unit.PX, height, Unit.PX);
-         // Without z-index, the header widget will obscure the context button
-         // if the former is set after the latter.
-         frame_.getWidgetContainerElement(button).getStyle().setZIndex(10);
+         contextButtons_.put(position, button);
+         button.getElement().getStyle().setFloat(Float.RIGHT);
+         
+         buttonsArea_.add(button);
+         frame_.setWidgetTopHeight(buttonsArea_, 3, Unit.PX, height, Unit.PX);
+         
+         button.getElement().setAttribute("display", "inline-block");
+         button.getElement().setAttribute("float", "right");
       }
    }
 
@@ -363,10 +376,11 @@ public class WindowFrame extends Composite
    private Widget main_;
    private Widget header_;
    private Widget fill_;
-   private Widget contextButton_;
+   private HashMap<Integer, Widget> contextButtons_ = new HashMap<Integer, Widget>();
    private HandlerRegistration ensureVisibleRegistration_;
    private HandlerRegistration ensureHeightRegistration_;
    private Widget previousHeader_;
+   private FlowPanel buttonsArea_;
    
    // Injected ----
    private EventBus events_;

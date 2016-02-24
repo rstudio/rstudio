@@ -77,6 +77,12 @@ public class ConsolePane extends WorkbenchPane
    {
       return consoleInterruptButton_;
    }
+   
+   @Override
+   public IsWidget getProfilerInterruptButton()
+   {
+      return profilerInterruptButton_;
+   }
 
    public int getCharacterWidth()
    {
@@ -93,6 +99,10 @@ public class ConsolePane extends WorkbenchPane
       toolbar.addLeftWidget(commands_.goToWorkingDir().createToolbarButton());
       consoleInterruptButton_ = commands_.interruptR().createToolbarButton();
       toolbar.addRightWidget(consoleInterruptButton_);
+      
+      profilerInterruptButton_ = commands_.interruptR().createToolbarButton();
+      toolbar.addRightWidget(profilerInterruptButton_);
+      
       return toolbar;
    }
    
@@ -169,5 +179,6 @@ public class ConsolePane extends WorkbenchPane
    private Session session_;
    private Label workingDir_;
    private ToolbarButton consoleInterruptButton_;
+   private ToolbarButton profilerInterruptButton_;
    private boolean debugMode_;
 }
