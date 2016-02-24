@@ -265,34 +265,28 @@ inline core::r_util::ProjectId toProjectId(const std::string& projectDir,
       }
    }
 
-   // if this project belongs to someone else, try to look up its shared
-   // project ID (we currently have to do this even if we found the ID in the
-   // map; see note below)
 #ifndef _WIN32
-   struct stat st;
-   if (::stat(projectDir.c_str(), &st) == 0 &&
-       st.st_uid != ::geteuid())
+   // if we don't have a user ID as part of the project ID, there may be 
+   // more work to do
+   if (id.length() == kProjectIdLen)
    {
-      // if we already found an ID but it doesn't contain any user information
-      // (just a raw project ID), we need to do some fixup
-      if (id.length() == kProjectIdLen)
+      // if this project belongs to someone else, try to look up its shared
+      // project ID 
+      struct stat st;
+      if (::stat(projectDir.c_str(), &st) == 0 &&
+          st.st_uid != ::geteuid())
       {
-         // TODO: The following code is temporary. There was a period of time
-         // during which it was possible to get your own project ID for a
-         // project that did not belong to you.
-         //
-         // This is no longer possible, but mismatched project IDs cause
-         // features such as distributed events to fail, and the project IDs
-         // are cached in the mapping file, so until all the per-user IDs are
-         // flushed and replaced with shared IDs, we need to leave this in; it
-         // causes us to erase the per-user ID so it's replaced with a shared
-         // ID.
-
-         idMap.erase(it);
-         it = idMap.end();
+         // fix it up to a shared project ID if we have one. this could happen
+         // if e.g. a project is opened as an unshared project and later opened
+         // as a shared one.
+         std::string sharedId = sharedProjectId(sharedStoragePath, projectDir);
+         if (!sharedId.empty())
+         {
+            idMap.erase(it);
+            it = idMap.end();
+            id = sharedId;
+         }
       }
-
-      id = sharedProjectId(sharedStoragePath, projectDir);
    }
 #endif
 
