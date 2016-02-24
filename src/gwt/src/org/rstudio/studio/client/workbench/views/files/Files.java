@@ -48,6 +48,7 @@ import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.files.events.*;
+import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
@@ -83,7 +84,7 @@ public class Files
       void setColumnSortOrder(JsArray<ColumnSortInfo> sortOrder);
       
       void listDirectory(FileSystemItem directory, 
-                         ServerDataSource<JsArray<FileSystemItem>> filesDS);
+                         ServerDataSource<DirectoryListing> filesDS);
       
       void updateDirectoryListing(FileChange action);
       
@@ -621,11 +622,11 @@ public class Files
    
    // data source for listing files on the current path which can 
    // be passed to the files view
-   ServerDataSource<JsArray<FileSystemItem>> currentPathFilesDS_ = 
-      new ServerDataSource<JsArray<FileSystemItem>>()
+   ServerDataSource<DirectoryListing> currentPathFilesDS_ = 
+      new ServerDataSource<DirectoryListing>()
       {
          public void requestData(
-               ServerRequestCallback<JsArray<FileSystemItem>> requestCallback)
+               ServerRequestCallback<DirectoryListing> requestCallback)
          {
             // pass true to enable monitoring for all calls to list_files
             server_.listFiles(currentPath_, true, requestCallback);

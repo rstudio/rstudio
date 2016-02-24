@@ -24,10 +24,13 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.core.client.widget.images.MessageDialogImages;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
@@ -40,7 +43,9 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCompletedEvent;
+import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentFailedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentStartedEvent;
+import org.rstudio.studio.client.rsconnect.model.PlotPublishMRUList;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDirectoryState;
@@ -69,7 +74,13 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.user.client.Command;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -78,7 +89,8 @@ import com.google.inject.Singleton;
 public class RSConnect implements SessionInitHandler, 
                                   RSConnectActionEvent.Handler,
                                   RSConnectDeployInitiatedEvent.Handler,
-                                  RSConnectDeploymentCompletedEvent.Handler
+                                  RSConnectDeploymentCompletedEvent.Handler,
+                                  RSConnectDeploymentFailedEvent.Handler
 {
    public interface Binder
            extends CommandBinder<Commands, RSConnect> {}
@@ -87,7 +99,6 @@ public class RSConnect implements SessionInitHandler,
    public RSConnect(EventBus events, 
                     Commands commands, 
                     Session session,
-                    Satellite satellite,
                     GlobalDisplay display,
                     DependencyManager dependencyManager,
                     Binder binder, 
@@ -95,7 +106,8 @@ public class RSConnect implements SessionInitHandler,
                     SourceServerOperations sourceServer,
                     RPubsServerOperations rpubsServer,
                     RSAccountConnector connector,
-                    Provider<UIPrefs> pUiPrefs)
+                    Provider<UIPrefs> pUiPrefs,
+                    PlotPublishMRUList plotMru)
                     
    {
       commands_ = commands;
@@ -106,9 +118,9 @@ public class RSConnect implements SessionInitHandler,
       sourceServer_ = sourceServer;
       rpubsServer_ = rpubsServer;
       events_ = events;
-      satellite_ = satellite;
       connector_ = connector;
       pUiPrefs_ = pUiPrefs;
+      plotMru_ = plotMru;
 
       binder.bind(commands, this);
 
@@ -116,10 +128,11 @@ public class RSConnect implements SessionInitHandler,
       events.addHandler(RSConnectActionEvent.TYPE, this); 
       events.addHandler(RSConnectDeployInitiatedEvent.TYPE, this); 
       events.addHandler(RSConnectDeploymentCompletedEvent.TYPE, this); 
+      events.addHandler(RSConnectDeploymentFailedEvent.TYPE, this);
       
       // satellite windows don't get session init events, so initialize the
       // session here
-      if (satellite_.isCurrentWindowSatellite())
+      if (Satellite.isCurrentWindowSatellite())
       {
          ensureSessionInit();
       }
@@ -136,13 +149,23 @@ public class RSConnect implements SessionInitHandler,
    @Override
    public void onRSConnectAction(final RSConnectActionEvent event)
    {
+      // ignore if we're already waiting for a dependency check 
+      if (depsPending_)
+         return;
+      
       // see if we have the requisite R packages
+      depsPending_ = true; 
       dependencyManager_.withRSConnect(
-         "Publishing content", null, new Command() {
+         "Publishing content", 
+         event.getContentType() == CONTENT_TYPE_DOCUMENT,
+         null, new CommandWithArg<Boolean>() {
             @Override
-            public void execute()
+            public void execute(Boolean succeeded)
             {
-               handleRSConnectAction(event); 
+               if (succeeded)
+                  handleRSConnectAction(event); 
+               
+               depsPending_ = false;
             }
          });  
    }
@@ -179,7 +202,8 @@ public class RSConnect implements SessionInitHandler,
          switch (event.getContentType())
          {
          case CONTENT_TYPE_APP:
-            publishAsCode(event);
+         case CONTENT_TYPE_APP_SINGLE:
+            publishAsCode(event, true);
             break;
          case CONTENT_TYPE_PRES:
          case CONTENT_TYPE_PLOT:
@@ -205,9 +229,11 @@ public class RSConnect implements SessionInitHandler,
                               new RSConnectPublishSource(event.getPath(), 
                                     event.getHtmlFile(), 
                                     arg.isSelfContained(), 
-                                    arg.getDescription()));
+                                    arg.isShiny(),
+                                    arg.getDescription(),
+                                    event.getContentType()));
                      else
-                        publishAsCode(event);
+                        publishAsCode(event, arg.isShiny());
                   }
                });
             }
@@ -278,7 +304,7 @@ public class RSConnect implements SessionInitHandler,
             else
             {
                // single Shiny doc
-               publishAsCode(event);
+               publishAsCode(event, true);
             }
          }
          else
@@ -294,7 +320,7 @@ public class RSConnect implements SessionInitHandler,
                else
                {
                   // we don't have output, always publish the code
-                  publishAsCode(event);
+                  publishAsCode(event, false);
                }
             }
             else if (input.isSelfContained() && input.hasDocOutput())
@@ -311,31 +337,40 @@ public class RSConnect implements SessionInitHandler,
             }
          }
       }
-      else if (input.getContentType() == CONTENT_TYPE_APP)
+      else if (input.getContentType() == CONTENT_TYPE_APP ||
+               input.getContentType() == CONTENT_TYPE_APP_SINGLE)
       {
-         publishAsCode(event);
+         publishAsCode(event, true);
       }
    }
    
-   private void publishAsCode(RSConnectActionEvent event)
+   private void publishAsCode(RSConnectActionEvent event, boolean isShiny)
    {
       RSConnectPublishSource source = null;
-      if (event.getContentType() == CONTENT_TYPE_APP)
+      if (event.getContentType() == CONTENT_TYPE_APP ||
+          event.getContentType() == CONTENT_TYPE_APP_SINGLE)
       {
          if (StringUtil.getExtension(event.getPath()).equalsIgnoreCase("r"))
          {
             FileSystemItem rFile = FileSystemItem.createFile(event.getPath());
-            source = new RSConnectPublishSource(rFile.getParentPathString());
+            // use the directory for the deployment record when publishing 
+            // directory-based apps; use the file itself when publishing 
+            // single-file apps
+            source = new RSConnectPublishSource(rFile.getParentPathString(),
+                  event.getContentType() == CONTENT_TYPE_APP ? 
+                        rFile.getParentPathString() :
+                        rFile.getName());
          }
          else
          {
-            source = new RSConnectPublishSource(event.getPath());
+            source = new RSConnectPublishSource(event.getPath(),
+                  event.getPath());
          }
       }
       else
       {
          source = new RSConnectPublishSource(event.getPath(), 
-            false, null);
+            false, isShiny, null, event.getContentType());
       }
          
       publishAsFiles(event, source);
@@ -349,6 +384,7 @@ public class RSConnect implements SessionInitHandler,
          source = new RSConnectPublishSource(
                      input.getOriginatingEvent().getFromPreview(),
                      input.isSelfContained(),
+                     input.isShiny(),
                      input.getDescription());
       }
       else
@@ -356,7 +392,9 @@ public class RSConnect implements SessionInitHandler,
          source = new RSConnectPublishSource(
                input.getOriginatingEvent().getHtmlFile(),
                input.isSelfContained(), 
-               input.getDescription());
+               input.isShiny(),
+               input.getDescription(),
+               input.getContentType());
       }
       publishAsFiles(input.getOriginatingEvent(), source);
    }
@@ -506,6 +544,60 @@ public class RSConnect implements SessionInitHandler,
       }
    }
 
+   @Override
+   public void onRSConnectDeploymentFailed(
+         final RSConnectDeploymentFailedEvent event)
+   {
+      String failedPath = event.getData().getPath();
+      // if this looks like an API call, process the path to get the 'bare'
+      // server URL
+      int pos = failedPath.indexOf("__api__");
+      if (pos < 1)
+      {
+         // if not, just get the host
+         pos = failedPath.indexOf("/", 10) + 1;
+      }
+      if (pos > 0)
+      {
+         failedPath = failedPath.substring(0, pos);
+      }
+      final String serverUrl = failedPath;
+      
+      new ModalDialogBase()
+      {
+         @Override
+         protected Widget createMainWidget()
+         {
+            setText("Publish Failed");
+            addOkButton(new ThemedButton("OK", new ClickHandler()
+            {
+               @Override
+               public void onClick(ClickEvent arg0)
+               {
+                  closeDialog();
+               }
+            }));
+            HorizontalPanel panel = new HorizontalPanel();
+            Image errorImage = 
+                  new Image(MessageDialogImages.INSTANCE.dialog_error());
+            errorImage.getElement().getStyle().setMarginTop(1, Unit.EM);
+            errorImage.getElement().getStyle().setMarginRight(1, Unit.EM);
+            panel.add(errorImage);
+            panel.add(new HTML("<p>Your content could not be published because " +
+                  "of a problem on the server.</p>" + 
+                  "<p>More information may be available on the server's home " +
+                  "page:</p>" +
+                  "<p><a href=\"" + serverUrl + "\">" + serverUrl + "</a>" +
+                  "</p>" + 
+                  "<p>If the error persists, contact the server's "  +
+                  "administrator.</p>" +
+                  "<p><small>Error code: " + event.getData().getHttpStatus() + 
+                  "</small></p>"));
+            return panel;
+         }
+      }.showModal();
+   }
+
    public void ensureSessionInit()
    {
       if (sessionInited_)
@@ -562,21 +654,29 @@ public class RSConnect implements SessionInitHandler,
          JsArrayString additionalFiles,
          JsArrayString ignoredFiles,
          boolean isSelfContained,
+         boolean isShiny,
          boolean asMultiple,
          boolean asStatic,
          boolean launch, 
          JavaScriptObject record) /*-{
       $wnd.opener.deployToRSConnect(sourceFile, deployDir, deployFile, 
                                     description, deployFiles, additionalFiles, 
-                                    ignoredFiles, isSelfContained, asMultiple, 
-                                    asStatic, launch, record);
+                                    ignoredFiles, isSelfContained, isShiny,
+                                    asMultiple, asStatic, launch, record);
    }-*/;
+   
+   
+   public static boolean showRSConnectUI()
+   {
+      return true;
+   }
    
    public static String contentTypeDesc(int contentType)
    {
       switch(contentType)
       {
       case RSConnect.CONTENT_TYPE_APP:
+      case RSConnect.CONTENT_TYPE_APP_SINGLE:
          return "Application";
       case RSConnect.CONTENT_TYPE_PLOT:
          return "Plot";
@@ -593,7 +693,7 @@ public class RSConnect implements SessionInitHandler,
    public void fireRSConnectPublishEvent(RSConnectPublishResult result,
          boolean launchBrowser)
    {
-      if (satellite_.isCurrentWindowSatellite())
+      if (Satellite.isCurrentWindowSatellite())
       {
          // in a satellite window, call back to the main window to do a 
          // deployment
@@ -609,6 +709,7 @@ public class RSConnect implements SessionInitHandler,
                JsArrayUtil.toJsArrayString(
                      result.getSettings().getIgnoredFiles()),
                result.getSource().isSelfContained(),
+               result.getSource().isShiny(),
                result.getSettings().getAsMultiple(),
                result.getSettings().getAsStatic(),
                launchBrowser, 
@@ -636,7 +737,7 @@ public class RSConnect implements SessionInitHandler,
                      result.getAccount(), "")));
       }
    }
-
+   
    // Private methods ---------------------------------------------------------
    
    private void uploadToRPubs(RSConnectPublishInput input, 
@@ -663,7 +764,6 @@ public class RSConnect implements SessionInitHandler,
                input.getOriginatingEvent().getFromPrevious().getBundleId(),
             false);
    }
-   
    
    private void handleRSConnectAction(RSConnectActionEvent event)
    {
@@ -699,6 +799,13 @@ public class RSConnect implements SessionInitHandler,
                dirState_.addDeployment(event.getSource().getDeployDir(), 
                      event.getRecord());
                dirStateDirty_ = true;
+               if (event.getSource().getContentCategory() == 
+                     RSConnect.CONTENT_CATEGORY_PLOT)
+               {
+                  plotMru_.addPlotMruEntry(event.getRecord().getAccountName(),
+                        event.getRecord().getServer(),
+                        event.getRecord().getName());
+               }
                launchBrowser_ = event.getLaunchBrowser();
                events_.fireEvent(new RSConnectDeploymentStartedEvent(
                      event.getSource().getDeployKey(), 
@@ -722,6 +829,7 @@ public class RSConnect implements SessionInitHandler,
          }
       });
    }
+
    // Manage, step 1: create a list of apps deployed from this directory
    private void configureShinyApp(final String dir)
    {
@@ -826,8 +934,8 @@ public class RSConnect implements SessionInitHandler,
    private final native void exportNativeCallbacks() /*-{
       var thiz = this;     
       $wnd.deployToRSConnect = $entry(
-         function(sourceFile, deployDir, deployFile, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, asMultiple, asStatic, launch, record) {
-            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;ZZZZLcom/google/gwt/core/client/JavaScriptObject;)(sourceFile, deployDir, deployFile, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, asMultiple, asStatic, launch, record);
+         function(sourceFile, deployDir, deployFile, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, isShiny, asMultiple, asStatic, launch, record) {
+            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;ZZZZZLcom/google/gwt/core/client/JavaScriptObject;)(sourceFile, deployDir, deployFile, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, isShiny, asMultiple, asStatic, launch, record);
          }
       ); 
    }-*/;
@@ -840,6 +948,7 @@ public class RSConnect implements SessionInitHandler,
                                   JsArrayString additionalFiles, 
                                   JsArrayString ignoredFiles, 
                                   boolean isSelfContained,
+                                  boolean isShiny,
                                   boolean asMultiple, 
                                   boolean asStatic,
                                   boolean launch, 
@@ -862,7 +971,7 @@ public class RSConnect implements SessionInitHandler,
       RSConnectDeploymentRecord record = jsoRecord.cast();
       events_.fireEvent(new RSConnectDeployInitiatedEvent(
             new RSConnectPublishSource(sourceFile, deployDir, deployFile,
-                  isSelfContained, description),
+                  isSelfContained, isShiny, description),
             new RSConnectPublishSettings(deployFilesList, 
                   additionalFilesList, ignoredFilesList, asMultiple, asStatic), 
             launch, record));
@@ -882,6 +991,7 @@ public class RSConnect implements SessionInitHandler,
                   input.setIsMultiRmd(details.isMultiRmd());
                   input.setIsShiny(details.isShinyRmd());
                   input.setIsSelfContained(details.isSelfContained());
+                  input.setHasConnectAccount(details.hasConnectAccount());
                   if (StringUtil.isNullOrEmpty(input.getDescription()))
                   {
                      if (details.getTitle() != null && 
@@ -922,12 +1032,14 @@ public class RSConnect implements SessionInitHandler,
    private final SourceServerOperations sourceServer_;
    private final DependencyManager dependencyManager_;
    private final EventBus events_;
-   private final Satellite satellite_;
    private final RSAccountConnector connector_;
    private final Provider<UIPrefs> pUiPrefs_;
+   private final PlotPublishMRUList plotMru_;
    
    private boolean launchBrowser_ = false;
    private boolean sessionInited_ = false;
+   private boolean depsPending_ = false;
+   private String lastDeployedServer_ = "";
    
    // incremented on each RPubs publish (to provide a unique context)
    private static int rpubsCount_ = 0;
@@ -938,20 +1050,25 @@ public class RSConnect implements SessionInitHandler,
    public final static String CLOUD_SERVICE_NAME = "ShinyApps.io";
    
    // No/unknown content type 
-   public final static int CONTENT_TYPE_NONE     = 0;
+   public final static int CONTENT_TYPE_NONE       = 0;
    
    // A single HTML file representing a plot
-   public final static int CONTENT_TYPE_PLOT     = 1;
+   public final static int CONTENT_TYPE_PLOT       = 1;
    
    // A document (.Rmd, .md, etc.), 
-   public final static int CONTENT_TYPE_DOCUMENT = 2;
+   public final static int CONTENT_TYPE_DOCUMENT   = 2;
    
    // A Shiny application
-   public final static int CONTENT_TYPE_APP      = 3;
+   public final static int CONTENT_TYPE_APP        = 3;
+   
+   // A single-file Shiny application
+   public final static int CONTENT_TYPE_APP_SINGLE = 4;
    
    // Standalone HTML (from HTML widgets/viewer pane, etc.)
-   public final static int CONTENT_TYPE_HTML     = 4;
+   public final static int CONTENT_TYPE_HTML       = 5;
    
    // A .Rpres presentation
-   public final static int CONTENT_TYPE_PRES     = 5;
+   public final static int CONTENT_TYPE_PRES       = 6;
+   
+   public final static String CONTENT_CATEGORY_PLOT = "plot";
 }

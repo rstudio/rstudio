@@ -38,10 +38,10 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
    }
 
    public static RSConnectActionEvent DeployAppEvent(String path, 
-         RSConnectDeploymentRecord fromPrevious)
+         int contentType, RSConnectDeploymentRecord fromPrevious)
    {
       return new RSConnectActionEvent(ACTION_TYPE_DEPLOY, 
-            RSConnect.CONTENT_TYPE_APP, path, null, null, null, fromPrevious);
+            contentType, path, null, null, null, fromPrevious);
    }
    
    public static RSConnectActionEvent DeployDocEvent(RenderedDocPreview params,
@@ -56,11 +56,12 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
             fromPrevious);
    }
    
-   public static RSConnectActionEvent DeployPlotEvent(String htmlFile)
+   public static RSConnectActionEvent DeployPlotEvent(String htmlFile, 
+         RSConnectDeploymentRecord fromPrevious)
    {
       return new RSConnectActionEvent(ACTION_TYPE_DEPLOY, 
             RSConnect.CONTENT_TYPE_PLOT, null, htmlFile, "Current Plot",
-            null, null);
+            null, fromPrevious);
    }
 
    public static RSConnectActionEvent DeployHtmlEvent(int contentType,

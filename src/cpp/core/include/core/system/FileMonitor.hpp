@@ -23,6 +23,7 @@
 #include <boost/function.hpp>
 
 #include <core/FilePath.hpp>
+#include <core/ScheduledCommand.hpp>
 #include <core/collection/Tree.hpp>
 
 #include <core/system/System.hpp>
@@ -134,6 +135,9 @@ void unregisterMonitor(Handle handle);
 void checkForChanges();
 
 
+// create a ScheduledCommand that periodically checks for changes
+boost::shared_ptr<ScheduledCommand> checkForChangesCommand(
+                       const boost::posix_time::time_duration& interval);
 
 // convenience functions for creating filters that are useful in
 // file monitoring scenarios

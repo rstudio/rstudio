@@ -24,6 +24,7 @@
 
 #include <core/Settings.hpp>
 #include <core/FilePath.hpp>
+#include <core/StringUtils.hpp>
 
 #include <core/json/Json.hpp>
 
@@ -98,6 +99,7 @@ public:
    bool alwaysEnableRnwCorcordance() const;
    bool handleErrorsInUserCodeOnly() const;
    int shinyViewerType() const;
+   bool enableRSConnectUI() const;
 
    bool rProfileOnResume() const;
    void setRprofileOnResume(bool rProfileOnResume);
@@ -111,6 +113,9 @@ public:
    bool loadRData() const;
    void setLoadRData(bool loadRData);
 
+   bool showLastDotValue() const;
+   void setShowLastDotValue(bool show);
+
    core::FilePath initialWorkingDirectory() const;
    void setInitialWorkingDirectory(const core::FilePath& filePath);
 
@@ -120,11 +125,20 @@ public:
    bool removeHistoryDuplicates() const;
    void setRemoveHistoryDuplicates(bool removeDuplicates);
 
+   core::string_utils::LineEnding lineEndings() const;
+   void setLineEndings(core::string_utils::LineEnding lineEndings);
+
+   bool useNewlineInMakefiles() const;
+   void setUseNewlineInMakefiles(bool useNewline);
+
    CRANMirror cranMirror() const;
    void setCRANMirror(const CRANMirror& cranMirror);
 
    BioconductorMirror bioconductorMirror() const;
    void setBioconductorMirror(const BioconductorMirror& bioconductorMirror);
+
+   bool securePackageDownload() const;
+   void setSecurePackageDownload(bool secureDownload);
 
    bool vcsEnabled() const;
    void setVcsEnabled(bool enabled);
@@ -186,6 +200,15 @@ public:
    bool enableStyleDiagnostics() const;
    void setEnableStyleDiagnostics(bool enable);
 
+   bool usingMingwGcc49() const;
+   void setUsingMingwGcc49(bool usingMingwGcc49);
+
+   std::string showUserHomePage() const;
+   void setShowUserHomePage(const std::string& value);
+
+   bool reuseSessionsForProjectLinks() const;
+   void setReuseSessionsForProjectLinks(bool reuse);
+
 private:
 
    void onSettingsFileChanged(
@@ -223,6 +246,7 @@ private:
    mutable boost::scoped_ptr<core::json::Array> pSpellingCustomDicts_;
    mutable boost::scoped_ptr<bool> pHandleErrorsInUserCodeOnly_;
    mutable boost::scoped_ptr<int> pShinyViewerType_;
+   mutable boost::scoped_ptr<bool> pEnableRSConnectUI_;
    
    // diagnostic-related prefs
    mutable boost::scoped_ptr<bool> pLintRFunctionCalls_;

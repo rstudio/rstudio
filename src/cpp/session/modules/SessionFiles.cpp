@@ -46,6 +46,9 @@
 #include <core/system/ShellUtils.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/RecycleBin.hpp>
+#ifndef _WIN32
+#include <core/system/FileMode.hpp>
+#endif
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -75,7 +78,7 @@ namespace {
 FilesListingMonitor s_filesListingMonitor;
 
 // make sure that monitoring persists accross suspended sessions
-const char * const kMonitoredPath = "files.monitored-path";   
+const char * const kFilesMonitoredPath = "files.monitored-path";
 
 void onSuspend(Settings* pSettings)
 {
@@ -88,7 +91,7 @@ void onSuspend(Settings* pSettings)
    }
 
    // set it
-   pSettings->set(kMonitoredPath, monitoredPath);
+   pSettings->set(kFilesMonitoredPath, monitoredPath);
 }
 
 void onResume(const Settings& settings)
@@ -197,6 +200,8 @@ Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pRes
    if (error)
       return error;
    FilePath targetPath = module_context::resolveAliasedPath(path) ;
+
+   json::Object result;
    
    // if this includes a request for monitoring
    core::json::Array jsonFiles;
@@ -226,7 +231,20 @@ Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pRes
          return error;
    }
 
-   pResponse->setResult(jsonFiles);
+   result["files"] = jsonFiles;
+
+   bool browseable = true;
+
+#ifndef _WIN32
+   // on *nix systems, see if browsing above this path is possible
+   error = core::system::isFileReadable(targetPath.parent(), &browseable);
+   if (error && !core::isPathNotFoundError(error))
+      LOG_ERROR(error);
+#endif
+
+   result["is_parent_browseable"] = browseable;
+
+   pResponse->setResult(result);
    return Success();
 }
 
@@ -864,6 +882,88 @@ bool isMonitoringDirectory(const FilePath& directory)
    return !monitoredPath.empty() && (directory == monitoredPath);
 }
 
+Error writeJSON(const core::json::JsonRpcRequest& request,
+                json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(false);
+   
+   std::string path;
+   json::Object object;
+   Error error = json::readParams(request.params, &path, &object);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   FilePath filePath = module_context::resolveAliasedPath(path);
+   error = filePath.parent().ensureDirectory();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   std::string contents = json::writeFormatted(object);
+   error = writeStringToFile(filePath, contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   pResponse->setResult(true);
+   return Success();
+}
+
+Error readJSON(const core::json::JsonRpcRequest& request,
+               json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(json::Object());
+   
+   std::string path;
+   bool logErrorIfNotFound;
+   Error error = json::readParams(request.params, &path, &logErrorIfNotFound);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   FilePath filePath = module_context::resolveAliasedPath(path);
+   if (!filePath.exists())
+   {
+      Error error = logErrorIfNotFound ?
+               fileNotFoundError(ERROR_LOCATION) :
+               Success();
+      
+      if (error)
+         LOG_ERROR(error);
+      
+      return error;
+   }
+   
+   std::string contents;
+   error = readStringFromFile(filePath, &contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   json::Value valueJson;
+   bool success = json::parse(contents, &valueJson);
+   if (!success)
+   {
+      Error error(json::errc::ParseError, ERROR_LOCATION);
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   pResponse->setResult(valueJson);
+   return Success();
+}
+
 Error initialize()
 {
    // register suspend handler
@@ -898,6 +998,8 @@ Error initialize()
       (bind(registerUriHandler, "/upload", handleFileUploadRequest))
       (bind(registerUriHandler, "/export", handleFileExportRequest))
       (bind(registerRpcMethod, "complete_upload", completeUpload))
+      (bind(registerRpcMethod, "write_json", writeJSON))
+      (bind(registerRpcMethod, "read_json", readJSON))
       (bind(sourceModuleRFile, "SessionFiles.R"))
       (bind(quotas::initialize));
    return initBlock.execute();

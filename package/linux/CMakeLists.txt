@@ -46,7 +46,7 @@ if(RSTUDIO_SERVER)
   # automatic dependency resolution use e.g.
   #   sudo apt-get install gdebi-core
   #   sudo gdebi rstudio-server-0.97.151-amd64.deb
-  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libapparmor1, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libapparmor1, libedit2, ")
 
   # rpm dependencies
   set(RSTUDIO_RPM_DEPENDS "psmisc, ")
@@ -55,9 +55,6 @@ if(RSTUDIO_SERVER)
   if(IS_RHEL_5 AND NOT RSTUDIO_PACKAGE_BUILD_SLES)
      set(RSTUDIO_RPM_DEPENDS "${RSTUDIO_RPM_DEPENDS}libffi, ")
   endif()
-
-  # don't auto-resolve other dependencies
-  set(CPACK_RPM_PACKAGE_AUTOREQPROV " no")
 
 elseif(RSTUDIO_DESKTOP)
  
@@ -69,8 +66,11 @@ elseif(RSTUDIO_DESKTOP)
   set(RPM_POSTINST postinst-desktop.sh.in)
   set(RPM_POSTRM postrm-desktop.sh.in)
 
-  # depend on libjpeg62 (for Qt 4.8 jpeg plugin)
-  set(RSTUDIO_DEBIAN_DEPENDS "libjpeg62, ")
+  # deb dependencies
+  set(RSTUDIO_DEBIAN_DEPENDS "libjpeg62, libedit2, libgstreamer0.10-0, libgstreamer-plugins-base0.10-0, ")
+  
+  # rpm dependencies
+  set(RSTUDIO_RPM_DEPENDS "gstreamer, gstreamer-plugins-base, ")
 
 endif()
 
@@ -189,6 +189,8 @@ set(CPACK_RPM_PACKAGE_LICENSE "AGPL v.3.0")
 set(CPACK_RPM_PACKAGE_GROUP "Development/Tools")
 set(CPACK_RPM_PACKAGE_ARCHITECTURE "${PACKAGE_ARCHITECTURE}")
 set(CPACK_RPM_PACKAGE_REQUIRES "${RSTUDIO_RPM_DEPENDS}")
+set(CPACK_RPM_PACKAGE_AUTOREQPROV " no")
+
 
 # build package
 include(CPack)

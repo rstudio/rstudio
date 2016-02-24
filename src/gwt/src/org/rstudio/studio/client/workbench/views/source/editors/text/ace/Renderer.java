@@ -160,5 +160,18 @@ public class Renderer extends JavaScriptObject
    
    public native final void removeGutterDecoration(int line, String clazz) /*-{
       this.removeGutterDecoration(line, clazz);
-   }-*/;  
+   }-*/;
+   
+   public final native void alignCursor(Position position, double ratio) /*-{
+      this.alignCursor(position, ratio);
+   }-*/;
+   
+   public final native void setScrollPastEnd(boolean value) /*-{
+      this.$scrollPastEnd = value;
+   }-*/;
+   
+   public final native boolean getScrollPastEnd() /*-{
+      return !!this.$scrollPastEnd;
+   }-*/;
+   
 }

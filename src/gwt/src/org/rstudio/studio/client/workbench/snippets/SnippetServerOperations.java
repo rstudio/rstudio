@@ -15,9 +15,14 @@
 package org.rstudio.studio.client.workbench.snippets;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
+
+import com.google.gwt.core.client.JsArray;
 
 public interface SnippetServerOperations
 {
    void transformSnippet(String snippetContent,
                          ServerRequestCallback<String> callBack);
+   
+   void getSnippets(ServerRequestCallback<JsArray<SnippetData>> callback);
 }

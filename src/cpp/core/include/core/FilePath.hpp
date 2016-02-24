@@ -104,6 +104,9 @@ public:
 
    bool hasTextMimeType() const;
    
+   // set last write time
+   void setLastWriteTime(std::time_t time = ::time(NULL)) const;
+   
    // last write time
    std::time_t lastWriteTime() const;
   
@@ -152,6 +155,9 @@ public:
    
    // remove the directory (if it exists) and create a new one in its place
    Error resetDirectory() const;
+
+   // create this file if it doesn't already exist
+   Error ensureFile() const;
    
    // complete a path (if input path is relative, returns path relative
    // to this one; if input path is absolute returns that path)
@@ -233,6 +239,32 @@ public:
 private:
    struct Impl;
    boost::scoped_ptr<Impl> pImpl_;
+};
+
+class RemoveOnExitScope : boost::noncopyable
+{
+public:
+   explicit RemoveOnExitScope(const FilePath& filePath,
+                              const ErrorLocation& errorLocation)
+      : filePath_(filePath), errorLocation_(errorLocation)
+   {
+   }
+   virtual ~RemoveOnExitScope()
+   {
+      try
+      {
+         Error error = filePath_.removeIfExists();
+         if (error)
+            core::log::logError(error, errorLocation_);
+      }
+      catch(...)
+      {
+      }
+   }
+
+private:
+   FilePath filePath_;
+   ErrorLocation errorLocation_;
 };
 
 }

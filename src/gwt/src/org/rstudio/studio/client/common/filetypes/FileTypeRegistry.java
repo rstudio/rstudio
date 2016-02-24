@@ -21,13 +21,14 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
+import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
+import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.resources.client.ImageResource;
@@ -64,7 +65,7 @@ public class FileTypeRegistry
 
    public static final TextFileType DCF =
          new TextFileType("dcf", "DCF", EditorLanguage.LANG_DCF, ".dcf",
-                          ICONS.iconText(), false, false, false, false, false,
+                          ICONS.iconDCF(), false, false, false, false, false,
                           false, false, false, false, false, false, false, false);
    
    public static final TextFileType STAN = new StanFileType();
@@ -95,6 +96,10 @@ public class FileTypeRegistry
    public static final RWebContentFileType RMARKDOWN =
          new RWebContentFileType("r_markdown", "R Markdown", EditorLanguage.LANG_RMARKDOWN,
                               ".Rmd", ICONS.iconRmarkdown(), true);
+   
+   public static final RWebContentFileType RNOTEBOOK =
+         new RWebContentFileType("r_notebook", "R Notebook", EditorLanguage.LANG_RMARKDOWN,
+                                 ".Rnb", ICONS.iconRnotebook(), true);
 
    public static final RWebContentFileType RPRESENTATION = new RPresentationFileType();
 
@@ -219,6 +224,11 @@ public class FileTypeRegistry
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
+   public static final TextFileType MAKEFILE = 
+         new TextFileType("makefile", "Makefile", EditorLanguage.LANG_MAKEFILE, ".makefile", ICONS.iconMakefile(),
+               false, false, false, false, false,
+               false, false, false, false, false, false, false, false);
+   
    public static final TextFileType MATLAB = 
          new TextFileType("matlab", "Matlab", EditorLanguage.LANG_MATLAB, ".m", ICONS.iconMatlab(),
                false, false, false, false, false,
@@ -272,7 +282,7 @@ public class FileTypeRegistry
       session_ = session;
       globalDisplay_ = globalDisplay;
 
-      if (!satellite_.isCurrentWindowSatellite())
+      if (!Satellite.isCurrentWindowSatellite())
          exportEditFileCallback();
 
       FileIconResources icons = ICONS;
@@ -283,13 +293,13 @@ public class FileTypeRegistry
       register("README", TEXT, icons.iconText());
       register(".gitignore", TEXT, icons.iconText());
       register(".Rbuildignore", TEXT, icons.iconText());
-      register("packrat.lock", DCF, icons.iconText());
+      register("packrat.lock", DCF, icons.iconDCF());
       register("*.r", R, icons.iconRdoc());
       register("*.q", R, icons.iconRdoc());
       register("*.s", R, icons.iconRdoc());
       register(".rprofile", R, icons.iconRprofile());
       register("Rprofile.site", R, icons.iconRprofile());
-      register("DESCRIPTION", DCF, icons.iconText());
+      register("DESCRIPTION", DCF, icons.iconDCF());
       register("INDEX", TEXT, icons.iconText());
       register("LICENCE", TEXT, icons.iconText());
       register("MD5", TEXT, icons.iconText());
@@ -307,9 +317,11 @@ public class FileTypeRegistry
       register("configure.win", SH, icons.iconSh());
       register("cleanup", SH, icons.iconSh());
       register("cleanup.win", SH, icons.iconSh());
-      register("Makevars", SH, icons.iconSh());
-      register("Makevars.win", SH, icons.iconSh());
-      register("TUTORIAL", DCF, icons.iconText());
+      register("Makefile", MAKEFILE, icons.iconMakefile());
+      register("Makefile.win", MAKEFILE, icons.iconMakefile());
+      register("Makevars", MAKEFILE, icons.iconMakefile());
+      register("Makevars.win", MAKEFILE, icons.iconMakefile());
+      register("TUTORIAL", DCF, icons.iconDCF());
       register("NAMESPACE", NAMESPACE, icons.iconText());
       register("*.rhistory", RHISTORY, icons.iconRhistory());
       register("*.rproj", RPROJECT, icons.iconRproject());
@@ -331,6 +343,7 @@ public class FileTypeRegistry
       register("*.json", JSON, icons.iconJavascript());
       register("*.rmd", RMARKDOWN, icons.iconRmarkdown());
       register("*.rmarkdown", RMARKDOWN, icons.iconRmarkdown());
+      register("*.rnb", RNOTEBOOK, icons.iconRnotebook());
       register("*.rpres", RPRESENTATION, icons.iconRpresentation());
       register("*.md", MARKDOWN, icons.iconMarkdown());
       register("*.mdtxt", MARKDOWN, icons.iconMarkdown());
@@ -347,7 +360,7 @@ public class FileTypeRegistry
       register("*.rdata", RDATA, icons.iconRdata());
       register("*.rda", RDATA, icons.iconRdata());
       register("*.Rproj", RPROJECT, icons.iconRproject());
-      register("*.dcf", DCF, icons.iconText());
+      register("*.dcf", DCF, icons.iconDCF());
       register("*.mmd", MERMAID, icons.iconMermaid());
       register("*.gv", GRAPHVIZ, icons.iconGraphviz());
       register("*.dot", GRAPHVIZ, icons.iconGraphviz());
@@ -381,6 +394,7 @@ public class FileTypeRegistry
       register("*.rs", RUST, icons.iconRust());
       register("*.scala", SCALA, icons.iconScala());
       register("*.snippets", SNIPPETS, icons.iconSnippets());
+      register("*.rprof", PROFILER, icons.iconRprofile());
 
       registerIcon(".jpg", icons.iconPng());
       registerIcon(".jpeg", icons.iconPng());
@@ -473,7 +487,10 @@ public class FileTypeRegistry
                         FilePosition position,
                         boolean highlightLine)
    {
-      if (satellite_.isCurrentWindowSatellite())
+      // edit the file in the main window unless this is a source satellite
+      // (in which case we want to edit it locally)
+      if (Satellite.isCurrentWindowSatellite() && 
+          !satellite_.getSatelliteName().startsWith(SourceSatellite.NAME_PREFIX))
       {
          satellite_.focusMainWindow();
          callSatelliteEditFile(file.cast(), position.cast(), highlightLine);
@@ -481,15 +498,19 @@ public class FileTypeRegistry
       else
       {
          FileType fileType = getTypeForFile(file);
-         if (fileType != null && !(fileType instanceof TextFileType))
+         if (fileType != null
+            && !(fileType instanceof TextFileType) 
+            && !(fileType instanceof ProfilerType))
+         {
             fileType = TEXT;
+         }
 
          if (fileType != null)
             fileType.openFile(file,
                   position,
                   highlightLine ?
-                        NavigationMethod.HighlightLine :
-                        NavigationMethod.Default,
+                        NavigationMethods.HIGHLIGHT_LINE :
+                        NavigationMethods.DEFAULT,
                   eventBus_);
       }
    }

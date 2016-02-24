@@ -49,27 +49,24 @@ Error PersistentState::initialize()
    // the session without reloading the client page
    desktopClientId_ = "33e600bb-c1b1-46bf-b562-ab5cba070b0e";
 
+   // scoped/project settings
    FilePath scratchPath = module_context::scopedScratchPath();
-   activeClientIdPath_ = scratchPath.childPath(kActiveClientId);
    FilePath statePath = scratchPath.complete("persistent-state");
-   return settings_.initialize(statePath);
+   Error error = settings_.initialize(statePath);
+   if (error)
+      return error;
+
+   // session settings
+   scratchPath = module_context::sessionScratchPath();
+   statePath = scratchPath.complete("session-persistent-state");
+   return sessionSettings_.initialize(statePath);
 }
 
 std::string PersistentState::activeClientId()
 {
    if (serverMode_)
    {
-      std::string activeClientId;
-      if (activeClientIdPath_.exists())
-      {
-         Error error = core::readStringFromFile(activeClientIdPath_,
-                                                &activeClientId);
-         if (error)
-            LOG_ERROR(error);
-
-         boost::algorithm::trim(activeClientId);
-      }
-
+      std::string activeClientId = sessionSettings_.get(kActiveClientId);
       if (!activeClientId.empty())
          return activeClientId;
       else
@@ -86,9 +83,7 @@ std::string PersistentState::newActiveClientId()
    if (serverMode_)
    {
       std::string newId = core::system::generateUuid();
-      Error error = core::writeStringToFile(activeClientIdPath_, newId);
-      if (error)
-         LOG_ERROR(error);
+      sessionSettings_.set(kActiveClientId, newId);
       return newId;
    }
    else
@@ -103,7 +98,7 @@ bool PersistentState::hadAbend()
 { 
    if (serverMode_)
    {
-      return settings_.getInt(kAbend, false);
+      return sessionSettings_.getInt(kAbend, false);
    }
    else
    {
@@ -115,7 +110,7 @@ void PersistentState::setAbend(bool abend)
 { 
    if (serverMode_)
    {
-      settings_.set(kAbend, abend);
+      sessionSettings_.set(kAbend, abend);
    }
 }
 

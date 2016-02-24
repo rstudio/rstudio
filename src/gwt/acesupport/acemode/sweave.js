@@ -17,19 +17,20 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-define("mode/sweave", function(require, exports, module) {
+define("mode/sweave", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var TextMode = require("ace/mode/text").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
-var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").SweaveBackgroundHighlighter;
+var BackgroundHighlighter = require("mode/background_highlighter").BackgroundHighlighter;
 var SweaveHighlightRules = require("mode/sweave_highlight_rules").SweaveHighlightRules;
 var RCodeModel = require("mode/r_code_model").RCodeModel;
 var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
 var RMatchingBraceOutdent = require("mode/r_matching_brace_outdent").RMatchingBraceOutdent;
 var unicode = require("ace/unicode");
 var Utils = require("mode/utils");
+var AutoBraceInsert = require("mode/auto_brace_insert").AutoBraceInsert;
 
 var Mode = function(suppressHighlighting, session) {
    if (suppressHighlighting)
@@ -49,11 +50,11 @@ var Mode = function(suppressHighlighting, session) {
    this.$r_outdent = new RMatchingBraceOutdent(this.codeModel);
 
    this.foldingRules = this.codeModel;
-   this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
+   this.$sweaveBackgroundHighlighter = new BackgroundHighlighter(
          session,
          /^\s*<<.*>>=.*$/,
-         /^\s*@(?:\s.*)?$/,
-         false);
+         /^\s*@(?:\s.*)?$/
+   );
    this.$session = session;
 };
 oop.inherits(Mode, TextMode);
@@ -124,6 +125,8 @@ oop.inherits(Mode, TextMode);
    };
 
    this.allowAutoInsert = this.smartAllowAutoInsert;
+
+   this.$id = "mode/sweave";
 
 }).call(Mode.prototype);
 

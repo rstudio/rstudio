@@ -6,8 +6,9 @@
 #include <core/system/Environment.hpp>
 
 #include <core/r_util/RProjectFile.hpp>
-#include <core/r_util/RSessionContext.hpp>
+#include <core/r_util/RUserData.hpp>
 #include <core/r_util/REnvironment.hpp>
+#include <core/r_util/RSessionContext.hpp>
 
 #import <AppKit/AppKit.h>
 
@@ -138,13 +139,22 @@ void initializeWorkingDirectory(const std::string& filename)
 // PORT: from DesktopMain.cpp
 void setInitialProject(const FilePath& projectFile, std::string* pFilename)
 {
-   core::system::setenv(kRStudioInitialProject, projectFile.absolutePath());
+   core::system::setenv(kRStudioInitialProject,
+                        projectFile.absolutePath().empty() ?
+                        *pFilename : projectFile.absolutePath());
    pFilename->clear();
 }
 
 // PORT: from DesktopMain.cpp
 void initializeStartupEnvironment(std::string* pFilename)
 {
+   // handle manual override for switching to project: none
+   if (*pFilename == kProjectNone)
+   {
+      setInitialProject(FilePath(), pFilename);
+      return;
+   }
+   
    // if the filename ends with .RData or .rda then this is an
    // environment file. if it ends with .Rproj then it is
    // a project file. we handle both cases by setting an environment
@@ -238,7 +248,7 @@ bool prepareEnvironment(Options& options)
             openFile:(NSString *) filename
 {
    // open file and application together
-   if (!openFile_)
+   if (!initialized_ && !openFile_)
    {
       openFile_ = [filename copy];
    }
@@ -264,7 +274,11 @@ bool prepareEnvironment(Options& options)
    // check for open file request (either apple event or command line)
    NSString* openFile = verifyAndNormalizeFilename(openFile_);
    if (!openFile)
-      openFile = verifyAndNormalizeFilename(openFileCommandLineArgument());
+   {
+      openFile = openFileCommandLineArgument();
+      if (![openFile isEqualToString: @"none"])
+         openFile = verifyAndNormalizeFilename(openFile);
+   }
    std::string filename;
    if (openFile)
       filename = [openFile UTF8String];
@@ -352,6 +366,8 @@ bool prepareEnvironment(Options& options)
                             [NSString stringWithUTF8String: msg.c_str()]);
       [NSApp terminate: self];
    }
+
+   initialized_ = YES;
 }
 
 - (void) pollProcessSupervisor

@@ -15,11 +15,10 @@
 package org.rstudio.core.client.theme;
 
 import com.google.gwt.user.cellview.client.DataGrid;
-import com.google.gwt.user.cellview.client.DataGrid.Style;
 
 public interface RStudioDataGridResources extends DataGrid.Resources
 {
    @Source(RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS)
    @Override
-   Style dataGridStyle();
+   RStudioDataGridStyle dataGridStyle();
 }

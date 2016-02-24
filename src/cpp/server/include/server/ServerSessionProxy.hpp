@@ -58,9 +58,12 @@ bool requiresSession(const core::http::Request& request);
 
 typedef boost::function<bool(
     boost::shared_ptr<core::http::AsyncConnection>,
-    const std::string&
+    const core::r_util::SessionContext&
     )> ProxyFilter;
 void setProxyFilter(ProxyFilter filter);
+
+typedef boost::function<void(core::http::Request*)> ProxyRequestFilter;
+void setProxyRequestFilter(ProxyRequestFilter filter);
 
 typedef boost::function<bool(
     boost::shared_ptr<core::http::AsyncConnection>,

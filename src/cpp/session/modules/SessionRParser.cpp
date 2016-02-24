@@ -27,8 +27,9 @@
 #include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
 
+#include <core/r_util/RTokenCursor.hpp>
+
 #include "SessionRParser.hpp"
-#include "SessionRTokenCursor.hpp"
 #include "SessionCodeSearch.hpp"
 #include "SessionAsyncPackageInformation.hpp"
 
@@ -362,9 +363,22 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
       
    // Search the whole index.
    bool failed = false;
+   
+   std::vector<std::string> inferredPkgs;
+   if (status.filePath().exists())
+   {
+      boost::shared_ptr<RSourceIndex> pIndex =
+            code_search::rSourceIndex().get(status.filePath());
+      
+      if (pIndex)
+         inferredPkgs = pIndex->getInferredPackages();
+   }
+   
    const FunctionInformation& fnInfo =
          RSourceIndex::getFunctionInformationAnywhere(
-            symbol, &failed);
+            symbol,
+            inferredPkgs,
+            &failed);
 
    if (!failed)
    {
@@ -795,7 +809,7 @@ void handleIdentifier(RTokenCursor& cursor,
          RTokenCursor clone = cursor.clone();
          if (clone.moveToNextSignificantToken() &&
              clone.moveToNextSignificantToken() &&
-             !clone.isAtEndOfStatement(status))
+             !clone.isAtEndOfStatement(status.isInParentheticalScope()))
          {
             lookAheadAndWarnOnUsagesOfSymbol(cursor, clone, status);
          }
@@ -1011,8 +1025,18 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
       
       // Try looking up the symbol by name.
       bool lookupFailed = false;
+      std::vector<std::string> inferredPkgs;
+      if (status.filePath().exists())
+      {
+         boost::shared_ptr<RSourceIndex> pIndex =
+               code_search::rSourceIndex().get(status.filePath());
+
+         if (pIndex)
+            inferredPkgs = pIndex->getInferredPackages();
+      }
+      
       FunctionInformation info =
-            RSourceIndex::getFunctionInformationAnywhere(fnName, &lookupFailed);
+            RSourceIndex::getFunctionInformationAnywhere(fnName, inferredPkgs, &lookupFailed);
       
       if (!lookupFailed)
          return info;
@@ -1339,13 +1363,8 @@ private:
 
 void doParse(RTokenCursor&, ParseStatus&);
 
-ParseResults parse(const std::string& rCode,
-                   const ParseOptions& parseOptions)
-{
-   return parse(string_utils::utf8ToWide(rCode), parseOptions);
-}
-
-ParseResults parse(const std::wstring& rCode,
+ParseResults parse(const FilePath& filePath,
+                   const std::wstring& rCode,
                    const ParseOptions& parseOptions)
 {
    if (rCode.empty() || rCode.find_first_not_of(L" \r\n\t\v") == std::string::npos)
@@ -1356,7 +1375,7 @@ ParseResults parse(const std::wstring& rCode,
       return ParseResults();
    
    RTokenCursor cursor(rTokens);
-   ParseStatus status(parseOptions);
+   ParseStatus status(filePath, parseOptions);
    
    doParse(cursor, status);
    
@@ -1371,6 +1390,39 @@ ParseResults parse(const std::wstring& rCode,
    return ParseResults(status.root(), status.lint(), parseOptions.globals());
 }
 
+ParseResults parse(const std::string& rCode,
+                   const ParseOptions& parseOptions)
+{
+   return parse(
+            FilePath(),
+            string_utils::utf8ToWide(rCode),
+            parseOptions);
+}
+
+ParseResults parse(const std::wstring& rCode,
+                   const ParseOptions& parseOptions)
+{
+   return parse(
+            FilePath(),
+            rCode,
+            parseOptions);
+}
+
+ParseResults parse(const FilePath &filePath, const ParseOptions &parseOptions)
+{
+   std::string contents;
+   Error error = readStringFromFile(filePath, &contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return ParseResults();
+   }
+   
+   return parse(
+            filePath,
+            string_utils::utf8ToWide(contents),
+            parseOptions);
+}
 namespace {
 
 bool closesArgumentList(const RTokenCursor& cursor,
@@ -1666,6 +1718,17 @@ bool skipFormulas(RTokenCursor& origin, ParseStatus& status)
 
       if (cursor.contentEquals(L"~"))
          foundTilde = true;
+      
+      while (cursor.fwdToMatchingToken())
+         if (!cursor.moveToNextSignificantToken())
+            break;
+      
+      if (!cursor.moveToNextSignificantToken())
+         break;
+      
+      while (cursor.fwdToMatchingToken())
+         if (!cursor.moveToNextSignificantToken())
+            break;
 
       if (!isBinaryOp(cursor))
          break;
@@ -1861,8 +1924,7 @@ bool makeSymbolsAvailableInCallFromObjectNames(RTokenCursor cursor,
       goto INVALID_TOKEN;                                                      \
    } while (0)
 
-void doParse(RTokenCursor& cursor,
-             ParseStatus& status)
+void doParse(RTokenCursor& cursor, ParseStatus& status)
 {
    DEBUG("Beginning parse...");
    // Return early if the document is empty (only whitespace or comments)
@@ -1884,7 +1946,9 @@ START:
       checkIncorrectComparison(cursor, status);
       
       // We want to skip over formulas if necessary.
-      skipFormulas(cursor, status);
+      if (skipFormulas(cursor, status))
+         if (cursor.isAtEndOfDocument())
+            return;
       
       DEBUG("Start: " << cursor);
       // Move over unary operators -- any sequence is valid,
@@ -2000,7 +2064,7 @@ START:
             
             // Check to see if this paren closes the current statement.
             // If so, it effectively closes any parent conditional statements.
-            if (cursor.isAtEndOfStatement(status))
+            if (cursor.isAtEndOfStatement(status.isInParentheticalScope()))
                while (status.isInControlFlowStatement())
                   status.popState();
             
@@ -2215,7 +2279,7 @@ START:
 BINARY_OPERATOR:
       
       checkBinaryOperatorWhitespace(cursor, status);
-      if (!canFollowBinaryOperator(cursor.nextSignificantToken()))
+      if (!cursor.isAtEndOfDocument() && !canFollowBinaryOperator(cursor.nextSignificantToken()))
          status.lint().unexpectedToken(cursor.nextSignificantToken());
       
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
@@ -2300,8 +2364,9 @@ ARGUMENT_START:
       // arguments, with any of [`'"].
       if (cursor.isLookingAtNamedArgumentInFunctionCall())
       {
-         MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
-         MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+         checkBinaryOperatorWhitespace(cursor, status);
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       }
       
       goto START;
@@ -2320,7 +2385,7 @@ ARGUMENT_LIST_END:
          goto START;
       
       // Pop out of control flow statements if this ends the statement.
-      if (cursor.isAtEndOfStatement(status))
+      if (cursor.isAtEndOfStatement(status.isInParentheticalScope()))
          while (status.isInControlFlowStatement())
             status.popState();
       
@@ -2354,9 +2419,28 @@ ARGUMENT_LIST_END:
       
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       
-      if (isLeftBracket(cursor))
-         goto ARGUMENT_LIST;
-      else if (isBinaryOp(cursor))
+      // Check for a 'chain' of function calls, e.g.
+      //
+      //     x <- foo()(bar)[baz]
+      //
+      // We need to double-check a couple of things to
+      // get this parse correct -- either one of these
+      // conditions needs to hold.
+      //
+      //    1. The '(' token is on the same line, or
+      //    2. We're within a 'parenthetical' context.
+      if (cursor.isType(RToken::LPAREN) ||
+          cursor.isType(RToken::LBRACKET) ||
+          cursor.isType(RToken::LDBRACKET))
+      {
+         if (cursor.row() == cursor.previousSignificantToken().row() ||
+             status.isInParentheticalScope())
+         {
+            goto ARGUMENT_LIST;
+         }
+      }
+      
+      if (isBinaryOp(cursor))
          goto BINARY_OPERATOR;
       else
          goto START;

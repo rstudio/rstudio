@@ -31,69 +31,12 @@ namespace gwt {
    
 namespace {
    
-FilePath requestedFile(const std::string& wwwLocalPath,
-                       const std::string& relativePath)
-{
-   // ensure that this path does not start with /
-   if (relativePath.find('/') == 0)
-      return FilePath();
-   
-   // ensure that this path does not contain ..
-   if (relativePath.find("..") != std::string::npos)
-      return FilePath();
-   
-#ifndef _WIN32
-
-   // calculate "real" wwwPath
-   FilePath wwwRealPath;
-   Error error = core::system::realPath(wwwLocalPath, &wwwRealPath);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return FilePath();
-   }
-
-   // calculate "real" requested path
-   FilePath realRequestedPath;
-   FilePath requestedPath = wwwRealPath.complete(relativePath);
-   error = core::system::realPath(requestedPath.absolutePath(),
-                                  &realRequestedPath);
-   if (error)
-   {
-      // log if this isn't file not found
-      if (error.code() != boost::system::errc::no_such_file_or_directory)
-      {
-         error.addProperty("requested-path", relativePath);
-         LOG_ERROR(error);
-      }
-      return FilePath();
-   }
-
-   // validate that the requested path falls within the www path
-   if ( (realRequestedPath != wwwRealPath) &&
-        realRequestedPath.relativePath(wwwRealPath).empty() )
-   {
-      LOG_WARNING_MESSAGE("Non www-local-path URI requested: " +
-                          relativePath);
-      return FilePath();
-   }
-
-   // return the path
-   return realRequestedPath;
-
-#else
-
-   // just complete the path straight away on Win32
-   return FilePath(wwwLocalPath).complete(relativePath);
-
-#endif
-
-}
 
 void handleFileRequest(const std::string& wwwLocalPath,
                        const std::string& baseUri,
                        core::http::UriFilterFunction mainPageFilter,
                        const std::string& initJs,
+                       const std::string& gwtPrefix,
                        bool useEmulatedStack,
                        const http::Request& request, 
                        http::Response* pResponse)
@@ -142,7 +85,7 @@ void handleFileRequest(const std::string& wwwLocalPath,
    
    // get the requested file 
    std::string relativePath = uri.substr(baseUri.length());
-   FilePath filePath = requestedFile(wwwLocalPath, relativePath);
+   FilePath filePath = http::util::requestedFile(wwwLocalPath, relativePath);
    if (filePath.empty())
    {
       pResponse->setNotFoundError(request.uri());
@@ -177,6 +120,9 @@ void handleFileRequest(const std::string& wwwLocalPath,
       else
          vars["head_tags"] = std::string();
 
+      // gwt prefix
+      vars["gwt_prefix"] = gwtPrefix;
+
       // return the page
       pResponse->setNoCacheHeaders();
       pResponse->setFile(filePath, request, text::TemplateFilter(vars));
@@ -199,6 +145,7 @@ http::UriHandlerFunction fileHandlerFunction(
                                        const std::string& baseUri,
                                        http::UriFilterFunction mainPageFilter,
                                        const std::string& initJs,
+                                       const std::string& gwtPrefix,
                                        bool useEmulatedStack)
 {
    return boost::bind(handleFileRequest,
@@ -206,6 +153,7 @@ http::UriHandlerFunction fileHandlerFunction(
                       baseUri,
                       mainPageFilter,
                       initJs,
+                      gwtPrefix,
                       useEmulatedStack,
                       _1,
                       _2);

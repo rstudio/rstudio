@@ -70,7 +70,10 @@ public interface ThemeStyles extends CssResource
    String noLabel();
    String toolbarButtonPushed();
    String emptyProjectMenu();
+   String menuSubheader();
 
+   String menuRightImage();
+   
    String scrollableMenuBar();
 
    String moduleTabPanel();
@@ -83,6 +86,7 @@ public interface ThemeStyles extends CssResource
    String toolbarButtonMenu();
    String toolbarButtonMenuOnly();
    String toolbarButtonLabel();
+   String toolbarButtonInfoLabel();
    String toolbarButtonLeftImage();
    String toolbarButtonRightImage();
    String toolbarFileLabel();
@@ -165,5 +169,8 @@ public interface ThemeStyles extends CssResource
    
    String handCursor();
    
-   String inlineChunkIcon();
+   String inlineChunkToolbar();
+   String highlightIcon();
+   
+   String borderedIFrame();
 }

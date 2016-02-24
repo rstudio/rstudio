@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rsconnect.model;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 
 public class RSConnectPublishInput
@@ -49,6 +50,16 @@ public class RSConnectPublishInput
    public boolean isConnectUIEnabled() 
    {
       return isConnectUIEnabled_;
+   }
+   
+   public boolean hasConnectAccount()
+   {
+      return hasConnectAccount_;
+   }
+   
+   public void setHasConnectAccount(boolean hasAccount)
+   {
+      hasConnectAccount_ = hasAccount;
    }
    
    public void setConnectUIEnabled(boolean enabled)
@@ -114,11 +125,27 @@ public class RSConnectPublishInput
       return originatingEvent_;
    }
    
+   public boolean isStaticDocInput()
+   {
+      // plots and presentations are always static
+      if (getContentType() == RSConnect.CONTENT_TYPE_PLOT ||
+          getContentType() == RSConnect.CONTENT_TYPE_PRES ||
+          getContentType() == RSConnect.CONTENT_TYPE_HTML)
+         return true;
+      if (getContentType() != RSConnect.CONTENT_TYPE_DOCUMENT)
+         return false;
+      if (getSourceRmd() == null)
+         return true;
+      final String ext = getSourceRmd().getExtension().toLowerCase();
+      return ext == ".html" || ext == ".md";
+   }
+   
    private boolean isShiny_;
    private boolean isConnectUIEnabled_;
    private boolean isExternalUIEnabled_;
    private boolean isMultiRmd_;
    private boolean isSelfContained_;
+   private boolean hasConnectAccount_;
    private FileSystemItem sourceRmd_;
    private RSConnectActionEvent originatingEvent_;
    private String description_ = null;

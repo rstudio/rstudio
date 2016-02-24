@@ -31,7 +31,9 @@ endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect")
   message(FATAL_ERROR "rsconnect package not found (re-run install-dependencies script to install)")
 endif()
-
+if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/profvis")
+  message(FATAL_ERROR "profvis package not found (re-run install-dependencies script to install)")
+endif()
 
 # verify libclang is installed
 if(WIN32)
@@ -83,6 +85,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionAuthoring.cpp
    modules/SessionBreakpoints.cpp
    modules/SessionCodeSearch.cpp
+   modules/SessionUserCommands.cpp
    modules/SessionConsole.cpp
    modules/SessionDependencies.cpp
    modules/SessionDiagnostics.cpp
@@ -106,6 +109,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionPath.cpp
    modules/SessionPlots.cpp
    modules/SessionProfiler.cpp
+   modules/SessionRAddins.cpp
    modules/SessionRCompletions.cpp
    modules/SessionRHooks.cpp
    modules/SessionRParser.cpp
@@ -140,14 +144,17 @@ set (SESSION_SOURCE_FILES
    modules/presentation/SessionPresentation.cpp
    modules/presentation/PresentationLog.cpp
    modules/presentation/PresentationState.cpp
-   modules/presentation/PresentationOverlay.cpp
    modules/presentation/SlideMediaRenderer.cpp
    modules/presentation/SlideNavigationList.cpp
    modules/presentation/SlideParser.cpp
    modules/presentation/SlideQuizRenderer.cpp
    modules/presentation/SlideRenderer.cpp
    modules/presentation/SlideRequestHandler.cpp
+   modules/presentation/Tutorial.cpp
+   modules/presentation/TutorialInstaller.cpp
    modules/rmarkdown/SessionRMarkdown.cpp
+   modules/rmarkdown/SessionRmdNotebook.cpp
+   modules/rmarkdown/SessionRnbParser.cpp
    modules/rmarkdown/RMarkdownPresentation.cpp
    modules/shiny/SessionShiny.cpp
    modules/tex/SessionCompilePdf.cpp
@@ -303,6 +310,11 @@ endif()
 # define executable
 add_executable(rsession ${SESSION_SOURCE_FILES} ${SESSION_HEADER_FILES})
 
+# skip libR RPATH at development time
+if(RSTUDIO_DEVELOPMENT OR RSTUDIO_RUN_IN_PLACE)
+   set_target_properties(rsession PROPERTIES SKIP_BUILD_RPATH TRUE)
+endif()
+
 # add origin rpath for suse/sles
 if(RSTUDIO_PACKAGE_BUILD_SLES)
    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
@@ -397,7 +409,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
       # static Pandoc binaries (see dependencies/common/install-pandoc)
       set(PANDOC_EXTENSION_DIR "/static")
    endif()
-   set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.13.1${PANDOC_EXTENSION_DIR}")
+   set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.15.2${PANDOC_EXTENSION_DIR}")
    file(GLOB PANDOC_FILES "${PANDOC_BIN}/pandoc*")
    install(FILES ${PANDOC_FILES}
            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
@@ -406,6 +418,11 @@ if (NOT RSTUDIO_SESSION_WIN64)
    # install rsconnect package
    file(GLOB RSCONNECT_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect*.tar.gz")
    install(FILES ${RSCONNECT_PACKAGE}
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
+
+   # install profvis package
+   file(GLOB PROFVIS_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/profvis*.tar.gz")
+   install(FILES ${PROFVIS_PACKAGE}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
    # install PDF.js
@@ -418,6 +435,10 @@ if (NOT RSTUDIO_SESSION_WIN64)
 
    # help resources
    install(DIRECTORY "resources/help_resources"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+
+   # notebook resources
+   install(DIRECTORY "resources/notebook"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # install libclang
@@ -461,7 +482,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
               DESTINATION  ${RSTUDIO_INSTALL_BIN})
 
 
-      install(PROGRAMS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/sumatra/2.4/SumatraPDF.exe"
+      install(PROGRAMS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/sumatra/3.1.1/SumatraPDF.exe"
               DESTINATION  "${RSTUDIO_INSTALL_BIN}/sumatra")
       install(FILES resources/sumatrapdfrestrict.ini
                DESTINATION  "${RSTUDIO_INSTALL_BIN}/sumatra")

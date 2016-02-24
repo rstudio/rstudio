@@ -33,7 +33,7 @@
 #include <core/r_util/RSessionContext.hpp>
 
 #include <session/SessionOptions.hpp>
-
+#include <session/projects/ProjectsSettings.hpp>
 
 namespace rstudio {
 namespace session {
@@ -107,20 +107,9 @@ void handleAbortNextProjParam(
 
       if (!nextProj.empty())
       {
-         // NOTE: this must be synchronized with the implementation of
-         // ProjectContext::setNextSessionProject -- we do this using
-         // constants rather than code so that this code (which runs in
-         // a background thread) don't call into the projects module (which
-         // is designed to be foreground and single-threaded)
          core::FilePath userScratch = session::options().userScratchPath();
-         core::FilePath settings = userScratch.complete(kProjectsSettings);
-         error = settings.ensureDirectory();
-         if (error)
-            LOG_ERROR(error);
-         core::FilePath writePath = settings.complete(kNextSessionProject);
-         core::Error error = core::writeStringToFile(writePath, nextProj);
-         if (error)
-            LOG_ERROR(error);
+         projects::ProjectsSettings settings(userScratch);
+         settings.setNextSessionProject(nextProj);
       }
    }
    else

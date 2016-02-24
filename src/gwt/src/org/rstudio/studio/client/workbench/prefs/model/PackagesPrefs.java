@@ -30,7 +30,9 @@ public class PackagesPrefs extends JavaScriptObject
                                   boolean cleanupAfterCheckSuccess,
                                   boolean viewDirAfterCheckFailure,
                                   boolean hideObjectFiles,
-                                  boolean useDevtools) /*-{
+                                  boolean useDevtools,
+                                  boolean useSecureDownload,
+                                  boolean useNewlineInMakefiles) /*-{
       var prefs = new Object();
       prefs.cran_mirror = cranMirror;
       prefs.use_internet2 = useInternet2;
@@ -39,6 +41,8 @@ public class PackagesPrefs extends JavaScriptObject
       prefs.viewdir_after_check_failure = viewDirAfterCheckFailure;
       prefs.hide_object_files = hideObjectFiles;
       prefs.use_devtools = useDevtools;
+      prefs.use_secure_download = useSecureDownload;
+      prefs.use_newline_in_makefiles = useNewlineInMakefiles;
       return prefs ;
    }-*/;
 
@@ -69,4 +73,14 @@ public class PackagesPrefs extends JavaScriptObject
    public native final boolean getUseDevtools() /*-{
       return this.use_devtools;
    }-*/;
+   
+   public native final boolean getUseSecureDownload() /*-{
+      return this.use_secure_download;
+   }-*/;
+   
+   public native final boolean getUseNewlineInMakefiles() /*-{
+      return this.use_newline_in_makefiles;
+   }-*/;
+   
+   
 }

@@ -18,6 +18,7 @@
 #include <algorithm>
 
 #include <boost/archive/iterators/base64_from_binary.hpp>
+#include <boost/archive/iterators/binary_from_base64.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/archive/iterators/ostream_iterator.hpp>
 
@@ -69,6 +70,40 @@ Error encode(const FilePath& inputFile, std::string* pOutput)
    return encode(contents, pOutput);
 }
 
+
+Error decode(const std::string& input, std::string* pOutput)
+{
+   using namespace boost::archive::iterators;
+
+   typedef transform_width<binary_from_base64<
+                           std::string::const_iterator>, 8, 6 > text_b64;
+
+   // cast away const so we can temporarily manipulate the input string without
+   // making a copy 
+   std::string& base64 = const_cast<std::string&>(input);
+   unsigned pad = 0;
+
+   try
+   {
+      // remove = padding from end and replace with base64 encoding for 0
+      // (count instances removed)
+      while (base64.at(base64.size() - (pad + 1)) == '=')
+        base64[base64.size() - (pad++ + 1)] = 'A';
+
+      // perform the decoding
+      *pOutput = std::string(text_b64(base64.begin()), text_b64(base64.end()));
+
+      // erase padding from output
+      pOutput->erase(pOutput->end() - pad, pOutput->end());
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   // restore the input string contents
+   for (size_t i = 0; i < pad; i++)
+      base64[base64.size() - (i + 1)] = '=';
+
+   return Success();
+}
 
 } // namespace base64
 } // namespace core

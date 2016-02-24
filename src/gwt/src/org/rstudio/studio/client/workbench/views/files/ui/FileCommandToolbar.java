@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.files.ui;
 
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -45,6 +46,7 @@ public class FileCommandToolbar extends Toolbar
       moreMenu.addItem(commands.exportFiles().createMenuItem(false));
       moreMenu.addSeparator();
       moreMenu.addItem(commands.setAsWorkingDir().createMenuItem(false));
+      moreMenu.addItem(commands.goToWorkingDir().createMenuItem(false));
       moreMenu.addSeparator();
       moreMenu.addItem(commands.showFolder().createMenuItem(false));
 

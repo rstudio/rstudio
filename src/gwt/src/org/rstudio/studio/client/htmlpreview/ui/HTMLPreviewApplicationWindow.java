@@ -22,6 +22,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+
+import org.rstudio.studio.client.application.DesktopHooks;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewPresenter;
@@ -36,11 +38,13 @@ public class HTMLPreviewApplicationWindow extends SatelliteWindow
    @Inject
    public HTMLPreviewApplicationWindow(Provider<HTMLPreviewPresenter> pPresenter,
                                        Provider<EventBus> pEventBus,
-                                       Provider<FontSizeManager> pFSManager)
+                                       Provider<FontSizeManager> pFSManager,
+                                       Provider<DesktopHooks> pDesktopHooks)
    {
       super(pEventBus, pFSManager);
       
       pPresenter_ = pPresenter; 
+      pDesktopHooks_ = pDesktopHooks;
      
    }
 
@@ -53,6 +57,9 @@ public class HTMLPreviewApplicationWindow extends SatelliteWindow
       HTMLPreviewParams htmlPreviewParams = params.<HTMLPreviewParams>cast();
       presenter_ = pPresenter_.get();
       presenter_.onActivated(htmlPreviewParams);
+      
+      // enable command processing
+      pDesktopHooks_.get();
       
       // make it fill the containing layout panel
       Widget presWidget = presenter_.asWidget();
@@ -78,6 +85,7 @@ public class HTMLPreviewApplicationWindow extends SatelliteWindow
    }
 
    private final Provider<HTMLPreviewPresenter> pPresenter_;
+   private final Provider<DesktopHooks> pDesktopHooks_;
    private HTMLPreviewPresenter presenter_;
 
 }

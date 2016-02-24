@@ -27,7 +27,7 @@
  */
 
 
-define("mode/c_cpp_fold_mode", function(require, exports, module) {
+define("mode/c_cpp_fold_mode", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var Range = require("ace/range").Range;

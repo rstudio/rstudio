@@ -32,6 +32,14 @@ public class Document extends JavaScriptObject
    public native final int getLength() /*-{
       return this.getLength();
    }-*/;
+   
+   public native final Position indexToPosition(int index, int startRow) /*-{
+      return this.indexToPosition(index, startRow);
+   }-*/;
+   
+   public native final int positionToIndex(Position pos, int startRow) /*-{
+      return this.positionToIndex(pos, startRow);
+   }-*/;
 
    public final String getDocumentDump()
    {

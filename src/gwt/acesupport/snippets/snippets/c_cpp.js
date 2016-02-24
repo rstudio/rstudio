@@ -13,7 +13,7 @@
  *
  */
 
-define("rstudio/snippets/c_cpp", function(require, exports, module) {
+define("rstudio/snippets/c_cpp", ["require", "exports", "module"], function(require, exports, module) {
 
 var utils = require("rstudio/snippets");
 var SnippetManager = require("ace/snippets").snippetManager;
@@ -67,7 +67,7 @@ var snippets = [
    },
    {
       name: "ept",
-      content: "// [[Rcpp::export]]"
+      content: "// [[Rcpp::export]]\n"
    }
 ];
 

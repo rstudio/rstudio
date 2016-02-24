@@ -1,7 +1,7 @@
 /*
  * SendToConsoleEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,13 +14,33 @@
  */
 package org.rstudio.studio.client.workbench.views.console.events;
 
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
+
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class SendToConsoleEvent extends GwtEvent<SendToConsoleHandler>
+@JavaScriptSerializable
+public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleHandler>
 {
    public static final GwtEvent.Type<SendToConsoleHandler> TYPE =
       new GwtEvent.Type<SendToConsoleHandler>();
+   
+   public static class Data extends JavaScriptObject
+   {
+      protected Data() {}
+      
+      public final native String getCode() /*-{ return this["code"]; }-*/;
+      
+      public final native boolean shouldExecute() /*-{ return !!this["execute"]; }-*/;
+      public final native boolean shouldFocus() /*-{ return !!this["focus"]; }-*/;
+      public final native boolean shouldAnimate() /*-{ return !!this["animate"]; }-*/;
+   }
   
+   public SendToConsoleEvent()
+   {
+   }
+
    public SendToConsoleEvent(String code, boolean execute)
    {
       this(code, execute, false);
@@ -28,16 +48,34 @@ public class SendToConsoleEvent extends GwtEvent<SendToConsoleHandler>
    
    public SendToConsoleEvent(String code, boolean execute, boolean focus)
    {
-      this(code, execute, focus, false);
+      this(code, execute, true, focus, false);
+   }
+   
+   public SendToConsoleEvent(Data data)
+   {
+      this(data.getCode(),
+            data.shouldExecute(),
+            data.shouldFocus(),
+            data.shouldAnimate());
    }
    
    public SendToConsoleEvent(String code, 
                              boolean execute, 
+                             boolean raise,
+                             boolean focus)
+   {
+      this(code, execute, raise, focus, false);
+   }
+   
+   public SendToConsoleEvent(String code, 
+                             boolean execute, 
+                             boolean raise,
                              boolean focus,
                              boolean animate)
    {
       code_ = code;
       execute_ = execute;
+      raise_ = raise;
       focus_ = focus;
       animate_ = animate;
    }
@@ -52,6 +90,11 @@ public class SendToConsoleEvent extends GwtEvent<SendToConsoleHandler>
       return execute_;
    }
    
+   public boolean shouldRaise()
+   {
+      return raise_;
+   }
+   
    public boolean shouldFocus()
    {
       return focus_;
@@ -60,6 +103,13 @@ public class SendToConsoleEvent extends GwtEvent<SendToConsoleHandler>
    public boolean shouldAnimate()
    {
       return animate_;
+   }
+   
+   @Override
+   public int focusMode()
+   {
+      return shouldFocus() ? CrossWindowEvent.MODE_FOCUS : 
+                             CrossWindowEvent.MODE_AUXILIARY;
    }
    
    @Override
@@ -74,8 +124,9 @@ public class SendToConsoleEvent extends GwtEvent<SendToConsoleHandler>
       sendToConsoleHandler.onSendToConsole(this);
    }
 
-   private final String code_;
-   private final boolean execute_;
-   private final boolean focus_;
-   private final boolean animate_;
+   private String code_;
+   private boolean execute_;
+   private boolean focus_;
+   private boolean raise_;
+   private boolean animate_;
 }

@@ -188,10 +188,12 @@ private:
                   // call the filter (passing a continuation to be invoked
                   // once the filter is completed)
                   requestFilter_(
+                     ioService(),
                      &request_,
                      boost::bind(
-                        &AsyncConnectionImpl<ProtocolType>::callHandler,
-                        AsyncConnectionImpl<ProtocolType>::shared_from_this()
+                        &AsyncConnectionImpl<ProtocolType>::requestFilterContinuation,
+                        AsyncConnectionImpl<ProtocolType>::shared_from_this(),
+                        _1
                      ));
                }
                else
@@ -222,6 +224,19 @@ private:
       CATCH_UNEXPECTED_EXCEPTION
    }
    
+   void requestFilterContinuation(boost::shared_ptr<http::Response> response)
+   {
+      if (response)
+      {
+         response_.assign(*response);
+         writeResponse();
+      }
+      else
+      {
+         callHandler();
+      }
+   }
+
    void callHandler()
    {
       handler_(AsyncConnectionImpl<ProtocolType>::shared_from_this(),

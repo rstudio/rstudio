@@ -14,7 +14,8 @@
 #
 
 # target environment for rstudio supplemental tools
-.rs.Env <- attach(NULL,name="tools:rstudio")
+.rs.Env <- attach(NULL, name="tools:rstudio")
+assign(".rs.toolsEnv", envir = .rs.Env, function() { .rs.Env })
 
 # environment for completion hooks
 assign(".rs.RCompletionHooksEnv", new.env(parent = emptyenv()), envir = .rs.Env)
@@ -186,6 +187,23 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 .rs.addFunction( "activateGraphicsDevice", function()
 {
    invisible(.Call("rs_activateGD"))
+})
+
+.rs.addFunction( "newDesktopGraphicsDevice", function()
+{
+   sysName <- Sys.info()[['sysname']]
+   if (identical(sysName, "Windows"))
+      windows()
+   else if (identical(sysName, "Darwin"))
+      quartz()
+   else if (capabilities("X11"))
+      X11()
+   else {
+      warning("Unable to create a new graphics device ",
+              "(RStudio device already active and only a ",
+              "single RStudio device is supported)", 
+              call. = FALSE)
+   }
 })
 
 # record an object to a file
@@ -379,7 +397,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 })
 
 # replacing an internal R function
-.rs.addFunction( "registerReplaceHook", function(name, package, hook)
+.rs.addFunction( "registerReplaceHook", function(name, package, hook, keepOriginal)
 {
    hookFactory <- function(original) function(...) .rs.callAs(name,
                                                              hook, 
@@ -439,12 +457,19 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
       .rs.setCRANRepos(reposUrl)
 })
 
+
+.rs.addFunction( "isCRANReposFromSettings", function()
+{
+   !is.null(attr(getOption("repos"), "RStudio"))
+})
+
+
 .rs.addFunction( "setCRANReposFromSettings", function(reposUrl)
 {
    # only set the repository if the repository was set by us
    # in the first place (it wouldn't be if the user defined a
    # repository in .Rprofile or called setRepositories directly)
-   if (!is.null(attr(getOption("repos"), "RStudio")))
+   if (.rs.isCRANReposFromSettings())
       .rs.setCRANRepos(reposUrl)
 })
 
@@ -609,4 +634,162 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    } else {
       FALSE
    }
+})
+
+.rs.addFunction("rVersionString", function() {
+   as.character(getRversion())
+})
+
+.rs.addFunction("listDirs", function(dir = ".", full.names = TRUE, recursive = FALSE)
+{
+   # Normalize directory path
+   if (!file.exists(dir))
+      return(character())
+   dir <- normalizePath(dir, winslash = "/", mustWork = TRUE)
+   
+   # Shortcut if we have 'list.dirs'.
+   if (exists("list.dirs", envir = .BaseNamespaceEnv))
+      return(list.dirs(dir, full.names = full.names, recursive = recursive))
+   
+   
+   # Otherwise, use 'list.files' and filter results.
+   hasIncludeDirs <- "include.dirs" %in% names(formals(base::list.files))
+   args <- if (hasIncludeDirs)
+   {
+      list(path = dir,
+           full.names = full.names,
+           recursive = recursive,
+           include.dirs = TRUE)
+   }
+   else
+   {
+      list(path = dir,
+           full.names = full.names,
+           recursive = recursive)
+   }
+   
+   do.call(base::list.files, args)
+})
+
+.rs.addFunction("listFilesFuzzy", function(directory, token)
+{
+   pattern <- if (nzchar(token))
+      paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(token)), sep = "")
+   
+   # Manually construct a call to `list.files` which should work across
+   # versions of R >= 2.11.
+   formals <- as.list(formals(base::list.files))
+   
+   formals$path <- directory
+   formals$pattern <- pattern
+   formals$all.files <- TRUE
+   formals$full.names <- TRUE
+   
+   # NOTE: not available in older versions of R, but defaults to FALSE
+   # with newer versions.
+   if ("include.dirs" %in% names(formals))
+      formals[["include.dirs"]] <- TRUE
+   
+   # NOTE: not available with older versions of R, but defaults to FALSE
+   if ("no.." %in% names(formals))
+      formals[["no.."]] <- TRUE
+   
+   # Generate the call, and evaluate it.
+   result <- do.call(base::list.files, formals)
+   
+   # Clean up duplicated '/'.
+   absolutePaths <- gsub("/+", "/", result)
+   
+   # Remove un-needed `.` paths. These paths will look like
+   #
+   #     <path>/.
+   #     <path>/..
+   #
+   # This is only unnecessary if we couldn't use 'no..'.
+   if (!("no.." %in% names(formals)))
+   {
+      absolutePaths <- grep("/\\.+$",
+                            absolutePaths,
+                            invert = TRUE,
+                            value = TRUE)
+   }
+   
+   absolutePaths
+})
+
+.rs.addFunction("callWithRDS", function(functionName, inputLocation, outputLocation)
+{
+   params = readRDS(inputLocation)
+   result <- do.call(functionName, params)
+
+   saveRDS(file = outputLocation, object = result)
+})
+
+.rs.addFunction("readFile", function(file)
+{
+   readChar(file, file.info(file)$size, TRUE)
+})
+
+.rs.addFunction("fromJSON", function(string)
+{
+   .Call(.rs.routines$rs_fromJSON, string)
+})
+
+.rs.addFunction("stringBuilder", function()
+{
+   (function() {
+      indent_ <- "  "
+      indentSize_ <- 0
+      data_ <- character()
+      
+      indented_ <- function(data) {
+         indent <- paste(character(indentSize_ + 1), collapse = indent_)
+         for (i in seq_along(data))
+            if (is.list(data[[i]]))
+               data[[i]] <- indented_(data[[i]])
+            else
+               data[[i]] <- paste(indent, data[[i]], sep = "")
+            data
+      }
+      
+      list(
+         
+         append = function(...) {
+            data_ <<- c(data_, indented_(list(...)))
+         },
+         
+         appendf = function(...) {
+            data_ <<- c(data_, indented_(sprintf(...)))
+         },
+         
+         indent = function() {
+            indentSize_ <<- indentSize_ + 1
+         },
+         
+         unindent = function() {
+            indentSize_ <<- max(0, indentSize_ - 1)
+         },
+         
+         data = function() unlist(data_)
+         
+      )
+      
+   })()
+})
+
+.rs.addFunction("regexMatches", function(pattern, x) {
+   matches <- gregexpr(pattern, x, perl = TRUE)[[1]]
+   starts <- attr(matches, "capture.start")
+   ends <- starts + attr(matches, "capture.length") - 1
+   substring(x, starts, ends)
+})
+
+.rs.addFunction("withChangedExtension", function(path, ext)
+{
+   paste(tools::file_path_sans_ext(path), ext, sep = ".")
+})
+
+.rs.addFunction("dirExists", function(path)
+{
+   utils::file_test('-d', path)
 })

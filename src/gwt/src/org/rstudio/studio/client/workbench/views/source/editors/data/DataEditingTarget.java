@@ -1,7 +1,7 @@
 /*
  * DataEditingTarget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,6 +31,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.events.DataViewChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
@@ -263,17 +264,20 @@ public class DataEditingTarget extends UrlContentEditingTarget
    }
 
    @Override
-   public void onDismiss()
+   public void onDismiss(int dismissType)
    {
-      server_.removeCachedData(getCacheKey(),
-                               new ServerRequestCallback<org.rstudio.studio.client.server.Void>()
-                               {
-                                  @Override
-                                  public void onError(ServerError error)
-                                  {
-                                     Debug.logError(error);
-                                  }
-                               });
+      if (dismissType == EditingTarget.DISMISS_TYPE_CLOSE)
+      {
+         server_.removeCachedData(getCacheKey(),
+            new ServerRequestCallback<org.rstudio.studio.client.server.Void>()
+            {
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+      }
    }
 
    private SimplePanelWithProgress progressPanel_;

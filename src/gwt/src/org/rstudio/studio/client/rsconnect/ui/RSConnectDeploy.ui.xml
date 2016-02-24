@@ -21,9 +21,13 @@
              <g:VerticalPanel ui:field="fileListPanel_">
              </g:VerticalPanel>
            </g:ScrollPanel>
-           <rw:ThemedButton ui:field="addFileButton_" 
-                            text="Add More..."
-                            visible="false"></rw:ThemedButton>
+           <g:HorizontalPanel>
+              <rw:ThemedButton ui:field="checkUncheckAllButton_" 
+                               text="Uncheck All"></rw:ThemedButton>
+              <rw:ThemedButton ui:field="addFileButton_" 
+                               text="Add More..."
+                               visible="false"></rw:ThemedButton>
+           </g:HorizontalPanel>
          </g:VerticalPanel>
          <g:VerticalPanel ui:field="descriptionPanel_" 
                           visible="false">
@@ -40,27 +44,33 @@
      <g:customCell styleName="{res.style.rootCell}">
       <g:HTMLPanel>
          <g:HorizontalPanel width="100%">
-         <g:Label styleName="{res.style.firstControlLabel}" 
-                  text="Destination Account:">
-         </g:Label>
-         <g:Anchor styleName="rstudio-HyperlinkLabel {res.style.accountAnchor}" 
-                    ui:field="addAccountAnchor_" text="Add New Account">
-         </g:Anchor>
+            <g:Label styleName="{res.style.firstControlLabel}" 
+                     text="Destination Account:">
+            </g:Label>
+            <g:Anchor styleName="rstudio-HyperlinkLabel {res.style.accountAnchor}" 
+                       ui:field="addAccountAnchor_" text="Add New Account">
+            </g:Anchor>
          </g:HorizontalPanel>
          <rsc:RSConnectAccountList styleName="{res.style.accountList}" 
                                    ui:field="accountList_">
          </rsc:RSConnectAccountList>
          <g:HTMLPanel ui:field="newAppPanel_">
             <g:Label styleName="{res.style.controlLabel}" ui:field="nameLabel_" 
-                     text="Create New Content Named:"></g:Label>
+                     text="Title:"></g:Label>
             <rsc:AppNameTextbox styleName="{res.style.gridControl}" 
                                 ui:field="appName_">
             </rsc:AppNameTextbox>
          </g:HTMLPanel>
          <g:HTMLPanel styleName="{res.style.controlLabel}" visible="false" 
                       ui:field="appInfoPanel_">
-            <g:Label text="Update Existing Content:" 
-                     styleName="{res.style.controlLabel}"></g:Label>
+            <g:HorizontalPanel width="100%" 
+                               styleName="{res.style.controlLabel}">
+               <g:Label text="Update:">
+               </g:Label>
+               <g:Anchor styleName="rstudio-HyperlinkLabel {res.style.accountAnchor}" 
+                          ui:field="createNewAnchor_" text="Create New">
+               </g:Anchor>
+            </g:HorizontalPanel>
             <g:HTMLPanel ui:field="appDetailsPanel_" 
                          styleName="{res.style.appDetailsPanel}" 
                          visible="false">

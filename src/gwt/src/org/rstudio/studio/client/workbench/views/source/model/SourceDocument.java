@@ -15,7 +15,12 @@
 package org.rstudio.studio.client.workbench.views.source.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 
 public class SourceDocument extends JavaScriptObject
 {
@@ -114,7 +119,7 @@ public class SourceDocument extends JavaScriptObject
          this.properties = {};
       return this.properties;
    }-*/;
-
+   
    public native final String getFoldSpec() /*-{
       return this.folds || "";
    }-*/;
@@ -122,4 +127,49 @@ public class SourceDocument extends JavaScriptObject
    public native final void setFoldSpec(String foldSpec) /*-{
       this.folds = foldSpec;
    }-*/;
+   
+   public native final JsArray<ChunkDefinition> getChunkDefs() /*-{
+      return this.chunk_definitions || [];
+   }-*/;
+   
+   public native final void setChunkDefs(JsArray<ChunkDefinition> chunkDefs) /*-{
+      this.chunk_definitions = chunkDefs;
+   }-*/;
+   
+   public final String getSourceWindowId() 
+   {
+      if (getProperties().hasKey(SourceWindowManager.SOURCE_WINDOW_ID))
+      {
+         String windowId = getProperties().getAsString(
+               SourceWindowManager.SOURCE_WINDOW_ID);
+         if (windowId == null)
+            return "";
+         return windowId;
+      }
+      return "";
+   }
+   
+   public final void assignSourceWindowId(String windowId)
+   {
+      getProperties().setString(SourceWindowManager.SOURCE_WINDOW_ID, windowId);
+   }
+   
+   // get the collaborative editing session associated with this document 
+   // (local-only property; not persisted)
+   public native final CollabEditStartParams getCollabParams() /*-{
+     if (typeof this.collab_params === "undefined")
+        return null;
+     return this.collab_params;
+   }-*/;
+   
+   public native final void setCollabParams(CollabEditStartParams params) /*-{
+     this.collab_params = params;
+   }-*/;
+   
+   public final static String XT_RMARKDOWN = "rmarkdown";
+   public final static String XT_SHINY_PREFIX = "shiny-";
+   public final static String XT_SHINY_DIR = "shiny-dir";
+   public final static String XT_SHINY_SINGLE_FILE = "shiny-single-file";
+   public final static String XT_SHINY_SINGLE_EXE = "shiny-single-executable";
+   public final static String XT_SHINY_DOCUMENT = "shiny-document";
 }

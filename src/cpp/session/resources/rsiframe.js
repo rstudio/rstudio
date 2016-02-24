@@ -96,6 +96,7 @@ if (origin === null)
 
 // set up cross-domain send/receive
 var send = function(data) {
+   data.type = "ShinyFrameEvent";
    parent.postMessage(data, origin);
 };
 

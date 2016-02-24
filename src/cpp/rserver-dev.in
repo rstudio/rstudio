@@ -26,6 +26,8 @@ cleanupStreams
 # generic cleanup routine
 cleanup()
 {
+   killall -s USR2 rsession 2>/dev/null
+   killall -s USR2 rworkspaces 2>/dev/null
    cleanupStreams
    exit $?
 }

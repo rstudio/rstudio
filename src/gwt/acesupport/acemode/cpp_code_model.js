@@ -13,7 +13,7 @@
  *
  */
 
-define("mode/cpp_code_model", function(require, exports, module) {
+define("mode/cpp_code_model", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var Range = require("ace/range").Range;
@@ -50,10 +50,28 @@ var CppCodeModel = function(session, tokenizer,
 
    this.$scopes = new CppScopeManager(CppScopeNode);
 
+   var $firstChange = true;
+   var onChangeMode = function(data, session)
+   {
+      if ($firstChange)
+      {
+         $firstChange = false;
+         return;
+      }
+
+      this.$doc.off('change', onDocChange);
+      this.$session.off('changeMode', onChangeMode);
+   }.bind(this);
+
+   var onDocChange = function(evt)
+   {
+      this.$onDocChange(evt);
+   }.bind(this);
+
+   this.$session.on('changeMode', onChangeMode);
+   this.$doc.on('change', onDocChange);
+
    var that = this;
-   this.$doc.on('change', function(evt) {
-      that.$onDocChange.apply(that, [evt]);
-   });
    
 };
 
@@ -370,7 +388,8 @@ var CppCodeModel = function(session, tokenizer,
                var namespaceName = localCursor.currentValue();
                this.$scopes.onNamespaceScopeStart("namespace " + namespaceName,
                                                   localCursor.currentPosition(),
-                                                  tokenCursor.currentPosition());
+                                                  tokenCursor.currentPosition(),
+                                                  namespaceName);
                
             }
 
@@ -378,7 +397,8 @@ var CppCodeModel = function(session, tokenizer,
             else if (localCursor.peekBwd().currentValue() === "namespace") {
                this.$scopes.onNamespaceScopeStart("anonymous namespace",
                                                   startPos,
-                                                  tokenCursor.currentPosition());
+                                                  tokenCursor.currentPosition(),
+                                                  "<anonymous>");
             }
 
             // class (struct)
@@ -405,7 +425,8 @@ var CppCodeModel = function(session, tokenizer,
                
                this.$scopes.onClassScopeStart(classText,
                                               localCursor.currentPosition(),
-                                              tokenCursor.currentPosition());
+                                              tokenCursor.currentPosition(),
+                                              classText);
             }
 
             // function and lambdas
@@ -429,7 +450,8 @@ var CppCodeModel = function(session, tokenizer,
                      ));
 
                      lambdaText = $normalizeWhitespace("lambda " + lambdaText);
-                     
+
+                     // TODO: Extract lambda arguments.
                      this.$scopes.onLambdaScopeStart(lambdaText,
                                                      startPos,
                                                      tokenCursor.currentPosition());
@@ -515,7 +537,10 @@ var CppCodeModel = function(session, tokenizer,
                         this.$scopes.onFunctionScopeStart(
                            fullFnName,
                            localCursor.currentPosition(),
-                           tokenCursor.currentPosition());
+                           tokenCursor.currentPosition(),
+                           fnName.trim(),
+                           fnArgs.split(",")
+                        );
                      }
                   }
                }

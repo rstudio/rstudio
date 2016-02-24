@@ -28,6 +28,8 @@
 #include <boost/asio/read_until.hpp>
 #include <boost/asio/deadline_timer.hpp>
 
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
@@ -166,10 +168,19 @@ protected:
    // they finish connecting)
    void writeRequest()
    {
+      // specify closing of the connection after the request unless this is
+      // an attempt to upgrade to websockets
+      Header overrideHeader;
+      if (!boost::algorithm::iequals(request_.headerValue("Connection"),
+                                     "Upgrade"))
+      {
+         overrideHeader = Header::connectionClose();
+      }
+
       // write
       boost::asio::async_write(
           socket(),
-          request_.toBuffers(Header::connectionClose()),
+          request_.toBuffers(overrideHeader),
           boost::bind(
                &AsyncClient<SocketService>::handleWrite,
                AsyncClient<SocketService>::shared_from_this(),
@@ -215,22 +226,25 @@ private:
           !connectionRetryContext_.profile.empty())
       {
          // if this is our first retry then set our stop trying time
-         // and call the (optional) recovery function
+         bool firstAttempt = false;
          if (connectionRetryContext_.stopTryingTime.is_not_a_date_time())
          {
             connectionRetryContext_.stopTryingTime =
                   boost::posix_time::microsec_clock::universal_time() +
                   connectionRetryContext_.profile.maxWait;
 
-            if (connectionRetryContext_.profile.recoveryFunction)
+            firstAttempt = true;
+         }
+
+         // call recovery function if we have it
+         if (connectionRetryContext_.profile.recoveryFunction)
+         {
+            Error error = connectionRetryContext_.profile
+                                   .recoveryFunction(request_, firstAttempt);
+            if (error)
             {
-               Error error = connectionRetryContext_.profile
-                                      .recoveryFunction(request_);
-               if (error)
-               {
-                  *pOtherError = error;
-                  return false;
-               }
+               *pOtherError = error;
+               return false;
             }
          }
 

@@ -15,7 +15,10 @@
 
 #include <core/HtmlUtils.hpp>
 
+#include <core/system/System.hpp>
+
 #include <boost/format.hpp>
+#include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Base64.hpp>
@@ -128,6 +131,107 @@ std::string CssUrlFilter::toBase64Url(const boost::cmatch& match)
       return match[0];
    }
 }
+
+TextRange findClosestRange(std::string::const_iterator pos,
+                           const std::vector<TextRange>& ranges)
+{
+   TextRange closestRange = ranges.front();
+
+   BOOST_FOREACH(const TextRange& range, ranges)
+   {
+      if (std::abs(range.begin - pos) < std::abs(closestRange.begin - pos))
+         closestRange = range;
+   }
+
+   return closestRange;
+}
+
+void HtmlPreserver::preserve(std::string* pInput)
+{
+   // begin and end regexes
+   boost::regex beginPreserve("<!--html_preserve-->");
+   boost::regex endPreserve("<!--\\/html_preserve-->");
+
+   // discover ranges we need to preserve
+   std::vector<TextRange> ranges;
+   std::string::const_iterator pos = pInput->begin();
+   std::string::const_iterator inputEnd = pInput->end();
+   while (pos != inputEnd)
+   {
+      // look for begin marker
+      boost::smatch m;
+      if (boost::regex_search(pos, inputEnd, m, beginPreserve))
+      {
+         // set begin iterator
+         std::string::const_iterator begin = m[0].first;
+         std::string::const_iterator end = m[0].second;
+
+         // look for end marker
+         if (boost::regex_search(end, inputEnd, m, endPreserve))
+         {
+            // update end to be the end of the match
+            end = m[0].second;
+         }
+         else
+         {
+            // didn't find a matching end pattern so set the end to the
+            // end of the document -- this will cause us to exclude the
+            // rest of the document from processing
+            end = inputEnd;
+         }
+
+         // mark everything before the match as requiring processing
+         ranges.push_back(TextRange(true, pos, begin));
+
+         // add the matched range to our list
+         ranges.push_back(TextRange(false, begin, end));
+
+         // update the position
+         pos = end + 1;
+
+      }
+      else
+      {
+         // no more preserve regions, set termination condition
+         ranges.push_back(TextRange(true, pos, pInput->end()));
+         pos = inputEnd;
+      }
+   }
+
+   // substitute guids for all of the matched ranges
+   std::string modifiedInput;
+   for (std::vector<TextRange>::iterator it = ranges.begin();
+        it != ranges.end(); it++)
+   {
+      if (it->process)
+      {
+         modifiedInput += std::string(it->begin, it->end);
+      }
+      else
+      {
+         std::string guid = core::system::generateUuid();
+         std::string html = std::string(it->begin, it->end);
+         preserved_[guid] = html;
+         modifiedInput += guid;
+      }
+   }
+
+   // return the modified input
+   *pInput = modifiedInput;
+
+}
+
+void HtmlPreserver::restore(std::string* pOutput)
+{
+   typedef std::pair<std::string,std::string> StringPair;
+   BOOST_FOREACH(const StringPair& preserve, preserved_)
+   {
+      boost::algorithm::replace_first(*pOutput,
+                                      preserve.first,
+                                      preserve.second);
+   }
+}
+
 
 
 } // namespace html_utils

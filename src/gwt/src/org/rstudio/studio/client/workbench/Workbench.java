@@ -1,7 +1,7 @@
 /*
  * Workbench.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,18 +15,23 @@
 package org.rstudio.studio.client.workbench;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.application.ApplicationVisibility;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
@@ -43,13 +48,17 @@ import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.htmlpreview.HTMLPreview;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
+import org.rstudio.studio.client.projects.ProjectOpener;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
+import org.rstudio.studio.client.rmarkdown.events.ShinyGadgetDialogEvent;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
 import org.rstudio.studio.client.shiny.ShinyApplication;
+import org.rstudio.studio.client.shiny.ui.ShinyGadgetDialog;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
@@ -70,7 +79,9 @@ public class Workbench implements BusyHandler,
                                   QuotaStatusHandler,
                                   WorkbenchLoadedHandler,
                                   WorkbenchMetricsChangedHandler,
-                                  InstallRtoolsEvent.Handler
+                                  InstallRtoolsEvent.Handler,
+                                  ShinyGadgetDialogEvent.Handler,
+                                  ExecuteUserCommandEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Workbench> {}
    
@@ -87,6 +98,8 @@ public class Workbench implements BusyHandler,
                     FileDialogs fileDialogs,
                     FileTypeRegistry fileTypeRegistry,
                     ConsoleDispatcher consoleDispatcher,
+                    WorkbenchNewSession newSession,
+                    ProjectOpener projectOpener,
                     Provider<GitState> pGitState,
                     ChooseFile chooseFile,   // required to force gin to create
                     AskPassManager askPass,  // required to force gin to create
@@ -95,10 +108,12 @@ public class Workbench implements BusyHandler,
                     ProfilerPresenter prof,  // required to force gin to create
                     ShinyApplication sApp,   // required to force gin to create
                     DependencyManager dm,    // required to force gin to create
+                    ApplicationVisibility av,// required to force gin to create
                     RmdOutput rmdOutput)     // required to force gin to create    
   {
       view_ = view;
       workbenchContext_ = workbenchContext;
+      projectOpener_ = projectOpener;
       globalDisplay_ = globalDisplay;
       commands_ = commands;
       eventBus_ = eventBus;
@@ -110,6 +125,7 @@ public class Workbench implements BusyHandler,
       fileTypeRegistry_ = fileTypeRegistry;
       consoleDispatcher_ = consoleDispatcher;
       pGitState_ = pGitState;
+      newSession_ = newSession;
       
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
       
@@ -123,6 +139,8 @@ public class Workbench implements BusyHandler,
       eventBus.addHandler(WorkbenchLoadedEvent.TYPE, this);
       eventBus.addHandler(WorkbenchMetricsChangedEvent.TYPE, this);
       eventBus.addHandler(InstallRtoolsEvent.TYPE, this);
+      eventBus.addHandler(ShinyGadgetDialogEvent.TYPE, this);
+      eventBus.addHandler(ExecuteUserCommandEvent.TYPE, this);
 
       // We don't want to send setWorkbenchMetrics more than once per 1/2-second
       metricsChangedCommand_ = new TimeBufferedCommand(-1, -1, 500)
@@ -163,16 +181,9 @@ public class Workbench implements BusyHandler,
             @Override
             public void onVcsRefresh(VcsRefreshEvent event)
             {
-               FileSystemItem projDir = workbenchContext_.getActiveProjectDir();
-               if (projDir != null)
-               {
-                  String title = projDir.getPath();
-                  String branch = pGitState_.get().getBranchInfo()
-                                                        .getActiveBranch();
-                  if (branch != null)
-                     title = title + " - " + branch;
+               String title = workbenchContext_.createWindowTitle();
+               if (title != null)
                   Desktop.getFrame().setWindowTitle(title);
-               }
             }
          });
       }
@@ -243,6 +254,15 @@ public class Workbench implements BusyHandler,
          nearQuotaWarningShown_ = true;
       }
    }
+   
+   @Override
+   public void onShinyGadgetDialog(ShinyGadgetDialogEvent event)
+   {
+      new ShinyGadgetDialog(event.getCaption(), 
+                            event.getUrl(),
+                            new Size(event.getPreferredWidth(),
+                                     event.getPreferredHeight())).showModal();
+   }
   
    @Handler
    public void onSetWorkingDir()
@@ -280,6 +300,15 @@ public class Workbench implements BusyHandler,
          consoleDispatcher_.executeSetWd(projectDir, false);
          eventBus_.fireEvent(new DirectoryNavigateEvent(projectDir, true));
       }
+   }
+   
+   @Handler
+   void onNewSession()
+   {
+      newSession_.openNewSession(globalDisplay_, 
+                                 workbenchContext_, 
+                                 projectOpener_,
+                                 server_);
    }
    
    @Handler
@@ -385,6 +414,27 @@ public class Workbench implements BusyHandler,
    }
    
    @Handler
+   public void onBrowseAddins()
+   {
+      BrowseAddinsDialog dialog = new BrowseAddinsDialog(new OperationWithInput<Command>()
+      {
+         @Override
+         public void execute(Command input)
+         {
+            if (input != null)
+               input.execute();
+         }
+      });
+      dialog.showModal();
+   }
+   
+   @Handler
+   public void onModifyKeyboardShortcuts()
+   {
+      new ModifyKeyboardShortcutsWidget().showModal();
+   }
+   
+   @Handler
    public void onToggleFullScreen()
    {
       if (Desktop.isDesktop() && Desktop.getFrame().supportsFullscreenMode())
@@ -413,7 +463,6 @@ public class Workbench implements BusyHandler,
       }
    }
     
-   
    public void onUserPrompt(UserPromptEvent event)
    {
       // is cancel supported?
@@ -464,6 +513,12 @@ public class Workbench implements BusyHandler,
       }
    }
    
+   @Override
+   public void onExecuteUserCommand(ExecuteUserCommandEvent event)
+   {
+      server_.executeUserCommand(event.getCommandName(), new VoidServerRequestCallback());
+   }
+   
    private final Server server_;
    private final EventBus eventBus_;
    private final Session session_;
@@ -475,9 +530,12 @@ public class Workbench implements BusyHandler,
    private final FileDialogs fileDialogs_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final WorkbenchContext workbenchContext_;
+   private final ProjectOpener projectOpener_;
    private final ConsoleDispatcher consoleDispatcher_;
    private final Provider<GitState> pGitState_;
    private final TimeBufferedCommand metricsChangedCommand_;
    private WorkbenchMetrics lastWorkbenchMetrics_;
+   private WorkbenchNewSession newSession_;
    private boolean nearQuotaWarningShown_ = false;
+   
 }

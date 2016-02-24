@@ -18,13 +18,13 @@
  *
  */
 
-define("mode/rhtml", function(require, exports, module) {
+define("mode/rhtml", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var HtmlMode = require("ace/mode/html").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
 var RHtmlHighlightRules = require("mode/rhtml_highlight_rules").RHtmlHighlightRules;
-var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").SweaveBackgroundHighlighter;
+var BackgroundHighlighter = require("mode/background_highlighter").BackgroundHighlighter;
 var RCodeModel = require("mode/r_code_model").RCodeModel;
 var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
 var RMatchingBraceOutdent = require("mode/r_matching_brace_outdent").RMatchingBraceOutdent;
@@ -46,11 +46,11 @@ var Mode = function(suppressHighlighting, session) {
    this.$r_outdent = new RMatchingBraceOutdent(this.codeModel);
    
    this.foldingRules = this.codeModel;
-   this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
+   this.$sweaveBackgroundHighlighter = new BackgroundHighlighter(
          session,
          /^<!--\s*begin.rcode\s*(?:.*)/,
-         /^\s*end.rcode\s*-->/,
-         true);
+         /^\s*end.rcode\s*-->/
+   );
 };
 oop.inherits(Mode, HtmlMode);
 
@@ -99,6 +99,8 @@ oop.inherits(Mode, HtmlMode);
       else
          return this.$getNextLineIndent(state, line, tab);
    };
+
+   this.$id = "mode/rhtml";
 
 }).call(Mode.prototype);
 

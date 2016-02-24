@@ -13,7 +13,7 @@
  *
  */
 
-define("mode/token_cursor", function(require, exports, module) {
+define("mode/token_cursor", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var Utils = require("mode/utils");
@@ -26,6 +26,15 @@ var TokenCursor = function(tokens, row, offset) {
 };
 
 (function () {
+
+   this.cloneCursor = function()
+   {
+      return new TokenCursor(
+         this.$tokens,
+         this.$row,
+         this.$offset
+      );
+   };
 
    var isArray = Utils.isArray;
    var contains = Utils.contains;
@@ -384,6 +393,24 @@ var TokenCursor = function(tokens, row, offset) {
       return this.currentToken().type;
    };
 
+   this.hasType = function(/*...*/)
+   {
+      var tokenType = this.currentType();
+      if (tokenType == null)
+         return false;
+
+      for (var i = 0; i < arguments.length; i++) {
+         var type = arguments[i];
+         if (tokenType === type ||
+             tokenType.indexOf(type + ".") !== -1 ||
+             tokenType.indexOf("." + type) !== -1)
+         {
+            return true;
+         }
+      }
+      return false;
+   };
+
    this.currentPosition = function()
    {
       var token = this.currentToken();
@@ -391,19 +418,6 @@ var TokenCursor = function(tokens, row, offset) {
          return null;
       else
          return {row: this.$row, column: token.column};
-   };
-
-   // Perform a (shallow) copy of a cursor. This is sufficient as
-   // long as the new cursor has its own $row and $offset (which
-   // is ensured by their being primtive types)
-   this.cloneCursor = function()
-   {
-      var args = [];
-      for (var item in this)
-         if (this.hasOwnProperty(item))
-            args.push(this[item]);
-
-      return construct(this.constructor, args);
    };
 
    this.isFirstSignificantTokenOnLine = function()
@@ -480,8 +494,13 @@ var TokenCursor = function(tokens, row, offset) {
          }
 
          this.$row = row;
-         
-         if (rightInclusive && rowTokens[index].column === column)
+
+         // It's possible for us to go too far, if the column passed
+         // in is too large. In that case, we still want to move to the
+         // final token on the line.
+         if (index === rowTokens.length)
+            this.$offset = index - 1;
+         else if (rightInclusive && rowTokens[index].column === column)
             this.$offset = index;
          else
             this.$offset = index - 1;
@@ -593,6 +612,16 @@ var CppTokenCursor = function(tokens, row, offset, codeModel) {
 oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
 
 (function() {
+
+   this.cloneCursor = function()
+   {
+      return new CppTokenCursor(
+         this.$tokens,
+         this.$row,
+         this.$offset,
+         this.$codeModel
+      );
+   };
 
    var contains = Utils.contains;
 
@@ -807,13 +836,9 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
       }
 
       // Chomp keywords
-      while (clonedCursor.currentType() === "keyword") {
-         
-         if (!clonedCursor.moveToPreviousToken()) {
+      while (clonedCursor.currentType() === "keyword")
+         if (!clonedCursor.moveToPreviousToken())
             return false;
-         }
-         
-      }
       
       // Move backwards over the name of the element initialized
       if (clonedCursor.moveToPreviousToken()) {
@@ -824,7 +849,7 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
             return this.doBwdOverInitializationList(clonedCursor, tokenCursor);
          } else if (value === ":") {
             var prevValue = clonedCursor.peekBwd().currentValue();
-            if (contains(
+            if (!contains(
                ["public", "private", "protected"],
                prevValue
             ))
@@ -852,29 +877,34 @@ oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
 
 (function() {
 
-   var contains = Utils.contains;
-
-   this.isValidAsIdentifier = function() {
-      var type = this.currentType();
-      return type === "identifier" ||
-         type === "symbol" ||
-         type === "keyword" ||
-         type === "string" ||
-         type.indexOf("constant") !== -1;
+   this.cloneCursor = function()
+   {
+      return new RTokenCursor(
+         this.$tokens,
+         this.$row,
+         this.$offset,
+         this.$codeModel
+      );
    };
 
-   this.isLookingAtInfixySymbol = function() {
-      
+   var contains = Utils.contains;
+
+   this.isValidAsIdentifier = function()
+   {
+      var type = this.currentType();
+      return this.hasType("identifier", "constant") ||
+             type === "symbol" ||
+             type === "keyword" ||
+             type === "string";
+   };
+
+   this.isExtractionOperator = function()
+   {
       var value = this.currentValue();
-      if (value === "$" ||
-          value === "@" ||
-          value === ":")
-         return true;
-      
-      if (this.currentType().indexOf("infix") !== -1)
-         return true;
-      
-      return false;
+      return value === "$" ||
+             value === "@" ||
+             value === "::" ||
+             value === ":::";
    };
 
    // Find the start of the evaluation context for a generic expression,
@@ -898,19 +928,8 @@ oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
             if (!clone.moveToPreviousToken())
                break;
 
-            // TODO: explicitly tokenize '::', ':::' so we don't have to do this hack
-            if (clone.isLookingAtInfixySymbol())
-            {
-               while (clone.isLookingAtInfixySymbol())
-                  if (!clone.moveToPreviousToken())
-                     return false;
-
-               // Move back up one because the loop condition will take us back again
-               if (!clone.moveToNextToken())
-                  return false;
-
+            if (clone.isExtractionOperator())
                continue;
-            }
             
             if (!clone.moveToNextToken())
                return false;
@@ -933,8 +952,9 @@ oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
 
    this.isLookingAtBinaryOp = function()
    {
-      return this.currentType() === "keyword.operator" ||
-             this.currentType() === "keyword.operator.infix";
+      var type = this.currentType();
+      return type === "keyword.operator" ||
+             type === "keyword.operator.infix";
    };
 
    this.moveToStartOfCurrentStatement = function()
@@ -1078,35 +1098,25 @@ oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
    // or 'operator' types.
    this.isValidForEndOfStatement = function()
    {
-      var token = this.currentToken();
-      if (!token) return false;
-      
-      var value = token.value;
-      var type  = token.type;
-
+      var type = this.currentType();
       if (type === "paren.keyword.operator")
-         return isRightBracket(value);
+         return isRightBracket(this.currentValue());
+
+      var value = this.currentValue();
 
       return isSingleLineString(value) ||
-             type === "identifier" ||
-             type.indexOf("constant") !== -1 ||
-             type.indexOf("variable") !== -1;
+             this.hasType("identifier", "constant", "variable");
    };
 
    this.isValidForStartOfStatement = function()
    {
-      var token = this.currentToken();
-      
-      var value = token.value;
-      var type = token.type;
-
+      var type = this.currentType();
       if (type === "paren.keyword.operator")
-         return isLeftBracket(value);
+         return isLeftBracket(this.currentValue());
 
+      var value = this.currentValue();
       return isSingleLineString(value) ||
-             type === "identifier" ||
-             type.indexOf("constant") !== -1 ||
-             type.indexOf("variable") !== -1;
+             this.hasType("identifier", "constant", "variable");
    };
 
    // NOTE: By 'conditional' we mean following by a parenthetical

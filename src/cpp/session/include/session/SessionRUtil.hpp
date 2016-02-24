@@ -45,10 +45,6 @@ std::set<std::string> implicitlyAvailablePackages(const core::FilePath& filePath
 std::set<std::string> implicitlyAvailablePackages(const core::FilePath& filePath,
                                                   const std::string& fileContents);
 
-bool isShinyDocument(const core::FilePath& filePath,
-                     const std::string& fileContents);
-
-
 core::Error initialize();
 
 } // namespace r_util

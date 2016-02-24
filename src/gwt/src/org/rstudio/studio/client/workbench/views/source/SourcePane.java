@@ -41,7 +41,6 @@ import org.rstudio.studio.client.common.AutoGlassAttacher;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.source.Source.Display;
-
 import java.util.ArrayList;
 
 public class SourcePane extends Composite implements Display,
@@ -99,7 +98,7 @@ public class SourcePane extends Composite implements Display,
       panel_.setWidgetRightWidth(chevron_,
                                 52, Unit.PX,
                                 chevron_.getWidth(), Unit.PX);
-
+      
       initWidget(panel_);
    }
 
@@ -118,11 +117,13 @@ public class SourcePane extends Composite implements Display,
 
    public void addTab(Widget widget,
                       ImageResource icon,
+                      String docId,
                       String name,
                       String tooltip,
+                      Integer position,
                       boolean switchToTab)
    {
-      tabPanel_.add(widget, icon, name, tooltip);
+      tabPanel_.add(widget, icon, docId, name, tooltip, position);
       if (switchToTab)
          tabPanel_.selectTab(widget);
    }
@@ -193,6 +194,12 @@ public class SourcePane extends Composite implements Display,
    public int getTabCount()
    {
       return tabPanel_.getWidgetCount();
+   }
+
+   @Override
+   public void moveTab(int index, int delta)
+   {
+      tabPanel_.moveTab(index, delta);
    }
 
    public HandlerRegistration addTabClosingHandler(TabClosingHandler handler)
@@ -300,7 +307,11 @@ public class SourcePane extends Composite implements Display,
             ((RequiresVisibilityChanged)w).onVisibilityChanged(visible);
       }
    }
-
+   
+   public void cancelTabDrag()
+   {
+      tabPanel_.cancelTabDrag();
+   }
 
    private DocTabLayoutPanel tabPanel_;
    private HTML utilPanel_;

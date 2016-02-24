@@ -20,14 +20,17 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.rsconnect.events.EnableRStudioConnectUIEvent;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult.AccountType;
+import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAuthUser;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPreAuthToken;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerEntry;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
@@ -40,6 +43,10 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.PublishingPreferencesPane;
 import org.rstudio.studio.client.workbench.ui.OptionsLoader;
 
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -75,14 +82,13 @@ public class RSAccountConnector implements
       optionsLoader_ = optionsLoader;
       pUiPrefs_ = pUiPrefs;
       session_ = session;
-      satellite_ = satellite;
 
       events.addHandler(EnableRStudioConnectUIEvent.TYPE, this);
 
       binder.bind(commands, this);
       
       // register satellite callback
-      if (!satellite_.isCurrentWindowSatellite())
+      if (!Satellite.isCurrentWindowSatellite())
          exportManageAccountsCallback();
    }
    
@@ -101,10 +107,64 @@ public class RSAccountConnector implements
       }
    }
    
+   public void showReconnectWizard(
+         final RSConnectAccount account,
+         final OperationWithInput<Boolean> onCompleted)
+   {
+      server_.getServerUrls(new ServerRequestCallback<JsArray<RSConnectServerEntry>>()
+      {
+         @Override
+         public void onResponseReceived(JsArray<RSConnectServerEntry> entries)
+         {
+            boolean found = false;
+            for (int i = 0; i < entries.length(); i++)
+            {
+               if (entries.get(i).getName().equalsIgnoreCase(
+                     account.getServer()))
+               {
+                  RSConnectReconnectWizard wizard = 
+                        new RSConnectReconnectWizard(
+                        server_,
+                        display_,
+                        account,
+                        entries.get(i).getUrl(),
+                        new ProgressOperationWithInput<NewRSConnectAccountResult>()
+                  {
+                     @Override
+                     public void execute(NewRSConnectAccountResult input,
+                           final ProgressIndicator indicator)
+                     {
+                        processDialogResult(input, indicator, onCompleted);
+                     }
+                  });
+                  wizard.showModal();
+                  found = true;
+                  closeAuthWindowWhenFinished(wizard);
+                  break;
+               }
+            }
+
+            if (!found)
+            {
+               display_.showErrorMessage("Server Information Not Found", 
+                     "RStudio could not retrieve server information for " +
+                     "the selected account.");
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showErrorMessage("Can't Find Servers", 
+                  "RStudio could not retrieve server information.");
+         }
+      });
+   }
+   
    @Handler
    public void onRsconnectManageAccounts()
    {
-      if (satellite_.isCurrentWindowSatellite())
+      if (Satellite.isCurrentWindowSatellite())
       {
          callSatelliteManageAccounts();
       }
@@ -154,6 +214,10 @@ public class RSAccountConnector implements
          boolean withCloudOption,
          final OperationWithInput<Boolean> onCompleted)
    {
+      // ignore if wizard is already up
+      if (showingWizard_)
+         return;
+      
       RSConnectAccountWizard wizard = new RSConnectAccountWizard(
             server_,
             display_,
@@ -169,7 +233,21 @@ public class RSAccountConnector implements
             processDialogResult(input, indicator, onCompleted);
          }
       });
+      wizard.setGlassEnabled(true);
       wizard.showModal();
+      
+      // remember whether wizard is showing
+      showingWizard_ = true;
+      wizard.addCloseHandler(new CloseHandler<PopupPanel>()
+      {
+         @Override
+         public void onClose(CloseEvent<PopupPanel> arg0)
+         {
+            showingWizard_ = false;
+         }
+      });
+
+      closeAuthWindowWhenFinished(wizard);
    }
    
    private void processDialogResult(final NewRSConnectAccountResult input, 
@@ -308,12 +386,30 @@ public class RSAccountConnector implements
    private final native void callSatelliteManageAccounts()/*-{
       $wnd.opener.rsManageAccountsFromRStudioSatellite();
    }-*/;
-
+   
+   
+   private void closeAuthWindowWhenFinished(PopupPanel panel)
+   {
+      if (Desktop.isDesktop())
+      {
+         panel.addCloseHandler(new CloseHandler<PopupPanel>()
+         {
+            @Override
+            public void onClose(CloseEvent<PopupPanel> arg0)
+            {
+               // take down the auth window if it's still showing
+               Desktop.getFrame().closeNamedWindow(
+                     NewRSConnectAuthPage.AUTH_WINDOW_NAME);
+            }
+         });
+      }
+   }
 
    private final GlobalDisplay display_;
    private final RSConnectServerOperations server_;
    private final OptionsLoader.Shim optionsLoader_;
    private final Provider<UIPrefs> pUiPrefs_;
    private final Session session_;
-   private final Satellite satellite_;
+   
+   private boolean showingWizard_;
 }

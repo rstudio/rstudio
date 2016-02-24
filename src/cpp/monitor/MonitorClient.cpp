@@ -13,6 +13,8 @@
  *
  */
 
+#include <boost/asio/io_service.hpp>
+
 #include <monitor/MonitorClient.hpp>
 
 #include "MonitorClientImpl.hpp"

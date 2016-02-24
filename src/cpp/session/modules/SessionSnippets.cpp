@@ -106,23 +106,19 @@ bool isSnippetFilePath(const FilePath& filePath,
    return true;
 }
 
-void checkAndNotifyClientIfSnippetsAvailable()
+Error getSnippetsAsJson(json::Array* pJsonData)
 {
    FilePath snippetsDir = getSnippetsDir();
    if (!snippetsDir.exists() || !snippetsDir.isDirectory())
-      return;
+      return Success();
    
    // Get the contents of each file here, and pass that info back up
    // to the client
    std::vector<FilePath> snippetPaths;
    Error error = snippetsDir.children(&snippetPaths);
    if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
+      return error;
    
-   json::Array jsonData;
    BOOST_FOREACH(const FilePath& filePath, snippetPaths)
    {
       // bail if this doesn't appear to be a snippets file
@@ -133,19 +129,34 @@ void checkAndNotifyClientIfSnippetsAvailable()
       std::string contents;
       error = readStringFromFile(filePath, &contents);
       if (error)
-      {
-         LOG_ERROR(error);
-         return;
-      }
+         return error;
       
       json::Object snippetJson;
       snippetJson["mode"] = mode;
       snippetJson["contents"] = contents;
-      jsonData.push_back(snippetJson);
+      pJsonData->push_back(snippetJson);
    }
+   return Success();
+}
 
-   ClientEvent event(client_events::kSnippetsChanged, jsonData);
-   module_context::enqueClientEvent(event);
+void checkAndNotifyClientIfSnippetsAvailable()
+{
+   json::Array jsonData;
+
+   // attempt to get the snippets as a JSON array 
+   Error error = getSnippetsAsJson(&jsonData);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   
+   // if we got some, send them to the client
+   if (!jsonData.empty())
+   {
+      ClientEvent event(client_events::kSnippetsChanged, jsonData);
+      module_context::enqueClientEvent(event);
+   }
 }
 
 void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
@@ -187,6 +198,19 @@ void afterSessionInitHook(bool newSession)
    source_database::events().onDocUpdated.connect(onDocUpdated);
 }
 
+Error getSnippets(const json::JsonRpcRequest& request,
+                  json::JsonRpcResponse* pResponse)
+{
+   json::Array jsonData;
+   Error error = getSnippetsAsJson(&jsonData);
+   if (error)
+      return error;
+
+   pResponse->setResult(jsonData);
+
+   return Success();
+}
+
 } // anonymous namespace
 
 core::Error initialize()
@@ -199,7 +223,8 @@ core::Error initialize()
    
    ExecBlock initBlock;
    initBlock.addFunctions()
-         (bind(registerRpcMethod, "save_snippets", saveSnippets));
+         (bind(registerRpcMethod, "save_snippets", saveSnippets))
+         (bind(registerRpcMethod, "get_snippets", getSnippets));
    
    return initBlock.execute();
 }

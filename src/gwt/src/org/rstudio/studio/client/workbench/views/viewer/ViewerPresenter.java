@@ -71,6 +71,7 @@ public class ViewerPresenter extends BasePresenter
       void navigate(String url);
       void setExportEnabled(boolean exportEnabled);
       void previewRmd(RmdPreviewParams params);
+      void previewShiny(ShinyApplicationParams params);
       String getUrl();
       String getTitle();
       void popout();
@@ -189,7 +190,9 @@ public class ViewerPresenter extends BasePresenter
       {
          manageCommands(true);
          display_.bringToFront();
-         navigate(event.getParams().getUrl());
+         if (Desktop.isDesktop())
+            Desktop.getFrame().setViewerUrl(event.getParams().getUrl());
+         display_.previewShiny(event.getParams());
          runningShinyAppParams_ = event.getParams();
       }
    }
@@ -509,6 +512,8 @@ public class ViewerPresenter extends BasePresenter
       $wnd.addEventListener(
             "message",
             $entry(function(e) {
+               if (typeof e.data != 'string')
+                  return;
                thiz.@org.rstudio.studio.client.workbench.views.viewer.ViewerPresenter::onMessage(Ljava/lang/String;Ljava/lang/String;)(e.data, e.origin);
             }),
             true);

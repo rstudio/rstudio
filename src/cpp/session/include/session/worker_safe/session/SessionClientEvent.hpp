@@ -118,6 +118,7 @@ extern const int kRmdTemplateDiscoveryCompleted;
 extern const int kRmdShinyDocStarted;
 extern const int kRmdRSConnectDeploymentOutput;
 extern const int kRmdRSConnectDeploymentCompleted;
+extern const int kRmdRSConnectDeploymentFailed;
 extern const int kUserPrompt;
 extern const int kInstallRtools;
 extern const int kInstallShiny;
@@ -129,6 +130,26 @@ extern const int kEnableRStudioConnect;
 extern const int kUpdateGutterMarkers;
 extern const int kSnippetsChanged;
 extern const int kJumpToFunction;
+extern const int kCollabEditStarted;
+extern const int kSessionCountChanged;
+extern const int kCollabEditEnded;
+extern const int kProjectUsersChanged;
+extern const int kRVersionsChanged;
+extern const int kShinyGadgetDialog;
+extern const int kRmdParamsReady;
+extern const int kRegisterUserCommand;
+extern const int kReplaceRanges;
+extern const int kGetActiveDocumentContext;
+extern const int kSendToConsole;
+extern const int kUserFollowStarted;
+extern const int kUserFollowEnded;
+extern const int kProjectAccessRevoked;
+extern const int kCollabEditSaved;
+extern const int kAddinRegistryUpdated;
+extern const int kChunkOutput;
+extern const int kChunkOutputFinished;
+extern const int kRprofStarted;
+extern const int kRprofStopped;
 }
    
 class ClientEvent

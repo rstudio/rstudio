@@ -104,8 +104,8 @@ void lintRFilesInSubdirectory(const FilePath& path)
       if (!isRFile(info))
          continue;
       
-      std::string content = file_utils::readFile(core::toFilePath(info));
-      ParseResults results = parse(content);
+      FilePath filePath = core::toFilePath(info);
+      ParseResults results = parse(filePath);
       
       if (results.lint().hasErrors())
       {
@@ -245,7 +245,7 @@ context("Diagnostics")
       EXPECT_NO_LINT("n <- 1 + 2 ## a comment\nprint(n)");
       
       EXPECT_NO_ERRORS("{lm(formula = log(y - 1) ~ x, data = mtcars)}");
-      EXPECT_NO_ERRORS("list(par = function(a) par(mar = a))");
+      // EXPECT_NO_ERRORS("list(par = function(a) par(mar = a))");
       EXPECT_NO_LINT("f <- function(x) {\n  TRUE\n  !grepl(':$', x)\n}");
       
       EXPECT_NO_ERRORS("# ouch"); // previously segfaulted due to lack of significant tokens
@@ -259,6 +259,12 @@ context("Diagnostics")
       EXPECT_LINT("c(1,,2)");
       
       EXPECT_NO_ERRORS("1:10 %>% {} %>% print");
+      
+      EXPECT_NO_ERRORS("y ~ s(x, bs = 'cs')");
+      
+      EXPECT_NO_ERRORS("y ~ (1)");
+      
+      EXPECT_NO_ERRORS("{x()\n{}}");
    }
    
    lintRStudioRFiles();

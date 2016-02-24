@@ -35,6 +35,8 @@ import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedHandler;
 
 import java.util.ArrayList;
 
@@ -58,6 +60,16 @@ public class SnippetHelper
       path_ = path;
       
       RStudioGinjector.INSTANCE.injectMembers(this);
+      
+      editor_.getWidget().addEditorLoadedHandler(new EditorLoadedHandler()
+      {
+         @Override
+         public void onEditorLoaded(EditorLoadedEvent event)
+         {
+            if (editor_.getFileType() != null)
+               ensureSnippetsLoaded();
+         }
+      });
    }
    
    @Inject
@@ -72,12 +84,11 @@ public class SnippetHelper
    
    public ArrayList<String> getAvailableSnippets()
    {
-      ensureSnippetsLoaded();
       return JsArrayUtil.fromJsArrayString(
             getAvailableSnippetsImpl(manager_, getActiveMode()));
    }
    
-   private final void ensureSnippetsLoaded()
+   public final void ensureSnippetsLoaded()
    {
       ensureSnippetsLoadedImpl(
             getActiveMode(), manager_);
@@ -104,19 +115,19 @@ public class SnippetHelper
       delete manager.snippetMap[mode];
       delete manager.snippetNameMap[mode];
       
-      // Overwrite the old snippets stored.
+      // Overwrite the old snippets stored. This amounts to
+      // either overwriting the old RStudio snippets or the
+      // Ace snippets themselves (if no such RStudio snippets
+      // exist)
       var old = $wnd.require("rstudio/snippets/" + mode);
+      if (old == null)
+         old = $wnd.require("ace/snippets/" + mode);
+         
       if (old != null) {
          old.$snippetText = old.snippetText;
          old.snippetText = snippetText;
-      } else {
-         old = $wnd.require("ace/snippets/" + mode);
-         if (old != null) {
-            old.$snippetText = old.snippetText;
-            old.snippetText = snippetText;
-         }
       }
-      
+         
       // Apply new snippets
       manager.register(snippets, mode);
       return null;
@@ -136,7 +147,7 @@ public class SnippetHelper
    private static final native void ensureSnippetsLoadedImpl(
          String mode,
          SnippetManager manager) /*-{
-
+            
       var snippetsForMode = manager.snippetNameMap[mode];
       if (!snippetsForMode) {
          
@@ -162,7 +173,8 @@ public class SnippetHelper
             
          manager.files[id] = m;
          if (!m.snippets && m.snippetText)
-         m.snippets = manager.parseSnippetFile(m.snippetText);
+            m.snippets = manager.parseSnippetFile(m.snippetText);
+            
          manager.register(m.snippets || [], m.scope);
       }
       
@@ -396,6 +408,21 @@ public class SnippetHelper
                return true;
             }
          }
+         
+         // Try 'special' snippets (those that start with punctuation characters)
+         String line = editor_.getCurrentLine().trim();
+         if (!Character.isLetterOrDigit(line.charAt(0)))
+         {
+            for (int i = 0; i < snippets.size(); i++)
+            {
+               String snippetName = snippets.get(i);
+               if (line.startsWith(snippetName))
+               {
+                  applySnippet(line, snippetName);
+                  return true;
+               }
+            }
+         }
       }
       
       return false;
@@ -406,11 +433,13 @@ public class SnippetHelper
    private final SnippetManager manager_;
    private final String path_;
    
-   private SnippetServerOperations server_;
-   
    private static boolean customCppSnippetsLoaded_;
    private static boolean customRSnippetsLoaded_;
    
    private static final Pattern RE_R_CODE =
          Pattern.create("`[Rr]\\s+[^`]+`", "");
+   
+   // Injected ----
+   private SnippetServerOperations server_;
+   
 }

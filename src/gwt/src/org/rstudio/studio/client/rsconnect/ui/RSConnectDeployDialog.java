@@ -53,17 +53,12 @@ public class RSConnectDeployDialog
       addOkButton(deployButton_);
       addCancelButton();
       connect_ = connect;
-
-      if (source.isDocument())
-      {
-         contents_.setNewAppName(
-               FileSystemItem.createFile(source.getSourceFile()).getStem());
-      }
-      else
-      {
-         contents_.setNewAppName(
-               FilePathUtils.friendlyFileName(source.getDeployDir()));
-      }
+      
+      // create a default app name
+      String defaultName = source.isDocument() ? 
+               FileSystemItem.createFile(source.getSourceFile()).getStem() :
+               FilePathUtils.friendlyFileName(source.getDeployDir());
+      contents_.setUnsanitizedAppName(defaultName);
 
       launchCheck_ = new CheckBox("Launch browser");
       launchCheck_.setValue(true);

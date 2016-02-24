@@ -27,8 +27,11 @@
 
 #include <core/http/Header.hpp>
 #include <core/http/Request.hpp>
+#include <core/http/Response.hpp>
 #include <core/Log.hpp>
 #include <core/Error.hpp>
+#include <core/FilePath.hpp>
+#include <core/system/System.hpp>
 
 namespace rstudio {
 namespace core {
@@ -355,6 +358,109 @@ std::string pathAfterPrefix(const Request& request,
    // was url encoding dashes in e.g. help for memory-limits)
    return  http::util::urlDecode(uri);
 }
+
+core::FilePath requestedFile(const std::string& wwwLocalPath,
+                             const std::string& relativePath)
+{
+   // ensure that this path does not start with /
+   if (relativePath.find('/') == 0)
+      return FilePath();
+
+   // ensure that this path does not contain ..
+   if (relativePath.find("..") != std::string::npos)
+      return FilePath();
+
+#ifndef _WIN32
+
+   // calculate "real" wwwPath
+   FilePath wwwRealPath;
+   Error error = core::system::realPath(wwwLocalPath, &wwwRealPath);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return FilePath();
+   }
+
+   // calculate "real" requested path
+   FilePath realRequestedPath;
+   FilePath requestedPath = wwwRealPath.complete(relativePath);
+   error = core::system::realPath(requestedPath.absolutePath(),
+                                  &realRequestedPath);
+   if (error)
+   {
+      // log if this isn't file not found
+      if (error.code() != boost::system::errc::no_such_file_or_directory)
+      {
+         error.addProperty("requested-path", relativePath);
+         LOG_ERROR(error);
+      }
+      return FilePath();
+   }
+
+   // validate that the requested path falls within the www path
+   if ( (realRequestedPath != wwwRealPath) &&
+        realRequestedPath.relativePath(wwwRealPath).empty() )
+   {
+      LOG_WARNING_MESSAGE("Non www-local-path URI requested: " +
+                          relativePath);
+      return FilePath();
+   }
+
+   // return the path
+   return realRequestedPath;
+
+#else
+
+   // just complete the path straight away on Win32
+   return FilePath(wwwLocalPath).complete(relativePath);
+
+#endif
+}
+
+void fileRequestHandler(const std::string& wwwLocalPath,
+                        const std::string& baseUri,
+                        const http::Request& request,
+                        http::Response* pResponse)
+{
+   // get the uri and strip the query string
+   std::string uri = request.uri();
+   std::size_t pos = uri.find("?");
+   if (pos != std::string::npos)
+      uri.erase(pos);
+
+   // request for one-character short of root location redirects to root
+   if (uri == baseUri.substr(0, baseUri.size()-1))
+   {
+      pResponse->setMovedPermanently(request, baseUri);
+      return;
+   }
+
+   // request for a URI not within our location scope
+   if (uri.find(baseUri) != 0)
+   {
+      pResponse->setNotFoundError(request.uri());
+      return;
+   }
+
+   // auto-append index.htm to request for root location
+   const char * const kIndexFile = "index.htm";
+   if (uri == baseUri)
+      uri += kIndexFile;
+
+   // get path to the requested file requested file
+   std::string relativePath = uri.substr(baseUri.length());
+   FilePath filePath = http::util::requestedFile(wwwLocalPath, relativePath);
+   if (filePath.empty())
+   {
+      pResponse->setNotFoundError(request.uri());
+      return;
+   }
+
+   // return requested file
+   pResponse->setCacheWithRevalidationHeaders();
+   pResponse->setCacheableFile(filePath, request);
+}
+
 
 } // namespace util
 

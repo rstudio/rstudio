@@ -20,13 +20,13 @@
 
 #include <core/FilePath.hpp>
 #include <core/SafeConvert.hpp>
+#include "Options.hpp"
 
 #import "GwtCallbacks.h"
 #import "MainFrameMenu.h"
 #import "Utils.hpp"
 
 #include "SessionLauncher.hpp"
-
 
 
 using namespace rstudio;
@@ -37,6 +37,30 @@ static MainFrameController* instance_;
 
 // context for tracking all running applications
 const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
+
+namespace
+{
+
+bool setWindowGeometry(NSWindow* window, NSString* geometry)
+{
+   // split geometry into individual values
+   NSArray* geom = [geometry componentsSeparatedByString:@","];
+   if ([geom count] < 4)
+      return false;
+   
+   // parse into individual values
+   NSRect frame;
+   frame.origin.x    = [[geom objectAtIndex: 0] intValue];
+   frame.origin.y    = [[geom objectAtIndex: 1] intValue];
+   frame.size.height = [[geom objectAtIndex: 2] intValue];
+   frame.size.width  = [[geom objectAtIndex: 3] intValue];
+   
+   // apply parsed geometry
+   [window setFrame: frame display: TRUE];
+   return true;
+}
+
+} // anonymous namespace
 
 + (MainFrameController*) instance
 {
@@ -56,6 +80,7 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
       // initialize flags
       quitConfirmed_ = NO;
       firstWorkbenchInitialized_ = NO;
+      pendingProject_ = nil;
       
       // retain openFile request
       if (openFile)
@@ -64,8 +89,24 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
       // create the main menu
       menu_ = [[MainFrameMenu alloc] init];
       
-      // auto-save window position
-      [self setWindowFrameAutosaveName: @"RStudio"];
+      bool hasInitialGeometry = false;
+      NSArray* args = [[NSProcessInfo processInfo] arguments];
+      for (NSUInteger i = 0; i < [args count]; i++)
+      {
+         NSString* str = [args objectAtIndex: i];
+         if ([str isEqualToString: kInitialGeometryArg] &&
+             (i + 1) < [args count])
+         {
+            hasInitialGeometry = setWindowGeometry(
+               [self window], [args objectAtIndex: i+1]);
+         }
+      }
+      
+      // auto-save window position unless we're using manually supplied geometry
+      if (!hasInitialGeometry)
+      {
+         [self setWindowFrameAutosaveName: @"RStudio"];
+      }
       
       // set title
       [[self window] setTitle: @"RStudio"];
@@ -156,6 +197,11 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
    [[self window] setTitle: title];
 }
 
+- (void) setPendingProject: (NSString*) path
+{
+   pendingProject_ = [path retain];
+}
+
 
 // whenever the list of running applications changes then check to see
 // whether we should show project name labels on our dock tile (do it
@@ -193,6 +239,15 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
    [[NSApp dockTile] display];
 }
 
+std::string jsEscape(std::string str)
+{
+   boost::algorithm::replace_all(str, "\\", "\\\\");
+   boost::algorithm::replace_all(str, "\"", "\\\"");
+   boost::algorithm::replace_all(str, "\n", "\\n");
+   return str;
+}
+
+
 - (void) openFileInRStudio: (NSString*) openFile
 {
    // must be absolute
@@ -206,43 +261,20 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
       return;
    
    // fixup for passing as a javascript string
-   boost::algorithm::replace_all(filename, "\\", "\\\\");
-   boost::algorithm::replace_all(filename, "\"", "\\\"");
-   boost::algorithm::replace_all(filename, "\n", "\\n");
+   filename = jsEscape(filename);
    
    // execute the openFile command
    std::string js = "window.desktopHooks.openFile(\"" + filename + "\")";
    [self evaluateJavaScript: [NSString stringWithUTF8String: js.c_str()]];
 }
 
-
-- (id) invokeCommand: (NSString*) command
+// evaluate R command
+- (void) evaluateRCommand: (NSString*) cmd
 {
-   static NSArray* noRefocusCommands = [[NSArray alloc] initWithObjects:
-                                        @"undoDummy", @"redoDummy",
-                                        @"cutDummy", @"copyDummy", @"pasteDummy",
-                                        nil];
-
-   if (![noRefocusCommands containsObject: command])
-      [[self window] makeKeyAndOrderFront: self];
-   
-   return [self evaluateJavaScript: [NSString stringWithFormat: @"window.desktopHooks.invokeCommand(\"%@\");",
-                                     command]];
-}
-
-- (BOOL) isCommandEnabled: (NSString*) command
-{
-   return [[self evaluateJavaScript: [NSString stringWithFormat: @"window.desktopHooks.isCommandEnabled(\"%@\");",
-                                     command]] boolValue];
-}
-
-- (BOOL) hasDesktopObject
-{
-   WebScriptObject* script = [webView_ windowScriptObject];
-   if (script == nil)
-      return NO;
-   
-   return [[script evaluateWebScript: @"!!window.desktopHooks"] boolValue];   
+   std::string rCmd = [cmd UTF8String];
+   rCmd = jsEscape(rCmd);
+   std::string js = "window.desktopHooks.evaluateRCmd(\"" + rCmd + "\")";
+   [self evaluateJavaScript: [NSString stringWithUTF8String: js.c_str()]];
 }
 
 - (void) initiateQuit
@@ -253,9 +285,15 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
 - (void) quit
 {
    quitConfirmed_ = YES;
+   if (pendingProject_ != nil)
+   {
+      [gwtCallbacks_ openProjectInOverlaidNewWindow: pendingProject_];
+      [pendingProject_ release];
+      pendingProject_ = nil;
+      [NSThread sleepForTimeInterval:1.0f];
+   }
    [[self window] performClose: self];
 }
-
 
 - (void) windowDidLoad
 {
@@ -269,7 +307,8 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
    // parse version info out of user agent string
    boost::regex re("^.*?AppleWebKit/(\\d+).*$");
    boost::smatch match;
-   if (boost::regex_match(std::string([userAgent UTF8String]), match, re))
+   std::string userAgentStr([userAgent UTF8String]);
+   if (boost::regex_match(userAgentStr, match, re))
    {
       int version = core::safe_convert::stringTo<int>(match[1], 0);
       if (version < 534)

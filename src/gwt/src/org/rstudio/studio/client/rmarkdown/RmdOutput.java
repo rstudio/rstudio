@@ -46,6 +46,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.rmarkdown.model.RmdShinyDocInfo;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFrame;
 import org.rstudio.studio.client.rmarkdown.ui.ShinyDocumentWarningDialog;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -204,6 +205,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                               event.getSourceLine(),
                               event.getFormat(),
                               event.getEncoding(), 
+                              event.getParamsFile(),
                               event.asTempfile(),
                               event.asShiny(),
                   new SimpleRequestCallback<Boolean>());
@@ -335,11 +337,15 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    {
       events_.fireEvent(new RenderRmdEvent(
             result.getTargetFile(), result.getTargetLine(), 
-            null, result.getTargetEncoding(), false, true));
+            null, result.getTargetEncoding(), null, false, true));
    }
    
    private void displayRenderResult(final RmdRenderResult result)
    {
+      // don't display anything if user doesn't want to
+      if (prefs_.rmdViewerType().getValue() == RMD_VIEWER_TYPE_NONE)
+         return;
+      
       String extension = FileSystemItem.getExtensionFromPath(
                                                 result.getOutputFile()); 
       if (".pdf".equals(extension))
@@ -361,7 +367,9 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                globalDisplay_.showHtmlFile(result.getOutputFile());
          }
       }
-      else if (".docx".equals(extension))
+      else if (".docx".equals(extension) || 
+               ".rtf".equals(extension) ||
+               ".odt".equals(extension))
       {
          if (Desktop.isDesktop())
             globalDisplay_.showWordDoc(result.getOutputFile());
@@ -430,9 +438,19 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       
       // don't host presentations in the viewer pane--ioslides doesn't scale
       // slides well without help
-      final int newViewerType = result.isHtmlPresentation() ?
-            RMD_VIEWER_TYPE_WINDOW :
-            prefs_.rmdViewerType().getValue();
+      final int newViewerType = result.isHtmlPresentation() && 
+            prefs_.rmdViewerType().getValue() == RMD_VIEWER_TYPE_PANE ?
+                    RMD_VIEWER_TYPE_WINDOW : 
+                    prefs_.rmdViewerType().getValue();
+      
+      // if we're about to pop open a window but one of the publish buttons
+      // is waiting for a render to complete, skip the preview entirely so 
+      // we don't disturb the publish flow with a window popping up
+      if (newViewerType == RMD_VIEWER_TYPE_WINDOW &&
+            RSConnectPublishButton.isAnyRmdRenderPending())
+      {
+         return;
+      }
       
       // get the window object if available
       WindowEx win = null;
@@ -473,6 +491,9 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private void displayRenderResult(WindowEx win, int viewerType, 
                                     RmdPreviewParams params)
    {
+      if (viewerType == RMD_VIEWER_TYPE_NONE)
+         return;
+      
       RmdRenderResult result = params.getResult();
       
       if (outputFrame_ == null)
@@ -590,4 +611,5 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    
    public final static int RMD_VIEWER_TYPE_WINDOW = 0;
    public final static int RMD_VIEWER_TYPE_PANE = 1;
+   public final static int RMD_VIEWER_TYPE_NONE = 2;
 }

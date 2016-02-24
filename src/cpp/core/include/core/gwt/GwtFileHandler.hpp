@@ -27,6 +27,7 @@ http::UriHandlerFunction fileHandlerFunction(
       const std::string& baseUri = std::string(),
       http::UriFilterFunction mainPageFilter = http::UriFilterFunction(),
       const std::string& initJs = std::string(),
+      const std::string& gwtPrefix = std::string(),
       bool useEmulatedStack = false);
    
 } // namespace gwt

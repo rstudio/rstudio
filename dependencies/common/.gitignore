@@ -13,3 +13,7 @@ shinyapps/
 shinyapps*.tar.gz
 rsconnect/
 rsconnect*.tar.gz
+profvis/
+profvis*.tar.gz
+*.tar.bz
+*.tar.bz2

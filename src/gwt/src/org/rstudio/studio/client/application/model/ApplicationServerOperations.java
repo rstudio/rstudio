@@ -21,6 +21,8 @@ import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
 
+import com.google.gwt.core.client.JsArray;
+
 public interface ApplicationServerOperations extends PrefsServerOperations
 {    
    // establish new session for this client
@@ -49,10 +51,16 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    // quit the current session
    void quitSession(boolean saveWorkspace, 
                     String switchToProjectPath,
+                    RVersionSpec switchToRVersion,
+                    String hostPageUrl,
                     ServerRequestCallback<Boolean> requestCallback);
    
    // verify current credentials
    void updateCredentials();
+   
+   // event listener
+   void stopEventListener();
+   void ensureEventListener();
    
    // get an application URL
    String getApplicationURL(String pathName);
@@ -69,4 +77,25 @@ public interface ApplicationServerOperations extends PrefsServerOperations
 
    public void getProductInfo(
          ServerRequestCallback<ProductInfo> requestCallback);
+   
+   void getNewSessionUrl(String hostPageUrl,
+         boolean isProject, 
+         String directory,
+         RVersionSpec rVersion,
+         ServerRequestCallback<String> callback);
+   
+   void getActiveSessions(
+      String hostPageUrl,
+      ServerRequestCallback<JsArray<ActiveSession>> callback);
+   
+   void getAvailableRVersions(
+      ServerRequestCallback<JsArray<RVersionSpec>> callback);
+   
+   void getProjectRVersion(
+         String projectDir,
+         ServerRequestCallback<RVersionSpec> callback);
+   
+   void getProjectFilePath(
+         String projectId,
+         ServerRequestCallback<String> callback);
 }

@@ -19,15 +19,25 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.MenuItem;
+
+import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.common.satellite.SatelliteManager;
 
 public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 {
@@ -91,7 +101,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       private HandlerRegistration handlerReg2_;
       private Toolbar parentToolbar_;
    }
-
+   
    public AppCommand()
    {
    }
@@ -116,6 +126,34 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       assert visible_ : "AppCommand executed when it was not visible";
       if (!visible_)
          return;
+      
+      // if this window is a satellite but the command only wants to be handled
+      // in the a different window, execute the command there instead
+      Satellite satellite = RStudioGinjector.INSTANCE.getSatellite();
+      if (getWindowMode() != WINDOW_MODE_ANY &&
+          Satellite.isCurrentWindowSatellite() && 
+          satellite.getSatelliteName() != getWindowMode()) 
+      {
+         if (getWindowMode().equals(WINDOW_MODE_MAIN))
+         {
+            // raise the main window if it's not a background command
+            satellite.focusMainWindow();
+         }
+         else if (getWindowMode().equals(WINDOW_MODE_BACKGROUND) &&
+                  Desktop.isDesktop())
+         {
+            // for background commands, we still want the main window to be
+            // as visible as possible, so bring it up behind the current window
+            // (this is of course only possible in desktop mode)
+            Desktop.getFrame().bringMainFrameBehindActive();
+         }
+         
+         // satellites don't fire commands peer-to-peer--route it to the main
+         // window for processing
+         SatelliteManager mgr = RStudioGinjector.INSTANCE.getSatelliteManager();
+         mgr.dispatchCommand(this, null);
+         return;
+      }
 
       if (enableNoHandlerAssertions_)
       {
@@ -176,14 +214,75 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       checked_ = checked;
    }
 
-   public boolean preventShortcutWhenDisabled()
+   public String getWindowMode()
    {
-      return preventShortcutWhenDisabled_;
+      return windowMode_;
+   }
+   
+   public void setWindowMode(String mode)
+   {
+      windowMode_ = mode;
+   }
+   
+   public boolean isRebindable()
+   {
+      return rebindable_;
+   }
+   
+   public void setRebindable(boolean rebindable)
+   {
+      rebindable_ = rebindable;
+   }
+   
+   public enum Context
+   {
+      Workbench, Editor, R, Cpp, PackageDevelopment, RMarkdown,
+      Markdown, Sweave, Help, VCS, Packrat, RPresentation, Addin;
+      
+      @Override
+      public String toString()
+      {
+         if (this == Cpp)
+            return "C / C++";
+         
+         return StringUtil.prettyCamel(super.toString());
+      }
    }
 
-   public void setPreventShortcutWhenDisabled(boolean preventShortcut)
+   public Context getContext()
    {
-      preventShortcutWhenDisabled_ = preventShortcut;
+      return context_;
+   }
+   
+   public void setContext(String context)
+   {
+      String lower = context.toLowerCase();
+      if (lower.equals("workbench"))
+         context_ = Context.Workbench;
+      else if (lower.equals("editor"))
+         context_ = Context.Editor;
+      else if (lower.equals("vcs"))
+         context_ = Context.VCS;
+      else if (lower.equals("r"))
+         context_ = Context.R;
+      else if (lower.equals("cpp"))
+         context_ = Context.Cpp;
+      else if (lower.equals("packagedevelopment"))
+         context_ = Context.PackageDevelopment;
+      else if (lower.equals("rmarkdown"))
+         context_ = Context.RMarkdown;
+      else if (lower.equals("sweave"))
+         context_ = Context.Markdown;
+      else if (lower.equals("markdown"))
+         context_ = Context.Sweave;
+      else if (lower.equals("help"))
+         context_ = Context.Help;
+      else if (lower.equals("packrat"))
+         context_ = Context.Packrat;
+      else if (lower.equals("presentation"))
+         context_ = Context.RPresentation;
+      else
+         throw new Error("Invalid AppCommand context '" + context + "'");
    }
 
    /**
@@ -288,6 +387,17 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    {
       imageResource_ = imageResource;
    }
+   
+   public void setRightImage(ImageResource image)
+   {
+      setRightImage(image, null);
+   }
+   
+   public void setRightImage(ImageResource image, String desc)
+   {
+      rightImage_ = image;
+      rightImageDesc_ = desc;
+   }
 
    public HandlerRegistration addHandler(CommandHandler handler)
    {
@@ -338,20 +448,73 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       String shortcut = shortcut_ != null ? shortcut_.toString(true) : "";
 
       return formatMenuLabel(
-            getImageResource(), label, shortcut);
+            getImageResource(), label, shortcut, rightImage_, rightImageDesc_);
+   }
+   
+   public static String formatMenuLabel(ImageResource icon, 
+         String label,
+         String shortcut)
+   {
+      return formatMenuLabel(icon, label, false, shortcut);
+   }
+   
+   public static String formatMenuLabel(ImageResource icon, 
+         String label,
+         boolean html,
+         String shortcut)
+   {
+      return formatMenuLabel(icon, label, html, shortcut, null, null);
+   }
+   
+   public static String formatMenuLabel(ImageResource icon, 
+         String label,
+         String shortcut,
+         ImageResource rightImage,
+         String rightImageDesc)
+   {
+      return formatMenuLabel(icon, label, false, shortcut, rightImage, rightImageDesc);
    }
 
    public static String formatMenuLabel(ImageResource icon, 
                                          String label,
-                                         String shortcut)
+                                         boolean html,
+                                         String shortcut,
+                                         ImageResource rightImage,
+                                         String rightImageDesc)
    {
-      return formatMenuLabel(icon, label, shortcut, null);
+      return formatMenuLabel(icon, 
+                             label, 
+                             html,
+                             shortcut, 
+                             null, 
+                             rightImage,
+                             rightImageDesc);
+   }
+   
+   public static String formatMenuLabel(ImageResource icon, 
+         String label,
+         String shortcut, 
+         Integer iconOffsetY)
+   {
+      return formatMenuLabel(icon, label, false, shortcut, iconOffsetY);
+   }
+   
+   public static String formatMenuLabel(ImageResource icon, 
+                                        String label,
+                                        boolean html,
+                                        String shortcut, 
+                                        Integer iconOffsetY)
+   {
+      return formatMenuLabel(icon, label, html, shortcut, iconOffsetY, null, null);
    }
    
    public static String formatMenuLabel(ImageResource icon, 
                                          String label,
+                                         boolean html,
                                          String shortcut, 
-                                         Integer iconOffsetY)
+                                         Integer iconOffsetY,
+                                         ImageResource rightImage,
+                                         String rightImageDesc)
    {
       StringBuilder text = new StringBuilder();
       int topOffset = -10;
@@ -371,19 +534,42 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       }
       text.append("</div></td>");
 
-      text.append("<td>" + DomUtils.textToHtml(StringUtil.notNull(label)) + "</td>");
-      if (shortcut != null)
+      label = StringUtil.notNull(label);
+      if (!html)
+         label = DomUtils.textToHtml(label);
+      text.append("<td>" + label + "</td>");
+      if (rightImage != null)
+      {
+         SafeHtml imageHtml = createRightImageHtml(rightImage, rightImageDesc);
+         text.append("<td align=right width=\"25\"><div style=\"width: 25px; float: right; margin-top: -7px; margin-bottom: -10px;\">" + imageHtml.asString() + "</div></td>");
+      }
+      else if (shortcut != null)
+      {
          text.append("<td align=right nowrap>&nbsp;&nbsp;&nbsp;&nbsp;" + shortcut + "</td>");
+      }
       text.append("</tr></table>");
 
       return text.toString();
+   }
+   
+   public KeyboardShortcut getShortcut()
+   {
+      return shortcut_;
+   }
+   
+   public KeySequence getKeySequence()
+   {
+      if (shortcut_ == null)
+         return new KeySequence();
+      
+      return shortcut_.getKeySequence();
    }
 
    public void setShortcut(KeyboardShortcut shortcut)
    {
       shortcut_ = shortcut;
    }
-
+   
    public String getShortcutRaw()
    {
       return shortcut_ != null ? shortcut_.toString(false) : null;
@@ -404,13 +590,27 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       enableNoHandlerAssertions_ = false;
    }
    
+   private static SafeHtml createRightImageHtml(ImageResource image, 
+                                                String desc)
+   {
+      SafeHtmlBuilder sb = new SafeHtmlBuilder();
+      sb.append(SafeHtmlUtil.createOpenTag("img",
+        "class", ThemeStyles.INSTANCE.menuRightImage(),
+        "title", StringUtil.notNull(desc),
+        "src", image.getSafeUri().asString()));
+      sb.appendHtmlConstant("</img>");   
+      return sb.toSafeHtml();
+   }
+   
    private boolean enabled_ = true;
    private boolean visible_ = true;
    private boolean removed_ = false;
-   private boolean preventShortcutWhenDisabled_ = true;
    private boolean checkable_ = false;
    private boolean checked_ = false;
+   private String windowMode_ = "any";
    private final HandlerManager handlers_ = new HandlerManager(this);
+   private boolean rebindable_ = true;
+   private Context context_ = Context.Workbench;
 
    private String label_ = null;
    private String buttonLabel_ = null;
@@ -419,8 +619,13 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private ImageResource imageResource_;
    private KeyboardShortcut shortcut_;
    private String id_;
+   private ImageResource rightImage_ = null;
+   private String rightImageDesc_ = null;
    
    private boolean executedFromShortcut_ = false;
  
    private static boolean enableNoHandlerAssertions_ = true;
+   private static final String WINDOW_MODE_BACKGROUND = "background";
+   private static final String WINDOW_MODE_MAIN = "main";
+   private static final String WINDOW_MODE_ANY = "any";
 }

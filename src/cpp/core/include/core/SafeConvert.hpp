@@ -56,6 +56,23 @@ T stringTo(const std::string& str,
    return result;
 }
 
+inline std::string numberToString(double input, bool localeIndependent = true)
+{
+   try
+   {
+      std::ostringstream stream;
+      if (localeIndependent)
+         stream.imbue(std::locale::classic()); // force locale-independence
+      stream << std::fixed;
+      stream << input;
+      return stream.str();
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   // return empty string for unexpected error
+   return std::string();
+}
+
 template <typename T>
 std::string numberToString(T input, bool localeIndependent = true)
 {
@@ -64,6 +81,7 @@ std::string numberToString(T input, bool localeIndependent = true)
       std::ostringstream stream;
       if (localeIndependent)
          stream.imbue(std::locale::classic()); // force locale-independence
+
       stream << input;
       return stream.str();
    }

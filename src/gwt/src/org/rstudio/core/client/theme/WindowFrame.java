@@ -20,6 +20,8 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
+import com.google.inject.Inject;
+
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.layout.WindowState;
@@ -27,6 +29,8 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.BeforeShowCallback;
 import org.rstudio.core.client.widget.CanFocus;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 
 public class WindowFrame extends Composite
    implements HasWindowStateChangeHandlers,
@@ -40,8 +44,11 @@ public class WindowFrame extends Composite
       this();
       setMainWidget(mainWidget);
    }
+   
    public WindowFrame()
    {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      
       final ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
 
       border_ = new ShadowBorder();
@@ -98,6 +105,12 @@ public class WindowFrame extends Composite
                                  14, Style.Unit.PX);
 
       initWidget(frame_);
+   }
+   
+   @Inject
+   private void initialize(EventBus events)
+   {
+      events_ = events;
    }
 
    @Override
@@ -321,6 +334,8 @@ public class WindowFrame extends Composite
    {
       if (!isVisible())
          fireEvent(new WindowStateChangeEvent(WindowState.NORMAL));
+      
+      events_.fireEvent(new WindowEnsureVisibleEvent(this));
    }
    
    @Override
@@ -352,5 +367,8 @@ public class WindowFrame extends Composite
    private HandlerRegistration ensureVisibleRegistration_;
    private HandlerRegistration ensureHeightRegistration_;
    private Widget previousHeader_;
+   
+   // Injected ----
+   private EventBus events_;
    
 }

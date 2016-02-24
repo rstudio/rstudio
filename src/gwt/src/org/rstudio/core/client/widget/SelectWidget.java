@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -54,6 +55,18 @@ public class SelectWidget extends Composite
                        boolean horizontalLayout,
                        boolean listOnLeft)
    {
+      this(label, options, values, isMultipleSelect, 
+           horizontalLayout, listOnLeft, false);
+   }
+   
+   public SelectWidget(String label,
+                       String[] options,
+                       String[] values,
+                       boolean isMultipleSelect,
+                       boolean horizontalLayout,
+                       boolean listOnLeft,
+                       boolean fillContainer)
+   {
       if (values == null)
          values = options;
 
@@ -90,8 +103,16 @@ public class SelectWidget extends Composite
          panel = flowPanel_;
          panel.add(listBox_);
       }
-
+      
       initWidget(panel);
+      
+      if (fillContainer)
+      {
+         if (StringUtil.isNullOrEmpty(label))
+            listBox_.setWidth("100%");
+         horizontalPanel_.setWidth("100%");
+      }
+      
       addStyleName(ThemeResources.INSTANCE.themeStyles().selectWidget());
    }
    
@@ -153,6 +174,15 @@ public class SelectWidget extends Composite
       return listBox_.getValue(listBox_.getSelectedIndex());
    }
 
+   public int getIntValue()
+   {
+      return Integer.parseInt(getValue());
+   }
+   
+   public void setIntValue(int value)
+   {
+      setValue(new Integer(value).toString());
+   }
    
    public void addWidget(Widget widget)
    {
@@ -173,7 +203,7 @@ public class SelectWidget extends Composite
    {
       listBox_.insertItem(label, value, index);
    }
-
+   
    private HorizontalPanel horizontalPanel_ = null;
    private FlowPanel flowPanel_ = null;
    private final ListBox listBox_;

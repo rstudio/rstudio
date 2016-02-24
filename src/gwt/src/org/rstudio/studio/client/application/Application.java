@@ -24,10 +24,10 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -36,11 +36,15 @@ import com.google.inject.Singleton;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.events.*;
+import org.rstudio.studio.client.application.model.InvalidSessionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.AboutDialog;
@@ -50,6 +54,9 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.projects.Projects;
+import org.rstudio.studio.client.projects.events.NewProjectEvent;
+import org.rstudio.studio.client.projects.events.OpenProjectEvent;
+import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
 import org.rstudio.studio.client.workbench.Workbench;
@@ -78,6 +85,8 @@ public class Application implements ApplicationEventHandlers
                       Projects projects,
                       SatelliteManager satelliteManager,
                       ApplicationUncaughtExceptionHandler uncaughtExHandler,
+                      ApplicationTutorialApi tutorialApi,
+                      MacZoomHandler zoomHandler,
                       Provider<UIPrefs> uiPrefs,
                       Provider<Workbench> workbench,
                       Provider<EventBus> eventBusProvider,
@@ -121,6 +130,8 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(ServerUnavailableEvent.TYPE, this);
       events.addHandler(InvalidClientVersionEvent.TYPE, this);
       events.addHandler(ServerOfflineEvent.TYPE, this);
+      events.addHandler(InvalidSessionEvent.TYPE, this);
+      events.addHandler(SwitchToRVersionEvent.TYPE, this);
       
       // register for uncaught exceptions
       uncaughtExHandler.register();
@@ -144,10 +155,29 @@ public class Application implements ApplicationEventHandlers
             verifyAgreement(sessionInfo, new Operation() {
                public void execute()
                {
-                  dismissLoadingProgress.execute();
-
-                  session_.setSessionInfo(sessionInfo);
+                  // if this is a switch project then wait to dismiss the 
+                  // loading progress animation for 10 seconds. typically
+                  // this will be enough time to switch projects. if it
+                  // isn't then it's nice to reveal whatever progress 
+                  // operation or error state is holding up the switch
+                  // directly to the user
+                  if (ApplicationAction.isSwitchProject())
+                  {
+                     new Timer() {
+                        @Override
+                        public void run()
+                        {
+                           dismissLoadingProgress.execute();
+                        }   
+                     }.schedule(10000);  
+                  }
+                  else
+                  {
+                     dismissLoadingProgress.execute();
+                  }
                   
+                  session_.setSessionInfo(sessionInfo);
+                        
                   // initialize workbench
                   initializeWorkbench();
                }
@@ -178,6 +208,11 @@ public class Application implements ApplicationEventHandlers
       setToolbarPref(false);
    }
    
+   @Handler
+   public void onToggleToolbar()
+   {
+      setToolbarPref(!view_.isToolbarShowing());
+   }
    
    @Handler
    void onShowAboutDialog()
@@ -197,13 +232,6 @@ public class Application implements ApplicationEventHandlers
       });
    }
    
-   @Handler
-   public void onGoToFileFunction()
-   {
-      view_.performGoToFunction();
-   }
-   
-    
    public void onUnauthorized(UnauthorizedEvent event)
    {
       navigateToSignIn();
@@ -304,30 +332,6 @@ public class Application implements ApplicationEventHandlers
       SuperDevMode.reload();
    }
    
-   @Handler
-   public void onZoomActualSize()
-   {
-      // only supported in cocoa desktop
-      if (BrowseCap.isCocoaDesktop())
-         Desktop.getFrame().macZoomActualSize();
-   }
-   
-   @Handler
-   public void onZoomIn()
-   {
-      // pass on to cocoa desktop (qt desktop intercepts)
-      if (BrowseCap.isCocoaDesktop())
-         Desktop.getFrame().macZoomIn();
-   }
-   
-   @Handler
-   public void onZoomOut()
-   {
-      // pass on to cocoa desktop (qt desktop intercepts)
-      if (BrowseCap.isCocoaDesktop())
-         Desktop.getFrame().macZoomOut();
-   }
-  
    public void onSessionSerialization(SessionSerializationEvent event)
    {
       switch(event.getAction().getType())
@@ -394,6 +398,27 @@ public class Application implements ApplicationEventHandlers
    {
       view_.hideSerializationProgress();
    }
+   
+   @Override
+   public void onSwitchToRVersion(final SwitchToRVersionEvent event)
+   {
+      final ApplicationQuit applicaitonQuit = pApplicationQuit_.get();
+      applicaitonQuit.prepareForQuit("Switch R Version", 
+                                             new QuitContext() {
+         public void onReadyToQuit(boolean saveChanges)
+         {
+            // see if we have a project (otherwise switch to "None")
+            String project = session_.getSessionInfo().getActiveProjectFile();
+            if (project == null)
+               project = Projects.NONE;
+            
+            // do the quit
+            applicaitonQuit.performQuit(saveChanges, 
+                                        project, 
+                                        event.getRVersionSpec());
+         }   
+      });
+   }
 
    public void onReload(ReloadEvent event)
    {
@@ -414,15 +439,54 @@ public class Application implements ApplicationEventHandlers
          // the R session to fully exit on the server)
          if (event.getSwitchProjects())
          {
-            reloadWindowWithDelay(true);
+            String nextSessionUrl = event.getNextSessionUrl();
+            if (!StringUtil.isNullOrEmpty(nextSessionUrl))
+            {
+               // forward any query string parameters (e.g. the edit_published
+               // parameter might follow an action=switch_project)
+               String query = ApplicationAction.getQueryStringWithoutAction();
+               if (query.length() > 0)
+                  nextSessionUrl = nextSessionUrl + "?" + query;
+               
+               navigateWindowWithDelay(nextSessionUrl);
+            }
+            else
+            {
+               reloadWindowWithDelay(true);
+            }
          }
-         else
-         {
-            view_.showApplicationQuit();
+         else 
+         { 
+            if (session_.getSessionInfo().getMultiSession())
+            {
+               view_.showApplicationMultiSessionQuit();
+            }
+            else
+            {
+               view_.showApplicationQuit();
+            }
+            
+            // attempt to close the window if this is a quit
+            // action (may or may not be able to depending on 
+            // how it was created)
+            if (ApplicationAction.isQuit() && !ApplicationAction.isQuitToHome())
+            {
+               try
+               {
+                  WindowEx.get().close();
+               }
+               catch(Exception ex)
+               {
+               }
+            }
+            else if (session_.getSessionInfo().getShowUserHomePage())
+            {
+               navigateWindowWithDelay(
+                     session_.getSessionInfo().getUserHomePageUrl());
+            }
          }
       }
    }
-   
    
    private void reloadWindowWithDelay(final boolean baseUrlOnly)
    {
@@ -434,6 +498,17 @@ public class Application implements ApplicationEventHandlers
                Window.Location.replace(GWT.getHostPageBaseURL());
             else
                Window.Location.reload();
+         }
+      }.schedule(100);
+   }
+   
+   private void navigateWindowWithDelay(final String url)
+   {
+      new Timer() {
+         @Override
+         public void run()
+         { 
+            Window.Location.replace(url);
          }
       }.schedule(100);
    }
@@ -454,6 +529,31 @@ public class Application implements ApplicationEventHandlers
    {
       cleanupWorkbench();
       view_.showApplicationUpdateRequired();
+   }
+   
+
+   public void onInvalidSession(InvalidSessionEvent event)
+   {
+      // calculate the url without the scope
+      InvalidSessionInfo info = event.getInfo();
+      String baseURL = GWT.getHostPageBaseURL();
+      String scopePath = info.getScopePath();
+      int loc = baseURL.indexOf(scopePath);
+      if (loc != -1)
+         baseURL = baseURL.substring(0, loc) + "/";
+
+      if (info.getScopeState() == InvalidSessionInfo.ScopeMissingProject)
+      {
+         baseURL += "projectnotfound.htm";
+      }
+      else
+      {
+         // add the scope info to the query string
+         baseURL += "?project="
+               + URL.encodeQueryString(info.getSessionProject()) + "&id="
+               + URL.encodeQueryString(info.getSessionProjectId());
+      }
+      navigateWindowWithDelay(baseURL);
    }
 
    public void onSessionAbendWarning(SessionAbendWarningEvent event)
@@ -493,6 +593,8 @@ public class Application implements ApplicationEventHandlers
                                        DesktopFrame.PENDING_QUIT_AND_EXIT);
                      server_.quitSession(false,
                                          null,
+                                         null,
+                                         GWT.getHostPageBaseURL(),
                                          new SimpleRequestCallback<Boolean>());
                   }
                   else
@@ -525,9 +627,22 @@ public class Application implements ApplicationEventHandlers
    
    private void navigateWindowTo(String relativeUrl)
    {
+      navigateWindowTo(relativeUrl, true);
+   }
+   
+   private void navigateWindowTo(String relativeUrl, boolean includeContext)
+   {
       cleanupWorkbench();
     
-      String url = GWT.getHostPageBaseURL() + relativeUrl;
+      // ensure there is no session context if requested
+      String url = includeContext ? 
+            GWT.getHostPageBaseURL() :
+            ApplicationUtils.getHostPageBaseURLWithoutContext(true);
+            
+      // add relative URL
+      url += relativeUrl;
+     
+      // navigate window
       Window.Location.replace(url);
    }
    
@@ -578,6 +693,73 @@ public class Application implements ApplicationEventHandlers
       if (!session_.getSessionInfo().hasAgreement())
          commands_.rstudioAgreement().setVisible(false);
            
+      // remove knit params if they aren't supported
+      if (!sessionInfo.getKnitParamsAvailable())
+         commands_.knitWithParameters().remove();
+         
+      // show the correct set of data import commands
+      if (uiPrefs_.get().useDataImport().getValue())
+      {
+         commands_.importDatasetFromFile().remove();
+         commands_.importDatasetFromURL().remove();
+         
+         commands_.importDatasetFromCSV().setVisible(false);
+         commands_.importDatasetFromSAV().setVisible(false);
+         commands_.importDatasetFromSAS().setVisible(false);
+         commands_.importDatasetFromStata().setVisible(false);
+         commands_.importDatasetFromXML().setVisible(false);
+         commands_.importDatasetFromODBC().setVisible(false);
+         commands_.importDatasetFromJDBC().setVisible(false);
+         
+         try
+         {
+            String rVersion = sessionInfo.getRVersionsInfo().getRVersion();
+            if (ApplicationUtils.compareVersions(rVersion, "3.0.2") >= 0)
+            {
+               commands_.importDatasetFromCSV().setVisible(true);
+            }
+            if (ApplicationUtils.compareVersions(rVersion, "3.1.0") >= 0)
+            {
+               commands_.importDatasetFromSAV().setVisible(true);
+               commands_.importDatasetFromSAS().setVisible(true);
+               commands_.importDatasetFromStata().setVisible(true);
+               
+               commands_.importDatasetFromXML().setVisible(true);
+            }
+            if (ApplicationUtils.compareVersions(rVersion, "3.0.0") >= 0)
+            {
+               commands_.importDatasetFromODBC().setVisible(true);
+            }
+            if (ApplicationUtils.compareVersions(rVersion, "2.4.0") >= 0)
+            {
+               commands_.importDatasetFromJDBC().setVisible(true);
+            }
+         }
+         catch (Exception e)
+         {
+         }
+         
+         // Removing data import dialogs that are NYI
+         commands_.importDatasetFromXML().remove();
+         commands_.importDatasetFromJSON().remove();
+         commands_.importDatasetFromJDBC().remove();
+         commands_.importDatasetFromODBC().remove();
+         commands_.importDatasetFromMongo().remove();
+      }
+      else
+      {
+         commands_.importDatasetFromCSV().remove();
+         commands_.importDatasetFromSAV().remove();
+         commands_.importDatasetFromSAS().remove();
+         commands_.importDatasetFromStata().remove();
+         commands_.importDatasetFromXLS().remove();
+         commands_.importDatasetFromXML().remove();
+         commands_.importDatasetFromJSON().remove();
+         commands_.importDatasetFromJDBC().remove();
+         commands_.importDatasetFromODBC().remove();
+         commands_.importDatasetFromMongo().remove();
+      }
+      
       // show workbench
       view_.showWorkbenchView(wb.getMainView().asWidget());
       
@@ -592,6 +774,23 @@ public class Application implements ApplicationEventHandlers
       {
          commands_.zoomIn().remove();
          commands_.zoomOut().remove();
+      }
+
+      // show the correct set of data import commands
+      if (!uiPrefs_.get().showProfiler().getValue())
+      {
+          commands_.showProfiler().remove();
+          commands_.startProfiler().remove();
+          commands_.stopProfiler().remove();
+      }
+      
+      // show new session when appropriate
+      if (!Desktop.isDesktop())
+      {
+         if (sessionInfo.getMultiSession())
+            commands_.newSession().setMenuLabel("New Session...");
+         else
+            commands_.newSession().remove();
       }
       
       // toolbar (must be after call to showWorkbenchView because
@@ -609,7 +808,66 @@ public class Application implements ApplicationEventHandlers
       });
       
       clientStateUpdaterInstance_ = clientStateUpdater_.get();
+      
+      // initiate action if requested. do this after a delay 
+      // so that the source database has time to load
+      // before we interrogate it for unsaved documents
+      if (ApplicationAction.hasAction())
+      {
+         new Timer() {
+            @Override
+            public void run() {
+               if (ApplicationAction.isQuit())
+               {
+                  commands_.quitSession().execute();
+               }
+               else if (ApplicationAction.isNewProject())
+               {
+                  ApplicationAction.removeActionFromUrl();
+                  events_.fireEvent(new NewProjectEvent(true, false));
+               }
+               else if (ApplicationAction.isOpenProject())
+               {
+                  ApplicationAction.removeActionFromUrl();
+                  events_.fireEvent(new OpenProjectEvent(true, false));
+               }
+               else if (ApplicationAction.isSwitchProject())
+               {
+                  handleSwitchProjectAction();
+               }
+            }
+         }.schedule(500); 
+      }
    }
+   
+   private void handleSwitchProjectAction()
+   { 
+      String projectId = ApplicationAction.getId();
+      if (projectId.length() > 0)
+      {
+         server_.getProjectFilePath(
+            projectId, 
+            new ServerRequestCallback<String>() {
+
+               @Override
+               public void onResponseReceived(String projectFilePath)
+               {
+                  if (projectFilePath.length() > 0)
+                  {
+                     events_.fireEvent(
+                           new SwitchToProjectEvent(projectFilePath, true));
+                  }
+               }
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+         
+            });
+      } 
+   }
+ 
    
    private void setToolbarPref(boolean showToolbar)
    {
@@ -625,17 +883,6 @@ public class Application implements ApplicationEventHandlers
       // manage commands
       commands_.showToolbar().setVisible(!showToolbar);
       commands_.hideToolbar().setVisible(showToolbar);
-   }
-   
-   private void hideWorkbench(final RootLayoutPanel rootPanel)
-   {
-      final Label w = new Label();
-      w.getElement().getStyle().setBackgroundColor("#e1e2e5");
-      rootPanel.add(w);
-      rootPanel.setWidgetTopBottom(w, 0, Style.Unit.PX, 
-                                      0, Style.Unit.PX);
-      rootPanel.setWidgetLeftRight(w, 0, Style.Unit.PX, 
-                                      0, Style.Unit.PX);
    }
       
    private void cleanupWorkbench()
@@ -655,7 +902,6 @@ public class Application implements ApplicationEventHandlers
    {
       navigateWindowTo("auth-sign-in");
    }
-   
    
    private final ApplicationView view_ ;
    private final GlobalDisplay globalDisplay_ ;

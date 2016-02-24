@@ -96,6 +96,7 @@ public class ShinyApplicationPresenter implements
    public void onShinyDisconnect()
    {
       appStopped_ = true;
+      notifyShinyAppDisconnected(params_);
       closeShinyApp();
    }
 
@@ -150,6 +151,11 @@ public class ShinyApplicationPresenter implements
    
    private final native void notifyShinyAppClosed(JavaScriptObject params) /*-{
       $wnd.opener.notifyShinyAppClosed(params);
+   }-*/;
+
+   private final native void notifyShinyAppDisconnected(JavaScriptObject params) /*-{
+      if ($wnd.opener)
+         $wnd.opener.notifyShinyAppDisconnected(params);
    }-*/;
 
    private final Display view_;

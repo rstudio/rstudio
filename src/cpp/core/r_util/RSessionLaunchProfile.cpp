@@ -29,42 +29,28 @@ namespace r_util {
 
 namespace {
 
-json::Object optionsAsJson(const core::system::Options& options)
-{
-   json::Object optionsJson;
-   BOOST_FOREACH(const core::system::Option& option, options)
-   {
-      optionsJson[option.first] = option.second;
-   }
-   return optionsJson;
-}
-
-core::system::Options optionsFromJson(const json::Object& optionsJson)
-{
-   core::system::Options options;
-   BOOST_FOREACH(const json::Member& member, optionsJson)
-   {
-      std::string name = member.first;
-      json::Value value = member.second;
-      if (value.type() == json::StringType)
-         options.push_back(std::make_pair(name, value.get_str()));
-   }
-   return options;
-}
-
-json::Object scopeAsJson(const SessionScope& scope)
+json::Object contextAsJson(const SessionContext& context)
 {
    json::Object scopeJson;
-   scopeJson["project"] = scope.project;
-   scopeJson["id"] = scope.id;
+   scopeJson["username"] = context.username;
+   scopeJson["project"] = context.scope.project();
+   scopeJson["id"] = context.scope.id();
    return scopeJson;
 }
 
-Error scopeFromJson(const json::Object& scopeJson, SessionScope* pScope)
+Error contextFromJson(const json::Object& contextJson, SessionContext* pContext)
 {
-   return json::readObject(scopeJson,
-                           "project", &(pScope->project),
-                           "id", &(pScope->id));
+   std::string project, id;
+   Error error = json::readObject(contextJson,
+                           "username", &(pContext->username),
+                           "project", &project,
+                           "id", &id);
+   if (error)
+      return error;
+
+   pContext->scope = r_util::SessionScope::fromProjectId(project, id);
+
+   return Success();
 }
 
 
@@ -86,8 +72,14 @@ Error cpuAffinityFromJson(const json::Array& affinityJson,
 
 json::Value toJson(RLimitType limit)
 {
-   boost::uint64_t value = safe_convert::numberTo<boost::uint64_t>(limit, 0);
-   return json::Value(value);
+   try
+   {
+      return json::Value(boost::uint64_t(limit));
+   }
+   catch(...)
+   {
+      return json::Value(0);
+   }
 }
 
 } // anonymous namespace
@@ -96,13 +88,12 @@ json::Value toJson(RLimitType limit)
 json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile)
 {
    json::Object profileJson;
-   profileJson["username"] = profile.username;
+   profileJson["context"] = contextAsJson(profile.context);
    profileJson["password"] = profile.password;
-   profileJson["scope"] = scopeAsJson(profile.scope);
    profileJson["executablePath"] = profile.executablePath;
    json::Object configJson;
-   configJson["args"] = optionsAsJson(profile.config.args);
-   configJson["environment"] = optionsAsJson(profile.config.environment);
+   configJson["args"] = json::toJsonObject(profile.config.args);
+   configJson["environment"] = json::toJsonObject(profile.config.environment);
    configJson["stdInput"] = profile.config.stdInput;
    configJson["stdStreamBehavior"] = profile.config.stdStreamBehavior;
    configJson["priority"] = profile.config.limits.priority;
@@ -123,19 +114,18 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    SessionLaunchProfile profile;
 
    // read top level fields
-   json::Object configJson, scopeJson;
+   json::Object configJson, contextJson;
    Error error = json::readObject(jsonProfile,
-                                  "username", &profile.username,
+                                  "context", &contextJson,
                                   "password", &profile.password,
-                                  "scope", &scopeJson,
                                   "executablePath", &profile.executablePath,
                                   "config", &configJson);
    if (error)
       LOG_ERROR(error);
 
 
-   // read scope object
-   error = scopeFromJson(scopeJson, &(profile.scope));
+   // read context object
+   error = contextFromJson(contextJson, &(profile.context));
    if (error)
       LOG_ERROR(error);
 
@@ -176,8 +166,8 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    }
 
    // populate config
-   profile.config.args = optionsFromJson(argsJson);
-   profile.config.environment = optionsFromJson(envJson);
+   profile.config.args = json::optionsFromJson(argsJson);
+   profile.config.environment = json::optionsFromJson(envJson);
    profile.config.stdInput = stdInput;
    profile.config.stdStreamBehavior =
             static_cast<core::system::StdStreamBehavior>(stdStreamBehavior);
@@ -193,6 +183,8 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    // return profile
    return profile;
 }
+
+
 
 } // namespace r_util
 } // namespace core 

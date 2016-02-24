@@ -21,12 +21,14 @@ import java.util.List;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
@@ -34,6 +36,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -45,6 +48,7 @@ import org.rstudio.studio.client.notebookv2.CompileNotebookv2OptionsDialog;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2Prefs;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdSourceEvent;
+import org.rstudio.studio.client.rmarkdown.events.RmdParamsReadyEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
@@ -64,6 +68,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
@@ -97,6 +102,8 @@ public class TextEditingTargetRMarkdownHelper
                           GlobalDisplay globalDisplay,
                           EventBus eventBus,
                           UIPrefs prefs,
+                          ConsoleDispatcher consoleDispatcher,
+                          WorkbenchContext workbenchContext,
                           FileTypeCommands fileTypeCommands,
                           DependencyManager dependencyManager,
                           RMarkdownServerOperations server,
@@ -107,6 +114,8 @@ public class TextEditingTargetRMarkdownHelper
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
       prefs_ = prefs;
+      consoleDispatcher_ = consoleDispatcher;
+      workbenchContext_ = workbenchContext;
       dependencyManager_ = dependencyManager;
       server_ = server;
       fileServer_ = fileServer;
@@ -252,6 +261,7 @@ public class TextEditingTargetRMarkdownHelper
                                              1, 
                                              format, 
                                              sourceDoc.getEncoding(),
+                                             null,
                                              false,
                                              false));
    }
@@ -260,6 +270,7 @@ public class TextEditingTargetRMarkdownHelper
                                final int sourceLine,
                                final String format,
                                final String encoding, 
+                               final String paramsFile,
                                final boolean asTempfile,
                                final boolean isShinyDoc,
                                final boolean asShiny)
@@ -274,6 +285,7 @@ public class TextEditingTargetRMarkdownHelper
                                                    sourceLine,
                                                    format,
                                                    encoding, 
+                                                   paramsFile,
                                                    asTempfile,
                                                    asShiny));
          }
@@ -700,7 +712,83 @@ public class TextEditingTargetRMarkdownHelper
       });
    }
 
+   public void getRMarkdownParamsFile(final String file, 
+                                      final String encoding,
+                                      final boolean contentKnownToBeAscii,
+                                      final CommandWithArg<String> onReady)
+   {
+      // can't do this if the server is already busy
+      if (workbenchContext_.isServerBusy())
+      {
+         globalDisplay_.showMessage(
+               MessageDisplay.MSG_WARNING,
+               "R Session Busy", 
+               "Unable to edit parameters (the R session is currently busy).");
+         return;
+      }
+      
+      // meet all dependencies then ask for params
+      final String action = "Specifying Knit parameters";
+      dependencyManager_.withRMarkdown(
+         action, 
+         new Command() {
+            @Override
+            public void execute()
+            {
+               dependencyManager_.withShiny(
+                  action,
+                  new Command() {
+
+                     @Override
+                     public void execute()
+                     {  
+                        // subscribe to notification of params ready
+                        // (ensure only one handler at a time is sucscribed)
+                        rmdParamsReadyUnsubscribe();
+                        rmdParamsReadyRegistration_ = eventBus_.addHandler(
+                              RmdParamsReadyEvent.TYPE, 
+                              new RmdParamsReadyEvent.Handler()
+                        {   
+                           @Override
+                           public void onRmdParamsReady(RmdParamsReadyEvent e)
+                           {
+                              rmdParamsReadyUnsubscribe();     
+                              onReady.execute(e.getParamsFile());
+                           }
+                        });
+                        
+                        // execute knit_with_parameters in the console
+                        FileSystemItem targetFile = 
+                                          FileSystemItem.createFile(file);
+                        consoleDispatcher_.executeCommandWithFileEncoding(
+                                             "knit_with_parameters", 
+                                             targetFile.getPath(),
+                                             encoding,
+                                             contentKnownToBeAscii);
+                     }
+                  });                 
+            }
+      });
+   }
+   
+   public void executeInlineChunk(String docPath, String docId, String chunkId, 
+         String options, String content, ServerRequestCallback<Void> callback)
+   {
+      server_.executeInlineChunk(docPath, docId, chunkId, options, content, 
+            callback);
+   }
+   
    // Private methods ---------------------------------------------------------
+   
+   
+   private static void rmdParamsReadyUnsubscribe()
+   {
+      if (rmdParamsReadyRegistration_ != null)
+      {
+         rmdParamsReadyRegistration_.removeHandler();
+         rmdParamsReadyRegistration_ = null;
+      }
+   }
    
    private void cleanAndCreateTemplate(final RmdChosenTemplate template, 
                                        final String target,
@@ -855,8 +943,12 @@ public class TextEditingTargetRMarkdownHelper
    private GlobalDisplay globalDisplay_;
    private EventBus eventBus_;
    private UIPrefs prefs_;
+   private ConsoleDispatcher consoleDispatcher_;
+   private WorkbenchContext workbenchContext_;
    private FileTypeCommands fileTypeCommands_;
    private DependencyManager dependencyManager_;
    private RMarkdownServerOperations server_;
    private FilesServerOperations fileServer_;
+   
+   private static HandlerRegistration rmdParamsReadyRegistration_ = null;
 }

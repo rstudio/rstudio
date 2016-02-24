@@ -65,8 +65,8 @@ public slots:
                            bool forceDefaultExtension);
    QString getExistingDirectory(const QString& caption,
                                 const QString& dir);
-   void undo();
-   void redo();
+   void undo(bool forAce);
+   void redo(bool forAce);
    void clipboardCut();
    void clipboardCopy();
    void clipboardPaste();
@@ -87,7 +87,8 @@ public slots:
    void openMinimalWindow(QString name, QString url, int width, int height);
    void activateMinimalWindow(QString name);
    void activateSatelliteWindow(QString name);
-   void prepareForSatelliteWindow(QString name, int width, int height);
+   void prepareForSatelliteWindow(QString name, int x, int y, int width,
+                                  int height);
    void prepareForNamedWindow(QString name, bool allowExternalNavigate,
                               bool showToolbar);
    void closeNamedWindow(QString name);
@@ -125,6 +126,7 @@ public slots:
 
    void showAboutDialog();
    void bringMainFrameToFront();
+   void bringMainFrameBehindActive();
 
    QString filterText(QString text);
 
@@ -133,6 +135,7 @@ public slots:
    void setPendingQuit(int pendingQuit);
 
    void openProjectInNewWindow(QString projectFilePath);
+   void openSessionInNewWindow(QString workingDirectoryPath);
 
    void openTerminal(QString terminalPath,
                      QString workingDirectory,
@@ -170,9 +173,12 @@ public slots:
    void setViewerUrl(QString url);
    void reloadViewerZoomWindow(QString url);
 
+   void setShinyDialogUrl(QString url);
+
    QString getScrollingCompensationType();
 
    bool isOSXMavericks();
+   bool isCentOS();
 
    void setBusy(bool busy);
 

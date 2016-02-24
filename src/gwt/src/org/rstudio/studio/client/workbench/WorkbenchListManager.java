@@ -45,8 +45,10 @@ public class WorkbenchListManager
       
       listContexts_.put(FILE_MRU, new ListContext(FILE_MRU));
       listContexts_.put(PROJECT_MRU, new ListContext(PROJECT_MRU));
+      listContexts_.put(PLOT_PUBLISH_MRU, new ListContext(PLOT_PUBLISH_MRU));
       listContexts_.put(HELP_HISTORY, new ListContext(HELP_HISTORY));
       listContexts_.put(USER_DICTIONARY, new ListContext(USER_DICTIONARY));
+      listContexts_.put(ADDINS_MRU, new ListContext(ADDINS_MRU));
       
       events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
          @Override
@@ -55,8 +57,10 @@ public class WorkbenchListManager
             WorkbenchLists lists = session_.getSessionInfo().getLists();
             updateList(FILE_MRU, lists);
             updateList(PROJECT_MRU, lists);
+            updateList(PLOT_PUBLISH_MRU, lists);
             updateList(HELP_HISTORY, lists);
             updateList(USER_DICTIONARY, lists);
+            updateList(ADDINS_MRU, lists);
          }  
       });
       
@@ -73,7 +77,6 @@ public class WorkbenchListManager
    {
       return listContexts_.get(FILE_MRU);
    }
-   
   
    public WorkbenchList getProjectMruList()
    {
@@ -90,6 +93,15 @@ public class WorkbenchListManager
       return listContexts_.get(USER_DICTIONARY);
    }
    
+   public WorkbenchList getPlotPublishMruList()
+   {
+      return listContexts_.get(PLOT_PUBLISH_MRU);
+   }
+   
+   public WorkbenchList getAddinsMruList()
+   {
+      return listContexts_.get(ADDINS_MRU);
+   }
    
    private void updateList(String name, WorkbenchLists lists)
    {
@@ -137,7 +149,7 @@ public class WorkbenchListManager
       {
          server_.listRemoveItem(name_, item, new ListRequestCallback());
       }
-
+      
       @Override
       public void clear()
       {
@@ -176,6 +188,8 @@ public class WorkbenchListManager
    
    private static final String FILE_MRU = "file_mru";
    private static final String PROJECT_MRU = "project_mru";
+   private static final String PLOT_PUBLISH_MRU = "plot_publish_mru";
    private static final String HELP_HISTORY = "help_history_links";
    private static final String USER_DICTIONARY = "user_dictionary";
+   private static final String ADDINS_MRU = "addins_mru";
 }

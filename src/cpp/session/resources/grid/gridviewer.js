@@ -34,9 +34,40 @@ var cachedFilterValues = [];
 // the height of the table at the last time we adjusted it to fit its window
 var lastHeight = 0;
 
+// the table header height of the table at the last time we adjusted it to fit
+var lastHeaderHeight = 0;
+
 // scroll handlers; these are detached when the data viewer is hidden 
 var detachedHandlers = [];
 var lastScrollPos = 0;
+
+// display nulls as NAs
+var displayNullsAsNAs = false;
+
+// status text (replaces "Showing x of y...")
+var statusTextOverride = null;
+
+// enables ordering in the table
+var ordering = true;
+
+// show row numbers in index column
+var rowNumbers = true;
+
+// list of calls to defer after table is init (e.g. showing headers)
+var postInitActions = {};
+
+// callback to trigger column options
+var onColumnOpen;
+
+// callback to dismiss column options
+var onColumnDismiss;
+
+// reference to the column being opened
+var columnsPopup = null;
+
+// Active column properties
+var activeColumnInfo = {
+};
 
 var isHeaderWidthMismatched = function() {
   // find the elements to measure (they may not exist)
@@ -101,6 +132,9 @@ var showError = function(msg) {
 
 // simple HTML escaping (avoid XSS in data)
 var escapeHtml = function(html) {
+  if (!html)
+    return "";
+
   // handle special cells
   if (typeof(html) === "number")
     return html.toString();
@@ -127,7 +161,7 @@ var highlightSearchMatch = function(data, search, pos) {
 var renderCellContents = function(data, type, row, meta) {
 
   // usually data is a string; 0 is a special value signifying NA 
-  if (data === 0) {
+  if (data === 0 || (displayNullsAsNAs && data === null)) {
     return '<span class="naCell">NA</span>';
   }
 
@@ -209,12 +243,16 @@ var sizeDataTable = function(force) {
     return;
   }
 
+  var thead = document.getElementById("data_cols");
+  var theadHeight = thead ? thead.clientHeight : 0;
+
   // ignore if height hasn't changed
-  if (lastHeight === window.innerHeight && !force) {
+  if (lastHeight === window.innerHeight && lastHeaderHeight === theadHeight && !force) {
     return;
   }
   
   lastHeight = window.innerHeight;
+  lastHeaderHeight = theadHeight;
 
   // adjust scroll body height accordingly
   var scrollBody = $(".dataTables_scrollBody");
@@ -225,8 +263,10 @@ var sizeDataTable = function(force) {
   }
 
   // apply new size
-  table.settings().scroller().measure(false);
-  table.draw();
+  if (table) {
+    table.settings().scroller().measure(false);
+    table.draw();
+  }
 };
 
 var debouncedDataTableSize = debounce(sizeDataTable, 75);
@@ -278,7 +318,7 @@ var postDrawCallback = function() {
   // server, etc).
   if (isHeaderWidthMismatched()) {
     syncWidth();
-    $.fn.dataTableExt.internal._fnScrollDraw(table.settings()[0]);
+    $.fn.dataTableExt.internal._fnScrollDraw($("#rsGridData").DataTable().settings()[0]);
   }
   window.clearTimeout(loadingTimer);
 };
@@ -350,24 +390,70 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
   return ele;
 };
 
+// shared among factor and text filter UI
+var createTextFilterBox = function(ele, idx, col, onDismiss) {
+  var input = document.createElement("input");
+  input.type = "text";
+  input.className = "textFilterBox";
+
+  // apply the search filter value if this column is filtered as character
+  var searchvals = table.columns(idx).search()[0].split("|");
+  if (searchvals.length > 1 && searchvals[0] === "character") 
+    input.value = searchvals[1];
+
+  var updateView = debounce(function() {
+      table.columns(idx).search("character|" + input.value).draw();
+    }, 200);
+  input.addEventListener("keyup", function(evt) {
+    updateView();
+  });
+  input.addEventListener("keydown", function(evt) {
+    if (evt.keyCode === 27) {
+      onDismiss();
+    }
+  });
+  ele.addEventListener("click", function(evt) {
+    input.focus();
+    evt.preventDefault();
+    evt.stopPropagation();
+  });
+  ele.appendChild(input);
+  return input;
+};
+
 var createFactorFilterUI = function(idx, col, onDismiss) {
   var ele = document.createElement("div");
-  var display = document.createElement("span");
-  display.innerHTML = "&nbsp;";
-  ele.appendChild(display);
+  var input = createTextFilterBox(ele, idx, col, onDismiss);
+  input.addEventListener("keyup", function(evt) {
+    // when the user starts typing in the text box, hide the drop list
+    if (dismissActivePopup) {
+      dismissActivePopup(false);
+    }
+  });
+  input.addEventListener("blur", function(evt) {
+    if (!dismissActivePopup) 
+      onDismiss();
+  });
+  input.addEventListener("focus", function(evt) {
+    if (dismissActivePopup)
+      dismissActivePopup(false);
+  });
 
   var setValHandler = function(factor, text) {
       return function(evt) {
         var searchText = "factor|" + factor.toString();
         table.columns(idx).search(searchText).draw();
-        display.textContent = text;
+        input.value = text;
       };
   };
+
   invokeFilterPopup(ele, function(popup) {
     var list = document.createElement("div");
     list.className = "choiceList";
-    var val = parseSearchVal(idx);
-    var current = val.length > 0 ? parseInt(val) : 0;
+    var current = 0;
+    var searchvals = table.columns(idx).search()[0].split("|");
+    if (searchvals.length > 1 && searchvals[0] === "factor") 
+      current = parseInt(searchvals[1]);
     for (var i = 0; i < col.col_vals.length; i++) {
       var opt = document.createElement("div");
       opt.textContent = col.col_vals[i];
@@ -383,34 +469,14 @@ var createFactorFilterUI = function(idx, col, onDismiss) {
 
 var createTextFilterUI = function(idx, col, onDismiss) {
   var ele = document.createElement("div");
-  var input = document.createElement("input");
-  input.type = "text";
-  input.className = "textFilterBox";
-  input.value = parseSearchVal(idx);
-  var updateView = debounce(function() {
-      table.columns(idx).search("character|" + input.value).draw();
-    }, 200);
-  input.addEventListener("keyup", function(evt) {
-    updateView();
-  });
-  input.addEventListener("keydown", function(evt) {
-    if (evt.keyCode === 27) {
-      onDismiss();
-    }
-  });
+  var input = createTextFilterBox(ele, idx, col, onDismiss);
   input.addEventListener("blur", function(evt) {
     onDismiss();
   });
   input.addEventListener("focus", function(evt) {
     if (dismissActivePopup)
-      dismissActivePopup();
+      dismissActivePopup(true);
   });
-  ele.addEventListener("click", function(evt) {
-    input.focus();
-    evt.preventDefault();
-    evt.stopPropagation();
-  });
-  ele.appendChild(input);
   return ele;
 };
 
@@ -432,11 +498,12 @@ var createBooleanFilterUI = function(idx, col, onDismiss) {
     var list = document.createElement("div");
     list.className = "choiceList";
     var values = ["TRUE", "FALSE"];
-    for (logical in values) {
+    for (var logical in values) {
       var opt = document.createElement("div");
       opt.textContent = values[logical];
       opt.className = "choiceListItem";
       opt.addEventListener("click", setBoolValHandler(values[logical]));
+
       list.appendChild(opt);
     }
     popup.appendChild(list);
@@ -448,14 +515,15 @@ var createBooleanFilterUI = function(idx, col, onDismiss) {
 var invokeFilterPopup = function (ele, buildPopup, onDismiss, dismissOnClick) {
   var popup = null;
 
-  var dismissPopup = function() {
+  var dismissPopup = function(actionComplete) {
     if (popup) {
       document.body.removeChild(popup);
       document.body.removeEventListener("click", checkLightDismiss);
       document.body.removeEventListener("keydown", checkEscDismiss);
       dismissActivePopup = null;
       popup = null;
-      onDismiss();
+      if (actionComplete)
+        onDismiss();
       return true;
     }
     return false;
@@ -463,31 +531,34 @@ var invokeFilterPopup = function (ele, buildPopup, onDismiss, dismissOnClick) {
   
   var checkLightDismiss = function(evt) {
     if (popup && (!dismissOnClick || !popup.contains(evt.target))) {
-      dismissPopup();
+      dismissPopup(true);
     }
   };
 
   var checkEscDismiss = function(evt) {
     if (popup && evt.keyCode === 27) {
-      dismissPopup();
+      dismissPopup(true);
     }
   };
 
   ele.addEventListener("click", function(evt) {
     // dismiss any other popup
     if (dismissActivePopup && dismissActivePopup != dismissPopup) {
-      dismissActivePopup();
+      dismissActivePopup(true);
     }
     if (popup) {
-      dismissPopup();
+      dismissPopup(true);
     } else {
       popup = createFilterPopup();
-      buildPopup(popup);
+      var popupInfo = buildPopup(popup);
       document.body.appendChild(popup);
 
       // compute position
-      var top = $(ele).offset().top + 20;
-      var left = $(ele).offset().left - 4;
+      var top = $(ele).offset().top + (!popupInfo ? 20 : popupInfo.top)
+      var left = $(ele).offset().left + (!popupInfo ? -4 : popupInfo.left);
+      if (popupInfo && popupInfo.width) {
+        $(popup).width(popupInfo.width(ele));
+      }
 
       // ensure we're not outside the body
       if (popup.offsetWidth + left > document.body.offsetWidth) {
@@ -500,6 +571,7 @@ var invokeFilterPopup = function (ele, buildPopup, onDismiss, dismissOnClick) {
       document.body.addEventListener("keydown", checkEscDismiss);
       dismissActivePopup = dismissPopup;
     }
+
     evt.preventDefault();
     evt.stopPropagation();
   });
@@ -512,7 +584,8 @@ var createFilterUI = function(idx, col) {
 
   var setUnfiltered = function() {
     if (ui !== null) {
-      host.replaceChild(val, ui);
+      if (ui.parentNode === host)
+        host.replaceChild(val, ui);
       ui = null;
     }
     host.className = "colFilter unfiltered";
@@ -531,7 +604,7 @@ var createFilterUI = function(idx, col) {
   clear.style.display = "none";
   clear.addEventListener("click", function(evt) {
     if (dismissActivePopup)
-      dismissActivePopup();
+      dismissActivePopup(true);
     table.columns(idx).search("").draw();
     setUnfiltered();
     evt.preventDefault();
@@ -568,6 +641,57 @@ var createFilterUI = function(idx, col) {
   return host;
 };
 
+var createColumnTypesUI = function(th, idx, col) {
+  var host = document.createElement("div");
+  host.className = "columnTypeWrapper";
+
+  var checkLightDismiss = function(evt) {
+    if (columnsPopup && onColumnDismiss && !columnsPopup.contains(evt.target))
+      onColumnDismiss();
+  };
+
+  var checkEscDismiss = function(evt) {
+    if (evt.keyCode === 27) {
+      if (onColumnDismiss)
+        onColumnDismiss();
+    }
+  };
+
+  var val = document.createElement("div");
+  val.textContent = "(" + (col.col_type_assigned ? col.col_type_assigned : col.col_type_r) + ")";
+  val.className = "columnTypeHeader";
+
+  th.className = th.className + " columnClickable";
+  th.addEventListener("click", function(evt) {
+    if (columnsPopup == null || columnsPopup != th) {
+      columnsPopup = th;
+      activeColumnInfo = {
+        left: $(host).offset().left - 5,
+        top: $(host).parent().height() + 11,
+        width: $(th).outerWidth() - 1,
+        index: idx,
+        name: col.col_name
+      };
+      if (onColumnOpen)
+        onColumnOpen();
+
+      evt.preventDefault();
+      evt.stopPropagation();
+    }
+    else {
+      columnsPopup = null;
+      if (onColumnDismiss)
+        onColumnDismiss();
+    }
+  });
+
+  document.body.addEventListener("click", checkLightDismiss);
+  document.body.addEventListener("keydown", checkEscDismiss);
+
+  host.appendChild(val);
+  return host;
+};
+
 var createFilterPopup = function() {
   var filterUI = document.createElement("div");
   filterUI.className = "filterPopup";
@@ -588,6 +712,10 @@ var createHeader = function(idx, col) {
     th.title += " with " + col.col_vals.length + " levels";
   }
 
+  if (idx === 0) {
+    th.className = "first-child";
+  }
+
   // add the column label, if it has one
   if (col.col_label && col.col_label.length > 0) {
     var label = document.createElement("div");
@@ -600,10 +728,54 @@ var createHeader = function(idx, col) {
   return th;
 };
 
-var initDataTable = function(result) {
-  // parse result
-  resCols = $.parseJSON(result);
+var parseLocationUrl = function() {
+  var parsedLocation = {};
 
+  parsedLocation.env = parsedLocation.obj = parsedLocation.cacheKey = parsedLocation.id = "";
+
+  var query = window.location.search.substring(1);
+  var queryVars = query.split("&");
+  for (var i = 0; i < queryVars.length; i++) {
+    var queryVar = queryVars[i].split("=");
+    if (queryVar[0] == "env") {
+      parsedLocation.env = queryVar[1];
+    } else if (queryVar[0] == "obj") {
+      parsedLocation.obj = queryVar[1];
+    } else if (queryVar[0] == "cache_key") {
+      parsedLocation.cacheKey = queryVar[1];
+    } else if (queryVar[0] == "data_source") {
+      parsedLocation.dataSource = queryVar[1];
+    } else if (queryVar[0] == "id") {
+      parsedLocation.id = queryVar[1];
+    }
+  }
+
+  return parsedLocation;
+}
+
+var initDataTableLoad = function(result) {
+  table = $("#rsGridData").DataTable();
+
+  // datatables has a bug wherein it sometimes thinks an LTR browser is RTL if
+  // the LTR browser is at >100% zoom; this causes layout problems, so force
+  // into LTR mode as we don't support RTL here.
+  $.fn.dataTableSettings[0].oBrowser.bScrollbarLeft = false;
+
+  // listen for size changes
+  debouncedDataTableSize();
+  window.addEventListener("resize", function() { 
+    debouncedDataTableSize(); 
+  });
+
+  // trigger post-init actions
+  for (actionName in postInitActions) {
+    if (postInitActions[actionName]) {
+      postInitActions[actionName]();
+    }
+  }
+}
+
+var initDataTable = function(resCols, data) {
   if (resCols.error) {
     showError(cols.error);
     return;
@@ -611,19 +783,8 @@ var initDataTable = function(result) {
   cols = resCols;
 
   // look up the query parameters
-  var env = "", obj = "", cacheKey = "";
-  var query = window.location.search.substring(1);
-  var queryVars = query.split("&");
-  for (var i = 0; i < queryVars.length; i++) {
-    var queryVar = queryVars[i].split("=");
-    if (queryVar[0] == "env") {
-      env = queryVar[1];
-    } else if (queryVar[0] == "obj") {
-      obj = queryVar[1];
-    } else if (queryVar[0] == "cache_key") {
-      cacheKey = queryVar[1];
-    }
-  }
+  var parsedLocation = parseLocationUrl();
+  var env = parsedLocation.env, obj = parsedLocation.obj, cacheKey = parsedLocation.cacheKey;
 
   // keep track of which columns are numeric and which are text (we use
   // different renderers for these types)
@@ -643,34 +804,13 @@ var initDataTable = function(result) {
   }
   var scrollHeight = window.innerHeight - (thead.clientHeight + 2);
 
-  // activate the data table
-  $("#rsGridData").dataTable({
-    "processing": true,
-    "serverSide": true,
-    "autoWidth": false,
-    "pagingType": "full_numbers",
-    "pageLength": 25,
-    "scrollY": scrollHeight + "px",
-    "scrollX": true,
-    "scroller": {
-      "rowHeight": 23,            // sync w/ CSS (scroller auto row height is busted)
-      "loadingIndicator": true,   // show loading indicator when loading
-    },
-    "preDrawCallback": preDrawCallback,
-    "drawCallback": postDrawCallback,
-    "dom": "tiS", 
-    "deferRender": true,
-    "columnDefs": [ {
-      "targets": numberCols,
-      "render": renderNumberCell
-      }, {
-      "targets": textCols,
-      "render": renderTextCell
-      }, {
-      "targets": "_all",
-      "width": "4em"
-      }],
-    "ajax": {
+  var dataTableAjax = null;
+  var dataTableData = null;
+  var dataTableColumnDefs = null;
+  var dataTableColumns = null;
+
+  if (!data) {
+    dataTableAjax = {
       "url": "../grid_data", 
       "type": "POST",
       "data": function(d) {
@@ -691,22 +831,79 @@ var initDataTable = function(result) {
             showError("The data could not be displayed.");
           }
         }
-      },
-     }
+      }
+     };
+    dataTableColumnDefs = [ {
+        "targets": numberCols,
+        "render": renderNumberCell
+      }, {
+        "targets": textCols,
+        "render": renderTextCell
+      }, {
+        "targets": "_all",
+        "width": "4em"
+      }, {
+        "targets": 0,
+        "sClass": "first-child",
+        "width": "4em",
+        "orderable": false
+      }];
+  }
+  else {
+    // Create an empty array of data tto be use as a map in the callback
+    dataTableData = [];
+    if (data.length > 0) {
+      for (i = 0; i < data[0].length; i++) {
+        dataTableData.push(i);
+      }
+    }
+
+    dataTableColumns = resCols.length > 0 ? cols.map(function (e, idx) {
+      var className = (rowNumbers && idx === 0) ? "first-child" : null;
+      if (e.col_disabled) {
+        className = "disabledColumn";
+      }
+
+      return {
+        "sClass": className,
+        "visible": (!rowNumbers && idx === 0) ? false : true,
+        "data": function (row, type, set, meta) {
+          return (meta.col == 0 ? meta.row : (data ? data[meta.col-1][meta.row] : null));
+        },
+        "width": "4em",
+        "render": e.col_type === "numeric" ? renderNumberCell : renderTextCell
+      };
+    }) : [{}];
+  }
+
+  // activate the data table
+  $("#rsGridData").dataTable({
+    "processing": true,
+    "serverSide": dataTableData ? false : true,
+    "autoWidth": false,
+    "pagingType": "full_numbers",
+    "pageLength": 25,
+    "scrollY": scrollHeight + "px",
+    "scrollX": true,
+    "scroller": {
+      "rowHeight": 23,            // sync w/ CSS (scroller auto row height is busted)
+      "loadingIndicator": true,   // show loading indicator when loading
+    },
+    "preDrawCallback": preDrawCallback,
+    "drawCallback": postDrawCallback,
+    "dom": "tiS", 
+    "deferRender": true,
+    "columnDefs": dataTableColumnDefs,
+    "ajax": dataTableAjax,
+    "data": dataTableData,
+    "columns": dataTableColumns,
+    "fnInfoCallback": !statusTextOverride ? null : function(oSettings, iStart, iEnd, iMax, iTotal, sPre) {
+      return statusTextOverride;
+    },
+    "ordering": ordering
   });
 
-  table = $("#rsGridData").DataTable();
-
-  // datatables has a bug wherein it sometimes thinks an LTR browser is RTL if
-  // the LTR browser is at >100% zoom; this causes layout problems, so force
-  // into LTR mode as we don't support RTL here.
-  $.fn.dataTableSettings[0].oBrowser.bScrollbarLeft = false;
-
-  // listen for size changes
-  debouncedDataTableSize();
-  window.addEventListener("resize", function() { 
-    debouncedDataTableSize(); 
-  });
+  initDataTableLoad();
 };
 
 var debouncedSearch = debounce(function(text) {
@@ -714,6 +911,32 @@ var debouncedSearch = debounce(function(text) {
     table.search(text).draw();
   }
 }, 100);
+
+var loadDataFromUrl = function(callback) {
+  // call the server to get data shape
+  $.ajax({
+        url: "../grid_data",
+        data: "show=cols&" + window.location.search.substring(1),
+        type: "POST"})
+    .done(function(result) {
+      callback(result);
+    })
+    .fail(function(jqXHR)
+    {
+      if (jqXHR.responseText[0] !== "{")
+        showError(jqXHR.responseText);
+      else
+      {
+        var result = $.parseJSON(jqXHR.responseText);
+
+        if (result.error) {
+          showError(result.error);
+        } else {
+          showError("The object could not be displayed.");
+        }
+      }
+    }); 
+}
 
 // bootstrapping: 
 // 1. clean up state (we re-bootstrap whenever table structure changes)
@@ -724,11 +947,11 @@ var debouncedSearch = debounce(function(text) {
 // 3. wait for the document to be ready
 // 4. wait for the window size to stop changing (RStudio animates tab opening)
 // 5. initialize the data table
-var bootstrap = function() {
+var bootstrap = function(data) {
 
   // dismiss any active popups
   if (dismissActivePopup)
-    dismissActivePopup();
+    dismissActivePopup(true);
 
   // clean state
   table = null;   
@@ -737,6 +960,7 @@ var bootstrap = function() {
   cachedSearch = "";
   cachedFilterValues = [];
   lastHeight = 0;
+  lastHeaderHeight = 0;
   lastScrollPos = 0;
   detachedHandlers = [];
 
@@ -758,74 +982,119 @@ var bootstrap = function() {
   newEle.innerHTML = "<thead>" +
                      "    <tr id='data_cols'>" +
                      "    </tr>" +
-                     "</thead>";
+                     "</thead>";  
 
-  // call the server to get data shape
-  $.ajax({
-        url: "../grid_data",
-        data: "show=cols&" + window.location.search.substring(1),
-        type: "POST"})
-    .done(function(result) {
+  if (!data) {
+    loadDataFromUrl(function(result) {
       $(document).ready(function() {
         document.body.appendChild(newEle);
         runAfterSizing(function() {
-          initDataTable(result);
+          if (result) {
+            initDataTable($.parseJSON(result));
+          }
         });
       });
-    })
-    .fail(function(jqXHR)
-    {
-      if (jqXHR.responseText[0] !== "{")
-        showError(jqXHR.responseText);
-      else
-      {
-        var result = $.parseJSON(jqXHR.responseText);
+    });
+  }
+  else {
+    $(document).ready(function() {
+      document.body.appendChild(newEle);
+      runAfterSizing(function() {
 
-        if (result.error) {
-          showError(result.error);
-        } else {
-          showError("The object could not be displayed.");
+        // Assign line numbers:
+        if (data.data) {
+          data.data = data.data.map(function (e, idx) {
+            var eWithNumber = e;
+            eWithNumber[""] = idx + 1;
+            return eWithNumber;
+          })
         }
+        else {
+          data.data = [
+            []
+          ];
+        }
+
+        if (data.columns) {
+          initDataTable(data.columns, data.data);
+        }
+      });
+    });
+  }
+};
+
+var setHeaderUIVisible = function(visible, initialize, hide) {
+  var thead = document.getElementById("data_cols");
+
+  // it's possible the dable is getting redrawn right now; if it is, defer
+  // this request.
+  if (thead === null || table === null || cols === null) {
+    postInitActions["setHeaderUIVisible"] = visible ? (function() {
+      setHeaderUIVisible(true, initialize);
+    }) : null;
+    return false;
+  }
+
+  if (!visible) {
+    hide(thead);
+    // close any popup
+    if (dismissActivePopup)
+      dismissActivePopup(true);
+  }
+  for (var i = 0; i < Math.min(thead.children.length, cols.length); i++) {
+    var colIdx = i + (rowNumbers ? 0 : 1)
+    var col = cols[colIdx];
+    var th = thead.children[i];
+    if (visible) {
+      var headerElement = initialize(th, col, colIdx);
+      if (headerElement) {
+        th.appendChild(headerElement);
       }
-    });  
+    } else if (th.children.length > 1) {
+      th.removeChild(th.lastChild);
+    }
+  }
+  sizeDataTable(true);
+  return true;
 };
 
 // Exports -------------------------------------------------------------------
 
 // called from RStudio to toggle the filter UI 
 window.setFilterUIVisible = function(visible) {
-  var thead = document.getElementById("data_cols");
-
-  // it's possible the dable is getting redrawn right now; if it is, ignore
-  // this request.
-  if (thead === null || table === null || cols === null) {
-    return false;
-  }
-
-  if (!visible) {
-    // clear all the filter data
-    table.columns().search("");
-    // close any popup
-    if (dismissActivePopup)
-      dismissActivePopup();
-  }
-  for (var i = 0; i < Math.min(thead.children.length, cols.length); i++) {
-    var col = cols[i];
-    var th = thead.children[i];
+  var setFilterUIVisiblePerColumn = function(th, col, i) {
     if (col.col_search_type === "numeric" || 
         col.col_search_type === "character" ||
         col.col_search_type === "factor" ||
         col.col_search_type === "boolean")  {
-      if (visible) {
-        var filter = createFilterUI(i, col);
-        th.appendChild(filter);
-      } else if (th.children.length > 1) {
-        th.removeChild(th.lastChild);
-      }
+      return createFilterUI(i, col);
     }
+
+    return null;
   }
-  sizeDataTable(true);
-  return true;
+
+  var hideFilterUI = function() {
+    // clear all the filter data
+    table.columns().search("");
+  }
+
+  return setHeaderUIVisible(visible, setFilterUIVisiblePerColumn, hideFilterUI);
+};
+
+// called from RStudio to toggle the filter UI 
+window.setColumnDefinitionsUIVisible = function(visible, onColOpen, onColDismiss) {
+  var setColumnDefinitionsUIVisiblePerColumn = function(th, col, i) {
+    return createColumnTypesUI(th, i, col);
+  }
+
+  var hideColumnTypeUI = function(thead) {
+    $(".columnTypeWrapper").remove();
+  }
+
+  onColumnOpen = onColOpen ? onColOpen : onColumnOpen;
+  onColumnDismiss = onColDismiss ? onColDismiss : onColumnDismiss;
+
+  return setHeaderUIVisible(visible, setColumnDefinitionsUIVisiblePerColumn, hideColumnTypeUI);
 };
 
 // called from RStudio when the underlying object changes
@@ -890,8 +1159,39 @@ window.onDeactivate = function() {
   scrollBody.off("scroll");
 };
 
+window.setData = function(data) {
+  bootstrap(data);
+}
+
+window.setOption = function(option, value) {
+  switch (option)
+  {
+    case "nullsAsNAs":
+      displayNullsAsNAs = value === "true" ? true : false;
+      break;
+    case "status":
+      statusTextOverride = value;
+      break;
+    case "ordering":
+      ordering = value === "true" ? true : false;
+      break;
+    case "rowNumbers":
+      rowNumbers = value === "true" ? true : false;
+      break;
+  }
+}
+
+window.getActiveColumn = function() {
+  return activeColumnInfo;
+}
+
+var parsedLocation = parseLocationUrl();
+var dataMode = parsedLocation && parsedLocation.dataSource ? parsedLocation.dataSource : "server";
+
 // start the first request
-bootstrap();
+if (dataMode === "server") {
+  bootstrap();
+}
 
 })();
 

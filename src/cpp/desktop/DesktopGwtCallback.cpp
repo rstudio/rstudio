@@ -34,6 +34,7 @@
 #include <core/SafeConvert.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
+#include <core/r_util/RUserData.hpp>
 
 #include "DesktopAboutDialog.hpp"
 #include "DesktopOptions.hpp"
@@ -259,12 +260,12 @@ void GwtCallback::doAction(QKeySequence::StandardKey key)
    pOwner_->postWebViewEvent(keyEvent);
 }
 
-void GwtCallback::undo()
+void GwtCallback::undo(bool forAce)
 {
    doAction(QKeySequence::Undo);
 }
 
-void GwtCallback::redo()
+void GwtCallback::redo(bool forAce)
 {
    doAction(QKeySequence::Redo);
 }
@@ -450,11 +451,13 @@ void GwtCallback::activateMinimalWindow(QString name)
 }
 
 void GwtCallback::prepareForSatelliteWindow(QString name,
+                                            int x,
+                                            int y,
                                             int width,
                                             int height)
 {
    pOwner_->webPage()->prepareForWindow(
-                PendingWindow(name, pMainWindow_, width, height));
+                PendingWindow(name, pMainWindow_, x, y, width, height));
 }
 
 void GwtCallback::prepareForNamedWindow(QString name,
@@ -686,6 +689,11 @@ void GwtCallback::bringMainFrameToFront()
    desktop::raiseAndActivateWindow(pMainWindow_);
 }
 
+void GwtCallback::bringMainFrameBehindActive()
+{
+   desktop::moveWindowBeneath(QApplication::activeWindow(), pMainWindow_);
+}
+
 QString GwtCallback::filterText(QString text)
 {
    // Ace doesn't do well with NFD Unicode text. To repro on
@@ -851,7 +859,17 @@ int GwtCallback::collectPendingQuitRequest()
 
 void GwtCallback::openProjectInNewWindow(QString projectFilePath)
 {
-   launchProjectInNewInstance(resolveAliasedPath(projectFilePath));
+   std::vector<std::string> args;
+   args.push_back(resolveAliasedPath(projectFilePath).toStdString());
+   launchRStudio(args);
+}
+
+void GwtCallback::openSessionInNewWindow(QString workingDirectoryPath)
+{
+   workingDirectoryPath = resolveAliasedPath(workingDirectoryPath);
+   core::system::setenv(kRStudioInitialWorkingDir,
+                        workingDirectoryPath.toStdString());
+   launchRStudio();
 }
 
 void GwtCallback::openTerminal(QString terminalPath,
@@ -1039,6 +1057,11 @@ void GwtCallback::setViewerUrl(QString url)
    pOwner_->webPage()->setViewerUrl(url);
 }
 
+void GwtCallback::setShinyDialogUrl(QString url)
+{
+   pOwner_->webPage()->setShinyDialogUrl(url);
+}
+
 void GwtCallback::reloadViewerZoomWindow(QString url)
 {
    BrowserWindow* pBrowser = s_windowTracker.getWindow(
@@ -1050,6 +1073,11 @@ void GwtCallback::reloadViewerZoomWindow(QString url)
 bool GwtCallback::isOSXMavericks()
 {
    return desktop::isOSXMavericks();
+}
+
+bool GwtCallback::isCentOS()
+{
+   return desktop::isCentOS();
 }
 
 QString GwtCallback::getScrollingCompensationType()

@@ -14,12 +14,16 @@
  */
 package org.rstudio.studio.client.shiny.events;
 
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ShinyApplicationStatusEvent extends GwtEvent<ShinyApplicationStatusEvent.Handler>
+@JavaScriptSerializable
+public class ShinyApplicationStatusEvent 
+   extends CrossWindowEvent<ShinyApplicationStatusEvent.Handler>
 { 
    public interface Handler extends EventHandler
    {
@@ -29,14 +33,36 @@ public class ShinyApplicationStatusEvent extends GwtEvent<ShinyApplicationStatus
    public static final GwtEvent.Type<ShinyApplicationStatusEvent.Handler> TYPE =
       new GwtEvent.Type<ShinyApplicationStatusEvent.Handler>();
    
+   public ShinyApplicationStatusEvent()
+   {
+   }
+   
    public ShinyApplicationStatusEvent(ShinyApplicationParams params)
    {
+      this(params, false);
+   }
+
+   public ShinyApplicationStatusEvent(ShinyApplicationParams params,
+         boolean serverInitiated)
+   {
       params_ = params;
+      serverInitiated_ = serverInitiated;
    }
    
    public ShinyApplicationParams getParams()
    {
       return params_;
+   }
+   
+   public boolean isServerInitiated()
+   {
+      return serverInitiated_;
+   }
+   
+   @Override
+   public boolean forward()
+   {
+      return false;
    }
    
    @Override
@@ -52,4 +78,5 @@ public class ShinyApplicationStatusEvent extends GwtEvent<ShinyApplicationStatus
    }
    
    private ShinyApplicationParams params_;
+   private boolean serverInitiated_;
 }

@@ -15,11 +15,8 @@
 
 package org.rstudio.studio.client.common.filetypes;
 
-import java.util.HashSet;
 
-import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
-import org.rstudio.studio.client.workbench.commands.Commands;
 
 public class RPresentationFileType extends RWebContentFileType
 {
@@ -32,13 +29,5 @@ public class RPresentationFileType extends RWebContentFileType
             FileIconResources.INSTANCE.iconRpresentation(), 
             true, 
             false);
-   }
-   
-   @Override
-   public HashSet<AppCommand> getSupportedCommands(Commands commands)
-   {
-      HashSet<AppCommand> result = super.getSupportedCommands(commands);
-      result.add(commands.authoringRPresentationsHelp());
-      return result;
    }
 }

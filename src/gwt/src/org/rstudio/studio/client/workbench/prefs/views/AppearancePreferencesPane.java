@@ -85,7 +85,6 @@ public class AppearancePreferencesPane extends PreferencesPane
                public void onChange(ChangeEvent event)
                {
                   updatePreviewZoomLevel();
-                  preview_.reload();
                }
             });
          }

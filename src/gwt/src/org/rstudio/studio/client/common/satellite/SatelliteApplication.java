@@ -26,7 +26,21 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceT
 
 public class SatelliteApplication
 {
+   public SatelliteApplication()
+   {
+   }
+
    public SatelliteApplication(
+                        String name,
+                        SatelliteApplicationView view,
+                        Satellite satellite,
+                        Provider<AceThemes> pAceThemes,
+                        ApplicationUncaughtExceptionHandler uncaughtExHandler)
+   {
+      initialize(name, view, satellite, pAceThemes, uncaughtExHandler);
+   }
+
+   public void initialize(
                         String name,
                         SatelliteApplicationView view,
                         Satellite satellite,
@@ -39,6 +53,7 @@ public class SatelliteApplication
       pAceThemes_ = pAceThemes;
       uncaughtExHandler_ = uncaughtExHandler;
    }
+   
 
    /**
     * Have subclasses override and return true if the satellite application is
@@ -95,9 +110,9 @@ public class SatelliteApplication
    }
 
 
-   private final String name_;
-   private final SatelliteApplicationView view_;
-   private final Satellite satellite_;
-   private final Provider<AceThemes> pAceThemes_;
-   private final ApplicationUncaughtExceptionHandler uncaughtExHandler_;
+   private String name_;
+   private SatelliteApplicationView view_;
+   private Satellite satellite_;
+   private Provider<AceThemes> pAceThemes_;
+   private ApplicationUncaughtExceptionHandler uncaughtExHandler_;
 }

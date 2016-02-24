@@ -19,10 +19,14 @@
 #include <QPushButton>
 #include <QDesktopServices>
 
+#include <boost/foreach.hpp>
+
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 
 #include "DesktopOptions.hpp"
 
@@ -79,6 +83,22 @@ bool isOSXMavericks()
    return false;
 }
 
+// NOTE: also RHEL
+bool isCentOS()
+{
+   FilePath redhatRelease("/etc/redhat-release");
+   if (!redhatRelease.exists())
+      return false;
+
+   std::string contents;
+   Error error = readStringFromFile(redhatRelease, &contents);
+   if (error)
+      return false;
+
+   return contents.find("CentOS") != std::string::npos ||
+          contents.find("Red Hat Enterprise Linux") != std::string::npos;
+}
+
 void enableFullscreenMode(QMainWindow* pMainWindow, bool primary)
 {
 
@@ -113,6 +133,18 @@ void raiseAndActivateWindow(QWidget* pWindow)
 
    pWindow->raise();
    pWindow->activateWindow();
+}
+
+void moveWindowBeneath(QWidget* pTop, QWidget* pBottom)
+{
+#ifdef WIN32
+   HWND hwndTop = reinterpret_cast<HWND>(pTop->winId());
+   HWND hwndBottom = reinterpret_cast<HWND>(pBottom->winId());
+   ::SetWindowPos(hwndBottom, hwndTop, 0, 0, 0, 0,
+                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+#endif
+   // not currently supported on Linux--Qt doesn't provide a way to view or
+   // change the window stacking order
 }
 
 void closeWindow(QWidget* pWindow)
@@ -197,16 +229,31 @@ void showFileError(const QString& action,
                   msg);
 }
 
-void launchProjectInNewInstance(QString projectFilename)
+void launchRStudio(const std::vector<std::string>& args)
 {
-   // launch the new instance
-   QStringList args;
-   args.append(projectFilename);
+#ifdef _WIN32
+   core::system::ProcessOptions options;
+   options.breakawayFromJob = true;
+   options.detachProcess = true;
+   Error error = core::system::runProgram(
+      desktop::options().executablePath().absolutePath(),
+      args,
+      "",
+      options,
+      NULL);
+   if (error)
+      LOG_ERROR(error);
+#else
+   QStringList argList;
+   BOOST_FOREACH(const std::string& arg, args)
+   {
+      argList.append(QString::fromStdString(arg));
+   }
    QString exePath = QString::fromUtf8(
       desktop::options().executablePath().absolutePath().c_str());
-   QProcess::startDetached(exePath, args);
+   QProcess::startDetached(exePath, argList);
+#endif
 }
-
 
 bool isFixedWidthFont(const QFont& font)
 {

@@ -86,6 +86,7 @@ public class EditorLanguage
    public static final EditorLanguage LANG_JULIA = new EditorLanguage("ace/mode/julia", false, true);
    public static final EditorLanguage LANG_LISP = new EditorLanguage("ace/mode/lisp", false, true);
    public static final EditorLanguage LANG_LUA = new EditorLanguage("ace/mode/lua", false, true);
+   public static final EditorLanguage LANG_MAKEFILE = new EditorLanguage("ace/mode/makefile", false, true);
    public static final EditorLanguage LANG_MATLAB = new EditorLanguage("ace/mode/matlab", false, true);
    public static final EditorLanguage LANG_PERL = new EditorLanguage("ace/mode/perl", false, true);
    public static final EditorLanguage LANG_RUBY = new EditorLanguage("ace/mode/ruby", false, true);

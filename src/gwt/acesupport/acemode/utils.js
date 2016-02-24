@@ -13,11 +13,22 @@
  *
  */
 
-define("mode/utils", function(require, exports, module) {
+define("mode/utils", ["require", "exports", "module"], function(require, exports, module) {
+
+var Range = require("ace/range").Range;
+var TokenIterator = require("ace/token_iterator").TokenIterator;
+var Unicode = require("ace/unicode").packages;
 
 (function() {
 
    var that = this;
+   var reWordCharacter = new RegExp(
+         "^[" +
+         Unicode.L +
+         Unicode.Mn + Unicode.Mc +
+         Unicode.Nd +
+         Unicode.Pc +
+         "._]+", "");
 
    // Simulate 'new Foo([args])'; ie, construction of an
    // object from an array of arguments
@@ -43,6 +54,11 @@ define("mode/utils", function(require, exports, module) {
    this.isArray = function(object)
    {
       return Object.prototype.toString.call(object) === '[object Array]';
+   };
+
+   this.asArray = function(object)
+   {
+      return that.isArray(object) ? object : [object];
    };
 
    this.getPrimaryState = function(session, row)
@@ -77,25 +93,147 @@ define("mode/utils", function(require, exports, module) {
    };
 
    this.embedRules = function(HighlightRules, EmbedRules,
-                              prefix, reStart, reEnd)
+                              prefix, reStart, reEnd,
+                              startStates, endState)
    {
-      var rules = HighlightRules.$rules;
-      rules["start"].unshift({
-         token: "support.function.codebegin",
-         regex: reStart,
-         next : prefix + "-start"
-      });
+      if (typeof startStates === "undefined")
+         startStates = ["start"];
 
-      var embed = new EmbedRules().getRules();
-      HighlightRules.addRules(embed, prefix + "-");
-      
-      rules[prefix + "-start"].unshift({
+      if (typeof endState === "undefined")
+         endState = "start";
+
+      startStates = that.asArray(startStates);
+
+      var rules = HighlightRules.$rules;
+
+      for (var i = 0; i < startStates.length; i++) {
+         rules[startStates[i]].unshift({
+            token: "support.function.codebegin",
+            regex: reStart,
+            next: prefix + "-start"
+         });
+      }
+
+      HighlightRules.embedRules(EmbedRules, prefix + "-", [{
          token: "support.function.codeend",
          regex: reEnd,
-         next : "start"
-      });
+         next: "start"
+      }]);
+      
    };
-   
+
+   this.isSingleLineString = function(string)
+   {
+      if (string.length < 2)
+         return false;
+
+      var firstChar = string[0];
+      if (firstChar !== "'" && firstChar !== "\"")
+         return false;
+
+      var lastChar = string[string.length - 1];
+      if (lastChar !== firstChar)
+         return false;
+
+      var isEscaped = string[string.length - 2] === "\\" &&
+                      string[string.length - 3] !== "\\";
+
+      if (isEscaped)
+         return false;
+
+      return true;
+   };
+
+   this.createTokenIterator = function(editor)
+   {
+      var position = editor.getSelectionRange().start;
+      var session = editor.getSession();
+      return new TokenIterator(session, position.row, position.column);
+   };
+
+   this.isWordCharacter = function(string)
+   {
+      return reWordCharacter.test(string);
+   };
+
+   // The default set of complements is R-centric.
+   var $complements = {
+
+      "'" : "'",
+      '"' : '"',
+      "`" : "`",
+
+      "{" : "}",
+      "(" : ")",
+      "[" : "]",
+      "<" : ">",
+
+      "}" : "{",
+      ")" : "(",
+      "]" : "[",
+      ">" : "<"
+   };
+
+   this.isOpeningBracket = function(string, allowArrow)
+   {
+      return string === "{" ||
+             string === "(" ||
+             string === "[" ||
+             (!!allowArrow && string === "<");
+   };
+
+   this.isClosingBracket = function(string, allowArrow)
+   {
+      return string === "}" ||
+             string === ")" ||
+             string === "]" ||
+             (!!allowArrow && string === ">");
+   };
+
+   this.getComplement = function(string, complements)
+   {
+      if (typeof complements === "undefined")
+         complements = $complements;
+
+      return complements[string];
+   };
+
+   this.stripEnclosingQuotes = function(string)
+   {
+      var n = string.length;
+      if (n < 2)
+         return string;
+      
+      var firstChar = string[0];
+      var isQuote =
+             firstChar === "'" ||
+             firstChar === "\"" ||
+             firstChar === "`";
+
+      if (!isQuote)
+         return string;
+
+      var lastChar = string[n - 1];
+      if (lastChar !== firstChar)
+         return string;
+
+      return string.substr(1, n - 2);
+   };
+
+   this.startsWith = function(string, prefix)
+   {
+      if (typeof string !== "string") return false;
+      if (typeof prefix !== "string") return false;
+      if (string.length < prefix.length) return false;
+
+      for (var i = 0; i < prefix.length; i++)
+         if (string[i] !== prefix[i])
+            return false;
+
+      return true;
+   };
+
+
 }).call(exports);
 
 });

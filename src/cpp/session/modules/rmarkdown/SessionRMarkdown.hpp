@@ -29,6 +29,8 @@ namespace rmarkdown {
 
 bool rmarkdownPackageAvailable();
 
+bool knitParamsAvailable();
+
 core::Error initialize();
 
 } // namespace rmarkdown

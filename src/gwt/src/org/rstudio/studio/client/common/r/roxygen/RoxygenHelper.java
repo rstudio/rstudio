@@ -25,6 +25,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -51,9 +52,11 @@ public class RoxygenHelper
    }
    
    @Inject
-   void initialize(RoxygenServerOperations server)
+   void initialize(GlobalDisplay globalDisplay,
+                   RoxygenServerOperations server)
    {
       server_ = server;
+      globalDisplay_ = globalDisplay;
    }
    
    private static native final String getFunctionName(Scope scope)
@@ -98,7 +101,13 @@ public class RoxygenHelper
       if (scope != null && scope.isFunction())
       {
          insertRoxygenSkeletonFunction(scope);
-         return;
+      }
+      else
+      {
+         globalDisplay_.showErrorMessage(
+             "Insert Roxygen Skeleton",
+             "Unable to insert skeleton (the cursor is not currently " +
+             "inside an R function definition).");
       }
    }
    
@@ -764,6 +773,7 @@ public class RoxygenHelper
    
    private final AceEditor editor_;
    private final WarningBarDisplay view_;
+   private GlobalDisplay globalDisplay_;
    
    private RoxygenServerOperations server_;
    

@@ -1,19 +1,30 @@
 #!/bin/sh
 
+# indirection to ensure correct 'nodejs' executable
+# is discovered / used
+if test -n `which nodejs`; then
+    NODEJS=nodejs
+else
+    NODEJS=node
+fi
+
 cd ace
 
 # Build and copy ace, ace-uncompressed to RStudio
-node ./Makefile.dryice.js normal
-node ./Makefile.dryice.js -m normal
+${NODEJS} ./Makefile.dryice.js normal
+${NODEJS} ./Makefile.dryice.js -m normal
 
 cp build/src/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js
 cp build/src-min/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace.js
 
 # Copy in the 'emacs', 'vim' keybindings
+cp build/src/keybinding-vim.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/keybinding-vim-uncompressed.js
+cp build/src/keybinding-emacs.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/keybinding-emacs-uncompressed.js
 cp build/src-min/keybinding-* ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
 
 # Copy the ext-language-tools
-cp build/src-min/ext-language_tools.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
+cp build/src/ext-language_tools.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ext-language_tools-uncompressed.js
+cp build/src-min/ext-language_tools.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ext-language_tools.js
 
 # Copy in workers
 cp build/src-min/worker-html.js ../../www/js/workers

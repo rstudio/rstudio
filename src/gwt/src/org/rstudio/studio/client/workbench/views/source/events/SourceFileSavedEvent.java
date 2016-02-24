@@ -14,24 +14,38 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
-import com.google.gwt.event.shared.GwtEvent;
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
 /**
  * Fired when an explicit "Save As", or Save of a previously unsaved file,
  * occurs. Does NOT fire when a Save occurs on a previously saved file.
  */
-public class SourceFileSavedEvent extends GwtEvent<SourceFileSavedHandler>
+@JavaScriptSerializable
+public class SourceFileSavedEvent
+             extends CrossWindowEvent<SourceFileSavedHandler>
 {
-   public static final Type<SourceFileSavedHandler> TYPE = new Type<SourceFileSavedHandler>();
-
-   public SourceFileSavedEvent(String path)
+   public static final Type<SourceFileSavedHandler> TYPE = 
+         new Type<SourceFileSavedHandler>();
+   
+   public SourceFileSavedEvent()
    {
+   }
+
+   public SourceFileSavedEvent(String docId, String path)
+   {
+      docId_ = docId;
       path_ = path;
    }
 
    public String getPath()
    {
       return path_;
+   }
+   
+   public String getDocId()
+   {
+      return docId_;
    }
 
    @Override
@@ -46,5 +60,6 @@ public class SourceFileSavedEvent extends GwtEvent<SourceFileSavedHandler>
       handler.onSourceFileSaved(this);
    }
 
-   private final String path_;
+   private String path_;
+   private String docId_;
 }

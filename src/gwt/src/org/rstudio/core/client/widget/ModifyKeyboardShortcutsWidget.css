@@ -1,0 +1,80 @@
+@def MODIFIED_COLOUR #cdefcd;
+@def CUSTOM_COLOUR #EFF;
+
+/* DataGrid styling / overrides */
+/* Avoid GWT's inset styling for selected cells */
+.dataGridKeyboardSelectedRowCell, .dataGridKeyboardSelectedRowCell:active,
+.dataGridKeyboardSelectedRowCell:hover, .dataGridKeyboardSelectedRowCell:focus {
+	border-top: 1px solid #FFF !important;
+	border-left: 1px solid #FFF !important;
+	border-right: 1px solid #FFF !important;
+}
+
+.dataGridKeyboardSelectedRowCell:first-child {
+	border-left: 2px solid #0AF !important;
+}
+
+.dataGridKeyboardSelectedRowCell:first-child div {
+	margin-left: -1px;
+}
+
+.dataGridWidget > div {
+	min-height: 18px !important;
+}
+
+.dataGridWidget td > div {
+	float: left;
+}
+
+.dataGridCell {
+	border-bottom: 1px solid #ddd !important;
+}
+
+.dataGridHeader:active, .dataGridHeader:focus {
+	outline: 0;
+}
+
+.dataGridWidget input {
+	height: 14px !important;
+}
+
+/* Other styling */
+
+.modifiedRow {
+	background-color: MODIFIED_COLOUR !important;
+}
+
+.modifiedRow td {
+	border-color: MODIFIED_COLOUR !important;
+}
+
+.customBindingRow {
+	background-color: CUSTOM_COLOUR !important;
+}
+
+.customBindingRow td {
+	border-color: CUSTOM_COLOUR !important;
+}
+
+.maskedEditorCommandCell div {
+	text-decoration: line-through;
+}
+
+.conflictRow {
+	background-color: #FED;
+}
+
+.shortcutInput {
+	border: 1px solid #CCC;
+	border-radius: 5px;
+}
+
+.icon {
+	float: right;
+	margin-right: 10px;
+}
+
+.icon:hover {
+	border-radius: 20px;
+	box-shadow: 0 0 4px #8BF;
+}

@@ -25,6 +25,10 @@ public class Selection extends JavaScriptObject
    public native final Range getRange() /*-{
       return this.getRange();
    }-*/;
+   
+   public native final void addRange(Range range, boolean blockChangeEvents) /*-{
+      this.addRange(range, blockChangeEvents);
+   }-*/;
 
    public native final void setSelectionRange(Range range) /*-{
       this.session.unfold(range, true);

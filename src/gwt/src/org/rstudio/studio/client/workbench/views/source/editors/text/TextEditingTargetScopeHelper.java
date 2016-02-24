@@ -31,12 +31,15 @@ public class TextEditingTargetScopeHelper
 
    public Scope getCurrentSweaveChunk()
    {
-      return docDisplay_.getCurrentChunk();
+      return getCurrentSweaveChunk(null);
    }
 
    public Scope getCurrentSweaveChunk(Position position)
    {
-      return docDisplay_.getCurrentChunk(position);
+      if (position != null)
+         return docDisplay_.getCurrentChunk(position);
+      else
+         return docDisplay_.getCurrentChunk();
    }
 
    private class SweaveIncludeContext
@@ -118,16 +121,25 @@ public class TextEditingTargetScopeHelper
 
    public Scope[] getPreviousSweaveChunks()
    {
+      return getPreviousSweaveChunks(null);
+   }
+
+   public Scope[] getPreviousSweaveChunks(Position startPosition)
+   {
+      // provide default position based on selection if necessary
+      final Position position = startPosition != null ? 
+                                   startPosition :
+                                   docDisplay_.getSelectionStart();
+                                          
       ScopeList scopeList = new ScopeList(docDisplay_);
       scopeList.selectAll(ScopeList.CHUNK);
-      final Position selectionStart = docDisplay_.getSelectionStart();
       scopeList.selectAll(new ScopePredicate() {
 
          @Override
          public boolean test(Scope scope)
          {
             return scope.isChunk() && 
-                   (scope.getEnd().compareTo(selectionStart) < 0);
+                   (scope.getEnd().compareTo(position) < 0);
          }
          
       });

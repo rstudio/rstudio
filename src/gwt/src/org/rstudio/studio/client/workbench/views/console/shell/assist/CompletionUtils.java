@@ -27,7 +27,7 @@ public class CompletionUtils
    public static boolean isCompletionRequest(NativeEvent event, int modifier)
    {
       return (event.getKeyCode() == KeyCodes.KEY_TAB && modifier == KeyboardShortcut.NONE)
-            || (event.getKeyCode() == ' ' && modifier == KeyboardShortcut.CTRL);
+            || (event.getKeyCode() == KeyCodes.KEY_SPACE && modifier == KeyboardShortcut.CTRL);
    }
 
    public static boolean handleEncloseSelection(InputEditorDisplay input, 

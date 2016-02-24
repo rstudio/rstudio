@@ -40,14 +40,14 @@ th {
     text-align: left; 
 }
 
-th, table.dataTable tbody td:first-child {
+th, td.first-child {
     font-size: 11px;
     color: #555555;
     background-color: #f7f8f9;
     font-weight: bold;
 }
 
-table.dataTable tbody td:first-child {
+td.first-child {
     text-align: right; 
 }
 
@@ -58,11 +58,11 @@ table.dataTable thead td {
     border-right: 1px solid #cfd4d8;
 }
 
-table.dataTable thead th:first-child {
-    background: none;
+th.first-child {
+    background: none !important;
 }
 
-table.dataTable th div:first-child {
+th.first-child div {
     margin-right: 12px;
 }
 
@@ -165,6 +165,10 @@ table.dataTable {
     padding-right: 8px;
     padding-left: 8px;
     cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 400px;
 }
 
 .choiceListItem:hover {
@@ -172,7 +176,7 @@ table.dataTable {
 }
 
 .filterValue {
-    margin-right: 14px;
+    padding-right: 14px;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
@@ -313,3 +317,41 @@ div.DTS div.DTS_Loading.showLoading {
     display: block;
 }
 
+.columnTypeHeader {
+    font-weight: normal;
+    font-style: italic;
+    margin-top: 3px;
+}
+
+table.dataTable thead th.columnClickable {
+    cursor: pointer;
+    vertical-align: bottom;
+}
+
+table.dataTable thead th.columnClickable div {
+    padding-right: 15px;
+
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+table.dataTable thead th.columnClickable .columnTypeWrapper {
+    background: url("datatables/images/header_expand.png") no-repeat right top;
+    background-position-y: -5px;
+    padding-right: 15px;
+}
+
+table.dataTable thead th.columnClickable .columnTypeHeader {
+    padding-right: 0px;
+}
+
+.columnTypeWrapper {
+    text-align: right;
+    padding-right: 0px;
+}
+
+.disabledColumn {
+    background-color: #f7f8f9;
+}

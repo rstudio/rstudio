@@ -1,7 +1,7 @@
 /*
  * RSessionContext.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,54 +17,211 @@
 #define CORE_R_UTIL_R_SESSION_CONTEXT_HPP
 
 #include <string>
-#include <iosfwd>
+#include <vector>
+#include <sstream>
+#include <iomanip>
+#include <iostream>
 
-#include <core/FilePath.hpp>
+#include <boost/function.hpp>
 
-#include <core/r_util/RVersionInfo.hpp>
-#include <core/r_util/RSessionScope.hpp>
+#include <core/system/UserObfuscation.hpp>
 
-#define kUserSettings                  "monitored/user-settings/user-settings"
-#define kAlwaysRestoreLastProject      "restoreLastProject"
+#define kProjectNone   "none"
+#define kUserIdLen      5
+#define kProjectIdLen   8
+#define kProjectNoneId "cfc78a31"
+#define kWorkspacesId  "3c286bd3"
 
-#define kProjectsSettings              "projects_settings"
-#define kNextSessionProject            "next-session-project"
-#define kSwitchToProject               "switch-to-project"
-#define kProjectNone                   "none"
-#define kLastProjectPath               "last-project-path"
-
-#define kRStudioInitialWorkingDir      "RS_INITIAL_WD"
-#define kRStudioInitialEnvironment     "RS_INITIAL_ENV"
-#define kRStudioInitialProject         "RS_INITIAL_PROJECT"
+#ifdef _WIN32
+typedef unsigned int uid_t;
+inline uid_t geteuid()
+{
+   return 0;
+}
+#endif
 
 namespace rstudio {
 namespace core {
+
+class FilePath;
+
 namespace r_util {
 
-enum SessionType
+enum SessionScopeState
 {
-   SessionTypeDesktop,
-   SessionTypeServer
+   ScopeValid, 
+   ScopeInvalidSession,
+   ScopeInvalidProject,
+   ScopeMissingProject,
 };
 
-struct UserDirectories
+inline std::string obfuscatedUserId(uid_t uid)
 {
-   std::string homePath;
-   std::string scratchPath;
+   std::ostringstream ustr;
+   ustr << std::setw(kUserIdLen) << std::setfill('0') << std::hex
+        << OBFUSCATE_USER_ID(uid);
+   return ustr.str();
+}
+
+inline uid_t deobfuscatedUserId(const std::string& userId)
+{
+   // shortcut if user ID is not known
+   if (userId.empty())
+      return 0;
+
+   // attempt to parse user id
+   long uid = strtol(userId.c_str(), NULL, 16);
+
+   // collapse all error cases
+   if (uid == LONG_MAX || uid == LONG_MIN)
+      uid = 0;
+   else if (uid != 0)
+      uid = DEOBFUSCATE_USER_ID(uid);
+   return uid;
+}
+
+class ProjectId
+{
+public:
+   ProjectId()
+   {}
+
+   ProjectId(const std::string &id)
+   {
+      if (id.length() == kProjectIdLen)
+      {
+         id_ = id;
+         userId_ = obfuscatedUserId(::geteuid());
+      }
+      else if (id.length() == (kProjectIdLen + kUserIdLen))
+      {
+         userId_ = id.substr(0, kUserIdLen);
+         id_ = id.substr(kUserIdLen);
+      }
+   }
+
+   ProjectId(const std::string& id, const std::string& userId):
+      id_(id), userId_(userId)
+   {}
+
+   ProjectId(const std::string& id, uid_t userId):
+      id_(id)
+   {
+      userId_ = obfuscatedUserId(userId);
+   }
+
+   std::string asString() const
+   {
+      return userId_ + id_;
+   }
+
+   bool operator==(const ProjectId &other) const
+   {
+      return id_  == other.id_ && userId_ == other.userId_;
+   }
+
+   bool operator<(const ProjectId &other) const
+   {
+       return id_ < other.id_ ||
+              (id_  == other.id_  && userId_  < other.userId_);
+   }
+
+   const std::string& id() const
+   {
+      return id_;
+   }
+
+   const std::string& userId() const
+   {
+      return userId_;
+   }
+
+private:
+   std::string id_;
+   std::string userId_;
 };
 
-UserDirectories userDirectories(SessionType sessionType,
-                                const std::string& homePath = std::string());
+typedef boost::function<std::string(const ProjectId&)> ProjectIdToFilePath;
+typedef boost::function<ProjectId(const std::string&)> FilePathToProjectId;
 
+class SessionScope
+{
+private:
+   SessionScope(const ProjectId& project, const std::string& id)
+      : project_(project), id_(id)
+   {
+   }
 
-FilePath projectsSettingsPath(const FilePath& userScratchPath);
+public:
 
-std::string readProjectsSetting(const FilePath& settingsPath,
-                                const char * const settingName);
+   static SessionScope fromProject(
+                           const std::string& project,
+                           const std::string& id,
+                           const FilePathToProjectId& filePathToProjectId);
 
-void writeProjectsSetting(const FilePath& settingsPath,
-                          const char * const settingName,
-                          const std::string& value);
+   static std::string projectPathForScope(
+                           const SessionScope& scope,
+                           const ProjectIdToFilePath& projectIdToFilePath);
+
+   static SessionScope fromProjectId(const ProjectId& project,
+                                     const std::string& id);
+
+   static SessionScope projectNone(const std::string& id);
+
+   SessionScope()
+   {
+   }
+
+   bool isProjectNone() const;
+
+   bool isWorkspaces() const;
+
+   const std::string project() const { return project_.asString(); }
+
+   const std::string& id() const { return id_; }
+
+   const ProjectId& projectId() const { return project_; }
+
+   bool empty() const { return project_.id().empty(); }
+
+   bool operator==(const SessionScope &other) const {
+      return project_ == other.project_ && id_ == other.id_;
+   }
+
+   bool operator!=(const SessionScope &other) const {
+      return !(*this == other);
+   }
+
+   bool operator<(const SessionScope &other) const {
+       return project_ < other.project_ ||
+              (project_ == other.project_ && id_ < other.id_);
+   }
+
+private:
+   ProjectId project_;
+   std::string id_;
+};
+
+SessionScopeState validateSessionScope(const SessionScope& scope,
+                          const core::FilePath& userHomePath,
+                          const core::FilePath& userScratchPath,
+                          core::r_util::ProjectIdToFilePath projectIdToFilePath,
+                          bool projectSharingEnabled,
+                          std::string* pProjectFilePath);
+
+bool isSharedPath(const std::string& projectPath,
+                  const core::FilePath& userHomePath);
+
+std::string urlPathForSessionScope(const SessionScope& scope);
+
+std::string createSessionUrl(const std::string& hostPageUrl,
+                             const SessionScope& scope);
+
+void parseSessionUrl(const std::string& url,
+                     SessionScope* pScope,
+                     std::string* pUrlPrefix,
+                     std::string* pUrlWithoutPrefix);
+
 
 struct SessionContext
 {
@@ -73,13 +230,12 @@ struct SessionContext
    }
 
    explicit SessionContext(const std::string& username,
-                           const core::r_util::SessionScope& scope =
-                                             core::r_util::SessionScope())
+                           const SessionScope& scope = SessionScope())
       : username(username), scope(scope)
    {
    }
    std::string username;
-   core::r_util::SessionScope scope;
+   SessionScope scope;
 
    bool empty() const { return username.empty(); }
 
@@ -96,10 +252,17 @@ struct SessionContext
 
 std::ostream& operator<< (std::ostream& os, const SessionContext& context);
 
-std::string sessionContextToStreamFile(const SessionContext& context);
+std::string sessionScopeFile(std::string prefix,
+                             const SessionScope& scope);
 
-SessionContext streamFileToSessionContext(const std::string& file);
+std::string sessionScopePrefix(const std::string& username);
 
+std::string sessionScopesPrefix(const std::string& username);
+
+std::string sessionContextFile(const SessionContext& context);
+
+std::string generateScopeId();
+std::string generateScopeId(const std::vector<std::string>& reserved);
 
 
 } // namespace r_util
@@ -108,4 +271,3 @@ SessionContext streamFileToSessionContext(const std::string& file);
 
 
 #endif // CORE_R_UTIL_R_SESSION_CONTEXT_HPP
-

@@ -48,7 +48,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-define("mode/markdown", function(require, exports, module) {
+define("mode/markdown", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var TextMode = require("ace/mode/text").Mode;
@@ -59,26 +59,28 @@ var MarkdownHighlightRules = require("mode/markdown_highlight_rules").MarkdownHi
 var MarkdownFoldMode = require("mode/markdown_folding").FoldMode;
 
 var Mode = function() {
-    this.HighlightRules = MarkdownHighlightRules;
+   this.HighlightRules = MarkdownHighlightRules;
 
-    this.createModeDelegates({
-        "js-": JavaScriptMode,
-        "xml-": XmlMode,
-        "html-": HtmlMode
-    });
+   this.createModeDelegates({
+      "js-": JavaScriptMode,
+      "xml-": XmlMode,
+      "html-": HtmlMode
+   });
 
-    this.foldingRules = new MarkdownFoldMode();
+   this.foldingRules = new MarkdownFoldMode();
 };
 oop.inherits(Mode, TextMode);
 
 (function() {
-    this.type = "text";
-    this.blockComment = {start: "<!--", end: "-->"};
+   this.type = "text";
+   this.blockComment = {start: "<!--", end: "-->"};
 
-    this.getNextLineIndent = function(state, line, tab) {
-        return this.$getIndent(line);
-    };
-    this.$id = "mode/markdown";
+   this.getNextLineIndent = function(state, line, tab) {
+      return this.$getIndent(line);
+   };
+
+
+   this.$id = "mode/markdown";
 }).call(Mode.prototype);
 
 exports.Mode = Mode;

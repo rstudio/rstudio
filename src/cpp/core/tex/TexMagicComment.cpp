@@ -36,7 +36,7 @@ Error parseMagicComments(const FilePath& texFile,
    if (error)
       return error;
 
-   boost::regex mcRegex("%\\s*!(\\w+)\\s+(\\w+)\\s*=\\s*(.*)$");
+   boost::regex mcRegex("%{1,2}\\s*!(\\w+)\\s+(\\w+)\\s*=\\s*(.*)$");
    BOOST_FOREACH(std::string line, lines)
    {
       boost::algorithm::trim(line);

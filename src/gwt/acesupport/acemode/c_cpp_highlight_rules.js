@@ -26,7 +26,7 @@
  *
  */
 
-define("mode/c_cpp_highlight_rules", function(require, exports, module) {
+define("mode/c_cpp_highlight_rules", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var lang = require("ace/lib/lang");
@@ -43,20 +43,20 @@ var c_cppHighlightRules = function() {
 
    var keywords = lang.arrayToMap([
       "alignas", "alignof", "and", "and_eq", "asm", "auto", "bitand",
-       "bitor", "bool", "break", "case", "catch", "char", "char16_t",
-       "char32_t", "class", "compl", "const", "constexpr",
-       "const_cast", "continue", "decltype", "default", "delete",
-       "do", "double", "dynamic_cast", "else", "enum", "explicit",
-       "export", "extern", "false", "float", "for", "friend", "goto",
-       "if", "inline", "int", "in", "long", "mutable", "namespace",
-       "new", "noexcept", "not", "not_eq", "nullptr", "or", "or_eq",
-       "private", "protected", "public", "register",
-       "reinterpret_cast", "return", "short", "signed", "sizeof",
-       "static", "static_assert", "static_cast", "struct", "switch",
-       "template", "this", "thread_local", "throw", "true", "try",
-       "typedef", "typeid", "typeof", "typename", "union", "unsigned",
-       "using", "virtual", "void", "volatile", "wchar_t", "while",
-       "xor", "xor_eq"
+      "bitor", "bool", "break", "case", "catch", "char", "char16_t",
+      "char32_t", "class", "compl", "const", "constexpr",
+      "const_cast", "continue", "decltype", "default", "delete",
+      "do", "double", "dynamic_cast", "else", "enum", "explicit",
+      "export", "extern", "false", "float", "for", "friend", "goto",
+      "if", "inline", "int", "in", "long", "mutable", "namespace",
+      "new", "noexcept", "not", "not_eq", "nullptr", "or", "or_eq",
+      "private", "protected", "public", "register",
+      "reinterpret_cast", "return", "short", "signed", "sizeof",
+      "static", "static_assert", "static_cast", "struct", "switch",
+      "template", "this", "thread_local", "throw", "true", "try",
+      "typedef", "typeid", "typeof", "typename", "union", "unsigned",
+      "using", "virtual", "void", "volatile", "wchar_t", "while",
+      "xor", "xor_eq"
    ]);
 
    var preProcTokens = [
@@ -73,10 +73,10 @@ var c_cppHighlightRules = function() {
       ">>=", "<<=", "new", "delete",
       
       "<<", ">>", "&&", "||", "==", "!=", "<=", ">=", "::",
-      "*=", "+=", "-=", "/=", "++", "--", "<>", "&=", "^=",
+      "*=", "+=", "-=", "/=", "++", "--", "&=", "^=",
       "%=", "->",
       
-      "!", "$", "&", "|", "*", "-", "+", "~", "="
+      "!", "$", "&", "|", "+", "-", "*", "/", "^", "~", "="
       
    ];
 
@@ -85,8 +85,9 @@ var c_cppHighlightRules = function() {
    }).join("|");
 
    var reOperator =
-      [",", "()", "[]", "->*", "->"]
+      ["->*"]
       .concat(operatorTokens)
+      .concat(["<", ">", ",", "()", "[]", "->"])
       .map(function(x) {
          return escapeRegExp(x);
       });
@@ -174,7 +175,7 @@ var c_cppHighlightRules = function() {
             merge : false,
             regex : reOperatorTokens
          }, {
-            token : "punctuation.operator",
+            token : "keyword.punctuation.operator",
             merge : false,
             regex : "\\?|\\:|\\,|\\;|\\.|\\\\"
          }, {

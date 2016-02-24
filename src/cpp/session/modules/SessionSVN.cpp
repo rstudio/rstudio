@@ -1769,6 +1769,7 @@ Error augmentSvnIgnore()
       svnIgnore += ".Rproj.user\n";
       svnIgnore += ".Rhistory\n";
       svnIgnore += ".RData\n";
+      svnIgnore += ".Ruserdata\n";
    }
    else
    {

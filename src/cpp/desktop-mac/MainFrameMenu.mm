@@ -18,6 +18,7 @@
 #import <Cocoa/Cocoa.h>
 
 #import "MainFrameController.h"
+#import "SatelliteController.h"
 
 #import "MainFrameMenu.h"
 
@@ -172,12 +173,26 @@ NSString* charToStr(unichar c) {
 }
 
 - (void) invoke: (id) sender {
+   // get the command to invoke
    NSString* command = [commands_ objectAtIndex: [sender tag]];
-   [[MainFrameController instance] invokeCommand: command];
+   WebViewController* targetController =
+      [WebViewController activeDesktopController];
+   
+   // invoke it on the window that currently wants commands
+   [targetController invokeCommand: command];
 }
 
 - (void) assignShortcut: (NSString*) shortcut toMenuItem: (NSMenuItem*) menuItem {
+   
    if ([shortcut length] == 0)
+      return;
+   
+   // Don't assign shortcuts for commands bound to a key sequence (until
+   // we figure out how to handle this).
+   //
+   // Note that e.g. Sublime Text has 'Hide Side Bar' bound to 'Cmd+K Cmd+B'
+   // so it's definitely possible.
+   if ([shortcut rangeOfString: @" "].length != 0)
       return;
 
    NSArray* parts = [shortcut componentsSeparatedByString: @"+"];
@@ -190,7 +205,7 @@ NSString* charToStr(unichar c) {
          modifiers |= NSShiftKeyMask;
       else if ([mod isEqualToString: @"Alt"])
          modifiers |= NSAlternateKeyMask;
-      else if ([mod isEqualToString: @"Meta"])
+      else if ([mod isEqualToString: @"Meta"] || [mod isEqualToString: @"Cmd"])
          modifiers |= NSCommandKeyMask;
    }
    NSString* key = [parts lastObject];
@@ -209,23 +224,28 @@ NSString* charToStr(unichar c) {
    if ([item tag] == 0) {
       return YES;
    }
+   
+   // get the window to query for command state
+   WebViewController *menuController =
+      [WebViewController activeDesktopController];
 
    NSString* command = [commands_ objectAtIndex: [item tag]];
 
    NSString* labelJs = [NSString stringWithFormat: @"window.desktopHooks.getCommandLabel(\"%@\");", command];
-   NSString* title = [[MainFrameController instance] evaluateJavaScript: labelJs];
+   
+   NSString* title = [menuController evaluateJavaScript: labelJs];
    if (title == nil) // setTitleWithMnemonic raises exception if passed nil
       title = @"";
    [item setTitleWithMnemonic: title];
 
    NSString* checkedJs = [NSString stringWithFormat: @"window.desktopHooks.isCommandChecked(\"%@\");", command];
-   if ([[[MainFrameController instance] evaluateJavaScript: checkedJs] boolValue])
+   if ([[menuController evaluateJavaScript: checkedJs] boolValue])
       [item setState: NSOnState];
    else
       [item setState: NSOffState];
 
    NSString* visibleJs = [NSString stringWithFormat: @"window.desktopHooks.isCommandVisible(\"%@\");", command];
-   [item setHidden: ![[[MainFrameController instance] evaluateJavaScript: visibleJs] boolValue]];
+   [item setHidden: ![[menuController evaluateJavaScript: visibleJs] boolValue]];
 
    // Suppress any unnecessary separators. This code will run once per menu item which seems more
    // effort than necessary, but there's no guarantee that I know of that validateMenuItem will be
@@ -249,7 +269,7 @@ NSString* charToStr(unichar c) {
    if (trailingSep != Nil)
       [trailingSep setHidden: YES];
 
-   if ([[MainFrameController instance] isCommandEnabled: command])
+   if ([menuController isCommandEnabled: command])
       return YES;
    else
       return NO;
@@ -419,6 +439,8 @@ NSString* charToStr(unichar c) {
 
 - (void) menuNeedsUpdate: (NSMenu *) menu
 {
+   WebViewController* menuController =
+      [WebViewController activeDesktopController];
    for (NSMenuItem* item in [menu itemArray])
    {
       if ([item hasSubmenu])
@@ -436,7 +458,7 @@ NSString* charToStr(unichar c) {
                NSString* visibleJs =
                   [NSString stringWithFormat:
                    @"window.desktopHooks.isCommandVisible(\"%@\");", command];
-               id result = [[MainFrameController instance] evaluateJavaScript: visibleJs];
+               id result = [menuController evaluateJavaScript: visibleJs];
                if ([result boolValue])
                {
                   hide = false;

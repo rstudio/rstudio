@@ -355,9 +355,9 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
    public void viewOnGitHub(final GitHubViewRequest viewRequest)
    {
       String view = null;
-      if (viewRequest.getViewType() == GitHubViewRequest.ViewType.View)
+      if (viewRequest.getViewType() == GitHubViewRequest.VCS_VIEW)
          view = "blob";
-      else if (viewRequest.getViewType() == GitHubViewRequest.ViewType.Blame)
+      else if (viewRequest.getViewType() == GitHubViewRequest.VCS_BLAME)
          view = "blame";
       
       final String path = viewRequest.getFile().getPath();

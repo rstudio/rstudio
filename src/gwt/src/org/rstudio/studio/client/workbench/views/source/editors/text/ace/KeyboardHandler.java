@@ -21,7 +21,11 @@ public class KeyboardHandler extends JavaScriptObject
    protected KeyboardHandler() {}
    
    public static native KeyboardHandler vim() /*-{
-      var vim = $wnd.require('ace/keyboard/vim').handler;
-      return vim;
+      return $wnd.require("ace/keyboard/vim").handler;
    }-*/;
+   
+   public static native KeyboardHandler emacs() /*-{
+      return $wnd.require("ace/keyboard/emacs").handler;
+   }-*/;
+   
 }

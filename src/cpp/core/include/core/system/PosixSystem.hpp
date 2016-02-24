@@ -166,9 +166,15 @@ struct ProcessConfig
 
 core::Error waitForProcessExit(PidType processId);
 
+// filter to call after the setuid has occurred (i.e. after
+// the user's home directory has become visible)
+typedef boost::function<void(const user::User&, ProcessConfig*)>
+                                                   ProcessConfigFilter;
+
 core::Error launchChildProcess(std::string path,
                                std::string runAsUser,
                                ProcessConfig config,
+                               ProcessConfigFilter configFilter,
                                PidType* pProcessId ) ;
 
 bool isUserNotFoundError(const core::Error& error);

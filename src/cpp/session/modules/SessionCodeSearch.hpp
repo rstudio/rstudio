@@ -42,11 +42,9 @@ private:
    
 public:
    
-   typedef std::string DocumentId;
-   typedef std::string AbsolutePath;
-   
    // maps document id (as string) to associated index
-   typedef std::map< DocumentId, boost::shared_ptr<RSourceIndex> > IndexMap;
+   typedef std::map< std::string, boost::shared_ptr<RSourceIndex> > IDMap;
+   typedef std::map< std::string, boost::shared_ptr<RSourceIndex> > FilePathMap;
    
    RSourceIndexes() {}
    virtual ~RSourceIndexes() {}
@@ -54,34 +52,49 @@ public:
    // COPYING: boost::noncopyable
 
    void initialize();
-   void update(boost::shared_ptr<SourceDocument> pDoc);
+   void update(const boost::shared_ptr<SourceDocument>& pDoc);
    boost::shared_ptr<RSourceIndex> get(const std::string& id)
    {
-      if (indexes_.find(id) != indexes_.end())
-         return indexes_[id];
+      if (idMap_.count(id))
+         return idMap_[id];
       return boost::shared_ptr<RSourceIndex>();
    }
    
-   void remove(const std::string& id);
+   boost::shared_ptr<RSourceIndex> get(const core::FilePath& filePath)
+   {
+      std::string absPath = filePath.absolutePath();
+      if (filePathMap_.count(absPath))
+         return filePathMap_[absPath];
+      return boost::shared_ptr<RSourceIndex>();
+   }
+   
+   void remove(const std::string& id, const std::string& path);
    void removeAll();
 
    std::vector< boost::shared_ptr<RSourceIndex> > indexes()
    {
       std::vector< boost::shared_ptr<RSourceIndex> > indexes;
-      BOOST_FOREACH(const IndexMap::value_type& index, indexes_)
+      BOOST_FOREACH(const IDMap::value_type& index, idMap_)
       {
          indexes.push_back(index.second);
       }
       return indexes;
    }
    
-   const IndexMap& indexMap() const
+   const IDMap& indexMap() const
    {
-      return indexes_;
+      return idMap_;
+   }
+   
+   const FilePathMap& filePathMap() const
+   {
+      return filePathMap_;
    }
 
 private:
-  IndexMap indexes_;
+   
+  IDMap idMap_;
+  FilePathMap filePathMap_;
   
 };
 

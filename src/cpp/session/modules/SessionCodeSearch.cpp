@@ -654,12 +654,7 @@ public:
       Entry parentEntry(core::toFileInfo(parentPath));
       EntryTree::iterator parentItr = pEntries_->find(parentEntry);
       if (parentItr == pEntries_->end())
-      {
-         std::stringstream ss;
-         ss << "Expected node '" << parentPath.absolutePath() << "' in index tree but none found";
-         LOG_ERROR_MESSAGE(ss.str());
          return;
-      }
       
       EntryTree::iterator it = parentItr.begin();
       EntryTree::iterator end = parentItr.end();
@@ -701,12 +696,7 @@ public:
       Entry parentEntry(core::toFileInfo(parentPath));
       EntryTree::iterator parentItr = pEntries_->find(parentEntry);
       if (parentItr == pEntries_->end())
-      {
-         std::stringstream ss;
-         ss << "Expected node '" << parentPath.absolutePath() << "' in index tree but none found";
-         LOG_ERROR_MESSAGE(ss.str());
          return;
-      }
 
       EntryTree::iterator it = parentItr.begin();
       EntryTree::iterator end = parentItr.end();
@@ -937,13 +927,12 @@ void RSourceIndexes::initialize()
    source_database::events().onDocUpdated.connect(
        boost::bind(&RSourceIndexes::update, this, _1));
    source_database::events().onDocRemoved.connect(
-       boost::bind(&RSourceIndexes::remove, this, _1));
+       boost::bind(&RSourceIndexes::remove, this, _1, _2));
    source_database::events().onRemoveAll.connect(
        boost::bind(&RSourceIndexes::removeAll, this));
 }
 
-void RSourceIndexes::update(
-    boost::shared_ptr<session::source_database::SourceDocument> pDoc)
+void RSourceIndexes::update(const boost::shared_ptr<SourceDocument>& pDoc)
 {
    // is this indexable? if not then bail
    if (!pDoc->canContainRCode())
@@ -972,20 +961,29 @@ void RSourceIndexes::update(
    }
    
    // insert it
-   indexes_[pDoc->id()] = pIndex;
+   idMap_[pDoc->id()] = pIndex;
+   
+   // create aliases
+   filePathMap_[filePath.absolutePath()] = pIndex;
    
    // kick off an update if necessary
    r_packages::AsyncPackageInformationProcess::update();
 }
 
-void RSourceIndexes::remove(const std::string& id)
+void RSourceIndexes::remove(const std::string& id, const std::string&)
 {
-   indexes_.erase(id);
+   idMap_.erase(id);
+
+   FilePath filePath;
+   Error error = source_database::getPath(id, &filePath);
+   if (!error)
+      filePathMap_.erase(filePath.absolutePath());
 }
 
 void RSourceIndexes::removeAll()
 {
-   indexes_.clear();
+   idMap_.clear();
+   filePathMap_.clear();
 }
 
 RSourceIndexes& rSourceIndex()
@@ -1008,7 +1006,7 @@ bool sourceDatabaseFilter(const r_util::RSourceIndex& index)
    }
    else
    {
-      return true;
+      return !index.context().empty();
    }
 }
 
@@ -1582,7 +1580,16 @@ Error searchCode(const json::JsonRpcRequest& request,
    std::vector<PairIntInt> srcItemScores;
    for (std::size_t i = 0; i < srcItems.size(); ++i)
    {
-      srcItemScores.push_back(std::make_pair(i, scoreMatch(srcItems[i].name(), term, false)));
+      const SourceItem& item = srcItems[i];
+      
+      // don't index auto-generated files
+      const std::string& context = item.context();
+      if (boost::algorithm::ends_with(context, "RcppExports.R") ||
+          boost::algorithm::ends_with(context, "RcppExports.cpp"))
+         continue;
+         
+      int score = scoreMatch(item.name(), term, false);
+      srcItemScores.push_back(std::make_pair(i, score));
    }
    std::sort(srcItemScores.begin(), srcItemScores.end(), ScorePairComparator());
 
@@ -1717,6 +1724,7 @@ void getFunctionSource(SEXP functionSEXP,
    r::exec::RFunction deparseFunc(".rs.deparseFunction");
    deparseFunc.addParam(functionSEXP);
    deparseFunc.addParam(*pFromSrcAttrib);
+   deparseFunc.addParam(false);
    error = deparseFunc.call(pLines);
    if (error)
       LOG_ERROR(error);
@@ -1820,7 +1828,7 @@ json::Object createErrorFunctionDefinition(const std::string& name,
    funDef["name"] = name;
    funDef["namespace"] = namespaceName;
    funDef["methods"] = json::Array();
-   boost::format fmt("\n# ERROR: Defintion of function '%1%' not found\n"
+   boost::format fmt("\n# ERROR: Definition of function '%1%' not found\n"
                      "# in namespace '%2%'");
    funDef["code"] = boost::str(fmt % name % namespaceName);
    funDef["from_src_attrib"] = false;
@@ -2458,6 +2466,8 @@ void addAllProjectSymbols(std::set<std::string>* pSymbols)
    if (projects::projectContext().isPackageProject())
    {
       std::string pkgName = projects::projectContext().packageInfo().name();
+      if (pkgName.empty())
+         return;
       std::vector<std::string> nativeRoutineNames;
       r::exec::RFunction getNativeSymbols(".rs.getNativeSymbols");
       getNativeSymbols.addParam(pkgName);

@@ -66,7 +66,6 @@ FilePath scanForRScript(const std::vector<std::string>& rScriptPaths,
 
    // didn't find it
    *pErrMsg = "Unable to locate R binary by scanning standard locations";
-   LOG_ERROR_MESSAGE(*pErrMsg);
    return FilePath();
 }
 
@@ -216,13 +215,11 @@ FilePath systemDefaultRScript(std::string* pErrMsg)
       if (error)
       {
          *pErrMsg = "Error calling which R: " + error.summary();
-         LOG_ERROR_MESSAGE(*pErrMsg);
       }
       else
       {
          *pErrMsg = "Unable to find an installation of R on the system "
                     "(which R didn't return valid output)";
-         LOG_ERROR_MESSAGE(*pErrMsg);
       }
 
       // scan in standard locations as a fallback
@@ -730,7 +727,7 @@ std::string rLibraryPath(const FilePath& rHomePath,
    libraryPath.append(ldLibraryPath);
    if (!libraryPath.empty())
       libraryPath.append(":");
-   libraryPath.append(rLibPath.absolutePath());
+   libraryPath = rLibPath.absolutePath() + ":" + libraryPath;
    std::string extraPaths = extraLibraryPaths(ldPathsScript,
                                               rHomePath.absolutePath());
    if (!extraPaths.empty())
@@ -749,10 +746,11 @@ Error rVersion(const FilePath& rHomePath,
    core::system::setenv(&env, "R_HOME", rHomePath.absolutePath());
    options.environment = env;
    core::system::ProcessResult result;
-   Error error = core::system::runCommand(rScriptPath.absolutePath() +
-                                          " --slave --vanilla --version",
-                                          options,
-                                          &result);
+   Error error = core::system::runCommand(
+      rScriptPath.absolutePath() +
+      " --slave --vanilla -e 'cat(R.Version()$major,R.Version()$minor, sep=\".\")'",
+      options,
+      &result);
    if (error)
    {
       error.addProperty("r-script", rScriptPath);
@@ -761,7 +759,7 @@ Error rVersion(const FilePath& rHomePath,
    else
    {
       std::string versionInfo = boost::algorithm::trim_copy(result.stdOut);
-      boost::regex re("^[^\\d]+([\\d\\.]+)");
+      boost::regex re("^([\\d\\.]+)$");
       boost::smatch match;
       if (boost::regex_search(versionInfo, match, re))
       {
@@ -805,7 +803,8 @@ void ensureLang()
          Error error = config_utils::extractVariables(FilePath(file), &vars);
          if (error)
          {
-            LOG_ERROR(error);
+            if (!core::isPathNotFoundError(error))
+               LOG_ERROR(error);
             continue;
          }
          std::string value = vars[var];
@@ -815,7 +814,14 @@ void ensureLang()
             break;
          }
       }
-   }
+
+      // log a warning if it's still empty
+      if (core::system::getenv("LANG").empty())
+      {
+         LOG_WARNING_MESSAGE(
+            "Unable to determine LANG (proceeding with no LANG set");
+      }
+   }   
 }
 #else
 void ensureLang()

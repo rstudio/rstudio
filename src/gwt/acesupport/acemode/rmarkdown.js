@@ -18,19 +18,26 @@
  *
  */
 
-define("mode/rmarkdown", function(require, exports, module) {
+define("mode/rmarkdown", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var MarkdownMode = require("mode/markdown").Mode;
+
 var Tokenizer = require("ace/tokenizer").Tokenizer;
 var RMarkdownHighlightRules = require("mode/rmarkdown_highlight_rules").RMarkdownHighlightRules;
+
 var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
 var RMatchingBraceOutdent = require("mode/r_matching_brace_outdent").RMatchingBraceOutdent;
 var CppMatchingBraceOutdent = require("mode/c_cpp_matching_brace_outdent").CppMatchingBraceOutdent;
-var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").SweaveBackgroundHighlighter;
+
+var BackgroundHighlighter = require("mode/background_highlighter").BackgroundHighlighter;
+
 var RCodeModel = require("mode/r_code_model").RCodeModel;
 var CppCodeModel = require("mode/cpp_code_model").CppCodeModel;
-var MarkdownFoldMode = require("ace/mode/folding/markdown").FoldMode;
+
+var RMarkdownFoldMode = require("rstudio/folding/rmarkdown").FoldMode;
+var CFoldMode = require("ace/mode/folding/cstyle").FoldMode;
+
 var Utils = require("mode/utils");
 var unicode = require("ace/unicode");
 
@@ -59,31 +66,48 @@ var Mode = function(suppressHighlighting, session) {
    );
    this.$cpp_outdent = new CppMatchingBraceOutdent(this.cpp_codeModel);
 
-   var markdownFoldingRules = new MarkdownFoldMode();
+   var rMarkdownFoldingRules = new RMarkdownFoldMode();
+   var cFoldingRules = new CFoldMode();
 
+   // NOTE: R Markdown is in charge of generating all 'top-level' folds.
+   // That is, for the YAML header, chunk boundaries, and Markdown headers.
    this.foldingRules = {
 
       getFoldWidget: function(session, foldStyle, row) {
-         if (that.getLanguageMode({row: row, column: 0}) == "Markdown")
-            return markdownFoldingRules.getFoldWidget(session, foldStyle, row);
+
+         var position = {row: row, column: 0};
+         var mode = that.getLanguageMode(position);
+         var line = session.getLine(row);
+
+         if (mode === "Markdown" || Utils.startsWith(line, "```") || row === 0)
+            return rMarkdownFoldingRules.getFoldWidget(session, foldStyle, row);
+         else if (mode === "C_CPP")
+            return cFoldingRules.getFoldWidget(session, foldStyle, row);
          else
             return that.codeModel.getFoldWidget(session, foldStyle, row);
       },
 
       getFoldWidgetRange: function(session, foldStyle, row) {
-         if (that.getLanguageMode({row: row, column: 0}) == "Markdown")
-            return markdownFoldingRules.getFoldWidgetRange(session, foldStyle, row);
+
+         var position = {row: row, column: 0};
+         var mode = that.getLanguageMode(position);
+         var line = session.getLine(row);
+         
+         if (mode === "Markdown" || Utils.startsWith(line, "```") || row === 0)
+            return rMarkdownFoldingRules.getFoldWidgetRange(session, foldStyle, row);
+         else if (mode === "C_CPP")
+            return cFoldingRules.getFoldWidgetRange(session, foldStyle, row);
          else
             return that.codeModel.getFoldWidgetRange(session, foldStyle, row);
       }
 
    };
 
-   this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
+   this.$sweaveBackgroundHighlighter = new BackgroundHighlighter(
          session,
          /^(?:[ ]{4})?`{3,}\s*\{(?:.*)\}\s*$/,
-         /^(?:[ ]{4})?`{3,}\s*$/,
-         true);
+         /^(?:[ ]{4})?`{3,}\s*$/
+   );
 };
 oop.inherits(Mode, MarkdownMode);
 
@@ -107,6 +131,8 @@ oop.inherits(Mode, MarkdownMode);
          return "R";
       else if (mode === "r-cpp")
          return "C_CPP";
+      else if (mode === "yaml")
+         return "YAML";
       else
          return "Markdown";
    };
@@ -184,7 +210,8 @@ oop.inherits(Mode, MarkdownMode);
         + unicode.packages.Nd
         + unicode.packages.Pc + "._]|\\s])+", "g"
     );
-   
+
+    this.$id = "mode/rmarkdown";
 
 }).call(Mode.prototype);
 

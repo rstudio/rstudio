@@ -124,6 +124,11 @@ public:
       return wwwProxyLocalhost_;
    }
 
+   bool wwwVerifyUserAgent() const
+   {
+      return wwwVerifyUserAgent_;
+   }
+
    // auth
    bool authNone()
    {
@@ -135,6 +140,11 @@ public:
       return authValidateUsers_;
    }
 
+   int authStaySignedInDays()
+   {
+      return authStaySignedInDays_;
+   }
+
    bool authEncryptPassword()
    {
       return authEncryptPassword_;
@@ -143,6 +153,11 @@ public:
    std::string authRequiredUserGroup()
    {
       return std::string(authRequiredUserGroup_.c_str());
+   }
+
+   unsigned int authMinimumUserId()
+   {
+      return authMinimumUserId_;
    }
 
    std::string authPamHelperPath() const
@@ -185,6 +200,8 @@ public:
    {
       return monitorIntervalSeconds_;
    }
+
+   std::string gwtPrefix() const;
    
    std::string getOverlayOption(const std::string& name)
    {
@@ -238,10 +255,13 @@ private:
    bool wwwUseEmulatedStack_;
    int wwwThreadPoolSize_;
    bool wwwProxyLocalhost_;
+   bool wwwVerifyUserAgent_;
    bool authNone_;
    bool authValidateUsers_;
+   int authStaySignedInDays_;
    bool authEncryptPassword_;
    std::string authRequiredUserGroup_;
+   unsigned int authMinimumUserId_;
    std::string authPamHelperPath_;
    std::string rsessionWhichR_;
    std::string rsessionPath_;

@@ -1,4 +1,4 @@
-define("mode/c_cpp_matching_brace_outdent", function(require, exports, module) {
+define("mode/c_cpp_matching_brace_outdent", ["require", "exports", "module"], function(require, exports, module) {
 
 var Range = require("ace/range").Range;
 

@@ -22,6 +22,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/regex.hpp>
+#include <boost/format.hpp>
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
@@ -35,8 +36,10 @@
 #include <r/RJson.hpp>
 #include <r/RInterface.hpp>
 
+#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
+#include <session/SessionAsyncRProcess.hpp>
 
 #include "SessionPackrat.hpp"
 
@@ -46,18 +49,212 @@ using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
+namespace module_context {
+
+namespace {
+
+bool isSecure(const std::string& url)
+{
+   return boost::algorithm::starts_with(url, "https");
+}
+
+void insecureReposURLWarning(const std::string& url,
+                             const std::string& extraMsg = "")
+{
+   std::string msg =
+         "Your CRAN mirror is set to \"" + url + "\" which "
+         "has an insecure (non-HTTPS) URL.";
+   
+   if (!extraMsg.empty())
+      msg += " " + extraMsg;
+   
+   Error error = r::exec::RFunction(".rs.insecureReposWarning", msg).call();
+   if (error)
+      LOG_ERROR(error);
+}
+
+void insecureDownloadWarning(const std::string& msg)
+{
+   Error error = r::exec::RFunction(".rs.insecureDownloadWarning", msg).call();
+   if (error)
+      LOG_ERROR(error);
+}
+
+
+void unableToSecureConnectionWarning(const std::string& url)
+{
+   boost::format fmt(
+      "You are configured to use the CRAN mirror at %1%. This mirror "
+      "supports secure (HTTPS) downloads however your system is unable to "
+      "communicate securely with the server (possibly due to out of date "
+      "certificate files on your system). Falling back to using insecure "
+      "URL for this mirror."
+   );
+
+   insecureDownloadWarning(boost::str(fmt % url));
+}
+
+bool isCRANReposFromSettings()
+{
+   bool fromSettings = true;
+   Error error = r::exec::RFunction(".rs.isCRANReposFromSettings").call(
+                                                              &fromSettings);
+   if (error)
+      LOG_ERROR(error);
+   return fromSettings;
+}
+
+
+class CRANMirrorHttpsUpgrade : public async_r::AsyncRProcess
+{
+public:
+   static void attemptUpgrade()
+   {
+      // get the URL currently in settings. if it's https already then bail
+      CRANMirror mirror = userSettings().cranMirror();
+      if (isSecure(mirror.url))
+         return;
+
+      // modify to be secure
+      mirror.url = boost::algorithm::replace_first_copy(mirror.url,
+                                                        "http://",
+                                                        "https://");
+
+      // build the command
+      std::string cmd("{ " + module_context::CRANDownloadOptions() + "; ");
+      cmd += "tmp <- tempfile(); ";
+      cmd += "download.file(paste(contrib.url('" + mirror.url +
+              "'), '/PACKAGES.gz', sep = ''), destfile = tmp); ";
+      cmd += "cat(readLines(tmp)); ";
+      cmd += "} ";
+
+      // kickoff the process
+      boost::shared_ptr<CRANMirrorHttpsUpgrade> pUpgrade(
+                                    new CRANMirrorHttpsUpgrade(mirror));
+      pUpgrade->start(cmd.c_str(), FilePath(), async_r::R_PROCESS_VANILLA);
+   }
+
+   virtual void onStdout(const std::string& output)
+   {
+      output_ += output;
+   }
+
+   virtual void onCompleted(int exitStatus)
+   {
+      if ((exitStatus == EXIT_SUCCESS) && checkOutputForSuccess())
+      {
+         userSettings().setCRANMirror(secureMirror_);
+      }
+      else
+      {
+         std::string url = userSettings().cranMirror().url;
+         if (isKnownSecureMirror(url))
+            unableToSecureConnectionWarning(secureMirror_.url);
+         else
+            insecureReposURLWarning(url);
+      }
+   }
+
+private:
+   bool checkOutputForSuccess()
+   {
+      return boost::algorithm::contains(output_, "Package: Matrix");
+   }
+
+   bool isKnownSecureMirror(const std::string& url)
+   {
+      std::vector<std::string> mirrors;
+      mirrors.push_back("http://cran.rstudio.com/");
+      return std::find(mirrors.begin(), mirrors.end(), url) != mirrors.end();
+   }
+
+private:
+   explicit CRANMirrorHttpsUpgrade(const CRANMirror& secureMirror)
+      : secureMirror_(secureMirror)
+   {
+   }
+   std::string output_;
+   CRANMirror secureMirror_;
+};
+
+
+void revertCRANMirrorToHTTP()
+{
+   CRANMirror mirror = userSettings().cranMirror();
+   boost::algorithm::replace_first(mirror.url, "https://", "http://");
+   userSettings().setCRANMirror(mirror);
+}
+
+} // anonymous namespace
+
+void reconcileSecureDownloadConfiguration()
+{
+   // secure downloads enabled
+   if (userSettings().securePackageDownload())
+   {
+      // ensure we have a secure download method
+      Error error = r::exec::RFunction(".rs.initSecureDownload").call();
+      if (error)
+         LOG_ERROR(error);
+
+      // if we couldn't get one then a suitable warning has been printed,
+      // revert any https mirror and exit
+      if (!module_context::haveSecureDownloadFileMethod())
+      {
+         revertCRANMirrorToHTTP();
+         return;
+      }
+
+      // if the current repository is secure then don't bother (it may
+      // be secure via the setting or by the user setting it explicitly
+      // within .Rprofile)
+      std::string reposURL = module_context::CRANReposURL();
+      if (isSecure(reposURL))
+         return;
+
+      // if there is a global repository set and it's inscure then warn
+      // (in this case the global repository is always overriding the user
+      // provided repository so it only makes sense to check/verify the
+      // global repository)
+      std::string globalRepos = session::options().rCRANRepos();
+      if (!globalRepos.empty() && !isSecure(globalRepos))
+      {
+         insecureReposURLWarning(globalRepos,
+            "Please report this to your server administrator."
+         );
+      }
+
+      // if the repository was set in R profile then we also need to
+      // just warn and bail
+      else if (!isCRANReposFromSettings())
+      {
+         insecureReposURLWarning(reposURL,
+            "The repository was likely specified in .Rprofile or "
+            "Rprofile.site so if you wish to change it you may need "
+            "to edit one of those files.");
+      }
+
+      // let's see if we can automatically update the user's CRAN repos to
+      // an HTTPS connection
+      else
+      {
+         CRANMirrorHttpsUpgrade::attemptUpgrade();
+      }
+   }
+
+   // secure downloads not enabled -- back out any https url
+   else
+   {
+      revertCRANMirrorToHTTP();
+   }
+}
+
+} // namespace module_context
+
 namespace modules { 
 namespace packages {
 
 namespace {
-
-Error availablePackagesBegin(const core::json::JsonRpcRequest& request,
-                             std::vector<std::string>* pContribUrls)
-{
-   return r::exec::evaluateString<std::vector<std::string> >(
-         "contrib.url(getOption('repos'), getOption('pkgType'))",
-         pContribUrls);
-}
 
 class AvailablePackagesCache : public boost::noncopyable
 {
@@ -72,7 +269,6 @@ public:
 private:
    
    AvailablePackagesCache()
-      : pMutex_(new boost::mutex())
    {
    }
    
@@ -81,96 +277,57 @@ public:
    void insert(const std::string& contribUrl,
                const std::vector<std::string>& availablePackages)
    {
-      LOCK_MUTEX(*pMutex_)
-      {
-         cache_[contribUrl] = availablePackages;
-      }
-      END_LOCK_MUTEX
+      cache_[contribUrl] = availablePackages;
    }
    
    bool find(const std::string& contribUrl)
    {
-      LOCK_MUTEX(*pMutex_)
-      {
-         return cache_.find(contribUrl) != cache_.end();
-      }
-      END_LOCK_MUTEX
-            
-      // happy compiler
-      return false;
+      return cache_.find(contribUrl) != cache_.end();
    }
 
 
    bool lookup(const std::string& contribUrl,
                std::vector<std::string>* pAvailablePackages)
    {
-      LOCK_MUTEX(*pMutex_)
-      {
-         std::map<std::string, std::vector<std::string> >::const_iterator it =
+      std::map<std::string, std::vector<std::string> >::const_iterator it =
                                                          cache_.find(contribUrl);
-         if (it != cache_.end())
-         {
-            *pAvailablePackages = it->second;
-            return true;
-         }
-         else
-         {
-            return false;
-         }
+      if (it != cache_.end())
+      {
+         core::algorithm::append(pAvailablePackages, it->second);
+         return true;
       }
-      END_LOCK_MUTEX
-
-      // keep compiler happy
-      return false;
+      else
+      {
+         return false;
+      }
    }
    
    void ensurePopulated(const std::string& contribUrl)
    {
-      LOCK_MUTEX(*pMutex_)
+      if (cache_.find(contribUrl) != cache_.end())
+         return;
+
+      // build code to execute
+      boost::format fmt(
+               "row.names(available.packages(contriburl = '%1%'))");
+      std::string code = boost::str(fmt % contribUrl);
+
+      // get the packages
+      std::vector<std::string> packages;
+      Error error = r::exec::evaluateString(code, &packages);
+      if (error)
       {
-         if (cache_.find(contribUrl) != cache_.end())
-            return;
-         
-         // make an HTTP request for the available packages
-         http::URL url(contribUrl + "/PACKAGES");
-         http::Request pkgRequest;
-         pkgRequest.setMethod("GET");
-         pkgRequest.setHost(url.hostname());
-         pkgRequest.setUri(url.path());
-         pkgRequest.setHeader("Accept", "*/*");
-         pkgRequest.setHeader("Connection", "close");
-         http::Response pkgResponse;
-
-         Error error = http::sendRequest(url.hostname(),
-                                         safe_convert::numberToString(url.port()),
-                                         pkgRequest,
-                                         &pkgResponse);
-
-         // we don't log errors or bad http status codes because we expect these
-         // requests will fail frequently due to either being offline or unable to
-         // navigate a proxy server
-         if (!error && (pkgResponse.statusCode() == 200))
-         {
-            std::string body = pkgResponse.body();
-            boost::regex re("^Package:\\s*([^\\s]+?)\\s*$");
-
-            boost::sregex_iterator matchBegin(body.begin(), body.end(), re);
-            boost::sregex_iterator matchEnd;
-            std::vector<std::string> results;
-            for (; matchBegin != matchEnd; matchBegin++)
-               results.push_back((*matchBegin)[1]);
-            cache_[contribUrl] = results;
-         }
-         
+         // log error if it wasn't merly a null return value
+         if (error.code() != r::errc::UnexpectedDataTypeError)
+            LOG_ERROR(error);
+         return;
       }
-      END_LOCK_MUTEX
+
+      // put them in the cache
+      cache_[contribUrl] = packages;
    }
 
 private:
-   
-   // make mutex heap based to avoid boost mutex assertions when
-   // it is destructucted in a multicore forked child
-   boost::mutex* pMutex_;
    std::map<std::string, std::vector<std::string> > cache_;
 };
 
@@ -209,10 +366,19 @@ SEXP rs_getCachedAvailablePackages(SEXP contribUrlSEXP)
       return R_NilValue;
 }
 
-Error availablePackagesEnd(const core::json::JsonRpcRequest& request,
-                           const std::vector<std::string>& contribUrls,
-                           core::json::JsonRpcResponse* pResponse)
+
+Error availablePackages(const core::json::JsonRpcRequest&,
+                        core::json::JsonRpcResponse* pResponse)
 {
+   // get contrib urls
+   std::vector<std::string> contribUrls;
+   Error error = r::exec::evaluateString<std::vector<std::string> >(
+                  "contrib.url(getOption('repos'), getOption('pkgType'))",
+                  &contribUrls);
+   if (error)
+      return error;
+
+
    // download available packages
    std::vector<std::string> availablePackages;
    std::for_each(contribUrls.begin(),
@@ -230,7 +396,6 @@ Error availablePackagesEnd(const core::json::JsonRpcRequest& request,
    pResponse->setResult(jsonResults);
    return Success();
 }
-
 
 Error getPackageStateJson(json::Object* pJson, bool useCachedPackratActions)
 {
@@ -332,9 +497,17 @@ void onDetectChanges(module_context::ChangeSource source)
 
 void onDeferredInit(bool newSession)
 {
+   // Ensure we have a writeable user library
+   Error error = r::exec::RFunction(".rs.ensureWriteableUserLibrary").call();
+   if (error)
+      LOG_ERROR(error);
+
    // monitor libPaths for changes
    detectLibPathsChanges();
    module_context::events().onDetectChanges.connect(onDetectChanges);
+
+   // ensure we have a secure connection to CRAN
+   module_context::reconcileSecureDownloadConfiguration();
 }
 
 Error getPackageState(const json::JsonRpcRequest& request,
@@ -404,16 +577,12 @@ Error initialize()
             (DL_FUNC) rs_downloadAvailablePackages,
             1);
    
-
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(registerRpcAsyncCoupleMethod<std::vector<std::string> >,
-            "available_packages",
-            availablePackagesBegin,
-            availablePackagesEnd))
       (bind(sourceModuleRFile, "SessionPackages.R"))
+      (bind(registerRpcMethod, "available_packages", availablePackages))
       (bind(registerRpcMethod, "get_package_state", getPackageState))
       (bind(r::exec::executeString, ".rs.packages.initialize()"));
    return initBlock.execute();

@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -27,9 +30,11 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.patch.SubstringDiff;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.ValueChangeHandlerManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -38,8 +43,13 @@ import org.rstudio.studio.client.workbench.events.LastChanceSaveHandler;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Fold;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.VimMarks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
+import org.rstudio.studio.client.workbench.views.source.events.SaveFailedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SaveInitiatedEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -103,6 +113,8 @@ public class DocUpdateSentinel
       dirtyState_ = dirtyState;
       eventBus_ = events;
       changeTracker_ = docDisplay.getChangeTracker();
+      propertyChangeHandlers_ = 
+            new HashMap<String, ValueChangeHandlerManager<String>>();
 
       bufferedCommand_ = new TimeBufferedCommand(2000)
       {
@@ -141,6 +153,10 @@ public class DocUpdateSentinel
                                           new ProgressIndicator()
                   {
                      public void onProgress(String message)
+                     {
+                     }
+                     
+                     public void onProgress(String message, Operation onCancel)
                      {
                      }
                      
@@ -187,6 +203,7 @@ public class DocUpdateSentinel
             }
    
             @Override public void onProgress(String message) {}
+            @Override public void onProgress(String message, Operation onCancel) {}
             @Override public void onError(String message) {}
             @Override public void clearProgress() {}
          });
@@ -241,8 +258,13 @@ public class DocUpdateSentinel
       {
          public void onProgress(String message)
          {
+            onProgress(message, null);
+         }
+         
+         public void onProgress(String message, Operation onCancel)
+         {
             if (progress != null)
-               progress.onProgress(message);
+               progress.onProgress(message, onCancel);
          }
          
          public void clearProgress()
@@ -292,6 +314,25 @@ public class DocUpdateSentinel
                              ex.getMessage());
          }
       }
+      
+      // Update marks after document save
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            if (docDisplay_.isVimModeOn())
+            {
+               String oldMarksSpec = "";
+               if (hasProperty("marks"))
+                  oldMarksSpec = getProperty("marks");
+
+               String newMarksSpec = VimMarks.encode(docDisplay_.getMarks());
+               if (!oldMarksSpec.equals(newMarksSpec))
+                  setProperty("marks", newMarksSpec);
+            }
+         }
+      });
       return didSave;
    }
 
@@ -313,14 +354,19 @@ public class DocUpdateSentinel
 
       final String foldSpec = Fold.encode(Fold.flatten(docDisplay_.getFolds()));
       String oldFoldSpec = sourceDoc_.getFoldSpec();
-
+      
+      final JsArray<ChunkDefinition> newChunkDefs = docDisplay_.getChunkDefs();
+      JsArray<ChunkDefinition> oldChunkDefs = sourceDoc_.getChunkDefs();
+      
       //String patch = DiffMatchPatch.diff(oldContents, newContents);
       SubstringDiff diff = new SubstringDiff(oldContents, newContents);
 
       // Don't auto-save when there are no changes. In addition to being
       // wasteful, it causes the server to think the document is dirty.
       if (path == null && fileType == null && diff.isEmpty()
-          && foldSpec.equals(oldFoldSpec))
+          && foldSpec.equals(oldFoldSpec) 
+          && (newChunkDefs == null || 
+              ChunkDefinition.equalTo(newChunkDefs, oldChunkDefs)))
       {
          changesPending_ = false;
          return false;
@@ -338,6 +384,19 @@ public class DocUpdateSentinel
          changesPending_ = false;
          return false;
       }
+      
+
+      try
+      {
+         if (path != null)
+         {
+            eventBus_.fireEvent(new SaveInitiatedEvent(path, getId()));
+         }
+      }
+      catch(Exception e)
+      {
+         Debug.logException(e);
+      }
 
       server_.saveDocumentDiff(
             sourceDoc_.getId(),
@@ -345,6 +404,7 @@ public class DocUpdateSentinel
             fileType,
             encoding,
             foldSpec,
+            newChunkDefs,
             diff.getReplacement(),
             diff.getOffset(),
             diff.getLength(),
@@ -357,6 +417,17 @@ public class DocUpdateSentinel
                   Debug.logError(error);
                   if (progress != null)
                      progress.onError(error.getUserMessage());
+                  try
+                  {
+                     if (path != null)
+                     {
+                        eventBus_.fireEvent(new SaveFailedEvent(path, getId()));
+                     }
+                  }
+                  catch(Exception e)
+                  {
+                     Debug.logException(e);
+                  }
                   changesPending_ = false;
                }
 
@@ -371,7 +442,13 @@ public class DocUpdateSentinel
                      {
                         if (!thisChangeTracker.hasChanged())
                            changeTracker_.reset();
-
+                        
+                        // update the foldSpec and newChunkDefs so we 
+                        // can use them for change detection the next
+                        // time around
+                        sourceDoc_.setFoldSpec(foldSpec);
+                        sourceDoc_.setChunkDefs(newChunkDefs);
+                        
                         onSuccessfulUpdate(newContents,
                                            newHash,
                                            path,
@@ -387,6 +464,9 @@ public class DocUpdateSentinel
                      }
                      if (progress != null)
                         progress.onCompleted();
+                     
+                     // let anyone interested know we just saved 
+                     eventBus_.fireEvent(new SaveFileEvent());
                   }
                   else if (!hash.equals(sourceDoc_.getHash()))
                   {
@@ -404,6 +484,7 @@ public class DocUpdateSentinel
                            fileType,
                            encoding,
                            foldSpec,
+                           newChunkDefs,
                            newContents,
                            this);
                   }
@@ -471,13 +552,18 @@ public class DocUpdateSentinel
                }
             });
    }
+   
+   public boolean hasProperty(String propertyName)
+   {
+      return sourceDoc_.getProperties().hasKey(propertyName);
+   }
 
    public String getProperty(String propertyName)
    {
       JsObject properties = sourceDoc_.getProperties();
       return properties.getString(propertyName);
    }
-
+   
    public void setProperty(String name,
                            String value,
                            ProgressIndicator progress)
@@ -485,6 +571,11 @@ public class DocUpdateSentinel
       HashMap<String, String> props = new HashMap<String, String>();
       props.put(name, value);
       modifyProperties(props, progress);
+   }
+   
+   public void setProperty(String name, String value)
+   {
+      setProperty(name, value, null);
    }
 
    /**
@@ -519,6 +610,22 @@ public class DocUpdateSentinel
                }
             });
    }
+   
+   public void modifyProperties(final HashMap<String, String> properties)
+   {
+      modifyProperties(properties, null);
+   }
+   
+   public HandlerRegistration addPropertyValueChangeHandler(
+         final String propertyName,
+         final ValueChangeHandler<String> handler)
+   {
+      if (!propertyChangeHandlers_.containsKey(propertyName))
+            propertyChangeHandlers_.put(
+                  propertyName, new ValueChangeHandlerManager<String>(this));
+      return propertyChangeHandlers_.get(propertyName).addValueChangeHandler(
+            handler);
+   }
 
    private void applyProperties(JsObject properties,
                                 HashMap<String, String> newProperties)
@@ -529,9 +636,15 @@ public class DocUpdateSentinel
             properties.unset(entry.getKey());
          else
             properties.setString(entry.getKey(), entry.getValue());
+         if (propertyChangeHandlers_.containsKey(entry.getKey()))
+         {
+            ValueChangeEvent.fire(
+                  propertyChangeHandlers_.get(entry.getKey()), 
+                  entry.getValue());
+         }
       }
    }
-
+   
    public void onValueChange(ValueChangeEvent<Void> voidValueChangeEvent)
    {
       changesPending_ = true;
@@ -553,6 +666,11 @@ public class DocUpdateSentinel
    public String getContents()
    {
       return sourceDoc_.getContents();
+   }
+   
+   public SourceDocument getDoc()
+   {
+      return sourceDoc_;
    }
 
    public void stop()
@@ -621,4 +739,6 @@ public class DocUpdateSentinel
    private final TimeBufferedCommand bufferedCommand_;
    private final HandlerRegistration closeHandlerReg_;
    private HandlerRegistration lastChanceSaveHandlerReg_;
+   private final HashMap<String, ValueChangeHandlerManager<String>> 
+                 propertyChangeHandlers_;
 }

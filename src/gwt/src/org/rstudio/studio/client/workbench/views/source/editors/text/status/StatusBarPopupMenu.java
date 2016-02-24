@@ -26,14 +26,21 @@ public class StatusBarPopupMenu extends ScrollableToolbarPopupMenu
       addStyleName(ThemeStyles.INSTANCE.statusBarMenu());
    }
 
-   public void showRelativeToUpward(final UIObject target)
+   public void showRelativeToUpward(final UIObject target, 
+         final boolean alignRight)
    {
       setPopupPositionAndShow(new PositionCallback()
       {
          public void setPosition(int offsetWidth, int offsetHeight)
          {
-            setPopupPosition(target.getAbsoluteLeft(),
-                             target.getAbsoluteTop() - offsetHeight);
+            // position left-aligned by default
+            int left = target.getAbsoluteLeft();
+            
+            // if right-aligned, move popup to the left by the difference in
+            // widths (add 10px to account for chrome)
+            if (alignRight)
+               left -= ((offsetWidth - target.getOffsetWidth()) - 10);
+            setPopupPosition(left, target.getAbsoluteTop() - offsetHeight);
          }
       });
    }

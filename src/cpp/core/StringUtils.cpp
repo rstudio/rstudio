@@ -176,6 +176,59 @@ void convertLineEndings(std::string* pStr, LineEnding type)
    *pStr = boost::regex_replace(*pStr, boost::regex("\\r?\\n|\\r|\\xE2\\x80[\\xA8\\xA9]"), replacement);
 }
 
+bool detectLineEndings(const FilePath& filePath, LineEnding* pType)
+{
+   if (!filePath.exists())
+      return false;
+
+   boost::shared_ptr<std::istream> pIfs;
+   Error error = filePath.open_r(&pIfs);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   // read file character-by-character using a streambuf
+   try
+   {
+      std::istream::sentry se(*pIfs, true);
+      std::streambuf* sb = pIfs->rdbuf();
+
+      while(true)
+      {
+         int ch = sb->sbumpc();
+
+         if (ch == '\n')
+         {
+            // using posix line endings
+            *pType = string_utils::LineEndingPosix;
+            return true;
+         }
+         else if (ch == '\r' && sb->sgetc() == '\n')
+         {
+            // using windows line endings
+            *pType = string_utils::LineEndingWindows;
+            return true;
+         }
+         else if (ch == EOF)
+         {
+            break;
+         }
+         else if (pIfs->fail())
+         {
+            LOG_WARNING_MESSAGE("I/O Error reading file " +
+                                filePath.absolutePath());
+            break;
+         }
+      }
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   // no detection possible (perhaps the file is empty or has only one line)
+   return false;
+}
+
 std::string utf8ToSystem(const std::string& str,
                          bool escapeInvalidChars)
 {
@@ -338,7 +391,6 @@ std::string jsonLiteralEscape(const std::string& str)
 
    return escape(escapes, subs, str);
 }
-
 // The str that is passed in should INCLUDE the " " around the value!
 // (Sorry this is inconsistent with jsonLiteralEscape, but it's more efficient
 // than adding double-quotes in this function)
@@ -352,6 +404,17 @@ std::string jsonLiteralUnescape(const std::string& str)
    }
 
    return value.get_str();
+}
+
+std::string singleQuotedStrEscape(const std::string& str)
+{
+   std::string escapes = "'\\";
+
+   std::map<char, std::string> subs;
+   subs['\\'] = "\\\\";
+   subs['\''] = "\\'";
+
+   return escape(escapes, subs, str);
 }
 
 std::string filterControlChars(const std::string& str)

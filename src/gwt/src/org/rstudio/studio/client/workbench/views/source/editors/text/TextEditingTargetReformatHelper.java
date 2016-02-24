@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Stack;
 
+import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
@@ -34,26 +35,6 @@ public class TextEditingTargetReformatHelper
    public TextEditingTargetReformatHelper(DocDisplay docDisplay)
    {
       docDisplay_ = docDisplay;
-   }
-   
-   class MutableInteger {
-      
-      public MutableInteger(int data)
-      {
-         data_ = data;
-      }
-      
-      public void set(int data)
-      {
-         data_ = data;
-      }
-      
-      public int get()
-      {
-         return data_;
-      }
-      
-      private int data_;
    }
    
    private static final Pattern ENDS_WITH_NEWLINE =
@@ -99,6 +80,11 @@ public class TextEditingTargetReformatHelper
          offset_ = offset;
          n_ = n;
          complements_ = complements;
+      }
+      
+      public int getOffset()
+      {
+         return offset_;
       }
       
       public SimpleTokenCursor clone()
@@ -159,6 +145,14 @@ public class TextEditingTargetReformatHelper
          return true;
       }
       
+      public Token previousToken()
+      {
+         SimpleTokenCursor clone = clone();
+         if (!clone.moveToPreviousToken())
+            return Token.create();
+         return clone.currentToken();
+      }
+      
       public Token previousSignificantToken()
       {
          SimpleTokenCursor clone = clone();
@@ -168,6 +162,15 @@ public class TextEditingTargetReformatHelper
          while (clone.isWhitespaceOrNewline())
             if (!clone.moveToPreviousToken())
                return Token.create();
+         
+         return clone.currentToken();
+      }
+      
+      public Token nextToken()
+      {
+         SimpleTokenCursor clone = clone();
+         if (!clone.moveToNextToken())
+            return Token.create();
          
          return clone.currentToken();
       }
@@ -223,7 +226,7 @@ public class TextEditingTargetReformatHelper
          return fwdToMatchingToken(null);
       }
       
-      public boolean fwdToMatchingToken(MutableInteger counter)
+      public boolean fwdToMatchingToken(Mutable<Integer> counter)
       {
          String lhs = this.currentValue();
          if (!isLeftBrace())
@@ -405,6 +408,21 @@ public class TextEditingTargetReformatHelper
             return "";
          
          return tokens_.get(index).getValue();
+      }
+      
+      public boolean hasType(String... targetTypes)
+      {
+         String tokenType = tokens_.get(offset_).getType();
+         for (String targetType : targetTypes)
+         {
+            if (tokenType.equals(targetType) ||
+                tokenType.contains(targetType + ".") ||
+                tokenType.contains("." + targetType))
+            {
+               return true;
+            }
+         }
+         return false;
       }
       
       public String currentType()
@@ -679,7 +697,7 @@ public class TextEditingTargetReformatHelper
                   clone.fwdToMatchingToken();
                else
                {
-                  MutableInteger counter = new MutableInteger(0);
+                  Mutable<Integer> counter = new Mutable<Integer>(0);
                   clone.fwdToMatchingToken(counter);
                   accumulatedLength += counter.get();
                }
@@ -841,8 +859,17 @@ public class TextEditingTargetReformatHelper
          // Ensure newlines around 'naked' else
          if (cursor.currentValue().equals("else"))
          {
-            if (!cursor.previousSignificantToken().getValue().equals("}"))
+            if (!cursor.previousSignificantToken().getValue().equals("}") &&
+                 cursor.getOffset() >= 2)
+            {
                cursor.ensureNewlinePreceeds();
+            }
+            
+            if (!(cursor.previousToken().getType().contains("comment") ||
+                  cursor.previousToken().getValue().matches(".*\\s+")))
+            {
+               cursor.ensureWhitespacePreceeds();
+            }
             
             String nextValue = cursor.nextSignificantToken().getValue();
             if (!(nextValue.equals("{") || nextValue.equals("if")))
@@ -942,7 +969,7 @@ public class TextEditingTargetReformatHelper
          }
          
          // Ensure spaces, or newlines, after commas, if so desired.
-         if (cursor.currentType().equals("text"))
+         if (cursor.currentValue().equals(","))
          {
             if (newlineAfterComma &&
                 cursor.peek(1).currentValue().indexOf('\n') == -1)
@@ -954,12 +981,15 @@ public class TextEditingTargetReformatHelper
             else if (!newlineAfterComma &&
                      !cursor.peek(1).isWhitespaceOrNewline())
             {
-               cursor.setValue(cursor.getValue().replaceAll(",[\\s\\n]*", ", "));
+               cursor.setValue(", ");
             }
+         }
             
             // Transform semi-colons into newlines.
             // TODO: Too destructive?
-            cursor.setValue(cursor.getValue().replaceAll(";+\\s*(?!\\n)", "\n"));
+         if (cursor.currentValue().equals(";"))
+         {
+            cursor.setValue("\n");
          }
          
          // If we encounter an opening paren, recurse a new token cursor within,

@@ -82,7 +82,9 @@ r_util::RToolsInfo scanPathForRTools()
    boost::regex pattern("Rtools version (\\d\\.\\d\\d)[\\d\\.]+$");
    boost::smatch match;
    if (boost::regex_search(contents, match, pattern))
-      return r_util::RToolsInfo(match[1], installPath);
+      return r_util::RToolsInfo(match[1],
+                                installPath,
+                                module_context::usingMingwGcc49());
    else
       return noToolsFound;
 }
@@ -122,7 +124,7 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget,
              "not compatible with the currently running version of R."
              "\n\nPlease download and install the appropriate version of "
              "Rtools to ensure that packages are built correctly:"
-             "\n\nhttp://cran.rstudio.com/bin/windows/Rtools/"
+             "\n\nhttps://cran.rstudio.com/bin/windows/Rtools/"
              "\n\nNote that in addition to installing a compatible verison you "
              "also need to remove the incompatible version from your PATH");
             *pWarningMessage = boost::str(
@@ -134,8 +136,9 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget,
     }
 
     // ok so scan for R tools
+    bool usingGcc49 = module_context::usingMingwGcc49();
     std::vector<r_util::RToolsInfo> rTools;
-    error = core::r_util::scanRegistryForRTools(&rTools);
+    error = core::r_util::scanRegistryForRTools(usingGcc49, &rTools);
     if (error)
     {
        LOG_ERROR(error);
@@ -163,7 +166,7 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget,
            "currently installed. "
            "Please download and install the appropriate "
            "version of Rtools before proceeding:\n\n"
-           "http://cran.rstudio.com/bin/windows/Rtools/";
+           "https://cran.rstudio.com/bin/windows/Rtools/";
     }
     else
     {
@@ -185,7 +188,7 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget,
        pWarningMessage->append(
           "\nPlease download and install the appropriate "
           "version of Rtools before proceeding:\n\n"
-          "http://cran.rstudio.com/bin/windows/Rtools/");
+          "https://cran.rstudio.com/bin/windows/Rtools/");
     }
 
     return false;

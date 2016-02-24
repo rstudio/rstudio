@@ -31,12 +31,11 @@ public interface ApplicationView
    
    // toolbar
    void showToolbar(boolean showToolbar);
-   
-   // go to function
-   void performGoToFunction();
+   boolean isToolbarShowing();
    
    // application exit states
    void showApplicationQuit();
+   void showApplicationMultiSessionQuit();
    void showApplicationSuicide(String reason);
    void showApplicationDisconnected();
    void showApplicationOffline();

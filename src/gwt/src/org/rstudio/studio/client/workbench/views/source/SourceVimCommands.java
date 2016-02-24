@@ -1,7 +1,7 @@
 /*
- * Source.java
+ * SourceVimCommands.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,44 @@ public class SourceVimCommands
             source.@org.rstudio.studio.client.workbench.views.source.Source::saveActiveSourceDoc()();
          })
       );
+   }-*/;
+   
+   public native final void selectTabIndex(Source source) /*-{
+      
+      var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
+      for (var i = 1; i <= 100; i++) {
+         (function(i) {
+            Vim.defineEx("b" + i, "b" + i, $entry(function(cm, params) {
+               source.@org.rstudio.studio.client.workbench.views.source.Source::vimSetTabIndex(I)(i - 1);
+            }));
+         })(i);
+      }
+      
+      var nextTab = $entry(function(cm, args, vim) {
+         source.@org.rstudio.studio.client.workbench.views.source.Source::nextTabWithWrap()();
+      });
+     
+      Vim.defineAction("selectNextTab", nextTab);
+      Vim.mapCommand({
+         keys: "gt",
+         type: "action",
+         action: "selectNextTab",
+         isEdit: false,
+         context: "normal"
+      });
+
+      var prevTab = $entry(function(cm, args, vim) {
+         source.@org.rstudio.studio.client.workbench.views.source.Source::prevTabWithWrap()();
+      });
+     
+      Vim.defineAction("selectPreviousTab", prevTab);
+      Vim.mapCommand({
+         keys: "gT",
+         type: "action",
+         action: "selectPreviousTab",
+         isEdit: false,
+         context: "normal"
+      });
    }-*/;
    
    public native final void selectNextTab(Source source) /*-{
@@ -90,6 +128,7 @@ public class SourceVimCommands
       
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("badd", "bad", callback);
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("edit", "e", callback);
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("tabedit", "tabe", callback);
       
    }-*/;
    
@@ -207,5 +246,98 @@ public class SourceVimCommands
       });
       
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("help", "help", callback);
+   }-*/;
+   
+   public native final void expandShrinkSelection(Source source) /*-{
+      
+      var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
+      
+      function toVimSelection(range) {
+         return {
+            anchor: {
+               line: range.start.row, ch: range.start.column
+            },
+            head: {
+               line: range.end.row, ch: range.end.column - 1
+            }
+         };
+      }
+      
+      var expandCallback = $entry(function(cm, origHead, motionArgs, vim) {
+         vim.sel = toVimSelection(cm.ace.$expandSelection());
+      });
+      
+      Vim.defineMotion("expandSelection", expandCallback);
+      Vim.mapCommand({
+         keys: "v",
+         type: "motion",
+         motion: "expandSelection",
+         context: "visual"
+      });
+      
+      var shrinkCallback = $entry(function(cm, origHead, motionArgs, vim) {
+         vim.sel = toVimSelection(cm.ace.$shrinkSelection());
+      });
+      
+      Vim.defineMotion("shrinkSelection", shrinkCallback);
+      Vim.mapCommand({
+         keys: "V",
+         type: "motion",
+         motion: "shrinkSelection",
+         context: "visual"
+      });
+   
+   }-*/;
+   
+   public native final void addStarRegister() /*-{
+      
+      var SystemClipboardRegister = function(text, linewise, blockwise) {
+         this.clear();
+         this.keyBuffer = [text || ''];
+         this.insertModeChanges = [];
+         this.searchQueries = [];
+         this.linewise = !!linewise;
+         this.blockwise = !!blockwise;
+      }
+      
+      // TODO: Reimplement this and read/write
+      // from the system clipboard using appropriate
+      // callbacks.
+      SystemClipboardRegister.prototype = {
+         
+         setText: function(text, linewise, blockwise) {
+            this.keyBuffer = [text || ''];
+            this.linewise = !!linewise;
+            this.blockwise = !!blockwise;
+         },
+         
+         pushText: function(text, linewise) {
+            this.keyBuffer.push(text);
+            if (linewise) {
+               if (!this.linewise) {
+                  this.keyBuffer.push('\n');
+               }
+               this.linewise = true;
+            }
+            this.keyBuffer.push(text);
+         },
+         
+         clear: function() {
+            this.keyBuffer = [];
+            this.insertModeChanges = [];
+            this.searchQueries = [];
+            this.linewise = false;
+         },
+         
+         toString: function() {
+            return this.keyBuffer.join('');
+         }
+         
+      };
+      
+      var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
+      var controller = Vim.getRegisterController();
+      // controller.registers['*'] = new SystemClipboardRegister();
+   
    }-*/;
 }

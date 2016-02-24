@@ -67,7 +67,11 @@ public class RSConnectDeployOutputPresenter extends BusyPresenter
       // HTML file for which we know the title--this may very well be a
       // temporary file
       String title = event.getPath();
-      if ((title.toLowerCase().endsWith(".htm") || 
+      if (title == null)
+         title = "";
+      
+      if ((title.isEmpty() ||
+           title.toLowerCase().endsWith(".htm") || 
            title.toLowerCase().endsWith(".html") &&
            !StringUtil.isNullOrEmpty(event.getTitle())))
       {

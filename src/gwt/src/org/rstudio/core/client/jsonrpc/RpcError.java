@@ -57,6 +57,7 @@ public class RpcError extends JavaScriptObject
    public final static int METHOD_UNEXEPECTED = 11 ;
    public final static int INVALID_CLIENT_VERSION = 12;
    public final static int SERVER_OFFLINE = 13;
+   public final static int INVALID_SESSION = 14;
    
    // execution error (method was executed and returned known error state)
    public final static int EXECUTION_ERROR = 100;

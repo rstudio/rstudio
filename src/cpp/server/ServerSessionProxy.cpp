@@ -42,13 +42,16 @@
 #include <core/http/LocalStreamAsyncClient.hpp>
 #include <core/http/TcpIpAsyncClient.hpp>
 #include <core/http/Util.hpp>
+#include <core/http/URL.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
+#include <core/r_util/RSessionContext.hpp>
 
 #include <core/json/JsonRpc.hpp>
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionLocalStreams.hpp>
+#include <session/SessionInvalidScope.hpp>
 
 #include <server/auth/ServerValidateUser.hpp>
 #include <server/auth/ServerAuthHandler.hpp>
@@ -68,6 +71,7 @@ namespace session_proxy {
 namespace {
 
 Error launchSessionRecovery(const http::Request& request,
+                            bool firstAttempt,
                             const r_util::SessionContext& context)
 {
    // if this request is marked as requiring an existing
@@ -75,12 +79,27 @@ Error launchSessionRecovery(const http::Request& request,
    if (requiresSession(request))
       return Error(server::errc::SessionUnavailableError, ERROR_LOCATION);
 
+   // if the session scope is marked as invalid then return
+   // invalid session scope error
+   core::r_util::SessionScopeState state =
+         session::collectInvalidScope(context);
+   if (state != core::r_util::ScopeValid)
+   {
+       Error error(server::errc::InvalidSessionScopeError, ERROR_LOCATION);
+       error.addProperty("state", state);
+       return error;
+   }
+
    // recreate streams dir if necessary
    Error error = session::local_streams::ensureStreamsDir();
    if (error)
       LOG_ERROR(error);
 
-   return sessionManager().launchSession(context);
+   // attempt to launch the session only if this is the first recovery attempt
+   if (firstAttempt)
+      return sessionManager().launchSession(context);
+   else
+      return Success();
 }
 
 http::ConnectionRetryProfile sessionRetryProfile(const r_util::SessionContext& context)
@@ -89,18 +108,20 @@ http::ConnectionRetryProfile sessionRetryProfile(const r_util::SessionContext& c
    retryProfile.retryInterval = boost::posix_time::milliseconds(25);
    retryProfile.maxWait = boost::posix_time::seconds(10);
    retryProfile.recoveryFunction = boost::bind(launchSessionRecovery,
-                                               _1, context);
+                                               _1, _2, context);
    return retryProfile;
 }
 
 ProxyFilter s_proxyFilter;
 
+ProxyRequestFilter s_proxyRequestFilter;
+
 bool applyProxyFilter(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
-      const std::string& username)
+      const r_util::SessionContext& context)
 {
    if (s_proxyFilter)
-      return s_proxyFilter(ptrConnection, username);
+      return s_proxyFilter(ptrConnection, context);
    else
       return false;
 }
@@ -300,15 +321,28 @@ void handleContentError(
    if (server::isAuthenticationError(error))
    {
       http::Response& response = ptrConnection->response();
-      response.setStatusCode(http::status::Unauthorized);
+      response.setError(http::status::Unauthorized, "Unauthorized");
       ptrConnection->writeResponse();
       return;
    }
 
-   if (server::isSessionUnavailableError(error))
+   if (server::isSessionUnavailableError(error) ||
+       server::isInvalidSessionScopeError(error))
    {
       http::Response& response = ptrConnection->response();
-      response.setStatusCode(http::status::ServiceUnavailable);
+      if (server::isInvalidSessionScopeError(error))
+      {
+         unsigned state = safe_convert::stringTo(error.getProperty("state"), 0);
+         if (static_cast<r_util::SessionScopeState>(state) ==
+             r_util::ScopeMissingProject)
+            response.setError(http::status::NotFound, "Project not found");
+         else
+            response.setStatusCode(http::status::ServiceUnavailable);
+      }
+      else
+      {
+         response.setStatusCode(http::status::ServiceUnavailable);
+      }
       ptrConnection->writeResponse();
       return;
    }
@@ -358,6 +392,22 @@ void handleRpcError(
       return;
    }
 
+   if (server::isInvalidSessionScopeError(error))
+   {
+      // prepare client info
+      json::Object clJson;
+      clJson["scope_path"] = r_util::urlPathForSessionScope(context.scope);
+      clJson["scope_state"] = safe_convert::numberToString(
+               error.getProperty("state"));
+      clJson["project"] = context.scope.project();
+      clJson["id"] = context.scope.id();
+      json::JsonRpcResponse jsonRpcResponse ;
+      jsonRpcResponse.setError(json::errc::InvalidSession, clJson);
+      json::setJsonRpcResponse(jsonRpcResponse, &(ptrConnection->response()));
+      ptrConnection->writeResponse();
+      return;
+   }
+
    // log if not connection terminated
    logIfNotConnectionTerminated(error, ptrConnection->request());
 
@@ -399,6 +449,11 @@ void handleEventsError(
                               &(ptrConnection->response()));
       }
    }
+   else if (server::isInvalidSessionScopeError(error))
+   {
+      json::setJsonRpcError(json::errc::Unavailable,
+                           &(ptrConnection->response()));
+   }
    else
    {
       // log if not connection terminated
@@ -419,11 +474,11 @@ void proxyRequest(
       const http::ConnectionRetryProfile& connectionRetryProfile)
 {
    // apply optional proxy filter
-   if (applyProxyFilter(ptrConnection, context.username))
+   if (applyProxyFilter(ptrConnection, context))
       return;
 
    // create async client
-   std::string streamFile = r_util::sessionContextToStreamFile(context);
+   std::string streamFile = r_util::sessionContextFile(context);
    FilePath streamPath = session::local_streams::streamPath(streamFile);
    boost::shared_ptr<http::LocalStreamAsyncClient> pClient(
     new http::LocalStreamAsyncClient(ptrConnection->ioService(), streamPath));
@@ -434,6 +489,10 @@ void proxyRequest(
 
    // assign request
    pClient->request().assign(ptrConnection->request());
+
+   // call request filter if we have one
+   if (s_proxyRequestFilter)
+      s_proxyRequestFilter(&(pClient->request()));
 
    // execute
    pClient->execute(
@@ -567,12 +626,16 @@ void proxyLocalhostRequest(
       return;
 
    // apply optional proxy filter
-   if (applyProxyFilter(ptrConnection, context.username))
+   if (applyProxyFilter(ptrConnection, context))
       return;
 
    // make a copy of the request for forwarding
    http::Request request;
    request.assign(ptrConnection->request());
+
+   // call request filter if we have one
+   if (s_proxyRequestFilter)
+      s_proxyRequestFilter(&request);
 
    // extract the port
    boost::regex re("/p/(\\d+)/");
@@ -627,6 +690,11 @@ bool requiresSession(const http::Request& request)
 void setProxyFilter(ProxyFilter filter)
 {
    s_proxyFilter = filter;
+}
+
+void setProxyRequestFilter(ProxyRequestFilter filter)
+{
+   s_proxyRequestFilter = filter;
 }
 
 void setSessionContextSource(SessionContextSource source)

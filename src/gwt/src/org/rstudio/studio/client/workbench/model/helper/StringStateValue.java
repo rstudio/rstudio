@@ -30,6 +30,19 @@ public abstract class StringStateValue extends ClientStateValue<String>
             persist,
             state);
    }
+   
+   public StringStateValue(String group,
+                           String name,
+                           int persist,
+                           ClientInitState state,
+                           boolean delayedInit)
+   {
+      super(group,
+            name,
+            persist,
+            state,
+            delayedInit);
+   }
 
    @Override
    protected final String doGet(JsObject group, String name)

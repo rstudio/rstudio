@@ -53,6 +53,25 @@ public class JsArrayUtil
       }
    }
    
+   public static <T extends JavaScriptObject> ArrayList<T> toArrayList(
+         JsArray<T> jsArray)
+   {
+      ArrayList<T> list = new ArrayList<T>();
+      fillList(jsArray, list);
+      return list;
+   }
+   
+   public static <T extends JavaScriptObject> JsArray<T> toJsArray(List<T> list)
+   {
+      JsArray<T> array = JsArray.createArray().cast();
+      for (T item: list)
+      {
+         array.push(item);
+      }
+      return array;
+   }
+   
+   
    public static JsArrayString toJsArrayString(List<String> in)
    {
       JsArrayString out = JavaScriptObject.createArray().cast();
@@ -71,5 +90,47 @@ public class JsArrayUtil
          out.add(in.get(i));
       }
       return out;
+   }
+   
+   public static boolean jsArrayStringEqual(JsArrayString first, 
+         JsArrayString second)
+   {
+      if (first.length() != second.length())
+         return false;
+      for (int i = 0; i < first.length(); i++)
+      {
+         if (!first.get(i).equals(second.get(i)))
+            return false;
+      }
+      return true;
+   }
+   
+   public final static native void remove(JsArray<?> array, int index) /*-{
+      array.splice(index, 1);
+   }-*/;
+   
+   public static JsArrayString concat(JsArrayString a, JsArrayString b)
+   {
+      JsArrayString ab = JsArrayString.createArray().cast();
+      for (int i = 0; i < a.length(); i++)
+         ab.push(a.get(i));
+      for (int i = 0; i < b.length(); i++)
+         ab.push(b.get(i));
+      return ab;
+   }
+   
+   public static final native <T extends JavaScriptObject> JsArray<T> copy(JsArray<T> object) /*-{
+      return object.slice();
+   }-*/;
+
+   public static JsArrayString copy(JsArrayString array)
+   {
+      if (array == null)
+         return null;
+
+      JsArrayString copy = JsArrayString.createArray().cast();
+      for (int i = 0; i < array.length(); i++)
+         copy.push(array.get(i));
+      return copy;
    }
 }

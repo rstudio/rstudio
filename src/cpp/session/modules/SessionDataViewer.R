@@ -41,9 +41,9 @@
    # NA for character cols)
    vals <- format(col, trim = TRUE, justify = "none", ...)
 
-   # restore NAs if there were any
+   # restore NA values if there were any
    if (any(naVals)) {
-     vals[naVals] <- NA
+     vals[naVals] <- col[naVals]
    } 
 
    vals
@@ -72,6 +72,7 @@
                 else 
                   as.character(idx)
     col_type <- "unknown"
+    col_type_r <- "unknown"
     col_min <- 0
     col_max <- 0
     col_vals <- ""
@@ -91,6 +92,7 @@
     if (length(x[[idx]]) > 0 && length(x[[idx]][1]) == 1)
     {
       val <- x[[idx]][1]
+      col_type_r <- typeof(val)
       if (is.factor(val))
       {
         col_type <- "factor"
@@ -142,7 +144,8 @@
       col_max         = .rs.scalar(col_max),
       col_search_type = .rs.scalar(col_search_type),
       col_label       = .rs.scalar(col_label),
-      col_vals        = col_vals
+      col_vals        = col_vals,
+      col_type_r      = .rs.scalar(col_type_r)
     )
   })
   c(list(list(
@@ -152,7 +155,8 @@
       col_max         = .rs.scalar(0),
       col_search_type = .rs.scalar("none"),
       col_label       = .rs.scalar(""),
-      col_vals        = ""
+      col_vals        = "",
+      col_type_r      = .rs.scalar("")
     )), colAttrs)
 })
 
@@ -327,7 +331,10 @@
       else if (identical(filtertype, "character"))
       {
         # apply character filter: non-case-sensitive prefix
-        x <- x[grepl(tolower(filterval), tolower(x[[i]]), fixed = TRUE), , 
+        # use PCRE and the special \Q and \E escapes to ensure no characters in
+        # the search expression are interpreted as regexes 
+        x <- x[grepl(paste("\\Q", filterval, "\\E", sep = ""), x[[i]], 
+                     perl = TRUE, ignore.case = TRUE), , 
                drop = FALSE]
       } 
       else if (identical(filtertype, "numeric"))
@@ -355,14 +362,15 @@
   if (!is.null(search) && nchar(search) > 0)
   {
     x <- x[Reduce("|", lapply(x, function(column) { 
-             grepl(tolower(search), tolower(column), fixed = TRUE)
+             grepl(paste("\\Q", search, "\\E", sep = ""), column, perl = TRUE,
+                   ignore.case = TRUE)
            })), , drop = FALSE]
   }
 
   # apply sort
   if (col > 0 && length(x[[col]]) > 0)
   {
-    if (is.list(x[1,col]) || length(x[1,col]) > 1)
+    if (is.list(x[[col]][[1]]) || length(x[[col]][[1]]) > 1)
     {
       # extract the first value from each cell for ordering (handle
       # vector-valued columns gracefully)
@@ -442,8 +450,11 @@
   # cached environment
   cacheFile <- file.path(cacheDir, paste(cacheKey, "Rdata", sep = "."))
   if (file.exists(cacheFile))
-  { 
-    load(cacheFile, envir = .rs.CachedDataEnv)
+  {
+    status <- try(load(cacheFile, envir = .rs.CachedDataEnv), silent = TRUE)
+    if (inherits(status, "try-error"))
+       return(NULL)
+     
     if (exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
       return(get(cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE))
   }
@@ -544,7 +555,12 @@
      # either this function doesn't have a source reference or its source
      # reference points to a file we can't locate on disk--show a deparsed
      # version of the function
-     namespace <- environmentName(env)
+   
+     # remove package qualifiers from function name
+     title <- sub("^[^:]+:::?", "", title)
+
+     # infer environment location
+     namespace <- .rs.environmentName(environment(x))
      if (identical(namespace, "R_EmptyEnv") || identical(namespace, ""))
        namespace <- "viewing"
      else if (identical(namespace, "R_GlobalEnv"))
@@ -578,7 +594,7 @@
 
 .rs.addFunction("addCachedData", function(obj, objName) 
 {
-   cacheKey <- paste(sample(c(letters, 0:9), 10, replace = TRUE), collapse = "")
+   cacheKey <- .Call(.rs.routines$rs_generateShortUuid)
    .rs.assignCachedData(cacheKey, obj, objName)
    cacheKey
 })
@@ -622,9 +638,6 @@
   # no work to do if we have no cache
   if (!exists(".rs.CachedDataEnv")) 
     return(invisible(NULL))
-
-  # create the cache directory if it doesn't already exist
-  dir.create(cacheDir, recursive = TRUE, showWarnings = FALSE, mode = "0700")
 
   # save each active cache file from the cache environment
   lapply(ls(.rs.CachedDataEnv), function(cacheKey) {

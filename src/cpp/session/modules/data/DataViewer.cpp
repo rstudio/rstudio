@@ -43,6 +43,10 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionContentUrls.hpp>
 
+#ifndef _WIN32
+#include <core/system/FileMode.hpp>
+#endif
+
 #define kGridResource "grid_resource"
 #define kViewerCacheDir "viewer-cache"
 #define kGridResourceLocation "/" kGridResource "/"
@@ -767,9 +771,29 @@ Error getGridData(const http::Request& request,
 
    std::ostringstream ostr;
    json::write(result, ostr);
+
+   // There are some unprintable ASCII control characters that are written
+   // verbatim by json::write, but that won't parse in most Javascript JSON
+   // parsing implementations, even if contained in a string literal. Scan the
+   // output data for these characters and replace them with spaces. Escaping
+   // is another option here for some character ranges but since (a) these are
+   // unprintable and (b) some characters are invalid *even if escaped* e.g.
+   // \v, there's little to be gained here in trying to marshal them to the
+   // viewer.
+   std::string output = ostr.str();
+   for (size_t i = 0; i < output.size(); i++) 
+   {
+      char c = output[i];
+      // These ranges for control character values come from empirical testing
+      if ((c >= 1 && c <= 7) || c == 11 || (c >= 14 && c <= 31))
+      {
+         output[i] = ' ';
+      }
+   }
+ 
    pResponse->setNoCacheHeaders();    // don't cache data/grid shape
    pResponse->setStatusCode(status);
-   pResponse->setBody(ostr.str());
+   pResponse->setBody(output);
 
    return Success();
 }
@@ -902,6 +926,38 @@ void onDetectChanges(module_context::ChangeSource source)
    }
 }
 
+void onClientInit()
+{
+   // ensure the viewer cache directory exists--we create this eagerly on 
+   // client init (rather than on-demand) so we have time to correct its 
+   // permissions 
+   FilePath cacheDir(viewerCacheDir());
+   if (cacheDir.exists())
+      return;
+
+   Error error = cacheDir.ensureDirectory();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+#ifndef _WIN32
+   // tighten permissions on viewer cache directory
+   error = core::system::changeFileMode(
+            cacheDir,  core::system::UserReadWriteExecuteMode);
+   if (error)
+   {
+      // not fatal, log and continue
+      LOG_ERROR(error);
+   }
+   else
+   {
+      module_context::events().onPermissionsChanged(cacheDir);
+   }
+#endif
+}
+
 } // anonymous namespace
    
 Error initialize()
@@ -917,6 +973,7 @@ Error initialize()
 
    module_context::events().onShutdown.connect(onShutdown);
    module_context::events().onDetectChanges.connect(onDetectChanges);
+   module_context::events().onClientInit.connect(onClientInit);
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
 
    using boost::bind;

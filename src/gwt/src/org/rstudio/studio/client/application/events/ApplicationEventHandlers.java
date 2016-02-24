@@ -18,12 +18,14 @@ public interface ApplicationEventHandlers extends LogoutRequestedHandler,
                                                   UnauthorizedHandler,
                                                   ReloadEvent.Handler,
                                                   QuitHandler,
+                                                  SwitchToRVersionEvent.Handler,
                                                   SuicideHandler,
                                                   SessionAbendWarningHandler,
                                                   SessionSerializationHandler,
                                                   ServerUnavailableHandler,
                                                   ClientDisconnectedHandler,
                                                   InvalidClientVersionHandler,
-                                                  ServerOfflineHandler
+                                                  ServerOfflineHandler,
+                                                  InvalidSessionEvent.Handler
 {
 }

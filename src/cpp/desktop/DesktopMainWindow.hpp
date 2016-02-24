@@ -43,15 +43,11 @@ public:
    void evaluateJavaScript(QString jsCode);
    void launchSession(bool reload);
 
-   const std::vector<double>& zoomLevels() const { return zoomLevels_; }
-
 public slots:
    void quit();
    void loadUrl(const QUrl& url);
    void setMenuBar(QMenuBar *pMenuBar);
    void invokeCommand(QString commandId);
-   void zoomIn();
-   void zoomOut();
    void manageCommand(QString cmdId, QAction* pAction);
    void manageCommandVisibility(QString cmdId, QAction* pAction);
    void openFileInRStudio(QString path);
@@ -70,6 +66,8 @@ protected slots:
 
 protected:
    virtual void closeEvent(QCloseEvent*);
+   virtual double getZoomLevel();
+   virtual void setZoomLevel(double zoomLevel);
 
 // private interface for SessionLauncher
 private:
@@ -91,7 +89,6 @@ private:
    virtual void onActivated();
 
 private:
-   std::vector<double> zoomLevels_;
    bool quitConfirmed_;
    MenuCallback menuCallback_;
    GwtCallback gwtCallback_;

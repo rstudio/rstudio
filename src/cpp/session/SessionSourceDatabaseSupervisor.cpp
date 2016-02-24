@@ -31,6 +31,7 @@
 
 #include <core/system/System.hpp>
 
+#include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
 #include "session/SessionSourceDatabase.hpp"
 
@@ -56,9 +57,28 @@ FilePath sourceDatabaseRoot()
    return module_context::scopedScratchPath().complete("sdb");
 }
 
-FilePath persistentTitledDir()
+FilePath mostRecentTitledDir()
 {
-   return sourceDatabaseRoot().complete("per/t");
+   return module_context::scopedScratchPath().complete("sdb/mt");
+}
+
+FilePath mostRecentUntitledDir()
+{
+   return module_context::scopedScratchPath().complete("sdb/mu");
+}
+
+
+FilePath persistentTitledDir(bool multiSession = true)
+{
+   if (multiSession && !module_context::activeSession().empty())
+   {
+      std::string id = module_context::activeSession().id();
+      return sourceDatabaseRoot().complete("per/t/" + id);
+   }
+   else
+   {
+      return sourceDatabaseRoot().complete("per/t");
+   }
 }
 
 FilePath oldPersistentTitledDir()
@@ -70,9 +90,17 @@ FilePath oldPersistentTitledDir()
       return FilePath();
 }
 
-FilePath persistentUntitledDir()
+FilePath persistentUntitledDir(bool multiSession = true)
 {
-   return sourceDatabaseRoot().complete("per/u");
+   if (multiSession && !module_context::activeSession().empty())
+   {
+      std::string id = module_context::activeSession().id();
+      return sourceDatabaseRoot().complete("per/u/" + id);
+   }
+   else
+   {
+      return sourceDatabaseRoot().complete("per/u");
+   }
 }
 
 FilePath oldPersistentUntitledDir()
@@ -89,8 +117,21 @@ FilePath sessionLockFilePath(const FilePath& sessionDir)
    return sessionDir.complete("lock_file");
 }
 
-// session dir lock (initialized by attachToSourceDatabase)
-FileLock s_sessionDirLock;
+// session dir lock (lock is acquired within 'attachToSourceDatabase()')
+boost::shared_ptr<FileLock> createSessionDirLock()
+{
+   bool isServer = session::options().programMode() == kSessionProgramModeServer;
+   FileLock::LockType lockType = isServer
+         ? FileLock::LOCKTYPE_LINKBASED
+         : FileLock::LOCKTYPE_ADVISORY;
+   return FileLock::create(lockType);
+}
+
+FileLock& sessionDirLock()
+{
+   static boost::shared_ptr<FileLock> instance = createSessionDirLock();
+   return *instance;
+}
 
 Error removeSessionDir(const FilePath& sessionDir)
 {
@@ -152,6 +193,13 @@ void attemptToMoveSourceDbFiles(const FilePath& fromPath,
    // move the files
    BOOST_FOREACH(const FilePath& filePath, children)
    {
+      // skip directories (directories can exist because multi-session
+      // mode writes top level directories into the /sdb/t and /sdb/u
+      // stores -- these directories correspond to the persistent docs
+      // of particular long-running sessions)
+      if (filePath.isDirectory())
+         continue;
+
       // if the target path already exists then skip it and log
       // (we used to generate a new uniqueFilePath however this
       // caused the filename and id (stored in the source doc)
@@ -162,8 +210,9 @@ void attemptToMoveSourceDbFiles(const FilePath& fromPath,
       FilePath targetPath = toPath.complete(filePath.filename());
       if (targetPath.exists())
       {
-         LOG_WARNING_MESSAGE("Skipping source db move for: " +
-                             filePath.absolutePath());
+         LOG_WARNING_MESSAGE("Skipping source db move from: " +
+                             filePath.absolutePath() + " to " +
+                             targetPath.absolutePath());
 
          Error error = filePath.remove();
          if (error)
@@ -193,7 +242,7 @@ Error createSessionDir(FilePath* pSessionDir)
 
    // attempt to acquire the lock. if we can't then we still continue
    // so we can support filesystems that don't have file locks.
-   error = s_sessionDirLock.acquire(sessionLockFilePath(*pSessionDir));
+   error = sessionDirLock().acquire(sessionLockFilePath(*pSessionDir));
    if (error)
       LOG_ERROR(error);
 
@@ -225,7 +274,7 @@ Error createSessionDirFromOldSourceDatabase(FilePath* pSessionDir)
 
    // attempt to acquire the lock. if we can't then we still continue
    // so we can support filesystems that don't have file locks.
-   error =  s_sessionDirLock.acquire(sessionLockFilePath(*pSessionDir));
+   error = sessionDirLock().acquire(sessionLockFilePath(*pSessionDir));
    if (error)
       LOG_ERROR(error);
 
@@ -234,14 +283,32 @@ Error createSessionDirFromOldSourceDatabase(FilePath* pSessionDir)
 
 Error createSessionDirFromPersistent(FilePath* pSessionDir)
 {
+   // note whether we are in multi-session mode
+   bool multiSession = !module_context::activeSession().empty();
+
    // create new session dir
    Error error = createSessionDir(pSessionDir);
    if (error)
       return error;
 
-   // move persistent titled files
+   // move persistent titled files. if we don't have any this is a
+   // brand new instantiation of this project within this session
+   // so we try to grab the MRU list
    if (persistentTitledDir().exists())
+   {
       attemptToMoveSourceDbFiles(persistentTitledDir(), *pSessionDir);
+   }
+   // check for the most recent titled directory
+   else if (multiSession && mostRecentTitledDir().exists())
+   {
+      attemptToMoveSourceDbFiles(mostRecentTitledDir(), *pSessionDir);
+   }
+   // last resort: if we are in multi-session mode see if there is a set of
+   // mono-session source documents that we can migrate
+   else if (multiSession && persistentTitledDir(false).exists())
+   {
+      attemptToMoveSourceDbFiles(persistentTitledDir(false), *pSessionDir);
+   }
 
    // get legacy titled docs if they exist
    if (oldPersistentTitledDir().exists())
@@ -249,7 +316,20 @@ Error createSessionDirFromPersistent(FilePath* pSessionDir)
 
    // move persistent untitled files
    if (persistentUntitledDir().exists())
+   {
       attemptToMoveSourceDbFiles(persistentUntitledDir(), *pSessionDir);
+   }
+   // check for the most recent untitled directory
+   else if (multiSession && mostRecentUntitledDir().exists())
+   {
+      attemptToMoveSourceDbFiles(mostRecentUntitledDir(), *pSessionDir);
+   }
+   // last resort: if we are in multi-session mode see if there is a set of
+   // mono-session source documents that we can migrate
+   else if (multiSession && persistentUntitledDir(false).exists())
+   {
+       attemptToMoveSourceDbFiles(persistentUntitledDir(false), *pSessionDir);
+   }
 
    // get legacy untitled docs if they exist
    if (oldPersistentUntitledDir().exists())
@@ -259,15 +339,23 @@ Error createSessionDirFromPersistent(FilePath* pSessionDir)
    return Success();
 }
 
-bool reclaimOrphanedSession(const std::vector<FilePath>& sessionDirs,
-                            FilePath* pSessionDir)
+bool reclaimOrphanedSession(FilePath* pSessionDir)
 {
+   // check for existing sessions
+   std::vector<FilePath> sessionDirs;
+   Error error = enumerateSessionDirs(&sessionDirs);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
    BOOST_FOREACH(const FilePath& sessionDir, sessionDirs)
    {
       FilePath lockFilePath = sessionLockFilePath(sessionDir);
-      if (!FileLock::isLocked(lockFilePath))
+      if (!sessionDirLock().isLocked(lockFilePath))
       {
-         Error error = s_sessionDirLock.acquire(lockFilePath);
+         Error error = sessionDirLock().acquire(lockFilePath);
          if (!error)
          {
             *pSessionDir = sessionDir;
@@ -281,6 +369,15 @@ bool reclaimOrphanedSession(const std::vector<FilePath>& sessionDirs,
    }
 
    return false;
+}
+
+Error removeAndRecreate(const FilePath& dir)
+{
+   // blow it away if it exists then recreate it
+   Error error = dir.removeIfExists();
+   if (error)
+      LOG_ERROR(error);
+   return dir.ensureDirectory();
 }
 
 } // anonymous namespace
@@ -304,6 +401,12 @@ bool reclaimOrphanedSession(const std::vector<FilePath>& sessionDirs,
 //      a lock on them -- for volumes that don't support locks this will
 //      always be an error so we'll never be able to recover an orphan dir
 //
+// In some multi-machine cases it's actually possible for two proccesses
+// to both get a lock on the same file. For this reason if we are running
+// multi-machine (i.e. load balancing enabled) we don't attempt orphan
+// recovery because it could result in one session stealing the other's
+// source database out from under it.
+//
 
 Error attachToSourceDatabase(FilePath* pSessionDir)
 {  
@@ -319,23 +422,57 @@ Error attachToSourceDatabase(FilePath* pSessionDir)
    if (error)
       return error;
 
-   // check for existing sessions (use this to decide how to startup below)
-   std::vector<FilePath> sessionDirs;
-   error = enumerateSessionDirs(&sessionDirs);
-   if (error)
-      LOG_ERROR(error);
-
    // attempt to migrate if necessary
    if (needToMigrate)
       return createSessionDirFromOldSourceDatabase(pSessionDir);
 
-   // if there is an orphan (crash) then reclaim it
-   else if (reclaimOrphanedSession(sessionDirs, pSessionDir))
+   // if there is an orphan (crash) then reclaim it.
+   else if (reclaimOrphanedSession(pSessionDir))
       return Success();
 
    // attempt to create from persistent
    else
       return createSessionDirFromPersistent(pSessionDir);
+}
+
+// preserve documents for re-opening in a future session
+Error saveMostRecentDocuments()
+{
+   // only do this for multi-session contexts
+   if (!module_context::activeSession().empty())
+   {
+      // most recent docs is last one wins so we remove and recreate
+      FilePath mostRecentDir = mostRecentTitledDir();
+      Error error = removeAndRecreate(mostRecentDir);
+      if (error)
+         return error;
+
+      // untitled are aggregated (so we never lose unsaved docs)
+      // so we just ensure the directory exists)
+      FilePath mostRecentDirUntitled = mostRecentUntitledDir();
+      error = mostRecentDirUntitled.ensureDirectory();
+      if (error)
+         return error;
+
+      // list all current source docs
+      std::vector<boost::shared_ptr<SourceDocument> > sourceDocs;
+      error = source_database::list(&sourceDocs);
+      if (error)
+         return error;
+
+      // write the docs into the mru directories
+      BOOST_FOREACH(boost::shared_ptr<SourceDocument> pDoc, sourceDocs)
+      {
+         FilePath targetDir = pDoc->isUntitled() ? mostRecentDirUntitled :
+                                                   mostRecentDir;
+
+         Error error = pDoc->writeToFile(targetDir.childPath(pDoc->id()));
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+
+   return Success();
 }
 
 Error detachFromSourceDatabase()
@@ -388,10 +525,10 @@ Error detachFromSourceDatabase()
    }
 
    // record session dir (parent of lock file)
-   FilePath sessionDir = s_sessionDirLock.lockFilePath().parent();
+   FilePath sessionDir = sessionDirLock().lockFilePath().parent();
 
    // give up our lock
-   error = s_sessionDirLock.release();
+   error = sessionDirLock().release();
    if (error)
       LOG_ERROR(error);
 

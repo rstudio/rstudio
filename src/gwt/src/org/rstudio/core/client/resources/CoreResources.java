@@ -33,6 +33,7 @@ public interface CoreResources extends ClientBundle
    ImageResource progress_gray();
    ImageResource progress_large();
    ImageResource progress_large_gray();
+   ImageResource iconEmpty();
 
    @Source("clear.gif")
    DataResource clear();

@@ -327,6 +327,7 @@ bool performKnit(const FilePath& rmdPath,
                      "render_markdown(); "
                      "knit('%2%', output = '%3%', encoding='%4%');");
    std::string encoding = projects::projectContext().defaultEncoding();
+   if(encoding.empty()) encoding = "UTF-8";
    std::string cmd = boost::str(
       fmt % string_utils::utf8ToSystem(rmdPath.stem())
           % string_utils::utf8ToSystem(rmdPath.filename())
@@ -815,6 +816,23 @@ void loadSlideDeckDependencies(const SlideDeck& slideDeck)
    }
 }
 
+void setWebCacheableFileResponse(const FilePath& path,
+                                 const http::Request& request,
+                                 http::Response* pResponse)
+{
+   if (options().programMode() == kSessionProgramModeServer)
+   {
+      pResponse->setCacheWithRevalidationHeaders();
+      pResponse->setCacheableBody(path, request);
+   }
+   else
+   {
+      // Qt doesn't deal well with etag-based caching, so just send the body
+      // without cache headers
+      pResponse->setBody(path);
+   }
+}
+
 void handlePresentationRootRequest(const std::string& path,
                                    http::Response* pResponse)
 {   
@@ -1081,9 +1099,8 @@ void handlePresentationFileRequest(const http::Request& request,
                                                   "/presentation/" + dir + "/");
    FilePath resPath = options().rResourcesPath().complete("presentation");
    FilePath filePath = resPath.complete(dir + "/" + path);
-   pResponse->setCacheWithRevalidationHeaders();
    pResponse->setContentType(filePath.mimeContentType());
-   pResponse->setCacheableBody(filePath, request);
+   setWebCacheableFileResponse(filePath, request, pResponse);
 }
 
 } // anonymous namespace
@@ -1141,8 +1158,7 @@ void handlePresentationPaneRequest(const http::Request& request,
    {
       FilePath filePath =
             session::options().mathjaxPath().parent().childPath(path);
-      pResponse->setCacheWithRevalidationHeaders();
-      pResponse->setCacheableBody(filePath, request);
+      setWebCacheableFileResponse(filePath, request, pResponse);
    }
 
 
@@ -1160,8 +1176,7 @@ void handlePresentationPaneRequest(const http::Request& request,
          pResponse->addHeader("Accept-Ranges", "bytes");
 
          // return the file
-         pResponse->setCacheWithRevalidationHeaders();
-         pResponse->setCacheableBody(targetFile, request);
+         setWebCacheableFileResponse(targetFile, request, pResponse);
       }
    }
 }
@@ -1204,8 +1219,7 @@ void handlePresentationHelpRequest(const core::http::Request& request,
       // just a stock file
       else
       {
-         pResponse->setCacheWithRevalidationHeaders();
-         pResponse->setCacheableBody(filePath, request);
+         setWebCacheableFileResponse(filePath, request, pResponse);
       }
    }
 
@@ -1224,9 +1238,8 @@ void handlePresentationHelpRequest(const core::http::Request& request,
                                                      "/help/presentation/");
 
       // serve the file back
-      pResponse->setCacheWithRevalidationHeaders();
-      pResponse->setCacheableBody(s_presentationHelpDir.complete(path),
-                                  request);
+      setWebCacheableFileResponse(s_presentationHelpDir.complete(path),
+                                  request, pResponse);
    }
 }
 

@@ -21,6 +21,9 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Command;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.js.JsMap;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+
 import java.util.LinkedList;
 
 public class AceEditorNative extends JavaScriptObject {
@@ -34,6 +37,17 @@ public class AceEditorNative extends JavaScriptObject {
    public native final Renderer getRenderer() /*-{
       return this.renderer;
    }-*/;
+   
+   public native final LineWidgetManager getLineWidgetManager() /*-{
+      var session = this.getSession();
+      if (!session.widgetManager) 
+      {
+         var LineWidgets = $wnd.require("ace/line_widgets").LineWidgets;
+         session.widgetManager = new LineWidgets(session);
+         session.widgetManager.attach(this);
+      }
+      return session.widgetManager;
+   }-*/; 
 
    public native final void resize() /*-{
       this.resize();
@@ -107,6 +121,10 @@ public class AceEditorNative extends JavaScriptObject {
 
    public native final void setKeyboardHandler(KeyboardHandler keyboardHandler) /*-{
       this.setKeyboardHandler(keyboardHandler);
+   }-*/;
+   
+   public native final KeyboardHandler getKeyboardHandler() /*-{
+      return this.getKeyboardHandler();
    }-*/;
    
    public native final void addKeyboardHandler(KeyboardHandler keyboardHandler) /*-{
@@ -185,11 +203,29 @@ public class AceEditorNative extends JavaScriptObject {
    }-*/;
    
    public final native void manageDefaultKeybindings() /*-{
+      
       // We bind 'Ctrl + Shift + M' to insert a magrittr shortcut on Windows
       delete this.commands.commandKeyBinding["ctrl-shift-m"];
       
       // We bind 'Ctrl + Shift + P' to run previous code on Windows
       delete this.commands.commandKeyBinding["ctrl-shift-p"];
+      
+      // Don't bind 'Cmd+,'
+      delete this.commands.commandKeyBinding["cmd-,"];
+      
+      // We bind 'Ctrl + Alt + A' to 'split into lines'
+      if (this.commands.platform !== "mac")
+         delete this.commands.commandKeyBinding["ctrl-alt-a"];
+         
+      // We don't use the internal Ace binding for 'jump to matching',
+      // and the binding conflicts with 'Ctrl-P' for moving cursor up
+      // when desired by the user (ie, when the RStudio 'jump to matching'
+      // is moved out of the way)
+      var binding = this.commands.commandKeyBinding["ctrl-p"];
+      if (binding[1] && binding[1].name && binding[1].name === "jumptomatching") {
+         this.commands.commandKeyBinding["ctrl-p"] = binding[0];
+      }
+      
    }-*/;
 
    public static <T> HandlerRegistration addEventListener(
@@ -228,9 +264,22 @@ public class AceEditorNative extends JavaScriptObject {
    private static native void invokeFunctor(JavaScriptObject functor) /*-{
       functor();
    }-*/;
+   
+   public final native void scrollPageUp() /*-{ this.scrollPageUp(); }-*/;
+   public final native void scrollPageDown() /*-{ this.scrollPageDown(); }-*/;
 
+   public final native void gotoPageUp() /*-{ this.gotoPageUp(); }-*/;
+   public final native void gotoPageDown() /*-{ this.gotoPageDown(); }-*/;
+   
+   public final native void selectPageUp() /*-{ this.selectPageUp(); }-*/;
+   public final native void selectPageDown() /*-{ this.selectPageDown(); }-*/;
+   
    public final native void scrollToRow(int row) /*-{
       this.scrollToRow(row);
+   }-*/;
+   
+   public final native void centerSelection() /*-{
+      this.centerSelection();
    }-*/;
 
    public final native void scrollToLine(int line, boolean center) /*-{
@@ -239,6 +288,10 @@ public class AceEditorNative extends JavaScriptObject {
    
    public final native void jumpToMatching(boolean select, boolean expand) /*-{
       this.jumpToMatching(select, expand);
+   }-*/;
+   
+   public final native void splitIntoLines() /*-{
+      return this.multiSelect && this.multiSelect.splitIntoLines();
    }-*/;
    
    public native final void revealRange(Range range, boolean animate) /*-{
@@ -265,9 +318,10 @@ public class AceEditorNative extends JavaScriptObject {
       this.onCursorChange();
    }-*/;
 
-   public static native void setInsertMatching(boolean insertMatching) /*-{
-      $wnd.require("mode/auto_brace_insert").setInsertMatching(insertMatching);
-   }-*/;
+   public final void setInsertMatching(boolean value)
+   {
+      getSession().getMode().setInsertMatching(value);
+   }
 
    public static native void setVerticallyAlignFunctionArgs(
          boolean verticallyAlign) /*-{
@@ -295,6 +349,18 @@ public class AceEditorNative extends JavaScriptObject {
       this.forEachSelection(function() {
          that.insert(text);
       });
+   }-*/;
+   
+   public final native boolean inMultiSelectMode() /*-{ return this.inMultiSelectMode === true; }-*/;
+   public final native void exitMultiSelectMode() /*-{ this.exitMultiSelectMode(); }-*/;
+   public final native void clearSelection() /*-{ return this.clearSelection(); }-*/;
+   
+   public final native void moveCursorTo(int row, int column) /*-{
+      return this.moveCursorTo(row, column);
+   }-*/;
+   
+   public final native void moveCursorToPosition(Position pos) /*-{
+      return this.moveCursorToPosition(pos);
    }-*/;
    
    public final native void moveCursorLeft(int times) /*-{
@@ -333,8 +399,144 @@ public class AceEditorNative extends JavaScriptObject {
       return this.getCursorPosition();
    }-*/;
    
+   public final native Position getCursorPositionScreen() /*-{
+      return this.getCursorPositionScreen();
+   }-*/;
+   
    public final native void blockOutdent() /*-{
       return this.blockOutdent();
    }-*/;
    
+   public final native void expandSelection() /*-{
+      return this.$expandSelection();
+   }-*/;
+   
+   public final native void shrinkSelection() /*-{
+      return this.$shrinkSelection();
+   }-*/;
+   
+   public final native void clearSelectionHistory() /*-{
+      return this.$clearSelectionHistory();
+   }-*/;
+   
+   public final native Element getContainer() /*-{
+      return this.container;
+   }-*/;
+   
+   public final native AceCommandManager getCommandManager()
+   /*-{
+      return this.commands;
+   }-*/;
+   
+   public final void retokenizeDocument()
+   {
+      tokenizeUpToRow(getSession().getLength() - 1);
+   }
+   
+   public final native void tokenizeUpToRow(int row) /*-{
+      var session = this.getSession();
+      var tokenizer = session.bgTokenizer;
+      var lastTokenizedRow = tokenizer.currentLine;
+      var maxRow = Math.max(row, session.getLength() - 1);
+      for (var i = lastTokenizedRow; i <= maxRow; i++)
+         tokenizer.$tokenizeRow(i);
+      tokenizer.fireUpdateEvent(lastTokenizedRow, maxRow);
+   }-*/;
+   
+   public final native void setCommandManager(AceCommandManager commands)
+   /*-{
+      this.commands = commands;
+   }-*/;
+   
+   public final native void setDragEnabled(boolean enabled) /*-{
+      this.setOption("dragEnabled", enabled);
+   }-*/;
+   
+   public final native boolean dragEnabled() /*-{
+      return this.getOption("dragEnabled");
+   }-*/;
+   
+   public final native JsMap<Position> getMarks() /*-{
+      
+      var marks = {};
+      if (this.state &&
+          this.state.cm &&
+          this.state.cm.state &&
+          this.state.cm.state.vim &&
+          this.state.cm.state.vim.marks)
+       {
+          marks = this.state.cm.state.vim.marks;
+       }
+       
+      var result = {};
+      for (var key in marks) {
+         if (marks.hasOwnProperty(key)) {
+            var mark = marks[key];
+            result[key] = {
+               row: mark.row,
+               column: mark.column
+            };
+         }
+      }
+      
+      return result;
+   
+   }-*/;
+   
+   public final native void setMarks(JsMap<Position> marks) /*-{
+      
+      if (this.state &&
+          this.state.cm &&
+          this.state.cm.state &&
+          this.state.cm.state.vim)
+      {
+         var cm = this.state.cm;
+         var vim = this.state.cm.state.vim;
+         
+         if (!vim.marks)
+            vim.marks = {};
+            
+         for (var key in marks) {
+            var mark = marks[key];
+            vim.marks[key] = cm.setBookmark({line: mark.row, ch: mark.column});
+         }
+      }
+   
+   }-*/;
+   
+   public static final native void setDefaultInsertMatching(boolean value) /*-{
+      $wnd.require("mode/auto_brace_insert").setInsertMatching(value);
+   }-*/;
+   
+   public final static void syncUiPrefs(UIPrefs uiPrefs)
+   {
+      if (uiPrefsSynced_)
+         return;
+
+      uiPrefs.insertMatching().bind(new CommandWithArg<Boolean>() 
+      {
+         @Override
+         public void execute(Boolean arg) 
+         {
+            setDefaultInsertMatching(arg);
+         }
+      });
+      
+      uiPrefs.verticallyAlignArgumentIndent().bind(new CommandWithArg<Boolean>()
+      {
+         @Override
+         public void execute(Boolean arg)
+         {
+            setVerticallyAlignFunctionArgs(arg);
+         }
+      });
+
+      uiPrefsSynced_ = true;
+   }
+   
+   public final native void setSurroundSelectionPref(String value) /*-{
+      this.$surroundSelection = value;
+   }-*/;
+   
+   private static boolean uiPrefsSynced_ = false;
 }

@@ -18,6 +18,7 @@
 #include <QToolBar>
 #include <QShortcut>
 
+#include <QtPrintSupport/QPrinter>
 #include <QtPrintSupport/QPrintPreviewDialog>
 
 #include "DesktopWebView.hpp"
@@ -75,7 +76,9 @@ BrowserWindow::BrowserWindow(bool showToolbar,
 
 void BrowserWindow::printRequested(QWebFrame* frame)
 {
-   QPrintPreviewDialog dialog(window());
+   QPrinter printer;
+   printer.setOutputFormat(QPrinter::NativeFormat);
+   QPrintPreviewDialog dialog(&printer, window());
    QSize size = printDialogMinimumSize();
    if (!size.isNull())
       dialog.setMinimumSize(size);
@@ -174,6 +177,11 @@ void BrowserWindow::onJavaScriptWindowObjectCleared()
    cmd.append(QString::fromUtf8("', window);"));
 
    webView()->page()->mainFrame()->evaluateJavaScript(cmd);
+}
+
+QString BrowserWindow::getName()
+{
+   return name_;
 }
 
 } // namespace desktop

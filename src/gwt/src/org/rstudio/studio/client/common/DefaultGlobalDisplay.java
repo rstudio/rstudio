@@ -189,6 +189,11 @@ public class DefaultGlobalDisplay extends GlobalDisplay
       {
          public void onProgress(String message)
          {
+            onProgress(message, null);
+         }
+         
+         public void onProgress(String message, Operation onCancel)
+         {
             dismissProgress();
             dismissProgress_ = showProgress(message);
          }
@@ -346,7 +351,7 @@ public class DefaultGlobalDisplay extends GlobalDisplay
    {
       // build url
       final SessionInfo sessionInfo = session_.getSessionInfo();
-      String url = "http://www.rstudio.org/links/" ;
+      String url = "https://www.rstudio.org/links/" ;
       url += URL.encodePathSegment(linkName) ;
       if (includeVersionInfo)
       {

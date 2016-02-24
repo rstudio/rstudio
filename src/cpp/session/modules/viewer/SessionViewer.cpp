@@ -248,11 +248,19 @@ Error viewerCreateRPubsHtml(const json::JsonRpcRequest& request,
 
 bool isHTMLWidgetPath(const FilePath& filePath)
 {
+   // get the session temp dir real path; needed since the file path above is
+   // also a real path--e.g. on OS X, it refers to /private/tmp rather than
+   // /tmp 
+   FilePath tempDir;
+   Error error = core::system::realPath(module_context::tempDir(), &tempDir);
+   if (error)
+      LOG_ERROR(error);
+
    // parent of parent must be session temp dir
    // (this is required because of the way we copy/restore
    // widget directories during suspend/resume)
    FilePath parentDir = filePath.parent();
-   if (parentDir.parent() != module_context::tempDir())
+   if (parentDir.parent() != tempDir)
       return false;
 
    // it is a widget!
@@ -277,6 +285,14 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
          // get the path to the tempdir and the file
          FilePath tempDir = module_context::tempDir();
          FilePath filePath = module_context::resolveAliasedPath(url);
+
+         // canoncialize paths for comparison
+         Error error = core::system::realPath(tempDir, &tempDir);
+         if (error)
+            LOG_ERROR(error);
+         error = core::system::realPath(filePath, &filePath);
+         if (error)
+            LOG_ERROR(error);
 
          // if it's in the temp dir and we're running R >= 2.14 then
          // we can serve it via the help server, otherwise we need
@@ -336,7 +352,7 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
 
 FilePath historySerializationPath()
 {
-   FilePath historyPath = module_context::scopedScratchPath()
+   FilePath historyPath = module_context::sessionScratchPath()
                                     .childPath("viewer_history");
    Error error = historyPath.ensureDirectory();
    if (error)

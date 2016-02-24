@@ -90,6 +90,39 @@ public class JsUtil
          }
       };
    }
+   
+   public static <T extends JavaScriptObject> Iterable<T> asReverseIterable(final JsArray<T> array)
+   {
+      return new Iterable<T>()
+      {
+         @Override
+         public Iterator<T> iterator()
+         {
+            return new Iterator<T>()
+            {
+               int index_ = array.length() - 1;
+
+               @Override
+               public boolean hasNext()
+               {
+                  return index_ > 0;
+               }
+
+               @Override
+               public T next()
+               {
+                  return array.get(index_--);
+               }
+
+               @Override
+               public void remove()
+               {
+                  throw new UnsupportedOperationException();
+               }
+            };
+         }
+      };
+   }
 
    public static boolean areEqual(JsArrayString a, JsArrayString b)
    {
@@ -164,5 +197,23 @@ public class JsUtil
    public native static JavaScriptObject createEmptyArray(int length) /*-{
       return new Array(length);
    }-*/;
-
+   
+   public native static String getObjectType(JavaScriptObject obj) /*-{
+     var s = typeof obj;
+     if (s === "object") 
+     {
+        if (obj) 
+        {
+           // this ugly check for array types is necessary because 
+           // "instanceof Array" and friends don't work for arrays created in
+           // other windows:
+           // http://javascript.crockford.com/remedial.html
+           if (Object.prototype.toString.call(obj) == "[object Array]") 
+               s = "array";
+        } 
+        else 
+           s = "null";
+     }
+     return s;
+  }-*/;
 }

@@ -323,6 +323,11 @@ pre {
    padding-right: 20px;
 }
 
+.menuRightImage {
+   cursor: pointer;
+}
+
+
 .highlight {
    color: #900 !important;
 }
@@ -379,11 +384,11 @@ pre {
 }
 
 .gwt-DialogBox-ModalDialog, .gwt-DecoratedPopupPanel {
-   z-index: 1001;
+   z-index: 1000;
 }
 
 .gwt-SuggestBoxPopup {
-   z-index: 1002;	
+   z-index: 1000;	
    cursor: default;
 }
 
@@ -811,6 +816,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    height: 23px;
    background: TOOLBARBACKGROUND repeat-x top;
    padding: 0 0 0 6px;
+   white-space: nowrap;
 }
 
 .toolbar * {
@@ -892,6 +898,10 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    white-space: nowrap;
 }
 
+.toolbarButtonInfoLabel {
+   color: #82868C;
+}
+
 .toolbarButtonLatchable {
   padding-right: 6px;
   padding-left: 4px;
@@ -930,6 +940,10 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    margin-right: 2px;
 }
 
+.globalToolbar .toolbarButtonMenu .toolbarButtonInfoLabel {
+   margin-left: 1px;
+}
+
 .emptyProjectMenu .toolbarButtonRightImage {
 	margin-left: 4px;
 }
@@ -940,12 +954,12 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 
 @if user.agent gecko1_8 { .webHeaderBarCommandsProjectMenu {
       margin-top: 1px;
-      margin-left: 14px;
+      margin-left: 5px;
    }
  }
  @else { .webHeaderBarCommandsProjectMenu {
       margin-top: 2px;
-      margin-left: 15px;
+      margin-left: 6px;
    }
  }
 
@@ -1074,6 +1088,8 @@ body.ubuntu_mono .searchBox {
    padding-top: 12px;
    width: 300px;
    padding-bottom: 12px;
+   overflow-wrap: break-word;
+   word-wrap: break-word;
 }
 
 .sessionAbendMessage {
@@ -1151,6 +1167,10 @@ body.ubuntu_mono .searchBox {
 
 .locatorPanel:hover {
    cursor: crosshair;
+}
+
+.tabOverflowPopup {
+   z-index: 10;
 }
 
 .tabOverflowPopup .gwt-MenuBar>table {
@@ -1392,9 +1412,36 @@ body.ubuntu_mono .searchBox {
    background-image: ERRORDARK;
 }
 
-.inlineChunkIcon {
+.inlineChunkToolbar {
 	position: absolute;
-	right: 10px;
+	right: 5px;
 	z-index: 10;
-	cursor: pointer !important;
+	padding-left: 5px;
+	padding-right: 5px;
+	padding-top: 2px;
+	border-radius: 5px;
 }
+
+.highlightIcon {
+	cursor: pointer;
+}
+
+.highlightIcon:hover {
+	background-color: rgba(160, 160, 160, 0.25);
+	box-shadow: 0 0 3px rgb(160, 160, 160);
+}
+
+.menuSubheader {
+   font-family: proportionalFont;
+   text-transform: uppercase;
+   font-size: 11px;
+   color: #909090;
+   padding-left: 28px;
+   padding-top: 2px;
+   padding-bottom: 2px;
+}
+
+.borderedIFrame {
+   border: 1px solid #BBB;    
+}
+

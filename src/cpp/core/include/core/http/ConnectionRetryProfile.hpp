@@ -39,8 +39,8 @@ struct ConnectionRetryProfile
    ConnectionRetryProfile(
          const boost::posix_time::time_duration& maxWait,
          const boost::posix_time::time_duration& retryInterval,
-         const boost::function<Error(const http::Request&)>& recoveryFunction =
-                            boost::function<Error(const http::Request&)>())
+         const boost::function<Error(const http::Request&,bool)>& recoveryFunction =
+                   boost::function<Error(const http::Request&,bool)>())
       : maxWait(maxWait),
         retryInterval(retryInterval),
         recoveryFunction(recoveryFunction)
@@ -51,7 +51,7 @@ struct ConnectionRetryProfile
 
    boost::posix_time::time_duration maxWait;
    boost::posix_time::time_duration retryInterval;
-   boost::function<Error(const http::Request&)> recoveryFunction;
+   boost::function<Error(const http::Request&,bool)> recoveryFunction;
 };
 
 

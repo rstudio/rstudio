@@ -18,15 +18,22 @@
 
 #include <string>
 
-#include <boost/asio/io_service.hpp>
-
 #include <core/system/System.hpp>
 #include <core/LogWriter.hpp>
 
+#include <monitor/audit/ConsoleAction.hpp>
 #include <monitor/events/Event.hpp>
 #include <monitor/metrics/Metric.hpp>
 
 #include "MonitorConstants.hpp"
+
+// forward declaration; boost/asio/io_service may cause errors if included more
+// than once (Boost 1.50 on Win x64 only)
+namespace boost {
+namespace asio {
+   class io_service;
+}
+}
 
 namespace rstudio {
 namespace monitor {
@@ -57,6 +64,8 @@ public:
                         const std::vector<metrics::MultiMetric>& metrics) = 0;
 
    virtual void logEvent(const Event& event) = 0;
+
+   virtual void logConsoleAction(const audit::ConsoleAction& action) = 0;
 
 protected:
    const std::string& metricsSocket() const { return metricsSocket_; }

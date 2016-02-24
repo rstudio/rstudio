@@ -86,6 +86,11 @@
    })
 })
 
+.rs.addFunction("surround", function(string, with)
+{
+   paste(with, string, with, sep = "")
+})
+
 .rs.addFunction("guessToken", function(line, cursorPos)
 {
    utils:::.assignLinebuffer(line)
@@ -136,8 +141,19 @@
 
 .rs.addFunction("getFunction", function(name, namespaceName)
 {
+   # resolve "namespace:" environments
+   envir <- if (identical(substring(namespaceName, 1, nchar("namespace:")), 
+                          "namespace:"))
+   {
+     asNamespace(substring(namespaceName, nchar("namespace:") + 1))
+   }
+   else
+   {
+     as.environment(namespaceName);
+   }
+
    tryCatch(eval(parse(text = name),
-                 envir = as.environment(namespaceName),
+                 envir = envir,
                  enclos = NULL),
             error = function(e) NULL)
 })
@@ -148,13 +164,76 @@
    return (!is.null(attr(func, "srcref")))
 })
 
-.rs.addFunction("deparseFunction", function(func, useSource)
+# Returns a function's code as a string. Arguments:
+# useSource -- Whether to use the function's source references (if available)
+# asString -- Whether to return the result as a single string
+#             (otherwise a character vector of lines is returned)
+.rs.addFunction("deparseFunction", function(func, useSource, asString)
 {
    control <- c("keepInteger", "keepNA")
    if (useSource)
      control <- append(control, "useSource")
 
-   deparse(func, width.cutoff = 59, control = control)
+   code <- deparse(func, width.cutoff = 59, control = control)
+   
+   # if we were asked not to use source refs, or we were but there wasn't a
+   # source ref to use, then format the code according to user pref
+   if (!useSource || is.null(attr(func, "srcref", exact = TRUE)))
+   {
+     replaceText <- "\t"
+
+     # determine the replacement text based on the user's current editing
+     # preferences
+     if (isTRUE(.rs.readUiPref("use_spaces_for_tab"))) 
+     {
+       replaceText <- paste(rep(" ", .rs.readUiPref("num_spaces_for_tab")),
+                                collapse = "")
+     }
+
+     # split the code into individual lines -- R's immutable strings make it
+     # quicker to process these small chunks than on the whole code text
+     lines <- unlist(strsplit(code, "\n", fixed = TRUE))
+     for (l in seq_along(lines))
+     {
+       line <- lines[[l]]
+       pos <- 1
+       # convert up to 20 indentation levels per line
+       for (lvl in seq_len(20))
+       {
+         # NOTE: the 4 spaces comes from the implementation of printtab2buff in
+         # deparse.c -- it is hard-coded to use 4 spaces for the first 4 levels
+         # of indentation and then 2 spaces for subsequent levels.
+         indent <- if (lvl <= 4) "    " else "  "
+         if (substring(line, pos, pos + (nchar(indent) - 1)) == indent)
+         {
+           # convert this indent to the user's preferred indentation 
+           line <- paste(substring(line, 0, pos - 1),
+                         replaceText, 
+                         substring(line, pos + nchar(indent)),
+                         sep = "")
+           pos <- pos + nchar(replaceText)
+         }
+         else
+         {
+           # no more indents we want to convert on this line
+           break
+         }
+       }
+       lines[[l]] <- line
+     }
+
+     # if we were asked to return individual lines, we're done now
+     if (!asString)
+       return(lines)
+     else 
+       code <- lines
+   }
+
+   # return (possibly formatted) code
+   if (asString)
+     paste(code, collapse = "\n")
+   else
+     code
 })
 
 .rs.addFunction("isS3Generic", function(object)
@@ -437,6 +516,11 @@
          ls(object, all.names = TRUE)
       else if (inherits(object, "tbl") && "dplyr" %in% loadedNamespaces())
          dplyr::tbl_vars(object)
+      # For some reason, `jobjRef` objects (from rJava) return names containing
+      # parentheses after the associated function call, which confuses our completion
+      # system.
+      else if (inherits(object, "jobjRef"))
+         gsub("[\\(\\)]", "", names(object))
       else
          names(object)
    }, error = function(e) NULL)
@@ -470,7 +554,7 @@
       object <- if (length(output))
          output
       else
-         evaled
+         deparse(evaled)
       
       paste(as.character(object), collapse = "\n")
    })
@@ -670,34 +754,39 @@
 
 .rs.addFunction("namedVectorAsList", function(vector)
 {
-   # Early escape for zero-length vectors
-   if (!length(vector))
-   {
-      return(list(
-         values = NULL,
-         names = NULL
-      ))
-   }
-   
    values <- unlist(vector, use.names = FALSE)
+   if (!length(values))
+      return(list(names = NULL, values = NULL))
    vectorNames <- names(vector)
-   names <- unlist(lapply(1:length(vector), function(i) {
+   names <- unlist(lapply(seq_along(vector), function(i) {
       rep.int(vectorNames[i], length(vector[[i]]))
    }))
    
-   list(values = values,
-        names = names)
+   list(names = names, values = values)
 })
 
-.rs.addFunction("getDollarNamesMethod", function(object)
+.rs.addFunction("getDollarNamesMethod", function(object,
+                                                 excludeBaseClasses = FALSE)
 {
    classes <- class(object)
    for (class in classes)
    {
+      if (excludeBaseClasses && class %in% c("list", "environment"))
+         next
+      
       method <- .rs.getAnywhere(paste(".DollarNames", class, sep = "."))
       if (!is.null(method))
          return(method)
    }
+   
+   ## S4 objects might still 'be' data.frames or lists or environments under
+   ## the hood; in such a case their 'formal' class can 'mask' the underlying
+   ## S3 class / type, so explicitly check that as well.
+   if (is.list(object) && !excludeBaseClasses)
+      return(utils:::.DollarNames.list)
+   else if (is.environment(object) && !excludeBaseClasses)
+      return(utils:::.DollarNames.environment)
+   
    NULL
 })
 
@@ -978,15 +1067,35 @@
          # Explicitly load the library, and do everything we can to hide any
          # package startup messages (because we don't want to put non-JSON
          # on stdout)
-         invisible(capture.output(suppressPackageStartupMessages(suppressWarnings(
-            success <- library(x, character.only = TRUE, quietly = TRUE, logical.return = TRUE)
-         ))))
+         invisible(capture.output(suppressPackageStartupMessages(suppressWarnings({
+            
+            ## Don't load the package if a corresponding 00LOCK directory exists.
+            ## This gives partial protection against attempting to load a package
+            ## while another R process is attempting to modify the library directory.
+            has00LOCK <- FALSE
+            for (libPath in .libPaths())
+            {
+               globalLockPath <- file.path(libPath, "00LOCK")
+               pkgLockPath <- file.path(libPath, paste("00LOCK", basename(x), sep = "-"))
+               if (file.exists(globalLockPath) || file.exists(pkgLockPath))
+               {
+                  has00LOCK <- TRUE
+                  break
+               }
+            }
+            
+            success <- if (has00LOCK)
+               FALSE
+            else
+               library(x, character.only = TRUE, quietly = TRUE, logical.return = TRUE)
+            
+         }))))
          
          if (!success)
             return(.rs.emptyFunctionInfo())
          
-         # Get the exported items in the NAMESPACE (for search path + `::`
-         # completions).
+         # Get the exported items in the NAMESPACE
+         # (for search path + `::` completions).
          ns <- asNamespace(x)
          exports <- getNamespaceExports(ns)
          objects <- mget(exports, ns, inherits = TRUE)
@@ -1388,7 +1497,7 @@
    parsed <- .rs.rpc.get_set_ref_class_call(callString)
    as.character(c(
       parsed$field.names,
-      parsed$method.name
+      parsed$method.names
    ))
 })
 
@@ -1496,4 +1605,54 @@
       return(.rs.extractNativeSymbols(DLL))
    })))
    
+})
+
+.rs.addJsonRpcHandler("extract_chunk_options", function(chunkText)
+{
+   # Attempt to parse the chunk as R code
+   parsed <- try(parse(text = chunkText), silent = TRUE)
+   if (inherits(parsed, "try-error"))
+      return(list())
+   
+   # Iterate through the expression tree, looking for calls to opts_chunk$set and
+   # extracting their values. Load them up into an environment (which we then return
+   # as a list back to the client)
+   chunkOptionsEnv <- new.env(parent = emptyenv())
+   lapply(parsed, function(node) {
+      .rs.recursiveWalk(node, function(node) {
+         
+         if (!is.call(node) || length(node) < 2)
+            return()
+         
+         # Perhaps not the most efficient, but probably the easiest way to detect
+         # appropriate calls to `opts_chunk$set`.
+         callName <- as.character(node)
+         if (callName == "knitr:::opts_chunk$set" ||
+             callName == "knitr::opts_chunk$set" ||
+             callName == "opts_chunk$set")
+         {
+            names <- names(node)
+            for (i in 2:length(node))
+            {
+               key <- names[[i]]
+               if (key == "")
+                  next
+               
+               val <- if (is.character(node[[i]]))
+                  .rs.surround(node[[i]], with = "\"")
+               else
+                  format(node[[i]])
+               chunkOptionsEnv[[key]] <- val
+            }
+         }
+      })
+   })
+   
+   # Convert to a list, and ensure each element is interpretted as a scalar
+   # (rather than an array containing a single element)
+   result <- as.list(chunkOptionsEnv)
+   for (i in seq_along(result))
+      result[[i]] <- .rs.scalar(result[[i]])
+   
+   return(result)
 })

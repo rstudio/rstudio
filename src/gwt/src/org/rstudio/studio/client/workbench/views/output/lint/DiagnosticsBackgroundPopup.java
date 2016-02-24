@@ -87,6 +87,12 @@ public class DiagnosticsBackgroundPopup
       isRunning_ = true;
       stopRequested_ = false;
       
+      if (handler_ != null)
+      {
+         handler_.removeHandler();
+         handler_ = null;
+      }
+      
       handler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
       {
          @Override
@@ -194,7 +200,7 @@ public class DiagnosticsBackgroundPopup
       }
    }
    
-   class DiagnosticsPopupPanel extends PopupPanel
+   private class DiagnosticsPopupPanel extends PopupPanel
    {
       public DiagnosticsPopupPanel(
             String text,
@@ -215,19 +221,12 @@ public class DiagnosticsBackgroundPopup
          setWidget(new Label(text));
       }
       
-      public void hide()
-      {
-         super.hide();
-      }
-      
       private final Range range_;
    }
    
    private void showPopup(String text, Range range)
    {
-      if (popup_ != null)
-         popup_.hide();
-      
+      hidePopup();
       popup_ = new DiagnosticsPopupPanel(text, range);
       final Rectangle coords = editor_.toScreenCoordinates(range);
       popup_.setTitle("Diagnostics");

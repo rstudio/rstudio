@@ -162,8 +162,20 @@ public class TextEditingTargetFindReplace
    
    public void replaceAndFind()
    {
-      if (findReplace_ != null)
+      if (findReplace_ == null)
+      {
+         String selection = container_.getEditor().getSelectionValue();
+         boolean isMultilineSelection = selection.indexOf('\n') != -1;
+         if (!isMultilineSelection)
+         {
+            ensureFindReplaceBar(true);
+            findReplace_.activate(selection, true, false);
+         }
+      }
+      else
+      {
          findReplace_.replaceAndFind();
+      }
    }
   
    

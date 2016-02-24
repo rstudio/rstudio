@@ -67,6 +67,7 @@ void rotateHistoryDatabase()
 
 void writeEntry(double timestamp, const std::string& command, std::ostream* pOS)
 {
+   // write to local disk
    *pOS << std::fixed << std::setprecision(0)
         << timestamp << ":" << command;
 }

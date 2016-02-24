@@ -20,7 +20,7 @@
          };
       }
 
-define("rstudio/loader", function(require, exports, module) {
+define("rstudio/loader", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var event = require("ace/lib/event");
@@ -30,6 +30,9 @@ var EditSession = require("ace/edit_session").EditSession;
 var UndoManager = require("ace/undomanager").UndoManager;
 var Range = require("ace/range").Range;
 var Utils = require("mode/utils");
+var ExpandSelection = require("util/expand_selection");
+
+require("mixins/token_iterator"); // adds mixins to TokenIterator.prototype
 
 var RStudioEditor = function(renderer, session) {
    Editor.call(this, renderer, session);
@@ -38,6 +41,34 @@ var RStudioEditor = function(renderer, session) {
 oop.inherits(RStudioEditor, Editor);
 
 (function() {
+
+   // Custom insert to handle enclosing of selection
+   this.insert = function(text, pasted)
+   {
+      if (!this.session.selection.isEmpty())
+      {
+         // Read UI pref to determine what are eligible for surrounding
+         var candidates = [];
+         if (this.$surroundSelection === "quotes")
+            candidates = ["'", "\""];
+         else if (this.$surroundSelection === "quotes_and_brackets")
+            candidates = ["'", "\"", "(", "{", "["];
+
+         if (Utils.contains(candidates, text))
+         {
+            var lhs = text;
+            var rhs = Utils.getComplement(text);
+            return this.session.replace(
+               this.session.selection.getRange(),
+               lhs + this.session.getTextRange() + rhs
+            );
+         }
+      }
+
+      // Delegate to default insert implementation otherwise
+      return Editor.prototype.insert.call(this, text, pasted);
+   };
+
    this.remove = function(dir) {
       if (this.session.getMode().wrapRemove) {
          return this.session.getMode().wrapRemove(this, Editor.prototype.remove, dir);
@@ -55,6 +86,10 @@ oop.inherits(RStudioEditor, Editor);
    this.redo = function() {
       Editor.prototype.redo.call(this);
       this._dispatchEvent("redo");
+   };
+
+   this.onPaste = function(text, event) {
+      Editor.prototype.onPaste.call(this, text.replace(/\r\n|\n\r|\r/g, "\n"), event);
    };
 }).call(RStudioEditor.prototype);
 
@@ -75,11 +110,11 @@ oop.inherits(RStudioEditSession, EditSession);
    };
 
    this.reindent = function(range) {
-      
+
       var mode = this.getMode();
       if (!mode.getNextLineIndent)
          return;
-      
+
       var start = range.start.row;
       var end = range.end.row;
 
@@ -88,7 +123,7 @@ oop.inherits(RStudioEditSession, EditSession);
          this.applyIndent(0, "");
          start++;
       }
-      
+
       for (var i = start; i <= end; i++)
       {
          var state = Utils.getPrimaryState(this, i - 1);

@@ -32,8 +32,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
                           String defaultExtension, 
                           boolean forceDefaultExtension);
    String getExistingDirectory(String caption, String dir);
-   void undo();
-   void redo();
+   void undo(boolean forAce);
+   void redo(boolean forAce);
    void clipboardCut();
    void clipboardCopy();
    void clipboardPaste();
@@ -47,7 +47,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void openMinimalWindow(String name, String url, int width, int height);
    void activateMinimalWindow(String name);
    void activateSatelliteWindow(String name);
-   void prepareForSatelliteWindow(String name, int width, int height);
+   void prepareForSatelliteWindow(String name, int x, int y, int width,
+                                  int height);
    void prepareForNamedWindow(String name, boolean allowExternalNavigation,
          boolean showDesktopToolbar);
    void closeNamedWindow(String name);
@@ -89,6 +90,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
 
    void showAboutDialog();
    void bringMainFrameToFront();
+   void bringMainFrameBehindActive();
 
    String getRVersion();
    String chooseRVersion();
@@ -105,9 +107,11 @@ public interface DesktopFrame extends JavaScriptPassthrough
    public static final int PENDING_QUIT_RESTART_AND_RELOAD = 3;
    
    void setPendingQuit(int pendingQuit);
+   void setPendingProject(String projectFilePath);
    void launchSession(boolean reload);
    
    void openProjectInNewWindow(String projectFilePath);
+   void openSessionInNewWindow(String workingDirectoryPath);
    
    void openTerminal(String terminalPath,
                      String workingDirectory,
@@ -144,7 +148,10 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void setViewerUrl(String url);
    void reloadViewerZoomWindow(String url);
    
+   void setShinyDialogUrl(String url);
+   
    boolean isOSXMavericks();
+   boolean isCentOS();
 
    String getScrollingCompensationType();
    

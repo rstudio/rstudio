@@ -62,7 +62,14 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       .Call(.rs.routines$rs_packageUnloaded, pkgname)
    }
    
-   sapply(.packages(TRUE), function(packageName) 
+   # NOTE: `list.dirs()` was introduced with R 2.13 but was buggy until 3.0
+   # (the 'full.names' argument was not properly respected)
+   pkgNames <- if (getRversion() >= "3.0.0")
+      base::list.dirs(.libPaths(), full.names = FALSE, recursive = FALSE)
+   else
+      .packages(TRUE)
+   
+   sapply(pkgNames, function(packageName)
    {
       if ( !(packageName %in% .rs.hookedPackages) )
       {
@@ -348,22 +355,52 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addJsonRpcHandler( "get_cran_mirrors", function()
 {
-   # RStudio mirror
-   rstudioDF <- data.frame(name = "Global (CDN)",
-                           host = "RStudio",
-                           url = "http://cran.rstudio.com",
-                           country = "us",
-                           stringsAsFactors = FALSE)
-
-   # CRAN mirrors
-   cranMirrors <- utils::getCRANmirrors()
+   # get CRAN mirrors (securely if we are configured to do so)
+   haveSecureMethod <- .rs.haveSecureDownloadFileMethod()
+   protocol <- ifelse(haveSecureMethod, "https", "http")
+   cranMirrors <- try(silent = TRUE, {
+      mirrors_csv_url <- paste(protocol, "://cran.r-project.org/CRAN_mirrors.csv",
+                               sep = "")
+      mirrors_csv <- tempfile("mirrors", fileext = ".csv")
+      download.file(mirrors_csv_url, destfile = mirrors_csv, quiet = TRUE)
+      
+      # read them
+      read.csv(mirrors_csv, as.is = TRUE, encoding = "UTF-8")
+   })
+   
+   # if we got an error then use local only
+   if (is.null(cranMirrors) || inherits(cranMirrors, "try-error"))
+      cranMirrors <- utils::getCRANmirrors(local.only = TRUE)
+   
+   # create data frame
    cranDF <- data.frame(name = cranMirrors$Name,
                         host = cranMirrors$Host,
                         url = cranMirrors$URL,
                         country = cranMirrors$CountryCode,
+                        ok = cranMirrors$OK,
                         stringsAsFactors = FALSE)
 
-   # return mirrors
+   # filter by OK status
+   cranDF <- cranDF[as.logical(cranDF$ok), ]
+
+   # filter by mirror type supported by the current download.file.method
+   # (also verify that https urls are provided inline -- if we didn't do
+   # this and CRAN changed the format we could end up with no mirrors)
+   secureMirror <- grepl("^https", cranDF[, "url"])
+   useHttpsURL <- haveSecureMethod && any(secureMirror)
+   if (useHttpsURL)
+      cranDF <- cranDF[secureMirror,]
+   else
+      cranDF <- cranDF[!secureMirror,]
+
+   # prepend RStudio mirror and return
+   rstudioDF <- data.frame(name = "Global (CDN)",
+                           host = "RStudio",
+                           url = paste(ifelse(useHttpsURL, "https", "http"), 
+                                       "://cran.rstudio.com/", sep=""),
+                           country = "us",
+                           ok = TRUE,
+                           stringsAsFactors = FALSE)
    rbind(rstudioDF, cranDF)
 })
 
@@ -522,6 +559,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
                                                    sourceFiles,
                                                    usingRcpp)
 {
+   # sourceFiles is passed in as a list -- convert back to
+   # character vector
+   sourceFiles <- as.character(sourceFiles)
+   
    # Make sure we expand the aliased path if necessary
    # (note this is a no-op if there is no leading '~')
    packageDirectory <- path.expand(packageDirectory)
@@ -591,8 +632,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       Package = packageName,
       Type = "Package",
       Title = "What the Package Does (Title Case)",
-      Version = "0.1",
-      Date = as.character(Sys.Date()),
+      Version = "0.1.0",
       Author = Author,
       Maintainer = Maintainer,
       Description = "More about what it does (maybe more than one line)",
@@ -835,7 +875,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    else if (length(sourceFiles))
    {
       # Copy the source files to the appropriate sub-directory
-      sourceFileExtensions <- gsub(".*\\.", "", sourceFiles, perl = TRUE)
+      sourceFileExtensions <- tolower(gsub(".*\\.", "", sourceFiles, perl = TRUE))
       sourceDirs <- .rs.swap(
          sourceFileExtensions,
          "R" = c("r", "q", "s"),
@@ -846,17 +886,27 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          default = ""
       )
       
-      copyPaths <- gsub("/+", "", file.path(
+      copyPaths <- gsub("/+", "/", file.path(
          packageDirectory,
          sourceDirs,
          basename(sourceFiles)
       ))
       
       dirPaths <- dirname(copyPaths)
-      dir.create(dirPaths, recursive = TRUE)
       
-      success <- file.copy(sourceFiles,
-                           copyPaths)
+      success <- unlist(lapply(dirPaths, function(path) {
+         
+         if (isTRUE(file.info(path)$isdir))
+            return(TRUE)
+         
+         dir.create(path, recursive = TRUE, showWarnings = FALSE)
+         
+      }))
+      
+      if (!all(success))
+         return(.rs.error("Failed to create package directory structure"))
+      
+      success <- file.copy(sourceFiles, copyPaths)
       
       if (!all(success))
          return(.rs.error("Failed to copy one or more source files"))
@@ -929,4 +979,170 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    .rs.success()
    
+})
+
+
+.rs.addFunction("secureDownloadMethod", function()
+{
+   # Function to determine whether R checks for 404 in libcurl calls
+   libcurlHandles404 <- function() {
+      getRversion() >= "3.3" && .rs.haveRequiredRSvnRev(69197)
+   }
+
+   # Check whether we are running R 3.2 and whether we have libcurl
+   isR32 <- getRversion() >= "3.2"
+   haveLibcurl <- isR32 && capabilities("libcurl") && libcurlHandles404()
+   
+   # Utility function to bind to libcurl or a fallback utility (e.g. wget)
+   posixMethod <- function(utility) {
+      if (haveLibcurl)
+         "libcurl"
+      else if (nzchar(Sys.which(utility)))
+         utility
+      else
+         ""
+   }
+   
+   # Determine the right secure download method per-system
+   sysName <- Sys.info()[['sysname']]
+   
+   # For windows we prefer binding directly to wininet if we can (since
+   # that doesn't rely on the value of setInternet2). If it's R <= 3.1
+   # then we can use "internal" for https so long as internet2 is enabled 
+   # (we don't use libcurl on Windows because it doesn't check certs).
+   if (identical(sysName, "Windows")) {
+      if (isR32)
+         "wininet"
+      else if (setInternet2(NA))
+         "internal"
+      else
+         ""
+   }
+   
+   # For Darwin and Linux we use libcurl if we can and then fall back
+   # to curl or wget as appropriate. We prefer libcurl because it honors
+   # the same proxy configuration that "internal" does so it less likely
+   # to break downloads for users behind proxy servers. 
+   
+   else if (identical(sysName, "Darwin")) {
+      posixMethod("curl")
+   }
+   
+   else if (identical(sysName, "Linux")) {
+      method <- posixMethod("wget")
+      if (!nzchar(method))
+         method <- posixMethod("curl")
+      method
+   } 
+   
+   # Another OS, don't even attempt detection since RStudio currently
+   # only runs on Windows, Linux, and Mac
+   else {
+      ""
+   }
+})
+
+.rs.addFunction("autoDownloadMethod", function() {
+   if (capabilities("http/ftp"))
+      "internal"
+   else if (nzchar(Sys.which("wget")))
+      "wget"
+   else if (nzchar(Sys.which("curl")))
+      "curl"
+   else
+      ""
+})
+
+.rs.addFunction("isDownloadMethodSecure", function(method) {
+   
+   # resolve auto if needed
+   if (identical(method, "auto"))
+      method <- .rs.autoDownloadMethod()
+   
+   # check for methods known to work securely
+   if (method %in% c("wininet", "libcurl", "wget", "curl")) {
+      TRUE
+   }
+   
+   # if internal then see if were using windows internal with inet2
+   else if (identical(method, "internal")) {
+      identical(Sys.info()[['sysname']], "Windows") && setInternet2(NA)
+   }
+   
+   # method with unknown properties (e.g. "lynx") or unresolved auto
+   else {
+      FALSE
+   }
+})
+
+.rs.addFunction("haveSecureDownloadFileMethod", function() {
+   .rs.isDownloadMethodSecure(getOption("download.file.method", "auto"))
+})
+
+.rs.addFunction("showSecureDownloadWarning", function() {
+   is.na(Sys.getenv("RSTUDIO_DISABLE_SECURE_DOWNLOAD_WARNING", unset = NA))
+})
+
+.rs.addFunction("insecureReposWarning", function(msg) {
+   if (.rs.showSecureDownloadWarning()) {
+      message("WARNING: ", msg, " You should either switch to a repository ",
+              "that supports HTTPS or change your RStudio options to not require HTTPS ",
+              "downloads.\n\nTo learn more and/or disable this warning ",
+              "message see the \"Use secure download method for HTTP\" option ",
+              "in Tools -> Global Options -> Packages.")
+   }
+})
+
+.rs.addFunction("insecureDownloadWarning", function(msg) {
+   if (.rs.showSecureDownloadWarning()) {
+      message("WARNING: ", msg,
+              "\n\nTo learn more and/or disable this warning ",
+              "message see the \"Use secure download method for HTTP\" option ",
+              "in Tools -> Global Options -> Packages.")
+   }
+})
+
+.rs.addFunction("initSecureDownload", function() {
+      
+   # check if the user has already established a download.file.method and
+   # if so verify that it is secure
+   method <- getOption("download.file.method")
+   if (!is.null(method)) {
+      if (!.rs.isDownloadMethodSecure(method)) {
+         .rs.insecureDownloadWarning(
+             paste("The download.file.method option is \"", method, "\" ",
+                   "however that method cannot provide secure (HTTPS) downloads ",
+                   "on this platform. ", 
+                   "This option was likely specified in .Rprofile or ",
+                   "Rprofile.site so if you wish to change it you may need ",
+                   "to edit one of those files.",
+                   sep = "")
+         )
+      }
+   } 
+   
+   # no user specified method, automatically set a secure one if we can
+   else {
+      secureMethod <- .rs.secureDownloadMethod()
+      if (nzchar(secureMethod)) {
+         options(download.file.method = secureMethod) 
+         if (secureMethod == "curl")
+            options(download.file.extra = .rs.downloadFileExtraWithCurlArgs())
+      }
+      else {
+         .rs.insecureDownloadWarning(
+            paste("Unable to set a secure (HTTPS) download.file.method (no",
+                  "compatible method available in this installation of R).")
+         )
+      }
+   }
+})
+   
+
+.rs.addFunction("downloadFileExtraWithCurlArgs", function() {
+   curlArgs <- "-L -f"
+   existingArgs <- getOption("download.file.extra")
+   if (!is.null(existingArgs) && !grepl(curlArgs, existingArgs, fixed = TRUE))
+      curlArgs <- paste(existingArgs, curlArgs)
+   curlArgs
 })

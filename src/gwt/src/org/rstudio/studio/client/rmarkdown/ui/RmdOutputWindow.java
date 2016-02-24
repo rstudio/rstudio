@@ -23,6 +23,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
+import org.rstudio.studio.client.application.DesktopHooks;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.rmarkdown.RmdOutputView;
@@ -36,10 +37,12 @@ public class RmdOutputWindow extends SatelliteWindow implements RmdOutputView
    @Inject
    public RmdOutputWindow(Provider<EventBus> pEventBus,
                           Provider<FontSizeManager> pFSManager, 
-                          Provider<RmdOutputPresenter> pPresenter)
+                          Provider<RmdOutputPresenter> pPresenter,
+                          Provider<DesktopHooks> pDesktopHooks)
    {
       super(pEventBus, pFSManager);
       pPresenter_ = pPresenter;
+      pDesktopHooks_ = pDesktopHooks;
    }
 
    @Override
@@ -47,6 +50,9 @@ public class RmdOutputWindow extends SatelliteWindow implements RmdOutputView
    {
       presenter_ = pPresenter_.get();
       showRenderResult((RmdPreviewParams) params.cast());
+      
+      // enable command processing in this window
+      pDesktopHooks_.get();
       
       // make it fill the containing layout panel
       Widget presWidget = presenter_.asWidget();
@@ -74,5 +80,6 @@ public class RmdOutputWindow extends SatelliteWindow implements RmdOutputView
    }
    
    private Provider<RmdOutputPresenter> pPresenter_;
+   private Provider<DesktopHooks> pDesktopHooks_;
    private RmdOutputPresenter presenter_;
 }

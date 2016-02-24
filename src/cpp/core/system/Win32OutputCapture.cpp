@@ -71,6 +71,7 @@ Error ioError(const std::string& description, const ErrorLocation& location)
 }
 
 Error redirectToPipe(DWORD stdHandle,
+                     int stdFd,
                      FILE* fpStdFile,
                      HANDLE* phReadPipe)
 {
@@ -87,7 +88,24 @@ Error redirectToPipe(DWORD stdHandle,
    int fd = ::_open_osfhandle((intptr_t)hWritePipe, _O_TEXT);
    if (fd == -1)
       return ioError("_open_osfhandle", ERROR_LOCATION);
-   if (::_dup2(fd, _fileno(fpStdFile)) != 0)
+
+   int stdDupFd = ::_fileno(fpStdFile);
+   if (stdDupFd == -2)
+   {
+      // -2 is a special value that indicates stdout/stderr isn't associated
+      // with an output stream. The below fixes an issue in which, for Windows
+      // users other than the first, QProcess doesn't start the R session in
+      // such a way that it receives stdout/stderr streams (see case 4230); in
+      // this situation, we allocate a new stream for the descriptor so
+      // stdout/stderr will go somewhere.
+      FILE* newStdHandle = ::_fdopen(stdFd, "w");
+      if (newStdHandle == NULL)
+         return systemError(errno, ERROR_LOCATION);
+      *fpStdFile = *newStdHandle;
+      stdDupFd = stdFd;
+   }
+
+   if (::_dup2(fd, stdDupFd))
       return systemError(errno, ERROR_LOCATION);
 
    // turn off buffering
@@ -111,7 +129,8 @@ Error captureStandardStreams(
    {
       // redirect stdout
       HANDLE hReadStdoutPipe = NULL;
-      Error error = redirectToPipe(STD_OUTPUT_HANDLE, stdout, &hReadStdoutPipe);
+      Error error = redirectToPipe(STD_OUTPUT_HANDLE, STDOUT_FILENO, stdout,
+                                   &hReadStdoutPipe);
       if (error)
          return error;
 
@@ -125,7 +144,8 @@ Error captureStandardStreams(
       if (stderrHandler)
       {
          // redirect stderr
-         error = redirectToPipe(STD_ERROR_HANDLE, stderr, &hReadStderrPipe);
+         error = redirectToPipe(STD_ERROR_HANDLE, STDERR_FILENO, stderr,
+                                &hReadStderrPipe);
          if (error)
             return error;
 

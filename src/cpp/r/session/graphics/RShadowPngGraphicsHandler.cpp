@@ -110,10 +110,10 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
       // determine width, height, and res
       int width = pDC->width * pDC->devicePixelRatio;
       int height = pDC->height * pDC->devicePixelRatio;
-      int res = 72 * pDC->devicePixelRatio;
+      int res = 96 * pDC->devicePixelRatio;
 
       // create PNG device (completely bail on error)
-      boost::format fmt("grDevices:::png(\"%1%\", %2%, %3%, res = %4% %5%, pointsize = 16)");
+      boost::format fmt("grDevices:::png(\"%1%\", %2%, %3%, res = %4% %5%)");
       std::string code = boost::str(fmt %
                                     string_utils::utf8ToSystem(pDC->targetPath.absolutePath()) %
                                     width %

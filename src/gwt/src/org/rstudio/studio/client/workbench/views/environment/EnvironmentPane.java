@@ -106,9 +106,7 @@ public class EnvironmentPane extends WorkbenchPane
       toolbar.addLeftWidget(createImportMenu());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.refreshEnvironment().createToolbarButton());
-      
+       
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_LIST_VIEW));
       menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_GRID_VIEW));
@@ -117,6 +115,10 @@ public class EnvironmentPane extends WorkbenchPane
             imageOfViewType(EnvironmentObjects.OBJECT_LIST_VIEW),
             menu);
       toolbar.addRightWidget(viewButton_);
+      
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(commands_.refreshEnvironment().createToolbarButton());
+      
 
       return toolbar;
    }
@@ -216,7 +218,7 @@ public class EnvironmentPane extends WorkbenchPane
       environmentButton_.setLeftImage(imageOfEnvironment(environmentName, 
                                                          local));
       objects_.setEnvironmentName(friendlyEnvironmentName());
-      if (environmentName.equals("R_GlobalEnv"))
+      if (environmentName.equals(".GlobalEnv"))
          commands_.clearWorkspace().setEnabled(true); 
       else
          commands_.clearWorkspace().setEnabled(false);
@@ -413,8 +415,25 @@ public class EnvironmentPane extends WorkbenchPane
    private Widget createImportMenu()
    {
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
+      
+      menu.addItem(commands_.importDatasetFromCSV().createMenuItem(false));
       menu.addItem(commands_.importDatasetFromFile().createMenuItem(false));
       menu.addItem(commands_.importDatasetFromURL().createMenuItem(false));
+      menu.addSeparator();
+      menu.addItem(commands_.importDatasetFromXLS().createMenuItem(false));
+      menu.addSeparator();
+      menu.addItem(commands_.importDatasetFromSAV().createMenuItem(false));
+      menu.addItem(commands_.importDatasetFromSAS().createMenuItem(false));
+      menu.addItem(commands_.importDatasetFromStata().createMenuItem(false));
+      menu.addSeparator();
+      menu.addItem(commands_.importDatasetFromXML().createMenuItem(false));
+      menu.addItem(commands_.importDatasetFromJSON().createMenuItem(false));
+      menu.addSeparator();
+      menu.addItem(commands_.importDatasetFromJDBC().createMenuItem(false));
+      menu.addItem(commands_.importDatasetFromODBC().createMenuItem(false));
+      menu.addSeparator();
+      menu.addItem(commands_.importDatasetFromMongo().createMenuItem(false));
+      
       dataImportButton_ = new ToolbarButton(
               "Import Dataset",
               StandardIcons.INSTANCE.import_dataset(),
@@ -430,7 +449,7 @@ public class EnvironmentPane extends WorkbenchPane
    
    private String friendlyNameOfEnvironment(String name)
    {
-      if (name.equals("R_GlobalEnv"))
+      if (name.equals(".GlobalEnv") || name.equals("R_GlobalEnv"))
          return GLOBAL_ENVIRONMENT_NAME;
       else if (name.equals("base"))
          return "package:base";
@@ -442,7 +461,7 @@ public class EnvironmentPane extends WorkbenchPane
    {
       if (name.endsWith("()"))
          return EnvironmentResources.INSTANCE.functionEnvironment();
-      else if (name.equals("R_GlobalEnv"))
+      else if (name.equals(".GlobalEnv") || name.equals("R_GlobalEnv"))
          return EnvironmentResources.INSTANCE.globalEnvironment();
       else if (name.startsWith("package:") ||
                name.equals("base") || 

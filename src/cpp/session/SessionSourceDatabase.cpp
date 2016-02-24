@@ -1,7 +1,7 @@
 /*
  * SessionSourceDatabase.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -68,6 +68,10 @@ const char * const SourceDocument::SourceDocumentTypeRHTML     = "r_html";
 const char * const SourceDocument::SourceDocumentTypeCpp       = "cpp";
 
 namespace {
+
+// cached mapping of document id to document path (facilitates efficient path
+// lookup)
+std::map<std::string, std::string> s_idToPath;
 
 struct PropertiesDatabase
 {
@@ -220,6 +224,7 @@ SourceDocument::SourceDocument(const std::string& type)
    created_ = date_time::millisecondsSinceEpoch();
    sourceOnSave_ = false;
    relativeOrder_ = 0;
+   lastContentUpdate_ = date_time::millisecondsSinceEpoch();
 }
    
 
@@ -250,6 +255,7 @@ void SourceDocument::setContents(const std::string& contents)
 {
    contents_ = contents;
    hash_ = hash::crc32Hash(contents_);
+   lastContentUpdate_ = date_time::millisecondsSinceEpoch();
 }
 
 // set contents from file
@@ -271,6 +277,9 @@ Error SourceDocument::setPathAndContents(const std::string& path,
    path_ = path;
    setContents(contents);
    lastKnownWriteTime_ = docPath.lastWriteTime();
+
+   // rewind the last content update to the file's write time
+   lastContentUpdate_ = lastKnownWriteTime_;
 
    return Success();
 }
@@ -351,6 +360,11 @@ void SourceDocument::updateLastKnownWriteTime()
 
    lastKnownWriteTime_ = filePath.lastWriteTime();
 }
+
+void SourceDocument::setLastKnownWriteTime(std::time_t time)
+{
+   lastKnownWriteTime_ = time;
+}
    
 Error SourceDocument::readFromJson(json::Object* pDocJson)
 {
@@ -401,6 +415,18 @@ Error SourceDocument::readFromJson(json::Object* pDocJson)
       json::Value order = docJson["relative_order"];
       relativeOrder_ = !order.is_null() ? order.get_int() : 0;
 
+      json::Value lastContentUpdate = docJson["last_content_update"];
+      lastContentUpdate_ = !lastContentUpdate.is_null() ? 
+                               lastContentUpdate.get_int64() : 0;
+
+      json::Value collabServer = docJson["collab_server"];
+      collabServer_ = !collabServer.is_null() ? collabServer.get_str() : 
+                                                std::string();
+
+      json::Value sourceWindow = docJson["source_window"];
+      sourceWindow_ = !sourceWindow.is_null() ? sourceWindow.get_str() :
+                                                std::string();
+
       return Success();
    }
    catch(const std::exception& e)
@@ -429,6 +455,11 @@ void SourceDocument::writeToJson(json::Object* pDocJson) const
    jsonDoc["lastKnownWriteTime"] = json::Value(
          static_cast<boost::int64_t>(lastKnownWriteTime_));
    jsonDoc["encoding"] = encoding_;
+   jsonDoc["collab_server"] = collabServer();
+   jsonDoc["source_window"] = sourceWindow_;
+   jsonDoc["last_content_update"] = json::Value(
+         static_cast<boost::int64_t>(lastContentUpdate_));
+
 }
 
 Error SourceDocument::writeToFile(const FilePath& filePath) const
@@ -673,13 +704,86 @@ Error removeAll()
    return Success();
 }
 
+Error getPath(const std::string& id, std::string* pPath)
+{
+   std::map<std::string, std::string>::iterator it = s_idToPath.find(id);
+   if (it == s_idToPath.end())
+   {
+      return systemError(boost::system::errc::no_such_file_or_directory,
+                         ERROR_LOCATION);
+   }
+   *pPath = it->second;
+   return Success();
+}
+
+Error getPath(const std::string& id, core::FilePath* pPath)
+{
+   std::string path;
+   Error error = getPath(id, &path);
+   if (error) 
+      return error;
+   *pPath = module_context::resolveAliasedPath(path);
+   return Success();
+}
+
+Error getId(const std::string& path, std::string* pId)
+{
+   for (std::map<std::string, std::string>::iterator it = s_idToPath.begin();
+        it != s_idToPath.end();
+        it++)
+   {
+      if (it->second == path)
+      {
+         *pId = it->first;
+         return Success();
+      }
+   }
+   return systemError(boost::system::errc::no_such_file_or_directory,
+                      ERROR_LOCATION);
+}
+
+Error getId(const FilePath& path, std::string* pId)
+{
+   return getId(module_context::createAliasedPath(FileInfo(path)), pId);
+}
+
 namespace {
+
+void onQuit()
+{
+   Error error = supervisor::saveMostRecentDocuments();
+   if (error)
+      LOG_ERROR(error);
+}
 
 void onShutdown(bool)
 {
    Error error = supervisor::detachFromSourceDatabase();
    if (error)
       LOG_ERROR(error);
+}
+
+void onDocUpdated(boost::shared_ptr<SourceDocument> pDoc)
+{
+   s_idToPath[pDoc->id()] = pDoc->path();
+}
+
+void onDocRemoved(const std::string& id, const std::string& path)
+{
+   std::map<std::string, std::string>::iterator it = s_idToPath.find(id);
+   if (it != s_idToPath.end())
+      s_idToPath.erase(it);
+}
+
+void onDocRenamed(const std::string &, 
+                  boost::shared_ptr<SourceDocument> pDoc)
+{
+   s_idToPath[pDoc->id()] = pDoc->path();
+}
+
+void onRemoveAll()
+{
+   s_idToPath.clear();
 }
 
 } // anonymous namespace
@@ -692,14 +796,18 @@ Events& events()
 
 Error initialize()
 {
-   
-   
    // provision a source database directory
    Error error = supervisor::attachToSourceDatabase(&s_sourceDBPath);
    if (error)
       return error;
 
-   // signup for the shutdown event
+   events().onDocUpdated.connect(onDocUpdated);
+   events().onDocRemoved.connect(onDocRemoved);
+   events().onDocRenamed.connect(onDocRenamed);
+   events().onRemoveAll.connect(onRemoveAll);
+
+   // signup for the quit and shutdown events
+   module_context::events().onQuit.connect(onQuit);
    module_context::events().onShutdown.connect(onShutdown);
 
    return Success();

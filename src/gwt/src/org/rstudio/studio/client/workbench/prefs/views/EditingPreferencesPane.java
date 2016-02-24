@@ -28,26 +28,40 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.widget.HelpButton;
+import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
 import org.rstudio.core.client.widget.NumericValueWidget;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.SmallButton;
+import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.DiagnosticsHelpLink;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.rmarkdown.RmdOutput;
+import org.rstudio.studio.client.workbench.prefs.model.EditingPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
+import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 public class EditingPreferencesPane extends PreferencesPane
 {
    @Inject
    public EditingPreferencesPane(UIPrefs prefs,
+                                 SourceServerOperations server,
                                  PreferencesDialogResources res)
    {
       prefs_ = prefs;
+      server_ = server;
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
       
       VerticalPanel editingPanel = new VerticalPanel();
@@ -58,14 +72,61 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(checkboxPref("Auto-indent code after paste", prefs_.reindentOnPaste()));
       editingPanel.add(checkboxPref("Vertically align arguments in auto-indent", prefs_.verticallyAlignArgumentIndent()));
       editingPanel.add(checkboxPref("Soft-wrap R source files", prefs_.softWrapRFiles()));
-      editingPanel.add(checkboxPref("Ensure that source files end with newline", prefs_.autoAppendNewline()));
-      editingPanel.add(checkboxPref("Strip trailing horizontal whitespace when saving", prefs_.stripTrailingWhitespace()));
       editingPanel.add(checkboxPref(
             "Continue comment when inserting new line",
             prefs_.continueCommentsOnNewline(),
             "When enabled, pressing enter will continue comments on new lines. Press Shift + Enter to exit a comment."));
-      editingPanel.add(checkboxPref("Enable vim editing mode", prefs_.useVimMode()));
-     
+      
+      delimiterSurroundWidget_ = new SelectWidget(
+            "Surround selection on text insertion:",
+            new String[] {
+                  "Never",
+                  "Quotes",
+                  "Quotes & Brackets"
+            },
+            new String[] {
+                  UIPrefsAccessor.EDITOR_SURROUND_SELECTION_NEVER,
+                  UIPrefsAccessor.EDITOR_SURROUND_SELECTION_QUOTES,
+                  UIPrefsAccessor.EDITOR_SURROUND_SELECTION_QUOTES_AND_BRACKETS
+            },
+            false,
+            true,
+            false);
+      editingPanel.add(delimiterSurroundWidget_);
+      
+      HorizontalPanel keyboardPanel = new HorizontalPanel();
+      editorMode_ = new SelectWidget(
+            "Keybindings:",
+            new String[] {
+                  "Default",
+                  "Vim",
+                  "Emacs"
+            },
+            new String[] {
+                  UIPrefsAccessor.EDITOR_KEYBINDINGS_DEFAULT,
+                  UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM,
+                  UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS
+            },
+            false,
+            true,
+            false);
+      
+      keyboardPanel.add(editorMode_);
+      SmallButton editShortcuts = new SmallButton("Modify Keyboard Shortcuts...");
+      editShortcuts.getElement().getStyle().setMarginLeft(15, Unit.PX);
+      editShortcuts.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            new ModifyKeyboardShortcutsWidget().showModal();
+         }         
+      });
+      keyboardPanel.add(editShortcuts);
+      
+      
+      lessSpaced(keyboardPanel);
+      editingPanel.add(keyboardPanel);
+      
       Label executionLabel = headerLabel("Execution");
       editingPanel.add(executionLabel);
       executionLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
@@ -104,6 +165,7 @@ public class EditingPreferencesPane extends PreferencesPane
       
       
       VerticalPanel displayPanel = new VerticalPanel();
+      displayPanel.add(headerLabel("General"));
       displayPanel.add(checkboxPref("Highlight selected word", prefs.highlightSelectedWord()));
       displayPanel.add(checkboxPref("Highlight selected line", prefs.highlightSelectedLine()));
       displayPanel.add(checkboxPref("Show line numbers", prefs.showLineNumbers()));
@@ -113,6 +175,85 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref("Show indent guides", prefs_.showIndentGuides()));
       displayPanel.add(checkboxPref("Blinking cursor", prefs_.blinkingCursor()));
       displayPanel.add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
+      displayPanel.add(checkboxPref("Highlight R function calls", prefs_.highlightRFunctionCalls()));
+      
+      Label rMarkdownLabel = headerLabel("R Markdown");
+      rMarkdownLabel.getElement().getStyle().setPaddingTop(14, Unit.PX);
+      displayPanel.add(rMarkdownLabel);
+      displayPanel.add(checkboxPref("Show inline toolbar for R code chunks", prefs_.showInlineToolbarForRCodeChunks()));
+      displayPanel.add(checkboxPref("Show document outline by default", prefs_.showDocumentOutlineRmd()));
+      displayPanel.add(checkboxPref("Show unnamed entries in document outline", prefs_.showUnnamedEntriesInDocumentOutline()));
+      rmdViewerMode_ = new SelectWidget(
+            "Show output preview in: ",
+            new String[] {
+                  "Window",
+                  "Viewer Pane",
+                  "(None)"
+            },
+            new String[] {
+                  new Integer(RmdOutput.RMD_VIEWER_TYPE_WINDOW).toString(),
+                  new Integer(RmdOutput.RMD_VIEWER_TYPE_PANE).toString(),
+                  new Integer(RmdOutput.RMD_VIEWER_TYPE_NONE).toString()
+            },
+            false,
+            true,
+            false);
+      displayPanel.add(rmdViewerMode_);
+      
+      
+      VerticalPanel savePanel = new VerticalPanel();
+      
+      savePanel.add(headerLabel("General"));
+      savePanel.add(checkboxPref("Ensure that source files end with newline", prefs_.autoAppendNewline()));
+      savePanel.add(checkboxPref("Strip trailing horizontal whitespace when saving", prefs_.stripTrailingWhitespace()));
+
+      Label serializationLabel = headerLabel("Serialization");
+      serializationLabel.getElement().getStyle().setPaddingTop(14, Unit.PX);
+      savePanel.add(serializationLabel);
+      
+      
+      lineEndings_ = new LineEndingsSelectWidget();
+      spaced(lineEndings_);
+      savePanel.add(lineEndings_);
+      
+      encodingValue_ = prefs_.defaultEncoding().getGlobalValue();
+      savePanel.add(lessSpaced(encoding_ = new TextBoxWithButton(
+            "Default text encoding:",
+            "Change...",
+            new ClickHandler()
+            {
+               public void onClick(ClickEvent event)
+               {
+                  server_.iconvlist(new SimpleRequestCallback<IconvListResult>()
+                  {
+                     @Override
+                     public void onResponseReceived(IconvListResult response)
+                     {
+                        new ChooseEncodingDialog(
+                              response.getCommon(),
+                              response.getAll(),
+                              encodingValue_,
+                              true,
+                              false,
+                              new OperationWithInput<String>()
+                              {
+                                 public void execute(String encoding)
+                                 {
+                                    if (encoding == null)
+                                       return;
+
+                                    setEncoding(encoding);
+                                 }
+                              }).showModal();
+                     }
+                  });
+
+               }
+            })));
+      nudgeRight(encoding_);
+      textBoxWithChooser(encoding_);
+      spaced(encoding_);
+      setEncoding(prefs.defaultEncoding().getGlobalValue());
       
       VerticalPanel completionPanel = new VerticalPanel();
       
@@ -212,8 +353,7 @@ public class EditingPreferencesPane extends PreferencesPane
         
       
       VerticalPanel diagnosticsPanel = new VerticalPanel();
-      Label rLabel = headerLabel("R Diagnostics");
-      diagnosticsPanel.add(spacedBefore(rLabel));
+      diagnosticsPanel.add(headerLabel("R Diagnostics"));
       final CheckBox chkShowRDiagnostics = checkboxPref("Show diagnostics for R", prefs.showDiagnosticsR());
       diagnosticsPanel.add(chkShowRDiagnostics);
       
@@ -257,6 +397,7 @@ public class EditingPreferencesPane extends PreferencesPane
       tabPanel.setSize("435px", "498px");
       tabPanel.add(editingPanel, "Editing");
       tabPanel.add(displayPanel, "Display");
+      tabPanel.add(savePanel, "Saving");
       tabPanel.add(completionPanel, "Completion");
       tabPanel.add(diagnosticsPanel, "Diagnostics");
       tabPanel.selectTab(0);
@@ -300,8 +441,20 @@ public class EditingPreferencesPane extends PreferencesPane
    @Override
    protected void initialize(RPrefs prefs)
    {
+      // editing prefs
+      EditingPrefs editingPrefs = prefs.getEditingPrefs();
+      lineEndings_.setIntValue(editingPrefs.getLineEndings());
+      
       showCompletions_.setValue(prefs_.codeComplete().getValue());
       showCompletionsOther_.setValue(prefs_.codeCompleteOther().getValue());
+      if (prefs_.useVimMode().getValue())
+         editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM);
+      else if (prefs_.enableEmacsKeybindings().getValue())
+         editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS);
+      else
+         editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_DEFAULT);
+      delimiterSurroundWidget_.setValue(prefs_.surroundSelection().getValue());
+      rmdViewerMode_.setValue(prefs_.rmdViewerType().getValue().toString());
    }
    
    @Override
@@ -309,13 +462,35 @@ public class EditingPreferencesPane extends PreferencesPane
    {
       boolean reload = super.onApply(prefs);
       
+      // editing prefs
+      prefs.setEditingPrefs(EditingPrefs.create(lineEndings_.getIntValue()));
+                      
+      prefs_.defaultEncoding().setGlobalValue(encodingValue_);
+      
       prefs_.codeComplete().setGlobalValue(showCompletions_.getValue());
       prefs_.codeCompleteOther().setGlobalValue(showCompletionsOther_.getValue());
       
+      String editorMode = editorMode_.getValue();
+      boolean isVim = editorMode.equals(UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM);
+      boolean isEmacs = editorMode.equals(UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS);
+      
+      prefs_.useVimMode().setGlobalValue(isVim);
+      prefs_.enableEmacsKeybindings().setGlobalValue(isEmacs);
+      
+      if (isVim)
+         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_VIM);
+      else if (isEmacs)
+         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_EMACS);
+      else
+         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
+      
+      prefs_.rmdViewerType().setGlobalValue(Integer.decode(
+            rmdViewerMode_.getValue()));
+      
+      prefs_.surroundSelection().setGlobalValue(delimiterSurroundWidget_.getValue());
+      
       return reload;
    }
-   
-   
  
    @Override
    public ImageResource getIcon()
@@ -338,10 +513,21 @@ public class EditingPreferencesPane extends PreferencesPane
    {
       return "Code";
    }
+   
+   private void setEncoding(String encoding)
+   {
+      encodingValue_ = encoding;
+      if (StringUtil.isNullOrEmpty(encoding))
+         encoding_.setText(ChooseEncodingDialog.ASK_LABEL);
+      else
+         encoding_.setText(encoding);
+   }
 
    private final UIPrefs prefs_;
+   private final SourceServerOperations server_;
    private final NumericValueWidget tabWidth_;
    private final NumericValueWidget marginCol_;
+   private final LineEndingsSelectWidget lineEndings_;
    private final NumericValueWidget alwaysCompleteChars_;
    private final NumericValueWidget alwaysCompleteDelayMs_;
    private final NumericValueWidget backgroundDiagnosticsDelayMs_;
@@ -349,6 +535,11 @@ public class EditingPreferencesPane extends PreferencesPane
    private final CheckBox showMargin_;
    private final SelectWidget showCompletions_;
    private final SelectWidget showCompletionsOther_;
+   private final SelectWidget editorMode_;
+   private final SelectWidget rmdViewerMode_;
+   private final SelectWidget delimiterSurroundWidget_;
+   private final TextBoxWithButton encoding_;
+   private String encodingValue_;
    
    
 }

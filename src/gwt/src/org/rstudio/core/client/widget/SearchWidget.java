@@ -41,8 +41,7 @@ public class SearchWidget extends Composite implements SearchDisplay
    interface MyUiBinder extends UiBinder<Widget, SearchWidget> {}
    private static MyUiBinder uiBinder = GWT.create(MyUiBinder.class);
 
-   class FocusSuggestBox extends SuggestBox implements HasFocusHandlers,
-                                                       HasBlurHandlers
+   class FocusSuggestBox extends SuggestBox implements HasAllFocusHandlers
    {
       FocusSuggestBox(SuggestOracle oracle)
       {
@@ -194,6 +193,8 @@ public class SearchWidget extends Composite implements SearchDisplay
             ValueChangeEvent.fire(suggestBox_, "");
          }
       });
+      
+      focusTracker_ = new FocusTracker(suggestBox_);
    }
    
    public HandlerRegistration addFocusHandler(FocusHandler handler)
@@ -318,6 +319,16 @@ public class SearchWidget extends Composite implements SearchDisplay
    {
       return lastValueSent_;
    }
+   
+   public void setPlaceholderText(String value)
+   {
+      suggestBox_.getElement().setAttribute("placeholder", value);
+   }
+   
+   public boolean isFocused()
+   {
+      return focusTracker_.isFocused();
+   }
 
    @UiField(provided=true)
    FocusSuggestBox suggestBox_;
@@ -327,6 +338,6 @@ public class SearchWidget extends Composite implements SearchDisplay
    Image icon_;
 
    private String lastValueSent_ = null;
-
+   private final FocusTracker focusTracker_;
   
 }

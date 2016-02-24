@@ -233,7 +233,7 @@ void ChooseRHome::done(int r)
                                        "You can download R from the official R Project "
                                        "website. Would you like to go there now?")))
                {
-                  rstudio::desktop::openUrl(QUrl(QString::fromUtf8("http://www.rstudio.org/links/r-project")));
+                  rstudio::desktop::openUrl(QUrl(QString::fromUtf8("https://www.rstudio.org/links/r-project")));
                }
             }
          }

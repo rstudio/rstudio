@@ -16,23 +16,37 @@ package org.rstudio.studio.client.workbench.ui;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
+
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.js.JsUtil;
 
 import java.util.*;
 
 public class PaneConfig extends JavaScriptObject
 {
+   public final static String SOURCE = "Source";
+   public final static String CONSOLE = "Console";
+   
+   
    public native static PaneConfig create(JsArrayString panes,
                                           JsArrayString tabSet1,
-                                          JsArrayString tabSet2) /*-{
-      return { panes: panes, tabSet1: tabSet1, tabSet2: tabSet2 };
+                                          JsArrayString tabSet2,
+                                          boolean consoleLeftOnTop,
+                                          boolean consoleRightOnTop) /*-{
+      return { 
+         panes: panes, 
+         tabSet1: tabSet1, 
+         tabSet2: tabSet2,
+         consoleLeftOnTop: consoleLeftOnTop,
+         consoleRightOnTop: consoleRightOnTop 
+      };
    }-*/;
 
    public static PaneConfig createDefault()
    {
       JsArrayString panes = createArray().cast();
-      panes.push("Source");
-      panes.push("Console");
+      panes.push(SOURCE);
+      panes.push(CONSOLE);
       panes.push("TabSet1");
       panes.push("TabSet2");
 
@@ -50,12 +64,12 @@ public class PaneConfig extends JavaScriptObject
       tabSet2.push("Help");
       tabSet2.push("Viewer");
 
-      return create(panes, tabSet1, tabSet2);
+      return create(panes, tabSet1, tabSet2, false, true);
    }
 
    public static String[] getAllPanes()
    {
-      return new String[] {"Source", "Console", "TabSet1", "TabSet2"};
+      return new String[] {SOURCE, CONSOLE, "TabSet1", "TabSet2"};
    }
 
    public static String[] getAllTabs()
@@ -131,24 +145,49 @@ public class PaneConfig extends JavaScriptObject
       return this.panes;
    }-*/;
 
-   public native final void setPanes(JsArrayString panes) /*-{
-      this.panes = panes;
-   }-*/;
-
    public native final JsArrayString getTabSet1() /*-{
       return this.tabSet1;
-   }-*/;
-
-   public native final void setTabSet1(JsArrayString tabSet) /*-{
-      this.tabSet1 = tabSet;
    }-*/;
 
    public native final JsArrayString getTabSet2() /*-{
       return this.tabSet2;
    }-*/;
-
-   public native final void setTabSet2(JsArrayString tabSet) /*-{
-      this.tabSet2 = tabSet;
+   
+   public final int getConsoleIndex()
+   {
+      JsArrayString panes = getPanes();
+      for (int i = 0; i<panes.length(); i++)
+         if (panes.get(i).equals("Console"))
+            return i;
+      
+      throw new IllegalStateException();
+   }
+   
+   public final boolean getConsoleLeft()
+   {
+      JsArrayString panes = getPanes();
+      return panes.get(0).equals("Console") || panes.get(1).equals("Console");
+   }
+   
+   public final boolean getConsoleRight()
+   {
+      return !getConsoleLeft();
+   }
+   
+   public native final boolean getConsoleLeftOnTop() /*-{
+      // return default if the existing object doesn't have this property
+      if (this.hasOwnProperty("consoleLeftOnTop"))
+         return this.consoleLeftOnTop;
+      else
+         return false;
+   }-*/;
+   
+   public native final boolean getConsoleRightOnTop() /*-{
+      // return default if the existing object doesn't have this property
+      if (this.hasOwnProperty("consoleRightOnTop"))
+         return this.consoleRightOnTop;
+      else
+         return true;
    }-*/;
 
    public final boolean validateAndAutoCorrect()
@@ -156,7 +195,7 @@ public class PaneConfig extends JavaScriptObject
       JsArrayString panes = getPanes();
       if (panes == null)
          return false;
-      if (!sameElements(panes, new String[] {"Source", "Console", "TabSet1", "TabSet2"}))
+      if (!sameElements(panes, new String[] {SOURCE, CONSOLE, "TabSet1", "TabSet2"}))
          return false;
 
       JsArrayString ts1 = getTabSet1();
@@ -226,7 +265,9 @@ public class PaneConfig extends JavaScriptObject
    {
       return create(copy(getPanes()),
                     copy(getTabSet1()),
-                    copy(getTabSet2()));
+                    copy(getTabSet2()),
+                    getConsoleLeftOnTop(),
+                    getConsoleRightOnTop());
    }
    
    public final native boolean isEqualTo(PaneConfig other)  /*-{
@@ -257,23 +298,12 @@ public class PaneConfig extends JavaScriptObject
 
    private JsArrayString concat(JsArrayString a, JsArrayString b)
    {
-      JsArrayString ab = createArray().cast();
-      for (int i = 0; i < a.length(); i++)
-         ab.push(a.get(i));
-      for (int i = 0; i < b.length(); i++)
-         ab.push(b.get(i));
-      return ab;
+      return JsArrayUtil.concat(a, b);
    }
 
    private static JsArrayString copy(JsArrayString array)
    {
-      if (array == null)
-         return null;
-
-      JsArrayString copy = JsArrayString.createArray().cast();
-      for (int i = 0; i < array.length(); i++)
-         copy.push(array.get(i));
-      return copy;
+      return JsArrayUtil.copy(array);
    }
 
    public static boolean isValidConfig(ArrayList<String> tabs)

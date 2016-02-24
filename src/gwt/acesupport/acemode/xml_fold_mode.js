@@ -24,7 +24,7 @@
  *
  */
 
-define("mode/xml_fold_mode", function(require, exports, module) {
+define("mode/xml_fold_mode", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var lang = require("ace/lib/lang");

@@ -1,7 +1,7 @@
 /*
  * RSession.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,10 +22,13 @@
 
 #include <core/FilePath.hpp>
 
+#include <core/r_util/RSessionContext.hpp>
+
 #include <R_ext/RStartup.h>
 #include <r/session/RSessionUtils.hpp>
 
 #define EX_CONTINUE 100
+#define EX_FORCE    101
 
 namespace rstudio {
 namespace core {
@@ -65,10 +68,10 @@ struct ROptions
    core::FilePath userHomePath;
    core::FilePath userScratchPath;
    core::FilePath scopedScratchPath;
+   core::FilePath sessionScratchPath;
    core::FilePath logPath;
    core::FilePath startupEnvironmentFilePath;
    std::string sessionPort;
-   boost::function<core::Settings&()> persistentState;
    boost::function<core::FilePath()> rEnvironmentDir;
    boost::function<core::FilePath()> rHistoryDir;
    boost::function<bool()> alwaysSaveHistory;
@@ -82,6 +85,7 @@ struct ROptions
    bool restoreWorkspace;
    SA_TYPE saveWorkspace;
    bool rProfileOnResume;
+   core::r_util::SessionScope sessionScope;
 };
       
 struct RInitInfo
@@ -99,10 +103,12 @@ struct RInitInfo
       
 struct RConsoleInput
 {
-   RConsoleInput() : cancel(true) {}
-   RConsoleInput(const std::string& text) : cancel(false), text(text) {}
+   explicit RConsoleInput(const std::string& console) : cancel(true), console(console) {}
+   explicit RConsoleInput(const std::string& text, const std::string& console) : 
+                          cancel(false), text(text), console(console) {}
    bool cancel ;
    std::string text;
+   std::string console;
 };
 
 // forward declare DisplayState
@@ -157,7 +163,7 @@ void reportAndLogWarning(const std::string& warning);
 
 // suspend/resume
 bool isSuspendable(const std::string& prompt);
-bool suspend(bool force);
+bool suspend(bool force, int status = EXIT_SUCCESS);
 
 struct RSuspendOptions
 {

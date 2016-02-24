@@ -25,7 +25,16 @@ public class TokenIterator extends JavaScriptObject
       return new TokenIterator(session, initialRow, initialColumn);
    }-*/;
 
+   public static native TokenIterator create(EditSession session) /*-{
+      var TokenIterator = $wnd.require('ace/token_iterator').TokenIterator;
+      return new TokenIterator(session);
+   }-*/;
+   
    protected TokenIterator() {}
+   
+   public native final TokenIterator clone() /*-{
+      return this.clone();
+   }-*/;
 
    public native final Token stepForward() /*-{
       return this.stepForward();
@@ -38,6 +47,10 @@ public class TokenIterator extends JavaScriptObject
    public native final Token getCurrentToken() /*-{
       return this.getCurrentToken();
    }-*/;
+   
+   public native final Position getCurrentTokenPosition() /*-{
+      return this.getCurrentTokenPosition();
+   }-*/;
 
    public native final int getCurrentTokenRow() /*-{
       return this.getCurrentTokenRow();
@@ -45,5 +58,21 @@ public class TokenIterator extends JavaScriptObject
 
    public native final int getCurrentTokenColumn() /*-{
       return this.getCurrentTokenColumn();
+   }-*/;
+   
+   public native final boolean fwdToMatchingToken() /*-{
+      return this.fwdToMatchingToken();
+   }-*/;
+   
+   public native final boolean bwdToMatchingToken() /*-{
+      return this.bwdToMatchingToken();
+   }-*/;
+   
+   public native final void tokenizeUpToRow(int row) /*-{
+      this.tokenizeUpToRow(row);
+   }-*/;
+   
+   public native final Token moveToPosition(Position pos) /*-{
+      return this.moveToPosition(pos);
    }-*/;
 }

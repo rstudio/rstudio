@@ -1,0 +1,10 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui"
+	xmlns:rs="urn:import:org.rstudio.core.client.widget">
+	<ui:style>
+	</ui:style>
+	<g:HTMLPanel>
+	    <rs:GridViewerFrame ui:field="gridViewerFrame_"/>
+	</g:HTMLPanel>
+</ui:UiBinder> 

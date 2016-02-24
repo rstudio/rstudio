@@ -30,6 +30,7 @@
 #include <core/http/UriHandler.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/r_util/RToolsInfo.hpp>
+#include <core/r_util/RActiveSessions.hpp>
 #include <core/Thread.hpp>
 
 #include <session/SessionOptions.hpp>
@@ -63,6 +64,9 @@ namespace session {
 
 namespace rstudio {
 namespace session {   
+
+class DistributedEvent;
+
 namespace module_context {
 
 enum PackageCompatStatus
@@ -82,6 +86,8 @@ std::string createFileUrl(const core::FilePath& path);
 core::FilePath resolveAliasedPath(const std::string& aliasedPath);
 core::FilePath userScratchPath();
 core::FilePath scopedScratchPath();
+core::FilePath sharedScratchPath();
+core::FilePath sessionScratchPath();
 core::FilePath oldScopedScratchPath();
 bool isVisibleUserFile(const core::FilePath& filePath);
 
@@ -90,6 +96,14 @@ core::FilePath safeCurrentPath();
 core::json::Object createFileSystemItem(const core::FileInfo& fileInfo);
 core::json::Object createFileSystemItem(const core::FilePath& filePath);
    
+// r session info
+std::string rVersion();
+std::string rHomeDir();
+
+// active sessions
+core::r_util::ActiveSession& activeSession();
+core::r_util::ActiveSessions& activeSessions();
+
 // get a temp file
 core::FilePath tempFile(const std::string& prefix, 
                         const std::string& extension);
@@ -111,6 +125,12 @@ core::shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir);
 
 // get the R local help port
 std::string rLocalHelpPort();
+
+// get current libpaths
+std::vector<core::FilePath> getLibPaths();
+
+// is the packages pane disabled
+bool disablePackages();
 
 // check if a package is installed
 bool isPackageInstalled(const std::string& packageName);
@@ -289,10 +309,13 @@ struct firstNonEmpty
 // session events
 struct Events : boost::noncopyable
 {
+   boost::signal<void (core::json::Object*)> onSessionInfo;
    boost::signal<void ()>                    onClientInit;
    boost::signal<void ()>                    onBeforeExecute;
    boost::signal<void(const std::string&)>   onConsolePrompt;
    boost::signal<void(const std::string&)>   onConsoleInput;
+   boost::signal<void(const std::string&, const std::string&)>  
+                                             onActiveConsoleChanged;
    boost::signal<void (ConsoleOutputType, const std::string&)>
                                              onConsoleOutput;
    boost::signal<void (ChangeSource)>        onDetectChanges;
@@ -304,6 +327,10 @@ struct Events : boost::noncopyable
    boost::signal<void ()>                    onQuit;
    boost::signal<void (const std::string&)>  onPackageLoaded;
    boost::signal<void ()>                    onPackageLibraryMutated;
+   boost::signal<void ()>                    onPreferencesSaved;
+   boost::signal<void (const DistributedEvent&)>
+                                             onDistributedEvent;
+   boost::signal<void (core::FilePath)>      onPermissionsChanged;
 
    // signal for detecting extended type of documents
    boost::signal<std::string(boost::shared_ptr<source_database::SourceDocument>),
@@ -357,6 +384,8 @@ void scheduleDelayedWork(const boost::posix_time::time_duration& period,
                          const boost::function<void()> &execute,
                          bool idleOnly = true);
 
+
+core::string_utils::LineEnding lineEndings(const core::FilePath& filePath);
 
 core::Error readAndDecodeFile(const core::FilePath& filePath,
                               const std::string& encoding,
@@ -520,6 +549,16 @@ core::json::Object compileOutputAsJson(const CompileOutput& compileOutput);
 std::string previousRpubsUploadId(const core::FilePath& filePath);
 
 std::string CRANReposURL();
+
+std::string rstudioCRANReposURL();
+
+std::string downloadFileMethod(const std::string& defaultMethod = "");
+
+std::string CRANDownloadOptions();
+
+bool haveSecureDownloadFileMethod();
+
+void reconcileSecureDownloadConfiguration();
 
 struct UserPrompt
 {
@@ -778,6 +817,11 @@ enum MarkerAutoSelect
 
 void showSourceMarkers(const SourceMarkerSet& markerSet,
                        MarkerAutoSelect autoSelect);
+
+
+bool isLoadBalanced();
+
+bool usingMingwGcc49();
 
 } // namespace module_context
 } // namespace session

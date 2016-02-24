@@ -17,13 +17,15 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-define("mode/auto_brace_insert", function(require, exports, module)
+define("mode/auto_brace_insert", ["require", "exports", "module"], function(require, exports, module)
 {
    var Range = require("ace/range").Range;
    var TextMode = require("ace/mode/text").Mode;
 
-   (function()
-   {
+   (function() {
+
+      // modes can override these to provide for
+      // auto-pairing of other kinds of tokens
       this.$complements = {
          "(": ")",
          "[": "]",

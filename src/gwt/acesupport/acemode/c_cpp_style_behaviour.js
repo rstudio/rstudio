@@ -27,7 +27,7 @@
  */
 
 
-define('mode/behaviour/cstyle', function(require, exports, module) {
+define('mode/behaviour/cstyle', ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var Behaviour = require("ace/mode/behaviour").Behaviour;

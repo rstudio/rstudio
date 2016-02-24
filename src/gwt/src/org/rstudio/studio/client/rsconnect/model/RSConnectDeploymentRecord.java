@@ -39,6 +39,17 @@ public class RSConnectDeploymentRecord extends JavaScriptObject
          };
    }-*/;
    
+   public static final native RSConnectDeploymentRecord create(
+         String name, 
+         String account,
+         String server) /*-{
+      return {
+         'name': name,
+         'account': account,
+         'server': server,
+         };
+   }-*/;
+   
    public final native String getName() /*-{
       return this.name;
    }-*/;
@@ -49,6 +60,10 @@ public class RSConnectDeploymentRecord extends JavaScriptObject
 
    public final native String getServer() /*-{
       return this.server;
+   }-*/;
+
+   public final native String getAppId() /*-{
+      return this.appId;
    }-*/;
 
    public final native String getBundleId() /*-{

@@ -61,7 +61,7 @@ public class AskPassManager
             
             // also handle if we are the main window and the specified
             // satellite doesn't exist
-            if (!satellite.isCurrentWindowSatellite() &&
+            if (!Satellite.isCurrentWindowSatellite() &&
                 !satelliteManager.satelliteWindowExists(targetWindow))
                return true;
             

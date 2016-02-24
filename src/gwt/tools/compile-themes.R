@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-if (!require("highlight")) {
+if (!require("highlight", quietly = TRUE)) {
    install.packages("highlight")
    if (!require("highlight")) {
       stop("This script requires 'highlight' in order to run!")
@@ -135,6 +135,78 @@ get_chunk_bg_color <- function(themeName, isDark) {
       p
 }
 
+applyFixups <- function(content, fileName, parsed) {
+   
+   methodName <- paste("applyFixups", fileName, sep = ".")
+   method <- try(get(methodName), silent = TRUE)
+   if (inherits(method, "try-error"))
+      return(content)
+   
+   method(content, parsed)
+}
+
+findNext <- function(regex, content, start = 1, end = length(content)) {
+   matches <- grep(regex, content, perl = TRUE)
+   matches[(matches > start) & (matches < end)][1]
+}
+
+setPrintMarginColor <- function(content, color) {
+   printMarginLoc <- grep("print-margin", content, perl = TRUE)
+   bgLoc <- grep("background:", content, perl = TRUE)
+   loc <- bgLoc[bgLoc > printMarginLoc][1]
+   content[loc] <- paste("  background:", color, ";")
+   content
+}
+
+applyFixups.ambiance <- function(content, parsed) {
+   
+   aceCursorLayerLoc <- grep("^\\s*\\.ace_cursor-layer\\s*{", content, perl = TRUE)
+   nextBraceLoc <- findNext("}", content, aceCursorLayerLoc)
+   
+   content[aceCursorLayerLoc:nextBraceLoc] <- ""
+   
+   content
+}
+
+applyFixups.cobalt <- function(content, parsed) {
+   content <- setPrintMarginColor(content, "#246")
+   content
+}
+
+applyFixups.clouds_midnight <- function(content, parsed) {
+   content <- setPrintMarginColor(content, "#333")
+   content
+}
+
+applyFixups.idle_fingers <- function(content, parsed) {
+   content <- setPrintMarginColor(content, "#555")
+   content
+}
+
+applyFixups.kr_theme <- function(content, parsed) {
+   content <- setPrintMarginColor(content, "#333")
+   content
+}
+
+applyFixups.merbivore_soft <- applyFixups.kr_theme
+applyFixups.pastel_on_dark <- applyFixups.kr_theme
+
+applyFixups.tomorrow_night_blue <- applyFixups.kr_theme
+applyFixups.tomorrow_night_bright <- applyFixups.kr_theme
+
+applyFixups.tomorrow_night_eighties <- function(content, parsed) {
+   content <- setPrintMarginColor(content, "#444")
+   content
+}
+applyFixups.tomorrow_night <- applyFixups.tomorrow_night_eighties
+
+applyFixups.twilight <- function(content, parsed) {
+   content <- setPrintMarginColor(content, "#333")
+   content
+}
+
+applyFixups.vibrant_ink <- applyFixups.tomorrow_night_eighties
+
 ## Get the set of all theme .css files
 outDir <- "../src/org/rstudio/studio/client/workbench/views/source/editors/text/themes"
 themeDir <- "ace/lib/ace/theme"
@@ -221,17 +293,17 @@ for (file in themeFiles) {
    
    ## Parse the modified CSS.
    modified <- unlist(strsplit(modified, "\n", fixed = TRUE))
-   parsed <- css.parser(lines = modified)
+   parsed <- suppressWarnings(css.parser(lines = modified))
    
    if (!any(grepl("^ace_keyword", names(parsed)))) {
-      warning("No field 'ace_keyword' in file '", basename(file), "'")
+      warning("No field 'ace_keyword' in file '", basename(file), "'; skipping", call. = FALSE)
       next
    }
    
    name <- grep("^ace_keyword", names(parsed), value = TRUE)[[1]]
    keywordColor <- parsed[[name]]$color
    if (is.null(keywordColor)) {
-      warning("No keyword color available for file '", basename(file), "'")
+      warning("No keyword color available for file '", basename(file), "'; skipping", call. = FALSE)
       next
    }
    
@@ -247,17 +319,17 @@ for (file in themeFiles) {
    ## on highlight.
    layerName <- "ace_marker-layer .ace_bracket"
    if (!(layerName %in% names(parsed))) {
-      warning("Expected rule for '", layerName, "' in file '", basename(file), "'")
+      warning("Expected rule for '", layerName, "' in file '", basename(file), "'; skipping", call. = FALSE)
       next
    }
    
    borderField <- parsed[[layerName]]$border
    if (is.null(borderField)) {
-      warning("No field for layer '", layerName, "' in file '", basename(file), "'")
+      warning("No field for layer '", layerName, "' in file '", basename(file), "'; skipping", call. = FALSE)
       next
    }
    
-   jsContents <- readLines(sub("css$", "js", file))
+   jsContents <- readLines(sub("css$", "js", file), warn = FALSE)
    isDark <- any(grepl("exports.isDark = true;", jsContents))
    
    operatorBgColor <- if (isDark)
@@ -355,6 +427,9 @@ for (file in themeFiles) {
    ## Add keyword colors if necessary.
    if (fileName %in% names(keyword_theme_map))
       content <- add_keyword_color(content, fileName)
+   
+   # Apply other custom fixups
+   content <- applyFixups(content, fileName, parsed)
    
    ## Phew! Write it out.
    outputPath <- file.path(outDir, basename(file))

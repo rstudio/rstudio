@@ -17,7 +17,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-define("mode/r_matching_brace_outdent", function(require, exports, module)
+define("mode/r_matching_brace_outdent", ["require", "exports", "module"], function(require, exports, module)
 {
    var Range = require("ace/range").Range;
 

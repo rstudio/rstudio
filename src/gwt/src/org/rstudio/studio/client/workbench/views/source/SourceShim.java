@@ -49,7 +49,7 @@ import org.rstudio.studio.client.workbench.views.source.events.*;
 @Singleton
 public class SourceShim extends Composite
    implements IsWidget, HasEnsureVisibleHandlers, HasEnsureHeightHandlers, BeforeShowCallback,
-              ProvidesResize, RequiresResize, RequiresVisibilityChanged
+              ProvidesResize, RequiresResize, RequiresVisibilityChanged, MaximizeSourceWindowEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, AsyncSource> {}
 
@@ -76,6 +76,8 @@ public class SourceShim extends Composite
       @Handler
       public abstract void onNewRMarkdownDoc();
       @Handler
+      public abstract void onNewRShinyApp();
+      @Handler
       public abstract void onNewRHTMLDoc();
       @Handler
       public abstract void onNewRDocumentationDoc();
@@ -88,11 +90,15 @@ public class SourceShim extends Composite
       @Handler
       public abstract void onSaveAllSourceDocs();
       @Handler
+      public abstract void onCloseOtherSourceDocs();
+      @Handler
       public abstract void onCloseAllSourceDocs();
       @Handler
       public abstract void onFindInFiles();
       @Handler
       public abstract void onActivateSource();
+      @Handler
+      public abstract void onLayoutZoomSource();
       @Handler
       public abstract void onPreviousTab();
       @Handler
@@ -104,11 +110,17 @@ public class SourceShim extends Composite
       @Handler
       public abstract void onSwitchToTab();
       @Handler
+      public abstract void onMoveTabLeft();
+      @Handler
+      public abstract void onMoveTabRight();
+      @Handler
+      public abstract void onMoveTabToFirst();
+      @Handler
+      public abstract void onMoveTabToLast();
+      @Handler
       public abstract void onSourceNavigateBack();
       @Handler
       public abstract void onSourceNavigateForward();
-      @Handler
-      public abstract void onShowProfiler();
       
       @Override
       protected void preInstantiationHook(Command continuation)
@@ -176,6 +188,7 @@ public class SourceShim extends Composite
       events.addHandler(EditPresentationSourceEvent.TYPE, asyncSource);
       events.addHandler(InsertSourceEvent.TYPE, asyncSource);
       events.addHandler(SnippetsChangedEvent.TYPE, asyncSource);
+      events.addHandler(MaximizeSourceWindowEvent.TYPE, this);
       asyncSource_ = asyncSource;
 
       events.fireEvent(new DocTabsChangedEvent(new String[0],
@@ -199,6 +212,12 @@ public class SourceShim extends Composite
    public HandlerRegistration addEnsureHeightHandler(EnsureHeightHandler handler)
    {
       return addHandler(handler, EnsureHeightEvent.TYPE);
+   }
+   
+   @Override
+   public void onMaximizeSourceWindow(MaximizeSourceWindowEvent e)
+   {
+      fireEvent(new EnsureHeightEvent(EnsureHeightEvent.MAXIMIZED));
    }
 
    public void forceLoad()
@@ -238,7 +257,7 @@ public class SourceShim extends Composite
    {
       if (source_ != null)
       {
-         source_.closeAllSourceDocs(caption, onCompleted);
+         source_.closeAllSourceDocs(caption, onCompleted, false);
       }
       else
       {
@@ -296,6 +315,20 @@ public class SourceShim extends Composite
       {
          onCompleted.execute();
       }
+   }
+   
+   public String getCurrentDocPath()
+   {
+      if (source_ == null || source_.getActiveEditor() == null)
+         return null;
+      return source_.getActiveEditor().getPath();
+   }
+   
+   public String getCurrentDocId()
+   {
+      if (source_ == null || source_.getActiveEditor() == null)
+         return null;
+      return source_.getActiveEditor().getId();
    }
    
    void setSource(Source source)

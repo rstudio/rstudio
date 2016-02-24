@@ -166,7 +166,11 @@ Error realPath(const std::string& path, FilePath* pRealPath)
    char buffer[PATH_MAX*2];
    char* realPath = ::realpath(path.c_str(), buffer);
    if (realPath == NULL)
-      return systemError(errno, ERROR_LOCATION);
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", path);
+      return error;
+   }
   *pRealPath = FilePath(realPath);
    return Success();
 }
@@ -431,6 +435,11 @@ void sendSignalToSelf(SignalType signal)
 std::string username()
 {
    return system::getenv("USER");
+}
+
+unsigned int effectiveUserId()
+{
+   return ::geteuid();
 }
 
 FilePath userHomePath(std::string envOverride)
@@ -1265,6 +1274,7 @@ Error waitForProcessExit(PidType processId)
 Error launchChildProcess(std::string path,
                          std::string runAsUser,
                          ProcessConfig config,
+                         ProcessConfigFilter configFilter,
                          PidType* pProcessId)
 {
    pid_t pid = ::fork();
@@ -1366,6 +1376,10 @@ Error launchChildProcess(std::string path,
       core::system::setenv(&env, "LOGNAME", user.username);
       core::system::setenv(&env, "HOME", user.homeDirectory);
       copyEnvironmentVar("SHELL", &env);
+
+      // apply config filter if we have one
+      if (configFilter)
+         configFilter(user, &config);
 
       // add custom environment vars (overriding as necessary)
       for (core::system::Options::const_iterator it = config.environment.begin();

@@ -38,4 +38,8 @@ public class RmdPublishDetails extends JavaScriptObject
    public final native String getTitle() /*-{
       return this.title;
    }-*/;
+   
+   public final native boolean hasConnectAccount() /*-{
+      return this.has_connect_account;
+   }-*/;
 }

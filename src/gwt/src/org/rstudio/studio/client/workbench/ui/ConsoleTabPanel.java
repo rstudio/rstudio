@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.ui;
 
 import org.rstudio.core.client.events.*;
+import org.rstudio.core.client.layout.LogicalWindow;
 import org.rstudio.core.client.theme.PrimaryWindowFrame;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 public class ConsoleTabPanel extends WorkbenchTabPanel
 {
    public ConsoleTabPanel(final PrimaryWindowFrame owner,
+                          final LogicalWindow parentWindow,
                           ConsolePane consolePane,
                           WorkbenchTab compilePdfTab,
                           FindOutputTab findResultsTab,
@@ -41,7 +43,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                           ConsoleInterruptButton consoleInterrupt,
                           ToolbarButton goToWorkingDirButton)
    {
-      super(owner);
+      super(owner, parentWindow);
       owner_ = owner;
       consolePane_ = consolePane;
       compilePdfTab_ = compilePdfTab;

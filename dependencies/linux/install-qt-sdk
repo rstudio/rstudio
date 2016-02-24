@@ -29,7 +29,11 @@ else
 fi
 QT_SDK_BINARY=QtSDK-5.4.0-${QT_ARCH}.tar.gz
 QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/$QT_SDK_BINARY
-QT_SDK_DIR=~/Qt5.4.0
+
+# set Qt SDK dir if not already defined
+if [ -z "$QT_SDK_DIR" ]; then
+  QT_SDK_DIR=~/Qt5.4.0
+fi
 
 if ! test -e $QT_SDK_DIR
 then

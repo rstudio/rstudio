@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -27,14 +28,16 @@ import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
-import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.model.RVersionSpec;
+import org.rstudio.studio.client.application.model.RVersionsInfo;
 import org.rstudio.studio.client.application.model.SaveAction;
+import org.rstudio.studio.client.application.ui.RVersionSelectWidget;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.GeneralPrefs;
@@ -42,9 +45,6 @@ import org.rstudio.studio.client.workbench.prefs.model.HistoryPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.ProjectsPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
-import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 public class GeneralPreferencesPane extends PreferencesPane
 {
@@ -54,13 +54,14 @@ public class GeneralPreferencesPane extends PreferencesPane
                                  UIPrefs prefs,
                                  Session session,
                                  final GlobalDisplay globalDisplay,
-                                 SourceServerOperations server)
+                                 WorkbenchContext context)
    {
       fsContext_ = fsContext;
       fileDialogs_ = fileDialogs;
       prefs_ = prefs;
-      server_ = server;
       session_ = session;
+      
+      RVersionsInfo versionsInfo = context.getRVersionsInfo();
 
       if (Desktop.isDesktop())
       {
@@ -91,6 +92,21 @@ public class GeneralPreferencesPane extends PreferencesPane
             add(rVersion_);
          }
       }
+      else if (versionsInfo.isMultiVersion())
+      {
+         rServerRVersion_ = new RVersionSelectWidget(
+                                       versionsInfo.getAvailableRVersions());
+         add(tight(rServerRVersion_));
+         
+         rememberRVersionForProjects_ = 
+                        new CheckBox("Restore last used R version for projects");
+         
+         rememberRVersionForProjects_.setValue(true);
+         Style style = rememberRVersionForProjects_.getElement().getStyle();
+         style.setMarginTop(5, Unit.PX);
+         style.setMarginBottom(12, Unit.PX);
+         add(rememberRVersionForProjects_);
+      }
 
       Label defaultLabel = new Label("Default working directory (when not in a project):");
       nudgeRight(defaultLabel);
@@ -103,6 +119,34 @@ public class GeneralPreferencesPane extends PreferencesPane
       nudgeRight(dirChooser_);
       textBoxWithChooser(dirChooser_);
 
+      showServerHomePage_ = new SelectWidget(
+            "Show server home page:",
+            new String[] {
+                  "Multiple active sessions",
+                  "Always",
+                  "Never"
+            },
+            new String[] {
+                 "sessions",
+                 "always",
+                 "never"
+            },
+            false,
+            true,
+            false);
+      
+      reuseSessionsForProjectLinks_ = new CheckBox("Re-use idle sessions for project links");
+      
+      if (session_.getSessionInfo().getShowUserHomePage())
+      {
+         spaced(showServerHomePage_);
+         add(showServerHomePage_);
+         lessSpaced(reuseSessionsForProjectLinks_);  
+      }
+      
+      if (session_.getSessionInfo().getMultiSession())
+         add(reuseSessionsForProjectLinks_);
+      
       restoreLastProject_ = new CheckBox("Restore most recently opened project at startup");
       lessSpaced(restoreLastProject_);
       add(restoreLastProject_);
@@ -132,6 +176,10 @@ public class GeneralPreferencesPane extends PreferencesPane
       spaced(removeHistoryDuplicates_);
       add(removeHistoryDuplicates_);
 
+      showLastDotValue_ = new CheckBox("Show .Last.value in environment listing");
+      lessSpaced(showLastDotValue_);
+      add(showLastDotValue_);
+      
       rProfileOnResume_ = new CheckBox("Run Rprofile when resuming suspended session");
       spaced(rProfileOnResume_);
       if (!Desktop.isDesktop())
@@ -141,54 +189,15 @@ public class GeneralPreferencesPane extends PreferencesPane
       // version doesn't support them, don't show these options. 
       if (session_.getSessionInfo().getHaveSrcrefAttribute())
       {
-	      add(checkboxPref(
-	            "Use debug error handler only when my code contains errors", 
-	            prefs_.handleErrorsInUserCodeOnly()));
-	      CheckBox chkTracebacks = checkboxPref(
-	            "Automatically expand tracebacks in error inspector", 
-	            prefs_.autoExpandErrorTracebacks());
-	      chkTracebacks.getElement().getStyle().setMarginBottom(15, Unit.PX);
-	      add(chkTracebacks);
+         add(checkboxPref(
+               "Use debug error handler only when my code contains errors", 
+               prefs_.handleErrorsInUserCodeOnly()));
+         CheckBox chkTracebacks = checkboxPref(
+               "Automatically expand tracebacks in error inspector", 
+               prefs_.autoExpandErrorTracebacks());
+         chkTracebacks.getElement().getStyle().setMarginBottom(15, Unit.PX);
+         add(chkTracebacks);
       }
-      
-      encodingValue_ = prefs_.defaultEncoding().getGlobalValue();
-      add(encoding_ = new TextBoxWithButton(
-            "Default text encoding:",
-            "Change...",
-            new ClickHandler()
-            {
-               public void onClick(ClickEvent event)
-               {
-                  server_.iconvlist(new SimpleRequestCallback<IconvListResult>()
-                  {
-                     @Override
-                     public void onResponseReceived(IconvListResult response)
-                     {
-                        new ChooseEncodingDialog(
-                              response.getCommon(),
-                              response.getAll(),
-                              encodingValue_,
-                              true,
-                              false,
-                              new OperationWithInput<String>()
-                              {
-                                 public void execute(String encoding)
-                                 {
-                                    if (encoding == null)
-                                       return;
-
-                                    setEncoding(encoding);
-                                 }
-                              }).showModal();
-                     }
-                  });
-
-               }
-            }));
-      nudgeRight(encoding_);
-      textBoxWithChooser(encoding_);
-      spaced(encoding_);
-      setEncoding(prefs.defaultEncoding().getGlobalValue());
       
       // provide check for updates option in desktop mode when not
       // already globally disabled
@@ -199,12 +208,15 @@ public class GeneralPreferencesPane extends PreferencesPane
                           prefs_.checkForUpdates()));
       }
       
+      showServerHomePage_.setEnabled(false);
+      reuseSessionsForProjectLinks_.setEnabled(false);
       saveWorkspace_.setEnabled(false);
       loadRData_.setEnabled(false);
       dirChooser_.setEnabled(false);
       alwaysSaveHistory_.setEnabled(false);
       removeHistoryDuplicates_.setEnabled(false);
       rProfileOnResume_.setEnabled(false);
+      showLastDotValue_.setEnabled(false);
       restoreLastProject_.setEnabled(false);
    }
    
@@ -214,9 +226,14 @@ public class GeneralPreferencesPane extends PreferencesPane
       // general prefs
       GeneralPrefs generalPrefs = rPrefs.getGeneralPrefs();
       
+      showServerHomePage_.setEnabled(true);
+      reuseSessionsForProjectLinks_.setEnabled(true);
       saveWorkspace_.setEnabled(true);
       loadRData_.setEnabled(true);
       dirChooser_.setEnabled(true);
+      
+      showServerHomePage_.setValue(generalPrefs.getShowUserHomePage());
+      reuseSessionsForProjectLinks_.setValue(generalPrefs.getReuseSessionsForProjectLinks());
       
       int saveWorkspaceIndex;
       switch (generalPrefs.getSaveAction())
@@ -248,6 +265,18 @@ public class GeneralPreferencesPane extends PreferencesPane
       
       rProfileOnResume_.setValue(generalPrefs.getRprofileOnResume());
       rProfileOnResume_.setEnabled(true);
+      
+      showLastDotValue_.setValue(generalPrefs.getShowLastDotValue());
+      showLastDotValue_.setEnabled(true);
+      
+      if (rServerRVersion_ != null)
+         rServerRVersion_.setRVersion(generalPrefs.getDefaultRVersion());
+      
+      if (rememberRVersionForProjects_ != null)
+      {
+         rememberRVersionForProjects_.setValue(
+                                   generalPrefs.getRestoreProjectRVersion()); 
+      }
      
       // projects prefs
       ProjectsPrefs projectsPrefs = rPrefs.getProjectsPrefs();
@@ -266,9 +295,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    public boolean onApply(RPrefs rPrefs)
    {
       boolean restartRequired = super.onApply(rPrefs);
-
-      prefs_.defaultEncoding().setGlobalValue(encodingValue_);
-      
+ 
       if (saveWorkspace_.isEnabled())
       {
          int saveAction;
@@ -287,10 +314,15 @@ public class GeneralPreferencesPane extends PreferencesPane
          }
 
          // set general prefs
-         GeneralPrefs generalPrefs = GeneralPrefs.create(saveAction, 
+         GeneralPrefs generalPrefs = GeneralPrefs.create(showServerHomePage_.getValue(),
+                                                         reuseSessionsForProjectLinks_.getValue(),
+                                                         saveAction, 
                                                          loadRData_.getValue(),
                                                          rProfileOnResume_.getValue(),
-                                                         dirChooser_.getText());
+                                                         dirChooser_.getText(),
+                                                         getDefaultRVersion(),
+                                                         getRestoreProjectRVersion(),
+                                                         showLastDotValue_.getValue());
          rPrefs.setGeneralPrefs(generalPrefs);
          
          // set history prefs
@@ -315,19 +347,32 @@ public class GeneralPreferencesPane extends PreferencesPane
       return "General";
    }
 
-   private void setEncoding(String encoding)
-   {
-      encodingValue_ = encoding;
-      if (StringUtil.isNullOrEmpty(encoding))
-         encoding_.setText(ChooseEncodingDialog.ASK_LABEL);
-      else
-         encoding_.setText(encoding);
-   }
-
-
+  
    
+   private RVersionSpec getDefaultRVersion()
+   {
+      if (rServerRVersion_ != null)
+         return rServerRVersion_.getRVersion();
+      else
+         return RVersionSpec.createEmpty();
+   }
+   
+   private boolean getRestoreProjectRVersion()
+   {
+      if (rememberRVersionForProjects_ != null)
+         return rememberRVersionForProjects_.getValue();
+      else
+         return false;
+   }
+   
+    
+
    private final FileSystemContext fsContext_;
    private final FileDialogs fileDialogs_;
+   private RVersionSelectWidget rServerRVersion_ = null;
+   private CheckBox rememberRVersionForProjects_ = null;
+   private CheckBox reuseSessionsForProjectLinks_ = null;
+   private SelectWidget showServerHomePage_;
    private SelectWidget saveWorkspace_;
    private TextBoxWithButton rVersion_;
    private TextBoxWithButton dirChooser_;
@@ -336,9 +381,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private final CheckBox removeHistoryDuplicates_;
    private CheckBox restoreLastProject_;
    private CheckBox rProfileOnResume_;
-   private final SourceServerOperations server_;
+   private CheckBox showLastDotValue_;
    private final UIPrefs prefs_;
-   private final TextBoxWithButton encoding_;
-   private String encodingValue_;
    private final Session session_;
 }

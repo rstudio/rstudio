@@ -17,7 +17,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-define("theme/default", function(require, exports, module) {
+define("theme/default", ["require", "exports", "module"], function(require, exports, module) {
 
     var dom = require("ace/lib/dom");
     exports.cssClass = "ace-rs";

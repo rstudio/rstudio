@@ -14,21 +14,35 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class QuitEvent extends GwtEvent<QuitHandler>
 {
+   public static class Data extends JavaScriptObject
+   {
+      protected Data() {}
+
+      public native final boolean getSwitchProjects() /*-{ return this.switch_projects; }-*/;
+      public native final String getNextSessionUrl() /*-{ return this.next_session_url; }-*/;
+   }
+   
    public static final GwtEvent.Type<QuitHandler> TYPE =
       new GwtEvent.Type<QuitHandler>();
    
-   public QuitEvent(boolean switchProjects)
+   public QuitEvent(Data data)
    {
-      switchProjects_ = switchProjects;
+      data_ = data;
    }
    
    public boolean getSwitchProjects()
    {
-      return switchProjects_;
+      return data_.getSwitchProjects();
+   }
+   
+   public String getNextSessionUrl()
+   {
+      return data_.getNextSessionUrl();
    }
    
    @Override
@@ -43,5 +57,5 @@ public class QuitEvent extends GwtEvent<QuitHandler>
       return TYPE;
    }
    
-   private final boolean switchProjects_;
+   private final Data data_;
 }

@@ -58,6 +58,7 @@ SEXP asNamespace(const std::string& name);
 typedef std::pair<std::string,SEXP> Variable ;
 void listEnvironment(SEXP env, 
                      bool includeAll,
+                     bool includeLastDotValue,
                      Protect* pProtect,
                      std::vector<Variable>* pVariables);
       
@@ -84,6 +85,7 @@ SEXP functionBody(SEXP functionSEXP);
 // type checking
 bool isString(SEXP object);
 bool isLanguage(SEXP object);
+bool isList(SEXP object);
 bool isMatrix(SEXP object);
 bool isDataFrame(SEXP object);   
 bool isNull(SEXP object);

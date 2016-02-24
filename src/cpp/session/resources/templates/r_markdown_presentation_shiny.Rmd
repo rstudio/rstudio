@@ -1,12 +1,16 @@
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
 ## Shiny Presentation
 
 This R Markdown presentation is made interactive using Shiny. The viewers of the presentation can change the assumptions underlying what's presented and see the results immediately. 
 
 To learn more, see [Interactive Documents](http://rmarkdown.rstudio.com/authoring_shiny.html).
 
-## Slide with Interactive Plot
+## Interactive Plot
 
-```{r, echo=FALSE}
+```{r eruptions}
 inputPanel(
   selectInput("n_breaks", label = "Number of bins:",
               choices = c(10, 20, 35, 50), selected = 20),
@@ -24,15 +28,15 @@ renderPlot({
 })
 ```
 
-## Slide with Bullets
+## Bullets
 
 - Bullet 1
 - Bullet 2
 - Bullet 3
 
-## Slide with R Code and Output
+## R Output
 
-```{r}
+```{r cars}
 summary(cars)
 ```
 

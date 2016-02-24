@@ -152,9 +152,13 @@ public:
 
    int saveActionDefault() const { return saveActionDefault_; }
 
-   unsigned int minimumUserId() const { return 100; }
+   unsigned int authMinimumUserId() const { return authMinimumUserId_; }
+
+   std::string authRequiredUserGroup() const { return authRequiredUserGroup_; }
 
    bool showHelpHome() const { return showHelpHome_; }
+
+   bool showUserHomePage() const { return showUserHomePage_; }
    
    core::FilePath coreRSourcePath() const 
    { 
@@ -206,7 +210,17 @@ public:
    {
       return std::string(rDocDirOverride_.c_str());
    }
-
+   
+   std::string defaultRVersion()
+   {
+      return std::string(defaultRVersion_.c_str());
+   }
+   
+   std::string defaultRVersionHome()
+   {
+      return std::string(defaultRVersionHome_.c_str());
+   }
+   
    bool autoReloadSource() const { return autoReloadSource_; }
 
    // limits
@@ -323,6 +337,11 @@ public:
       return allowOverlay() || allowPublish_;
    }
 
+   bool allowPresentationCommands() const
+   {
+      return allowPresentationCommands_;
+   }
+
    // user info
    std::string userIdentity() const 
    { 
@@ -334,21 +353,35 @@ public:
       return showUserIdentity_;
    }
 
-   std::string project() const
-   {
-      return project_;
-   }
-
-   std::string scope() const
+   core::r_util::SessionScope sessionScope() const
    {
       return scope_;
    }
 
+   core::r_util::SessionScopeState scopeState() const
+   {
+      return scopeState_;
+   }
+
    core::r_util::SessionContext sessionContext() const
    {
-      return core::r_util::SessionContext(
-                              userIdentity(),
-                              core::r_util::SessionScope(project(), scope()));
+      return core::r_util::SessionContext(userIdentity(), sessionScope());
+   }
+
+   bool multiSession() const
+   {
+      return multiSession_;
+   }
+
+   bool projectSharingEnabled() const
+   {
+      return projectSharingEnabled_;
+   }
+
+   bool switchProjectsWithUrl() const
+   {
+      return programMode() == kSessionProgramModeServer &&
+             options().multiSession() == true;
    }
 
    core::FilePath userHomePath() const 
@@ -390,6 +423,14 @@ public:
          return core::FilePath();
    }
 
+   core::FilePath rVersionsPath()
+   {
+      if (!rVersionsPath_.empty())
+         return core::FilePath(rVersionsPath_.c_str());
+      else
+         return core::FilePath();
+   }
+
    void clearInitialContextSettings()
    {
       initialWorkingDirOverride_.clear();
@@ -403,13 +444,6 @@ public:
    core::string_utils::LineEnding sourceLineEnding() const
    {
       return core::string_utils::LineEndingPosix;
-   }
-
-   // The line ending we persist to disk with. This could potentially
-   // be a per-user or even per-file option.
-   core::string_utils::LineEnding sourcePersistLineEnding() const
-   {
-      return core::string_utils::LineEndingNative;
    }
 
    std::string monitorSharedSecret() const
@@ -480,7 +514,10 @@ private:
    bool rProfileOnResumeDefault_;
    int saveActionDefault_;
    bool standalone_;
+   std::string authRequiredUserGroup_;
+   unsigned int authMinimumUserId_;
    bool showHelpHome_;
+   bool showUserHomePage_;
 
    // r
    std::string coreRSourcePath_;
@@ -494,6 +531,8 @@ private:
    std::string rResourcesPath_;
    std::string rHomeDirOverride_;
    std::string rDocDirOverride_;
+   std::string defaultRVersion_;
+   std::string defaultRVersionHome_;
    
    // limits
    int limitFileUploadSizeMb_;
@@ -514,6 +553,9 @@ private:
    std::string libclangPath_;
    std::string libclangHeadersPath_;
 
+   // root directory for locating resources
+   core::FilePath resourcePath_;
+
    bool allowFileDownloads_;
    bool allowShell_;
    bool allowPackageInstallation_;
@@ -524,12 +566,15 @@ private:
    bool allowRpubsPublish_;
    bool allowExternalPublish_;
    bool allowPublish_;
+   bool allowPresentationCommands_;
 
    // user info
    bool showUserIdentity_;
    std::string userIdentity_;
-   std::string project_;
-   std::string scope_;
+   core::r_util::SessionScope scope_;
+   core::r_util::SessionScopeState scopeState_;
+   bool multiSession_;
+   bool projectSharingEnabled_;
    std::string userHomePath_;
    std::string userScratchPath_;   
 
@@ -539,6 +584,7 @@ private:
 
    // initial project
    std::string initialProjectPath_;
+   std::string rVersionsPath_;
 
    // monitor
    std::string monitorSharedSecret_;

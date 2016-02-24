@@ -49,18 +49,12 @@ public class WebContentFileType extends TextFileType
             true,
             false,
             false);
-      
-      isMarkdown_ = isMarkdown;
    }
    
    @Override
    public HashSet<AppCommand> getSupportedCommands(Commands commands)
    {
       HashSet<AppCommand> result = super.getSupportedCommands(commands);
-      if (isMarkdown_)
-         result.add(commands.markdownHelp());
       return result;
    }
-   
-   private final boolean isMarkdown_;
 }

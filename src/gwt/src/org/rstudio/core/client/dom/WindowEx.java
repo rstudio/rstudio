@@ -89,6 +89,10 @@ public class WindowEx extends JavaScriptObject
    public final native void replaceLocationHref(String helpURL) /*-{
       this.location.replace(helpURL) ;
    }-*/;
+   
+   public final native void replaceHistoryState(String url) /*-{
+      this.history.replaceState({}, "", url);
+   }-*/;
 
    public final Point getScrollPosition()
    {
@@ -127,7 +131,7 @@ public class WindowEx extends JavaScriptObject
       this.resizeTo(width, height);
    }-*/;
 
-   public final native Document getDocument() /*-{
+   public final native DocumentEx getDocument() /*-{
       return this.document;
    }-*/;
    
@@ -147,6 +151,14 @@ public class WindowEx extends JavaScriptObject
       return this.outerWidth;
    }-*/;
    
+   public final native int getInnerHeight() /*-{
+      return this.innerHeight;
+   }-*/;
+
+   public final native int getInnerWidth() /*-{
+      return this.innerWidth;
+   }-*/;
+   
    public final native void scrollTo(int x, int y) /*-{
       this.scrollTo(x, y);
    }-*/;
@@ -159,6 +171,14 @@ public class WindowEx extends JavaScriptObject
       return this.scrollY;
    }-*/;
    
+   public final native int getScreenX() /*-{
+      return this.screenX;
+   }-*/;
+   
+   public final native int getScreenY() /*-{
+      return this.screenY;
+   }-*/;
+
    public final native void postMessage(JavaScriptObject data, 
                                         String origin) /*-{
       this.postMessage(data, origin);

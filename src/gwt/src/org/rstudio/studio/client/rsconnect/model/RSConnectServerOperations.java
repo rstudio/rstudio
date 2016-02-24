@@ -14,10 +14,12 @@
  */
 package org.rstudio.studio.client.rsconnect.model;
 
+import org.rstudio.studio.client.server.Int;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 public interface RSConnectServerOperations
 {
@@ -32,6 +34,9 @@ public interface RSConnectServerOperations
 
    void getRSConnectAppList(String accountName, String server,
                ServerRequestCallback<JsArray<RSConnectApplicationInfo>> requestCallback);
+
+   void getRSConnectApp(String appId, String accountName, String server,
+               ServerRequestCallback<RSConnectApplicationInfo> requestCallback);
    
    void getRSConnectDeployments(String sourceFile, String outputFile,
                ServerRequestCallback<JsArray<RSConnectDeploymentRecord>> requestCallback); 
@@ -44,6 +49,9 @@ public interface RSConnectServerOperations
                String account, String server, String appName, 
                RSConnectPublishSettings settings,
                ServerRequestCallback<Boolean> requestCallback);
+   
+   void getServerUrls(
+               ServerRequestCallback<JsArray<RSConnectServerEntry>> requestCallback);
 
    void validateServerUrl (String url, 
                ServerRequestCallback<RSConnectServerInfo> requestCallback);
@@ -58,9 +66,14 @@ public interface RSConnectServerOperations
                 RSConnectPreAuthToken token, 
                 ServerRequestCallback<Void> requestCallback);
    
-   void getLintResults(String target,
+   void getLintResults(String target, 
                 ServerRequestCallback<RSConnectLintResults> resultCallback);
    
    void getRmdPublishDetails(String target,
                 ServerRequestCallback<RmdPublishDetails> resultCallback);
+   
+   void hasOrphanedAccounts(ServerRequestCallback<Int> resultCallback);
+   
+   void getEditPublishedDocs(String appPath,
+                ServerRequestCallback<JsArrayString> resultCallback);
 }

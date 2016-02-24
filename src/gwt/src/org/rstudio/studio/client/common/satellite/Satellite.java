@@ -15,15 +15,20 @@
 package org.rstudio.studio.client.common.satellite;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.satellite.events.SatelliteFocusedEvent;
 import org.rstudio.studio.client.server.remote.ClientEventDispatcher;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.HasCloseHandlers;
@@ -49,6 +54,7 @@ public class Satellite implements HasCloseHandlers<Satellite>
       session_ = session;
       pUIPrefs_ = pUIPrefs;
       commands_ = commands;
+      events_ = eventBus;
       eventDispatcher_ = new ClientEventDispatcher(eventBus);
    }
    
@@ -71,6 +77,17 @@ public class Satellite implements HasCloseHandlers<Satellite>
             }
          });
       }
+      
+      // let main window know when we get focus
+      WindowEx.addFocusHandler(new FocusHandler()
+      {
+         
+         @Override
+         public void onFocus(FocusEvent arg0)
+         {
+            events_.fireEvent(new SatelliteFocusedEvent(getSatelliteName()));
+         }
+      });
    }
 
    @Override
@@ -88,6 +105,11 @@ public class Satellite implements HasCloseHandlers<Satellite>
    public boolean isReactivatePending()
    {
       return pendingReactivate_;
+   }
+   
+   public boolean isClosePending()
+   {
+      return pendingClose_;
    }
 
    public native final void flushPendingEvents(String name) /*-{
@@ -141,17 +163,29 @@ public class Satellite implements HasCloseHandlers<Satellite>
          }
       ); 
       
-      // export command notification callback
-      $wnd.dispatchCommandToRStudioSatellite = $entry(
-         function(commandId) {
-            satellite.@org.rstudio.studio.client.common.satellite.Satellite::dispatchCommand(Ljava/lang/String;)(commandId);
-         }
-      ); 
-      
       // export request activation callback
       $wnd.notifyPendingReactivate = $entry(function() {
          satellite.@org.rstudio.studio.client.common.satellite.Satellite::notifyPendingReactivate()();
       });
+      
+      // export pending closure callback
+      $wnd.notifyPendingClosure = $entry(function() {
+         satellite.@org.rstudio.studio.client.common.satellite.Satellite::notifyPendingClosure()();
+      });
+      
+      // export point containment callback
+      $wnd.isPointWithinSatellite = $entry(function(x, y) {
+         // x and y are screen coordinates; translate them into window
+         // (viewport) coordinates
+         return $wnd.document.elementFromPoint(x - $wnd.screenX, y - $wnd.screenY) != null;
+      });
+
+      $wnd.addEventListener(
+            "unload",
+            $entry(function() {
+               $wnd.opener.notifyRStudioSatelliteClosed(name);
+            }),
+            true);
 
       // register (this will call the setSessionInfo back)
       $wnd.opener.registerAsRStudioSatellite(name, $wnd);
@@ -159,13 +193,19 @@ public class Satellite implements HasCloseHandlers<Satellite>
    
    
    // check whether the current window is a satellite
-   public native boolean isCurrentWindowSatellite() /*-{
+   public static native boolean isCurrentWindowSatellite() /*-{
       return !!$wnd.isRStudioSatellite;
    }-*/;
    
    // get the name of the current satellite window (null if not a satellite)
    public native String getSatelliteName() /*-{
       return $wnd.RStudioSatelliteName;
+   }-*/;
+   
+   // satellites only: call the main window to ask if it knows about any windows
+   // (including itself) at the given location
+   public native String getWindowAtPoint(int x, int y) /*-{
+      return $wnd.opener.getWindowAtPoint(x, y);
    }-*/;
    
    public JavaScriptObject getParams()
@@ -199,6 +239,10 @@ public class Satellite implements HasCloseHandlers<Satellite>
   
       // ensure ui prefs initialize
       pUIPrefs_.get();
+      
+      // some objects wait for SessionInit in order to initialize themselves
+      // with SessionInfo
+      events_.fireEvent(new SessionInitEvent());
    }
    
    // called by main window to setParams
@@ -227,16 +271,16 @@ public class Satellite implements HasCloseHandlers<Satellite>
       eventDispatcher_.enqueEventAsJso(clientEvent);
    }
    
-   // called by main window to deliver commands
-   private void dispatchCommand(String commandId)
-   {  
-      commands_.getCommandById(commandId).execute();
-   }
-   
    // called by the main window to notify us that we're about to be reactivated
    private void notifyPendingReactivate()
    {
       pendingReactivate_ = true;
+   }
+
+   // called by the main window to notify us that we're about to be closed
+   private void notifyPendingClosure()
+   {
+      pendingClose_ = true;
    }
    
    private final Session session_;
@@ -244,7 +288,9 @@ public class Satellite implements HasCloseHandlers<Satellite>
    private final ClientEventDispatcher eventDispatcher_;
    private final HandlerManager handlerManager_ = new HandlerManager(this);
    private final Commands commands_;
+   private final EventBus events_;
    private boolean pendingReactivate_ = false;
+   private boolean pendingClose_ = false;
    private JavaScriptObject params_ = null;
    private CommandWithArg<JavaScriptObject> onReactivated_ = null;
 }

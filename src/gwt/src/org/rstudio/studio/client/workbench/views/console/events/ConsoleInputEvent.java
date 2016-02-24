@@ -21,14 +21,20 @@ public class ConsoleInputEvent extends GwtEvent<ConsoleInputHandler>
    public static final GwtEvent.Type<ConsoleInputHandler> TYPE =
       new GwtEvent.Type<ConsoleInputHandler>();
     
-   public ConsoleInputEvent(String input)
+   public ConsoleInputEvent(String input, String console)
    {
       input_ = input;
+      console_ = console;
    }
    
    public String getInput()
    {
       return input_;
+   }
+   
+   public String getConsole()
+   {
+      return console_;
    }
    
    @Override
@@ -44,4 +50,5 @@ public class ConsoleInputEvent extends GwtEvent<ConsoleInputHandler>
    }
    
    private final String input_;
+   private final String console_;
 }

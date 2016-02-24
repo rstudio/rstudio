@@ -305,7 +305,8 @@ bool FilePath::exists() const
     }
     catch(const boost::filesystem::filesystem_error& e)
     {
-       logError(pImpl_->path, e, ERROR_LOCATION) ;
+       if (e.code() != boost::system::errc::permission_denied)
+         logError(pImpl_->path, e, ERROR_LOCATION) ;
        return false ;
     }
 }
@@ -327,7 +328,7 @@ uintmax_t FilePath::size() const
 {
    try
    {
-      if (!exists())
+      if (!exists() || !boost::filesystem::is_regular_file(pImpl_->path))
          return 0;
       else
          return boost::filesystem::file_size(pImpl_->path) ;
@@ -451,6 +452,7 @@ MimeType s_mimeTypes[] =
    { "gitignore", "text/plain"},
    { "Rbuildignore", "text/plain"},
    { "Rprofile", "text/x-r-source"},
+   { "rprof",   "text/x-r-profile" },
 
    { "tif",   "image/tiff" },
    { "tiff",  "image/tiff" },
@@ -531,6 +533,22 @@ bool FilePath::hasTextMimeType() const
    std::string mimeType = mimeContentType("application/octet-stream");
    return boost::algorithm::starts_with(mimeType, "text/") ||
           boost::algorithm::ends_with(mimeType, "+xml");
+}
+
+void FilePath::setLastWriteTime(std::time_t time) const
+{
+   try
+   {
+      if (!exists())
+         return;
+      else
+         boost::filesystem::last_write_time(pImpl_->path, time);
+   }
+   catch(const boost::filesystem::filesystem_error& e)
+   {
+      logError(pImpl_->path, e, ERROR_LOCATION) ;
+      return;
+   }
 }
 
 std::time_t FilePath::lastWriteTime() const
@@ -761,6 +779,25 @@ Error FilePath::createDirectory(const std::string& name) const
       error.addProperty("target-dir", name) ;
       return error ;
    }
+}
+
+Error FilePath::ensureFile() const
+{
+   // nothing to do if the file already exists
+   if (exists())
+      return Success();
+
+   // create output stream to ensure file creation
+   boost::shared_ptr<std::ostream> pStream;
+   Error error = open_w(&pStream);
+   if (error)
+      return error;
+
+   // release file handle
+   pStream->flush();
+   pStream.reset(); 
+
+   return Success();
 }
 
 Error FilePath::resetDirectory() const

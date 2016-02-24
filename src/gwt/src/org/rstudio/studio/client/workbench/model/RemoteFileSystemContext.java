@@ -26,6 +26,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
 import java.util.ArrayList;
@@ -60,7 +61,7 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
             newPathEntry,
             false, // since this is used for the file dialog don't 
                    // cause the call to reset the server monitoring state
-            new ServerRequestCallback<JsArray<FileSystemItem>>()
+            new ServerRequestCallback<DirectoryListing>()
             {
                @Override
                public void onError(ServerError error)
@@ -70,10 +71,11 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
                }
 
                @Override
-               public void onResponseReceived(final JsArray<FileSystemItem> response)
+               public void onResponseReceived(final DirectoryListing response)
                { 
-                  for (int i = 0; i < response.length(); i++)
-                     fsi.add(response.get(i));
+                  final JsArray<FileSystemItem> files = response.getFiles();
+                  for (int i = 0; i < files.length(); i++)
+                     fsi.add(files.get(i));
                   
                   workingDir_ = newPath;
                   contents_ = fsi.toArray(new FileSystemItem[0]);

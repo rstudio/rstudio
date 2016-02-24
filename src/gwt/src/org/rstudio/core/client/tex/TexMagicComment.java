@@ -78,5 +78,5 @@ public class TexMagicComment
    private final String value_;
    
    private static final Pattern magicCommentPattern_ = 
-         Pattern.create("%\\s*!(\\w+)\\s+(\\w+)\\s*=\\s*(.*)$");
+         Pattern.create("%{1,2}\\s*!(\\w+)\\s+(\\w+)\\s*=\\s*(.*)$");
 }

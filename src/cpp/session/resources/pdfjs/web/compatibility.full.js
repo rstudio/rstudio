@@ -1,5 +1,3 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /* Copyright 2012 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -447,20 +445,10 @@ if (typeof PDFJS === 'undefined') {
 
 // Checks if navigator.language is supported
 (function checkNavigatorLanguage() {
-  if ('language' in navigator &&
-      /^[a-z]+(-[A-Z]+)?$/.test(navigator.language)) {
+  if ('language' in navigator) {
     return;
   }
-  function formatLocale(locale) {
-    var split = locale.split(/[-_]/);
-    split[0] = split[0].toLowerCase();
-    if (split.length > 1) {
-      split[1] = split[1].toUpperCase();
-    }
-    return split.join('-');
-  }
-  var language = navigator.language || navigator.userLanguage || 'en-US';
-  PDFJS.locale = formatLocale(language);
+  PDFJS.locale = navigator.userLanguage || 'en-US';
 })();
 
 (function checkRangeRequests() {
@@ -479,7 +467,10 @@ if (typeof PDFJS === 'undefined') {
   var regex = /Android\s[0-2][^\d]/;
   var isOldAndroid = regex.test(navigator.userAgent);
 
-  if (isSafari || isOldAndroid) {
+  // Range requests are broken in Chrome 39 and 40, https://crbug.com/442318
+  var isChromeWithRangeBug = /Chrome\/(39|40)\./.test(navigator.userAgent);
+
+  if (isSafari || isOldAndroid || isChromeWithRangeBug) {
     PDFJS.disableRange = true;
     PDFJS.disableStream = true;
   }
@@ -529,9 +520,9 @@ if (typeof PDFJS === 'undefined') {
 
     if (polyfill) {
       var contextPrototype = window.CanvasRenderingContext2D.prototype;
-      contextPrototype._createImageData = contextPrototype.createImageData;
+      var createImageData = contextPrototype.createImageData;
       contextPrototype.createImageData = function(w, h) {
-        var imageData = this._createImageData(w, h);
+        var imageData = createImageData.call(this, w, h);
         imageData.data.set = function(arr) {
           for (var i = 0, ii = this.length; i < ii; i++) {
             this[i] = arr[i];
@@ -539,6 +530,8 @@ if (typeof PDFJS === 'undefined') {
         };
         return imageData;
       };
+      // this closure will be kept referenced, so clear its vars
+      contextPrototype = null;
     }
   }
 })();
@@ -571,4 +564,30 @@ if (typeof PDFJS === 'undefined') {
     // 5MP
     PDFJS.maxCanvasPixels = 5242880;
   }
+})();
+
+// Disable fullscreen support for certain problematic configurations.
+// Support: IE11+ (when embedded).
+(function checkFullscreenSupport() {
+  var isEmbeddedIE = (navigator.userAgent.indexOf('Trident') >= 0 &&
+                      window.parent !== window);
+  if (isEmbeddedIE) {
+    PDFJS.disableFullscreen = true;
+  }
+})();
+
+// Provides document.currentScript support
+// Support: IE, Chrome<29.
+(function checkCurrentScript() {
+  if ('currentScript' in document) {
+    return;
+  }
+  Object.defineProperty(document, 'currentScript', {
+    get: function () {
+      var scripts = document.getElementsByTagName('script');
+      return scripts[scripts.length - 1];
+    },
+    enumerable: true,
+    configurable: true
+  });
 })();

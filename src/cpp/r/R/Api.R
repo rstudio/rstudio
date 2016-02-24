@@ -6,6 +6,9 @@
   
   info$mode <- .Call(getNativeSymbolInfo("rs_rstudioProgramMode", 
                                          PACKAGE=""))
+
+  info$edition <- .Call(getNativeSymbolInfo("rs_rstudioEdition",
+                                            PACKAGE=""))
   
   info$version <- package_version(
     .Call(getNativeSymbolInfo("rs_rstudioVersion", PACKAGE=""))
@@ -114,4 +117,159 @@
       stop("basePath parameter is not of type character", call. = FALSE)
    
    invisible(.Call("rs_sourceMarkers", name, markers, basePath, autoSelect))
+})
+
+.rs.addApiFunction("navigateToFile", function(filePath, line = 1L, col = 1L) {
+   # validate file argument
+   if (!is.character(filePath)) {
+      stop("filePath must be a character")  
+   }
+   if (!file.exists(filePath)) {
+      stop(filePath, " does not exist.")
+   }
+
+   # validate line/col arguments
+   if (!is.integer(line) || length(line) != 1 ||
+       !is.integer(col)  || length(col) != 1) {
+      stop("line and column must be integer values.")
+   }
+
+   # expand and alias for client
+   filePath <- .rs.normalizePath(filePath, winslash="/", mustWork = TRUE) 
+   homeDir <- path.expand("~")
+   if (identical(substr(filePath, 1, nchar(homeDir)), homeDir)) {
+      filePath <- file.path("~", substring(filePath, nchar(homeDir) + 2))
+   }
+   
+   # send event to client
+   .rs.enqueClientEvent("jump_to_function", list(
+      file_name     = .rs.scalar(filePath),
+      line_number   = .rs.scalar(line), 
+      column_number = .rs.scalar(col)))
+
+   invisible(NULL)
+})
+
+.rs.addApiFunction("insertText", function(location, text, id = "") {
+   
+   invalidRangeMsg <- "'ranges' should be a list of 4-element integer vectors"
+   invalidTextMsg <- "'text' should be a character vector"
+   invalidLengthMsg <- "'text' should either be length 1, or same length as 'ranges'"
+
+   if (is.null(id))
+      id <- ""
+   
+   if (!is.character(id))
+      stop("'id' must be NULL or a character vector of length one")
+   
+   # allow calls of the form:
+   #    
+   #    insertText("foo")
+   #    insertText(text = "foo")
+   #    
+   # in such cases, we replace the current selection. we pass an empty range
+   # and let upstream interpret this as a request to replace the current
+   # selection.
+   
+   if (missing(text) && is.character(location)) {
+      text <- location
+      location <- list()
+   } else if (missing(location) && is.character(text)) {
+      text <- text
+      location <- list()
+   } else if (length(location) == 0) {
+      return()
+   }
+   
+   # allow a single range (then validate that it's a true range after)
+   if (!is.list(location) || inherits(location, "document_range"))
+      location <- list(location)
+   
+   ranges <- lapply(location, function(el) {
+      
+      # detect proxy Inf object
+      if (identical(el, Inf))
+         el <- c(Inf, 0, Inf, 0)
+      
+      # detect positions (2-element vectors) and transform them to ranges
+      n <- length(el)
+      if (n == 2 && is.numeric(el))
+         el <- c(el, el)
+      
+      # detect document_ranges and transform
+      if (is.list(el) && all(c("start", "end") %in% names(el)))
+         el <- c(el$start, el$end)
+      
+      # validate we have a range-like object
+      if (length(el) != 4 || !is.numeric(el) || any(is.na(el)))
+         stop(invalidRangeMsg, call. = FALSE)
+      
+      # transform out-of-bounds values appropriately
+      el[el < 1] <- 1
+      el[is.infinite(el)] <- NA
+      
+      # transform from 1-based to 0-based indexing for server
+      result <- as.integer(el) - 1L
+      
+      # treat NAs as end of row / column
+      result[is.na(result)] <- as.integer(2 ^ 31 - 1)
+      
+      result
+   })
+   
+   if (!is.character(text))
+      stop(invalidTextMsg, call. = FALSE)
+   
+   if (length(text) != 1 && length(ranges) != length(text))
+      stop(invalidLengthMsg, call. = FALSE)
+   
+   # sort the ranges in decreasing order -- this way, we can
+   # ensure the replacements occur correctly (except in the
+   # case of overlaps)
+   if (length(ranges)) {
+      idx <- order(unlist(lapply(ranges, `[[`, 1)))
+      
+      ranges <- ranges[idx]
+      if (length(text) != 1)
+         text <- text[idx]
+   }
+   
+   data <- list(ranges = ranges, text = text, id = .rs.scalar(id))
+   .rs.enqueClientEvent("replace_ranges", data)
+   invisible(data)
+})
+
+.rs.addApiFunction("getActiveDocumentContext", function() {
+   .Call(.rs.routines$rs_getActiveDocumentContext)
+})
+
+.rs.addApiFunction("getActiveProject", function() {
+   .rs.getProjectDirectory()
+})
+
+
+
+
+.rs.addApiFunction("sendToConsole", function(code,
+                                             echo = TRUE,
+                                             execute = TRUE,
+                                             focus = TRUE)
+{
+   if (!is.character(code))
+      stop("'code' should be a character vector", call. = FALSE)
+   
+   code <- paste(code, collapse = "\n")
+   data <- list(
+      code = .rs.scalar(code),
+      echo = .rs.scalar(as.logical(echo)),
+      execute = .rs.scalar(as.logical(execute)),
+      focus = .rs.scalar(as.logical(focus))
+   )
+   
+   .rs.enqueClientEvent("send_to_console", data)
+   invisible(data)
+})
+
+.rs.addApiFunction("askForPassword", function(prompt) {
+   .rs.askForPassword(prompt)
 })

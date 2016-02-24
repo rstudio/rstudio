@@ -37,6 +37,8 @@
 #include <session/SessionSourceDatabase.hpp>
 #include <session/projects/SessionProjects.hpp>
 
+#include "shiny/SessionShiny.hpp"
+
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
@@ -135,31 +137,44 @@ void addInferredSymbols(const FilePath& filePath,
    using namespace code_search;
    using namespace source_database;
    
-   boost::shared_ptr<RSourceIndex> index = rSourceIndex().get(documentId);
+   boost::shared_ptr<RSourceIndex> pIndex = rSourceIndex().get(documentId);
    
    // If that failed, try getting the index from the project index.
-   if (!index)
-      index = code_search::getIndexedProjectFile(filePath);
+   if (!pIndex)
+      pIndex = code_search::getIndexedProjectFile(filePath);
    
    // If we still don't have an index, bail
-   if (!index)
+   if (!pIndex)
       return;
    
    // We have the index -- now list the packages discovered in
    // 'library' calls, and add those here.
-   BOOST_FOREACH(const std::string& package,
-                 index->getInferredPackages())
+   BOOST_FOREACH(const std::string& package, pIndex->getInferredPackages())
    {
       const PackageInformation& completions =
-            index->getPackageInformation(package);
+            pIndex->getPackageInformation(package);
       
       pSymbols->insert(completions.exports.begin(),
                        completions.exports.end());
    }
    
+   // make 'shiny' implicitly available in shiny documents
+   if (modules::shiny::getShinyFileType(filePath) != modules::shiny::ShinyNone)
+   {
+      const PackageInformation& completions = pIndex->getPackageInformation("shiny");
+      pSymbols->insert(completions.exports.begin(), completions.exports.end());
+   }
+   
    // make 'params' implicitly available if we have a YAML header
    if (r_utils::hasYamlHeader(filePath))
       pSymbols->insert("params");
+   
+   // make 'input', 'output' implicitly available in Shiny documents
+   if (modules::shiny::isShinyRMarkdownDocument(filePath))
+   {
+      pSymbols->insert("input");
+      pSymbols->insert("output");
+   }
 }
 
 void addNamespaceSymbols(std::set<std::string>* pSymbols)
@@ -267,7 +282,38 @@ void addRcppExportedSymbols(const FilePath& filePath,
                             const std::string& documentId,
                             std::set<std::string>* pSymbols)
 {
-   // TODO
+   if (!(filePath.hasExtensionLowerCase(".cpp") || filePath.hasExtensionLowerCase(".cc")))
+      return;
+   
+   static boost::regex reRcppExport("^\\s*//\\s*\\[\\[\\s*Rcpp::export\\s*\\]\\]\\s*$");
+   
+   boost::shared_ptr<source_database::SourceDocument> pDoc(new source_database::SourceDocument());
+   Error error = source_database::get(documentId, pDoc);
+   if (error)
+      return;
+   
+   std::vector<std::string> contents = core::algorithm::split(pDoc->contents(), "\n");
+   std::size_t n = contents.size();
+   
+   for (std::size_t i = 0; i < n - 1; ++i)
+   {
+      const std::string& line = contents[i];
+      if (boost::regex_match(line, reRcppExport))
+      {
+         const std::string& next = contents[i + 1];
+         std::size_t leftParenIndex = next.find('(');
+         if (leftParenIndex == std::string::npos)
+            continue;
+         
+         std::string start = string_utils::substring(next, 0, leftParenIndex);
+         std::size_t lastSpace = start.find_last_of(" \t");
+         if (lastSpace == std::string::npos)
+            continue;
+         
+         std::string fnName = string_utils::substring(start, lastSpace + 1);
+         pSymbols->insert(fnName);
+      }
+   }
 }
 
 // For an R package, symbols are looked up in this order:
@@ -320,6 +366,9 @@ Error getAvailableSymbolsForProject(const FilePath& filePath,
    Error error = r::exec::RFunction(".rs.availableRSymbols").call(pSymbols);
    if (error)
       return error;
+   
+   // Add in symbols that would be made available by `// [[Rcpp::export]]`
+   addRcppExportedSymbols(filePath, documentId, pSymbols);
    
    // Get all of the symbols made available by `library()` calls
    // within this document.
@@ -611,7 +660,7 @@ ParseResults parse(const std::wstring& rCode,
    if (noLint)
       return ParseResults();
    
-   results = rparser::parse(rCode, options);
+   results = rparser::parse(origin, rCode, options);
    
    ParseNode* pRoot = results.parseTree();
    if (!pRoot)

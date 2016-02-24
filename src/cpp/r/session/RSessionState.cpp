@@ -85,6 +85,15 @@ Error restoreLibPaths(const FilePath& libPathsFile)
    return r::exec::RFunction(".rs.restoreLibPaths", file).call();
 }
 
+bool isRLocationVariable(const std::string& name)
+{
+  return name == "LD_LIBRARY_PATH" ||
+         name == "R_HOME" ||
+         name == "R_DOC_DIR" ||
+         name == "R_INCLUDE_DIR" ||
+         name == "R_SHARE_DIR";
+}
+
 Error saveEnvironmentVars(const FilePath& envFile)
 {
    // remove then create settings file
@@ -111,6 +120,14 @@ Error saveEnvironmentVars(const FilePath& envFile)
 
 void setEnvVar(const std::string& name, const std::string& value)
 {
+   // don't restore R location variables if we already have them
+   if (isRLocationVariable(name) && !core::system::getenv(name).empty())
+      return;
+
+   // don't overwrite route lock if already supplied (may change on resume)
+   if (name == "RSTUDIO_SESSION_ROUTE" && !core::system::getenv(name).empty())
+      return;
+
    core::system::setenv(name, value);
 }
 

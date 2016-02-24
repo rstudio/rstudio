@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client;
 
+import org.rstudio.core.client.regex.Pattern;
+
 // We do lazy initialization of all the regex singleton strings here
 public class RegexUtil
 {
@@ -39,7 +41,6 @@ public class RegexUtil
       return identifier.matches(SYNTACTIC_R_IDENTIFIER);
    }
    
-   
    private static final native String constructLetter() /*-{
       var unicode = $wnd.require("ace/unicode");
       return unicode.packages.L;
@@ -62,4 +63,23 @@ public class RegexUtil
    private static String LETTER = null;
    
    private static String SYNTACTIC_R_IDENTIFIER = null;
+   
+   public static final Pattern RE_RMARKDOWN_CHUNK_BEGIN =
+         Pattern.create("^\\s*```\\{(.*?)\\}\\s*$", "");
+   
+   public static final Pattern RE_RMARKDOWN_CHUNK_END =
+         Pattern.create("^\\s*```\\s*$", "");
+   
+   public static final Pattern RE_RHTML_CHUNK_BEGIN =
+         Pattern.create("^\\s*<!-{2,}\\s*(.*?)\\s*$", "");
+   
+   public static final Pattern RE_RHTML_CHUNK_END =
+         Pattern.create("end\\.rcode\\s*-{2,}\\>", "");
+   
+   public static final Pattern RE_SWEAVE_CHUNK_BEGIN =
+         Pattern.create("^\\s*\\<\\<(.*?)\\>\\>=\\s*$", "");
+   
+   public static final Pattern RE_SWEAVE_CHUNK_END =
+         Pattern.create("^\\s*@\\s*$", "");
+   
 }

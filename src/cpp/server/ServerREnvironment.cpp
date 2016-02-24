@@ -31,58 +31,122 @@ namespace r_environment {
   
 namespace {
 
-// static R environment vars detected during initialization
-r_util::EnvironmentVars s_rEnvironmentVars;
+// system R version detected during intialization
+core::r_util::RVersion s_systemVersion;
+
+// fallback version to use if no R environment is detected
+core::r_util::RVersion s_fallbackVersion;
+
+// R version detected during initialization (either the system
+// R version or the provided fallback)
+core::r_util::RVersion s_rVersion;
+
 
 }
 
 bool initialize(std::string* pErrMsg)
 {
+   // attempt to detect system R version
+   bool detected = detectSystemRVersion(&s_rVersion, pErrMsg);
+
+   // if we didn't detect then use fallback if possible
+   if (!detected && hasFallbackVersion())
+   {
+      s_rVersion = s_fallbackVersion;
+      detected = true;
+   }
+
+   // return status
+   return detected;
+}
+
+core::r_util::RVersion rVersion()
+{
+   // make a copy protected by a mutex just to be on the safest
+   // possible side (the copy is cheap and we're not sure what
+   // universal guarantees about multi-threaded read access to
+   // std::vector are)
+   static boost::mutex s_versionMutex ;
+   LOCK_MUTEX(s_versionMutex)
+   {
+      return s_rVersion;
+   }
+   END_LOCK_MUTEX
+
+   // mutex related error
+   return r_util::RVersion();
+}
+
+bool hasFallbackVersion()
+{
+   return !s_fallbackVersion.empty();
+}
+
+void setFallbackVersion(const core::r_util::RVersion& version)
+{
+   s_fallbackVersion = version;
+}
+
+bool detectSystemRVersion(core::r_util::RVersion* pVersion,
+                          std::string* pErrMsg)
+{
+   // return cached version if we have it
+   if (!s_systemVersion.empty())
+   {
+      *pVersion = s_systemVersion;
+      return true;
+   }
+
    // check for which R override
    FilePath rWhichRPath;
    std::string whichROverride = server::options().rsessionWhichR();
    if (!whichROverride.empty())
       rWhichRPath = FilePath(whichROverride);
 
-   // attempt to detect R environment
-   return detectREnvironment(rWhichRPath,
-                             &s_rEnvironmentVars,
-                             pErrMsg);
-}
-
-std::vector<std::pair<std::string,std::string> > variables()
-{
-   // make a copy protected by a mutex just to be on the safest
-   // possible side (the copy is cheap and we're not sure what
-   // universal guarantees about multi-threaded read access to
-   // std::vector are)
-   static boost::mutex s_variablesMutex ;
-   LOCK_MUTEX(s_variablesMutex)
+   // if it's a directory then see if we can find the script
+   if (rWhichRPath.isDirectory())
    {
-      return s_rEnvironmentVars;
+      FilePath rScriptPath = rWhichRPath.childPath("bin/R");
+      if (rScriptPath.exists())
+         rWhichRPath = rScriptPath;
    }
-   END_LOCK_MUTEX
 
-   // mutex related error
-   return r_util::EnvironmentVars();
+   // attempt to detect R version
+   bool result = detectRVersion(rWhichRPath, pVersion, pErrMsg);
+
+   // if we detected it then cache it
+   if (result)
+      s_systemVersion = *pVersion;
+
+   // return result
+   return result;
 }
 
-bool detectREnvironment(const core::FilePath& rScriptPath,
-                        core::r_util::EnvironmentVars* pVars,
-                        std::string* pErrMsg)
+bool detectRVersion(const core::FilePath& rScriptPath,
+                    core::r_util::RVersion* pVersion,
+                    std::string* pErrMsg)
 {
    // determine rLdPaths script location
    FilePath rLdScriptPath(server::options().rldpathPath());
    std::string ldLibraryPath = server::options().rsessionLdLibraryPath();
 
-   std::string rScriptPathOut, rVersion;
-   return r_util::detectREnvironment(rScriptPath,
+   std::string rDetectedScriptPath;
+   std::string rVersion;
+   core::r_util::EnvironmentVars environment;
+   bool result = r_util::detectREnvironment(
+                                     rScriptPath,
                                      rLdScriptPath,
                                      ldLibraryPath,
-                                     &rScriptPathOut,
+                                     &rDetectedScriptPath,
                                      &rVersion,
-                                     pVars,
+                                     &environment,
                                      pErrMsg);
+   if (result)
+   {
+      *pVersion = core::r_util::RVersion(rVersion, environment);
+   }
+
+   return result;
 }
 
 } // namespace r_environment

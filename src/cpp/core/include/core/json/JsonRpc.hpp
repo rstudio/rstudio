@@ -45,6 +45,7 @@ enum errc_t {
    MethodUnexpected = 11, // method unexpected for current application state
    InvalidClientVersion = 12, // client is running an invalid version
    ServerOffline = 13,    // server is offline
+   InvalidSession = 14,   // target session is invalid
 
    // Execution errors -- These errors occurred during execution of the method.
    // Application state is therefore known based on the expected behavior
@@ -138,6 +139,7 @@ struct JsonRpcRequest
    std::string sourceWindow;
    std::string clientId ;
    double version;
+   std::string clientVersion;
    bool isBackgroundConnection ;
 
    bool empty() const { return method.empty(); }
@@ -412,6 +414,40 @@ core::Error readParams(const json::Array& params,
    return readParam(params, 10, pValue11) ;
 }
 
+template <typename T1, typename T2, typename T3, typename T4, typename T5,
+typename T6, typename T7, typename T8, typename T9, typename T10, typename T11,
+typename T12>
+core::Error readParams(const json::Array& params,
+                       T1* pValue1,
+                       T2* pValue2,
+                       T3* pValue3,
+                       T4* pValue4,
+                       T5* pValue5,
+                       T6* pValue6,
+                       T7* pValue7,
+                       T8* pValue8,
+                       T9* pValue9,
+                       T10* pValue10,
+                       T11* pValue11,
+                       T12* pValue12)
+{
+   core::Error error = readParams(params,
+                                  pValue1,
+                                  pValue2,
+                                  pValue3,
+                                  pValue4,
+                                  pValue5,
+                                  pValue6,
+                                  pValue7,
+                                  pValue8,
+                                  pValue9,
+                                  pValue10,
+                                  pValue11) ;
+   if (error)
+      return error ;
+
+   return readParam(params, 11, pValue12) ;
+}
 namespace errors {
 
 inline Error paramMissing(const std::string& name,
@@ -930,6 +966,39 @@ core::Error readObject(const json::Object& object,
    return readObject(object, name11, pValue11);
 }
 
+template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10, typename T11, typename T12>
+core::Error readObject(const json::Object& object,
+                       const std::string& name1, T1* pValue1,
+                       const std::string& name2, T2* pValue2,
+                       const std::string& name3, T3* pValue3,
+                       const std::string& name4, T4* pValue4,
+                       const std::string& name5, T5* pValue5,
+                       const std::string& name6, T6* pValue6,
+                       const std::string& name7, T7* pValue7,
+                       const std::string& name8, T8* pValue8,
+                       const std::string& name9, T9* pValue9,
+                       const std::string& name10, T10* pValue10,
+                       const std::string& name11, T11* pValue11,
+                       const std::string& name12, T12* pValue12)
+{
+   Error error = readObject(object,
+                            name1, pValue1,
+                            name2, pValue2,
+                            name3, pValue3,
+                            name4, pValue4,
+                            name5, pValue5,
+                            name6, pValue6,
+                            name7, pValue7,
+                            name8, pValue8,
+                            name9, pValue9,
+                            name10, pValue10,
+                            name11, pValue11);
+   if (error)
+      return error;
+
+   return readObject(object, name12, pValue12);
+}
+
 // json rpc response
          
 class JsonRpcResponse
@@ -959,7 +1028,8 @@ public:
 
    void setError(const core::Error& error, const json::Value& clientInfo);
 
-   void setError(const boost::system::error_code& ec);
+   void setError(const boost::system::error_code& ec,
+                 const json::Value& clientInfo = json::Value());
 
    void setAsyncHandle(const std::string& handle);
 

@@ -15,15 +15,21 @@
 package org.rstudio.studio.client.workbench.views.vcs.common.events;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
 import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
 
-public class ShowVcsDiffEvent extends GwtEvent<ShowVcsDiffEvent.Handler>
+@JavaScriptSerializable
+public class ShowVcsDiffEvent extends CrossWindowEvent<ShowVcsDiffEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
       void onShowVcsDiff(ShowVcsDiffEvent event);
+   }
+   
+   public ShowVcsDiffEvent()
+   {
    }
 
    public ShowVcsDiffEvent(FileSystemItem file)
@@ -50,5 +56,5 @@ public class ShowVcsDiffEvent extends GwtEvent<ShowVcsDiffEvent.Handler>
 
    public static final Type<Handler> TYPE = new Type<Handler>();
    
-   private final FileSystemItem file_;
+   private FileSystemItem file_;
 }

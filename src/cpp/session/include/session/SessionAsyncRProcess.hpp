@@ -19,6 +19,8 @@
 
 #include <boost/enable_shared_from_this.hpp>
 
+#include <core/system/Types.hpp>
+
 namespace core
 {
    class FilePath;
@@ -55,11 +57,21 @@ public:
    void start(const char* rCommand,
               const core::FilePath& workingDir,
               AsyncRProcessOptions rOptions,
+              std::vector<core::FilePath> rSourceFiles = std::vector<core::FilePath>())
+   {
+      start(rCommand, core::system::Options(), workingDir, rOptions, rSourceFiles);
+   }
+
+   void start(const char* rCommand,
+              core::system::Options environment,
+              const core::FilePath& workingDir,
+              AsyncRProcessOptions rOptions,
               std::vector<core::FilePath> rSourceFiles = std::vector<core::FilePath>());
 
    bool isRunning();
    void terminate();
    void markCompleted();
+   bool terminationRequested();
 
 protected:
    virtual bool onContinue();

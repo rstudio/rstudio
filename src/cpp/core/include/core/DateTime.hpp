@@ -38,6 +38,8 @@ boost::posix_time::ptime timeFromMillisecondsSinceEpoch(int64_t ms);
 std::string format(const boost::posix_time::ptime& datetime,
                    const std::string& format);
 
+std::string millisecondsSinceEpochAsString(double ms);
+
 } // namespace date_time
 } // namespace core 
 } // namespace rstudio

@@ -22,9 +22,12 @@
 #include <boost/foreach.hpp>
 
 #include <core/Algorithm.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/r_util/REnvironment.hpp>
+#include <core/json/JsonRpc.hpp>
 
 #include <core/system/Environment.hpp>
+#include <core/system/System.hpp>
 
 #ifdef __APPLE__
 #define kRFrameworkVersions "/Library/Frameworks/R.framework/Versions"
@@ -37,6 +40,21 @@ namespace r_util {
 
 namespace {
 
+std::vector<FilePath> realPaths(const std::vector<FilePath>& paths)
+{
+   std::vector<FilePath> realPaths;
+   BOOST_FOREACH(const FilePath& path, paths)
+   {
+      FilePath realPath;
+      Error error = core::system::realPath(path.absolutePath(), &realPath);
+      if (!error)
+         realPaths.push_back(realPath);
+      else
+         LOG_ERROR(error);
+   }
+   return realPaths;
+}
+
 std::vector<FilePath> removeNonExistent(const std::vector<FilePath>& paths)
 {
    std::vector<FilePath> filteredPaths;
@@ -48,17 +66,32 @@ std::vector<FilePath> removeNonExistent(const std::vector<FilePath>& paths)
    return filteredPaths;
 }
 
+void scanForRHomePaths(const core::FilePath& rootDir,
+                       std::vector<FilePath>* pHomePaths)
+{
+   if (rootDir.exists())
+   {
+      std::vector<FilePath> rDirs;
+      Error error = rootDir.children(&rDirs);
+      if (error)
+         LOG_ERROR(error);
+      BOOST_FOREACH(const FilePath& rDir, rDirs)
+      {
+         if (rDir.childPath("bin/R").exists())
+            pHomePaths->push_back(rDir);
+      }
+   }
+}
+
 
 } // anonymous namespace
 
 std::ostream& operator<<(std::ostream& os, const RVersion& version)
 {
-   os << version.number;
-   if (version.isDefault)
-      os << " [default]";
+   os << version.number();
    os << std::endl;
    os << version.homeDir() << std::endl;
-   BOOST_FOREACH(const core::system::Option& option, version.environment)
+   BOOST_FOREACH(const core::system::Option& option, version.environment())
    {
       os << option.first << "=" << option.second << std::endl;
    }
@@ -68,51 +101,44 @@ std::ostream& operator<<(std::ostream& os, const RVersion& version)
 }
 
 std::vector<RVersion> enumerateRVersions(
-                              const std::vector<FilePath>& otherRHomes,
+                              std::vector<FilePath> rHomePaths,
+                              bool scanForOtherVersions,
                               const FilePath& ldPathsScript,
                               const std::string& ldLibraryPath)
 {
    std::vector<RVersion> rVersions;
 
-   // start with all of the typical script locations
-   std::vector<FilePath> rScriptPaths;
-   const char* const kDefaultVersion = "/usr/bin/R";
-   rScriptPaths.push_back(FilePath(kDefaultVersion));
-   rScriptPaths.push_back(FilePath("/usr/local/bin/R"));
-   rScriptPaths.push_back(FilePath("/opt/local/bin/R"));
-
-   // scan /opt/R
-   FilePath optRDir("/opt/R");
-   if (optRDir.exists())
+   // scan if requested
+   if (scanForOtherVersions)
    {
-      std::vector<FilePath> optRDirs;
-      Error error = optRDir.children(&optRDirs);
-      if (error)
-         LOG_ERROR(error);
-      BOOST_FOREACH(const FilePath& optRDir, optRDirs)
-      {
-         FilePath rScriptPath = optRDir.childPath("bin/R");
-         if (rScriptPath.exists())
-            rScriptPaths.push_back(rScriptPath);
-      }
+      // start with all of the typical script locations
+      rHomePaths.push_back(FilePath("/usr/lib/R"));
+      rHomePaths.push_back(FilePath("/usr/lib64/R"));
+      rHomePaths.push_back(FilePath("/usr/local/lib/R"));
+      rHomePaths.push_back(FilePath("/usr/local/lib64/R"));
+      rHomePaths.push_back(FilePath("/opt/local/lib/R"));
+      rHomePaths.push_back(FilePath("/opt/local/lib64/R"));
+
+      // scan /opt/R and /opt/local/R
+      scanForRHomePaths(FilePath("/opt/R"), &rHomePaths);
+      scanForRHomePaths(FilePath("/opt/local/R"), &rHomePaths);
    }
 
-   // add the additional R homes
-   BOOST_FOREACH(const FilePath& otherRHome, otherRHomes)
-   {
-      FilePath rScriptPath = otherRHome.childPath("bin/R");
-      if (rScriptPath.exists())
-         rScriptPaths.push_back(rScriptPath);
-   }
-
-   // filter on existence and eliminate duplicates
-   rScriptPaths = removeNonExistent(rScriptPaths);
-   std::sort(rScriptPaths.begin(), rScriptPaths.end());
-   std::unique(rScriptPaths.begin(), rScriptPaths.end());
+   // filter on existence, capture real paths, and eliminate duplicates
+   rHomePaths = removeNonExistent(rHomePaths);
+   rHomePaths = realPaths(rHomePaths);
+   std::sort(rHomePaths.begin(), rHomePaths.end());
+   rHomePaths.erase(std::unique(rHomePaths.begin(), rHomePaths.end()),
+                    rHomePaths.end());
 
    // probe versions
-   BOOST_FOREACH(const FilePath& rScriptPath, rScriptPaths)
+   BOOST_FOREACH(const FilePath& rHomePath, rHomePaths)
    {
+      // compute R script path
+      FilePath rScriptPath = rHomePath.childPath("bin/R");
+      if (!rScriptPath.exists())
+         continue;
+
       std::string rDiscoveredScriptPath, rVersion, errMsg;
       core::system::Options env;
       if (detectREnvironment(rScriptPath,
@@ -123,10 +149,7 @@ std::vector<RVersion> enumerateRVersions(
                              &env,
                              &errMsg))
       {
-         RVersion version;
-         version.isDefault = (rScriptPath.absolutePath() == kDefaultVersion);
-         version.number = rVersion;
-         version.environment = env;
+         RVersion version(rVersion, env);
          rVersions.push_back(version);
       }
       else
@@ -170,9 +193,7 @@ std::vector<RVersion> enumerateRVersions(
                                                    ldLibraryPath));
          core::system::setenv(&env, "R_ARCH", "/x86_64");
 
-         RVersion version;
-         version.number = versionPath.filename();
-         version.environment = env;
+         RVersion version(versionPath.filename(), env);
 
          // improve on the version by asking R for it's version
          FilePath rBinaryPath = rHomePath.childPath("bin/exec/R");
@@ -180,11 +201,13 @@ std::vector<RVersion> enumerateRVersions(
             rBinaryPath = rHomePath.childPath("bin/exec/x86_64/R");
          if (rBinaryPath.exists())
          {
+            std::string versionNumber = version.number();
             Error error = rVersion(rHomePath,
                                    rBinaryPath,
-                                   &version.number);
+                                   &versionNumber);
             if (error)
                LOG_ERROR(error);
+            version = RVersion(versionNumber, version.environment());
          }
 
          rVersions.push_back(version);
@@ -192,59 +215,68 @@ std::vector<RVersion> enumerateRVersions(
    }
 #endif
 
+   // sort the versions
+   std::sort(rVersions.begin(), rVersions.end());
+
+   // remove duplicates
+   rVersions.erase(std::unique(rVersions.begin(), rVersions.end()),
+                   rVersions.end());
+
+   // reverse the order so more recent versions come first
+   std::reverse(rVersions.begin(), rVersions.end());
+
+   // return the versions
    return rVersions;
 }
 
 namespace {
 
-bool isVersion(const RVersionNumber& test, const RVersion& item)
+bool isVersion(const RVersionNumber& number,
+               const std::string& rHomeDir,
+               const RVersion& item)
 {
-   return test == RVersionNumber::parse(item.number);
+   return number == RVersionNumber::parse(item.number()) &&
+          rHomeDir == item.homeDir().absolutePath();
 }
 
-bool isMajorMinorVersion(RVersionNumber& test, const RVersion& item)
+bool isMajorMinorVersion(const RVersionNumber& test, const RVersion& item)
 {
-   RVersionNumber itemNumber = RVersionNumber::parse(item.number);
+   RVersionNumber itemNumber = RVersionNumber::parse(item.number());
    return (test.major() == itemNumber.major() &&
            test.minor() == itemNumber.minor());
 }
 
-bool compareVersion(const RVersion& a, const RVersion& b)
-{
-   return RVersionNumber::parse(a.number) <
-          RVersionNumber::parse(b.number);
-}
 
-bool compareVersionInfo(const RVersionInfo& versionInfo,
+bool compareVersionInfo(const RVersionNumber& versionNumber,
                         const RVersion& version)
 {
-   return RVersionNumber::parse(versionInfo.number) <
-          RVersionNumber::parse(version.number);
+   return versionNumber < RVersionNumber::parse(version.number());
 }
 
-RVersion findClosest(const RVersionInfo& matchVersion,
+RVersion findClosest(const RVersionNumber& versionNumber,
                      std::vector<RVersion> versions)
 {
    // sort so algorithms work correctly
-   std::sort(versions.begin(), versions.end(), compareVersion);
+   std::sort(versions.begin(), versions.end());
 
    // first look for an upper_bound
    std::vector<RVersion>::const_iterator it;
    it = std::upper_bound(versions.begin(),
                          versions.end(),
-                         matchVersion,
+                         versionNumber,
                          compareVersionInfo);
    if (it != versions.end())
       return *it;
 
    // can't find a greater version, use the newest version
-   return *std::max_element(versions.begin(), versions.end(), compareVersion);
+   return *std::max_element(versions.begin(), versions.end());
 }
 
 }
 
 
-RVersion selectVersion(const RVersionInfo& matchVersion,
+RVersion selectVersion(const std::string& number,
+                       const std::string& rHomeDir,
                        std::vector<RVersion> versions)
 {
    // check for empty
@@ -252,16 +284,16 @@ RVersion selectVersion(const RVersionInfo& matchVersion,
       return RVersion();
 
    // version we are seeking
-   RVersionNumber matchNumber = RVersionNumber::parse(matchVersion.number);
+   RVersionNumber matchNumber = RVersionNumber::parse(number);
 
    // order correctly for algorithms
-   std::sort(versions.begin(), versions.end(), compareVersion);
+   std::sort(versions.begin(), versions.end());
 
    // first seek an exact match
    std::vector<RVersion>::const_iterator it;
    it = std::find_if(versions.begin(),
                      versions.end(),
-                     boost::bind(isVersion, matchNumber, _1));
+                     boost::bind(isVersion, matchNumber, rHomeDir, _1));
    if (it != versions.end())
       return *it;
 
@@ -275,18 +307,128 @@ RVersion selectVersion(const RVersionInfo& matchVersion,
    // find the closest match in the series
    if (seriesVersions.size() > 0)
    {
-      return findClosest(matchVersion, seriesVersions);
+      return findClosest(matchNumber, seriesVersions);
    }
    // otherwise find the closest match in the whole list
    else
    {
-      return findClosest(matchVersion, versions);
+      return findClosest(matchNumber, versions);
    }
+}
+
+json::Object rVersionToJson(const RVersion& version)
+{
+   json::Object versionJson;
+   versionJson["number"] = version.number();
+   versionJson["environment"] = json::toJsonObject(version.environment());
+   return versionJson;
+}
+
+Error rVersionFromJson(const json::Object& versionJson,
+                       r_util::RVersion* pVersion)
+{
+   std::string number;
+   json::Object environmentJson;
+   Error error = json::readObject(versionJson,
+                                  "number", &number,
+                                  "environment", &environmentJson);
+   if (error)
+      return error;
+
+   *pVersion = RVersion(number,
+                        json::optionsFromJson(environmentJson));
+   return Success();
+}
+
+json::Array versionsToJson(const std::vector<RVersion>& versions)
+{
+   json::Array versionsJson;
+   std::transform(versions.begin(),
+                  versions.end(),
+                  std::back_inserter(versionsJson),
+                  rVersionToJson);
+   return versionsJson;
+}
+
+Error rVersionsFromJson(const json::Array& versionsJson,
+                        std::vector<RVersion>* pVersions)
+{
+   BOOST_FOREACH(const json::Value& versionJson, versionsJson)
+   {
+      if (!json::isType<json::Object>(versionJson))
+         return systemError(boost::system::errc::bad_message, ERROR_LOCATION);
+
+      r_util::RVersion rVersion;
+      Error error = rVersionFromJson(versionJson.get_obj(), &rVersion);
+      if (error)
+          return error;
+
+      pVersions->push_back(rVersion);
+   }
+
+   return Success();
+}
+
+
+Error writeRVersionsToFile(const FilePath& filePath,
+                           const std::vector<r_util::RVersion>& versions)
+{
+   std::ostringstream ostr;
+   json::writeFormatted(versionsToJson(versions), ostr);
+   return core::writeStringToFile(filePath, ostr.str());
+}
+
+Error readRVersionsFromFile(const FilePath& filePath,
+                            std::vector<r_util::RVersion>* pVersions)
+{
+   // read file contents
+   std::string contents;
+   Error error = core::readStringFromFile(filePath, &contents);
+   if (error)
+      return error;
+
+   // parse json
+   using namespace json;
+   json::Value jsonValue;
+   if (!parse(contents, &jsonValue) || !isType<json::Array>(jsonValue))
+   {
+      Error error = systemError(boost::system::errc::bad_message,
+                                ERROR_LOCATION);
+      error.addProperty("contents", contents);
+      return error;
+   }
+
+   return rVersionsFromJson(jsonValue.get_array(), pVersions);
+}
+
+Error validatedReadRVersionsFromFile(const FilePath& filePath,
+                                     std::vector<r_util::RVersion>* pVersions)
+{
+   std::vector<r_util::RVersion> versions;
+   Error error = readRVersionsFromFile(filePath, &versions);
+   if (error)
+      return error;
+
+   // ensure the home path exists before returning
+   BOOST_FOREACH(const r_util::RVersion& version, versions)
+   {
+      if (version.homeDir().exists())
+      {
+         pVersions->push_back(version);
+      }
+      else
+      {
+         LOG_WARNING_MESSAGE("R version home directory not found: " +
+                             version.homeDir().absolutePath());
+      }
+   }
+
+   return Success();
 }
 
 
 } // namespace r_util
-} // namespace core 
+} // namespace core
 } // namespace rstudio
 
 

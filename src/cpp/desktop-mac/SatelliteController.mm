@@ -35,6 +35,16 @@ didClearWindowObject:(WebScriptObject *)windowObject
 - (BOOL) windowShouldClose: (id) sender
 {
    id win = [webView_ windowScriptObject];
+   if ([clientName_ hasPrefix: SOURCE_WINDOW_PREFIX])
+   {
+      // the source window has special close semantics (consider: should it also
+      // have its own controller object?)
+      if (![[win evaluateWebScript:@"window.rstudioReadyToClose"] boolValue])
+      {
+         [win evaluateWebScript: @"window.rstudioCloseSourceWindow();"];
+         return NO;
+      }
+   }
    [win evaluateWebScript:
       @"if (window.notifyRStudioSatelliteClosing) "
       "   window.notifyRStudioSatelliteClosing();"];
@@ -48,6 +58,22 @@ didClearWindowObject:(WebScriptObject *)windowObject
    [win evaluateWebScript:
       @"if (window.notifyRStudioSatelliteReactivated) "
       "   window.notifyRStudioSatelliteReactivated(null);"];
+}
+
+- (BOOL) performKeyEquivalent: (NSEvent *) theEvent
+{
+   NSString* chr = [theEvent charactersIgnoringModifiers];
+   NSUInteger mod = [theEvent modifierFlags] & NSDeviceIndependentModifierFlagsMask;
+
+   // enable the preferences keyboard shortcut in satellites (brings up pref
+   // dialog in main window)
+   if (([chr isEqualToString: @","] && mod == NSCommandKeyMask))
+   {
+      if ([[NSApp mainMenu] performKeyEquivalent: theEvent])
+         return YES;
+   }
+   
+   return [super performKeyEquivalent: theEvent];
 }
 
 @end

@@ -1,7 +1,7 @@
 /*
  * SessionProjectContext.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,11 +26,20 @@
 
 #include <core/system/FileMonitor.hpp>
 
+#ifndef _WIN32
+#include <core/system/FileMode.hpp>
+#endif
+
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
+
+#include <session/projects/ProjectsSettings.hpp>
+#include <session/projects/SessionProjectSharing.hpp>
+
+#include <sys/stat.h>
 
 #include "SessionProjectFirstRun.hpp"
 
@@ -44,7 +53,14 @@ namespace {
 
 bool canWriteToProjectDir(const FilePath& projectDirPath)
 {
-   FilePath testFile = projectDirPath.complete(core::system::generateUuid());
+   std::string prefix(
+#ifndef _WIN32
+   "."
+#endif 
+   "write-test-");
+
+   FilePath testFile = projectDirPath.complete(prefix +
+         core::system::generateUuid());
    Error error = core::writeStringToFile(testFile, "test");
    if (error)
    {
@@ -60,14 +76,11 @@ bool canWriteToProjectDir(const FilePath& projectDirPath)
    }
 }
 
-// access to project settings
-std::string readSetting(const char * const settingName);
-void writeSetting(const char * const settingName, const std::string& value);
-
 }  // anonymous namespace
 
 
-Error computeScratchPath(const FilePath& projectFile, FilePath* pScratchPath)
+Error computeScratchPaths(const FilePath& projectFile, 
+      FilePath* pScratchPath, FilePath* pSharedScratchPath)
 {
    // ensure project user dir
    FilePath projectUserDir = projectFile.parent().complete(".Rproj.user");
@@ -87,13 +100,30 @@ Error computeScratchPath(const FilePath& projectFile, FilePath* pScratchPath)
    }
 
    // now add context id to form scratch path
-   FilePath scratchPath = projectUserDir.complete(userSettings().contextId());
-   Error error = scratchPath.ensureDirectory();
-   if (error)
-      return error;
+   if (pScratchPath)
+   {
+      FilePath scratchPath = projectUserDir.complete(userSettings().contextId());
+      Error error = scratchPath.ensureDirectory();
+      if (error)
+         return error;
 
-   // return the path
-   *pScratchPath = scratchPath;
+      // return the path
+      *pScratchPath = scratchPath;
+   }
+
+   // add "shared" to form shared path (shared among all sessions that have
+   // this project open)
+   if (pSharedScratchPath)
+   {
+      FilePath sharedScratchPath = projectUserDir.complete("shared");
+      Error error = sharedScratchPath.ensureDirectory();
+      if (error)
+         return error;
+
+      // return the path
+      *pSharedScratchPath = sharedScratchPath;
+   }
+
    return Success();
 }
 
@@ -148,7 +178,9 @@ Error ProjectContext::startup(const FilePath& projectFile,
 
    // calculate project scratch path
    FilePath scratchPath;
-   Error error = computeScratchPath(projectFile, &scratchPath);
+   FilePath sharedScratchPath;
+   Error error = computeScratchPaths(projectFile, &scratchPath,
+         &sharedScratchPath);
    if (error)
    {
       *pUserErrMsg = "unable to initialize project - " + error.summary();
@@ -168,10 +200,11 @@ Error ProjectContext::startup(const FilePath& projectFile,
       return error;
 
    // update package install args with new defaults (one time only)
+   ProjectsSettings projSettings(options().userScratchPath());
    const char * kUpdatePackageInstallDefault = "update-pkg-install-default";
-   if (readSetting(kUpdatePackageInstallDefault).empty())
+   if (projSettings.readSetting(kUpdatePackageInstallDefault).empty())
    {
-      writeSetting(kUpdatePackageInstallDefault, "1");
+      projSettings.writeSetting(kUpdatePackageInstallDefault, "1");
       if (r_util::updateSetPackageInstallArgsDefault(&config))
          providedDefaults = true;
    }
@@ -189,6 +222,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
    file_ = projectFile;
    directory_ = file_.parent();
    scratchPath_ = scratchPath;
+   sharedScratchPath_ = sharedScratchPath;
    config_ = config;
 
    // assume true so that the initial files pane listing doesn't register
@@ -208,14 +242,15 @@ void ProjectContext::augmentRbuildignore()
       // constants
       const char * const kIgnoreRproj = "^.*\\.Rproj$";
       const char * const kIgnoreRprojUser = "^\\.Rproj\\.user$";
-
+      const std::string newLine = "\n";
+      
       // create the file if it doesn't exists
       FilePath rbuildIgnorePath = directory().childPath(".Rbuildignore");
       if (!rbuildIgnorePath.exists())
       {
          Error error = writeStringToFile(rbuildIgnorePath,
-                                         kIgnoreRproj + std::string("\n") +
-                                         kIgnoreRprojUser + std::string("\n"),
+                                         kIgnoreRproj + newLine +
+                                         kIgnoreRprojUser + newLine,
                                          string_utils::LineEndingNative);
          if (error)
             LOG_ERROR(error);
@@ -248,11 +283,11 @@ void ProjectContext::augmentRbuildignore()
                                 && strIgnore[strIgnore.size() - 1] != '\n';
 
          if (addExtraNewline)
-            strIgnore += "\n";
+            strIgnore += newLine;
          if (!hasRProj)
-            strIgnore += kIgnoreRproj + std::string("\n");
+            strIgnore += kIgnoreRproj + newLine;
          if (!hasRProjUser)
-            strIgnore += kIgnoreRprojUser + std::string("\n");
+            strIgnore += kIgnoreRprojUser + newLine;
          error = core::writeStringToFile(rbuildIgnorePath,
                                          strIgnore,
                                          string_utils::LineEndingNative);
@@ -282,6 +317,8 @@ SEXP rs_hasFileMonitor()
 
 Error ProjectContext::initialize()
 {
+   using namespace module_context;
+
    r::routines::registerCallMethod(
             "rs_getProjectDirectory",
             (DL_FUNC) rs_getProjectDirectory,
@@ -294,6 +331,9 @@ Error ProjectContext::initialize()
    
    if (hasProject())
    {
+      // update activeSession
+      activeSession().setProject(createAliasedPath(directory()));
+
       // read build options for the side effect of updating buildOptions_
       RProjectBuildOptions buildOptions;
       Error error = readBuildOptions(&buildOptions);
@@ -319,75 +359,14 @@ Error ProjectContext::initialize()
                       boost::bind(&ProjectContext::onDeferredInit, this, _1));
       }
    }
-
+   else
+   {
+      // update activeSession
+      activeSession().setProject(kProjectNone);
+   }
    return Success();
 }
 
-
-namespace {
-
-// NOTE: the HttpConnectionListener relies on this path as well as the
-// kNextSessionProject constant in order to write the next session project
-// in the case of a forced abort (the two implementations are synchronized
-// using constants so that the connection listener doesn't call into modules
-// that are single threaded by convention
-FilePath settingsPath()
-{
-   return r_util::projectsSettingsPath(session::options().userScratchPath());
-}
-
-std::string readSetting(const char * const settingName)
-{
-   return r_util::readProjectsSetting(settingsPath(), settingName);
-}
-
-void writeSetting(const char * const settingName, const std::string& value)
-{
-   r_util::writeProjectsSetting(settingsPath(), settingName, value);
-}
-
-} // anonymous namespace
-
-std::string ProjectContext::nextSessionProject() const
-{
-   return readSetting(kNextSessionProject);
-}
-
-void ProjectContext::setNextSessionProject(
-                           const std::string& nextSessionProject)
-{
-   writeSetting(kNextSessionProject, nextSessionProject);
-}
-
-// switch to project path
-std::string ProjectContext::switchToProjectPath() const
-{
-   return readSetting(kSwitchToProject);
-}
-
-void ProjectContext::setSwitchToProjectPath(
-                                 const std::string& switchToProjectPath)
-{
-   writeSetting(kSwitchToProject, switchToProjectPath);
-}
-
-
-FilePath ProjectContext::lastProjectPath() const
-{
-   std::string path = readSetting(kLastProjectPath);
-   if (!path.empty())
-      return FilePath(path);
-   else
-      return FilePath();
-}
-
-void ProjectContext::setLastProjectPath(const FilePath& lastProjectPath)
-{
-   if (!lastProjectPath.empty())
-      writeSetting(kLastProjectPath, lastProjectPath.absolutePath());
-   else
-      writeSetting(kLastProjectPath, "");
-}
 
 
 void ProjectContext::onDeferredInit(bool newSession)
@@ -725,6 +704,36 @@ bool ProjectContext::isPackageProject()
    return r_util::isPackageDirectory(directory());
 }
 
+bool ProjectContext::supportsSharing()
+{
+   // never supports sharing if disabled explicitly
+   if (!core::system::getenv(kRStudioDisableProjectSharing).empty())
+      return false;
+
+   // otherwise, check to see whether shared storage is configured
+   return !options().getOverlayOption(kSessionSharedStoragePath).empty();
+}
+
+// attempts to determine whether we can browse above the project folder
+bool ProjectContext::parentBrowseable()
+{
+#ifdef _WIN32
+   // we don't need to know this on Windows, and we'd need to compute it very
+   // differently
+   return true;
+#else
+   bool browse = true;
+   Error error = core::system::isFileReadable(directory().parent(), &browse);
+   if (error)
+   {
+      // if we can't figure it out, presume it to be browseable (this preserves
+      // existing behavior) 
+      LOG_ERROR(error);
+      return true;
+   }
+   return browse;
+#endif
+}
 
 } // namespace projects
 } // namespace session

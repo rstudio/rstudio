@@ -14,11 +14,13 @@
  */
 
 #include <core/json/Json.hpp>
+#include <core/json/JsonRpc.hpp>
 
 #include <cstdlib>
 #include <sstream>
 
 #include <boost/format.hpp>
+#include <boost/foreach.hpp>
 #include <boost/scoped_array.hpp>
 
 #include <core/Log.hpp>
@@ -42,6 +44,33 @@ json::Value toJsonString(const std::string& val)
 {
    return json::Value(val);
 }
+
+json::Object toJsonObject(
+      const std::vector<std::pair<std::string,std::string> >& options)
+{
+   json::Object optionsJson;
+   typedef std::pair<std::string,std::string> Pair;
+   BOOST_FOREACH(const Pair& option, options)
+   {
+      optionsJson[option.first] = option.second;
+   }
+   return optionsJson;
+}
+
+std::vector<std::pair<std::string,std::string> > optionsFromJson(
+                                      const json::Object& optionsJson)
+{
+   std::vector<std::pair<std::string,std::string> > options;
+   BOOST_FOREACH(const json::Member& member, optionsJson)
+   {
+      std::string name = member.first;
+      json::Value value = member.second;
+      if (value.type() == json::StringType)
+         options.push_back(std::make_pair(name, value.get_str()));
+   }
+   return options;
+}
+
 
 bool fillVectorString(const Array& array, std::vector<std::string>* pVector)
 {
@@ -115,8 +144,18 @@ void write(const Value& value, std::ostream& os)
 void writeFormatted(const Value& value, std::ostream& os)
 {
    json_spirit::write_formatted(value, os);
-}   
-   
+}
+
+std::string write(const Value& value)
+{
+   return json_spirit::write(value);
+}
+
+std::string writeFormatted(const Value& value)
+{
+   return json_spirit::write_formatted(value);
+}
+
 } // namespace json
 } // namespace core
 } // namespace rstudio

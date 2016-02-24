@@ -28,6 +28,8 @@
 #include <r/RErrorCategory.hpp>
 #include <r/RUtil.hpp>
 
+#include <r/session/RSessionUtils.hpp>
+
 #include "RGraphicsUtils.hpp"
 #include "RGraphicsPlotManager.hpp"
 #include "RGraphicsHandler.hpp"
@@ -431,7 +433,20 @@ SEXP createGD()
    // error if there is already an RStudio device
    if (s_pGEDevDesc != NULL)
    {
-      Rf_warning("Only one RStudio graphics device is permitted");
+      if (!r::session::utils::isServerMode())
+      {
+         Error error = r::exec::executeString(".rs.newDesktopGraphicsDevice()");
+         if (error)
+         {
+            std::string msg = error.summary();
+            r::isCodeExecutionError(error, &msg);
+            Rf_warning(("Error creating graphics device: " + msg).c_str());
+         }
+      }
+      else
+      {
+         Rf_warning("Only one RStudio graphics device is permitted");
+      }
       return R_NilValue;
    }
 

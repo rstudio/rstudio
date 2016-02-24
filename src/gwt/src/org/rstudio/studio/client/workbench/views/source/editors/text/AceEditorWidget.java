@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
@@ -23,6 +24,7 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -32,7 +34,6 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.inject.Inject;
 
@@ -40,16 +41,15 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.dom.StyleBuilder;
-import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
+import org.rstudio.studio.client.events.BeginPasteEvent;
+import org.rstudio.studio.client.events.EndPasteEvent;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
 import org.rstudio.studio.client.workbench.views.output.lint.LintResources;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
@@ -58,19 +58,22 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocu
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceMouseEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunkEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AnchoredRange;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunksEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidgetManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.events.AfterAceRenderEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent.Handler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager;
 
 public class AceEditorWidget extends Composite
       implements RequiresResize,
                  HasValueChangeHandlers<Void>,
                  HasFoldChangeHandlers,
-                 HasKeyDownHandlers,
-                 HasKeyPressHandlers
+                 HasAllKeyHandlers
 {
    
    public AceEditorWidget()
@@ -90,6 +93,7 @@ public class AceEditorWidget extends Composite
       editor_ = AceEditorNative.createEditor(getElement());
       editor_.manageDefaultKeybindings();
       editor_.getRenderer().setHScrollBarAlwaysVisible(false);
+      editor_.getRenderer().setScrollPastEnd(true);
       editor_.setShowPrintMargin(false);
       editor_.setPrintMarginColumn(0);
       editor_.setHighlightActiveLine(false);
@@ -97,7 +101,7 @@ public class AceEditorWidget extends Composite
       editor_.delegateEventsTo(AceEditorWidget.this);
       editor_.onChange(new CommandWithArg<AceDocumentChangeEventNative>()
       {
-         public void execute(AceDocumentChangeEventNative changeEvent)
+         public void execute(AceDocumentChangeEventNative event)
          {
             // Case 3815: It appears to be possible for change events to be
             // fired recursively, which exhausts the stack. This shouldn't 
@@ -112,8 +116,10 @@ public class AceEditorWidget extends Composite
             try
             {
                ValueChangeEvent.fire(AceEditorWidget.this, null);
-               updateBreakpoints(changeEvent);
-               updateAnnotations(changeEvent);
+               AceEditorWidget.this.fireEvent(new DocumentChangedEvent(event));
+               
+               updateBreakpoints(event);
+               updateAnnotations(event);
                
                // Immediately re-render on change if we have markers, to
                // ensure they're re-drawn in the correct locations.
@@ -185,7 +191,10 @@ public class AceEditorWidget extends Composite
             AceEditorWidget.this.fireEvent(new CursorChangedEvent(arg));
          }
       });
-      AceEditorNative.addEventListener(
+      
+      aceEventHandlers_ = new ArrayList<HandlerRegistration>();
+      
+      aceEventHandlers_.add(AceEditorNative.addEventListener(
                   editor_,
                   "undo",
                   new CommandWithArg<Void>()
@@ -194,8 +203,9 @@ public class AceEditorWidget extends Composite
                      {
                         fireEvent(new UndoRedoEvent(false));
                      }
-                  });
-      AceEditorNative.addEventListener(
+                  }));
+      
+      aceEventHandlers_.add(AceEditorNative.addEventListener(
                   editor_,
                   "redo",
                   new CommandWithArg<Void>()
@@ -204,8 +214,9 @@ public class AceEditorWidget extends Composite
                      {
                         fireEvent(new UndoRedoEvent(true));
                      }
-                  });
-      AceEditorNative.addEventListener(
+                  }));
+      
+      aceEventHandlers_.add(AceEditorNative.addEventListener(
                   editor_,
                   "paste",
                   new CommandWithArg<String>()
@@ -214,8 +225,9 @@ public class AceEditorWidget extends Composite
                      {
                         fireEvent(new PasteEvent(text));
                      }
-                  });
-      AceEditorNative.addEventListener(
+                  }));
+      
+      aceEventHandlers_.add(AceEditorNative.addEventListener(
                   editor_,
                   "mousedown",
                   new CommandWithArg<AceMouseEventNative>()
@@ -225,9 +237,9 @@ public class AceEditorWidget extends Composite
                      {
                         fireEvent(new AceClickEvent(event));
                      }
-                  });
+                  }));
       
-      AceEditorNative.addEventListener(
+      aceEventHandlers_.add(AceEditorNative.addEventListener(
             editor_.getRenderer(),
             "afterRender",
             new CommandWithArg<Void>()
@@ -235,111 +247,101 @@ public class AceEditorWidget extends Composite
                @Override
                public void execute(Void event)
                {
-                  manageChunkIcons();
+                  fireEvent(new RenderFinishedEvent());
+                  isRendered_ = true;
+                  events_.fireEvent(new AfterAceRenderEvent(AceEditorWidget.this.getEditor()));
+               }
+            }));
+      
+      addAttachHandler(new AttachEvent.Handler()
+      {
+         @Override
+         public void onAttachOrDetach(AttachEvent event)
+         {
+            if (!event.isAttached())
+            {
+               for (HandlerRegistration registration : aceEventHandlers_)
+                  registration.removeHandler();
+               aceEventHandlers_.clear();
+            }
+         }
+      });
+      
+      events_.addHandler(
+            BeginPasteEvent.TYPE,
+            new BeginPasteEvent.Handler()
+            {
+               
+               @Override
+               public void onBeginPaste(BeginPasteEvent event)
+               {
+                  maybeUnmapCtrlV();
+               }
+            });
+      
+      events_.addHandler(
+            EndPasteEvent.TYPE,
+            new EndPasteEvent.Handler()
+            {
+               
+               @Override
+               public void onEndPaste(EndPasteEvent event)
+               {
+                  maybeRemapCtrlV();
+               }
+            });
+      
+      events_.addHandler(
+            RStudioCommandExecutedFromShortcutEvent.TYPE,
+            new RStudioCommandExecutedFromShortcutEvent.Handler()
+            {
+               @Override
+               public void onRStudioCommandExecutedFromShortcut(RStudioCommandExecutedFromShortcutEvent event)
+               {
+                  clearKeyBuffers(editor_);
                }
             });
    }
    
-   @Inject
-   private void initialize(EventBus events)
-   {
-      events_ = events;
-   }
-   
-   private boolean isPseudoMarker(Element el)
-   {
-      return el.getOffsetHeight() == 0 || el.getOffsetWidth() == 0;
-   }
-   
-   private void manageChunkIcons()
-   {
-      Element[] icons = DomUtils.getElementsByClassName(
-            ThemeStyles.INSTANCE.inlineChunkIcon());
-      
-      for (Element icon : icons)
-         icon.removeFromParent();
-      
-      Element[] chunkStarts =
-            DomUtils.getElementsByClassName("rstudio_chunk_start");
-      
-      for (int i = 0; i < chunkStarts.length; i++)
-      {
-         Element el = chunkStarts[i];
-         
-         if (isPseudoMarker(el))
-            continue;
-         
-         if (el.getChildCount() > 0)
-            el.removeAllChildren();
-         
-         Image icon = createRunIcon();
-         displayIcon(icon, el);
-      }
-   }
-   
-   private void displayIcon(Image icon, Element underlyingMarker)
-   {
-      // Bail if the underlying marker isn't wide enough
-      if (underlyingMarker.getOffsetWidth() < 250)
-         return;
-      
-      // Get the 'virtual' parent -- this is the Ace scroller that houses all
-      // of the Ace content, where we want our icons to live. We need them
-      // to live here so that they properly hide when the user scrolls and
-      // e.g. markers are only partially visible.
-      Element virtualParent = DomUtils.getParent(underlyingMarker, 3);
-      
-      // We'd prefer to use 'getOffsetTop()' here, but that seems to give
-      // some janky dimensions due to how the Ace layers are ... layered,
-      // so we manually compute it.
-      int top =
-            underlyingMarker.getAbsoluteTop() -
-            virtualParent.getAbsoluteTop();
-      
-      // Manually align the icon so it lies in the 'middle' of the marker.
-      int iconHeight = icon.getHeight();
-      int markerHeight = underlyingMarker.getOffsetHeight();
-      
-      if (markerHeight > iconHeight)
-         top += (markerHeight - iconHeight) / 2;
-      
-      icon.addStyleName(ThemeStyles.INSTANCE.inlineChunkIcon());
-      
-      StyleBuilder builder = new StyleBuilder();
-      builder.add("top", top + "px");
-      icon.getElement().setAttribute("style", builder.toString());
-      
-      // Since we don't have a GWT panel to bind to, we need to capture
-      // the mouse events natively.
-      bindNativeClickToExecuteChunk(this, icon.getElement());
-      
-      virtualParent.appendChild(icon.getElement());
-   }
-   
-   private final void fireExecuteChunkEvent(Object object)
-   {
-      NativeEvent event = (NativeEvent) object;
-      if (event == null) return;
-      events_.fireEvent(new ExecuteChunkEvent(event.getClientX(), event.getClientY()));
-   }
-   
-   private static final native void bindNativeClickToExecuteChunk(AceEditorWidget widget,
-                                                                  Element element) 
-   /*-{
-      var self = this;
-      element.addEventListener("click", function(evt) {
-         widget.@org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget::fireExecuteChunkEvent(Ljava/lang/Object;)(evt);
-      });
+   // When the 'keyBinding' field is initialized (the field holding all keyboard
+   // handlers for an Ace editor), an associated '$data' element is used to store
+   // information on keys (to allow for keyboard chaining, and so on). We refresh
+   // that data whenever an RStudio AppCommand is executed (thereby ensuring that
+   // the current keybuffer is cleared as far as Ace is concerned)
+   private static final native void clearKeyBuffers(AceEditorNative editor) /*-{
+      var keyBinding = editor.keyBinding;
+      keyBinding.$data = {editor: editor};
    }-*/;
    
-   private Image createRunIcon()
+   private static native final void maybeUnmapCtrlV() /*-{
+      var Vim = $wnd.require("ace/keyboard/vim").handler;
+      var keymap = Vim.defaultKeymap;
+      for (var i = 0; i < keymap.length; i++) {
+         if (keymap[i].keys === "<C-v>") {
+            keymap[i].keys = "<DISABLED:C-v>";
+            break;
+         }
+      }
+   }-*/;
+   
+   private static native final void maybeRemapCtrlV() /*-{
+      var Vim = $wnd.require("ace/keyboard/vim").handler;
+      var keymap = Vim.defaultKeymap;
+      for (var i = 0; i < keymap.length; i++) {
+         if (keymap[i].keys === "<DISABLED:C-v>") {
+            keymap[i].keys = "<C-v>";
+            break;
+         }
+      }
+   }-*/;
+   
+   @Inject
+   private void initialize(EventBus events, ChunkIconsManager manager)
    {
-      Image icon = new Image(ThemeResources.INSTANCE.runChunk());
-      icon.setTitle(
-            commands_.executeCurrentChunk().getTooltip());
-      return icon;
+      events_ = events;
+      chunkIconsManager_ = manager;
    }
-
+   
    public HandlerRegistration addCursorChangedHandler(
          CursorChangedHandler handler)
    {
@@ -382,7 +384,8 @@ public class AceEditorWidget extends Composite
       editor_.getRenderer().updateFontSize();
       onResize();
       
-      fireEvent(new EditorLoadedEvent());
+      fireEvent(new EditorLoadedEvent(editor_));
+      events_.fireEvent(new EditorLoadedEvent(editor_));
 
       int delayMs = initToEmptyString_ ? 100 : 500;
 
@@ -458,6 +461,11 @@ public class AceEditorWidget extends Composite
    {
       return addHandler(handler, KeyPressEvent.getType());
    }
+   
+   public HandlerRegistration addKeyUpHandler(KeyUpHandler handler)
+   {
+      return addHandler(handler, KeyUpEvent.getType());
+   }
 
    public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)
    {
@@ -499,9 +507,9 @@ public class AceEditorWidget extends Composite
       return addHandler(handler, AceClickEvent.TYPE);
    }
    
-   public HandlerRegistration addExecuteChunkHandler(ExecuteChunkEvent.Handler handler)
+   public HandlerRegistration addExecuteChunkHandler(ExecuteChunksEvent.Handler handler)
    {
-      return addHandler(handler, ExecuteChunkEvent.TYPE);
+      return addHandler(handler, ExecuteChunksEvent.TYPE);
    }
    
    public void forceResize()
@@ -790,20 +798,34 @@ public class AceEditorWidget extends Composite
    
    // ---- Annotation related methods
    
-   private Range createAnchoredRange(Position start,
-                                     Position end)
+   private AnchoredRange createAnchoredRange(Position start,
+                                             Position end)
    {
       return getEditor().getSession().createAnchoredRange(start, end);
    }
    
    // This class binds an ace annotation (used for the gutter) with an
-   // inline marker (the underlining for associated lint)
-   class AnchoredAceAnnotation
+   // inline marker (the underlining for associated lint). We also store
+   // the associated marker. Ie, with some beautiful ASCII art:
+   //
+   //
+   //   1. | 
+   //   2. | foo <- function(apple) {    
+   //  /!\ |   print(Apple)
+   //   3. | }       ~~~~~
+   //   4. |
+   //
+   // The 'anchor' is associated with the position of the warning icon
+   // /!\; while the anchored range is associated with the underlying
+   // '~~~~~'. The marker id is needed to detach the annotation later.
+   private class AnchoredAceAnnotation
    {
       public AnchoredAceAnnotation(AceAnnotation annotation,
+                                   AnchoredRange range,
                                    int markerId)
       {
          annotation_ = annotation;
+         range_ = range;
          anchor_ = Anchor.createAnchor(
                editor_.getSession().getDocument(),
                annotation.row(),
@@ -812,8 +834,17 @@ public class AceEditorWidget extends Composite
       }
       
       public int getMarkerId() { return markerId_; }
-      public int row() { return anchor_.getRow(); }
-      public int column() { return anchor_.getColumn(); }
+      
+      public void detach()
+      {
+         if (range_ != null)
+            range_.detach();
+         
+         if (anchor_ != null)
+            anchor_.detach();
+         
+         editor_.getSession().removeMarker(markerId_);
+      }
       
       public AceAnnotation asAceAnnotation()
       {
@@ -825,6 +856,7 @@ public class AceEditorWidget extends Composite
       }
       
       private final AceAnnotation annotation_;
+      private final AnchoredRange range_;
       private final Anchor anchor_;
       private final int markerId_;
    }
@@ -857,7 +889,7 @@ public class AceEditorWidget extends Composite
       for (int i = 0; i < lint.length(); i++)
       {
          LintItem item = lint.get(i);
-         Range range = createAnchoredRange(
+         AnchoredRange range = createAnchoredRange(
                Position.create(item.getStartRow(), item.getStartColumn()),
                Position.create(item.getEndRow(), item.getEndColumn()));
          
@@ -871,11 +903,11 @@ public class AceEditorWidget extends Composite
          else if (item.getType() == "style")
             clazz = lintStyles_.style();
          
-         int id = editor_.getSession().addMarker(
-               range, clazz, "text", true);
+         int id = editor_.getSession().addMarker(range, clazz, "text", true);
          
          annotations_.add(new AnchoredAceAnnotation(
                annotations.get(i),
+               range,
                id));
       }
    }
@@ -901,7 +933,7 @@ public class AceEditorWidget extends Composite
          if (!range.contains(pos))
             annotations.add(annotation);
          else
-            editor_.getSession().removeMarker(annotation.getMarkerId());
+            annotation.detach();
       }
       annotations_ = annotations;
    }
@@ -909,7 +941,7 @@ public class AceEditorWidget extends Composite
    public void clearAnnotations()
    {
       for (int i = 0; i < annotations_.size(); i++)
-         editor_.getSession().removeMarker(annotations_.get(i).getMarkerId());
+         annotations_.get(i).detach();
       annotations_.clear();
    }
    
@@ -978,13 +1010,9 @@ public class AceEditorWidget extends Composite
                
                Range range = marker.getRange();
                if (!range.contains(cursor))
-               {
                   newAnnotations.push(annotation.asAceAnnotation());
-               }
                else
-               {
                   editor_.getSession().removeMarker(markerId);
-               }
             }
             
             editor_.getSession().setAnnotations(newAnnotations);
@@ -994,10 +1022,32 @@ public class AceEditorWidget extends Composite
       });
    }
    
+   public void setDragEnabled(boolean enabled)
+   {
+      // the ACE API currently provides no way to disable dropping text 
+      // from external sources specifically (the dragEnabled option affects
+      // only internal ACE dragging); for now, just put the whole editor into
+      // read-only mode while dragging, which prevents it from accepting the
+      // text 
+      editor_.setReadOnly(!enabled);
+   }
+   
+   public LineWidgetManager getLineWidgetManager()
+   {
+      return editor_.getLineWidgetManager();
+   }
+   
+   public boolean isRendered()
+   {
+      return isRendered_;
+   }
+
    private final AceEditorNative editor_;
    private final HandlerManager capturingHandlers_;
+   private final List<HandlerRegistration> aceEventHandlers_;
    private boolean initToEmptyString_ = true;
    private boolean inOnChangeHandler_ = false;
+   private boolean isRendered_ = false;
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
    
    private ArrayList<AnchoredAceAnnotation> annotations_ =
@@ -1005,7 +1055,6 @@ public class AceEditorWidget extends Composite
    private LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
    
    private EventBus events_;
+   private ChunkIconsManager chunkIconsManager_;
    private Commands commands_ = RStudioGinjector.INSTANCE.getCommands();
-   
-   
 }

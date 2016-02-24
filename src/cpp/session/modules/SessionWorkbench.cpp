@@ -22,6 +22,7 @@
 #include <boost/format.hpp>
 
 #include <core/Error.hpp>
+#include <core/Debug.hpp>
 #include <core/Exec.hpp>
 #include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
@@ -38,12 +39,14 @@
 #include <r/session/RSession.hpp>
 #include <r/session/RClientState.hpp> 
 #include <r/RFunctionHook.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionConsoleProcess.hpp>
+#include <session/RVersionSettings.hpp>
 
 #include "SessionVCS.hpp"
 #include "SessionGit.hpp"
@@ -67,8 +70,92 @@ namespace session {
 namespace modules { 
 namespace workbench {
 
-namespace {   
+namespace {
+
+module_context::WaitForMethodFunction s_waitForActiveDocumentContext;
+
+SEXP rs_getActiveDocumentContext()
+{
+   // prepare context event
+   ClientEvent activeDocumentContextEvent(client_events::kGetActiveDocumentContext);
+   
+   // wait for event to complete
+   json::JsonRpcRequest request;
+   
+   bool succeeded = s_waitForActiveDocumentContext(&request, activeDocumentContextEvent);
+   if (!succeeded)
+      return R_NilValue;
+   
+   std::string id;
+   std::string path;
+   std::string contents;
+   json::Array selection;
+   
+   Error error = json::readObjectParam(request.params, 0,
+                                       "id", &id,
+                                       "path", &path,
+                                       "contents", &contents,
+                                       "selection", &selection);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+   
+   // if the id is empty, implies the source window is closed or
+   // no documents were available
+   if (id.empty())
+      return R_NilValue;
+   
+   using namespace r::sexp;
+   Protect protect;
+   ListBuilder builder(&protect);
+   
+   builder.add("id", id);
+   builder.add("path", path);
+   builder.add("contents", core::algorithm::split(contents, "\n"));
+   
+   // add in the selection ranges
+   ListBuilder selectionBuilder(&protect);
+   for (std::size_t i = 0; i < selection.size(); ++i)
+   {
+      json::Object object = selection[i].get_obj();
       
+      json::Array rangeJson;
+      std::string text;
+      Error error = json::readObject(object,
+                                     "range", &rangeJson,
+                                     "text", &text);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+      
+      std::vector<int> range;
+      if (!json::fillVectorInt(rangeJson, &range))
+      {
+         LOG_WARNING_MESSAGE("failed to parse document range");
+         continue;
+      }
+      
+      // the ranges passed use 0-based indexing;
+      // transform to 1-based indexing for R
+      for (std::size_t i = 0; i < range.size(); ++i)
+         ++range[i];
+      
+      ListBuilder builder(&protect);
+      builder.add("range", range);
+      builder.add("text", text);
+      
+      selectionBuilder.add(builder);
+   }
+   
+   builder.add("selection", selectionBuilder);
+   
+   return r::sexp::create(builder, &protect);
+}
+
 Error setClientState(const json::JsonRpcRequest& request, 
                      json::JsonRpcResponse* pResponse)
 {   
@@ -168,11 +255,12 @@ FilePath detectedTerminalPath()
 Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 {
    // read params
-   json::Object generalPrefs, historyPrefs, packagesPrefs, projectsPrefs,
-                sourceControlPrefs, compilePdfPrefs;
+   json::Object generalPrefs, historyPrefs, editingPrefs, packagesPrefs,
+                projectsPrefs, sourceControlPrefs, compilePdfPrefs;
    Error error = json::readObjectParam(request.params, 0,
                               "general_prefs", &generalPrefs,
                               "history_prefs", &historyPrefs,
+                              "editing_prefs", &editingPrefs,
                               "packages_prefs", &packagesPrefs,
                               "projects_prefs", &projectsPrefs,
                               "source_control_prefs", &sourceControlPrefs,
@@ -187,25 +275,60 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 
    // read and set general prefs
    int saveAction;
-   bool loadRData, rProfileOnResume;
-   std::string initialWorkingDir;
+   bool loadRData, rProfileOnResume, restoreProjectRVersion, showLastDotValue;
+   bool reuseSessionsForProjectLinks;
+   std::string initialWorkingDir, showUserHomePage;
+   json::Object defaultRVersionJson;
    error = json::readObject(generalPrefs,
+                            "show_user_home_page", &showUserHomePage,
+                            "reuse_sessions_for_project_links", &reuseSessionsForProjectLinks,
                             "save_action", &saveAction,
                             "load_rdata", &loadRData,
                             "rprofile_on_resume", &rProfileOnResume,
-                            "initial_working_dir", &initialWorkingDir);
+                            "initial_working_dir", &initialWorkingDir,
+                            "default_r_version", &defaultRVersionJson,
+                            "restore_project_r_version", &restoreProjectRVersion,
+                            "show_last_dot_value", &showLastDotValue);
    if (error)
       return error;
 
+   // detect if lastDotValue changed
+   bool lastDotValueChanged = userSettings().showLastDotValue() != showLastDotValue;
+
+   // update settings
    userSettings().beginUpdate();
+   userSettings().setShowUserHomePage(showUserHomePage);
+   userSettings().setReuseSessionsForProjectLinks(reuseSessionsForProjectLinks);
    userSettings().setSaveAction(saveAction);
    userSettings().setLoadRData(loadRData);
    userSettings().setRprofileOnResume(rProfileOnResume);
+   userSettings().setShowLastDotValue(showLastDotValue);
    userSettings().setInitialWorkingDirectory(FilePath(initialWorkingDir));
    userSettings().endUpdate();
 
+   // refresh environment if lastDotValueChanged
+   if (lastDotValueChanged)
+   {
+      ClientEvent refreshEvent(client_events::kEnvironmentRefresh);
+      module_context::enqueClientEvent(refreshEvent);
+   }
+
    // sync underlying R save action
    module_context::syncRSaveAction();
+
+   // versions prefs
+   std::string defaultRVersion, defaultRVersionHome;
+   error = json::readObject(defaultRVersionJson,
+                            "version", &defaultRVersion,
+                            "r_home", &defaultRVersionHome);
+   if (error)
+      return error;
+
+   RVersionSettings versionSettings(module_context::userScratchPath(),
+                                    FilePath(options().getOverlayOption(
+                                                kSessionSharedStoragePath)));
+   versionSettings.setDefaultRVersion(defaultRVersion, defaultRVersionHome);
+   versionSettings.setRestoreProjectRVersion(restoreProjectRVersion);
 
    // read and set history prefs
    bool alwaysSave, removeDuplicates;
@@ -219,9 +342,19 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().setRemoveHistoryDuplicates(removeDuplicates);
    userSettings().endUpdate();
 
+   // read and set editing prefs
+   int lineEndings;
+   error = json::readObject(editingPrefs,
+                            "line_endings", &lineEndings);
+   if (error)
+      return error;
+   userSettings().beginUpdate();
+   userSettings().setLineEndings((core::string_utils::LineEnding)lineEndings);
+   userSettings().endUpdate();
+
    // read and set packages prefs
    bool useInternet2, cleanupAfterCheckSuccess, viewDirAfterCheckFailure;
-   bool hideObjectFiles, useDevtools;
+   bool hideObjectFiles, useDevtools, useSecureDownload, useNewlineInMakefiles;
    json::Object cranMirrorJson;
    error = json::readObject(packagesPrefs,
                             "cran_mirror", &cranMirrorJson,
@@ -232,17 +365,21 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
                             "cleanup_after_check_success", &cleanupAfterCheckSuccess,
                             "viewdir_after_check_failure", &viewDirAfterCheckFailure,
                             "hide_object_files", &hideObjectFiles,
-                            "use_devtools", &useDevtools);
+                            "use_devtools", &useDevtools,
+                            "use_secure_download", &useSecureDownload,
+                            "use_newline_in_makefiles", &useNewlineInMakefiles);
 
    if (error)
        return error;
    userSettings().beginUpdate();
    userSettings().setUseDevtools(useDevtools);
+   userSettings().setSecurePackageDownload(useSecureDownload);
    userSettings().setCRANMirror(toCRANMirror(cranMirrorJson));
    userSettings().setUseInternet2(useInternet2);
    userSettings().setCleanupAfterRCmdCheck(cleanupAfterCheckSuccess);
    userSettings().setHideObjectFiles(hideObjectFiles);
    userSettings().setViewDirAfterRCmdCheck(viewDirAfterCheckFailure);
+   userSettings().setUseNewlineInMakefiles(useNewlineInMakefiles);
 
    // NOTE: currently there is no UI for bioconductor mirror so we
    // don't want to set it (would have side effect of overwriting
@@ -253,6 +390,9 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    */
    userSettings().endUpdate();
 
+   // verify cran mirror security (will either update to https or
+   // will print a warning)
+   module_context::reconcileSecureDownloadConfiguration();
 
    // read and set projects prefs
    bool restoreLastProject;
@@ -316,6 +456,9 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    // set ui prefs
    userSettings().setUiPrefs(uiPrefs);
 
+   // fire preferences saved event
+   module_context::events().onPreferencesSaved();
+
    return Success();
 }
 
@@ -357,18 +500,35 @@ json::Object toBioconductorMirrorJson(
 Error getRPrefs(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
+   // proj settings
+   RVersionSettings versionSettings(module_context::userScratchPath(),
+                                    FilePath(options().getOverlayOption(
+                                                kSessionSharedStoragePath)));
+   json::Object defaultRVersionJson;
+   defaultRVersionJson["version"] = versionSettings.defaultRVersion();
+   defaultRVersionJson["r_home"] = versionSettings.defaultRVersionHome();
+
    // get general prefs
    json::Object generalPrefs;
+   generalPrefs["show_user_home_page"] = userSettings().showUserHomePage();
+   generalPrefs["reuse_sessions_for_project_links"] = userSettings().reuseSessionsForProjectLinks();
    generalPrefs["save_action"] = userSettings().saveAction();
    generalPrefs["load_rdata"] = userSettings().loadRData();
    generalPrefs["rprofile_on_resume"] = userSettings().rProfileOnResume();
    generalPrefs["initial_working_dir"] = module_context::createAliasedPath(
          userSettings().initialWorkingDirectory());
+   generalPrefs["default_r_version"] = defaultRVersionJson;
+   generalPrefs["restore_project_r_version"] = versionSettings.restoreProjectRVersion();
+   generalPrefs["show_last_dot_value"] = userSettings().showLastDotValue();
 
    // get history prefs
    json::Object historyPrefs;
    historyPrefs["always_save"] = userSettings().alwaysSaveHistory();
    historyPrefs["remove_duplicates"] = userSettings().removeHistoryDuplicates();
+
+   // get editing prefs
+   json::Object editingPrefs;
+   editingPrefs["line_endings"] = (int)userSettings().lineEndings();
 
    // get packages prefs
    json::Object packagesPrefs;
@@ -381,6 +541,8 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    packagesPrefs["cleanup_after_check_success"] = userSettings().cleanupAfterRCmdCheck();
    packagesPrefs["viewdir_after_check_failure"] = userSettings().viewDirAfterRCmdCheck();
    packagesPrefs["hide_object_files"] = userSettings().hideObjectFiles();
+   packagesPrefs["use_secure_download"] = userSettings().securePackageDownload();
+   packagesPrefs["use_newline_in_makefiles"] = userSettings().useNewlineInMakefiles();
 
    // get projects prefs
    json::Object projectsPrefs;
@@ -422,6 +584,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    json::Object result;
    result["general_prefs"] = generalPrefs;
    result["history_prefs"] = historyPrefs;
+   result["editing_prefs"] = editingPrefs;
    result["packages_prefs"] = packagesPrefs;
    result["projects_prefs"] = projectsPrefs;
    result["source_control_prefs"] = sourceControlPrefs;
@@ -495,6 +658,28 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error executeCode(const json::JsonRpcRequest& request,
+                  json::JsonRpcResponse* pResponse)
+{
+   // get the code
+   std::string code;
+   Error error = json::readParam(request.params, 0, &code);
+   if (error)
+      return error;
+
+   // execute the code (show error in the console)
+   error = r::exec::executeString("{" + code + "}");
+   if (error)
+   {
+      std::string errMsg = "Error executing code: " + code + "\n";
+      errMsg += r::endUserErrorMessage(error);
+      module_context::consoleWriteError(errMsg + "\n");
+   }
+
+   return Success();
+}
+
+
 Error createSshKey(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
@@ -518,6 +703,9 @@ Error createSshKey(const json::JsonRpcRequest& request,
 
    // resolve key path
    FilePath sshKeyPath = module_context::resolveAliasedPath(path);
+   error = sshKeyPath.parent().ensureDirectory();
+   if (error)
+      return error;
    FilePath sshPublicKeyPath = sshKeyPath.parent().complete(
                                              sshKeyPath.stem() + ".pub");
    if (sshKeyPath.exists() || sshPublicKeyPath.exists())
@@ -730,6 +918,10 @@ Error setCRANMirror(const json::JsonRpcRequest& request,
    userSettings().setCRANMirror(cranMirror);
    userSettings().endUpdate();
 
+   // verify cran mirror security (will either update to https or
+   // will print a warning)
+   module_context::reconcileSecureDownloadConfiguration();
+
    return Success();
 }
 
@@ -812,6 +1004,13 @@ Error initialize()
                                                          "edit_completed");
    }
    
+   // register waitForMethod for active document context
+   using namespace module_context;
+   s_waitForActiveDocumentContext =
+         registerWaitForMethod("get_active_document_context_completed");
+   
+   RS_REGISTER_CALL_METHOD(rs_getActiveDocumentContext, 0);
+   
    // complete initialization
    using boost::bind;
    using namespace module_context;
@@ -826,7 +1025,8 @@ Error initialize()
       (bind(registerRpcMethod, "set_cran_mirror", setCRANMirror))
       (bind(registerRpcMethod, "get_terminal_options", getTerminalOptions))
       (bind(registerRpcMethod, "create_ssh_key", createSshKey))
-      (bind(registerRpcMethod, "start_shell_dialog", startShellDialog));
+      (bind(registerRpcMethod, "start_shell_dialog", startShellDialog))
+      (bind(registerRpcMethod, "execute_code", executeCode));
    return initBlock.execute();
 }
 

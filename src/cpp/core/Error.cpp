@@ -169,6 +169,14 @@ Error systemError(int value, const ErrorLocation& location)
 }
 
 Error systemError(int value,
+                  const Error& cause,
+                  const ErrorLocation& location)
+{
+   using namespace boost::system ;
+   return Error(error_code(value, get_system_category()), cause, location);
+}
+
+Error systemError(int value,
                   const std::string& description,
                   const ErrorLocation& location)
 {

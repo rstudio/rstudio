@@ -20,13 +20,18 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 
+import org.rstudio.core.client.command.ApplicationCommandManager;
+import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.command.ShortcutViewer;
+import org.rstudio.core.client.command.UserCommandManager;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationView;
+import org.rstudio.studio.client.application.ApplicationVisibility;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.ui.ApplicationWindow;
+import org.rstudio.studio.client.application.ui.CodeSearchLauncher;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.DefaultGlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -79,6 +84,7 @@ import org.rstudio.studio.client.rmarkdown.ui.RmdOutputPanel;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputPresenter;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputWindow;
 import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.model.PlotPublishMRUList;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
 import org.rstudio.studio.client.server.Server;
@@ -90,10 +96,12 @@ import org.rstudio.studio.client.shiny.ui.ShinyApplicationView;
 import org.rstudio.studio.client.shiny.ui.ShinyApplicationWindow;
 import org.rstudio.studio.client.vcs.VCSApplicationView;
 import org.rstudio.studio.client.vcs.ui.VCSApplicationWindow;
+import org.rstudio.studio.client.workbench.AddinsMRUList;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchMainView;
+import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchWidget;
@@ -174,11 +182,16 @@ import org.rstudio.studio.client.workbench.views.presentation.PresentationTab;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourcePane;
+import org.rstudio.studio.client.workbench.views.source.SourceSatelliteView;
+import org.rstudio.studio.client.workbench.views.source.SourceSatelliteWindow;
+import org.rstudio.studio.client.workbench.views.source.SourceWindow;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.TexServerOperations;
@@ -219,6 +232,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(WorkbenchListManager.class).asEagerSingleton();
       bind(ApplicationQuit.class).asEagerSingleton();
       bind(ApplicationInterrupt.class).asEagerSingleton();
+      bind(ApplicationVisibility.class).asEagerSingleton();
       bind(ClientStateUpdater.class).asEagerSingleton();
       bind(ConsoleProcessFactory.class).asEagerSingleton();
       bind(RnwWeaveRegistry.class).asEagerSingleton();
@@ -239,6 +253,14 @@ public class RStudioGinModule extends AbstractGinModule
       bind(RmdOutput.class).in(Singleton.class);
       bind(HelpStrategy.class).in(Singleton.class);
       bind(RSAccountConnector.class).in(Singleton.class);
+      bind(PlotPublishMRUList.class).asEagerSingleton();
+      bind(SourceWindowManager.class).in(Singleton.class);
+      bind(SourceWindow.class).in(Singleton.class);
+      bind(EditorCommandManager.class).in(Singleton.class);
+      bind(UserCommandManager.class).in(Singleton.class);
+      bind(ApplicationCommandManager.class).in(Singleton.class);
+      bind(CodeSearchLauncher.class).in(Singleton.class);
+      bind(AddinsMRUList.class).asEagerSingleton();
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;
@@ -251,6 +273,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ShinyApplicationView.class).to(ShinyApplicationWindow.class);
       bind(RmdOutputView.class).to(RmdOutputWindow.class);
       bind(DataTableView.class).to(DataViewerWindow.class);
+      bind(SourceSatelliteView.class).to(SourceSatelliteWindow.class);
       
       bind(Server.class).to(RemoteServer.class) ;
       bind(WorkbenchServerOperations.class).to(RemoteServer.class) ;
@@ -360,10 +383,13 @@ public class RStudioGinModule extends AbstractGinModule
       bind(LintServerOperations.class).to(RemoteServer.class);
       bind(RoxygenServerOperations.class).to(RemoteServer.class);
       bind(SnippetServerOperations.class).to(RemoteServer.class);
+      bind(AddinsServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 
       bind(DocDisplay.class).to(AceEditor.class);
+      
+      bind(ChunkIconsManager.class).in(Singleton.class);
       
       install(new GinFactoryModuleBuilder()
          .implement(CompileOutputPaneDisplay.class, CompileOutputPane.class)

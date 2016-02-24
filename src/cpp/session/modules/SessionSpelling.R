@@ -13,7 +13,7 @@
 #
 #
 
-.rs.addFunction("downloadAllDictionaries", function(targetDir)
+.rs.addFunction("downloadAllDictionaries", function(targetDir, secure)
 {
    # archive we are downloading
    allDicts <- "all-dictionaries.zip"
@@ -23,27 +23,14 @@
    if (file.exists(allDictsTemp))
       file.remove(allDictsTemp)
    
-   # download function
-   download <- function(protocol, method) {
-      download.file(paste(protocol,
-                          "://s3.amazonaws.com/rstudio-dictionaries/",
-                          allDicts, sep=""),
-                    destfile=allDictsTemp,
-                    method=method,
-                    cacheOK = FALSE,
-                    quiet = TRUE)
-   }
-   
-   # system-specific download methods (to try to get https)
-   switch(Sys.info()[['sysname']],
-          Windows = { method <- "internal"},
-          Linux   = { method <- "wget"},
-          Darwin  = { method <- "curl"})
-   
-   # try downloading using https, fallback to http if it fails for any reason
-   tryCatch(download("https", method), 
-            error = function(e) download("http", "internal"))
-   
+   # download the dictionary
+   download.file(paste(ifelse(secure, "https", "http"),
+                       "://s3.amazonaws.com/rstudio-dictionaries/",
+                       allDicts, sep=""),
+                 destfile=allDictsTemp,
+                 cacheOK = FALSE,
+                 quiet = TRUE)
+      
    # define function to remove the existing dictionaries then call it
    removeExisting <- function() {
       suppressWarnings({

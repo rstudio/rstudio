@@ -13,10 +13,11 @@
  *
  */package org.rstudio.studio.client.rsconnect.ui;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardPage;
-import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 
@@ -32,40 +33,33 @@ public class RSConnectPublishWizard
    private static WizardPage<RSConnectPublishInput, RSConnectPublishResult>
       createFirstPage(RSConnectPublishInput input)
    {
-      // Select the first page of the wizard based on the kind of content we're
-      // dealing with (all other content type situations don't require a 
-      // wizard to resolve)
-      if (input.getContentType() == RSConnect.CONTENT_TYPE_PLOT ||
-          input.getContentType() == RSConnect.CONTENT_TYPE_HTML ||
-          input.getContentType() == RSConnect.CONTENT_TYPE_PRES)
+      if (!input.hasDocOutput() && input.isMultiRmd())
       {
-         // self-contained static content
-         return new PublishStaticDestPage("Publish", "Publish", null, input, 
+         // multiple docs -- see if we should send them all up
+         return new PublishMultiplePage("Publish", "Publish", null, input);
+      }
+      else if (!input.isMultiRmd() && 
+               (!input.isExternalUIEnabled() || !input.isSelfContained()))
+      {
+         // a single doc, but it can't go to RPubs because RPubs is disabled,
+         // or because the doc is not self-contained
+         return new PublishReportSourcePage("Publish", "Publish", null, input, 
                false);
-      }
-      else if (input.getContentType() == RSConnect.CONTENT_TYPE_DOCUMENT &&
-               input.getSourceRmd().getExtension().toLowerCase().equals(".md"))
-      {
-         // pure Markdown -- always publish as static
-         return new PublishStaticDestPage("Publish", "Publish", null, input, 
-               false);
-      }
-      else if (input.getContentType() == RSConnect.CONTENT_TYPE_DOCUMENT &&
-               input.isMultiRmd())
-      {
-         return new PublishMultiplePage(input);
-      }
-      else if (input.getContentType() == RSConnect.CONTENT_TYPE_DOCUMENT &&
-               !input.isMultiRmd() &&
-               input.isConnectUIEnabled())
-      {
-         return new PublishReportSourcePage("Publish", "Publish", input, false);
       }
       else
       {
-         // shouldn't happen but this is a safe default
-         return new PublishFilesPage("Publish", "Publish", null, input, false,
-               false);
+         // non-Shiny doc--see which service user wants to publish to
+         return new PublishDocServicePage("Publish", "Publish", null, input);
       }
+      // note that single Shiny docs don't require a wizard (the user can choose
+      // a destination directly in the dialog)
+   }
+   
+   @Override
+   protected ArrayList<String> getWizardBodyStyles()
+   {
+      ArrayList<String> styles = super.getWizardBodyStyles();
+      styles.add(RSConnectDeploy.RESOURCES.style().wizardDeployPage());
+      return styles;
    }
 }

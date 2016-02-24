@@ -43,6 +43,7 @@ public class HelpLink extends Composite
                    final boolean withVersionInfo)
    {
       rstudioLink_ = rstudioLink;
+      withVersionInfo_ = withVersionInfo;
 
       HorizontalPanel helpPanel = new HorizontalPanel();
     
@@ -55,7 +56,7 @@ public class HelpLink extends Composite
          {
             RStudioGinjector.INSTANCE.getGlobalDisplay().openRStudioLink(
                                                          rstudioLink_,
-                                                         withVersionInfo);
+                                                         withVersionInfo_);
          }  
       });
       helpPanel.add(helpLink_);
@@ -73,6 +74,12 @@ public class HelpLink extends Composite
       rstudioLink_ = link;
    }
    
+   public void setWithVersionInfo(boolean withVersionInfo)
+   {
+      withVersionInfo_ = withVersionInfo;
+   }
+   
    private HyperlinkLabel helpLink_;
    private String rstudioLink_;
+   private boolean withVersionInfo_;
 }

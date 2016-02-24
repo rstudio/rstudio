@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.user.rebind.SourceWriter;
 
+import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -29,6 +30,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ShortcutsEmitter
 {
@@ -72,84 +75,132 @@ public class ShortcutsEmitter
             throw new UnableToCompleteException();
          }
 
-         printShortcut(writer, condition, shortcutValue, 
-                       command, groupName_, title, disableModes);
+         List<String> shortcuts = preprocessShortcutValue(shortcutValue);
+         for (String shortcut : shortcuts)
+         {
+            printShortcut(writer, condition, shortcut, 
+                  command, groupName_, title, disableModes);
+         }
       }
+   }
+   
+   private static List<String> preprocessShortcutValue(String shortcutValue)
+   {
+      List<String> shortcuts = new ArrayList<String>();
+      
+      for (String keySequence : shortcutValue.split("\\|"))
+      {
+         if (keySequence.indexOf("Cmd") != -1)
+         {
+            shortcuts.add(keySequence.replaceAll("Cmd", "Ctrl"));
+            shortcuts.add(keySequence.replaceAll("Cmd", "Meta"));
+         }
+         else
+         {
+            shortcuts.add(keySequence);
+         }
+      }
+      
+      return shortcuts;
    }
 
    private void printShortcut(SourceWriter writer,
                               String condition,
-                              String shortcutValue,
+                              String shortcut,
                               String command,
                               String shortcutGroup,
                               String title,
                               String disableModes) throws UnableToCompleteException
    {
-      String[] chunks = shortcutValue.split("\\+");
-      int modifiers = KeyboardShortcut.NONE;
-      boolean cmd = false;
-      for (int i = 0; i < chunks.length - 1; i++)
+      List<Pair<Integer, String>> keys = new ArrayList<Pair<Integer, String>>();
+      for (String keyCombination : shortcut.split("\\s+"))
       {
-         String m = chunks[i];
-         if (m.equals("Ctrl"))
-            modifiers += KeyboardShortcut.CTRL;
-         else if (m.equals("Meta"))
-            modifiers += KeyboardShortcut.META;
-         else if (m.equals("Alt"))
-            modifiers += KeyboardShortcut.ALT;
-         else if (m.equals("Shift"))
-            modifiers += KeyboardShortcut.SHIFT;
-         else if (m.equals("Cmd"))
-            cmd = true;
-         else
+         String[] chunks = keyCombination.split("\\+");
+         
+         // Build the shortcut modifiers integer and validate
+         // as we build.
+         int modifiers = KeyboardShortcut.NONE;
+         for (int i = 0; i < chunks.length - 1; i++)
          {
-            logger_.log(Type.ERROR, "Invalid shortcut " + shortcutValue);
+            String m = chunks[i];
+            if (m.equals("Ctrl"))
+               modifiers += KeyboardShortcut.CTRL;
+            else if (m.equals("Alt"))
+               modifiers += KeyboardShortcut.ALT;
+            else if (m.equals("Shift"))
+               modifiers += KeyboardShortcut.SHIFT;
+            else if (m.equals("Meta"))
+               modifiers += KeyboardShortcut.META;
+            else
+            {
+               logger_.log(
+                     Type.ERROR,
+                     "Invalid modifier '" + m + "'; expected one of " +
+                     "'Ctrl', 'Alt', 'Shift', 'Meta'");
+               
+               throw new UnableToCompleteException();
+            }
+         }
+            
+         // Validate the key name.
+         String key = toKey(chunks[chunks.length - 1]);
+         if (key == null)
+         {
+            logger_.log(Type.ERROR,
+                  "Invalid shortcut '" + shortcut + "', only " +
+                  "modified alphanumeric characters, enter, " +
+                  "left, right, up, down, pageup, pagedown, " +
+                  "and tab are valid");
             throw new UnableToCompleteException();
          }
+         
+         // Push the parsed keys to the list.
+         keys.add(new Pair<Integer, String>(modifiers, key));
       }
-
-      String key = toKey(chunks[chunks.length - 1]);
-      if (key == null)
-      {
-         logger_.log(Type.ERROR, "Invalid shortcut " + shortcutValue + ", only " +
-                                 "modified alphanumeric characters, enter, " +
-                                 "left, right, up, down, pageup, pagedown, " +
-                                 "and tab are valid");
-         throw new UnableToCompleteException();
-      }
-
+      
+      // Emit the relevant code registering these shortcuts.
       if (!condition.isEmpty())
       {
          writer.println("if (" + condition + ") {");
          writer.indent();
       }
-
-      if (cmd)
+      
+      if (keys.size() == 1)
       {
+         int modifiers = keys.get(0).first;
+         String key = keys.get(0).second;
          writer.println("ShortcutManager.INSTANCE.register(" +
-                        (modifiers| KeyboardShortcut.CTRL) + ", " +
-                        key + ", " +
-                        command + ", " +
-                        "\"" + shortcutGroup + "\", " +
-                        "\"" + title + "\", " +
-                        "\"" + disableModes + "\");");
+               modifiers + ", " +
+               key + ", " +
+               command + ", " +
+               "\"" + shortcutGroup + "\", " +
+               "\"" + title + "\", " + 
+               "\"" + disableModes + "\");");
+      }
+      else if (keys.size() == 2)
+      {
+         int m1    = keys.get(0).first;
+         String k1 = keys.get(0).second;
+         int m2    = keys.get(1).first;
+         String k2 = keys.get(1).second;
+         
          writer.println("ShortcutManager.INSTANCE.register(" +
-                        (modifiers| KeyboardShortcut.META) + ", " +
-                        key + ", " +
-                        command + ", " +
-                        "\"" + shortcutGroup + "\", " +
-                        "\"" + title + "\", " + 
-                        "\"" + disableModes + "\");");
+               m1 + ", " +
+               k1 + ", " +
+               m2 + ", " +
+               k2 + ", " +
+               command + ", " +
+               "\"" + shortcutGroup + "\", " +
+               "\"" + title + "\", " + 
+               "\"" + disableModes + "\");");
+         
       }
       else
       {
-         writer.println("ShortcutManager.INSTANCE.register(" +
-                        modifiers + ", " +
-                        key + ", " +
-                        command + ", " +
-                        "\"" + shortcutGroup + "\", " +
-                        "\"" + title + "\", " + 
-                        "\"" + disableModes + "\");");
+         logger_.log(
+               Type.ERROR,
+               "Invalid key sequence: sequences must be of length 1 or 2");
+         throw new UnableToCompleteException();
       }
 
       if (!condition.isEmpty())
@@ -211,7 +262,7 @@ public class ShortcutsEmitter
          return "190";
       if (val.equals("="))
          return "187";
-      if (val.equals("<"))
+      if (val.equals(","))
          return "188";
       if (val.equals("-"))
          return "189";

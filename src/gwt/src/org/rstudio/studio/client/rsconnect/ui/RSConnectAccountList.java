@@ -26,6 +26,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -48,13 +49,16 @@ public class RSConnectAccountList extends Composite
                RSConnectResources.INSTANCE.localAccountIconSmall());
          icon.getElement().getStyle().setMarginRight(2, Unit.PX);
          panel.add(icon);
-         Label serverLabel = new Label(account.getServer() + ": ");
-         serverLabel.getElement().getStyle().setFontWeight(FontWeight.BOLD);
-         serverLabel.getElement().getStyle().setMarginRight(5, Unit.PX);
-         panel.add(serverLabel);
 
-         Label nameLabel = new Label(account.getName());
+         Label nameLabel = new Label(account.getName() + ":");
+         nameLabel.getElement().getStyle().setCursor(Cursor.POINTER);
+         nameLabel.getElement().getStyle().setFontWeight(FontWeight.BOLD);
+         nameLabel.getElement().getStyle().setMarginRight(4, Unit.PX);
          panel.add(nameLabel);
+
+         Label serverLabel = new Label(account.getServer());
+         serverLabel.getElement().getStyle().setCursor(Cursor.POINTER);
+         panel.add(serverLabel);
 
          initWidget(panel);
       }
@@ -107,7 +111,7 @@ public class RSConnectAccountList extends Composite
       });
    }
    
-   public void setAccountList(JsArray<RSConnectAccount> accounts)
+   public int setAccountList(JsArray<RSConnectAccount> accounts)
    {
       accounts_.clear();
       accountList_.clearItems();
@@ -123,6 +127,7 @@ public class RSConnectAccountList extends Composite
       {
          onRefreshCompleted_.execute();
       }
+      return accounts_.size();
    }
    
    public RSConnectAccount getSelectedAccount()
@@ -184,6 +189,11 @@ public class RSConnectAccountList extends Composite
    public void setShowCloudAccounts(boolean show)
    {
       showCloudAccounts_ = show;
+   }
+   
+   public boolean getShowCloudAccounts()
+   {
+      return showCloudAccounts_;
    }
    
    private final WidgetListBox<AccountEntry> accountList_;

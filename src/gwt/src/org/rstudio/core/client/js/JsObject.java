@@ -142,11 +142,41 @@ public class JsObject extends JavaScriptObject
    }-*/;
 
    public final native JsArrayString keys() /*-{
-      var keys = [];
-      for (var key in this) {
-         keys.push(key);
-      }
-      return keys;
+      return Object.keys(this);
    }-*/;
    
+   public final Iterable<String> iterableKeys()
+   {
+      return JsUtil.asIterable(keys());
+   }
+   
+   public final native void insert(JsObject other) /*-{
+      for (var key in other) {
+         this[key] = other[key];
+      }
+   }-*/;
+   
+   public final native JsObject clone() /*-{
+      // recursive function to handle cloning the object
+      var cloneObj = function(obj) {
+         var cloned = null;
+         if (obj == null || typeof obj != "object") 
+            return obj;
+         if (Object.prototype.toString.call(obj) == "[object Array]") {
+            cloned = [];
+            for (var i = 0; i < obj.length; i++) {
+               cloned[i] = cloneObj(obj[i]);
+            }
+         } else if (obj instanceof Object) {
+            cloned = {};
+            for (var attrib in obj)
+               if (obj.hasOwnProperty(attrib))
+                  cloned[attrib] = cloneObj(obj[attrib]);
+         } 
+         return cloned;
+      };
+      
+      // perform the clone on ourselves
+      return cloneObj(this);
+   }-*/;
 }

@@ -67,6 +67,7 @@ protected:
 protected:
      WebView* pView_;
      QToolBar* pToolbar_;
+     QString getName();
 
 private:
      int progress_;

@@ -21,6 +21,8 @@
 #include <QMainWindow>
 #include <QFileDialog>
 
+#include <core/system/Process.hpp>
+
 namespace rstudio {
 namespace core {
    class FilePath;
@@ -37,8 +39,11 @@ core::FilePath userLogPath();
 double devicePixelRatio(QMainWindow* pMainWindow);
 
 bool isOSXMavericks();
+bool isCentOS();
 
 void raiseAndActivateWindow(QWidget* pWindow);
+
+void moveWindowBeneath(QWidget* pTop, QWidget* pBottom);
 
 void closeWindow(QWidget* pWindow);
 
@@ -62,7 +67,7 @@ void showFileError(const QString& action,
                    const QString& file,
                    const QString& error);
 
-void launchProjectInNewInstance(QString projectFilename);
+void launchRStudio(const std::vector<std::string>& args = std::vector<std::string>());
 
 bool isFixedWidthFont(const QFont& font);
 

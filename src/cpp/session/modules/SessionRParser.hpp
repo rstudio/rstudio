@@ -32,6 +32,7 @@
 
 #include <core/Algorithm.hpp>
 #include <core/r_util/RTokenizer.hpp>
+#include <core/r_util/RTokenCursor.hpp>
 #include <core/collection/Position.hpp>
 #include <core/collection/Stack.hpp>
 
@@ -319,6 +320,16 @@ public:
                   "unexpected end of document");
    }
    
+   void noSymbolNamed(const core::r_util::token_cursor::RTokenCursor& cursor,
+                      const std::string& candidate = std::string())
+   {
+      ParseItem item(
+               cursor.contentAsUtf8(),
+               cursor.currentPosition(),
+               NULL);
+      noSymbolNamed(item, candidate);
+   }
+   
    void noSymbolNamed(const ParseItem& item,
                       const std::string& candidate = std::string())
    {
@@ -369,7 +380,7 @@ public:
    {
       addLintItem(token,
                   LintTypeStyle,
-                  "expected whitespace around binary operator");
+                  "expected whitespace around '" + token.contentAsUtf8() + "' token");
    }
 
    void tooManyErrors(const Position& position)
@@ -981,11 +992,12 @@ class ParseStatus
    
 public:
    
-   explicit ParseStatus(const ParseOptions& parseOptions)
+   explicit ParseStatus(const FilePath& filePath, const ParseOptions& parseOptions)
       : pRoot_(ParseNode::createRootNode()),
         pNode_(pRoot_.get()),
         lint_(parseOptions),
-        parseOptions_(parseOptions)
+        parseOptions_(parseOptions),
+        filePath_(filePath)
    {
       parseStateStack_.push(ParseStateTopLevel);
       functionNames_.push(std::wstring(L""));
@@ -1347,6 +1359,11 @@ public:
                begin,
                end);
    }
+   
+   const FilePath& filePath() const
+   {
+      return filePath_;
+   }
 
 private:
    boost::shared_ptr<ParseNode> pRoot_;
@@ -1372,6 +1389,8 @@ private:
    // given ranges.
    typedef std::map< Range, std::set<std::string> > SymbolRanges;
    SymbolRanges symbolRanges_;
+   
+   FilePath filePath_;
 };
 
 class ParseResults {
@@ -1414,6 +1433,15 @@ private:
    LintItems lint_;
    std::set<std::string> globals_;
 };
+
+// Primary method ----
+ParseResults parse(const core::FilePath& filePath,
+                   const std::wstring& rCode,
+                   const ParseOptions& parseOptions = ParseOptions());
+
+// Useful aliases ----
+ParseResults parse(const core::FilePath& filePath,
+                   const ParseOptions& parseOptions = ParseOptions());
 
 ParseResults parse(const std::string& rCode,
                    const ParseOptions& parseOptions = ParseOptions());

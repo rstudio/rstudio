@@ -16,10 +16,14 @@
 #ifndef CORE_R_UTIL_R_VERSIONS_HPP
 #define CORE_R_UTIL_R_VERSIONS_HPP
 
+#define kRStudioRVersionsPath "RS_R_VERSIONS_PATH"
+
 #include <vector>
 #include <iosfwd>
 
 #include <core/FilePath.hpp>
+
+#include <core/json/Json.hpp>
 
 #include <core/system/Environment.hpp>
 
@@ -29,29 +33,77 @@ namespace rstudio {
 namespace core {
 namespace r_util {
 
-struct RVersion
+class RVersion
 {
-   RVersion() : isDefault(false) {}
-   bool isDefault;
-   std::string number;
-   core::system::Options environment;
+public:
+   RVersion() {}
+   RVersion(const std::string& number, const core::system::Options& environment)
+      : number_(number), environment_(environment)
+   {
+   }
+
+public:
+   bool empty() const { return number_.empty(); }
 
    FilePath homeDir() const
    {
-      return FilePath(core::system::getenv(environment, "R_HOME"));
+      return FilePath(core::system::getenv(environment_, "R_HOME"));
    }
-};
 
+   const std::string& number() const { return number_; }
+   const core::system::Options& environment() const { return environment_; }
+
+   bool operator<(const RVersion& other) const
+   {
+      RVersionNumber ver = RVersionNumber::parse(number());
+      RVersionNumber otherVer = RVersionNumber::parse(other.number());
+
+      if (ver == otherVer)
+         return homeDir().absolutePath() < other.homeDir().absolutePath();
+      else
+         return ver < otherVer;
+   }
+
+   bool operator==(const RVersion& other) const
+   {
+      return number() == other.number() &&
+            homeDir().absolutePath() == other.homeDir().absolutePath();
+   }
+
+private:
+   std::string number_;
+   core::system::Options environment_;
+};
 
 std::ostream& operator<<(std::ostream& os, const RVersion& version);
 
 std::vector<RVersion> enumerateRVersions(
-                              const std::vector<FilePath>& otherRHomes,
+                              std::vector<FilePath> rHomePaths,
+                              bool scanForOtherVersions,
                               const FilePath& ldPathsScript,
                               const std::string& ldLibraryPath);
 
-RVersion selectVersion(const RVersionInfo& matchVersion,
+RVersion selectVersion(const std::string& number,
+                       const std::string& rHomeDir,
                        std::vector<RVersion> versions);
+
+json::Object rVersionToJson(const r_util::RVersion& version);
+
+r_util::RVersion rVersionFromJson(const json::Object& versionJson);
+
+Error rVersionsFromJson(const json::Array& versionsJson,
+                        std::vector<RVersion>* pVersions);
+
+json::Array versionsToJson(const std::vector<r_util::RVersion>& versions);
+
+Error writeRVersionsToFile(const FilePath& filePath,
+                          const std::vector<r_util::RVersion>& versions);
+
+Error readRVersionsFromFile(const FilePath& filePath,
+                            std::vector<r_util::RVersion>* pVersions);
+
+Error validatedReadRVersionsFromFile(const FilePath& filePath,
+                                     std::vector<r_util::RVersion>* pVersions);
 
 } // namespace r_util
 } // namespace core 

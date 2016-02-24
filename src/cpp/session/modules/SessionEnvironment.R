@@ -1,7 +1,7 @@
 #
 # SessionEnvironment.R
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-16 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -154,22 +154,6 @@
       ""
 })
 
-.rs.addFunction("sourceCodeFromFunction", function(fun)
-{
-   if (is.null(attr(fun, "srcref")))
-   {
-      # The function does not have source refs, so deparse it to get a 
-      # formatted representation. 
-      paste(deparse(fun), collapse="\n")
-   }
-   else
-   {
-      # The function has source refs; use them to get exactly the code that
-      # was used to create the function.
-      paste(capture.output(attr(fun, "srcref")), collapse="\n")
-   }
-})
-
 # Given a function and some content inside that function, returns a vector
 # in the standard R source reference format that represents the location of
 # the content in the deparsed representation of the function.
@@ -188,7 +172,7 @@
       (is.null(call) && is.null(calltext)) )
      return(c(0L, 0L, 0L, 0L, 0L, 0L))
 
-  lines <- deparse(fun)
+  lines <- .rs.deparseFunction(fun, FALSE, FALSE)
 
   # Remember the indentation level on each line (added by deparse), and remove
   # it along with any other leading or trailing whitespace. 
@@ -250,7 +234,6 @@
   {
      endpos <- pos + attr(pos, "match.length")
   }
-
 
   # Return an empty source ref if we couldn't find a match
   if (length(pos) == 0 || pos < 0)
@@ -346,7 +329,8 @@
               || is.numeric(obj)
               || is.factor(obj)
               || is.raw(obj) 
-              || is.character(obj))
+              || is.character(obj)
+              || is.logical(obj))
       {
          return(.rs.valueFromStr(obj))
       }
@@ -383,7 +367,7 @@
          }
          # otherwise it's a function, write it to a file for editing
          else {
-            functionSrc <- .rs.deparseFunction(name, TRUE)
+            functionSrc <- .rs.deparseFunction(name, TRUE, FALSE)
             targetFile <- scratchFile
             writeLines(functionSrc, targetFile)
          }
@@ -481,6 +465,7 @@
              class == "ore.frame" ||
              class == "cast_df" ||
              class == "xts" ||
+             class == "DataFrame" ||
              is.list(obj) || 
              is.data.frame(obj) ||
              isS4(obj))
@@ -540,14 +525,30 @@
 
 .rs.addFunction("environmentName", function(env)
 {
+   # global environment 
+   if (identical(env, globalenv()))
+     return(".GlobalEnv")
+
+   # base environment
+   if (identical(env, baseenv()))
+     return("package:base")
+
    # look for the environment's given name; if it doesn't have a name, check
    # the callstack to see if it matches the environment in one of the call 
    # frames.
    result <- environmentName(env)
+   
    if (nchar(result) == 0)
       .rs.environmentCallFrameName(env)$name
    else
-      result
+   {
+      # resolve namespaces
+      if ((result %in% loadedNamespaces()) && 
+          identical(asNamespace(result), env))
+         paste("namespace:", result, sep="")
+      else
+         result
+   }
 })
 
 .rs.addFunction("environmentList", function(startEnv)
@@ -643,4 +644,6 @@
       is(obj, "externalptr") && capture.output(print(obj)) == "<pointer: 0x0>"
    }
 })
+
+
 

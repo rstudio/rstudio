@@ -1,7 +1,7 @@
 #
 # SessionRSConnect.R
 #
-# Copyright (C) 2009-14 by RStudio, Inc.
+# Copyright (C) 2009-15 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -12,6 +12,41 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 #
+
+# this is a clone of a function in the rsconnect package; we use it to detect
+# the condition in which rsconnect has state but the package itself isn't 
+# installed. 
+.rs.addFunction("connectConfigDir", function(appName, subDir = NULL) {
+
+  # get the home directory from the operating system (in case
+  # the user has redefined the meaning of ~) but fault back
+  # to ~ if there is no HOME variable defined
+  homeDir <- Sys.getenv("HOME", unset="~")
+
+  # determine application config dir (platform specific)
+  sysName <- Sys.info()[['sysname']]
+  if (identical(sysName, "Windows"))
+    configDir <- Sys.getenv("APPDATA")
+  else if (identical(sysName, "Darwin"))
+    configDir <- file.path(homeDir, "Library/Application Support")
+  else
+    configDir <- Sys.getenv("XDG_CONFIG_HOME", file.path(homeDir, ".config"))
+
+  # append the application name and optional subdir
+  configDir <- file.path(configDir, "R", appName)
+  if (!is.null(subDir))
+    configDir <- file.path(configDir, subDir)
+
+  # normalize path
+  configDir <- normalizePath(configDir, mustWork=FALSE)
+
+  # ensure that it exists
+  if (!file.exists(configDir))
+    dir.create(configDir, recursive=TRUE)
+
+  # return it
+  configDir
+})
 
 .rs.addFunction("scalarListFromFrame", function(frame)
 {
@@ -41,6 +76,7 @@
      account = character(0),
      server = character(0),
      bundleId = character(0),
+     appId = character(0),
      asStatic = logical(0),
      when = numeric(0))
    deployments <- list()
@@ -75,6 +111,8 @@
        rpubsDeployment[col] = "rpubs"
      else if (col == "server")
        rpubsDeployment[col] = "rpubs.com"
+     else if (col == "appId")
+       rpubsDeployment[col] = rpubsUploadId
      else if (col == "bundleId") 
        rpubsDeployment[col] = rpubsUploadId
      else if (col == "asStatic")
@@ -96,7 +134,11 @@
    # accounts when the rsconnect package is not installed or broken 
    # (vs. raising an error)
    tryCatch({
-     accounts <- .rs.scalarListFromFrame(rsconnect::accounts())
+     accountFrame <- rsconnect::accounts()
+     # if raw characters (older rsconnect), presume shinyapps.io
+     if (is.character(accountFrame))
+       accountFrame <- data.frame(name = accountFrame, server = "shinyapps.io")
+     accounts <- .rs.scalarListFromFrame(accountFrame)
    }, error = function(e) { })
    accounts
 })
@@ -109,9 +151,31 @@
    .rs.scalarListFromFrame(rsconnect::applications(account, server))
 })
 
+.rs.addJsonRpcHandler("get_rsconnect_app", function(id, account, server) { 
+   # init with empty list
+   appList <- list()
+
+   # attempt to get app ID from server
+   tryCatch({
+     appList <- rsconnect:::getAppById(id, account, server)
+   }, error = function(e) {
+     # Connect returns a generic HTTP failure when the app doesn't exist (for
+     # instance, after being deleted); check the error message and treat this
+     # particular case as though the search returned no apps. 
+     if (!grepl("does not exist", conditionMessage(e))) {
+        # we didn't expect this error, bubble it up
+        stop(e)
+     }
+   })
+   
+   .rs.scalarListFromList(appList)
+})
 
 .rs.addJsonRpcHandler("validate_server_url", function(url) {
-   .rs.scalarListFromList(rsconnect:::validateServerUrl(url))
+   # suppress output when validating server URL (timeouts otherwise emitted to
+   # console)
+   capture.output(serverInfo <- rsconnect:::validateServerUrl(url))
+   .rs.scalarListFromList(serverInfo)
 })
 
 .rs.addJsonRpcHandler("get_auth_token", function(name) {
@@ -144,6 +208,10 @@
          # a directory was specified--lint the whole thing
          basePath <- target
          results <- rsconnect::lint(basePath)
+       } else if (tolower(tools::file_ext(target)) == "r") {
+         # a single-file Shiny app--lint the directory (with file hint)
+         basePath <- dirname(target)
+         results <- rsconnect::lint(basePath, appPrimaryDoc = basename(target))
        } else {
          # a single file was specified--lint just that file
          basePath <- dirname(target)
@@ -270,7 +338,7 @@
 })
 
 .rs.addFunction("rsconnectDeployList", function(target, asMultipleDoc) {
-  max_size <- 104857600   # 100MB
+  max_size <- 1048576000   # 1GB
   dirlist <- .rs.makeDeploymentList(target, asMultipleDoc, max_size)
   list (
     # if the directory is too large, no need to bother sending a potentially
@@ -288,6 +356,16 @@
   message("RStudio Connect UI ", if (enable) "enabled" else "disabled", ".")
   invisible(enable)
 })
+
+.rs.addFunction("hasConnectAccount", function() {
+   tryCatch({
+      # check for any non-shinyapps.io accounts
+      accounts <- rsconnect::accounts()
+      accounts <- subset(accounts, server != "shinyapps.io")
+      nrow(accounts) > 0
+   }, error = function(e) { FALSE })
+})
+
 
 .rs.addJsonRpcHandler("get_deployment_files", function(target, asMultipleDoc) {
   .rs.rsconnectDeployList(target, asMultipleDoc)
@@ -329,9 +407,43 @@
   # check to see if this is an interactive doc (i.e. needs to be run rather
   # rather than rendered)
   renderFunction <- .rs.getCustomRenderFunction(target)
+
   list(
-    is_multi_rmd      = .rs.scalar(length(rmds) > 1), 
-    is_shiny_rmd      = .rs.scalar(renderFunction == "rmarkdown::run"),
-    is_self_contained = .rs.scalar(selfContained),
-    title             = .rs.scalar(title))
+    is_multi_rmd        = .rs.scalar(length(rmds) > 1), 
+    is_shiny_rmd        = .rs.scalar(renderFunction == "rmarkdown::run"),
+    is_self_contained   = .rs.scalar(selfContained),
+    title               = .rs.scalar(title),
+    has_connect_account = .rs.scalar(.rs.hasConnectAccount()))
+})
+
+# indicates whether there appear to be accounts registered on the system that
+# cannot be used because the rsconnect package isn't installed
+.rs.addJsonRpcHandler("has_orphaned_accounts", function() {
+  # get the folder in which we expect account data to exist
+  accountDir <- .rs.connectConfigDir("connect", "accounts")
+
+  # if the folder exists, list all regular files (not directories) inside it
+  if (file.exists(accountDir)) {
+    files <- list.files(accountDir, recursive = TRUE, include.dirs = FALSE)
+
+    # if there are files and the rsconnect package isn't installed at all, 
+    # consider those files to correspond to orphaned accounts
+    if (length(files) > 0 && !.rs.isPackageInstalled("rsconnect")) {
+      return(.rs.scalar(length(files)))
+    }
+  }
+
+  return(.rs.scalar(0))
+})
+
+.rs.addJsonRpcHandler("get_server_urls", function() {
+  servers <- rsconnect::servers()
+
+  # convert from factors if necessary
+  for (col in c("name", "url")) {
+    if (col %in% colnames(servers)) {
+      servers[[col]] <- as.character(servers[[col]])
+    }
+  }
+  .rs.scalarListFromFrame(servers)
 })

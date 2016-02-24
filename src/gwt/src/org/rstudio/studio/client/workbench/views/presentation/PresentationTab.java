@@ -62,15 +62,14 @@ public class PresentationTab extends DelayLoadWorkbenchTab<Presentation>
             if (state.isActive())
                shim.initialize(state);    
             
+            // always remove tutorial feedback command for now
+            commands.tutorialFeedback().remove();
+            
             if (state.isTutorial())
             {
                commands.clearPresentationCache().remove();
                commands.presentationViewInBrowser().remove();
                commands.presentationSaveAsStandalone().remove();
-            }
-            else
-            {
-               commands.tutorialFeedback().remove();
             }
          }
       });

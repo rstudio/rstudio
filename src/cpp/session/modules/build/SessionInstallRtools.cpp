@@ -61,18 +61,19 @@ void onDownloadCompleted(const core::system::ProcessResult& result,
 Error installRtools()
 {
    // determine the correct version of rtools
+   bool gcc49 = module_context::usingMingwGcc49();
    std::string version, url;
    FilePath installPath("C:\\Rtools");
    std::vector<r_util::RToolsInfo> availableRtools;
-   availableRtools.push_back(r_util::RToolsInfo("3.3", installPath));
-   availableRtools.push_back(r_util::RToolsInfo("3.2", installPath));
-   availableRtools.push_back(r_util::RToolsInfo("3.1", installPath));
-   availableRtools.push_back(r_util::RToolsInfo("3.0", installPath));
-   availableRtools.push_back(r_util::RToolsInfo("2.15", installPath));
-   availableRtools.push_back(r_util::RToolsInfo("2.14", installPath));
-   availableRtools.push_back(r_util::RToolsInfo("2.13", installPath));
-   availableRtools.push_back(r_util::RToolsInfo("2.12", installPath));
-   availableRtools.push_back(r_util::RToolsInfo("2.11", installPath));
+   availableRtools.push_back(r_util::RToolsInfo("3.3", installPath, gcc49));
+   availableRtools.push_back(r_util::RToolsInfo("3.2", installPath, gcc49));
+   availableRtools.push_back(r_util::RToolsInfo("3.1", installPath, gcc49));
+   availableRtools.push_back(r_util::RToolsInfo("3.0", installPath, gcc49));
+   availableRtools.push_back(r_util::RToolsInfo("2.15", installPath, gcc49));
+   availableRtools.push_back(r_util::RToolsInfo("2.14", installPath, gcc49));
+   availableRtools.push_back(r_util::RToolsInfo("2.13", installPath, gcc49));
+   availableRtools.push_back(r_util::RToolsInfo("2.12", installPath, gcc49));
+   availableRtools.push_back(r_util::RToolsInfo("2.11", installPath, gcc49));
    BOOST_FOREACH(const r_util::RToolsInfo& rTools, availableRtools)
    {
       if (module_context::isRtoolsCompatible(rTools))
@@ -81,7 +82,7 @@ Error installRtools()
 
          std::string repos = userSettings().cranMirror().url;
          if (repos.empty())
-            repos = "http://cran.rstudio.com/";
+            repos = module_context::rstudioCRANReposURL();
          url = rTools.url(repos);
          break;
       }

@@ -69,6 +69,51 @@ private:
    FilePath basePath_;
 };
 
+struct ExcludePattern
+{
+   ExcludePattern(const boost::regex& pattern)
+      : begin(pattern)
+   {
+   }
+
+   ExcludePattern(const boost::regex& beginPattern,
+                  const boost::regex& endPattern)
+      : begin(beginPattern), end(endPattern)
+   {
+   }
+
+   boost::regex begin;
+   boost::regex end;
+};
+
+struct TextRange
+{
+   TextRange(bool process,
+             const std::string::const_iterator& begin,
+             const std::string::const_iterator& end)
+      : process(process), begin(begin), end(end)
+   {
+   }
+
+   bool process;
+   std::string::const_iterator begin;
+   std::string::const_iterator end;
+};
+
+
+TextRange findClosestRange(std::string::const_iterator pos,
+                           const std::vector<TextRange>& ranges);
+
+
+class HtmlPreserver : boost::noncopyable
+{
+public:
+   void preserve(std::string* pInput);
+   void restore(std::string* pOutput);
+
+private:
+   std::map<std::string,std::string> preserved_;
+};
 
 } // namespace regex_utils
 } // namespace core 

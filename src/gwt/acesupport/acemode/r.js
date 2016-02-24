@@ -17,7 +17,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-define("mode/r", function(require, exports, module)
+define("mode/r", ["require", "exports", "module"], function(require, exports, module)
 {
    var Editor = require("ace/editor").Editor;
    var EditSession = require("ace/edit_session").EditSession;
@@ -71,15 +71,17 @@ define("mode/r", function(require, exports, module)
           + unicode.packages.Pc + "._]|\\s])+", "g"
       );
 
+      // NOTE: these override fields used for 'auto_brace_insert'
       this.$complements = {
                "(": ")",
                "[": "]",
                '"': '"',
                "'": "'",
-               "{": "}"
+               "{": "}",
+               "`": "`"
             };
-      this.$reOpen = /^[(["'{]$/;
-      this.$reClose = /^[)\]"'}]$/;
+      this.$reOpen  = /^[{(\["'`]$/;
+      this.$reClose = /^[})\]"'`]$/;
 
       this.getNextLineIndent = function(state, line, tab, row)
       {

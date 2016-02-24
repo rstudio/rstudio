@@ -1,21 +1,27 @@
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
+import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAuthUser;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPreAuthToken;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -35,6 +41,16 @@ public class NewRSConnectAuthPage
       RStudioGinjector.INSTANCE.getEventBus().addHandler(
             WindowClosedEvent.TYPE, 
             this);
+
+      waitingForAuth_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> waiting)
+         {
+            if (setOkButtonVisible_ != null)
+               setOkButtonVisible_.execute(!waiting.getValue());
+         }
+      });
    }
 
    @Override
@@ -46,40 +62,59 @@ public class NewRSConnectAuthPage
    public void setIntermediateResult(NewRSConnectAccountResult result) 
    {
       result_ = result;
-      contents_.setClaimLink(result.getServerInfo().getName(),
-            result.getPreAuthToken().getClaimUrl());
    }
    
    @Override
-   public void onActivate(ProgressIndicator indicator) 
+   public void onActivate(final ProgressIndicator indicator) 
    {
-      if (waitingForAuth_ || result_ == null)
+      if (waitingForAuth_.getValue() || result_ == null)
          return;
+      
+      // save reference to parent wizard's progress indicator for retries
+      wizardIndicator_ = indicator;
 
-      // begin waiting for user to complete authentication
-      waitingForAuth_ = true;
-      contents_.showWaiting();
-      
-      // prepare a new window with the auth URL loaded
-      NewWindowOptions options = new NewWindowOptions();
-      options.setName(AUTH_WINDOW_NAME);
-      options.setAllowExternalNavigation(true);
-      options.setShowDesktopToolbar(false);
-      display_.openWebMinimalWindow(
-            result_.getPreAuthToken().getClaimUrl(),
-            false, 
-            700, 800, options);
-      
-      // close the window automatically when authentication finishes
-      pollForAuthCompleted();
+      indicator.onProgress("Checking server connection...");
+      server_.validateServerUrl(result_.getServerUrl(), 
+            new ServerRequestCallback<RSConnectServerInfo>()
+      {
+         @Override
+         public void onResponseReceived(RSConnectServerInfo info)
+         {
+            if (info.isValid()) 
+            {
+               result_.setServerInfo(info);
+               getPreAuthToken(indicator);
+            }
+            else
+            {
+               contents_.showError("Server Validation Failed", 
+                     "The URL '" + result_.getServerUrl() + 
+                     "' does not appear to belong to a valid server. Please " +
+                     "double check the URL, and contact your administrator " +
+                     "if the problem persists.\n\n" +
+                     info.getMessage());
+               indicator.clearProgress();
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            contents_.showError("Error Connecting Account", 
+                  "The server couldn't be validated. " + 
+                   error.getMessage());
+            indicator.clearProgress();
+         }
+      });
    }
+
 
    @Override
    public void onWindowClosed(WindowClosedEvent event)
    {
       if (event.getName().equals(AUTH_WINDOW_NAME))
       {
-         waitingForAuth_ = false;
+         waitingForAuth_.setValue(false, true);
          
          // check to see if the user successfully authenticated
          onAuthCompleted();
@@ -90,7 +125,12 @@ public class NewRSConnectAuthPage
    public void onWizardClosing()
    {
       // this will cause us to stop polling for auth (if we haven't already)
-      waitingForAuth_ = false;
+      waitingForAuth_.setValue(false, true);
+   }
+   
+   public void setOkButtonVisible(OperationWithInput<Boolean> okButtonVisible)
+   {
+      setOkButtonVisible_ = okButtonVisible;
    }
 
    @Override
@@ -102,7 +142,7 @@ public class NewRSConnectAuthPage
          @Override
          public void execute()
          {
-            onActivate(null);
+            onActivate(wizardIndicator_);
          }
       });
       return contents_;
@@ -135,7 +175,7 @@ public class NewRSConnectAuthPage
          public boolean execute()
          {
             // don't keep polling once auth is complete or window is closed
-            if (!waitingForAuth_)
+            if (!waitingForAuth_.getValue())
                return false;
             
             // avoid re-entrancy--if we're already running a check but it hasn't
@@ -161,7 +201,7 @@ public class NewRSConnectAuthPage
                         // user is valid--cache account info and close the
                         // window
                         result_.setAuthUser(user);
-                        waitingForAuth_ = false;
+                        waitingForAuth_.setValue(false, true);
                         
                         if (Desktop.isDesktop())
                         {
@@ -246,11 +286,101 @@ public class NewRSConnectAuthPage
             result_.getAccountNickname());
    }
 
+   private void getPreAuthToken(ProgressIndicator indicator)
+   {
+      getPreAuthToken(result_, result_.getServerInfo(), indicator, 
+            new OperationWithInput<NewRSConnectAccountResult>()
+            {
+               @Override
+               public void execute(NewRSConnectAccountResult input)
+               {
+                  // save intermediate result
+                  result_ = input;
+
+                  contents_.setClaimLink(result_.getServerInfo().getName(),
+                        result_.getPreAuthToken().getClaimUrl());
+
+                  // begin waiting for user to complete authentication
+                  waitingForAuth_.setValue(true, true);
+                  contents_.showWaiting();
+                  
+                  // prepare a new window with the auth URL loaded
+                  if (canSpawnAuthenticationWindow())
+                  {
+                     NewWindowOptions options = new NewWindowOptions();
+                     options.setName(AUTH_WINDOW_NAME);
+                     options.setAllowExternalNavigation(true);
+                     options.setShowDesktopToolbar(false);
+                     display_.openWebMinimalWindow(
+                           result_.getPreAuthToken().getClaimUrl(),
+                           false, 
+                           700, 800, options);
+                  }
+                  else
+                  {
+                     Desktop.getFrame().browseUrl(result_.getPreAuthToken().getClaimUrl());
+                  }
+                  
+                  // close the window automatically when authentication finishes
+                  pollForAuthCompleted();
+               }
+            });
+   }
+
+   private void getPreAuthToken(
+         final NewRSConnectAccountResult result,
+         final RSConnectServerInfo serverInfo,
+         final ProgressIndicator indicator,
+         final OperationWithInput<NewRSConnectAccountResult> onResult)
+   {
+      indicator.onProgress("Setting up an account...");
+      server_.getPreAuthToken(serverInfo.getName(), 
+            new ServerRequestCallback<RSConnectPreAuthToken>()
+      {
+         @Override
+         public void onResponseReceived(final RSConnectPreAuthToken token)
+         {
+            NewRSConnectAccountResult newResult = result;
+            newResult.setPreAuthToken(token);
+            newResult.setServerInfo(serverInfo);
+            onResult.execute(newResult);
+            indicator.clearProgress();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showErrorMessage("Error Connecting Account", 
+                  "The server appears to be valid, but rejected the " + 
+                  "request to authorize an account.\n\n"+
+                  serverInfo.getInfoString() + "\n" +
+                  error.getMessage());
+            indicator.clearProgress();
+            onResult.execute(null);
+         }
+      });
+   }
+   
+   private boolean canSpawnAuthenticationWindow()
+   {
+      if (!Desktop.isDesktop())
+         return true;
+      
+      if (Desktop.getFrame().isCentOS())
+         return false;
+      
+      return true;
+   }
+   
+   private OperationWithInput<Boolean> setOkButtonVisible_;
+   
    private NewRSConnectAccountResult result_;
    private RSConnectServerOperations server_;
    private GlobalDisplay display_;
    private RSConnectAuthWait contents_;
-   private boolean waitingForAuth_ = false;
+   private Value<Boolean> waitingForAuth_ = new Value<Boolean>(false);
    private boolean runningAuthCompleteCheck_ = false;
-   private final static String AUTH_WINDOW_NAME = "rstudio_rsconnect_auth";
+   private ProgressIndicator wizardIndicator_;
+
+   public final static String AUTH_WINDOW_NAME = "rstudio_rsconnect_auth";
 }

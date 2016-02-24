@@ -48,7 +48,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-define("mode/markdown_highlight_rules", function(require, exports, module) {
+define("mode/markdown_highlight_rules", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var lang = require("ace/lib/lang");
@@ -196,7 +196,7 @@ var MarkdownHighlightRules = function() {
             next  : "mathjaxdisplay"
         }, { // MathJax $...$ (org-mode style)
             token : ["markup.list","support.function","markup.list"],
-            regex : "(\\$)" + "((?!\\s)[^$]*[^$\\s])" + "(\\$)" + "(?![\\w\\d`])"
+            regex : "(\\$)((?:(?:\\\\.)|(?:[^\\$\\\\]))*?)(\\$)"
         }, { // strong ** __
             token : ["constant.numeric", "constant.numeric", "constant.numeric"],
             regex : "([*]{2}|[_]{2}(?=\\S))([^\\r]*?\\S[*_]*)(\\1)"
@@ -284,7 +284,7 @@ var MarkdownHighlightRules = function() {
 
         "listblock" : [ { // Lists only escape on completely blank lines.
             token : "empty_line",
-            regex : "^$",
+            regex : "^\\s*$",
             next  : "start"
         }, { // list
             token : "text",
@@ -321,7 +321,60 @@ var MarkdownHighlightRules = function() {
         }, {
             token : "support.function",
             regex : ".+"
+        }],
+
+         "fieldblock" : [{
+            token : function(value) {
+                var field = value.slice(0,-1);
+                if (slideFields[field])
+                    return "comment.doc.tag";
+                else
+                    return "text";
+            },
+            regex : "^" +"[\\w-]+\\:",
+            next  : "fieldblockvalue"
+        }, {
+            token : "text",
+            regex : "(?=.+)",
+            next  : "start"
+        }],
+
+        "fieldblockvalue" : [{
+            token : "text",
+            regex : "$",
+            next  : "fieldblock"
+        }, {
+            token : "text",
+            regex : ".+"
+        }],
+
+        "mathjaxdisplay" : [{
+            token : "markup.list",
+            regex : "\\${2}",
+            next  : "start"
+        }, {
+            token : "support.function",
+            regex : "[^\\$]+"
+        }],
+        
+        "mathjaxnativedisplay" : [{
+            token : "markup.list",
+            regex : "\\\\\\]",
+            next  : "start"
+        }, {
+            token : "support.function",
+            regex : "[\\s\\S]+?"
+        }],
+        
+        "mathjaxnativeinline" : [{
+            token : "markup.list",
+            regex : "\\\\\\)",
+            next  : "start"
+        }, {
+            token : "support.function",
+            regex : "[\\s\\S]+?"
         }]
+
     };
 
     this.embedRules(JavaScriptHighlightRules, "jscode-", [{

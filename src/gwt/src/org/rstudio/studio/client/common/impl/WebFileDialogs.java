@@ -19,9 +19,11 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.files.filedialog.ChooseFolderDialog2;
 import org.rstudio.core.client.files.filedialog.FileDialog;
 import org.rstudio.core.client.files.filedialog.OpenFileDialog;
+import org.rstudio.core.client.files.filedialog.OpenProjectDialog;
 import org.rstudio.core.client.files.filedialog.SaveFileDialog;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.common.FileDialogs;
+import org.rstudio.studio.client.projects.model.OpenProjectParams;
 
 public class WebFileDialogs implements FileDialogs
 {
@@ -46,6 +48,20 @@ public class WebFileDialogs implements FileDialogs
 
       dialog.setInvokeOperationEvenOnCancel(true);
 
+      finishInit(fsContext, initialFilePath, dialog);
+   }
+   
+   public void openProject(FileSystemContext fsContext,
+                           FileSystemItem initialFilePath,
+                           int defaultType, 
+                           boolean showNewSession,
+                           ProgressOperationWithInput<OpenProjectParams> operation)
+   {
+      OpenProjectDialog dialog = new OpenProjectDialog(fsContext, defaultType,
+            showNewSession, operation);
+
+      dialog.setInvokeOperationEvenOnCancel(true);
+      
       finishInit(fsContext, initialFilePath, dialog);
    }
 
@@ -74,6 +90,7 @@ public class WebFileDialogs implements FileDialogs
    {
       ChooseFolderDialog2 dialog = new ChooseFolderDialog2(caption,
                                                            fsContext,
+                                                           true,
                                                            operation);
       dialog.setInvokeOperationEvenOnCancel(true);
       if (initialDir != null)

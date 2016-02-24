@@ -84,6 +84,26 @@ const char * const kFormAction = "formAction";
 
 const char * const kStaySignedInDisplay = "staySignedInDisplay";
 
+enum ErrorType 
+{
+   kErrorNone,
+   kErrorInvalidLogin,
+   kErrorServer 
+};
+
+std::string errorMessage(ErrorType error)
+{
+   switch (error)
+   {
+      case kErrorNone:
+         return "";
+      case kErrorInvalidLogin: 
+         return "Incorrect or invalid username/password";
+      case kErrorServer:
+         return "Temporary server error, please try again";
+   }
+   return "";
+}
 
 std::string applicationURL(const http::Request& request,
                            const std::string& path = std::string())
@@ -95,14 +115,15 @@ std::string applicationURL(const http::Request& request,
 
 std::string applicationSignInURL(const http::Request& request,
                                  const std::string& appUri,
-                                 const std::string& errorMessage=std::string())
+                                 ErrorType error = kErrorNone)
 {
    // build fields
    http::Fields fields ;
    if (appUri != "/")
       fields.push_back(std::make_pair(kAppUri, appUri));
-   if (!errorMessage.empty())
-     fields.push_back(std::make_pair(kErrorParam, errorMessage));
+   if (error != kErrorNone)
+     fields.push_back(std::make_pair(kErrorParam, 
+                                     safe_convert::numberToString(error)));
 
    // build query string
    std::string queryString ;
@@ -166,7 +187,10 @@ void refreshCredentialsThenContinue(
 void signIn(const http::Request& request,
             http::Response* pResponse)
 {
-   auth::secure_cookie::remove(request, kUserId, "", pResponse);
+   auth::secure_cookie::remove(request,
+                               kUserId,
+                               "/",
+                               pResponse);
 
    std::map<std::string,std::string> variables;
    variables["action"] = applicationURL(request, kDoSignIn);
@@ -174,7 +198,8 @@ void signIn(const http::Request& request,
 
    // setup template variables
    std::string error = request.queryParamValue(kErrorParam);
-   variables[kErrorMessage] = error;
+   variables[kErrorMessage] = errorMessage(static_cast<ErrorType>(
+            safe_convert::stringTo<unsigned>(error, kErrorNone)));
    variables[kErrorDisplay] = error.empty() ? "none" : "block";
    variables[kStaySignedInDisplay] = canStaySignedIn() ? "block" : "none";
    if (server::options().authEncryptPassword())
@@ -211,21 +236,22 @@ void setSignInCookies(const core::http::Request& request,
                       bool persist,
                       core::http::Response* pResponse)
 {
+   int staySignedInDays = server::options().authStaySignedInDays();
    boost::optional<boost::gregorian::days> expiry;
    if (persist && canStaySignedIn())
-      expiry = boost::gregorian::days(3652);
+      expiry = boost::gregorian::days(staySignedInDays);
    else
       expiry = boost::none;
 
    auth::secure_cookie::set(kUserId,
                             username,
                             request,
-                            boost::posix_time::time_duration(24*3652,
+                            boost::posix_time::time_duration(24*staySignedInDays,
                                                              0,
                                                              0,
                                                              0),
                             expiry,
-                            std::string(),
+                            "/",
                             pResponse);
 }
 
@@ -254,8 +280,7 @@ void doSignIn(const http::Request& request,
                request,
                applicationSignInURL(request,
                                     appUri,
-                                    "Temporary server error,"
-                                    " please try again"));
+                                    kErrorServer));
          return;
       }
 
@@ -267,8 +292,7 @@ void doSignIn(const http::Request& request,
                request,
                applicationSignInURL(request,
                                     appUri,
-                                    "Temporary server error,"
-                                    " please try again"));
+                                    kErrorServer));
          return;
       }
 
@@ -311,7 +335,7 @@ void doSignIn(const http::Request& request,
             request,
             applicationSignInURL(request,
                                  appUri,
-                                 "Incorrect or invalid username/password"));
+                                 kErrorInvalidLogin));
    }
 }
 
@@ -333,7 +357,11 @@ void signOut(const http::Request& request,
       onUserUnauthenticated(username);
    }
 
-   auth::secure_cookie::remove(request, kUserId, "", pResponse);
+   auth::secure_cookie::remove(request,
+                               kUserId,
+                               "/",
+                               pResponse);
+
    pResponse->setMovedTemporarily(request, auth::handler::kSignIn);
 }
 

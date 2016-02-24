@@ -70,14 +70,14 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
       addLeftSeparator();
       
       // clear all plots
-      addLeftWidget(commands_.clearPlots().createToolbarButton());
-      
-      // refresh
-      addLeftSeparator();
-      addLeftWidget(commands_.refreshPlot().createToolbarButton());
+      addLeftWidget(commands_.clearPlots().createToolbarButton());  
       
       // publish
       addRightWidget(publishButton_);
+    
+      // refresh
+      addRightSeparator();
+      addRightWidget(commands_.refreshPlot().createToolbarButton());
    }
    
    private final Commands commands_;   

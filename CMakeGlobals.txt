@@ -63,6 +63,15 @@ if (${RSTUDIO_TARGET} STREQUAL "SessionWin64")
    set(RSTUDIO_SESSION_WIN64 TRUE)
 endif()
 
+# record git revision hash (cache it since we don't use this in development
+# mode and we don't want it to force rebuilds there)
+if(NOT RSTUDIO_SESSION_WIN64 AND NOT RSTUDIO_GIT_REVISION_HASH)
+   exec_program(git ARGS rev-parse HEAD
+                OUTPUT_VARIABLE RSTUDIO_GIT_REVISION_HASH)
+   SET(RSTUDIO_GIT_REVISION_HASH "${RSTUDIO_GIT_REVISION_HASH}" CACHE STRING "Git Revision Hash")
+endif()
+
+
 # required R version
 set(RSTUDIO_R_MAJOR_VERSION_REQUIRED 2)
 set(RSTUDIO_R_MINOR_VERSION_REQUIRED 11)

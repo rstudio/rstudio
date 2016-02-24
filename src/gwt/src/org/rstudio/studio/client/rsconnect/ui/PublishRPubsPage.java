@@ -57,7 +57,9 @@ public class PublishRPubsPage
                   initialData_.getOriginatingEvent().getPath(), 
                   initialData_.getOriginatingEvent().getHtmlFile(),
                   initialData_.isSelfContained(),
-                  initialData_.getDescription()));
+                  initialData_.isShiny(),
+                  initialData_.getDescription(),
+                  initialData_.getContentType()));
    }
 
    @Override

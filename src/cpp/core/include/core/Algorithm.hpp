@@ -21,7 +21,9 @@
 #include <algorithm>
 
 #include <boost/type_traits.hpp>
+#include <boost/algorithm/string.hpp>
 
+#include <core/StringUtils.hpp>
 #include <core/type_traits/TypeTraits.hpp>
 
 namespace rstudio {
@@ -185,6 +187,43 @@ bool get(const AssociativeContainer& container,
    
    *ppValue = &(const_cast<AssociativeContainer&>(container)[key]);
    return true;
+}
+
+template <typename ContainerType>
+void append(ContainerType* pContainer, const ContainerType& other)
+{
+   pContainer->insert(
+            pContainer->end(),
+            other.begin(),
+            other.end());
+}
+
+inline std::vector<std::string> split(const std::string& string, const std::string& delim)
+{
+   std::vector<std::string> result;
+   
+   std::string::size_type start = 0;
+   std::string::size_type end   = string.find(delim, start);
+   
+   // Add all of the initial split pieces
+   while (end != std::string::npos)
+   {
+      result.push_back(string_utils::substring(string, start, end));
+      
+      start = end + delim.size();
+      end   = string.find(delim, start);
+   }
+   
+   // Add the final piece
+   result.push_back(string_utils::substring(string, start));
+   
+   // And return!
+   return result;
+}
+
+inline std::string join(const std::vector<std::string>& container, const std::string& delim)
+{
+   return boost::algorithm::join(container, delim);
 }
 
 } // namespace algorithm

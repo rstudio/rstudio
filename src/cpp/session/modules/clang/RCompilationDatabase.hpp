@@ -91,6 +91,8 @@ private:
    std::vector<std::string> precompiledHeaderArgs(const std::string& pkgName,
                                                   const std::string& stdArg);
 
+   bool shouldIndexConfig(const CompilationConfig& config);
+
 private:
 
    // Rtools arguments (cache once we successfully get them)

@@ -297,13 +297,15 @@ public class HelpPane extends WorkbenchPane
       toolbar.addLeftWidget(commands_.helpHome().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.printHelp().createToolbarButton());
-      toolbar.addLeftWidget(commands_.helpPopout().createToolbarButton());
-      
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.refreshHelp().createToolbarButton());
-      
+      toolbar.addLeftWidget(commands_.helpPopout().createToolbarButton());
+        
       toolbar.addRightWidget(searchProvider_.get().getSearchWidget());
 
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(commands_.refreshHelp().createToolbarButton());
+    
+      
       return toolbar;
    }
    
@@ -381,6 +383,9 @@ public class HelpPane extends WorkbenchPane
                      // check for term
                      String term = findTextBox_.getValue().trim();
                      
+                     int modifier = KeyboardShortcut.getModifierValue(event.getNativeEvent());
+                     boolean isShift = modifier == KeyboardShortcut.SHIFT;
+                     
                      // if there is a term then search for it
                      if (term.length() > 0)
                      { 
@@ -394,12 +399,12 @@ public class HelpPane extends WorkbenchPane
                             !event.isAnyModifierKeyDown() &&
                             (event.getNativeKeyCode() != KeyCodes.KEY_ENTER);   
                            
-                           performFind(term, true, incremental);
+                           performFind(term, !isShift, incremental);
                         }
                         else
                         {
                            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
-                              performFind(term, true, false);
+                              performFind(term, !isShift, false);
                         }
                      }
                      

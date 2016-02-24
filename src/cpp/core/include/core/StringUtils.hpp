@@ -25,10 +25,10 @@ namespace core {
 namespace string_utils {
 
 enum LineEnding {
-   LineEndingWindows,
-   LineEndingPosix,
-   LineEndingNative,
-   LineEndingPassthrough
+   LineEndingWindows = 0,
+   LineEndingPosix = 1,
+   LineEndingNative = 2,
+   LineEndingPassthrough = 3
 };
 
 bool isSubsequence(std::string const& self,
@@ -67,8 +67,11 @@ std::string htmlEscape(const std::string& str, bool isAttributeValue = false);
 std::string jsLiteralEscape(const std::string& str);
 std::string jsonLiteralEscape(const std::string& str);
 std::string jsonLiteralUnescape(const std::string& str);
+std::string singleQuotedStrEscape(const std::string& str);
 
 void convertLineEndings(std::string* str, LineEnding type);
+
+bool detectLineEndings(const FilePath& filePath, LineEnding* pType);
 
 std::string filterControlChars(const std::string& str);
 
@@ -217,6 +220,13 @@ std::wstring::const_iterator countNewlines(std::wstring::const_iterator begin,
                                            std::size_t* pCount);
 
 bool isPrefixOf(const std::string& self, const std::string& prefix);
+
+template <typename StringType>
+inline StringType substring(const StringType& string,
+                            std::size_t startPos)
+{
+   return string.substr(startPos);
+}
 
 template <typename StringType>
 inline StringType substring(const StringType& string,

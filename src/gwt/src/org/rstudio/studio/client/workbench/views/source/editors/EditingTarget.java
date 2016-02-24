@@ -30,6 +30,7 @@ import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
@@ -76,6 +77,7 @@ public interface EditingTarget extends IsWidget,
                            boolean recordCurrent,
                            boolean highlightLine);
    void restorePosition(SourcePosition position);
+   SourcePosition currentPosition();
    boolean isAtSourceRow(SourcePosition position);
    
    void forceLineHighlighting();
@@ -92,11 +94,14 @@ public interface EditingTarget extends IsWidget,
          boolean executing);   
    void endDebugHighlighting();
    
+   void beginCollabSession(CollabEditStartParams params);
+   void endCollabSession();
+   
    /**
     * @return True if dismissal is allowed, false to cancel.
     */
    boolean onBeforeDismiss();
-   void onDismiss();
+   void onDismiss(int dismissType);
 
    ReadOnlyValue<Boolean> dirtyState();
    
@@ -132,4 +137,7 @@ public interface EditingTarget extends IsWidget,
     * Any bigger than this, and the user should be warned before opening
     */
    long getLargeFileSize();
+   
+   public final static int DISMISS_TYPE_CLOSE = 0;
+   public final static int DISMISS_TYPE_MOVE = 1;
 }

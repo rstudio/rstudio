@@ -14,12 +14,14 @@
  */
 package org.rstudio.studio.client.workbench.prefs.events;
 
+import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.event.shared.GwtEvent;
 
-public class UiPrefsChangedEvent extends GwtEvent<UiPrefsChangedHandler>
+@JavaScriptSerializable
+public class UiPrefsChangedEvent extends CrossWindowEvent<UiPrefsChangedHandler>
 {
    public static final String GLOBAL_TYPE = "global";
    public static final String PROJECT_TYPE = "project";
@@ -29,6 +31,13 @@ public class UiPrefsChangedEvent extends GwtEvent<UiPrefsChangedHandler>
       protected Data()
       {
       }
+      
+      public final native static Data create(String type, JsObject prefs) /*-{
+         return {
+            "type" : type,
+            "prefs": prefs
+         };
+      }-*/;
       
       public final native String getType() /*-{
          return this.type;
@@ -40,6 +49,10 @@ public class UiPrefsChangedEvent extends GwtEvent<UiPrefsChangedHandler>
    }
    
    public static final Type<UiPrefsChangedHandler> TYPE = new Type<UiPrefsChangedHandler>();
+   
+   public UiPrefsChangedEvent()
+   {
+   }
 
    public UiPrefsChangedEvent(Data data)
    {
@@ -68,5 +81,5 @@ public class UiPrefsChangedEvent extends GwtEvent<UiPrefsChangedHandler>
       handler.onUiPrefsChanged(this);
    }
 
-   private final Data data_;
+   private Data data_;
 }

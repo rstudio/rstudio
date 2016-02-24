@@ -98,9 +98,18 @@ public class UIPrefsAccessor extends Prefs
       return bool("continue_comments_on_newline", false);
    }
    
+   public static final String EDITOR_KEYBINDINGS_DEFAULT = "default";
+   public static final String EDITOR_KEYBINDINGS_VIM = "vim";
+   public static final String EDITOR_KEYBINDINGS_EMACS = "emacs";
+   
    public PrefValue<Boolean> useVimMode()
    {
       return bool("use_vim_mode", false);
+   }
+   
+   public PrefValue<Boolean> enableEmacsKeybindings()
+   {
+      return bool("enable_emacs_keybindings", false);
    }
    
    public PrefValue<Boolean> insertMatching()
@@ -115,6 +124,15 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> allowTabMultilineCompletion()
    {
       return bool("tab_multiline_completion", false);
+   }
+   
+   public static final String EDITOR_SURROUND_SELECTION_NEVER               = "never";
+   public static final String EDITOR_SURROUND_SELECTION_QUOTES              = "quotes";
+   public static final String EDITOR_SURROUND_SELECTION_QUOTES_AND_BRACKETS = "quotes_and_brackets";
+   
+   public PrefValue<String> surroundSelection()
+   {
+      return string("surround_selection", EDITOR_SURROUND_SELECTION_QUOTES_AND_BRACKETS);
    }
    
    public PrefValue<Boolean> enableSnippets()
@@ -257,6 +275,16 @@ public class UIPrefsAccessor extends Prefs
       return bool("syntax_color_console", false);
    }
    
+   public PrefValue<Boolean> highlightRFunctionCalls()
+   {
+      return bool("highlight_r_function_calls", false);
+   }
+   
+   public PrefValue<Boolean> showInlineToolbarForRCodeChunks()
+   {
+      return bool("show_inline_toolbar_for_r_code_chunks", true);
+   }
+   
    public PrefValue<Boolean> saveAllBeforeBuild()
    {
       return bool("save_files_before_build", false);
@@ -363,6 +391,11 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> useRoxygen()
    {
       return bool("use_roxygen", false);
+   }
+   
+   public PrefValue<Boolean> useDataImport()
+   {
+      return bool("use_dataimport", true);
    }
    
    public static final String PDF_PREVIEW_NONE = "none";
@@ -480,7 +513,32 @@ public class UIPrefsAccessor extends Prefs
    {
       return object("preferred_publish_account");
    }
+   
+   public PrefValue<Boolean> showRmdChunkOutputInline()
+   {
+      return bool("show_rmd_chunk_output_inline", false);
+   }
+   
+   public PrefValue<Integer> preferredDocumentOutlineWidth()
+   {
+      return integer("preferred_document_outline_width", 110);
+   }
+   
+   public PrefValue<Boolean> showDocumentOutlineRmd()
+   {
+      return bool("show_doc_outline_rmd", false);
+   }
+   
+   public PrefValue<Boolean> showUnnamedEntriesInDocumentOutline()
+   {
+      return bool("show_unnamed_chunks_in_document_outline", true);
+   }
 
+   public PrefValue<Boolean> showProfiler()
+   {
+      return bool("show_profiler", false);
+   }
+   
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())

@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.rsconnect.ui;
 
 import org.rstudio.core.client.widget.TextBoxWithCue;
+import org.rstudio.studio.client.common.HelpLink;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -42,16 +43,11 @@ public class RSConnectLocalAccount extends Composite
       return serverUrl_.getText();
    }
 
-   public String getAccountName() 
-   {
-      return accountName_.getText();
-   }
-   
    public void focus()
    {
       serverUrl_.setFocus(true);
    }
    
    @UiField TextBoxWithCue serverUrl_;
-   @UiField TextBoxWithCue accountName_;
+   @UiField HelpLink connectHelpLink_;
 }
