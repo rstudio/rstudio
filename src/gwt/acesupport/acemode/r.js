@@ -71,15 +71,17 @@ define("mode/r", ["require", "exports", "module"], function(require, exports, mo
           + unicode.packages.Pc + "._]|\\s])+", "g"
       );
 
+      // NOTE: these override fields used for 'auto_brace_insert'
       this.$complements = {
                "(": ")",
                "[": "]",
                '"': '"',
                "'": "'",
-               "{": "}"
+               "{": "}",
+               "`": "`"
             };
-      this.$reOpen = /^[(["'{]$/;
-      this.$reClose = /^[)\]"'}]$/;
+      this.$reOpen  = /^[{(\["'`]$/;
+      this.$reClose = /^[})\]"'`]$/;
 
       this.getNextLineIndent = function(state, line, tab, row)
       {

@@ -1,5 +1,9 @@
 ## v0.99c - Release Notes
 
+### Editor
+
+* Enabled auto-pairing of backticks (\`\`) in R documents
+
 ### Data Import
 
 * Import dataset from text via readr

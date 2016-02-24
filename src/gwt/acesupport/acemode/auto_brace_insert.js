@@ -22,8 +22,10 @@ define("mode/auto_brace_insert", ["require", "exports", "module"], function(requ
    var Range = require("ace/range").Range;
    var TextMode = require("ace/mode/text").Mode;
 
-   (function()
-   {
+   (function() {
+
+      // modes can override these to provide for
+      // auto-pairing of other kinds of tokens
       this.$complements = {
          "(": ")",
          "[": "]",
