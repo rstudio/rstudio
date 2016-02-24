@@ -26,17 +26,22 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
+import org.rstudio.core.client.events.HasSelectionCommitHandlers;
+import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -45,6 +50,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileType;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.ProfilerType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
@@ -68,12 +74,11 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 
-public class ProfilerEditingTarget implements EditingTarget
+public class ProfilerEditingTarget implements EditingTarget,
+                                              HasSelectionCommitHandlers<CodeNavigationTarget>
 {
    interface MyCommandBinder
    extends CommandBinder<Commands, ProfilerEditingTarget>
@@ -107,6 +112,12 @@ public class ProfilerEditingTarget implements EditingTarget
       workbenchContext_ = workbenchContext;
       eventBus_ = eventBus;
       sourceServer_ = sourceServer;
+      
+      if (!initializedEvents_)
+      {
+         initializedEvents_ = true;
+         initializeEvents();
+      }
    }
 
    public String getId()
@@ -433,12 +444,10 @@ public class ProfilerEditingTarget implements EditingTarget
       return getContents().getPath();
    }
    
-   public void onMessage(String data, String origin)
+   @Override
+   public HandlerRegistration addSelectionCommitHandler(SelectionCommitHandler<CodeNavigationTarget> handler)
    {
-      if (view_.getUrl().startsWith(origin))
-      {
-         
-      }
+      return null;
    }
 
    @Handler
@@ -569,22 +578,30 @@ public class ProfilerEditingTarget implements EditingTarget
       };
    }
    
-   private static void onGLobalMessage(String data, String origin)
+   private static void onMessage(String message, String file, int line)
    {  
-      if ("gotosource".equals(data))
+      if (message == "sourcefile")
       {
-         for (ProfilerEditingTarget profilerEditingTarget : allProfilerEditingTargets_)
-         {
-            profilerEditingTarget.onMessage(data, origin);
-         }
+         FilePosition filePosition = FilePosition.create(line, 0);
+         CodeNavigationTarget navigationTarget = new CodeNavigationTarget(file, filePosition);
+         
+         RStudioGinjector.INSTANCE.getFileTypeRegistry().editFile(
+               FileSystemItem.createFile(navigationTarget.getFile()),
+               filePosition);
       }
    }
 
-   private native static void initializeEvents() /*-{  
+   private static native void initializeEvents() /*-{
+      var this_ = this;  
       var handler = $entry(function(e) {
-         if (typeof e.data != 'string')
+         if (typeof e.data != 'object')
             return;
-         @org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfileEditingTarget::onGLobalMessage(Ljava/lang/String;Ljava/lang/String;)(e.data, e.origin);
+         if (!e.origin.startsWith(window.location.origin))
+            return;
+         if (e.data.source != "profvis")
+            return;
+            
+         @org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerEditingTarget::onMessage(Ljava/lang/String;Ljava/lang/String;I)(e.data.message, e.data.file, e.data.line);
       });
       $wnd.addEventListener("message", handler, true);
    }-*/;
@@ -612,6 +629,5 @@ public class ProfilerEditingTarget implements EditingTarget
    
    private boolean htmlPathInitialized_;
    
-   private static List<ProfilerEditingTarget> allProfilerEditingTargets_ = 
-         new ArrayList<ProfilerEditingTarget>();
+   private static boolean initializedEvents_;
 }
