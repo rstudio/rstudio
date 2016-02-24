@@ -82,7 +82,12 @@ private:
          for (std::size_t i = 0; i<argCount_; ++i)
             delete [] args_[i] ;
       }
-      delete [] args_ ;
+
+      if (args_)
+      {
+         delete [] args_ ;
+         args_ = NULL;
+      }
    }
    
 private:
