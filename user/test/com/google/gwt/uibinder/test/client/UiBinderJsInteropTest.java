@@ -32,6 +32,7 @@ public class UiBinderJsInteropTest extends GWTTestCase {
     interface Binder extends UiBinder<Widget, MyWidgetBasedUi> { }
 
     @UiField TestJsElementType myJsElementType;
+    @UiField TestJsElementTypeClass myJsElementTypeClass;
 
     @Override
     protected void init() {
@@ -40,9 +41,10 @@ public class UiBinderJsInteropTest extends GWTTestCase {
     }
   }
 
-  public void testJsElementType() {
+  public void testJsElementTypes() {
     MyWidgetBasedUi widget = new MyWidgetBasedUi();
     assertEquals("JS-ELEMENT-TYPE", widget.myJsElementType.getTagName());
+    assertEquals("JS-ELEMENT-TYPE-CLASS", widget.myJsElementTypeClass.getTagName());
   }
 
   @Override

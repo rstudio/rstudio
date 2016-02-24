@@ -15,14 +15,15 @@
  */
 package com.google.gwt.uibinder.test.client;
 
+import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 
 /**
- * Test class for checking UiBinder casting to a JsType interface like this one.
+ * Test class for checking UiBinder casting to a JsType class like this one.
  */
-@JsType(isNative = true)
-public interface TestJsElementType {
+@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+public class TestJsElementTypeClass {
   @JsProperty
-  String getTagName();
+  public native String getTagName();
 }

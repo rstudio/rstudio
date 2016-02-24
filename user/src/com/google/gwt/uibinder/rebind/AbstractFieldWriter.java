@@ -336,7 +336,7 @@ abstract class AbstractFieldWriter implements FieldWriter {
       if (!rawType.isAssignableTo(getDomElement(typeOracle))
           && rawType.getAnnotation(jsinterop.annotations.JsType.class) != null) {
         w.write(
-            "this.owner.%1$s = (%2$s) %1$s;", name,
+            "this.owner.%1$s = (%2$s) (Object) %1$s;", name,
             rawType.getQualifiedSourceName());
       } else {
         w.write("this.owner.%1$s = %1$s;", name);

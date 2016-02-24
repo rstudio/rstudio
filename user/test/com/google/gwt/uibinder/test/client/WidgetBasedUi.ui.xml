@@ -712,6 +712,7 @@
 
      <element-with-tagname ui:field='myElementWithTagName'/>
      <js-element-type ui:field='myJsElementType'/>
+     <js-element-type-class ui:field='myJsElementTypeClass'/>
      <demo:FooIsWidget ui:field='fooIsWidget' addStyleNames="{myStyle.menuBar}" visible="false" />
    </gwt:HTMLPanel>
   </gwt:Dock>
