@@ -481,10 +481,6 @@ public class ShortcutManager implements NativePreviewHandler,
       return false;
    }
    
-   private static final native boolean isContentEditable(Element element) /*-{
-      return !!element.isContentEditable;
-   }-*/;
-   
    public void onEdit(EditEvent event)
    {
       if (event.isBeforeEdit())
