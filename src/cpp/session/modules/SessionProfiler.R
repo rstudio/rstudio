@@ -13,15 +13,24 @@
 #
 #
 
+.rs.addFunction("profile_resources", function()
+{
+   tempPath <- .Call(.rs.routines$rs_profilesPath)
+   if (!.rs.dirExists(tempPath)) {
+      dir.create(tempPath, recursive = TRUE)
+   }
+
+   return list(
+      tempPath = tempPath
+   )
+})
+
 .rs.addJsonRpcHandler("start_profiling", function(profilerOptions)
 {
    tryCatch({
-      tempPath <- .Call(.rs.routines$rs_profilesPath)
-      if (!.rs.dirExists(tempPath)) {
-         dir.create(tempPath, recursive = TRUE)
-      }
+      resources <- .rs.profile_resources()
       
-   	fileName <- tempfile(fileext = ".rprof", tmpdir = tempPath)
+   	fileName <- tempfile(fileext = ".rprof", tmpdir = resources$tempPath)
 
       Rprof(filename = fileName, line.profiling = TRUE)
 
@@ -54,10 +63,10 @@
 .rs.addJsonRpcHandler("open_profile", function(profilerOptions)
 {
    tryCatch({
+      resources <- .rs.profile_resources()
       profvis <- profvis::profvis(prof_input = profilerOptions$fileName)
 
-      tempPath <- .Call(.rs.routines$rs_profilesPath)
-      htmlFile <- tempfile(fileext = ".html", tmpdir = tempPath)
+      htmlFile <- tempfile(fileext = ".html", tmpdir = resources$tempPath)
       htmlwidgets::saveWidget(profvis, htmlFile)
 
       return(list(
