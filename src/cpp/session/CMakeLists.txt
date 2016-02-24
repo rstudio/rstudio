@@ -31,7 +31,9 @@ endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect")
   message(FATAL_ERROR "rsconnect package not found (re-run install-dependencies script to install)")
 endif()
-
+if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/profvis")
+  message(FATAL_ERROR "profvis package not found (re-run install-dependencies script to install)")
+endif()
 
 # verify libclang is installed
 if(WIN32)
@@ -151,6 +153,8 @@ set (SESSION_SOURCE_FILES
    modules/presentation/Tutorial.cpp
    modules/presentation/TutorialInstaller.cpp
    modules/rmarkdown/SessionRMarkdown.cpp
+   modules/rmarkdown/SessionRmdNotebook.cpp
+   modules/rmarkdown/SessionRnbParser.cpp
    modules/rmarkdown/RMarkdownPresentation.cpp
    modules/shiny/SessionShiny.cpp
    modules/tex/SessionCompilePdf.cpp
@@ -416,6 +420,11 @@ if (NOT RSTUDIO_SESSION_WIN64)
    install(FILES ${RSCONNECT_PACKAGE}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
+   # install profvis package
+   file(GLOB PROFVIS_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/profvis*.tar.gz")
+   install(FILES ${PROFVIS_PACKAGE}
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
+
    # install PDF.js
    install(DIRECTORY "resources/pdfjs"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
@@ -426,6 +435,10 @@ if (NOT RSTUDIO_SESSION_WIN64)
 
    # help resources
    install(DIRECTORY "resources/help_resources"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+
+   # notebook resources
+   install(DIRECTORY "resources/notebook"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # install libclang

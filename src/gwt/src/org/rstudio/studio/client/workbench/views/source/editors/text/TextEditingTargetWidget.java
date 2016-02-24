@@ -69,8 +69,10 @@ import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidget;
+import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 public class TextEditingTargetWidget
@@ -78,6 +80,7 @@ public class TextEditingTargetWidget
       implements Display, RequiresVisibilityChanged
 {
    public TextEditingTargetWidget(final TextEditingTarget target,
+                                  DocUpdateSentinel docUpdateSentinel,
                                   Commands commands,
                                   UIPrefs uiPrefs,
                                   FileTypeRegistry fileTypeRegistry,
@@ -88,6 +91,7 @@ public class TextEditingTargetWidget
                                   Session session)
    {
       target_ = target;
+      docUpdateSentinel_ = docUpdateSentinel;
       commands_ = commands;
       uiPrefs_ = uiPrefs;
       session_ = session;
@@ -1017,10 +1021,26 @@ public class TextEditingTargetWidget
          menu.addSeparator();
       }
       
+      if (uiPrefs_.showRmdChunkOutputInline().getValue())
+      {
+         menu.addItem(new DocPropMenuItem(
+               "Show chunk output inline", docUpdateSentinel_, 
+               true, 
+               TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE, 
+               TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE));
+         menu.addItem(new DocPropMenuItem(
+               "Show chunk output in console", docUpdateSentinel_, 
+               false, 
+               TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE, 
+               TextEditingTargetNotebook.CHUNK_OUTPUT_CONSOLE));
+         menu.addSeparator();
+      }
+      
       menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
    }
    
    private final TextEditingTarget target_;
+   private final DocUpdateSentinel docUpdateSentinel_;
    private final Commands commands_;
    private final UIPrefs uiPrefs_;
    private final Session session_;

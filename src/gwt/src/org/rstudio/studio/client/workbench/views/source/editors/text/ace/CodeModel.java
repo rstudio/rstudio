@@ -122,4 +122,10 @@ public class CodeModel extends JavaScriptObject
       this.insertRoxygenSkeleton && this.insertRoxygenSkeleton();
    }-*/;
    
+   public native final int buildScopeTreeUpToRow(int row) /*-{
+      if (typeof this.$buildScopeTreeUpToRow !== "function")
+         return 0;
+      return this.$buildScopeTreeUpToRow(row);
+   }-*/;
+   
 }

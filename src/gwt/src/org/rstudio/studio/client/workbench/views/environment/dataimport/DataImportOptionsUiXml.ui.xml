@@ -1,0 +1,16 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+    xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <ui:style src="res/DataImportStyles.css"
+        type="org.rstudio.studio.client.workbench.views.environment.dataimport.res.DataImportResources.Style">
+    </ui:style>
+    <g:HTMLPanel styleName="{style.mainPanel}">
+        <g:Label text="Import Options:" styleName="{style.optionsLabel}"/>
+        <div class="{style.optionsBlock}">
+            <div class="{style.optionsRow}">
+                <div class="{style.optionLabel} {style.nameLabel}">Name:</div>
+                <g:TextBox ui:field="nameTextBox_" styleName="{style.nameTextBox}"/>
+            </div>
+        </div>
+    </g:HTMLPanel>
+</ui:UiBinder> 

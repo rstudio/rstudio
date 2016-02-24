@@ -137,6 +137,9 @@ import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
 import org.rstudio.studio.client.workbench.views.environment.model.DataPreviewResult;
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
@@ -153,7 +156,10 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationRPubsSource;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationRequest;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
@@ -542,9 +548,15 @@ public class RemoteServer implements Server
    }
 
    public void consoleInput(String consoleInput,
+                            String consoleId,
                             ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, CONSOLE_INPUT, consoleInput, requestCallback);
+      JSONArray params = new JSONArray();
+      params.set(0, consoleInput == null ? JSONNull.getInstance() :
+         new JSONString(consoleInput));
+      params.set(1, consoleId == null? JSONNull.getInstance() :
+         new JSONString(consoleId));
+      sendRequest(RPC_SCOPE, CONSOLE_INPUT, params, requestCallback);
    }
    
    public void resetConsoleActions(ServerRequestCallback<Void> requestCallback)
@@ -1532,6 +1544,7 @@ public class RemoteServer implements Server
                             String fileType,
                             String encoding,
                             String foldSpec,
+                            JsArray<ChunkDefinition> chunkDefs,
                             String contents,
                             ServerRequestCallback<String> requestCallback)
    {
@@ -1541,7 +1554,8 @@ public class RemoteServer implements Server
       params.set(2, fileType == null ? JSONNull.getInstance() : new JSONString(fileType));
       params.set(3, encoding == null ? JSONNull.getInstance() : new JSONString(encoding));
       params.set(4, new JSONString(StringUtil.notNull(foldSpec)));
-      params.set(5, new JSONString(contents));
+      params.set(5, chunkDefs == null ? JSONNull.getInstance() : new JSONObject(chunkDefs));
+      params.set(6, new JSONString(contents));
       sendRequest(RPC_SCOPE, SAVE_DOCUMENT, params, requestCallback);
    }
 
@@ -1550,6 +1564,7 @@ public class RemoteServer implements Server
                                 String fileType,
                                 String encoding,
                                 String foldSpec,
+                                JsArray<ChunkDefinition> chunkDefs,
                                 String replacement,
                                 int offset,
                                 int length,
@@ -1562,10 +1577,11 @@ public class RemoteServer implements Server
       params.set(2, fileType == null ? JSONNull.getInstance() : new JSONString(fileType));
       params.set(3, encoding == null ? JSONNull.getInstance() : new JSONString(encoding));
       params.set(4, new JSONString(StringUtil.notNull(foldSpec)));
-      params.set(5, new JSONString(replacement));
-      params.set(6, new JSONNumber(offset));
-      params.set(7, new JSONNumber(length));
-      params.set(8, new JSONString(hash));
+      params.set(5, chunkDefs == null ? JSONNull.getInstance() : new JSONObject(chunkDefs));
+      params.set(6, new JSONString(replacement));
+      params.set(7, new JSONNumber(offset));
+      params.set(8, new JSONNumber(length));
+      params.set(9, new JSONString(hash));
       sendRequest(RPC_SCOPE, SAVE_DOCUMENT_DIFF, params, requestCallback);
    }
 
@@ -1778,6 +1794,17 @@ public class RemoteServer implements Server
    public void iconvlist(ServerRequestCallback<IconvListResult> requestCallback)
    {
       sendRequest(RPC_SCOPE, ICONVLIST, requestCallback);      
+   }
+   
+   @Override
+   public void extractRmdFromNotebook(String inputPath,
+                                      String outputPath,
+                                      ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(inputPath));
+      params.set(1, new JSONString(outputPath));
+      sendRequest(RPC_SCOPE, "extract_rmd_from_notebook", params, requestCallback);
    }
 
    @Override
@@ -4161,6 +4188,52 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void executeInlineChunk(String docPath, String docId, String chunkId, 
+         String options, String content, 
+         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(docPath == null ? "" : docPath));
+      params.set(1, new JSONString(docId));
+      params.set(2, new JSONString(chunkId));
+      params.set(3, new JSONString(options));
+      params.set(4, new JSONString(content));
+      sendRequest(RPC_SCOPE,
+            "execute_inline_chunk",
+            params,
+            requestCallback);
+   }
+
+   @Override
+   public void refreshChunkOutput(String docPath, String docId, 
+         String contextId, String requestId, 
+         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(docPath == null ? "" : docPath));
+      params.set(1, new JSONString(docId));
+      params.set(2, new JSONString(contextId));
+      params.set(3, new JSONString(requestId));
+      sendRequest(RPC_SCOPE,
+            "refresh_chunk_output",
+            params,
+            requestCallback);
+   }
+
+   @Override
+   public void setChunkConsole(String docId, String chunkId,
+         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(docId));
+      params.set(1, new JSONString(chunkId));
+      sendRequest(RPC_SCOPE,
+            "set_chunk_console",
+            params,
+            requestCallback);
+   }
+
+   @Override
    public void getRmdOutputInfo(String input,
          ServerRequestCallback<RmdOutputInfo> requestCallback)
    {
@@ -4425,6 +4498,83 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(sessionId));
       sendRequest(RPC_SCOPE, "set_following_user", params, callback);
+   }
+
+   @Override
+   public void previewDataImport(DataImportOptions dataImportOptions,
+                                 int maxCols,
+                                 int maxFactors,
+                                 ServerRequestCallback<DataImportPreviewResponse> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(dataImportOptions));
+      params.set(1, new JSONNumber(maxCols));
+      params.set(2, new JSONNumber(maxFactors));
+      sendRequest(RPC_SCOPE, PREVIEW_DATA_IMPORT, params, requestCallback);
+   }
+   
+   @Override
+   public void assembleDataImport(DataImportOptions dataImportOptions,
+                                  ServerRequestCallback<DataImportAssembleResponse> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(dataImportOptions));
+      sendRequest(RPC_SCOPE, ASSEMBLE_DATA_IMPORT, params, requestCallback);
+   }
+   
+   @Override
+   public void startProfiling(ProfileOperationRequest profilerRequest,
+                              ServerRequestCallback<ProfileOperationResponse> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(profilerRequest));
+      sendRequest(RPC_SCOPE, START_PROFILING, params, requestCallback);
+   }
+
+   @Override
+   public void stopProfiling(ProfileOperationRequest profilerRequest,
+                             ServerRequestCallback<ProfileOperationResponse> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(profilerRequest));
+      sendRequest(RPC_SCOPE, STOP_PROFILING, params, requestCallback);
+   }
+
+   @Override
+   public void previewDataImportAsync(DataImportOptions dataImportOptions,
+                                      int maxCols,
+                                      int maxFactors,
+                                      ServerRequestCallback<DataImportPreviewResponse> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(dataImportOptions));
+      params.set(1, new JSONNumber(maxCols));
+      params.set(2, new JSONNumber(maxFactors));
+      sendRequest(RPC_SCOPE, PREVIEW_DATA_IMPORT_ASYNC, params, requestCallback);
+   }
+
+   @Override
+   public void previewDataImportClean(DataImportOptions dataImportOptions, 
+                                      ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(dataImportOptions));
+      sendRequest(RPC_SCOPE, PREVIEW_DATA_IMPORT_CLEAN, params, requestCallback);
+   }
+
+   @Override
+   public void previewDataImportAsyncAbort(ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      sendRequest(RPC_SCOPE, PREVIEW_DATA_IMPORT_ASYNC_ABORT, params, requestCallback);
+   }
+
+   public void openProfile(ProfileOperationRequest profilerRequest,
+                           ServerRequestCallback<ProfileOperationResponse> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(profilerRequest));
+      sendRequest(RPC_SCOPE, OPEN_PROFILE, params, requestCallback);
    }
 
    private String clientId_;
@@ -4774,4 +4924,14 @@ public class RemoteServer implements Server
    private static final String GET_SET_REF_CLASS_CALL = "get_set_ref_class_call";
    private static final String TRANSFORM_SNIPPET = "transform_snippet";
    private static final String GET_SNIPPETS = "get_snippets";
+
+   private static final String PREVIEW_DATA_IMPORT = "preview_data_import";
+   private static final String ASSEMBLE_DATA_IMPORT = "assemble_data_import";
+   private static final String PREVIEW_DATA_IMPORT_ASYNC = "preview_data_import_async";
+   private static final String PREVIEW_DATA_IMPORT_ASYNC_ABORT = "preview_data_import_async_abort";
+   private static final String PREVIEW_DATA_IMPORT_CLEAN = "preview_data_import_clean";
+
+   private static final String START_PROFILING = "start_profiling";
+   private static final String STOP_PROFILING = "stop_profiling";
+   private static final String OPEN_PROFILE = "open_profile";
 }

@@ -64,6 +64,8 @@ import org.rstudio.studio.client.projects.events.ProjectUserChangedEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
 import org.rstudio.studio.client.projects.model.ProjectUser;
 import org.rstudio.studio.client.rmarkdown.events.ShinyGadgetDialogEvent;
+import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
+import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdParamsReadyEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderOutputEvent;
@@ -71,6 +73,7 @@ import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdShinyDocStartedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdTemplateDiscoveredEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdTemplateDiscoveryCompletedEvent;
+import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdDiscoveredTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.rmarkdown.model.RmdShinyDocInfo;
@@ -96,6 +99,7 @@ import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEve
 import org.rstudio.studio.client.workbench.views.console.events.*;
 import org.rstudio.studio.client.workbench.views.console.model.ConsolePrompt;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleResetHistory;
+import org.rstudio.studio.client.workbench.views.console.model.ConsoleText;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.model.DataView;
 import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
@@ -129,6 +133,7 @@ import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 import org.rstudio.studio.client.workbench.views.presentation.events.PresentationPaneRequestCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.events.ShowPresentationPaneEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.RprofEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditEndedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditSavedEvent;
@@ -196,12 +201,12 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.ConsoleOutput))
          {
-            String output = event.getData();
+            ConsoleText output = event.getData();
             eventBus_.fireEvent(new ConsoleWriteOutputEvent(output));
          }
          else if (type.equals(ClientEvent.ConsoleError))
          {
-            String error = event.getData();
+            ConsoleText error = event.getData();
             eventBus_.fireEvent(new ConsoleWriteErrorEvent(error));
          }
          else if (type.equals(ClientEvent.ConsoleWritePrompt))
@@ -211,7 +216,7 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.ConsoleWriteInput))
          {
-            String input = event.getData();
+            ConsoleText input = event.getData();
             eventBus_.fireEvent(new ConsoleWriteInputEvent(input));
          }
          else if (type.equals(ClientEvent.ConsolePrompt))
@@ -754,6 +759,24 @@ public class ClientEventDispatcher
          {
             RAddins data = event.getData();
             eventBus_.fireEvent(new AddinRegistryUpdatedEvent(data));
+         }
+         else if (type.equals(ClientEvent.ChunkOutput))
+         {
+            RmdChunkOutput data = event.getData();
+            eventBus_.fireEvent(new RmdChunkOutputEvent(data));
+         }
+         else if (type.equals(ClientEvent.ChunkOutputFinished))
+         {
+            RmdChunkOutputFinishedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new RmdChunkOutputFinishedEvent(data));
+         }
+         else if (type.equals(ClientEvent.RprofStarted))
+         {
+            eventBus_.fireEvent(new RprofEvent(true));
+         }
+         else if (type.equals(ClientEvent.RprofStopped))
+         {
+            eventBus_.fireEvent(new RprofEvent(false));
          }
          else
          {

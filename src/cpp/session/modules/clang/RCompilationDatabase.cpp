@@ -100,9 +100,9 @@ SourceCppFileInfo sourceCppFileInfo(const core::FilePath& srcPath)
       info.hash.append(attrib);
    }
 
-   // using RcppParallel/Boost.SIMD means don't index (expression templates
+   // using RcppNT2/Boost.SIMD means don't index (expression templates
    // are too much for the way we do indexing)
-   if (boost::algorithm::contains(info.hash, "RcppParallel"))
+   if (boost::algorithm::contains(info.hash, "RcppNT2"))
       info.disableIndexing = true;
 
    // return info
@@ -679,11 +679,11 @@ bool RCompilationDatabase::shouldIndexConfig(const CompilationConfig& config)
    if (config.args.empty())
       return false;
 
-   // using RcppParallel/Boost.SIMD means don't index (expression templates
+   // using RcppNT2/Boost.SIMD means don't index (expression templates
    // are too much for the way we do indexing)
    BOOST_FOREACH(const std::string& arg, config.args)
    {
-      if (boost::algorithm::contains(arg, "RcppParallel"))
+      if (boost::algorithm::contains(arg, "RcppNT2"))
          return false;
    }
 

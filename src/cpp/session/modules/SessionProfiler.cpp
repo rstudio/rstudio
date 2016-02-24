@@ -20,6 +20,14 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include <core/Error.hpp>
+#include <core/Exec.hpp>
+
+#include <r/RSexp.hpp>
+#include <r/RRoutines.hpp>
+#include <r/RUtil.hpp>
+#include <r/ROptions.hpp>
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -28,23 +36,48 @@ namespace modules {
 namespace profiler {
 
 namespace {
-      
 
+#define kProfilesCacheDir "profiles-cache"
+#define kProfilesUrlPath "profiles"
 
+std::string profilesCacheDir() 
+{
+   return module_context::scopedScratchPath().childPath(kProfilesCacheDir)
+      .absolutePath();
+}
 
-   
+SEXP rs_profilesPath()
+{
+	r::sexp::Protect rProtect;
+	return r::sexp::create(profilesCacheDir(), &rProtect);
+}
+
 } // anonymous namespace
-   
+
+void handleProfilerResReq(const http::Request& request,
+                            http::Response* pResponse)
+{
+   std::string resourceName = http::util::pathAfterPrefix(request, "/" kProfilesUrlPath "/");
+
+   core::FilePath profilesPath = core::FilePath(profilesCacheDir());
+   core::FilePath profileResource = profilesPath.childPath(resourceName);
+
+   pResponse->setCacheableFile(profileResource, request);
+}
+
 Error initialize()
 {  
    ExecBlock initBlock ;
+   
    initBlock.addFunctions()
-      (boost::bind(module_context::sourceModuleRFile, "SessionProfiler.R"));
+      (boost::bind(module_context::sourceModuleRFile, "SessionProfiler.R"))
+      (boost::bind(module_context::registerUriHandler, "/" kProfilesUrlPath "/", handleProfilerResReq));
+
+   RS_REGISTER_CALL_METHOD(rs_profilesPath, 0);
+
    return initBlock.execute();
 
 }
-   
-
 
 } // namespace profiler
 } // namespace modules

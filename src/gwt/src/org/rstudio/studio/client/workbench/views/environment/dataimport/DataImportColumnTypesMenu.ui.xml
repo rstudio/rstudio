@@ -1,0 +1,71 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+    xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <ui:style type='org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportColumnTypesMenu.DataImportColumnTypesMenuCss'>
+    .important {
+        font-weight: bold;
+    }
+    .mainPanel {
+        background-color: #FFF;
+        border: 1px solid #cfd4d8;
+        -webkit-box-shadow: 0px 5px 5px 0px rgba(0,0,0,0.25);
+        -moz-box-shadow:0px 5px 5px 0px rgba(0,0,0,0.25);
+        box-shadow: 0px 5px 5px 0px rgba(0,0,0,0.25);
+        font-size: 11px;
+        min-width: 70px;
+    }
+    .sectionPanel {
+        border-bottom: 1px solid #cfd4d8;
+    }
+    .sectionLastPanel {
+    }
+    .entry {
+        cursor: pointer;
+        display: block;
+        padding-right: 8px;
+        padding-left: 8px;
+        padding-top: 6px;
+        padding-bottom: 6px;
+    }
+    .entrySelected {
+        cursor: pointer;
+        display: block;
+        padding-right: 8px;
+        padding-left: 8px;
+        padding-top: 6px;
+        padding-bottom: 6px;
+        background-color: rgb(234, 246, 255);
+    }
+    .entry:hover {
+        background-color: #bce0fc;
+    }
+    .entrySelected:hover {
+        background-color: #bce0fc;
+    }
+    .errorMessage {
+        padding: 10px;
+    }
+    </ui:style>
+    <g:HTMLPanel styleName="{style.mainPanel}">
+        <g:HTMLPanel ui:field="typesPanel_" styleName="{style.sectionPanel}">
+            <g:Label text="Guess" styleName="{style.entry}" ui:field="guess_"/>
+            <g:Label text="Character" styleName="{style.entry}" ui:field="character_"/>
+            <g:Label text="Double" styleName="{style.entry}" ui:field="double_"/>
+            <g:Label text="Integer" styleName="{style.entry}" ui:field="integer_"/>
+            <g:Label text="Numeric" styleName="{style.entry}" ui:field="numeric_"/>
+            <g:Label text="Logical" styleName="{style.entry}" ui:field="logical_"/>
+            <g:Label text="Date" styleName="{style.entry}" ui:field="date_"/>
+            <g:Label text="Time" styleName="{style.entry}" ui:field="time_"/>
+            <g:Label text="DateTime" styleName="{style.entry}" ui:field="dateTime_"/>
+            <g:Label text="Factor" styleName="{style.entry}" ui:field="factor_"/>
+        </g:HTMLPanel>
+        <g:HTMLPanel ui:field="includePanel_">
+            <g:Label text="Include" styleName="{style.entry}" ui:field="include_"/>
+            <g:Label text="Skip" styleName="{style.entry}" ui:field="skip_"/>
+            <g:Label text="Only" styleName="{style.entry}" ui:field="only_"/>
+        </g:HTMLPanel>
+        <g:HTMLPanel ui:field="errorPanel_">
+            <g:Label styleName="{style.errorMessage}" ui:field="error_"/>
+        </g:HTMLPanel>
+    </g:HTMLPanel>
+</ui:UiBinder> 

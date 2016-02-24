@@ -295,11 +295,17 @@ void AsyncPackageInformationProcess::update()
    
    boost::shared_ptr<AsyncPackageInformationProcess> pProcess(
          new AsyncPackageInformationProcess());
+
+   std::vector<core::FilePath> sources;
+   FilePath modulesPath = session::options().modulesRSourcePath();
+   sources.push_back(modulesPath.complete("SessionCodeTools.R"));
+   sources.push_back(modulesPath.complete("SessionRCompletions.R"));
    
    pProcess->start(
             finalCmd.c_str(),
             core::FilePath(),
-            async_r::R_PROCESS_VANILLA | async_r::R_PROCESS_AUGMENTED);
+            async_r::R_PROCESS_VANILLA | async_r::R_PROCESS_AUGMENTED,
+            sources);
    
 }
 

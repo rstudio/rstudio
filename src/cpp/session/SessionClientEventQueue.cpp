@@ -15,6 +15,8 @@
 
 #include "SessionClientEventQueue.hpp"
 
+#include "modules/SessionConsole.hpp"
+
 #include <boost/foreach.hpp>
 
 
@@ -52,6 +54,25 @@ ClientEventQueue::ClientEventQueue()
 {
 }
 
+bool ClientEventQueue::setActiveConsole(const std::string& console)
+{
+   bool changed = false;
+   LOCK_MUTEX(*pMutex_)
+   {
+      if (activeConsole_ != console)
+      {
+         // flush events to the previous console
+         flushPendingConsoleOutput();
+         
+         // switch to the new one
+         activeConsole_ = console;
+         changed = true;
+      }
+   }
+   END_LOCK_MUTEX
+   return changed;
+}
+
 void ClientEventQueue::add(const ClientEvent& event)
 { 
    LOCK_MUTEX(*pMutex_)
@@ -61,6 +82,12 @@ void ClientEventQueue::add(const ClientEvent& event)
       {
          if (event.data().type() == json::StringType)
             pendingConsoleOutput_ += event.data().get_str();
+      }
+      else if (event.type() == client_events::kConsoleWriteError &&
+               event.data().type() == json::StringType)
+      {
+         flushPendingConsoleOutput();
+         enqueueClientOutputEvent(event.type(), event.data().get_str());
       }
       else
       {
@@ -169,10 +196,19 @@ void ClientEventQueue::flushPendingConsoleOutput()
       int limit = r::session::consoleActions().capacity() + 1;
       string_utils::trimLeadingLines(limit, &pendingConsoleOutput_);
 
-      pendingEvents_.push_back(ClientEvent(client_events::kConsoleWriteOutput, 
-                                           pendingConsoleOutput_)); 
+      enqueueClientOutputEvent(client_events::kConsoleWriteOutput, 
+            pendingConsoleOutput_);
       pendingConsoleOutput_.clear() ;
    }
+}
+
+void ClientEventQueue::enqueueClientOutputEvent(
+      int event, const std::string& text)
+{
+   json::Object output;
+   output[kConsoleText] = text;
+   output[kConsoleId]   = activeConsole_;
+   pendingEvents_.push_back(ClientEvent(event, output)); 
 }
 
 } // namespace session

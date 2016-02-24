@@ -145,6 +145,10 @@ const int kUserFollowEnded = 121;
 const int kProjectAccessRevoked = 122;
 const int kCollabEditSaved = 123;
 const int kAddinRegistryUpdated = 124;
+const int kChunkOutput = 125;
+const int kChunkOutputFinished = 126;
+const int kRprofStarted = 127;
+const int kRprofStopped = 128;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -394,6 +398,14 @@ std::string ClientEvent::typeName() const
          return "collab_edit_saved";
       case client_events::kAddinRegistryUpdated:
          return "addin_registry_updated";
+      case client_events::kChunkOutput:
+         return "chunk_output";
+      case client_events::kChunkOutputFinished:
+         return "chunk_output_finished";
+      case client_events::kRprofStarted:
+         return "rprof_started";
+      case client_events::kRprofStopped:
+         return "rprof_stopped";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

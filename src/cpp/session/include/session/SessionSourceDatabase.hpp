@@ -1,7 +1,7 @@
 /*
  * SessionSourceDatabase.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -188,13 +188,20 @@ core::Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs);
 core::Error put(boost::shared_ptr<SourceDocument> pDoc);
 core::Error remove(const std::string& id);
 core::Error removeAll();
+core::Error getPath(const std::string& id, std::string* pPath);
+core::Error getPath(const std::string& id, core::FilePath* pPath);
+core::Error getId(const std::string& path, std::string* pId);
+core::Error getId(const core::FilePath& path, std::string* pId);
 
 // source database events
 struct Events : boost::noncopyable
 {
-   boost::signal<void(boost::shared_ptr<SourceDocument>)> onDocUpdated;
-   boost::signal<void(const std::string&)>                onDocRemoved;
-   boost::signal<void()>                                  onRemoveAll;
+   boost::signal<void(boost::shared_ptr<SourceDocument>)>      onDocUpdated;
+   boost::signal<void(const std::string&,
+                      boost::shared_ptr<SourceDocument>)>      onDocRenamed;
+   boost::signal<void(const std::string&)>                     onDocAdded;
+   boost::signal<void(const std::string&, const std::string&)> onDocRemoved;
+   boost::signal<void()>                                       onRemoveAll;
 };
 
 Events& events();

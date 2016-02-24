@@ -129,7 +129,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
                // if we're in someone else's project, disable paths above
                // the project
                SessionInfo si = session_.getSessionInfo();
-               if (si.getActiveProjectDir() != null && !si.isProjectOwner())
+               if (si.getActiveProjectDir() != null && !si.projectParentBrowseable())
                   lastBrowseable = si.getActiveProjectDir().getPath();
             }
                

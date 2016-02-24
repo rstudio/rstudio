@@ -433,6 +433,14 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // how to view R Markdown documents
          rmdViewerType().setGlobalValue(
                newUiPrefs.rmdViewerType().getGlobalValue());
+         
+         // show improved data import dialog
+         useDataImport().setGlobalValue(
+               newUiPrefs.useDataImport().getGlobalValue());
+
+         // show profiler
+         showProfiler().setGlobalValue(
+               newUiPrefs.showProfiler().getGlobalValue());
       }
       else if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
       {

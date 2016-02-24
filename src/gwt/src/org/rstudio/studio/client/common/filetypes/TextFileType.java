@@ -238,6 +238,11 @@ public class TextFileType extends EditableFileType
       return FileTypeRegistry.MARKDOWN.getTypeId().equals(getTypeId());
    }
    
+   public boolean isRNotebook()
+   {
+      return FileTypeRegistry.RNOTEBOOK.getTypeId().equals(getTypeId());
+   }
+   
    public boolean isC()
    {
       return EditorLanguage.LANG_CPP.equals(getEditorLanguage());

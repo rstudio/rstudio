@@ -70,7 +70,8 @@ public class RObjectEntry
           type.equals("matrix") ||
           type.equals("data.table") ||
           type.equals("cast_df") ||
-          type.equals("xts"))
+          type.equals("xts") ||
+          type.equals("DataFrame"))
       {
          return Categories.Data;
       }

@@ -95,7 +95,7 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
       updateSavePromptRequired();
 }
 
-void onDocRemoved(const std::string& id)
+void onDocRemoved(const std::string& id, const std::string&)
 {
    s_dirtyDocuments.erase(id);
    updateSavePromptRequired();

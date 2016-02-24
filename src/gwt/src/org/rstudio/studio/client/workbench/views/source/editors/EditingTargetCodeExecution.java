@@ -1,7 +1,7 @@
 /*
  * EditingTargetCodeExecution.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,11 +17,13 @@ package org.rstudio.studio.client.workbench.views.source.editors;
 
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleExecutePendingInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
+import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
@@ -34,9 +36,9 @@ public class EditingTargetCodeExecution
       String extractCode(DocDisplay docDisplay, Range range);
    }
    
-   public EditingTargetCodeExecution(DocDisplay docDisplay)
+   public EditingTargetCodeExecution(DocDisplay docDisplay, String docId)
    {
-      this(docDisplay, new CodeExtractor() {
+      this(docDisplay, docId, new CodeExtractor() {
          @Override
          public String extractCode(DocDisplay docDisplay, Range range)
          {
@@ -46,10 +48,12 @@ public class EditingTargetCodeExecution
    }
    
    public EditingTargetCodeExecution(DocDisplay docDisplay,
+                                     String docId,
                                      CodeExtractor codeExtractor)
    {
       docDisplay_ = docDisplay;
       codeExtractor_ = codeExtractor;
+      docId_ = docId;
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
    
@@ -113,6 +117,18 @@ public class EditingTargetCodeExecution
       {
          code = code.replaceFirst("^[ \\t]*#'[ \\t]?", "");
          code = code.replaceAll("\n[ \\t]*#'[ \\t]?", "\n");
+      }
+      
+      // if we're in a chunk with in-line output, execute it there instead
+      if (docDisplay_.showChunkOutputInline())
+      {
+         Scope scope = docDisplay_.getCurrentChunk(range.getStart());
+         if (scope != null)
+         {
+            events_.fireEvent(new SendToChunkConsoleEvent(docId_, 
+                  scope.getEnd().getRow(), code));
+            return;
+         }
       }
       
       // send to console
@@ -194,6 +210,7 @@ public class EditingTargetCodeExecution
    private UIPrefs prefs_;
    private final DocDisplay docDisplay_;
    private final CodeExtractor codeExtractor_;
+   private final String docId_;
    private AnchoredSelection lastExecutedCode_;
 }
 

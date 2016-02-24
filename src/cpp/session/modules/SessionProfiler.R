@@ -1,7 +1,7 @@
 #
 # SessionProfiler.R
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-16 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -13,4 +13,70 @@
 #
 #
 
+.rs.addJsonRpcHandler("start_profiling", function(profilerOptions)
+{
+   tryCatch({
+      tempPath <- .Call(.rs.routines$rs_profilesPath)
+      if (!.rs.dirExists(tempPath)) {
+         dir.create(tempPath, recursive = TRUE)
+      }
+      
+   	fileName <- tempfile(fileext = ".rprof", tmpdir = tempPath)
 
+      Rprof(filename = fileName, line.profiling = TRUE)
+
+      return(list(
+         fileName = .rs.scalar(fileName)
+      ))
+   }, error = function(e) {
+      return(list(error = .rs.scalar(e)))
+   })
+})
+
+.rs.addJsonRpcHandler("stop_profiling", function(profilerOptions)
+{
+   tryCatch({
+      Rprof(NULL)
+
+      if (!identical(profilerOptions$fileName, NULL))
+      {
+         invisible(.Call(.rs.routines$rs_fileEdit, c(profilerOptions$fileName)))
+      }
+
+      return(list(
+         fileName = .rs.scalar(profilerOptions$fileName)
+      ))
+   }, error = function(e) {
+      return(list(error = .rs.scalar(e)))
+   })
+})
+
+.rs.addJsonRpcHandler("open_profile", function(profilerOptions)
+{
+   tryCatch({
+      profvis <- profvis::profvis(prof_input = profilerOptions$fileName)
+
+      tempPath <- .Call(.rs.routines$rs_profilesPath)
+      htmlFile <- tempfile(fileext = ".html", tmpdir = tempPath)
+      htmlwidgets::saveWidget(profvis, htmlFile)
+
+      return(list(
+         htmlFile = .rs.scalar(paste("profiles/", basename(htmlFile), sep = ""))
+      ))
+   }, error = function(e) {
+      return(list(error = .rs.scalar(e)))
+   })
+})
+
+.rs.registerNotifyHook("Rprof", "utils", function(...) 
+{
+   args <- c(...)
+   if (!identical(args, NULL))
+   {
+      .rs.enqueClientEvent("rprof_started");
+   }
+   else
+   {
+      .rs.enqueClientEvent("rprof_stopped");
+   }
+})

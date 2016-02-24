@@ -393,6 +393,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("use_roxygen", false);
    }
    
+   public PrefValue<Boolean> useDataImport()
+   {
+      return bool("use_dataimport", true);
+   }
+   
    public static final String PDF_PREVIEW_NONE = "none";
    public static final String PDF_PREVIEW_RSTUDIO = "rstudio";
    public static final String PDF_PREVIEW_DESKTOP_SYNCTEX = "desktop-synctex";
@@ -509,6 +514,11 @@ public class UIPrefsAccessor extends Prefs
       return object("preferred_publish_account");
    }
    
+   public PrefValue<Boolean> showRmdChunkOutputInline()
+   {
+      return bool("show_rmd_chunk_output_inline", false);
+   }
+   
    public PrefValue<Integer> preferredDocumentOutlineWidth()
    {
       return integer("preferred_document_outline_width", 110);
@@ -522,6 +532,11 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> showUnnamedEntriesInDocumentOutline()
    {
       return bool("show_unnamed_chunks_in_document_outline", true);
+   }
+
+   public PrefValue<Boolean> showProfiler()
+   {
+      return bool("show_profiler", false);
    }
    
    private String getDefaultPdfPreview()

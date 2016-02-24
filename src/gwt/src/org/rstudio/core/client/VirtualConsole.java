@@ -222,7 +222,7 @@ public class VirtualConsole
       parent.appendChild(textNode);
    }
    
-   private void redraw(Element parent)
+   public void redraw(Element parent)
    {
       // convert to a plain-text string
       String plainText = toString();

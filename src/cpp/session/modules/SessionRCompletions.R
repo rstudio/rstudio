@@ -197,9 +197,7 @@ assign(x = ".rs.acCompletionTypes",
                                                quote = FALSE,
                                                directoriesOnly = FALSE)
 {
-   projectPath <- .rs.getProjectDirectory()
-   hasFileMonitor <- .rs.hasFileMonitor()
-   path <- suppressWarnings(.rs.normalizePath(path))
+   path <- suppressWarnings(.rs.normalizePath(path, winslash = "/"))
    
    ## Separate the token into a 'directory' prefix, and a 'name' prefix. We need
    ## to prefix the prefix as we will need to prepend it onto completions for
@@ -261,9 +259,11 @@ assign(x = ".rs.acCompletionTypes",
    # If the directory lies within a folder that we're monitoring
    # for indexing, use that.
    cacheable <- TRUE
-   usingFileMonitor <- .rs.hasFileMonitor() &&
+   usingFileMonitor <-
+      .rs.hasFileMonitor() &&
       .rs.startsWith(directory, projDirEndsWithSlash)
    
+   absolutePaths <- character()
    if (usingFileMonitor)
    {
       if (directoriesOnly)
@@ -275,51 +275,7 @@ assign(x = ".rs.acCompletionTypes",
       absolutePaths <- index$paths
    }
    
-   # Otherwise, result to a listing of just the current directory.
-   else
-   {
-      pattern <- if (nzchar(tokenName))
-         paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(tokenName)), sep = "")
-      
-      # Manually construct a call to `list.files` which should work across
-      # versions of R >= 2.11.
-      formals <- as.list(formals(base::list.files))
-      
-      formals$path <- directory
-      formals$pattern <- pattern
-      formals$all.files <- TRUE
-      formals$full.names <- TRUE
-      
-      # NOTE: not available in older versions of R, but defaults to FALSE
-      # with newer versions.
-      if ("include.dirs" %in% names(formals))
-         formals[["include.dirs"]] <- TRUE
-      
-      # NOTE: not available with older versions of R, but defaults to FALSE
-      if ("no.." %in% names(formals))
-         formals[["no.."]] <- TRUE
-      
-      # Generate the call, and evaluate it.
-      result <- do.call(base::list.files, formals)
-      
-      # Clean up duplicated '/'.
-      absolutePaths <- gsub("/+", "/", result)
-      
-      # Remove un-needed `.` paths. These paths will look like
-      #
-      #     <path>/.
-      #     <path>/..
-      #
-      # This is only unnecessary if we couldn't use 'no..'.
-      if (!("no.." %in% names(formals)))
-      {
-         absolutePaths <- grep("/\\.+$",
-                               absolutePaths,
-                               invert = TRUE,
-                               value = TRUE)
-      }
-      
-   }
+   absolutePaths <- sort(union(absolutePaths, .rs.listFilesFuzzy(directory, tokenName)))
    
    ## Bail out early if we didn't get any completions.
    if (!length(absolutePaths))
@@ -757,9 +713,9 @@ assign(x = ".rs.acCompletionTypes",
          getNamespaceExports(namespace)
       else
       {
-         # Take advantage of 'sorted' argument if 
-         # available -- we only want to sort a filtered
-         # subset
+         # Take advantage of 'sorted' argument if available,
+         # as we only want to sort a filtered subset and will
+         # sort again later
          arguments <- list()
          arguments[["name"]] <- namespace
          arguments[["all.names"]] <- TRUE
@@ -769,9 +725,49 @@ assign(x = ".rs.acCompletionTypes",
          do.call(objects, arguments)
       }
       
-      completions <- sort(.rs.selectFuzzyMatches(objectNames, token))
-      objects <- mget(completions, envir = namespace, inherits = TRUE)
-      type <- vapply(objects, FUN.VALUE = numeric(1), USE.NAMES = FALSE, .rs.getCompletionType)
+      # For `::`, we also want to grab items in the 'lazydata' environment
+      # within the namespace.
+      lazydata <- new.env(parent = emptyenv())
+      dataNames <- character()
+      if (exportsOnly && exists(".__NAMESPACE__.", envir = namespace))
+      {
+         .__NAMESPACE__. <- get(".__NAMESPACE__.", envir = namespace)
+         if (exists("lazydata", envir = .__NAMESPACE__.))
+         {
+            lazydata  <- get("lazydata", envir = .__NAMESPACE__.)
+            dataNames <- objects(lazydata, all.names = TRUE)
+         }
+      }
+      
+      # Filter our results
+      objectNames <- .rs.selectFuzzyMatches(objectNames, token)
+      dataNames   <- .rs.selectFuzzyMatches(dataNames, token)
+      
+      # Collect the object types
+      objectTypes <- vapply(
+         mget(objectNames, envir = namespace, inherits = TRUE),
+         FUN.VALUE = numeric(1),
+         USE.NAMES = FALSE,
+         .rs.getCompletionType
+      )
+      
+      # Let 'lazydata' be lazy -- don't force evaluation.
+      dataTypes <- rep(.rs.acCompletionTypes$DATAFRAME, length(dataNames))
+      
+      # Construct a data.frame to hold our results (because we'll
+      # need to re-sort our items)
+      df <- data.frame(
+         names = c(objectNames, dataNames),
+         types = c(objectTypes, dataTypes),
+         stringsAsFactors = FALSE
+      )
+      
+      # Sort by 'names'
+      df <- df[order(df$names), ]
+      
+      # Construct the completion result
+      completions <- df$names
+      type <- df$types
       
       result <- .rs.makeCompletions(
          token = token,
@@ -861,6 +857,19 @@ assign(x = ".rs.acCompletionTypes",
       packages <- packages[order]
       quote    <- quote[order]
       type     <- type[order]
+   }
+   
+   # Avoid generating too many completions
+   limit <- 2000
+   if (length(results) > limit)
+   {
+      cacheable <- FALSE
+      idx <- seq_len(limit)
+      
+      results  <- results[idx]
+      packages <- packages[idx]
+      quote    <- quote[idx]
+      type     <- type[idx]
    }
    
    list(token = token,
@@ -1016,10 +1025,10 @@ assign(x = ".rs.acCompletionTypes",
                   type <- numeric(length(names))
                   for (i in seq_along(names))
                   {
-                     type[[i]] <- tryCatch(
+                     type[[i]] <- suppressWarnings(tryCatch(
                         .rs.getCompletionType(eval(call("@", quote(object), names[[i]]))),
                         error = function(e) .rs.acCompletionTypes$UNKNOWN
-                     )
+                     ))
                   }
                }
             }, error = function(e) NULL
@@ -1105,10 +1114,13 @@ assign(x = ".rs.acCompletionTypes",
             type <- numeric(length(names))
             for (i in seq_along(names))
             {
-               type[[i]] <- tryCatch(
-                  .rs.getCompletionType(eval(call("$", quote(object), names[[i]]))),
+               type[[i]] <- suppressWarnings(tryCatch(
+                  if (is.environment(object) && bindingIsActive(names[[i]], object))
+                     .rs.acCompletionTypes$UNKNOWN
+                  else
+                     .rs.getCompletionType(eval(call("$", quote(object), names[[i]]))),
                   error = function(e) .rs.acCompletionTypes$UNKNOWN
-               )
+               ))
             }
          }
       }
@@ -1229,11 +1241,23 @@ assign(x = ".rs.acCompletionTypes",
                                                    excludeOtherCompletions = FALSE,
                                                    quote = !appendColons)
 {
-   allPackages <- Reduce(union, lapply(.libPaths(), list.files))
+   # List all directories within the .libPaths()
+   allPackages <- Reduce(union, lapply(.libPaths(), function(libPath) {
+      .rs.listDirs(libPath, full.names = FALSE, recursive = FALSE)
+   }))
    
    # Not sure why 'DESCRIPTION' might show up here, but let's take it out
    allPackages <- setdiff(allPackages, "DESCRIPTION")
    
+   # Also remove any '00LOCK' directories -- these might be leftovers
+   # from earlier failed package installations
+   if (length(allPackages))
+   {
+      isLockDir <- substring(allPackages, 1, 6) == "00LOCK"
+      allPackages <- allPackages[!isLockDir]
+   }
+   
+   # Construct our completions, and we're done
    completions <- .rs.selectFuzzyMatches(allPackages, token)
    .rs.makeCompletions(token = token,
                        results = if (appendColons && length(completions))
@@ -1472,28 +1496,21 @@ assign(x = ".rs.acCompletionTypes",
    .Call(.rs.routines$rs_isBrowserActive)
 })
 
-.rs.addFunction("getActiveFrame", function(n = 0L)
+# NOTE: This function attempts to find an active frame (if
+# any) in the current caller's context, which may be a
+# function environment if we're currently in the debugger,
+# and just the .GlobalEnv otherwise. Because the
+# '.rs.rpc.get_completions' call gets its own set of 'stack
+# frames', we must poke into 'sys.frames()' and get the last
+# frame not part of that stack. In practice, this means
+# discarding the current frame, as well as any extra frames
+# from the caller (hence, the 'offset' argument). Of course,
+# when there is no debug frame active, we just want to draw
+# our completions from the global environment.
+.rs.addFunction("getActiveFrame", function(offset = 1L)
 {
-   # We need to skip the following frames:
-   # 1. The frame created by the .Call,
-   # 2. The current frame from this function call,
-   # 3. The browser call (if necessary).
-   offset <- 2L
-   if (.rs.isBrowserActive())
-      offset <- offset + 1L
-   
-   # We also need to further munge this if JIT compilation is
-   # active. It looks like it can optimize out a frame somewhere?
-   if ("compiler" %in% loadedNamespaces())
-   {
-      tryCatch({
-         compilerLevel <- compiler::getCompilerOption("optimize")
-         if (compilerLevel == 2)
-            offset <- offset - 1L
-      }, error = function(e) NULL)
-   }
-   
-   .Call(.rs.routines$rs_getActiveFrame, as.integer(n) + offset)
+   frames <- c(.GlobalEnv, sys.frames())
+   frames[[length(frames) - 1L - offset]]
 })
 
 .rs.addFunction("getCompletionsNativeRoutine", function(token, interface)
@@ -1650,7 +1667,7 @@ assign(x = ".rs.acCompletionTypes",
       on.exit(.rs.removeKnitrParamsObject(), add = TRUE)
    
    # Get the currently active frame
-   envir <- .rs.getActiveFrame(1L)
+   envir <- .rs.getActiveFrame()
    
    filePath <- suppressWarnings(.rs.normalizePath(filePath))
    

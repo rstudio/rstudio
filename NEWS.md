@@ -1,140 +1,52 @@
-## v0.99b - Release Notes
+## v0.99c - Release Notes
 
-### Source Editor
+### Editor
 
-* New Emacs editing mode
-* Editor and IDE keyboard shortcuts can now be customized
-* Support for multiple source windows (tear editor tabs off main window)
-* New global and per-project options for line feed conversion
-* Snippets: pass parameters to snippet generating R functions
-* Split into lines command for multiple cursors (Ctrl+Alt+A)
-* New keyboard shortcuts to expand/contract current selection
-    * Cmd+Alt+Shift+{Up/Down} OS X
-    * Ctrl+Shift+{Up/Down} otherwise
-* Enhanced display of sections in R scope navigator
-* Added document outline display to R and C++ documents
-* New Close All Except Current command
-* Rename variable in scope (Cmd+Shift+Alt+M)
-* More context-sensitive highlighting of R keywords
-* Option to enable highlighting of R function calls
-* F2 now navigates into files (e.g. within calls to source)
-* Yank before/after (Ctrl+K, Ctrl+U) now use system clipboard on RStudio Desktop
-* Yank after cursor (Ctrl+K) no longer eats end of line character
-* Added option controlling 'surround on text insertion' behavior
+* Enabled auto-pairing of backticks (\`\`) in R documents
 
-### R Markdown
+### Data Import
 
-* New run chunk and options buttons overlaid at the top right of chunks
-* New shortcut for run current chunk (Cmd+Shift+Enter)
-* Outline view for quick navigation between sections/code chunks
-* Ctrl+PageUp and Ctrl+PageDown navigate between sections within Rmd, Rpres
-* Enabled comment/uncomment (Cmd+Shift+C) for Markdown documents
-* Knit with Parameters command for previewing with varying parameters
-* Run All now executes chunks in console (rather than calling e.g. knitr::purl)
-* Reorganize toolbar commands/menu for improved discoverability
-* Added Run Setup Chunk command
-* Updated embedded pandoc to v1.15.2
-* Update embedded pdf.js to v1.3
-* Support additional options for MS Word (table of contents, keep markdown)
+* Import dataset from text via readr
+* Import dataset from Excel via readxl
+* Import dataset from SAS, SPSS, and Stata via haven
+* Preview data while importing datasets
+* Explicitly set column types while importing datasets
+* Preview and copy code while importing datasets
+* Enable data import preview to be cancelled
+* Enable data import to cache web files
 
 ### Miscellaneous
 
-* RStudio Addins
-    - Register R functions as addins that can interact with the IDE using the rstudioapi package.
-    - Accessible from the Addins menu and can be bound to custom keyboard shortcuts
-* New Session command (create new R session with same project or working directory)
-* Open project in a new window from the projects recently used menu
-* New Shiny App command for quick creation of Shiny applications
-* Data Viewer: Filter factor columns by text or level
-* Raise limit on shinyapps uploads to 1GB from 100MB
-* 'Edit -> Replace and Find' opens Find toolbar if not already open (e.g. with Cmd+Shift+J)
-* Improve performance of console for large and/or rapidly updating output
-* Roxygen quick reference available from the Help menu
-* Links to RStudio cheat sheets available on the Help menu
-* Scan for Rtools in both HKCU and HKLM (for non-Admin installs of Rtools)
-* Run app command and shortcut now works for running single file Shiny applications 
-* Move running Shiny apps between IDE panes and windows without restarting the app
-* Add support for single-file, standalone Shiny applications
-* Parse TeX magic comments that start with "%%" (ESS compatibility).
-* Change default Rpres template to specify autosize: true
-* Automatically create ~/.ssh directory if necessary on Windows
-* Added Makefile mode (used for Makefile, Makevars)
-* Always use LF for line endings in Unix Makefiles in R packages
-* Return environment variables as completions within Sys.getenv(), Sys.setenv() calls
-* Add 'R Scripts' preset filter to Find in Files dialog
-* OS X: Support for executing commands via AppleScript via 'cmd' verb
-* OS X: Enable WebKit WebGL by default
-* OS X: Enable WebKit DeveloperExtras by default
-* OS X: Enable creation of directories in folder picker dialog
-* Windows: Update to SumatraPDF 3.1.1
-* Added ability to zoom panes (e.g. Ctrl+Shift+1 to zoom source pane)
-* Add Console on Left/Right commands for quick relocation of Console
-* Add product and version metadata to Windows installer
-* Add askForPassword function to rstudioapi
-* Improved detection of Msysgit installation location on Windows
-
-### Server
-
-* Include active project in document title (caption of browser tab) 
-* Quit session command now accessible from global toolbar
-* Added option to control how many days users stay signed in for
-* Allow specification of multiple groups in auth-required-user-group option
-* Suspend and resume running R sessions when server is restarted
-* Add kill-session and kill-all admin commands
-* Use SHA256 for signing cookies (previously used SHA1)
-* Use more resilient file locking mechanism for compatibility with NFS volumes
-* Attempt to close application window when quitting
-* Track installed client version using git commit hash rather than timestamp
-* Detect minimum user id from /etc/login.defs (can also be specified via option)
-* Save user-specific .RData and .Rhistory if .Ruserdata directory exists
-* Server Pro: Shared Projects (including concurrent multi-user editing)
-* Server Pro: Support for multiple concurrent R sessions per-user
-* Server Pro: Support for running against multiple versions of R
-* Server Pro: Ability to record user console history for audit purposes
-* Server Pro: Home page for navigating to active sessions and recent projects
-* Server Pro: Don't close PAM sessions by default (configurable via an option)
-* Server Pro: Remove Google OpenID auth (deprecated by Google in favor of OAuth)
-* Server Pro: Add option to specify client-id for Graphite metrics back end
-* Server Pro: Supported SSL protocols is now configurable
-* Server Pro: Add option to rewrite user header in proxied authentication
+* Update C++ unit testing library (catch) to v1.3.3 (fix gcc >=5 compilation errors)
+* Implement gt/gT bindings in Vim mode to switch to next/previous tab
+* Always provide file completions for top-level current directory
+* Prevent wrapping of text in Files pane display
 
 ### Bug Fixes
 
-* Diagnostics: Avoid linting symbols in R formulas
-* Diagnostics: Resolve functions in correct namespace 
-* Diagnostics: Fix invalid diagnostics within formulas
-* Diagnostics: Respect // [[Rcpp::export]] functions used in R code
-* Fix grid metrics issues (e.g. text too small) by using res of 96 rather than 72
-* Correct computation of getOption("width") on high DPI displays
-* Rcpp: Parse attributes when generating diagnostics for header files
-* Enable outdenting in Rhtml documents
-* Find all now respects active search/replace options
-* Fix issue with cursor disappearing in Rmd chunks for ambiance theme
-* Publish button shows in the editor and viewer at the appropriate times
-* Avoid spurious R warnings when autocompletions requested
-* Allow completions in statements following infix operators
-* Completions in Install Packages are now correct for the case of multiple active repositories
-* Vim mode: prevent paste operation from entering visual mode via Ctrl+V cross-talk
-* Fixed chunk highlighter issues that occurred when editing chunk label
-* Correctly handle call to edit() with no arguments
-* Fix inability to start up on OS X when multiple conflicting R versions are on the library search path
-* Prevent crash when canceling out of q() prompt on Windows
-* OS X: Fix crash which could occur when focusing text boxes with placeholders
-* OS X: Viewer now correctly recognizes session temp dir even when prefixed by /private
-* OS X: Word document preview now correctly reloads for newer versions of Office
-* Fix issue with rstudioapi previewRd function when path included spaces
-* R 3.3: Don't call setInternet2 or use --internet2 flag for child R processes
-* Linux, Windows: ensure native printer used (don't default to PDF printing)
-* Prevent spurious navigation when user cancels from the file upload dialog
-* Don't include H3 (and higher) headers when creating presentation slide preview navigation menu
-* Don't allow long file paths to overflow in message dialogs
-* RPM: Set autreqprov to "no" for both desktop and server
-* Prevent periods from being used in Rmd date field (caused LaTeX errors)
-
-
-
-
-
-
+* Autocompletion: avoid errors when retrieving completions in debugger
+* Diagnostics: fix false positive errors with '{' following function calls
+* Avoid over-eager re-rendering + tokenization of documents
+* Fix block commenting of Sweave chunks
+* Fix highlighting of escaped '$' in inline Mathjax expressions
+* Fix editor preview vanishing on zoom level change
+* Emacs mode: C-f now moves the cursor forward instead of opening Find dialog
+* Ensure that modal dialogs capture all input even in the presence of multiple modals
+* Filter out "00LOCK" directories from package name completions
+* Provide completions for 'lazydata' objects within namespaces
+* Prevent warnings from leaking when accessing refClass elements for completions
+* Fix inablity to get active frame for completions when package lfe was loaded
+* Prevent completion popup from appearing offscreen for very long completion names
+* Don't pass encoding="" to knitr for .Rpres files not in a project
+* Avoid duplicating keydown handlers in image list boxes (e.g. New R Markdown template)
+* Ensure editor completion popups are hidden when editor loses focus
+* Cleanup R auto-indentation for plain () or [] (i.e., when not in a function call)
+* Suppress httpd warnings on invalid help queries 
+* Correct syntax highlighting for operator << in C++ mode
+* Fix highlighting in R mode for numbers with only a trailing decimal (e.g. '1.')
+* Ensure that SparkR DataFrames appear as data in environment pane
+* Avoid firing active bindings in completion system
+* Avoid perturbing RNG state when invoking View()
+* Fix unlinked directories in Files pane when other users' folders are browseable
 
 

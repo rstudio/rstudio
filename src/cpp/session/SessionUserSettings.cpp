@@ -860,7 +860,9 @@ void UserSettings::setLintRFunctionCalls(bool enable)
 
 bool  UserSettings::usingMingwGcc49() const
 {
-   return settings_.getBool("usingMingwGcc49", false);
+   return boost::algorithm::contains(core::system::getenv("R_COMPILED_BY"),
+                                     "4.9.3") ||
+          settings_.getBool("usingMingwGcc49", false);
 }
 
 void  UserSettings::setUsingMingwGcc49(bool usingMingwGcc49)
