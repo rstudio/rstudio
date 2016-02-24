@@ -72,21 +72,26 @@ public class DocumentIdleBackgroundTask
          public void onBlur(BlurEvent event)
          {
             stop();
-            if (handler_ != null)
-            {
-               handler_.removeHandler();
-               handler_ = null;
-            }
          }
       });
    }
    
    public void start()
    {
-      assert !isRunning_ : "Background process already running!";
+      if (isRunning_)
+         return;
+      
+      if (!task_.onStart())
+         return;
       
       isRunning_ = true;
       stopRequested_ = false;
+      
+      if (handler_ != null)
+      {
+         handler_.removeHandler();
+         handler_ = null;
+      }
       
       handler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
       {
@@ -105,9 +110,6 @@ public class DocumentIdleBackgroundTask
             }
          }
       });
-      
-      if (!task_.onStart())
-         return;
       
       Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
       {
@@ -151,6 +153,11 @@ public class DocumentIdleBackgroundTask
       task_.onStop();
       isRunning_ = false;
       stopRequested_ = false;
+      if (handler_ != null)
+      {
+         handler_.removeHandler();
+         handler_ = null;
+      }
       return false;
    }
    
