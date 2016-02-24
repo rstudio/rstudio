@@ -31,10 +31,10 @@ import com.google.gwt.user.client.Event.NativePreviewHandler;
 
 public class DocumentIdleBackgroundTask
 {
-   public static abstract class Command
+   public static abstract class BackgroundTask
    {
       // Return 'true' to continue execution, 'false' to end execution
-      public abstract boolean onIdle(Position pos, boolean isMouse);
+      public abstract boolean continueExecution(Position pos, boolean isMouse);
       
       // Return 'false' to signal a stop / failure to start
       public boolean onStart() { return true; }
@@ -42,20 +42,20 @@ public class DocumentIdleBackgroundTask
    }
    
    public DocumentIdleBackgroundTask(DocDisplay docDisplay,
-                                     Command command)
+                                     BackgroundTask task)
    {
-      this(docDisplay, 500, 500, command);
+      this(docDisplay, 500, 500, task);
    }
    
    public DocumentIdleBackgroundTask(DocDisplay docDisplay,
                                      long pollDelayMs,
                                      long idleThresholdMs,
-                                     Command command)
+                                     BackgroundTask task)
    {
       docDisplay_ = docDisplay;
       pollDelayMs_ = pollDelayMs;
       idleThresholdMs_ = idleThresholdMs;
-      command_ = command;
+      task_ = task;
       
       docDisplay_.addFocusHandler(new FocusHandler()
       {
@@ -106,7 +106,7 @@ public class DocumentIdleBackgroundTask
          }
       });
       
-      if (!command_.onStart())
+      if (!task_.onStart())
          return;
       
       Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
@@ -135,7 +135,7 @@ public class DocumentIdleBackgroundTask
                         docDisplay_.toDocumentPosition(lastMouseCoords_) :
                            docDisplay_.getCursorPosition();
             
-            return command_.onIdle(position, lastEventWasMouseMove_);
+            return task_.continueExecution(position, lastEventWasMouseMove_);
          }
       }, (int) pollDelayMs_);
       
@@ -148,7 +148,7 @@ public class DocumentIdleBackgroundTask
    
    private boolean stopExecution()
    {
-      command_.onStop();
+      task_.onStop();
       isRunning_ = false;
       stopRequested_ = false;
       return false;
@@ -160,7 +160,7 @@ public class DocumentIdleBackgroundTask
    private final DocDisplay docDisplay_;
    private final long pollDelayMs_;
    private final long idleThresholdMs_;
-   private final Command command_;
+   private final BackgroundTask task_;
    
    private long lastMouseMoveTime_;
    private ScreenCoordinates lastMouseCoords_;

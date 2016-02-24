@@ -40,11 +40,14 @@ public class SignatureToolTipManager
       docDisplay_ = docDisplay;
       idleTask_ = new DocumentIdleBackgroundTask(
             docDisplay,
-            new DocumentIdleBackgroundTask.Command()
+            new DocumentIdleBackgroundTask.BackgroundTask()
             {
                @Override
-               public boolean onIdle(Position position, boolean isMouse)
+               public boolean continueExecution(Position position, boolean isMouse)
                {
+                  if (!uiPrefs_.showFunctionTooltipOnIdle().getGlobalValue())
+                     return false;
+                  
                   resolveActiveFunctionAndDisplayToolTip(position, !isMouse);
                   return true;
                }
