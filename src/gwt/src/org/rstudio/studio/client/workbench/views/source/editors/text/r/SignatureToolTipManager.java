@@ -48,6 +48,9 @@ public class SignatureToolTipManager
                   if (!uiPrefs_.showFunctionTooltipOnIdle().getGlobalValue())
                      return false;
                   
+                  if (!uiPrefs_.showSignatureTooltips().getGlobalValue())
+                     return false;
+                  
                   resolveActiveFunctionAndDisplayToolTip(position, !isMouse);
                   return true;
                }
