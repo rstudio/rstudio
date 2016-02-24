@@ -59,6 +59,11 @@ public class SignatureToolTipManager
       server_ = server;
    }
    
+   public RCompletionToolTip getToolTip()
+   {
+      return toolTip_;
+   }
+   
    public boolean previewKeyDown(NativeEvent event)
    {
       return toolTip_.previewKeyDown(event);

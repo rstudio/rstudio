@@ -77,6 +77,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
@@ -213,15 +214,18 @@ public class RCompletionManager implements CompletionManager
       popup_.addAttachHandler(new AttachEvent.Handler()
       {
          private boolean wasSigtipShowing_ = false;
+         
          @Override
          public void onAttachOrDetach(AttachEvent event)
          {
+            RCompletionToolTip toolTip = sigTipManager_.getToolTip();
+            
             if (event.isAttached())
             {
-               if (sigTip_ != null && sigTip_.isShowing())
+               if (toolTip != null && toolTip.isShowing())
                {
                   wasSigtipShowing_ = true;
-                  sigTip_.hide();
+                  toolTip.hide();
                }
                else
                {
@@ -230,8 +234,8 @@ public class RCompletionManager implements CompletionManager
             }
             else
             {
-               if (sigTip_ != null && wasSigtipShowing_)
-                  sigTip_.show();
+               if (toolTip != null && wasSigtipShowing_)
+                  toolTip.show();
             }
          }
       });
