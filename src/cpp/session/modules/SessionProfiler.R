@@ -20,9 +20,9 @@
       dir.create(tempPath, recursive = TRUE)
    }
 
-   return list(
+   return (list(
       tempPath = tempPath
-   )
+   ))
 })
 
 .rs.addJsonRpcHandler("start_profiling", function(profilerOptions)
@@ -67,7 +67,7 @@
       profvis <- profvis::profvis(prof_input = profilerOptions$fileName)
 
       htmlFile <- tempfile(fileext = ".html", tmpdir = resources$tempPath)
-      htmlwidgets::saveWidget(profvis, htmlFile)
+      htmlwidgets::saveWidget(profvis, htmlFile, selfcontained = FALSE)
 
       return(list(
          htmlFile = .rs.scalar(paste("profiles/", basename(htmlFile), sep = ""))
