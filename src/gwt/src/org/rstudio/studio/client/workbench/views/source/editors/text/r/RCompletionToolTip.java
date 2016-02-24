@@ -186,7 +186,6 @@ public class RCompletionToolTip extends CppCompletionToolTip
 
    }
    
-   @SuppressWarnings("unused")
    private void setAnchor(Position start, Position end)
    {
       int startCol = start.getColumn();
@@ -194,6 +193,8 @@ public class RCompletionToolTip extends CppCompletionToolTip
          start.setColumn(start.getColumn() - 1);
       
       end.setColumn(end.getColumn() + 1);
+      if (anchor_ != null)
+         anchor_.detach();
       anchor_ = docDisplay_.createAnchoredSelection(start, end);
    }
    
@@ -203,6 +204,8 @@ public class RCompletionToolTip extends CppCompletionToolTip
       start = Position.create(start.getRow(), start.getColumn() - 1);
       Position end = docDisplay_.getSelectionEnd();
       end = Position.create(end.getRow(), end.getColumn() + 1);
+      if (anchor_ != null)
+         anchor_.detach();
       anchor_ = docDisplay_.createAnchoredSelection(start, end);
    }
    
@@ -234,6 +237,8 @@ public class RCompletionToolTip extends CppCompletionToolTip
                         if (cursorPos.isBeforeOrEqualTo(anchorRange.getStart()) ||
                               cursorPos.isAfterOrEqualTo(anchorRange.getEnd()))
                         {
+                           anchor_.detach();
+                           anchor_ = null;
                            hide();
                         }
                      }
