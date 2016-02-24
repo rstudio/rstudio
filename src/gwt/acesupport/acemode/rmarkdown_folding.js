@@ -107,7 +107,6 @@ oop.inherits(FoldMode, BaseFoldMode);
       var limit = increment > 0 ? session.getLength() : 0;
       while (true)
       {
-         idx += increment;
          if (idx === limit)
             break;
 
@@ -117,6 +116,8 @@ oop.inherits(FoldMode, BaseFoldMode);
 
          if (prefix2 && Utils.startsWith(trimmed, prefix2))
             break;
+
+         idx += increment;
       }
       
       var endPos = {row: idx, column: 0};

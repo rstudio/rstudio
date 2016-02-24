@@ -52,6 +52,16 @@ public class RSConnectPublishInput
       return isConnectUIEnabled_;
    }
    
+   public boolean hasConnectAccount()
+   {
+      return hasConnectAccount_;
+   }
+   
+   public void setHasConnectAccount(boolean hasAccount)
+   {
+      hasConnectAccount_ = hasAccount;
+   }
+   
    public void setConnectUIEnabled(boolean enabled)
    {
       isConnectUIEnabled_ = enabled;
@@ -135,6 +145,7 @@ public class RSConnectPublishInput
    private boolean isExternalUIEnabled_;
    private boolean isMultiRmd_;
    private boolean isSelfContained_;
+   private boolean hasConnectAccount_;
    private FileSystemItem sourceRmd_;
    private RSConnectActionEvent originatingEvent_;
    private String description_ = null;

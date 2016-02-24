@@ -44,6 +44,12 @@ FunctionInformation RSourceIndex::s_noSuchFunction_;
 
 namespace {
 
+bool isValidRPackageName(const std::string& pkgName)
+{
+   static const boost::regex rePkgName("[a-zA-Z][a-zA-Z0-9._]*");
+   return boost::regex_match(pkgName, rePkgName);
+}
+
 std::wstring removeQuoteDelims(const std::wstring& input)
 {
    // since we know this was parsed as a quoted string we can just remove
@@ -324,7 +330,8 @@ void libraryCallIndexer(const RTokenCursor& cursor, const IndexStatus& status, R
    if (clone.isType(RToken::STRING))
    {
       std::string pkgName = string_utils::strippedOfQuotes(clone.contentAsUtf8());
-      pIndex->addInferredPackage(pkgName);
+      if (isValidRPackageName(pkgName))
+         pIndex->addInferredPackage(pkgName);
    }
    
    // If the package name is a symbol, then look forward and check for
@@ -332,7 +339,8 @@ void libraryCallIndexer(const RTokenCursor& cursor, const IndexStatus& status, R
    else if (clone.isType(RToken::ID))
    {
       std::string pkgName = clone.contentAsUtf8();
-      pIndex->addInferredPackage(pkgName);
+      if (isValidRPackageName(pkgName))
+         pIndex->addInferredPackage(pkgName);
    }
 }
 

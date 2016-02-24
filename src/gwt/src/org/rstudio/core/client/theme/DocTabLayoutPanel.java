@@ -415,7 +415,13 @@ public class DocTabLayoutPanel
             }
             if (curState_ == STATE_NONE)
             {
-               beginDrag(event);
+               // if we know what we're dragging, initiate it; otherwise, let 
+               // the event continue unimpeded (so we won't appear as a drag
+               // target)
+               if (initDragParams_ == null)
+                  return;
+               else
+                  beginDrag(event);
             }
             event.preventDefault();
          }
@@ -497,6 +503,12 @@ public class DocTabLayoutPanel
       
       private void beginDrag(Event evt)
       {
+         // skip if we don't know what we're dragging -- these parameters 
+         // should get injected by the editor but might not if a failure occurs
+         // during its processing of the DocTabDragInitiatedEvent.
+         if (initDragParams_ == null)
+            return;
+         
          String docId = initDragParams_.getDocId();
          int dragTabWidth = initDragWidth_;
          
@@ -609,7 +621,10 @@ public class DocTabLayoutPanel
                @Override
                public void execute()
                {
-                 dragElement_.getStyle().setDisplay(Display.NONE);
+                  // we may not still be dragging when the event loop comes
+                  // back, so be sure there's an element before hiding it
+                  if (dragElement_ != null)
+                    dragElement_.getStyle().setDisplay(Display.NONE);
                }
             });
          }
@@ -886,7 +901,7 @@ public class DocTabLayoutPanel
             
             events_.fireEvent(new DocWindowChangedEvent(pieces[0],
                   pieces.length > 1 ? pieces[1] : "", 
-                  initDragParams_, destPos_));
+                  initDragParams_, null, destPos_));
          }
          
          // this is the case when our own drag ends; if it ended outside our
@@ -1004,6 +1019,12 @@ public class DocTabLayoutPanel
                // location of the dragged image
                int evtX = evt.getNativeEvent().getClientX();
                ElementEx ele = getElement().cast();
+               
+               // if the drag leaves the window, the destination is going to
+               // need to know information we don't have here (such as the
+               // cursor position in the editor); this event gets handled by
+               // the editor, which adds the needed information and broadcasts
+               // it to all the windows.
                events_.fireEvent(new DocTabDragInitiatedEvent(docId_, 
                            getElement().getClientWidth(), 
                            evtX - ele.getBoundingClientRect().getLeft()));

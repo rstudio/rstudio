@@ -15,6 +15,7 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.StyleElement;
@@ -69,6 +70,11 @@ public class FontSizer
 
    public static void setNormalFontSize(Document document, double size)
    {
+      // ensure we have a document to attach styles to and that GWT created
+      // our resource class
+      if (document == null || styles == null)
+         return;
+      
       size = size + BrowseCap.getFontSkew();
 
       final String STYLE_EL_ID = "__rstudio_normal_size";
@@ -76,12 +82,17 @@ public class FontSizer
       Element oldStyle = document.getElementById(STYLE_EL_ID);
 
       StyleElement style = document.createStyleElement();
+      if (style == null)
+         return;
       style.setAttribute("type", "text/css");
       style.setInnerText("." + styles.normalSize() + ", " +
                          "." + styles.normalSize() + " td, " +
                          "." + styles.normalSize() + " pre" +
                          " {font-size:" + size + "pt !important;}");
-      document.getBody().appendChild(style);
+      BodyElement body = document.getBody();
+      if (body == null)
+         return;
+      body.appendChild(style);
 
       if (oldStyle != null)
          oldStyle.removeFromParent();

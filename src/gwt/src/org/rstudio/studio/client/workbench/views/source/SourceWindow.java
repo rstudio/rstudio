@@ -17,6 +17,8 @@ package org.rstudio.studio.client.workbench.views.source;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.command.ApplicationCommandManager;
+import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.Desktop;
@@ -62,7 +64,9 @@ public class SourceWindow implements LastSourceDocClosedHandler,
          EventBus events,
          MacZoomHandler zoomHandler,
          SourceShim shim,
-         SnippetServerOperations snippetServer)
+         SnippetServerOperations snippetServer,
+         ApplicationCommandManager appCommandManager,
+         EditorCommandManager editorCommandManager)
    {
       sourceShim_ = shim;
       events_ = events;
@@ -214,6 +218,14 @@ public class SourceWindow implements LastSourceDocClosedHandler,
          return satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::getUnsavedChanges()();
       });
       
+      $wnd.rstudioGetCurrentDocPath = $entry(function() {
+         return satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::getCurrentDocPath()();
+      });
+
+      $wnd.rstudioGetCurrentDocId = $entry(function() {
+         return satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::getCurrentDocId()();
+      });
+      
       $wnd.rstudioHandleUnsavedChangesBeforeExit = $entry(function(targets, onCompleted) {
          satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::handleUnsavedChangesBeforeExit(Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/user/client/Command;)(targets, onCompleted);
       });
@@ -272,6 +284,16 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       return items;
    }
    
+   private String getCurrentDocPath()
+   {
+      return sourceShim_.getCurrentDocPath();
+   }
+
+   private String getCurrentDocId()
+   {
+      return sourceShim_.getCurrentDocId();
+   }
+
    private void closeSourceWindow()
    {
       ApplicationQuit.QuitContext quitContext = 
@@ -301,7 +323,7 @@ public class SourceWindow implements LastSourceDocClosedHandler,
          quitContext.onReadyToQuit(false);
       else
          ApplicationQuit.handleUnsavedChanges(SaveAction.SAVEASK, 
-               "Close Source Window", sourceShim_, null, null, quitContext);
+               "Close Source Window", false, sourceShim_, null, null, quitContext);
    }
    
    private final native void markReadyToClose() /*-{

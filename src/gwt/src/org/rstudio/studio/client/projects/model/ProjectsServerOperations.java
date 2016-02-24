@@ -27,6 +27,9 @@ import com.google.gwt.core.client.JsArrayString;
 public interface ProjectsServerOperations extends PrefsServerOperations,
                                                   SourceServerOperations
 {  
+   void validateProjectPath(String projectPath, 
+                            ServerRequestCallback<Boolean> callback);
+   
    void getNewProjectContext(ServerRequestCallback<NewProjectContext> callback);
      
    void createProject(String projectFile,
@@ -50,7 +53,8 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
    
    void analyzeProject(ServerRequestCallback<Void> callback);
    
-   void getProjectSharedUsers(ServerRequestCallback<JsArrayString> callback);
+   void getProjectSharedUsers(
+         ServerRequestCallback<JsArray<ProjectUserRole>> callback);
    
    void setProjectSharedUsers(JsArrayString users, 
                               ServerRequestCallback<SharingResult> callback);
@@ -63,4 +67,18 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
    void getSharedProjects(
          int maxProjects,
          ServerRequestCallback<JsArray<SharedProjectDetails>> callback);
+   
+   void setCurrentlyEditing(String path,
+         String id,
+         ServerRequestCallback<Void> callback);
+   
+   void reportCollabDisconnected(String path, 
+         String id, 
+         ServerRequestCallback<Void> callback);
+   
+   void getProjectUser(String sessionId, 
+         ServerRequestCallback<ProjectUser> callback);
+   
+   void setFollowingUser(String sessionId,
+         ServerRequestCallback<Void> callback);
 }

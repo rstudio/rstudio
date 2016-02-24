@@ -116,7 +116,7 @@ private:
 {
    NSString* path = @"";
    [panel beginSheetModalForWindow: [uiDelegate_ uiWindow]
-                completionHandler: nil];
+                 completionHandler: ^(NSInteger result) {}];
    long int result = [panel runModal];
    @try
    {
@@ -314,19 +314,48 @@ private:
    }
 }
 
+- (void) performClipboardAction: (SEL) selector
+{
+
+#if defined(__MAC_OS_X_VERSION_MAX_ALLOWED) && defined(__MAC_10_10)
+#   if __MAC_OS_X_VERSION_MAX_ALLOWED >= __MAC_10_10
+   typedef WKWebView RSWebView;
+#   else
+   typedef WebView RSWebView;
+#   endif
+#else
+   typedef WebView RSWebView;
+#endif
+   
+   RSWebView* view = [[[NSApp mainWindow] windowController] webView];
+   if (view == nil) {
+      NSString* errorMsg = [NSString stringWithFormat: @"nil webView on clipboard action %@", NSStringFromSelector(selector)];
+      LOG_ERROR_MESSAGE([errorMsg UTF8String]);
+      return;
+   }
+
+   if ([view respondsToSelector: selector]) {
+      [view performSelector: selector withObject: view];
+   } else {
+      NSString* errorMsg = [NSString stringWithFormat: @"@webView does not respond to selector %@", NSStringFromSelector(selector)];
+      LOG_ERROR_MESSAGE([errorMsg UTF8String]);
+      return;
+   }
+}
+
 - (void) clipboardCut
 {
-   [[[[NSApp mainWindow] windowController] webView] cut: self];
+   [self performClipboardAction: @selector(cut:)];
 }
 
 - (void) clipboardCopy
 {
-   [[[[NSApp mainWindow] windowController] webView] copy: self];
+   [self performClipboardAction: @selector(copy:)];
 }
 
 - (void) clipboardPaste
 {
-   [[[[NSApp mainWindow] windowController] webView] paste: self];
+   [self performClipboardAction: @selector(paste:)];
 }
 
 - (NSString*) getUriForPath: (NSString*) path
@@ -380,32 +409,18 @@ private:
    // create the structure describing the doc to open
    path = resolveAliasedPath(path);
    
-   // figure out what application is associated with this path
-   NSURL* appURL = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL: [NSURL fileURLWithPath: path]];
-   if (appURL != nil)
+   // figure out if word is installed
+   if ([[NSWorkspace sharedWorkspace] fullPathForApplication:@"Microsoft Word"]!= nil)
    {
-      NSString* app = [appURL absoluteString];
-      NSArray* splat = [app componentsSeparatedByString: @"/"];
-      
-      // URLs should be stored in the format, e.g.
-      // file://<path>/<app>/
-      // and so we want the second last component
-      NSString* appName = [splat objectAtIndex: [splat count] - 2];
-      
-      // infer whether the application is Word
-      BOOL defaultAppIsWord = [appName rangeOfString: @"Word.app"].location != NSNotFound;
-      
-      if (defaultAppIsWord)
-      {
-         // looks like Word is installed. try to reopen this Word document if it's
-         // already open, while preserving its scroll position; if it isn't already
-         // open, open it.
-         NSString *openDocScript = [NSString stringWithFormat:
+       // looks like Word is installed. try to reopen this Word document if it's
+       // already open, while preserving its scroll position; if it isn't already
+       // open, open it.
+       NSString *openDocScript = [NSString stringWithFormat:
             @"tell application \"Microsoft Word\"\n"
             "  activate\n"
             "  set reopened to false\n"
             "  repeat with i from 1 to (count of documents)\n"
-            "     set docPath to path of document i\n"
+            "     set docPath to full name of document i\n"
             "     if POSIX path of docPath is equal to \"%@\" then\n"
             "        set w to active window of document i\n"
             "        set h to horizontal percent scrolled of w\n"
@@ -422,14 +437,13 @@ private:
             "  if not reopened then open file name POSIX file \"%@\" with read only\n"
             "end tell\n" , path, path];
          
-         NSAppleScript *openDoc =
-         [[[NSAppleScript alloc] initWithSource: openDocScript] autorelease];
+       NSAppleScript *openDoc =
+           [[[NSAppleScript alloc] initWithSource: openDocScript] autorelease];
          
-         if ([openDoc executeAndReturnError: nil] != nil)
-         {
-            opened = true;
-         }
-      }
+       if ([openDoc executeAndReturnError: nil] != nil)
+       {
+           opened = true;
+       }
    }
    
    if (!opened)
@@ -686,7 +700,7 @@ private:
    }
    
    // write to file
-   NSBitmapImageRep *imageRep = [[image representations] objectAtIndex: 0];
+   NSBitmapImageRep *imageRep = (NSBitmapImageRep*) [[image representations] objectAtIndex: 0];
    NSData *data = [imageRep representationUsingType: imageFileType properties: properties];
    if (![data writeToFile: targetPath atomically: NO])
    {
@@ -819,30 +833,37 @@ private:
    sessionLauncher().setPendingQuit((PendingQuit)pendingQuit);
 }
 
+- (void) openInNewWindow: (NSArray*) args
+{
+   NSString* exePath = [NSString stringWithUTF8String:
+               desktop::options().executablePath().absolutePath().c_str()];
+   [NSTask launchedTaskWithLaunchPath: exePath arguments: args];
+}
+
 - (void) openProjectInNewWindow: (NSString*) projectFilePath
 {
    projectFilePath = resolveAliasedPath(projectFilePath);
-   
-   NSString* exePath = [NSString stringWithUTF8String:
-               desktop::options().executablePath().absolutePath().c_str()];
    NSArray* args = [NSArray arrayWithObjects: projectFilePath,
                                               kInitialGeometryArg,
                                               getNewWindowGeometry(), nil];
-   
-   [NSTask launchedTaskWithLaunchPath: exePath arguments: args];
+   [self openInNewWindow: args];
+}
+
+- (void) openProjectInOverlaidNewWindow: (NSString*) projectFilePath
+{
+   if (![projectFilePath isEqualToString: @"none"])
+      projectFilePath = resolveAliasedPath(projectFilePath);
+   NSArray* args = [NSArray arrayWithObjects: projectFilePath, nil];
+   [self openInNewWindow: args];
 }
 
 - (void) openSessionInNewWindow: (NSString*) workingDirectoryPath
 {
-   workingDirectoryPath = resolveAliasedPath(workingDirectoryPath);
-   
-   NSString* exePath = [NSString stringWithUTF8String:
-                                              desktop::options().executablePath().absolutePath().c_str()];
-   
+   workingDirectoryPath = resolveAliasedPath(workingDirectoryPath);   
    core::system::setenv(kRStudioInitialWorkingDir, [workingDirectoryPath UTF8String]);
    NSArray* args = [NSArray arrayWithObjects: kInitialGeometryArg,
                    getNewWindowGeometry(), nil];
-   [NSTask launchedTaskWithLaunchPath: exePath arguments: args];
+   [self openInNewWindow: args];
 }
 
 
@@ -998,6 +1019,11 @@ private:
           boost::algorithm::starts_with(version, "10.10");
 }
 
+- (Boolean) isCentOS
+{
+   return NO;
+}
+
 // On Mavericks we need to tell the OS that we are busy so that
 // AppNap doesn't kick in. Declare a local version of NSActivityOptions
 // so we can build this on non-Mavericks systems
@@ -1037,6 +1063,12 @@ enum RS_NSActivityOptions : uint64_t
 - (void) setWindowTitle: (NSString*) title
 {
    [[MainFrameController instance] setWindowTitle: title];
+}
+
+- (void) setPendingProject: (NSString*) projectPath
+{
+   [self setPendingQuit: 1];
+   [[MainFrameController instance] setPendingProject: projectPath];
 }
  
 - (NSString*) filterText: (NSString*) text
@@ -1198,7 +1230,9 @@ enum RS_NSActivityOptions : uint64_t
       return @"undo";
    else if (sel == @selector(redo:))
       return @"redo";
-   
+   else if (sel == @selector(setPendingProject:))
+      return @"setPendingProject";
+      
    return nil;
 }
 

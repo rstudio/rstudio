@@ -19,6 +19,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.*;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.DataResource;
@@ -26,21 +28,27 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.resources.CoreResources;
 
-public class SlideLabel extends Widget
+public class SlideLabel extends Composite
 {
+   private static SlideLabelUiBinder uiBinder = GWT
+         .create(SlideLabelUiBinder.class);
+   
    static Resources RESOURCES = (Resources)GWT.create(Resources.class);
    public static void ensureStylesInjected() 
    {
       RESOURCES.style().ensureInjected();
    }
 
-   interface Binder extends UiBinder<Element, SlideLabel> {}
-   private static Binder binder = GWT.create(Binder.class);
-
+   interface SlideLabelUiBinder extends UiBinder<Widget, SlideLabel>
+   {
+   }
+   
    interface Resources extends ClientBundle
    {
       @Source("SlideLabel.css")
@@ -73,6 +81,9 @@ public class SlideLabel extends Widget
       String SW();
       String S();
       String SE();
+      
+      String cancelColumn();
+      String cancelButton();
    }
 
    public static Command show(String label,
@@ -133,12 +144,27 @@ public class SlideLabel extends Widget
 
    public SlideLabel(boolean showProgressSpinner)
    {
-      setElement(binder.createAndBindUi(this));
+      initWidget(uiBinder.createAndBindUi(this));
+            
       if (showProgressSpinner)
          progress_.setSrc(CoreResources.INSTANCE.progress_gray_as_data().getSafeUri().asString());
       else
          progress_.getStyle().setDisplay(Style.Display.NONE);
-      curtain_.getStyle().setHeight(0, Style.Unit.PX);
+      curtain_.setHeight("0px");
+
+      cancel_.setVisible(false);
+
+      cancel_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent arg0)
+         {
+            if (onCancel_ != null)
+            {
+               onCancel_.execute();
+            }
+         }
+      });
    }
 
    public void setText(String label, boolean asHtml)
@@ -170,7 +196,7 @@ public class SlideLabel extends Widget
                protected void onStart()
                {
                   setVisible(true);
-                  curtain_.getStyle().setHeight(0, Style.Unit.PX);
+                  curtain_.setHeight("0px");
                   height = content_.getOffsetHeight() + 14 + 14;
                   super.onStart();
                }
@@ -234,10 +260,16 @@ public class SlideLabel extends Widget
       };
       currentAnimation_.run(ANIM_MILLIS);
    }
+   
+   public void onCancel(final Operation onCancel)
+   {
+      onCancel_ = onCancel;
+      cancel_.setVisible(onCancel != null);
+   }
 
    private void setHeight(double height)
    {
-      curtain_.getStyle().setHeight((int)height, Style.Unit.PX);
+      curtain_.setHeight((int)height + "px");
    }
 
    private void stopCurrentAnimation()
@@ -256,16 +288,19 @@ public class SlideLabel extends Widget
    }
 
    @UiField
-   DivElement curtain_;
+   HTMLPanel curtain_;
    @UiField
    DivElement content_;
    @UiField
    TableElement border_;
    @UiField
    ImageElement progress_;
+   @UiField
+   SmallButton cancel_;
 
    private Animation currentAnimation_;
    private Timer currentAutoHideTimer_;
+   private Operation onCancel_;
 
    private static final int ANIM_MILLIS = 250;
 }

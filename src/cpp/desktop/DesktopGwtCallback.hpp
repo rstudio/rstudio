@@ -178,6 +178,7 @@ public slots:
    QString getScrollingCompensationType();
 
    bool isOSXMavericks();
+   bool isCentOS();
 
    void setBusy(bool busy);
 

@@ -69,14 +69,18 @@ import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidget;
+import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 public class TextEditingTargetWidget
       extends ResizeComposite
       implements Display, RequiresVisibilityChanged
 {
    public TextEditingTargetWidget(final TextEditingTarget target,
+                                  DocUpdateSentinel docUpdateSentinel,
                                   Commands commands,
                                   UIPrefs uiPrefs,
                                   FileTypeRegistry fileTypeRegistry,
@@ -87,6 +91,7 @@ public class TextEditingTargetWidget
                                   Session session)
    {
       target_ = target;
+      docUpdateSentinel_ = docUpdateSentinel;
       commands_ = commands;
       uiPrefs_ = uiPrefs;
       session_ = session;
@@ -285,9 +290,7 @@ public class TextEditingTargetWidget
       toolbar.addRightSeparator();
       toolbar.addRightWidget(runLastButton_ = commands_.executeLastCode().createToolbarButton(false));
       toolbar.addRightWidget(goToPrevButton_ = commands_.goToPrevSection().createToolbarButton(false));
-      goToPrevButton_.setTitle("Go to previous section/chunk (PageUp)");
       toolbar.addRightWidget(goToNextButton_ = commands_.goToNextSection().createToolbarButton(false));
-      goToNextButton_.setTitle("Go to next section/chunk (PageDown)");
       toolbar.addRightSeparator();
       final String SOURCE_BUTTON_TITLE = "Source the active document"; 
       
@@ -499,7 +502,8 @@ public class TextEditingTargetWidget
       boolean canPreviewFromR = fileType.canPreviewFromR();
       
       // don't show the run buttons for cpp files, or R files in Shiny
-      runButton_.setVisible(canExecuteCode && !canExecuteChunks && !isCpp && !isShinyFile());
+      runButton_.setVisible(canExecuteCode && !canExecuteChunks && !isCpp && 
+            !isShinyFile());
       runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks);
       
       // chunk oriented buttons     
@@ -550,6 +554,7 @@ public class TextEditingTargetWidget
       }
       else
       {
+         shinyLaunchButton_.setVisible(false);
          setSourceButtonFromScriptState(isScript, 
                                         canPreviewFromR,
                                         fileType.getPreviewButtonText());
@@ -571,7 +576,8 @@ public class TextEditingTargetWidget
    
    private boolean isShinyFile()
    {
-      return extendedType_.equals("shiny");
+      return extendedType_ != null &&
+             extendedType_.startsWith(SourceDocument.XT_SHINY_PREFIX);
    }
 
    public HasValue<Boolean> getSourceOnSave()
@@ -603,7 +609,7 @@ public class TextEditingTargetWidget
       texToolbarButton_.setText(width < 520 ? "" : "Format");
       runButton_.setText(((width < 480) || isShinyFile()) ? "" : "Run");
       compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
-      previewHTMLButton_.setText(width < 450 ? "" : previewCommandText_);                                                       
+      previewHTMLButton_.setText(width < 450 ? "" : previewCommandText_);
       knitDocumentButton_.setText(width < 450 ? "" : knitCommandText_);
       
       if (editor_.getFileType().isRd() || editor_.getFileType().canPreviewFromR())
@@ -863,12 +869,17 @@ public class TextEditingTargetWidget
       publishPath_ = publishPath;
       if (publishButton_ != null)
       {
-         if (type == "shiny")
+         if (type == SourceDocument.XT_SHINY_DIR)
          {
             publishButton_.setContentPath(publishPath, "");
             publishButton_.setContentType(RSConnect.CONTENT_TYPE_APP);
          }
-         else if (type == "rmarkdown")
+         else if (type == SourceDocument.XT_SHINY_SINGLE_FILE)
+         {
+            publishButton_.setContentPath(publishPath, "");
+            publishButton_.setContentType(RSConnect.CONTENT_TYPE_APP_SINGLE);
+         }
+         else if (type == SourceDocument.XT_RMARKDOWN)
          {
             publishButton_.setRmd(publishPath, !isShiny_);
          }
@@ -876,6 +887,25 @@ public class TextEditingTargetWidget
          {
             publishButton_.setContentType(RSConnect.CONTENT_TYPE_NONE);
          }
+      }
+   }
+
+   @Override
+   public void invokePublish()
+   {
+      if (publishButton_ == null)
+      {
+         // shouldn't happen in practice (we hide the publish button and 
+         // disable the command when a non-publishable item is showing in the
+         // widget) but in case it does let the user know why nothing's 
+         // happening.
+         RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+               "Content not publishable", 
+               "This item cannot be published.");
+      }
+      else
+      {
+         publishButton_.invokePublish();
       }
    }
 
@@ -915,6 +945,8 @@ public class TextEditingTargetWidget
       
       sourceButton_.setTitle(sourceCommandDesc);
       sourceButton_.setText(sourceCommandText_);
+      sourceButton_.setLeftImage(
+            commands_.sourceActiveDocument().getImageResource());
    }
 
    public void setSourceButtonFromShinyState()
@@ -989,10 +1021,26 @@ public class TextEditingTargetWidget
          menu.addSeparator();
       }
       
+      if (uiPrefs_.showRmdChunkOutputInline().getValue())
+      {
+         menu.addItem(new DocPropMenuItem(
+               "Show chunk output inline", docUpdateSentinel_, 
+               true, 
+               TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE, 
+               TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE));
+         menu.addItem(new DocPropMenuItem(
+               "Show chunk output in console", docUpdateSentinel_, 
+               false, 
+               TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE, 
+               TextEditingTargetNotebook.CHUNK_OUTPUT_CONSOLE));
+         menu.addSeparator();
+      }
+      
       menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
    }
    
    private final TextEditingTarget target_;
+   private final DocUpdateSentinel docUpdateSentinel_;
    private final Commands commands_;
    private final UIPrefs uiPrefs_;
    private final Session session_;

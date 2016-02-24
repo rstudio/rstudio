@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FocusContext;
@@ -28,6 +29,8 @@ import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
@@ -52,6 +55,7 @@ public class GlobalToolbar extends Toolbar
       newMenu_.addItem(commands.newSourceDoc().createMenuItem(false));
       newMenu_.addSeparator();
       newMenu_.addItem(commands.newRMarkdownDoc().createMenuItem(false));
+      newMenu_.addItem(commands.newRShinyApp().createMenuItem(false));
       newMenu_.addSeparator();
       newMenu_.addItem(commands.newTextDoc().createMenuItem(false));
       newMenu_.addItem(commands.newCppDoc().createMenuItem(false));
@@ -109,13 +113,28 @@ public class GlobalToolbar extends Toolbar
          @Override
          public void onCancel()
          {
-            codeSearchFocusContext_.restore();     
+            // Experimental workaround for crashes observed on El Capitan
+            Scheduler.get().scheduleFinally(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  codeSearchFocusContext_.restore();
+               }
+            });
          }
          
          @Override
          public void onCompleted()
-         {   
-            codeSearchFocusContext_.clear();
+         {
+            Scheduler.get().scheduleFinally(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  codeSearchFocusContext_.clear();
+               }
+            });
          }
          
          @Override
@@ -176,6 +195,9 @@ public class GlobalToolbar extends Toolbar
       
       paneLayoutMenu.addItem(commands_.layoutEndZoom().createMenuItem(false));
       paneLayoutMenu.addSeparator();
+      paneLayoutMenu.addItem(commands_.layoutConsoleOnLeft().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutConsoleOnRight().createMenuItem(false));
+      paneLayoutMenu.addSeparator();
       paneLayoutMenu.addItem(commands_.paneLayout().createMenuItem(false));
       paneLayoutMenu.addSeparator();
       paneLayoutMenu.addItem(commands_.layoutZoomSource().createMenuItem(false));
@@ -199,6 +221,33 @@ public class GlobalToolbar extends Toolbar
       paneLayoutButton.setTitle("Workspace Panes");
       
       addLeftWidget(paneLayoutButton);
+      
+      // addins menu
+      ToolbarPopupMenu addinsMenu = new ToolbarPopupMenu();
+      addinsMenu.addItem(commands_.addinsMru0().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru1().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru2().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru3().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru4().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru5().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru6().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru7().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru8().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru9().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru10().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru11().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru12().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru13().createMenuItem(false));
+      addinsMenu.addItem(commands_.addinsMru14().createMenuItem(false));
+      addinsMenu.addSeparator();
+      addinsMenu.addItem(commands_.browseAddins().createMenuItem(false));
+      addLeftSeparator();
+      ToolbarButton addinsButton = new ToolbarButton(
+           "Addins", CoreResources.INSTANCE.iconEmpty(), addinsMenu);
+      addLeftWidget(addinsButton);
+      
+      
+      
       // project popup menu
       ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
                                                           commands_);

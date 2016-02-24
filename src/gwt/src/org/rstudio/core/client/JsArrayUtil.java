@@ -108,4 +108,29 @@ public class JsArrayUtil
    public final static native void remove(JsArray<?> array, int index) /*-{
       array.splice(index, 1);
    }-*/;
+   
+   public static JsArrayString concat(JsArrayString a, JsArrayString b)
+   {
+      JsArrayString ab = JsArrayString.createArray().cast();
+      for (int i = 0; i < a.length(); i++)
+         ab.push(a.get(i));
+      for (int i = 0; i < b.length(); i++)
+         ab.push(b.get(i));
+      return ab;
+   }
+   
+   public static final native <T extends JavaScriptObject> JsArray<T> copy(JsArray<T> object) /*-{
+      return object.slice();
+   }-*/;
+
+   public static JsArrayString copy(JsArrayString array)
+   {
+      if (array == null)
+         return null;
+
+      JsArrayString copy = JsArrayString.createArray().cast();
+      for (int i = 0; i < array.length(); i++)
+         copy.push(array.get(i));
+      return copy;
+   }
 }

@@ -283,7 +283,8 @@ Error readStringVectorFromFile(const core::FilePath& filePath,
 // lineEnding is the type of line ending you want to end up on disk
 Error writeStringToFile(const core::FilePath& filePath,
                         const std::string& str,
-                        string_utils::LineEnding lineEnding=string_utils::LineEndingPassthrough);
+                        string_utils::LineEnding lineEnding=string_utils::LineEndingPassthrough,
+                        bool truncate = true);
 
 // lineEnding is the type of line ending you want the resulting string to have
 Error readStringFromFile(const core::FilePath& filePath,

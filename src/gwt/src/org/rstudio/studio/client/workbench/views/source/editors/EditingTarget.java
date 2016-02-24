@@ -101,7 +101,7 @@ public interface EditingTarget extends IsWidget,
     * @return True if dismissal is allowed, false to cancel.
     */
    boolean onBeforeDismiss();
-   void onDismiss();
+   void onDismiss(int dismissType);
 
    ReadOnlyValue<Boolean> dirtyState();
    
@@ -137,4 +137,7 @@ public interface EditingTarget extends IsWidget,
     * Any bigger than this, and the user should be warned before opening
     */
    long getLargeFileSize();
+   
+   public final static int DISMISS_TYPE_CLOSE = 0;
+   public final static int DISMISS_TYPE_MOVE = 1;
 }

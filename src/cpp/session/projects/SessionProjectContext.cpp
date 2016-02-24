@@ -1,7 +1,7 @@
 /*
  * SessionProjectContext.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,10 @@
 
 #include <core/system/FileMonitor.hpp>
 
+#ifndef _WIN32
+#include <core/system/FileMode.hpp>
+#endif
+
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
@@ -34,6 +38,8 @@
 
 #include <session/projects/ProjectsSettings.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
+
+#include <sys/stat.h>
 
 #include "SessionProjectFirstRun.hpp"
 
@@ -47,7 +53,14 @@ namespace {
 
 bool canWriteToProjectDir(const FilePath& projectDirPath)
 {
-   FilePath testFile = projectDirPath.complete(core::system::generateUuid());
+   std::string prefix(
+#ifndef _WIN32
+   "."
+#endif 
+   "write-test-");
+
+   FilePath testFile = projectDirPath.complete(prefix +
+         core::system::generateUuid());
    Error error = core::writeStringToFile(testFile, "test");
    if (error)
    {
@@ -229,7 +242,6 @@ void ProjectContext::augmentRbuildignore()
       // constants
       const char * const kIgnoreRproj = "^.*\\.Rproj$";
       const char * const kIgnoreRprojUser = "^\\.Rproj\\.user$";
-      const char * const kIgnoreSrcFile = "^.*\\.o$";
       const std::string newLine = "\n";
       
       // create the file if it doesn't exists
@@ -263,9 +275,8 @@ void ProjectContext::augmentRbuildignore()
          // for previous less precisely specified .Rproj entries
          bool hasRProj = strIgnore.find("\\.Rproj$") != std::string::npos;
          bool hasRProjUser = strIgnore.find(kIgnoreRprojUser) != std::string::npos;
-         bool ignoresSrcFiles = strIgnore.find(kIgnoreSrcFile) != std::string::npos;
 
-         if (hasRProj && hasRProjUser && ignoresSrcFiles)
+         if (hasRProj && hasRProjUser)
             return;
 
          bool addExtraNewline = strIgnore.size() > 0
@@ -277,8 +288,6 @@ void ProjectContext::augmentRbuildignore()
             strIgnore += kIgnoreRproj + newLine;
          if (!hasRProjUser)
             strIgnore += kIgnoreRprojUser + newLine;
-         if(!ignoresSrcFiles)
-            strIgnore += kIgnoreSrcFile + newLine;
          error = core::writeStringToFile(rbuildIgnorePath,
                                          strIgnore,
                                          string_utils::LineEndingNative);
@@ -697,9 +706,34 @@ bool ProjectContext::isPackageProject()
 
 bool ProjectContext::supportsSharing()
 {
-   return options().getBoolOverlayOption(kProjectSharingSessionOption);
+   // never supports sharing if disabled explicitly
+   if (!core::system::getenv(kRStudioDisableProjectSharing).empty())
+      return false;
+
+   // otherwise, check to see whether shared storage is configured
+   return !options().getOverlayOption(kSessionSharedStoragePath).empty();
 }
 
+// attempts to determine whether we can browse above the project folder
+bool ProjectContext::parentBrowseable()
+{
+#ifdef _WIN32
+   // we don't need to know this on Windows, and we'd need to compute it very
+   // differently
+   return true;
+#else
+   bool browse = true;
+   Error error = core::system::isFileReadable(directory().parent(), &browse);
+   if (error)
+   {
+      // if we can't figure it out, presume it to be browseable (this preserves
+      // existing behavior) 
+      LOG_ERROR(error);
+      return true;
+   }
+   return browse;
+#endif
+}
 
 } // namespace projects
 } // namespace session

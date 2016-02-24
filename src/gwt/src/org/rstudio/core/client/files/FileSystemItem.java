@@ -302,7 +302,7 @@ public class FileSystemItem extends JavaScriptObject
       return this.length;
    }-*/;
 
-   private final native double getLastModifiedNative() /*-{
+   public final native double getLastModifiedNative() /*-{
       return this.lastModified;
    }-*/;
 
@@ -388,6 +388,7 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "gitignore",   "text/plain");
       MIME_TYPES.put( "rbuildignore","text/plain");
       MIME_TYPES.put( "rprofile", "text/x-r-source");
+      MIME_TYPES.put( "rprof", "text/x-r-profile");
 
       MIME_TYPES.put( "tif",   "image/tiff" );
       MIME_TYPES.put( "tiff",  "image/tiff" );

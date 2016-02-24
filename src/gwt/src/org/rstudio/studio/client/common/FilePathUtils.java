@@ -88,6 +88,13 @@ public class FilePathUtils
       return path.substring(lastSlashIndex + 1, extensionIndex);
    }
    
+   public static String filePathSansExtension(String path)
+   {
+      int lastSlashIndex = path.lastIndexOf('/');
+      int extensionIndex = getExtensionIndex(path, lastSlashIndex + 1);
+      return path.substring(0, extensionIndex);
+   }
+   
    @SuppressWarnings("unused")
    private static int getExtensionIndex(String path)
    {

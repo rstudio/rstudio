@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;
 
+import org.rstudio.core.client.command.AddinCommandBinding;
 import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.command.ShortcutManager;
@@ -30,6 +31,7 @@ import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.LocalRepositoriesWidget;
 import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
 import org.rstudio.studio.client.application.Application;
+import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.ProjectPopupMenu;
 import org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader;
@@ -63,10 +65,14 @@ import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFramePane;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFrameSatellite;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
+import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
+import org.rstudio.studio.client.shiny.ui.ShinyGadgetDialog;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.vcs.VCSApplication;
+import org.rstudio.studio.client.workbench.BrowseAddinsDialog;
+import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -79,14 +85,13 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletio
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.source.DocsMenu;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
+import org.rstudio.studio.client.workbench.views.source.NewShinyWebApplication;
 import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
 import org.rstudio.studio.client.workbench.views.source.SourceWindow;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkIconsManager;
-import org.rstudio.studio.client.workbench.views.source.editors.text.SetupChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCppHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
@@ -94,8 +99,14 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.SetupChunkOptionsPopupPanel;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
 import org.rstudio.studio.client.workbench.views.environment.ClearAllDialog;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImport;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportDialog;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptionsUiCsv;
 
 @GinModules(RStudioGinModuleOverlay.class)
 public interface RStudioGinjector extends Ginjector
@@ -150,11 +161,21 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(EditorCommandManager manager);
    void injectMembers(ApplicationCommandManager manager);
    void injectMembers(FileBacked<?> object);
+   void injectMembers(TextEditingTargetNotebook notebook);
    void injectMembers(WindowFrame frame);
+   void injectMembers(ShinyGadgetDialog dialog);
+   void injectMembers(NewShinyWebApplication dialog);
+   void injectMembers(AddinCommandBinding binding);
+   void injectMembers(BrowseAddinsDialog dialog);
+   void injectMembers(AddinExecutor addinExecutor);
+   void injectMembers(DataImportDialog dataImportDialog);
+   void injectMembers(DataImport dataImport);
+   void injectMembers(DataImportOptionsUiCsv dataImport);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
    Application getApplication() ;
+   ApplicationInterrupt getApplicationInterrupt();
    VCSApplication getVCSApplication();
    HTMLPreviewApplication getHTMLPreviewApplication();
    ShinyApplicationSatellite getShinyApplicationSatellite();
@@ -181,4 +202,5 @@ public interface RStudioGinjector extends Ginjector
    SatelliteManager getSatelliteManager();
    SourceWindowManager getSourceWindowManager();
    SourceWindow getSourceWindow();
+   Server getServer();
 }

@@ -14,13 +14,16 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
+import org.rstudio.studio.client.events.GetActiveDocumentContextEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
@@ -29,6 +32,7 @@ import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperatio
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 
 import java.util.HashMap;
 import java.util.List;
@@ -47,7 +51,8 @@ public interface SourceServerOperations extends FilesServerOperations,
                                                 HTMLPreviewServerOperations,
                                                 BuildServerOperations,
                                                 PresentationServerOperations,
-                                                LintServerOperations
+                                                LintServerOperations,
+                                                RSConnectServerOperations
 {
    /**
     * Create a new, empty document, without a path but with a unique ID, and
@@ -87,6 +92,7 @@ public interface SourceServerOperations extends FilesServerOperations,
                      String fileType,
                      String encoding,
                      String foldSpec,
+                     JsArray<ChunkDefinition> chunkOutput,
                      String contents,
                      ServerRequestCallback<String> requestCallback);
 
@@ -107,6 +113,7 @@ public interface SourceServerOperations extends FilesServerOperations,
                          String fileType,
                          String encoding,
                          String foldSpec,
+                         JsArray<ChunkDefinition> chunkOutput,
                          String replacement,
                          int offset,
                          int length,
@@ -219,4 +226,19 @@ public interface SourceServerOperations extends FilesServerOperations,
    
    public void getSourceDocument(String docId,
                 ServerRequestCallback<SourceDocument> requestCallback);
+   
+   public void createShinyApp(String appName,
+                              String appType,
+                              String appDir,
+                              ServerRequestCallback<JsArrayString> requestCallback);
+   
+   public void getActiveDocumentContextCompleted(GetActiveDocumentContextEvent.Data data,
+                                                 ServerRequestCallback<Void> requestCallback);
+   
+   public void setSourceDocumentDirty(String docId, boolean dirty,
+         ServerRequestCallback<Void> requestCallback);
+   
+   public void extractRmdFromNotebook(String inputPath,
+                                      String outputPath,
+                                      ServerRequestCallback<Boolean> requestCallback);
 }

@@ -89,6 +89,10 @@ public class WindowEx extends JavaScriptObject
    public final native void replaceLocationHref(String helpURL) /*-{
       this.location.replace(helpURL) ;
    }-*/;
+   
+   public final native void replaceHistoryState(String url) /*-{
+      this.history.replaceState({}, "", url);
+   }-*/;
 
    public final Point getScrollPosition()
    {
@@ -127,7 +131,7 @@ public class WindowEx extends JavaScriptObject
       this.resizeTo(width, height);
    }-*/;
 
-   public final native Document getDocument() /*-{
+   public final native DocumentEx getDocument() /*-{
       return this.document;
    }-*/;
    

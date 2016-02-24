@@ -129,10 +129,22 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kUnhandledError;
       else if (name == "enable_rstudio_connect")
          type = session::client_events::kEnableRStudioConnect;
-      else if (name == "rmd_params_edit")
-         type = session::client_events::kRmdParamsEdit;
+      else if (name == "shiny_gadget_dialog")
+         type = session::client_events::kShinyGadgetDialog;
       else if (name == "rmd_params_ready")
          type = session::client_events::kRmdParamsReady;
+      else if (name == "jump_to_function")
+         type = session::client_events::kJumpToFunction;
+      else if (name == "replace_ranges")
+         type = session::client_events::kReplaceRanges;
+      else if (name == "send_to_console")
+         type = session::client_events::kSendToConsole;
+      else if (name == "get_active_document_context")
+         type = session::client_events::kGetActiveDocumentContext;
+      else if (name == "rprof_started")
+        type = session::client_events::kRprofStarted;
+      else if (name == "rprof_stopped")
+        type = session::client_events::kRprofStopped;
 
       if (type != -1)
       {
@@ -236,6 +248,13 @@ SEXP rs_rstudioCitation()
    }
 }
 
+SEXP rs_setUsingMingwGcc49(SEXP usingSEXP)
+{
+   bool usingMingwGcc49 = r::sexp::asLogical(usingSEXP);
+   userSettings().setUsingMingwGcc49(usingMingwGcc49);
+   return R_NilValue;
+}
+
 // ensure file hidden
 SEXP rs_ensureFileHidden(SEXP fileSEXP)
 {
@@ -317,6 +336,16 @@ SEXP rs_restartR(SEXP afterRestartSEXP)
    return R_NilValue;
 }
 
+SEXP rs_generateShortUuid()
+{
+   // generate a short uuid -- we make this available in R code so that it's
+   // possible to create random identifiers without perturbing the state of the
+   // RNG that R uses
+   std::string uuid = core::system::generateShortenedUuid();
+   r::sexp::Protect rProtect;
+   return r::sexp::create(uuid, &rProtect);
+}
+
 } // anonymous namespace
 
 
@@ -330,7 +359,7 @@ bool s_monitorByScanning = false;
 
 FilePath monitoredParentPath()
 {
-   FilePath monitoredPath = userScratchPath().complete("monitored");
+   FilePath monitoredPath = userScratchPath().complete(kMonitoredPath);
    Error error = monitoredPath.ensureDirectory();
    if (error)
       LOG_ERROR(error);
@@ -989,6 +1018,28 @@ std::string rLocalHelpPort()
    return port;
 }
 
+std::vector<FilePath> getLibPaths()
+{
+   std::vector<std::string> libPathsString;
+   r::exec::RFunction rfLibPaths(".libPaths");
+   Error error = rfLibPaths.call(&libPathsString);
+   if (error)
+      LOG_ERROR(error);
+
+   std::vector<FilePath> libPaths(libPathsString.size());
+   BOOST_FOREACH(const std::string& path, libPathsString)
+   {
+      libPaths.push_back(module_context::resolveAliasedPath(path));
+   }
+
+   return libPaths;
+}
+
+bool disablePackages()
+{
+   return !core::system::getenv("RSTUDIO_DISABLE_PACKAGES").empty();
+}
+
 // check if a package is installed
 bool isPackageInstalled(const std::string& packageName)
 {
@@ -1403,7 +1454,9 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
        ext == ".rbuildignore" ||
        ext == ".rdata"    ||
        ext == ".rhistory" ||
+       ext == ".ruserdata" ||
        ext == ".renviron" ||
+       ext == ".httr-oauth" ||
        ext == ".gitignore")
    {
       return true;
@@ -2015,6 +2068,19 @@ bool isLoadBalanced()
    return !core::system::getenv(kRStudioSessionRoute).empty();
 }
 
+#ifdef _WIN32
+bool usingMingwGcc49()
+{
+   // temporarily determine this using a setting (eventually we'll want to check the
+   // R version and SVN revision number)
+   return userSettings().usingMingwGcc49();
+}
+#else
+bool usingMingwGcc49()
+{
+   return false;
+}
+#endif
 
 Error initialize()
 {
@@ -2145,6 +2211,17 @@ Error initialize()
    r::routines::registerCallMethod(
             "rs_rstudioCitation",
             (DL_FUNC) rs_rstudioCitation,
+            0);
+
+   // register rs_setUsingMingwGcc49
+   r::routines::registerCallMethod(
+            "rs_setUsingMingwGcc49",
+            (DL_FUNC)rs_setUsingMingwGcc49,
+            1);
+
+   r::routines::registerCallMethod(
+            "rs_generateShortUuid",
+            (DL_FUNC)rs_generateShortUuid, 
             0);
    
    // initialize monitored scratch dir

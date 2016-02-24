@@ -173,7 +173,10 @@ public class ToolbarButton extends FocusWidget
                public void onPopupMenu(final ToolbarPopupMenu menu)
                {
                   if (menuShowing[0])
+                  {
+                     removeStyleName(styles_.toolbarButtonPushed());
                      menu.hide();
+                  }
                   else
                   {
                      if (rightAlign)

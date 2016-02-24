@@ -41,6 +41,8 @@ namespace secure_cookie {
 std::string readSecureCookie(const core::http::Request& request,
                              const std::string& name);
 
+core::Error hashWithSecureKey(const std::string& value, std::string* pHMAC);
+
 void set(const std::string& name,
          const std::string& value,
          const http::Request& request,

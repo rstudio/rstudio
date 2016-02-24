@@ -14,12 +14,28 @@
  */
 package org.rstudio.studio.client.projects;
 
+import org.rstudio.studio.client.projects.model.ProjectUser;
+
 import com.google.inject.Singleton;
 
 @Singleton
 public class SharedProject
 {
    public SharedProject()
+   {
+   }
+   
+   public ProjectUser getFollowingUser()
+   {
+      return null;
+   }
+   
+   public ProjectUser popCursorSync(String path)
+   {
+      return null;
+   }
+   
+   public void reportCollabDisconnected(String path, String id)
    {
    }
 }

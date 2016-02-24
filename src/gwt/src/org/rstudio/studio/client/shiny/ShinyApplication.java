@@ -113,6 +113,13 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
             display_.openWindow(event.getParams().getUrl());
          }
          params_ = event.getParams();
+         
+         // if the app was started from the same path as a pending satellite
+         // closure, don't shut down the app when the close finishes
+         if (event.getParams().getPath() == satelliteClosePath_)
+         {
+            stopOnNextClose_ = false;
+         }
       }
       else if (event.getParams().getState() == ShinyApplicationParams.STATE_STOPPED)
       {
@@ -123,7 +130,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    @Override
    public void onLaunchShinyApplication(LaunchShinyApplicationEvent event)
    {
-      launchShinyApplication(event.getPath());
+      launchShinyApplication(event.getPath(), event.getExtendedType());
    }
 
    @Override
@@ -211,10 +218,11 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
 
    // Private methods ---------------------------------------------------------
    
-   private void launchShinyApplication(String filePath)
+   private void launchShinyApplication(final String filePath, 
+         final String extendedType)
    {
-      final String dir = filePath.substring(0, filePath.lastIndexOf("/"));
-      if (dir.equals(currentAppPath()))
+      String fileDir = filePath.substring(0, filePath.lastIndexOf("/"));
+      if (fileDir.equals(currentAppPath()))
       {
          // The app being launched is the one already running; open and
          // reload the app.
@@ -242,7 +250,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
             @Override
             public void onInterruptFinished()
             {
-               launchShinyAppDir(dir);
+               launchShinyFile(filePath, extendedType);
             }
          });
       }
@@ -254,7 +262,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
                   @Override
                   public void execute()
                   {
-                     launchShinyAppDir(dir);
+                     launchShinyFile(filePath, extendedType);
                   }
          });
       }
@@ -272,7 +280,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       ShinyApplicationParams appState = params.cast();
       if (params_ == null)
          return;
-
+      
       // remember that this URL is disconnecting (so we don't interrupt R when
       // the window is torn down)
       disconnectingUrl_ = appState.getUrl();
@@ -283,6 +291,8 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       // if we don't know that an app is running, ignore this event
       if (params_ == null)
          return;
+
+      satelliteClosePath_ = params_.getPath();
       
       // wait for confirmation of window closure (could be a reload)
       WindowCloseMonitor.monitorSatelliteClosure(
@@ -291,7 +301,18 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
          @Override
          public void execute()
          {
+            // satellite closed for real; shut down the app
+            satelliteClosePath_ = null;
             onShinyApplicationClosed(params);
+         }
+      }, 
+      new Command() 
+      {
+         @Override
+         public void execute()
+         {
+            // satellite didn't actually close (it was a reload)
+            satelliteClosePath_ = null;
          }
       });
    }
@@ -378,9 +399,10 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       }
    }
    
-   private void launchShinyAppDir(String dir)
+   private void launchShinyFile(String file, String extendedType)
    {
-      server_.getShinyRunCmd(dir, 
+      server_.getShinyRunCmd(file, 
+            extendedType,
             new ServerRequestCallback<ShinyRunCmd>()
             {
                @Override
@@ -447,5 +469,6 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    private String disconnectingUrl_;
    private boolean isBusy_;
    private boolean stopOnNextClose_ = true;
+   private String satelliteClosePath_ = null;
    private int currentViewType_;
 }

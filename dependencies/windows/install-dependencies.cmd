@@ -16,9 +16,9 @@ set JUNIT_FILE=junit-4.9b3.jar
 set GNUDIFF_FILE=gnudiff.zip
 set GNUGREP_FILE=gnugrep-2.5.4.zip
 set MSYS_SSH_FILE=msys-ssh-1000-18.zip
-set SUMATRA_PDF_FILE=SumatraPDF-2.4.zip
+set SUMATRA_PDF_FILE=SumatraPDF-3.1.1.zip
 
-set PANDOC_VERSION=1.13.1
+set PANDOC_VERSION=1.15.2
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%.zip
 
@@ -66,11 +66,11 @@ if not exist msys-ssh-1000-18 (
   del "%MSYS_SSH_FILE%"
 )
 
-if not exist sumatra\2.4 (
+if not exist sumatra\3.1.1 (
   wget %WGET_ARGS% "%BASEURL%%SUMATRA_PDF_FILE%"
-  mkdir sumatra\2.4
+  mkdir sumatra\3.1.1
   echo Unzipping %SUMATRA_PDF_FILE%
-  unzip %UNZIP_ARGS% "%SUMATRA_PDF_FILE%" -d sumatra\2.4
+  unzip %UNZIP_ARGS% "%SUMATRA_PDF_FILE%" -d sumatra\3.1.1
   del "%SUMATRA_PDF_FILE%"
 )
 

@@ -39,7 +39,7 @@ then
    then
       curl -L $BOOST_URL > $BOOST_TAR
    else
-      wget $BOOST_URL -O $BOOST_TAR
+      wget -c $BOOST_URL -O $BOOST_TAR
    fi
    
    # remove existing boost installation

@@ -64,6 +64,9 @@ namespace session {
 
 namespace rstudio {
 namespace session {   
+
+class DistributedEvent;
+
 namespace module_context {
 
 enum PackageCompatStatus
@@ -122,6 +125,12 @@ core::shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir);
 
 // get the R local help port
 std::string rLocalHelpPort();
+
+// get current libpaths
+std::vector<core::FilePath> getLibPaths();
+
+// is the packages pane disabled
+bool disablePackages();
 
 // check if a package is installed
 bool isPackageInstalled(const std::string& packageName);
@@ -305,6 +314,8 @@ struct Events : boost::noncopyable
    boost::signal<void ()>                    onBeforeExecute;
    boost::signal<void(const std::string&)>   onConsolePrompt;
    boost::signal<void(const std::string&)>   onConsoleInput;
+   boost::signal<void(const std::string&, const std::string&)>  
+                                             onActiveConsoleChanged;
    boost::signal<void (ConsoleOutputType, const std::string&)>
                                              onConsoleOutput;
    boost::signal<void (ChangeSource)>        onDetectChanges;
@@ -316,6 +327,10 @@ struct Events : boost::noncopyable
    boost::signal<void ()>                    onQuit;
    boost::signal<void (const std::string&)>  onPackageLoaded;
    boost::signal<void ()>                    onPackageLibraryMutated;
+   boost::signal<void ()>                    onPreferencesSaved;
+   boost::signal<void (const DistributedEvent&)>
+                                             onDistributedEvent;
+   boost::signal<void (core::FilePath)>      onPermissionsChanged;
 
    // signal for detecting extended type of documents
    boost::signal<std::string(boost::shared_ptr<source_database::SourceDocument>),
@@ -805,6 +820,8 @@ void showSourceMarkers(const SourceMarkerSet& markerSet,
 
 
 bool isLoadBalanced();
+
+bool usingMingwGcc49();
 
 } // namespace module_context
 } // namespace session

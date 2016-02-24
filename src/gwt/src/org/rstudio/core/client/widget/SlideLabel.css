@@ -14,6 +14,7 @@
 }
 .content {
    max-width: 500px;
+   display: inline-block;
 }
 .progress {
    margin-right: 8px;
@@ -45,4 +46,14 @@
    background: SLIDELABELBOTTOMRIGHT no-repeat top left;
    width: 18px;
    height: 18px;
+}
+
+.cancelColumn {
+	padding-left: 6px;
+}
+.cancelButton {
+	margin-top: 1px;
+	border: 0px;
+	padding: 0px;
+	background: none;
 }

@@ -109,8 +109,11 @@ Error initialize()
                  paths.end(),
                  boost::bind(addToPathIfNecessary, _1, &path));
 
-   // do we need to add /usr/texbin (sometimes texlive doesn't get this
-   // written into /etc/paths.d)
+   // do we need to add /Library/TeX/texbin or /usr/texbin or (sometimes texlive
+   // doesn't get this written into /etc/paths.d)
+   FilePath libraryTexbinPath("/Library/TeX/texbin");
+   if (libraryTexbinPath.exists())
+      addToPathIfNecessary(libraryTexbinPath.absolutePath(), &path);
    FilePath texbinPath("/usr/texbin");
    if (texbinPath.exists())
       addToPathIfNecessary(texbinPath.absolutePath(), &path);

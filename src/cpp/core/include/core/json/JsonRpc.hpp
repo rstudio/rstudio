@@ -139,6 +139,7 @@ struct JsonRpcRequest
    std::string sourceWindow;
    std::string clientId ;
    double version;
+   std::string clientVersion;
    bool isBackgroundConnection ;
 
    bool empty() const { return method.empty(); }

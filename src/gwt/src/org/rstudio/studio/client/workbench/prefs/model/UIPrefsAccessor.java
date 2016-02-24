@@ -127,6 +127,15 @@ public class UIPrefsAccessor extends Prefs
       return bool("tab_multiline_completion", false);
    }
    
+   public static final String EDITOR_SURROUND_SELECTION_NEVER               = "never";
+   public static final String EDITOR_SURROUND_SELECTION_QUOTES              = "quotes";
+   public static final String EDITOR_SURROUND_SELECTION_QUOTES_AND_BRACKETS = "quotes_and_brackets";
+   
+   public PrefValue<String> surroundSelection()
+   {
+      return string("surround_selection", EDITOR_SURROUND_SELECTION_QUOTES_AND_BRACKETS);
+   }
+   
    public PrefValue<Boolean> enableSnippets()
    {
       return bool("enable_snippets", true);
@@ -395,6 +404,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("use_roxygen", false);
    }
    
+   public PrefValue<Boolean> useDataImport()
+   {
+      return bool("use_dataimport", true);
+   }
+   
    public static final String PDF_PREVIEW_NONE = "none";
    public static final String PDF_PREVIEW_RSTUDIO = "rstudio";
    public static final String PDF_PREVIEW_DESKTOP_SYNCTEX = "desktop-synctex";
@@ -511,6 +525,11 @@ public class UIPrefsAccessor extends Prefs
       return object("preferred_publish_account");
    }
    
+   public PrefValue<Boolean> showRmdChunkOutputInline()
+   {
+      return bool("show_rmd_chunk_output_inline", false);
+   }
+   
    public PrefValue<Integer> preferredDocumentOutlineWidth()
    {
       return integer("preferred_document_outline_width", 110);
@@ -525,10 +544,10 @@ public class UIPrefsAccessor extends Prefs
    {
       return bool("show_unnamed_chunks_in_document_outline", true);
    }
-   
-   public PrefValue<Boolean> enableSharedProjectUi()
+
+   public PrefValue<Boolean> showProfiler()
    {
-      return bool("enable_shared_project_ui", false);
+      return bool("show_profiler", false);
    }
    
    private String getDefaultPdfPreview()

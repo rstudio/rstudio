@@ -110,7 +110,6 @@ public class CodeBrowserEditingTarget implements EditingTarget
       fontSizeManager_ = fontSizeManager;
       globalDisplay_ = globalDisplay;
       docDisplay_ = docDisplay;
-      codeExecution_ = new EditingTargetCodeExecution(docDisplay);
       
       TextEditingTarget.addRecordNavigationPositionHandler(releaseOnDismiss_,
                                                            docDisplay_, 
@@ -159,6 +158,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
                           Provider<String> defaultNameProvider)
    {
       doc_ = document;
+      codeExecution_ = new EditingTargetCodeExecution(docDisplay_, getId());
       view_ = new CodeBrowserEditingTargetWidget(commands_,
                                                  globalDisplay_,
                                                  events_,
@@ -310,7 +310,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       events_.fireEventToMainWindow(new DocWindowChangedEvent(
             getId(), SourceWindowManager.getSourceWindowId(), "",
-            DocTabDragParams.create(getId(), currentPosition()), 0));
+            DocTabDragParams.create(getId(), currentPosition()), null, 0));
    }
    
    @Override
@@ -581,7 +581,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
 
    @Override
-   public void onDismiss()
+   public void onDismiss(int dismissType)
    {
       while (releaseOnDismiss_.size() > 0)
          releaseOnDismiss_.remove(0).removeHandler();

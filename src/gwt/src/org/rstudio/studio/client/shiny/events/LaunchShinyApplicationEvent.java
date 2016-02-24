@@ -36,15 +36,21 @@ public class LaunchShinyApplicationEvent
    {
    }
    
-   public LaunchShinyApplicationEvent(String path)
+   public LaunchShinyApplicationEvent(String path, String extendedType)
    {
       path_ = path;
+      extendedType_ = extendedType;
    }
 
    
    public String getPath()
    {
       return path_;
+   }
+   
+   public String getExtendedType()
+   {
+      return extendedType_;
    }
    
    @Override
@@ -60,4 +66,5 @@ public class LaunchShinyApplicationEvent
    }
    
    private String path_;
+   private String extendedType_;
 }

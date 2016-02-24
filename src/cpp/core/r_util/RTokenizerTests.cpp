@@ -129,6 +129,7 @@ void testNumbers()
    v.verify(L"1");
    v.verify(L"10");
    v.verify(L"0.1");
+   v.verify(L"1.");
    v.verify(L".2");
    v.verify(L"1e-7");
    v.verify(L"1.2e+7");
@@ -170,9 +171,12 @@ void testOperators()
    v.verify(L"~");
    v.verify(L"->");
    v.verify(L"<-");
+   v.verify(L"->>");
+   v.verify(L"<<-");
    v.verify(L"$");
    v.verify(L":");
    v.verify(L"=");
+   v.verify(L":=");
 }
 
 void testUOperators()

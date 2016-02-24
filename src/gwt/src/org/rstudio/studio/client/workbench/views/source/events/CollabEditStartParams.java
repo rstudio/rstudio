@@ -31,6 +31,10 @@ public class CollabEditStartParams extends JavaScriptObject
       return this.path;
    }-*/;
    
+   public final native String getId() /*-{
+      return this.id;
+   }-*/;
+   
    public final native String cursorColor() /*-{
       return this.cursor_color;
    }-*/;
@@ -41,5 +45,9 @@ public class CollabEditStartParams extends JavaScriptObject
    
    public final native boolean isRejoining() /*-{
       return this.rejoining;
+   }-*/;
+   
+   public final native String getHostNode() /*-{
+      return this.host_node;
    }-*/;
 }

@@ -334,7 +334,7 @@ void handleContentError(
       {
          unsigned state = safe_convert::stringTo(error.getProperty("state"), 0);
          if (static_cast<r_util::SessionScopeState>(state) ==
-             r_util::ScopeInvalidProject)
+             r_util::ScopeMissingProject)
             response.setError(http::status::NotFound, "Project not found");
          else
             response.setStatusCode(http::status::ServiceUnavailable);

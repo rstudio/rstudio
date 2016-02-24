@@ -75,17 +75,27 @@ public class PopupPositioner implements PositionCallback
       int windowRight = windowLeft + Window.getClientWidth();
       int windowBottom = windowTop + Window.getClientHeight();
       
-      boolean positionRight =
-            pageX + width + fudgeFactor < windowRight;
+      // Compute the horizontal position.
+      int left = pageX + fudgeFactor;
       
-      boolean positionBottom =
+      // Check to see if the popup would overflow to the right.
+      // If so, nudge the coordinates left to prevent this.
+      int horizontalOverflow = pageX + width + fudgeFactor - windowRight;
+      if (horizontalOverflow > 0)
+      {
+         left = Math.max(
+               fudgeFactor + 10,
+               left - horizontalOverflow);
+      }
+      
+      // Compute the vertical position. Normally we want the
+      // completion popup to appear below the rectangle, but
+      // we may need to position it above (e.g. R completions
+      // in the console).
+      boolean showOnBottom =
             pageY + height + fudgeFactor < windowBottom;
       
-      int left = positionRight ?
-            pageX + fudgeFactor :
-            pageX - width - fudgeFactor;
-      
-      int top = positionBottom ?
+      int top = showOnBottom ?
             pageY + fudgeFactor :
             pageY - height - fudgeFactor - 10;
       

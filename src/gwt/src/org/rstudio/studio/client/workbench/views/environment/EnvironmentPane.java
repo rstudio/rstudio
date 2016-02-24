@@ -415,8 +415,25 @@ public class EnvironmentPane extends WorkbenchPane
    private Widget createImportMenu()
    {
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
+      
+      menu.addItem(commands_.importDatasetFromCSV().createMenuItem(false));
       menu.addItem(commands_.importDatasetFromFile().createMenuItem(false));
       menu.addItem(commands_.importDatasetFromURL().createMenuItem(false));
+      menu.addSeparator();
+      menu.addItem(commands_.importDatasetFromXLS().createMenuItem(false));
+      menu.addSeparator();
+      menu.addItem(commands_.importDatasetFromSAV().createMenuItem(false));
+      menu.addItem(commands_.importDatasetFromSAS().createMenuItem(false));
+      menu.addItem(commands_.importDatasetFromStata().createMenuItem(false));
+      menu.addSeparator();
+      menu.addItem(commands_.importDatasetFromXML().createMenuItem(false));
+      menu.addItem(commands_.importDatasetFromJSON().createMenuItem(false));
+      menu.addSeparator();
+      menu.addItem(commands_.importDatasetFromJDBC().createMenuItem(false));
+      menu.addItem(commands_.importDatasetFromODBC().createMenuItem(false));
+      menu.addSeparator();
+      menu.addItem(commands_.importDatasetFromMongo().createMenuItem(false));
+      
       dataImportButton_ = new ToolbarButton(
               "Import Dataset",
               StandardIcons.INSTANCE.import_dataset(),

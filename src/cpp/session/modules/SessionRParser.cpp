@@ -2279,7 +2279,7 @@ START:
 BINARY_OPERATOR:
       
       checkBinaryOperatorWhitespace(cursor, status);
-      if (!canFollowBinaryOperator(cursor.nextSignificantToken()))
+      if (!cursor.isAtEndOfDocument() && !canFollowBinaryOperator(cursor.nextSignificantToken()))
          status.lint().unexpectedToken(cursor.nextSignificantToken());
       
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
@@ -2419,9 +2419,28 @@ ARGUMENT_LIST_END:
       
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       
-      if (isLeftBracket(cursor))
-         goto ARGUMENT_LIST;
-      else if (isBinaryOp(cursor))
+      // Check for a 'chain' of function calls, e.g.
+      //
+      //     x <- foo()(bar)[baz]
+      //
+      // We need to double-check a couple of things to
+      // get this parse correct -- either one of these
+      // conditions needs to hold.
+      //
+      //    1. The '(' token is on the same line, or
+      //    2. We're within a 'parenthetical' context.
+      if (cursor.isType(RToken::LPAREN) ||
+          cursor.isType(RToken::LBRACKET) ||
+          cursor.isType(RToken::LDBRACKET))
+      {
+         if (cursor.row() == cursor.previousSignificantToken().row() ||
+             status.isInParentheticalScope())
+         {
+            goto ARGUMENT_LIST;
+         }
+      }
+      
+      if (isBinaryOp(cursor))
          goto BINARY_OPERATOR;
       else
          goto START;

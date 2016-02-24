@@ -16,14 +16,13 @@ package org.rstudio.studio.client.common.codetools;
 
 import java.util.List;
 
-import org.rstudio.core.client.command.UserCommandManager.UserCommandResult;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.server.*;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
 public interface CodeToolsServerOperations extends HelpServerOperations,
@@ -75,14 +74,6 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          String chunkText,
          ServerRequestCallback<JsObject> callback);
    
-   void executeUserCommand(
-         String functionName,
-         JsArrayString content,
-         String filePath,
-         int rowStart,
-         int columnStart,
-         int rowEnd,
-         int columnEnd,
-         ServerRequestCallback<JsArray<UserCommandResult>> callback);
+   void executeUserCommand(String name, ServerRequestCallback<Void> callback);
          
 }

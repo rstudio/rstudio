@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -36,7 +37,19 @@ public class RSConnectReconnectWizard
             new NewRSConnectAccountInput(server, display), 
             new NewRSConnectAuthPage(),
             onCompleted);
-      
+
+      // hook up ok button visibility toggle
+      NewRSConnectAuthPage firstPage = 
+            (NewRSConnectAuthPage) super.getFirstPage();
+      firstPage.setOkButtonVisible(new OperationWithInput<Boolean>()
+            {
+               @Override
+               public void execute(Boolean input)
+               {
+                  setOkButtonVisible(input);
+               }
+
+            });
       NewRSConnectAuthPage authPage = (NewRSConnectAuthPage)getFirstPage();
       NewRSConnectAccountResult result = new NewRSConnectAccountResult(
             account.getServer(), serverUrl, account.getName());

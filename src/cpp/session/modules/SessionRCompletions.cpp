@@ -316,19 +316,6 @@ SEXP rs_isSubsequence(SEXP stringsSEXP, SEXP querySEXP)
 
 }
 
-SEXP rs_getActiveFrame(SEXP depthSEXP)
-{
-   int depth = r::sexp::asInteger(depthSEXP);
-   RCNTXT* context = r::getGlobalContext();
-   for (int i = 0; i < depth; ++i)
-   {
-      context = context->nextcontext;
-      if (context == NULL)
-         return R_NilValue;
-   }
-   return context->cloenv;
-}
-
 SEXP rs_getNAMESPACEImportedSymbols(SEXP documentIdSEXP)
 {
    std::string documentId = r::sexp::asString(documentIdSEXP);
@@ -456,6 +443,11 @@ SEXP rs_getKnitParamsForDocument(SEXP documentIdSEXP)
    using namespace source_database;
    
    std::string documentId = r::sexp::asString(documentIdSEXP);
+   
+   // Check for empty doc ID (can happen if this is requested e.g. from console)
+   if (documentId.empty())
+      return R_NilValue;
+   
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
    
    Error error = get(documentId, pDoc);
@@ -464,6 +456,9 @@ SEXP rs_getKnitParamsForDocument(SEXP documentIdSEXP)
       LOG_ERROR(error);
       return R_NilValue;
    }
+   
+   if (!pDoc->isRMarkdownDocument())
+      return R_NilValue;
    
    r::exec::RFunction knitParams(".rs.knitParams");
    knitParams.addParam(pDoc->contents());
@@ -488,7 +483,6 @@ Error initialize() {
    RS_REGISTER_CALL_METHOD(rs_getSourceIndexCompletions, 1);
    RS_REGISTER_CALL_METHOD(rs_scanFiles, 4);
    RS_REGISTER_CALL_METHOD(rs_isSubsequence, 2);
-   RS_REGISTER_CALL_METHOD(rs_getActiveFrame, 1);
    RS_REGISTER_CALL_METHOD(rs_listInferredPackages, 1);
    RS_REGISTER_CALL_METHOD(rs_getInferredCompletions, 1);
    RS_REGISTER_CALL_METHOD(rs_getNAMESPACEImportedSymbols, 1);

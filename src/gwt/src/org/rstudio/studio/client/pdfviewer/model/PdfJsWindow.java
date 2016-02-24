@@ -133,7 +133,7 @@ public class PdfJsWindow extends WindowEx
          var n = 0, t = 0;
          var checkPDFViewAvailable = function() {
             n++;
-            if (typeof(win.PDFView) === "object") {
+            if (typeof(win.PDFView) === "object" && win.PDFView.initialized) {
                // PDFView is available now, initialize it
                clearInterval(t);
                initUi();
@@ -162,7 +162,7 @@ public class PdfJsWindow extends WindowEx
    
    public final native void openPdf(String path, float scale, 
                                     boolean synctex) /*-{
-      this.PDFView.open(path, scale);
+      this.PDFView.open(path, { "scale": scale });
       var jumpToSource = this.document.getElementById("jumpToSource");
       if (jumpToSource)
       {

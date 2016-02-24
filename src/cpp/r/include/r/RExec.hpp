@@ -148,6 +148,25 @@ public:
       addParam(param4);
    }
    
+   template <typename Param1Type, typename Param2Type,
+             typename Param3Type, typename Param4Type,
+             typename Param5Type>
+   RFunction(const std::string& name,
+             const Param1Type& param1,
+             const Param2Type& param2,
+             const Param3Type& param3,
+             const Param4Type& param4,
+             const Param5Type& param5)
+      : functionSEXP_(R_UnboundValue)
+   {
+      commonInit(name);
+      addParam(param1);
+      addParam(param2);
+      addParam(param3);
+      addParam(param4);
+      addParam(param5);
+   }
+   
    explicit RFunction(SEXP functionSEXP);
    
    virtual ~RFunction() ;

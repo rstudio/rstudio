@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.Debug;
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
@@ -115,17 +117,31 @@ public abstract class ModalDialog<T> extends ModalDialogBase
 
    protected void validateAndGo(T input, final Command executeOnSuccess)
    {
-      validateAsync(input, new OperationWithInput<Boolean>()
+      // prevent re-entrancy 
+      if (validating_)
+         return; 
+      
+      validating_ = true;
+      try
       {
-         @Override
-         public void execute(Boolean valid)
+         validateAsync(input, new OperationWithInput<Boolean>()
          {
-            if (valid)
+            @Override
+            public void execute(Boolean valid)
             {
-               executeOnSuccess.execute();
+               validating_ = false;
+               if (valid)
+               {
+                  executeOnSuccess.execute();
+               }
             }
-         }
-      });
+         });
+      }
+      catch (Exception e)
+      {
+         validating_ = false;
+         Debug.logException(e);
+      }
    }
    
    protected ProgressIndicator getProgressIndicator()
@@ -145,4 +161,5 @@ public abstract class ModalDialog<T> extends ModalDialogBase
    }
   
    private final ProgressIndicator progressIndicator_;
+   private boolean validating_ = false;
 }

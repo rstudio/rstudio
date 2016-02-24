@@ -754,30 +754,26 @@
 
 .rs.addFunction("namedVectorAsList", function(vector)
 {
-   # Early escape for zero-length vectors
-   if (!length(vector))
-   {
-      return(list(
-         values = NULL,
-         names = NULL
-      ))
-   }
-   
    values <- unlist(vector, use.names = FALSE)
+   if (!length(values))
+      return(list(names = NULL, values = NULL))
    vectorNames <- names(vector)
-   names <- unlist(lapply(1:length(vector), function(i) {
+   names <- unlist(lapply(seq_along(vector), function(i) {
       rep.int(vectorNames[i], length(vector[[i]]))
    }))
    
-   list(values = values,
-        names = names)
+   list(names = names, values = values)
 })
 
-.rs.addFunction("getDollarNamesMethod", function(object)
+.rs.addFunction("getDollarNamesMethod", function(object,
+                                                 excludeBaseClasses = FALSE)
 {
    classes <- class(object)
    for (class in classes)
    {
+      if (excludeBaseClasses && class %in% c("list", "environment"))
+         next
+      
       method <- .rs.getAnywhere(paste(".DollarNames", class, sep = "."))
       if (!is.null(method))
          return(method)
@@ -786,9 +782,9 @@
    ## S4 objects might still 'be' data.frames or lists or environments under
    ## the hood; in such a case their 'formal' class can 'mask' the underlying
    ## S3 class / type, so explicitly check that as well.
-   if (is.list(object))
+   if (is.list(object) && !excludeBaseClasses)
       return(utils:::.DollarNames.list)
-   else if (is.environment(object))
+   else if (is.environment(object) && !excludeBaseClasses)
       return(utils:::.DollarNames.environment)
    
    NULL

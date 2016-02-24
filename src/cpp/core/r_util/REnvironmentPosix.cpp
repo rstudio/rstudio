@@ -746,10 +746,11 @@ Error rVersion(const FilePath& rHomePath,
    core::system::setenv(&env, "R_HOME", rHomePath.absolutePath());
    options.environment = env;
    core::system::ProcessResult result;
-   Error error = core::system::runCommand(rScriptPath.absolutePath() +
-                                          " --slave --vanilla --version",
-                                          options,
-                                          &result);
+   Error error = core::system::runCommand(
+      rScriptPath.absolutePath() +
+      " --slave --vanilla -e 'cat(R.Version()$major,R.Version()$minor, sep=\".\")'",
+      options,
+      &result);
    if (error)
    {
       error.addProperty("r-script", rScriptPath);
@@ -758,7 +759,7 @@ Error rVersion(const FilePath& rHomePath,
    else
    {
       std::string versionInfo = boost::algorithm::trim_copy(result.stdOut);
-      boost::regex re("^[^\\d]+([\\d\\.]+)");
+      boost::regex re("^([\\d\\.]+)$");
       boost::smatch match;
       if (boost::regex_search(versionInfo, match, re))
       {

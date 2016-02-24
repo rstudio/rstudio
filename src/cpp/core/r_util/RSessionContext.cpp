@@ -36,6 +36,10 @@
 #include <core/r_util/RActiveSessions.hpp>
 #include <core/r_util/RProjectFile.hpp>
 
+#ifndef _WIN32
+#include <sys/stat.h>
+#endif
+
 #define kSessionSuffix "-d"
 #define kProjectNone   "none"
 
@@ -89,17 +93,49 @@ bool SessionScope::isWorkspaces() const
    return project_.id() == kWorkspacesId;
 }
 
+bool isSharedPath(const std::string& projectPath,
+                  const core::FilePath& userHomePath)
+{
+#ifndef _WIN32
+   // ensure this is a real path
+   FilePath projectDir = FilePath::resolveAliasedPath(projectPath,
+                                                      userHomePath);
+   if (!projectDir.exists())
+      return false;
+
+   struct stat st;
+   if (::stat(projectDir.absolutePath().c_str(), &st) == 0)
+   {
+      // consider this project to be shared if we aren't the owner
+      if (st.st_uid != ::geteuid())
+      {
+         return true;
+      }
+   }
+   else
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", projectDir.absolutePath());
+      LOG_ERROR(error);
+   }
+
+#endif
+   return false;
+}
+
 SessionScopeState validateSessionScope(const SessionScope& scope,
                           const core::FilePath& userHomePath,
                           const core::FilePath& userScratchPath,
                           core::r_util::ProjectIdToFilePath projectIdToFilePath,
+                          bool projectSharingEnabled,
                           std::string* pProjectFilePath)
 {
    // does this session exist?
    r_util::ActiveSessions activeSessions(userScratchPath);
    boost::shared_ptr<r_util::ActiveSession> pSession
                                           = activeSessions.get(scope.id());
-   if (pSession->empty() || !pSession->validate(userHomePath))
+   if (pSession->empty() || !pSession->validate(userHomePath,
+                                                projectSharingEnabled))
       return ScopeInvalidSession;
 
    // if this isn't project none then check if the project exists
@@ -110,7 +146,7 @@ SessionScopeState validateSessionScope(const SessionScope& scope,
                scope,
                projectIdToFilePath);
       if (project.empty())
-         return ScopeInvalidProject;
+         return ScopeMissingProject;
 
       // if session points to another project then the scope is invalid
       if (project != pSession->project())
@@ -128,17 +164,23 @@ SessionScopeState validateSessionScope(const SessionScope& scope,
 
       // record path to project file
       *pProjectFilePath = projectPath.absolutePath();
-
-      // success!
-      return ScopeValid;
    }
    else
    {
       // if the session project isn't project none then it's invalid
       if (pSession->project() != kProjectNone)
          return ScopeInvalidProject;
+   }
 
-      // success!
+   // if we got this far the scope is valid, do one final check for
+   // trying to open a shared project if sharing is disabled
+   if (!projectSharingEnabled &&
+       r_util::isSharedPath(*pProjectFilePath, userHomePath))
+   {
+      return r_util::ScopeMissingProject;
+   }
+   else
+   {
       return ScopeValid;
    }
 }
@@ -197,15 +239,35 @@ void parseSessionUrl(const std::string& url,
 std::string createSessionUrl(const std::string& hostPageUrl,
                              const SessionScope& scope)
 {
-   // get url without prefix
-   std::string url;
-   parseSessionUrl(hostPageUrl, NULL, NULL, &url);
+   // build scope path for project (e.g. /s/BAF43..../).
+   std::string scopePath = urlPathForSessionScope(scope);
 
-   // build path for project
-   std::string path = urlPathForSessionScope(scope);
+   // determine the host scope path
+   std::string hostScopePath;
+   parseSessionUrl(hostPageUrl, NULL, &hostScopePath, NULL);
 
-   // complete the url and return it
-   return http::URL::complete(url, path);
+   // if we got a scope path then take everything before
+   // it and append our target scope path
+   if (!hostScopePath.empty())
+   {
+      // extract the base url
+      size_t pos = hostPageUrl.find(hostScopePath);
+      std::string baseUrl = hostPageUrl.substr(0, pos);
+
+      // complete the url and return it
+      return baseUrl + scopePath;
+   }
+   else
+   {
+      // completely unexpected that we'd pass a host page url
+      // with no scope path!  log a warning and just complete
+      // against the root of the host page url
+
+      LOG_WARNING_MESSAGE("Attempted to create session url from "
+                          "non prefixed host page " + hostPageUrl);
+
+      return http::URL::complete(hostPageUrl, scopePath);
+   }
 }
 
 

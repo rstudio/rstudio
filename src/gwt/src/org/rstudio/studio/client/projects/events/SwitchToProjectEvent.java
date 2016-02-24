@@ -23,12 +23,23 @@ public class SwitchToProjectEvent extends GwtEvent<SwitchToProjectHandler>
    
    public SwitchToProjectEvent(String project)
    {
+      this(project, false);
+   }
+   
+   public SwitchToProjectEvent(String project, boolean forceSaveAll)
+   {
       project_ = project;
+      forceSaveAll_ = forceSaveAll;
    }
    
    public String getProject()
    {
       return project_;
+   }
+   
+   public boolean getForceSaveAll()
+   {
+      return forceSaveAll_;
    }
    
    @Override
@@ -44,4 +55,5 @@ public class SwitchToProjectEvent extends GwtEvent<SwitchToProjectHandler>
    }
    
    private final String project_;
+   private final boolean forceSaveAll_;
 }

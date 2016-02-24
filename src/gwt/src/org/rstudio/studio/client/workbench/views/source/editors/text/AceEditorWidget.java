@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
@@ -23,6 +24,7 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -47,6 +49,7 @@ import org.rstudio.studio.client.events.BeginPasteEvent;
 import org.rstudio.studio.client.events.EndPasteEvent;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
 import org.rstudio.studio.client.workbench.views.output.lint.LintResources;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
@@ -57,12 +60,14 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceMous
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AnchoredRange;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunksEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidgetManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.events.AfterAceRenderEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent.Handler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager;
 
 public class AceEditorWidget extends Composite
       implements RequiresResize,
@@ -88,6 +93,7 @@ public class AceEditorWidget extends Composite
       editor_ = AceEditorNative.createEditor(getElement());
       editor_.manageDefaultKeybindings();
       editor_.getRenderer().setHScrollBarAlwaysVisible(false);
+      editor_.getRenderer().setScrollPastEnd(true);
       editor_.setShowPrintMargin(false);
       editor_.setPrintMarginColumn(0);
       editor_.setHighlightActiveLine(false);
@@ -185,7 +191,10 @@ public class AceEditorWidget extends Composite
             AceEditorWidget.this.fireEvent(new CursorChangedEvent(arg));
          }
       });
-      AceEditorNative.addEventListener(
+      
+      aceEventHandlers_ = new ArrayList<HandlerRegistration>();
+      
+      aceEventHandlers_.add(AceEditorNative.addEventListener(
                   editor_,
                   "undo",
                   new CommandWithArg<Void>()
@@ -194,8 +203,9 @@ public class AceEditorWidget extends Composite
                      {
                         fireEvent(new UndoRedoEvent(false));
                      }
-                  });
-      AceEditorNative.addEventListener(
+                  }));
+      
+      aceEventHandlers_.add(AceEditorNative.addEventListener(
                   editor_,
                   "redo",
                   new CommandWithArg<Void>()
@@ -204,8 +214,9 @@ public class AceEditorWidget extends Composite
                      {
                         fireEvent(new UndoRedoEvent(true));
                      }
-                  });
-      AceEditorNative.addEventListener(
+                  }));
+      
+      aceEventHandlers_.add(AceEditorNative.addEventListener(
                   editor_,
                   "paste",
                   new CommandWithArg<String>()
@@ -214,8 +225,9 @@ public class AceEditorWidget extends Composite
                      {
                         fireEvent(new PasteEvent(text));
                      }
-                  });
-      AceEditorNative.addEventListener(
+                  }));
+      
+      aceEventHandlers_.add(AceEditorNative.addEventListener(
                   editor_,
                   "mousedown",
                   new CommandWithArg<AceMouseEventNative>()
@@ -225,9 +237,9 @@ public class AceEditorWidget extends Composite
                      {
                         fireEvent(new AceClickEvent(event));
                      }
-                  });
+                  }));
       
-      AceEditorNative.addEventListener(
+      aceEventHandlers_.add(AceEditorNative.addEventListener(
             editor_.getRenderer(),
             "afterRender",
             new CommandWithArg<Void>()
@@ -236,9 +248,24 @@ public class AceEditorWidget extends Composite
                public void execute(Void event)
                {
                   fireEvent(new RenderFinishedEvent());
+                  isRendered_ = true;
                   events_.fireEvent(new AfterAceRenderEvent(AceEditorWidget.this.getEditor()));
                }
-            });
+            }));
+      
+      addAttachHandler(new AttachEvent.Handler()
+      {
+         @Override
+         public void onAttachOrDetach(AttachEvent event)
+         {
+            if (!event.isAttached())
+            {
+               for (HandlerRegistration registration : aceEventHandlers_)
+                  registration.removeHandler();
+               aceEventHandlers_.clear();
+            }
+         }
+      });
       
       events_.addHandler(
             BeginPasteEvent.TYPE,
@@ -263,7 +290,28 @@ public class AceEditorWidget extends Composite
                   maybeRemapCtrlV();
                }
             });
+      
+      events_.addHandler(
+            RStudioCommandExecutedFromShortcutEvent.TYPE,
+            new RStudioCommandExecutedFromShortcutEvent.Handler()
+            {
+               @Override
+               public void onRStudioCommandExecutedFromShortcut(RStudioCommandExecutedFromShortcutEvent event)
+               {
+                  clearKeyBuffers(editor_);
+               }
+            });
    }
+   
+   // When the 'keyBinding' field is initialized (the field holding all keyboard
+   // handlers for an Ace editor), an associated '$data' element is used to store
+   // information on keys (to allow for keyboard chaining, and so on). We refresh
+   // that data whenever an RStudio AppCommand is executed (thereby ensuring that
+   // the current keybuffer is cleared as far as Ace is concerned)
+   private static final native void clearKeyBuffers(AceEditorNative editor) /*-{
+      var keyBinding = editor.keyBinding;
+      keyBinding.$data = {editor: editor};
+   }-*/;
    
    private static native final void maybeUnmapCtrlV() /*-{
       var Vim = $wnd.require("ace/keyboard/vim").handler;
@@ -984,10 +1032,22 @@ public class AceEditorWidget extends Composite
       editor_.setReadOnly(!enabled);
    }
    
+   public LineWidgetManager getLineWidgetManager()
+   {
+      return editor_.getLineWidgetManager();
+   }
+   
+   public boolean isRendered()
+   {
+      return isRendered_;
+   }
+
    private final AceEditorNative editor_;
    private final HandlerManager capturingHandlers_;
+   private final List<HandlerRegistration> aceEventHandlers_;
    private boolean initToEmptyString_ = true;
    private boolean inOnChangeHandler_ = false;
+   private boolean isRendered_ = false;
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
    
    private ArrayList<AnchoredAceAnnotation> annotations_ =
@@ -997,6 +1057,4 @@ public class AceEditorWidget extends Composite
    private EventBus events_;
    private ChunkIconsManager chunkIconsManager_;
    private Commands commands_ = RStudioGinjector.INSTANCE.getCommands();
-   
-   
 }

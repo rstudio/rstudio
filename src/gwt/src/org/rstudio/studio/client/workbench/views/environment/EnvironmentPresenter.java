@@ -34,6 +34,7 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.debugging.DebugCommander;
 import org.rstudio.studio.client.common.debugging.DebugCommander.DebugMode;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
@@ -60,9 +61,12 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInpu
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportDialog;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportModes;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettings;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialogResult;
@@ -134,7 +138,9 @@ public class EnvironmentPresenter extends BasePresenter
                                RemoteFileSystemContext fsContext,
                                Session session,
                                SourceShim sourceShim,
-                               DebugCommander debugCommander)
+                               DebugCommander debugCommander,
+                               DependencyManager dependencyManager,
+                               FileTypeRegistry fileTypeRegistry)
    {
       super(view);
       binder.bind(commands, this);
@@ -155,6 +161,9 @@ public class EnvironmentPresenter extends BasePresenter
       sourceShim_ = sourceShim;
       debugCommander_ = debugCommander;
       session_ = session;
+      dependencyManager_ = dependencyManager;
+      fileTypeRegistry_ = fileTypeRegistry;
+      
       requeryContextTimer_ = new Timer()
       {
          @Override
@@ -278,10 +287,12 @@ public class EnvironmentPresenter extends BasePresenter
                   event.getColumnNumber());
             FileSystemItem destFile = FileSystemItem.createFile(
                   event.getFileName());
-            eventBus_.fireEvent(new OpenSourceFileEvent(destFile, pos,
-                                   FileTypeRegistry.R,
-                                   NavigationMethods.DEFAULT));
-         }
+            eventBus_.fireEvent(new OpenSourceFileEvent(
+                  destFile,
+                  pos,
+                  fileTypeRegistry_.getTextTypeForFile(destFile),
+                  NavigationMethods.DEFAULT));
+            }
       });
       
       new JSObjectStateValue(
@@ -469,6 +480,133 @@ public class EnvironmentPresenter extends BasePresenter
                         });
                  }
               });
+   }
+   
+   Command getImportDatasetCommandFromMode(
+      final DataImportModes dataImportMode,
+      final String dialogTitle)
+   {
+      return 
+         new Command() {
+            @Override
+            public void execute()
+            {
+               view_.bringToFront();
+               DataImportDialog dataImportDialog = new DataImportDialog(
+                     dataImportMode,
+                     dialogTitle,
+                     new OperationWithInput<String>()
+               {
+                  @Override
+                  public void execute(final String importCode)
+                  {
+                     eventBus_.fireEvent(new SendToConsoleEvent(importCode, true, true)); 
+                  }
+               });
+               
+               dataImportDialog.showModal();
+            }
+         };
+   }
+
+   void onImportDatasetFromCSV()
+   {
+      dependencyManager_.withDataImportCSV(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.Text,
+                  "Import Text Data")
+      );
+   }
+   
+   void onImportDatasetFromSAV()
+   {
+      dependencyManager_.withDataImportSAV(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.SAV,
+                  "Import Statistical Data")
+      );
+   }
+
+   void onImportDatasetFromSAS()
+   {
+      dependencyManager_.withDataImportSAV(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.SAS,
+                  "Import Statistical Data")
+      );
+   }
+
+   void onImportDatasetFromStata()
+   {
+      dependencyManager_.withDataImportSAV(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.Stata,
+                  "Import Statistical Data")
+      );
+   }
+
+   void onImportDatasetFromXLS()
+   {
+      dependencyManager_.withDataImportXLS(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.XLS,
+                  "Import Excel Data")
+      );
+   }
+
+   void onImportDatasetFromXML()
+   {
+      dependencyManager_.withDataImportXML(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.XML,
+                  "Import XML Data")
+      );
+   }
+
+   void onImportDatasetFromJSON()
+   {
+      dependencyManager_.withDataImportJSON(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.JSON,
+                  "Import JSON Data")
+      );
+   }
+
+   void onImportDatasetFromJDBC()
+   {
+      dependencyManager_.withDataImportJDBC(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.JDBC,
+                  "Import from JDBC")
+      );
+   }
+
+   void onImportDatasetFromODBC()
+   {
+      dependencyManager_.withDataImportODBC(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.ODBC,
+                  "Import from ODBC")
+      );
+   }
+
+   void onImportDatasetFromMongo()
+   {
+      dependencyManager_.withDataImportMongo(
+            dataImportDependecyUserAction_, 
+            getImportDatasetCommandFromMode(
+                  DataImportModes.Mongo,
+                  "Import from Mongo DB")
+      );
    }
 
    public void onOpenDataFile(OpenDataFileEvent event)
@@ -899,6 +1037,8 @@ public class EnvironmentPresenter extends BasePresenter
    private final SourceShim sourceShim_;
    private final DebugCommander debugCommander_;
    private final Session session_;
+   private final DependencyManager dependencyManager_;
+   private final FileTypeRegistry fileTypeRegistry_;
    
    private int contextDepth_;
    private boolean refreshingView_;
@@ -912,4 +1052,6 @@ public class EnvironmentPresenter extends BasePresenter
    private String functionEnvName_;
    private Timer requeryContextTimer_;
    private SearchPathFunctionDefinition searchFunction_;
+   
+   final String dataImportDependecyUserAction_ = "Preparing data import";
 }

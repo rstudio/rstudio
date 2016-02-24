@@ -24,6 +24,7 @@
    BOOL quitConfirmed_;
    BOOL firstWorkbenchInitialized_;
    NSString* openFile_;
+   NSString* pendingProject_;
    MainFrameMenu* menu_;
    DockTileView* dockTile_;
 }
@@ -40,8 +41,14 @@
 // set the window title
 - (void) setWindowTitle: (NSString*) title;
 
+// set project to be opened on quit
+- (void) setPendingProject: (NSString*) path;
+
 // open a file association file
 - (void) openFileInRStudio: (NSString*) filename;
+
+// evaluate R command
+- (void) evaluateRCommand: (NSString*) cmd;
 
 // initiate a quit sequence
 - (void) initiateQuit;

@@ -14,9 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import java.util.ArrayList;
-
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -37,6 +34,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.application.model.RVersionsInfo;
 import org.rstudio.studio.client.application.model.SaveAction;
+import org.rstudio.studio.client.application.ui.RVersionSelectWidget;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
@@ -121,6 +119,34 @@ public class GeneralPreferencesPane extends PreferencesPane
       nudgeRight(dirChooser_);
       textBoxWithChooser(dirChooser_);
 
+      showServerHomePage_ = new SelectWidget(
+            "Show server home page:",
+            new String[] {
+                  "Multiple active sessions",
+                  "Always",
+                  "Never"
+            },
+            new String[] {
+                 "sessions",
+                 "always",
+                 "never"
+            },
+            false,
+            true,
+            false);
+      
+      reuseSessionsForProjectLinks_ = new CheckBox("Re-use idle sessions for project links");
+      
+      if (session_.getSessionInfo().getShowUserHomePage())
+      {
+         spaced(showServerHomePage_);
+         add(showServerHomePage_);
+         lessSpaced(reuseSessionsForProjectLinks_);  
+      }
+      
+      if (session_.getSessionInfo().getMultiSession())
+         add(reuseSessionsForProjectLinks_);
+      
       restoreLastProject_ = new CheckBox("Restore most recently opened project at startup");
       lessSpaced(restoreLastProject_);
       add(restoreLastProject_);
@@ -182,6 +208,8 @@ public class GeneralPreferencesPane extends PreferencesPane
                           prefs_.checkForUpdates()));
       }
       
+      showServerHomePage_.setEnabled(false);
+      reuseSessionsForProjectLinks_.setEnabled(false);
       saveWorkspace_.setEnabled(false);
       loadRData_.setEnabled(false);
       dirChooser_.setEnabled(false);
@@ -198,9 +226,14 @@ public class GeneralPreferencesPane extends PreferencesPane
       // general prefs
       GeneralPrefs generalPrefs = rPrefs.getGeneralPrefs();
       
+      showServerHomePage_.setEnabled(true);
+      reuseSessionsForProjectLinks_.setEnabled(true);
       saveWorkspace_.setEnabled(true);
       loadRData_.setEnabled(true);
       dirChooser_.setEnabled(true);
+      
+      showServerHomePage_.setValue(generalPrefs.getShowUserHomePage());
+      reuseSessionsForProjectLinks_.setValue(generalPrefs.getReuseSessionsForProjectLinks());
       
       int saveWorkspaceIndex;
       switch (generalPrefs.getSaveAction())
@@ -281,7 +314,9 @@ public class GeneralPreferencesPane extends PreferencesPane
          }
 
          // set general prefs
-         GeneralPrefs generalPrefs = GeneralPrefs.create(saveAction, 
+         GeneralPrefs generalPrefs = GeneralPrefs.create(showServerHomePage_.getValue(),
+                                                         reuseSessionsForProjectLinks_.getValue(),
+                                                         saveAction, 
                                                          loadRData_.getValue(),
                                                          rProfileOnResume_.getValue(),
                                                          dirChooser_.getText(),
@@ -332,100 +367,12 @@ public class GeneralPreferencesPane extends PreferencesPane
    
     
 
-   private static class RVersionSelectWidget extends SelectWidget
-   {
-      public RVersionSelectWidget(JsArray<RVersionSpec> rVersions)
-      {
-         super("R version for new sessions:",
-               rVersionChoices(rVersions),
-               rVersionValues(rVersions),
-               false, 
-               true, 
-               false);
-      }
-      
-      public void setRVersion(RVersionSpec version)
-      {
-         if (!setValue(rVersionSpecToString(version)))
-            setValue(rVersionSpecToString(RVersionSpec.createEmpty()));
-      }
-      
-      public RVersionSpec getRVersion()
-      {
-         return rVersionSpecFromString(getValue());
-      }
-      
-      
-      private static String[] rVersionChoices(JsArray<RVersionSpec> rVersions)
-      {
-         // do we need to disambiguate identical version numbers
-         boolean disambiguate = RVersionSpec.hasDuplicates(rVersions);
-
-         // build list of choices
-         ArrayList<String> choices = new ArrayList<String>();
-
-         // always include "default" lable
-         choices.add(USE_DEFAULT_VERSION);
-
-         for (int i=0; i<rVersions.length(); i++)
-         {
-            RVersionSpec version = rVersions.get(i);
-            String choice = "R version " + version.getVersion();
-            if (disambiguate)
-               choice = choice + " (" + version.getRHome() + ")";
-            choices.add(choice);
-         }
-
-         return choices.toArray(new String[0]);
-      }
-
-      private static String[] rVersionValues(JsArray<RVersionSpec> rVersions)
-      {
-         ArrayList<String> values = new ArrayList<String>();
-
-         values.add(rVersionSpecToString(RVersionSpec.createEmpty()));
-
-         for (int i=0; i<rVersions.length(); i++)
-            values.add(rVersionSpecToString(rVersions.get(i)));
-
-         return values.toArray(new String[0]);
-      }
-      
-      private static RVersionSpec rVersionSpecFromString(String str)
-      {
-         if (str != null)
-         {
-            int loc = str.indexOf(SEP);
-            if (loc != -1)
-            {
-               String version = str.substring(0, loc);
-               String rHomeDir = str.substring(loc + SEP.length());
-               if (version.length() > 0 && rHomeDir.length() > 0)
-                  return RVersionSpec.create(version, rHomeDir);
-            }
-         }
-         
-         // couldn't parse it
-         return RVersionSpec.createEmpty();
-      }
-      
-      private static String rVersionSpecToString(RVersionSpec version)
-      {
-         if (version.getVersion().length() == 0)
-            return "";
-         else
-            return version.getVersion() + SEP + version.getRHome();
-      }
-
-      private final static String USE_DEFAULT_VERSION = "(Use System Default)";
-      private final static String SEP = "::::";
-   }
-
-   
    private final FileSystemContext fsContext_;
    private final FileDialogs fileDialogs_;
    private RVersionSelectWidget rServerRVersion_ = null;
    private CheckBox rememberRVersionForProjects_ = null;
+   private CheckBox reuseSessionsForProjectLinks_ = null;
+   private SelectWidget showServerHomePage_;
    private SelectWidget saveWorkspace_;
    private TextBoxWithButton rVersion_;
    private TextBoxWithButton dirChooser_;

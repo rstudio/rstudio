@@ -189,6 +189,11 @@ public class DefaultGlobalDisplay extends GlobalDisplay
       {
          public void onProgress(String message)
          {
+            onProgress(message, null);
+         }
+         
+         public void onProgress(String message, Operation onCancel)
+         {
             dismissProgress();
             dismissProgress_ = showProgress(message);
          }

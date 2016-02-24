@@ -18,12 +18,17 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
+import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.ProgressIndicator;
 
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -135,9 +140,26 @@ implements HasEnsureVisibleHandlers
       return widget;
    }
    
+   protected HorizontalPanel checkBoxWithHelp(CheckBox checkBox, String topic)
+   {
+      HorizontalPanel panel = new HorizontalPanel();
+      panel.add(checkBox);
+      HelpButton helpButton = new HelpButton(topic, false);
+      Style helpStyle = helpButton.getElement().getStyle();
+      helpStyle.setMarginTop(1, Unit.PX);
+      helpStyle.setMarginLeft(6, Unit.PX);
+      panel.add(helpButton);
+      return panel;
+   }
+   
    protected void forceClosed(Command onClosed)
    {
       dialog_.forceClosed(onClosed);
+   }
+   
+   protected void setEnterDisabled(boolean enterDisabled)
+   {
+      dialog_.setEnterDisabled(enterDisabled);
    }
    
    protected PreferencesDialogBaseResources res() 

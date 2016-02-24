@@ -18,6 +18,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Command;
 import org.rstudio.core.client.widget.DialogBuilder;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
@@ -85,6 +86,11 @@ public class DesktopDialogBuilderFactory implements DialogBuilderFactory
                   buttonSpec.progressOperation.execute(new ProgressIndicator()
                   {
                      public void onProgress(String message)
+                     {
+                        onProgress(message, null);
+                     }
+                     
+                     public void onProgress(String message, Operation onCancel)
                      {
                         if (dismissProgress_ != null)
                            dismissProgress_.execute();

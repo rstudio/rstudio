@@ -228,6 +228,7 @@ std::string username();
 FilePath userHomePath(std::string envOverride = std::string());
 FilePath userSettingsPath(const FilePath& userHomeDirectory,
                           const std::string& appName);
+unsigned int effectiveUserId();
 bool currentUserIsPrivilleged(unsigned int minimumUserId);
 
 // log

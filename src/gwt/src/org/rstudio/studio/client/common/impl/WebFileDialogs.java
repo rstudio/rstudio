@@ -54,10 +54,11 @@ public class WebFileDialogs implements FileDialogs
    public void openProject(FileSystemContext fsContext,
                            FileSystemItem initialFilePath,
                            int defaultType, 
+                           boolean showNewSession,
                            ProgressOperationWithInput<OpenProjectParams> operation)
    {
       OpenProjectDialog dialog = new OpenProjectDialog(fsContext, defaultType,
-            operation);
+            showNewSession, operation);
 
       dialog.setInvokeOperationEvenOnCancel(true);
       

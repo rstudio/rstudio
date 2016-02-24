@@ -72,6 +72,17 @@ public class StringUtil
       return formatFileSize(new Long(size).intValue());
    }
    
+   // return a friendly (not precise) elapsed time
+   public static String formatElapsedTime(int seconds)
+   {
+      if (seconds < 60)
+         return seconds + " second" + (seconds == 1 ? "" : "s");
+      else if (seconds < 3600)
+         return (seconds / 60) + " minute" + ((seconds / 60) == 1 ? "" : "s");
+      else 
+         return (seconds / 3600) + " hour" + ((seconds / 3600) == 1 ? "" : "s");
+   }
+   
    // Given a raw size, convert it to a human-readable value 
    // (e.g. 11580 -> "11.3 KB"). Note that this routine must generally avoid
    // implicit casts and use only ints; GWT's JavaScript compiler will truncate
@@ -222,6 +233,11 @@ public class StringUtil
          return str;
 
       return indent + str.replaceAll("\n", "\n" + indent);
+   }
+   
+   public static String join(String delimiter, String... strings)
+   {
+      return join(strings, delimiter);
    }
    
    public static String join(String[] collection, String delim)
@@ -986,6 +1002,37 @@ public class StringUtil
    {
       return RE_INDENT.match(line, 0).getGroup(0);
    }
+   
+   public static final String truncate(String string, int targetLength, String suffix)
+   {
+      if (string.length() <= targetLength)
+         return string;
+      
+      int truncatedSize = targetLength - suffix.length();
+      if (truncatedSize < 0)
+         return string;
+      
+      return string.substring(0, truncatedSize) + suffix;
+   }
+   
+   public static final String makeRandomId(int length) 
+   {
+      String alphanum = "0123456789abcdefghijklmnopqrstuvwxyz";
+      String id = "";
+      for (int i = 0; i < length; i++)
+      {
+         id += alphanum.charAt((int)(Math.random() * alphanum.length()));
+      }
+      return id;
+   }
+   
+   public static final native String encodeURI(String string) /*-{
+      return $wnd.encodeURI(string);
+   }-*/;
+   
+   public static final native String normalizeNewLines(String string) /*-{
+      return string.replace(/\r\n|\n\r|\r/g, "\n");
+   }-*/;
    
    public static final HashMap<String, String> COMPLEMENTS =
          makeComplementsMap();

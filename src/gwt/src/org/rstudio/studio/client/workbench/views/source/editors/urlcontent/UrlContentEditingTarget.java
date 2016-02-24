@@ -197,7 +197,7 @@ public class UrlContentEditingTarget implements EditingTarget
    {
       events_.fireEventToMainWindow(new DocWindowChangedEvent(
             getId(), SourceWindowManager.getSourceWindowId(), "",
-            DocTabDragParams.create(getId(), currentPosition()), 0));
+            DocTabDragParams.create(getId(), currentPosition()), null, 0));
    }
    
    public void focus()
@@ -311,7 +311,7 @@ public class UrlContentEditingTarget implements EditingTarget
       return true;
    }
 
-   public void onDismiss()
+   public void onDismiss(int dismissType)
    {
       server_.removeContentUrl(getContentUrl(),
                                new ServerRequestCallback<org.rstudio.studio.client.server.Void>()

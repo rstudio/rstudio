@@ -214,16 +214,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       checked_ = checked;
    }
 
-   public boolean preventShortcutWhenDisabled()
-   {
-      return preventShortcutWhenDisabled_;
-   }
-
-   public void setPreventShortcutWhenDisabled(boolean preventShortcut)
-   {
-      preventShortcutWhenDisabled_ = preventShortcut;
-   }
-   
    public String getWindowMode()
    {
       return windowMode_;
@@ -247,7 +237,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public enum Context
    {
       Workbench, Editor, R, Cpp, PackageDevelopment, RMarkdown,
-      Markdown, Sweave, Help, VCS, Packrat, RPresentation;
+      Markdown, Sweave, Help, VCS, Packrat, RPresentation, Addin;
       
       @Override
       public String toString()
@@ -615,7 +605,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private boolean enabled_ = true;
    private boolean visible_ = true;
    private boolean removed_ = false;
-   private boolean preventShortcutWhenDisabled_ = true;
    private boolean checkable_ = false;
    private boolean checked_ = false;
    private String windowMode_ = "any";

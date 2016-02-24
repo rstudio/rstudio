@@ -35,6 +35,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
+#include <session/SessionSourceDatabase.hpp>
 
 using namespace rstudio::core ;
 using namespace rstudio::r::sexp;
@@ -56,11 +57,62 @@ namespace {
 // to figure out how to preserve dirty state of the workspace accross suspend
 int s_lastSaveAction = r::session::kSaveActionAsk;
 
+// list of dirty documents (if it's empty then no document save is required)
+std::set<std::string> s_dirtyDocuments;
+
 const char * const kSaveActionState = "saveActionState";
 const char * const kImageDirtyState = "imageDirtyState";
 
-void enqueSaveActionChanged()
+
+
+void updateSavePromptRequired()
 {
+   bool workspaceSavePromptRequired =
+                    s_lastSaveAction == r::session::kSaveActionAsk;
+
+   bool documentSavePromptRequired = s_dirtyDocuments.size() > 0;
+
+   bool savePromptRequired = workspaceSavePromptRequired ||
+                             documentSavePromptRequired;
+
+   module_context::activeSession().setSavePromptRequired(savePromptRequired);
+}
+
+void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   // ignore docs with no path
+   if (pDoc->path().empty())
+      return;
+
+   // if it's dirty then ensure it's in the list, otherwise remove it
+   size_t previousDirtyDocsSize = s_dirtyDocuments.size();
+   if (pDoc->dirty())
+      s_dirtyDocuments.insert(pDoc->id());
+   else
+      s_dirtyDocuments.erase(pDoc->id());
+
+   if (s_dirtyDocuments.size() != previousDirtyDocsSize)
+      updateSavePromptRequired();
+}
+
+void onDocRemoved(const std::string& id, const std::string&)
+{
+   s_dirtyDocuments.erase(id);
+   updateSavePromptRequired();
+}
+
+void onRemoveAll()
+{
+   s_dirtyDocuments.clear();
+   updateSavePromptRequired();
+}
+
+void handleSaveActionChanged()
+{
+   // update savePromptRequired
+   updateSavePromptRequired();
+
+   // enque event to client
    json::Object saveAction;
    saveAction["action"] = s_lastSaveAction;
    ClientEvent event(client_events::kSaveActionChanged, saveAction);
@@ -78,7 +130,7 @@ void checkForSaveActionChanged()
    if (s_lastSaveAction != currentSaveAction)
    {
       s_lastSaveAction = currentSaveAction;
-      enqueSaveActionChanged();
+      handleSaveActionChanged();
    }
 }
 
@@ -95,13 +147,13 @@ void onResume(const Settings& settings)
 
    r::session::setImageDirty(settings.getBool(kImageDirtyState, true));
 
-   enqueSaveActionChanged();
+   handleSaveActionChanged();
 }
 
 void onClientInit()
 {
    // enque save action changed
-   enqueSaveActionChanged();
+   handleSaveActionChanged();
 }
  
 void onDetectChanges(module_context::ChangeSource source)
@@ -120,8 +172,11 @@ Error initialize()
 
    // subscribe to events
    using boost::bind;
-   events().onClientInit.connect(bind(onClientInit));
-   events().onDetectChanges.connect(bind(onDetectChanges, _1));
+   module_context::events().onClientInit.connect(bind(onClientInit));
+   module_context::events().onDetectChanges.connect(bind(onDetectChanges, _1));
+   source_database::events().onDocUpdated.connect(onDocUpdated);
+   source_database::events().onDocRemoved.connect(onDocRemoved);
+   source_database::events().onRemoveAll.connect(onRemoveAll);
 
    return Success();
 }

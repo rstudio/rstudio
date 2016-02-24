@@ -758,9 +758,9 @@ public class RCompletionManager implements CompletionManager
          if (docDisplay_.isCursorInSingleLineString())
             return false;
          
-         // if there's a selection, let the encloser handle it
+         // if there's a selection, bail
          if (input_.hasSelection()) 
-            return CompletionUtils.handleEncloseSelection(input_, c);
+            return false;
          
          // Bail if there is an alpha-numeric character
          // following the cursor
@@ -1589,10 +1589,8 @@ public class RCompletionManager implements CompletionManager
          
          // Bail if we find a closing paren (we should walk over matched
          // pairs properly, so finding one implies that we have a parse error).
-         if (value.equals("]") || value.equals("]]") || value.equals("}"))
-         {
+         if (value.equals("]") || value.equals("}"))
             break;
-         }
          
          if (clone.fwdToMatchingToken())
             continue;
@@ -1625,7 +1623,10 @@ public class RCompletionManager implements CompletionManager
              argsValue.equals("$") ||
              argsValue.equals("@") ||
              argsValue.equals("::") ||
-             argsValue.equals(":::"))
+             argsValue.equals(":::") ||
+             argsValue.equals("]") ||
+             argsValue.equals(")") ||
+             argsValue.equals("}"))
          {
             break;
          }
@@ -1797,8 +1798,8 @@ public class RCompletionManager implements CompletionManager
          if (results.length == 1 &&
              completions.token.equals(results[0].name.replaceAll(":*", "")))
          {
-            // For snippets we need to apply the completion
-            if (results[0].type == RCompletionType.SNIPPET)
+            // For snippets we need to apply the completion if explicitly requested
+            if (results[0].type == RCompletionType.SNIPPET && canAutoAccept_)
             {
                snippets_.applySnippet(completions.token, results[0].name);
                return;
@@ -1933,7 +1934,6 @@ public class RCompletionManager implements CompletionManager
          // Strip off the quotes for string completions.
          if (completionToken.startsWith("'") || completionToken.startsWith("\""))
             completionToken = completionToken.substring(1);
-         
          
          if (qualifiedName.source.equals("`chunk-option`"))
          {
@@ -2165,6 +2165,11 @@ public class RCompletionManager implements CompletionManager
       if (editor == null)
          return "";
       
+      // TODO: Better handling of completions within markdown mode, e.g.
+      // `r foo`
+      if (DocumentMode.isCursorInMarkdownMode(docDisplay_))
+         return token_;
+      
       Position cursorPos = editor.getCursorPosition();
       Token currentToken = editor.getSession().getTokenAt(cursorPos);
       if (currentToken == null)
@@ -2175,6 +2180,7 @@ public class RCompletionManager implements CompletionManager
          return "";
       
       String tokenValue = currentToken.getValue();
+      
       String subsetted = tokenValue.substring(0, cursorPos.getColumn() - currentToken.getColumn());
       
       return subsetted;

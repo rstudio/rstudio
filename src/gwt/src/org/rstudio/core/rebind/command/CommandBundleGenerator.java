@@ -326,7 +326,6 @@ class CommandBundleGeneratorHelper
 
       setPropertyBool(writer, name, props.get(name), "visible");
       setPropertyBool(writer, name, props.get(name), "enabled");
-      setPropertyBool(writer, name, props.get(name), "preventShortcutWhenDisabled");
       setPropertyBool(writer, name, props.get(name), "checkable");
       setPropertyBool(writer, name, props.get(name), "checked");
       setPropertyBool(writer, name, props.get(name), "rebindable");

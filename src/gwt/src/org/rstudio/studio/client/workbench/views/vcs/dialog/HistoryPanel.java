@@ -114,6 +114,14 @@ public class HistoryPanel extends Composite implements Display
 
       topToolbar_.addLeftWidget(commitFilterToolbarButton_);
       
+      topToolbar_.addLeftSeparator();
+      
+      refreshButton_ = new ToolbarButton(
+                                 null, 
+                                 commands.vcsRefresh().getImageResource(),
+                                 (ClickHandler) null);
+      topToolbar_.addLeftWidget(refreshButton_); 
+      
       searchText_ = new SearchWidget(new MultiWordSuggestOracle(),
                                      new TextBoxWithCue("Search"),
                                      null);
@@ -122,14 +130,6 @@ public class HistoryPanel extends Composite implements Display
 
       topToolbar_.addRightWidget(commands.vcsPull().createToolbarButton());
       
-      topToolbar_.addRightSeparator();
-      
-      refreshButton_ = new ToolbarButton(
-                                 null, 
-                                 commands.vcsRefresh().getImageResource(),
-                                 (ClickHandler) null);
-      topToolbar_.addRightWidget(refreshButton_); 
-     
       pager_.setDisplay(commitTable_);
    }
 

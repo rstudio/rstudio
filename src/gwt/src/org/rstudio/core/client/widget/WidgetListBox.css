@@ -6,7 +6,6 @@
 
 .anyItem
 {
-	width: 100%;
 	box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	-webkit-box-sizing: border-box;
@@ -18,6 +17,18 @@
 	padding: 0px;
 }
 
+.scrollPanel
+{
+	background-color: #ffffff;
+	border: 1px solid #999999;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+}
+
 .outerPanel:focus
 {
 	outline: none;
@@ -25,14 +36,10 @@
 
 .listPanel
 {
-	background-color: #ffffff;
-	border: 1px solid #999999;
-	width: 100%;
-	height: 100%;
 	box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	-webkit-box-sizing: border-box;
-	overflow: auto;
+	width: 100%;
 }
 
 .listPanel:focus

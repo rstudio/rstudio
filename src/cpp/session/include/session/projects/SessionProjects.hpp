@@ -168,6 +168,9 @@ public:
    // can this project be shared with other users?
    bool supportsSharing();
 
+   // can we browse in the parent directories of this project?
+   bool parentBrowseable();
+
 public:
    static core::r_util::RProjectBuildDefaults buildDefaults();
    static core::r_util::RProjectConfig defaultConfig();

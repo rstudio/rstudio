@@ -258,6 +258,11 @@ public class SatelliteManager implements CloseHandler<Window>
          }   
       }
    }
+      
+   public boolean getSatellitesOpen()
+   {
+      return satellites_.size() >= 1;
+   }
    
    // close all satellite windows
    public void closeAllSatellites()

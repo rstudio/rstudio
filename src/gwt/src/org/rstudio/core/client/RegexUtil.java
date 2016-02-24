@@ -41,7 +41,6 @@ public class RegexUtil
       return identifier.matches(SYNTACTIC_R_IDENTIFIER);
    }
    
-   
    private static final native String constructLetter() /*-{
       var unicode = $wnd.require("ace/unicode");
       return unicode.packages.L;

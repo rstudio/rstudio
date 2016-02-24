@@ -37,6 +37,17 @@ public class AceEditorNative extends JavaScriptObject {
    public native final Renderer getRenderer() /*-{
       return this.renderer;
    }-*/;
+   
+   public native final LineWidgetManager getLineWidgetManager() /*-{
+      var session = this.getSession();
+      if (!session.widgetManager) 
+      {
+         var LineWidgets = $wnd.require("ace/line_widgets").LineWidgets;
+         session.widgetManager = new LineWidgets(session);
+         session.widgetManager.attach(this);
+      }
+      return session.widgetManager;
+   }-*/; 
 
    public native final void resize() /*-{
       this.resize();
@@ -199,6 +210,9 @@ public class AceEditorNative extends JavaScriptObject {
       // We bind 'Ctrl + Shift + P' to run previous code on Windows
       delete this.commands.commandKeyBinding["ctrl-shift-p"];
       
+      // Don't bind 'Cmd+,'
+      delete this.commands.commandKeyBinding["cmd-,"];
+      
       // We bind 'Ctrl + Alt + A' to 'split into lines'
       if (this.commands.platform !== "mac")
          delete this.commands.commandKeyBinding["ctrl-alt-a"];
@@ -304,9 +318,10 @@ public class AceEditorNative extends JavaScriptObject {
       this.onCursorChange();
    }-*/;
 
-   public static native void setInsertMatching(boolean insertMatching) /*-{
-      $wnd.require("mode/auto_brace_insert").setInsertMatching(insertMatching);
-   }-*/;
+   public final void setInsertMatching(boolean value)
+   {
+      getSession().getMode().setInsertMatching(value);
+   }
 
    public static native void setVerticallyAlignFunctionArgs(
          boolean verticallyAlign) /*-{
@@ -415,18 +430,30 @@ public class AceEditorNative extends JavaScriptObject {
    
    public final void retokenizeDocument()
    {
-      retokenizeDocument(0);
+      tokenizeUpToRow(getSession().getLength() - 1);
    }
    
-   public final native void retokenizeDocument(int fromRow) /*-{
-      this.session.bgTokenizer &&
-         this.session.bgTokenizer.start &&
-         this.session.bgTokenizer.start(fromRow);
+   public final native void tokenizeUpToRow(int row) /*-{
+      var session = this.getSession();
+      var tokenizer = session.bgTokenizer;
+      var lastTokenizedRow = tokenizer.currentLine;
+      var maxRow = Math.max(row, session.getLength() - 1);
+      for (var i = lastTokenizedRow; i <= maxRow; i++)
+         tokenizer.$tokenizeRow(i);
+      tokenizer.fireUpdateEvent(lastTokenizedRow, maxRow);
    }-*/;
    
    public final native void setCommandManager(AceCommandManager commands)
    /*-{
       this.commands = commands;
+   }-*/;
+   
+   public final native void setDragEnabled(boolean enabled) /*-{
+      this.setOption("dragEnabled", enabled);
+   }-*/;
+   
+   public final native boolean dragEnabled() /*-{
+      return this.getOption("dragEnabled");
    }-*/;
    
    public final native JsMap<Position> getMarks() /*-{
@@ -477,6 +504,10 @@ public class AceEditorNative extends JavaScriptObject {
    
    }-*/;
    
+   public static final native void setDefaultInsertMatching(boolean value) /*-{
+      $wnd.require("mode/auto_brace_insert").setInsertMatching(value);
+   }-*/;
+   
    public final static void syncUiPrefs(UIPrefs uiPrefs)
    {
       if (uiPrefsSynced_)
@@ -487,7 +518,7 @@ public class AceEditorNative extends JavaScriptObject {
          @Override
          public void execute(Boolean arg) 
          {
-            setInsertMatching(arg);
+            setDefaultInsertMatching(arg);
          }
       });
       
@@ -502,6 +533,10 @@ public class AceEditorNative extends JavaScriptObject {
 
       uiPrefsSynced_ = true;
    }
+   
+   public final native void setSurroundSelectionPref(String value) /*-{
+      this.$surroundSelection = value;
+   }-*/;
    
    private static boolean uiPrefsSynced_ = false;
 }

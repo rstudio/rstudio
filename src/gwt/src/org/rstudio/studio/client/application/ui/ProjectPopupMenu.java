@@ -22,6 +22,7 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.projects.ProjectMRUList;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.SharedProjectDetails;
@@ -40,7 +41,6 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
@@ -133,6 +133,10 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       ProjectMRUList.setOpenInNewWindow(false);
       if (allowSharedProjects_)
       {
+         final GlobalProgressDelayer progress = new GlobalProgressDelayer(
+               RStudioGinjector.INSTANCE.getGlobalDisplay(),
+               250, "Looking for projects...");
+
          // if shared projects are on, check for them every time the user drops
          // the menu; we request one more than the maximum we can display so 
          // we can let the user know whether there are more projects than those
@@ -144,6 +148,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
             public void onResponseReceived(JsArray<SharedProjectDetails> result)
             {
                rebuildMenu(result, callback);
+               progress.dismiss();
             }
 
             @Override
@@ -152,6 +157,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
                // if we can't get the shared projects, we can at least show
                // the menu without them
                rebuildMenu(null, callback);
+               progress.dismiss();
             }
          });
       }
@@ -188,7 +194,11 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       addSeparator(225);
 
       addItem(commands_.openProject().createMenuItem(false));
+      if (Desktop.isDesktop())
+         addItem(commands_.openProjectInNewWindow().createMenuItem(false));
       addItem(commands_.closeProject().createMenuItem(false));
+      addSeparator();
+      addItem(commands_.shareProject().createMenuItem(false));
       if (hasSharedProjects)
          addSeparator("Recent Projects"); 
       else
@@ -255,7 +265,6 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       addSeparator();
       addItem(commands_.clearRecentProjects().createMenuItem(false));
       addSeparator();
-      addItem(commands_.shareProject().createMenuItem(false));
       addItem(commands_.projectOptions().createMenuItem(false));
       
       callback.onPopupMenu(this);

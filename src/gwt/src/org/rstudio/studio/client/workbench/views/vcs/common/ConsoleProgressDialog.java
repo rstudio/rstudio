@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.common;
 
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -146,7 +147,10 @@ public class ConsoleProgressDialog extends ProgressDialog
          hideProgress();
          
          int height = Window.getClientHeight() - 150;
-         display_.getElement().getStyle().setHeight(height, Unit.PX);
+         int width = Math.min(800, Window.getClientWidth() - 150);
+         Style style = display_.getElement().getStyle();
+         style.setHeight(height, Unit.PX);
+         style.setWidth(width, Unit.PX);
       }
 
    }

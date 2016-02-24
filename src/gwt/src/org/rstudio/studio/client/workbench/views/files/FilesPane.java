@@ -39,7 +39,10 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
 import org.rstudio.studio.client.workbench.views.files.ui.*;
@@ -53,6 +56,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
                     FileDialogs fileDialogs,
                     Commands commands,
                     FileTypeRegistry fileTypeRegistry,
+                    Session session,
                     Provider<FileCommandToolbar> pFileCommandToolbar)
    {
       super("Files");
@@ -61,6 +65,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
       fileDialogs_ = fileDialogs;
       fileTypeRegistry_ = fileTypeRegistry;
       pFileCommandToolbar_ = pFileCommandToolbar;
+      session_ = session;
       ensureWidget();
    }
    
@@ -105,16 +110,31 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    }
     
    public void listDirectory(final FileSystemItem directory, 
-                             ServerDataSource<JsArray<FileSystemItem>> dataSource)
+                             ServerDataSource<DirectoryListing> dataSource)
    {
       setProgress(true);
         
-      dataSource.requestData(new ServerRequestCallback<JsArray<FileSystemItem>>(){
-         public void onResponseReceived(JsArray<FileSystemItem> response)
+      dataSource.requestData(new ServerRequestCallback<DirectoryListing>(){
+         public void onResponseReceived(DirectoryListing response)
          {
             setProgress(false);
-            filePathToolbar_.setPath(directory.getPath());
-            filesList_.displayFiles(directory, response); 
+            String lastBrowseable = null;
+            if (!response.isParentBrowseable())
+            {
+               // if we can't go up, disable everything up to the current path
+               lastBrowseable = directory.getPath();
+            }
+            else
+            {
+               // if we're in someone else's project, disable paths above
+               // the project
+               SessionInfo si = session_.getSessionInfo();
+               if (si.getActiveProjectDir() != null && !si.projectParentBrowseable())
+                  lastBrowseable = si.getActiveProjectDir().getPath();
+            }
+               
+            filePathToolbar_.setPath(directory.getPath(), lastBrowseable);
+            filesList_.displayFiles(directory, response.getFiles()); 
          }
          public void onError(ServerError error)
          {
@@ -253,6 +273,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    private final GlobalDisplay globalDisplay_ ;
    private final FileDialogs fileDialogs_;
    private Files.Display.Observer observer_;
+   private final Session session_;
 
    private final FileTypeRegistry fileTypeRegistry_;
    private final Commands commands_;

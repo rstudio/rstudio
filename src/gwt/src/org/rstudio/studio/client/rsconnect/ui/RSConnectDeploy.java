@@ -44,6 +44,8 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -85,7 +87,6 @@ public class RSConnectDeploy extends Composite
       String controlLabel();
       String deployLabel();
       String descriptionPanel();
-      String dropListControl();
       String fileList();
       String firstControlLabel();
       String gridControl();
@@ -101,6 +102,7 @@ public class RSConnectDeploy extends Composite
       String wizard();
       String progressPanel();
       String appDetailsPanel();
+      String wizardDeployPage();
    }
    
    public interface DeployResources extends ClientBundle
@@ -118,7 +120,7 @@ public class RSConnectDeploy extends Composite
    public static DeployResources RESOURCES = GWT.create(DeployResources.class);
    
    public RSConnectDeploy(RSConnectPublishSource source,
-                          int contentType,
+                          final int contentType,
                           RSConnectDeploymentRecord fromPrevious,
                           boolean asWizard)
    {
@@ -142,6 +144,7 @@ public class RSConnectDeploy extends Composite
          asStatic_ = fromPrevious.getAsStatic();
       }
       
+      
       // inject dependencies 
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -153,31 +156,46 @@ public class RSConnectDeploy extends Composite
       {
          deployIllustration_.setVisible(false);
          rootPanel_.addStyleName(style_.wizard());
+         hideCheckUncheckAllButton();
       }
 
+      final boolean rsConnectEnabled = RStudioGinjector.INSTANCE.getUIPrefs()
+            .enableRStudioConnect().getGlobalValue();
+      
       // Invoke the "add account" wizard
-      addAccountAnchor_.addClickHandler(new ClickHandler()
+      if (contentType == RSConnect.CONTENT_TYPE_APP || rsConnectEnabled)
       {
-         @Override
-         public void onClick(ClickEvent event)
+         addAccountAnchor_.addClickHandler(new ClickHandler()
          {
-            connector_.showAccountWizard(false, !asStatic_, 
-                  new OperationWithInput<Boolean>() 
+            @Override
+            public void onClick(ClickEvent event)
             {
-               @Override
-               public void execute(Boolean successful)
+               connector_.showAccountWizard(false, 
+                     contentType == RSConnect.CONTENT_TYPE_APP ||
+                     contentType == RSConnect.CONTENT_TYPE_APP_SINGLE, 
+                     new OperationWithInput<Boolean>() 
                {
-                  if (successful)
+                  @Override
+                  public void execute(Boolean successful)
                   {
-                     accountList_.refreshAccountList();
+                     if (successful)
+                     {
+                        accountList_.refreshAccountList();
+                     }
                   }
-               }
-            });
-            
-            event.preventDefault();
-            event.stopPropagation();
-         }
-      });
+               });
+               
+               event.preventDefault();
+               event.stopPropagation();
+            }
+         });
+      }
+      else
+      {
+         // if not deploying a Shiny app and RSConnect UI is not enabled, then
+         // there's no account we can add suitable for this content
+         addAccountAnchor_.setVisible(false);
+      }
       
       createNewAnchor_.addClickHandler(new ClickHandler()
       {
@@ -190,8 +208,17 @@ public class RSConnectDeploy extends Composite
          }
       });
 
+      checkUncheckAllButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
+      checkUncheckAllButton_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent arg0)
+         {
+            checkUncheckAll();
+         }
+      });
+
       addFileButton_.setVisible(forDocument_);
-      addFileButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
       addFileButton_.addClickHandler(new ClickHandler()
       {
          @Override
@@ -214,6 +241,8 @@ public class RSConnectDeploy extends Composite
             }
          }
       });
+      
+      
       
       // If we're loading a previous deployment, hide new app name fields
       if (fromPrevious_ != null)
@@ -296,11 +325,18 @@ public class RSConnectDeploy extends Composite
       deployLabel_.setText(dir);
    }
    
-   public void setNewAppName(String name)
+   public void setUnsanitizedAppName(String unsanitizedName)
    {
-      appName_.setText(name);
-   }
+      // make the name into a valid URL slug
+      String sanitized = new String(unsanitizedName);
+      sanitized = sanitized.trim();
+      sanitized = sanitized.replaceAll("[^a-zA-Z0-9\\-]", "_");
+      if (sanitized.length() > 64)
+         sanitized = sanitized.substring(0, 64);
 
+      appName_.setText(sanitized);
+   }
+   
    public void setDefaultAccount(RSConnectAccount account)
    {
       accountList_.selectAccount(account);
@@ -338,11 +374,15 @@ public class RSConnectDeploy extends Composite
          urlAnchor_.setText(info.getUrl());
          urlAnchor_.setHref(info.getUrl());
       }
-      appInfoPanel_.setVisible(true);
       appDetailsPanel_.setVisible(true);
-      newAppPanel_.setVisible(false);
-      if (onDeployEnabled_ != null)
-         onDeployEnabled_.execute();
+
+      if (isUpdate())
+      {
+         appInfoPanel_.setVisible(true);
+         newAppPanel_.setVisible(false);
+         if (onDeployEnabled_ != null)
+            onDeployEnabled_.execute();
+      }
    }
    
    public HandlerRegistration addAccountChangeHandler(ChangeHandler handler)
@@ -522,11 +562,23 @@ public class RSConnectDeploy extends Composite
             addFile(additionalFiles.get(i), true);
          }
       }
+      
+      // hide check/uncheck all button if there are only a few files
+      if (fileChecks_.size() < 3)
+      {
+         hideCheckUncheckAllButton();
+      }
    }
    
    private RSConnectAccount getSelectedAccount()
    {
       return accountList_.getSelectedAccount();
+   }
+   
+   private void hideCheckUncheckAllButton()
+   {
+      checkUncheckAllButton_.setVisible(false);
+      addFileButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
    }
    
    private void setPreviousInfo()
@@ -726,7 +778,15 @@ public class RSConnectDeploy extends Composite
                            FileSystemItem.createFile(
                                  source_.getDeployFile()).getName());
                   }
-                  indicator.clearProgress();
+                  
+                  Scheduler.get().scheduleDeferred(new ScheduledCommand()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        indicator.clearProgress();
+                     }
+                  });
                }
                @Override
                public void onError(ServerError error)
@@ -862,6 +922,7 @@ public class RSConnectDeploy extends Composite
       // (for apps and documents--other content types use temporary filenames)
       if (appName_.getText().isEmpty() && 
             contentType_ == RSConnect.CONTENT_TYPE_APP || 
+            contentType_ == RSConnect.CONTENT_TYPE_APP_SINGLE || 
             contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT)
       {
          // set the app name to the filename
@@ -877,7 +938,7 @@ public class RSConnectDeploy extends Composite
                   source_.getDeployDir());
          }
 
-         appName_.setText(appName);
+         setUnsanitizedAppName(appName);
       }
       
       ImageResource illustration = null;
@@ -898,6 +959,7 @@ public class RSConnectDeploy extends Composite
    private boolean isUpdate()
    {
       return fromPrevious_ != null && 
+            getSelectedAccount() != null &&
             getSelectedAccount().equals(fromPrevious_.getAccount());
    }
    
@@ -987,6 +1049,24 @@ public class RSConnectDeploy extends Composite
       fromPrevious_ = null;
    }
    
+   private void checkUncheckAll()
+   {
+      allChecked_ = !allChecked_;
+      for (CheckBox box: fileChecks_)
+      {
+         // don't toggle state for disabled boxes, or common Shiny .R filenames
+         String file = box.getText().toLowerCase();
+         if (box.isEnabled() &&
+             file != "ui.r" &&
+             file != "server.r" &&
+             file != "app.r")
+         {
+            box.setValue(allChecked_);
+         }
+      }
+      checkUncheckAllButton_.setText(allChecked_ ? "Uncheck All" : "Check All");
+   }
+   
    
    @UiField Anchor addAccountAnchor_;
    @UiField Anchor createNewAnchor_;
@@ -1005,6 +1085,7 @@ public class RSConnectDeploy extends Composite
    @UiField Label appProgressName_;
    @UiField Label nameLabel_;
    @UiField ThemedButton addFileButton_;
+   @UiField ThemedButton checkUncheckAllButton_;
    @UiField ThemedButton previewButton_;
    @UiField VerticalPanel fileListPanel_;
    @UiField VerticalPanel filePanel_;
@@ -1026,6 +1107,7 @@ public class RSConnectDeploy extends Composite
    private int contentType_;
    private Command onDeployEnabled_;
    private RSConnectDeploymentRecord fromPrevious_;
+   private boolean allChecked_ = true;
 
    private final DeployStyle style_;
    private final boolean forDocument_;

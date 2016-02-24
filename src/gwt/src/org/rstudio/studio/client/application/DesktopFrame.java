@@ -107,6 +107,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    public static final int PENDING_QUIT_RESTART_AND_RELOAD = 3;
    
    void setPendingQuit(int pendingQuit);
+   void setPendingProject(String projectFilePath);
    void launchSession(boolean reload);
    
    void openProjectInNewWindow(String projectFilePath);
@@ -150,6 +151,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void setShinyDialogUrl(String url);
    
    boolean isOSXMavericks();
+   boolean isCentOS();
 
    String getScrollingCompensationType();
    
