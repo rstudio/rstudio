@@ -212,6 +212,21 @@
          <key>CFBundleTypeRole</key>
          <string>Editor</string>
       </dict>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
+             <string>Rprof</string>
+             <string>rprof</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>RMarkdown.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>R Profile File</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+         <key>LSIsAppleDefaultForType</key>
+         <true/>
+      </dict>
    </array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
