@@ -241,6 +241,11 @@ public class TextEditingTarget implements
 
       public void onProgress(String message)
       {
+         onProgress(message, null);
+      }
+
+      public void onProgress(String message, Operation onCancel)
+      {
       }
       
       public void clearProgress()
@@ -417,6 +422,14 @@ public class TextEditingTarget implements
       docDisplay_.setCppCompletionContext(cppCompletionContext_);
       docDisplay_.setRCompletionContext(rContext_);
       scopeHelper_ = new TextEditingTargetScopeHelper(docDisplay_);
+      scopeTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            doUpdateCurrentScope();
+         }
+      };
       
       addRecordNavigationPositionHandler(releaseOnDismiss_, 
                                          docDisplay_, 
@@ -1174,7 +1187,16 @@ public class TextEditingTarget implements
       
       themeHelper_ = new TextEditingTargetThemeHelper(this, events_);
       
+      docUpdateSentinel_ = new DocUpdateSentinel(
+            server_,
+            docDisplay_,
+            document,
+            globalDisplay_.getProgressIndicator("Save File"),
+            dirtyState_,
+            events_);
+      
       view_ = new TextEditingTargetWidget(this,
+                                          docUpdateSentinel_,
                                           commands_,
                                           prefs_,
                                           fileTypeRegistry_,
@@ -1184,19 +1206,10 @@ public class TextEditingTarget implements
                                           events_,
                                           session_);
       
-      docUpdateSentinel_ = new DocUpdateSentinel(
-            server_,
-            docDisplay_,
-            document,
-            globalDisplay_.getProgressIndicator("Save File"),
-            dirtyState_,
-            events_);
-      
       roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
       
-      notebook_ = new TextEditingTargetNotebook(
-                              this, rmarkdownHelper_, 
-                              docDisplay_, docUpdateSentinel_, document);   
+      notebook_ = new TextEditingTargetNotebook(this, rmarkdownHelper_,
+                              docDisplay_, docUpdateSentinel_, document);
       
       // ensure that Makefile and Makevars always use tabs
       name_.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -1832,54 +1845,52 @@ public class TextEditingTarget implements
   
    private void updateCurrentScope()
    {
-      Scheduler.get().scheduleDeferred(
-            new ScheduledCommand()
-            {
-               public void execute()
+      scopeTimer_.schedule(docDisplay_.getSuggestedScopeUpdateDelay());
+   }
+   
+   private void doUpdateCurrentScope()
+   {
+      // special handing for presentations since we extract
+      // the slide structure in a different manner than 
+      // the editor scope trees
+      if (fileType_.isRpres())
+      {
+         statusBar_.getScope().setValue(
+               presentationHelper_.getCurrentSlide());
+         statusBar_.setScopeType(StatusBar.SCOPE_SLIDE);
+
+      }
+      else
+      {
+         Scope scope = docDisplay_.getCurrentScope();
+         String label = scope != null
+               ? scope.getLabel()
+                     : null;
+               statusBar_.getScope().setValue(label);
+
+               if (scope != null)
                {
-                  // special handing for presentations since we extract
-                  // the slide structure in a different manner than 
-                  // the editor scope trees
-                  if (fileType_.isRpres())
-                  {
-                     statusBar_.getScope().setValue(
-                                       presentationHelper_.getCurrentSlide());
-                     statusBar_.setScopeType(StatusBar.SCOPE_SLIDE);
-                     
-                  }
-                  else
-                  {
-                     Scope scope = docDisplay_.getCurrentScope();
-                     String label = scope != null
-                                   ? scope.getLabel()
-                                   : null;
-                     statusBar_.getScope().setValue(label);
-                     
-                     if (scope != null)
-                     {
-                        boolean useChunk = 
-                                 scope.isChunk() || 
-                                 (fileType_.isRnw() && scope.isTopLevel());
-                             if (useChunk)
-                           statusBar_.setScopeType(StatusBar.SCOPE_CHUNK);
-                        else if (scope.isNamespace())
-                          statusBar_.setScopeType(StatusBar.SCOPE_NAMESPACE);
-                        else if (scope.isClass())
-                           statusBar_.setScopeType(StatusBar.SCOPE_CLASS);
-                        else if (scope.isSection())
-                           statusBar_.setScopeType(StatusBar.SCOPE_SECTION);
-                        else if (scope.isTopLevel())
-                           statusBar_.setScopeType(StatusBar.SCOPE_TOP_LEVEL);
-                        else if (scope.isFunction())
-                           statusBar_.setScopeType(StatusBar.SCOPE_FUNCTION);
-                        else if (scope.isLambda())
-                           statusBar_.setScopeType(StatusBar.SCOPE_LAMBDA);
-                        else if (scope.isAnon())
-                           statusBar_.setScopeType(StatusBar.SCOPE_ANON);
-                     }
-                  }
+                  boolean useChunk = 
+                        scope.isChunk() || 
+                        (fileType_.isRnw() && scope.isTopLevel());
+                  if (useChunk)
+                     statusBar_.setScopeType(StatusBar.SCOPE_CHUNK);
+                  else if (scope.isNamespace())
+                     statusBar_.setScopeType(StatusBar.SCOPE_NAMESPACE);
+                  else if (scope.isClass())
+                     statusBar_.setScopeType(StatusBar.SCOPE_CLASS);
+                  else if (scope.isSection())
+                     statusBar_.setScopeType(StatusBar.SCOPE_SECTION);
+                  else if (scope.isTopLevel())
+                     statusBar_.setScopeType(StatusBar.SCOPE_TOP_LEVEL);
+                  else if (scope.isFunction())
+                     statusBar_.setScopeType(StatusBar.SCOPE_FUNCTION);
+                  else if (scope.isLambda())
+                     statusBar_.setScopeType(StatusBar.SCOPE_LAMBDA);
+                  else if (scope.isAnon())
+                     statusBar_.setScopeType(StatusBar.SCOPE_ANON);
                }
-            });
+      }
    }
    
    private String getNameFromDocument(SourceDocument document,
@@ -3947,7 +3958,7 @@ public class TextEditingTarget implements
    
    public void executePreviousChunks(final Position position)
    {
-      if (prefs_.showRmdChunkOutputInline().getGlobalValue())
+      if (docDisplay_.showChunkOutputInline())
       {
          executePreviousChunksNotebookMode(position);
          return;
@@ -4082,7 +4093,7 @@ public class TextEditingTarget implements
                codeExecution_.setLastExecuted(range.getStart(), range.getEnd());
                String code = scopeHelper_.getSweaveChunkText(chunk);
                if (fileType_.isRmd() && 
-                   prefs_.showRmdChunkOutputInline().getValue())
+                   docDisplay_.showChunkOutputInline())
                {
                   notebook_.executeChunk(chunk, code);
                }
@@ -5753,6 +5764,7 @@ public class TextEditingTarget implements
    private final LintManager lintManager_;
    private final TextEditingTargetRenameHelper renameHelper_;
    private CollabEditStartParams queuedCollabParams_;
+   private final Timer scopeTimer_;
    
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =

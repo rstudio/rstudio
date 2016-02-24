@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.profiler.model;
 
-import java.util.HashMap;
-
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class ProfilerContents extends JavaScriptObject
@@ -23,50 +21,15 @@ public class ProfilerContents extends JavaScriptObject
    protected ProfilerContents()
    {
    }
-
-   public static final ProfilerContents createDefault()
-   {
-      return create(10, true);
-   }
    
-   public static final native ProfilerContents create(int propA,
-                                                      boolean propB) /*-{
+   public static final native ProfilerContents create(
+      String path) /*-{
       var contents = new Object();
-      contents.prop_a = propA.toString();
-      contents.prop_b = propB.toString();
-      return contents ;
+      contents.path = path;
+      return contents;
    }-*/;
    
-   
-   public final int getPropA()
-   {
-      return Integer.parseInt(getPropAString());
-   };
-   
-   public final boolean getPropB()
-   {
-      return Boolean.parseBoolean(getPropBString());
-   };
-   
-   public final boolean equalTo(ProfilerContents other)
-   {
-      return getPropA() == other.getPropA() &&
-             getPropB() == other.getPropB();
-   }
-   
-   public final void fillProperties(HashMap<String, String> properties)
-   {
-      properties.put("prop_a", getPropAString());
-      properties.put("prop_b", getPropBString());
-   }
-   
-   private native final String getPropAString() /*-{
-      return this.prop_a;
+   public final native String getPath() /*-{
+      return this.path;
    }-*/;
-
-   private native final String getPropBString() /*-{
-      return this.prop_b;
-   }-*/;
-   
-   
 }

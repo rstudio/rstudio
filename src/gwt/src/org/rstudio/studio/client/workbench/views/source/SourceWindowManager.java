@@ -48,6 +48,8 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserCreatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditEndedEvent;
@@ -57,6 +59,7 @@ import org.rstudio.studio.client.workbench.views.source.events.DocFocusedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.MaximizeSourceWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
@@ -107,7 +110,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          FileTypeRegistry registry,
          GlobalDisplay display, 
          SourceShim sourceShim,
-         Session session)
+         Session session,
+         UIPrefs uiPrefs)
    {
       events_ = events;
       server_ = server;
@@ -116,6 +120,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       pWorkbenchContext_ = pWorkbenchContext;
       display_ = display;
       sourceShim_ = sourceShim;
+      uiPrefs_ = uiPrefs;
       
       events_.addHandler(DocWindowChangedEvent.TYPE, this);
       
@@ -717,6 +722,21 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          }
       });
    }
+   
+   public void maximizeSourcePaneIfNecessary()
+   {
+      if (SourceWindowManager.isMainSourceWindow())
+      {
+         // see if the Source and Console are paired
+         PaneConfig paneConfig = uiPrefs_.paneConfig().getValue();
+         if (paneConfig == null)
+            paneConfig = PaneConfig.createDefault();
+         if (hasSourceAndConsolePaired(paneConfig.getPanes()))
+         {
+            events_.fireEvent(new MaximizeSourceWindowEvent());
+         }  
+      }
+   }
 
    // Private methods ---------------------------------------------------------
    
@@ -1200,6 +1220,31 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
 
       return null;
    }
+   
+   private boolean hasSourceAndConsolePaired(JsArrayString panes)
+   {
+      // default config
+      if (panes == null)
+         return true;
+      
+      // if there aren't 4 panes this is a configuration we
+      // don't recognize
+      if (panes.length() != 4)
+         return false;
+      
+      // check for paired config
+      return hasSourceAndConsolePaired(panes.get(0), panes.get(1)) ||
+             hasSourceAndConsolePaired(panes.get(2), panes.get(3));
+   }
+   
+   private boolean hasSourceAndConsolePaired(String pane1, String pane2)
+   {
+      return (pane1.equals(PaneConfig.SOURCE) &&
+              pane2.equals(PaneConfig.CONSOLE))
+                 ||
+             (pane1.equals(PaneConfig.CONSOLE) &&
+              pane2.equals(PaneConfig.SOURCE));
+   }
 
    // Private types -----------------------------------------------------------
    
@@ -1218,6 +1263,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private final SourceServerOperations server_;
    private final GlobalDisplay display_;
    private final SourceShim sourceShim_;
+   private final UIPrefs uiPrefs_;
 
    private HashMap<String, Integer> sourceWindows_ = 
          new HashMap<String,Integer>();

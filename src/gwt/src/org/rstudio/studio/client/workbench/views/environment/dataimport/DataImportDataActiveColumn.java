@@ -41,6 +41,6 @@ public class DataImportDataActiveColumn extends JavaScriptObject
    }-*/;
    
    public final native String getName() /*-{
-      return this.name;
+      return this.name.toString();
    }-*/;
 }

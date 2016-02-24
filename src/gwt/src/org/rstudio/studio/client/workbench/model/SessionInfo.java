@@ -245,8 +245,8 @@ public class SessionInfo extends JavaScriptObject
       return !!this.project_supports_sharing;
    }-*/;
    
-   public final native boolean isProjectOwner() /*-{
-      return !!this.project_owned_by_user;
+   public final native boolean projectParentBrowseable() /*-{
+      return !!this.project_parent_browseable;
    }-*/;
    
    public final native String getProjectUserDataDir() /*-{

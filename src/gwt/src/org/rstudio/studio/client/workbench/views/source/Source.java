@@ -116,7 +116,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
-import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.OpenProfileEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -172,7 +172,8 @@ public class Source implements InsertSourceHandler,
                              DocWindowChangedEvent.Handler,
                              DocTabDragInitiatedEvent.Handler,
                              PopoutDocInitiatedEvent.Handler,
-                             DebugModeChangedEvent.Handler
+                             DebugModeChangedEvent.Handler,
+                             OpenProfileEvent.Handler
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -648,6 +649,8 @@ public class Source implements InsertSourceHandler,
                   }
                }
             });
+      
+      events.addHandler(OpenProfileEvent.TYPE, this);
 
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
       Event.addNativePreviewHandler(new NativePreviewHandler()
@@ -1063,14 +1066,15 @@ public class Source implements InsertSourceHandler,
             });
    }
    
-   @Handler
-   public void onShowProfiler()
+   public void onShowProfiler(OpenProfileEvent event)
    {
+      String profilePath = event.getFilePath();
+      
       // first try to activate existing
       for (int idx = 0; idx < editors_.size(); idx++)
       {
          String path = editors_.get(idx).getPath();
-         if (ProfilerEditingTarget.PATH.equals(path))
+         if (profilePath.equals(path))
          {
             ensureVisible(false);
             view_.selectTab(idx);
@@ -1083,7 +1087,7 @@ public class Source implements InsertSourceHandler,
       server_.newDocument(
             FileTypeRegistry.PROFILER.getTypeId(),
             null,
-            (JsObject) ProfilerContents.createDefault().cast(),
+            (JsObject) ProfilerContents.create(profilePath).cast(),
             new SimpleRequestCallback<SourceDocument>("Show Profiler")
             {
                @Override
@@ -1752,25 +1756,13 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onPreviousTab()
    {
-      if (view_.getTabCount() == 0)
-         return;
-
-      ensureVisible(false);
-      int index = getPhysicalTabIndex();
-      if (index >= 1)
-         setPhysicalTabIndex(index - 1);
+      switchToTab(-1, false);
    }
 
    @Handler
    public void onNextTab()
    {
-      if (view_.getTabCount() == 0)
-         return;
-
-      ensureVisible(false);
-      int index = getPhysicalTabIndex();
-      if (index < view_.getTabCount() - 1)
-         setPhysicalTabIndex(index + 1);
+      switchToTab(1, false);
    }
 
    @Handler
@@ -1782,6 +1774,41 @@ public class Source implements InsertSourceHandler,
       ensureVisible(false);
       if (view_.getTabCount() > 0)
          setPhysicalTabIndex(view_.getTabCount() - 1);
+   }
+   
+   public void nextTabWithWrap()
+   {
+      switchToTab(1, true);
+   }
+
+   public void prevTabWithWrap()
+   {
+      switchToTab(-1, true);
+   }
+   
+   private void switchToTab(int delta, boolean wrap)
+   {
+      if (view_.getTabCount() == 0)
+         return;
+      
+      ensureVisible(false);
+
+      int targetIndex = getPhysicalTabIndex() + delta;
+      if (targetIndex > (view_.getTabCount() - 1))
+      {
+         if (wrap)
+            targetIndex = 0;
+         else
+            return;
+      }
+      else if (targetIndex < 0)
+      {
+         if (wrap)
+            targetIndex = view_.getTabCount() - 1;
+         else
+            return;
+      }
+      setPhysicalTabIndex(targetIndex);
    }
    
    @Handler
@@ -2698,8 +2725,6 @@ public class Source implements InsertSourceHandler,
       // TODO: should we perform conflict resolution here as well?
       if (openFileAlreadyOpen(rmdFile, resultCallback))
          return;
-      
-      EditingTarget target = editingTargetSource_.getEditingTarget(fileType);
       
       // ask the server to extract the .Rmd, then open that
       server_.extractRmdFromNotebook(
@@ -3991,6 +4016,11 @@ public class Source implements InsertSourceHandler,
                         nativeEvent);
                }
             });
+   }
+   
+   public void onOpenProfileEvent(OpenProfileEvent event)
+   {
+      onShowProfiler(event);
    }
    
    private void inEditorForPath(String path, 

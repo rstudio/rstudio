@@ -87,6 +87,10 @@ oop.inherits(RStudioEditor, Editor);
       Editor.prototype.redo.call(this);
       this._dispatchEvent("redo");
    };
+
+   this.onPaste = function(text, event) {
+      Editor.prototype.onPaste.call(this, text.replace(/\r\n|\n\r|\r/g, "\n"), event);
+   };
 }).call(RStudioEditor.prototype);
 
 

@@ -237,6 +237,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void alignCursor(Position position, double ratio);
    void centerSelection();
    
+   int getSuggestedScopeUpdateDelay();
    Scope getCurrentScope();
    Scope getCurrentChunk();
    Scope getCurrentChunk(Position position);
@@ -349,11 +350,14 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
 
    void addLineWidget(LineWidget widget);
    void removeLineWidget(LineWidget widget);
+   void removeAllLineWidgets();
    void onLineWidgetChanged(LineWidget widget); 
    
    JsArray<LineWidget> getLineWidgets();
    LineWidget getLineWidgetForRow(int row);
    
+   boolean showChunkOutputInline();
+   void setShowChunkOutputInline(boolean show);
    JsArray<ChunkDefinition> getChunkDefs();
 
    Position getDocumentEnd();

@@ -29,6 +29,15 @@ public class LineWidgetManager extends JavaScriptObject
       this.removeLineWidget(widget);
    }-*/;
    
+   public native final void removeAllLineWidgets() /*-{
+      var lineWidgetsByRow = this.session.lineWidgets;
+      var self = this;
+      lineWidgetsByRow.forEach(function(w, i) {
+         if (w) 
+            self.removeLineWidget(w);
+      });
+   }-*/;
+   
    public native final void onWidgetChanged(LineWidget widget) /*-{
       this.onWidgetChanged(widget);
    }-*/;

@@ -23,6 +23,7 @@
 #include <core/FileSerializer.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -152,8 +153,26 @@ std::set<std::string> implicitlyAvailablePackages(const FilePath& filePath)
    return implicitlyAvailablePackages(filePath, contents);
 }
 
+namespace {
+
+SEXP rs_fromJSON(SEXP objectSEXP)
+{
+   std::string contents = r::sexp::asString(objectSEXP);
+   
+   json::Value jsonValue;
+   if (!json::parse(contents, &jsonValue))
+      return R_NilValue;
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(jsonValue, &protect);
+}
+
+} // anonymous namespace
+
 Error initialize()
 {
+   RS_REGISTER_CALL_METHOD(rs_fromJSON, 1);
+   
    return Success();
 }
 

@@ -24,7 +24,7 @@ public class DataImportPreviewResponse extends JavaScriptObject
    }
    
    public final native String getErrorMessage() /*-{
-      return this.error ? this.error.message.join(' ') : null;
+      return (this.error && this.error.message) ? this.error.message.join(' ') : null;
    }-*/;
    
    public final native int getParsingErrors() /*-{
@@ -43,5 +43,9 @@ public class DataImportPreviewResponse extends JavaScriptObject
    
    public final native String[] getSupportedColumnTypes() /*-{
       return this.options && this.options.columnTypes ? this.options.columnTypes : [];
+   }-*/;
+   
+   public final native JavaScriptObject getLocalFiles() /*-{
+      return this.localFiles;
    }-*/;
 }

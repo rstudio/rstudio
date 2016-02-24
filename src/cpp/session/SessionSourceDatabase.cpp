@@ -726,6 +726,27 @@ Error getPath(const std::string& id, core::FilePath* pPath)
    return Success();
 }
 
+Error getId(const std::string& path, std::string* pId)
+{
+   for (std::map<std::string, std::string>::iterator it = s_idToPath.begin();
+        it != s_idToPath.end();
+        it++)
+   {
+      if (it->second == path)
+      {
+         *pId = it->first;
+         return Success();
+      }
+   }
+   return systemError(boost::system::errc::no_such_file_or_directory,
+                      ERROR_LOCATION);
+}
+
+Error getId(const FilePath& path, std::string* pId)
+{
+   return getId(module_context::createAliasedPath(FileInfo(path)), pId);
+}
+
 namespace {
 
 void onQuit()

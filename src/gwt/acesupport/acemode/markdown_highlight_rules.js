@@ -196,7 +196,7 @@ var MarkdownHighlightRules = function() {
             next  : "mathjaxdisplay"
         }, { // MathJax $...$ (org-mode style)
             token : ["markup.list","support.function","markup.list"],
-            regex : "(\\$)" + "((?!\\s)[^$]*[^$\\s])" + "(\\$)" + "(?![\\w\\d`])"
+            regex : "(\\$)((?:(?:\\\\.)|(?:[^\\$\\\\]))*?)(\\$)"
         }, { // strong ** __
             token : ["constant.numeric", "constant.numeric", "constant.numeric"],
             regex : "([*]{2}|[_]{2}(?=\\S))([^\\r]*?\\S[*_]*)(\\1)"
@@ -366,15 +366,6 @@ var MarkdownHighlightRules = function() {
             regex : "[\\s\\S]+?"
         }],
         
-        "mathjaxinline" : [{
-            token : "markup.list",
-            regex : "\\$",
-            next  : "start"
-        }, {
-            token : "support.function",
-            regex : "[^\\$]+"
-        }],
-
         "mathjaxnativeinline" : [{
             token : "markup.list",
             regex : "\\\\\\)",

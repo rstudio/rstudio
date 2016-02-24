@@ -190,6 +190,8 @@ core::Error remove(const std::string& id);
 core::Error removeAll();
 core::Error getPath(const std::string& id, std::string* pPath);
 core::Error getPath(const std::string& id, core::FilePath* pPath);
+core::Error getId(const std::string& path, std::string* pId);
+core::Error getId(const core::FilePath& path, std::string* pId);
 
 // source database events
 struct Events : boost::noncopyable
@@ -197,6 +199,7 @@ struct Events : boost::noncopyable
    boost::signal<void(boost::shared_ptr<SourceDocument>)>      onDocUpdated;
    boost::signal<void(const std::string&,
                       boost::shared_ptr<SourceDocument>)>      onDocRenamed;
+   boost::signal<void(const std::string&)>                     onDocAdded;
    boost::signal<void(const std::string&, const std::string&)> onDocRemoved;
    boost::signal<void()>                                       onRemoveAll;
 };

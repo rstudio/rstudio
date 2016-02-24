@@ -141,6 +141,10 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kSendToConsole;
       else if (name == "get_active_document_context")
          type = session::client_events::kGetActiveDocumentContext;
+      else if (name == "rprof_started")
+        type = session::client_events::kRprofStarted;
+      else if (name == "rprof_stopped")
+        type = session::client_events::kRprofStopped;
 
       if (type != -1)
       {
@@ -330,6 +334,16 @@ SEXP rs_restartR(SEXP afterRestartSEXP)
    ClientEvent event(client_events::kSuspendAndRestart, dataJson);
    module_context::enqueClientEvent(event);
    return R_NilValue;
+}
+
+SEXP rs_generateShortUuid()
+{
+   // generate a short uuid -- we make this available in R code so that it's
+   // possible to create random identifiers without perturbing the state of the
+   // RNG that R uses
+   std::string uuid = core::system::generateShortenedUuid();
+   r::sexp::Protect rProtect;
+   return r::sexp::create(uuid, &rProtect);
 }
 
 } // anonymous namespace
@@ -2204,6 +2218,11 @@ Error initialize()
             "rs_setUsingMingwGcc49",
             (DL_FUNC)rs_setUsingMingwGcc49,
             1);
+
+   r::routines::registerCallMethod(
+            "rs_generateShortUuid",
+            (DL_FUNC)rs_generateShortUuid, 
+            0);
    
    // initialize monitored scratch dir
    initializeMonitoredUserScratchDir();

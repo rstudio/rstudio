@@ -14,6 +14,7 @@
  */
 
 #include "SessionRmdNotebook.hpp"
+#include "SessionRnbParser.hpp"
 
 #include <iostream>
 
@@ -21,6 +22,7 @@
 
 #include <r/RJson.hpp>
 #include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
 
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
@@ -34,12 +36,12 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionOptions.hpp>
+#include <session/SessionUserSettings.hpp>
 
 #define kChunkDefs         "chunk_definitions"
 #define kChunkDocWriteTime "doc_write_time"
 #define kChunkDocId        "doc_id"
 #define kChunkId           "chunk_id"
-#define kChunkLibDir       "lib"
 #define kChunkOutputPath   "chunk_output"
 #define kChunkUrl          "url"
 #define kChunkConsole      "console"
@@ -94,7 +96,13 @@ bool s_consoleConnected = false;
 //   which several htmlwidget chunks depend)
 
 
-FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
+FilePath unsavedNotebookCache()
+{
+   return module_context::sessionScratchPath().childPath("unsaved-notebooks");
+}
+
+FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId,
+      const std::string& contextId)
 {
    FilePath folder;
    std::string stem;
@@ -103,7 +111,7 @@ FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
    {
       // the doc hasn't been saved, so keep its chunk output in the scratch
       // path
-      folder = module_context::userScratchPath().childPath("unsaved-notebooks");
+      folder = unsavedNotebookCache();
       stem = docId;
    }
    else
@@ -118,43 +126,50 @@ FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
 #endif
 
       stem += path.stem();
+      stem += "-" + contextId;
       folder = path.parent();
    }
 
    return folder.childPath(stem + ".Rnb.cached");
 }
 
+FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
+{
+   return chunkCacheFolder(docPath, docId, userSettings().contextId());
+}
 
 FilePath chunkDefinitionsPath(const std::string& docPath,
                               const std::string& docId,
-                              const std::string& fileExt)
+                              const std::string& contextId)
 {
-   std::string fileName = std::string() + "chunks." + fileExt;
-   return chunkCacheFolder(docPath, docId).childPath(fileName);
+   std::string fileName = std::string() + "chunks.json";
+   return chunkCacheFolder(docPath, docId, contextId).childPath(fileName);
 }
 
 FilePath chunkOutputPath(
       const std::string& docPath, const std::string& docId,
-      const std::string& chunkId)
+      const std::string& chunkId, const std::string& contextId)
+
 {
-   return chunkCacheFolder(docPath, docId)
+   return chunkCacheFolder(docPath, docId, contextId)
                           .childPath(chunkId + ".html");
 }
 
 FilePath chunkConsolePath(
       const std::string& docPath, const std::string& docId, 
-      const std::string& chunkId)
+      const std::string& chunkId, const std::string& contextId)
    
 {
-   return chunkCacheFolder(docPath, docId)
+   return chunkCacheFolder(docPath, docId, contextId)
                           .childPath(chunkId + ".csv");
 }
 
 Error chunkConsoleContents(const std::string& docPath, const std::string& docId, 
-      const std::string& chunkId, json::Array* pArray)
+      const std::string& chunkId, const std::string& contextId,
+      json::Array* pArray)
 {
    std::string contents;
-   FilePath consoleFile = chunkConsolePath(docPath, docId, chunkId);
+   FilePath consoleFile = chunkConsolePath(docPath, docId, chunkId, contextId);
    Error error = readStringFromFile(consoleFile, &contents);
    if (error)
       return error;
@@ -182,11 +197,11 @@ Error chunkConsoleContents(const std::string& docPath, const std::string& docId,
 
 Error enqueueChunkOutput(
       const std::string& docPath, const std::string& docId,
-      const std::string& chunkId)
+      const std::string& chunkId, const std::string& contextId)
 {
    Error error;
-   FilePath outputPath = chunkOutputPath(docPath, docId, chunkId);
-   FilePath consolePath = chunkConsolePath(docPath, docId, chunkId);
+   FilePath outputPath = chunkOutputPath(docPath, docId, chunkId, contextId);
+   FilePath consolePath = chunkConsolePath(docPath, docId, chunkId, contextId);
 
    unsigned chunkType = kChunkTypeNone;
    if (outputPath.exists() && !consolePath.exists())
@@ -213,7 +228,8 @@ Error enqueueChunkOutput(
    else if (chunkType == kChunkTypeConsole)
    {
       json::Array consoleOutput;
-      error = chunkConsoleContents(docPath, docId, chunkId, &consoleOutput);
+      error = chunkConsoleContents(docPath, docId, chunkId, contextId,
+            &consoleOutput);
       if (error)
          LOG_ERROR(error);
       output[kChunkConsole] = consoleOutput;
@@ -254,7 +270,7 @@ void replayChunkOutputs(const std::string& docPath, const std::string& docId,
    // find all the chunks and play them back to the client
    BOOST_FOREACH(const std::string& chunkId, chunkIds)
    {
-      enqueueChunkOutput(docPath, docId, chunkId);
+      enqueueChunkOutput(docPath, docId, chunkId, userSettings().contextId());
    }
 
    json::Object result;
@@ -264,19 +280,75 @@ void replayChunkOutputs(const std::string& docPath, const std::string& docId,
    module_context::enqueClientEvent(event);
 }
 
+Error getChunkDefs(const std::string& docPath, const std::string& docId,
+                   const std::string& contextId, time_t *pDocTime, 
+                   core::json::Value* pDefs)
+{
+   Error error;
+   FilePath defs = chunkDefinitionsPath(docPath, docId, contextId);
+   if (!defs.exists())
+      return Success();
+
+   // read the defs file 
+   std::string contents;
+   error = readStringFromFile(defs, &contents);
+   if (error)
+      return error;
+
+   // pull out the contents
+   json::Value defContents;
+   if (!json::parse(contents, &defContents) || 
+       defContents.type() != json::ObjectType)
+      return Error(json::errc::ParseError, ERROR_LOCATION);
+
+   // extract the chunk definitions
+   if (pDefs)
+   {
+      json::Array chunkDefs;
+      error = json::readObject(defContents.get_obj(), kChunkDefs, &chunkDefs);
+      if (error)
+         return error;
+
+      // return to caller
+      *pDefs = chunkDefs;
+   }
+
+   // extract the doc write time 
+   if (pDocTime)
+   {
+      json::Object::iterator it = 
+         defContents.get_obj().find(kChunkDocWriteTime);
+      if (it != defContents.get_obj().end() &&
+          it->second.type() == json::IntegerType)
+      {
+         *pDocTime = static_cast<std::time_t>(it->second.get_int64());
+      }
+      else
+      {
+         return Error(json::errc::ParamMissing, ERROR_LOCATION);
+      }
+   }
+   return Success();
+}
+
 // called by the client to inject output into a recently opened document 
 Error refreshChunkOutput(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
    // extract path to doc to be refreshed
-   std::string docPath, docId, requestId;
-   Error error = json::readParams(request.params, &docPath, &docId, &requestId);
+   std::string docPath, docId, contextId, requestId;
+   Error error = json::readParams(request.params, &docPath, &docId, &contextId,
+         &requestId);
    if (error)
       return error;
 
+   // use our own context ID if none supplied
+   if (contextId.empty())
+      contextId = userSettings().contextId();
+
    json::Object result;
    json::Value chunkDefs; 
-   error = getChunkDefs(docPath, docId, NULL, &chunkDefs);
+   error = getChunkDefs(docPath, docId, contextId, NULL, &chunkDefs);
 
    // schedule the work to play back the chunks
    if (!error && chunkDefs.type() == json::ArrayType) 
@@ -321,7 +393,8 @@ void onDocRemoved(const std::string& docId, const std::string& docPath)
    Error error;
 
    FilePath cacheFolder = chunkCacheFolder(docPath, docId);
-   FilePath defFile = chunkDefinitionsPath(docPath, docId, "json");
+   FilePath defFile = chunkDefinitionsPath(docPath, docId, 
+         userSettings().contextId());
    if (!docPath.empty() && defFile.exists())
    {
       // for saved documents, we want to keep the cache folder around even when
@@ -329,7 +402,8 @@ void onDocRemoved(const std::string& docId, const std::string& docPath)
       // of sync.
       FilePath docFile = module_context::resolveAliasedPath(docPath);
       std::time_t writeTime;
-      error = getChunkDefs(docPath, docId, &writeTime, NULL);
+      error = getChunkDefs(docPath, docId, userSettings().contextId(),
+            &writeTime, NULL);
 
       if (writeTime <= docFile.lastWriteTime())
       {
@@ -384,6 +458,43 @@ void onDocRenamed(const std::string& oldPath,
    }
 }
 
+void onDocAdded(const std::string& id)
+{
+   std::string path;
+   Error error = source_database::getPath(id, &path);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // ignore empty paths and non-R Markdown files
+   if (path.empty())
+      return;
+   FilePath docPath = module_context::resolveAliasedPath(path);
+   if (docPath.extensionLowerCase() != ".rmd")
+      return;
+
+   FilePath cachePath = chunkCacheFolder(path, id);
+   FilePath nbPath = docPath.parent().complete(docPath.stem() + ".Rnb");
+
+   if (!cachePath.exists() && nbPath.exists())
+   {
+      // we have a saved representation, but no cache -- populate the cache
+      // from the saved representation
+      error = parseRnb(nbPath, cachePath);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+   }
+
+   // TODO: consider write times of document, cache, and .Rnb -- are there
+   // combinations which would suggest we should overwrite the cache with the
+   // contents of the notebook?
+}
+
 void disconnectConsole();
 
 void onConsolePrompt(const std::string& )
@@ -406,7 +517,7 @@ void onConsoleText(const std::string& docId, const std::string& chunkId,
    }
 
    FilePath outputCsv = chunkConsolePath(path.absolutePath(), 
-         docId, chunkId);
+         docId, chunkId, userSettings().contextId());
 
    std::vector<std::string> vals; 
    vals.push_back(safe_convert::numberToString(type));
@@ -418,6 +529,8 @@ void onConsoleText(const std::string& docId, const std::string& chunkId,
    {
       LOG_ERROR(error);
    }
+
+   events().onChunkConsoleOutput(docId, chunkId, type, output);
 }
 
 void onConsoleOutput(module_context::ConsoleOutputType type, 
@@ -472,6 +585,20 @@ void onActiveConsoleChanged(const std::string& consoleId,
    }
 }
 
+void onChunkExecCompleted(const std::string& docId, 
+                          const std::string& chunkId,
+                          const std::string& contextId)
+{
+   // attempt to get the path of the doc (this may fail if the document does
+   // not yet exist)
+   std::string path;
+   source_database::getPath(docId, &path);
+
+   Error error = enqueueChunkOutput(path, docId, chunkId, contextId);
+   if (error)
+      LOG_ERROR(error);
+}
+
 Error handleChunkOutputRequest(const http::Request& request,
                                http::Response* pResponse)
 {
@@ -486,12 +613,20 @@ Error handleChunkOutputRequest(const http::Request& request,
    for (int i = 0; i < 3; i++)
       parts.erase(parts.begin());
 
+   // attempt to get the path -- ignore failure (doc may be unsaved and
+   // therefore won't have a path)
    std::string path;
-   Error error = source_database::getPath(docId, &path);
-   if (error)
-      return error;
+   source_database::getPath(docId, &path);
+
    FilePath target = chunkCacheFolder(path, docId).complete(
          algorithm::join(parts, "/"));
+
+   // ensure the target exists 
+   if (!target.exists())
+   {
+      pResponse->setNotFoundError(request.uri());
+      return Success();
+   }
 
    if (parts[0] == kChunkLibDir)
    {
@@ -537,24 +672,13 @@ Error executeInlineChunk(const json::JsonRpcRequest& request,
       return error;
 
    // ensure we have a place to put the output
-   FilePath chunkOutput = chunkOutputPath(docPath, docId, chunkId);
+   FilePath chunkOutput = chunkOutputPath(docPath, docId, chunkId,
+         userSettings().contextId());
    if (!chunkOutput.parent().exists())
    {
-      error = chunkOutput.parent().ensureDirectory();
+      error = ensureCacheFolder(chunkOutput.parent());
       if (error)
          return error;
-#ifdef _WIN32
-      // on Windows, mark the directory hidden after creating it
-      if (!docPath.empty())
-      {
-         error = core::system::makeFileHidden(chunkOutput.parent());
-         if (error)
-         {
-            // non-fatal
-            LOG_ERROR(error);
-         }
-      }
-#endif
    }
 
    // ensure we have a library path
@@ -594,7 +718,8 @@ Error executeInlineChunk(const json::JsonRpcRequest& request,
       // chunk so not helpful without some additional plumbing) 
    }
 
-   error = enqueueChunkOutput(docPath, docId, chunkId);
+   // emit chunk output to client
+   events().onChunkExecCompleted(docId, chunkId, userSettings().contextId());
 
    return Success();
 }
@@ -635,6 +760,20 @@ void cleanChunks(const FilePath& cacheDir,
    }
 }
 
+SEXP rs_populateNotebookCache(SEXP fileSEXP)
+{
+   std::string file = r::sexp::safeAsString(fileSEXP);
+   FilePath cacheFolder = 
+      chunkCacheFolder(file, "", userSettings().contextId());
+   Error error = parseRnb(module_context::resolveAliasedPath(file), 
+                          cacheFolder);
+   if (error) 
+      LOG_ERROR(error);
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(cacheFolder.absolutePath(), &rProtect);
+}
+
 } // anonymous namespace
 
 Error setChunkDefs(const std::string& docPath, const std::string& docId,
@@ -646,7 +785,8 @@ Error setChunkDefs(const std::string& docPath, const std::string& docId,
    chunkDefs[kChunkDocWriteTime] = static_cast<boost::int64_t>(docTime);
 
    // ensure we have a place to write the sidecar file
-   FilePath defFile = chunkDefinitionsPath(docPath, docId, "json");
+   FilePath defFile = chunkDefinitionsPath(docPath, docId, 
+         userSettings().contextId());
 
    // if there are no old chunk definitions and we aren't adding any new ones,
    // no work to do
@@ -654,7 +794,7 @@ Error setChunkDefs(const std::string& docPath, const std::string& docId,
       return Success();
 
    // we're going to write something; make sure the parent folder exists
-   Error error = defFile.parent().ensureDirectory();
+   Error error = ensureCacheFolder(defFile.parent());
    if (error)
       return error;
 
@@ -663,7 +803,8 @@ Error setChunkDefs(const std::string& docPath, const std::string& docId,
    std::vector<std::string> chunkIds;
    json::Value oldDefs;
    std::string oldContent;
-   error = getChunkDefs(docPath, docId, NULL, &oldDefs);
+   error = getChunkDefs(docPath, docId, userSettings().contextId(), NULL, 
+         &oldDefs);
    if (error)
       LOG_ERROR(error);
    else if (oldDefs.type() == json::ArrayType)
@@ -693,53 +834,61 @@ Error setChunkDefs(const std::string& docPath, const std::string& docId,
 Error getChunkDefs(const std::string& docPath, const std::string& docId,
                    time_t *pDocTime, core::json::Value* pDefs)
 {
-   Error error;
-   FilePath defs = chunkDefinitionsPath(docPath, docId, "json");
-   if (!defs.exists())
-      return Success();
+   return getChunkDefs(docPath, docId, userSettings().contextId(), 
+                       pDocTime, pDefs);
+}
 
-   // read the defs file 
-   std::string contents;
-   error = readStringFromFile(defs, &contents);
+
+Error ensureCacheFolder(const FilePath& folder)
+{
+   Error error = folder.ensureDirectory();
    if (error)
       return error;
-
-   // pull out the contents
-   json::Value defContents;
-   if (!json::parse(contents, &defContents) || 
-       defContents.type() != json::ObjectType)
-      return Error(json::errc::ParseError, ERROR_LOCATION);
-
-   // extract the chunk definitions
-   if (pDefs)
+#ifdef _WIN32
+   // on Windows, mark the directory hidden after creating it
+   error = core::system::makeFileHidden(folder);
+   if (error)
    {
-      json::Array chunkDefs;
-      error = json::readObject(defContents.get_obj(), kChunkDefs, &chunkDefs);
-      if (error)
-         return error;
+      // non-fatal
+      LOG_ERROR(error);
+   }
+#endif
+   return error;
+}
 
-      // return to caller
-      *pDefs = chunkDefs;
+Error extractTagAttrs(const std::string& tag,
+                      const std::string& attr,
+                      const std::string& contents, 
+                      std::vector<std::string>* pValues)
+{
+   std::string::const_iterator pos = contents.begin(); 
+
+   // Not robust to all formulations (e.g. doesn't allow for attributes between
+   // the tag and attr, or single-quoted/unquoted attributes), but we only need
+   // to parse canonical Pandoc output
+   boost::regex re("<\\s*" + tag + "\\s*" + attr + 
+                   "\\s*=\\s*\"([^\"]+)\"[^>]*>", boost::regex::icase);
+
+   // Iterate over all matches 
+   boost::smatch match;
+   while (boost::regex_search(pos, contents.end(), match, re, 
+                              boost::match_default))
+   {
+      // record script src contents
+      pValues->push_back(match.str(1));
+
+      // continue search from end of match
+      pos = match[0].second;
    }
 
-   // extract the doc write time 
-   if (pDocTime)
-   {
-      json::Object::iterator it = 
-         defContents.get_obj().find(kChunkDocWriteTime);
-      if (it != defContents.get_obj().end() &&
-          it->second.type() == json::IntegerType)
-      {
-         *pDocTime = static_cast<std::time_t>(it->second.get_int64());
-      }
-      else
-      {
-         return Error(json::errc::ParamMissing, ERROR_LOCATION);
-      }
-   }
    return Success();
 }
 
+Events& events()
+{
+   static Events instance;
+   return instance;
+}
 Error initialize()
 {
    using boost::bind;
@@ -747,9 +896,18 @@ Error initialize()
 
    source_database::events().onDocRenamed.connect(onDocRenamed);
    source_database::events().onDocRemoved.connect(onDocRemoved);
+   source_database::events().onDocAdded.connect(onDocAdded);
 
    module_context::events().onActiveConsoleChanged.connect(
          onActiveConsoleChanged);
+
+   events().onChunkExecCompleted.connect(onChunkExecCompleted);
+
+   R_CallMethodDef methodDef ;
+   methodDef.name = "rs_populateNotebookCache";
+   methodDef.fun = (DL_FUNC)rs_populateNotebookCache ;
+   methodDef.numArgs = 1;
+   r::routines::addCallMethod(methodDef);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

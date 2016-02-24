@@ -521,8 +521,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["project_open_docs"] = projects::projectContext().openDocs();
       sessionInfo["project_supports_sharing"] = 
          projects::projectContext().supportsSharing();
-      sessionInfo["project_owned_by_user"] = 
-         projects::projectContext().ownedByUser();
+      sessionInfo["project_parent_browseable"] = 
+         projects::projectContext().parentBrowseable();
       sessionInfo["project_user_data_directory"] =
        module_context::createAliasedPath(getProjectUserDataDir(ERROR_LOCATION));
 
