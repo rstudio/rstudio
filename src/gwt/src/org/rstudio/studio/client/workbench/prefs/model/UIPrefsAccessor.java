@@ -271,11 +271,6 @@ public class UIPrefsAccessor extends Prefs
       return string("fold_style", FoldStyle.FOLD_MARK_BEGIN_ONLY);
    }
    
-   public PrefValue<Boolean> showUpwardsFoldToken()
-   {
-      return bool("show_upwards_fold_token", false);
-   }
-   
    public PrefValue<Boolean> saveBeforeSourcing()
    {
       return bool("save_before_sourcing", true);
