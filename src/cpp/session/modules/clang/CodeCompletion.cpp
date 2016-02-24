@@ -35,6 +35,12 @@
 using namespace rstudio::core ;
 using namespace rstudio::core::libclang;
 
+#ifndef _WIN32
+# define kDevNull "/dev/null"
+#else
+# define kDevNull "NUL"
+#endif
+
 namespace rstudio {
 namespace session {
 namespace modules { 
@@ -221,15 +227,8 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
    // gcc and clang accept the same command)
    std::string includePathOutput;
    {
-      std::string devNull;
-#ifndef _WIN32
-      devNull = "/dev/null";
-#else
-      devNull = "NUL";
-#endif
-      
       core::system::ProcessResult result;
-      std::string cmd = compilerPath + " -E -x c++ - -v < " + devNull;
+      std::string cmd = compilerPath + " -E -x c++ - -v < " kDevNull;
       
       // TODO: this needs to execute with Rtools on the PATH
       Error error = core::system::runCommand(cmd, processOptions, &result);
