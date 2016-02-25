@@ -101,3 +101,11 @@
       .rs.enqueClientEvent("rprof_stopped");
    }
 })
+
+options("profvis.print" = function(x)
+{
+   options("profvis.prof_output" = .rs.profile_resources()$tempPath)
+   options("profvis.prof_extension" = ".rprof")
+
+   invisible(.Call(.rs.routines$rs_fileEdit, c(x$x$message$prof_output)))
+})
