@@ -31,6 +31,23 @@ enum LineEnding {
    LineEndingPassthrough = 3
 };
 
+class Contains
+{
+public:
+   Contains(const std::string& needle)
+      : needle_(needle)
+   {
+   }
+   
+   bool operator()(const std::string& haystack)
+   {
+      return haystack.find(needle_) != std::string::npos;
+   }
+   
+private:
+   std::string needle_;
+};
+
 bool isSubsequence(std::string const& self,
                    std::string const& other);
 

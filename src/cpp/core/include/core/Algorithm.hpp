@@ -142,27 +142,30 @@ void insert(Container& container, Iterator begin, Iterator end)
 
 /* Wrappers for the erase-remove idiom */
 template <typename Container, typename ValueType>
-void discard(Container& container, const ValueType& value)
+void expel(Container& container, const ValueType& value)
 {
    container.erase(std::remove(container.begin(), container.end(), value), container.end());
 }
 
 template <typename Container, typename Predicate>
-void discard_if(Container& container, Predicate predicate)
+void expel_if(Container& container, Predicate predicate)
 {
    container.erase(std::remove_if(container.begin(), container.end(), predicate), container.end());
 }
 
+/* Value-based wrappers for erase-remove idiom */
 template <typename Container, typename ValueType>
-Container without(Container& container, const ValueType& value)
+Container without(Container container, const ValueType& value)
 {
    container.erase(std::remove(container.begin(), container.end(), value), container.end());
+   return container;
 }
 
 template <typename Container, typename Predicate>
-Container without_if(Container& container, Predicate predicate)
+Container without_if(Container container, Predicate predicate)
 {
    container.erase(std::remove_if(container.begin(), container.end(), predicate), container.end());
+   return container;
 }
 
 template <typename T>

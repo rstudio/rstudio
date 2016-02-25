@@ -276,10 +276,13 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
                                     startPos + startString.size(),
                                     endPos));
    
-   // TODO: framework paths can be included here; how should we handle?
-   
-   // Split on newlines, and trim whitespace for each
+   // split on newlines
    std::vector<std::string> includePaths = core::algorithm::split(includePathsString, "\n");
+   
+   // remove framework directories
+   core::algorithm::expel_if(includePaths, string_utils::Contains("(framework directory)"));
+   
+   // trim whitespace
    for (std::size_t i = 0, n = includePaths.size(); i < n; ++i)
       includePaths[i] = string_utils::trimWhitespace(includePaths[i]);
    
