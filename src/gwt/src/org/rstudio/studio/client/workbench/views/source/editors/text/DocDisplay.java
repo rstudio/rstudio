@@ -243,7 +243,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void alignCursor(Position position, double ratio);
    void centerSelection();
    
-   int getSuggestedScopeUpdateDelay();
    Scope getCurrentScope();
    Scope getCurrentChunk();
    Scope getCurrentChunk(Position position);

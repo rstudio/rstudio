@@ -1855,12 +1855,6 @@ public class AceEditor implements DocDisplay,
       return widget_.addFocusHandler(handler);
    }
    
-   public int getSuggestedScopeUpdateDelay()
-   {
-      int nrow = getRowCount();
-      return MathUtil.clamp(nrow / 20, 0, 700);
-   }
-   
    public Scope getCurrentScope()
    {
       return getSession().getMode().getCodeModel().getCurrentScope(
