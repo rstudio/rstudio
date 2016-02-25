@@ -83,7 +83,7 @@
       [self drawFrameWithContext: context inRect: badgeRect];
       
       
-      NSMutableParagraphStyle *paraStyle=[[NSMutableParagraphStyle alloc] init];
+      NSMutableParagraphStyle *paraStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
       [paraStyle setAlignment:NSCenterTextAlignment];
       
       NSDictionary *attributes = [NSDictionary dictionaryWithObjectsAndKeys:
@@ -92,9 +92,9 @@
                      paraStyle, NSParagraphStyleAttributeName,
                      nil];
       
-      NSMutableAttributedString *as = [[NSMutableAttributedString alloc]
+      NSMutableAttributedString *as = [[[NSMutableAttributedString alloc]
                                  initWithString: label_
-                                 attributes:attributes];
+                                 attributes:attributes] autorelease];
       
       NSRect textRect = NSMakeRect(badgeRect.origin.x + inset,
                                    badgeRect.origin.y - (.25 * fontSize),

@@ -1045,7 +1045,7 @@ bool isPackageInstalled(const std::string& packageName)
 {
    r::session::utils::SuppressOutputInScope suppressOutput;
 
-   bool installed;
+   bool installed = false;
    r::exec::RFunction func(".rs.isPackageInstalled", packageName);
    Error error = func.call(&installed);
    return !error ? installed : false;
@@ -1056,7 +1056,7 @@ bool isPackageVersionInstalled(const std::string& packageName,
 {
    r::session::utils::SuppressOutputInScope suppressOutput;
 
-   bool installed;
+   bool installed = false;
    r::exec::RFunction func(".rs.isPackageVersionInstalled",
                            packageName, version);
    Error error = func.call(&installed);

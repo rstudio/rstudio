@@ -446,7 +446,7 @@ bool prepareEnvironment(Options& options)
 - (void) launchNewRStudioWindow
 {
    [NSTask launchedTaskWithLaunchPath: executablePath()
-                            arguments: [NSArray new]];
+                            arguments: [NSArray array]];
 }
 
 @end

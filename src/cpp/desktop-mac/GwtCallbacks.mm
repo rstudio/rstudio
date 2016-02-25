@@ -638,7 +638,7 @@ private:
    }
 
    // return the image
-   return image;
+   return [image autorelease];
 }
 
 
@@ -655,9 +655,6 @@ private:
    [pboard clearContents];
    NSArray *copiedObjects = [NSArray arrayWithObject:image];
    [pboard writeObjects: copiedObjects];
-   
-   // release the image
-   [image release];
 }
 
 
@@ -708,9 +705,6 @@ private:
       error.addProperty("target-file", [targetPath UTF8String]);
       LOG_ERROR(error);
    }
-   
-   // release the image
-   [image release];
 }
 
 
@@ -762,6 +756,8 @@ private:
       
    [alert setMessageText:caption];
    [alert setInformativeText:message];
+   [alert setAlertStyle: style];
+   
    for (NSString* buttonText in dialogButtons)
    {
       [alert addButtonWithTitle: buttonText];
