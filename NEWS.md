@@ -26,7 +26,7 @@
 
 * Autocompletion: avoid errors when retrieving completions in debugger
 * Diagnostics: fix false positive errors with '{' following function calls
-* Avoid over-eager re-rendering + tokenization of documents
+* Improved performance of document tokenization (fix laggy typing)
 * Fix block commenting of Sweave chunks
 * Fix highlighting of escaped '$' in inline Mathjax expressions
 * Fix editor preview vanishing on zoom level change
