@@ -48,6 +48,8 @@ namespace clang {
 
 namespace {
 
+// cache our system include paths
+std::vector<std::string> s_systemIncludePaths;
 
 json::Object friendlyCompletionText(const CodeCompleteResult& result)
 {
@@ -192,6 +194,16 @@ void discoverTranslationUnitIncludePaths(const FilePath& filePath,
 
 void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
 {
+   // if we've cached results already, just use that
+   if (!s_systemIncludePaths.empty())
+   {
+      pIncludePaths->insert(
+               pIncludePaths->end(),
+               s_systemIncludePaths.begin(),
+               s_systemIncludePaths.end());
+      return;
+   }
+   
    core::system::ProcessOptions processOptions;
    processOptions.redirectStdErrToStdOut = true;
    
@@ -271,6 +283,10 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
    for (std::size_t i = 0, n = includePaths.size(); i < n; ++i)
       includePaths[i] = string_utils::trimWhitespace(includePaths[i]);
    
+   // update cache
+   s_systemIncludePaths = includePaths;
+   
+   // fill result vector
    pIncludePaths->insert(
             pIncludePaths->end(),
             includePaths.begin(),
