@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.console;
 import org.rstudio.core.client.layout.DelayFadeInHelper;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.RprofEvent;
 
@@ -31,7 +32,7 @@ public class ConsoleInterruptProfilerButton extends Composite
 {
    @Inject
    public ConsoleInterruptProfilerButton(final EventBus events,
-                                  Commands commands)
+                                         Commands commands)
    {
       fadeInHelper_ = new DelayFadeInHelper(this);
 
@@ -40,8 +41,7 @@ public class ConsoleInterruptProfilerButton extends Composite
       SimplePanel panel = new SimplePanel();
       panel.getElement().getStyle().setPosition(Position.RELATIVE);
 
-      commands_ = commands;
-      ImageResource icon = commands_.stopProfiler().getImageResource();
+      ImageResource icon = FileIconResources.INSTANCE.iconProfiler();;
       ToolbarButton button = new ToolbarButton(icon,
                                                commands.stopProfiler());
       width_ = icon.getWidth() + 6;
@@ -81,5 +81,4 @@ public class ConsoleInterruptProfilerButton extends Composite
    private final DelayFadeInHelper fadeInHelper_;
    private final int width_;
    private final int height_;
-   private final Commands commands_;
 }
