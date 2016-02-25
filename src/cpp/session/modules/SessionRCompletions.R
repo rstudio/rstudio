@@ -1758,7 +1758,12 @@ assign(x = ".rs.acCompletionTypes",
    if (length(string) && 
        string[[1]] %in% c(".Call", ".C", ".Fortran", ".External") &&
        numCommas[[1]] == 0)
-      return(.rs.getCompletionsNativeRoutine(token, string[[1]]))
+   {
+      completions <- .rs.appendCompletions(
+         .rs.getCompletionsNativeRoutine(token, string[[1]]),
+         .rs.getCompletionsSearchPath(token))
+      return(completions)
+   }
    
    # data
    if (.rs.acContextTypes$FUNCTION %in% type &&
