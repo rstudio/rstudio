@@ -83,11 +83,7 @@ private:
             delete [] args_[i] ;
       }
 
-      if (args_)
-      {
-         delete [] args_ ;
-         args_ = NULL;
-      }
+      delete [] args_ ;
    }
    
 private:
