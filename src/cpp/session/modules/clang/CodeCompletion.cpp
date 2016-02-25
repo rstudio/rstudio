@@ -296,6 +296,18 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
             includePaths.end());
 }
 
+void discoverRelativeIncludePaths(const FilePath& filePath,
+                                  const std::string& parentDir,
+                                  std::vector<std::string>* pIncludePaths)
+{
+   // Construct the directory in which to search for includes
+   FilePath targetPath = filePath.parent().complete(parentDir);
+   if (!targetPath.exists())
+      return;
+   
+   pIncludePaths->push_back(targetPath.absolutePath());
+}
+
 json::Object jsonHeaderCompletionResult(const std::string& name,
                                         const std::string& source,
                                         int completionType)
@@ -314,12 +326,13 @@ json::Object jsonHeaderCompletionResult(const std::string& name,
    return completionJson;
 }
 
-Error getSystemHeaderCompletions(const std::string& token,
-                                 const std::string& parentDir,
-                                 const FilePath& filePath,
-                                 const std::string& docId,
-                                 const core::json::JsonRpcRequest& request,
-                                 core::json::JsonRpcResponse* pResponse)
+Error getHeaderCompletionsImpl(const std::string& token,
+                               const std::string& parentDir,
+                               const FilePath& filePath,
+                               const std::string& docId,
+                               bool systemHeadersOnly,
+                               const core::json::JsonRpcRequest& request,
+                               core::json::JsonRpcResponse* pResponse)
 {
    std::vector<std::string> includePaths;
    
@@ -328,6 +341,10 @@ Error getSystemHeaderCompletions(const std::string& token,
    
    // discover TU-related include paths
    discoverTranslationUnitIncludePaths(filePath, &includePaths);
+   
+   // discover local include paths
+   if (!systemHeadersOnly)
+      discoverRelativeIncludePaths(filePath, parentDir, &includePaths);
    
    // remove dupes
    std::sort(includePaths.begin(), includePaths.end());
@@ -359,6 +376,10 @@ Error getSystemHeaderCompletions(const std::string& token,
          if (discoveredEntries.count(name))
             continue;
          
+         std::string extension = childPath.extensionLowerCase();
+         if (!(extension == ".h" || extension == ".hpp" || extension == ""))
+            continue;
+         
          if (string_utils::isSubsequence(name, token, true))
          {
             int type = childPath.isDirectory() ? kCompletionDirectory : kCompletionFile;
@@ -375,16 +396,6 @@ Error getSystemHeaderCompletions(const std::string& token,
    json::Object resultJson;
    resultJson["completions"] = completionsJson;
    pResponse->setResult(resultJson);
-   return Success();
-}
-
-Error getLocalHeaderCompletions(const std::string& token,
-                                const std::string& parentDir,
-                                const FilePath& filePath,
-                                const core::json::JsonRpcRequest& request,
-                                core::json::JsonRpcResponse* pResponse)
-{
-   // TODO -- list files + dirs
    return Success();
 }
 
@@ -418,10 +429,13 @@ Error getHeaderCompletions(std::string line,
       token     = pathString.substr(pathDelimIdx + 1);
    }
    
-   if (isSystemHeader)
-      return getSystemHeaderCompletions(token, parentDir, filePath, docId, request, pResponse);
-   else
-      return getLocalHeaderCompletions(token, parentDir, filePath, request, pResponse);
+   return getHeaderCompletionsImpl(token,
+                                   parentDir,
+                                   filePath,
+                                   docId,
+                                   isSystemHeader,
+                                   request,
+                                   pResponse);
 }
 
 
