@@ -194,6 +194,7 @@ private:
    void activateAndFocusOwner();
 
 private:
+   void doAction(const QKeySequence& keys);
    void doAction(QKeySequence::StandardKey key);
    MainWindow* pMainWindow_;
    GwtCallbackOwner* pOwner_;
