@@ -109,20 +109,9 @@ public class ConsolePane extends WorkbenchPane
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      SecondaryToolbar toolbar = new SecondaryToolbar(true);
-      toolbar.addLeftWidget(commands_.debugStep().createToolbarButton()); 
-      if (session_.getSessionInfo().getHaveAdvancedStepCommands())
-      {
-         toolbar.addLeftSeparator();
-         toolbar.addLeftWidget(commands_.debugStepInto().createToolbarButton());
-         toolbar.addLeftSeparator();
-         toolbar.addLeftWidget(commands_.debugFinish().createToolbarButton());
-      }
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.debugContinue().createToolbarButton());
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.debugStop().createToolbarButton());    
-      return toolbar;
+      secondaryToolbar_ = new SecondaryToolbar(true);
+       
+      return secondaryToolbar_;
    }
 
    @Override
@@ -157,11 +146,23 @@ public class ConsolePane extends WorkbenchPane
    @Override
    public void setDebugMode(boolean debugMode)
    {
-      debugMode_ = debugMode;
-      setSecondaryToolbarVisible(debugMode_);
-      
-      if (debugMode_)
+      if (debugMode == debugMode_)
       {
+         return;
+      }
+
+      debugMode_ = debugMode;
+      setSecondaryToolbarVisible(debugMode_ || profilerMode_);
+      
+      secondaryToolbar_.removeAllWidgets();
+      if (debugMode)
+      {
+         loadDebugToolsIntoSecondaryToolbar();
+         if (profilerMode_)
+         {
+            loadProfilerToolsIntoSecondaryToolbar();
+         }
+
          Scheduler.get().scheduleDeferred(new ScheduledCommand() {
             @Override
             public void execute()
@@ -171,6 +172,57 @@ public class ConsolePane extends WorkbenchPane
             }
          });
       }
+      else if (profilerMode_)
+      {
+         loadProfilerToolsIntoSecondaryToolbar();
+      }
+   }
+
+   @Override
+   public void setProfilerMode(boolean profilerMode)
+   {
+      if (profilerMode == profilerMode_)
+      {
+         return;
+      }
+
+      profilerMode_ = profilerMode;
+      setSecondaryToolbarVisible(debugMode_ || profilerMode_);
+
+      secondaryToolbar_.removeAllWidgets();
+      if (profilerMode_)
+      {
+         if (debugMode_)
+         {
+            loadDebugToolsIntoSecondaryToolbar();
+         }
+         loadProfilerToolsIntoSecondaryToolbar();
+      }
+      else if (debugMode_)
+      {
+         loadDebugToolsIntoSecondaryToolbar();
+      }
+   }
+   
+   private void loadDebugToolsIntoSecondaryToolbar()
+   {
+      secondaryToolbar_.addLeftWidget(commands_.debugStep().createToolbarButton()); 
+      if (session_.getSessionInfo().getHaveAdvancedStepCommands())
+      {
+         secondaryToolbar_.addLeftSeparator();
+         secondaryToolbar_.addLeftWidget(commands_.debugStepInto().createToolbarButton());
+         secondaryToolbar_.addLeftSeparator();
+         secondaryToolbar_.addLeftWidget(commands_.debugFinish().createToolbarButton());
+      }
+      secondaryToolbar_.addLeftSeparator();
+      secondaryToolbar_.addLeftWidget(commands_.debugContinue().createToolbarButton());
+      secondaryToolbar_.addLeftSeparator();
+      secondaryToolbar_.addLeftWidget(commands_.debugStop().createToolbarButton());
+   }
+   
+   private void loadProfilerToolsIntoSecondaryToolbar()
+   {
+      secondaryToolbar_.addLeftWidget(commands_.stopProfiler().createToolbarButton()); 
    }
    
    private Provider<Shell> consoleProvider_ ;
@@ -181,4 +233,6 @@ public class ConsolePane extends WorkbenchPane
    private ToolbarButton consoleInterruptButton_;
    private ToolbarButton profilerInterruptButton_;
    private boolean debugMode_;
+   private boolean profilerMode_;
+   private SecondaryToolbar secondaryToolbar_;
 }

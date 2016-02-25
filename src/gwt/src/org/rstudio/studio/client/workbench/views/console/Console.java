@@ -47,6 +47,7 @@ public class Console
       IsWidget getConsoleInterruptButton();
       IsWidget getProfilerInterruptButton();
       void setDebugMode(boolean debugMode);
+      void setProfilerMode(boolean profilerMode);
    }
    
    @Inject
@@ -85,6 +86,7 @@ public class Console
          @Override
          public void onRprofEvent(RprofEvent event)
          {
+            view.setProfilerMode(event.getStarted());
             if (event.getStarted())
             {
                profilerFadeInHelper_.beginShow();
