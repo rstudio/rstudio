@@ -19,7 +19,7 @@
 
 ### C / C++
 
-* Provide autocompletion for system headers in `#include`
+* Provide autocompletion of header paths
 * Update C++ unit testing library (catch) to v1.3.3 (fix gcc >=5 compilation errors)
 
 ### Miscellaneous
