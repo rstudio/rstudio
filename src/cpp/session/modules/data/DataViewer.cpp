@@ -42,6 +42,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionContentUrls.hpp>
+#include <session/SessionSourceDatabase.hpp>
 
 #ifndef _WIN32
 #include <core/system/FileMode.hpp>
@@ -798,6 +799,19 @@ Error getGridData(const http::Request& request,
    return Success();
 }
 
+Error removeCacheKey(const std::string& cacheKey)
+{
+   // remove from watchlist
+   std::map<std::string, CachedFrame>::iterator pos = 
+      s_cachedFrames.find(cacheKey);
+   if (pos != s_cachedFrames.end())
+      s_cachedFrames.erase(pos);
+   
+   // remove cache env object and backing file
+   return r::exec::RFunction(".rs.removeCachedData", cacheKey, 
+         viewerCacheDir()).call();
+}
+
 // called by the client to expire data cached by an associated viewer tab
 Error removeCachedData(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse*)
@@ -807,19 +821,7 @@ Error removeCachedData(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // remove from watchlist
-   std::map<std::string, CachedFrame>::iterator pos = 
-      s_cachedFrames.find(cacheKey);
-   if (pos != s_cachedFrames.end())
-      s_cachedFrames.erase(pos);
-   
-   // remove cache env object and backing file
-   error = r::exec::RFunction(".rs.removeCachedData", cacheKey, 
-         viewerCacheDir()).call();
-   if (error)
-      return error;
-
-   return Success();
+   return removeCacheKey(cacheKey);
 }
 
 void onShutdown(bool terminatedNormally)
@@ -917,6 +919,36 @@ void onClientInit()
 #endif
 }
 
+void onDocPendingRemove(const std::string &id)
+{
+   // see if the document has a path (if it does, it can't be a data viewer
+   // item)
+   std::string path;
+   source_database::getPath(id, &path);
+   if (!path.empty())
+      return;
+
+   // retrieve document from source database
+   boost::shared_ptr<source_database::SourceDocument> pDoc(
+         new source_database::SourceDocument());
+   Error error = source_database::get(id, pDoc);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // see if it has a cache key we need to remove (if not, no work to do)
+   std::string cacheKey = pDoc->getProperty("cacheKey");
+   if (cacheKey.empty())
+      return;
+
+   // remove cache env object and backing file
+   error = removeCacheKey(cacheKey);
+   if (error)
+      LOG_ERROR(error);
+}
+
 } // anonymous namespace
    
 Error initialize()
@@ -929,6 +961,8 @@ Error initialize()
    methodDef.fun = (DL_FUNC) rs_viewData ;
    methodDef.numArgs = 5;
    r::routines::addCallMethod(methodDef);
+
+   source_database::events().onDocPendingRemove.connect(onDocPendingRemove);
 
    module_context::events().onShutdown.connect(onShutdown);
    module_context::events().onDetectChanges.connect(onDetectChanges);

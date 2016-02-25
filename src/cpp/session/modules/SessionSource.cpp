@@ -705,6 +705,10 @@ Error closeDocument(const json::JsonRpcRequest& request,
    std::string path;
    source_database::getPath(id, &path);
    
+   // do any cleanup necessary prior to removal
+   source_database::events().onDocPendingRemove(id);
+
+   // actually remove from the source database
    error = source_database::remove(id);
    if (error)
       return error;

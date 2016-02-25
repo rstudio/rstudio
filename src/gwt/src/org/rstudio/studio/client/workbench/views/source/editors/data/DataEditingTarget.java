@@ -28,7 +28,6 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.events.DataViewChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
@@ -232,23 +231,6 @@ public class DataEditingTarget extends UrlContentEditingTarget
                   progressPanel_.setWidget(originalWidget);
                }
             });
-   }
-
-   @Override
-   public void onDismiss(int dismissType)
-   {
-      if (dismissType == EditingTarget.DISMISS_TYPE_CLOSE)
-      {
-         server_.removeCachedData(getCacheKey(),
-            new ServerRequestCallback<org.rstudio.studio.client.server.Void>()
-            {
-               @Override
-               public void onError(ServerError error)
-               {
-                  Debug.logError(error);
-               }
-            });
-      }
    }
 
    private SimplePanelWithProgress progressPanel_;
