@@ -252,6 +252,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void foldAll();
    void unfoldAll();
    void toggleFold();
+   void setFoldStyle(String style); // see FoldStyle constants
    
    void jumpToMatching();
    void selectToMatching();

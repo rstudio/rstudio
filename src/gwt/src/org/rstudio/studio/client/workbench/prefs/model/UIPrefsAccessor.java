@@ -25,6 +25,7 @@ import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
+import org.rstudio.studio.client.workbench.views.source.editors.text.FoldStyle;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -263,6 +264,11 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> focusConsoleAfterExec()
    {
       return bool("focus_console_after_exec", false);
+   }
+   
+   public PrefValue<String> foldStyle()
+   {
+      return string("fold_style", FoldStyle.FOLD_MARK_BEGIN_ONLY);
    }
    
    public PrefValue<Boolean> saveBeforeSourcing()

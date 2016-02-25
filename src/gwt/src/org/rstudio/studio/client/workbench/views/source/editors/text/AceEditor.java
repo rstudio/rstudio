@@ -2090,6 +2090,12 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
+   public void setFoldStyle(String style)
+   {
+      getSession().setFoldStyle(style);
+   }
+   
+   @Override
    public JsMap<Position> getMarks()
    {
       return widget_.getEditor().getMarks();
