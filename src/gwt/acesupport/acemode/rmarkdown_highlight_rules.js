@@ -63,6 +63,16 @@ var RMarkdownHighlightRules = function() {
       ["start", "listblock", "allowBlock"]
    );
 
+   // Embed Markdown highlight rules (for bookdown)
+   Utils.embedRules(
+      this,
+      MarkdownHighlightRules,
+      "markdown",
+      this.$reMarkdownChunkStartString,
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
+   );
+
    // Embed YAML highlight rules, but ensure that they can only be
    // found at the start of a document. We do this by moving all of the
    // start rules to a second '$start' state, and ensuring that YAML headers
@@ -95,13 +105,16 @@ var RMarkdownHighlightRules = function() {
 oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
 
 (function() {
-   
+
    this.$reRChunkStartString =
       "^(?:[ ]{4})?`{3,}\\s*\\{[Rr](.*)\\}\\s*$";
 
    this.$reCppChunkStartString =
       "^(?:[ ]{4})?`{3,}\\s*\\{[Rr](?:.*)engine\\s*\\=\\s*['\"]Rcpp['\"](?:.*)\\}\\s*$|" +
       "^(?:[ ]{4})?`{3,}\\s*\\{[Rr]cpp(?:.*)\\}\\s*$";
+
+   this.$reMarkdownChunkStartString =
+      "^(?:[ ]{4})?`{3,}\\s*\\{\\s*block(?:.*)\\}\\s*$";
 
    this.$reChunkEndString =
       "^(?:[ ]{4})?`{3,}\\s*$";
