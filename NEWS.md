@@ -3,6 +3,7 @@
 ### Editor
 
 * Enabled auto-pairing of backticks (\`\`) in R documents
+* Added option for display of 'end' fold markers
 
 ### Data Import
 
