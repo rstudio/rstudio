@@ -326,10 +326,10 @@ public class EditingPreferencesPane extends PreferencesPane
       
       completionPanel.add(insertParensAfterFunctionCompletionsCheckbox);
       completionPanel.add(showSignatureTooltipsCheckbox);
-      
+
+      completionPanel.add(checkboxPref("Show help tooltip on idle", prefs.showFunctionTooltipOnIdle()));
       completionPanel.add(checkboxPref("Insert spaces around equals for argument completions", prefs.insertSpacesAroundEquals()));
       completionPanel.add(checkboxPref("Use tab for multiline autocompletions", prefs.allowTabMultilineCompletion()));
-      completionPanel.add(checkboxPref("Show function tooltips on idle", prefs.showFunctionTooltipOnIdle()));
       
       
       Label otherLabel = headerLabel("Other Languages");
