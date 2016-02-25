@@ -203,7 +203,8 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="executeAllCode"/>
          </menu>
-
+         <separator/>
+         <cmd refid="profileCode"/>
          <separator/>
          <cmd refid="sourceActiveDocument"/>
          <cmd refid="sourceActiveDocumentWithEcho"/>
@@ -660,6 +661,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="executeCurrentChunk" value="Cmd+Alt+C"/>
          <shortcut refid="executeCurrentChunk" value="Cmd+Shift+Enter"/>
          <shortcut refid="executeNextChunk" value="Cmd+Alt+N"/>
+         <shortcut refid="profileCode" value="Cmd+Alt+Shift+P"/>
       </shortcutgroup>
       <shortcutgroup name="Debug">
          <shortcut refid="debugBreakpoint" value="Shift+F9"/>
@@ -1374,6 +1376,16 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Re-Run _Previous"
         desc="Re-run the previous code region"
         context="r"/>
+
+   <cmd id="profileCode"
+        label="Profile Current Line or Selection"
+        buttonLabel="Profile"
+        menuLabel="_Profile Selected Line(s)"
+        desc="Profile the current line or selection"
+        context="r"/>
+
+   <cmd id="profileCodeWithoutFocus"
+        rebindable="false"/>
         
    <cmd id="insertChunk"
         menuLabel="_Insert Chunk"

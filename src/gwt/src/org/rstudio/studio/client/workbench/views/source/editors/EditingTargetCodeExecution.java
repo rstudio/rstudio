@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.source.editors;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleExecutePendingInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -58,23 +59,25 @@ public class EditingTargetCodeExecution
    }
    
    @Inject
-   void initialize(EventBus events, UIPrefs prefs)
+   void initialize(EventBus events, UIPrefs prefs, Commands commands)
    {
       events_ = events;
       prefs_ = prefs;
+      commands_ = commands;
    }
    
    public void executeSelection(boolean consoleExecuteWhenNotFocused,
-         boolean moveCursorAfter)
+                                boolean moveCursorAfter)
+   {
+      executeSelectionMaybeNoFocus(consoleExecuteWhenNotFocused,
+            moveCursorAfter,
+            null);
+   }
+   
+   public void executeSelection(boolean consoleExecuteWhenNotFocused,
+         boolean moveCursorAfter,
+         String functionWrapper)
    {  
-      // allow console a chance to execute code if we aren't focused
-      if (consoleExecuteWhenNotFocused && !docDisplay_.isFocused())
-      {
-         events_.fireEvent(new ConsoleExecutePendingInputEvent());
-         return;
-      }
-      
-      
       Range selectionRange = docDisplay_.getSelectionRange();
       boolean noSelection = selectionRange.isEmpty();
       if (noSelection)
@@ -85,7 +88,7 @@ public class EditingTargetCodeExecution
                Position.create(row, docDisplay_.getLength(row)));
       }
 
-      executeRange(selectionRange);
+      executeRange(selectionRange, functionWrapper);
       
       // advance if there is no current selection
       if (noSelection && moveCursorAfter)
@@ -98,10 +101,45 @@ public class EditingTargetCodeExecution
    
    public void executeSelection(boolean consoleExecuteWhenNotFocused)
    {
-      executeSelection(consoleExecuteWhenNotFocused, true);
+      executeSelectionMaybeNoFocus(consoleExecuteWhenNotFocused,
+            true,
+            null);
    }
    
    public void executeRange(Range range)
+   {
+      executeRange(range, null);
+   }
+   
+   public void profileSelection()
+   {
+      // allow console a chance to execute code if we aren't focused
+      if (!docDisplay_.isFocused())
+      {
+         events_.fireEvent(new ConsoleExecutePendingInputEvent(
+               commands_.profileCodeWithoutFocus().getId()));
+         return;
+      }
+      
+      executeSelection(false, false, "profvis::profvis");
+   }
+   
+   private void executeSelectionMaybeNoFocus(boolean consoleExecuteWhenNotFocused,
+                                             boolean moveCursorAfter,
+                                             String functionWrapper)
+   {
+      // allow console a chance to execute code if we aren't focused
+      if (consoleExecuteWhenNotFocused && !docDisplay_.isFocused())
+      {
+         events_.fireEvent(new ConsoleExecutePendingInputEvent(
+               commands_.executeCodeWithoutFocus().getId()));
+         return;
+      }
+      
+      executeSelection(consoleExecuteWhenNotFocused, moveCursorAfter, functionWrapper);
+   }
+   
+   private void executeRange(Range range, String functionWrapper)
    {
       String code = codeExtractor_.extractCode(docDisplay_, range);
      
@@ -129,6 +167,11 @@ public class EditingTargetCodeExecution
                   scope.getEnd().getRow(), code));
             return;
          }
+      }
+      
+      if (functionWrapper != null)
+      {
+         code = functionWrapper + "(" + code + ")";
       }
       
       // send to console
@@ -212,5 +255,6 @@ public class EditingTargetCodeExecution
    private final CodeExtractor codeExtractor_;
    private final String docId_;
    private AnchoredSelection lastExecutedCode_;
+   private Commands commands_;
 }
 

@@ -3703,6 +3703,12 @@ public class TextEditingTarget implements
    {
       codeExecution_.executeSelection(false);
    }
+
+   @Handler
+   void onProfileCodeWithoutFocus()
+   {
+      codeExecution_.executeSelection(false, false, "profvis::profvis");
+   }
    
    @Handler
    void onExecuteCodeWithoutMovingCursor()
@@ -4237,6 +4243,11 @@ public class TextEditingTarget implements
       sourceActiveDocument(true);
    }
    
+   @Handler
+   void onProfileCode()
+   {
+      codeExecution_.executeSelection(true, true, "profvis::profvis");
+   }
   
    private void sourceActiveDocument(final boolean echo)
    {
