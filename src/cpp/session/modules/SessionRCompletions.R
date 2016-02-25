@@ -335,6 +335,19 @@ assign(x = ".rs.acCompletionTypes",
       }
    }
    
+   # Order completions by depth
+   matches <- gregexpr("/", paths, fixed = TRUE)
+   depth <- vapply(matches, function(match) {
+      if (identical(c(match), -1L))
+         0
+      else
+         length(match)
+   }, numeric(1))
+   
+   idx <- order(depth)
+   paths <- paths[idx]
+   type <- type[idx]
+   
    .rs.makeCompletions(token = token,
                        results = paths,
                        type = type,
