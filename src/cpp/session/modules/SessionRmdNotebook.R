@@ -12,6 +12,7 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 #
+assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addJsonRpcHandler("extract_rmd_from_notebook", function(input, output)
 {
@@ -30,13 +31,8 @@
    
    contents <- .rs.extractFromNotebook("rnb-document-source", input)
    cat(contents, file = output, sep = "\n")
-   
-   .rs.scalar(TRUE)
-})
 
-.rs.addFunction("withChangedExtension", function(path, ext)
-{
-   paste(tools::file_path_sans_ext(path), ext, sep = ".")
+   .rs.scalar(TRUE)
 })
 
 .rs.addFunction("extractFromNotebook", function(tag, rnbPath)
@@ -206,22 +202,191 @@
    
    # write out file and prepare for render
    renderInput  <- tempfile("rnb-render-input-", fileext = ".Rmd")
-   renderOutput <- tempfile("rnb-render-output", fileext = ".Rnb")
    writeLines(rmdModified, renderInput)
    on.exit(unlink(renderInput), add = TRUE)
-   on.exit(unlink(renderOutput), add = TRUE)
    
-   # render the document
+   # perform render
+   .rs.rnb.render(inputFile = renderInput,
+                  outputFile = outputFile,
+                  rmdContents = rmdContents)
+   
+   invisible(outputFile)
+   
+})
+
+.rs.addFunction("rnb.withChunkLocations", function(rmdContents, chunkInfo)
+{
+   chunkLocs <- grep("^\\s*```{", rmdContents, perl = TRUE)
+   for (i in seq_along(chunkInfo$chunk_definitions)) {
+      info <- chunkInfo$chunk_definitions[[i]]
+      
+      info$chunk_start <- tail(chunkLocs[chunkLocs < info$row + 1], 1)
+      info$chunk_end   <- info$row + 1
+      
+      chunkInfo$chunk_definitions[[i]] <- info
+      
+   }
+   names(chunkInfo$chunk_definitions) <-
+      unlist(lapply(chunkInfo$chunk_definitions, "[[", "chunk_id"))
+   chunkInfo
+})
+
+.rs.addFunction("readRnbCache", function(rmdPath, cachePath)
+{
+   if (Encoding(rmdPath) == "unknown")   Encoding(rmdPath) <- "UTF-8"
+   if (Encoding(cachePath) == "unknown") Encoding(cachePath) <- "UTF-8"
+   
+   if (!file.exists(rmdPath))
+      stop("No file at path '", rmdPath, "'")
+   
+   if (!file.exists(cachePath))
+      stop("No cache directory at path '", cachePath, "'")
+   
+   rmdPath <- .rs.normalizePath(rmdPath, winslash = "/", mustWork = TRUE)
+   cachePath <- normalizePath(cachePath, winslash = "/", mustWork = TRUE)
+   rmdContents <- suppressWarnings(readLines(rmdPath))
+   
+   # Begin collecting the units that form the Rnb data structure
+   rnbData <- list()
+   
+   # store reference to source path
+   rnbData[["source_path"]] <- rmdPath
+   rnbData[["cache_path"]]  <- cachePath
+   
+   # Keep the original source data
+   rnbData[["contents"]] <- rmdContents
+   
+   # Read the chunk information
+   chunkInfoPath <- file.path(cachePath, "chunks.json")
+   chunkInfo <- .rs.fromJSON(.rs.readFile(chunkInfoPath))
+   
+   # Augment with start, end locations of chunks
+   chunkInfo <- .rs.rnb.withChunkLocations(rmdContents, chunkInfo)
+   rnbData[["chunk_info"]] <- chunkInfo
+   
+   # Collect all of the HTML files, alongside their dependencies
+   htmlFiles <- list.files(cachePath, pattern = "html$", full.names = TRUE)
+   chunkData <- lapply(htmlFiles, function(file) {
+      dependenciesDir <- paste(tools::file_path_sans_ext(file), "files", sep = "_")
+      dependenciesFiles <- list.files(dependenciesDir, full.names = TRUE, recursive = TRUE)
+      list(
+         html = .rs.readFile(file),
+         deps = lapply(dependenciesFiles, .rs.readFile)
+      )
+   })
+   names(chunkData) <- tools::file_path_sans_ext(basename(htmlFiles))
+   rnbData[["chunk_data"]] <- chunkData
+   
+   # Read in the 'libs' directory.
+   rnbData[["lib"]] <- list()
+   
+   libDir <- file.path(cachePath, "lib")
+   if (file.exists(libDir)) {
+      owd <- setwd(libDir)
+      libFiles <- list.files(libDir, recursive = TRUE)
+      libData <- lapply(libFiles, .rs.readFile)
+      names(libData) <- libFiles
+      rnbData[["lib"]] <- libData
+      setwd(owd)
+   }
+   
+   rnbData
+})
+
+.rs.addFunction("extractHTMLBodyElement", function(html)
+{
+   begin <- regexpr('<body[^>]*>', html, perl = TRUE)
+   end   <- regexpr('</body>', html, perl = TRUE)
+   
+   contents <- substring(html, begin + attr(begin, "match.length"), end - 1)
+   .rs.trimWhitespace(contents)
+})
+
+.rs.addFunction("rnb.injectBase64Data", function(html, chunkId, rnbData)
+{
+   # we'll be calling pandoc in the cache dir, so make sure
+   # we save our original dir
+   owd <- getwd()
+   on.exit(setwd(owd), add = TRUE)
+   setwd(rnbData$cache_path)
+   
+   # use pandoc to render the HTML fragment, thereby injecting
+   # base64-encoded dependencies
+   input  <- "rnb-base64-inject-input.html"
+   output <- "rnb-base64-inject-output.html"
+   
+   cat(html, file = input, sep = "\n")
+   opts <- c("--self-contained")
+   rmarkdown:::pandoc_convert(input, output = output, options = opts)
+   
+   result <- .rs.readFile(output)
+   .rs.extractHTMLBodyElement(result)
+})
+
+.rs.addFunction("rnb.maskChunks", function(contents, chunkInfo)
+{
+   masked <- contents
+   
+   # Extract chunk locations based on the document + chunk info
+   chunkRanges <- lapply(chunkInfo$chunk_definitions, function(info) {
+      list(start = info$chunk_start,
+           end   = info$chunk_end,
+           id    = info$chunk_id)
+   })
+   
+   for (range in rev(chunkRanges)) {
+      masked <- c(
+         masked[1:(range$start - 1)],
+         paste("<!-- rnb-chunk-id", range$id, "-->"),
+         masked[(range$end + 1):length(masked)]
+      )
+   }
+   
+   masked
+   
+})
+
+.rs.addFunction("rnb.fillChunks", function(html, rnbData)
+{
+   filled <- html
+   chunkIdx <- 1
+   for (i in seq_along(filled)) {
+      line <- filled[[i]]
+      if (!(.rs.startsWith(line, "<!-- rnb-chunk-id") && .rs.endsWith(line, "-->")))
+         next
+      
+      chunkId <- sub('<!-- rnb-chunk-id\\s*(\\S+)\\s*-->', '\\1', line)
+      chunkData <- rnbData$chunk_data[[chunkId]]
+      chunkDefn <- rnbData$chunk_info$chunk_definitions[[chunkId]]
+      if (is.null(chunkData) || is.null(chunkDefn))
+         stop("no chunk with id '", chunkId, "'")
+      
+      # inject PNGs etc. as base64 data
+      injected <- .rs.rnb.injectBase64Data(chunkData$html, chunkId, rnbData)
+      
+      # insert into document
+      injection <- c(
+         sprintf("<!-- rnb-chunk-start-%s %s -->", chunkIdx, chunkDefn$chunk_start),
+         paste(injected, collapse = "\n"),
+         sprintf("<!-- rnb-chunk-end-%s %s -->", chunkIdx, chunkDefn$chunk_end)
+      )
+      
+      filled[[i]] <- paste(injection, sep = "\n", collapse = "\n")
+      chunkIdx <- chunkIdx + 1
+   }
+   filled
+})
+
+.rs.addFunction("rnb.render", function(inputFile,
+                                       outputFile,
+                                       rmdContents = .rs.readFile(inputFile),
+                                       envir = .GlobalEnv)
+{
+   renderOutput <- tempfile("rnb-render-output-", fileext = ".html")
    outputFormat <- rmarkdown::html_document(self_contained = TRUE,
                                             keep_md = TRUE)
    
-   if (is.null(renderOutput))
-      renderOutput <- paste(tools::file_path_sans_ext(renderInput), "rnb", sep = ".")
-   
-   if (!file.exists(dirname(renderOutput)))
-      dir.create(dirname(renderOutput), recursive = TRUE)
-   
-   rmarkdown::render(input = renderInput,
+   rmarkdown::render(input = inputFile,
                      output_format = outputFormat,
                      output_file = renderOutput,
                      output_options = list(self_contained = TRUE),
@@ -229,28 +394,56 @@
                      envir = envir,
                      quiet = TRUE)
    
+   
    # read the rendered file
    rnbContents <- readLines(renderOutput, warn = FALSE)
    
    # generate base64-encoded versions of .Rmd source, .md sidecar
-   rmdContents <- readChar(inputFile, file.info(inputFile)$size, TRUE)
    rmdEncoded <- caTools::base64encode(paste(rmdContents, collapse = "\n"))
-   
-   mdPath <- .rs.withChangedExtension(renderOutput, "md")
-   mdContents <- readChar(mdPath, file.info(mdPath)$size, TRUE)
-   mdEncoded  <- caTools::base64encode(mdContents)
    
    # inject document contents into rendered file
    # (i heard you like documents, so i put a document in your document)
    rnbContents <- .rs.injectHTMLComments(
       rnbContents,
       "<head>",
-      list("rnb-document-source" = rmdEncoded,
-           "rnb-github-md"       = mdEncoded)
+      list("rnb-document-source" = rmdEncoded)
    )
    
    # write our .Rnb to file and we're done!
    cat(rnbContents, file = outputFile, sep = "\n")
    invisible(outputFile)
    
+})
+
+.rs.addFunction("createNotebookFromCacheData", function(rnbData,
+                                                        outputFile,
+                                                        envir = .GlobalEnv)
+{
+   # first, render our .Rmd to transform markdown to html
+   contents <- rnbData$contents
+   chunkInfo <- rnbData$chunk_info
+   
+   # mask out chunks (replace with placeholders w/id)
+   masked <- .rs.rnb.maskChunks(contents, chunkInfo)
+   
+   # use pandoc to convert md to html
+   inputTemp  <- tempfile("rnb-tempfile-input-", fileext = ".md")
+   outputTemp <- tempfile("rnb-tempfile-output-", fileext = ".html")
+   cat(masked, file = inputTemp, sep = "\n")
+   
+   # render our notebook
+   .rs.rnb.render(inputFile = inputTemp,
+                  outputFile = outputTemp,
+                  rmdContents = contents,
+                  envir = envir)
+   
+   # read the HTML
+   html <- readLines(outputTemp)
+   
+   # replace chunk placeholders with their actual data
+   html <- .rs.rnb.fillChunks(html, rnbData)
+   
+   # write to file
+   cat(html, file = outputFile, sep = "\n")
+   outputFile
 })

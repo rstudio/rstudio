@@ -397,7 +397,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 })
 
 # replacing an internal R function
-.rs.addFunction( "registerReplaceHook", function(name, package, hook)
+.rs.addFunction( "registerReplaceHook", function(name, package, hook, keepOriginal)
 {
    hookFactory <- function(original) function(...) .rs.callAs(name,
                                                              hook, 
@@ -725,3 +725,71 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    saveRDS(file = outputLocation, object = result)
 })
 
+.rs.addFunction("readFile", function(file)
+{
+   readChar(file, file.info(file)$size, TRUE)
+})
+
+.rs.addFunction("fromJSON", function(string)
+{
+   .Call(.rs.routines$rs_fromJSON, string)
+})
+
+.rs.addFunction("stringBuilder", function()
+{
+   (function() {
+      indent_ <- "  "
+      indentSize_ <- 0
+      data_ <- character()
+      
+      indented_ <- function(data) {
+         indent <- paste(character(indentSize_ + 1), collapse = indent_)
+         for (i in seq_along(data))
+            if (is.list(data[[i]]))
+               data[[i]] <- indented_(data[[i]])
+            else
+               data[[i]] <- paste(indent, data[[i]], sep = "")
+            data
+      }
+      
+      list(
+         
+         append = function(...) {
+            data_ <<- c(data_, indented_(list(...)))
+         },
+         
+         appendf = function(...) {
+            data_ <<- c(data_, indented_(sprintf(...)))
+         },
+         
+         indent = function() {
+            indentSize_ <<- indentSize_ + 1
+         },
+         
+         unindent = function() {
+            indentSize_ <<- max(0, indentSize_ - 1)
+         },
+         
+         data = function() unlist(data_)
+         
+      )
+      
+   })()
+})
+
+.rs.addFunction("regexMatches", function(pattern, x) {
+   matches <- gregexpr(pattern, x, perl = TRUE)[[1]]
+   starts <- attr(matches, "capture.start")
+   ends <- starts + attr(matches, "capture.length") - 1
+   substring(x, starts, ends)
+})
+
+.rs.addFunction("withChangedExtension", function(path, ext)
+{
+   paste(tools::file_path_sans_ext(path), ext, sep = ".")
+})
+
+.rs.addFunction("dirExists", function(path)
+{
+   utils::file_test('-d', path)
+})

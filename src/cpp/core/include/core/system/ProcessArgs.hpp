@@ -77,12 +77,13 @@ private:
 
    void freeArgs()
    {
-      if (argCount_ > 0)
+      if (args_ && argCount_ > 0)
       {
          for (std::size_t i = 0; i<argCount_; ++i)
             delete [] args_[i] ;
-         delete [] args_ ;
       }
+
+      delete [] args_ ;
    }
    
 private:

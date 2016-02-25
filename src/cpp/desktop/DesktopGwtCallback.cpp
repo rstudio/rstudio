@@ -244,20 +244,23 @@ QString GwtCallback::getExistingDirectory(const QString& caption,
    return createAliasedPath(result);
 }
 
+void GwtCallback::doAction(const QKeySequence& keys)
+{
+   int keyCode = keys[0];
+   Qt::KeyboardModifier modifiers = static_cast<Qt::KeyboardModifier>(keyCode & Qt::KeyboardModifierMask);
+   keyCode &= ~Qt::KeyboardModifierMask;
+
+   QKeyEvent* keyEvent = new QKeyEvent(QKeyEvent::KeyPress, keyCode, modifiers);
+   pOwner_->postWebViewEvent(keyEvent);
+}
+
 void GwtCallback::doAction(QKeySequence::StandardKey key)
 {
    QList<QKeySequence> bindings = QKeySequence::keyBindings(key);
    if (bindings.size() == 0)
       return;
 
-   QKeySequence seq = bindings.first();
-
-   int keyCode = seq[0];
-   Qt::KeyboardModifier modifiers = static_cast<Qt::KeyboardModifier>(keyCode & Qt::KeyboardModifierMask);
-   keyCode &= ~Qt::KeyboardModifierMask;
-
-   QKeyEvent* keyEvent = new QKeyEvent(QKeyEvent::KeyPress, keyCode, modifiers);
-   pOwner_->postWebViewEvent(keyEvent);
+   doAction(bindings.first());
 }
 
 void GwtCallback::undo(bool forAce)
@@ -267,7 +270,14 @@ void GwtCallback::undo(bool forAce)
 
 void GwtCallback::redo(bool forAce)
 {
-   doAction(QKeySequence::Redo);
+   // NOTE: On Windows, the default redo key sequence is 'Ctrl+Y';
+   // however, we bind this to 'yank' and so 'redo' actions executed
+   // from the menu will fail. We instead use 'Ctrl+Shift+Z' which is
+   // supported across all platforms using Qt.
+   static const QKeySequence keys =
+         QKeySequence::fromString(QString::fromUtf8("Ctrl+Shift+Z"));
+
+   doAction(keys);
 }
 
 void GwtCallback::clipboardCut()

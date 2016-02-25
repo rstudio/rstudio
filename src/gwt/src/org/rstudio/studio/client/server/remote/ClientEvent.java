@@ -138,7 +138,9 @@ class ClientEvent extends JavaScriptObject
    public static final String AddinRegistryUpdated = "addin_registry_updated";
    public static final String ChunkOutput = "chunk_output";
    public static final String ChunkOutputFinished = "chunk_output_finished";
-   
+   public static final String RprofStarted = "rprof_started";
+   public static final String RprofStopped = "rprof_stopped";
+
    protected ClientEvent()
    {
    }

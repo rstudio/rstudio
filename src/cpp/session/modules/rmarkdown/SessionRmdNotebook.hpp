@@ -21,6 +21,8 @@
 #include <boost/signals.hpp>
 #include <core/json/Json.hpp>
 
+#define kChunkLibDir "lib"
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -36,11 +38,18 @@ namespace notebook {
 
 core::Error initialize();
 
+core::Error ensureCacheFolder(const core::FilePath& cacheFolder);
+
 core::Error getChunkDefs(const std::string& docPath, const std::string& docId, 
       std::time_t *pDocTime, core::json::Value* pDefs);
 
 core::Error setChunkDefs(const std::string& docPath, const std::string& docId, 
       std::time_t docTime, const core::json::Array& defs);
+
+core::Error extractTagAttrs(const std::string& tag,
+                            const std::string& attr,
+                            const std::string& contents,
+                            std::vector<std::string>* pValues);
 
 struct Events : boost::noncopyable
 {
@@ -49,8 +58,7 @@ struct Events : boost::noncopyable
                       const std::string&)> 
                 onChunkExecCompleted;
 
-   // Document {0}, chunk {1} had console output of type {2} and text
-   // {3}
+   // Document {0}, chunk {1} had console output of type {2} and text {3}
    boost::signal<void(const std::string&, const std::string&, int, 
                 const std::string&)>
                 onChunkConsoleOutput;

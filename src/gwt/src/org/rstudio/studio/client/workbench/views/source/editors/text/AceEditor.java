@@ -35,6 +35,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -43,6 +44,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
+import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
@@ -272,7 +274,9 @@ public class AceEditor implements DocDisplay,
       diagnosticsBgPopup_ = new DiagnosticsBackgroundPopup(this);
       
       RStudioGinjector.INSTANCE.injectMembers(this);
-
+      
+      backgroundTokenizer_ = new BackgroundTokenizer(this);
+      
       widget_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
          public void onValueChange(ValueChangeEvent<Void> evt)
@@ -302,7 +306,7 @@ public class AceEditor implements DocDisplay,
                completionManager_.onPaste(event);
 
             final Position start = getSelectionStart();
-
+            
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                @Override
@@ -790,6 +794,9 @@ public class AceEditor implements DocDisplay,
       // bug in 0.95. We can choose to remove this when 0.95 ships, hopefully
       // any documents that would be affected by this will be gone by then.
       code = code.replaceAll("\u001B", "");
+      
+      // Normalize newlines -- convert all of '\r', '\r\n', '\n\r' to '\n'.
+      code = StringUtil.normalizeNewLines(code);
 
       final AceEditorNative ed = widget_.getEditor();
 
@@ -855,14 +862,13 @@ public class AceEditor implements DocDisplay,
 
    public void insertCode(String code, boolean blockMode)
    {
-      widget_.getEditor().insert(code);
+      widget_.getEditor().insert(StringUtil.normalizeNewLines(code));
    }
 
    public String getCode(Position start, Position end)
    {
       return getSession().getTextRange(Range.fromPoints(start, end));
    }
-
 
    @Override
    public InputEditorSelection search(String needle,
@@ -1204,20 +1210,25 @@ public class AceEditor implements DocDisplay,
             renderer.screenToTextCoordinates(rectangle.getLeft(), rectangle.getTop()),
             renderer.screenToTextCoordinates(rectangle.getRight(), rectangle.getBottom()));
    }
-
-   public Rectangle getPositionBounds(InputEditorPosition position)
+   
+   @Override
+   public Rectangle getPositionBounds(Position position)
    {
       Renderer renderer = widget_.getEditor().getRenderer();
-
-      Position pos = ((AceInputEditorPosition) position).getValue();
-
       ScreenCoordinates start = renderer.textToScreenCoordinates(
-            pos.getRow(),
-            pos.getColumn());
+            position.getRow(),
+            position.getColumn());
 
       return new Rectangle(start.getPageX(), start.getPageY(),
                            (int) Math.round(renderer.getCharacterWidth()),
                            (int) (renderer.getLineHeight() * 0.8));
+   }
+   
+   @Override
+   public Rectangle getPositionBounds(InputEditorPosition position)
+   {
+      Position pos = ((AceInputEditorPosition) position).getValue();
+      return getPositionBounds(pos);
    }
 
    public Rectangle getBounds()
@@ -1384,6 +1395,7 @@ public class AceEditor implements DocDisplay,
 
    public void replaceSelection(String code)
    {
+      code = StringUtil.normalizeNewLines(code);
       Range selRange = getSession().getSelection().getRange();
       Position position = getSession().replace(selRange, code);
       Range range = Range.fromPoints(selRange.getStart(), position);
@@ -1842,7 +1854,7 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.addFocusHandler(handler);
    }
-
+   
    public Scope getCurrentScope()
    {
       return getSession().getMode().getCodeModel().getCurrentScope(
@@ -2062,6 +2074,14 @@ public class AceEditor implements DocDisplay,
       if (hasScopeTree())
          getScopeTree();
    }
+   
+   public int buildScopeTreeUpToRow(int row)
+   {
+      if (!hasScopeTree())
+         return 0;
+      
+      return getSession().getMode().getRCodeModel().buildScopeTreeUpToRow(row);
+   }
 
    public JsArray<Scope> getScopeTree()
    {
@@ -2090,6 +2110,12 @@ public class AceEditor implements DocDisplay,
    public void toggleFold()
    {
       getSession().toggleFold();
+   }
+   
+   @Override
+   public void setFoldStyle(String style)
+   {
+      getSession().setFoldStyle(style);
    }
    
    @Override
@@ -2370,6 +2396,16 @@ public class AceEditor implements DocDisplay,
                            LineWidgetsChangedEvent.Handler handler)
    {
       return handlers_.addHandler(LineWidgetsChangedEvent.TYPE, handler);
+   }
+   
+   public boolean isScopeTreeReady(int row)
+   {
+      return backgroundTokenizer_.isReady(row);
+   }
+   
+   public HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler)
+   {
+      return handlers_.addHandler(ScopeTreeReadyEvent.TYPE, handler);
    }
 
    public HandlerRegistration addRenderFinishedHandler(RenderFinishedEvent.Handler handler)
@@ -2926,6 +2962,57 @@ public class AceEditor implements DocDisplay,
       AceEditor.this.fireEvent(new LineWidgetsChangedEvent());
    }
    
+   private static class BackgroundTokenizer
+   {
+      public BackgroundTokenizer(final AceEditor editor)
+      {
+         editor_ = editor;
+         
+         timer_ = new Timer()
+         {
+            @Override
+            public void run()
+            {
+               // Stop our timer if we've tokenized up to the end of the document.
+               if (row_ >= editor_.getRowCount())
+               {
+                  editor_.fireEvent(new ScopeTreeReadyEvent(
+                        editor_.getScopeTree(),
+                        editor_.getCurrentScope()));
+                  return;
+               }
+               
+               row_ += ROWS_TOKENIZED_PER_ITERATION;
+               row_ = Math.max(row_, editor.buildScopeTreeUpToRow(row_));
+               timer_.schedule(DELAY_MS);
+            }
+         };
+         
+         editor_.addDocumentChangedHandler(new DocumentChangedEvent.Handler()
+         {
+            @Override
+            public void onDocumentChanged(DocumentChangedEvent event)
+            {
+               row_ = event.getEvent().getRange().getStart().getRow();
+               timer_.schedule(DELAY_MS);
+            }
+         });
+      }
+      
+      public boolean isReady(int row)
+      {
+         return row < row_;
+      }
+      
+      private final AceEditor editor_;
+      private final Timer timer_;
+      
+      private int row_ = 0;
+      
+      private static final int DELAY_MS = 5;
+      private static final int ROWS_TOKENIZED_PER_ITERATION = 200;
+   }
+   
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
@@ -2949,6 +3036,7 @@ public class AceEditor implements DocDisplay,
    private boolean valueChangeSuppressed_ = false;
    private AceInfoBar infoBar_;
    private boolean showChunkOutputInline_ = false;
+   private BackgroundTokenizer backgroundTokenizer_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {

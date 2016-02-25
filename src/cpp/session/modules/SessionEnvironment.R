@@ -641,7 +641,7 @@
    else
    {
       # check the object itself for a null pointer
-      is(obj, "externalptr") && capture.output(print(obj)) == "<pointer: 0x0>"
+      inherits(obj, "externalptr") && capture.output(print(obj)) == "<pointer: 0x0>"
    }
 })
 

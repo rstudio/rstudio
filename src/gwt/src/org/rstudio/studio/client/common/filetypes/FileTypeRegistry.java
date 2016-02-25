@@ -394,6 +394,7 @@ public class FileTypeRegistry
       register("*.rs", RUST, icons.iconRust());
       register("*.scala", SCALA, icons.iconScala());
       register("*.snippets", SNIPPETS, icons.iconSnippets());
+      register("*.rprof", PROFILER, icons.iconRprofile());
 
       registerIcon(".jpg", icons.iconPng());
       registerIcon(".jpeg", icons.iconPng());
@@ -497,8 +498,12 @@ public class FileTypeRegistry
       else
       {
          FileType fileType = getTypeForFile(file);
-         if (fileType != null && !(fileType instanceof TextFileType))
+         if (fileType != null
+            && !(fileType instanceof TextFileType) 
+            && !(fileType instanceof ProfilerType))
+         {
             fileType = TEXT;
+         }
 
          if (fileType != null)
             fileType.openFile(file,

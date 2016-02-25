@@ -219,10 +219,12 @@ public class DataImport extends Composite
                @Override
                public void execute()
                {
+                  // Invalidate cached files, click update to refresh stale files
+                  cleanPreviewResources();
+                  
                   if (dataImportFileChooser_.getText() != importOptions_.getImportLocation())
                   {
                      lastSuccessfulResponse_ = null;
-                     localFiles_ = null;
                      resetColumnDefinitions();
                   }
                   
@@ -439,6 +441,29 @@ public class DataImport extends Composite
       return options;
    }
    
+   @Override
+   public void onDetach()
+   {
+      cleanPreviewResources();
+      super.onDetach();
+   }
+   
+   private void cleanPreviewResources()
+   {
+      if (localFiles_ != null)
+      {
+         server_.previewDataImportClean(getOptions(), new ServerRequestCallback<Void>()
+         {
+            @Override
+            public void onError(ServerError error)
+            {
+            }
+         });
+      }
+      
+      localFiles_ = null;
+   }
+   
    private void setGridViewerData(DataImportPreviewResponse response)
    {
       gridViewer_.setOption("nullsAsNAs", "true");
@@ -482,7 +507,7 @@ public class DataImport extends Composite
                public void execute()
                {
                   progressIndicator_.clearProgress();
-                  localFiles_ = null;
+                  cleanPreviewResources();
                   
                   server_.previewDataImportAsyncAbort(new ServerRequestCallback<Void>()
                   {
@@ -526,6 +551,11 @@ public class DataImport extends Composite
                   lastSuccessfulResponse_ = response;
                   
                   dataImportOptionsUi_.setPreviewResponse(response);
+
+                  if (response.getLocalFiles() != null)
+                  {
+                     localFiles_ = response.getLocalFiles();
+                  }
                   
                   gridViewer_.setOption("status",
                         "Previewing first " + toLocaleString(maxRows_) + 
@@ -544,7 +574,7 @@ public class DataImport extends Composite
                @Override
                public void onError(ServerError error)
                {
-                  localFiles_ = null;
+                  cleanPreviewResources();
                   gridViewer_.setData(null);
                   progressIndicator_.onError(error.getMessage());
                }
@@ -580,7 +610,10 @@ public class DataImport extends Composite
             
             codePreview_ = response.getImportCode();
             dataImportOptionsUi_.setAssembleResponse(response);
-            localFiles_ = response.getLocalFiles();
+            if (response.getLocalFiles() != null)
+            {
+               localFiles_ = response.getLocalFiles();
+            }
             
             setCodeAreaDefaults();
             codeArea_.setCode(codePreview_);

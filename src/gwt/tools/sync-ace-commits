@@ -92,10 +92,12 @@ git merge \
 
 # Need to merge separately to handle merge conflicts
 # note: ace-keyboard-activity will be part of Ace 1.2.1
+# note: vim-paragraph-object fixed upstream as well
 git merge --strategy-option theirs \
 	origin/patch/vim-Y-yank \
 	origin/patch/ace-keyboard-activity \
 	origin/patch/incremental-search \
+	origin/patch/vim-paragraph-object \
 	-m "merge again"
 
 git merge origin/patch/isearch-cursor-position -m "merge once more"

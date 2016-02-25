@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.Rectangle;
 import java.util.List;
 
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
@@ -35,6 +36,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWid
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
@@ -48,6 +50,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasD
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasFoldChangeHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasLineWidgetsChangedHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasRenderFinishedHandlers;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
@@ -198,6 +201,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
    
+   boolean isScopeTreeReady(int row);
+   HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler);
+   
    Position getCursorPosition();
    void setCursorPosition(Position position);
    
@@ -256,6 +262,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void foldAll();
    void unfoldAll();
    void toggleFold();
+   void setFoldStyle(String style); // see FoldStyle constants
    
    void jumpToMatching();
    void selectToMatching();
@@ -341,6 +348,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void blockOutdent();
    void splitIntoLines();
    
+   Rectangle getPositionBounds(Position position);
+   Position toDocumentPosition(ScreenCoordinates coordinates);
    Position screenCoordinatesToDocumentPosition(int pageX, int pageY);
    
    void forceImmediateRender();

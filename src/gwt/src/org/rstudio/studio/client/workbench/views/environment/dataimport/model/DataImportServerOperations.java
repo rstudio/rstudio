@@ -37,4 +37,6 @@ public interface DataImportServerOperations
    void interrupt(ServerRequestCallback<Void> requestCallback);
    
    void previewDataImportAsyncAbort(ServerRequestCallback<Void> requestCallback);
+   
+   void previewDataImportClean(DataImportOptions dataImportOptions, ServerRequestCallback<Void> requestCallback);
 }

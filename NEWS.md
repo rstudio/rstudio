@@ -1,5 +1,11 @@
 ## v0.99c - Release Notes
 
+### Editor
+
+* Enabled auto-pairing of backticks (\`\`) in R documents
+* Added option for display of 'end' fold markers
+* Added option to display function signature tooltip on idle
+
 ### Data Import
 
 * Import dataset from text via readr
@@ -8,6 +14,8 @@
 * Preview data while importing datasets
 * Explicitly set column types while importing datasets
 * Preview and copy code while importing datasets
+* Enable data import preview to be cancelled
+* Enable data import to cache web files
 
 ### C / C++
 
@@ -24,8 +32,10 @@
 
 * Autocompletion: avoid errors when retrieving completions in debugger
 * Diagnostics: fix false positive errors with '{' following function calls
-* Avoid over-eager re-rendering + tokenization of documents
+* Improved performance of document tokenization (fix laggy typing)
 * Fix block commenting of Sweave chunks
+* Fix highlighting of escaped '$' in inline Mathjax expressions
+* Fix editor preview vanishing on zoom level change
 * Emacs mode: C-f now moves the cursor forward instead of opening Find dialog
 * Ensure that modal dialogs capture all input even in the presence of multiple modals
 * Filter out "00LOCK" directories from package name completions
@@ -42,5 +52,7 @@
 * Fix highlighting in R mode for numbers with only a trailing decimal (e.g. '1.')
 * Ensure that SparkR DataFrames appear as data in environment pane
 * Avoid firing active bindings in completion system
+* Avoid perturbing RNG state when invoking View()
+* Fix unlinked directories in Files pane when other users' folders are browseable
 
 

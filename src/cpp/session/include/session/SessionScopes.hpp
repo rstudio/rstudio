@@ -265,34 +265,28 @@ inline core::r_util::ProjectId toProjectId(const std::string& projectDir,
       }
    }
 
-   // if this project belongs to someone else, try to look up its shared
-   // project ID (we currently have to do this even if we found the ID in the
-   // map; see note below)
 #ifndef _WIN32
+   // if this project belongs to someone else, try to look up its shared
+   // project ID 
    struct stat st;
    if (::stat(projectDir.c_str(), &st) == 0 &&
        st.st_uid != ::geteuid())
    {
-      // if we already found an ID but it doesn't contain any user information
-      // (just a raw project ID), we need to do some fixup
-      if (id.length() == kProjectIdLen)
+      // fix it up to a shared project ID if we have one. this could happen
+      // if e.g. a project is opened as an unshared project and later opened
+      // as a shared one.
+      std::string sharedId = sharedProjectId(sharedStoragePath, projectDir);
+
+      if (!sharedId.empty())
       {
-         // TODO: The following code is temporary. There was a period of time
-         // during which it was possible to get your own project ID for a
-         // project that did not belong to you.
-         //
-         // This is no longer possible, but mismatched project IDs cause
-         // features such as distributed events to fail, and the project IDs
-         // are cached in the mapping file, so until all the per-user IDs are
-         // flushed and replaced with shared IDs, we need to leave this in; it
-         // causes us to erase the per-user ID so it's replaced with a shared
-         // ID.
-
-         idMap.erase(it);
-         it = idMap.end();
+         // if we already had a local project ID, sync to the shared one
+         if (id.length() == kProjectIdLen)
+         {
+            idMap.erase(it);
+            it = idMap.end();
+         }
+         id = sharedId;
       }
-
-      id = sharedProjectId(sharedStoragePath, projectDir);
    }
 #endif
 

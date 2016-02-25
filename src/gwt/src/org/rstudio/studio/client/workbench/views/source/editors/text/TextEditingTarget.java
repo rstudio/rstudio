@@ -589,6 +589,15 @@ public class TextEditingTarget implements
          }
       });
       
+      docDisplay_.addScopeTreeReadyHandler(new ScopeTreeReadyEvent.Handler()
+      {
+         @Override
+         public void onScopeTreeReady(ScopeTreeReadyEvent event)
+         {
+            updateCurrentScope();
+         }
+      });
+      
       events_.addHandler(
             ShinyApplicationStatusEvent.TYPE, 
             new ShinyApplicationStatusEvent.Handler()
@@ -1619,11 +1628,13 @@ public class TextEditingTarget implements
          public void onCursorChanged(CursorChangedEvent event)
          {
             updateStatusBarPosition();
+            if (docDisplay_.isScopeTreeReady(event.getPosition().getRow()))
+               updateCurrentScope();
+               
          }
       });
       updateStatusBarPosition();
       updateStatusBarLanguage();
-
       
       // build file type menu dynamically (so it can change according
       // to whether e.g. knitr is installed)
@@ -1821,8 +1832,6 @@ public class TextEditingTarget implements
       statusBar_.getLanguage().setValue(fileType_.getLabel());
       boolean canShowScope = fileType_.canShowScopeTree();
       statusBar_.setScopeVisible(canShowScope);
-      if (canShowScope)
-         updateCurrentScope();
    }
 
    private void updateStatusBarPosition()
@@ -1830,61 +1839,54 @@ public class TextEditingTarget implements
       Position pos = docDisplay_.getCursorPosition();
       statusBar_.getPosition().setValue((pos.getRow() + 1) + ":" +
                                         (pos.getColumn() + 1));
-      
-      if (fileType_.canShowScopeTree())
-         updateCurrentScope();
    }
   
    private void updateCurrentScope()
    {
-      Scheduler.get().scheduleDeferred(
-            new ScheduledCommand()
-            {
-               public void execute()
+      if (fileType_ == null || !fileType_.canShowScopeTree())
+         return;
+      
+      // special handing for presentations since we extract
+      // the slide structure in a different manner than 
+      // the editor scope trees
+      if (fileType_.isRpres())
+      {
+         statusBar_.getScope().setValue(
+               presentationHelper_.getCurrentSlide());
+         statusBar_.setScopeType(StatusBar.SCOPE_SLIDE);
+
+      }
+      else
+      {
+         Scope scope = docDisplay_.getCurrentScope();
+         String label = scope != null
+               ? scope.getLabel()
+                     : null;
+               statusBar_.getScope().setValue(label);
+
+               if (scope != null)
                {
-                  // special handing for presentations since we extract
-                  // the slide structure in a different manner than 
-                  // the editor scope trees
-                  if (fileType_.isRpres())
-                  {
-                     statusBar_.getScope().setValue(
-                                       presentationHelper_.getCurrentSlide());
-                     statusBar_.setScopeType(StatusBar.SCOPE_SLIDE);
-                     
-                  }
-                  else
-                  {
-                     Scope scope = docDisplay_.getCurrentScope();
-                     String label = scope != null
-                                   ? scope.getLabel()
-                                   : null;
-                     statusBar_.getScope().setValue(label);
-                     
-                     if (scope != null)
-                     {
-                        boolean useChunk = 
-                                 scope.isChunk() || 
-                                 (fileType_.isRnw() && scope.isTopLevel());
-                             if (useChunk)
-                           statusBar_.setScopeType(StatusBar.SCOPE_CHUNK);
-                        else if (scope.isNamespace())
-                          statusBar_.setScopeType(StatusBar.SCOPE_NAMESPACE);
-                        else if (scope.isClass())
-                           statusBar_.setScopeType(StatusBar.SCOPE_CLASS);
-                        else if (scope.isSection())
-                           statusBar_.setScopeType(StatusBar.SCOPE_SECTION);
-                        else if (scope.isTopLevel())
-                           statusBar_.setScopeType(StatusBar.SCOPE_TOP_LEVEL);
-                        else if (scope.isFunction())
-                           statusBar_.setScopeType(StatusBar.SCOPE_FUNCTION);
-                        else if (scope.isLambda())
-                           statusBar_.setScopeType(StatusBar.SCOPE_LAMBDA);
-                        else if (scope.isAnon())
-                           statusBar_.setScopeType(StatusBar.SCOPE_ANON);
-                     }
-                  }
+                  boolean useChunk = 
+                        scope.isChunk() || 
+                        (fileType_.isRnw() && scope.isTopLevel());
+                  if (useChunk)
+                     statusBar_.setScopeType(StatusBar.SCOPE_CHUNK);
+                  else if (scope.isNamespace())
+                     statusBar_.setScopeType(StatusBar.SCOPE_NAMESPACE);
+                  else if (scope.isClass())
+                     statusBar_.setScopeType(StatusBar.SCOPE_CLASS);
+                  else if (scope.isSection())
+                     statusBar_.setScopeType(StatusBar.SCOPE_SECTION);
+                  else if (scope.isTopLevel())
+                     statusBar_.setScopeType(StatusBar.SCOPE_TOP_LEVEL);
+                  else if (scope.isFunction())
+                     statusBar_.setScopeType(StatusBar.SCOPE_FUNCTION);
+                  else if (scope.isLambda())
+                     statusBar_.setScopeType(StatusBar.SCOPE_LAMBDA);
+                  else if (scope.isAnon())
+                     statusBar_.setScopeType(StatusBar.SCOPE_ANON);
                }
-            });
+      }
    }
    
    private String getNameFromDocument(SourceDocument document,
@@ -3952,7 +3954,7 @@ public class TextEditingTarget implements
    
    public void executePreviousChunks(final Position position)
    {
-      if (prefs_.showRmdChunkOutputInline().getGlobalValue())
+      if (docDisplay_.showChunkOutputInline())
       {
          executePreviousChunksNotebookMode(position);
          return;
@@ -5561,9 +5563,14 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.forceImmediateRender();
                }}));
+      releaseOnDismiss.add(prefs.foldStyle().bind(
+            new CommandWithArg<String>() {
+               public void execute(String style)
+               {
+                  docDisplay.setFoldStyle(style);
+               }}));
       releaseOnDismiss.add(prefs.surroundSelection().bind(
             new CommandWithArg<String>() {
-               @Override
                public void execute(String string)
                {
                   docDisplay.setSurroundSelectionPref(string);
