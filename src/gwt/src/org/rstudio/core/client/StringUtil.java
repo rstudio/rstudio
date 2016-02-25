@@ -1015,6 +1015,22 @@ public class StringUtil
       return string.substring(0, truncatedSize) + suffix;
    }
    
+   public static boolean isOneOf(String string, String... candidates)
+   {
+      for (String candidate : candidates)
+         if (candidate.equals(string))
+            return true;
+      return false;
+   }
+   
+   public static boolean isOneOf(char ch, char... candidates)
+   {
+      for (char candidate : candidates)
+         if (ch == candidate)
+            return true;
+      return false;
+   }
+
    public static final String makeRandomId(int length) 
    {
       String alphanum = "0123456789abcdefghijklmnopqrstuvwxyz";

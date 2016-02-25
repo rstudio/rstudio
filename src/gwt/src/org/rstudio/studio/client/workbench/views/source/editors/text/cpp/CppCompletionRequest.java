@@ -50,10 +50,12 @@ public class CppCompletionRequest
                            extends ServerRequestCallback<CppCompletionResult>
 {
    public CppCompletionRequest(String docPath,
+                               String docId,
                                CompletionPosition completionPosition,
                                DocDisplay docDisplay, 
                                Invalidation.Token token,
                                boolean explicit,
+                               CppCompletionManager manager,
                                Command onTerminated)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -62,14 +64,20 @@ public class CppCompletionRequest
       completionPosition_ = completionPosition;
       invalidationToken_ = token;
       explicit_ = explicit;
+      manager_ = manager;
       onTerminated_ = onTerminated;
       snippets_ = new SnippetHelper((AceEditor) docDisplay, docPath);
       
-      Position pos = completionPosition_.getPosition();
+      // Get the current line (up to the cursor position)
+      Position cursorPos = docDisplay_.getCursorPosition();
+      String line = docDisplay_.getLine(cursorPos.getRow()).substring(0, cursorPos.getColumn());
       
-      server_.getCppCompletions(docPath, 
-                                pos.getRow() + 1, 
-                                pos.getColumn() + 1, 
+      Position completionPos = completionPosition_.getPosition();
+      server_.getCppCompletions(line,
+                                docPath,
+                                docId,
+                                completionPos.getRow() + 1, 
+                                completionPos.getColumn() + 1, 
                                 completionPosition_.getUserText(),
                                 this);
    }
@@ -335,7 +343,7 @@ public class CppCompletionRequest
          @Override
          public void onClose(CloseEvent<PopupPanel> event)
          {
-            popup_ = null; 
+            closeCompletionPopup();
             terminated_ = true;
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
@@ -392,6 +400,18 @@ public class CppCompletionRequest
          else
             insertText = insertText + "(";
       }
+      else if (completion.getType() == CppCompletion.DIRECTORY)
+      {
+         insertText += "/";
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               manager_.codeCompletion();
+            }
+         });
+      }
       
       docDisplay_.setFocus(true); 
       docDisplay_.setSelection(getReplacementSelection());
@@ -404,6 +424,26 @@ public class CppCompletionRequest
          Position pos = docDisplay_.getCursorPosition();
          pos = Position.create(pos.getRow(), pos.getColumn() - 1);
          docDisplay_.setSelectionRange(Range.fromPoints(pos, pos));
+      }
+      else if (completion.getType() == CppCompletion.FILE)
+      {
+         char ch = docDisplay_.getCharacterAtCursor();
+         
+         // if there is a '>' or '"' following the cursor, move over it
+         if (ch == '>' || ch == '"')
+         {
+            docDisplay_.moveCursorForward();
+         }
+         
+         // otherwise, insert the corresponding closing character
+         else
+         {
+            String line = docDisplay_.getCurrentLine();
+            if (line.contains("<"))
+               docDisplay_.insertCode(">");
+            else if (line.contains("\""))
+               docDisplay_.insertCode("\"");
+         }
       }
       
       if (completion.hasParameters() &&
@@ -430,6 +470,7 @@ public class CppCompletionRequest
   
    private final DocDisplay docDisplay_; 
    private final boolean explicit_;
+   private final CppCompletionManager manager_;
    private final Invalidation.Token invalidationToken_;
    
    private final SnippetHelper snippets_;

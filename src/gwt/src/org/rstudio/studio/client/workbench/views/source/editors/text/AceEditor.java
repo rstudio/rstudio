@@ -1957,6 +1957,30 @@ public class AceEditor implements DocDisplay,
       int screenRow = getSession().documentToScreenRow(getCursorPosition());
       widget_.getEditor().scrollToRow(Math.max(0, screenRow - rowOffset));
    }
+   
+   @Override
+   public void moveCursorForward()
+   {
+      moveCursorForward(1);
+   }
+   
+   @Override
+   public void moveCursorForward(int characters)
+   {
+      widget_.getEditor().moveCursorRight(characters);
+   }
+   
+   @Override
+   public void moveCursorBackward()
+   {
+      moveCursorBackward(1);
+   }
+   
+   @Override
+   public void moveCursorBackward(int characters)
+   {
+      widget_.getEditor().moveCursorLeft(characters);
+   }
 
    @Override
    public void moveCursorNearTop()

@@ -20,7 +20,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 
 public class CompletionPosition
 {
-   public enum Scope { Global, Namespace, Member }
+   public enum Scope { Global, Namespace, Member, File }
     
    public CompletionPosition(Position position, String userText, Scope scope)
    {

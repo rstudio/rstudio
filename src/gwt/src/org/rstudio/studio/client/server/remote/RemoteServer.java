@@ -635,25 +635,29 @@ public class RemoteServer implements Server
    }
    
    public void getCppCompletions(
+                  String line,
                   String docPath,
-                  int line, 
+                  String docId,
+                  int row, 
                   int column,
                   String userText,
                   ServerRequestCallback<CppCompletionResult> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(docPath));
-      params.set(1, new JSONNumber(line));
-      params.set(2, new JSONNumber(column));
-      params.set(3,  new JSONString(userText));
-      sendRequest(RPC_SCOPE, "get_cpp_completions", params, requestCallback);
+      params.set(0, new JSONString(line));
+      params.set(1, new JSONString(docPath));
+      params.set(2, new JSONString(docId));
+      params.set(3, new JSONNumber(row));
+      params.set(4, new JSONNumber(column));
+      params.set(5,  new JSONString(userText));
+      sendRequest(RPC_SCOPE, GET_CPP_COMPLETIONS, params, requestCallback);
    }
    
    public void getCppDiagnostics(
                  String docPath,
                  ServerRequestCallback<JsArray<CppDiagnostic>> requestCallback)
    {
-      sendRequest(RPC_SCOPE, "get_cpp_diagnostics", docPath, requestCallback);
+      sendRequest(RPC_SCOPE, GET_CPP_DIAGNOSTICS, docPath, requestCallback);
    }
    
    public void printCppCompletions(String docId, 
@@ -4826,6 +4830,9 @@ public class RemoteServer implements Server
 
    private static final String BEGIN_FIND = "begin_find";
    private static final String STOP_FIND = "stop_find";
+   
+   private static final String GET_CPP_COMPLETIONS = "get_cpp_completions";
+   private static final String GET_CPP_DIAGNOSTICS = "get_cpp_diagnostics";
    
    private static final String GET_CPP_CAPABILITIES = "get_cpp_capabilities";
    private static final String INSTALL_BUILD_TOOLS = "install_build_tools";

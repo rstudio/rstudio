@@ -69,6 +69,10 @@ var CStyleBehaviour = function(codeModel) {
          var cursorRightChar = line[cursor.column];
          if (cursorRightChar == rightChar) {
 
+            // TODO: Workaround for 'findMatchingBracket' failing for '<>'
+            if (rightChar === '>')
+               return { text: '', selection: [1, 1] };
+
             var matchPos = session.findMatchingBracket({
                row: cursor.row,
                column: cursor.column + 1
@@ -421,6 +425,18 @@ var CStyleBehaviour = function(codeModel) {
    this.add("brackets", "deletion", function (state, action, edditor, session, range) {
       if (!this.insertMatching) return;
       return autoPairDeletion("[", range, session);
+   });
+
+   this.add("arrows", "insertion", function (state, action, editor, session, text) {
+      if (!this.insertMatching) return;
+      var line = session.getLine(editor.getCursorPosition().row);
+      if (!/^\s*#\s*include/.test(line)) return;
+      return autoPairInsertion("<", text, editor, session);
+   });
+
+   this.add("arrows", "deletion", function (state, action, edditor, session, range) {
+      if (!this.insertMatching) return;
+      return autoPairDeletion("<", range, session);
    });
 
    this.add("string_dquotes", "insertion", function (state, action, editor, session, text) {
