@@ -219,7 +219,7 @@
              <string>rprof</string>
          </array>
          <key>CFBundleTypeIconFile</key>
-         <string>RMarkdown.icns</string>
+         <string>RSource.icns</string>
          <key>CFBundleTypeName</key>
          <string>R Profile File</string>
          <key>CFBundleTypeRole</key>
