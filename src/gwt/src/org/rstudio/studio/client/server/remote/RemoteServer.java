@@ -165,7 +165,6 @@ import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 import org.rstudio.studio.client.workbench.views.source.model.CppSourceLocation;
-import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -1764,19 +1763,6 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, REMOVE_CACHED_DATA, cacheKey, requestCallback);
    }
 
-   public void duplicateDataView(String caption, String envName,
-         String objName, String cacheKey,
-         ServerRequestCallback<DataItem> requestCallback)
-   {
-      
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(caption));
-      params.set(1, new JSONString(envName));
-      params.set(2, new JSONString(objName));
-      params.set(3, new JSONString(cacheKey));
-      sendRequest(RPC_SCOPE, DUPLICATE_DATA_VIEW, params, requestCallback);
-   }
-   
    public void ensureFileExists(String path,
                                 ServerRequestCallback<Boolean> requestCallback)
    {
@@ -4729,7 +4715,6 @@ public class RemoteServer implements Server
    private static final String GET_CHUNK_OPTIONS = "get_chunk_options";
    private static final String SET_DOC_ORDER = "set_doc_order";
    private static final String REMOVE_CACHED_DATA = "remove_cached_data";
-   private static final String DUPLICATE_DATA_VIEW = "duplicate_data_view";
    private static final String ENSURE_FILE_EXISTS = "ensure_file_exists";
    private static final String GET_SOURCE_DOCUMENT = "get_source_document";
    

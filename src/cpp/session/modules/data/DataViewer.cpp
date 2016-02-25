@@ -822,47 +822,6 @@ Error removeCachedData(const json::JsonRpcRequest& request,
    return Success();
 }
 
-// called by the client to create a second window into a data frame. this is
-// primarily needed because each view needs its own cache key so we can
-// filter/sort/search them independently.
-Error duplicateDataView(const json::JsonRpcRequest& request,
-                        json::JsonRpcResponse* pResponse)
-{
-   r::sexp::Protect protect;
-   std::string caption, envName, objName, cacheKey;
-   Error error = json::readParams(request.params, &caption, &envName, &objName, 
-                                  &cacheKey);
-   if (error)
-      return error;
-
-   // try to duplicate the original object, but clone the cached copy if needed
-   SEXP dataSEXP = findInNamedEnvir(envName, objName);
-   if (dataSEXP == NULL) 
-   {
-      dataSEXP = R_NilValue;
-      error = r::exec::RFunction(".rs.findDataFrame", envName, objName, 
-            cacheKey, viewerCacheDir()).call(&dataSEXP, &protect);
-      if (error)
-         return error;
-      if (dataSEXP == NULL || TYPEOF(dataSEXP) == NILSXP || Rf_isNull(dataSEXP))
-      {
-         // TODO: meaningful error message
-         return Success();
-      }
-   }
-
-   // assign a new cache key
-   std::string newCacheKey;
-   error = r::exec::RFunction(".rs.addCachedData", dataSEXP).call(&newCacheKey);
-   if (error)
-      return error;
-
-   // return the result
-   pResponse->setResult(makeDataItem(dataSEXP, 
-         caption, objName, envName, newCacheKey));
-   return Success();
-}
-
 void onShutdown(bool terminatedNormally)
 {
    if (terminatedNormally) 
@@ -983,7 +942,6 @@ Error initialize()
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionDataViewer.R"))
       (bind(registerRpcMethod, "remove_cached_data", removeCachedData))
-      (bind(registerRpcMethod, "duplicate_data_view", duplicateDataView))
       (bind(registerUriHandler, "/grid_data", getGridData))
       (bind(registerUriHandler, kGridResourceLocation, handleGridResReq));
 
