@@ -127,6 +127,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("tab_multiline_completion", false);
    }
    
+   public PrefValue<Boolean> showFunctionTooltipOnIdle()
+   {
+      return bool("show_function_tooltip_on_idle", true);
+   }
+   
    public static final String EDITOR_SURROUND_SELECTION_NEVER               = "never";
    public static final String EDITOR_SURROUND_SELECTION_QUOTES              = "quotes";
    public static final String EDITOR_SURROUND_SELECTION_QUOTES_AND_BRACKETS = "quotes_and_brackets";
