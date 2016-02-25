@@ -599,6 +599,76 @@ void onChunkExecCompleted(const std::string& docId,
       LOG_ERROR(error);
 }
 
+void executeSingleInlineChunk(const std::string& docPath, 
+                              const std::string& docId, 
+                              const std::string& chunkId,
+                              const std::string& chunkOptions, 
+                              const std::string& content)
+{
+   Error error;
+
+   // ensure we have a place to put the output
+   FilePath chunkOutput = chunkOutputPath(docPath, docId, chunkId,
+         userSettings().contextId());
+   if (!chunkOutput.parent().exists())
+   {
+      error = ensureCacheFolder(chunkOutput.parent());
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+   }
+
+   // ensure we have a library path
+   FilePath chunkLibDir = chunkCacheFolder(docPath, docId).complete(
+         kChunkLibDir);
+   error = chunkLibDir.ensureDirectory();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   FilePath headerHtml = options().rResourcesPath().complete("notebook").
+      complete("in_header.html");
+
+   // render the contents to the cached folder
+   r::sexp::Protect protect;
+   SEXP err;
+   error = r::exec::RFunction(".rs.executeSingleChunk", chunkOptions, content,
+         chunkLibDir.absolutePath(),
+         headerHtml.absolutePath(),
+         chunkOutput.absolutePath()).call(&err, &protect);
+   if (error)
+   {
+      onConsoleText(docId, chunkId, kChunkConsoleError, error.summary(), 
+            true);
+      LOG_ERROR(error);
+      return;
+   }
+
+   // if an error message was returned, show a console error instead of the
+   // output
+   std::string errorMsg;
+   if (r::sexp::getNamedListElement(err, "message", &errorMsg) == Success() &&
+       !errorMsg.empty())
+   {
+      chunkOutput.removeIfExists();
+      onConsoleText(docId, chunkId, kChunkConsoleError, errorMsg + "\n", 
+            true);
+
+      // consider: the "text" member of the list element contains the contents
+      // of stderr, which may include message such as "Quitting from lines 2-4"
+      // which could be used to help the user pinpoint the source of the
+      // problem (although these messages currently just point at the current
+      // chunk so not helpful without some additional plumbing) 
+   }
+
+   // emit chunk output to client
+   events().onChunkExecCompleted(docId, chunkId, userSettings().contextId());
+}
+
 Error handleChunkOutputRequest(const http::Request& request,
                                http::Response* pResponse)
 {
@@ -663,7 +733,7 @@ Error setChunkConsole(const json::JsonRpcRequest& request,
 
 // called by client to execute a single chunk in a document
 Error executeInlineChunk(const json::JsonRpcRequest& request,
-                         json::JsonRpcResponse*)
+                         json::JsonRpcResponse* pResponse)
 {
    std::string docPath, docId, chunkId, chunkOptions, content;
    Error error = json::readParams(request.params, &docPath, &docId, &chunkId, 
@@ -671,55 +741,10 @@ Error executeInlineChunk(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // ensure we have a place to put the output
-   FilePath chunkOutput = chunkOutputPath(docPath, docId, chunkId,
-         userSettings().contextId());
-   if (!chunkOutput.parent().exists())
-   {
-      error = ensureCacheFolder(chunkOutput.parent());
-      if (error)
-         return error;
-   }
-
-   // ensure we have a library path
-   FilePath chunkLibDir = chunkCacheFolder(docPath, docId).complete(
-         kChunkLibDir);
-   error = chunkLibDir.ensureDirectory();
-   if (error)
-      return error;
-
-   FilePath headerHtml = options().rResourcesPath().complete("notebook").
-      complete("in_header.html");
-
-   // render the contents to the cached folder
-   r::sexp::Protect protect;
-   SEXP err;
-   error = r::exec::RFunction(".rs.executeSingleChunk", chunkOptions, content,
-         chunkLibDir.absolutePath(),
-         headerHtml.absolutePath(),
-         chunkOutput.absolutePath()).call(&err, &protect);
-   if (error)
-      return error;
-
-   // if an error message was returned, show a console error instead of the
-   // output
-   std::string errorMsg;
-   if (r::sexp::getNamedListElement(err, "message", &errorMsg) == Success() &&
-       !errorMsg.empty())
-   {
-      chunkOutput.removeIfExists();
-      onConsoleText(docId, chunkId, kChunkConsoleError, errorMsg + "\n", 
-            true);
-
-      // consider: the "text" member of the list element contains the contents
-      // of stderr, which may include message such as "Quitting from lines 2-4"
-      // which could be used to help the user pinpoint the source of the
-      // problem (although these messages currently just point at the current
-      // chunk so not helpful without some additional plumbing) 
-   }
-
-   // emit chunk output to client
-   events().onChunkExecCompleted(docId, chunkId, userSettings().contextId());
+   // return immediately from RPC 
+   pResponse->setAfterResponse(
+      boost::bind(executeSingleInlineChunk, docPath, docId, chunkId, 
+                  chunkOptions, content));
 
    return Success();
 }
