@@ -26,7 +26,6 @@ import java.util.List;
 
 import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsOverlay;
-import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 
 /**
@@ -1313,7 +1312,6 @@ public class Java8Test extends GWTTestCase {
     @JsOverlay
     Object object = new Integer(5);
 
-    @JsProperty
     int getA();
 
     @JsOverlay
@@ -1324,7 +1322,7 @@ public class Java8Test extends GWTTestCase {
 
   private native NativeJsTypeInterfaceWithStaticInitializationAndInstanceOverlayMethod
       createNativeJsTypeInterfaceWithStaticInitializationAndInstanceOverlayMethod() /*-{
-    return {a: 1};
+    return { getA: function() { return 1; } };
   }-*/;
 
   @JsType(isNative = true)
@@ -1341,7 +1339,6 @@ public class Java8Test extends GWTTestCase {
 
   static class JavaTypeImplementingNativeJsTypeInterceWithDefaultMethod implements
       NativeJsTypeInterfaceWithStaticInitializationAndInstanceOverlayMethod {
-    @JsProperty
     public int getA() {
       return 4;
     }
