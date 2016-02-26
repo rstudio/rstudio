@@ -144,11 +144,6 @@ public class ConsolePane extends WorkbenchPane
    @Override
    public void setDebugMode(boolean debugMode)
    {
-      if (debugMode == debugMode_)
-      {
-         return;
-      }
-
       debugMode_ = debugMode;
       loadDebugToolsIntoSecondaryToolbar();
    }
@@ -156,11 +151,6 @@ public class ConsolePane extends WorkbenchPane
    @Override
    public void setProfilerMode(boolean profilerMode)
    {
-      if (profilerMode == profilerMode_)
-      {
-         return;
-      }
-
       profilerMode_ = profilerMode;
       loadDebugToolsIntoSecondaryToolbar();
    }
