@@ -505,6 +505,11 @@ Error initialize()
          return error;
    }
 
+   // initialize profile resources
+   error = r::exec::RFunction(".rs.profile_resources").call();
+   if (error)
+      return error;
+
    // complete embedded r initialization
    error = r::session::completeEmbeddedRInitialization(s_options.useInternet2);
    if (error)

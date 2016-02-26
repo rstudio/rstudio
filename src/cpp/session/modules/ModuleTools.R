@@ -50,6 +50,13 @@
    return(obj)
 })
 
+.rs.addFunction("nullOrScalar", function(obj)
+{
+   if (!identical(obj, NULL))
+      class(obj) <- 'rs.scalar'
+   return(obj)
+})
+
 .rs.addFunction("validateAndNormalizeEncoding", function(encoding)
 {
    iconvList <- toupper(iconvlist())

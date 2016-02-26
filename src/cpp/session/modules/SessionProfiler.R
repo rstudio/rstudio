@@ -15,6 +15,10 @@
 
 .rs.addFunction("profile_resources", function()
 {
+   if (identical(getOption("profvis.prof_extension"), NULL)) {
+      options("profvis.prof_extension" = ".rprof")
+   }
+
    tempPath <- .Call(.rs.routines$rs_profilesPath)
    if (!.rs.dirExists(tempPath)) {
       dir.create(tempPath, recursive = TRUE)
@@ -53,7 +57,7 @@
       }
 
       return(list(
-         fileName = .rs.scalar(profilerOptions$fileName)
+         fileName = .rs.nullOrScalar(profilerOptions$fileName)
       ))
    }, error = function(e) {
       return(list(error = .rs.scalar(e$message)))
@@ -104,8 +108,5 @@
 
 options("profvis.print" = function(x)
 {
-   options("profvis.prof_output" = .rs.profile_resources()$tempPath)
-   options("profvis.prof_extension" = ".rprof")
-
    invisible(.Call(.rs.routines$rs_fileEdit, c(x$x$message$prof_output)))
 })
