@@ -62,69 +62,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    caTools::base64decode(rmdEncoded, character())
 })
 
-.rs.addFunction("executeSingleChunk", function(options,
-                                               content,
-                                               libDir,
-                                               headerFile,
-                                               outputFile) 
-{
-  # presume paths are UTF-8 encoded unless specified otherwise
-  if (Encoding(libDir) == "unknown") Encoding(libDir) <- "UTF-8"
-  if (Encoding(headerFile) == "unknown") Encoding(headerFile) <- "UTF-8"
-  if (Encoding(outputFile) == "unknown") Encoding(outputFile) <- "UTF-8"
-
-  # create a temporary file stub to send to R Markdown
-  chunkFile <- tempfile(fileext = ".Rmd")
-  chunk <- paste(paste("```{r", options, "echo=FALSE}"),
-                 content,
-                 "```\n", 
-                 sep = "\n");
-  writeLines(chunk, con = chunkFile)
-  on.exit(unlink(chunkFile), add = TRUE)
-  
-  # render chunks directly in .GlobalEnv
-  # TODO: use .rs.getActiveFrame()? use sandbox env
-  # that has .GlobalEnv as parent?
-  envir <- .GlobalEnv
-                 
-  # begin capturing the error stream (and clean up when we're done)
-  errorFile <- tempfile()
-  on.exit(unlink(errorFile), add = TRUE)
-  errorCon <- file(errorFile, open = "wt")
-  sink(errorCon, type = "message")
-  on.exit(sink(type = "message"), add = TRUE)
-  on.exit(close(errorCon), add = TRUE)
-
-  # render the stub to the given file
-  errorMessage <- ""
-  errorText <- ""
-  tryCatch({
-    capture.output(rmarkdown::render(
-      input = normalizePath(chunkFile, winslash = "/"), 
-      output_format = rmarkdown::html_document(
-        theme = NULL,
-        highlight = NULL,
-        template = NULL, 
-        self_contained = FALSE,
-        includes = list(
-          in_header = headerFile),
-        lib_dir = libDir),
-      output_file = normalizePath(outputFile, winslash = "/", mustWork = FALSE),
-      encoding = "UTF-8",
-      envir = envir,
-      quiet = TRUE))
-  }, error = function(e) {
-    # capture any error message returned
-    errorMessage <<- paste("Error:", e$message)
-
-    # flush the error stream and send it as well
-    errorText <<- paste(readLines(errorFile), collapse = "\n")
-  })
-
-  list(message = errorMessage, 
-       text    = errorText)
-})
-
 .rs.addFunction("injectHTMLComments", function(contents,
                                                location,
                                                inject)

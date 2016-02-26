@@ -36,6 +36,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
@@ -220,17 +221,15 @@ public class TextEditingTargetNotebook
       
       // let the chunk widget know it's started executing
       outputWidgets_.get(unit.chunkId).setChunkExecuting();
-      rmdHelper_.executeInlineChunk(docUpdateSentinel_.getPath(), 
-            docUpdateSentinel_.getId(), unit.chunkId, "", unit.code,
+
+      server_.setChunkConsole(docUpdateSentinel_.getId(), 
+            unit.chunkId, 
             new ServerRequestCallback<Void>()
             {
                @Override
                public void onError(ServerError error)
                {
-                  executingChunk_ = null;
-                  outputWidgets_.get(unit.chunkId)
-                                .showServerError(error);
-                  processChunkExecQueue();
+                  events_.fireEvent(new SendToConsoleEvent(unit.code, true));
                }
             });
    }

@@ -4178,23 +4178,6 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void executeInlineChunk(String docPath, String docId, String chunkId, 
-         String options, String content, 
-         ServerRequestCallback<Void> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(docPath == null ? "" : docPath));
-      params.set(1, new JSONString(docId));
-      params.set(2, new JSONString(chunkId));
-      params.set(3, new JSONString(options));
-      params.set(4, new JSONString(content));
-      sendRequest(RPC_SCOPE,
-            "execute_inline_chunk",
-            params,
-            requestCallback);
-   }
-
-   @Override
    public void refreshChunkOutput(String docPath, String docId, 
          String contextId, String requestId, 
          ServerRequestCallback<Void> requestCallback)
