@@ -177,6 +177,11 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
          {
          }
          
+         @Override
+         public void detach()
+         {
+         }
+         
       }); 
       
       initWidget(panel_);

@@ -49,5 +49,9 @@ public class NullCompletionManager implements CompletionManager
    {
       return false;
    }
+   
+   public void detach()
+   {
+   }
 
 }

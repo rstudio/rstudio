@@ -65,6 +65,11 @@ public class SignatureToolTipManager
       server_ = server;
    }
    
+   public void detach()
+   {
+      idleTask_.detach();
+   }
+   
    public RCompletionToolTip getToolTip()
    {
       return toolTip_;

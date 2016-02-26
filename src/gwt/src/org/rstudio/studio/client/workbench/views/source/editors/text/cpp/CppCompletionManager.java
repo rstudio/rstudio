@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 
 import org.rstudio.core.client.CommandWith2Args;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -63,14 +64,15 @@ public class CppCompletionManager implements CompletionManager
       completionContext_ = completionContext;
       rCompletionManager_ = rCompletionManager;
       snippets_ = new SnippetHelper((AceEditor) docDisplay_, completionContext.getDocPath());
+      handlers_ = new HandlerRegistrations();
       
-      docDisplay_.addClickHandler(new ClickHandler()
+      handlers_.add(docDisplay_.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
          {
             terminateCompletionRequest();
          }
-      });
+      }));
    }
  
    @Inject
@@ -100,6 +102,12 @@ public class CppCompletionManager implements CompletionManager
       }
    }
    
+   @Override
+   public void detach()
+   {
+      handlers_.removeHandler();
+      snippets_.detach();
+   }
    
    // perform completion at the current cursor location
    @Override
@@ -503,6 +511,7 @@ public class CppCompletionManager implements CompletionManager
    private final Invalidation completionRequestInvalidation_ = new Invalidation();
    private final SnippetHelper snippets_;
    
+   private final HandlerRegistrations handlers_;
   
 
 }

@@ -31,6 +31,7 @@ import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.RegexUtil;
@@ -141,34 +142,35 @@ public class RCompletionManager implements CompletionManager
       suggestTimer_ = new SuggestionTimer(this, uiPrefs_);
       snippets_ = new SnippetHelper((AceEditor) docDisplay, getSourceDocumentPath());
       requester_ = new CompletionRequester(rnwContext, navigableSourceEditor, snippets_);
+      handlers_ = new HandlerRegistrations();
       
-      input_.addBlurHandler(new BlurHandler() {
+      handlers_.add(input_.addBlurHandler(new BlurHandler() {
          public void onBlur(BlurEvent event)
          {
             if (!ignoreNextInputBlur_)
                invalidatePendingRequests() ;
             ignoreNextInputBlur_ = false ;
          }
-      }) ;
+      }));
 
-      input_.addClickHandler(new ClickHandler()
+      handlers_.add(input_.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
          {
             invalidatePendingRequests();
          }
-      });
+      }));
 
-      popup_.addSelectionCommitHandler(new SelectionCommitHandler<QualifiedName>() {
+      handlers_.add(popup_.addSelectionCommitHandler(new SelectionCommitHandler<QualifiedName>() {
          public void onSelectionCommit(SelectionCommitEvent<QualifiedName> event)
          {
             assert context_ != null : "onSelection called but handler is null" ;
             if (context_ != null)
                context_.onSelection(event.getSelectedItem()) ;
          }
-      }) ;
+      }));
       
-      popup_.addSelectionHandler(new SelectionHandler<QualifiedName>() {
+      handlers_.add(popup_.addSelectionHandler(new SelectionHandler<QualifiedName>() {
          public void onSelection(SelectionEvent<QualifiedName> event)
          {
             lastSelectedItem_ = event.getSelectedItem();
@@ -177,25 +179,25 @@ public class RCompletionManager implements CompletionManager
             else
                showHelpDeferred(context_, lastSelectedItem_, 600);
          }
-      }) ;
+      }));
       
-      popup_.addMouseDownHandler(new MouseDownHandler() {
+      handlers_.add(popup_.addMouseDownHandler(new MouseDownHandler() {
          public void onMouseDown(MouseDownEvent event)
          {
             ignoreNextInputBlur_ = true ;
          }
-      });
+      }));
       
-      popup_.addSelectionHandler(new SelectionHandler<QualifiedName>() {
+      handlers_.add(popup_.addSelectionHandler(new SelectionHandler<QualifiedName>() {
          
          @Override
          public void onSelection(SelectionEvent<QualifiedName> event)
          {
             docDisplay_.setPopupVisible(true);
          }
-      });
+      }));
       
-      popup_.addCloseHandler(new CloseHandler<PopupPanel>()
+      handlers_.add(popup_.addCloseHandler(new CloseHandler<PopupPanel>()
       {
          @Override
          public void onClose(CloseEvent<PopupPanel> event)
@@ -209,9 +211,9 @@ public class RCompletionManager implements CompletionManager
                }
             });
          }
-      });
+      }));
       
-      popup_.addAttachHandler(new AttachEvent.Handler()
+      handlers_.add(popup_.addAttachHandler(new AttachEvent.Handler()
       {
          private boolean wasSigtipShowing_ = false;
          
@@ -238,7 +240,7 @@ public class RCompletionManager implements CompletionManager
                   toolTip.show();
             }
          }
-      });
+      }));
       
    }
    
@@ -254,6 +256,13 @@ public class RCompletionManager implements CompletionManager
       eventBus_ = eventBus;
       helpStrategy_ = helpStrategy;
       uiPrefs_ = uiPrefs;
+   }
+   
+   public void detach()
+   {
+      handlers_.removeHandler();
+      sigTipManager_.detach();
+      snippets_.detach();
    }
 
    public void close()
@@ -2221,4 +2230,6 @@ public class RCompletionManager implements CompletionManager
       private boolean canAutoInsert_;
       
    }
+   
+   private final HandlerRegistrations handlers_;
 }

@@ -56,24 +56,9 @@ public class DocumentIdleBackgroundTask
       pollDelayMs_ = pollDelayMs;
       idleThresholdMs_ = idleThresholdMs;
       task_ = task;
+      handlers_ = new HandlerRegistrations();
       
-      docDisplay_.addFocusHandler(new FocusHandler()
-      {
-         @Override
-         public void onFocus(FocusEvent event)
-         {
-            start();
-         }
-      });
-      
-      docDisplay_.addBlurHandler(new BlurHandler()
-      {
-         @Override
-         public void onBlur(BlurEvent event)
-         {
-            stop();
-         }
-      });
+      attach();
    }
    
    public void start()
@@ -148,6 +133,33 @@ public class DocumentIdleBackgroundTask
       stopRequested_ = true;
    }
    
+   private void attach()
+   {
+      handlers_.add(docDisplay_.addFocusHandler(new FocusHandler()
+      {
+         @Override
+         public void onFocus(FocusEvent event)
+         {
+            start();
+         }
+      }));
+      
+      handlers_.add(docDisplay_.addBlurHandler(new BlurHandler()
+      {
+         @Override
+         public void onBlur(BlurEvent event)
+         {
+            stop();
+         }
+      }));
+   }
+   
+   public void detach()
+   {
+      stopExecution();
+      handlers_.removeHandler();
+   }
+   
    private boolean stopExecution()
    {
       task_.onStop();
@@ -168,6 +180,7 @@ public class DocumentIdleBackgroundTask
    private final long pollDelayMs_;
    private final long idleThresholdMs_;
    private final BackgroundTask task_;
+   private final HandlerRegistrations handlers_;
    
    private long lastMouseMoveTime_;
    private ScreenCoordinates lastMouseCoords_;
