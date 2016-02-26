@@ -263,6 +263,7 @@ public class RCompletionManager implements CompletionManager
       handlers_.removeHandler();
       sigTipManager_.detach();
       snippets_.detach();
+      popup_.hide();
    }
 
    public void close()
