@@ -416,6 +416,11 @@ public class AceEditor implements DocDisplay,
                for (HandlerRegistration handler : editorEventListeners_)
                   handler.removeHandler();
                editorEventListeners_.clear();
+               if (completionManager_ != null)
+               {
+                  completionManager_.detach();
+                  completionManager_ = null;
+               }
             }
          }
       });
