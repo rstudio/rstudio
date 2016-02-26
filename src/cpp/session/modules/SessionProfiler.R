@@ -13,7 +13,7 @@
 #
 #
 
-.rs.addFunction("profile_resources", function()
+.rs.addFunction("profileResources", function()
 {
    if (identical(getOption("profvis.prof_extension"), NULL)) {
       options("profvis.prof_extension" = ".rprof")
@@ -29,12 +29,24 @@
    ))
 })
 
+.rs.addFunction("newProfileFileName" , function(path) {
+   profileFileName <- function (path, i) {
+      file.path(path, paste("profile", i, ".rprof", sep=""))
+   }
+
+   i <- 1
+   while (file.exists(profileFileName(path, i))) {
+      i <- i + 1
+   }
+
+   profileFileName(path, i)
+})
+
 .rs.addJsonRpcHandler("start_profiling", function(profilerOptions)
 {
    tryCatch({
-      resources <- .rs.profile_resources()
-      
-   	fileName <- tempfile(fileext = ".rprof", tmpdir = resources$tempPath)
+      resources <- .rs.profileResources()
+      fileName <- .rs.newProfileFileName(resources$tempPath)
 
       Rprof(filename = fileName, line.profiling = TRUE)
 
@@ -67,7 +79,7 @@
 .rs.addJsonRpcHandler("open_profile", function(profilerOptions)
 {
    tryCatch({
-      resources <- .rs.profile_resources()
+      resources <- .rs.profileResources()
       profvis <- profvis::profvis(prof_input = profilerOptions$fileName, split="h")
 
       htmlFile <- tempfile(fileext = ".html", tmpdir = resources$tempPath)

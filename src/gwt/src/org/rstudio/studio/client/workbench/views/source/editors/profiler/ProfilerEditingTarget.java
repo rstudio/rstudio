@@ -452,7 +452,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    @Handler
    void onSaveSourceDocAs()
    {
-      saveNewFile(getPath(), postSaveProfileCommand());
+      saveNewFile(getPath());
    }
 
    private ProfilerContents getContents()
@@ -486,8 +486,6 @@ public class ProfilerEditingTarget implements EditingTarget,
             {
                globalDisplay_.showErrorMessage("Failed to Open Profile",
                      error.getMessage());
-               
-               continuation.execute(null);
             }
          });
    }
@@ -516,8 +514,7 @@ public class ProfilerEditingTarget implements EditingTarget,
       });
    }
 
-   private void saveNewFile(final String suggestedPath,
-                            final Command executeOnSuccess)
+   private void saveNewFile(final String suggestedPath)
    {
       FileSystemItem fsi;
       if (suggestedPath != null)
@@ -595,7 +592,7 @@ public class ProfilerEditingTarget implements EditingTarget,
       var handler = $entry(function(e) {
          if (typeof e.data != 'object')
             return;
-         if (!e.origin.startsWith(window.location.origin))
+         if (!e.origin.startsWith($wnd.location.origin))
             return;
          if (e.data.source != "profvis")
             return;

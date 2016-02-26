@@ -506,7 +506,7 @@ Error initialize()
    }
 
    // initialize profile resources
-   error = r::exec::RFunction(".rs.profile_resources").call();
+   error = r::exec::RFunction(".rs.profileResources").call();
    if (error)
       return error;
 

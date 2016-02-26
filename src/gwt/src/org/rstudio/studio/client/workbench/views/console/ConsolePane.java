@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.console;
 
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -152,30 +150,7 @@ public class ConsolePane extends WorkbenchPane
       }
 
       debugMode_ = debugMode;
-      setSecondaryToolbarVisible(debugMode_ || profilerMode_);
-      
-      secondaryToolbar_.removeAllWidgets();
-      if (debugMode)
-      {
-         loadDebugToolsIntoSecondaryToolbar();
-         if (profilerMode_)
-         {
-            loadProfilerToolsIntoSecondaryToolbar();
-         }
-
-         Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-            @Override
-            public void execute()
-            {
-               if (shell_ != null)
-                  shell_.getDisplay().ensureInputVisible();
-            }
-         });
-      }
-      else if (profilerMode_)
-      {
-         loadProfilerToolsIntoSecondaryToolbar();
-      }
+      loadDebugToolsIntoSecondaryToolbar();
    }
 
    @Override
@@ -187,42 +162,34 @@ public class ConsolePane extends WorkbenchPane
       }
 
       profilerMode_ = profilerMode;
-      setSecondaryToolbarVisible(debugMode_ || profilerMode_);
-
-      secondaryToolbar_.removeAllWidgets();
-      if (profilerMode_)
-      {
-         if (debugMode_)
-         {
-            loadDebugToolsIntoSecondaryToolbar();
-         }
-         loadProfilerToolsIntoSecondaryToolbar();
-      }
-      else if (debugMode_)
-      {
-         loadDebugToolsIntoSecondaryToolbar();
-      }
+      loadDebugToolsIntoSecondaryToolbar();
    }
    
    private void loadDebugToolsIntoSecondaryToolbar()
-   {
-      secondaryToolbar_.addLeftWidget(commands_.debugStep().createToolbarButton()); 
-      if (session_.getSessionInfo().getHaveAdvancedStepCommands())
+   {      
+      setSecondaryToolbarVisible(debugMode_ || profilerMode_);
+      secondaryToolbar_.removeAllWidgets();
+      
+      if (debugMode_)
       {
+         secondaryToolbar_.addLeftWidget(commands_.debugStep().createToolbarButton()); 
+         if (session_.getSessionInfo().getHaveAdvancedStepCommands())
+         {
+            secondaryToolbar_.addLeftSeparator();
+            secondaryToolbar_.addLeftWidget(commands_.debugStepInto().createToolbarButton());
+            secondaryToolbar_.addLeftSeparator();
+            secondaryToolbar_.addLeftWidget(commands_.debugFinish().createToolbarButton());
+         }
          secondaryToolbar_.addLeftSeparator();
-         secondaryToolbar_.addLeftWidget(commands_.debugStepInto().createToolbarButton());
+         secondaryToolbar_.addLeftWidget(commands_.debugContinue().createToolbarButton());
          secondaryToolbar_.addLeftSeparator();
-         secondaryToolbar_.addLeftWidget(commands_.debugFinish().createToolbarButton());
+         secondaryToolbar_.addLeftWidget(commands_.debugStop().createToolbarButton());
       }
-      secondaryToolbar_.addLeftSeparator();
-      secondaryToolbar_.addLeftWidget(commands_.debugContinue().createToolbarButton());
-      secondaryToolbar_.addLeftSeparator();
-      secondaryToolbar_.addLeftWidget(commands_.debugStop().createToolbarButton());
-   }
-   
-   private void loadProfilerToolsIntoSecondaryToolbar()
-   {
-      secondaryToolbar_.addLeftWidget(commands_.stopProfiler().createToolbarButton()); 
+      
+      if (profilerMode_)
+      {
+         secondaryToolbar_.addLeftWidget(commands_.stopProfiler().createToolbarButton()); 
+      }
    }
    
    private Provider<Shell> consoleProvider_ ;
