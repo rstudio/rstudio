@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.r;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DocumentIdleBackgroundTask;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
@@ -27,6 +28,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.inject.Inject;
@@ -38,6 +41,8 @@ public class SignatureToolTipManager
       RStudioGinjector.INSTANCE.injectMembers(this);
       toolTip_ = new RCompletionToolTip(docDisplay);
       docDisplay_ = docDisplay;
+      handlers_ = new HandlerRegistrations();
+      
       idleTask_ = new DocumentIdleBackgroundTask(
             docDisplay,
             new DocumentIdleBackgroundTask.BackgroundTask()
@@ -51,10 +56,21 @@ public class SignatureToolTipManager
                   if (!uiPrefs_.showSignatureTooltips().getGlobalValue())
                      return false;
                   
+                  isMouseTriggeredEvent_ = isMouse;
                   resolveActiveFunctionAndDisplayToolTip(position, !isMouse);
                   return true;
                }
             });
+      
+      handlers_.add(docDisplay_.addCursorChangedHandler(new CursorChangedHandler()
+      {
+         @Override
+         public void onCursorChanged(CursorChangedEvent event)
+         {
+            if (isMouseTriggeredEvent_)
+               toolTip_.hide();
+         }
+      }));
    }
    
    @Inject
@@ -157,6 +173,9 @@ public class SignatureToolTipManager
       
       if (isBoringFunction(callString))
          return;
+      
+      if (position.equals(lastCursorPosition_))
+         return;
 
       server_.getArgs(callString, "", new ServerRequestCallback<String>() {
          
@@ -168,11 +187,9 @@ public class SignatureToolTipManager
             if (StringUtil.isNullOrEmpty(arguments))
                return;
             
-            if (toolTip_.isShowing() && toolTip_.getSignature().equals(signature))
-               return;
-            
             if (!searchForFunction)
             {
+               lastCursorPosition_ = position;
                toolTip_.resolvePositionAndShow(
                      signature,
                      position);
@@ -186,6 +203,7 @@ public class SignatureToolTipManager
                if (!endCursor.fwdToMatchingToken())
                   return;
                
+               lastCursorPosition_ = position;
                toolTip_.resolvePositionAndShow(
                      signature,
                      Range.fromPoints(
@@ -204,7 +222,10 @@ public class SignatureToolTipManager
    
    private final RCompletionToolTip toolTip_;
    private final DocDisplay docDisplay_;
+   private final HandlerRegistrations handlers_;
    private final DocumentIdleBackgroundTask idleTask_;
+   
+   private boolean isMouseTriggeredEvent_;
    private Position lastCursorPosition_;
 
    private UIPrefs uiPrefs_;

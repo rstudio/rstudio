@@ -63,8 +63,15 @@ public class DocumentIdleBackgroundTask
    
    public void start()
    {
+      // If we try to 'stop()' then 'start()' the background task in quick
+      // succession, we should unset the 'stopRequested_' field to ensure that
+      // the 'stop()' request is cancelled, and let the originally scheduled
+      // task continue running.
       if (isRunning_)
+      {
+         stopRequested_ = false;
          return;
+      }
       
       if (!task_.onStart())
          return;
@@ -156,7 +163,7 @@ public class DocumentIdleBackgroundTask
    
    public void detach()
    {
-      stopExecution();
+      stop();
       handlers_.removeHandler();
    }
    
