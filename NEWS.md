@@ -54,5 +54,7 @@
 * Avoid firing active bindings in completion system
 * Avoid perturbing RNG state when invoking View()
 * Fix unlinked directories in Files pane when other users' folders are browseable
+* Prevent lines terminated by \r\n from entering editor (cause of many subtle problems)
+
 
 
