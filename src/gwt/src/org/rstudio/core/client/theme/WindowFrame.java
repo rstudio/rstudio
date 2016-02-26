@@ -108,13 +108,7 @@ public class WindowFrame extends Composite
                                  14, Style.Unit.PX);
       
       buttonsArea_ = new FlowPanel();
-      
-      // Without z-index, the header widget will obscure the context button
-      // if the former is set after the latter.
-      buttonsArea_.getElement().getStyle().setZIndex(10);
-      
       frame_.add(buttonsArea_);
-      frame_.setWidgetRightWidth(buttonsArea_, 48, Unit.PX, 100, Unit.PX);
       
       initWidget(frame_);
    }
@@ -316,7 +310,11 @@ public class WindowFrame extends Composite
          button.getElement().getStyle().setFloat(Float.RIGHT);
          
          buttonsArea_.add(button);
+         frame_.setWidgetRightWidth(buttonsArea_, 48, Unit.PX, width * contextButtons_.size(), Unit.PX);
          frame_.setWidgetTopHeight(buttonsArea_, 3, Unit.PX, height, Unit.PX);
+         // Without z-index, the header widget will obscure the context button
+         // if the former is set after the latter.
+         frame_.getWidgetContainerElement(buttonsArea_).getStyle().setZIndex(10);
          
          button.getElement().setAttribute("display", "inline-block");
          button.getElement().setAttribute("float", "right");
