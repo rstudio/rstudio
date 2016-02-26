@@ -4274,7 +4274,8 @@ public class TextEditingTarget implements
       
       // If the document being sourced is a testthat test file
       // and we have testthat available then use that
-      if (isTestthatTestFile())
+      if (isTestthatTestFile() &&
+          session_.getSessionInfo().isTestthatAvailable())
       {
          runTestthatTestFile();
          return;

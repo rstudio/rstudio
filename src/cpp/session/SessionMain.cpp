@@ -659,7 +659,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["packrat_available"] =
                      module_context::isRequiredPackratInstalled();
-
+   
+   sessionInfo["testthat_available"] =
+         module_context::isPackageVersionInstalled("testthat", "0.11.0");
 
    sessionInfo["knit_params_available"] =
          modules::rmarkdown::knitParamsAvailable();
