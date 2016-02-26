@@ -64,7 +64,7 @@
 {
    tryCatch({
       resources <- .rs.profile_resources()
-      profvis <- profvis::profvis(prof_input = profilerOptions$fileName)
+      profvis <- profvis::profvis(prof_input = profilerOptions$fileName, split="h")
 
       htmlFile <- tempfile(fileext = ".html", tmpdir = resources$tempPath)
       htmlwidgets::saveWidget(profvis, htmlFile, selfcontained = FALSE)
