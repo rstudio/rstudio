@@ -1574,6 +1574,17 @@ public class TextEditingTarget implements
       }
    }
    
+   private boolean isTestthatTestFile()
+   {
+      String path = getPath();
+      if (path == null || fileType_ == null)
+         return false;
+      
+      return
+            fileType_.isR() &&
+            path.contains("/tests/testthat/test-");
+   }
+   
    private boolean isPackageFile()
    {
       // not a package file if we're not in package development mode
@@ -4261,6 +4272,14 @@ public class TextEditingTarget implements
          return;
       }
       
+      // If the document being sourced is a testthat test file
+      // and we have testthat available then use that
+      if (isTestthatTestFile())
+      {
+         runTestthatTestFile();
+         return;
+      }
+      
       // If the document being sourced is a script then use that codepath
       if (fileType_.isScript())
       {
@@ -4363,6 +4382,23 @@ public class TextEditingTarget implements
                   getExtendedFileType()));
          }
       }, "Run Shiny Application");
+   }
+   
+   private void runTestthatTestFile()
+   {
+      final String command =
+            "testthat::test_file(\"" +
+            getPath() +
+            "\")";
+            
+      saveThenExecute(null, new Command()
+      {
+         @Override
+         public void execute()
+         {
+            events_.fireEvent(new SendToConsoleEvent(command, true));
+         }
+      });
    }
    
    private void runScript()
