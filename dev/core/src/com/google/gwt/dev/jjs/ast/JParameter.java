@@ -24,22 +24,32 @@ public class JParameter extends JVariable {
 
   private final boolean isThis;
   private final boolean isVarags;
+  private boolean isOptional;
 
   public JParameter(SourceInfo info, String name, JType type, boolean isFinal) {
-    this(info, name, type, isFinal, false, false);
+    this(info, name, type, isFinal, false, false, false);
   }
 
   JParameter(SourceInfo info, String name, JType type, boolean isFinal, boolean isVarargs,
-      boolean isThis) {
+      boolean isThis, boolean isOptional) {
     super(info, name, type, isFinal);
     this.isThis = isThis;
     this.isVarags = isVarargs;
+    this.isOptional = isOptional;
     assert !isVarargs || type.isArrayType();
   }
 
   public JParameterRef createRef(SourceInfo info) {
     return new JParameterRef(info, this);
   }
+
+  /**
+   * Returns <code>true</code> if this parameter marked as optional.
+   */
+  public boolean isOptional() {
+    return isOptional;
+  }
+
   /**
    * Returns <code>true</code> if this parameter is the this parameter of a
    * static impl method.
@@ -53,6 +63,10 @@ public class JParameter extends JVariable {
    */
   public boolean isVarargs() {
     return isVarags;
+  }
+
+  public void setOptional() {
+    isOptional = true;
   }
 
   @Override

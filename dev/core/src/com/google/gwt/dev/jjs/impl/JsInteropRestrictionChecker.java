@@ -243,6 +243,10 @@ public class JsInteropRestrictionChecker {
       checkIllegalOverrides(member);
     }
 
+    if (member instanceof JMethod) {
+      checkMethodParameters((JMethod) member);
+    }
+
     if (member.isJsOverlay()) {
       checkJsOverlay(member);
       return;
@@ -258,10 +262,6 @@ public class JsInteropRestrictionChecker {
 
     if (!checkJsPropertyAccessor(member)) {
       return;
-    }
-
-    if (member.isJsMethodVarargs()) {
-      checkJsVarargs(member);
     }
 
     checkMemberQualifiedJsName(member);
@@ -307,33 +307,38 @@ public class JsInteropRestrictionChecker {
       return;
     }
 
-    String methodDescription = JjsUtils.getReadableDescription(member);
+    String memberDescription = JjsUtils.getReadableDescription(member);
 
     if (!member.getEnclosingType().isJsNative()) {
-      logError(member, "JsOverlay '%s' can only be declared in a native type.", methodDescription);
+      logError(member, "JsOverlay '%s' can only be declared in a native type.", memberDescription);
+    }
+
+    if (member instanceof JConstructor) {
+      logError(member, "JsOverlay method '%s' cannot be a constructor.", memberDescription);
+      return;
+    }
+
+    if (member.getJsMemberType() != JsMemberType.NONE) {
+      logError(member, "JsOverlay method '%s' cannot be nor override a JsProperty or a JsMethod.",
+          memberDescription);
+      return;
     }
 
     if (member instanceof JField) {
       JField field = (JField) member;
       if (field.needsDynamicDispatch()) {
-        logError(
-            member, "JsOverlay field '%s' can only be static.",
-            methodDescription);
+        logError(member, "JsOverlay field '%s' can only be static.", memberDescription);
       }
       return;
     }
 
     JMethod method = (JMethod) member;
-    if (!method.getOverriddenMethods().isEmpty()) {
-      logError(member,
-          "JsOverlay method '%s' cannot override a supertype method.", methodDescription);
-      return;
-    }
+
+    assert method.getOverriddenMethods().isEmpty();
 
     if (method.getBody() == null || (!method.isFinal() && !method.isStatic()
         && !method.isDefaultMethod())) {
-      logError(member,
-          "JsOverlay method '%s' cannot be non-final nor native.", methodDescription);
+      logError(member, "JsOverlay method '%s' cannot be non-final nor native.", memberDescription);
     }
   }
 
@@ -380,8 +385,34 @@ public class JsInteropRestrictionChecker {
     }
   }
 
-  private void checkJsVarargs(JMember member) {
-    final JMethod method = (JMethod) member;
+  private void checkMethodParameters(JMethod method) {
+    boolean hasOptionalParameters = false;
+    for (JParameter parameter : method.getParams()) {
+      if (parameter.isOptional()) {
+        hasOptionalParameters = true;
+        continue;
+      }
+      if (hasOptionalParameters && !parameter.isVarargs()) {
+        logError(method, "JsOptional parameter '%s' in method %s cannot precede parameters "
+            + "that are not optional.", parameter.getName(), getMemberDescription(method));
+        break;
+      }
+    }
+
+    if (hasOptionalParameters
+        && method.getJsMemberType() != JsMemberType.CONSTRUCTOR
+        && method.getJsMemberType() != JsMemberType.METHOD
+        && !method.isOrOverridesJsFunctionMethod()) {
+      logError(method, "Method %s has JsOptional parameters and is not a JsMethod, "
+          + "a JsConstructor or a JsFunction method.", getMemberDescription(method));
+    }
+
+    if (method.isJsMethodVarargs()) {
+      checkJsVarargs(method);
+    }
+  }
+
+  private void checkJsVarargs(final JMethod method) {
     if (!method.isJsniMethod()) {
       return;
     }

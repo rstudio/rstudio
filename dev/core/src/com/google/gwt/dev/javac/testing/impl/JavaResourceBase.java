@@ -419,6 +419,11 @@ public class JavaResourceBase {
           "package jsinterop.annotations;",
           "public @interface JsFunction {",
           "}");
+  public static final MockJavaResource JSOPTIONAL =
+      createMockJavaResource("jsinterop.annotations.JsOptional",
+          "package jsinterop.annotations;",
+          "public @interface JsOptional {",
+          "}");
   public static final MockJavaResource JSOVERLAY =
       createMockJavaResource("jsinterop.annotations.JsOverlay",
           "package jsinterop.annotations;",
@@ -433,7 +438,7 @@ public class JavaResourceBase {
         JAVASCRIPTOBJECT, LIST, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR, NUMBER, OBJECT,
         RUNTIME_EXCEPTION, SERIALIZABLE, SHORT, STRING, STRING_BUILDER, SUPPRESS_WARNINGS, SYSTEM,
         THROWABLE, SPECIALIZE_METHOD, JSTYPE, JSCONSTRUCTOR, JSPACKAGE, JSPROPERTY, JSMETHOD,
-        JSIGNORE, JSFUNCTION, JSOVERLAY};
+        JSIGNORE, JSFUNCTION, JSOVERLAY, JSOPTIONAL};
   }
 
   /**

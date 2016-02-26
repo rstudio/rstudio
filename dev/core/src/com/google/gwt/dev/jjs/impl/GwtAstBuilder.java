@@ -4081,6 +4081,11 @@ public class GwtAstBuilder {
     processSuppressedWarnings(method, x.annotations);
   }
 
+  private void processAnnotations(JParameter parameter, Annotation... annotations) {
+    JsInteropUtil.maybeSetJsInteropProperties(parameter, annotations);
+    processSuppressedWarnings(parameter, annotations);
+  }
+
   private void processSuppressedWarnings(CanHaveSuppressedWarnings x, Annotation... annotations) {
     x.setSuppressedWarnings(JdtUtil.getSuppressedWarnings(annotations));
   }
@@ -4137,9 +4142,9 @@ public class GwtAstBuilder {
 
   private void createParameter(SourceInfo info, LocalVariableBinding binding, String name,
       JMethod method, boolean isVarargs, Annotation... annotations) {
-    JParameter param =
+    JParameter parameter =
         method.createParameter(info, name, typeMap.get(binding.type), binding.isFinal(), isVarargs);
-    processSuppressedWarnings(param, annotations);
+    processAnnotations(parameter, annotations);
   }
 
   private void createParameters(JMethod method, AbstractMethodDeclaration x) {

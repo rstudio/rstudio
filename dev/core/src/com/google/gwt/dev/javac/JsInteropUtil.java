@@ -21,6 +21,7 @@ import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMember;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 
 import org.eclipse.jdt.internal.compiler.ast.Annotation;
@@ -68,6 +69,12 @@ public final class JsInteropUtil {
     setJsInteropProperties(method, annotations, annotation, isPropertyAccessor, generateExport);
   }
 
+  public static void maybeSetJsInteropProperties(JParameter parameter,  Annotation... annotations) {
+    if (getInteropAnnotation(annotations, "JsOptional") != null) {
+      parameter.setOptional();
+    }
+  }
+
   public static void maybeSetJsInteropProperties(
       JField field, boolean generateExport, Annotation... annotations) {
     AnnotationBinding annotation = getInteropAnnotation(annotations, "JsProperty");
@@ -86,7 +93,8 @@ public final class JsInteropUtil {
 
     boolean isPublicMemberForJsType = member.getEnclosingType().isJsType() && member.isPublic();
     boolean memberForNativeType = member.getEnclosingType().isJsNative();
-    if (!isPublicMemberForJsType && !memberForNativeType && memberAnnotation == null) {
+    if (memberAnnotation == null
+        && (!isPublicMemberForJsType && !memberForNativeType || member.isJsOverlay())) {
       return;
     }
 
