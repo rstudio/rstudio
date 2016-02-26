@@ -588,7 +588,6 @@ public class ProfilerEditingTarget implements EditingTarget,
    }
 
    private static native void initializeEvents() /*-{
-      var this_ = this;  
       var handler = $entry(function(e) {
          if (typeof e.data != 'object')
             return;
