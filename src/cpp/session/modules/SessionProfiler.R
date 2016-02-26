@@ -118,7 +118,9 @@
    }
 })
 
-options("profvis.print" = function(x)
-{
-   invisible(.Call(.rs.routines$rs_fileEdit, c(x$x$message$prof_output)))
-})
+if (identical(getOption("profvis.print"), NULL)) {
+   options("profvis.print" = function(x)
+   {
+      invisible(.Call(.rs.routines$rs_fileEdit, c(x$x$message$prof_output)))
+   })
+}
