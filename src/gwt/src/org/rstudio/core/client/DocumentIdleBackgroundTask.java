@@ -56,30 +56,22 @@ public class DocumentIdleBackgroundTask
       pollDelayMs_ = pollDelayMs;
       idleThresholdMs_ = idleThresholdMs;
       task_ = task;
+      handlers_ = new HandlerRegistrations();
       
-      docDisplay_.addFocusHandler(new FocusHandler()
-      {
-         @Override
-         public void onFocus(FocusEvent event)
-         {
-            start();
-         }
-      });
-      
-      docDisplay_.addBlurHandler(new BlurHandler()
-      {
-         @Override
-         public void onBlur(BlurEvent event)
-         {
-            stop();
-         }
-      });
+      attach();
    }
    
    public void start()
    {
+      // If we try to 'stop()' then 'start()' the background task in quick
+      // succession, we should unset the 'stopRequested_' field to ensure that
+      // the 'stop()' request is cancelled, and let the originally scheduled
+      // task continue running.
       if (isRunning_)
+      {
+         stopRequested_ = false;
          return;
+      }
       
       if (!task_.onStart())
          return;
@@ -148,6 +140,33 @@ public class DocumentIdleBackgroundTask
       stopRequested_ = true;
    }
    
+   private void attach()
+   {
+      handlers_.add(docDisplay_.addFocusHandler(new FocusHandler()
+      {
+         @Override
+         public void onFocus(FocusEvent event)
+         {
+            start();
+         }
+      }));
+      
+      handlers_.add(docDisplay_.addBlurHandler(new BlurHandler()
+      {
+         @Override
+         public void onBlur(BlurEvent event)
+         {
+            stop();
+         }
+      }));
+   }
+   
+   public void detach()
+   {
+      stop();
+      handlers_.removeHandler();
+   }
+   
    private boolean stopExecution()
    {
       task_.onStop();
@@ -168,6 +187,7 @@ public class DocumentIdleBackgroundTask
    private final long pollDelayMs_;
    private final long idleThresholdMs_;
    private final BackgroundTask task_;
+   private final HandlerRegistrations handlers_;
    
    private long lastMouseMoveTime_;
    private ScreenCoordinates lastMouseCoords_;
