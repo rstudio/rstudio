@@ -1053,7 +1053,7 @@ Error getRmdTemplate(const json::JsonRpcRequest& request,
    std::string templateContent;
    if (skeletonPath.exists())
    {
-      error = readStringFromFile(skeletonPath, &templateContent);
+      error = readStringFromFile(skeletonPath, &templateContent, string_utils::LineEndingPosix);
       if (error)
          return error;
    }
