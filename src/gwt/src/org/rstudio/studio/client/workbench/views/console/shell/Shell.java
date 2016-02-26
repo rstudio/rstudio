@@ -399,7 +399,7 @@ public class Shell implements ConsoleInputHandler,
       // call a method on the SourceShim
       else
       {
-         commands_.executeCodeWithoutFocus().execute();
+         commands_.getCommandById(event.getCommandId()).execute();
       }
    }
    

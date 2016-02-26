@@ -322,6 +322,8 @@ public class TextFileType extends EditableFileType
          results.add(commands.reflowComment());
          results.add(commands.reformatCode());
          results.add(commands.renameInFile());
+         results.add(commands.profileCode());
+         results.add(commands.profileCodeWithoutFocus());
       }
       
       if (canExecuteAllCode())
@@ -339,6 +341,7 @@ public class TextFileType extends EditableFileType
          results.add(commands.executeToCurrentLine());
          results.add(commands.executeFromCurrentLine());
          results.add(commands.executeCurrentSection());
+         results.add(commands.profileCode());
       }
       if (canKnitToHTML())
       {

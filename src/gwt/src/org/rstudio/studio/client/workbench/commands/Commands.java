@@ -319,6 +319,8 @@ public abstract class
    public abstract AppCommand showProfiler();
    public abstract AppCommand startProfiler();
    public abstract AppCommand stopProfiler();
+   public abstract AppCommand profileCode();
+   public abstract AppCommand profileCodeWithoutFocus();
    
    // Tools
    public abstract AppCommand showShellDialog();
