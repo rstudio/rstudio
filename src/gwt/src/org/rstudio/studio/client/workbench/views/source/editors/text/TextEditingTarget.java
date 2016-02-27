@@ -4400,6 +4400,12 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
+            if (rPackageMonitor_.isPackageAttached("testthat"))
+            {
+               events_.fireEvent(new SendToConsoleEvent(command, true));
+               return;
+            }
+            
             server_.executeRCode("library(testthat)", new ServerRequestCallback<String>()
             {
                @Override
