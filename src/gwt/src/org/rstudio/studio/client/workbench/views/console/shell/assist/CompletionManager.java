@@ -35,5 +35,7 @@ public interface CompletionManager extends KeyDownPreviewHandler,
    void close();
    
    void onPaste(PasteEvent event);
+   
+   void detach();
 
 }

@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.r;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -23,11 +24,13 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionToolTip;
-
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
@@ -38,12 +41,41 @@ public class RCompletionToolTip extends CppCompletionToolTip
 {
    public RCompletionToolTip(DocDisplay docDisplay)
    {
-      // save references
       docDisplay_ = docDisplay;
+      handlers_ = new HandlerRegistrations();
 
       // set the max width
       setMaxWidth(Window.getClientWidth() - 200);
       getElement().getStyle().setZIndex(10000);
+      
+      addAttachHandler(new AttachEvent.Handler()
+      {
+         @Override
+         public void onAttachOrDetach(AttachEvent event)
+         {
+            if (event.isAttached())
+               attachHandlers();
+            else
+               detachHandlers();
+         }
+      });
+   }
+   
+   private void attachHandlers()
+   {
+      handlers_.add(docDisplay_.addBlurHandler(new BlurHandler()
+      {
+         @Override
+         public void onBlur(BlurEvent event)
+         {
+            hide();
+         }
+      }));
+   }
+   
+   private void detachHandlers()
+   {
+      handlers_.removeHandler();
    }
    
    public boolean previewKeyDown(NativeEvent event)
@@ -214,6 +246,12 @@ public class RCompletionToolTip extends CppCompletionToolTip
    protected void onLoad()
    {
       super.onLoad();
+      if (nativePreviewReg_ != null)
+      {
+         nativePreviewReg_.removeHandler();
+         nativePreviewReg_ = null;
+      }
+      
       nativePreviewReg_ = Event.addNativePreviewHandler(new NativePreviewHandler()
       {
          public void onPreviewNativeEvent(NativePreviewEvent e)
@@ -254,7 +292,11 @@ public class RCompletionToolTip extends CppCompletionToolTip
    protected void onUnload()
    {
       super.onUnload();
-      nativePreviewReg_.removeHandler();
+      if (nativePreviewReg_ != null)
+      {
+         nativePreviewReg_.removeHandler();
+         nativePreviewReg_ = null;
+      }
    }
    
    public String getSignature()
@@ -263,6 +305,8 @@ public class RCompletionToolTip extends CppCompletionToolTip
    }
    
    private final DocDisplay docDisplay_;
+   private final HandlerRegistrations handlers_;
+   
    private HandlerRegistration nativePreviewReg_;
    private AnchoredSelection anchor_;
    

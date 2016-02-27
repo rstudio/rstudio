@@ -78,6 +78,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
+import org.rstudio.studio.client.workbench.ui.ConsoleTabPanel;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
@@ -97,7 +98,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
-import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager;
@@ -173,6 +173,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(DataImport dataImport);
    void injectMembers(DataImportOptionsUiCsv dataImport);
    void injectMembers(CppCompletion completion);
+   void injectMembers(ConsoleTabPanel consoleTabPanel);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

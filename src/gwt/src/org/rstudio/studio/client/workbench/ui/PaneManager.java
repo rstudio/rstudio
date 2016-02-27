@@ -61,7 +61,6 @@ import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.PaneLayoutPreferencesPane;
-import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
@@ -204,7 +203,6 @@ public class PaneManager
                       Commands commands,
                       UIPrefs uiPrefs,
                       @Named("Console") final Widget consolePane,
-                      ConsoleInterruptButton consoleInterrupt,
                       SourceShim source,
                       @Named("History") final WorkbenchTab historyTab,
                       @Named("Files") final WorkbenchTab filesTab,
@@ -229,7 +227,6 @@ public class PaneManager
       commands_ = commands;
       uiPrefs_ = uiPrefs;
       consolePane_ = (ConsolePane)consolePane;
-      consoleInterrupt_ = consoleInterrupt;
       source_ = source;
       historyTab_ = historyTab;
       filesTab_ = filesTab;
@@ -881,7 +878,6 @@ public class PaneManager
                                                             deployContentTab_,
                                                             markersTab_,
                                                             eventBus_,
-                                                            consoleInterrupt_,
                                                             goToWorkingDirButton);
       
       return logicalWindow;
@@ -1101,7 +1097,6 @@ public class PaneManager
    private final WorkbenchTab compilePdfTab_;
    private final WorkbenchTab sourceCppTab_;
    private final ConsolePane consolePane_;
-   private final ConsoleInterruptButton consoleInterrupt_;
    private final SourceShim source_;
    private final WorkbenchTab historyTab_;
    private final WorkbenchTab filesTab_;

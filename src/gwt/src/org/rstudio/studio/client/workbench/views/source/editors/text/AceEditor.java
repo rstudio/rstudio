@@ -44,7 +44,6 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
-import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
@@ -417,6 +416,11 @@ public class AceEditor implements DocDisplay,
                for (HandlerRegistration handler : editorEventListeners_)
                   handler.removeHandler();
                editorEventListeners_.clear();
+               if (completionManager_ != null)
+               {
+                  completionManager_.detach();
+                  completionManager_ = null;
+               }
             }
          }
       });
@@ -617,6 +621,12 @@ public class AceEditor implements DocDisplay,
       if (fileType_ == null)
          return;
 
+      if (completionManager_ != null)
+      {
+         completionManager_.detach();
+         completionManager_ = null;
+      }
+      
       completionManager_ = completionManager;
 
       updateKeyboardHandlers();

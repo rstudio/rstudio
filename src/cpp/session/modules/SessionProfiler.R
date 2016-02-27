@@ -13,15 +13,40 @@
 #
 #
 
+.rs.addFunction("profileResources", function()
+{
+   if (identical(getOption("profvis.prof_extension"), NULL)) {
+      options("profvis.prof_extension" = ".rprof")
+   }
+
+   tempPath <- .Call(.rs.routines$rs_profilesPath)
+   if (!.rs.dirExists(tempPath)) {
+      dir.create(tempPath, recursive = TRUE)
+   }
+
+   return (list(
+      tempPath = tempPath
+   ))
+})
+
+.rs.addFunction("newProfileFileName" , function(path) {
+   profileFileName <- function (path, i) {
+      file.path(path, paste("profile", i, ".rprof", sep=""))
+   }
+
+   i <- 1
+   while (file.exists(profileFileName(path, i))) {
+      i <- i + 1
+   }
+
+   profileFileName(path, i)
+})
+
 .rs.addJsonRpcHandler("start_profiling", function(profilerOptions)
 {
    tryCatch({
-      tempPath <- .Call(.rs.routines$rs_profilesPath)
-      if (!.rs.dirExists(tempPath)) {
-         dir.create(tempPath, recursive = TRUE)
-      }
-      
-   	fileName <- tempfile(fileext = ".rprof", tmpdir = tempPath)
+      resources <- .rs.profileResources()
+      fileName <- .rs.newProfileFileName(resources$tempPath)
 
       Rprof(filename = fileName, line.profiling = TRUE)
 
@@ -29,7 +54,7 @@
          fileName = .rs.scalar(fileName)
       ))
    }, error = function(e) {
-      return(list(error = .rs.scalar(e)))
+      return(list(error = .rs.scalar(e$message)))
    })
 })
 
@@ -44,27 +69,39 @@
       }
 
       return(list(
-         fileName = .rs.scalar(profilerOptions$fileName)
+         fileName = .rs.nullOrScalar(profilerOptions$fileName)
       ))
    }, error = function(e) {
-      return(list(error = .rs.scalar(e)))
+      return(list(error = .rs.scalar(e$message)))
    })
 })
 
 .rs.addJsonRpcHandler("open_profile", function(profilerOptions)
 {
    tryCatch({
-      profvis <- profvis::profvis(prof_input = profilerOptions$fileName)
+      resources <- .rs.profileResources()
+      profvis <- profvis::profvis(prof_input = profilerOptions$fileName, split="h")
 
-      tempPath <- .Call(.rs.routines$rs_profilesPath)
-      htmlFile <- tempfile(fileext = ".html", tmpdir = tempPath)
-      htmlwidgets::saveWidget(profvis, htmlFile)
+      htmlFile <- tempfile(fileext = ".html", tmpdir = resources$tempPath)
+      htmlwidgets::saveWidget(profvis, htmlFile, selfcontained = FALSE)
 
       return(list(
          htmlFile = .rs.scalar(paste("profiles/", basename(htmlFile), sep = ""))
       ))
    }, error = function(e) {
-      return(list(error = .rs.scalar(e)))
+      return(list(error = .rs.scalar(e$message)))
+   })
+})
+
+.rs.addJsonRpcHandler("copy_profile", function(fromPath, toPath)
+{
+   tryCatch({
+      file.copy(fromPath, toPath, overwrite = TRUE)
+
+      return(list(
+      ))
+   }, error = function(e) {
+      return(list(error = .rs.scalar(e$message)))
    })
 })
 
@@ -80,3 +117,10 @@
       .rs.enqueClientEvent("rprof_stopped");
    }
 })
+
+if (identical(getOption("profvis.print"), NULL)) {
+   options("profvis.print" = function(x)
+   {
+      invisible(.Call(.rs.routines$rs_fileEdit, c(x$x$message$prof_output)))
+   })
+}

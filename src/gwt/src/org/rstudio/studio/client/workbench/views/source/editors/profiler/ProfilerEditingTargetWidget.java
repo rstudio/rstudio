@@ -53,9 +53,6 @@ public class ProfilerEditingTargetWidget extends Composite
    private Toolbar createToolbar(Commands commands)
    {
       Toolbar toolbar = new EditingTargetToolbar(commands);
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands.startProfiler().createToolbarButton());
-      toolbar.addLeftWidget(commands.stopProfiler().createToolbarButton());
       return toolbar;
    }
    
@@ -67,5 +64,10 @@ public class ProfilerEditingTargetWidget extends Composite
    public void showProfilePage(String path)
    {
       profilePage_.setUrl(path);
+   }
+   
+   public String getUrl()
+   {
+      return profilePage_.getUrl();
    }
 }
