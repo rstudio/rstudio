@@ -424,7 +424,7 @@ public class SessionInfo extends JavaScriptObject
    }-*/;
    
    public final native boolean isTestthatAvailable() /*-{
-      return this.testthat_available;
+      return !!this.testthat_available;
    }-*/;
    
    public final native boolean getShowUserHomePage() /*-{

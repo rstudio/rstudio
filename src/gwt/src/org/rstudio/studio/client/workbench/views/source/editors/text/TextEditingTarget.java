@@ -76,6 +76,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.SweaveFileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.r.RPackageMonitor;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.synctex.Synctex;
@@ -388,7 +389,8 @@ public class TextEditingTarget implements
                             DocDisplay docDisplay,
                             UIPrefs prefs, 
                             BreakpointManager breakpointManager,
-                            SourceBuildHelper sourceBuildHelper)
+                            SourceBuildHelper sourceBuildHelper,
+                            RPackageMonitor rPackageMonitor)
    {
       commands_ = commands;
       server_ = server;
@@ -404,6 +406,7 @@ public class TextEditingTarget implements
       fontSizeManager_ = fontSizeManager;
       breakpointManager_ = breakpointManager;
       sourceBuildHelper_ = sourceBuildHelper;
+      rPackageMonitor_ = rPackageMonitor;
 
       docDisplay_ = docDisplay;
       dirtyState_ = new DirtyState(docDisplay_, false);
@@ -4275,7 +4278,7 @@ public class TextEditingTarget implements
       // If the document being sourced is a testthat test file
       // and we have testthat available then use that
       if (isTestthatTestFile() &&
-          session_.getSessionInfo().isTestthatAvailable())
+          (session_.getSessionInfo().isTestthatAvailable() || rPackageMonitor_.isPackageLoaded("testthat")))
       {
          runTestthatTestFile();
          return;
@@ -4397,7 +4400,20 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            events_.fireEvent(new SendToConsoleEvent(command, true));
+            server_.executeRCode("library(testthat)", new ServerRequestCallback<String>()
+            {
+               @Override
+               public void onResponseReceived(String response)
+               {
+                  events_.fireEvent(new SendToConsoleEvent(command, true));
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
          }
       });
    }
@@ -5814,6 +5830,7 @@ public class TextEditingTarget implements
    private final LintManager lintManager_;
    private final TextEditingTargetRenameHelper renameHelper_;
    private CollabEditStartParams queuedCollabParams_;
+   private final RPackageMonitor rPackageMonitor_;
    
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =
