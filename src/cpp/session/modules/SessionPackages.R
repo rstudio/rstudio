@@ -54,7 +54,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    notifyPackageLoaded <- function(pkgname, ...)
    {
-      .Call(.rs.routines$rs_packageLoaded, pkgname)
+      version <- as.character(utils::packageVersion(pkgname))
+      .Call(.rs.routines$rs_packageLoaded, pkgname, version)
    }
 
    notifyPackageUnloaded <- function(pkgname, ...)

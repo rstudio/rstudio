@@ -537,8 +537,8 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.PackageLoaded))
          {
-            eventBus_.fireEvent(new PackageLoadedEvent(
-                  (String)event.getData()));
+            PackageLoadedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new PackageLoadedEvent(data));
          }
          else if (type.equals(ClientEvent.PackageUnloaded))
          {
