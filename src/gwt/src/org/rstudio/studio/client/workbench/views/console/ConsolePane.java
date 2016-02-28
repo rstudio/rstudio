@@ -98,12 +98,13 @@ public class ConsolePane extends WorkbenchPane
       toolbar.addLeftWidget(workingDir_);
       toolbar.addLeftWidget(commands_.goToWorkingDir().createToolbarButton());
       consoleInterruptButton_ = commands_.interruptR().createToolbarButton();
-      toolbar.addRightWidget(consoleInterruptButton_);
       
       ImageResource profilerIcon = FileIconResources.INSTANCE.iconProfiler();
-      profilerInterruptButton_= new ToolbarButton(profilerIcon, commands_.stopProfiler());
+      profilerInterruptButton_ = new ToolbarButton(profilerIcon, commands_.stopProfiler());
+      profilerInterruptButton_.setVisible(false);
 
       toolbar.addRightWidget(profilerInterruptButton_);
+      toolbar.addRightWidget(consoleInterruptButton_);
       
       return toolbar;
    }
