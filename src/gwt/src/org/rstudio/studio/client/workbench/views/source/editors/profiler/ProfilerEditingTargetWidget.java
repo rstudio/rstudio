@@ -52,7 +52,7 @@ public class ProfilerEditingTargetWidget extends Composite
 
    private Toolbar createToolbar(Commands commands)
    {
-      Toolbar toolbar = new EditingTargetToolbar(commands);
+      Toolbar toolbar = new EditingTargetToolbar(commands, true);
       return toolbar;
    }
    

@@ -228,13 +228,7 @@ public class TextEditingTargetWidget
 
    private Toolbar createToolbar(TextFileType fileType)
    {
-      Toolbar toolbar = new EditingTargetToolbar(commands_);
-       
-      toolbar.addLeftSeparator();
-      if (SourceWindowManager.isMainSourceWindow())
-         toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
-      toolbar.addLeftWidget(commands_.returnDocToMain().createToolbarButton());
-      toolbar.addLeftSeparator();
+      Toolbar toolbar = new EditingTargetToolbar(commands_, true);
 
       toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
       sourceOnSave_.getElement().getStyle().setMarginRight(0, Unit.PX);

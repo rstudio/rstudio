@@ -117,18 +117,7 @@ public class DataEditingTargetWidget extends Composite
    private Toolbar createToolbar(DataItem dataItem, Styles styles)
    {
 
-      Toolbar toolbar = new EditingTargetToolbar(commands_);
-      if (SourceWindowManager.isMainSourceWindow())
-      {
-         toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
-      }
-      else
-      {
-         toolbar.addLeftWidget(
-               commands_.returnDocToMain().createToolbarButton());
-      }
-      toolbar.addLeftSeparator();
-      
+      Toolbar toolbar = new EditingTargetToolbar(commands_, true);
       table_.initToolbar(toolbar);
 
       return toolbar;
