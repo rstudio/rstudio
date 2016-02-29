@@ -225,6 +225,7 @@ std::string chunkOutputExt(unsigned outputType)
    return "";
 }
 
+// given a document ID and a chunk ID, discover the last output the chunk had
 OutputPair lastChunkOutput(const std::string& docId, 
                            const std::string& chunkId)
 {
@@ -253,6 +254,18 @@ FilePath chunkOutputFile(const std::string& docId,
           .complete((boost::format("%1$05x%2") 
                      % output.ordinal 
                      % chunkOutputExt(output.outputType)).str());
+}
+
+FilePath chunkOutputFile(const std::string& docId, 
+                         const std::string& chunkId, 
+                         unsigned outputType)
+{
+   OutputPair output = lastChunkOutput(docId, chunkId);
+   if (output.outputType == outputType)
+      return chunkOutputFile(docId, chunkId, output);
+   output.ordinal++;
+   output.outputType = outputType;
+   return chunkOutputFile(docId, chunkId, output);
 }
 
 Error enqueueChunkOutput(
@@ -586,12 +599,7 @@ void onConsoleText(const std::string& docId, const std::string& chunkId,
       LOG_ERROR(error);
    }
 
-   FilePath outputCsv;
-   OutputPair last = lastChunkOutput(docId, chunkId);
-   if (last.outputType == kChunkOutputText) 
-   {
-      
-   }
+   FilePath outputCsv = chunkOutputFile(docId, chunkId, kChunkOutputText);
 
    std::vector<std::string> vals; 
    vals.push_back(safe_convert::numberToString(type));
@@ -756,18 +764,10 @@ void cleanChunks(const FilePath& cacheDir,
                        newIds.begin(), newIds.end(), 
                        std::back_inserter(staleIds));
 
+   // remove each stale folder from the system
    BOOST_FOREACH(const std::string& staleId, staleIds)
    {
-      // clean chunk HTML and supporting files if present
-      error = cacheDir.complete(staleId + ".html").removeIfExists();
-      if (error)
-         LOG_ERROR(error);
-      error = cacheDir.complete(staleId + "_files").removeIfExists();
-      if (error)
-         LOG_ERROR(error);
-      error = cacheDir.complete(staleId + ".csv").removeIfExists();
-      if (error)
-         LOG_ERROR(error);
+      error = cacheDir.complete(staleId).removeIfExists();
    }
 }
 
