@@ -251,7 +251,7 @@ FilePath chunkOutputFile(const std::string& docId,
    }
 
    return chunkOutputPath(docPath, docId, chunkId, userSettings().contextId())
-          .complete((boost::format("%1$05x%2") 
+          .complete((boost::format("%|1$05x|%2%") 
                      % output.ordinal 
                      % chunkOutputExt(output.outputType)).str());
 }
@@ -592,14 +592,13 @@ void onConsoleText(const std::string& docId, const std::string& chunkId,
    if (output.empty())
       return;
 
-   FilePath path;
-   Error error = source_database::getPath(docId, &path);
+   FilePath outputCsv = chunkOutputFile(docId, chunkId, kChunkOutputText);
+   Error error = outputCsv.parent().ensureDirectory();
    if (error)
    {
       LOG_ERROR(error);
+      return;
    }
-
-   FilePath outputCsv = chunkOutputFile(docId, chunkId, kChunkOutputText);
 
    std::vector<std::string> vals; 
    vals.push_back(safe_convert::numberToString(type));
