@@ -204,8 +204,6 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="executeAllCode"/>
          </menu>
          <separator/>
-         <cmd refid="profileCode"/>
-         <separator/>
          <cmd refid="sourceActiveDocument"/>
          <cmd refid="sourceActiveDocumentWithEcho"/>
          <separator/>
@@ -355,10 +353,19 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="errorsBreak"/>
          </menu>
          <separator/>
+         <cmd refid="debugHelp"/>
+      </menu>
+
+      <menu label="_Profile">
          <cmd refid="startProfiler"/>
          <cmd refid="stopProfiler"/>
          <separator/>
-         <cmd refid="debugHelp"/>
+         <cmd refid="profileCode"/>
+         <separator/>
+         <cmd refid="openProfile"/>
+         <cmd refid="saveProfileAs"/>
+         <separator/>
+         <cmd refid="profileHelp"/>
       </menu>
 
       <separator/>
@@ -661,7 +668,6 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="executeCurrentChunk" value="Cmd+Alt+C"/>
          <shortcut refid="executeCurrentChunk" value="Cmd+Shift+Enter"/>
          <shortcut refid="executeNextChunk" value="Cmd+Alt+N"/>
-         <shortcut refid="profileCode" value="Cmd+Alt+Shift+P"/>
       </shortcutgroup>
       <shortcutgroup name="Debug">
          <shortcut refid="debugBreakpoint" value="Shift+F9"/>
@@ -670,6 +676,9 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="debugFinish" value="Shift+F6"/>
          <shortcut refid="debugContinue" value="Shift+F5"/>
          <shortcut refid="debugStop" value="Shift+F8"/>
+      </shortcutgroup>
+      <shortcutgroup name="Profile">
+         <shortcut refid="profileCode" value="Cmd+Alt+Shift+P"/>
       </shortcutgroup>
       <shortcutgroup name="Source Control">
          <shortcut refid="vcsFileDiff" value="Ctrl+Alt+D" title="Diff Files"/>
@@ -1376,16 +1385,6 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Re-Run _Previous"
         desc="Re-run the previous code region"
         context="r"/>
-
-   <cmd id="profileCode"
-        label="Profile Current Line or Selection"
-        buttonLabel="Profile"
-        menuLabel="_Profile Selected Line(s)"
-        desc="Profile the current line or selection"
-        context="r"/>
-
-   <cmd id="profileCodeWithoutFocus"
-        rebindable="false"/>
         
    <cmd id="insertChunk"
         menuLabel="_Insert Chunk"
@@ -2623,6 +2622,32 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Stop Profiling"
         desc="Stop profiling R code"
         rebindable="false"/>
+
+   <cmd id="profileCode"
+        label="Profile Current Line or Selection"
+        buttonLabel="Profile"
+        menuLabel="_Profile Selected Line(s)"
+        desc="Profile the current line or selection"
+        context="r"/>
+
+   <cmd id="profileCodeWithoutFocus"
+        rebindable="false"/>
+
+   <cmd id="openProfile"
+        label="Open Profile..."
+        menuLabel="_Open Profile..."
+        desc="Opens a profile from a file"/>
+
+   <cmd id="saveProfileAs"
+        label="Save Profile As..."
+        menuLabel="_Save Profile As..."
+        desc="Saves current profile into a file"/>
+
+   <cmd id="profileHelp"
+        label="Show Guide on Profiling with RStudio"
+        menuLabel="Profiling _Help"
+        desc="Guide to profiling features"
+        context="help"/>
 
    <cmd id="reloadShinyApp"
         label="Reload Shiny Application"

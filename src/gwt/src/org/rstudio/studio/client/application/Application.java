@@ -782,6 +782,11 @@ public class Application implements ApplicationEventHandlers
           commands_.showProfiler().remove();
           commands_.startProfiler().remove();
           commands_.stopProfiler().remove();
+          commands_.profileCode().remove();
+
+          commands_.saveProfileAs().remove();
+          commands_.openProfile().remove();
+          commands_.profileHelp().remove();
       }
       
       // show new session when appropriate
