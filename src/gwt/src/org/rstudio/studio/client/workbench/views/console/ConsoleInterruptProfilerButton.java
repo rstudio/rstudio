@@ -16,20 +16,32 @@
 package org.rstudio.studio.client.workbench.views.console;
 
 import org.rstudio.core.client.layout.DelayFadeInHelper;
-import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.RprofEvent;
 
 import com.google.gwt.dom.client.Style.Position;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
 
 public class ConsoleInterruptProfilerButton extends Composite
 {
+   public static Image CreateProfilerButton()
+   {
+      ImageResource icon = FileIconResources.INSTANCE.iconProfiler();
+      Image button = new Image(icon);
+      button.addStyleName(ThemeResources.INSTANCE.themeStyles().toolbarButtonLeftImage());
+      button.getElement().getStyle().setMarginRight(4,Unit.PX);
+      
+      return button;
+   }
+   
    @Inject
    public ConsoleInterruptProfilerButton(final EventBus events,
                                          Commands commands)
@@ -40,10 +52,10 @@ public class ConsoleInterruptProfilerButton extends Composite
       // effect to work.
       SimplePanel panel = new SimplePanel();
       panel.getElement().getStyle().setPosition(Position.RELATIVE);
-
-      ImageResource icon = FileIconResources.INSTANCE.iconProfiler();;
-      ToolbarButton button = new ToolbarButton(icon,
-                                               commands.stopProfiler());
+      
+      ImageResource icon = FileIconResources.INSTANCE.iconProfiler();
+      Image button = CreateProfilerButton();
+      
       width_ = icon.getWidth() + 6;
       height_ = icon.getHeight();
       panel.setWidget(button);

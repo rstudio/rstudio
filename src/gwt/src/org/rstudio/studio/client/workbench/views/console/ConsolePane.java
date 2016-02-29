@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.console;
 
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -99,8 +100,7 @@ public class ConsolePane extends WorkbenchPane
       toolbar.addLeftWidget(commands_.goToWorkingDir().createToolbarButton());
       consoleInterruptButton_ = commands_.interruptR().createToolbarButton();
       
-      ImageResource profilerIcon = FileIconResources.INSTANCE.iconProfiler();
-      profilerInterruptButton_ = new ToolbarButton(profilerIcon, commands_.stopProfiler());
+      profilerInterruptButton_ = ConsoleInterruptProfilerButton.CreateProfilerButton();
       profilerInterruptButton_.setVisible(false);
 
       toolbar.addRightWidget(profilerInterruptButton_);
@@ -193,7 +193,7 @@ public class ConsolePane extends WorkbenchPane
    private Session session_;
    private Label workingDir_;
    private ToolbarButton consoleInterruptButton_;
-   private ToolbarButton profilerInterruptButton_;
+   private Image profilerInterruptButton_;
    private boolean debugMode_;
    private boolean profilerMode_;
    private SecondaryToolbar secondaryToolbar_;
