@@ -394,7 +394,7 @@ public class FileTypeRegistry
       register("*.rs", RUST, icons.iconRust());
       register("*.scala", SCALA, icons.iconScala());
       register("*.snippets", SNIPPETS, icons.iconSnippets());
-      register("*.rprof", PROFILER, icons.iconRprofile());
+      register("*.Rprof", PROFILER, icons.iconRprofile());
 
       registerIcon(".jpg", icons.iconPng());
       registerIcon(".jpeg", icons.iconPng());

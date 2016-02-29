@@ -15,8 +15,9 @@
 
 .rs.addFunction("profileResources", function()
 {
-   if (identical(getOption("profvis.prof_extension"), NULL)) {
-      options("profvis.prof_extension" = ".rprof")
+   if (identical(getOption("profvis.prof_extension"), NULL) ||
+       identical(getOption("profvis.prof_extension"), ".rprof")) {
+      options("profvis.prof_extension" = ".Rprof")
    }
 
    tempPath <- .Call(.rs.routines$rs_profilesPath)
@@ -31,7 +32,7 @@
 
 .rs.addFunction("newProfileFileName" , function(path) {
    profileFileName <- function (path, i) {
-      file.path(path, paste("profile", i, ".rprof", sep=""))
+      file.path(path, paste("profile", i, ".Rprof", sep=""))
    }
 
    i <- 1
@@ -118,9 +119,13 @@
    }
 })
 
+.rs.addFunction("profilePrint", function(x)
+{
+   invisible(.Call(.rs.routines$rs_fileEdit, c(x$x$message$prof_output)))
+})
+
 if (identical(getOption("profvis.print"), NULL)) {
-   options("profvis.print" = function(x)
-   {
-      invisible(.Call(.rs.routines$rs_fileEdit, c(x$x$message$prof_output)))
+   options("profvis.print" = function(x, ...) {
+      .rs.profilePrint(x, ...)
    })
 }
