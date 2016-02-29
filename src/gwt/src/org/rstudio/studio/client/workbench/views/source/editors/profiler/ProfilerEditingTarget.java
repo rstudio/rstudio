@@ -66,8 +66,11 @@ import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.P
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
+import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
+import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
+import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -175,7 +178,12 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    public HashSet<AppCommand> getSupportedCommands()
    {
-      return fileType_.getSupportedCommands(commands_);
+      HashSet<AppCommand> commands = fileType_.getSupportedCommands(commands_);
+      if (SourceWindowManager.isMainSourceWindow())
+         commands.add(commands_.popoutDoc());
+      else
+         commands.add(commands_.returnDocToMain());
+      return commands;
    }
    
    @Override
@@ -585,6 +593,21 @@ public class ProfilerEditingTarget implements EditingTarget,
                FileSystemItem.createFile(navigationTarget.getFile()),
                filePosition);
       }
+   }
+
+   @Handler
+   void onPopoutDoc()
+   {
+      events_.fireEvent(new PopoutDocEvent(getId(), currentPosition()));
+   }
+
+   @Handler
+   void onReturnDocToMain()
+   {
+      events_.fireEventToMainWindow(new DocWindowChangedEvent(
+            getId(), SourceWindowManager.getSourceWindowId(), "",
+            DocTabDragParams.create(getId(), currentPosition()),
+            null, 0));
    }
 
    private static native void initializeEvents() /*-{
