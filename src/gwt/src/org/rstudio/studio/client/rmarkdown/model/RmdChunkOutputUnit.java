@@ -1,5 +1,5 @@
 /*
- * RmdChunkOutput.java
+ * RmdChunkOutputUnit.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -14,28 +14,32 @@
  */
 package org.rstudio.studio.client.rmarkdown.model;
 
+import org.rstudio.core.client.js.JsArrayEx;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
-public class RmdChunkOutput extends JavaScriptObject
+public class RmdChunkOutputUnit extends JavaScriptObject
 {
-   protected RmdChunkOutput()
-   { }
-   
-   public final native String getChunkId() /*-{
-      return this.chunk_id;
-   }-*/;
-
-   public final native String getDocId() /*-{
-      return this.doc_id;
-   }-*/;
-
-   public final native JsArray<RmdChunkOutputUnit> getUnits() /*-{
-      return this.chunk_outputs || [];
-   }-*/;
-   
-   public final boolean isEmpty() 
+   protected RmdChunkOutputUnit()
    {
-      return getUnits() == null || getUnits().length() == 0;
    }
+
+   public final native int getType() /*-{
+      return this.output_type;
+   }-*/;
+   
+   public final native String getString() /*-{
+      return this.output_val;
+   }-*/;
+   
+   public final native JsArray<JsArrayEx> getArray() /*-{
+      return this.output_val;
+   }-*/;
+   
+   // symmetric with server-side enumeration
+   public final static int TYPE_NONE = 0;
+   public final static int TYPE_TEXT = 1; 
+   public final static int TYPE_PLOT = 2;
+   public final static int TYPE_HTML = 3;
 }

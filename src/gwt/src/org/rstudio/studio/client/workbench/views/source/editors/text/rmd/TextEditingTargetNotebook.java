@@ -43,7 +43,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutput
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
@@ -83,7 +82,6 @@ public class TextEditingTargetNotebook
    };
 
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
-                                    TextEditingTargetRMarkdownHelper rmdHelper,
                                     DocDisplay docDisplay,
                                     DocUpdateSentinel docUpdateSentinel,
                                     SourceDocument document)
@@ -93,7 +91,6 @@ public class TextEditingTargetNotebook
       initialChunkDefs_ = document.getChunkDefs();
       outputWidgets_ = new HashMap<String, ChunkOutputWidget>();
       lineWidgets_ = new HashMap<String, LineWidget>();
-      rmdHelper_ = rmdHelper;
       chunkExecQueue_ = new LinkedList<ChunkExecQueueUnit>();
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -546,7 +543,6 @@ public class TextEditingTargetNotebook
    private Queue<ChunkExecQueueUnit> chunkExecQueue_;
    private ChunkExecQueueUnit executingChunk_;
    
-   private final TextEditingTargetRMarkdownHelper rmdHelper_;
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel docUpdateSentinel_;
    private Provider<SourceWindowManager> pSourceWindowManager_;

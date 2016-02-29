@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsArrayEx;
@@ -26,6 +25,7 @@ import org.rstudio.studio.client.application.ApplicationInterrupt.InterruptHandl
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.shell.ShellWidget;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
+import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
@@ -167,13 +167,20 @@ public class ChunkOutputWidget extends Composite
 
    public void showChunkOutput(RmdChunkOutput output)
    {
-      if (StringUtil.isNullOrEmpty(output.getUrl()))
+      // loop over the output units and emit the appropriate contents for each
+      JsArray<RmdChunkOutputUnit> units = output.getUnits();
+      for (int i = 0; i < units.length(); i++)
       {
-         showConsoleOutput(output.getConsole());
-      }
-      else
-      {
-         showHtmlOutput(output.getUrl());
+         RmdChunkOutputUnit unit = units.get(i);
+         switch(unit.getType())
+         {
+         case RmdChunkOutputUnit.TYPE_TEXT:
+            showConsoleOutput(unit.getArray());
+            break;
+         case RmdChunkOutputUnit.TYPE_HTML:
+            showHtmlOutput(unit.getString());
+            break;
+         }
       }
    }
    
@@ -212,20 +219,12 @@ public class ChunkOutputWidget extends Composite
    
    private void showHtmlOutput(String url)
    {
-      // destroy console if necessary
-      if (state_ == CONSOLE_READY)
-         destroyConsole();
-      
-      // clean up old frame if needed
-      if (frame_ != null)
-         frame_.removeFromParent();
+      final ChunkOutputFrame frame = new ChunkOutputFrame();
+      frame.getElement().getStyle().setHeight(100, Unit.PCT);
+      frame.getElement().getStyle().setWidth(100, Unit.PCT);
+      root_.add(frame);
 
-      frame_ = new ChunkOutputFrame();
-      frame_.getElement().getStyle().setHeight(100, Unit.PCT);
-      frame_.getElement().getStyle().setWidth(100, Unit.PCT);
-      root_.add(frame_);
-
-      frame_.loadUrl(url, new Command() 
+      frame.loadUrl(url, new Command() 
       {
          @Override
          public void execute()
@@ -236,8 +235,8 @@ public class ChunkOutputWidget extends Composite
             applyCachedEditorStyle();
             showReadyState();
             setOverflowStyle();
-            injectEmptyText(frame_.getDocument().getBody());
-            Element doc = frame_.getDocument().getDocumentElement();
+            injectEmptyText(frame.getDocument().getBody());
+            Element doc = frame.getDocument().getDocumentElement();
             int height = doc.getScrollHeight();
             if (doc.getScrollWidth() > doc.getOffsetWidth())
             {
@@ -322,10 +321,16 @@ public class ChunkOutputWidget extends Composite
          return;
       Style frameStyle = getElement().getStyle();
       frameStyle.setBorderColor(s_outlineColor);
-      if (state_ == CHUNK_RENDERED)
+
+      // apply the style to any frames in the output
+      for (Widget w: root_)
       {
-         Style bodyStyle = frame_.getDocument().getBody().getStyle();
-         bodyStyle.setColor(s_color);
+         if (w instanceof ChunkOutputFrame)
+         {
+            ChunkOutputFrame frame = (ChunkOutputFrame)w;
+            Style bodyStyle = frame.getDocument().getBody().getStyle();
+            bodyStyle.setColor(s_color);
+         }
       }
       getElement().getStyle().setBackgroundColor(s_backgroundColor);
    }
@@ -378,10 +383,7 @@ public class ChunkOutputWidget extends Composite
       {
          console_.getElement().setInnerHTML("");
       }
-      // remove the frame if it exists
-      if (frame_ != null)
-         frame_.removeFromParent();
-      
+
       // attach the console
       root_.add(console_);
    }
@@ -436,19 +438,7 @@ public class ChunkOutputWidget extends Composite
    
    private void setOverflowStyle()
    {
-      Element ele;
-      if (state_ == CONSOLE_READY)
-      {
-         ele = console_.getElement();
-      }
-      else if (state_ == CHUNK_RENDERED)
-      {
-         ele = frame_.getDocument().getDocumentElement();
-      }
-      else
-      {
-         return;
-      }
+      Element ele = root_.getElement();
       boolean hasOverflow = ele.getScrollHeight() > ele.getOffsetHeight();
       if (hasOverflow && !root_.getElement().hasClassName(style.overflowY()))
       {
@@ -496,7 +486,6 @@ public class ChunkOutputWidget extends Composite
    @UiField HTMLPanel root_;
    @UiField ChunkStyle style;
    
-   private ChunkOutputFrame frame_;
    private PreWidget console_;
    private VirtualConsole vconsole_;
    
