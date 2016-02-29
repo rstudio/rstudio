@@ -184,7 +184,7 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
     } else if (value instanceof Integer) {
       return JIntLiteral.get(((Integer) value).intValue()).toSource();
     } else if (value instanceof Long) {
-      return JLongLiteral.get(((Long) value).intValue()).toSource();
+      return JLongLiteral.get(((Long) value).longValue()).toSource();
     } else if (value instanceof String) {
       return '"' + Generator.escape((String) value) + '"';
     } else {
