@@ -15,6 +15,11 @@
  */
 package elemental.json.impl;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
+import elemental.json.Json;
 import elemental.json.JsonNumber;
 import elemental.json.JsonType;
 import elemental.json.JsonValue;
@@ -24,7 +29,9 @@ import elemental.json.JsonValue;
  */
 public class JreJsonNumber extends JreJsonValue implements JsonNumber {
 
-  private double number;
+  private static final long serialVersionUID = 1L;
+
+  private transient double number;
 
   public JreJsonNumber(double number) {
     this.number = number;
@@ -73,5 +80,15 @@ public class JreJsonNumber extends JreJsonValue implements JsonNumber {
       toReturn = toReturn.substring(0, toReturn.length() - 2);
     }
     return toReturn;
+  }
+
+  private void readObject(ObjectInputStream stream)
+          throws IOException, ClassNotFoundException {
+    JreJsonNumber instance = parseJson(stream);
+    this.number = instance.number;
+  }
+
+  private void writeObject(ObjectOutputStream stream) throws IOException {
+    stream.writeObject(toJson());
   }
 }

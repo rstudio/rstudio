@@ -15,6 +15,11 @@
  */
 package elemental.json.impl;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
+import elemental.json.Json;
 import elemental.json.JsonString;
 import elemental.json.JsonType;
 import elemental.json.JsonValue;
@@ -24,7 +29,9 @@ import elemental.json.JsonValue;
  */
 public class JreJsonString extends JreJsonValue implements JsonString {
 
-  private String string;
+  private static final long serialVersionUID = 1L;
+
+  private transient String string;
 
   public JreJsonString(String string) {
     this.string = string;
@@ -78,4 +85,15 @@ public class JreJsonString extends JreJsonValue implements JsonString {
   public String toJson() throws IllegalStateException {
     return JsonUtil.quote(getString());
   }
+
+  private void readObject(ObjectInputStream stream) throws IOException,
+      ClassNotFoundException {
+    JreJsonString instance = parseJson(stream);
+    this.string = instance.string;
+  }
+
+  private void writeObject(ObjectOutputStream stream) throws IOException {
+    stream.writeObject(toJson());
+  }
+
 }

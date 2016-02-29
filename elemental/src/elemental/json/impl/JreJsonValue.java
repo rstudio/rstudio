@@ -15,6 +15,10 @@
  */
 package elemental.json.impl;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+
+import elemental.json.Json;
 import elemental.json.JsonValue;
 
 /**
@@ -27,5 +31,11 @@ public abstract class JreJsonValue implements JsonValue {
   @Override
   public Object toNative() {
     return this;
+  }
+
+  protected static <T extends JsonValue> T parseJson(ObjectInputStream stream)
+    throws ClassNotFoundException, IOException {
+    String jsonString = (String) stream.readObject();
+    return Json.instance().parse(jsonString);
   }
 }

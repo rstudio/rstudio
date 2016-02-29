@@ -15,10 +15,12 @@
  */
 package elemental.json;
 
+import java.io.Serializable;
+
 /**
  * Base interface for all Json values.
  */
-public interface JsonValue {
+public interface JsonValue extends Serializable {
 
   /**
    * Coerces underlying value to boolean according to the rules of Javascript coercion.

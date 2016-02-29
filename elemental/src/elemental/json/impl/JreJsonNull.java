@@ -15,6 +15,11 @@
  */
 package elemental.json.impl;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamException;
+
 import elemental.json.JsonNull;
 import elemental.json.JsonType;
 import elemental.json.JsonValue;
@@ -23,6 +28,8 @@ import elemental.json.JsonValue;
  * Server-side implementation of JsonObject.
  */
 public class JreJsonNull extends JreJsonValue implements JsonNull {
+
+  private static final long serialVersionUID = 1L;
 
   public static final JsonNull NULL_INSTANCE = new JreJsonNull();
 
@@ -62,4 +69,9 @@ public class JreJsonNull extends JreJsonValue implements JsonNull {
   public String toJson() {
     return null;
   }
+
+  private Object readResolve() throws ObjectStreamException {
+    return NULL_INSTANCE;
+  }
+
 }

@@ -15,9 +15,13 @@
  */
 package elemental.json.impl;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import elemental.json.Json;
 import elemental.json.JsonArray;
 import elemental.json.JsonBoolean;
 import elemental.json.JsonFactory;
@@ -32,9 +36,11 @@ import elemental.json.JsonValue;
  */
 public class JreJsonArray extends JreJsonValue implements JsonArray {
 
-  private ArrayList<JsonValue> arrayValues = new ArrayList<JsonValue>();
+  private static final long serialVersionUID = 1L;
 
-  private JsonFactory factory;
+  private transient ArrayList<JsonValue> arrayValues = new ArrayList<JsonValue>();
+
+  private transient JsonFactory factory;
 
   public JreJsonArray(JsonFactory factory) {
     this.factory = factory;
@@ -162,4 +168,16 @@ public class JreJsonArray extends JreJsonValue implements JsonArray {
     }
     visitor.endVisit(this, ctx);
   }
+
+  private void readObject(ObjectInputStream stream)
+          throws IOException, ClassNotFoundException {
+    JreJsonArray instance = parseJson(stream);
+    this.factory = Json.instance();
+    this.arrayValues = instance.arrayValues;
+  }
+
+  private void writeObject(ObjectOutputStream stream) throws IOException {
+    stream.writeObject(toJson());
+  }
+
 }
