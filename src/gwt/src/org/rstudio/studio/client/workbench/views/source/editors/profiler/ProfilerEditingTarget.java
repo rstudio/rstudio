@@ -220,8 +220,6 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    public void onActivate()
    {
-      pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
-      
       if (!htmlPathInitialized_) {
          htmlPathInitialized_ = true;
          
@@ -235,6 +233,8 @@ public class ProfilerEditingTarget implements EditingTarget,
                {
                   persistHtmlPath(newHtmlPath);
                   view_.showProfilePage(newHtmlPath);
+                  
+                  pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
                }
                
             });
