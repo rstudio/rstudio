@@ -171,7 +171,7 @@ public class EditingTargetCodeExecution
       
       if (functionWrapper != null)
       {
-         code = functionWrapper + "(" + code + ")";
+         code = functionWrapper + "({" + code + "})";
       }
       
       // send to console
