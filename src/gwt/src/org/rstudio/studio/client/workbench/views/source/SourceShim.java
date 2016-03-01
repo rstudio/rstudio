@@ -190,6 +190,7 @@ public class SourceShim extends Composite
       events.addHandler(InsertSourceEvent.TYPE, asyncSource);
       events.addHandler(SnippetsChangedEvent.TYPE, asyncSource);
       events.addHandler(MaximizeSourceWindowEvent.TYPE, this);
+      events.addHandler(EnsureVisibleSourceWindowEvent.TYPE, this);
       asyncSource_ = asyncSource;
 
       events.fireEvent(new DocTabsChangedEvent(new String[0],
@@ -226,6 +227,7 @@ public class SourceShim extends Composite
    public void onEnsureVisibleSourceWindow(EnsureVisibleSourceWindowEvent e)
    {
       fireEvent(new EnsureVisibleEvent());
+      fireEvent(new EnsureHeightEvent(EnsureHeightEvent.NORMAL));
    }
 
    public void forceLoad()

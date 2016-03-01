@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.console;
 
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
@@ -28,7 +27,6 @@ import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
