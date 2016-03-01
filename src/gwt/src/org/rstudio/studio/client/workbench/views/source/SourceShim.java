@@ -49,7 +49,8 @@ import org.rstudio.studio.client.workbench.views.source.events.*;
 @Singleton
 public class SourceShim extends Composite
    implements IsWidget, HasEnsureVisibleHandlers, HasEnsureHeightHandlers, BeforeShowCallback,
-              ProvidesResize, RequiresResize, RequiresVisibilityChanged, MaximizeSourceWindowEvent.Handler
+              ProvidesResize, RequiresResize, RequiresVisibilityChanged, MaximizeSourceWindowEvent.Handler,
+              EnsureVisibleSourceWindowEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, AsyncSource> {}
 
@@ -217,7 +218,14 @@ public class SourceShim extends Composite
    @Override
    public void onMaximizeSourceWindow(MaximizeSourceWindowEvent e)
    {
+      fireEvent(new EnsureVisibleEvent());
       fireEvent(new EnsureHeightEvent(EnsureHeightEvent.MAXIMIZED));
+   }
+   
+   @Override
+   public void onEnsureVisibleSourceWindow(EnsureVisibleSourceWindowEvent e)
+   {
+      fireEvent(new EnsureVisibleEvent());
    }
 
    public void forceLoad()

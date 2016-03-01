@@ -59,6 +59,7 @@ import org.rstudio.studio.client.workbench.views.source.events.DocFocusedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.EnsureVisibleSourceWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.events.MaximizeSourceWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
@@ -734,6 +735,21 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          if (hasSourceAndConsolePaired(paneConfig.getPanes()))
          {
             events_.fireEvent(new MaximizeSourceWindowEvent());
+         }  
+      }
+   }
+   
+   public void ensureVisibleSourcePaneIfNecessary()
+   {
+      if (SourceWindowManager.isMainSourceWindow())
+      {
+         // see if the Source and Console are paired
+         PaneConfig paneConfig = uiPrefs_.paneConfig().getValue();
+         if (paneConfig == null)
+            paneConfig = PaneConfig.createDefault();
+         if (hasSourceAndConsolePaired(paneConfig.getPanes()))
+         {
+            events_.fireEvent(new EnsureVisibleSourceWindowEvent());
          }  
       }
    }

@@ -23,6 +23,7 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
@@ -30,6 +31,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
@@ -41,6 +43,7 @@ public class ProfilerPresenter implements RprofEvent.Handler
    private final HandlerRegistrations handlerRegistrations_ = new HandlerRegistrations();
    private final GlobalDisplay globalDisplay_;
    private final EventBus events_;
+   private Provider<SourceWindowManager> pSourceWindowManager_;
    
    final String profilerDependecyUserAction_ = "Preparing profiler";
    
@@ -60,13 +63,15 @@ public class ProfilerPresenter implements RprofEvent.Handler
                             Commands commands,
                             DependencyManager dependencyManager,
                             GlobalDisplay globalDisplay,
-                            EventBus events)
+                            EventBus events,
+                            Provider<SourceWindowManager> pSourceWindowManager)
    {
       server_ = server;
       commands_ = commands;
       dependencyManager_ = dependencyManager;
       globalDisplay_ = globalDisplay;
       events_ = events;
+      pSourceWindowManager_ = pSourceWindowManager;
       
       binder.bind(commands, this);
 
@@ -120,6 +125,8 @@ public class ProfilerPresenter implements RprofEvent.Handler
                            response.getErrorMessage());
                      return;
                   }
+                  
+                  pSourceWindowManager_.get().ensureVisibleSourcePaneIfNecessary();
 
                   response_ = response;
                }
