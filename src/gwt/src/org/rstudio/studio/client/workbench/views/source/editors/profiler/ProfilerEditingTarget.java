@@ -68,7 +68,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.P
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;
@@ -141,26 +140,12 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    public HasValue<String> getName()
    {
-      String title = getTitle();
-      return new Value<String>(title);
+      return name_;
    }
 
    public String getTitle()
    {
-      String name = doc_.getProperties().getString("name");
-      String tempName = doc_.getProperties().getString("tempName");
-      
-      if (!StringUtil.isNullOrEmpty(name)) {
-         return name;
-      }
-      else if (!StringUtil.isNullOrEmpty(tempName)) {
-         return tempName;
-      }
-      else {
-         String defaultName = defaultNameProvider_.get();
-         persistDocumentProperty("tempName", defaultName);
-         return defaultName;
-      }
+      return name_.getValue();
    }
 
    public String getContext()
@@ -390,6 +375,24 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       onCompleted.execute();
    }
+   
+   private String getAndSetInitialName()
+   {
+      String name = doc_.getProperties().getString("name");
+      tempName_ = doc_.getProperties().getString("tempName");
+      
+      if (!StringUtil.isNullOrEmpty(name)) {
+         return name;
+      }
+      else if (!StringUtil.isNullOrEmpty(tempName_)) {
+         return tempName_;
+      }
+      else {
+         String defaultName = defaultNameProvider_.get();
+         persistDocumentProperty("tempName", defaultName);
+         return defaultName;
+      }
+   }
 
    public void initialize(SourceDocument document,
                           FileSystemContext fileContext,
@@ -400,6 +403,8 @@ public class ProfilerEditingTarget implements EditingTarget,
       doc_ = document;
       view_ = new ProfilerEditingTargetWidget(commands_);
       defaultNameProvider_ = defaultNameProvider;
+      
+      getName().setValue(getAndSetInitialName());
       
       presenter_.attatch(doc_, view_);
    }
@@ -477,10 +482,14 @@ public class ProfilerEditingTarget implements EditingTarget,
       saveNewFile(getPath());
    }
    
-   private void updateNameFromPath()
+   private void savePropertiesWithPath(String path)
    {
-      String name = FileSystemItem.getNameFromPath(getPath());
+      String name = FileSystemItem.getNameFromPath(path);
       persistDocumentProperty("name", name);
+      persistDocumentProperty("path", path);
+      
+      getName().setValue(name, true);
+      name_.fireChangeEvent();
    }
 
    private ProfilerContents getContents()
@@ -580,8 +589,7 @@ public class ProfilerEditingTarget implements EditingTarget,
                         @Override
                         public void onResponseReceived(JavaScriptObject response)
                         {
-                           eventBus_.fireEvent(new FileEditEvent(saveItem));
-                           
+                           savePropertiesWithPath(saveItem.getPath());
                            indicator.onCompleted();
                         }
 
@@ -634,6 +642,14 @@ public class ProfilerEditingTarget implements EditingTarget,
             DocTabDragParams.create(getId(), currentPosition()),
             null, 0));
    }
+   
+   private boolean isSaved()
+   {
+      String name = doc_.getProperties().getString("name");
+      
+      // only saved documents contain a given name, not a tempName
+      return !StringUtil.isNullOrEmpty(name);
+   }
 
    private static native void initializeEvents() /*-{
       var handler = $entry(function(e) {
@@ -674,4 +690,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    private boolean htmlPathInitialized_;
    
    private static boolean initializedEvents_;
+   
+   private Value<String> name_ = new Value<String>(null);
+   private String tempName_;
 }
