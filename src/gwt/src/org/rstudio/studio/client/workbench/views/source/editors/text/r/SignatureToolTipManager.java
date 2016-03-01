@@ -73,12 +73,26 @@ public class SignatureToolTipManager
          }
       };
       
+      monitor_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            if (ready_)
+            {
+               timer_.schedule(TIMER_DELAY_MS);
+               ready_ = false;
+            }
+         }
+      };
+      
       handlers_.add(docDisplay_.addFocusHandler(new FocusHandler()
       {
          @Override
          public void onFocus(FocusEvent event)
          {
             attachPreviewHandler();
+            beginMonitoring();
          }
       }));
       
@@ -90,6 +104,7 @@ public class SignatureToolTipManager
             timer_.cancel();
             toolTip_.hide();
             detachPreviewHandler();
+            endMonitoring();
          }
       }));
       
@@ -112,8 +127,6 @@ public class SignatureToolTipManager
                      anchor_ = null;
                      toolTip_.hide();
                   }
-                  
-                  timer_.schedule(DELAY_MS);
                }
             });
          }
@@ -124,10 +137,7 @@ public class SignatureToolTipManager
          @Override
          public void onAttachOrDetach(AttachEvent event)
          {
-            if (event.isAttached())
-            {
-            }
-            else
+            if (!event.isAttached())
             {
                coordinates_ = null;
                position_ = null;
@@ -159,13 +169,13 @@ public class SignatureToolTipManager
                coordinates_ = new MouseCoordinates(
                      event.getClientX(),
                      event.getClientY());
+               ready_ = true;
             }
             else if (preview.getTypeInt() == Event.ONKEYDOWN)
             {
                coordinates_ = null;
+               ready_ = true;
             }
-            
-            timer_.schedule(DELAY_MS);
          }
       });
    }
@@ -179,10 +189,26 @@ public class SignatureToolTipManager
       }
    }
    
+   private void beginMonitoring()
+   {
+      if (monitoring_)
+         return;
+      
+      monitor_.scheduleRepeating(MONITOR_DELAY_MS);
+      monitoring_ = true;
+   }
+   
+   private void endMonitoring()
+   {
+      monitor_.cancel();
+      monitoring_ = false;
+   }
+   
    public void detach()
    {
       detachPreviewHandler();
       timer_.cancel();
+      endMonitoring();
       handlers_.removeHandler();
    }
    
@@ -401,14 +427,19 @@ public class SignatureToolTipManager
    private final HandlerRegistrations handlers_;
    private final Timer timer_;
    
+   private final Timer monitor_;
+   private boolean monitoring_;
+   
    private HandlerRegistration preview_;
    private MouseCoordinates coordinates_;
    private Position position_;
    private AnchoredSelection anchor_;
+   private boolean ready_;
 
    private UIPrefs uiPrefs_;
    private CodeToolsServerOperations server_;
    
-   private static final int DELAY_MS = 1200;
+   private static final int MONITOR_DELAY_MS = 200;
+   private static final int TIMER_DELAY_MS   = 1200;
 }
 
