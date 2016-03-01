@@ -29,6 +29,7 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -146,12 +147,19 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    public String getTitle()
    {
-      if (getPath() != null) {
-         String name = FileSystemItem.getNameFromPath(getPath());
+      String name = doc_.getProperties().getString("name");
+      String tempName = doc_.getProperties().getString("tempName");
+      
+      if (!StringUtil.isNullOrEmpty(name)) {
          return name;
       }
+      else if (!StringUtil.isNullOrEmpty(tempName)) {
+         return tempName;
+      }
       else {
-         return "Profiler";
+         String defaultName = defaultNameProvider_.get();
+         persistDocumentProperty("tempName", defaultName);
+         return defaultName;
       }
    }
 
@@ -220,6 +228,8 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    public void onActivate()
    {
+      commands_.saveProfileAs().setEnabled(true);
+      
       if (!htmlPathInitialized_) {
          htmlPathInitialized_ = true;
          
@@ -258,6 +268,8 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    public void onDeactivate()
    {
+      commands_.saveProfileAs().setEnabled(false);
+      
       recordCurrentNavigationPosition();
       
       commandHandlerReg_.removeHandler();
@@ -387,6 +399,8 @@ public class ProfilerEditingTarget implements EditingTarget,
       // initialize doc, view, and presenter
       doc_ = document;
       view_ = new ProfilerEditingTargetWidget(commands_);
+      defaultNameProvider_ = defaultNameProvider;
+      
       presenter_.attatch(doc_, view_);
    }
 
@@ -462,6 +476,12 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       saveNewFile(getPath());
    }
+   
+   private void updateNameFromPath()
+   {
+      String name = FileSystemItem.getNameFromPath(getPath());
+      persistDocumentProperty("name", name);
+   }
 
    private ProfilerContents getContents()
    {
@@ -500,8 +520,13 @@ public class ProfilerEditingTarget implements EditingTarget,
    
    private void persistHtmlPath(String htmlPath)
    {
+      persistDocumentProperty("htmlPath", htmlPath);
+   }
+   
+   private void persistDocumentProperty(String property, String value)
+   {
       HashMap<String, String> props = new HashMap<String, String>();
-      props.put("htmlPath", htmlPath);
+      props.put(property, value);
       
       sourceServer_.modifyDocumentProperties(
          doc_.getId(),
@@ -640,6 +665,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    private final RemoteFileSystemContext fileContext_;
    private final WorkbenchContext workbenchContext_;
    private final EventBus eventBus_;
+   private Provider<String> defaultNameProvider_;
    
    private ProfilerType fileType_ = new ProfilerType();
    
