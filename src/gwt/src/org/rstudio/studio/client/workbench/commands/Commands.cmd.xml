@@ -2647,7 +2647,8 @@ well as menu structures (for main menu and popup menus).
         label="Show Guide on Profiling with RStudio"
         menuLabel="Profiling _Help"
         desc="Guide to profiling features"
-        context="help"/>
+        context="help"
+        windowMode="main"/>
 
    <cmd id="reloadShinyApp"
         label="Reload Shiny Application"
