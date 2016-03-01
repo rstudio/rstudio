@@ -440,6 +440,6 @@ public class SignatureToolTipManager
    private CodeToolsServerOperations server_;
    
    private static final int MONITOR_DELAY_MS = 200;
-   private static final int TIMER_DELAY_MS   = 1200;
+   private static final int TIMER_DELAY_MS   = 900;
 }
 
