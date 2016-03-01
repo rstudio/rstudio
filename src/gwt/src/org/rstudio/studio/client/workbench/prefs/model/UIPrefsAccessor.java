@@ -129,7 +129,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Boolean> showFunctionTooltipOnIdle()
    {
-      return bool("show_function_tooltip_on_idle", true);
+      return bool("show_help_tooltip_on_idle", false);
    }
    
    public static final String EDITOR_SURROUND_SELECTION_NEVER               = "never";
