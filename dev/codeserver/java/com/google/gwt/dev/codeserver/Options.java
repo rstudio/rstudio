@@ -705,7 +705,7 @@ public class Options {
       }
 
       File candidate = new File(args[startIndex + 1]);
-      if (!candidate.isDirectory()) {
+      if (candidate.exists() && !candidate.isDirectory()) {
         System.err.println("not a directory: " + candidate);
         return -1;
       }
