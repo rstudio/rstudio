@@ -155,6 +155,7 @@ set (SESSION_SOURCE_FILES
    modules/rmarkdown/SessionRMarkdown.cpp
    modules/rmarkdown/SessionRmdNotebook.cpp
    modules/rmarkdown/SessionRnbParser.cpp
+   modules/rmarkdown/NotebookPlots.cpp
    modules/rmarkdown/RMarkdownPresentation.cpp
    modules/shiny/SessionShiny.cpp
    modules/tex/SessionCompilePdf.cpp

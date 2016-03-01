@@ -15,6 +15,7 @@
 
 #include "SessionRmdNotebook.hpp"
 #include "SessionRnbParser.hpp"
+#include "NotebookPlots.hpp"
 
 #include <iostream>
 
