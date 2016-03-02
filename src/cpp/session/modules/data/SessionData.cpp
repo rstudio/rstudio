@@ -98,11 +98,11 @@ private:
       }
 
       std::string cmd = std::string(".rs.callWithRDS(") +
-        "\".rs.rpc.preview_data_import\", \"" +
-      	inputLocation_ +
-      	"\", \"" + 
-      	outputLocation_ +
-      	"\")";
+        "'.rs.rpc.preview_data_import', '" +
+        inputLocation_ +
+        "', '" +
+        outputLocation_ +
+        "')";
 
       std::vector<core::FilePath> sources;
       sources.push_back(pathFromSource("Tools.R"));
@@ -149,6 +149,12 @@ private:
       {
          json::JsonRpcResponse response;
          continuation_(Success(), &response);
+         return;
+      }
+
+      if (exitStatus != EXIT_SUCCESS)
+      {
+         continuationWithError("Operation finished with error code.");
          return;
       }
 
