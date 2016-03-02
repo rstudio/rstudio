@@ -32,8 +32,10 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
-core::Error beginPlotCapture(const core::FilePath& plotFolder,
-                             boost::function<void(core::FilePath&)> plotCaptured);
+core::Error beginPlotCapture(
+              const core::FilePath& plotFolder,
+              boost::function<void(const core::FilePath&)> plotCaptured);
+
 } // namespace notebook
 } // namespace rmarkdown
 } // namespace modules

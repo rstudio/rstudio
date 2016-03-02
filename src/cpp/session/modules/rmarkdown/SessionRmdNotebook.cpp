@@ -173,6 +173,20 @@ FilePath chunkOutputPath(
    return chunkCacheFolder(docPath, docId, contextId).childPath(chunkId);
 }
 
+FilePath chunkOutputPath(const std::string& docId, const std::string& chunkId)
+{
+   std::string docPath;
+   Error error = source_database::getPath(docId, &docPath);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return FilePath();
+   }
+
+   return chunkOutputPath(docPath, docId, chunkId, userSettings().contextId());
+}
+
+
 Error chunkConsoleContents(const FilePath& consoleFile, json::Array* pArray)
 {
    std::string contents;
@@ -239,20 +253,19 @@ OutputPair lastChunkOutput(const std::string& docId,
    return OutputPair(kChunkOutputNone, 0);
 }
 
+void updateLastChunkOutput(const std::string& docId, 
+                           const std::string& chunkId,
+                           const OutputPair& pair)
+{
+   s_lastChunkOutputs[docId + chunkId] = pair;
+}
+
 FilePath chunkOutputFile(const std::string& docId, 
                          const std::string& chunkId, 
                          const OutputPair& output)
 {
-   std::string docPath;
-   Error error = source_database::getPath(docId, &docPath);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return FilePath();
-   }
-
-   return chunkOutputPath(docPath, docId, chunkId, userSettings().contextId())
-          .complete((boost::format("%|1$05x|%2%") 
+   return chunkOutputPath(docId, chunkId).complete(
+         (boost::format("%|1$05x|%2%") 
                      % output.ordinal 
                      % chunkOutputExt(output.outputType)).str());
 }
@@ -266,6 +279,7 @@ FilePath chunkOutputFile(const std::string& docId,
       return chunkOutputFile(docId, chunkId, output);
    output.ordinal++;
    output.outputType = outputType;
+   updateLastChunkOutput(docId, chunkId, output);
    return chunkOutputFile(docId, chunkId, output);
 }
 
@@ -594,17 +608,11 @@ void onConsoleText(const std::string& docId, const std::string& chunkId,
       return;
 
    FilePath outputCsv = chunkOutputFile(docId, chunkId, kChunkOutputText);
-   Error error = outputCsv.parent().ensureDirectory();
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
 
    std::vector<std::string> vals; 
    vals.push_back(safe_convert::numberToString(type));
    vals.push_back(output);
-   error = core::writeStringToFile(outputCsv, 
+   Error error = core::writeStringToFile(outputCsv, 
          text::encodeCsvLine(vals) + "\n", 
          string_utils::LineEndingPassthrough, truncate);
    if (error)
@@ -632,6 +640,19 @@ void onConsoleInput(const std::string& input)
          false);
 }
 
+void onPlotOutput(const FilePath& plot)
+{
+   OutputPair pair = lastChunkOutput(s_consoleDocId, s_consoleChunkId);
+   pair.ordinal++;
+   pair.outputType = kChunkOutputPlot;
+   FilePath target = chunkOutputFile(s_consoleDocId, s_consoleChunkId, pair);
+   Error error = plot.move(target);
+   if (error)
+      LOG_ERROR(error);
+   else
+      updateLastChunkOutput(s_consoleDocId, s_consoleChunkId, pair);
+}
+
 void disconnectConsole()
 {
    module_context::events().onConsolePrompt.disconnect(onConsolePrompt);
@@ -642,9 +663,24 @@ void disconnectConsole()
 
 void connectConsole()
 {
+   FilePath outputPath = chunkOutputPath(s_consoleDocId, s_consoleChunkId);
+   Error error = outputPath.ensureDirectory();
+   if (error)
+   {
+      // if we don't have a place to put the output, don't register any handlers
+      // (will end in tears)
+      LOG_ERROR(error);
+      return;
+   }
+
    module_context::events().onConsolePrompt.connect(onConsolePrompt);
    module_context::events().onConsoleOutput.connect(onConsoleOutput);
    module_context::events().onConsoleInput.connect(onConsoleInput);
+
+   error = beginPlotCapture(outputPath, onPlotOutput);
+   if (error)
+      LOG_ERROR(error);
+
    s_consoleConnected = true;
 }
 
