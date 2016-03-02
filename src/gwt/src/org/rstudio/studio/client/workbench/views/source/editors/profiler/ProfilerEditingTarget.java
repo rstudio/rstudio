@@ -562,7 +562,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       FileSystemItem fsi;
       if (suggestedPath != null)
-         fsi = FileSystemItem.createFile(suggestedPath);
+         fsi = FileSystemItem.createFile(suggestedPath).getParentPath();
       else
          fsi = workbenchContext_.getDefaultFileDialogDir();
  
