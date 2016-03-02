@@ -222,7 +222,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Satellite.class).in(Singleton.class);
       bind(SatelliteManager.class).in(Singleton.class);
       bind(AskPassManager.class).in(Singleton.class);
-      bind(ProfilerPresenter.class).asEagerSingleton();
+      bind(ProfilerPresenter.class).in(Singleton.class);
       bind(WorkbenchContext.class).asEagerSingleton();
       bind(DependencyManager.class).asEagerSingleton();
       bind(WorkbenchListManager.class).asEagerSingleton();
