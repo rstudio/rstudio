@@ -38,7 +38,7 @@ public class ProfilerType extends EditableFileType
                         int navMethod,
                         EventBus eventBus)
    {
-      eventBus.fireEvent(new OpenProfileEvent(file.getPath()));
+      eventBus.fireEvent(new OpenProfileEvent(file.getPath(), false));
    }
 
    @Override

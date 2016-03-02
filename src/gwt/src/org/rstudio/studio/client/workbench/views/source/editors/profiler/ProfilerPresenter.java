@@ -17,19 +17,30 @@ package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
@@ -41,6 +52,11 @@ public class ProfilerPresenter implements RprofEvent.Handler
    private final HandlerRegistrations handlerRegistrations_ = new HandlerRegistrations();
    private final GlobalDisplay globalDisplay_;
    private final EventBus events_;
+   private Provider<SourceWindowManager> pSourceWindowManager_;
+   private final FileDialogs fileDialogs_;
+   private final RemoteFileSystemContext fileContext_;
+   private final WorkbenchContext workbenchContext_;
+   private final FileTypeRegistry fileTypeRegistry_;
    
    final String profilerDependecyUserAction_ = "Preparing profiler";
    
@@ -60,13 +76,23 @@ public class ProfilerPresenter implements RprofEvent.Handler
                             Commands commands,
                             DependencyManager dependencyManager,
                             GlobalDisplay globalDisplay,
-                            EventBus events)
+                            EventBus events,
+                            Provider<SourceWindowManager> pSourceWindowManager,
+                            FileDialogs fileDialogs,
+                            RemoteFileSystemContext fileContext,
+                            WorkbenchContext workbenchContext,
+                            FileTypeRegistry fileTypeRegistry)
    {
       server_ = server;
       commands_ = commands;
       dependencyManager_ = dependencyManager;
       globalDisplay_ = globalDisplay;
       events_ = events;
+      pSourceWindowManager_ = pSourceWindowManager;
+      fileDialogs_ = fileDialogs;
+      fileContext_ = fileContext;
+      workbenchContext_ = workbenchContext;
+      fileTypeRegistry_ = fileTypeRegistry;
       
       binder.bind(commands, this);
 
@@ -78,13 +104,17 @@ public class ProfilerPresenter implements RprofEvent.Handler
    
    public void onRprofEvent(RprofEvent event)
    {
-      if (event.getStarted())
+      switch (event.getEventType())
       {
-         enableStartedCommands();
-      }
-      else
-      {
-         enableStoppedCommands();
+         case START:
+            enableStartedCommands();
+            break;
+         case STOP:
+            enableStoppedCommands();
+            break;
+         default:
+            events_.fireEvent(new OpenProfileEvent(event.getData().getPath(), true));
+            break;
       }
    }
 
@@ -120,6 +150,8 @@ public class ProfilerPresenter implements RprofEvent.Handler
                            response.getErrorMessage());
                      return;
                   }
+                  
+                  pSourceWindowManager_.get().ensureVisibleSourcePaneIfNecessary();
 
                   response_ = response;
                }
@@ -163,6 +195,43 @@ public class ProfilerPresenter implements RprofEvent.Handler
                         error.getMessage());
                }
             });
+   }
+   
+   @Handler
+   public void onOpenProfile()
+   {
+      fileDialogs_.openFile(
+         "Open File",
+         fileContext_,
+         workbenchContext_.getDefaultFileDialogDir(),
+         ".Rprof",
+         new ProgressOperationWithInput<FileSystemItem>()
+         {
+            public void execute(final FileSystemItem input,
+                                ProgressIndicator indicator)
+            {
+               if (input == null)
+                  return;
+   
+               workbenchContext_.setDefaultFileDialogDir(
+                                                input.getParentPath());
+   
+               indicator.onCompleted();
+               Scheduler.get().scheduleDeferred(new ScheduledCommand()
+               {
+                  public void execute()
+                  {
+                     fileTypeRegistry_.openFile(input);
+                  }
+               });
+            }
+         });
+   }
+   
+   @Handler
+   public void onSaveProfileAs()
+   {
+      commands_.saveSourceDocAs().execute();
    }
 
    private void enableStartedCommands()

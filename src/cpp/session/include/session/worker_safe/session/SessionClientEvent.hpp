@@ -150,6 +150,7 @@ extern const int kChunkOutput;
 extern const int kChunkOutputFinished;
 extern const int kRprofStarted;
 extern const int kRprofStopped;
+extern const int kRprofCreated;
 }
    
 class ClientEvent

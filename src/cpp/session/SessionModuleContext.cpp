@@ -145,6 +145,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
         type = session::client_events::kRprofStarted;
       else if (name == "rprof_stopped")
         type = session::client_events::kRprofStopped;
+      else if (name == "rprof_created")
+        type = session::client_events::kRprofCreated;
 
       if (type != -1)
       {

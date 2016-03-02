@@ -279,6 +279,11 @@ public class Help extends BasePresenter implements ShowHelpHandler
       events_.fireEvent(new ShowHelpEvent("help/doc/markdown_help.html")) ;
    }
 
+   void onProfileHelp()
+   {
+      globalDisplay_.openRStudioLink("profiling_help");
+   }
+
    private Display view_ ;
    private HelpServerOperations server_ ;
    private WorkbenchList helpHistoryList_;

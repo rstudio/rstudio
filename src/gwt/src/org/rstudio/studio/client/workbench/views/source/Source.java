@@ -1089,7 +1089,9 @@ public class Source implements InsertSourceHandler,
       server_.newDocument(
             FileTypeRegistry.PROFILER.getTypeId(),
             null,
-            (JsObject) ProfilerContents.create(profilePath).cast(),
+            (JsObject) ProfilerContents.create(
+                  profilePath,
+                  event.getCreateProfile()).cast(),
             new SimpleRequestCallback<SourceDocument>("Show Profiler")
             {
                @Override

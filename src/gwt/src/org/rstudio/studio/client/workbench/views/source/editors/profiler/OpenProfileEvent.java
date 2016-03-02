@@ -25,9 +25,10 @@ public class OpenProfileEvent extends GwtEvent<OpenProfileEvent.Handler>
       void onOpenProfileEvent(OpenProfileEvent event);
    }
    
-   public OpenProfileEvent(String filePath)
+   public OpenProfileEvent(String filePath, boolean createProfile)
    {
       filePath_ = filePath;
+      createProfile_ = createProfile;
    }
    
    @Override
@@ -47,6 +48,12 @@ public class OpenProfileEvent extends GwtEvent<OpenProfileEvent.Handler>
       return filePath_;
    }
    
+   public boolean getCreateProfile()
+   {
+      return createProfile_;
+   }
+   
    public static final Type<Handler> TYPE = new Type<Handler>();
    private String filePath_;
+   private boolean createProfile_ = false;
 }
