@@ -262,7 +262,21 @@ public class SignatureToolTipManager
    Position getLookupPosition()
    {
       if (coordinates_ == null)
-         return docDisplay_.getCursorPosition();
+      {
+         Position position = docDisplay_.getCursorPosition();
+         
+         // Nudge the cursor column if the cursor currently lies
+         // upon a closing paren.
+         if (docDisplay_.getCharacterAtCursor() == ')' &&
+             position.getColumn() != 0)
+         {
+            position = Position.create(
+                  position.getRow(),
+                  position.getColumn() - 1);
+         }
+         
+         return position;
+      }
       
       return docDisplay_.screenCoordinatesToDocumentPosition(
             coordinates_.getMouseX(),
