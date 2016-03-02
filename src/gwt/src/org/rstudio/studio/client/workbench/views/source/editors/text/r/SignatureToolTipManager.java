@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.r;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.events.MouseDragHandler.MouseCoordinates;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -44,6 +45,8 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.inject.Inject;
 
 public class SignatureToolTipManager
@@ -313,7 +316,7 @@ public class SignatureToolTipManager
       if (editor == null)
          return;
       
-      Position position = getLookupPosition();
+      final Position position = getLookupPosition();
       final boolean isMouseEvent = isMouseDrivenEvent();
       
       // Hide an older tooltip if this was a mouse move (this allows
@@ -400,7 +403,6 @@ public class SignatureToolTipManager
       setAnchor(cursor.cloneCursor());
       
       final String fnString = callString;
-      final Position showPosition = position_;
       server_.getArgs(fnString, "", new ServerRequestCallback<String>() {
          
          @Override
@@ -411,13 +413,37 @@ public class SignatureToolTipManager
             if (StringUtil.isNullOrEmpty(arguments))
                return;
             
-            toolTip_.resolvePositionAndShow(signature, showPosition);
+            resolvePositionAndShow(signature, position);
          }
 
          @Override
          public void onError(ServerError error)
          {
             Debug.logError(error);
+         }
+      });
+   }
+   
+   private void resolvePositionAndShow(String signature, Position position)
+   {
+      // Default to displaying before cursor; however, display above
+      // if doing so would place the tooltip too close (or off) of
+      // the window.
+      final Rectangle bounds = docDisplay_.getPositionBounds(position);
+      toolTip_.setText(signature);
+      toolTip_.setPopupPositionAndShow(new PositionCallback()
+      {
+         @Override
+         public void setPosition(int offsetWidth, int offsetHeight)
+         {
+            int left = bounds.getLeft();
+            
+            boolean verticalOverflow = bounds.getBottom() + offsetHeight >= Window.getClientHeight() - 20;
+            int top = verticalOverflow
+                  ? bounds.getTop() - offsetHeight - 10
+                  : bounds.getBottom() + 10;
+                  
+            toolTip_.setPopupPosition(left, top);
          }
       });
    }
