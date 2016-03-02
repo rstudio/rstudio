@@ -68,13 +68,16 @@ public class ConsoleInterruptProfilerButton extends Composite
          @Override
          public void onRprofEvent(RprofEvent event)
          {
-            if (event.getStarted())
+            switch (event.getEventType())
             {
-               fadeInHelper_.beginShow();
-            }
-            else
-            {
-               fadeInHelper_.hide();
+               case START:
+                  fadeInHelper_.beginShow();
+                  break;
+               case STOP:
+                  fadeInHelper_.hide();
+                  break;
+               default:
+                  break;
             }
          }
       });

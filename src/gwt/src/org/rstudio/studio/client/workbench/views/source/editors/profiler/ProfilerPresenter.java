@@ -104,13 +104,17 @@ public class ProfilerPresenter implements RprofEvent.Handler
    
    public void onRprofEvent(RprofEvent event)
    {
-      if (event.getStarted())
+      switch (event.getEventType())
       {
-         enableStartedCommands();
-      }
-      else
-      {
-         enableStoppedCommands();
+         case START:
+            enableStartedCommands();
+            break;
+         case STOP:
+            enableStoppedCommands();
+            break;
+         default:
+            events_.fireEvent(new OpenProfileEvent(event.getData().getPath(), true));
+            break;
       }
    }
 

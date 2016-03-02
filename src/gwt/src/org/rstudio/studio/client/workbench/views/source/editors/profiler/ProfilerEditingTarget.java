@@ -378,19 +378,21 @@ public class ProfilerEditingTarget implements EditingTarget,
    
    private String getAndSetInitialName()
    {
-      String name = doc_.getProperties().getString("name");
-      tempName_ = doc_.getProperties().getString("tempName");
+      String name = getContents().getName();
+      boolean createProfile = getContents().getCreateProfile();
       
       if (!StringUtil.isNullOrEmpty(name)) {
          return name;
       }
-      else if (!StringUtil.isNullOrEmpty(tempName_)) {
-         return tempName_;
+      else if (createProfile) {
+         String defaultName = defaultNameProvider_.get();
+         persistDocumentProperty("name", defaultName);
+         return defaultName;
       }
       else {
-         String defaultName = defaultNameProvider_.get();
-         persistDocumentProperty("tempName", defaultName);
-         return defaultName;
+         String nameFromFile = FileSystemItem.getNameFromPath(getPath());
+         persistDocumentProperty("name", nameFromFile);
+         return nameFromFile;
       }
    }
 
@@ -641,14 +643,6 @@ public class ProfilerEditingTarget implements EditingTarget,
             getId(), SourceWindowManager.getSourceWindowId(), "",
             DocTabDragParams.create(getId(), currentPosition()),
             null, 0));
-   }
-   
-   private boolean isSaved()
-   {
-      String name = doc_.getProperties().getString("name");
-      
-      // only saved documents contain a given name, not a tempName
-      return !StringUtil.isNullOrEmpty(name);
    }
 
    private static native void initializeEvents() /*-{

@@ -30,24 +30,11 @@
    ))
 })
 
-.rs.addFunction("newProfileFileName" , function(path) {
-   profileFileName <- function (path, i) {
-      file.path(path, paste("profile", i, ".Rprof", sep=""))
-   }
-
-   i <- 1
-   while (file.exists(profileFileName(path, i))) {
-      i <- i + 1
-   }
-
-   profileFileName(path, i)
-})
-
 .rs.addJsonRpcHandler("start_profiling", function(profilerOptions)
 {
    tryCatch({
       resources <- .rs.profileResources()
-      fileName <- .rs.newProfileFileName(resources$tempPath)
+      fileName <- tempfile(fileext = ".Rprof", tmpdir = resources$tempPath)
 
       Rprof(filename = fileName, line.profiling = TRUE)
 
@@ -66,7 +53,9 @@
 
       if (!identical(profilerOptions$fileName, NULL))
       {
-         invisible(.Call(.rs.routines$rs_fileEdit, c(profilerOptions$fileName)))
+         .rs.enqueClientEvent("rprof_created", list(
+            path = .rs.scalar(profilerOptions$fileName)
+         ));
       }
 
       return(list(
@@ -121,7 +110,9 @@
 
 .rs.addFunction("profilePrint", function(x)
 {
-   invisible(.Call(.rs.routines$rs_fileEdit, c(x$x$message$prof_output)))
+   .rs.enqueClientEvent("rprof_created", list(
+      path = .rs.scalar(x$x$message$prof_output)
+   ));
 })
 
 if (identical(getOption("profvis.print"), NULL)) {
