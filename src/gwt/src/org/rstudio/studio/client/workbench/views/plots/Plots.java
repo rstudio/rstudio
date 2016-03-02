@@ -122,10 +122,22 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
          {
             org.rstudio.studio.client.workbench.views.plots.model.Point p = null;
             if (e.getSelectedItem() != null)
+            {
                p = org.rstudio.studio.client.workbench.views.plots.model.Point.create(
                      e.getSelectedItem().getX(),
                      e.getSelectedItem().getY()
                );
+               
+               // re-scale points for OS X Quartz
+               if (BrowseCap.isMacintoshDesktop())
+               {
+                  p = org.rstudio.studio.client.workbench.views.plots.model.Point.create(
+                        p.getX() * (72.0 / 96.0),
+                        p.getY() * (72.0 / 96.0));
+               }
+               
+            }
+            
             server.locatorCompleted(p, new SimpleRequestCallback<Void>());
          }
       });
@@ -150,10 +162,17 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
             @Override
             public void onClick(ClickEvent event)
             {
-              server_.manipulatorPlotClicked(new Double(event.getX()).intValue(), 
-                                             new Double(event.getY()).intValue(), 
-                                             new ManipulatorRequestCallback());
+               int x = new Double(event.getX()).intValue();
+               int y = new Double(event.getY()).intValue();
                
+               // Re-scale for OSX Quartz
+               if (BrowseCap.isMacintoshDesktop())
+               {
+                  x *= (72.0 / 96.0);
+                  y *= (72.0 / 96.0);
+               }
+               
+               server_.manipulatorPlotClicked(x, y, new ManipulatorRequestCallback());
             }   
          }
       );
