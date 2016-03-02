@@ -39,6 +39,7 @@ import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
@@ -178,6 +179,8 @@ public class SignatureToolTipManager
             {
                coordinates_ = null;
                ready_ = true;
+               if (preview.getNativeEvent().getKeyCode() == KeyCodes.KEY_ESCAPE)
+                  suppressed_ = true;
             }
          }
       });
@@ -323,6 +326,12 @@ public class SignatureToolTipManager
    
    public void resolveActiveFunctionAndDisplayToolTip()
    {
+      if (suppressed_)
+      {
+         suppressed_ = false;
+         return;
+      }
+      
       if (docDisplay_.isPopupVisible())
          return;
       
@@ -469,6 +478,7 @@ public class SignatureToolTipManager
    
    private final Timer monitor_;
    private boolean monitoring_;
+   private boolean suppressed_;
    
    private HandlerRegistration preview_;
    private MouseCoordinates coordinates_;
