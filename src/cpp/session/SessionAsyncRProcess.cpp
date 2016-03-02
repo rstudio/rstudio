@@ -102,6 +102,11 @@ void AsyncRProcess::start(const char* rCommand,
    if (needsQuote)
       command << "\"";
 
+   std::string escapedCommand = rCommand;
+
+   if (needsQuote)
+      boost::algorithm::replace_all(escapedCommand, "\"", "\\\"");
+    
    if (rSourceFiles.size())
    {
       // add in the r source files requested
@@ -112,11 +117,11 @@ void AsyncRProcess::start(const char* rCommand,
          command << "source('" << it->absolutePath() << "');";
       }
       
-      command << rCommand;
+      command << escapedCommand.c_str();
    }
    else
    {
-      command << rCommand;
+      command << escapedCommand.c_str();
    }
 
    if (needsQuote)
