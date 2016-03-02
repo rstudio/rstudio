@@ -37,8 +37,7 @@ public class ArgHandlerSourceLevel extends ArgHandlerString {
 
   @Override
   public String getPurpose() {
-    return "Specifies Java source level (defaults to " + SourceLevel.JAVA8.getStringValue() + ":"
-        + SourceLevel.DEFAULT_SOURCE_LEVEL + ")";
+    return "Specifies Java source level (defaults to " + SourceLevel.JAVA8.getStringValue() + ")";
   }
 
   @Override
@@ -61,7 +60,8 @@ public class ArgHandlerSourceLevel extends ArgHandlerString {
     SourceLevel level = SourceLevel.fromString(value);
     if (level == null) {
       System.err.println("Source level must be one of [" +
-          Joiner.on(", ").skipNulls().join(AUTO_SELECT, null, (Object[]) SourceLevel.values()) + "].");
+          Joiner.on(", ").skipNulls().join(AUTO_SELECT, null, (Object[]) SourceLevel.values())
+          + "].");
       return false;
     }
     options.setSourceLevel(level);
