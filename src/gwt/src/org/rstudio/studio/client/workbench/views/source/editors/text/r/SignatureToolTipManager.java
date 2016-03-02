@@ -18,6 +18,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.MouseDragHandler.MouseCoordinates;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
@@ -27,6 +28,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
@@ -34,6 +36,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Curs
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
@@ -341,6 +344,18 @@ public class SignatureToolTipManager
       
       final Position position = getLookupPosition();
       final boolean isMouseEvent = isMouseDrivenEvent();
+      
+      // Ensure that the mouse target is actually the active editor
+      if (isMouseEvent)
+      {
+         Element el = DomUtils.elementFromPoint(
+               coordinates_.getMouseX(),
+               coordinates_.getMouseY());
+         
+         AceEditorNative nativeEditor = AceEditorNative.getEditor(el);
+         if (nativeEditor != null && nativeEditor != editor.getWidget().getEditor())
+            return;
+      }
       
       // Hide an older tooltip if this was a mouse move (this allows
       // the popup to hide if the user hovers over a function name,

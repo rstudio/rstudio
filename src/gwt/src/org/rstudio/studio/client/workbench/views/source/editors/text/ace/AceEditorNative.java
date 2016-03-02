@@ -538,5 +538,14 @@ public class AceEditorNative extends JavaScriptObject {
       this.$surroundSelection = value;
    }-*/;
    
+   public static final native AceEditorNative getEditor(Element el) /*-{
+      while (el != null) {
+         if (el.env && el.env.editor)
+            return el.env.editor;
+         el = el.parentNode;
+      }
+      return null;
+   }-*/;
+   
    private static boolean uiPrefsSynced_ = false;
 }
