@@ -14,13 +14,13 @@
 }
 
 .toolTipText {
-   font-family: fixedWidthFont;
    white-space: pre-wrap;
+   font-size: 0.85em;
 }
 
 .commentText {
    margin-top: 6px;
-   font-size: 0.95em;
+   font-size: 0.8em;
 }
 
 .pagingWidget {
@@ -39,6 +39,7 @@
 .itemMenu {
    padding: 2px;
    font-family: fixedWidthFont;
+   font-size: 1em;
 }
 
 .itemImage {
