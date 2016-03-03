@@ -25,6 +25,10 @@
       dir.create(tempPath, recursive = TRUE)
    }
 
+   if (identical(getOption("profvis.prof_output"), NULL)) {
+      options("profvis.prof_output" = tempPath)
+   }
+
    return (list(
       tempPath = tempPath
    ))
