@@ -44,6 +44,8 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -164,23 +166,40 @@ public class ChunkOutputWidget extends Composite
             .interruptR().getImageResource());
       busy_.setResource(CoreResources.INSTANCE.progress_gray());
    }
+   
+   public void showChunkOutputUnit(RmdChunkOutputUnit unit)
+   {
+      switch(unit.getType())
+      {
+      case RmdChunkOutputUnit.TYPE_TEXT:
+         showConsoleOutput(unit.getArray());
+         break;
+      case RmdChunkOutputUnit.TYPE_HTML:
+         showHtmlOutput(unit.getString());
+         break;
+      case RmdChunkOutputUnit.TYPE_PLOT:
+         showPlotOutput(unit.getString());
+         break;
+      }
+   }
 
    public void showChunkOutput(RmdChunkOutput output)
    {
-      // loop over the output units and emit the appropriate contents for each
-      JsArray<RmdChunkOutputUnit> units = output.getUnits();
-      for (int i = 0; i < units.length(); i++)
+      if (output.getType() == RmdChunkOutput.TYPE_MULTIPLE_UNIT)
       {
-         RmdChunkOutputUnit unit = units.get(i);
-         switch(unit.getType())
+         // TODO: for multiple units we need to clear existing units
+         
+         // loop over the output units and emit the appropriate contents for
+         // each
+         JsArray<RmdChunkOutputUnit> units = output.getUnits();
+         for (int i = 0; i < units.length(); i++)
          {
-         case RmdChunkOutputUnit.TYPE_TEXT:
-            showConsoleOutput(unit.getArray());
-            break;
-         case RmdChunkOutputUnit.TYPE_HTML:
-            showHtmlOutput(unit.getString());
-            break;
+            showChunkOutputUnit(units.get(i));
          }
+      }
+      else if (output.getType() == RmdChunkOutput.TYPE_SINGLE_UNIT)
+      {
+         showChunkOutputUnit(output.getUnit());
       }
    }
    
@@ -215,6 +234,30 @@ public class ChunkOutputWidget extends Composite
       console_.getElement().setScrollTop(console_.getElement().getScrollHeight());
       state_ = CONSOLE_READY;
       setOverflowStyle();
+   }
+   
+   private void showPlotOutput(String url)
+   {
+      final Image plot = new Image();
+      root_.add(plot);
+
+      DOM.sinkEvents(plot.getElement(), Event.ONLOAD);
+      DOM.setEventListener(plot.getElement(), new EventListener()
+      {
+         @Override
+         public void onBrowserEvent(Event event)
+         {
+            if (DOM.eventGetType(event) != Event.ONLOAD)
+               return;
+            if (state_ != CHUNK_RENDERING)
+               return;
+            state_ = CHUNK_RENDERED;
+            onRenderCompleted_.execute(root_.getOffsetHeight());
+         }
+      });
+
+      state_ = CHUNK_RENDERING;
+      plot.setUrl(url);
    }
    
    private void showHtmlOutput(String url)
