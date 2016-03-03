@@ -81,6 +81,12 @@ class OutboxTable {
     }
   }
 
+  void forceNextRecompileAll() {
+    for (Outbox box: outboxes.values()) {
+      box.forceNextRecompile();
+    }
+  }
+
   /**
    * Given the name of a policy file, searches all the boxes for a file with that name.
    * Returns null if not found.

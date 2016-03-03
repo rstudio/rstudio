@@ -66,6 +66,13 @@ class Outbox {
   }
 
   /**
+   * Forces the next recompile even if no input files have changed.
+   */
+  void forceNextRecompile() {
+    recompiler.forceNextRecompile();
+  }
+
+  /**
    * A unique id for this outbox. (This should be treated as an opaque string.)
    */
   String getId() {

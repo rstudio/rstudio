@@ -100,6 +100,13 @@ public class Recompiler {
   }
 
   /**
+   * Forces the next recompile even if no input files have changed.
+   */
+  void forceNextRecompile() {
+    previousInputSummary = null;
+  }
+
+  /**
    * Compiles the first time, while Super Dev Mode is starting up.
    * Either this method or {@link #initWithoutPrecompile} should be called first.
    */
@@ -336,7 +343,7 @@ public class Recompiler {
       return true;
     }
     // Force a recompile if we don't succeed.
-    previousInputSummary = null;
+    forceNextRecompile();
 
     job.onProgress("Compiling");
 

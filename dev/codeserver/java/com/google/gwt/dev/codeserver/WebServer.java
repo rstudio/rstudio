@@ -232,7 +232,7 @@ public class WebServer {
     if (target.startsWith("/clean")) {
       JsonObject json = null;
       try {
-        runner.clean(logger);
+        runner.clean(logger, outboxes);
         json = jsonExporter.exportOk("Cleaned disk caches.");
       } catch (ExecutionException e) {
         json = jsonExporter.exportError(e.getMessage());

@@ -48,10 +48,10 @@ public class JobRunner {
   /**
    * Submits a cleaner job to be executed. (Waits for completion.)
    */
-  void clean(TreeLogger logger) throws ExecutionException {
+  void clean(final TreeLogger logger, final OutboxTable outboxTable) throws ExecutionException {
     try {
       TreeLogger branch = logger.branch(TreeLogger.INFO, "Cleaning disk caches.");
-      executor.submit(new CleanerJob(branch)).get();
+      executor.submit(new CleanerJob(branch, outboxTable)).get();
     } catch (InterruptedException e) {
       // Allow the JVM to shutdown.
     }
@@ -114,17 +114,20 @@ public class JobRunner {
   }
 
   /**
-   * A callable for clearing both unit and minimalRebuild caches.
+   * A callable for clearing both unit and minimalRebuild caches. It also forces the next recompile
+   * even if no input files have changed.
    * <p>
    * By packaging it as a callable and running it in the ExecutorService any danger of clearing
    * caches at the same time as an active compile job is avoided.
    */
   private class CleanerJob implements Callable<Void> {
 
+    private final OutboxTable outboxTable;
     private TreeLogger logger;
 
-    public CleanerJob(TreeLogger logger) {
+    public CleanerJob(final TreeLogger logger, final OutboxTable outboxTable) {
       this.logger = logger;
+      this.outboxTable = outboxTable;
     }
 
     @Override
@@ -132,6 +135,7 @@ public class JobRunner {
       long beforeMs = System.nanoTime() / 1000000L;
       minimalRebuildCacheManager.deleteCaches();
       UnitCacheSingleton.clearCache();
+      outboxTable.forceNextRecompileAll();
       long afterMs = System.nanoTime() / 1000000L;
       logger.log(TreeLogger.INFO, String.format("Cleaned in %sms.", (afterMs - beforeMs)));
       return null;
