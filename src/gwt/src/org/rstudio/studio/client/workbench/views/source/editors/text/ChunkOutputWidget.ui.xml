@@ -27,7 +27,6 @@
       margin-right: 20px;
       padding-left: 10px;
       transition: background-color 500ms ease;
-      overflow: auto;
    }
    
    .clear
@@ -35,8 +34,14 @@
       opacity: 0.0;
       transition: opacity 500ms ease;
    }
+   
+   .root
+   {
+      overflow: auto;
+      max-height: 750px;
+   }
    </ui:style>
-   <g:HTMLPanel styleName="{style.frame}" ui:field="root_">
+   <g:HTMLPanel styleName="{style.frame}">
      <g:Image styleName="{style.clear}"
               ui:field="clear_"
               visible="false"
@@ -47,5 +52,7 @@
      <g:Image styleName="{style.busy}" 
               ui:field="busy_"
               visible="false"></g:Image>
+     <g:HTMLPanel styleName="{style.root}" ui:field="root_">
+     </g:HTMLPanel>
    </g:HTMLPanel>
 </ui:UiBinder> 

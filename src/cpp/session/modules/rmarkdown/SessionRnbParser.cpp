@@ -15,6 +15,8 @@
 
 #include "SessionRmdNotebook.hpp"
 #include "SessionRnbParser.hpp"
+#include "NotebookChunkDefs.hpp"
+#include "NotebookCache.hpp"
 
 #include <core/Base64.hpp>
 #include <core/FileSerializer.hpp>
@@ -52,6 +54,34 @@ struct extractDef extractDefs[2] =
     "<script src=\"%1%\"></script>\n" },
   { "link",   "href", "text/css",                 "css",
     "<link href=\"%1%\" rel=\"stylesheet\" type=\"text/css\" />\n" } };
+
+Error extractTagAttrs(const std::string& tag,
+                      const std::string& attr,
+                      const std::string& contents, 
+                      std::vector<std::string>* pValues)
+{
+   std::string::const_iterator pos = contents.begin(); 
+
+   // Not robust to all formulations (e.g. doesn't allow for attributes between
+   // the tag and attr, or single-quoted/unquoted attributes), but we only need
+   // to parse canonical Pandoc output
+   boost::regex re("<\\s*" + tag + "\\s*" + attr + 
+                   "\\s*=\\s*\"([^\"]+)\"[^>]*>", boost::regex::icase);
+
+   // Iterate over all matches 
+   boost::smatch match;
+   while (boost::regex_search(pos, contents.end(), match, re, 
+                              boost::match_default))
+   {
+      // record script src contents
+      pValues->push_back(match.str(1));
+
+      // continue search from end of match
+      pos = match[0].second;
+   }
+
+   return Success();
+}
 
 core::Error saveChunkResources(const std::string& contents, 
                              const FilePath& cacheFolder,

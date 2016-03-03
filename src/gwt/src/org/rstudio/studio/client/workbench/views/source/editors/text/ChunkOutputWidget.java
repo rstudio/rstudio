@@ -23,7 +23,6 @@ import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationInterrupt.InterruptHandler;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.shell.ShellWidget;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
 import org.rstudio.studio.client.server.ServerError;
