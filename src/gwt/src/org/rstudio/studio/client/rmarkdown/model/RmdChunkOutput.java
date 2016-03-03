@@ -34,8 +34,23 @@ public class RmdChunkOutput extends JavaScriptObject
       return this.chunk_outputs || [];
    }-*/;
    
+   public final native RmdChunkOutputUnit getUnit() /*-{
+      return this.chunk_output;
+   }-*/;
+   
+   public final int getType() 
+   {
+      if (getUnit() == null)
+         return TYPE_MULTIPLE_UNIT;
+      return TYPE_SINGLE_UNIT;
+   }
+   
    public final boolean isEmpty() 
    {
-      return getUnits() == null || getUnits().length() == 0;
+      return (getUnits() == null || getUnits().length() == 0) &&
+             getUnit() == null;
    }
+   
+   public static final int TYPE_SINGLE_UNIT   = 0;
+   public static final int TYPE_MULTIPLE_UNIT = 1;
 }

@@ -80,6 +80,9 @@ bool s_consoleConnected = false;
 // chunk
 struct OutputPair
 {
+   OutputPair() :
+      outputType(kChunkOutputNone), ordinal(0)
+   {}
    OutputPair(unsigned type, unsigned ord):
       outputType(type), ordinal(ord) 
    {}
@@ -250,7 +253,7 @@ OutputPair lastChunkOutput(const std::string& docId,
       return it->second;
    
    // TODO: inspect filesystem and populate cache
-   return OutputPair(kChunkOutputNone, 0);
+   return OutputPair();
 }
 
 void updateLastChunkOutput(const std::string& docId, 
@@ -281,6 +284,23 @@ FilePath chunkOutputFile(const std::string& docId,
    output.outputType = outputType;
    updateLastChunkOutput(docId, chunkId, output);
    return chunkOutputFile(docId, chunkId, output);
+}
+
+void enqueueChunkOutput(const std::string& docId,
+      const std::string& chunkId, int outputType, 
+      const FilePath& path)
+{
+   json::Object output;
+   output[kChunkOutputType]  = outputType;
+   output[kChunkOutputValue] = kChunkOutputPath "/" + docId + "/" +
+      chunkId + "/" + path.filename();
+
+   json::Object result;
+   result[kChunkId]         = chunkId;
+   result[kChunkDocId]      = docId;
+   result[kChunkOutputPath] = output;
+   ClientEvent event(client_events::kChunkOutput, result);
+   module_context::enqueClientEvent(event);
 }
 
 Error enqueueChunkOutput(
@@ -324,7 +344,7 @@ Error enqueueChunkOutput(
                outputType == kChunkOutputHtml)
       {
          output[kChunkOutputValue] = kChunkOutputPath "/" + docId + "/" +
-            outputPath.filename();
+            chunkId + "/" + outputPath.filename();
       }
 
       outputs.push_back(output);
@@ -648,9 +668,15 @@ void onPlotOutput(const FilePath& plot)
    FilePath target = chunkOutputFile(s_consoleDocId, s_consoleChunkId, pair);
    Error error = plot.move(target);
    if (error)
+   {
       LOG_ERROR(error);
+   }
    else
+   {
+      enqueueChunkOutput(s_consoleDocId, s_consoleChunkId, kChunkOutputPlot,
+            target);
       updateLastChunkOutput(s_consoleDocId, s_consoleChunkId, pair);
+   }
 }
 
 void disconnectConsole()
