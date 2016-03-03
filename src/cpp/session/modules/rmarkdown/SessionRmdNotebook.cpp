@@ -81,7 +81,7 @@ bool s_consoleConnected = false;
 struct OutputPair
 {
    OutputPair() :
-      outputType(kChunkOutputNone), ordinal(0)
+      outputType(kChunkOutputNone), ordinal(1)
    {}
    OutputPair(unsigned type, unsigned ord):
       outputType(type), ordinal(ord) 
@@ -189,7 +189,6 @@ FilePath chunkOutputPath(const std::string& docId, const std::string& chunkId)
    return chunkOutputPath(docPath, docId, chunkId, userSettings().contextId());
 }
 
-
 Error chunkConsoleContents(const FilePath& consoleFile, json::Array* pArray)
 {
    std::string contents;
@@ -243,6 +242,13 @@ std::string chunkOutputExt(unsigned outputType)
    return "";
 }
 
+void updateLastChunkOutput(const std::string& docId, 
+                           const std::string& chunkId,
+                           const OutputPair& pair)
+{
+   s_lastChunkOutputs[docId + chunkId] = pair;
+}
+
 // given a document ID and a chunk ID, discover the last output the chunk had
 OutputPair lastChunkOutput(const std::string& docId, 
                            const std::string& chunkId)
@@ -252,16 +258,38 @@ OutputPair lastChunkOutput(const std::string& docId,
    if (it != s_lastChunkOutputs.end())
       return it->second;
    
-   // TODO: inspect filesystem and populate cache
-   return OutputPair();
+   std::string docPath;
+   source_database::getPath(docId, &docPath);
+   FilePath outputPath = chunkOutputPath(docPath, docId, chunkId, 
+         userSettings().contextId());
+
+   // scan the directory for output
+   std::vector<FilePath> outputPaths;
+   Error error = outputPath.children(&outputPaths);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return OutputPair();
+   }
+
+   OutputPair last;
+   BOOST_FOREACH(const FilePath& path, outputPaths)
+   {
+      // extract ordinal and update if it's the most recent we've seen so far
+      unsigned ordinal = static_cast<unsigned>(
+            ::strtoul(path.stem().c_str(), NULL, 16));
+      if (ordinal > last.ordinal)
+      {
+         last.ordinal = ordinal;
+         last.outputType = chunkOutputType(path);
+      }
+   }
+
+   // cache for future calls
+   updateLastChunkOutput(docId, chunkId, last);
+   return last;
 }
 
-void updateLastChunkOutput(const std::string& docId, 
-                           const std::string& chunkId,
-                           const OutputPair& pair)
-{
-   s_lastChunkOutputs[docId + chunkId] = pair;
-}
 
 FilePath chunkOutputFile(const std::string& docId, 
                          const std::string& chunkId, 

@@ -170,7 +170,7 @@ core::Error beginPlotCapture(
    // generate code for creating PNG device
    boost::format fmt("{ require(grDevices, quietly=TRUE); "
                      "  png(file = \"%1%/" kPlotPrefix "%%03d.png\", "
-                     "  width = 3, height = 3, "
+                     "  width = 5, height = 5, "
                      "  units=\"in\", res = 96, type = \"cairo-png\", TRUE)"
                      "}");
 
