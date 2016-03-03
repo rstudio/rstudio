@@ -830,7 +830,7 @@ public class RCompletionManager implements CompletionManager
             if (token.matches("^(library|require|requireNamespace|data)\\s*$"))
                canAutoPopup = true;
             
-            sigTipManager_.resolveActiveFunctionAndDisplayToolTip(false);
+            sigTipManager_.resolveActiveFunctionAndDisplayToolTip();
          }
          
          if (

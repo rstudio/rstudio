@@ -321,6 +321,9 @@ public abstract class
    public abstract AppCommand stopProfiler();
    public abstract AppCommand profileCode();
    public abstract AppCommand profileCodeWithoutFocus();
+   public abstract AppCommand saveProfileAs();
+   public abstract AppCommand openProfile();
+   public abstract AppCommand profileHelp();
    
    // Tools
    public abstract AppCommand showShellDialog();

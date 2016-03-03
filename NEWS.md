@@ -4,7 +4,8 @@
 
 * Enabled auto-pairing of backticks (\`\`) in R documents
 * Added option for display of 'end' fold markers
-* Added option to display function signature tooltip on idle
+* Display function tooltip on mouse over of function name
+* Added option to display function signature tooltip on cursor idle
 
 ### Data Import
 

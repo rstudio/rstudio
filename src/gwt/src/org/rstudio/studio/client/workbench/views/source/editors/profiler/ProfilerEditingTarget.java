@@ -29,6 +29,7 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -67,7 +68,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.P
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;
@@ -140,19 +140,12 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    public HasValue<String> getName()
    {
-      String title = getTitle();
-      return new Value<String>(title);
+      return name_;
    }
 
    public String getTitle()
    {
-      if (getPath() != null) {
-         String name = FileSystemItem.getNameFromPath(getPath());
-         return name;
-      }
-      else {
-         return "Profiler";
-      }
+      return name_.getValue();
    }
 
    public String getContext()
@@ -220,7 +213,7 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    public void onActivate()
    {
-      pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
+      commands_.saveProfileAs().setEnabled(true);
       
       if (!htmlPathInitialized_) {
          htmlPathInitialized_ = true;
@@ -235,6 +228,8 @@ public class ProfilerEditingTarget implements EditingTarget,
                {
                   persistHtmlPath(newHtmlPath);
                   view_.showProfilePage(newHtmlPath);
+                  
+                  pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
                }
                
             });
@@ -258,6 +253,8 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    public void onDeactivate()
    {
+      commands_.saveProfileAs().setEnabled(false);
+      
       recordCurrentNavigationPosition();
       
       commandHandlerReg_.removeHandler();
@@ -378,6 +375,26 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       onCompleted.execute();
    }
+   
+   private String getAndSetInitialName()
+   {
+      String name = getContents().getName();
+      boolean createProfile = getContents().getCreateProfile();
+      
+      if (!StringUtil.isNullOrEmpty(name)) {
+         return name;
+      }
+      else if (createProfile) {
+         String defaultName = defaultNameProvider_.get();
+         persistDocumentProperty("name", defaultName);
+         return defaultName;
+      }
+      else {
+         String nameFromFile = FileSystemItem.getNameFromPath(getPath());
+         persistDocumentProperty("name", nameFromFile);
+         return nameFromFile;
+      }
+   }
 
    public void initialize(SourceDocument document,
                           FileSystemContext fileContext,
@@ -387,6 +404,10 @@ public class ProfilerEditingTarget implements EditingTarget,
       // initialize doc, view, and presenter
       doc_ = document;
       view_ = new ProfilerEditingTargetWidget(commands_);
+      defaultNameProvider_ = defaultNameProvider;
+      
+      getName().setValue(getAndSetInitialName());
+      
       presenter_.attatch(doc_, view_);
    }
 
@@ -462,6 +483,16 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       saveNewFile(getPath());
    }
+   
+   private void savePropertiesWithPath(String path)
+   {
+      String name = FileSystemItem.getNameFromPath(path);
+      persistDocumentProperty("name", name);
+      persistDocumentProperty("path", path);
+      
+      getName().setValue(name, true);
+      name_.fireChangeEvent();
+   }
 
    private ProfilerContents getContents()
    {
@@ -500,8 +531,13 @@ public class ProfilerEditingTarget implements EditingTarget,
    
    private void persistHtmlPath(String htmlPath)
    {
+      persistDocumentProperty("htmlPath", htmlPath);
+   }
+   
+   private void persistDocumentProperty(String property, String value)
+   {
       HashMap<String, String> props = new HashMap<String, String>();
-      props.put("htmlPath", htmlPath);
+      props.put(property, value);
       
       sourceServer_.modifyDocumentProperties(
          doc_.getId(),
@@ -526,7 +562,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       FileSystemItem fsi;
       if (suggestedPath != null)
-         fsi = FileSystemItem.createFile(suggestedPath);
+         fsi = FileSystemItem.createFile(suggestedPath).getParentPath();
       else
          fsi = workbenchContext_.getDefaultFileDialogDir();
  
@@ -555,8 +591,7 @@ public class ProfilerEditingTarget implements EditingTarget,
                         @Override
                         public void onResponseReceived(JavaScriptObject response)
                         {
-                           eventBus_.fireEvent(new FileEditEvent(saveItem));
-                           
+                           savePropertiesWithPath(saveItem.getPath());
                            indicator.onCompleted();
                         }
 
@@ -640,6 +675,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    private final RemoteFileSystemContext fileContext_;
    private final WorkbenchContext workbenchContext_;
    private final EventBus eventBus_;
+   private Provider<String> defaultNameProvider_;
    
    private ProfilerType fileType_ = new ProfilerType();
    
@@ -648,4 +684,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    private boolean htmlPathInitialized_;
    
    private static boolean initializedEvents_;
+   
+   private Value<String> name_ = new Value<String>(null);
+   private String tempName_;
 }

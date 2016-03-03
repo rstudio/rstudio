@@ -15,8 +15,9 @@
 
 .rs.addFunction("profileResources", function()
 {
-   if (identical(getOption("profvis.prof_extension"), NULL)) {
-      options("profvis.prof_extension" = ".rprof")
+   if (identical(getOption("profvis.prof_extension"), NULL) ||
+       identical(getOption("profvis.prof_extension"), ".rprof")) {
+      options("profvis.prof_extension" = ".Rprof")
    }
 
    tempPath <- .Call(.rs.routines$rs_profilesPath)
@@ -29,24 +30,11 @@
    ))
 })
 
-.rs.addFunction("newProfileFileName" , function(path) {
-   profileFileName <- function (path, i) {
-      file.path(path, paste("profile", i, ".rprof", sep=""))
-   }
-
-   i <- 1
-   while (file.exists(profileFileName(path, i))) {
-      i <- i + 1
-   }
-
-   profileFileName(path, i)
-})
-
 .rs.addJsonRpcHandler("start_profiling", function(profilerOptions)
 {
    tryCatch({
       resources <- .rs.profileResources()
-      fileName <- .rs.newProfileFileName(resources$tempPath)
+      fileName <- tempfile(fileext = ".Rprof", tmpdir = resources$tempPath)
 
       Rprof(filename = fileName, line.profiling = TRUE)
 
@@ -65,7 +53,9 @@
 
       if (!identical(profilerOptions$fileName, NULL))
       {
-         invisible(.Call(.rs.routines$rs_fileEdit, c(profilerOptions$fileName)))
+         .rs.enqueClientEvent("rprof_created", list(
+            path = .rs.scalar(profilerOptions$fileName)
+         ));
       }
 
       return(list(
@@ -118,9 +108,15 @@
    }
 })
 
+.rs.addFunction("profilePrint", function(x)
+{
+   .rs.enqueClientEvent("rprof_created", list(
+      path = .rs.scalar(x$x$message$prof_output)
+   ));
+})
+
 if (identical(getOption("profvis.print"), NULL)) {
-   options("profvis.print" = function(x)
-   {
-      invisible(.Call(.rs.routines$rs_fileEdit, c(x$x$message$prof_output)))
+   options("profvis.print" = function(x, ...) {
+      .rs.profilePrint(x, ...)
    })
 }

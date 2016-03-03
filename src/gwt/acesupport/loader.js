@@ -202,24 +202,25 @@ oop.inherits(RStudioUndoManager, UndoManager);
 
 function loadEditor(container) {
    var env = {};
+   container.env = env;
 
-	var Renderer = require("ace/virtual_renderer").VirtualRenderer;
+   var Renderer = require("ace/virtual_renderer").VirtualRenderer;
 
-	var TextMode = require("ace/mode/text").Mode;
-	var theme = {}; // prevent default textmate theme from loading
+   var TextMode = require("ace/mode/text").Mode;
+   var theme = {}; // prevent default textmate theme from loading
 
-	env.editor = new RStudioEditor(new Renderer(container, theme), new RStudioEditSession(""));
-	var session = env.editor.getSession();
-	session.setMode(new TextMode());
-	session.setUndoManager(new RStudioUndoManager());
+   env.editor = new RStudioEditor(new Renderer(container, theme), new RStudioEditSession(""));
+   var session = env.editor.getSession();
+   session.setMode(new TextMode());
+   session.setUndoManager(new RStudioUndoManager());
 
    // Setup syntax checking
    var config = require("ace/config");
    config.set("workerPath", "js/workers");
    config.setDefaultValue("session", "useWorker", false);
 
-	// We handle these commands ourselves.
-	function squelch(cmd) {
+   // We handle these commands ourselves.
+   function squelch(cmd) {
       env.editor.commands.removeCommand(cmd);
    }
    squelch("findnext");

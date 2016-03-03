@@ -86,14 +86,18 @@ public class Console
          @Override
          public void onRprofEvent(RprofEvent event)
          {
-            view.setProfilerMode(event.getStarted());
-            if (event.getStarted())
+            switch (event.getEventType())
             {
-               profilerFadeInHelper_.beginShow();
-            }
-            else
-            {
-               profilerFadeInHelper_.hide();
+               case START:
+                  view.setProfilerMode(true);
+                  profilerFadeInHelper_.beginShow();
+                  break;
+               case STOP:
+                  view.setProfilerMode(false);
+                  profilerFadeInHelper_.hide();
+                  break;
+               default:
+                  break;
             }
          }
       });
