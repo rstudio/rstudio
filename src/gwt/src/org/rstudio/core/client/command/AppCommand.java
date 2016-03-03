@@ -114,9 +114,18 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    
    public void execute()
    {
+      trackCommand(id_);
       executedFromShortcut_ = false;
       doExecute();
    }
+
+   private final native void trackCommand(String command) /*-{
+      $wnd.postMessage({
+         message: "diagnostics",
+         type: "command",
+         data: command
+      }, $wnd.location.origin);
+   }-*/;
    
    private void doExecute()
    {

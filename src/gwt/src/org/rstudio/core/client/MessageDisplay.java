@@ -280,8 +280,9 @@ public abstract class MessageDisplay
    public void showErrorMessage(String caption, String message)
    {
       createDialog(MSG_ERROR, caption, message).showModal();
+      trackError(message);
    }
-
+   
    public void showErrorMessage(String caption,
                                 String message,
                                 Operation dismissed)
@@ -289,6 +290,7 @@ public abstract class MessageDisplay
       createDialog(MSG_ERROR, caption, message)
             .addButton("OK", dismissed)
             .showModal();
+      trackError(message);
    }
 
    public void showErrorMessage(String caption,
@@ -296,6 +298,7 @@ public abstract class MessageDisplay
                                 Focusable focusAfter)
    {
       showMessage(MSG_ERROR, caption, message, focusAfter);
+      trackError(message);
    }
 
    public void showErrorMessage(String caption,
@@ -303,7 +306,16 @@ public abstract class MessageDisplay
                                 CanFocus focusAfter)
    {
       showMessage(MSG_ERROR, caption, message, focusAfter);
+      trackError(message);
    }
+   
+   private final native void trackError(String message) /*-{
+      $wnd.postMessage({
+         message: "diagnostics", 
+         type: "error",
+         data: message
+      }, $wnd.location.origin);
+   }-*/;
    
    public void showPopupBlockedMessage(Operation yesOperation)
    {
