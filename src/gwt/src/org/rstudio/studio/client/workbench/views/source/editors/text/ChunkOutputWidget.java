@@ -236,6 +236,16 @@ public class ChunkOutputWidget extends Composite
       setOverflowStyle();
    }
    
+   private void completeUnitRender()
+   {
+      if (state_ != CHUNK_RENDERING)
+         return;
+      state_ = CHUNK_RENDERED;
+      int height = root_.getElement().getScrollHeight();
+      root_.getElement().setScrollTop(height);
+      onRenderCompleted_.execute(height);
+   }
+
    private void showPlotOutput(String url)
    {
       final Image plot = new Image();
@@ -251,8 +261,7 @@ public class ChunkOutputWidget extends Composite
                return;
             if (state_ != CHUNK_RENDERING)
                return;
-            state_ = CHUNK_RENDERED;
-            onRenderCompleted_.execute(root_.getOffsetHeight());
+            completeUnitRender();
          }
       });
 
@@ -274,21 +283,9 @@ public class ChunkOutputWidget extends Composite
          {
             if (state_ != CHUNK_RENDERING)
                return;
-            state_ = CHUNK_RENDERED;
-            applyCachedEditorStyle();
-            showReadyState();
-            setOverflowStyle();
-            injectEmptyText(frame.getDocument().getBody());
-            Element doc = frame.getDocument().getDocumentElement();
-            int height = doc.getScrollHeight();
-            if (doc.getScrollWidth() > doc.getOffsetWidth())
-            {
-               // if there's a horizontal scrollbar we need to allocate space
-               // for it (otherwise the horizontal scrollbar will overflow and
-               // cause a vertical scrollbar too)
-               height += ShellWidget.ESTIMATED_SCROLLBAR_WIDTH;
-            }
-            onRenderCompleted_.execute(height);
+            Style bodyStyle = frame.getDocument().getBody().getStyle();
+            bodyStyle.setColor(s_color);
+            completeUnitRender();
          };
       });
       state_ = CHUNK_RENDERING;
@@ -509,18 +506,6 @@ public class ChunkOutputWidget extends Composite
          return;
       }
       showReadyState();
-   }
-   
-   private void injectEmptyText(BodyElement body)
-   {
-      // if the chunk has empty content, show something so the user doesn't
-      // just see a blank box
-      if (body.getInnerHTML().trim().isEmpty())
-      {
-         body.setInnerHTML("<div class=\"emptyText\">" +
-               "Chunk did not produce output." +
-               "</div>");
-      }
    }
    
    @UiField Image interrupt_;
