@@ -542,7 +542,9 @@ public class DependencyManager implements InstallShinyEvent.Handler
         "Preparing Profiler",
         userAction, 
         new Dependency[] {
-           Dependency.embeddedPackage("profvis")
+           Dependency.embeddedPackage("profvis"),
+           Dependency.cranPackage("htmlwidgets", "0.6"),
+           Dependency.cranPackage("stringr", "0.6")
         }, 
         false,
         new CommandWithArg<Boolean>()
