@@ -157,6 +157,7 @@ set (SESSION_SOURCE_FILES
    modules/rmarkdown/SessionRnbParser.cpp
    modules/rmarkdown/NotebookCache.cpp
    modules/rmarkdown/NotebookChunkDefs.cpp
+   modules/rmarkdown/NotebookOutput.cpp
    modules/rmarkdown/NotebookPlots.cpp
    modules/rmarkdown/RMarkdownPresentation.cpp
    modules/shiny/SessionShiny.cpp

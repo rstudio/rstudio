@@ -18,6 +18,7 @@
 #include "NotebookPlots.hpp"
 #include "NotebookCache.hpp"
 #include "NotebookChunkDefs.hpp"
+#include "NotebookOutput.hpp"
 
 #include <iostream>
 
@@ -41,23 +42,9 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionUserSettings.hpp>
 
-#define kChunkDocId        "doc_id"
-#define kChunkId           "chunk_id"
-#define kChunkOutputPath   "chunk_output"
-#define kChunkOutputType   "output_type"
-#define kChunkOutputValue  "output_val"
-#define kChunkOutputs      "chunk_outputs"
-#define kChunkUrl          "url"
-#define kChunkConsole      "console"
-
 #define kChunkConsoleInput  0
 #define kChunkConsoleOutput 1
 #define kChunkConsoleError  3
-
-#define kChunkOutputNone 0
-#define kChunkOutputText 1
-#define kChunkOutputPlot 2
-#define kChunkOutputHtml 3
 
 using namespace rstudio::core;
 
@@ -74,271 +61,6 @@ std::string s_consoleChunkId, s_consoleDocId, s_activeConsole;
 
 // whether we're currently connected to console events
 bool s_consoleConnected = false;
-
-// for performance, we cache the ordinal and output type associated with each 
-// chunk
-struct OutputPair
-{
-   OutputPair() :
-      outputType(kChunkOutputNone), ordinal(1)
-   {}
-   OutputPair(unsigned type, unsigned ord):
-      outputType(type), ordinal(ord) 
-   {}
-   unsigned outputType;
-   unsigned ordinal;
-};
-typedef std::map<std::string, OutputPair> LastChunkOutput;
-LastChunkOutput s_lastChunkOutputs;
-
-// A notebook .Rmd is accompanied by a sidecar .Rnb.cached folder, which has
-// the following structure:
-//
-// - foo.Rmd
-// + .foo.Rnd.cached
-//   - chunks.json
-//   - cwiaiw9i4f0.html
-//   + cwiaiw9i4f0_files
-//     - plot.png
-//   - c0aj9vhk0cz.html
-//   - cjz0958jgzh.csv
-//   + lib
-//     + htmlwidgets
-//       - htmlwidget.js
-// 
-// That is:
-// - each chunk has an ID and is represented by one of the following:
-//   - an HTML file (.html) with accompanying dependencies indicating
-//     chunk output, or 
-//   - a CSV file (.csv) indicating console output
-// - the special file "chunks.json" indicates the location of the chunks
-//   in the source .Rmd
-// - the special folder "lib" is used for shared libraries (e.g. scripts upon
-//   which several htmlwidget chunks depend)
-
-
-FilePath chunkOutputPath(
-      const std::string& docPath, const std::string& docId,
-      const std::string& chunkId, const std::string& contextId)
-
-{
-   return chunkCacheFolder(docPath, docId, contextId).childPath(chunkId);
-}
-
-FilePath chunkOutputPath(const std::string& docId, const std::string& chunkId)
-{
-   std::string docPath;
-   Error error = source_database::getPath(docId, &docPath);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return FilePath();
-   }
-
-   return chunkOutputPath(docPath, docId, chunkId, userSettings().contextId());
-}
-
-Error chunkConsoleContents(const FilePath& consoleFile, json::Array* pArray)
-{
-   std::string contents;
-   Error error = readStringFromFile(consoleFile, &contents);
-   if (error)
-      return error;
-
-   // parse each line of the CSV file
-   std::pair<std::vector<std::string>, std::string::iterator> line;
-   line = text::parseCsvLine(contents.begin(), contents.end());
-   while (!line.first.empty())
-   {
-      if (line.first.size() > 1)
-      {
-         json::Array output;
-         output.push_back(safe_convert::stringTo<int>(line.first[0], 
-               module_context::ConsoleOutputNormal));
-         output.push_back(line.first[1]);
-         pArray->push_back(output);
-      }
-      // read next line
-      line = text::parseCsvLine(line.second, contents.end());
-   }
-
-   return Success();
-}
-
-unsigned chunkOutputType(const FilePath& outputPath)
-{
-   int outputType = kChunkOutputNone;
-   if (outputPath.extensionLowerCase() == ".csv")
-      outputType = kChunkOutputText;
-   else if (outputPath.extensionLowerCase() == ".png")
-      outputType = kChunkOutputPlot;
-   else if (outputPath.extensionLowerCase() == ".html")
-      outputType = kChunkOutputHtml;
-   return outputType;
-}
-
-std::string chunkOutputExt(unsigned outputType)
-{
-   switch(outputType)
-   {
-      case kChunkOutputText:
-         return ".csv";
-      case kChunkOutputPlot:
-         return ".png";
-      case kChunkOutputHtml:
-         return ".html";
-   }
-   return "";
-}
-
-void updateLastChunkOutput(const std::string& docId, 
-                           const std::string& chunkId,
-                           const OutputPair& pair)
-{
-   s_lastChunkOutputs[docId + chunkId] = pair;
-}
-
-// given a document ID and a chunk ID, discover the last output the chunk had
-OutputPair lastChunkOutput(const std::string& docId, 
-                           const std::string& chunkId)
-{
-   // check our cache 
-   LastChunkOutput::iterator it = s_lastChunkOutputs.find(docId + chunkId);
-   if (it != s_lastChunkOutputs.end())
-      return it->second;
-   
-   std::string docPath;
-   source_database::getPath(docId, &docPath);
-   FilePath outputPath = chunkOutputPath(docPath, docId, chunkId, 
-         userSettings().contextId());
-
-   // scan the directory for output
-   std::vector<FilePath> outputPaths;
-   Error error = outputPath.children(&outputPaths);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return OutputPair();
-   }
-
-   OutputPair last;
-   BOOST_FOREACH(const FilePath& path, outputPaths)
-   {
-      // extract ordinal and update if it's the most recent we've seen so far
-      unsigned ordinal = static_cast<unsigned>(
-            ::strtoul(path.stem().c_str(), NULL, 16));
-      if (ordinal > last.ordinal)
-      {
-         last.ordinal = ordinal;
-         last.outputType = chunkOutputType(path);
-      }
-   }
-
-   // cache for future calls
-   updateLastChunkOutput(docId, chunkId, last);
-   return last;
-}
-
-
-FilePath chunkOutputFile(const std::string& docId, 
-                         const std::string& chunkId, 
-                         const OutputPair& output)
-{
-   return chunkOutputPath(docId, chunkId).complete(
-         (boost::format("%|1$05x|%2%") 
-                     % output.ordinal 
-                     % chunkOutputExt(output.outputType)).str());
-}
-
-FilePath chunkOutputFile(const std::string& docId, 
-                         const std::string& chunkId, 
-                         unsigned outputType)
-{
-   OutputPair output = lastChunkOutput(docId, chunkId);
-   if (output.outputType == outputType)
-      return chunkOutputFile(docId, chunkId, output);
-   output.ordinal++;
-   output.outputType = outputType;
-   updateLastChunkOutput(docId, chunkId, output);
-   return chunkOutputFile(docId, chunkId, output);
-}
-
-void enqueueChunkOutput(const std::string& docId,
-      const std::string& chunkId, int outputType, 
-      const FilePath& path)
-{
-   json::Object output;
-   output[kChunkOutputType]  = outputType;
-   output[kChunkOutputValue] = kChunkOutputPath "/" + docId + "/" +
-      chunkId + "/" + path.filename();
-
-   json::Object result;
-   result[kChunkId]         = chunkId;
-   result[kChunkDocId]      = docId;
-   result[kChunkOutputPath] = output;
-   ClientEvent event(client_events::kChunkOutput, result);
-   module_context::enqueClientEvent(event);
-}
-
-Error enqueueChunkOutput(
-      const std::string& docPath, const std::string& docId,
-      const std::string& chunkId, const std::string& contextId)
-{
-   FilePath outputPath = chunkOutputPath(docPath, docId, chunkId, contextId);
-
-   // scan the directory for output
-   std::vector<FilePath> outputPaths;
-   Error error = outputPath.children(&outputPaths);
-
-   // non-fatal: if we can't list we'll safely return an empty array
-   if (error) 
-      LOG_ERROR(error);
-
-   // arrange by filename (use FilePath's < operator)
-   std::sort(outputPaths.begin(), outputPaths.end());
-
-   // loop through each and build an array of the outputs
-   json::Array outputs;
-   BOOST_FOREACH(const FilePath& outputPath, outputPaths)
-   {
-      json::Object output;
-
-      // ascertain chunk output type from file extension; skip if extension 
-      // unknown
-      int outputType = chunkOutputType(outputPath);
-      if (outputType == kChunkOutputNone)
-         continue;
-
-      // format/parse chunk output for client consumption
-      output[kChunkOutputType] = outputType;
-      if (outputType == kChunkOutputText)
-      {
-         json::Array consoleOutput;
-         error = chunkConsoleContents(outputPath, &consoleOutput);
-         output[kChunkOutputValue] = consoleOutput;
-      }
-      else if (outputType == kChunkOutputPlot ||
-               outputType == kChunkOutputHtml)
-      {
-         output[kChunkOutputValue] = kChunkOutputPath "/" + docId + "/" +
-            chunkId + "/" + outputPath.filename();
-      }
-
-      outputs.push_back(output);
-   }
-   
-   // note that if we find that this chunk has no output we can display, we
-   // should still send it to the client, which will clean it up correctly, and
-   // omit it in its next set of updated chunk definitions
-   json::Object result;
-   result[kChunkId]      = chunkId;
-   result[kChunkDocId]   = docId;
-   result[kChunkOutputs] = outputs;
-   ClientEvent event(client_events::kChunkOutput, result);
-   module_context::enqueClientEvent(event);
-
-   return Success();
-}
 
 void replayChunkOutputs(const std::string& docPath, const std::string& docId,
       const std::string& requestId, const json::Array& chunkOutputs) 
@@ -519,50 +241,6 @@ void onChunkExecCompleted(const std::string& docId,
       LOG_ERROR(error);
 }
 
-Error handleChunkOutputRequest(const http::Request& request,
-                               http::Response* pResponse)
-{
-   // uri format is: /chunk_output/<doc-id>/...
-   
-   // split URI into pieces, extract the document ID, and remove that part of
-   // the URI
-   std::vector<std::string> parts = algorithm::split(request.uri(), "/");
-   if (parts.size() < 4) 
-      return Success();
-   std::string docId = parts[2];
-   for (int i = 0; i < 3; i++)
-      parts.erase(parts.begin());
-
-   // attempt to get the path -- ignore failure (doc may be unsaved and
-   // therefore won't have a path)
-   std::string path;
-   source_database::getPath(docId, &path);
-
-   FilePath target = chunkCacheFolder(path, docId).complete(
-         algorithm::join(parts, "/"));
-
-   // ensure the target exists 
-   if (!target.exists())
-   {
-      pResponse->setNotFoundError(request.uri());
-      return Success();
-   }
-
-   if (parts[0] == kChunkLibDir)
-   {
-      // if a reference to the chunk library folder, we can reuse the contents
-      // (let the browser cache the file)
-      pResponse->setCacheableFile(target, request);
-   }
-   else
-   {
-      // otherwise, use ETag cache 
-      pResponse->setCacheableBody(target, request);
-   }
-
-   return Success();
-}
-
 // called by the client to set the active chunk console
 Error setChunkConsole(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse*)
@@ -603,9 +281,8 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "refresh_chunk_output", refreshChunkOutput))
       (bind(registerRpcMethod, "set_chunk_console", setChunkConsole))
-      (bind(registerUriHandler, "/" kChunkOutputPath, 
-            handleChunkOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRmdNotebook.R"))
+      (bind(initOutput))
       (bind(initCache));
 
    return initBlock.execute();

@@ -14,8 +14,34 @@
  */
 
 
+// A notebook .Rmd is accompanied by a sidecar .Rnb.cached folder, which has
+// the following structure:
+//
+// - foo.Rmd
+// + .foo.Rnd.cached
+//   - chunks.json
+//   + cwiaiw9i4f0
+//     - 00001.png
+//     - 00002.csv
+//   + lib
+//     + htmlwidgets
+//       - htmlwidget.js
+// 
+// That is:
+// - each chunk has an ID and a folder of content
+// - the folder contains a sequence of files which represent the content inside
+//   the chunk -- textual output, plots, and HTML; this content's output order
+//   is implied in the filenames 
+// - the special file "chunks.json" indicates the location of the chunks
+//   in the source .Rmd
+// - the special folder "lib" is used for shared libraries (e.g. scripts upon
+//   which several htmlwidget chunks depend)
+
+
 #ifndef SESSION_NOTEBOOK_CACHE_HPP
 #define SESSION_NOTEBOOK_CACHE_HPP
+
+#include <string>
 
 namespace rstudio {
 namespace core {
