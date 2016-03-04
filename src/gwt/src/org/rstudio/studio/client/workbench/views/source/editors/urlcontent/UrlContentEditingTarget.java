@@ -426,6 +426,11 @@ public class UrlContentEditingTarget implements EditingTarget
       assert false : "Not implemented";
    }
 
+   public String getDefaultNamePrefix()
+   {
+      return null;
+   }
+
    private ContentItem getContentItem()
    {
       return (ContentItem)doc_.getProperties().cast();

@@ -4040,6 +4040,11 @@ public class TextEditingTarget implements
          }
       }
    }
+
+   public String getDefaultNamePrefix()
+   {
+      return null;
+   }
    
    private boolean isRChunk(Scope scope)
    {

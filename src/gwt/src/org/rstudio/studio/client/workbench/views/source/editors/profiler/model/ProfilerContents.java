@@ -49,4 +49,8 @@ public class ProfilerContents extends JavaScriptObject
    public final native String getHtmlLocalPath() /*-{
       return this.htmlLocalPath;
    }-*/;
+   
+   public final native boolean isUserSaved() /*-{
+      return this.isUserSaved;
+   }-*/;
 }

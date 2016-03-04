@@ -138,6 +138,8 @@ public interface EditingTarget extends IsWidget,
     */
    long getLargeFileSize();
    
+   String getDefaultNamePrefix();
+   
    public final static int DISMISS_TYPE_CLOSE = 0;
    public final static int DISMISS_TYPE_MOVE = 1;
 }

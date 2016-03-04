@@ -508,6 +508,11 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       saveNewFile(getPath());
    }
+
+   public String getDefaultNamePrefix()
+   {
+      return "Profile";
+   }
    
    private void savePropertiesWithPath(String path)
    {
