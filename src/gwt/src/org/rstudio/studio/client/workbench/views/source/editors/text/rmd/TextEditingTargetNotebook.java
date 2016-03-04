@@ -36,6 +36,8 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
@@ -68,7 +70,8 @@ public class TextEditingTargetNotebook
                           RmdChunkOutputFinishedEvent.Handler,
                           SendToChunkConsoleEvent.Handler, 
                           ChunkChangeEvent.Handler,
-                          ChunkContextChangeEvent.Handler
+                          ChunkContextChangeEvent.Handler,
+                          ConsolePromptHandler
 {
    private class ChunkExecQueueUnit
    {
@@ -173,6 +176,7 @@ public class TextEditingTargetNotebook
       events_.addHandler(SendToChunkConsoleEvent.TYPE, this);
       events_.addHandler(ChunkChangeEvent.TYPE, this);
       events_.addHandler(ChunkContextChangeEvent.TYPE, this);
+      events_.addHandler(ConsolePromptEvent.TYPE, this);
    }
    
    public void executeChunk(Scope chunk, String code)
@@ -217,16 +221,46 @@ public class TextEditingTargetNotebook
       executingChunk_ = unit;
       
       // let the chunk widget know it's started executing
-      outputWidgets_.get(unit.chunkId).setChunkExecuting();
+      outputWidgets_.get(unit.chunkId).showConsoleCode(unit.code);
 
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
             unit.chunkId, 
             new ServerRequestCallback<Void>()
             {
                @Override
+               public void onResponseReceived(Void v)
+               {
+                  console_.consoleInput(unit.code, unit.chunkId, 
+                        new VoidServerRequestCallback());
+               }
+
+               @Override
                public void onError(ServerError error)
                {
-                  events_.fireEvent(new SendToConsoleEvent(unit.code, true));
+                  // if the queue is empty, show an error; if it's not, prompt
+                  // for continuing
+                  if (chunkExecQueue_.isEmpty())
+                     RStudioGinjector.INSTANCE.getGlobalDisplay()
+                       .showErrorMessage("Chunk Execution Failed", 
+                              error.getUserMessage());
+                  else
+                     RStudioGinjector.INSTANCE.getGlobalDisplay()
+                       .showYesNoMessage(
+                        GlobalDisplay.MSG_QUESTION, 
+                        "Continue Execution?", 
+                        "The following error was encountered during chunk " +
+                        "execution: \n\n" + error.getUserMessage() + "\n\n" +
+                        "Do you want to continue executing notebook chunks?", 
+                        false, 
+                        new Operation()
+                        {
+                           @Override
+                           public void execute()
+                           {
+                              processChunkExecQueue();
+                           }
+                        }, 
+                        null, null, "Continue", "Abort", true);
                }
             });
    }
@@ -366,6 +400,16 @@ public class TextEditingTargetNotebook
       }
    }
    
+   @Override
+   public void onConsolePrompt(ConsolePromptEvent event)
+   {
+      // mark chunk execution as finished
+      if (executingChunk_ != null)
+         executingChunk_ = null;
+      
+      processChunkExecQueue();
+   }
+
    // Private methods --------------------------------------------------------
    
    private void loadInitialChunkOutput()

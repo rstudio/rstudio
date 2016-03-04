@@ -334,16 +334,6 @@ public class ChunkOutputWidget extends Composite
       onRenderCompleted_.execute(console_.getElement().getOffsetHeight());
    }
 
-   public void setChunkExecuting()
-   {
-      if (state_ == CHUNK_EXECUTING)
-         return;
-      if (state_ == CONSOLE_READY)
-         destroyConsole();
-      state_ = CHUNK_EXECUTING;
-      showBusyState();
-   }
-   
    public void showServerError(ServerError error)
    {
       // consider: less obtrusive error message 
