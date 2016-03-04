@@ -346,6 +346,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.goToPrevSection());
       dynamicCommands_.add(commands.profileCode());
       dynamicCommands_.add(commands.profileCodeWithoutFocus());
+      dynamicCommands_.add(commands.saveProfileAs());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
