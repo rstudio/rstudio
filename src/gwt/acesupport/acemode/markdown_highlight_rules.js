@@ -219,16 +219,12 @@ var MarkdownHighlightRules = function() {
             token : ["paren.keyword.operator", "text", "paren.keyword.operator"],
             regex : "(\\{)([^\\}]*)(\\})"
         }, {
-            // pandoc citation with brackets
-            token : "markup.list",
-            regex : "\\[-?\\@[\\w\\d-]+\\]"
-        }, {
             // pandoc citation
             token : "markup.list",
             regex : "-?\\@[\\w\\d-]+"
         }, {
             token : "text",
-            regex : "[^\\*_%$`\\[#<>\\\\]+"
+            regex : "[^\\*_%$`\\[#<>\\\\@]+"
         }, {
             token : "text",
             regex : "\\\\"
