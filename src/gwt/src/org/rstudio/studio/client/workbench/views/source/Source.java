@@ -1102,7 +1102,6 @@ public class Source implements InsertSourceHandler,
             });
    }
    
-
    @Handler
    public void onNewSourceDoc()
    {
