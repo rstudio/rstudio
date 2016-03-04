@@ -34,33 +34,6 @@ namespace rmarkdown {
 namespace notebook {
 namespace {
 
-bool copyCacheItem(const FilePath& from,
-                   const FilePath& to,
-                   const FilePath& path)
-{
-
-   std::string relativePath = path.relativePath(from);
-   FilePath target = to.complete(relativePath);
-
-   Error error = path.isDirectory() ?
-                     target.ensureDirectory() :
-                     path.copy(target);
-   if (error)
-      LOG_ERROR(error);
-
-   return true;
-}
-
-Error copyCache(const FilePath& from, const FilePath& to)
-{
-   Error error = to.ensureDirectory();
-   if (error)
-      return error;
-
-   return from.childrenRecursive(
-             boost::bind(copyCacheItem, from, to, _2));
-}
-
 void onDocRemoved(const std::string& docId, const std::string& docPath)
 {
    Error error;
@@ -116,7 +89,7 @@ void onDocRenamed(const std::string& oldPath,
          return;
    }
 
-   error = copyCache(oldCacheDir, newCacheDir);
+   error = oldCacheDir.copyDirectoryRecursive(newCacheDir);
    if (error)
    {
       LOG_ERROR(error);

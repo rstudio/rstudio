@@ -156,6 +156,9 @@ public:
    // remove the directory (if it exists) and create a new one in its place
    Error resetDirectory() const;
 
+   // copy this directory to another one, recursively
+   Error copyDirectoryRecursive(const FilePath& targetPath) const;
+
    // create this file if it doesn't already exist
    Error ensureFile() const;
    
