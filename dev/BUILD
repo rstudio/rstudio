@@ -216,7 +216,6 @@ java_library(
         exclude = [
             "core/super/com/google/gwt/dev/jjs/intrinsic/**",
             "**/package-info.java",
-            "**/EmulatedCharset.java",
         ],
     ),
     compatible_with = ["//buildenv/target:android"],
@@ -338,12 +337,4 @@ GwtTestSuites(
     sharding = {"dev.CompilerTest": 12},
     tests = GWT_DEV_TESTS,
     deps = [":dev-test-code"],
-)
-
-filegroup(
-    name = "emul",
-    srcs = glob([
-        "core/super/javaemul/**/*.java",
-    ]),
-    visibility = ["//third_party/java_src/j2cl:__subpackages__"],
 )

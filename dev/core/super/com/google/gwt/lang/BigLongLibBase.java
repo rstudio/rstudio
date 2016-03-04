@@ -15,8 +15,6 @@
  */
 package com.google.gwt.lang;
 
-import com.google.gwt.core.client.UnsafeNativeLong;
-
 /**
  * Implements a Java <code>long</code> in a way that can be translated to
  * JavaScript.
@@ -64,14 +62,6 @@ class BigLongLibBase {
       * TWO_PWR_22_DBL;
   protected static final double TWO_PWR_63_DBL = TWO_PWR_32_DBL
       * TWO_PWR_31_DBL;
-
-  /**
-   * Production Mode implementation; the int array is already the right object.
-   */
-  @UnsafeNativeLong
-  protected static native long asLong(BigLong value) /*-{
-    return value;
-  }-*/;
 
   protected static BigLong create(int value) {
     int a0 = value & MASK;

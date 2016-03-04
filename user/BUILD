@@ -60,10 +60,13 @@ AugmentedJar(
 java_library(
     name = "gwt-user-bare",
     srcs = glob(
-        ["src/**/*.java"],
+        [
+            "src/**/*.java",
+            "super/com/google/gwt/emul/javaemul/internal/**/*.java",
+        ],
         exclude = [
             "src/com/google/gwt/junit/**/*.java",  # see gwt-testing
-            "**/super/**",
+            "**/EmulatedCharset.java",
             "**/RunStyleSelenium.java",
         ],
     ),
@@ -343,8 +346,6 @@ java_library(
             "src/com/google/gwt/user/client/impl/WindowImpl.java",
             "src/com/google/gwt/dom/client/*.java",
             "src/com/google/gwt/core/client/impl/Impl.java",
-            "src/com/google/gwt/core/client/impl/Disposable.java",
-            "src/com/google/gwt/core/client/impl/UnloadSupport.java",
             "src/com/google/gwt/core/client/impl/StackTraceCreator.java",
             "src/com/google/gwt/core/client/impl/SchedulerImpl.java",
             "src/com/google/gwt/core/client/impl/AsyncFragmentLoader.java",
@@ -359,12 +360,13 @@ java_library(
             "src/com/google/gwt/i18n/client/impl/*.java",
             "src/com/google/gwt/i18n/client/*.java",
             "src/com/google/gwt/i18n/rebind/keygen/*.java",
+            "super/com/google/gwt/emul/javaemul/internal/ArrayHelper.java",
+            "super/com/google/gwt/emul/javaemul/internal/ArrayStamper.java",
             # And it's also sensible to want for serialization:
             "src/com/google/gwt/user/client/ui/SuggestOracle.java",
         ],
         exclude = [
             "**/junit/**",
-            "**/super/**",
             "**/package-info.java",
             "src/com/google/web/bindery/requestfactory/server/RequestFactoryJarExtractor.java",
         ],
@@ -641,24 +643,30 @@ filegroup(
 )
 
 filegroup(
-    name = "emul",
-    srcs = glob(
-        [
-            "super/com/google/gwt/emul/java/**/*.java",
-        ],
-    ),
+    name = "java_emul",
+    srcs = glob(["super/com/google/gwt/emul/java/**/*.java"]),
     visibility = ["//third_party/java_src/j2cl:__subpackages__"],
 )
 
 filegroup(
-    name = "emul_test",
+    name = "java_emul_internal",
+    srcs = glob(["super/com/google/gwt/emul/javaemul/**/*.java"]),
+    visibility = ["//third_party/java_src/j2cl:__subpackages__"],
+)
+
+filegroup(
+    name = "java_emul_test",
     srcs = glob(
         [
             "test/com/google/gwt/emultest/**/*.java",
             "test/com/google/gwt/testing/TestUtils.java",
             "test/org/apache/commons/**/*.java",
         ],
-        exclude = ["**/package-info.java"],
+        exclude = [
+            "test/**/java8/**",
+            "test/**/*Java8Suite.java",
+            "**/package-info.java",
+        ],
     ),
     visibility = ["//third_party/java_src/j2cl:__subpackages__"],
 )

@@ -32,8 +32,9 @@
         <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar"/>
       </classpath>
     </gwt.javac>
-    <gwt.javac srcdir="${gwt.root}/user/src" destdir="${javac.junit.out}"
-               excludes="**/super/**">
+    <gwt.javac srcdir="" destdir="${javac.junit.out}" excludes="**/EmulatedCharset.java">
+      <src path="${gwt.root}/user/src" />
+      <src path="${gwt.root}/user/super/com/google/gwt/emul/javaemul/internal"/>
       <classpath>
         <pathelement location="${javac.out}"/>
         <pathelement location="${gwt.tools.lib}/gss/2015-11-04/closure-stylesheets-library-20151104-rebased.jar"/>
@@ -175,7 +176,7 @@
   <target name="compiler.standalone"
           description="Validates that the standalone gwt-compiler project can build.">
     <mkdir dir="${javac.out}"/>
-    <gwt.javac srcdir="core/super" excludes="com/google/gwt/dev/jjs/intrinsic/,**/EmulatedCharset.java"/>
+    <gwt.javac srcdir="core/super" excludes="com/google/gwt/dev/jjs/intrinsic/"/>
     <gwt.javac srcdir="core/src">
       <include name="com/google/gwt/core/ext/**"/>
       <include name="com/google/gwt/core/linker/**"/>

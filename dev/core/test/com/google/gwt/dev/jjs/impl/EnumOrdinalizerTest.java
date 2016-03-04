@@ -26,8 +26,6 @@ import com.google.gwt.dev.jjs.ast.JValueLiteral;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.impl.EnumOrdinalizer.Tracker;
 
-import javaemul.internal.annotations.DoNotInline;
-
 /**
  * A set of tests for the conditions under which ordinalization is and is not allowed.  The
  * ordinalization is performed when allowed.
@@ -1033,7 +1031,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   }
 
   private void setupFruitEnumWithStaticMethod() {
-    addSnippetImport(DoNotInline.class.getCanonicalName());
+    addSnippetImport("javaemul.internal.annotations.DoNotInline");
     addSnippetClassDecl("public enum Fruit {APPLE, ORANGE;",
         "  @DoNotInline",
         "  public static final int staticMethod() {",

@@ -237,9 +237,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import javaemul.internal.annotations.DoNotInline;
-import javaemul.internal.annotations.ForceInline;
-
 /**
  * Constructs a GWT Java AST from a single isolated compilation unit. The AST is
  * not associated with any {@link com.google.gwt.dev.jjs.ast.JProgram} and will
@@ -4090,11 +4087,11 @@ public class GwtAstBuilder {
     x.setSuppressedWarnings(JdtUtil.getSuppressedWarnings(annotations));
   }
 
-  private void maybeSetInliningMode(AbstractMethodDeclaration x,
-      JMethod method) {
-    if (JdtUtil.getAnnotation(x.binding, DoNotInline.class.getCanonicalName()) != null) {
+  private void maybeSetInliningMode(AbstractMethodDeclaration x, JMethod method) {
+    MethodBinding bind = x.binding;
+    if (JdtUtil.getAnnotation(bind, "javaemul.internal.annotations.DoNotInline") != null) {
       method.setInliningMode(InliningMode.DO_NOT_INLINE);
-    } else if (JdtUtil.getAnnotation(x.binding, ForceInline.class.getCanonicalName()) != null) {
+    } else if (JdtUtil.getAnnotation(bind, "javaemul.internal.annotations.ForceInline") != null) {
       method.setInliningMode(InliningMode.FORCE_INLINE);
     }
   }

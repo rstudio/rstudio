@@ -15,7 +15,6 @@
 <!-- A JavaScript-based emulation of the Java Runtime library.              -->
 <!-- Do not inherit this module directly; inherit com.google.gwt.core.Core. -->
 <module>
-  <inherits name="javaemul.internal.Internal"/>
   <inherits name="com.google.gwt.emul.Preconditions" />
 
   <extend-configuration-property name="compiler.enum.obfuscate.names.blacklist"

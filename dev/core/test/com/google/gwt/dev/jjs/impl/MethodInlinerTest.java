@@ -17,8 +17,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 
-import javaemul.internal.annotations.DoNotInline;
-
 /**
  * Test for {@link MethodInliner}.
  */
@@ -39,7 +37,7 @@ public class MethodInlinerTest extends OptimizerTestBase {
   }
 
   public void testLocalVariables() throws Exception {
-    addSnippetImport(DoNotInline.class.getCanonicalName());
+    addSnippetImport("javaemul.internal.annotations.DoNotInline");
     addSnippetClassDecl("static int fun() { int a = 1; return a; }");
     addSnippetClassDecl("@DoNotInline static int caller() { return fun(); }");
     Result result = optimize("int", "return caller();");
@@ -48,7 +46,7 @@ public class MethodInlinerTest extends OptimizerTestBase {
   }
 
   public void testLocalVariables_unassignedAtDefinition() throws Exception {
-    addSnippetImport(DoNotInline.class.getCanonicalName());
+    addSnippetImport("javaemul.internal.annotations.DoNotInline");
     addSnippetClassDecl("static int fun() { int a; return a = 1; }");
     addSnippetClassDecl("@DoNotInline static int caller() { return fun(); }");
     Result result = optimize("int", "return caller();");
@@ -57,7 +55,7 @@ public class MethodInlinerTest extends OptimizerTestBase {
   }
 
   public void testLocalVariablesUnusedReturn() throws Exception {
-    addSnippetImport(DoNotInline.class.getCanonicalName());
+    addSnippetImport("javaemul.internal.annotations.DoNotInline");
     addSnippetClassDecl("static int fun() { int a = 1; return a; }");
     addSnippetClassDecl("@DoNotInline static int caller() { fun(); return 1; }");
     Result result = optimize("int", "return caller();");
