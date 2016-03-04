@@ -754,23 +754,15 @@
 
 .rs.addFunction("namedVectorAsList", function(vector)
 {
-   # Early escape for zero-length vectors
-   if (!length(vector))
-   {
-      return(list(
-         values = NULL,
-         names = NULL
-      ))
-   }
-   
    values <- unlist(vector, use.names = FALSE)
+   if (!length(values))
+      return(list(names = NULL, values = NULL))
    vectorNames <- names(vector)
-   names <- unlist(lapply(1:length(vector), function(i) {
+   names <- unlist(lapply(seq_along(vector), function(i) {
       rep.int(vectorNames[i], length(vector[[i]]))
    }))
    
-   list(values = values,
-        names = names)
+   list(names = names, values = values)
 })
 
 .rs.addFunction("getDollarNamesMethod", function(object,
@@ -801,7 +793,7 @@
 .rs.addJsonRpcHandler("get_args", function(name, src)
 {
    if (identical(src, ""))
-      src <- NULL
+      src <- .GlobalEnv
    
    result <- .rs.getSignature(.rs.getAnywhere(name, src))
    result <- sub("function ", "", result)

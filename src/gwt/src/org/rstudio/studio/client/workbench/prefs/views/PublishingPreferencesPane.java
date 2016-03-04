@@ -23,13 +23,13 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -157,16 +157,20 @@ public class PublishingPreferencesPane extends PreferencesPane
          @Override
          public void onClick(ClickEvent arg0)
          {
-            deps_.withRSConnect("Viewing publish accounts", false, null, new Command() 
+            deps_.withRSConnect("Viewing publish accounts", false, null, 
+                                new CommandWithArg<Boolean>() 
             {
                @Override
-               public void execute()
+               public void execute(Boolean succeeded)
                {
-                  // refresh the account list to show the accounts
-                  accountList_.refreshAccountList();
-                  
-                  // remove the "missing package" UI
-                  missingPkgPanel.setVisible(false);
+                  if (succeeded)
+                  {
+                     // refresh the account list to show the accounts
+                     accountList_.refreshAccountList();
+                     
+                     // remove the "missing package" UI
+                     missingPkgPanel.setVisible(false);
+                  }
                }
             });
          }
@@ -309,10 +313,11 @@ public class PublishingPreferencesPane extends PreferencesPane
       }
       else
       {
-         deps_.withRSConnect("Connecting a publishing account", false, null, new Command() 
+         deps_.withRSConnect("Connecting a publishing account", false, null,
+                             new CommandWithArg<Boolean>() 
          {
             @Override
-            public void execute()
+            public void execute(Boolean succeeded)
             {
                // refresh the account list in case there are accounts already on
                // the system (e.g. package was installed at one point and some

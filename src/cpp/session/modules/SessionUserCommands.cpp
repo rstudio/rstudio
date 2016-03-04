@@ -39,59 +39,6 @@ using namespace rstudio::core;
 
 namespace {
 
-bool isUserCommandResult(SEXP resultSEXP)
-{
-   return r::sexp::isList(resultSEXP) &&
-          r::sexp::inherits(resultSEXP, "user_command");
-}
-
-template <typename T>
-bool extractField(SEXP elementSEXP, const std::string& name, T* field)
-{
-   Error error = r::sexp::getNamedListElement(elementSEXP, name, field);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return false;
-   }
-      
-   return true;
-}
-
-json::Array jsonFromUserCommandResult(SEXP resultSEXP)
-{
-   json::Array jsonData;
-   
-   if (!isUserCommandResult(resultSEXP))
-      return jsonData;
-   
-   std::size_t n = r::sexp::length(resultSEXP);
-   for (std::size_t i = 0; i < n; ++i)
-   {
-      json::Object jsonResult;
-      SEXP elementSEXP = VECTOR_ELT(resultSEXP, i);
-      
-      std::string action;
-      if (!extractField(elementSEXP, "action", &action))
-         return json::Array();
-      jsonResult["action"] = action;
-      
-      std::vector<int> range;
-      if (!extractField(elementSEXP, "range", &range))
-         return json::Array();
-      jsonResult["range"] = json::toJsonArray(range);
-      
-      std::string text;
-      if (!extractField(elementSEXP, "text", &text))
-         return json::Array();
-      jsonResult["text"]  = text;
-      
-      jsonData.push_back(jsonResult);
-   }
-   
-   return jsonData;
-}
-
 Error noSuchSymbol(const std::string symbol, const ErrorLocation& location)
 {
    Error error(r::errc::SymbolNotFoundError, location);
@@ -103,36 +50,12 @@ Error noSuchSymbol(const std::string symbol, const ErrorLocation& location)
 Error executeUserCommand(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
-   // Ensure response is empty array on failure
-   Error error;
-   pResponse->setResult(json::Array());
-   
    // Read JSON params
    std::string name;
-   json::Array contentJson;
-   std::string path;
-   int rowStart;
-   int columnStart;
-   int rowEnd;
-   int columnEnd;
-   error = json::readParams(request.params,
-                            &name,
-                            &contentJson,
-                            &path,
-                            &rowStart,
-                            &columnStart,
-                            &rowEnd,
-                            &columnEnd);
+   Error error = json::readParams(request.params, &name);
+   
    if (error)
    {
-      LOG_ERROR(error);
-      return error;
-   }
-   
-   std::vector<std::string> content;
-   if (!json::fillVectorString(contentJson, &content))
-   {
-      error = Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
       LOG_ERROR(error);
       return error;
    }
@@ -152,24 +75,14 @@ Error executeUserCommand(const json::JsonRpcRequest& request,
    SEXP resultSEXP = R_NilValue;
    
    r::exec::RFunction userCommand(fnSEXP);
-   userCommand.addParam(content);
-   userCommand.addParam(path);
-   userCommand.addParam(rowStart);
-   userCommand.addParam(columnStart);
-   userCommand.addParam(rowEnd);
-   userCommand.addParam(columnEnd);
-   
    error = userCommand.call(&resultSEXP, &protect);
+   
    if (error)
    {
       LOG_ERROR(error);
       return error;
    }
    
-   // Create JSON data from result
-   json::Array jsonData = jsonFromUserCommandResult(resultSEXP);
-   
-   pResponse->setResult(jsonData);
    return Success();
 }
 

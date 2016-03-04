@@ -29,6 +29,8 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.widget.HelpButton;
@@ -47,6 +49,7 @@ import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
+import org.rstudio.studio.client.workbench.views.source.editors.text.FoldStyle;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -124,6 +127,22 @@ public class EditingPreferencesPane extends PreferencesPane
       
       lessSpaced(keyboardPanel);
       editingPanel.add(keyboardPanel);
+      
+      foldMode_ = new SelectWidget(
+            "Fold Style:",
+            new String[] {
+                  "Start Only",
+                  "Start and End"
+            },
+            new String[] {
+                  FoldStyle.FOLD_MARK_BEGIN_ONLY,
+                  FoldStyle.FOLD_MARK_BEGIN_AND_END
+            },
+            false,
+            true,
+            false);
+      
+      editingPanel.add(foldMode_);
       
       Label executionLabel = headerLabel("Execution");
       editingPanel.add(executionLabel);
@@ -307,7 +326,8 @@ public class EditingPreferencesPane extends PreferencesPane
       
       completionPanel.add(insertParensAfterFunctionCompletionsCheckbox);
       completionPanel.add(showSignatureTooltipsCheckbox);
-      
+
+      completionPanel.add(checkboxPref("Show help tooltip on cursor idle", prefs.showFunctionTooltipOnIdle()));
       completionPanel.add(checkboxPref("Insert spaces around equals for argument completions", prefs.insertSpacesAroundEquals()));
       completionPanel.add(checkboxPref("Use tab for multiline autocompletions", prefs.allowTabMultilineCompletion()));
       
@@ -451,6 +471,8 @@ public class EditingPreferencesPane extends PreferencesPane
          editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS);
       else
          editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_DEFAULT);
+      
+      foldMode_.setValue(prefs_.foldStyle().getValue());
       delimiterSurroundWidget_.setValue(prefs_.surroundSelection().getValue());
       rmdViewerMode_.setValue(prefs_.rmdViewerType().getValue().toString());
    }
@@ -474,9 +496,18 @@ public class EditingPreferencesPane extends PreferencesPane
       
       prefs_.useVimMode().setGlobalValue(isVim);
       prefs_.enableEmacsKeybindings().setGlobalValue(isEmacs);
+      
+      if (isVim)
+         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_VIM);
+      else if (isEmacs)
+         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_EMACS);
+      else
+         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
+      
       prefs_.rmdViewerType().setGlobalValue(Integer.decode(
             rmdViewerMode_.getValue()));
       
+      prefs_.foldStyle().setGlobalValue(foldMode_.getValue());
       prefs_.surroundSelection().setGlobalValue(delimiterSurroundWidget_.getValue());
       
       return reload;
@@ -527,6 +558,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final SelectWidget showCompletionsOther_;
    private final SelectWidget editorMode_;
    private final SelectWidget rmdViewerMode_;
+   private final SelectWidget foldMode_;
    private final SelectWidget delimiterSurroundWidget_;
    private final TextBoxWithButton encoding_;
    private String encodingValue_;

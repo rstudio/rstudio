@@ -35,6 +35,7 @@ public class ProjectOpener
                   ProjectsServerOperations server,
                   String defaultLocation,
                   int defaultType,
+                  boolean showNewSession,
                   final ProgressOperationWithInput<OpenProjectParams> onCompleted)
    {
       // use the default dialog on desktop mode or single-session mode
@@ -54,7 +55,7 @@ public class ProjectOpener
                public void execute(FileSystemItem input,
                      ProgressIndicator indicator)
                {
-                  onCompleted.execute(new OpenProjectParams(input, false), 
+                  onCompleted.execute(new OpenProjectParams(input, null, false), 
                         indicator);
                }
             });  
@@ -65,7 +66,7 @@ public class ProjectOpener
          WebFileDialogs webDialogs = (WebFileDialogs)dialogs;
          webDialogs.openProject(fsContext, 
                FileSystemItem.createDir(defaultLocation), 
-               defaultType, onCompleted);
+               defaultType, showNewSession, onCompleted);
       }
    }
 }

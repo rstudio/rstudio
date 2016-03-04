@@ -18,11 +18,13 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.studio.client.application.ApplicationUtils;
 import org.rstudio.studio.client.application.model.RVersionsInfo;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
+import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
@@ -44,8 +46,8 @@ public class SessionInfo extends JavaScriptObject
       return this.clientId;
    }-*/;
    
-   public final native double getClientVersion() /*-{
-      return this.version;
+   public final native String getClientVersion() /*-{
+      return this.client_version;
    }-*/;
 
    public final native String getUserIdentity() /*-{
@@ -243,8 +245,12 @@ public class SessionInfo extends JavaScriptObject
       return !!this.project_supports_sharing;
    }-*/;
    
-   public final native boolean isProjectOwner() /*-{
-      return !!this.project_owned_by_user;
+   public final native boolean projectParentBrowseable() /*-{
+      return !!this.project_parent_browseable;
+   }-*/;
+   
+   public final native String getProjectUserDataDir() /*-{
+      return this.project_user_data_directory;
    }-*/;
 
    public final native JsArray<ConsoleProcessInfo> getConsoleProcesses() /*-{
@@ -400,4 +406,41 @@ public class SessionInfo extends JavaScriptObject
    public final native RVersionsInfo getRVersionsInfo() /*-{
       return this.r_versions_info;
    }-*/;
+   
+   public final native boolean getPresentationCommands() /*-{
+      return this.presentation_commands;
+   }-*/;
+   
+   public final native boolean getTutorialApiAvailable() /*-{
+      return this.tutorial_api_available;
+   }-*/;
+   
+   public final native String getTutorialApiClientOrigin() /*-{
+      return this.tutorial_api_client_origin;
+   }-*/;
+   
+   public final native boolean getPackratAvailable() /*-{
+      return this.packrat_available;
+   }-*/;
+   
+   public final native boolean getShowUserHomePage() /*-{
+      return this.show_user_home_page;
+   }-*/;
+   
+   public final String getUserHomePageUrl()
+   {
+      String url = getUserHomePageUrlNative();
+      if (url != null)
+         url = ApplicationUtils.getHostPageBaseURLWithoutContext(false) + url;
+      return url;
+   }
+   
+   private final native String getUserHomePageUrlNative() /*-{
+      return this.user_home_page_url;
+   }-*/;
+   
+   public final native RAddins getAddins() /*-{
+      return this.r_addins;
+   }-*/;
+   
 }

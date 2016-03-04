@@ -30,6 +30,10 @@ public class JsArrayEx extends JavaScriptObject
    public final native double getDouble(int idx) /*-{
       return this[idx];
    }-*/;
+   
+   public final native int getInt(int idx) /*-{
+      return this[idx];
+   }-*/;
 
    public final native String getString(int idx) /*-{
       return this[idx];

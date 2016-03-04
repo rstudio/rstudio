@@ -14,12 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HasValue;
-import com.google.gwt.user.client.ui.IntegerBox;
-import com.google.gwt.user.client.ui.Label;
-
+import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -32,31 +28,31 @@ public class ProfilerEditingTargetWidget extends Composite
                                          implements ProfilerPresenter.Display
               
 {
+   private Frame profilePage_;
+   
    public ProfilerEditingTargetWidget(Commands commands)
    {
       VerticalPanel panel = new VerticalPanel();
-      panel.add(new Label("PropA"));
-      txtPropA_ = new IntegerBox();
-      panel.add(txtPropA_);
-      panel.add(new Label("PropB"));
-      chkPropB_ = new CheckBox();
-      panel.add(chkPropB_); 
-      panel.setSize("100%", "100%");
+
 
       PanelWithToolbars mainPanel = new PanelWithToolbars(
                                           createToolbar(commands), 
                                           panel);
 
+      profilePage_ = new Frame();
+      profilePage_.setWidth("100%");
+      profilePage_.setHeight("100%");
+      
+      panel.add(profilePage_);
+      panel.setWidth("100%");
+      panel.setHeight("100%");
+      
       initWidget(mainPanel);
-
    }
 
    private Toolbar createToolbar(Commands commands)
    {
-      Toolbar toolbar = new EditingTargetToolbar(commands);
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands.startProfiler().createToolbarButton());
-      toolbar.addLeftWidget(commands.stopProfiler().createToolbarButton());
+      Toolbar toolbar = new EditingTargetToolbar(commands, true);
       return toolbar;
    }
    
@@ -65,18 +61,13 @@ public class ProfilerEditingTargetWidget extends Composite
       return this;
    }
    
-   @Override
-   public HasValue<Integer> getPropA()
+   public void showProfilePage(String path)
    {
-      return txtPropA_;
-   }
-
-   @Override
-   public HasValue<Boolean> getPropB()
-   {
-      return chkPropB_;
+      profilePage_.setUrl(path);
    }
    
-   private IntegerBox txtPropA_;
-   private CheckBox chkPropB_;   
+   public String getUrl()
+   {
+      return profilePage_.getUrl();
+   }
 }

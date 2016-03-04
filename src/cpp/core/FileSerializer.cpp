@@ -118,13 +118,14 @@ Error readStringVectorFromFile(const core::FilePath& filePath,
    
 Error writeStringToFile(const FilePath& filePath,
                         const std::string& str,
-                        string_utils::LineEnding lineEnding)
+                        string_utils::LineEnding lineEnding,
+                        bool truncate)
 {
    using namespace boost::system::errc ;
    
    // open file
    boost::shared_ptr<std::ostream> pOfs;
-   Error error = filePath.open_w(&pOfs);
+   Error error = filePath.open_w(&pOfs, truncate);
    if (error)
       return error;
    

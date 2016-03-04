@@ -34,6 +34,7 @@ public abstract class
    public abstract AppCommand newCppDoc();
    public abstract AppCommand newSweaveDoc();
    public abstract AppCommand newRMarkdownDoc();
+   public abstract AppCommand newRShinyApp();
    public abstract AppCommand newRHTMLDoc();
    public abstract AppCommand newRDocumentationDoc();
    public abstract AppCommand newRPresentationDoc();
@@ -69,6 +70,7 @@ public abstract class
    public abstract AppCommand sourceNavigateBack();
    public abstract AppCommand sourceNavigateForward();
    public abstract AppCommand markdownHelp();
+   public abstract AppCommand openRStudioIDECheatSheet();
    public abstract AppCommand openDataVisualizationCheatSheet();
    public abstract AppCommand openPackageDevelopmentCheatSheet();
    public abstract AppCommand openDataWranglingCheatSheet();
@@ -264,6 +266,16 @@ public abstract class
    public abstract AppCommand loadWorkspace();
    public abstract AppCommand importDatasetFromFile();
    public abstract AppCommand importDatasetFromURL();
+   public abstract AppCommand importDatasetFromCSV();
+   public abstract AppCommand importDatasetFromSAV();
+   public abstract AppCommand importDatasetFromSAS();
+   public abstract AppCommand importDatasetFromStata();
+   public abstract AppCommand importDatasetFromXLS();
+   public abstract AppCommand importDatasetFromXML();
+   public abstract AppCommand importDatasetFromJSON();
+   public abstract AppCommand importDatasetFromJDBC();
+   public abstract AppCommand importDatasetFromODBC();
+   public abstract AppCommand importDatasetFromMongo();
 
    // Environment
    public abstract AppCommand activateEnvironment();
@@ -307,6 +319,11 @@ public abstract class
    public abstract AppCommand showProfiler();
    public abstract AppCommand startProfiler();
    public abstract AppCommand stopProfiler();
+   public abstract AppCommand profileCode();
+   public abstract AppCommand profileCodeWithoutFocus();
+   public abstract AppCommand saveProfileAs();
+   public abstract AppCommand openProfile();
+   public abstract AppCommand profileHelp();
    
    // Tools
    public abstract AppCommand showShellDialog();
@@ -428,6 +445,25 @@ public abstract class
    public abstract AppCommand rsconnectDeploy();
    public abstract AppCommand rsconnectConfigure();
    public abstract AppCommand rsconnectManageAccounts();
+   
+   // Addins
+   public abstract AppCommand addinsMru0();
+   public abstract AppCommand addinsMru1();
+   public abstract AppCommand addinsMru2();
+   public abstract AppCommand addinsMru3();
+   public abstract AppCommand addinsMru4();
+   public abstract AppCommand addinsMru5();
+   public abstract AppCommand addinsMru6();
+   public abstract AppCommand addinsMru7();
+   public abstract AppCommand addinsMru8();
+   public abstract AppCommand addinsMru9();
+   public abstract AppCommand addinsMru10();
+   public abstract AppCommand addinsMru11();
+   public abstract AppCommand addinsMru12();
+   public abstract AppCommand addinsMru13();
+   public abstract AppCommand addinsMru14();
+   public abstract AppCommand clearAddinsMruList();
+   public abstract AppCommand browseAddins();
 
    // Other
    public abstract AppCommand checkSpelling();   

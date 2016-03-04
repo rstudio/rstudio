@@ -16,6 +16,9 @@
 #ifndef SESSION_CONSOLE_HPP
 #define SESSION_CONSOLE_HPP
 
+#define kConsoleText "text"
+#define kConsoleId   "console"
+
 namespace rstudio {
 namespace core {
    class Error;

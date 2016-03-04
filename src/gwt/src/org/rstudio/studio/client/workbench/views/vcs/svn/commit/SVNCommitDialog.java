@@ -147,8 +147,6 @@ public class SVNCommitDialog extends ModalDialogBase
       commitDraft_ = message_.getText();
       session_.persistClientState();
    }
-
-
  
    private void attemptCommit()
    {

@@ -80,10 +80,10 @@ public class ShortcutInfoPanel extends Composite
       List<ShortcutInfo> shortcuts = 
             ShortcutManager.INSTANCE.getActiveShortcutInfo();
       String[][] groupNames = { 
-            new String[] { "Tabs/Panes", "Files", "Console" },
+            new String[] { "Tabs", "Panes", "Files" },
             new String[] { "Source Navigation", "Execute" },
             new String[] { "Source Editor", "Debug" }, 
-            new String[] { "Source Control", "Build", "Other" }
+            new String[] { "Source Control", "Build", "Console", "Other" }
       };
       int pctWidth = 100 / groupNames.length;
       sb.appendHtmlConstant("<table width='100%'><tr>");
@@ -112,6 +112,10 @@ public class ShortcutInfoPanel extends Composite
                sb.appendHtmlConstant("</td></tr>");
             }
             sb.appendHtmlConstant("</table>");
+            if (colGroupName == "Panes")
+            {
+               sb.appendHtmlConstant("<p>Add Shift to zoom (maximize) pane.</p>");
+            }
          }
          sb.appendHtmlConstant("</td>");
       }

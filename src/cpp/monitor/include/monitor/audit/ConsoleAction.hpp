@@ -61,8 +61,10 @@ struct ConsoleAction
    std::string data;
 };
 
+std::string consoleActionTypeToString(int type);
 core::json::Object consoleActionToJson(const ConsoleAction& action);
 ConsoleAction consoleActionFromJson(const core::json::Object& actionJson);
+core::json::Object consoleActionToJsonLogEntry(const ConsoleAction& action);
 
 
 } // namespace audit

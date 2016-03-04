@@ -3,6 +3,9 @@
 
 @def selectionBorderWidth 1px;
 
+.dataGridHeader:active, .dataGridHeader:focus {
+	outline: 0;
+}
 
 .dataGridWidget {
    font-size: 9pt;

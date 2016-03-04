@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.Rectangle;
 import java.util.List;
 
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
@@ -31,9 +32,12 @@ import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
@@ -44,8 +48,11 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Curs
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasDocumentChangedHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasFoldChangeHandlers;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasLineWidgetsChangedHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasRenderFinishedHandlers;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -65,6 +72,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 public interface DocDisplay extends HasValueChangeHandlers<Void>,
                                     HasFoldChangeHandlers,
+                                    HasLineWidgetsChangedHandlers,
                                     IsWidget,
                                     HasFocusHandlers,
                                     HasKeyDownHandlers,
@@ -166,6 +174,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setUseVimMode(boolean use);
    boolean isVimModeOn();
    boolean isVimInInsertMode();
+   
+   boolean isRendered();
 
    JsArray<AceFold> getFolds();
    void addFold(Range range);
@@ -191,10 +201,18 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
    
+   boolean isScopeTreeReady(int row);
+   HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler);
+   
    Position getCursorPosition();
    void setCursorPosition(Position position);
    
    Position getCursorPositionScreen();
+   
+   void moveCursorBackward();
+   void moveCursorBackward(int characters);
+   void moveCursorForward();
+   void moveCursorForward(int characters);
    
    void moveCursorNearTop();
    void moveCursorNearTop(int rowOffset);
@@ -244,6 +262,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void foldAll();
    void unfoldAll();
    void toggleFold();
+   void setFoldStyle(String style); // see FoldStyle constants
    
    void jumpToMatching();
    void selectToMatching();
@@ -253,13 +272,14 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    JavaScriptObject getCleanStateToken();
    boolean checkCleanStateToken(JavaScriptObject token);
 
+   Selection getNativeSelection();
    Position getSelectionStart();
    Position getSelectionEnd();
    Range getSelectionRange();
    void setSelectionRange(Range range);
+   
    int getLength(int row);
    int getRowCount();
-
    String getLine(int row);
    
    char getCharacterAtCursor();
@@ -312,6 +332,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void beginCollabSession(CollabEditStartParams params, DirtyState dirtyState);
    boolean hasActiveCollabSession();
+   boolean hasFollowingCollabSession();
    void endCollabSession();
 
    void setPopupVisible(boolean visible);
@@ -327,6 +348,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void blockOutdent();
    void splitIntoLines();
    
+   Rectangle getPositionBounds(Position position);
+   Position toDocumentPosition(ScreenCoordinates coordinates);
    Position screenCoordinatesToDocumentPosition(int pageX, int pageY);
    
    void forceImmediateRender();
@@ -337,7 +360,19 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setDragEnabled(boolean enabled);
    
    boolean onInsertSnippet();
+
+   void addLineWidget(LineWidget widget);
+   void removeLineWidget(LineWidget widget);
+   void removeAllLineWidgets();
+   void onLineWidgetChanged(LineWidget widget); 
    
+   JsArray<LineWidget> getLineWidgets();
+   LineWidget getLineWidgetForRow(int row);
+   
+   boolean showChunkOutputInline();
+   void setShowChunkOutputInline(boolean show);
+   JsArray<ChunkDefinition> getChunkDefs();
+
    Position getDocumentEnd();
    
    void setInsertMatching(boolean value);

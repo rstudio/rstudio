@@ -1,7 +1,7 @@
 /*
  * SessionSourceDatabase.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -59,6 +59,8 @@ public:
    const std::string& folds() const { return folds_; }
    const std::string& collabServer() const { return collabServer_; }
    std::string getProperty(const std::string& name) const;
+   const std::time_t lastContentUpdate() const { return lastContentUpdate_; }
+   const std::time_t lastKnownWriteTime() const { return lastKnownWriteTime_; }
 
    // is this an untitled document?
    bool isUntitled() const;
@@ -108,6 +110,8 @@ public:
 
    void updateLastKnownWriteTime();
 
+   void setLastKnownWriteTime(std::time_t time);
+
    // applies the values in the given properties object to the document's property
    // bag. this does NOT replace all of the doc's properties on the server; any
    // properties that already exist but are not present in the given object are
@@ -151,6 +155,7 @@ private:
    std::string encoding_;
    std::string folds_;
    std::time_t lastKnownWriteTime_;
+   std::time_t lastContentUpdate_;
    bool dirty_;
    double created_;
    bool sourceOnSave_;
@@ -183,13 +188,21 @@ core::Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs);
 core::Error put(boost::shared_ptr<SourceDocument> pDoc);
 core::Error remove(const std::string& id);
 core::Error removeAll();
+core::Error getPath(const std::string& id, std::string* pPath);
+core::Error getPath(const std::string& id, core::FilePath* pPath);
+core::Error getId(const std::string& path, std::string* pId);
+core::Error getId(const core::FilePath& path, std::string* pId);
 
 // source database events
 struct Events : boost::noncopyable
 {
-   boost::signal<void(boost::shared_ptr<SourceDocument>)> onDocUpdated;
-   boost::signal<void(const std::string&)>                onDocRemoved;
-   boost::signal<void()>                                  onRemoveAll;
+   boost::signal<void(boost::shared_ptr<SourceDocument>)>      onDocUpdated;
+   boost::signal<void(const std::string&,
+                      boost::shared_ptr<SourceDocument>)>      onDocRenamed;
+   boost::signal<void(const std::string&)>                     onDocAdded;
+   boost::signal<void(const std::string&)>                     onDocPendingRemove;
+   boost::signal<void(const std::string&, const std::string&)> onDocRemoved;
+   boost::signal<void()>                                       onRemoveAll;
 };
 
 Events& events();

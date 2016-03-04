@@ -60,12 +60,14 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceMous
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AnchoredRange;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunksEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidgetManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.events.AfterAceRenderEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent.Handler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager;
 
 public class AceEditorWidget extends Composite
       implements RequiresResize,
@@ -91,6 +93,7 @@ public class AceEditorWidget extends Composite
       editor_ = AceEditorNative.createEditor(getElement());
       editor_.manageDefaultKeybindings();
       editor_.getRenderer().setHScrollBarAlwaysVisible(false);
+      editor_.getRenderer().setScrollPastEnd(true);
       editor_.setShowPrintMargin(false);
       editor_.setPrintMarginColumn(0);
       editor_.setHighlightActiveLine(false);
@@ -245,6 +248,7 @@ public class AceEditorWidget extends Composite
                public void execute(Void event)
                {
                   fireEvent(new RenderFinishedEvent());
+                  isRendered_ = true;
                   events_.fireEvent(new AfterAceRenderEvent(AceEditorWidget.this.getEditor()));
                }
             }));
@@ -1028,11 +1032,22 @@ public class AceEditorWidget extends Composite
       editor_.setReadOnly(!enabled);
    }
    
+   public LineWidgetManager getLineWidgetManager()
+   {
+      return editor_.getLineWidgetManager();
+   }
+   
+   public boolean isRendered()
+   {
+      return isRendered_;
+   }
+
    private final AceEditorNative editor_;
    private final HandlerManager capturingHandlers_;
    private final List<HandlerRegistration> aceEventHandlers_;
    private boolean initToEmptyString_ = true;
    private boolean inOnChangeHandler_ = false;
+   private boolean isRendered_ = false;
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
    
    private ArrayList<AnchoredAceAnnotation> annotations_ =
@@ -1042,6 +1057,4 @@ public class AceEditorWidget extends Composite
    private EventBus events_;
    private ChunkIconsManager chunkIconsManager_;
    private Commands commands_ = RStudioGinjector.INSTANCE.getCommands();
-   
-   
 }

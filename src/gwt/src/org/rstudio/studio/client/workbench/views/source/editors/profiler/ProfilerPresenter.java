@@ -14,171 +14,235 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 
-import java.util.HashMap;
-
 import org.rstudio.core.client.HandlerRegistrations;
-import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.FileDialogs;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
+import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationRequest;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
- 
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.user.client.ui.HasValue;
+
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
-public class ProfilerPresenter
-{ 
+public class ProfilerPresenter implements RprofEvent.Handler
+{
+   private final ProfilerServerOperations server_;
+   private final Commands commands_;
+   private final DependencyManager dependencyManager_;
+   private final HandlerRegistrations handlerRegistrations_ = new HandlerRegistrations();
+   private final GlobalDisplay globalDisplay_;
+   private final EventBus events_;
+   private Provider<SourceWindowManager> pSourceWindowManager_;
+   private final FileDialogs fileDialogs_;
+   private final RemoteFileSystemContext fileContext_;
+   private final WorkbenchContext workbenchContext_;
+   private final FileTypeRegistry fileTypeRegistry_;
+   
+   final String profilerDependecyUserAction_ = "Preparing profiler";
+   
+   private ProfileOperationResponse response_ = null;
+
+   public interface Binder extends CommandBinder<Commands, ProfilerPresenter>
+   {
+   }
+   
    public interface Display
    {
-      HasValue<Integer> getPropA();
-      HasValue<Boolean> getPropB();
    }
 
    @Inject
    public ProfilerPresenter(ProfilerServerOperations server,
                             Binder binder,
-                            Commands commands)
+                            Commands commands,
+                            DependencyManager dependencyManager,
+                            GlobalDisplay globalDisplay,
+                            EventBus events,
+                            Provider<SourceWindowManager> pSourceWindowManager,
+                            FileDialogs fileDialogs,
+                            RemoteFileSystemContext fileContext,
+                            WorkbenchContext workbenchContext,
+                            FileTypeRegistry fileTypeRegistry)
    {
       server_ = server;
       commands_ = commands;
-      binder.bind(commands, this);
+      dependencyManager_ = dependencyManager;
+      globalDisplay_ = globalDisplay;
+      events_ = events;
+      pSourceWindowManager_ = pSourceWindowManager;
+      fileDialogs_ = fileDialogs;
+      fileContext_ = fileContext;
+      workbenchContext_ = workbenchContext;
+      fileTypeRegistry_ = fileTypeRegistry;
       
-      // default profiler commands to disabled until we are attached
-      // to a document and view
-      disableAllCommands();
+      binder.bind(commands, this);
+
+      // by default, one can always start profiling
+      enableStoppedCommands();
+      
+      events_.addHandler(RprofEvent.TYPE, this);
    }
    
+   public void onRprofEvent(RprofEvent event)
+   {
+      switch (event.getEventType())
+      {
+         case START:
+            enableStartedCommands();
+            break;
+         case STOP:
+            enableStoppedCommands();
+            break;
+         default:
+            events_.fireEvent(new OpenProfileEvent(event.getData().getPath(), true));
+            break;
+      }
+   }
+
    public void attatch(SourceDocument doc, Display view)
    {
-      // save references to doc and view
-      doc_ = doc;
-      view_ = view;
-      
-      // initialize view
-      ProfilerContents contents = getContents();
-      view_.getPropA().setValue(contents.getPropA());
-      view_.getPropB().setValue(contents.getPropB());
-      
-      // subscribe to value changes on the view to save contents 
-      // to the server whenenver it's modfied
-      handlerRegistrations_.add(view_.getPropA()
-                  .addValueChangeHandler(new ValueChangeHandler<Integer>() {
-         @Override
-         public void onValueChange(ValueChangeEvent<Integer> event)
-         {
-            contentsUpdater_.nudge();           
-         }
-         
-      }));
-      
-      handlerRegistrations_.add(view_.getPropB()
-                 .addValueChangeHandler(new ValueChangeHandler<Boolean>() {
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
-         {
-            contentsUpdater_.nudge();
-         }
-      }));
-      
-      // enable commands for stopped state
-      enableStoppedCommands();
    }
-   
+
    public void detach()
    {
       // unsubscribe from view
       handlerRegistrations_.removeHandler();
-      
-      // null out references to doc and view
-      doc_ = null;
-      view_ = null;
-      
-      // disable all commands
-      disableAllCommands();
    }
-   
+
    @Handler
    public void onStartProfiler()
    {
-     
-      // manage commands
-      enableStartedCommands();
+      dependencyManager_.withProfvis(profilerDependecyUserAction_, new Command()
+      {
+         @Override
+         public void execute()
+         {
+            ProfileOperationRequest request = ProfileOperationRequest
+                  .create("");
+            server_.startProfiling(request,
+                  new ServerRequestCallback<ProfileOperationResponse>()
+            {
+               @Override
+               public void onResponseReceived(ProfileOperationResponse response)
+               {
+                  if (response.getErrorMessage() != null)
+                  {
+                     globalDisplay_.showErrorMessage("Profiler Error",
+                           response.getErrorMessage());
+                     return;
+                  }
+                  
+                  pSourceWindowManager_.get().ensureVisibleSourcePaneIfNecessary();
+
+                  response_ = response;
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  globalDisplay_.showErrorMessage("Failed to Stop Profiler",
+                        error.getMessage());
+               }
+            });
+         }
+      });
    }
-   
+
    @Handler
    public void onStopProfiler()
    {
-     
-      
-      // manage commands
-      enableStoppedCommands();
+      ProfileOperationRequest request = ProfileOperationRequest
+            .create(response_ != null ? response_.getFileName() : null);
+
+      response_ = null;
+      server_.stopProfiling(request,
+            new ServerRequestCallback<ProfileOperationResponse>()
+            {
+               @Override
+               public void onResponseReceived(ProfileOperationResponse response)
+               {
+                  if (response.getErrorMessage() != null)
+                  {
+                     globalDisplay_.showErrorMessage("Profiler Error",
+                           response.getErrorMessage());
+                     return;
+                  }
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  globalDisplay_.showErrorMessage("Failed to Stop Profiler",
+                        error.getMessage());
+               }
+            });
    }
    
-   private void disableAllCommands()
+   @Handler
+   public void onOpenProfile()
    {
-      commands_.startProfiler().setEnabled(false);
-      commands_.stopProfiler().setEnabled(false);
+      fileDialogs_.openFile(
+         "Open File",
+         fileContext_,
+         workbenchContext_.getDefaultFileDialogDir(),
+         ".Rprof",
+         new ProgressOperationWithInput<FileSystemItem>()
+         {
+            public void execute(final FileSystemItem input,
+                                ProgressIndicator indicator)
+            {
+               if (input == null)
+                  return;
+   
+               workbenchContext_.setDefaultFileDialogDir(
+                                                input.getParentPath());
+   
+               indicator.onCompleted();
+               Scheduler.get().scheduleDeferred(new ScheduledCommand()
+               {
+                  public void execute()
+                  {
+                     fileTypeRegistry_.openFile(input);
+                  }
+               });
+            }
+         });
    }
    
-   
+   @Handler
+   public void onSaveProfileAs()
+   {
+      commands_.saveSourceDocAs().execute();
+   }
+
    private void enableStartedCommands()
    {
       commands_.startProfiler().setEnabled(false);
       commands_.stopProfiler().setEnabled(true);
    }
+
    private void enableStoppedCommands()
    {
       commands_.startProfiler().setEnabled(true);
-      commands_.stopProfiler().setEnabled(false);   
+      commands_.stopProfiler().setEnabled(false);
    }
-   
-   // create a time buffered command for updating profiler contents (ensures
-   // that we save no more frequently than every 100ms even in the face of
-   // many changes over a short time)
-   private TimeBufferedCommand contentsUpdater_ = new TimeBufferedCommand(100) {
-
-      @Override
-      protected void performAction(boolean shouldSchedulePassive)
-      {         
-         // tab might have been closed in the meantime, check for this first
-         if (doc_ == null || view_ == null)
-            return;
-         
-         // update document properties if they've changed
-         ProfilerContents contents = ProfilerContents.create(
-                                           view_.getPropA().getValue(),
-                                           view_.getPropB().getValue());
-         if (!contents.equalTo(getContents()))
-         {
-            HashMap<String, String> props = new HashMap<String, String>();
-            contents.fillProperties(props);
-            server_.modifyDocumentProperties(doc_.getId(),
-                                             props,
-                                             new VoidServerRequestCallback());
-         }  
-      }
-   };
-   
-   // typed access to underlying document properties
-   private ProfilerContents getContents()
-   {
-      return (ProfilerContents)doc_.getProperties().cast();
-   }
-   
-   
-   private SourceDocument doc_ = null;
-   private Display view_ = null;
-   private final ProfilerServerOperations server_;
-   private final Commands commands_;
-   private final HandlerRegistrations handlerRegistrations_ = 
-                                             new HandlerRegistrations();
-   
-   public interface Binder extends CommandBinder<Commands, ProfilerPresenter> {}
 }

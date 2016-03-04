@@ -24,6 +24,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -40,6 +41,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.ConsoleEditorProvider;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientInitState;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -93,7 +95,8 @@ public class Shell implements ConsoleInputHandler,
                 Session session,
                 Commands commands,
                 UIPrefs uiPrefs, 
-                ErrorManager errorManager)
+                ErrorManager errorManager,
+                ConsoleEditorProvider tracker)
    {
       super() ;
 
@@ -108,6 +111,16 @@ public class Shell implements ConsoleInputHandler,
       historyManager_ = new CommandLineHistory(input_);
       browseHistoryManager_ = new CommandLineHistory(input_);
       prefs_ = uiPrefs;
+      tracker.setConsoleEditor(input_);
+      
+      prefs_.surroundSelection().bind(new CommandWithArg<String>()
+      {
+         @Override
+         public void execute(String value)
+         {
+            ((DocDisplay) input_).setSurroundSelectionPref(value);
+         }
+      });
 
       inputAnimator_ = new ShellInputAnimator(view_.getInputEditorDisplay());
       
@@ -229,6 +242,7 @@ public class Shell implements ConsoleInputHandler,
    public void onConsoleInput(final ConsoleInputEvent event)
    {
       server_.consoleInput(event.getInput(), 
+                           event.getConsole(),
                            new ServerRequestCallback<Void>() {
          @Override
          public void onError(ServerError error) 
@@ -325,7 +339,7 @@ public class Shell implements ConsoleInputHandler,
          addToHistory(commandText);
 
       // fire event 
-      eventBus_.fireEvent(new ConsoleInputEvent(commandText));
+      eventBus_.fireEvent(new ConsoleInputEvent(commandText, ""));
    }
 
    public void onSendToConsole(final SendToConsoleEvent event)
@@ -385,7 +399,7 @@ public class Shell implements ConsoleInputHandler,
       // call a method on the SourceShim
       else
       {
-         commands_.executeCodeWithoutFocus().execute();
+         commands_.getCommandById(event.getCommandId()).execute();
       }
    }
    
@@ -492,7 +506,7 @@ public class Shell implements ConsoleInputHandler,
                {
                   // if the input is already empty then send a console reset
                   // which will jump us back to the main prompt
-                  eventBus_.fireEvent(new ConsoleInputEvent(null));
+                  eventBus_.fireEvent(new ConsoleInputEvent(null, ""));
                }
             }
              
@@ -508,16 +522,6 @@ public class Shell implements ConsoleInputHandler,
                   case 'L':
                      Shell.this.onConsoleClear() ;
                      event.preventDefault() ;
-                     break;
-                  case 'A':
-                     event.stopPropagation();
-                     event.preventDefault();
-                     input_.goToLineStart();
-                     break;
-                  case 'E':
-                     event.stopPropagation();
-                     event.preventDefault();
-                     input_.goToLineEnd();
                      break;
                }
             }

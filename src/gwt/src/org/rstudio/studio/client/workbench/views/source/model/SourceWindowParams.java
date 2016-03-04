@@ -23,10 +23,12 @@ public class SourceWindowParams extends JavaScriptObject
    }
 
    public final static native SourceWindowParams create(int ordinal, 
-         String title, String docId, SourcePosition sourcePosition) /*-{
+         String title, String workingDir, String docId, 
+         SourcePosition sourcePosition) /*-{
       return { 
          "ordinal"        : ordinal,
          "title"          : title,
+         "working_dir"    : workingDir,
          "doc_id"         : docId,
          "source_position": sourcePosition,
       };
@@ -34,6 +36,10 @@ public class SourceWindowParams extends JavaScriptObject
    
    public final native String getTitle() /*-{
       return this.title;
+   }-*/;
+   
+   public final native String getWorkingDir() /*-{
+      return this.working_dir;
    }-*/;
 
    public final native int getOrdinal() /*-{

@@ -552,7 +552,7 @@ Error setEnvironmentName(int contextDepth,
       // This would be better wrapped in an R function, but this code may
       // run during session init when tools:rstudio isn't yet attached to the
       // search path.
-      SEXP env = contextDepth > 0 ?
+      SEXP env = contextDepth > 0 && pContext ?
                         pContext->cloenv :
                         R_GlobalEnv;
       std::string candidateEnv;
@@ -700,49 +700,49 @@ json::Object commonEnvironmentStateData(
    varJson["context_depth"] = depth;
    varJson["environment_list"] = environmentListAsJson();
    varJson["call_frames"] = callFramesAsJson(pLineDebugState);
+   varJson["function_name"] = "";
 
    // if we're in a debug context, add information about the function currently
    // being debugged
    if (depth > 0)
    {
       RCNTXT* pContext = getFunctionContext(depth);
-      std::string functionName;
-      Error error = functionNameFromContext(pContext, &functionName);
-      if (error)
+      if (pContext)
       {
-         LOG_ERROR(error);
-      }
-
-      // If the environment currently monitored is the function's environment,
-      // return that environment, unless the environment is the global
-      // environment (which happens for source-equivalent functions).
-      SEXP env = s_pEnvironmentMonitor->getMonitoredEnvironment();
-      if (env != R_GlobalEnv && env == pContext->cloenv)
-      {
-         varJson["environment_name"] = functionName + "()";
-         std::string envLocation;
-         error = r::exec::RFunction(".rs.environmentName", 
-               ENCLOS(pContext->cloenv)).call(&envLocation);
+         std::string functionName;
+         Error error = functionNameFromContext(pContext, &functionName);
          if (error)
+         {
             LOG_ERROR(error);
-         varJson["function_environment_name"] = envLocation;
-         varJson["environment_is_local"] = true;
-         inFunctionEnvironment = true;
-      }
+         }
 
-      if (pContext && functionName != "eval")
-      {
-         // see if the function to be debugged is out of sync with its saved
-         // sources (if available).
-         useProvidedSource =
-               functionIsOutOfSync(pContext, &functionCode) &&
-               functionCode != "NULL";
+         // If the environment currently monitored is the function's
+         // environment, return that environment, unless the environment is the
+         // global environment (which happens for source-equivalent functions).
+         SEXP env = s_pEnvironmentMonitor->getMonitoredEnvironment();
+         if (env != R_GlobalEnv && env == pContext->cloenv)
+         {
+            varJson["environment_name"] = functionName + "()";
+            std::string envLocation;
+            error = r::exec::RFunction(".rs.environmentName", 
+                  ENCLOS(pContext->cloenv)).call(&envLocation);
+            if (error)
+               LOG_ERROR(error);
+            varJson["function_environment_name"] = envLocation;
+            varJson["environment_is_local"] = true;
+            inFunctionEnvironment = true;
+         }
+
+         if (pContext && functionName != "eval")
+         {
+            // see if the function to be debugged is out of sync with its saved
+            // sources (if available).
+            useProvidedSource =
+                  functionIsOutOfSync(pContext, &functionCode) &&
+                  functionCode != "NULL";
+         }
+         varJson["function_name"] = functionName;
       }
-      varJson["function_name"] = functionName;
-   }
-   else
-   {
-      varJson["function_name"] = "";
    }
 
    if (!inFunctionEnvironment)

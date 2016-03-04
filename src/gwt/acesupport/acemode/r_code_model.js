@@ -758,15 +758,12 @@ var RCodeModel = function(session, tokenizer,
       // Nudge the maxRow ahead a bit -- some functions may request
       // the tree to be built up to a particular row, but we want to
       // build a bit further ahead in case some lookahead is required.
-      maxRow = Math.min(
-         maxRow + 30,
-         this.$doc.getLength() - 1
-      );
+      maxRow = Math.min(maxRow + 30, this.$doc.getLength() - 1);
 
       // Check if the scope tree has already been built up to this row.
       var scopeRow = this.$scopes.parsePos.row;
       if (scopeRow >= maxRow)
-          return;
+          return scopeRow;
 
       // We explicitly use a TokenIterator rather than a TokenCursor here.
       // We want to iterate over all token types here (including non-R code)
@@ -778,22 +775,31 @@ var RCodeModel = function(session, tokenizer,
       // of the tree that have been already built.
       var iterator = new TokenIterator(this.$session);
 
+      // Tokenize eagerly up to the desired row. Note that we have to tokenize
+      // in two places -- the internal Ace tokenizer (whose tokens are used by
+      // the token iterator here), and also the R code model's tokenizer (which
+      // maintains its own set of R tokens used for indentation). In a perfect
+      // world, we wouldn't maintain a separate set of tokens for our R code
+      // model, but ...
+      iterator.tokenizeUpToRow(maxRow);
+      this.$tokenizeUpToRow(maxRow);
+      
+
       var row = this.$scopes.parsePos.row;
       var column = this.$scopes.parsePos.column;
-
       iterator.moveToPosition({row: row, column: column}, true);
 
       var token = iterator.getCurrentToken();
       
       // If this failed, give up.
       if (token == null)
-         return;
+         return row;
 
       // Grab local state that we'll use when building the scope tree.
       var value = token.value;
       var type = token.type;
       var position = iterator.getCurrentTokenPosition();
-      
+
       do
       {
          // Bail if we've stepped past the max row.
@@ -804,6 +810,13 @@ var RCodeModel = function(session, tokenizer,
          value = token.value;
          type = token.type;
          position = iterator.getCurrentTokenPosition();
+
+         // Skip roxygen comments.
+         var state = this.$session.getState(position.row);
+         if (state === "rd-start") {
+            iterator.moveToEndOfRow();
+            continue;
+         }
 
          // Figure out if we're in R mode. This is a hack since
          // unfortunately the code model is handling both R and
@@ -1060,6 +1073,7 @@ var RCodeModel = function(session, tokenizer,
          row: rowTokenizedUpTo, column: -1
       };
 
+      return rowTokenizedUpTo;
    };
 
    this.$getFoldToken = function(session, foldStyle, row) {
@@ -1417,12 +1431,24 @@ var RCodeModel = function(session, tokenizer,
 
             if (tokenCursor.isAtStartOfNewExpression(false))
             {
-               if (currentValue === "{")
+               if (currentValue === "{" ||
+                   currentValue === "[" ||
+                   currentValue === "(")
+               {
                   continuationIndent = tab;
+               }
 
                return this.$getIndent(
                   this.$doc.getLine(tokenCursor.$row)
                ) + continuationIndent;
+            }
+
+            if (currentValue === "(" &&
+                tokenCursor.isAtStartOfNewExpression(true))
+            {
+               return this.$getIndent(
+                  this.$doc.getLine(tokenCursor.$row)
+               ) + tab;
             }
              
             // Walk over matching braces ('()', '{}', '[]')

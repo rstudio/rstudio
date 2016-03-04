@@ -103,6 +103,14 @@ bool detectSystemRVersion(core::r_util::RVersion* pVersion,
    if (!whichROverride.empty())
       rWhichRPath = FilePath(whichROverride);
 
+   // if it's a directory then see if we can find the script
+   if (rWhichRPath.isDirectory())
+   {
+      FilePath rScriptPath = rWhichRPath.childPath("bin/R");
+      if (rScriptPath.exists())
+         rWhichRPath = rScriptPath;
+   }
+
    // attempt to detect R version
    bool result = detectRVersion(rWhichRPath, pVersion, pErrMsg);
 

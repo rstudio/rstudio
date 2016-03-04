@@ -28,6 +28,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
+#include <session/SessionConstants.hpp>
 #include <session/projects/ProjectsSettings.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include "modules/SessionErrors.hpp"
@@ -48,7 +49,7 @@ namespace session {
 #define kAgreementPrefix "agreement."
    
 namespace {
-const char * const kContextId ="contextIdentifier";
+const char * const kContextId = kContextIdentifier;
 const char * const kAgreementHash = kAgreementPrefix "agreedToHash";
 const char * const kAutoCreatedProfile = "autoCreatedProfile";
 const char * const kUiPrefs = "uiPrefs";
@@ -193,9 +194,9 @@ Error UserSettings::initialize()
 {
    // calculate settings file path
    FilePath settingsDir = module_context::registerMonitoredUserScratchDir(
-              "user-settings",
+              kUserSettingsDir,
               boost::bind(&UserSettings::onSettingsFileChanged, this, _1));
-   settingsFilePath_ = settingsDir.complete("user-settings");
+   settingsFilePath_ = settingsDir.complete(kUserSettingsFile);
 
    // if it doesn't exist see if we can migrate an old user settings
    if (!settingsFilePath_.exists())
@@ -859,12 +860,34 @@ void UserSettings::setLintRFunctionCalls(bool enable)
 
 bool  UserSettings::usingMingwGcc49() const
 {
-   return settings_.getBool("usingMingwGcc49", false);
+   return boost::algorithm::contains(core::system::getenv("R_COMPILED_BY"),
+                                     "4.9.3") ||
+          settings_.getBool("usingMingwGcc49", false);
 }
 
 void  UserSettings::setUsingMingwGcc49(bool usingMingwGcc49)
 {
    settings_.set("usingMingwGcc49", usingMingwGcc49);
+}
+
+std::string UserSettings::showUserHomePage() const
+{
+   return settings_.get(kServerHomeSetting, kServerHomeSessions);
+}
+
+void UserSettings::setShowUserHomePage(const std::string& value)
+{
+   settings_.set(kServerHomeSetting, value);
+}
+
+bool UserSettings::reuseSessionsForProjectLinks() const
+{
+   return settings_.getBool(kReuseSessionsForProjectLinksSettings, true);
+}
+
+void UserSettings::setReuseSessionsForProjectLinks(bool reuse)
+{
+   settings_.set(kReuseSessionsForProjectLinksSettings, reuse);
 }
 
 

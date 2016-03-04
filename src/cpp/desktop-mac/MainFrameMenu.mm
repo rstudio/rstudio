@@ -24,10 +24,6 @@
 
 @implementation MainFrameMenu
 
-NSString* charToStr(unichar c) {
-   return [[NSString stringWithCharacters: &c length: 1] autorelease];
-}
-
 - (id)init
 {
    if (self = [super init])

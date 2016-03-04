@@ -25,6 +25,7 @@ import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
+import org.rstudio.studio.client.workbench.views.source.editors.text.FoldStyle;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -124,6 +125,11 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> allowTabMultilineCompletion()
    {
       return bool("tab_multiline_completion", false);
+   }
+   
+   public PrefValue<Boolean> showFunctionTooltipOnIdle()
+   {
+      return bool("show_help_tooltip_on_idle", false);
    }
    
    public static final String EDITOR_SURROUND_SELECTION_NEVER               = "never";
@@ -265,6 +271,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("focus_console_after_exec", false);
    }
    
+   public PrefValue<String> foldStyle()
+   {
+      return string("fold_style", FoldStyle.FOLD_MARK_BEGIN_ONLY);
+   }
+   
    public PrefValue<Boolean> saveBeforeSourcing()
    {
       return bool("save_before_sourcing", true);
@@ -393,6 +404,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("use_roxygen", false);
    }
    
+   public PrefValue<Boolean> useDataImport()
+   {
+      return bool("use_dataimport", true);
+   }
+   
    public static final String PDF_PREVIEW_NONE = "none";
    public static final String PDF_PREVIEW_RSTUDIO = "rstudio";
    public static final String PDF_PREVIEW_DESKTOP_SYNCTEX = "desktop-synctex";
@@ -509,6 +525,11 @@ public class UIPrefsAccessor extends Prefs
       return object("preferred_publish_account");
    }
    
+   public PrefValue<Boolean> showRmdChunkOutputInline()
+   {
+      return bool("show_rmd_chunk_output_inline", false);
+   }
+   
    public PrefValue<Integer> preferredDocumentOutlineWidth()
    {
       return integer("preferred_document_outline_width", 110);
@@ -522,6 +543,11 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> showUnnamedEntriesInDocumentOutline()
    {
       return bool("show_unnamed_chunks_in_document_outline", true);
+   }
+
+   public PrefValue<Boolean> showProfiler()
+   {
+      return bool("show_profiler", false);
    }
    
    private String getDefaultPdfPreview()

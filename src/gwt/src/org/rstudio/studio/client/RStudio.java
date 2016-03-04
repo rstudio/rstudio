@@ -18,13 +18,15 @@ package org.rstudio.studio.client;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
-import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.StyleInjector;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
@@ -57,7 +59,6 @@ import org.rstudio.studio.client.common.vcs.CreateKeyDialog;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
 import org.rstudio.studio.client.common.vcs.SshKeyWidget;
 import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
-import org.rstudio.studio.client.dataviewer.DataViewerSatellite;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2OptionsDialog;
 import org.rstudio.studio.client.packrat.ui.PackratActionDialog;
@@ -104,8 +105,17 @@ public class RStudio implements EntryPoint
 
    private Command showProgress()
    {
+      final Label background = new Label();
+      background.getElement().getStyle().setZIndex(1000);
+      background.getElement().getStyle().setBackgroundColor("#e1e2e5");
+      final RootLayoutPanel rootPanel = RootLayoutPanel.get();
+      rootPanel.add(background);
+      rootPanel.setWidgetTopBottom(background, 0, Style.Unit.PX, 
+                                               0, Style.Unit.PX);
+      rootPanel.setWidgetLeftRight(background, 0, Style.Unit.PX, 
+                                               0, Style.Unit.PX);
+      
       String progressUrl = ProgressImages.createLargeGray().getUrl();
-      final DivElement div = Document.get().createDivElement();
       StringBuilder str = new StringBuilder();
       str.append("<img src=\"");
       str.append(progressUrl);
@@ -113,21 +123,24 @@ public class RStudio implements EntryPoint
       if (BrowseCap.devicePixelRatio() > 1.0)
          str.append("width=24 height=24");
       str.append("/>");
+      final SimplePanel progressPanel = new SimplePanel();
+      final Element div = progressPanel.getElement();
       div.setInnerHTML(str.toString());
       div.getStyle().setWidth(100, Style.Unit.PCT);
       div.getStyle().setMarginTop(200, Style.Unit.PX);
       div.getStyle().setProperty("textAlign", "center");
       div.getStyle().setZIndex(1000);
       ElementIds.assignElementId(div, ElementIds.LOADING_SPINNER);
-      Document.get().getBody().appendChild(div);
-
+      rootPanel.add(progressPanel);
+     
       return new Command()
       {
          public void execute()
          {
             try
             {
-               Document.get().getBody().removeChild(div);
+               rootPanel.remove(progressPanel);
+               rootPanel.remove(background);
             }
             catch (Exception e)
             {
@@ -177,12 +190,6 @@ public class RStudio implements EntryPoint
                   else if (RmdOutputSatellite.NAME.equals(view))
                   {
                      RStudioGinjector.INSTANCE.getRmdOutputSatellite().go(
-                           RootLayoutPanel.get(), 
-                           dismissProgressAnimation);
-                  }
-                  else if (DataViewerSatellite.NAME.equals(view))
-                  {
-                     RStudioGinjector.INSTANCE.getDataViewerSatellite().go(
                            RootLayoutPanel.get(), 
                            dismissProgressAnimation);
                   }

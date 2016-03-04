@@ -239,6 +239,7 @@ void setSize(pDevDesc pDev)
 {
    dev_desc::setSize(pDev);
    dev_desc::setSize(shadowDevDesc(pDev));
+   setDeviceAttributes(pDev);
 }
 
 void setDeviceAttributes(pDevDesc pDev)
@@ -246,6 +247,15 @@ void setDeviceAttributes(pDevDesc pDev)
    pDevDesc shadowDev = shadowDevDesc(pDev);
    if (shadowDev == NULL)
       return;
+   
+   pDev->left = shadowDev->left;
+   pDev->top = shadowDev->top;
+   pDev->right = shadowDev->right;
+   pDev->bottom = shadowDev->bottom;
+   pDev->clipLeft = shadowDev->clipLeft;
+   pDev->clipTop = shadowDev->clipTop;
+   pDev->clipRight = shadowDev->clipRight;
+   pDev->clipBottom = shadowDev->clipBottom;
    
    pDev->cra[0] = shadowDev->cra[0];
    pDev->cra[1] = shadowDev->cra[1];

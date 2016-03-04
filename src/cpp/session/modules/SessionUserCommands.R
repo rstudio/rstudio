@@ -65,68 +65,27 @@ assign(".rs.userCommands", new.env(parent = emptyenv()), envir = .rs.toolsEnv())
    
 })
 
-.rs.addFunction("registerUserCommand", function(name,
-                                                shortcuts,
-                                                fn,
-                                                overwrite = FALSE)
+.rs.addFunction("registerUserCommand", function(name, shortcuts, fn, overwrite = TRUE)
 {
    if (length(name) != 1 || !is.character(name))
       stop("'name' should be a length-one character vector")
    
-   shortcuts <- lapply(shortcuts, .rs.normalizeKeyboardShortcut)
-   
-   for (shortcut in shortcuts)
-   {
-      if (!overwrite && exists(name, envir = .rs.userCommands))
-         stop(sprintf("'%s' is already bound to a function (set 'overwrite = TRUE' to overwrite)", name))
-      
-      wrapper <- function(content, filePath, rowStart, columnStart, rowEnd, columnEnd)
-      {
-         range <- list(start = list(row = rowStart, column = columnStart),
-                       end   = list(row = rowEnd,   column = columnEnd))
-         
-         fn(content, filePath, range)
-      }
-      .rs.userCommands[[name]] <- wrapper
-      
+   if (!overwrite && exists(name, envir = .rs.userCommands)) {
+      stop("'", name, "' is already bound to a command; use 'overwrite = TRUE'",
+           "to overwrite with the new command definition.")
    }
    
-   .Call(.rs.routines$rs_registerUserCommand,
-          .rs.scalar(name),
-          shortcut)
+   shortcuts <- unlist(lapply(shortcuts, .rs.normalizeKeyboardShortcut))
+   .rs.userCommands[[name]] <- fn
+   .Call(.rs.routines$rs_registerUserCommand, .rs.scalar(name), shortcuts)
    
    TRUE
-})
-
-.rs.addFunction("userCommandResult", function(...)
-{
-   result <- list(...)
-   class(result) <- "user_command"
-   result
-})
-
-.rs.addFunction("replaceTextAction", function(range, text)
-{
-   if (is.list(range))
-      range <- c(range$start$row, range$start$column, range$end$row, range$end$column)
-   
-   range <- as.integer(range)
-   text <- as.character(text)
-   
-   list(
-      action = .rs.scalar("document"),
-      range = range,
-      text = text
-   )
 })
 
 .rs.addFunction("loadUserCommands", function()
 {
    env <- new.env(parent = globalenv())
-   
    env$registerUserCommand <- .rs.registerUserCommand
-   env$replaceTextAction <- .rs.replaceTextAction
-   env$userCommandResult <- .rs.userCommandResult
    
    files <- list.files("~/.R/keybindings/R", full.names = TRUE)
    lapply(files, function(file) {

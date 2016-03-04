@@ -25,6 +25,23 @@ namespace rstudio {
 namespace monitor {
 namespace audit {
 
+std::string consoleActionTypeToString(int type)
+{
+    switch(type)
+    {
+        case kConsoleActionPrompt:
+            return "prompt";
+        case kConsoleActionInput:
+            return "input";
+        case kConsoleActionOutput:
+            return "output";
+        case kConsoleActionOutputError:
+            return "error";
+        default:
+            return "";
+    }
+}
+
 json::Object consoleActionToJson(const ConsoleAction& action)
 {
    json::Object actionJson;
@@ -35,6 +52,15 @@ json::Object consoleActionToJson(const ConsoleAction& action)
    actionJson["timestamp"] = action.timestamp;
    actionJson["type"] = action.type;
    actionJson["data"] = action.data;
+   return actionJson;
+}
+
+json::Object consoleActionToJsonLogEntry(const ConsoleAction& action)
+{
+   json::Object actionJson = consoleActionToJson(action);
+   actionJson["pid"] = static_cast<boost::int64_t>(action.pid);
+   actionJson["timestamp"] = static_cast<boost::int64_t>(action.timestamp);
+   actionJson["type"] = audit::consoleActionTypeToString(action.type);
    return actionJson;
 }
 

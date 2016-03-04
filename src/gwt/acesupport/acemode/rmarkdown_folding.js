@@ -37,6 +37,10 @@ oop.inherits(FoldMode, BaseFoldMode);
    // '' to skip.
    this.getFoldWidget = function(session, foldStyle, row) {
 
+      var FOLD_NONE  = "";
+      var FOLD_START = "start";
+      var FOLD_END   = foldStyle === "markbeginend" ? "end" : "";
+
       var line = session.getLine(row);
       var state = session.getState(row);
       var beforeState = row > 0 ?
@@ -50,10 +54,7 @@ oop.inherits(FoldMode, BaseFoldMode);
           Utils.startsWith(line, "---") ||
           Utils.startsWith(line, "..."))
       {
-         if (Utils.startsWith(beforeState, "yaml"))
-            return "end";
-         else
-            return "start";
+         return Utils.startsWith(beforeState, "yaml") ? FOLD_END : FOLD_START;
       }
 
       // Note the '$start' state is a proxy state used to allow YAML
@@ -61,7 +62,7 @@ oop.inherits(FoldMode, BaseFoldMode);
       // That is, the 'entry point' state is 'start' while all following
       // states are '$start'.
       if (state === "$start" && Utils.startsWith(line, "#"))
-         return "start";
+         return FOLD_START;
 
       var trimmed = line.trim();
 
@@ -77,10 +78,7 @@ oop.inherits(FoldMode, BaseFoldMode);
          //
          // The '$start' bit is an artefact of how we sneak YAML highlighting
          // into the start of R Markdown documents.
-         if (state === "$start")
-            return "end";
-         else
-            return "start";
+         return state === "$start" ? FOLD_END : FOLD_START;
       }
       
       // No match (bail)

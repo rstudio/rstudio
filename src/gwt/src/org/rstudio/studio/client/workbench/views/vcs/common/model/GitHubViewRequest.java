@@ -67,5 +67,5 @@ public class GitHubViewRequest
    private int endLine_;
    
    public final static int VCS_VIEW = 0;
-   public final static int VCS_BLAME = 0;
+   public final static int VCS_BLAME = 1;
 }

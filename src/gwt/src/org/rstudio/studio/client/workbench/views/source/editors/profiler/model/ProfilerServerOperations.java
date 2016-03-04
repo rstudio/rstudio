@@ -14,14 +14,23 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.profiler.model;
 
-import java.util.HashMap;
-
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+
+import com.google.gwt.core.client.JavaScriptObject;
 
 
 public interface ProfilerServerOperations
 {
-   void modifyDocumentProperties(String id, HashMap<String, String> properties,
-         ServerRequestCallback<Void> requestCallback);
+   void startProfiling(ProfileOperationRequest profilerRequest,
+                       ServerRequestCallback<ProfileOperationResponse> requestCallback);
+   
+   void stopProfiling(ProfileOperationRequest profilerRequest,
+                      ServerRequestCallback<ProfileOperationResponse> requestCallback);
+
+   void openProfile(ProfileOperationRequest profilerRequest,
+                    ServerRequestCallback<ProfileOperationResponse> requestCallback);
+   
+   void copyProfile(String fromPath,
+                    String toPath,
+                    ServerRequestCallback<JavaScriptObject> requestCallback);
 }

@@ -94,6 +94,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spellin
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
@@ -200,6 +201,13 @@ public class AceEditor implements DocDisplay,
                changed_ = true;
             }
          });
+         AceEditor.this.addLineWidgetsChangedHandler(new org.rstudio.studio.client.workbench.views.source.editors.text.events.LineWidgetsChangedEvent.Handler() {
+            @Override
+            public void onLineWidgetsChanged(LineWidgetsChangedEvent event)
+            {
+               changed_ = true;
+            }
+         });
       }
 
       @Override
@@ -264,22 +272,21 @@ public class AceEditor implements DocDisplay,
       completionManager_ = new NullCompletionManager();
       diagnosticsBgPopup_ = new DiagnosticsBackgroundPopup(this);
       
-      bgTokenizer_ = new BackgroundTokenizer();
-      
       RStudioGinjector.INSTANCE.injectMembers(this);
+      
+      backgroundTokenizer_ = new BackgroundTokenizer(this);
       
       widget_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
          public void onValueChange(ValueChangeEvent<Void> evt)
          {
-            bgTokenizer_.scheduleTokenization(widget_.getEditor().getSession().getSelection().getRange().getStart().getRow());
             if (!valueChangeSuppressed_)
             {
                ValueChangeEvent.fire(AceEditor.this, null);
             }
          }
       });
-
+      
       widget_.addFoldChangeHandler(new FoldChangeEvent.Handler()
       {
          @Override
@@ -298,7 +305,7 @@ public class AceEditor implements DocDisplay,
                completionManager_.onPaste(event);
 
             final Position start = getSelectionStart();
-
+            
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                @Override
@@ -409,6 +416,11 @@ public class AceEditor implements DocDisplay,
                for (HandlerRegistration handler : editorEventListeners_)
                   handler.removeHandler();
                editorEventListeners_.clear();
+               if (completionManager_ != null)
+               {
+                  completionManager_.detach();
+                  completionManager_ = null;
+               }
             }
          }
       });
@@ -609,6 +621,12 @@ public class AceEditor implements DocDisplay,
       if (fileType_ == null)
          return;
 
+      if (completionManager_ != null)
+      {
+         completionManager_.detach();
+         completionManager_ = null;
+      }
+      
       completionManager_ = completionManager;
 
       updateKeyboardHandlers();
@@ -786,6 +804,9 @@ public class AceEditor implements DocDisplay,
       // bug in 0.95. We can choose to remove this when 0.95 ships, hopefully
       // any documents that would be affected by this will be gone by then.
       code = code.replaceAll("\u001B", "");
+      
+      // Normalize newlines -- convert all of '\r', '\r\n', '\n\r' to '\n'.
+      code = StringUtil.normalizeNewLines(code);
 
       final AceEditorNative ed = widget_.getEditor();
 
@@ -851,14 +872,13 @@ public class AceEditor implements DocDisplay,
 
    public void insertCode(String code, boolean blockMode)
    {
-      widget_.getEditor().insert(code);
+      widget_.getEditor().insert(StringUtil.normalizeNewLines(code));
    }
 
    public String getCode(Position start, Position end)
    {
       return getSession().getTextRange(Range.fromPoints(start, end));
    }
-
 
    @Override
    public InputEditorSelection search(String needle,
@@ -1200,20 +1220,25 @@ public class AceEditor implements DocDisplay,
             renderer.screenToTextCoordinates(rectangle.getLeft(), rectangle.getTop()),
             renderer.screenToTextCoordinates(rectangle.getRight(), rectangle.getBottom()));
    }
-
-   public Rectangle getPositionBounds(InputEditorPosition position)
+   
+   @Override
+   public Rectangle getPositionBounds(Position position)
    {
       Renderer renderer = widget_.getEditor().getRenderer();
-
-      Position pos = ((AceInputEditorPosition) position).getValue();
-
       ScreenCoordinates start = renderer.textToScreenCoordinates(
-            pos.getRow(),
-            pos.getColumn());
+            position.getRow(),
+            position.getColumn());
 
       return new Rectangle(start.getPageX(), start.getPageY(),
                            (int) Math.round(renderer.getCharacterWidth()),
                            (int) (renderer.getLineHeight() * 0.8));
+   }
+   
+   @Override
+   public Rectangle getPositionBounds(InputEditorPosition position)
+   {
+      Position pos = ((AceInputEditorPosition) position).getValue();
+      return getPositionBounds(pos);
    }
 
    public Rectangle getBounds()
@@ -1380,6 +1405,7 @@ public class AceEditor implements DocDisplay,
 
    public void replaceSelection(String code)
    {
+      code = StringUtil.normalizeNewLines(code);
       Range selRange = getSession().getSelection().getRange();
       Position position = getSession().replace(selRange, code);
       Range range = Range.fromPoints(selRange.getStart(), position);
@@ -1838,7 +1864,7 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.addFocusHandler(handler);
    }
-
+   
    public Scope getCurrentScope()
    {
       return getSession().getMode().getCodeModel().getCurrentScope(
@@ -1941,6 +1967,30 @@ public class AceEditor implements DocDisplay,
       int screenRow = getSession().documentToScreenRow(getCursorPosition());
       widget_.getEditor().scrollToRow(Math.max(0, screenRow - rowOffset));
    }
+   
+   @Override
+   public void moveCursorForward()
+   {
+      moveCursorForward(1);
+   }
+   
+   @Override
+   public void moveCursorForward(int characters)
+   {
+      widget_.getEditor().moveCursorRight(characters);
+   }
+   
+   @Override
+   public void moveCursorBackward()
+   {
+      moveCursorBackward(1);
+   }
+   
+   @Override
+   public void moveCursorBackward(int characters)
+   {
+      widget_.getEditor().moveCursorLeft(characters);
+   }
 
    @Override
    public void moveCursorNearTop()
@@ -2034,6 +2084,14 @@ public class AceEditor implements DocDisplay,
       if (hasScopeTree())
          getScopeTree();
    }
+   
+   public int buildScopeTreeUpToRow(int row)
+   {
+      if (!hasScopeTree())
+         return 0;
+      
+      return getSession().getMode().getRCodeModel().buildScopeTreeUpToRow(row);
+   }
 
    public JsArray<Scope> getScopeTree()
    {
@@ -2062,6 +2120,12 @@ public class AceEditor implements DocDisplay,
    public void toggleFold()
    {
       getSession().toggleFold();
+   }
+   
+   @Override
+   public void setFoldStyle(String style)
+   {
+      getSession().setFoldStyle(style);
    }
    
    @Override
@@ -2336,6 +2400,22 @@ public class AceEditor implements DocDisplay,
          FoldChangeEvent.Handler handler)
    {
       return handlers_.addHandler(FoldChangeEvent.TYPE, handler);
+   }
+   
+   public HandlerRegistration addLineWidgetsChangedHandler(
+                           LineWidgetsChangedEvent.Handler handler)
+   {
+      return handlers_.addHandler(LineWidgetsChangedEvent.TYPE, handler);
+   }
+   
+   public boolean isScopeTreeReady(int row)
+   {
+      return backgroundTokenizer_.isReady(row);
+   }
+   
+   public HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler)
+   {
+      return handlers_.addHandler(ScopeTreeReadyEvent.TYPE, handler);
    }
 
    public HandlerRegistration addRenderFinishedHandler(RenderFinishedEvent.Handler handler)
@@ -2783,6 +2863,12 @@ public class AceEditor implements DocDisplay,
       return collab_.hasActiveCollabSession(this);
    }
    
+   @Override
+   public boolean hasFollowingCollabSession()
+   {
+      return collab_.hasFollowingCollabSession(this);
+   }
+   
    public void endCollabSession()
    {
       collab_.endCollabSession(this);
@@ -2812,6 +2898,145 @@ public class AceEditor implements DocDisplay,
          editor.tokenTooltip = new TokenTooltip(editor);
       }
    }-*/;
+
+   @Override
+   public void addLineWidget(LineWidget widget)
+   {
+      widget_.getLineWidgetManager().addLineWidget(widget);
+      fireLineWidgetsChanged();
+   }
+   
+   @Override
+   public void removeLineWidget(LineWidget widget)
+   {
+      widget_.getLineWidgetManager().removeLineWidget(widget);
+      fireLineWidgetsChanged();
+   }
+   
+   @Override
+   public void removeAllLineWidgets()
+   {
+      widget_.getLineWidgetManager().removeAllLineWidgets();
+      fireLineWidgetsChanged();
+   }
+   
+   @Override
+   public void onLineWidgetChanged(LineWidget widget)
+   {
+      widget_.getLineWidgetManager().onWidgetChanged(widget);
+      fireLineWidgetsChanged();
+   }
+   
+   @Override
+   public JsArray<LineWidget> getLineWidgets()
+   {
+      return widget_.getLineWidgetManager().getLineWidgets();
+   }
+   
+   @Override
+   public LineWidget getLineWidgetForRow(int row)
+   {
+      return widget_.getLineWidgetManager().getLineWidgetForRow(row);
+   }
+   
+   @Override
+   public JsArray<ChunkDefinition> getChunkDefs()
+   {
+      // chunk definitions are populated at render time, so don't return any
+      // if we haven't rendered yet
+      if (!isRendered())
+         return null;
+      
+      JsArray<ChunkDefinition> chunks = JsArray.createArray().cast();
+      JsArray<LineWidget> lineWidgets = getLineWidgets();
+      for (int i = 0; i<lineWidgets.length(); i++)
+      {
+         LineWidget lineWidget = lineWidgets.get(i);
+         if (lineWidget.getType().equals(ChunkDefinition.LINE_WIDGET_TYPE))
+         {
+            ChunkDefinition chunk = lineWidget.getData();
+            chunks.push(chunk.withRow(lineWidget.getRow()));
+         }
+      }
+      
+      return chunks;
+   }
+   
+
+   @Override
+   public boolean isRendered()
+   {
+      return widget_.isRendered();
+   }
+   
+   @Override
+   public boolean showChunkOutputInline()
+   {
+      return showChunkOutputInline_;
+   }
+   
+   @Override
+   public void setShowChunkOutputInline(boolean show)
+   {
+      showChunkOutputInline_ = show;
+   }
+   
+   private void fireLineWidgetsChanged()
+   {
+      AceEditor.this.fireEvent(new LineWidgetsChangedEvent());
+   }
+   
+   private static class BackgroundTokenizer
+   {
+      public BackgroundTokenizer(final AceEditor editor)
+      {
+         editor_ = editor;
+         
+         timer_ = new Timer()
+         {
+            @Override
+            public void run()
+            {
+               // Stop our timer if we've tokenized up to the end of the document.
+               if (row_ >= editor_.getRowCount())
+               {
+                  editor_.fireEvent(new ScopeTreeReadyEvent(
+                        editor_.getScopeTree(),
+                        editor_.getCurrentScope()));
+                  return;
+               }
+               
+               row_ += ROWS_TOKENIZED_PER_ITERATION;
+               row_ = Math.max(row_, editor.buildScopeTreeUpToRow(row_));
+               timer_.schedule(DELAY_MS);
+            }
+         };
+         
+         editor_.addDocumentChangedHandler(new DocumentChangedEvent.Handler()
+         {
+            @Override
+            public void onDocumentChanged(DocumentChangedEvent event)
+            {
+               row_ = event.getEvent().getRange().getStart().getRow();
+               timer_.schedule(DELAY_MS);
+            }
+         });
+      }
+      
+      public boolean isReady(int row)
+      {
+         return row < row_;
+      }
+      
+      private final AceEditor editor_;
+      private final Timer timer_;
+      
+      private int row_ = 0;
+      
+      private static final int DELAY_MS = 5;
+      private static final int ROWS_TOKENIZED_PER_ITERATION = 200;
+   }
+>>>>>>> origin/master
    
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
@@ -2835,31 +3060,8 @@ public class AceEditor implements DocDisplay,
    private Integer executionLine_ = null;
    private boolean valueChangeSuppressed_ = false;
    private AceInfoBar infoBar_;
-   private final BackgroundTokenizer bgTokenizer_;
-   
-   private class BackgroundTokenizer
-   {
-      public BackgroundTokenizer()
-      {
-         timer_ = new Timer()
-         {
-            @Override
-            public void run()
-            {
-              widget_.getEditor().tokenizeUpToRow(row_);
-            }
-         };
-      }
-      
-      public void scheduleTokenization(int row)
-      {
-         row_ = row;
-         timer_.schedule(300);
-      }
-      
-      private int row_ = 0;
-      private final Timer timer_;
-   }
+   private boolean showChunkOutputInline_ = false;
+   private BackgroundTokenizer backgroundTokenizer_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {
@@ -2904,5 +3106,4 @@ public class AceEditor implements DocDisplay,
    private String yankedText_ = null;
    
    private final List<HandlerRegistration> editorEventListeners_;
-
 }

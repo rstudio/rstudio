@@ -124,6 +124,11 @@ public class CppCompletionToolTip extends PopupPanel
       return topPad;
    }
    
+   public String getLabel()
+   {
+      return label_.getText();
+   }
+   
    private Label label_;
    private Label commentLabel_;
    private HorizontalPanel panel_;

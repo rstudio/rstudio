@@ -47,6 +47,9 @@
 // open a file association file
 - (void) openFileInRStudio: (NSString*) filename;
 
+// evaluate R command
+- (void) evaluateRCommand: (NSString*) cmd;
+
 // initiate a quit sequence
 - (void) initiateQuit;
 

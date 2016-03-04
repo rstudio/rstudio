@@ -1,7 +1,7 @@
 #
 # SessionEnvironment.R
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-16 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -465,6 +465,7 @@
              class == "ore.frame" ||
              class == "cast_df" ||
              class == "xts" ||
+             class == "DataFrame" ||
              is.list(obj) || 
              is.data.frame(obj) ||
              isS4(obj))
@@ -640,7 +641,7 @@
    else
    {
       # check the object itself for a null pointer
-      is(obj, "externalptr") && capture.output(print(obj)) == "<pointer: 0x0>"
+      inherits(obj, "externalptr") && capture.output(print(obj)) == "<pointer: 0x0>"
    }
 })
 

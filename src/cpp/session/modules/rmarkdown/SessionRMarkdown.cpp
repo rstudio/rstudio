@@ -269,9 +269,18 @@ private:
                              extraParams %
                              renderOptions);
 
+      // environment
+      core::system::Options environment;
+      std::string tempDir;
+      error = r::exec::RFunction("tempdir").call(&tempDir);
+      if (!error)
+         environment.push_back(std::make_pair("RMARKDOWN_PREVIEW_DIR", tempDir));
+      else
+         LOG_ERROR(error);
+
       // start the async R process with the render command
       allOutput_.clear();
-      async_r::AsyncRProcess::start(cmd.c_str(), targetFile_.parent(),
+      async_r::AsyncRProcess::start(cmd.c_str(), environment, targetFile_.parent(),
                                     async_r::R_PROCESS_NO_RDATA);
    }
 
@@ -343,24 +352,33 @@ private:
       // check each line of the emitted output; if it starts with a token
       // indicating rendering is complete, store the remainder of the emitted
       // line as the file we rendered
-      std::string completeMarker("Output created: ");
+      std::vector<std::string> completeMarkers;
+      completeMarkers.push_back("Preview created: ");
+      completeMarkers.push_back("Output created: ");
       std::string renderLine;
       std::stringstream outputStream(allOutput_);
       while (std::getline(outputStream, renderLine))
       {
-         if (boost::algorithm::starts_with(renderLine, completeMarker))
+         bool markerFound = false;
+         BOOST_FOREACH(const std::string& marker, completeMarkers)
          {
-            std::string fileName = renderLine.substr(completeMarker.length());
+            if (boost::algorithm::starts_with(renderLine, marker))
+            {
+               std::string fileName = renderLine.substr(marker.length());
 
-            // trim any whitespace from the end of the filename (on Windows this
-            // includes part of CR-LF)
-            boost::algorithm::trim(fileName);
+               // trim any whitespace from the end of the filename (on Windows
+               // this includes part of CR-LF)
+               boost::algorithm::trim(fileName);
 
-            // if the path looks absolute, use it as-is; otherwise, presume
-            // it to be in the same directory as the input file
-            outputFile_ = targetFile_.parent().complete(fileName);
-            break;
+               // if the path looks absolute, use it as-is; otherwise, presume
+               // it to be in the same directory as the input file
+               outputFile_ = targetFile_.parent().complete(fileName);
+               markerFound = true;
+               break;
+            }
          }
+         if (markerFound)
+            break;
       }
 
       // the process may be terminated normally by the IDE (e.g. to stop the
@@ -1035,7 +1053,7 @@ Error getRmdTemplate(const json::JsonRpcRequest& request,
    std::string templateContent;
    if (skeletonPath.exists())
    {
-      error = readStringFromFile(skeletonPath, &templateContent);
+      error = readStringFromFile(skeletonPath, &templateContent, string_utils::LineEndingPosix);
       if (error)
          return error;
    }
@@ -1082,19 +1100,6 @@ Error prepareForRmdChunkExecution(const json::JsonRpcRequest& request,
 }
 
 
-SEXP rs_showRmdParamsEditor(SEXP urlSEXP)
-{
-   // get transformed URL
-   std::string url = r::sexp::safeAsString(urlSEXP);
-   url = module_context::mapUrlPorts(url);
-
-   // enque client event
-   ClientEvent event(client_events::kRmdParamsEdit, url);
-   module_context::enqueClientEvent(event);
-
-   return R_NilValue;
-}
-
 SEXP rs_paramsFileForRmd(SEXP fileSEXP)
 {
    static std::map<std::string,std::string> s_paramsFiles;
@@ -1108,7 +1113,6 @@ SEXP rs_paramsFileForRmd(SEXP fileSEXP)
    r::sexp::Protect rProtect;
    return r::sexp::create(s_paramsFiles[file], &rProtect);
 }
-
 
 
 } // anonymous namespace
@@ -1137,11 +1141,6 @@ Error initialize()
    using namespace module_context;
 
    R_CallMethodDef methodDef ;
-   methodDef.name = "rs_showRmdParamsEditor" ;
-   methodDef.fun = (DL_FUNC)rs_showRmdParamsEditor ;
-   methodDef.numArgs = 1;
-   r::routines::addCallMethod(methodDef);
-
    methodDef.name = "rs_paramsFileForRmd" ;
    methodDef.fun = (DL_FUNC)rs_paramsFileForRmd ;
    methodDef.numArgs = 1;

@@ -115,9 +115,27 @@ core::system::ProcessConfig sessionProcessConfig(
    std::copy(extraArgs.begin(), extraArgs.end(), std::back_inserter(args));
 
    // append R environment variables
-   core::system::Options rEnvVars = r_environment::rVersion().environment();
+   r_util::RVersion rVersion = r_environment::rVersion();
+   core::system::Options rEnvVars = rVersion.environment();
    environment.insert(environment.end(), rEnvVars.begin(), rEnvVars.end());
+   
+   // mark this as the system default R version
+   core::system::setenv(&environment,
+                        kRStudioDefaultRVersion,
+                        rVersion.number());
+   core::system::setenv(&environment,
+                        kRStudioDefaultRVersionHome,
+                        rVersion.homeDir().absolutePath());
 
+   // forward the auth options
+   core::system::setenv(&environment,
+                        kRStudioRequiredUserGroup,
+                        options.authRequiredUserGroup());
+   core::system::setenv(&environment,
+                        kRStudioMinimumUserId,
+                        safe_convert::numberToString(
+                                 options.authMinimumUserId()));
+   
    // add monitor shared secret
    environment.push_back(std::make_pair(kMonitorSharedSecretEnvVar,
                                         options.monitorSharedSecret()));

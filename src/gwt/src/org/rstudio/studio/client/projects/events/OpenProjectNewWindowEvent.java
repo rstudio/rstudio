@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.projects.events;
 
+import org.rstudio.studio.client.application.model.RVersionSpec;
+
 import com.google.gwt.event.shared.GwtEvent;
 
 public class OpenProjectNewWindowEvent extends GwtEvent<OpenProjectNewWindowHandler>
@@ -21,14 +23,20 @@ public class OpenProjectNewWindowEvent extends GwtEvent<OpenProjectNewWindowHand
    public static final GwtEvent.Type<OpenProjectNewWindowHandler> TYPE =
       new GwtEvent.Type<OpenProjectNewWindowHandler>();
    
-   public OpenProjectNewWindowEvent(String project)
+   public OpenProjectNewWindowEvent(String project, RVersionSpec rVersion)
    {
       project_ = project;
+      rVersion_ = rVersion;
    }
    
    public String getProject()
    {
       return project_;
+   }
+   
+   public RVersionSpec getRVersion()
+   {
+      return rVersion_;
    }
    
    @Override
@@ -44,4 +52,5 @@ public class OpenProjectNewWindowEvent extends GwtEvent<OpenProjectNewWindowHand
    }
    
    private final String project_;
+   private final RVersionSpec rVersion_;
 }

@@ -1,7 +1,7 @@
 /*
  * SessionProjectContext.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,10 @@
 
 #include <core/system/FileMonitor.hpp>
 
+#ifndef _WIN32
+#include <core/system/FileMode.hpp>
+#endif
+
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
@@ -49,7 +53,14 @@ namespace {
 
 bool canWriteToProjectDir(const FilePath& projectDirPath)
 {
-   FilePath testFile = projectDirPath.complete(core::system::generateUuid());
+   std::string prefix(
+#ifndef _WIN32
+   "."
+#endif 
+   "write-test-");
+
+   FilePath testFile = projectDirPath.complete(prefix +
+         core::system::generateUuid());
    Error error = core::writeStringToFile(testFile, "test");
    if (error)
    {
@@ -696,34 +707,31 @@ bool ProjectContext::isPackageProject()
 bool ProjectContext::supportsSharing()
 {
    // never supports sharing if disabled explicitly
-   if (!options().getBoolOverlayOption(kProjectSharingSessionOption))
+   if (!core::system::getenv(kRStudioDisableProjectSharing).empty())
       return false;
 
    // otherwise, check to see whether shared storage is configured
    return !options().getOverlayOption(kSessionSharedStoragePath).empty();
 }
 
-// attempts to determine whether we're the owner of the project; currently
-// this is inferred from ownership on the project directory
-bool ProjectContext::ownedByUser()
+// attempts to determine whether we can browse above the project folder
+bool ProjectContext::parentBrowseable()
 {
 #ifdef _WIN32
    // we don't need to know this on Windows, and we'd need to compute it very
    // differently
    return true;
 #else
-   struct stat st; 
-   if (::stat(directory().absolutePath().c_str(), &st) == -1) 
+   bool browse = true;
+   Error error = core::system::isFileReadable(directory().parent(), &browse);
+   if (error)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
-      error.addProperty("path", directory().absolutePath());
-      LOG_ERROR(error);
-
-      // if we can't figure it out, presume we're the owner (this preserves
+      // if we can't figure it out, presume it to be browseable (this preserves
       // existing behavior) 
+      LOG_ERROR(error);
       return true;
    }
-   return st.st_uid == ::getuid();
+   return browse;
 #endif
 }
 

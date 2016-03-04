@@ -1,0 +1,50 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   xmlns:txt="urn:import:org.rstudio.studio.client.workbench.views.source.editors.text">
+   
+   <ui:with field="res" type="org.rstudio.core.client.theme.res.ThemeResources"/>
+
+   <ui:style type="org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget.ChunkStyle">
+   .interrupt, .clear, .busy
+   {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      cursor: pointer;
+   }
+   
+   .overflowY .interrupt, 
+   .overflowY .clear
+   .overflowY .busy
+   {
+      right: 25px;
+   }
+
+   .frame
+   {
+      border: 1px solid #e5e5e5;
+      margin-right: 20px;
+      padding-left: 10px;
+      transition: background-color 500ms ease;
+   }
+   
+   .clear
+   {
+      opacity: 0.0;
+      transition: opacity 500ms ease;
+   }
+   </ui:style>
+   <g:HTMLPanel styleName="{style.frame}" ui:field="root_">
+     <g:Image styleName="{style.clear}"
+              ui:field="clear_"
+              visible="false"
+              resource="{res.removePackage}"></g:Image>
+     <g:Image styleName="{style.interrupt}" 
+              ui:field="interrupt_"
+              visible="false"></g:Image>
+     <g:Image styleName="{style.busy}" 
+              ui:field="busy_"
+              visible="false"></g:Image>
+   </g:HTMLPanel>
+</ui:UiBinder> 

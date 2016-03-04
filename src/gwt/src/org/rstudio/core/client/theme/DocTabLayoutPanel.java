@@ -901,7 +901,7 @@ public class DocTabLayoutPanel
             
             events_.fireEvent(new DocWindowChangedEvent(pieces[0],
                   pieces.length > 1 ? pieces[1] : "", 
-                  initDragParams_, destPos_));
+                  initDragParams_, null, destPos_));
          }
          
          // this is the case when our own drag ends; if it ended outside our

@@ -22,6 +22,7 @@ public class EnsureHeightEvent extends GwtEvent<EnsureHeightHandler>
          = new Type<EnsureHeightHandler>();
 
    public static final int MAXIMIZED = -1;
+   public static final int NORMAL = -2;
    
    public EnsureHeightEvent(int height)
    {

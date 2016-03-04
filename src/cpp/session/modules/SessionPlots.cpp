@@ -312,13 +312,13 @@ Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
             "\"http://www.w3.org/TR/html4/strict.dtd\">\n"
        "<html lang=\"en\">\n"
        "<head>\n"
-       "  <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\">\n"
+       "<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\">\n"
        "</head>\n"
        "<body style=\"background-color: white;"
                      "font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;\">\n"
-       "  <div style=\"width: %1%px; margin-left: auto; margin-right: auto;\">\n"
-       "    <img src=\"%2%\"/>\n"
-       "  </div>\n"
+       "<div style=\"width: %1%px; margin-left: auto; margin-right: auto;\">\n"
+       "<img src=\"%2%\"/>\n"
+       "</div>\n"
        "</body>\n"
        "</html>\n");
    std::string html = boost::str(fmt % width % plotPath.filename());
@@ -745,7 +745,7 @@ void onDetectChanges(module_context::ChangeSource source)
    detectChanges(activatePlots);
 }
 
-void onBackgroundProcessing(bool)
+void onBackgroundProcessing(bool isIdle)
 {
    using namespace rstudio::r::session;
    if (graphics::display().isActiveDevice() && graphics::display().hasChanges())
@@ -761,7 +761,7 @@ void onBackgroundProcessing(bool)
       if ((graphics::display().lastChange() + milliseconds(kChangeWindowMs)) <
            boost::posix_time::microsec_clock::universal_time())
       {
-         detectChanges(true);
+         detectChanges(isIdle); // activate plots only when idle
       }
    }
 }

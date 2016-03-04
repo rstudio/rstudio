@@ -27,5 +27,6 @@ CMakeLists.txt.user
 .#*
 *.autosave
 *~
+*swp
 .orig
 .vagrant

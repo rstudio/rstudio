@@ -2352,9 +2352,6 @@ dom.importCssString(".normal-mode .ace_cursor{\
         } else if (character === 'w') {
           tmp = expandWordUnderCursor(cm, inclusive, true /** forward */,
                                                      false /** bigWord */);
-        } else if (character === 'p') {
-          tmp = expandParagraphUnderCursor(cm, inclusive, true /** forward */,
-                                                     false /** bigWord */);
         } else {
           return null;
         }

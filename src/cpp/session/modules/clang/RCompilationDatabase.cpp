@@ -61,9 +61,11 @@ LibClang& clang()
 
 struct SourceCppFileInfo
 {
+   SourceCppFileInfo() : disableIndexing(false) {}
    bool empty() const { return hash.empty(); }
    std::string hash;
    std::string rcppPkg;
+   bool disableIndexing;
 };
 
 SourceCppFileInfo sourceCppFileInfo(const core::FilePath& srcPath)
@@ -97,6 +99,11 @@ SourceCppFileInfo sourceCppFileInfo(const core::FilePath& srcPath)
       boost::algorithm::trim_all(attrib);
       info.hash.append(attrib);
    }
+
+   // using RcppNT2/Boost.SIMD means don't index (expression templates
+   // are too much for the way we do indexing)
+   if (boost::algorithm::contains(info.hash, "RcppNT2"))
+      info.disableIndexing = true;
 
    // return info
    return info;
@@ -470,6 +477,15 @@ void RCompilationDatabase::updateForSourceCpp(const core::FilePath& srcFile)
    if (info.empty())
       return;
 
+   // if we are disabling indexing then bail
+   if (info.disableIndexing)
+   {
+      if (rSourceIndex().verbose() > 0)
+         std::cerr << "CLANG SKIP INDEXING: " << srcFile << std::endl;
+
+      return;
+   }
+
    // get config
    CompilationConfig config = configForSourceCpp(info.rcppPkg, srcFile);
 
@@ -657,6 +673,24 @@ std::vector<std::string> RCompilationDatabase::projectTranslationUnits() const
 }
 
 
+bool RCompilationDatabase::shouldIndexConfig(const CompilationConfig& config)
+{
+   // no args
+   if (config.args.empty())
+      return false;
+
+   // using RcppNT2/Boost.SIMD means don't index (expression templates
+   // are too much for the way we do indexing)
+   BOOST_FOREACH(const std::string& arg, config.args)
+   {
+      if (boost::algorithm::contains(arg, "RcppNT2"))
+         return false;
+   }
+
+   return true;
+}
+
+
 std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
        const std::string& filename, bool usePrecompiledHeaders)
 {
@@ -689,9 +723,14 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
          config = it->second;
    }
 
-   // bail if we have no args
-   if (config.args.empty())
+   // bail if we aren't able to index this config
+   if (!shouldIndexConfig(config))
+   {
+      if (rSourceIndex().verbose() > 0)
+         std::cerr << "CLANG SKIP INDEXING: " << filename << std::endl;
+
       return std::vector<std::string>();
+   }
 
    // copy the args
    std::copy(config.args.begin(), config.args.end(), std::back_inserter(args));

@@ -16,7 +16,7 @@
 #ifndef SESSION_PROJECTS_SHARING_HPP
 #define SESSION_PROJECTS_SHARING_HPP
 
-#define kProjectSharingSessionOption "allow-project-sharing"
+#define kRStudioDisableProjectSharing "RSTUDIO_DISABLE_PROJECT_SHARING"
 #define kProjectEntryExt ".proj"
 #define kProjectSharedDir "shared-projects"
 

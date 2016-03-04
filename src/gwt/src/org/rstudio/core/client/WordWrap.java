@@ -89,8 +89,13 @@ public class WordWrap
       }
 
       // Loop while "line" is too big to fit in the current line without
-      // wrapping
-      while (true)
+      // wrapping.
+      
+      // TODO: previously the following loop used 'while(true)' but would
+      // hang on overly-large comment prefixes; e.g. 82 '#' in a row in an
+      // R document. This is a stop-gap fix to ensure that we don't hang
+      // when encountering such a situation.
+      for (int i = 0; i < 1000; i++)
       {
          // chars left
          int charsLeft = lineLength_ == 0 ? maxLineLength_ - indent_.length()

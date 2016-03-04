@@ -60,20 +60,27 @@ var Utils = require("mode/utils");
 oop.inherits(FoldMode, BaseFoldMode);
 
 (function() {
+
     this.foldingStartMarker = /^(?:[=-]+\s*$|#{1,6} |`{3})/;
 
     this.getFoldWidget = function(session, foldStyle, row) {
+
+        var FOLD_NONE  = "";
+        var FOLD_START = "start";
+        var FOLD_END   = foldStyle === "markbeginend" ? "end" : "";
+
         var line = session.getLine(row);
         if (!this.foldingStartMarker.test(line))
-            return "";
+            return FOLD_NONE;
 
-        if (line[0] == "`") {
-            if (Utils.getPrimaryState(session, row) === "start")
-                return "end";
-            return "start";
+        if (line[0] == "`")
+        {
+            return Utils.getPrimaryState(session, row) === "start" ?
+                FOLD_END :
+                FOLD_START;
         }
 
-        return "start";
+        return FOLD_NONE;
     };
 
     this.getFoldWidgetRange = function(session, foldStyle, row) {

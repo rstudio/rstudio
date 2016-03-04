@@ -51,6 +51,12 @@
   VIAddVersionKey LegalCopyright "Copyright (C) 2009-15 by RStudio, Inc."
   VIAddVersionKey LegalTrademarks "RStudio (TM) is a trademark of RStudio, Inc."
 
+  ;
+  ; RSTUDIO CHANGE - Don't require admin privs to install
+  ; (preserves behavior in < 2.5)
+  ;
+  RequestExecutionLevel none
+
   ;Set compression
   SetCompressor @CPACK_NSIS_COMPRESSOR@
 

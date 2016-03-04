@@ -31,7 +31,7 @@ import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.RegexUtil;
@@ -79,6 +79,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
+import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -137,38 +138,39 @@ public class RCompletionManager implements CompletionManager
       rnwContext_ = rnwContext;
       docDisplay_ = docDisplay;
       isConsole_ = isConsole;
-      sigTip_ = new RCompletionToolTip(docDisplay_);
+      sigTipManager_ = new SignatureToolTipManager(docDisplay_);
       suggestTimer_ = new SuggestionTimer(this, uiPrefs_);
       snippets_ = new SnippetHelper((AceEditor) docDisplay, getSourceDocumentPath());
       requester_ = new CompletionRequester(rnwContext, navigableSourceEditor, snippets_);
+      handlers_ = new HandlerRegistrations();
       
-      input_.addBlurHandler(new BlurHandler() {
+      handlers_.add(input_.addBlurHandler(new BlurHandler() {
          public void onBlur(BlurEvent event)
          {
             if (!ignoreNextInputBlur_)
                invalidatePendingRequests() ;
             ignoreNextInputBlur_ = false ;
          }
-      }) ;
+      }));
 
-      input_.addClickHandler(new ClickHandler()
+      handlers_.add(input_.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
          {
             invalidatePendingRequests();
          }
-      });
+      }));
 
-      popup_.addSelectionCommitHandler(new SelectionCommitHandler<QualifiedName>() {
+      handlers_.add(popup_.addSelectionCommitHandler(new SelectionCommitHandler<QualifiedName>() {
          public void onSelectionCommit(SelectionCommitEvent<QualifiedName> event)
          {
             assert context_ != null : "onSelection called but handler is null" ;
             if (context_ != null)
                context_.onSelection(event.getSelectedItem()) ;
          }
-      }) ;
+      }));
       
-      popup_.addSelectionHandler(new SelectionHandler<QualifiedName>() {
+      handlers_.add(popup_.addSelectionHandler(new SelectionHandler<QualifiedName>() {
          public void onSelection(SelectionEvent<QualifiedName> event)
          {
             lastSelectedItem_ = event.getSelectedItem();
@@ -177,25 +179,25 @@ public class RCompletionManager implements CompletionManager
             else
                showHelpDeferred(context_, lastSelectedItem_, 600);
          }
-      }) ;
+      }));
       
-      popup_.addMouseDownHandler(new MouseDownHandler() {
+      handlers_.add(popup_.addMouseDownHandler(new MouseDownHandler() {
          public void onMouseDown(MouseDownEvent event)
          {
             ignoreNextInputBlur_ = true ;
          }
-      });
+      }));
       
-      popup_.addSelectionHandler(new SelectionHandler<QualifiedName>() {
+      handlers_.add(popup_.addSelectionHandler(new SelectionHandler<QualifiedName>() {
          
          @Override
          public void onSelection(SelectionEvent<QualifiedName> event)
          {
             docDisplay_.setPopupVisible(true);
          }
-      });
+      }));
       
-      popup_.addCloseHandler(new CloseHandler<PopupPanel>()
+      handlers_.add(popup_.addCloseHandler(new CloseHandler<PopupPanel>()
       {
          @Override
          public void onClose(CloseEvent<PopupPanel> event)
@@ -209,20 +211,23 @@ public class RCompletionManager implements CompletionManager
                }
             });
          }
-      });
+      }));
       
-      popup_.addAttachHandler(new AttachEvent.Handler()
+      handlers_.add(popup_.addAttachHandler(new AttachEvent.Handler()
       {
          private boolean wasSigtipShowing_ = false;
+         
          @Override
          public void onAttachOrDetach(AttachEvent event)
          {
+            RCompletionToolTip toolTip = sigTipManager_.getToolTip();
+            
             if (event.isAttached())
             {
-               if (sigTip_ != null && sigTip_.isShowing())
+               if (toolTip != null && toolTip.isShowing())
                {
                   wasSigtipShowing_ = true;
-                  sigTip_.hide();
+                  toolTip.hide();
                }
                else
                {
@@ -231,11 +236,11 @@ public class RCompletionManager implements CompletionManager
             }
             else
             {
-               if (sigTip_ != null && wasSigtipShowing_)
-                  sigTip_.show();
+               if (toolTip != null && wasSigtipShowing_)
+                  toolTip.show();
             }
          }
-      });
+      }));
       
    }
    
@@ -251,6 +256,14 @@ public class RCompletionManager implements CompletionManager
       eventBus_ = eventBus;
       helpStrategy_ = helpStrategy;
       uiPrefs_ = uiPrefs;
+   }
+   
+   public void detach()
+   {
+      handlers_.removeHandler();
+      sigTipManager_.detach();
+      snippets_.detach();
+      popup_.hide();
    }
 
    public void close()
@@ -405,9 +418,8 @@ public class RCompletionManager implements CompletionManager
    {
       suggestTimer_.cancel();
       
-      if (sigTip_ != null)
-         if (sigTip_.previewKeyDown(event))
-            return true;
+      if (sigTipManager_.previewKeyDown(event))
+         return true;
       
       /**
        * KEYS THAT MATTER
@@ -805,7 +817,7 @@ public class RCompletionManager implements CompletionManager
          // Check for a valid number of R identifier characters for autopopup
          boolean canAutoPopup = checkCanAutoPopup(c, uiPrefs_.alwaysCompleteCharacters().getValue() - 1);
          
-         // Automatically popup completions after certain function calls
+         // Attempt to pop up completions immediately after a function call.
          if (c == '(' && !isLineInComment(docDisplay_.getCurrentLine()))
          {
             String token = StringUtil.getToken(
@@ -815,15 +827,10 @@ public class RCompletionManager implements CompletionManager
                   false,
                   true);
             
-            QualifiedName lastSelectedItem = popup_.getLastSelectedValue();
-            if (lastSelectedItem != null)
-            {
-               if (lastSelectedItem.name.equals(token))
-                  displaySignatureToolTip(lastSelectedItem);
-            }
-            
             if (token.matches("^(library|require|requireNamespace|data)\\s*$"))
                canAutoPopup = true;
+            
+            sigTipManager_.resolveActiveFunctionAndDisplayToolTip();
          }
          
          if (
@@ -1798,8 +1805,8 @@ public class RCompletionManager implements CompletionManager
          if (results.length == 1 &&
              completions.token.equals(results[0].name.replaceAll(":*", "")))
          {
-            // For snippets we need to apply the completion
-            if (results[0].type == RCompletionType.SNIPPET)
+            // For snippets we need to apply the completion if explicitly requested
+            if (results[0].type == RCompletionType.SNIPPET && canAutoAccept_)
             {
                snippets_.applySnippet(completions.token, results[0].name);
                return;
@@ -2074,9 +2081,8 @@ public class RCompletionManager implements CompletionManager
          if (needToMoveCursorInsideParens)
             editor.moveCursorLeft();
          
-         // Show a signature popup if we just completed a function
          if (RCompletionType.isFunctionType(qualifiedName.type))
-            displaySignatureToolTip(qualifiedName);
+            sigTipManager_.displayToolTip(qualifiedName.name, qualifiedName.source);
       }
       
       private final Invalidation.Token invalidationToken_ ;
@@ -2085,44 +2091,6 @@ public class RCompletionManager implements CompletionManager
       private boolean suggestOnAccept_;
       private boolean overrideInsertParens_;
       
-   }
-   
-   private void displaySignatureToolTip(final QualifiedName qualifiedName)
-   {
-      // Bail on lack of UI prefs
-      if (!uiPrefs_.showSignatureTooltips().getValue())
-         return;
-      
-      // We want to find the cursor position, and place the popup
-      // above the cursor.
-      server_.getArgs(
-            qualifiedName.name,
-            qualifiedName.source,
-            new ServerRequestCallback<String>()
-            {
-
-               @Override
-               public void onResponseReceived(String args)
-               {
-                  if (!StringUtil.isNullOrEmpty(args))
-                     doDisplaySignatureToolTip(qualifiedName.name + args);
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  Debug.logError(error);
-               }
-            });
-   }
-   
-   
-   private void doDisplaySignatureToolTip(String signature)
-   {
-      if (sigTip_.isShowing())
-         sigTip_.hide();
-
-      sigTip_.resolvePositionAndShow(signature);
    }
    
    private String getSourceDocumentPath()
@@ -2212,7 +2180,8 @@ public class RCompletionManager implements CompletionManager
    private final RCompletionContext rContext_;
    private final RnwCompletionContext rnwContext_;
    
-   private RCompletionToolTip sigTip_;
+   private final SignatureToolTipManager sigTipManager_;
+   
    private NativeEvent nativeEvent_;
    
    private QualifiedName lastSelectedItem_;
@@ -2262,4 +2231,6 @@ public class RCompletionManager implements CompletionManager
       private boolean canAutoInsert_;
       
    }
+   
+   private final HandlerRegistrations handlers_;
 }

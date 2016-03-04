@@ -14,23 +14,30 @@
  */
 package org.rstudio.studio.client.workbench.views.console.events;
 
+import org.rstudio.studio.client.workbench.views.console.model.ConsoleText;
+
 import com.google.gwt.event.shared.GwtEvent;
 
 public class ConsoleWriteInputEvent extends GwtEvent<ConsoleWriteInputHandler>
 {
    public static final Type<ConsoleWriteInputHandler> TYPE = new Type<ConsoleWriteInputHandler>();
 
-   public ConsoleWriteInputEvent(String input)
+   public ConsoleWriteInputEvent(ConsoleText text)
    {
-      this.input_ = input;
+      text_ = text;
    }
 
    public String getInput()
    {
-      return input_;
+      return text_.getText();
+   }
+   
+   public String getConsole()
+   {
+      return text_.getConsole();
    }
 
-   private String input_;
+   private final ConsoleText text_;
 
    @Override
    public Type<ConsoleWriteInputHandler> getAssociatedType()

@@ -238,6 +238,11 @@ public class TextFileType extends EditableFileType
       return FileTypeRegistry.MARKDOWN.getTypeId().equals(getTypeId());
    }
    
+   public boolean isRNotebook()
+   {
+      return FileTypeRegistry.RNOTEBOOK.getTypeId().equals(getTypeId());
+   }
+   
    public boolean isC()
    {
       return EditorLanguage.LANG_CPP.equals(getEditorLanguage());
@@ -317,6 +322,8 @@ public class TextFileType extends EditableFileType
          results.add(commands.reflowComment());
          results.add(commands.reformatCode());
          results.add(commands.renameInFile());
+         results.add(commands.profileCode());
+         results.add(commands.profileCodeWithoutFocus());
       }
       
       if (canExecuteAllCode())
@@ -334,6 +341,7 @@ public class TextFileType extends EditableFileType
          results.add(commands.executeToCurrentLine());
          results.add(commands.executeFromCurrentLine());
          results.add(commands.executeCurrentSection());
+         results.add(commands.profileCode());
       }
       if (canKnitToHTML())
       {

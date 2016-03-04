@@ -58,6 +58,11 @@ public:
       }
    }
 
+   virtual boost::posix_time::time_duration period()
+   {
+      return period_;
+   }
+
 private:
    const boost::posix_time::time_duration period_;
    boost::posix_time::ptime nextExecutionTime_;

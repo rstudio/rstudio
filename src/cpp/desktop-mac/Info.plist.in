@@ -212,13 +212,28 @@
          <key>CFBundleTypeRole</key>
          <string>Editor</string>
       </dict>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
+             <string>Rprof</string>
+             <string>rprof</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>RSource.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>R Profile File</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+         <key>LSIsAppleDefaultForType</key>
+         <true/>
+      </dict>
    </array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
    <string>RStudio</string>
 	<key>CFBundleGetInfoString</key>
-   <string>RStudio ${CPACK_PACKAGE_VERSION}, © 2009-2012 RStudio, Inc.</string>
+   <string>RStudio ${CPACK_PACKAGE_VERSION}, © 2009-2016 RStudio, Inc.</string>
 	<key>CFBundleIconFile</key>
 	<string>RStudio.icns</string>
 	<key>CFBundleIdentifier</key>
@@ -242,11 +257,15 @@
 	<key>LSRequiresCarbon</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
-  <string>RStudio ${CPACK_PACKAGE_VERSION}, © 2009-2014 RStudio, Inc.</string>
+  <string>RStudio ${CPACK_PACKAGE_VERSION}, © 2009-2016 RStudio, Inc.</string>
   <key>NSHighResolutionCapable</key>
   <true/>
   <key>NSPrincipalClass</key>
   <string>NSApplication</string>
+  <key>NSAppleScriptEnabled</key>
+  <true/>
+  <key>OSAScriptingDefinition</key>
+  <string>RStudio.sdef</string>
    <key>LSEnvironment</key>
    <dict>
       <key>DYLD_VERSIONED_FRAMEWORK_PATH</key>

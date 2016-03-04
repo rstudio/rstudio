@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -54,6 +55,18 @@ public class SelectWidget extends Composite
                        boolean horizontalLayout,
                        boolean listOnLeft)
    {
+      this(label, options, values, isMultipleSelect, 
+           horizontalLayout, listOnLeft, false);
+   }
+   
+   public SelectWidget(String label,
+                       String[] options,
+                       String[] values,
+                       boolean isMultipleSelect,
+                       boolean horizontalLayout,
+                       boolean listOnLeft,
+                       boolean fillContainer)
+   {
       if (values == null)
          values = options;
 
@@ -92,6 +105,14 @@ public class SelectWidget extends Composite
       }
       
       initWidget(panel);
+      
+      if (fillContainer)
+      {
+         if (StringUtil.isNullOrEmpty(label))
+            listBox_.setWidth("100%");
+         horizontalPanel_.setWidth("100%");
+      }
+      
       addStyleName(ThemeResources.INSTANCE.themeStyles().selectWidget());
    }
    

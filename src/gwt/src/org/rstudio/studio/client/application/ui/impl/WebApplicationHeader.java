@@ -20,7 +20,9 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Position;
+import com.google.gwt.dom.client.Style.TextDecoration;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -94,18 +96,21 @@ public class WebApplicationHeader extends Composite
       // large logo
       logoLarge_ = new Image(ThemeResources.INSTANCE.rstudio());
       ((ImageElement)logoLarge_.getElement().cast()).setAlt("RStudio");
-      Style style = logoLarge_.getElement().getStyle();
-      style.setPosition(Position.ABSOLUTE);
-      style.setTop(5, Unit.PX);
-      style.setLeft(18, Unit.PX);
+      logoLarge_.getElement().getStyle().setBorderWidth(0, Unit.PX);
       
       // small logo
       logoSmall_ = new Image(ThemeResources.INSTANCE.rstudio_small());
       ((ImageElement)logoSmall_.getElement().cast()).setAlt("RStudio");
-      style = logoSmall_.getElement().getStyle();
+      logoSmall_.getElement().getStyle().setBorderWidth(0, Unit.PX);
+
+      // link target for logo
+      logoAnchor_ = new Anchor();
+      Style style = logoAnchor_.getElement().getStyle();
       style.setPosition(Position.ABSOLUTE);
       style.setTop(5, Unit.PX);
       style.setLeft(18, Unit.PX);
+      style.setTextDecoration(TextDecoration.NONE);
+      style.setOutlineWidth(0, Unit.PX);
 
       // header container
       headerBarPanel_ = new HorizontalPanel() ;
@@ -179,6 +184,22 @@ public class WebApplicationHeader extends Composite
             headerBarPanel_.add(projectMenuButton_);
             showProjectMenu(!toolbar_.isVisible());
                 
+            // record logo target url (if any)
+            logoTargetUrl_ = sessionInfo.getUserHomePageUrl();
+            if (logoTargetUrl_ != null)
+            {
+               logoAnchor_.setHref(logoTargetUrl_);
+               logoAnchor_.setTitle("RStudio Server Home");
+
+               logoLarge_.setResource(ThemeResources.INSTANCE.rstudio_home());
+               logoSmall_.setResource(ThemeResources.INSTANCE.rstudio_home_small());
+            }
+            else
+            {
+               // no link, so ensure this doesn't get styled as clickable
+               logoAnchor_.getElement().getStyle().setCursor(Cursor.DEFAULT);
+            }
+            
             // init commands panel in server mode
             if (!Desktop.isDesktop())
                initCommandsPanel(sessionInfo);
@@ -209,7 +230,9 @@ public class WebApplicationHeader extends Composite
       
       if (showToolbar)
       {
-         outerPanel_.add(logoLarge_);
+         logoAnchor_.getElement().removeAllChildren();
+         logoAnchor_.getElement().appendChild(logoLarge_.getElement());
+         outerPanel_.add(logoAnchor_);
          HeaderPanel headerPanel = new HeaderPanel(headerBarPanel_, toolbar_);
          outerPanel_.add(headerPanel);
          mainMenu_.getElement().getStyle().setMarginLeft(18, Unit.PX);
@@ -218,7 +241,9 @@ public class WebApplicationHeader extends Composite
       }
       else
       {
-         outerPanel_.add(logoSmall_);
+         logoAnchor_.getElement().removeAllChildren();
+         logoAnchor_.getElement().appendChild(logoSmall_.getElement());
+         outerPanel_.add(logoAnchor_);
          MenubarPanel menubarPanel = new MenubarPanel(headerBarPanel_);
          outerPanel_.add(menubarPanel);
          mainMenu_.getElement().getStyle().setMarginLeft(0, Unit.PX);
@@ -245,8 +270,6 @@ public class WebApplicationHeader extends Composite
       projectMenuButton_.setVisible(show);
    }
    
-   
-
    private native final void suppressBrowserForwardBack() /*-{
       try {
       var outerWindow = $wnd.parent;
@@ -495,8 +518,10 @@ public class WebApplicationHeader extends Composite
   
    private int preferredHeight_;
    private FlowPanel outerPanel_;
+   private Anchor logoAnchor_;
    private Image logoLarge_;
    private Image logoSmall_;
+   private String logoTargetUrl_ = null;
    private HorizontalPanel headerBarPanel_;
    private HorizontalPanel headerBarCommandsPanel_;
    private HorizontalPanel projectBarCommandsPanel_;

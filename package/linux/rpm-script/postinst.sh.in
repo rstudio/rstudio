@@ -30,9 +30,7 @@ mkdir -p /var/lib/rstudio-server/conf
 mkdir -p /var/lib/rstudio-server/body
 mkdir -p /var/lib/rstudio-server/proxy
 
-# write installed indicator then force suspend active sessions
-# (so that the new client is never paired against the old server)
-sh -c "echo `date +%s` > /var/lib/rstudio-server/installed"
+# suspend all sessions
 rstudio-server force-suspend-all
 
 # alias libcrypto.so.0.9.8 to libcrypto.so.6 for compatiblity with

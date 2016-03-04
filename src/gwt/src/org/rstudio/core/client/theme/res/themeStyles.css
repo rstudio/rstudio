@@ -384,11 +384,11 @@ pre {
 }
 
 .gwt-DialogBox-ModalDialog, .gwt-DecoratedPopupPanel {
-   z-index: 1001;
+   z-index: 1000;
 }
 
 .gwt-SuggestBoxPopup {
-   z-index: 1002;	
+   z-index: 1000;	
    cursor: default;
 }
 
@@ -1088,6 +1088,8 @@ body.ubuntu_mono .searchBox {
    padding-top: 12px;
    width: 300px;
    padding-bottom: 12px;
+   overflow-wrap: break-word;
+   word-wrap: break-word;
 }
 
 .sessionAbendMessage {
@@ -1438,3 +1440,8 @@ body.ubuntu_mono .searchBox {
    padding-top: 2px;
    padding-bottom: 2px;
 }
+
+.borderedIFrame {
+   border: 1px solid #BBB;    
+}
+

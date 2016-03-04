@@ -54,6 +54,7 @@ public class FileMRUList extends MRUList
                   commands.mru14()
             },
             commands.clearRecentFiles(),
+            false,
             true,
             new OperationWithInput<String>() 
             {

@@ -42,6 +42,11 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionContentUrls.hpp>
+#include <session/SessionSourceDatabase.hpp>
+
+#ifndef _WIN32
+#include <core/system/FileMode.hpp>
+#endif
 
 #define kGridResource "grid_resource"
 #define kViewerCacheDir "viewer-cache"
@@ -794,6 +799,19 @@ Error getGridData(const http::Request& request,
    return Success();
 }
 
+Error removeCacheKey(const std::string& cacheKey)
+{
+   // remove from watchlist
+   std::map<std::string, CachedFrame>::iterator pos = 
+      s_cachedFrames.find(cacheKey);
+   if (pos != s_cachedFrames.end())
+      s_cachedFrames.erase(pos);
+   
+   // remove cache env object and backing file
+   return r::exec::RFunction(".rs.removeCachedData", cacheKey, 
+         viewerCacheDir()).call();
+}
+
 // called by the client to expire data cached by an associated viewer tab
 Error removeCachedData(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse*)
@@ -803,60 +821,7 @@ Error removeCachedData(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // remove from watchlist
-   std::map<std::string, CachedFrame>::iterator pos = 
-      s_cachedFrames.find(cacheKey);
-   if (pos != s_cachedFrames.end())
-      s_cachedFrames.erase(pos);
-   
-   // remove cache env object and backing file
-   error = r::exec::RFunction(".rs.removeCachedData", cacheKey, 
-         viewerCacheDir()).call();
-   if (error)
-      return error;
-
-   return Success();
-}
-
-// called by the client to create a second window into a data frame. this is
-// primarily needed because each view needs its own cache key so we can
-// filter/sort/search them independently.
-Error duplicateDataView(const json::JsonRpcRequest& request,
-                        json::JsonRpcResponse* pResponse)
-{
-   r::sexp::Protect protect;
-   std::string caption, envName, objName, cacheKey;
-   Error error = json::readParams(request.params, &caption, &envName, &objName, 
-                                  &cacheKey);
-   if (error)
-      return error;
-
-   // try to duplicate the original object, but clone the cached copy if needed
-   SEXP dataSEXP = findInNamedEnvir(envName, objName);
-   if (dataSEXP == NULL) 
-   {
-      dataSEXP = R_NilValue;
-      error = r::exec::RFunction(".rs.findDataFrame", envName, objName, 
-            cacheKey, viewerCacheDir()).call(&dataSEXP, &protect);
-      if (error)
-         return error;
-      if (dataSEXP == NULL || TYPEOF(dataSEXP) == NILSXP || Rf_isNull(dataSEXP))
-      {
-         // TODO: meaningful error message
-         return Success();
-      }
-   }
-
-   // assign a new cache key
-   std::string newCacheKey;
-   error = r::exec::RFunction(".rs.addCachedData", dataSEXP).call(&newCacheKey);
-   if (error)
-      return error;
-
-   // return the result
-   pResponse->setResult(makeDataItem(dataSEXP, 
-         caption, objName, envName, newCacheKey));
-   return Success();
+   return removeCacheKey(cacheKey);
 }
 
 void onShutdown(bool terminatedNormally)
@@ -922,6 +887,68 @@ void onDetectChanges(module_context::ChangeSource source)
    }
 }
 
+void onClientInit()
+{
+   // ensure the viewer cache directory exists--we create this eagerly on 
+   // client init (rather than on-demand) so we have time to correct its 
+   // permissions 
+   FilePath cacheDir(viewerCacheDir());
+   if (cacheDir.exists())
+      return;
+
+   Error error = cacheDir.ensureDirectory();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+#ifndef _WIN32
+   // tighten permissions on viewer cache directory
+   error = core::system::changeFileMode(
+            cacheDir,  core::system::UserReadWriteExecuteMode);
+   if (error)
+   {
+      // not fatal, log and continue
+      LOG_ERROR(error);
+   }
+   else
+   {
+      module_context::events().onPermissionsChanged(cacheDir);
+   }
+#endif
+}
+
+void onDocPendingRemove(const std::string &id)
+{
+   // see if the document has a path (if it does, it can't be a data viewer
+   // item)
+   std::string path;
+   source_database::getPath(id, &path);
+   if (!path.empty())
+      return;
+
+   // retrieve document from source database
+   boost::shared_ptr<source_database::SourceDocument> pDoc(
+         new source_database::SourceDocument());
+   Error error = source_database::get(id, pDoc);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // see if it has a cache key we need to remove (if not, no work to do)
+   std::string cacheKey = pDoc->getProperty("cacheKey");
+   if (cacheKey.empty())
+      return;
+
+   // remove cache env object and backing file
+   error = removeCacheKey(cacheKey);
+   if (error)
+      LOG_ERROR(error);
+}
+
 } // anonymous namespace
    
 Error initialize()
@@ -935,8 +962,11 @@ Error initialize()
    methodDef.numArgs = 5;
    r::routines::addCallMethod(methodDef);
 
+   source_database::events().onDocPendingRemove.connect(onDocPendingRemove);
+
    module_context::events().onShutdown.connect(onShutdown);
    module_context::events().onDetectChanges.connect(onDetectChanges);
+   module_context::events().onClientInit.connect(onClientInit);
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
 
    using boost::bind;
@@ -946,7 +976,6 @@ Error initialize()
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionDataViewer.R"))
       (bind(registerRpcMethod, "remove_cached_data", removeCachedData))
-      (bind(registerRpcMethod, "duplicate_data_view", duplicateDataView))
       (bind(registerUriHandler, "/grid_data", getGridData))
       (bind(registerUriHandler, kGridResourceLocation, handleGridResReq));
 

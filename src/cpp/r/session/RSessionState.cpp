@@ -124,6 +124,10 @@ void setEnvVar(const std::string& name, const std::string& value)
    if (isRLocationVariable(name) && !core::system::getenv(name).empty())
       return;
 
+   // don't overwrite route lock if already supplied (may change on resume)
+   if (name == "RSTUDIO_SESSION_ROUTE" && !core::system::getenv(name).empty())
+      return;
+
    core::system::setenv(name, value);
 }
 

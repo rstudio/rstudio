@@ -171,7 +171,8 @@ public class RSConnectDeploy extends Composite
             public void onClick(ClickEvent event)
             {
                connector_.showAccountWizard(false, 
-                     contentType == RSConnect.CONTENT_TYPE_APP, 
+                     contentType == RSConnect.CONTENT_TYPE_APP ||
+                     contentType == RSConnect.CONTENT_TYPE_APP_SINGLE, 
                      new OperationWithInput<Boolean>() 
                {
                   @Override
@@ -921,6 +922,7 @@ public class RSConnectDeploy extends Composite
       // (for apps and documents--other content types use temporary filenames)
       if (appName_.getText().isEmpty() && 
             contentType_ == RSConnect.CONTENT_TYPE_APP || 
+            contentType_ == RSConnect.CONTENT_TYPE_APP_SINGLE || 
             contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT)
       {
          // set the app name to the filename

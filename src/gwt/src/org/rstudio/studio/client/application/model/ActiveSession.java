@@ -46,6 +46,14 @@ public class ActiveSession extends JavaScriptObject
       return this.running;
    }-*/;
    
+   public native final boolean getExecuting() /*-{
+      return this.executing;
+   }-*/;
+   
+   public native final boolean getSavePromptRequired() /*-{
+      return this.save_prompt_required;
+   }-*/;
+   
    public native final double getLastUsed() /*-{
       return this.last_used;
    }-*/;
@@ -57,6 +65,4 @@ public class ActiveSession extends JavaScriptObject
    public native final String getRVersionHome() /*-{
       return this.r_version_home;
    }-*/;
-   
-   
 }

@@ -27,6 +27,7 @@
 #include <core/json/JsonRpc.hpp>
 
 #include <core/system/Environment.hpp>
+#include <core/system/System.hpp>
 
 #ifdef __APPLE__
 #define kRFrameworkVersions "/Library/Frameworks/R.framework/Versions"
@@ -38,6 +39,21 @@ namespace core {
 namespace r_util {
 
 namespace {
+
+std::vector<FilePath> realPaths(const std::vector<FilePath>& paths)
+{
+   std::vector<FilePath> realPaths;
+   BOOST_FOREACH(const FilePath& path, paths)
+   {
+      FilePath realPath;
+      Error error = core::system::realPath(path.absolutePath(), &realPath);
+      if (!error)
+         realPaths.push_back(realPath);
+      else
+         LOG_ERROR(error);
+   }
+   return realPaths;
+}
 
 std::vector<FilePath> removeNonExistent(const std::vector<FilePath>& paths)
 {
@@ -97,16 +113,20 @@ std::vector<RVersion> enumerateRVersions(
    {
       // start with all of the typical script locations
       rHomePaths.push_back(FilePath("/usr/lib/R"));
+      rHomePaths.push_back(FilePath("/usr/lib64/R"));
       rHomePaths.push_back(FilePath("/usr/local/lib/R"));
+      rHomePaths.push_back(FilePath("/usr/local/lib64/R"));
       rHomePaths.push_back(FilePath("/opt/local/lib/R"));
+      rHomePaths.push_back(FilePath("/opt/local/lib64/R"));
 
       // scan /opt/R and /opt/local/R
       scanForRHomePaths(FilePath("/opt/R"), &rHomePaths);
       scanForRHomePaths(FilePath("/opt/local/R"), &rHomePaths);
    }
 
-   // filter on existence and eliminate duplicates
+   // filter on existence, capture real paths, and eliminate duplicates
    rHomePaths = removeNonExistent(rHomePaths);
+   rHomePaths = realPaths(rHomePaths);
    std::sort(rHomePaths.begin(), rHomePaths.end());
    rHomePaths.erase(std::unique(rHomePaths.begin(), rHomePaths.end()),
                     rHomePaths.end());

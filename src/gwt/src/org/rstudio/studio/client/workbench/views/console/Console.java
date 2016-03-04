@@ -33,6 +33,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHan
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleHandler;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.RprofEvent;
 
 public class Console
 {
@@ -44,7 +45,9 @@ public class Console
       void focus();
       void ensureCursorVisible();
       IsWidget getConsoleInterruptButton();
+      IsWidget getProfilerInterruptButton();
       void setDebugMode(boolean debugMode);
+      void setProfilerMode(boolean profilerMode);
    }
    
    @Inject
@@ -57,13 +60,14 @@ public class Console
       {
          public void onSendToConsole(SendToConsoleEvent event)
          {
-            view.bringToFront();
+            if (event.shouldRaise())
+               view.bringToFront();
          }
       });
 
       ((Binder) GWT.create(Binder.class)).bind(commands, this);
 
-      fadeInHelper_ = new DelayFadeInHelper(
+      interruptFadeInHelper_ = new DelayFadeInHelper(
             view_.getConsoleInterruptButton().asWidget());
       events.addHandler(BusyEvent.TYPE, new BusyHandler()
       {
@@ -71,7 +75,30 @@ public class Console
          public void onBusy(BusyEvent event)
          {
             if (event.isBusy())
-               fadeInHelper_.beginShow();
+               interruptFadeInHelper_.beginShow();
+         }
+      });
+      
+      profilerFadeInHelper_ = new DelayFadeInHelper(
+            view_.getProfilerInterruptButton().asWidget());
+      events.addHandler(RprofEvent.TYPE, new RprofEvent.Handler()
+      {
+         @Override
+         public void onRprofEvent(RprofEvent event)
+         {
+            switch (event.getEventType())
+            {
+               case START:
+                  view.setProfilerMode(true);
+                  profilerFadeInHelper_.beginShow();
+                  break;
+               case STOP:
+                  view.setProfilerMode(false);
+                  profilerFadeInHelper_.hide();
+                  break;
+               default:
+                  break;
+            }
          }
       });
 
@@ -80,7 +107,7 @@ public class Console
          @Override
          public void onConsolePrompt(ConsolePromptEvent event)
          {
-            fadeInHelper_.hide();
+            interruptFadeInHelper_.hide();
          }
       });
       
@@ -133,7 +160,8 @@ public class Console
       return view_ ;
    }
 
-   private final DelayFadeInHelper fadeInHelper_;
+   private final DelayFadeInHelper interruptFadeInHelper_;
+   private final DelayFadeInHelper profilerFadeInHelper_;
    private final EventBus events_;
    private final Display view_;
 }

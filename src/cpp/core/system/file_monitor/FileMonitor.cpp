@@ -24,8 +24,8 @@
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
-
 #include <core/Thread.hpp>
+#include <core/PeriodicCommand.hpp>
 
 #include <core/system/System.hpp>
 #include <core/system/FileScanner.hpp>
@@ -676,6 +676,23 @@ void checkForChanges()
    boost::function<void()> callback;
    while (callbackQueue().deque(&callback))
       callback();
+}
+
+namespace {
+
+bool executeCheckForChanges()
+{
+   checkForChanges();
+   return true;
+}
+
+} // anonymous namespace
+
+boost::shared_ptr<ScheduledCommand> checkForChangesCommand(
+                       const boost::posix_time::time_duration& interval)
+{
+   return boost::shared_ptr<ScheduledCommand>(
+             new PeriodicCommand(interval, executeCheckForChanges, false));
 }
 
 } // namespace file_monitor

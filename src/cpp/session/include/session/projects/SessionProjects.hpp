@@ -168,8 +168,8 @@ public:
    // can this project be shared with other users?
    bool supportsSharing();
 
-   // is the current user this project's owner?
-   bool ownedByUser();
+   // can we browse in the parent directories of this project?
+   bool parentBrowseable();
 
 public:
    static core::r_util::RProjectBuildDefaults buildDefaults();

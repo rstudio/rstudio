@@ -13,6 +13,8 @@
  *
  */
 
+#include <boost/foreach.hpp>
+
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -34,8 +36,9 @@ AsyncRProcess::AsyncRProcess():
 {
 }
 
-void AsyncRProcess::start(const char* rCommand, 
-                          const core::FilePath& workingDir, 
+void AsyncRProcess::start(const char* rCommand,
+                          core::system::Options environment,
+                          const core::FilePath& workingDir,
                           AsyncRProcessOptions rOptions,
                           std::vector<core::FilePath> rSourceFiles)
 {
@@ -60,12 +63,8 @@ void AsyncRProcess::start(const char* rCommand,
             session::options().coreRSourcePath();
       
       const core::FilePath rTools =  rPath.childPath("Tools.R");
-      const core::FilePath sessionCodeTools = modulesPath.childPath("SessionCodeTools.R");
-      const core::FilePath sessionRCompletions = modulesPath.childPath("SessionRCompletions.R");
       
       rSourceFiles.push_back(rTools);
-      rSourceFiles.push_back(sessionCodeTools);
-      rSourceFiles.push_back(sessionRCompletions);
    }
 
    // args
@@ -103,6 +102,11 @@ void AsyncRProcess::start(const char* rCommand,
    if (needsQuote)
       command << "\"";
 
+   std::string escapedCommand = rCommand;
+
+   if (needsQuote)
+      boost::algorithm::replace_all(escapedCommand, "\"", "\\\"");
+    
    if (rSourceFiles.size())
    {
       // add in the r source files requested
@@ -113,11 +117,11 @@ void AsyncRProcess::start(const char* rCommand,
          command << "source('" << it->absolutePath() << "');";
       }
       
-      command << rCommand;
+      command << escapedCommand.c_str();
    }
    else
    {
-      command << rCommand;
+      command << escapedCommand.c_str();
    }
 
    if (needsQuote)
@@ -145,8 +149,13 @@ void AsyncRProcess::start(const char* rCommand,
    if (!libPaths.empty())
    {
       core::system::setenv(&childEnv, "R_LIBS", libPaths);
-      options.environment = childEnv;
    }
+   // forward passed environment variables
+   BOOST_FOREACH(const core::system::Option& var, environment)
+   {
+      core::system::setenv(&childEnv, var.first, var.second);
+   }
+   options.environment = childEnv;
 
    core::system::ProcessCallbacks cb;
    using namespace module_context;
@@ -190,6 +199,11 @@ void AsyncRProcess::onStderr(const std::string& output)
 bool AsyncRProcess::onContinue()
 {
    return !terminationRequested_;
+}
+
+bool AsyncRProcess::terminationRequested()
+{
+   return terminationRequested_;
 }
 
 void AsyncRProcess::onProcessCompleted(int exitStatus)

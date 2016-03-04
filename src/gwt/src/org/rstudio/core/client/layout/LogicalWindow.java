@@ -133,6 +133,11 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
          if (getState() != WindowState.MAXIMIZE)
             events_.fireEvent(new WindowStateChangeEvent(WindowState.MAXIMIZE));
       }
+      else if (event.getHeight() == EnsureHeightEvent.NORMAL)
+      {
+         if (getState() != WindowState.NORMAL)
+            events_.fireEvent(new WindowStateChangeEvent(WindowState.NORMAL));
+      }
       else
       {
          events_.fireEvent(event);

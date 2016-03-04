@@ -20,6 +20,7 @@
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -67,10 +68,16 @@ std::string quotedFilesFromArray(json::Array array, bool quoted)
    return joined;
 }
 
+// transforms a FilePath into an aliased json string
+json::Value toJsonString(const core::FilePath& filePath)
+{
+   return module_context::createAliasedPath(filePath);
+}
+
 class RSConnectPublish : public async_r::AsyncRProcess
 {
 public:
-   static boost::shared_ptr<RSConnectPublish> create(
+   static Error create(
          const std::string& dir,
          const json::Array& fileList, 
          const std::string& file, 
@@ -82,14 +89,30 @@ public:
          const json::Array& additionalFilesList,
          const json::Array& ignoredFilesList,
          bool asMultiple,
-         bool asStatic)
+         bool asStatic,
+         boost::shared_ptr<RSConnectPublish>* pDeployOut)
    {
       boost::shared_ptr<RSConnectPublish> pDeploy(new RSConnectPublish(file));
 
       std::string cmd("{ " + module_context::CRANDownloadOptions() + "; ");
 
+      // create temporary file to host file manifest
+      if (!fileList.empty())
+      {
+         Error error = FilePath::tempFilePath(&pDeploy->manifestPath_);
+         if (error)
+            return error;
+
+         // write manifest to temporary file
+         std::vector<std::string> deployFileList;
+         json::fillVectorString(fileList, &deployFileList);
+         error = core::writeStringVectorToFile(pDeploy->manifestPath_, 
+                                               deployFileList);
+         if (error)
+            return error;
+      }
+
       // join and quote incoming filenames to deploy
-      std::string deployFiles = quotedFilesFromArray(fileList, true);
       std::string additionalFiles = quotedFilesFromArray(additionalFilesList,
             false);
       std::string ignoredFiles = quotedFilesFromArray(ignoredFilesList,
@@ -102,7 +125,7 @@ public:
       {
          FilePath docFile = module_context::resolveAliasedPath(file);
          std::string extension = docFile.extensionLowerCase();
-         if (extension == ".rmd" || extension == ".html") 
+         if (extension == ".rmd" || extension == ".html" || extension == ".r") 
          {
             primaryDoc = string_utils::utf8ToSystem(file);
          }
@@ -115,8 +138,9 @@ public:
       // form the deploy command to hand off to the async deploy process
       cmd += "rsconnect::deployApp("
              "appDir = '" + string_utils::singleQuotedStrEscape(appDir) + "'," +
-             (deployFiles.empty() ? "" : "appFiles = c(" + 
-                deployFiles + "), ") +
+             (pDeploy->manifestPath_.empty() ? "" : "appFileManifest = '" + 
+                string_utils::singleQuotedStrEscape(
+                   pDeploy->manifestPath_.absolutePath()) + "', ") +
              (primaryDoc.empty() ? "" : "appPrimaryDoc = '" + 
                 string_utils::singleQuotedStrEscape(primaryDoc) + "', ") + 
              (sourceDoc.empty() ? "" : "appSourceDoc = '" + 
@@ -140,7 +164,8 @@ public:
              "))}";
 
       pDeploy->start(cmd.c_str(), FilePath(), async_r::R_PROCESS_VANILLA);
-      return pDeploy;
+      *pDeployOut = pDeploy;
+      return Success();
    }
 
 private:
@@ -163,6 +188,19 @@ private:
    {
       r::sexp::Protect protect;
       Error error;
+
+      // check for HTTP errors
+      boost::regex re("Error: HTTP (\\d{3})\\s+\\w+\\s+(\\S+)");
+      boost::smatch match;
+      if (boost::regex_search(output, match, re)) 
+      {
+         json::Object failure;
+         failure["http_status"] = (int)safe_convert::stringTo(match[1], 0);
+         failure["path"] = match[2].str();
+         ClientEvent event(client_events::kRmdRSConnectDeploymentFailed,
+                           failure);
+         module_context::enqueClientEvent(event);
+      }
 
       // look on each line of emitted output to see whether it contains the
       // finished marker
@@ -189,10 +227,16 @@ private:
       ClientEvent event(client_events::kRmdRSConnectDeploymentCompleted,
                         deployedUrl_);
       module_context::enqueClientEvent(event);
+
+      // clean up the manifest if we created it
+      Error error = manifestPath_.removeIfExists();
+      if (error)
+         LOG_ERROR(error);
    }
 
    std::string deployedUrl_;
    std::string sourceFile_;
+   FilePath manifestPath_;
 };
 
 boost::shared_ptr<RSConnectPublish> s_pRSConnectPublish_;
@@ -219,13 +263,17 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
    }
    else
    {
-      s_pRSConnectPublish_ = RSConnectPublish::create(sourceDir, sourceFiles, 
-                                                  sourceFile, sourceDoc, 
-                                                  account, server, appName, 
-                                                  contentCategory,
-                                                  additionalFiles,
-                                                  ignoredFiles, asMultiple,
-                                                  asStatic);
+      error = RSConnectPublish::create(sourceDir, sourceFiles, 
+                                       sourceFile, sourceDoc, 
+                                       account, server, appName, 
+                                       contentCategory,
+                                       additionalFiles,
+                                       ignoredFiles, asMultiple,
+                                       asStatic,
+                                       &s_pRSConnectPublish_);
+      if (error)
+         return error;
+
       pResponse->setResult(true);
    }
 
@@ -278,6 +326,53 @@ Error rsconnectDeployments(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error getEditPublishedDocs(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   std::string appPathParam;
+   Error error = json::readParams(request.params, &appPathParam);
+   if (error)
+      return error;
+
+   FilePath appPath = module_context::resolveAliasedPath(appPathParam);
+   if (!appPath.exists())
+      return pathNotFoundError(ERROR_LOCATION);
+
+   // doc paths to return
+   std::vector<FilePath> docPaths;
+
+   // if it's a file then just return the file
+   if (!appPath.isDirectory())
+   {
+      docPaths.push_back(appPath);
+   }
+   // otherwise look for shiny files
+   else
+   {
+      std::vector<FilePath> shinyPaths;
+      shinyPaths.push_back(appPath.childPath("app.R"));
+      shinyPaths.push_back(appPath.childPath("ui.R"));
+      shinyPaths.push_back(appPath.childPath("server.R"));
+      shinyPaths.push_back(appPath.childPath("www/index.html"));
+      BOOST_FOREACH(const FilePath& filePath, shinyPaths)
+      {
+         if (filePath.exists())
+            docPaths.push_back(filePath);
+      }
+   }
+
+   // return as json
+   json::Array resultJson;
+   std::transform(docPaths.begin(),
+                  docPaths.end(),
+                  std::back_inserter(resultJson),
+                  toJsonString);
+   pResponse->setResult(resultJson);
+   return Success();
+}
+
+
+
 void onDeferredInit(bool)
 {
    // automatically enable RSConnect UI if there are configured accounts
@@ -310,6 +405,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_rsconnect_deployments", rsconnectDeployments))
       (bind(registerRpcMethod, "rsconnect_publish", rsconnectPublish))
+      (bind(registerRpcMethod, "get_edit_published_docs", getEditPublishedDocs))
       (bind(sourceModuleRFile, "SessionRSConnect.R"));
 
    return initBlock.execute();

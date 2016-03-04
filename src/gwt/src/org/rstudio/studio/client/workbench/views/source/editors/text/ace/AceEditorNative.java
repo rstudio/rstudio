@@ -37,6 +37,17 @@ public class AceEditorNative extends JavaScriptObject {
    public native final Renderer getRenderer() /*-{
       return this.renderer;
    }-*/;
+   
+   public native final LineWidgetManager getLineWidgetManager() /*-{
+      var session = this.getSession();
+      if (!session.widgetManager) 
+      {
+         var LineWidgets = $wnd.require("ace/line_widgets").LineWidgets;
+         session.widgetManager = new LineWidgets(session);
+         session.widgetManager.attach(this);
+      }
+      return session.widgetManager;
+   }-*/; 
 
    public native final void resize() /*-{
       this.resize();
@@ -437,6 +448,14 @@ public class AceEditorNative extends JavaScriptObject {
       this.commands = commands;
    }-*/;
    
+   public final native void setDragEnabled(boolean enabled) /*-{
+      this.setOption("dragEnabled", enabled);
+   }-*/;
+   
+   public final native boolean dragEnabled() /*-{
+      return this.getOption("dragEnabled");
+   }-*/;
+   
    public final native JsMap<Position> getMarks() /*-{
       
       var marks = {};
@@ -517,6 +536,15 @@ public class AceEditorNative extends JavaScriptObject {
    
    public final native void setSurroundSelectionPref(String value) /*-{
       this.$surroundSelection = value;
+   }-*/;
+   
+   public static final native AceEditorNative getEditor(Element el) /*-{
+      while (el != null) {
+         if (el.env && el.env.editor)
+            return el.env.editor;
+         el = el.parentNode;
+      }
+      return null;
    }-*/;
    
    private static boolean uiPrefsSynced_ = false;

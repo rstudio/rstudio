@@ -23,6 +23,7 @@
 #include <boost/type_traits.hpp>
 #include <boost/algorithm/string.hpp>
 
+#include <core/StringUtils.hpp>
 #include <core/type_traits/TypeTraits.hpp>
 
 namespace rstudio {
@@ -141,27 +142,30 @@ void insert(Container& container, Iterator begin, Iterator end)
 
 /* Wrappers for the erase-remove idiom */
 template <typename Container, typename ValueType>
-void discard(Container& container, const ValueType& value)
+void expel(Container& container, const ValueType& value)
 {
    container.erase(std::remove(container.begin(), container.end(), value), container.end());
 }
 
 template <typename Container, typename Predicate>
-void discard_if(Container& container, Predicate predicate)
+void expel_if(Container& container, Predicate predicate)
 {
    container.erase(std::remove_if(container.begin(), container.end(), predicate), container.end());
 }
 
+/* Value-based wrappers for erase-remove idiom */
 template <typename Container, typename ValueType>
-Container without(Container& container, const ValueType& value)
+Container without(Container container, const ValueType& value)
 {
    container.erase(std::remove(container.begin(), container.end(), value), container.end());
+   return container;
 }
 
 template <typename Container, typename Predicate>
-Container without_if(Container& container, Predicate predicate)
+Container without_if(Container container, Predicate predicate)
 {
    container.erase(std::remove_if(container.begin(), container.end(), predicate), container.end());
+   return container;
 }
 
 template <typename T>
@@ -200,7 +204,23 @@ void append(ContainerType* pContainer, const ContainerType& other)
 inline std::vector<std::string> split(const std::string& string, const std::string& delim)
 {
    std::vector<std::string> result;
-   boost::algorithm::split(result, string, boost::is_any_of(delim));
+   
+   std::string::size_type start = 0;
+   std::string::size_type end   = string.find(delim, start);
+   
+   // Add all of the initial split pieces
+   while (end != std::string::npos)
+   {
+      result.push_back(string_utils::substring(string, start, end));
+      
+      start = end + delim.size();
+      end   = string.find(delim, start);
+   }
+   
+   // Add the final piece
+   result.push_back(string_utils::substring(string, start));
+   
+   // And return!
    return result;
 }
 

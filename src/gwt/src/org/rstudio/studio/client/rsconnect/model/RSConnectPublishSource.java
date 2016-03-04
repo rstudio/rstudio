@@ -20,15 +20,16 @@ import org.rstudio.studio.client.rsconnect.RSConnect;
 
 public class RSConnectPublishSource
 {
-   public RSConnectPublishSource(String sourceDir)
+   public RSConnectPublishSource(String sourceDir, String sourceFile)
    {
       sourceFile_ = sourceDir;
-      deployFile_ = sourceDir;
+      deployFile_ = sourceFile;
       isSelfContained_ = false;
       description_ = null;
       deployDir_ = sourceDir;
       contentCategory_ = null;
       isShiny_ = true;
+      isSingleFileShiny_ = sourceDir != sourceFile;
    }
 
    public RSConnectPublishSource(String sourceFile, boolean isSelfContained, 
@@ -46,6 +47,7 @@ public class RSConnectPublishSource
       description_ = description;
       isSelfContained_ = isSelfContained;
       isShiny_ = isShiny;
+      isSingleFileShiny_ = false;
 
       // consider plots and raw HTML published from the viewer pane to be 
       // plots 
@@ -64,6 +66,7 @@ public class RSConnectPublishSource
       description_ = description;
       isSelfContained_ = isSelfContained;
       isShiny_ = isShiny;
+      isSingleFileShiny_ = false;
       contentCategory_ = null;
       deployDir_ = FileSystemItem.createFile(preview.getOutputFile())
             .getParentPathString();
@@ -78,6 +81,7 @@ public class RSConnectPublishSource
       deployFile_ = deployFile;
       isSelfContained_ = isSelfContained;
       isShiny_ = isShiny;
+      isSingleFileShiny_ = false;
       description_ = description;
       contentCategory_ = null;
    }
@@ -110,6 +114,9 @@ public class RSConnectPublishSource
    
    public String getDeployKey()
    {
+      if (isSingleFileShiny_)
+         return FileSystemItem.createDir(getDeployDir())
+                              .completePath(getDeployFile());
       return isDocument() ? getSourceFile() : getDeployDir();
    }
    
@@ -133,6 +140,11 @@ public class RSConnectPublishSource
       return isShiny_;
    }
    
+   public boolean isSingleFileShiny()
+   {
+      return isSingleFileShiny_;
+   }
+   
    public String getContentCategory()
    {
       return contentCategory_;
@@ -145,4 +157,5 @@ public class RSConnectPublishSource
    private final String contentCategory_;
    private final boolean isSelfContained_;
    private final boolean isShiny_;
+   private final boolean isSingleFileShiny_;
 }

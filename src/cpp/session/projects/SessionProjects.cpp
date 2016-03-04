@@ -74,6 +74,40 @@ Error validateProjectPath(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error getProjectFilePath(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
+{
+   std::string projectIdParam;
+   Error error = json::readParams(request.params, &projectIdParam);
+   if (error)
+      return error;
+
+   // project dir from id
+   core::r_util::ProjectId projectId(projectIdParam);
+   std::string project = session::projectIdToProject(
+            options().userScratchPath(),
+            FilePath(options().getOverlayOption(kSessionSharedStoragePath)),
+            projectId);
+
+   // resolve to project file
+   FilePath projectPath = module_context::resolveAliasedPath(project);
+   if (!project.empty() && projectPath.exists())
+   {
+      FilePath projectFile = r_util::projectFromDirectory(projectPath);
+      if (projectFile.exists())
+         pResponse->setResult(module_context::createAliasedPath(projectFile));
+      else
+         pResponse->setResult("");
+   }
+   else
+   {
+      pResponse->setResult("");
+   }
+
+   return Success();
+}
+
+
 Error getNewProjectContext(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
@@ -261,9 +295,45 @@ json::Object projectBuildContextJson()
    return contextJson;
 }
 
+void setProjectConfig(const r_util::RProjectConfig& config)
+{
+   // set it
+   s_projectContext.setConfig(config);
+
+   // sync underlying R setting
+   module_context::syncRSaveAction();
+}
+
+
+void syncProjectFileChanges()
+{
+   // read project file config
+   bool providedDefaults;
+   std::string userErrMsg;
+   r_util::RProjectConfig config;
+   Error error = r_util::readProjectFile(s_projectContext.file(),
+                                         ProjectContext::defaultConfig(),
+                                         ProjectContext::buildDefaults(),
+                                         &config,
+                                         &providedDefaults,
+                                         &userErrMsg);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // set config
+   setProjectConfig(config);
+}
+
+
 Error readProjectOptions(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
+   // read the latest config from disk
+   syncProjectFileChanges();
+
    // get project config json
    json::Object configJson = projectConfigJson(s_projectContext.config());
 
@@ -281,14 +351,6 @@ Error readProjectOptions(const json::JsonRpcRequest& request,
    return Success();
 }
 
-void setProjectConfig(const r_util::RProjectConfig& config)
-{
-   // set it
-   s_projectContext.setConfig(config);
-
-   // sync underlying R setting
-   module_context::syncRSaveAction();
-}
 
 Error rProjectBuildOptionsFromJson(const json::Object& optionsJson,
                                    RProjectBuildOptions* pOptions)
@@ -444,35 +506,6 @@ void onQuit()
                         setLastProjectPath(s_projectContext.file());
 }
 
-void syncProjectFileChanges()
-{
-   // read project file config
-   bool providedDefaults;
-   std::string userErrMsg;
-   r_util::RProjectConfig config;
-   Error error = r_util::readProjectFile(s_projectContext.file(),
-                                         ProjectContext::defaultConfig(),
-                                         ProjectContext::buildDefaults(),
-                                         &config,
-                                         &providedDefaults,
-                                         &userErrMsg);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-
-   // set config
-   setProjectConfig(config);
-
-   // fire event to client
-   json::Object dataJson;
-   dataJson["type"] = "project";
-   dataJson["prefs"] = s_projectContext.uiPrefs();
-   ClientEvent event(client_events::kUiPrefsChanged, dataJson);
-   module_context::enqueClientEvent(event);
-}
-
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
    BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
@@ -481,7 +514,16 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
       if (event.fileInfo().absolutePath() ==
           s_projectContext.file().absolutePath())
       {
+         // update project context
          syncProjectFileChanges();
+
+         // fire event to client
+         json::Object dataJson;
+         dataJson["type"] = "project";
+         dataJson["prefs"] = s_projectContext.uiPrefs();
+         ClientEvent event(client_events::kUiPrefsChanged, dataJson);
+         module_context::enqueClientEvent(event);
+
          break;
       }
    }
@@ -682,6 +724,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "validate_project_path", validateProjectPath))
       (bind(registerRpcMethod, "get_new_project_context", getNewProjectContext))
+      (bind(registerRpcMethod, "get_project_file_path", getProjectFilePath))
       (bind(registerRpcMethod, "create_project", createProject))
       (bind(registerRpcMethod, "read_project_options", readProjectOptions))
       (bind(registerRpcMethod, "write_project_options", writeProjectOptions))

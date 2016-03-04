@@ -239,6 +239,15 @@ bool setWindowGeometry(NSWindow* window, NSString* geometry)
    [[NSApp dockTile] display];
 }
 
+std::string jsEscape(std::string str)
+{
+   boost::algorithm::replace_all(str, "\\", "\\\\");
+   boost::algorithm::replace_all(str, "\"", "\\\"");
+   boost::algorithm::replace_all(str, "\n", "\\n");
+   return str;
+}
+
+
 - (void) openFileInRStudio: (NSString*) openFile
 {
    // must be absolute
@@ -252,12 +261,19 @@ bool setWindowGeometry(NSWindow* window, NSString* geometry)
       return;
    
    // fixup for passing as a javascript string
-   boost::algorithm::replace_all(filename, "\\", "\\\\");
-   boost::algorithm::replace_all(filename, "\"", "\\\"");
-   boost::algorithm::replace_all(filename, "\n", "\\n");
+   filename = jsEscape(filename);
    
    // execute the openFile command
    std::string js = "window.desktopHooks.openFile(\"" + filename + "\")";
+   [self evaluateJavaScript: [NSString stringWithUTF8String: js.c_str()]];
+}
+
+// evaluate R command
+- (void) evaluateRCommand: (NSString*) cmd
+{
+   std::string rCmd = [cmd UTF8String];
+   rCmd = jsEscape(rCmd);
+   std::string js = "window.desktopHooks.evaluateRCmd(\"" + rCmd + "\")";
    [self evaluateJavaScript: [NSString stringWithUTF8String: js.c_str()]];
 }
 

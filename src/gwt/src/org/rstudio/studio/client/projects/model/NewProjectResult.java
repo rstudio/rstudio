@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.model;
 
+import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
 
 public class NewProjectResult
@@ -61,6 +62,16 @@ public class NewProjectResult
       openInNewWindow_ = openInNewWindow;
    }
    
+   public RVersionSpec getRVersion()
+   {
+      return rVersion_;
+   }
+   
+   public void setRVersion(RVersionSpec rVersion)
+   {
+      rVersion_ = rVersion;
+   }
+   
    public String getNewDefaultProjectLocation()
    {
       return newDefaultProjectLocation_;
@@ -84,6 +95,7 @@ public class NewProjectResult
    private final boolean createGitRepo_;
    private final boolean usePackrat_;
    private boolean openInNewWindow_;
+   private RVersionSpec rVersion_;
    private final String projectFile_;
    private final String newDefaultProjectLocation_;
    private final VcsCloneOptions vcsCloneOptions_;

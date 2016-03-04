@@ -235,6 +235,11 @@ public class StringUtil
       return indent + str.replaceAll("\n", "\n" + indent);
    }
    
+   public static String join(String delimiter, String... strings)
+   {
+      return join(strings, delimiter);
+   }
+   
    public static String join(String[] collection, String delim)
    {
       return join(Arrays.asList(collection), delim);
@@ -997,6 +1002,53 @@ public class StringUtil
    {
       return RE_INDENT.match(line, 0).getGroup(0);
    }
+   
+   public static final String truncate(String string, int targetLength, String suffix)
+   {
+      if (string.length() <= targetLength)
+         return string;
+      
+      int truncatedSize = targetLength - suffix.length();
+      if (truncatedSize < 0)
+         return string;
+      
+      return string.substring(0, truncatedSize) + suffix;
+   }
+   
+   public static boolean isOneOf(String string, String... candidates)
+   {
+      for (String candidate : candidates)
+         if (candidate.equals(string))
+            return true;
+      return false;
+   }
+   
+   public static boolean isOneOf(char ch, char... candidates)
+   {
+      for (char candidate : candidates)
+         if (ch == candidate)
+            return true;
+      return false;
+   }
+
+   public static final String makeRandomId(int length) 
+   {
+      String alphanum = "0123456789abcdefghijklmnopqrstuvwxyz";
+      String id = "";
+      for (int i = 0; i < length; i++)
+      {
+         id += alphanum.charAt((int)(Math.random() * alphanum.length()));
+      }
+      return id;
+   }
+   
+   public static final native String encodeURI(String string) /*-{
+      return $wnd.encodeURI(string);
+   }-*/;
+   
+   public static final native String normalizeNewLines(String string) /*-{
+      return string.replace(/\r\n|\n\r|\r/g, "\n");
+   }-*/;
    
    public static final HashMap<String, String> COMPLEMENTS =
          makeComplementsMap();

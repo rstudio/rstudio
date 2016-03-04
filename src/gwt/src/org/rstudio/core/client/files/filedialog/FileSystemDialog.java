@@ -34,6 +34,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -62,7 +63,12 @@ public abstract class FileSystemDialog extends ModalDialogBase
          {
             public void onProgress(String message)
             {
-               progress.onProgress(message);
+               onProgress(message, null);
+            }
+            
+            public void onProgress(String message, Operation onCancel)
+            {
+               progress.onProgress(message, onCancel);
             }
             
             public void clearProgress()
@@ -190,6 +196,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
    public void showModal()
    {
       super.showModal();
+      
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          public void execute()
@@ -253,6 +260,11 @@ public abstract class FileSystemDialog extends ModalDialogBase
    }
 
    public void onProgress(String message)
+   {
+      onProgress(message, null);
+   }
+   
+   public void onProgress(String message, Operation onCancel)
    {
       progress_.onProgress(message);
    }
