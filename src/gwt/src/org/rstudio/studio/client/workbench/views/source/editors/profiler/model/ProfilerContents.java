@@ -51,6 +51,6 @@ public class ProfilerContents extends JavaScriptObject
    }-*/;
    
    public final native boolean isUserSaved() /*-{
-      return this.isUserSaved;
+      return this.isUserSaved == "saved";
    }-*/;
 }

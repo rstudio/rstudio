@@ -222,6 +222,7 @@ public class ProfilerEditingTarget implements EditingTarget,
          
          htmlPath_ = getContents().getHtmlPath();
          htmlLocalPath_ = getContents().getHtmlLocalPath();
+         isUserSaved_ = getContents().isUserSaved();
          
          if (htmlPath_ == null)
          {
@@ -362,7 +363,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    @Override
    public boolean isSaveCommandActive()
    {
-      return dirtyState().getValue();
+      return !isUserSaved_;
    }
 
    @Override
@@ -502,6 +503,12 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       return null;
    }
+   
+   @Handler
+   void onSaveSourceDoc()
+   {
+      saveNewFile(getPath());
+   }
 
    @Handler
    void onSaveSourceDocAs()
@@ -561,7 +568,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    
    private void persistDocumentProperty(String property, String value)
    {
-      HashMap<String, String> props = new HashMap<String, String>();
+      HashMap<String, String> props = new HashMap<String, String>();   
       props.put(property, value);
       
       sourceServer_.modifyDocumentProperties(
@@ -617,6 +624,10 @@ public class ProfilerEditingTarget implements EditingTarget,
                         public void onResponseReceived(JavaScriptObject response)
                         {
                            savePropertiesWithPath(saveItem.getPath());
+                           
+                           persistDocumentProperty("isUserSaved", "saved");
+                           isUserSaved_ = true;
+                           
                            indicator.onCompleted();
                         }
 
@@ -715,4 +726,5 @@ public class ProfilerEditingTarget implements EditingTarget,
    
    private String htmlPath_;
    private String htmlLocalPath_;
+   private boolean isUserSaved_;
 }
