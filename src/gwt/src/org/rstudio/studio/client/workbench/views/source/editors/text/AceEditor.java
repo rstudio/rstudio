@@ -3036,7 +3036,6 @@ public class AceEditor implements DocDisplay,
       private static final int DELAY_MS = 5;
       private static final int ROWS_TOKENIZED_PER_ITERATION = 200;
    }
->>>>>>> origin/master
    
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
