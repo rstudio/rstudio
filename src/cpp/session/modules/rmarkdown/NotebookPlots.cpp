@@ -39,8 +39,6 @@ namespace {
 
 bool isPlotPath(const FilePath& path)
 {
-   std::cerr << "testing filter for " << path.absolutePath() << " " << 
-      path.hasExtensionLowerCase(".png") <<  string_utils::isPrefixOf(path.stem(), kPlotPrefix) << std::endl;
    return path.hasExtensionLowerCase(".png") &&
           string_utils::isPrefixOf(path.stem(), kPlotPrefix);
 }
@@ -50,8 +48,7 @@ bool plotFilter(const FileInfo& file)
    return file.isDirectory() || isPlotPath(FilePath(file.absolutePath()));
 }
 
-void removeGraphicsDevice(const FilePath& plotFolder, 
-                          boost::function<void(const FilePath&)> plotCaptured)
+void removeGraphicsDevice(const FilePath& plotFolder)
 {
    // turn off the graphics device -- this has the side effect of writing the
    // device's remaining output to files
@@ -68,25 +65,23 @@ void removeGraphicsDevice(const FilePath& plotFolder,
    BOOST_FOREACH(const FilePath& path, folderContents)
    {
       if (isPlotPath(path))
-         plotCaptured(path);
+         events().onPlotOutput(path);
    }
 }
 
 void unregisterMonitor(const std::string&,
                        const core::system::file_monitor::Handle& handle)
 {
-   std::cerr << "unregistering monitor " << handle.id << std::endl;
    module_context::events().onConsolePrompt.disconnect(
          boost::bind(unregisterMonitor, _1, handle));
 
    core::system::file_monitor::unregisterMonitor(handle);
 }
 
-void onMonitorRegistered(boost::function<void(const FilePath&)> plotCaptured,
+void onMonitorRegistered(
       const core::system::file_monitor::Handle& handle,
       const tree<FileInfo>& files)
 {
-   std::cerr << "monitor registered" << std::endl;
    // we only want to listen until the next console prompt
    module_context::events().onConsolePrompt.connect(
          boost::bind(unregisterMonitor, _1, handle));
@@ -94,57 +89,48 @@ void onMonitorRegistered(boost::function<void(const FilePath&)> plotCaptured,
    // fire for any plots which were emitted during file monitor registration
    for (tree<FileInfo>::iterator it = files.begin(); it != files.end(); it++) 
    {
-      std::cerr << "init contents:" << it->absolutePath() << std::endl;
       FilePath path(it->absolutePath());
       if (isPlotPath(path))
-         plotCaptured(path);
+         events().onPlotOutput(path);
    }
 
    // TODO: emit any plots which were created while we were registering
 }
 
 void onMonitorRegError(const FilePath& plotFolder, 
-                       boost::function<void(const FilePath&)> plotCaptured,
                        const Error &error)
 {
    LOG_ERROR(error);
-   removeGraphicsDevice(plotFolder, plotCaptured);
+   removeGraphicsDevice(plotFolder);
 }
 
 void onMonitorUnregistered(const FilePath& plotFolder,
-                           boost::function<void(const FilePath&)> plotCaptured,
                            const core::system::file_monitor::Handle& handle)
 {
    // when the monitor is unregistered, disable the associated graphics
    // device
-   std::cerr << "monitor unregistered " << std::endl;
-   removeGraphicsDevice(plotFolder, plotCaptured);
+   removeGraphicsDevice(plotFolder);
 }
 
 void onPlotFilesChanged(
-      boost::function<void(FilePath&)> plotCaptured,
-      const std::vector<core::system::FileChangeEvent>& events)
+      const std::vector<core::system::FileChangeEvent>& changeEvents)
 {
-   std::cerr << "notified of changes: " << events.size() << std::endl;
-   BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
+   BOOST_FOREACH(const core::system::FileChangeEvent& event, changeEvents)
    {
-      std::cerr << "change notif " << event.type() << " for object " << event.fileInfo().absolutePath() << std::endl;
       // we only care about new plots
       if (event.type() != core::system::FileChangeEvent::FileAdded)
          continue;
 
       // notify caller
       FilePath path(event.fileInfo().absolutePath());
-      plotCaptured(path);
+      events().onPlotOutput(path);
    }
 }
 
 } // anonymous namespace
 
 // begins capturing plot output
-core::Error beginPlotCapture(
-      const FilePath& plotFolder,
-      boost::function<void(const FilePath&)> plotCaptured)
+core::Error beginPlotCapture(const FilePath& plotFolder)
 {
    // clean up any stale plots from the folder
    std::vector<FilePath> folderContents;
@@ -157,7 +143,6 @@ core::Error beginPlotCapture(
       // remove if it looks like a plot 
       if (isPlotPath(file)) 
       {
-         std::cerr << "removing " << file.absolutePath() << std::endl;
          error = file.remove();
          if (error)
          {
@@ -182,13 +167,12 @@ core::Error beginPlotCapture(
 
    // set up file monitor callbacks
    core::system::file_monitor::Callbacks callbacks;
-   callbacks.onRegistered = boost::bind(onMonitorRegistered,
-         plotCaptured, _1, _2);
+   callbacks.onRegistered = onMonitorRegistered;
    callbacks.onUnregistered = boost::bind(onMonitorUnregistered,
-         plotFolder, plotCaptured, _1);
+         plotFolder, _1);
    callbacks.onRegistrationError = boost::bind(onMonitorRegError,
-         plotFolder, plotCaptured, _1);
-   callbacks.onFilesChanged = boost::bind(onPlotFilesChanged, plotCaptured, _1);
+         plotFolder, _1);
+   callbacks.onFilesChanged = onPlotFilesChanged;
 
    // create the monitor
    core::system::file_monitor::registerMonitor(plotFolder, true, plotFilter,

@@ -183,6 +183,9 @@ void disconnectConsole()
    module_context::events().onConsolePrompt.disconnect(onConsolePrompt);
    module_context::events().onConsoleOutput.disconnect(onConsoleOutput);
    module_context::events().onConsoleInput.disconnect(onConsoleInput);
+   
+   events().onPlotOutput.disconnect(onPlotOutput);
+
    s_consoleConnected = false;
 }
 
@@ -202,7 +205,9 @@ void connectConsole()
    module_context::events().onConsoleOutput.connect(onConsoleOutput);
    module_context::events().onConsoleInput.connect(onConsoleInput);
 
-   error = beginPlotCapture(outputPath, onPlotOutput);
+   events().onPlotOutput.connect(onPlotOutput);
+
+   error = beginPlotCapture(outputPath);
    if (error)
       LOG_ERROR(error);
 

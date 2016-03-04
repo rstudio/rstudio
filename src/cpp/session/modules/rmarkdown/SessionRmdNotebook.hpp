@@ -49,6 +49,9 @@ struct Events : boost::noncopyable
    boost::signal<void(const std::string&, const std::string&, int, 
                 const std::string&)>
                 onChunkConsoleOutput;
+
+   boost::signal<void(const core::FilePath&)> onPlotOutput;
+   boost::signal<void(const core::FilePath&)> onHtmlOutput;
 };
 
 Events& events();
