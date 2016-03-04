@@ -577,6 +577,11 @@ public class ControlFlowAnalyzer {
     }
 
     private void maybeRescueClassLiteral(JReferenceType type) {
+      if (type.isArrayType()) {
+        JArrayType arrayType = (JArrayType) type.getUnderlyingType();
+        // Always rescue the leaf type class literal as it is needed for creating arrays.
+        rescue(program.getClassLiteralField(arrayType.getLeafType()));
+      }
       if (liveFieldsAndMethods.contains(getClassMethod) ||
           liveFieldsAndMethods.contains(getClassField)) {
         // getClass() already live so rescue class literal immediately

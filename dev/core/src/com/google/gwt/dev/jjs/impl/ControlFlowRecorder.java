@@ -15,6 +15,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.StringAnalyzableTypeEnvironment;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
@@ -23,6 +24,8 @@ import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JNewArray;
+import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
@@ -67,22 +70,13 @@ public class ControlFlowRecorder extends JVisitor {
 
   @Override
   public void endVisit(JClassLiteral x, Context ctx) {
-    JType type = x.getRefType();
-    if (type instanceof JDeclaredType) {
-      String typeName = type.getName();
-      stringAnalyzableTypeEnvironment.recordStaticReferenceInMethod(typeName, currentMethodName);
-      maybeRecordClinitCall(typeName);
-    }
-    // Any Enum subtype whose class literal is referenced might have its enumValueOfFunc
-    // reflectively called at runtime (see Enum.valueOf()). So to be safe the enumValueOfFunc
-    // must be assumed to be called.
-    if (type.isEnumOrSubclass() != null && !type.getName().equals("java.lang.Enum")) {
-      JMethod valueOfMethod = getValueOfMethod((JDeclaredType) type);
-      if (valueOfMethod != null) {
-        stringAnalyzableTypeEnvironment.recordMethodCallsMethod(currentMethodName,
-            computeName(valueOfMethod));
-      }
-    }
+    recordClassLiteralReferenced(x.getRefType());
+  }
+
+  @Override
+  public void endVisit(JNewArray x, Context ctx) {
+    JType type = x.getArrayType().getLeafType();
+    recordClassLiteralReferenced(type);
   }
 
   @Override
@@ -112,7 +106,6 @@ public class ControlFlowRecorder extends JVisitor {
   @Override
   public boolean visit(JField x, Context ctx) {
     String typeName = x.getEnclosingType().getName();
-
     if (x.isJsInteropEntryPoint()) {
       stringAnalyzableTypeEnvironment.recordExportedStaticReferenceInType(typeName);
     }
@@ -150,6 +143,12 @@ public class ControlFlowRecorder extends JVisitor {
       recordCurrentMethodInstantiatesType(x.getEnclosingType());
     }
 
+    for (JParameter parameter : x.getParams()) {
+      if (x.isJsMethodVarargs() && parameter.isVarargs()) {
+        recordClassLiteralReferenced(
+            ((JArrayType) parameter.getType().getUnderlyingType()).getLeafType());
+      }
+    }
     return true;
   }
 
@@ -176,6 +175,24 @@ public class ControlFlowRecorder extends JVisitor {
     String typeClinitMethod = typeName + "::$clinit()V";
     if (!typeClinitMethod.equals(currentMethodName)) {
       stringAnalyzableTypeEnvironment.recordMethodCallsMethod(currentMethodName, typeClinitMethod);
+    }
+  }
+
+  private void recordClassLiteralReferenced(JType type) {
+    if (type instanceof JDeclaredType) {
+      String typeName = type.getName();
+      stringAnalyzableTypeEnvironment.recordStaticReferenceInMethod(typeName, currentMethodName);
+      maybeRecordClinitCall(typeName);
+    }
+    // Any Enum subtype whose class literal is referenced might have its enumValueOfFunc
+    // reflectively called at runtime (see Enum.valueOf()). So to be safe the enumValueOfFunc
+    // must be assumed to be called.
+    if (type.isEnumOrSubclass() != null && !type.getName().equals("java.lang.Enum")) {
+      JMethod valueOfMethod = getValueOfMethod((JDeclaredType) type);
+      if (valueOfMethod != null) {
+        stringAnalyzableTypeEnvironment.recordMethodCallsMethod(currentMethodName,
+            computeName(valueOfMethod));
+      }
     }
   }
 

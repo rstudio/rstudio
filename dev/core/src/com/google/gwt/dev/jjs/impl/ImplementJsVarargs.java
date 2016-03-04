@@ -374,8 +374,6 @@ public class ImplementJsVarargs {
               new JIntLiteral(sourceInfo, varargsIndex));
       JNewArray arrayVariable = JNewArray.createArrayWithDimensionExpressions(sourceInfo,
           varargsArrayType, Collections.singletonList(lengthMinusVarargsIndex));
-      arrayVariable.getLeafTypeClassLiteral().setField(
-          program.getClassLiteralField(varargsArrayType.getLeafType()));
       preamble.addStmt(new JDeclarationStatement(
           sourceInfo, argumentsCopyVariable.createRef(sourceInfo), arrayVariable));
 

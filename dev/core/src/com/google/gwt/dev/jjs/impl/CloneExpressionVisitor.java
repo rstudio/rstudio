@@ -217,8 +217,7 @@ public class CloneExpressionVisitor extends JVisitor {
   @Override
   public boolean visit(JNewArray x, Context ctx) {
     expression = new JNewArray(x.getSourceInfo(), x.getArrayType(),
-        cloneExpressions(x.getDimensionExpressions()), cloneExpressions(x.getInitializers()),
-        cloneExpression(x.getLeafTypeClassLiteral()));
+        cloneExpressions(x.getDimensionExpressions()), cloneExpressions(x.getInitializers()));
     return false;
   }
 

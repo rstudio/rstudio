@@ -396,6 +396,11 @@ public class ImplementClassLiteralsAsFields {
         resolveClassLiteralField(type);
       }
     }
+    // Class literals for array types are implicitly used in array creation, so they must be
+    // considered reachable.
+    for (JArrayType arrayType : program.getAllArrayTypes()) {
+      resolveClassLiteralField(arrayType.getLeafType());
+    }
     NormalizeVisitor visitor = new NormalizeVisitor();
     visitor.accept(program);
     program.recordClassLiteralFields(classLiteralFields);

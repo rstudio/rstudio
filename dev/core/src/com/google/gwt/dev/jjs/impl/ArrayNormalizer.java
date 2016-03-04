@@ -22,6 +22,7 @@ import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JCastMap;
+import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JLiteral;
@@ -130,7 +131,7 @@ public class ArrayNormalizer {
     private JExpression initializeUnidimensionalArray(JNewArray x, JArrayType arrayType) {
       // override the type of the called method with the array's type
       SourceInfo sourceInfo = x.getSourceInfo();
-      JLiteral classLit = x.getLeafTypeClassLiteral();
+      JLiteral classLiteral = getLeafTypeClassLiteral(x);
       JExpression castableTypeMap = getOrCreateCastMap(sourceInfo, arrayType);
       JRuntimeTypeReference arrayElementRuntimeTypeReference =
           getElementRuntimeTypeReference(sourceInfo, arrayType);
@@ -140,7 +141,7 @@ public class ArrayNormalizer {
       JMethodCall call =
           new JMethodCall(sourceInfo, null, initializeUnidimensionalArrayMethod);
       call.overrideReturnType(arrayType);
-      call.addArgs(classLit, castableTypeMap, arrayElementRuntimeTypeReference, dim,
+      call.addArgs(classLiteral, castableTypeMap, arrayElementRuntimeTypeReference, dim,
           elementTypeCategory, program.getLiteralInt(arrayType.getDims()));
       return call;
     }
@@ -152,7 +153,7 @@ public class ArrayNormalizer {
       JsonArray elementTypeReferences = new JsonArray(sourceInfo, program.getJavaScriptObject());
       JsonArray dimList = new JsonArray(sourceInfo, program.getJavaScriptObject());
       JType currentElementType = arrayType;
-      JLiteral classLit = x.getLeafTypeClassLiteral();
+      JLiteral classLit = getLeafTypeClassLiteral(x);
       for (int i = 0; i < x.getDimensionExpressions().size(); ++i) {
         // Walk down each type from most dims to least.
         JArrayType curArrayType = (JArrayType) currentElementType;
@@ -181,7 +182,7 @@ public class ArrayNormalizer {
       // override the type of the called method with the array's type
       SourceInfo sourceInfo = x.getSourceInfo();
       JExpression classLitExpression = program.createArrayClassLiteralExpression(x.getSourceInfo(),
-          x.getLeafTypeClassLiteral(), arrayType.getDims());
+          getLeafTypeClassLiteral(x), arrayType.getDims());
       JExpression castableTypeMap = getOrCreateCastMap(sourceInfo, arrayType);
       JRuntimeTypeReference elementTypeIds = getElementRuntimeTypeReference(sourceInfo, arrayType);
       JsonArray initializers =
@@ -200,6 +201,13 @@ public class ArrayNormalizer {
     private JIntLiteral getTypeCategoryLiteral(JType type) {
       return JIntLiteral.get(TypeCategory.typeCategoryForType(type, program).ordinal());
     }
+  }
+
+  private JClassLiteral getLeafTypeClassLiteral(JNewArray newArray) {
+    JType leafType = newArray.getArrayType().getLeafType();
+    JClassLiteral leafClassLiteral =  new JClassLiteral(newArray.getSourceInfo(), leafType);
+    leafClassLiteral.setField(program.getClassLiteralField(leafType));
+    return leafClassLiteral;
   }
 
   private JArrayRef needsSetCheck(JBinaryOperation x) {
