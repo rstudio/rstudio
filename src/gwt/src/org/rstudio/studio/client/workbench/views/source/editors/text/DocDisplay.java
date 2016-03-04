@@ -380,4 +380,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void goToLineStart();
    void goToLineEnd();
+   
+   void toggleTokenInfo();
 }
