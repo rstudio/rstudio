@@ -278,6 +278,8 @@ public class TextEditingTargetWidget
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
 
+      toolbar.addRightWidget(commands_.profileCode().createToolbarButton(false));
+      toolbar.addRightSeparator();
       toolbar.addRightWidget(insertChunkButton_ = commands_.insertChunk().createToolbarButton());
       toolbar.addRightWidget(runButton_ = commands_.executeCode().createToolbarButton(false));
       toolbar.addRightSeparator();
