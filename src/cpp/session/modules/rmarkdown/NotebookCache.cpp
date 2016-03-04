@@ -248,11 +248,7 @@ Error initCache()
    source_database::events().onDocRemoved.connect(onDocRemoved);
    source_database::events().onDocAdded.connect(onDocAdded);
 
-   R_CallMethodDef methodDef ;
-   methodDef.name = "rs_populateNotebookCache";
-   methodDef.fun = (DL_FUNC)rs_populateNotebookCache ;
-   methodDef.numArgs = 1;
-   r::routines::addCallMethod(methodDef);
+   RS_REGISTER_CALL_METHOD(rs_populateNotebookCache, 1);
 
    return Success();
 }

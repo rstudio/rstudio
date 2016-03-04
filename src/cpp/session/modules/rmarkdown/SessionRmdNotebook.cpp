@@ -19,6 +19,7 @@
 #include "NotebookCache.hpp"
 #include "NotebookChunkDefs.hpp"
 #include "NotebookOutput.hpp"
+#include "NotebookHtmlWidgets.hpp"
 
 #include <iostream>
 
@@ -283,7 +284,8 @@ Error initialize()
       (bind(registerRpcMethod, "set_chunk_console", setChunkConsole))
       (bind(module_context::sourceModuleRFile, "SessionRmdNotebook.R"))
       (bind(initOutput))
-      (bind(initCache));
+      (bind(initCache))
+      (bind(initHtmlWidgets));
 
    return initBlock.execute();
 }
