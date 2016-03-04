@@ -62,7 +62,7 @@ public class CodeServer {
       PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
       logger.setMaxDetail(options.getLogLevel());
 
-      OutboxTable outboxes;
+      OutboxTable outboxTable;
 
       try {
         File baseCacheDir =
@@ -70,7 +70,7 @@ public class CodeServer {
         UnitCache unitCache = UnitCacheSingleton.get(logger, null, baseCacheDir);
         MinimalRebuildCacheManager minimalRebuildCacheManager =
             new MinimalRebuildCacheManager(logger, baseCacheDir);
-        outboxes = makeOutboxes(options, logger, unitCache, minimalRebuildCacheManager);
+        outboxTable = makeOutboxTable(options, logger, unitCache, minimalRebuildCacheManager);
       } catch (Throwable t) {
         t.printStackTrace();
         System.out.println("FAIL");
@@ -84,7 +84,7 @@ public class CodeServer {
         try {
           // TODO: actually test recompiling here.
           // (This is just running precompiles repeatedly.)
-          outboxes.defaultCompileAll(logger);
+          outboxTable.defaultCompileAll(logger);
         } catch (Throwable t) {
           t.printStackTrace();
           System.out.println("FAIL");
@@ -129,17 +129,17 @@ public class CodeServer {
     UnitCache unitCache = UnitCacheSingleton.get(startupLogger, null, baseCacheDir);
     MinimalRebuildCacheManager minimalRebuildCacheManager =
         new MinimalRebuildCacheManager(topLogger, baseCacheDir);
-    OutboxTable outboxes =
-        makeOutboxes(options, startupLogger, unitCache, minimalRebuildCacheManager);
+    OutboxTable outboxTable =
+        makeOutboxTable(options, startupLogger, unitCache, minimalRebuildCacheManager);
 
     JobEventTable eventTable = new JobEventTable();
     JobRunner runner = new JobRunner(eventTable, minimalRebuildCacheManager);
 
-    JsonExporter exporter = new JsonExporter(options, outboxes);
+    JsonExporter exporter = new JsonExporter(options, outboxTable);
 
-    SourceHandler sourceHandler = new SourceHandler(outboxes, exporter);
-    SymbolMapHandler symbolMapHandler = new SymbolMapHandler(outboxes);
-    WebServer webServer = new WebServer(sourceHandler, symbolMapHandler, exporter, outboxes,
+    SourceHandler sourceHandler = new SourceHandler(outboxTable, exporter);
+    SymbolMapHandler symbolMapHandler = new SymbolMapHandler(outboxTable);
+    WebServer webServer = new WebServer(sourceHandler, symbolMapHandler, exporter, outboxTable,
         runner, eventTable, options.getBindAddress(), options.getPort());
     webServer.start(topLogger);
 
@@ -149,7 +149,7 @@ public class CodeServer {
   /**
    * Configures and compiles all the modules (unless {@link Options#getNoPrecompile} is false).
    */
-  private static OutboxTable makeOutboxes(Options options, TreeLogger logger,
+  private static OutboxTable makeOutboxTable(Options options, TreeLogger logger,
       UnitCache unitCache, MinimalRebuildCacheManager minimalRebuildCacheManager)
       throws IOException, UnableToCompleteException {
 
@@ -159,7 +159,7 @@ public class CodeServer {
     LauncherDir launcherDir = LauncherDir.maybeCreate(options);
 
     int nextOutboxId = 1;
-    OutboxTable outboxes = new OutboxTable();
+    OutboxTable outboxTable = new OutboxTable();
     for (String moduleName : options.getModuleNames()) {
       OutboxDir outboxDir = OutboxDir.create(new File(workDir, moduleName), logger);
 
@@ -171,9 +171,9 @@ public class CodeServer {
       String outboxId = moduleName + "_" + nextOutboxId;
       nextOutboxId++;
 
-      outboxes.addOutbox(new Outbox(outboxId, recompiler, options, logger));
+      outboxTable.addOutbox(new Outbox(outboxId, recompiler, options, logger));
     }
-    return outboxes;
+    return outboxTable;
   }
 
   /**

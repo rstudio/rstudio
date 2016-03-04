@@ -74,11 +74,11 @@ class SourceHandler {
 
   static final String SOURCEROOT_TEMPLATE_VARIABLE = "$sourceroot_goes_here$";
 
-  private final OutboxTable outboxes;
+  private final OutboxTable outboxTable;
   private final JsonExporter exporter;
 
-  SourceHandler(OutboxTable outboxes, JsonExporter exporter) {
-    this.outboxes = outboxes;
+  SourceHandler(OutboxTable outboxTable, JsonExporter exporter) {
+    this.outboxTable = outboxTable;
     this.exporter = exporter;
   }
 
@@ -101,7 +101,7 @@ class SourceHandler {
       throw new RuntimeException("invalid request (shouldn't happen): " + target);
     }
 
-    Outbox box = outboxes.findByOutputModuleName(moduleName);
+    Outbox box = outboxTable.findByOutputModuleName(moduleName);
     if (box == null) {
       return new ErrorPage("No such module: " + moduleName);
     } else if (box.containsStubCompile()) {

@@ -180,8 +180,8 @@ public class RecompilerTest extends TestCase {
     Recompiler recompiler = new Recompiler(OutboxDir.create(Files.createTempDir(), logger), null,
         "com.foo.SimpleModule", options, unitCache, minimalRebuildCacheManager);
     Outbox outbox = new Outbox("Transactional Cache", recompiler, options, logger);
-    OutboxTable outboxes = new OutboxTable();
-    outboxes.addOutbox(outbox);
+    OutboxTable outboxTable = new OutboxTable();
+    outboxTable.addOutbox(outbox);
     JobRunner runner = new JobRunner(new JobEventTable(), minimalRebuildCacheManager);
 
     // Perform a first compile. This should pass since all resources are valid.
@@ -226,8 +226,8 @@ public class RecompilerTest extends TestCase {
     Recompiler recompiler = new Recompiler(OutboxDir.create(Files.createTempDir(), logger), null,
         "com.foo.PropertyModule", options, unitCache, minimalRebuildCacheManager);
     Outbox outbox = new Outbox("Transactional Cache", recompiler, options, logger);
-    OutboxTable outboxes = new OutboxTable();
-    outboxes.addOutbox(outbox);
+    OutboxTable outboxTable = new OutboxTable();
+    outboxTable.addOutbox(outbox);
     JobRunner runner = new JobRunner(new JobEventTable(), minimalRebuildCacheManager);
 
     // Perform a first compile with configuration to rebind Bar to Foo.

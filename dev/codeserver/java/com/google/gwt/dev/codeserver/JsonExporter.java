@@ -30,11 +30,11 @@ import java.util.SortedMap;
  */
 class JsonExporter {
   private final Options options;
-  private final OutboxTable outboxes;
+  private final OutboxTable outboxTable;
 
-  JsonExporter(Options options, OutboxTable outboxes) {
+  JsonExporter(Options options, OutboxTable outboxTable) {
     this.options = options;
-    this.outboxes = outboxes;
+    this.outboxTable = outboxTable;
   }
 
   // === API responses ===
@@ -164,7 +164,7 @@ class JsonExporter {
 
   private JsonArray exportOutputModuleNames() {
     JsonArray moduleNames = new JsonArray();
-    for (String module : outboxes.getOutputModuleNames()) {
+    for (String module : outboxTable.getOutputModuleNames()) {
       moduleNames.add(module);
     }
     return moduleNames;

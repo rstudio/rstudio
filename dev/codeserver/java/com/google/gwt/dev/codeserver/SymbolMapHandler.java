@@ -52,10 +52,10 @@ class SymbolMapHandler {
   private static final Pattern SYMBOLMAP_MODULE_PATTERN = Pattern.compile(
       "^" + SYMBOLMAP_PATH + "([^/]+)/");
 
-  private final OutboxTable outboxes;
+  private final OutboxTable outboxTable;
 
-  SymbolMapHandler(OutboxTable outboxes) {
-    this.outboxes = outboxes;
+  SymbolMapHandler(OutboxTable outboxTable) {
+    this.outboxTable = outboxTable;
   }
 
   static boolean isSymbolMapRequest(String target) {
@@ -68,7 +68,7 @@ class SymbolMapHandler {
       throw new RuntimeException("invalid request (shouldn't happen): " + target);
     }
 
-    Outbox box = outboxes.findByOutputModuleName(moduleName);
+    Outbox box = outboxTable.findByOutputModuleName(moduleName);
     if (box == null) {
       return new ErrorPage("No such module: " + moduleName);
     } else if (box.containsStubCompile()) {
