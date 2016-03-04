@@ -57,6 +57,8 @@ public class ProfilerEditingTargetWidget extends Composite
    {
       Toolbar toolbar = new EditingTargetToolbar(commands, true);
       
+      toolbar.addLeftWidget(commands.saveProfileAs().createToolbarButton());
+      
       toolbar.addRightWidget(
             publishButton_ = new RSConnectPublishButton(
                   RSConnect.CONTENT_TYPE_DOCUMENT, true, null));
