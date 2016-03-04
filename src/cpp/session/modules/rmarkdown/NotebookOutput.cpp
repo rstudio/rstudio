@@ -43,7 +43,6 @@
 #define kChunkUrl          "url"
 #define kChunkId           "chunk_id"
 #define kChunkDocId        "doc_id"
-#define kChunkLibDir       "lib"
 
 using namespace rstudio::core;
 

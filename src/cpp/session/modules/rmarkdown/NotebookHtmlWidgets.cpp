@@ -13,6 +13,7 @@
  *
  */
 
+#include "SessionRmdNotebook.hpp"
 #include "NotebookHtmlWidgets.hpp"
 
 #include <iostream>
@@ -40,21 +41,36 @@ namespace {
 SEXP rs_recordHtmlWidget(SEXP fileSEXP)
 {
    std::string file = r::sexp::safeAsString(fileSEXP);
+   events().onHtmlOutput(FilePath(file));
    return R_NilValue;
 }
+
+void onConsolePrompt(const std::string&)
+{
+   // stop capturing HTML widgets when the prompt returns
+   Error error = r::exec::RFunction(".rs.releaseHtmlCapture").call();
+   if (error)
+      LOG_ERROR(error);
+
+   module_context::events().onConsolePrompt.disconnect(onConsolePrompt);
+}
+
 
 } // anonymous namespace
 
 core::Error beginWidgetCapture(
               const core::FilePath& outputFolder,
-              const core::FilePath& libraryFolder,
-              boost::function<void(const core::FilePath&)> widgetCaptured)
+              const core::FilePath& libraryFolder)
 {
    Error error = r::exec::RFunction(".rs.initHtmlCapture", 
          outputFolder.absolutePath(),
          libraryFolder.absolutePath()).call();
    if (error)
       return error;
+
+
+   module_context::events().onConsolePrompt.connect(onConsolePrompt);
+
    return Success();
 }
 
@@ -62,7 +78,11 @@ core::Error initHtmlWidgets()
 {
    RS_REGISTER_CALL_METHOD(rs_recordHtmlWidget, 1);
 
-   return Success();
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+      (boost::bind(module_context::sourceModuleRFile, "NotebookHtmlWidgets.R"));
+
+   return initBlock.execute();
 }
 
 } // namespace notebook

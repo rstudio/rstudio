@@ -34,7 +34,7 @@ namespace notebook {
 
 core::Error beginWidgetCapture(
               const core::FilePath& outputFolder,
-              boost::function<void(const core::FilePath&)> widgetCaptured);
+              const core::FilePath& libraryFolder);
 
 core::Error initHtmlWidgets();
 

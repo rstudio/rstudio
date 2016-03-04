@@ -24,6 +24,8 @@
 #define kChunkOutputPlot 2
 #define kChunkOutputHtml 3
 
+#define kChunkLibDir "lib"
+
 namespace rstudio {
 namespace core {
    class FilePath;

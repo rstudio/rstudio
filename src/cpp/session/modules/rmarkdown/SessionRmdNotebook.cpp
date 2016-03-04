@@ -159,11 +159,11 @@ void onConsoleInput(const std::string& input)
          false);
 }
 
-void onPlotOutput(const FilePath& plot)
+void onFileOutput(const FilePath& plot, int outputType)
 {
    OutputPair pair = lastChunkOutput(s_consoleDocId, s_consoleChunkId);
    pair.ordinal++;
-   pair.outputType = kChunkOutputPlot;
+   pair.outputType = outputType;
    FilePath target = chunkOutputFile(s_consoleDocId, s_consoleChunkId, pair);
    Error error = plot.move(target);
    if (error)
@@ -184,7 +184,10 @@ void disconnectConsole()
    module_context::events().onConsoleOutput.disconnect(onConsoleOutput);
    module_context::events().onConsoleInput.disconnect(onConsoleInput);
    
-   events().onPlotOutput.disconnect(onPlotOutput);
+   events().onPlotOutput.disconnect(
+         boost::bind(onFileOutput, _1, kChunkOutputPlot));
+   events().onHtmlOutput.disconnect(
+         boost::bind(onFileOutput, _1, kChunkOutputHtml));
 
    s_consoleConnected = false;
 }
@@ -201,13 +204,23 @@ void connectConsole()
       return;
    }
 
+   // begin capturing console text
    module_context::events().onConsolePrompt.connect(onConsolePrompt);
    module_context::events().onConsoleOutput.connect(onConsoleOutput);
    module_context::events().onConsoleInput.connect(onConsoleInput);
 
-   events().onPlotOutput.connect(onPlotOutput);
+   // begin capturing plots and HTML output
+   events().onPlotOutput.connect(
+         boost::bind(onFileOutput, _1, kChunkOutputPlot));
+   events().onHtmlOutput.connect(
+         boost::bind(onFileOutput, _1, kChunkOutputHtml));
 
    error = beginPlotCapture(outputPath);
+   if (error)
+      LOG_ERROR(error);
+
+   error = beginWidgetCapture(outputPath, 
+         outputPath.parent().complete(kChunkLibDir));
    if (error)
       LOG_ERROR(error);
 
