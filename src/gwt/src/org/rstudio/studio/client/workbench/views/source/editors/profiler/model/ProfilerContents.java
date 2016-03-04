@@ -45,4 +45,8 @@ public class ProfilerContents extends JavaScriptObject
    public final native String getName() /*-{
       return this.name;
    }-*/;
+   
+   public final native String getHtmlLocalPath() /*-{
+      return this.htmlLocalPath;
+   }-*/;
 }

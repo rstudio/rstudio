@@ -27,6 +27,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.CodeNavigationTarget;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
@@ -53,6 +54,7 @@ import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.ProfilerType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -218,16 +220,23 @@ public class ProfilerEditingTarget implements EditingTarget,
       if (!htmlPathInitialized_) {
          htmlPathInitialized_ = true;
          
-         String htmlPath = getContents().getHtmlPath();
-         if (htmlPath == null)
+         htmlPath_ = getContents().getHtmlPath();
+         htmlLocalPath_ = getContents().getHtmlLocalPath();
+         
+         if (htmlPath_ == null)
          {
-            buildHtmlPath(new OperationWithInput<String>()
+            buildHtmlPath(new OperationWithInput<ProfileOperationResponse>()
             {
                @Override
-               public void execute(String newHtmlPath)
+               public void execute(ProfileOperationResponse response)
                {
-                  persistHtmlPath(newHtmlPath);
-                  view_.showProfilePage(newHtmlPath);
+                  htmlPath_ = response.getHtmlFile();
+                  htmlLocalPath_ = response.getHtmlLocalFile();
+                  
+                  persistDocumentProperty("htmlPath", htmlPath_);
+                  persistDocumentProperty("htmlLocalPath", htmlLocalPath_);
+                  
+                  view_.showProfilePage(htmlPath_);
                   
                   pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
                }
@@ -236,7 +245,7 @@ public class ProfilerEditingTarget implements EditingTarget,
          }
          else
          {
-            view_.showProfilePage(htmlPath);
+            view_.showProfilePage(htmlPath_);
          }
       }
       
@@ -403,7 +412,23 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       // initialize doc, view, and presenter
       doc_ = document;
-      view_ = new ProfilerEditingTargetWidget(commands_);
+      
+      PublishHtmlSource publishHtmlSource = new PublishHtmlSource() {
+
+         @Override
+         public void generatePublishHtml(CommandWithArg<String> onComplete)
+         {
+            onComplete.execute(htmlLocalPath_) ;
+         }
+
+         @Override
+         public String getTitle()
+         {
+            return "Profile";
+         }
+      };
+      
+      view_ = new ProfilerEditingTargetWidget(commands_, publishHtmlSource);
       defaultNameProvider_ = defaultNameProvider;
       
       getName().setValue(getAndSetInitialName());
@@ -499,7 +524,7 @@ public class ProfilerEditingTarget implements EditingTarget,
       return doc_.getProperties().cast();
    }
 
-   private void buildHtmlPath(final OperationWithInput<String> continuation)
+   private void buildHtmlPath(final OperationWithInput<ProfileOperationResponse> continuation)
    {
       ProfileOperationRequest request = ProfileOperationRequest
             .create(getPath());
@@ -517,7 +542,7 @@ public class ProfilerEditingTarget implements EditingTarget,
                   return;
                }
                
-               continuation.execute(response.getHtmlFile());
+               continuation.execute(response);
             }
 
             @Override
@@ -527,11 +552,6 @@ public class ProfilerEditingTarget implements EditingTarget,
                      error.getMessage());
             }
          });
-   }
-   
-   private void persistHtmlPath(String htmlPath)
-   {
-      persistDocumentProperty("htmlPath", htmlPath);
    }
    
    private void persistDocumentProperty(String property, String value)
@@ -687,4 +707,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    
    private Value<String> name_ = new Value<String>(null);
    private String tempName_;
+   
+   private String htmlPath_;
+   private String htmlLocalPath_;
 }
