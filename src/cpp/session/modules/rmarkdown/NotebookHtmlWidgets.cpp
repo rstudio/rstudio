@@ -15,6 +15,7 @@
 
 #include "SessionRmdNotebook.hpp"
 #include "NotebookHtmlWidgets.hpp"
+#include "NotebookOutput.hpp"
 
 #include <iostream>
 
@@ -64,7 +65,7 @@ core::Error beginWidgetCapture(
 {
    Error error = r::exec::RFunction(".rs.initHtmlCapture", 
          outputFolder.absolutePath(),
-         libraryFolder.absolutePath()).call();
+         outputFolder.complete(kChunkLibDir).absolutePath()).call();
    if (error)
       return error;
 

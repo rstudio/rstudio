@@ -124,6 +124,12 @@ Error handleChunkOutputRequest(const http::Request& request,
    for (int i = 0; i < 3; i++)
       parts.erase(parts.begin());
 
+   // the chunks all share one library folder, so redirect requests for a 
+   // chunk-specific folder to the shared folder
+   if (parts.size() > 2 &&
+       parts[1] == kChunkLibDir) 
+      parts.erase(parts.begin());
+
    // attempt to get the path -- ignore failure (doc may be unsaved and
    // therefore won't have a path)
    std::string path;

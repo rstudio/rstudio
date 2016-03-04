@@ -159,23 +159,60 @@ void onConsoleInput(const std::string& input)
          false);
 }
 
-void onFileOutput(const FilePath& plot, int outputType)
+bool moveLibFile(const FilePath& from, const FilePath& to, 
+      const FilePath& path, std::vector<FilePath> *pPaths)
+{
+   std::string relativePath = path.relativePath(from);
+   FilePath target = to.complete(relativePath);
+
+   pPaths->push_back(path);
+
+   Error error = path.isDirectory() ?
+                     target.ensureDirectory() :
+                     path.move(target);
+   if (error)
+      LOG_ERROR(error);
+   return true;
+}
+
+void writeLibDeps(const std::string& docId, const std::string& chunkId,
+                  int ordinal, const std::vector<FilePath>& paths)
+{
+   // TODO: save dependency information to JSON
+}
+
+void onFileOutput(const FilePath& file, int outputType)
 {
    OutputPair pair = lastChunkOutput(s_consoleDocId, s_consoleChunkId);
    pair.ordinal++;
    pair.outputType = outputType;
    FilePath target = chunkOutputFile(s_consoleDocId, s_consoleChunkId, pair);
-   Error error = plot.move(target);
+   Error error = file.move(target);
    if (error)
    {
       LOG_ERROR(error);
+      return;
    }
-   else
+
+   // check to see if the file has an accompanying library folder; if so, move
+   // it to the global library folder
+   FilePath fileLib = file.parent().complete(kChunkLibDir);
+   if (fileLib.exists())
    {
-      enqueueChunkOutput(s_consoleDocId, s_consoleChunkId, kChunkOutputPlot,
-            target);
-      updateLastChunkOutput(s_consoleDocId, s_consoleChunkId, pair);
+      std::vector<FilePath> paths;
+      error = fileLib.childrenRecursive(boost::bind(moveLibFile, fileLib,
+            chunkCacheFolder(s_consoleDocId, s_consoleChunkId)
+                           .complete(kChunkLibDir), _2, &paths));
+      if (error)
+         LOG_ERROR(error);
+      writeLibDeps(s_consoleDocId, s_consoleChunkId, pair.ordinal, paths);
+      error = fileLib.remove();
+      if (error)
+         LOG_ERROR(error);
    }
+   
+   enqueueChunkOutput(s_consoleDocId, s_consoleChunkId, outputType, target);
+   updateLastChunkOutput(s_consoleDocId, s_consoleChunkId, pair);
 }
 
 void disconnectConsole()

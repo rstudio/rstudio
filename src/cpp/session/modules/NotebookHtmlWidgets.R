@@ -18,10 +18,10 @@
   assign("print.htmlwidget", function(x, ...) {
     if (require(htmlwidgets, quietly = TRUE)) {
       output <- tempfile(pattern = "_rs_html_", tmpdir = outputFolder, 
-                         fileext = "html"),
+                         fileext = "html")
       htmlwidgets::saveWidget(
         widget = x, 
-        file = output
+        file = output,
         selfcontained = FALSE, 
         libdir = libraryFolder)
       .Call("rs_recordHtmlWidget", output);
