@@ -303,9 +303,13 @@ Error setChunkConsole(const json::JsonRpcRequest& request,
 {
 
    std::string docId, chunkId;
-   Error error = json::readParams(request.params, &docId, &chunkId);
+   bool replace = false;
+   Error error = json::readParams(request.params, &docId, &chunkId, &replace);
    if (error)
       return error;
+
+   if (replace)
+      cleanChunkOutput(docId, chunkId, true);
 
    s_consoleChunkId = chunkId;
    s_consoleDocId = docId;

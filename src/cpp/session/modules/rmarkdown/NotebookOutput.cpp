@@ -333,6 +333,26 @@ Error enqueueChunkOutput(
    return Success();
 }
 
+core::Error cleanChunkOutput(const std::string& docId,
+      const std::string& chunkId, bool preserveFolder)
+{
+   FilePath outputPath = chunkOutputPath(docId, chunkId);
+   if (!outputPath.exists())
+      return Success();
+
+   Error error = outputPath.remove();
+   if (error)
+      return error;
+   if (preserveFolder)
+   {
+      error = outputPath.ensureDirectory();
+      if (error)
+         return error;
+   }
+   updateLastChunkOutput(docId, chunkId, OutputPair());
+   return Success();
+}
+
 Error initOutput()
 {
    ExecBlock initBlock;

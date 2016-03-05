@@ -38,7 +38,6 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
-import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
@@ -221,10 +220,11 @@ public class TextEditingTargetNotebook
       executingChunk_ = unit;
       
       // let the chunk widget know it's started executing
-      outputWidgets_.get(unit.chunkId).showConsoleCode(unit.code);
+      outputWidgets_.get(unit.chunkId).setCodeExecuting(true);
 
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
             unit.chunkId, 
+            true,
             new ServerRequestCallback<Void>()
             {
                @Override
@@ -293,7 +293,7 @@ public class TextEditingTargetNotebook
       
       // have the server start recording output from this chunk
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
-            chunkDef.getChunkId(), new ServerRequestCallback<Void>()
+            chunkDef.getChunkId(), false, new ServerRequestCallback<Void>()
       {
          @Override
          public void onResponseReceived(Void v)
@@ -311,8 +311,7 @@ public class TextEditingTargetNotebook
          }
       });
       
-      outputWidgets_.get(chunkDef.getChunkId()).showConsoleCode(
-            event.getCode());
+      outputWidgets_.get(chunkDef.getChunkId()).setCodeExecuting(false);
    }
    
    @Override

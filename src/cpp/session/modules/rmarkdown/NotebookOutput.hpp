@@ -72,6 +72,9 @@ core::FilePath chunkOutputFile(const std::string& docId,
 core::FilePath chunkOutputFile(const std::string& docId, 
       const std::string& chunkId, unsigned outputType);
 
+core::Error cleanChunkOutput(const std::string& docId, 
+      const std::string& chunkId, bool preserveFolder);
+
 // send chunk output to client
 void enqueueChunkOutput(const std::string& docId,
       const std::string& chunkId, int outputType, 
