@@ -20,6 +20,9 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
@@ -30,13 +33,13 @@ public class ProfilerEditingTargetWidget extends Composite
 {
    private Frame profilePage_;
    
-   public ProfilerEditingTargetWidget(Commands commands)
+   public ProfilerEditingTargetWidget(Commands commands, PublishHtmlSource publishHtmlSource)
    {
       VerticalPanel panel = new VerticalPanel();
 
 
       PanelWithToolbars mainPanel = new PanelWithToolbars(
-                                          createToolbar(commands), 
+                                          createToolbar(commands, publishHtmlSource), 
                                           panel);
 
       profilePage_ = new Frame();
@@ -50,9 +53,19 @@ public class ProfilerEditingTargetWidget extends Composite
       initWidget(mainPanel);
    }
 
-   private Toolbar createToolbar(Commands commands)
+   private Toolbar createToolbar(Commands commands, PublishHtmlSource publishHtmlSource)
    {
       Toolbar toolbar = new EditingTargetToolbar(commands, true);
+      
+      toolbar.addLeftWidget(commands.saveProfileAs().createToolbarButton());
+      
+      toolbar.addRightWidget(
+            publishButton_ = new RSConnectPublishButton(
+                  RSConnect.CONTENT_TYPE_DOCUMENT, true, null));
+      
+      publishButton_.setPublishHtmlSource(publishHtmlSource);
+      publishButton_.setContentType(RSConnect.CONTENT_TYPE_HTML);
+      
       return toolbar;
    }
    
@@ -70,4 +83,6 @@ public class ProfilerEditingTargetWidget extends Composite
    {
       return profilePage_.getUrl();
    }
+   
+   private RSConnectPublishButton publishButton_;
 }

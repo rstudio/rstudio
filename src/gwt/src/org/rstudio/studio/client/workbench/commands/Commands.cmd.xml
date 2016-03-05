@@ -515,7 +515,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="reflowComment" value="Cmd+Shift+/" if="!(org.rstudio.core.client.BrowseCap.isMacintosh() &amp;&amp; org.rstudio.core.client.BrowseCap.isChrome())"/>
          <shortcut refid="reflowComment" value="Cmd+Alt+Shift+/" if="org.rstudio.core.client.BrowseCap.isMacintosh() &amp;&amp; org.rstudio.core.client.BrowseCap.isChrome()"/>
          <shortcut refid="reformatCode" value="Cmd+Shift+A"/>
-         <shortcut refid="showDiagnosticsProject" value="Cmd+Shift+Alt+P"/>
+         <shortcut refid="showDiagnosticsProject" value="Cmd+Shift+Alt+D"/>
          <shortcut refid="fold" value="Alt+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Collapse Fold"/>
          <shortcut refid="fold" value="Cmd+Alt+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Collapse Fold"/>
          <shortcut refid="unfold" value="Shift+Alt+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Expand Fold"/>
@@ -2627,7 +2627,7 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="profileCode"
         label="Profile Current Line or Selection"
-        buttonLabel="Profile"
+        buttonLabel=""
         menuLabel="_Profile Selected Line(s)"
         desc="Profile the current line or selection"
         context="r"/>
@@ -2643,6 +2643,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="saveProfileAs"
         label="Save Profile As..."
         menuLabel="_Save Profile As..."
+        buttonLabel=""
         desc="Saves current profile into a file"/>
 
    <cmd id="profileHelp"

@@ -710,6 +710,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
    }
 
+   @Override
+   public String getDefaultNamePrefix()
+   {
+      return null;
+   }
+
    // Private methods --------------------------------------------------------
    
    private CodeBrowserContents getContents()

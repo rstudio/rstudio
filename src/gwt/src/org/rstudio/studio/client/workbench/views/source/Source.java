@@ -346,6 +346,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.goToPrevSection());
       dynamicCommands_.add(commands.profileCode());
       dynamicCommands_.add(commands.profileCodeWithoutFocus());
+      dynamicCommands_.add(commands.saveProfileAs());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
@@ -2913,12 +2914,13 @@ public class Source implements InsertSourceHandler,
 
    private EditingTarget addTab(SourceDocument doc, Integer position)
    {
+      final String defaultNamePrefix = editingTargetSource_.getDefaultNamePrefix(doc);
       final EditingTarget target = editingTargetSource_.getEditingTarget(
             doc, fileContext_, new Provider<String>()
             {
                public String get()
                {
-                  return getNextDefaultName();
+                  return getNextDefaultName(defaultNamePrefix);
                }
             });
       
@@ -3005,20 +3007,25 @@ public class Source implements InsertSourceHandler,
       return target;
    }
 
-   private String getNextDefaultName()
+   private String getNextDefaultName(String defaultNamePrefix)
    {
+      if (StringUtil.isNullOrEmpty(defaultNamePrefix))
+      {
+         defaultNamePrefix = "Untitled";
+      }
+      
       int max = 0;
       for (EditingTarget target : editors_)
       {
          String name = target.getName().getValue();
-         max = Math.max(max, getUntitledNum(name));
+         max = Math.max(max, getUntitledNum(name, defaultNamePrefix));
       }
 
-      return "Untitled" + (max + 1);
+      return defaultNamePrefix + (max + 1);
    }
 
-   private native final int getUntitledNum(String name) /*-{
-      var match = /^Untitled([0-9]{1,5})$/.exec(name);
+   private native final int getUntitledNum(String name, String prefix) /*-{
+      var match = (new RegExp("^" + prefix + "([0-9]{1,5})$")).exec(name);
       if (!match)
          return 0;
       return parseInt(match[1]);
