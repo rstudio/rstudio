@@ -75,12 +75,13 @@
           <include name="jsr305/jsr305.jar"/>
           <include name="protobuf/protobuf-2.5.0/protobuf-java-rebased-2.5.0.jar"/>
           <!-- dependencies needed for JSP support in DevMode: BEGIN -->
-          <include name="tomcat/commons-el-1.0.jar"/>
-          <include name="tomcat/jasper-compiler-1.0.jar"/>
-          <include name="tomcat/jasper-runtime-1.0.jar"/>
-          <include name="tomcat/jsp-api-2.0.jar"/>
+          <include name="jetty/jetty-9.2.14.v20151106/mortbay-apache-jsp-8.0.9.M3.jar"/>
+          <include name="jetty/jetty-9.2.14.v20151106/mortbay-apache-el-8.0.9.M3.jar"/>
+          <include name="jetty/jetty-9.2.14.v20151106/jetty-apache-jsp-9.2.14.v20151106.jar"/>
           <!-- dependencies needed for JSP support in DevMode: END -->
           <include name="tomcat/tomcat-servlet-api-8.0.28.jar"/>
+          <include name="tomcat/tomcat-websocket-api-8.0.28.jar"/>
+          <include name="tomcat/tomcat-annotations-api-8.0.28.jar"/>
           <include name="apache/commons/commons-collections-3.2.2.jar"/>
           <!-- htmlunit dependencies not already included: BEGIN -->
           <include name="apache/http/httpclient-4.5.1.jar"/>
@@ -111,6 +112,10 @@
       </targetfiles>
       <sequential>
         <gwt.jar destfile="${alldeps.jar}" duplicate="preserve">
+          <service type="javax.servlet.ServletContainerInitializer">
+            <provider classname="org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer"/>
+            <provider classname="org.eclipse.jetty.apache.jsp.JettyJasperInitializer"/>
+          </service>
           <zipfileset src="${gwt.tools.lib}/objectweb/asm-5.0.3/lib/asm-all-5.0.3.jar"/>
           <zipfileset src="${gwt.tools.lib}/apache/tapestry-util-text-4.0.2.jar"/>
           <zipfileset src="${gwt.tools.lib}/apache/ant-1.6.5.jar"/>
@@ -130,12 +135,13 @@
           <zipfileset
               src="${gwt.tools.lib}/protobuf/protobuf-2.5.0/protobuf-java-rebased-2.5.0.jar"/>
           <!-- dependencies needed for JSP support in DevMode: BEGIN -->
-          <zipfileset src="${gwt.tools.lib}/tomcat/commons-el-1.0.jar"/>
-          <zipfileset src="${gwt.tools.lib}/tomcat/jasper-compiler-1.0.jar"/>
-          <zipfileset src="${gwt.tools.lib}/tomcat/jasper-runtime-1.0.jar"/>
-          <zipfileset src="${gwt.tools.lib}/tomcat/jsp-api-2.0.jar"/>
+          <zipfileset src="${gwt.tools.lib}/jetty/jetty-9.2.14.v20151106/mortbay-apache-jsp-8.0.9.M3.jar"/>
+          <zipfileset src="${gwt.tools.lib}/jetty/jetty-9.2.14.v20151106/mortbay-apache-el-8.0.9.M3.jar"/>
+          <zipfileset src="${gwt.tools.lib}/jetty/jetty-9.2.14.v20151106/jetty-apache-jsp-9.2.14.v20151106.jar"/>
           <!-- dependencies needed for JSP support in DevMode: END -->
           <zipfileset src="${gwt.tools.lib}/tomcat/tomcat-servlet-api-8.0.28.jar"/>
+          <zipfileset src="${gwt.tools.lib}/tomcat/tomcat-websocket-api-8.0.28.jar"/>
+          <zipfileset src="${gwt.tools.lib}/tomcat/tomcat-annotations-api-8.0.28.jar"/>
           <zipfileset
               src="${gwt.tools.lib}/apache/commons/commons-collections-3.2.2.jar"/>
           <!-- htmlunit dependencies not already included: BEGIN -->

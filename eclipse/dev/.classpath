@@ -15,10 +15,9 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/ant-launcher-1.6.5.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/catalina-1.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/catalina-optional-1.0.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/commons-el-1.0.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/jasper-compiler-1.0.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/jasper-runtime-1.0.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/jsp-api-2.0.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-9.2.14.v20151106/mortbay-apache-jsp-8.0.9.M3.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-9.2.14.v20151106/mortbay-apache-el-8.0.9.M3.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-9.2.14.v20151106/jetty-apache-jsp-9.2.14.v20151106.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-2.19/htmlunit-2.19.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-2.19/htmlunit-core-js-2.15.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/protobuf/protobuf-2.5.0/protobuf-java-rebased-2.5.0.jar"/>
@@ -29,6 +28,8 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/json/android-sdk-19.1/json-android-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-collections-3.2.2.jar"/>
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/tomcat/tomcat-servlet-api-8.0.28.jar"/>
+	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/tomcat/tomcat-websocket-api-8.0.28.jar"/>
+	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/tomcat/tomcat-annotations-api-8.0.28.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/colt/colt-1.2.jar" sourcepath="/GWT_TOOLS/lib/colt/colt-1.2-src.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
