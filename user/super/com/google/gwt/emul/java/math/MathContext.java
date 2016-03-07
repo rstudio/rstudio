@@ -39,6 +39,8 @@ import static javaemul.internal.InternalPreconditions.checkNotNull;
 
 import java.io.Serializable;
 
+import javaemul.internal.NativeRegExp;
+
 /**
  * Immutable objects describing settings such as rounding mode and digit
  * precision for the numerical operations provided by class {@link BigDecimal}.
@@ -140,15 +142,15 @@ public final class MathContext implements Serializable {
   public MathContext(String val) {
     checkNotNull(val, "null string");
 
-    String[] extractedValues = parseValue(val);
+    Object[] extractedValues = (Object[]) createParseRegexp().exec(val);
     if (extractedValues == null || extractedValues.length != 3) {
       throw new IllegalArgumentException("bad string format");
     }
 
     try {
-      this.precision = Integer.parseInt(extractedValues[1]);
+      this.precision = Integer.parseInt((String) extractedValues[1]);
       // Can use RoundingMode.valueOf here because it is blacklisted in enum obfuscation.
-      this.roundingMode = RoundingMode.valueOf(extractedValues[2]);
+      this.roundingMode = RoundingMode.valueOf((String) extractedValues[2]);
     } catch (RuntimeException re) {
       // Ensure that we only throw IllegalArgumentException for any illegal value.
       throw new IllegalArgumentException("bad string format");
@@ -157,8 +159,8 @@ public final class MathContext implements Serializable {
     checkCriticalArgument(this.precision >= 0, "Digits < 0");
   }
 
-  private static native String[] parseValue(String val) /*-{
-    return /^precision=(\d+)\ roundingMode=(\w+)$/.exec(val);
+  private static native NativeRegExp createParseRegexp() /*-{
+    return /^precision=(\d+)\ roundingMode=(\w+)$/;
   }-*/;
 
   /* Public Methods */

@@ -18,7 +18,8 @@ package java.lang;
 import static javaemul.internal.InternalPreconditions.checkCriticalArgument;
 
 import java.io.Serializable;
-import java.lang.String.NativeRegExp;
+
+import javaemul.internal.NativeRegExp;
 
 /**
  * Wraps a native <code>char</code> as an object.

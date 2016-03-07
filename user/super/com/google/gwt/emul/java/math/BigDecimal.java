@@ -39,6 +39,7 @@ import static javaemul.internal.InternalPreconditions.checkNotNull;
 import java.io.Serializable;
 
 import javaemul.internal.JsUtils;
+import javaemul.internal.NativeRegExp;
 
 /**
  * This class represents immutable arbitrary precision decimal numbers. Each
@@ -138,7 +139,7 @@ public class BigDecimal extends Number implements Comparable<BigDecimal>,
   /**
    * Stores a regular expression object to verify the format of unscaled bigdecimal values.
    */
-  private static Object unscaledRegex;
+  private static NativeRegExp unscaledRegex;
 
   private static final int BI_SCALED_BY_ZERO_LENGTH = 11;
 
@@ -405,15 +406,11 @@ public class BigDecimal extends Number implements Comparable<BigDecimal>,
       unscaledRegex = createBigDecimalUnscaledRegex();
     }
 
-    return regexTest(unscaledRegex, str);
+    return unscaledRegex.test(str);
   }
 
-  private static native Object createBigDecimalUnscaledRegex() /*-{
+  private static native NativeRegExp createBigDecimalUnscaledRegex() /*-{
     return /^[+-]?\d*$/i;
-  }-*/;
-
-  private static native boolean regexTest(Object regex, String value) /*-{
-    return regex.test(value);
   }-*/;
 
   private static double parseUnscaled(String str) {

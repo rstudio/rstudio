@@ -29,6 +29,7 @@ import javaemul.internal.ArrayHelper;
 import javaemul.internal.EmulatedCharset;
 import javaemul.internal.HashCodes;
 import javaemul.internal.JsUtils;
+import javaemul.internal.NativeRegExp;
 import javaemul.internal.annotations.DoNotInline;
 import jsinterop.annotations.JsMethod;
 import jsinterop.annotations.JsPackage;
@@ -760,15 +761,6 @@ public final class String implements Comparable<String>, CharSequence,
     public native String toLocaleUpperCase();
     public native String toLowerCase();
     public native String toUpperCase();
-  }
-
-  @JsType(isNative = true, name = "RegExp", namespace = JsPackage.GLOBAL)
-  static class NativeRegExp {
-    public int lastIndex;
-    public NativeRegExp(String regex) { }
-    public NativeRegExp(String regex, String mode) { }
-    public native Object exec(String value);
-    public native boolean test(String value);
   }
 
   // CHECKSTYLE_OFF: Utility Methods for unboxed String.

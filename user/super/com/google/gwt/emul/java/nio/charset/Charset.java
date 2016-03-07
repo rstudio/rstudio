@@ -23,6 +23,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import javaemul.internal.EmulatedCharset;
+import javaemul.internal.NativeRegExp;
 
 /**
  * A minimal emulation of {@link Charset}.
@@ -56,15 +57,15 @@ public abstract class Charset implements Comparable<Charset> {
       return EmulatedCharset.UTF_8;
     }
 
-    if (!isLegalCharsetName(charsetName)) {
+    if (!createLegalCharsetNameRegex().test(charsetName)) {
       throw new IllegalCharsetNameException(charsetName);
     } else {
       throw new UnsupportedCharsetException(charsetName);
     }
   }
 
-  private static native boolean isLegalCharsetName(String name) /*-{
-    return /^[A-Za-z0-9][\w-:\.\+]*$/.test(name);
+  private static native NativeRegExp createLegalCharsetNameRegex() /*-{
+    return /^[A-Za-z0-9][\w-:\.\+]*$/;
   }-*/;
 
   private final String name;

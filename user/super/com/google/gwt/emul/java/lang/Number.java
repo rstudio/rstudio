@@ -18,6 +18,7 @@ package java.lang;
 import java.io.Serializable;
 
 import javaemul.internal.JsUtils;
+import javaemul.internal.NativeRegExp;
 import jsinterop.annotations.JsMethod;
 
 /**
@@ -28,7 +29,7 @@ public abstract class Number implements Serializable {
   /**
    * Stores a regular expression object to verify the format of float values.
    */
-  private static Object floatRegex;
+  private static NativeRegExp floatRegex;
 
   // CHECKSTYLE_OFF: A special need to use unusual identifiers to avoid
   // introducing name collisions.
@@ -341,15 +342,11 @@ public abstract class Number implements Serializable {
     if (floatRegex == null) {
       floatRegex = createFloatRegex();
     }
-    return regexTest(floatRegex, str);
+    return floatRegex.test(str);
   }
 
-  private static native Object createFloatRegex() /*-{
+  private static native NativeRegExp createFloatRegex() /*-{
     return /^\s*[+-]?(NaN|Infinity|((\d+\.?\d*)|(\.\d+))([eE][+-]?\d+)?[dDfF]?)\s*$/;
-  }-*/;
-
-  private static native boolean regexTest(Object regex, String value) /*-{
-    return regex.test(value);
   }-*/;
 
   // CHECKSTYLE_ON
