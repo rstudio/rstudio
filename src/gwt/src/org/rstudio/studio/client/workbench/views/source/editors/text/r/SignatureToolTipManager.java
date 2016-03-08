@@ -118,11 +118,8 @@ public class SignatureToolTipManager
          @Override
          public void onCursorChanged(final CursorChangedEvent event)
          {
-            // Ensure that we're running when we receive a
-            // cursor changed event.
-            if (!isMonitoring())
-               beginMonitoring();
-            
+            beginMonitoring();
+               
             // Defer so that anchors can update
             Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
             {
@@ -199,11 +196,6 @@ public class SignatureToolTipManager
          preview_.removeHandler();
          preview_ = null;
       }
-   }
-   
-   private boolean isMonitoring()
-   {
-      return monitoring_;
    }
    
    private void beginMonitoring()
