@@ -2563,6 +2563,7 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
       filesToIgnore.push_back(".Rhistory");
       filesToIgnore.push_back(".RData");
       filesToIgnore.push_back(".Ruserdata");
+      filesToIgnore.push_back(".*.Rnb.cached");
 
       // if this is a package dir with a src directory then
       // also ignore native code build artifacts
@@ -2579,21 +2580,26 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
    }
    else
    {
-      // If .gitignore exists, add .Rproj.user unless it's already there
+      // If .gitignore exists, add .Rproj.user and .Rnb.cached entries
 
       std::string strIgnore;
       Error error = core::readStringFromFile(gitIgnoreFile, &strIgnore);
       if (error)
          return error;
 
-      if (boost::regex_search(strIgnore, boost::regex("^\\.Rproj\\.user$")))
-         return Success();
-
       bool addExtraNewline = strIgnore.size() > 0
                              && strIgnore[strIgnore.size() - 1] != '\n';
 
       std::vector<std::string> filesToIgnore;
-      filesToIgnore.push_back(".Rproj.user");
+
+      if (!boost::regex_search(strIgnore, boost::regex("^\\.Rproj\\.user$")))
+         filesToIgnore.push_back(".Rproj.user");
+      if (!boost::regex_search(strIgnore, boost::regex("^\\.\\*\\.Rnb\\.cached$")))
+         filesToIgnore.push_back(".*.Rnb.cached");
+
+      if (filesToIgnore.size() == 0)
+         return Success();
+
       return addFilesToGitIgnore(gitIgnoreFile,
                                  filesToIgnore,
                                  addExtraNewline);

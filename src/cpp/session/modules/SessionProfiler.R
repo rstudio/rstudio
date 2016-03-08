@@ -77,10 +77,11 @@
       profvis <- profvis::profvis(prof_input = profilerOptions$fileName, split="h")
 
       htmlFile <- tempfile(fileext = ".html", tmpdir = resources$tempPath)
-      htmlwidgets::saveWidget(profvis, htmlFile, selfcontained = FALSE)
+      htmlwidgets::saveWidget(profvis, htmlFile, selfcontained = TRUE)
 
       return(list(
-         htmlFile = .rs.scalar(paste("profiles/", basename(htmlFile), sep = ""))
+         htmlFile = .rs.scalar(paste("profiles/", basename(htmlFile), sep = "")),
+         htmlLocalFile = .rs.scalar(htmlFile)
       ))
    }, error = function(e) {
       return(list(error = .rs.scalar(e$message)))

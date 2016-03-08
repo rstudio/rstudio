@@ -28,6 +28,7 @@
 * Implement gt/gT bindings in Vim mode to switch to next/previous tab
 * Always provide file completions for top-level current directory
 * Prevent wrapping of text in Files pane display
+* Indicate when object details in environment pane have been truncated
 
 ### Bug Fixes
 
@@ -56,6 +57,7 @@
 * Avoid perturbing RNG state when invoking View()
 * Fix unlinked directories in Files pane when other users' folders are browseable
 * Prevent lines terminated by \r\n from entering editor (cause of many subtle problems)
+* Fix error message when invoking View() on an object with no columns
 
 
 
