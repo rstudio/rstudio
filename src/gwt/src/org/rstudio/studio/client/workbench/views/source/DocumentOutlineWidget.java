@@ -14,12 +14,15 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Counter;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
@@ -224,9 +227,8 @@ public class DocumentOutlineWidget extends Composite
       panel_.add(tree_);
       
       container_.add(panel_);
+      handlers_ = new HandlerRegistrations();
       initHandlers();
-      
-      target.addEditorThemeStyleChangedHandler(this);
           
       initWidget(container_);
    }
@@ -245,7 +247,7 @@ public class DocumentOutlineWidget extends Composite
    
    private void initHandlers()
    {
-      target_.getDocDisplay().addScopeTreeReadyHandler(new ScopeTreeReadyEvent.Handler()
+      handlers_.add(target_.getDocDisplay().addScopeTreeReadyHandler(new ScopeTreeReadyEvent.Handler()
       {
          @Override
          public void onScopeTreeReady(ScopeTreeReadyEvent event)
@@ -253,9 +255,9 @@ public class DocumentOutlineWidget extends Composite
             rebuildScopeTree(event.getScopeTree(), event.getCurrentScope());
             resetTreeStyles();
          }
-      });
+      }));
       
-      target_.getDocDisplay().addCursorChangedHandler(new CursorChangedHandler()
+      handlers_.add(target_.getDocDisplay().addCursorChangedHandler(new CursorChangedHandler()
       {
          @Override
          public void onCursorChanged(CursorChangedEvent event)
@@ -266,7 +268,19 @@ public class DocumentOutlineWidget extends Composite
                resetTreeStyles();
             }
          }
-      });
+      }));
+      
+      handlers_.add(target_.addEditorThemeStyleChangedHandler(this));
+      
+      handlers_.add(uiPrefs_.shownSectionsInDocumentOutline().bind(new CommandWithArg<String>()
+      {
+         @Override
+         public void execute(String prefValue)
+         {
+            rebuildScopeTreeOnPrefChange();
+         }
+      }));
+      
    }
    
    private void updateStyles(Widget widget, Style computed)
@@ -296,6 +310,14 @@ public class DocumentOutlineWidget extends Composite
    {
       panel_.clear();
       panel_.add(widget);
+   }
+   
+   private void rebuildScopeTreeOnPrefChange()
+   {
+      if (scopeTree_ == null || currentScope_ == null)
+         return;
+      
+      rebuildScopeTree(scopeTree_, currentScope_);
    }
    
    private void rebuildScopeTree(JsArray<Scope> scopeTree, Scope currentScope)
@@ -367,11 +389,12 @@ public class DocumentOutlineWidget extends Composite
    
    private boolean shouldDisplayNode(Scope node)
    {
-      if (!uiPrefs_.showUnnamedEntriesInDocumentOutline().getGlobalValue() &&
-          isUnnamedNode(node))
-      {
+      String shownSectionsPref = uiPrefs_.shownSectionsInDocumentOutline().getGlobalValue();
+      if (node.isChunk() && shownSectionsPref.equals(UIPrefsAccessor.DOC_OUTLINE_SHOW_SECTIONS_ONLY))
          return false;
-      }
+      
+      if (isUnnamedNode(node) && !shownSectionsPref.equals(UIPrefsAccessor.DOC_OUTLINE_SHOW_ALL))
+         return false;
       
       // NOTE: the 'is*' items are not mutually exclusive
       if (node.isAnon() || node.isLambda() || node.isTopLevel())
@@ -425,7 +448,9 @@ public class DocumentOutlineWidget extends Composite
    private final VerticalSeparator separator_;
    private final Tree tree_;
    private final FlowPanel emptyPlaceholder_;
+   
    private final TextEditingTarget target_;
+   private final HandlerRegistrations handlers_;
    
    private JsArray<Scope> scopeTree_;
    private Scope currentScope_;
