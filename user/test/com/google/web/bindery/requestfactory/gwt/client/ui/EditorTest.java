@@ -229,12 +229,13 @@ public class EditorTest extends RequestFactoryTestBase {
   }
 
   /**
+   * (Disabled as it is flaky)
    * Tests issues with {@code CompositeEditor}s when subeditors are dynamically
    * created, such as with a {@link ListEditor}.
-   * 
+   *
    * @see http://code.google.com/p/google-web-toolkit/issues/detail?id=6081
    */
-  public void testList() {
+  public void _disabled_testList() {
     delayTestFinish(TEST_TIMEOUT);
     final SimpleFooEditorWithList editor = new SimpleFooEditorWithList();
 
