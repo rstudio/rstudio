@@ -98,7 +98,6 @@ public class SignatureToolTipManager
          @Override
          public void onFocus(FocusEvent event)
          {
-            attachPreviewHandler();
             beginMonitoring();
          }
       }));
@@ -110,7 +109,6 @@ public class SignatureToolTipManager
          {
             timer_.cancel();
             toolTip_.hide();
-            detachPreviewHandler();
             endMonitoring();
          }
       }));
@@ -120,6 +118,11 @@ public class SignatureToolTipManager
          @Override
          public void onCursorChanged(final CursorChangedEvent event)
          {
+            // Ensure that we're running when we receive a
+            // cursor changed event.
+            if (!isMonitoring())
+               beginMonitoring();
+            
             // Defer so that anchors can update
             Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
             {
@@ -198,26 +201,32 @@ public class SignatureToolTipManager
       }
    }
    
+   private boolean isMonitoring()
+   {
+      return monitoring_;
+   }
+   
    private void beginMonitoring()
    {
       if (monitoring_)
          return;
       
+      attachPreviewHandler();
       monitor_.scheduleRepeating(MONITOR_DELAY_MS);
       monitoring_ = true;
    }
    
    private void endMonitoring()
    {
+      detachPreviewHandler();
       monitor_.cancel();
       monitoring_ = false;
    }
    
    public void detach()
    {
-      detachPreviewHandler();
-      timer_.cancel();
       endMonitoring();
+      timer_.cancel();
       handlers_.removeHandler();
    }
    
