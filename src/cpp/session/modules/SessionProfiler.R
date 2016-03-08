@@ -21,8 +21,12 @@
    resetOptions <- rStudioVersion > "0.99.1053" && rStudioVersion < "0.99.1099"
 
    if (identical(getOption("profvis.print"), NULL) || resetOptions) {
-      options("profvis.print" = function(x, ...) {
-         .rs.profilePrint(x, ...)
+      options(profvis.print = function(x) {
+         envir <- as.environment(which(search() == "tools:rstudio"))
+         eval(
+            substitute(.rs.profilePrint(x), list(x = x)),
+            envir = envir
+         )
       })
    }
 
