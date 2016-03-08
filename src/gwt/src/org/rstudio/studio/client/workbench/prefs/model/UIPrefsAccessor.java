@@ -540,9 +540,13 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_doc_outline_rmd", false);
    }
    
-   public PrefValue<Boolean> showUnnamedEntriesInDocumentOutline()
+   public static final String DOC_OUTLINE_SHOW_SECTIONS_ONLY = "show_sections_only";
+   public static final String DOC_OUTLINE_SHOW_SECTIONS_AND_NAMED_CHUNKS = "show_sections_and_chunks";
+   public static final String DOC_OUTLINE_SHOW_ALL = "show_all";
+   
+   public PrefValue<String> shownSectionsInDocumentOutline()
    {
-      return bool("show_unnamed_chunks_in_document_outline", true);
+      return string("shown_sections_in_document_outline", DOC_OUTLINE_SHOW_ALL);
    }
 
    public PrefValue<Boolean> showProfiler()
