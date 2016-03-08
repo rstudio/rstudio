@@ -242,6 +242,13 @@ public class ProfilerEditingTarget implements EditingTarget,
                   pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
                }
                
+            }, new OperationWithInput<Void>()
+            {
+               @Override
+               public void execute(Void input)
+               {
+                  commands_.closeSourceDoc().execute();
+               }
             });
          }
          else
@@ -536,7 +543,9 @@ public class ProfilerEditingTarget implements EditingTarget,
       return doc_.getProperties().cast();
    }
 
-   private void buildHtmlPath(final OperationWithInput<ProfileOperationResponse> continuation)
+   private void buildHtmlPath(
+                              final OperationWithInput<ProfileOperationResponse> continuation,
+                              final OperationWithInput<Void> onError)
    {
       ProfileOperationRequest request = ProfileOperationRequest
             .create(getPath());
@@ -551,6 +560,7 @@ public class ProfilerEditingTarget implements EditingTarget,
                {
                   globalDisplay_.showErrorMessage("Profiler Error",
                         response.getErrorMessage());
+                  onError.execute(null);
                   return;
                }
                
@@ -562,6 +572,7 @@ public class ProfilerEditingTarget implements EditingTarget,
             {
                globalDisplay_.showErrorMessage("Failed to Open Profile",
                      error.getMessage());
+               onError.execute(null);
             }
          });
    }
