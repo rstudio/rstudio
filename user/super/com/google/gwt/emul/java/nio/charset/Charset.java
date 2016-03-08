@@ -33,7 +33,7 @@ public abstract class Charset implements Comparable<Charset> {
   private static final class AvailableCharsets {
     private static final SortedMap<String, Charset> CHARSETS;
     static {
-      SortedMap<String, Charset> map = new TreeMap<String, Charset>() { };
+      SortedMap<String, Charset> map = new TreeMap<>();
       map.put(EmulatedCharset.ISO_8859_1.name(), EmulatedCharset.ISO_8859_1);
       map.put(EmulatedCharset.ISO_LATIN_1.name(), EmulatedCharset.ISO_LATIN_1);
       map.put(EmulatedCharset.UTF_8.name(), EmulatedCharset.UTF_8);
