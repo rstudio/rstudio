@@ -22,6 +22,7 @@ import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationInterrupt.InterruptHandler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
 import org.rstudio.studio.client.server.ServerError;
@@ -156,6 +157,7 @@ public class ChunkOutputWidget extends Composite
    
    public void showChunkOutputUnit(RmdChunkOutputUnit unit)
    {
+      resetOnInitialContent(unit.getType());
       switch(unit.getType())
       {
       case RmdChunkOutputUnit.TYPE_TEXT:
@@ -298,6 +300,7 @@ public class ChunkOutputWidget extends Composite
    public void onConsolePrompt(ConsolePromptEvent event)
    {
       state_ = CONSOLE_READY;
+      lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
       setOverflowStyle();
       unregisterConsoleEvents();
       showReadyState();
@@ -305,10 +308,39 @@ public class ChunkOutputWidget extends Composite
 
    private void renderConsoleOutput(String text, String clazz)
    {
+      resetOnInitialContent(RmdChunkOutputUnit.TYPE_TEXT);
       vconsole_.submitAndRender(text, clazz,
             console_.getElement());
       console_.getElement().setScrollTop(console_.getElement().getScrollHeight());
       onRenderCompleted_.execute(console_.getElement().getOffsetHeight());
+   }
+   
+   private void resetOnInitialContent(int outputType)
+   {
+      if (state_ == CONSOLE_PRE_OUTPUT)
+      {
+         // if no output has been emitted yet, clean up all existing output
+         vconsole_.clear();
+         root_.clear();
+         state_ = CONSOLE_POST_OUTPUT;
+      }
+      if (state_ == CONSOLE_POST_OUTPUT)
+      {
+         if (lastOutputType_ == outputType)
+            return;
+         if (outputType == RmdChunkOutputUnit.TYPE_TEXT)
+         {
+            // if switching to textual output, allocate a new virtual console
+            initConsole();
+         }
+         else if (lastOutputType_ == RmdChunkOutputUnit.TYPE_TEXT)
+         {
+            // if switching from textual input, clear the text accumulator
+            vconsole_.clear();
+            console_ = null;
+         }
+      }
+      lastOutputType_ = outputType;
    }
 
    public void showServerError(ServerError error)
@@ -350,24 +382,9 @@ public class ChunkOutputWidget extends Composite
          return;
       }
 
-      if (entireChunk)
-      {
-         root_.clear();
-         state_ = CHUNK_EMPTY;
-      }
-      if (state_ != CONSOLE_READY)
-      {
-         initConsole();
-         state_ = CONSOLE_READY;
-      }
-      if (state_ == CONSOLE_READY)
-      {
-         registerConsoleEvents();
-         state_ = CONSOLE_PRE_OUTPUT;
-         showBusyState();
-      }
-
-      onRenderCompleted_.execute(console_.getElement().getOffsetHeight());
+      registerConsoleEvents();
+      state_ = CONSOLE_PRE_OUTPUT;
+      showBusyState();
    }
    
    public static void cacheEditorStyle(Element editorContainer, 
@@ -493,6 +510,7 @@ public class ChunkOutputWidget extends Composite
    private VirtualConsole vconsole_;
    
    private int state_ = CHUNK_EMPTY;
+   private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    
    private CommandWithArg<Integer> onRenderCompleted_;
    private final String chunkId_;
@@ -509,6 +527,7 @@ public class ChunkOutputWidget extends Composite
    public final static int CONSOLE_READY       = 5;
    public final static int CONSOLE_PRE_OUTPUT  = 6;
    public final static int CONSOLE_POST_OUTPUT = 7;
+   
    
    public final static int CONSOLE_INPUT  = 0;
    public final static int CONSOLE_OUTPUT = 1;
