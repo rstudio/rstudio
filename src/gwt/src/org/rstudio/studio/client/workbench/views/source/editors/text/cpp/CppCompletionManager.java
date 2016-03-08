@@ -107,6 +107,7 @@ public class CppCompletionManager implements CompletionManager
    {
       handlers_.removeHandler();
       snippets_.detach();
+      rCompletionManager_.detach();
    }
    
    // perform completion at the current cursor location
