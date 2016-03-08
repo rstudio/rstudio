@@ -339,12 +339,6 @@ public:
       }
       
       n_ = children_.size();
-      
-      if (isDevtoolsLoadAllActive())
-      {
-         children_.push_back(projects::projectContext().buildTargetPath());
-         ++n_;
-      }
    }
 
    void addContinuation(json::JsonRpcFunctionContinuation continuation)
@@ -368,12 +362,8 @@ public:
       FilePath addinPath = pkgPath.childPath("rstudio/addins.dcf");
       if (!addinPath.exists())
       {
-         addinPath = pkgPath.childPath("inst/rstudio/addins.dcf");
-         if (!addinPath.exists())
-         {
-            ++index_;
-            return maybeFinishRunning();
-         }
+         ++index_;
+         return maybeFinishRunning();
       }
       
       std::string pkgName = pkgPath.filename();
@@ -401,6 +391,18 @@ private:
    {
       if (!running())
       {
+         // finalize by indexing current package
+         if (isDevtoolsLoadAllActive())
+         {
+            FilePath pkgPath = projects::projectContext().buildTargetPath();
+            FilePath addinPath = pkgPath.childPath("inst/rstudio/addins.dcf");
+            if (addinPath.exists())
+            {
+               std::string pkgName = projects::projectContext().packageInfo().name();
+               pRegistry_->add(pkgName, addinPath);
+            }
+         }
+         
          // update the addin registry
          updateAddinRegistry(pRegistry_);
 
