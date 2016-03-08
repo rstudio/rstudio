@@ -49,9 +49,6 @@
      <g:Image styleName="{style.interrupt}" 
               ui:field="interrupt_"
               visible="false"></g:Image>
-     <g:Image styleName="{style.busy}" 
-              ui:field="busy_"
-              visible="false"></g:Image>
      <g:HTMLPanel styleName="{style.root}" ui:field="root_">
      </g:HTMLPanel>
    </g:HTMLPanel>

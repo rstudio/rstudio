@@ -18,7 +18,6 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsArrayEx;
-import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationInterrupt.InterruptHandler;
@@ -32,8 +31,6 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErro
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputHandler;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -57,8 +54,7 @@ import com.google.gwt.user.client.ui.Widget;
 public class ChunkOutputWidget extends Composite
                                implements ConsoleWriteOutputHandler,
                                           ConsoleWriteErrorHandler,
-                                          ConsolePromptHandler,
-                                          ConsoleWriteInputHandler
+                                          ConsolePromptHandler
 {
 
    private static ChunkOutputWidgetUiBinder uiBinder = GWT
@@ -117,11 +113,7 @@ public class ChunkOutputWidget extends Composite
             switch(DOM.eventGetType(evt))
             {
             case Event.ONCLICK:
-               if (state_ == CONSOLE_READY ||
-                   state_ == CONSOLE_EXECUTING)
-               {
-                  destroyConsole();
-               }
+               destroyConsole();
                onChunkCleared.execute();
                break;
             };
@@ -160,7 +152,6 @@ public class ChunkOutputWidget extends Composite
 
       interrupt_.setResource(RStudioGinjector.INSTANCE.getCommands()
             .interruptR().getImageResource());
-      busy_.setResource(CoreResources.INSTANCE.progress_gray());
    }
    
    public void showChunkOutputUnit(RmdChunkOutputUnit unit)
@@ -290,7 +281,7 @@ public class ChunkOutputWidget extends Composite
    @Override
    public void onConsoleWriteOutput(ConsoleWriteOutputEvent event)
    {
-      if (state_ != CONSOLE_EXECUTING || event.getConsole() != chunkId_)
+      if (event.getConsole() != chunkId_)
          return;
       renderConsoleOutput(event.getOutput(), classOfOutput(CONSOLE_OUTPUT));
    }
@@ -298,25 +289,14 @@ public class ChunkOutputWidget extends Composite
    @Override
    public void onConsoleWriteError(ConsoleWriteErrorEvent event)
    {
-      if (state_ != CONSOLE_EXECUTING || event.getConsole() != chunkId_)
+      if (event.getConsole() != chunkId_)
          return;
       renderConsoleOutput(event.getError(), classOfOutput(CONSOLE_ERROR));
    }
    
    @Override
-   public void onConsoleWriteInput(ConsoleWriteInputEvent event)
-   {
-      if (state_ != CONSOLE_EXECUTING || event.getConsole() != chunkId_)
-         return;
-      renderConsoleOutput("> " + event.getInput(), 
-            classOfOutput(CONSOLE_INPUT));
-   }
-
-   @Override
    public void onConsolePrompt(ConsolePromptEvent event)
    {
-      if (state_ != CONSOLE_EXECUTING)
-         return;
       state_ = CONSOLE_READY;
       setOverflowStyle();
       unregisterConsoleEvents();
@@ -363,14 +343,19 @@ public class ChunkOutputWidget extends Composite
    
    public void setCodeExecuting(boolean entireChunk)
    {
+      // do nothing if code is already executing
+      if (state_ == CONSOLE_PRE_OUTPUT || 
+          state_ == CONSOLE_POST_OUTPUT)
+      {
+         return;
+      }
+
       if (entireChunk)
       {
          root_.clear();
          state_ = CHUNK_EMPTY;
       }
-
-      if (state_ != CONSOLE_READY &&
-          state_ != CONSOLE_EXECUTING)
+      if (state_ != CONSOLE_READY)
       {
          initConsole();
          state_ = CONSOLE_READY;
@@ -378,7 +363,7 @@ public class ChunkOutputWidget extends Composite
       if (state_ == CONSOLE_READY)
       {
          registerConsoleEvents();
-         state_ = CONSOLE_EXECUTING;
+         state_ = CONSOLE_PRE_OUTPUT;
          showBusyState();
       }
 
@@ -433,7 +418,6 @@ public class ChunkOutputWidget extends Composite
       EventBus events = RStudioGinjector.INSTANCE.getEventBus();
       events.addHandler(ConsoleWriteOutputEvent.TYPE, this);
       events.addHandler(ConsoleWriteErrorEvent.TYPE, this);
-      events.addHandler(ConsoleWriteInputEvent.TYPE, this);
       events.addHandler(ConsolePromptEvent.TYPE, this);
    }
 
@@ -442,7 +426,6 @@ public class ChunkOutputWidget extends Composite
       EventBus events = RStudioGinjector.INSTANCE.getEventBus();
       events.removeHandler(ConsoleWriteOutputEvent.TYPE, this);
       events.removeHandler(ConsoleWriteErrorEvent.TYPE, this);
-      events.removeHandler(ConsoleWriteInputEvent.TYPE, this);
       events.removeHandler(ConsolePromptEvent.TYPE, this);
    }
    
@@ -457,8 +440,8 @@ public class ChunkOutputWidget extends Composite
    {
       getElement().getStyle().setBackgroundColor(s_busyColor);
       clear_.setVisible(false);
-      interrupt_.setVisible(state_ == CONSOLE_EXECUTING);
-      busy_.setVisible(state_ == CHUNK_EXECUTING);
+      interrupt_.setVisible(state_ == CONSOLE_PRE_OUTPUT ||
+                            state_ == CONSOLE_POST_OUTPUT);
    }
 
    private void showReadyState()
@@ -466,7 +449,6 @@ public class ChunkOutputWidget extends Composite
       getElement().getStyle().setBackgroundColor(s_backgroundColor);
       clear_.setVisible(true);
       interrupt_.setVisible(false);
-      busy_.setVisible(false);
    }
    
    private void setOverflowStyle()
@@ -486,7 +468,8 @@ public class ChunkOutputWidget extends Composite
    
    private void completeInterrupt()
    {
-      if (state_ == CONSOLE_EXECUTING)
+      if (state_ == CONSOLE_PRE_OUTPUT ||
+          state_ == CONSOLE_POST_OUTPUT)
       {
          state_ = CONSOLE_READY;
       }
@@ -503,7 +486,6 @@ public class ChunkOutputWidget extends Composite
    
    @UiField Image interrupt_;
    @UiField Image clear_;
-   @UiField Image busy_;
    @UiField HTMLPanel root_;
    @UiField ChunkStyle style;
    
@@ -520,12 +502,13 @@ public class ChunkOutputWidget extends Composite
    private static String s_color           = null;
    private static String s_busyColor       = null;
    
-   public final static int CHUNK_EMPTY       = 0;
-   public final static int CHUNK_EXECUTING   = 1;
-   public final static int CHUNK_RENDERING   = 2;
-   public final static int CHUNK_RENDERED    = 3;
-   public final static int CONSOLE_READY     = 4;
-   public final static int CONSOLE_EXECUTING = 5;
+   public final static int CHUNK_EMPTY         = 1;
+   public final static int CHUNK_EXECUTING     = 2;
+   public final static int CHUNK_RENDERING     = 3;
+   public final static int CHUNK_RENDERED      = 4;
+   public final static int CONSOLE_READY       = 5;
+   public final static int CONSOLE_PRE_OUTPUT  = 6;
+   public final static int CONSOLE_POST_OUTPUT = 7;
    
    public final static int CONSOLE_INPUT  = 0;
    public final static int CONSOLE_OUTPUT = 1;
