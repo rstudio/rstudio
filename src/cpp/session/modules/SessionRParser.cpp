@@ -1724,7 +1724,7 @@ bool skipFormulas(RTokenCursor& origin, ParseStatus& status)
             foundTilde = true;
 
          if (!cursor.moveToNextSignificantToken())
-            return false;
+            break;
       }
 
       // Stand-alone bracketed scopes
@@ -1747,7 +1747,7 @@ bool skipFormulas(RTokenCursor& origin, ParseStatus& status)
             return false;
 
          if (!cursor.moveToNextSignificantToken())
-            return false;
+            break;
 
          if (cursor.isAtEndOfStatement(status.isInParentheticalScope()))
             break;
@@ -1762,7 +1762,7 @@ bool skipFormulas(RTokenCursor& origin, ParseStatus& status)
 
       // Step over the operator and start again
       if (!cursor.moveToNextSignificantToken())
-         return false;
+         break;
    }
 
    if (foundTilde)
