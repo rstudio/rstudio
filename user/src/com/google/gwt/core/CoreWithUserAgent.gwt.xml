@@ -31,16 +31,4 @@
     <when-property-is name="compiler.useSourceMaps" value="true"/>
   </replace-with>
 
-  <!-- Utility class to query if source maps are enabled, mainly for testing -->
-  <replace-with class="com.google.gwt.core.client.impl.SourceMapProperty.SourceMapEnabled">
-    <when-type-is class="com.google.gwt.core.client.impl.SourceMapProperty.SourceMapImpl"/>
-    <when-property-is name="compiler.useSourceMaps" value="true"/>
-  </replace-with>
-
-  <!-- If stack trace emulation is on, we can still get accurate stack traces even if sourcemaps are off -->
-  <replace-with class="com.google.gwt.core.client.impl.SourceMapProperty.SourceMapEnabled">
-    <when-type-is class="com.google.gwt.core.client.impl.SourceMapProperty.SourceMapImpl"/>
-    <when-property-is name="compiler.useSourceMaps" value="false"/>
-    <when-property-is name="compiler.stackMode" value="emulated"/>
-  </replace-with>
 </module>

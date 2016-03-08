@@ -17,7 +17,6 @@
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.impl.SourceMapProperty;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.logging.Level;
@@ -32,9 +31,9 @@ public class LoggingRPCTest extends GWTTestCase {
    * WARNING! WARNING! If you edit this method or insert any lines of code above this method,you
    * must re-edit the line number constants below;
    */
-  private static final int METHOD_START_LINE = 39;
+  private static final int METHOD_START_LINE = 38;
 
-  private static final int METHOD_EXCEPTION_LINE = 41;
+  private static final int METHOD_EXCEPTION_LINE = 40;
 
   private void throwException(String arg) {
     // prevent inlining by double referencing arg
@@ -163,7 +162,7 @@ public class LoggingRPCTest extends GWTTestCase {
               for (StackTraceElement e : thrown.getStackTrace()) {
                 if (e.getFileName().contains("LoggingRPCTest")) {
                   // if DevMode or SourceMaps enabled and Chrome is the browser, check for exact line
-                  if (SourceMapProperty.isDetailedDeobfuscatedStackTraceSupported()) {
+                  if (System.getProperty("user.agent", "safari").equals("safari")) {
                     assertEquals(METHOD_EXCEPTION_LINE, e.getLineNumber());
                   } else {
                     // else fallback to line number of method itself
