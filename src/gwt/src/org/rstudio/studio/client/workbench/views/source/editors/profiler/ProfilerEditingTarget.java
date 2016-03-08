@@ -514,13 +514,13 @@ public class ProfilerEditingTarget implements EditingTarget,
    @Handler
    void onSaveSourceDoc()
    {
-      saveNewFile(getPath());
+      saveNewFile(null);
    }
 
    @Handler
    void onSaveSourceDocAs()
    {
-      saveNewFile(getPath());
+      saveNewFile(isUserSaved_ ? getPath() : null);
    }
 
    public String getDefaultNamePrefix()
