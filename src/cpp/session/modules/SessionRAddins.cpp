@@ -31,6 +31,7 @@
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
 
+#include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
@@ -41,6 +42,16 @@ namespace modules {
 namespace r_addins {
 
 namespace {
+
+bool isDevtoolsLoadAllActive()
+{
+   std::vector<std::string> search;
+   Error error = r::exec::RFunction("search").call(&search);
+   if (error)
+      return false;
+   
+   return std::find(search.begin(), search.end(), "devtools_shims") != search.end();
+}
 
 class AddinSpecification
 {
@@ -328,6 +339,12 @@ public:
       }
       
       n_ = children_.size();
+      
+      if (isDevtoolsLoadAllActive())
+      {
+         children_.push_back(projects::projectContext().buildTargetPath());
+         ++n_;
+      }
    }
 
    void addContinuation(json::JsonRpcFunctionContinuation continuation)
@@ -342,15 +359,21 @@ public:
    
    bool work()
    {
+      const FilePath& pkgPath = children_[index_];
+      
       // std::cout << "Job " << index_ + 1 << " of " << n_ << "\n";
+      // std::cout << "Package: '" << pkgPath.absolutePath() << "'\n";
       // ::usleep(10000);
       
-      const FilePath& pkgPath = children_[index_];
       FilePath addinPath = pkgPath.childPath("rstudio/addins.dcf");
       if (!addinPath.exists())
       {
-         ++index_;
-         return maybeFinishRunning();
+         addinPath = pkgPath.childPath("inst/rstudio/addins.dcf");
+         if (!addinPath.exists())
+         {
+            ++index_;
+            return maybeFinishRunning();
+         }
       }
       
       std::string pkgName = pkgPath.filename();
@@ -472,6 +495,8 @@ void onConsoleInput(const std::string& input)
       commands.push_back("remove.packages");
       commands.push_back("devtools::install_github");
       commands.push_back("install_github");
+      commands.push_back("devtools::load_all");
+      commands.push_back("load_all");
    }
 
    // check for package library mutating command
