@@ -63,7 +63,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
-import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
@@ -103,7 +102,8 @@ public class ProfilerEditingTarget implements EditingTarget,
                                 RemoteFileSystemContext fileContext,
                                 WorkbenchContext workbenchContext,
                                 EventBus eventBus,
-                                SourceServerOperations sourceServer)
+                                SourceServerOperations sourceServer,
+                                ProfilerPresenter profilerPresenter)
    {
       presenter_ = presenter;
       commands_ = commands;
@@ -116,6 +116,7 @@ public class ProfilerEditingTarget implements EditingTarget,
       workbenchContext_ = workbenchContext;
       eventBus_ = eventBus;
       sourceServer_ = sourceServer;
+      profilerPresenter_ = profilerPresenter;
       
       if (!initializedEvents_)
       {
@@ -226,7 +227,7 @@ public class ProfilerEditingTarget implements EditingTarget,
          
          if (htmlPath_ == null)
          {
-            buildHtmlPath(new OperationWithInput<ProfileOperationResponse>()
+            profilerPresenter_.buildHtmlPath(new OperationWithInput<ProfileOperationResponse>()
             {
                @Override
                public void execute(ProfileOperationResponse response)
@@ -249,7 +250,7 @@ public class ProfilerEditingTarget implements EditingTarget,
                {
                   commands_.closeSourceDoc().execute();
                }
-            });
+            }, getPath());
          }
          else
          {
@@ -542,40 +543,6 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       return doc_.getProperties().cast();
    }
-
-   private void buildHtmlPath(
-                              final OperationWithInput<ProfileOperationResponse> continuation,
-                              final OperationWithInput<Void> onError)
-   {
-      ProfileOperationRequest request = ProfileOperationRequest
-            .create(getPath());
-      
-      server_.openProfile(request,
-         new ServerRequestCallback<ProfileOperationResponse>()
-         {
-            @Override
-            public void onResponseReceived(ProfileOperationResponse response)
-            {
-               if (response.getErrorMessage() != null)
-               {
-                  globalDisplay_.showErrorMessage("Profiler Error",
-                        response.getErrorMessage());
-                  onError.execute(null);
-                  return;
-               }
-               
-               continuation.execute(response);
-            }
-
-            @Override
-            public void onError(ServerError error)
-            {
-               globalDisplay_.showErrorMessage("Failed to Open Profile",
-                     error.getMessage());
-               onError.execute(null);
-            }
-         });
-   }
    
    private void persistDocumentProperty(String property, String value)
    {
@@ -723,6 +690,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    private final WorkbenchContext workbenchContext_;
    private final EventBus eventBus_;
    private Provider<String> defaultNameProvider_;
+   private ProfilerPresenter profilerPresenter_;
    
    private ProfilerType fileType_ = new ProfilerType();
    

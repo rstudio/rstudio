@@ -18,6 +18,7 @@ import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -27,6 +28,7 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -232,6 +234,46 @@ public class ProfilerPresenter implements RprofEvent.Handler
    public void onSaveProfileAs()
    {
       commands_.saveSourceDocAs().execute();
+   }
+   
+   public void buildHtmlPath(final OperationWithInput<ProfileOperationResponse> continuation,
+                             final OperationWithInput<Void> onError,
+                             final String path)
+   {
+      dependencyManager_.withProfvis(profilerDependecyUserAction_, new Command()
+      {
+         @Override
+         public void execute()
+         {
+            ProfileOperationRequest request = ProfileOperationRequest.create(path);
+             
+            server_.openProfile(request, 
+                  new ServerRequestCallback<ProfileOperationResponse>()
+            {
+               @Override
+               public void onResponseReceived(ProfileOperationResponse response)
+               {
+                  if (response.getErrorMessage() != null)
+                  {
+                     globalDisplay_.showErrorMessage("Profiler Error",
+                           response.getErrorMessage());
+                     onError.execute(null);
+                     return;
+                  }
+                   
+                  continuation.execute(response);
+               }
+         
+               @Override
+               public void onError(ServerError error)
+               {
+                  globalDisplay_.showErrorMessage("Failed to Open Profile",
+                        error.getMessage());
+                  onError.execute(null);
+               }
+            });
+         }
+      });
    }
 
    private void enableStartedCommands()
