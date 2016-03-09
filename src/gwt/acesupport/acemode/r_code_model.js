@@ -1011,10 +1011,33 @@ var RCodeModel = function(session, tokenizer,
                if (moveFromFunctionTokenToEndOfFunctionName(localCursor))
                {
                   var functionEndCursor = localCursor.cloneCursor();
-                  if (localCursor.findStartOfEvaluationContext())
+                  var functionStartCursor = localCursor.cloneCursor();
+                  if (functionStartCursor.findStartOfEvaluationContext())
                   {
-                     var functionStartPos = localCursor.currentPosition();
-                     var functionEndPos = functionEndCursor.currentPosition();
+                     var functionStartPos = functionStartCursor.currentPosition();
+                     var functionEndPos   = functionEndCursor.currentPosition();
+
+                     // Only include text on the same line. This avoids cases
+                     // where e.g. someone might write
+                     //
+                     //     env$|
+                     //
+                     //     # This is a function
+                     //     foo <- function(x) { ... }
+                     //
+                     // It's more likely that the user was just typing a new
+                     // statement above than adding on to that function definition;
+                     // we should be conservative in looking backwards over comments
+                     // when providing that scope.
+                     if (functionStartPos.row !== functionEndPos.row) {
+                        functionStartPos.row = functionEndPos.row;
+                        functionStartPos.column = 0;
+                        localCursor.$row = functionStartPos.row;
+                        localCursor.$offset = 0;
+                     } else {
+                        localCursor.moveToPosition(functionStartPos);
+                     }
+
                      functionName = this.$doc.getTextRange(new Range(
                         functionStartPos.row,
                         functionStartPos.column,

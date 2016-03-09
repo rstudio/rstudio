@@ -199,7 +199,24 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(rMarkdownLabel);
       displayPanel.add(checkboxPref("Show inline toolbar for R code chunks", prefs_.showInlineToolbarForRCodeChunks()));
       displayPanel.add(checkboxPref("Show document outline by default", prefs_.showDocumentOutlineRmd()));
-      displayPanel.add(checkboxPref("Show unnamed entries in document outline", prefs_.showUnnamedEntriesInDocumentOutline()));
+      
+      docOutlineDisplay_ = new SelectWidget(
+            "Show in Document Outline: ",
+            new String[] {
+                  "Sections Only",
+                  "Sections and Named Chunks",
+                  "Sections and Chunks"
+            },
+            new String[] {
+                  UIPrefsAccessor.DOC_OUTLINE_SHOW_SECTIONS_ONLY,
+                  UIPrefsAccessor.DOC_OUTLINE_SHOW_SECTIONS_AND_NAMED_CHUNKS,
+                  UIPrefsAccessor.DOC_OUTLINE_SHOW_ALL
+            },
+            false,
+            true,
+            false);
+      displayPanel.add(docOutlineDisplay_);
+      
       rmdViewerMode_ = new SelectWidget(
             "Show output preview in: ",
             new String[] {
@@ -474,6 +491,7 @@ public class EditingPreferencesPane extends PreferencesPane
       
       foldMode_.setValue(prefs_.foldStyle().getValue());
       delimiterSurroundWidget_.setValue(prefs_.surroundSelection().getValue());
+      docOutlineDisplay_.setValue(prefs_.shownSectionsInDocumentOutline().getValue().toString());
       rmdViewerMode_.setValue(prefs_.rmdViewerType().getValue().toString());
    }
    
@@ -503,6 +521,9 @@ public class EditingPreferencesPane extends PreferencesPane
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_EMACS);
       else
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
+      
+      prefs_.shownSectionsInDocumentOutline().setGlobalValue(
+            docOutlineDisplay_.getValue());
       
       prefs_.rmdViewerType().setGlobalValue(Integer.decode(
             rmdViewerMode_.getValue()));
@@ -560,6 +581,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final SelectWidget rmdViewerMode_;
    private final SelectWidget foldMode_;
    private final SelectWidget delimiterSurroundWidget_;
+   private final SelectWidget docOutlineDisplay_;
    private final TextBoxWithButton encoding_;
    private String encodingValue_;
    
