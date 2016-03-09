@@ -26,6 +26,7 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/regex.hpp>
 
+#include <core/Algorithm.hpp>
 #include <core/Log.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/json/Json.hpp>
@@ -39,99 +40,125 @@ namespace rstudio {
 namespace core {
 namespace string_utils {
 
-bool isSubsequence(std::string const& self,
-                   std::string const& other,
-                   std::string::size_type other_n)
+bool isSubsequence(std::string const& sequence,
+                   std::string const& query,
+                   std::string::size_type queryN,
+                   const std::vector<char>& skip)
 {
-   std::string::size_type self_n = self.length();
+   std::string::size_type sequenceN = sequence.length();
 
-   if (other_n == 0)
+   if (queryN == 0)
       return true;
 
-   if (other_n > other.length())
-      other_n = other.length();
+   if (queryN > query.length())
+      queryN = query.length();
 
-   if (other_n > self_n)
+   if (!skip.empty() && queryN > sequenceN)
       return false;
 
-   std::string::size_type self_idx = 0;
-   std::string::size_type other_idx = 0;
+   std::string::size_type sequenceIdx = 0;
+   std::string::size_type queryIdx = 0;
 
-   while (self_idx < self_n)
+   while (sequenceIdx < sequenceN)
    {
-      char selfChar = self[self_idx];
-      char otherChar = other[other_idx];
-
-      if (otherChar == selfChar)
+      char sequenceChar = sequence[sequenceIdx];
+      char queryChar = query[queryIdx];
+      
+      while (core::algorithm::contains(skip, queryChar))
       {
-         ++other_idx;
-         if (other_idx == other_n)
-         {
+         ++queryIdx;
+         if (queryIdx == queryN)
             return true;
-         }
+         queryChar = query[queryIdx];
       }
-      ++self_idx;
+
+      if (queryChar == sequenceChar)
+      {
+         ++queryIdx;
+         if (queryIdx == queryN)
+            return true;
+      }
+      
+      ++sequenceIdx;
    }
+   
    return false;
 }
 
 
-bool isSubsequence(std::string const& self,
-                   std::string const& other,
-                   std::string::size_type other_n,
-                   bool caseInsensitive)
+bool isSubsequence(std::string const& sequence,
+                   std::string const& query,
+                   std::string::size_type querySize,
+                   bool caseInsensitive,
+                   const std::vector<char>& skip)
 {
-   return caseInsensitive ?
-            isSubsequence(boost::algorithm::to_lower_copy(self),
-                          boost::algorithm::to_lower_copy(other),
-                          other_n) :
-            isSubsequence(self, other, other_n)
-            ;
+   return caseInsensitive
+         
+         ? isSubsequence(boost::algorithm::to_lower_copy(sequence),
+                         boost::algorithm::to_lower_copy(query),
+                         querySize,
+                         skip)
+           
+         : isSubsequence(sequence,
+                         query,
+                         querySize,
+                         skip);
 }
 
-bool isSubsequence(std::string const& self,
-                   std::string const& other)
+bool isSubsequence(std::string const& sequence,
+                   std::string const& query,
+                   const std::vector<char>& skip)
 {
-   return isSubsequence(self, other, other.length());
+   return isSubsequence(sequence, query, query.length(), skip);
 }
 
-bool isSubsequence(std::string const& self,
-                   std::string const& other,
-                   bool caseInsensitive)
+bool isSubsequence(std::string const& sequence,
+                   std::string const& query,
+                   bool caseInsensitive,
+                   const std::vector<char>& skip)
 {
-   return isSubsequence(self, other, other.length(), caseInsensitive);
+   return isSubsequence(sequence, query, query.length(), caseInsensitive, skip);
 }
 
 std::vector<int> subsequenceIndices(std::string const& sequence,
-                                    std::string const& query)
+                                    std::string const& query,
+                                    const std::vector<char>& skip)
 {
-   int query_n = query.length();
+   std::string::size_type queryN = query.length();
    std::vector<int> result;
-   result.reserve(query.length());
+   result.reserve(queryN);
 
-   int prevMatchIndex = -1;
-   for (int i = 0; i < query_n; i++)
+   std::size_t prevMatchIndex = -1;
+   for (std::string::size_type i = 0; i < queryN; i++)
    {
-      result[i] = sequence.find(query[i], prevMatchIndex + 1);
-      prevMatchIndex = result[i];
+      char ch = query[i];
+      if (core::algorithm::contains(skip, ch))
+         continue;
+      
+      std::size_t index = sequence.find(ch, prevMatchIndex + 1);
+      result.push_back(index);
+      prevMatchIndex = index;
    }
+   
    return result;
 }
 
 bool subsequenceIndices(std::string const& sequence,
                         std::string const& query,
-                        std::vector<int> *pIndices)
+                        std::vector<int> *pIndices,
+                        const std::vector<char>& skip)
 {
-   pIndices->clear();
-   pIndices->reserve(query.length());
+   std::string::size_type queryN = query.length();
+   std::string::size_type prevMatchIndex = -1;
    
-   int query_n = query.length();
-   int prevMatchIndex = -1;
-   
-   for (int i = 0; i < query_n; i++)
+   for (std::string::size_type i = 0; i < queryN; i++)
    {
-      int index = sequence.find(query[i], prevMatchIndex + 1);
-      if (index == -1)
+      char ch = query[i];
+      if (core::algorithm::contains(skip, ch))
+         continue;
+      
+      std::string::size_type index = sequence.find(ch, prevMatchIndex + 1);
+      if (index == std::string::npos)
          return false;
       
       pIndices->push_back(index);

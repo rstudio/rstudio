@@ -1241,32 +1241,36 @@ void searchFiles(const std::string& term,
 // (See: CodeSearchOracle.java)
 int scoreMatch(std::string const& suggestion,
                std::string const& query,
-               bool isFile)
+               bool isFile,
+               const std::vector<char>& skip = std::vector<char>())
 {
    // No penalty for perfect matches
    if (suggestion == query)
       return 0;
    
-   int query_n = query.length();
-
    // Call a version of subsequence indices that returns false if the query is not
    // actually a subsequence
    std::vector<int> matches;
    bool success = string_utils::subsequenceIndices(
             boost::algorithm::to_lower_copy(suggestion),
             boost::algorithm::to_lower_copy(query),
-            &matches);
+            &matches,
+            skip);
    
    if (!success)
       return -1;
 
    int totalPenalty = 0;
-
+   int n = matches.size();
+   
    // Loop over the matches and assign a score
-   for (int j = 0; j < query_n; j++)
+   for (int j = 0; j < n; j++)
    {
       int matchPos = matches[j];
       int penalty = matchPos;
+      
+      if (!isFile && core::algorithm::contains(skip, query[j]))
+         continue;
 
       // Less penalty if character follows special delim
       if (matchPos >= 1)
@@ -1588,7 +1592,7 @@ Error searchCode(const json::JsonRpcRequest& request,
           boost::algorithm::ends_with(context, "RcppExports.cpp"))
          continue;
          
-      int score = scoreMatch(item.name(), term, false);
+      int score = scoreMatch(item.name(), term, false, string_utils::rAutocompletionSkippableCharacters());
       srcItemScores.push_back(std::make_pair(i, score));
    }
    std::sort(srcItemScores.begin(), srcItemScores.end(), ScorePairComparator());

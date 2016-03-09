@@ -28,6 +28,7 @@
 #include <r/session/RClientState.hpp>
 #include <r/session/RSessionUtils.hpp>
 
+#include <core/StringUtils.hpp>
 #include <core/system/FileScanner.hpp>
 
 #include <core/r_util/RProjectFile.hpp>
@@ -309,7 +310,8 @@ SEXP rs_isSubsequence(SEXP stringsSEXP, SEXP querySEXP)
                   boost::bind(
                      string_utils::isSubsequence,
                      _1,
-                     query));
+                     query,
+                     string_utils::rAutocompletionSkippableCharacters()));
 
    r::sexp::Protect protect;
    return r::sexp::create(result, &protect);
