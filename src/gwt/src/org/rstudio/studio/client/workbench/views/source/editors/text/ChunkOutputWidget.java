@@ -299,6 +299,13 @@ public class ChunkOutputWidget extends Composite
    @Override
    public void onConsolePrompt(ConsolePromptEvent event)
    {
+      // stop listening to the console once the prompt appears, but don't 
+      // clear up output until we receive the output finished event
+      unregisterConsoleEvents();
+   }
+   
+   public void onOutputFinished()
+   {
       if (state_ == CONSOLE_PRE_OUTPUT)
       {
          // if no output was produced, clear the contents and show the empty
@@ -312,7 +319,6 @@ public class ChunkOutputWidget extends Composite
       state_ = CONSOLE_READY;
       lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
       setOverflowStyle();
-      unregisterConsoleEvents();
       showReadyState();
    }
 
@@ -503,10 +509,6 @@ public class ChunkOutputWidget extends Composite
       {
          state_ = CONSOLE_READY;
       }
-      else if (state_ == CHUNK_EXECUTING)
-      {
-         state_ = CHUNK_RENDERED;
-      }
       else
       {
          return;
@@ -537,12 +539,11 @@ public class ChunkOutputWidget extends Composite
    private static String s_busyColor       = null;
    
    public final static int CHUNK_EMPTY         = 1;
-   public final static int CHUNK_EXECUTING     = 2;
-   public final static int CHUNK_RENDERING     = 3;
-   public final static int CHUNK_RENDERED      = 4;
-   public final static int CONSOLE_READY       = 5;
-   public final static int CONSOLE_PRE_OUTPUT  = 6;
-   public final static int CONSOLE_POST_OUTPUT = 7;
+   public final static int CHUNK_RENDERING     = 2;
+   public final static int CHUNK_RENDERED      = 3;
+   public final static int CONSOLE_READY       = 4;
+   public final static int CONSOLE_PRE_OUTPUT  = 5;
+   public final static int CONSOLE_POST_OUTPUT = 6;
    
    public final static int CONSOLE_INPUT  = 0;
    public final static int CONSOLE_OUTPUT = 1;

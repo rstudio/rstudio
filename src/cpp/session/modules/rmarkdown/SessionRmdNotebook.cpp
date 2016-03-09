@@ -20,6 +20,7 @@
 #include "NotebookChunkDefs.hpp"
 #include "NotebookOutput.hpp"
 #include "NotebookHtmlWidgets.hpp"
+#include "NotebookExec.hpp"
 
 #include <iostream>
 
@@ -30,11 +31,9 @@
 #include <r/RExec.hpp>
 
 #include <core/Exec.hpp>
-#include <core/FileSerializer.hpp>
 #include <core/Algorithm.hpp>
 #include <core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
-#include <core/text/CsvParser.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
 
@@ -56,12 +55,8 @@ namespace notebook {
 
 namespace {
 
-// the ID of the doc / chunk currently executing console commands (if any)
-std::string s_consoleChunkId, s_consoleDocId, s_activeConsole;
-
-// whether we're currently connected to console events/plots
-bool s_consoleConnected = false;
-bool s_plotsConnected = false;
+// the currently active console ID
+std::string s_activeConsole;
 
 void replayChunkOutputs(const std::string& docPath, const std::string& docId,
       const std::string& requestId, const json::Array& chunkOutputs) 
@@ -76,7 +71,7 @@ void replayChunkOutputs(const std::string& docPath, const std::string& docId,
    }
 
    json::Object result;
-   result["path"] = docPath;
+   result["doc_id"] = docId;
    result["request_id"] = requestId;
    result["chunk_id"] = "";
    result["type"] = kFinishedReplay;
@@ -114,228 +109,56 @@ Error refreshChunkOutput(const json::JsonRpcRequest& request,
    return Success();
 }
 
-void disconnectConsole();
-
-void onConsolePrompt(const std::string& )
+void emitOutputFinished(const std::string& docId, const std::string& chunkId)
 {
-   if (s_consoleConnected)
-      disconnectConsole();
-}
-
-void onConsoleText(const std::string& docId, const std::string& chunkId,
-                   int type, const std::string& output, bool truncate)
-{
-   if (output.empty())
-      return;
-
-   FilePath outputCsv = chunkOutputFile(docId, chunkId, kChunkOutputText);
-
-   std::vector<std::string> vals; 
-   vals.push_back(safe_convert::numberToString(type));
-   vals.push_back(output);
-   Error error = core::writeStringToFile(outputCsv, 
-         text::encodeCsvLine(vals) + "\n", 
-         string_utils::LineEndingPassthrough, truncate);
-   if (error)
-   {
-      LOG_ERROR(error);
-   }
-
-   events().onChunkConsoleOutput(docId, chunkId, type, output);
-}
-
-void onConsoleOutput(module_context::ConsoleOutputType type, 
-      const std::string& output)
-{
-   if (type == module_context::ConsoleOutputNormal)
-      onConsoleText(s_consoleDocId, s_consoleChunkId, kChunkConsoleOutput, 
-                    output, false);
-   else
-      onConsoleText(s_consoleDocId, s_consoleChunkId, kChunkConsoleError, 
-                    output, false);
-}
-
-void onConsoleInput(const std::string& input)
-{
-   onConsoleText(s_consoleDocId, s_consoleChunkId, kChunkConsoleInput, input, 
-         false);
-}
-
-bool moveLibFile(const FilePath& from, const FilePath& to, 
-      const FilePath& path, std::vector<FilePath> *pPaths)
-{
-   std::string relativePath = path.relativePath(from);
-   FilePath target = to.complete(relativePath);
-
-   pPaths->push_back(path);
-
-   Error error = path.isDirectory() ?
-                     target.ensureDirectory() :
-                     path.move(target);
-   if (error)
-      LOG_ERROR(error);
-   return true;
-}
-
-void writeLibDeps(const std::string& docId, const std::string& chunkId,
-                  int ordinal, const std::vector<FilePath>& paths)
-{
-   // TODO: save dependency information to JSON
-}
-
-void onFileOutput(const FilePath& file, int outputType)
-{
-   OutputPair pair = lastChunkOutput(s_consoleDocId, s_consoleChunkId);
-   pair.ordinal++;
-   pair.outputType = outputType;
-   FilePath target = chunkOutputFile(s_consoleDocId, s_consoleChunkId, pair);
-   Error error = file.move(target);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-
-   // check to see if the file has an accompanying library folder; if so, move
-   // it to the global library folder
-   FilePath fileLib = file.parent().complete(kChunkLibDir);
-   if (fileLib.exists())
-   {
-      std::vector<FilePath> paths;
-      error = fileLib.childrenRecursive(boost::bind(moveLibFile, fileLib,
-            chunkCacheFolder(s_consoleDocId, s_consoleChunkId)
-                           .complete(kChunkLibDir), _2, &paths));
-      if (error)
-         LOG_ERROR(error);
-      writeLibDeps(s_consoleDocId, s_consoleChunkId, pair.ordinal, paths);
-      error = fileLib.remove();
-      if (error)
-         LOG_ERROR(error);
-   }
-   
-   enqueueChunkOutput(s_consoleDocId, s_consoleChunkId, outputType, target);
-   updateLastChunkOutput(s_consoleDocId, s_consoleChunkId, pair);
-}
-
-void emitOutputFinished()
-{
-   std::string path;
-   source_database::getPath(s_consoleDocId, &path);
-
    json::Object result;
-   result["path"] = path;
+   result["doc_id"] = docId;
    result["request_id"] = "";
-   result["chunk_id"] = s_consoleChunkId;
+   result["chunk_id"] = chunkId;
    result["type"] = kFinishedInteractive;
    ClientEvent event(client_events::kChunkOutputFinished, result);
    module_context::enqueClientEvent(event);
 }
 
-void onPlotOutputComplete()
-{
-   // disconnect from plot output events
-   events().onPlotOutput.disconnect(
-         boost::bind(onFileOutput, _1, kChunkOutputPlot));
-   events().onPlotOutputComplete.disconnect(onPlotOutputComplete);
-   s_plotsConnected = false;
-
-   // if the console's not still connected, let the client know
-   if (!s_consoleConnected)
-      emitOutputFinished();
-}
-
-void disconnectConsole()
-{
-   module_context::events().onConsolePrompt.disconnect(onConsolePrompt);
-   module_context::events().onConsoleOutput.disconnect(onConsoleOutput);
-   module_context::events().onConsoleInput.disconnect(onConsoleInput);
-   
-   // disconnect HTML output (plots may still need to accumulate async)
-   events().onHtmlOutput.disconnect(
-         boost::bind(onFileOutput, _1, kChunkOutputHtml));
-
-   // if the plots are no longer connected (could happen in the case of error
-   // or early termination) let the client know
-   if (!s_plotsConnected)
-      emitOutputFinished();
-
-   s_consoleConnected = false;
-}
-
-void connectConsole()
-{
-   FilePath outputPath = chunkOutputPath(s_consoleDocId, s_consoleChunkId);
-   Error error = outputPath.ensureDirectory();
-   if (error)
-   {
-      // if we don't have a place to put the output, don't register any handlers
-      // (will end in tears)
-      LOG_ERROR(error);
-      return;
-   }
-
-   // begin capturing console text
-   module_context::events().onConsolePrompt.connect(onConsolePrompt);
-   module_context::events().onConsoleOutput.connect(onConsoleOutput);
-   module_context::events().onConsoleInput.connect(onConsoleInput);
-
-   // begin capturing plots 
-   events().onPlotOutput.connect(
-         boost::bind(onFileOutput, _1, kChunkOutputPlot));
-   events().onPlotOutputComplete.connect(onPlotOutputComplete);
-   s_plotsConnected = true;
-
-   // begin capturing HTML input
-   events().onHtmlOutput.connect(
-         boost::bind(onFileOutput, _1, kChunkOutputHtml));
-
-   error = beginPlotCapture(outputPath);
-   if (error)
-      LOG_ERROR(error);
-
-   error = beginWidgetCapture(outputPath, 
-         outputPath.parent().complete(kChunkLibDir));
-   if (error)
-      LOG_ERROR(error);
-
-   s_consoleConnected = true;
-}
-
-void onActiveConsoleChanged(const std::string& consoleId, 
+void onActiveConsoleChanged(boost::shared_ptr<ChunkExecContext> execContext,
+                            const std::string& consoleId, 
                             const std::string& text)
 {
    s_activeConsole = consoleId;
-   if (consoleId == s_consoleChunkId)
+   if (!execContext)
+      return;
+
+   if (consoleId == execContext->chunkId())
    {
-      if (s_consoleConnected) 
+      if (execContext->consoleConnected()) 
          return;
-      connectConsole();
-      onConsoleText(s_consoleDocId, s_consoleChunkId, kChunkConsoleInput, 
-            text, false);
+      execContext->connect();
    }
-   else if (s_consoleConnected)
+   else if (execContext->consoleConnected())
    {
-      // some other console is connected; disconnect ours
-      disconnectConsole();
+      execContext->disconnect();
    }
 }
 
-void onChunkExecCompleted(const std::string& docId, 
+void onChunkExecCompleted(boost::shared_ptr<ChunkExecContext> execContext,
+                          const std::string& docId, 
                           const std::string& chunkId,
                           const std::string& contextId)
 {
-   // attempt to get the path of the doc (this may fail if the document does
-   // not yet exist)
-   std::string path;
-   source_database::getPath(docId, &path);
+   // if this event belongs to the current execution context, destroy it
+   if (execContext &&
+       execContext->docId() == docId &&
+       execContext->chunkId() == chunkId)
+   {
+      execContext.reset();
+   }
 
-   Error error = enqueueChunkOutput(path, docId, chunkId, contextId);
-   if (error)
-      LOG_ERROR(error);
+   emitOutputFinished(docId, chunkId);
 }
 
 // called by the client to set the active chunk console
-Error setChunkConsole(const json::JsonRpcRequest& request,
+Error setChunkConsole(boost::shared_ptr<ChunkExecContext> execContext,
+                      const json::JsonRpcRequest& request,
                       json::JsonRpcResponse*)
 {
 
@@ -345,13 +168,12 @@ Error setChunkConsole(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   if (replace)
-      cleanChunkOutput(docId, chunkId, true);
+   cleanChunkOutput(docId, chunkId, true);
 
-   s_consoleChunkId = chunkId;
-   s_consoleDocId = docId;
+   // create the execution context and connect it immediately if necessary
+   execContext.reset(new ChunkExecContext(docId, chunkId));
    if (s_activeConsole == chunkId)
-      connectConsole();
+      execContext->connect();
 
    return Success();
 }
@@ -369,15 +191,22 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   module_context::events().onActiveConsoleChanged.connect(
-         onActiveConsoleChanged);
+   // the current execution context, if any
+   boost::shared_ptr<ChunkExecContext> pExecContext;
 
-   events().onChunkExecCompleted.connect(onChunkExecCompleted);
+   module_context::events().onActiveConsoleChanged.connect(
+         bind(onActiveConsoleChanged, pExecContext, _1, _2));
+
+   events().onChunkExecCompleted.connect(boost::bind(
+            onChunkExecCompleted, pExecContext, _1, _2, _3));
+
+   json::JsonRpcFunction setChunkConsoleCtx = bind(
+         setChunkConsole, pExecContext, _1, _2);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "refresh_chunk_output", refreshChunkOutput))
-      (bind(registerRpcMethod, "set_chunk_console", setChunkConsole))
+      (bind(registerRpcMethod, "set_chunk_console", setChunkConsoleCtx))
       (bind(module_context::sourceModuleRFile, "SessionRmdNotebook.R"))
       (bind(initOutput))
       (bind(initCache))

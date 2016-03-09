@@ -350,9 +350,19 @@ public class TextEditingTargetNotebook
    @Override
    public void onRmdChunkOutputFinished(RmdChunkOutputFinishedEvent event)
    {
-      if (event.getData().getRequestId() == Integer.toHexString(requestId_)) 
+      RmdChunkOutputFinishedEvent.Data data = event.getData();
+      if (data.getType() == RmdChunkOutputFinishedEvent.TYPE_REPLAY &&
+          data.getRequestId() == Integer.toHexString(requestId_)) 
       {
          state_ = STATE_INITIALIZED;
+      }
+      else if (data.getType() == RmdChunkOutputFinishedEvent.TYPE_INTERACTIVE &&
+               data.getDocId() == docUpdateSentinel_.getId())
+      {
+         if (outputWidgets_.containsKey(data.getChunkId()))
+         {
+            outputWidgets_.get(data.getChunkId()).onOutputFinished();
+         }
       }
    }
 
