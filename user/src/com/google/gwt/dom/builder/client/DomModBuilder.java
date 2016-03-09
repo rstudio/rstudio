@@ -18,6 +18,7 @@ package com.google.gwt.dom.builder.client;
 import com.google.gwt.dom.builder.shared.ModBuilder;
 import com.google.gwt.dom.client.ModElement;
 import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
 
 /**
  * DOM-based implementation of {@link ModBuilder}.
@@ -35,7 +36,7 @@ public class DomModBuilder extends DomElementBuilderBase<ModBuilder, ModElement>
   }
 
   @Override
-  public ModBuilder cite(String cite) {
+  public ModBuilder cite(@IsSafeUri String cite) {
     assertCanAddAttribute().setCite(cite);
     return this;
   }

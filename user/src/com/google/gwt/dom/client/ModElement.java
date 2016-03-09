@@ -17,6 +17,7 @@ package com.google.gwt.dom.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
 
 /**
  * Notice of modification to part of a document.
@@ -109,7 +110,7 @@ public class ModElement extends Element {
    *
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/">W3C HTML Specification</a>
    */
-  public final native void setCite(String cite) /*-{
+  public final native void setCite(@IsSafeUri String cite) /*-{
     this.cite = cite;
   }-*/;
 

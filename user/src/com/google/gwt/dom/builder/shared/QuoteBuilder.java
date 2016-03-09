@@ -16,6 +16,7 @@
 package com.google.gwt.dom.builder.shared;
 
 import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
 
 /**
  * Builds an quote element.
@@ -38,5 +39,5 @@ public interface QuoteBuilder extends ElementBuilderBase<QuoteBuilder> {
    *      href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#adef-cite-Q">W3C
    *      HTML Specification</a>
    */
-  QuoteBuilder cite(String cite);
+  QuoteBuilder cite(@IsSafeUri String cite);
 }

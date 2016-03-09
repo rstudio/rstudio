@@ -16,6 +16,7 @@
 package com.google.gwt.dom.builder.shared;
 
 import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
 import com.google.gwt.safehtml.shared.annotations.IsTrustedResourceUri;
 
 /**
@@ -48,7 +49,7 @@ public interface FrameBuilder extends ElementBuilderBase<FrameBuilder> {
    *      href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-longdesc-FRAME">W3C
    *      HTML Specification</a>
    */
-  FrameBuilder longDesc(String longDesc);
+  FrameBuilder longDesc(@IsSafeUri String longDesc);
 
   /**
    * Frame margin height, in pixels.

@@ -16,6 +16,7 @@
 package com.google.gwt.dom.builder.shared;
 
 import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
 
 /**
  * Builds an mod element.
@@ -34,7 +35,7 @@ public interface ModBuilder extends ElementBuilderBase<ModBuilder> {
    *
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/">W3C HTML Specification</a>
    */
-  ModBuilder cite(String cite);
+  ModBuilder cite(@IsSafeUri String cite);
 
   /**
    * The date and time of the change.

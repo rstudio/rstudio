@@ -16,6 +16,7 @@
 package com.google.gwt.dom.builder.shared;
 
 import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
 
 /**
  * HTML-based implementation of {@link QuoteBuilder}.
@@ -32,7 +33,7 @@ public class HtmlQuoteBuilder extends HtmlElementBuilderBase<QuoteBuilder> imple
   }
 
   @Override
-  public QuoteBuilder cite(String cite) {
+  public QuoteBuilder cite(@IsSafeUri String cite) {
     return trustedAttribute("cite", cite);
   }
 }

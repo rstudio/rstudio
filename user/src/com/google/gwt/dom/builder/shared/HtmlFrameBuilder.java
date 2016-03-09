@@ -16,6 +16,7 @@
 package com.google.gwt.dom.builder.shared;
 
 import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
 import com.google.gwt.safehtml.shared.annotations.IsTrustedResourceUri;
 import com.google.gwt.safehtml.shared.annotations.SuppressIsTrustedResourceUriCastCheck;
 
@@ -39,7 +40,7 @@ public class HtmlFrameBuilder extends HtmlElementBuilderBase<FrameBuilder> imple
   }
 
   @Override
-  public FrameBuilder longDesc(String longDesc) {
+  public FrameBuilder longDesc(@IsSafeUri String longDesc) {
     return trustedAttribute("longDesc", longDesc);
   }
 
