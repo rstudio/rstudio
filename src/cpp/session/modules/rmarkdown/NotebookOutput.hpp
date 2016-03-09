@@ -24,6 +24,10 @@
 #define kChunkOutputPlot 2
 #define kChunkOutputHtml 3
 
+#define kChunkConsoleInput  0
+#define kChunkConsoleOutput 1
+#define kChunkConsoleError  2
+
 #define kChunkLibDir "lib"
 
 namespace rstudio {

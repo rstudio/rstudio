@@ -97,11 +97,17 @@ Error chunkConsoleContents(const FilePath& consoleFile, json::Array* pArray)
    {
       if (line.first.size() > 1)
       {
-         json::Array output;
-         output.push_back(safe_convert::stringTo<int>(line.first[0], 
-               module_context::ConsoleOutputNormal));
-         output.push_back(line.first[1]);
-         pArray->push_back(output);
+         int outputType = safe_convert::stringTo<int>(line.first[0], 
+               kChunkConsoleOutput);
+
+         // don't emit input data to the client
+         if (outputType != kChunkConsoleInput)
+         {
+            json::Array output;
+            output.push_back(outputType);
+            output.push_back(line.first[1]);
+            pArray->push_back(output);
+         }
       }
       // read next line
       line = text::parseCsvLine(line.second, contents.end());

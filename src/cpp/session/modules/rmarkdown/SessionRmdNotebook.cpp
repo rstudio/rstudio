@@ -43,10 +43,6 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionUserSettings.hpp>
 
-#define kChunkConsoleInput   0
-#define kChunkConsoleOutput  1
-#define kChunkConsoleError   2
-
 #define kFinishedReplay      0
 #define kFinishedInteractive 1
 
