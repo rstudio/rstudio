@@ -38,6 +38,7 @@ public class ConsoleInterruptProfilerButton extends Composite
       Image button = new Image(icon);
       button.addStyleName(ThemeResources.INSTANCE.themeStyles().toolbarButtonLeftImage());
       button.getElement().getStyle().setMarginRight(4,Unit.PX);
+      button.setTitle("Profiling Code");
       
       return button;
    }
@@ -55,7 +56,7 @@ public class ConsoleInterruptProfilerButton extends Composite
       
       ImageResource icon = FileIconResources.INSTANCE.iconProfiler();
       Image button = CreateProfilerButton();
-      
+
       width_ = icon.getWidth() + 6;
       height_ = icon.getHeight();
       panel.setWidget(button);
