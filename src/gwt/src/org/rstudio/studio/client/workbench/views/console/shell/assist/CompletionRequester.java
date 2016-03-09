@@ -168,12 +168,12 @@ public class CompletionRequester
          // File types are narrowed only by the file name
          if (RCompletionType.isFileType(qname.type))
          {
-            if (StringUtil.isSubsequence(basename(qname.name), tokenSub, true))
+            if (StringUtil.isSubsequence(basename(qname.name), tokenSub, true, StringUtil.R_AUTOCOMPLETION_SKIPS))
                newCompletions.add(qname);
          }
          else
          {
-            if (StringUtil.isSubsequence(qname.name, token, true) &&
+            if (StringUtil.isSubsequence(qname.name, token, true, StringUtil.R_AUTOCOMPLETION_SKIPS) &&
                 filterStartsWithDot(qname.name, token))
                newCompletions.add(qname) ;
          }

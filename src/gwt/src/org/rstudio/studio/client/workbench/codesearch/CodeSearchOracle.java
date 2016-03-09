@@ -65,17 +65,18 @@ public class CodeSearchOracle extends SuggestOracle
       if (suggestion == query)
          return 0;
       
-      int query_n = query.length();
-      
       int totalPenalty = 0;
       
       // Get query matches in string (ordered)
       // Note: we have already guaranteed this to be a subsequence so
       // this will succeed
-      int[] matches = StringUtil.subsequenceIndices(suggestionLower, queryLower);
+      int[] matches = StringUtil.subsequenceIndices(
+            suggestionLower,
+            queryLower,
+            StringUtil.R_AUTOCOMPLETION_SKIPS);
       
       // Loop over the matches and assign a score
-      for (int j = 0; j < query_n; j++)
+      for (int j = 0; j < matches.length; j++)
       {
          int matchPos = matches[j];
          
@@ -169,7 +170,7 @@ public class CodeSearchOracle extends SuggestOracle
                   if (colonIndex == -1)
                      colonIndex = query.length();
                   
-                  if (StringUtil.isSubsequence(name, query.substring(0, colonIndex), true))
+                  if (StringUtil.isSubsequence(name, query.substring(0, colonIndex), true, StringUtil.R_AUTOCOMPLETION_SKIPS))
                      suggestions.add(sugg);
                }
             }

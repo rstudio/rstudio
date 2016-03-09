@@ -788,61 +788,113 @@ public class StringUtil
       return inSingleQuotes || inDoubleQuotes;
    }
    
-   public static boolean isSubsequence(String self,
-         String other,
-         boolean caseInsensitive)
+   public static char[] R_AUTOCOMPLETION_SKIPS = new char[] {
+      '.', '_'
+   };
+   
+   public static boolean isSubsequence(String sequence,
+                                       String query,
+                                       boolean caseInsensitive,
+                                       char[] skips)
    {
       return caseInsensitive ?
-            isSubsequence(self.toLowerCase(), other.toLowerCase()) :
-            isSubsequence(self, other)
+            isSubsequence(sequence.toLowerCase(), query.toLowerCase(), skips) :
+            isSubsequence(sequence, query, skips)
       ;
    }
    
-   public static boolean isSubsequence(String self,
-         String other)
+   public static boolean contains(String[] array, String string)
    {
-
-      final int self_n = self.length();
-      final int other_n = other.length();
-
-      if (other_n > self_n)
+      if (string == null)
          return false;
-
-      int self_idx = 0;
-      int other_idx = 0;
-         
-      while (self_idx < self_n)
-      {
-         char selfChar = self.charAt(self_idx);
-         char otherChar = other.charAt(other_idx);
-         
-         if (otherChar == selfChar)
-         {
-            ++other_idx;
-            if (other_idx == other_n)
-            {
-               return true;
-            }
-         }
-         ++self_idx;
-      }
+      
+      if (array.length == 0)
+         return false;
+      
+      for (int i = 0; i < array.length; i++)
+         if (string.equals(array[i]))
+            return true;
+      
       return false;
    }
    
-   public static int[] subsequenceIndices(
-         String sequence, String query)
+   public static boolean contains(char[] array, char ch)
    {
-      int query_n = query.length();
-      int[] result = new int[query.length()];
+      if (array.length == 0)
+         return false;
       
-      int prevMatchIndex = -1;
-      for (int i = 0; i < query_n; i++)
+      for (int i = 0; i < array.length; i++)
+         if (array[i] == ch)
+            return true;
+      
+      return false;
+   }
+   
+   public static boolean isSubsequence(String sequence, String query, char[] skips)
+   {
+      final int sequenceN = sequence.length();
+      final int queryN = query.length();
+
+      if (skips.length == 0 && queryN > sequenceN)
+         return false;
+
+      int sequenceIdx = 0;
+      int queryIdx = 0;
+         
+      while (sequenceIdx < sequenceN)
       {
-         result[i] = sequence.indexOf(query.charAt(i), prevMatchIndex + 1);
-         prevMatchIndex = result[i];
+         char sequenceChar = sequence.charAt(sequenceIdx);
+         char queryChar = query.charAt(queryIdx);
+         
+         // Update the query character if it's equal to one of the skips.
+         // Check success (as we might have a skippable character as the
+         // last character in the query)
+         while (contains(skips, queryChar))
+         {
+            queryIdx++;
+            if (queryIdx == queryN)
+               return true;
+            queryChar = query.charAt(queryIdx);
+         }
+         
+         // Check whether the query character matches the current character in
+         // the sequence. If so, advance the query index, and check success.
+         if (queryChar == sequenceChar)
+         {
+            ++queryIdx;
+            if (queryIdx == queryN)
+               return true;
+         }
+         
+         ++sequenceIdx;
       }
-      return result;
       
+      return false;
+   }
+   
+   public static int[] subsequenceIndices(String sequence, String query, char[] skips)
+   {
+      List<Integer> list = new ArrayList<Integer>();
+      
+      int queryN = query.length();
+      int prevMatchIndex = -1;
+      
+      for (int queryIdx = 0; queryIdx < queryN; queryIdx++)
+      {
+         char ch = query.charAt(queryIdx);
+         
+         if (contains(skips, ch))
+            continue;
+         
+         int idx = sequence.indexOf(ch, prevMatchIndex + 1);
+         list.add(idx);
+         prevMatchIndex = idx;
+      }
+      
+      int[] result = new int[list.size()];
+      for (int i = 0; i < list.size(); i++)
+         result[i] = list.get(i);
+      return result;
    }
    
    public static String getExtension(String string, int dots)
