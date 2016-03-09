@@ -43,9 +43,12 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionUserSettings.hpp>
 
-#define kChunkConsoleInput  0
-#define kChunkConsoleOutput 1
-#define kChunkConsoleError  3
+#define kChunkConsoleInput   0
+#define kChunkConsoleOutput  1
+#define kChunkConsoleError   2
+
+#define kFinishedReplay      0
+#define kFinishedInteractive 1
 
 using namespace rstudio::core;
 
@@ -60,8 +63,9 @@ namespace {
 // the ID of the doc / chunk currently executing console commands (if any)
 std::string s_consoleChunkId, s_consoleDocId, s_activeConsole;
 
-// whether we're currently connected to console events
+// whether we're currently connected to console events/plots
 bool s_consoleConnected = false;
+bool s_plotsConnected = false;
 
 void replayChunkOutputs(const std::string& docPath, const std::string& docId,
       const std::string& requestId, const json::Array& chunkOutputs) 
@@ -78,6 +82,8 @@ void replayChunkOutputs(const std::string& docPath, const std::string& docId,
    json::Object result;
    result["path"] = docPath;
    result["request_id"] = requestId;
+   result["chunk_id"] = "";
+   result["type"] = kFinishedReplay;
    ClientEvent event(client_events::kChunkOutputFinished, result);
    module_context::enqueClientEvent(event);
 }
@@ -215,16 +221,47 @@ void onFileOutput(const FilePath& file, int outputType)
    updateLastChunkOutput(s_consoleDocId, s_consoleChunkId, pair);
 }
 
+void emitOutputFinished()
+{
+   std::string path;
+   source_database::getPath(s_consoleDocId, &path);
+
+   json::Object result;
+   result["path"] = path;
+   result["request_id"] = "";
+   result["chunk_id"] = s_consoleChunkId;
+   result["type"] = kFinishedInteractive;
+   ClientEvent event(client_events::kChunkOutputFinished, result);
+   module_context::enqueClientEvent(event);
+}
+
+void onPlotOutputComplete()
+{
+   // disconnect from plot output events
+   events().onPlotOutput.disconnect(
+         boost::bind(onFileOutput, _1, kChunkOutputPlot));
+   events().onPlotOutputComplete.disconnect(onPlotOutputComplete);
+   s_plotsConnected = false;
+
+   // if the console's not still connected, let the client know
+   if (!s_consoleConnected)
+      emitOutputFinished();
+}
+
 void disconnectConsole()
 {
    module_context::events().onConsolePrompt.disconnect(onConsolePrompt);
    module_context::events().onConsoleOutput.disconnect(onConsoleOutput);
    module_context::events().onConsoleInput.disconnect(onConsoleInput);
    
-   events().onPlotOutput.disconnect(
-         boost::bind(onFileOutput, _1, kChunkOutputPlot));
+   // disconnect HTML output (plots may still need to accumulate async)
    events().onHtmlOutput.disconnect(
          boost::bind(onFileOutput, _1, kChunkOutputHtml));
+
+   // if the plots are no longer connected (could happen in the case of error
+   // or early termination) let the client know
+   if (!s_plotsConnected)
+      emitOutputFinished();
 
    s_consoleConnected = false;
 }
@@ -246,9 +283,13 @@ void connectConsole()
    module_context::events().onConsoleOutput.connect(onConsoleOutput);
    module_context::events().onConsoleInput.connect(onConsoleInput);
 
-   // begin capturing plots and HTML output
+   // begin capturing plots 
    events().onPlotOutput.connect(
          boost::bind(onFileOutput, _1, kChunkOutputPlot));
+   events().onPlotOutputComplete.connect(onPlotOutputComplete);
+   s_plotsConnected = true;
+
+   // begin capturing HTML input
    events().onHtmlOutput.connect(
          boost::bind(onFileOutput, _1, kChunkOutputHtml));
 

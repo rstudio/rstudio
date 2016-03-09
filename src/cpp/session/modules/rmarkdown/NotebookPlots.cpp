@@ -67,6 +67,8 @@ void removeGraphicsDevice(const FilePath& plotFolder)
       if (isPlotPath(path))
          events().onPlotOutput(path);
    }
+
+   events().onPlotOutputComplete();
 }
 
 void unregisterMonitor(const std::string&,
@@ -93,8 +95,6 @@ void onMonitorRegistered(
       if (isPlotPath(path))
          events().onPlotOutput(path);
    }
-
-   // TODO: emit any plots which were created while we were registering
 }
 
 void onMonitorRegError(const FilePath& plotFolder, 
@@ -155,7 +155,7 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
    // generate code for creating PNG device
    boost::format fmt("{ require(grDevices, quietly=TRUE); "
                      "  png(file = \"%1%/" kPlotPrefix "%%03d.png\", "
-                     "  width = 5, height = 5, "
+                     "  width = 7, height = 7, "
                      "  units=\"in\", res = 96, type = \"cairo-png\", TRUE)"
                      "}");
 

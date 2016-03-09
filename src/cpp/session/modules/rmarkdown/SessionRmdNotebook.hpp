@@ -52,6 +52,7 @@ struct Events : boost::noncopyable
 
    boost::signal<void(const core::FilePath&)> onPlotOutput;
    boost::signal<void(const core::FilePath&)> onHtmlOutput;
+   boost::signal<void()> onPlotOutputComplete;
 };
 
 Events& events();
