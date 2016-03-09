@@ -126,7 +126,9 @@ options(help_type = "html")
       return()
    
    # Get objects from that namespace
-   ns <- asNamespace(namespace)
+   ns <- try(asNamespace(namespace), silent = TRUE)
+   if (inherits(ns, "try-error"))
+      return()
    
    # Datasets don't live in the namespace -- ennumerate them separately
    # We have to avoid the 'base' package, though.
