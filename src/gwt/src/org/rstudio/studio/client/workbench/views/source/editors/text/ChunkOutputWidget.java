@@ -22,7 +22,6 @@ import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationInterrupt.InterruptHandler;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
 import org.rstudio.studio.client.server.ServerError;
@@ -50,6 +49,7 @@ import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkOutputWidget extends Composite
@@ -121,8 +121,8 @@ public class ChunkOutputWidget extends Composite
          }
       });
       
-      DOM.sinkEvents(root_.getElement(), Event.ONMOUSEOVER | Event.ONMOUSEOUT);
-      DOM.setEventListener(root_.getElement(), new EventListener()
+      DOM.sinkEvents(frame_.getElement(), Event.ONMOUSEOVER | Event.ONMOUSEOUT);
+      DOM.setEventListener(frame_.getElement(), new EventListener()
       {
          @Override
          public void onBrowserEvent(Event evt)
@@ -157,7 +157,7 @@ public class ChunkOutputWidget extends Composite
    
    public void showChunkOutputUnit(RmdChunkOutputUnit unit)
    {
-      resetOnInitialContent(unit.getType());
+      initializeOutput(unit.getType());
       switch(unit.getType())
       {
       case RmdChunkOutputUnit.TYPE_TEXT:
@@ -176,8 +176,6 @@ public class ChunkOutputWidget extends Composite
    {
       if (output.getType() == RmdChunkOutput.TYPE_MULTIPLE_UNIT)
       {
-         // TODO: for multiple units we need to clear existing units
-         
          // loop over the output units and emit the appropriate contents for
          // each
          JsArray<RmdChunkOutputUnit> units = output.getUnits();
@@ -185,6 +183,7 @@ public class ChunkOutputWidget extends Composite
          {
             showChunkOutputUnit(units.get(i));
          }
+         emitRenderComplete();
       }
       else if (output.getType() == RmdChunkOutput.TYPE_SINGLE_UNIT)
       {
@@ -204,7 +203,6 @@ public class ChunkOutputWidget extends Composite
    private void showConsoleOutput(JsArray<JsArrayEx> output)
    {
       initConsole();
-      
       for (int i = 0; i < output.length(); i++)
       {
          if (output.get(i).length() < 2)
@@ -215,13 +213,7 @@ public class ChunkOutputWidget extends Composite
                      output.get(i).getString(1)), 
                classOfOutput(output.get(i).getInt(0)));
       }
-      if (state_ == CHUNK_EXECUTING || state_ == CHUNK_EMPTY)
-         showReadyState();
       vconsole_.redraw(console_.getElement());
-      onRenderCompleted_.execute(console_.getElement().getOffsetHeight());
-      // scroll to the bottom
-      console_.getElement().setScrollTop(console_.getElement().getScrollHeight());
-      state_ = CONSOLE_READY;
       setOverflowStyle();
    }
    
@@ -230,7 +222,15 @@ public class ChunkOutputWidget extends Composite
       if (state_ != CHUNK_RENDERING)
          return;
       state_ = CHUNK_RENDERED;
+      emitRenderComplete();
+   }
+   
+   private void emitRenderComplete()
+   {
       int height = root_.getElement().getScrollHeight();
+      if (height == renderedHeight_)
+         return;
+      renderedHeight_ = height;
       root_.getElement().setScrollTop(height);
       onRenderCompleted_.execute(height);
    }
@@ -299,6 +299,16 @@ public class ChunkOutputWidget extends Composite
    @Override
    public void onConsolePrompt(ConsolePromptEvent event)
    {
+      if (state_ == CONSOLE_PRE_OUTPUT)
+      {
+         // if no output was produced, clear the contents and show the empty
+         // indicator
+         emptyIndicator_.setVisible(true);
+         if (vconsole_ != null)
+            vconsole_.clear();
+         root_.clear();
+         emitRenderComplete();
+      }
       state_ = CONSOLE_READY;
       lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
       setOverflowStyle();
@@ -308,20 +318,21 @@ public class ChunkOutputWidget extends Composite
 
    private void renderConsoleOutput(String text, String clazz)
    {
-      resetOnInitialContent(RmdChunkOutputUnit.TYPE_TEXT);
+      initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
       vconsole_.submitAndRender(text, clazz,
             console_.getElement());
-      console_.getElement().setScrollTop(console_.getElement().getScrollHeight());
-      onRenderCompleted_.execute(console_.getElement().getOffsetHeight());
    }
    
-   private void resetOnInitialContent(int outputType)
+   private void initializeOutput(int outputType)
    {
       if (state_ == CONSOLE_PRE_OUTPUT)
       {
          // if no output has been emitted yet, clean up all existing output
-         vconsole_.clear();
+         if (vconsole_ != null)
+            vconsole_.clear();
          root_.clear();
+         emptyIndicator_.setVisible(false);
+         lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
          state_ = CONSOLE_POST_OUTPUT;
       }
       if (state_ == CONSOLE_POST_OUTPUT)
@@ -336,7 +347,8 @@ public class ChunkOutputWidget extends Composite
          else if (lastOutputType_ == RmdChunkOutputUnit.TYPE_TEXT)
          {
             // if switching from textual input, clear the text accumulator
-            vconsole_.clear();
+            if (vconsole_ != null)
+               vconsole_.clear();
             console_ = null;
          }
       }
@@ -359,6 +371,7 @@ public class ChunkOutputWidget extends Composite
          return;
       Style frameStyle = getElement().getStyle();
       frameStyle.setBorderColor(s_outlineColor);
+      emptyIndicator_.getElement().getStyle().setColor(s_color);
 
       // apply the style to any frames in the output
       for (Widget w: root_)
@@ -503,14 +516,17 @@ public class ChunkOutputWidget extends Composite
    
    @UiField Image interrupt_;
    @UiField Image clear_;
+   @UiField Label emptyIndicator_;
    @UiField HTMLPanel root_;
    @UiField ChunkStyle style;
+   @UiField HTMLPanel frame_;
    
    private PreWidget console_;
    private VirtualConsole vconsole_;
    
    private int state_ = CHUNK_EMPTY;
    private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
+   private int renderedHeight_ = 0;
    
    private CommandWithArg<Integer> onRenderCompleted_;
    private final String chunkId_;
@@ -527,7 +543,6 @@ public class ChunkOutputWidget extends Composite
    public final static int CONSOLE_READY       = 5;
    public final static int CONSOLE_PRE_OUTPUT  = 6;
    public final static int CONSOLE_POST_OUTPUT = 7;
-   
    
    public final static int CONSOLE_INPUT  = 0;
    public final static int CONSOLE_OUTPUT = 1;
