@@ -61,6 +61,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
@@ -77,6 +78,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -102,7 +104,8 @@ public class ProfilerEditingTarget implements EditingTarget,
                                 RemoteFileSystemContext fileContext,
                                 WorkbenchContext workbenchContext,
                                 EventBus eventBus,
-                                SourceServerOperations sourceServer)
+                                SourceServerOperations sourceServer,
+                                FilesServerOperations fileServer)
    {
       presenter_ = presenter;
       commands_ = commands;
@@ -115,6 +118,7 @@ public class ProfilerEditingTarget implements EditingTarget,
       workbenchContext_ = workbenchContext;
       eventBus_ = eventBus;
       sourceServer_ = sourceServer;
+      fileServer_ = fileServer;
       
       if (!initializedEvents_)
       {
@@ -445,6 +449,7 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    public void onDismiss(int dismissType)
    {
+      clearProfileCache();
       presenter_.detach();
    }
 
@@ -525,6 +530,39 @@ public class ProfilerEditingTarget implements EditingTarget,
    public String getDefaultNamePrefix()
    {
       return "Profile";
+   }
+   
+   private void deleteFile(String targetFile)
+   {
+      fileServer_.stat(targetFile, new ServerRequestCallback<FileSystemItem>()
+      {
+         @Override
+         public void onResponseReceived(final FileSystemItem fsi)
+         {
+            ArrayList<FileSystemItem> cachedFiles = new ArrayList<FileSystemItem>();
+            cachedFiles.add(fsi);
+            
+            fileServer_.deleteFiles(
+                  cachedFiles,
+                  new ServerRequestCallback<Void>() {
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                     }
+            });
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+         }
+      });
+   }
+   
+   private void clearProfileCache()
+   {
+      deleteFile(getPath());
+      deleteFile(htmlLocalPath_);
    }
    
    private void savePropertiesWithPath(String path)
@@ -688,6 +726,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    private final WorkbenchContext workbenchContext_;
    private final EventBus eventBus_;
    private Provider<String> defaultNameProvider_;
+   private FilesServerOperations fileServer_;
    
    private ProfilerType fileType_ = new ProfilerType();
    
