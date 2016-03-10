@@ -821,6 +821,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("fuzzyMatches", function(completions, token)
 {
+   token <- gsub("(?!^)[._]", "", token, perl = TRUE)
    .rs.startsWith(tolower(completions), tolower(token))
 })
 
@@ -1409,7 +1410,10 @@ assign(x = ".rs.acCompletionTypes",
 .rs.addFunction("getCompletionsSearchPath", function(token,
                                                      overrideInsertParens = FALSE)
 {
-   objects <- .rs.objectsOnSearchPath(token, TRUE)
+   objects <- if (.rs.startsWith(token, "."))
+      .rs.objectsOnSearchPath(".")
+   else
+      .rs.objectsOnSearchPath()
    
    objects[["keywords"]] <- c(
       "NULL", "NA", "TRUE", "FALSE", "T", "F", "Inf", "NaN",

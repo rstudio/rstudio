@@ -146,6 +146,10 @@ public class CompletionRequester
       return !(!token.startsWith(".") && item.startsWith("."));
    }
    
+   private static final native String fuzzy(String string) /*-{
+      return string.replace(/(?!^)[._]/g, "");
+   }-*/;
+   
    private CompletionResult narrow(final String token,
                                    final String diff,
                                    CompletionResult cachedResult)
@@ -160,20 +164,20 @@ public class CompletionRequester
       // trailing slashes)
       
       // Transform the token once beforehand for completions.
-      final String tokenSub = token.substring(
-            token.lastIndexOf('/') + 1);
+      final String tokenSub   = token.substring(token.lastIndexOf('/') + 1);
+      final String tokenFuzzy = fuzzy(tokenSub);
       
       for (QualifiedName qname : cachedResult.completions)
       {
          // File types are narrowed only by the file name
          if (RCompletionType.isFileType(qname.type))
          {
-            if (StringUtil.isSubsequence(basename(qname.name), tokenSub, true))
+            if (StringUtil.isSubsequence(basename(qname.name), tokenFuzzy, true))
                newCompletions.add(qname);
          }
          else
          {
-            if (StringUtil.isSubsequence(qname.name, token, true) &&
+            if (StringUtil.isSubsequence(qname.name, tokenFuzzy, true) &&
                 filterStartsWithDot(qname.name, token))
                newCompletions.add(qname) ;
          }

@@ -1247,23 +1247,13 @@ int scoreMatch(std::string const& suggestion,
    if (suggestion == query)
       return 0;
    
-   int query_n = query.length();
-
-   // Call a version of subsequence indices that returns false if the query is not
-   // actually a subsequence
-   std::vector<int> matches;
-   bool success = string_utils::subsequenceIndices(
-            boost::algorithm::to_lower_copy(suggestion),
-            boost::algorithm::to_lower_copy(query),
-            &matches);
+   std::vector<int> matches =
+         string_utils::subsequenceIndices(suggestion, query);
    
-   if (!success)
-      return -1;
-
    int totalPenalty = 0;
 
    // Loop over the matches and assign a score
-   for (int j = 0; j < query_n; j++)
+   for (int j = 0, n = matches.size(); j < n; j++)
    {
       int matchPos = matches[j];
       int penalty = matchPos;
@@ -1274,7 +1264,7 @@ int scoreMatch(std::string const& suggestion,
          char prevChar = suggestion[matchPos - 1];
          if (prevChar == '_' || prevChar == '-' || (!isFile && prevChar == '.'))
          {
-            penalty = j;
+            penalty = j + 1;
          }
       }
 
@@ -1297,6 +1287,9 @@ int scoreMatch(std::string const& suggestion,
    // Penalize files
    if (isFile)
       ++totalPenalty;
+   
+   // Penalize unmatched characters
+   totalPenalty += (query.size() - matches.size()) * query.size();
 
    return totalPenalty;
 }
