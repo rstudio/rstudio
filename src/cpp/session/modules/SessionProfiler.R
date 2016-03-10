@@ -15,8 +15,24 @@
 
 .rs.addFunction("profileResources", function()
 {
+   rStudioVersion <- package_version(
+      .Call(getNativeSymbolInfo("rs_rstudioVersion", PACKAGE=""))
+   )
+   resetOptions <- rStudioVersion > "0.99.1053" && rStudioVersion < "0.99.1099"
+
+   if (identical(getOption("profvis.print"), NULL) || resetOptions) {
+      options(profvis.print = function(x) {
+         envir <- as.environment(which(search() == "tools:rstudio"))
+         eval(
+            substitute(.rs.profilePrint(x), list(x = x)),
+            envir = envir
+         )
+      })
+   }
+
    if (identical(getOption("profvis.prof_extension"), NULL) ||
-       identical(getOption("profvis.prof_extension"), ".rprof")) {
+       identical(getOption("profvis.prof_extension"), ".rprof") ||
+       resetOptions) {
       options("profvis.prof_extension" = ".Rprof")
    }
 
@@ -25,7 +41,7 @@
       dir.create(tempPath, recursive = TRUE)
    }
 
-   if (identical(getOption("profvis.prof_output"), NULL)) {
+   if (identical(getOption("profvis.prof_output"), NULL) || resetOptions) {
       options("profvis.prof_output" = tempPath)
    }
 
@@ -119,9 +135,3 @@
       path = .rs.scalar(x$x$message$prof_output)
    ));
 })
-
-if (identical(getOption("profvis.print"), NULL)) {
-   options("profvis.print" = function(x, ...) {
-      .rs.profilePrint(x, ...)
-   })
-}
