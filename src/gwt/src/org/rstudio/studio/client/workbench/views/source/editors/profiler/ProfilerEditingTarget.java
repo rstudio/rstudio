@@ -181,6 +181,7 @@ public class ProfilerEditingTarget implements EditingTarget,
          commands.add(commands_.popoutDoc());
       else
          commands.add(commands_.returnDocToMain());
+      
       return commands;
    }
    
@@ -218,8 +219,6 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    public void onActivate()
    {
-      commands_.saveProfileAs().setEnabled(true);
-      
       if (!htmlPathInitialized_) {
          htmlPathInitialized_ = true;
          
@@ -273,8 +272,6 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    public void onDeactivate()
    {
-      commands_.saveProfileAs().setEnabled(false);
-      
       recordCurrentNavigationPosition();
       
       commandHandlerReg_.removeHandler();
