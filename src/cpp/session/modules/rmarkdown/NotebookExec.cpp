@@ -99,14 +99,6 @@ void ChunkExecContext::connect()
       return;
    }
 
-   // begin capturing console text
-   connections_.push_back(module_context::events().onConsolePrompt.connect(
-         boost::bind(&ChunkExecContext::onConsolePrompt, this, _1)));
-   connections_.push_back(module_context::events().onConsoleOutput.connect(
-         boost::bind(&ChunkExecContext::onConsoleOutput, this, _1, _2)));
-   connections_.push_back(module_context::events().onConsoleInput.connect(
-         boost::bind(&ChunkExecContext::onConsoleInput, this, _1)));
-
    // begin capturing plots 
    connections_.push_back(events().onPlotOutput.connect(
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, 
@@ -125,6 +117,14 @@ void ChunkExecContext::connect()
          outputPath.parent().complete(kChunkLibDir));
    if (error)
       LOG_ERROR(error);
+
+   // begin capturing console text
+   connections_.push_back(module_context::events().onConsolePrompt.connect(
+         boost::bind(&ChunkExecContext::onConsolePrompt, this, _1)));
+   connections_.push_back(module_context::events().onConsoleOutput.connect(
+         boost::bind(&ChunkExecContext::onConsoleOutput, this, _1, _2)));
+   connections_.push_back(module_context::events().onConsoleInput.connect(
+         boost::bind(&ChunkExecContext::onConsoleInput, this, _1)));
 
    connected_ = true;
 }
@@ -147,6 +147,7 @@ void ChunkExecContext::onFileOutput(const FilePath& file, int outputType)
       LOG_ERROR(error);
       return;
    }
+
 
    // check to see if the file has an accompanying library folder; if so, move
    // it to the global library folder

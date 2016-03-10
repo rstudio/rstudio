@@ -127,7 +127,7 @@ public class ChunkOutputWidget extends Composite
          @Override
          public void onBrowserEvent(Event evt)
          {
-            if (state_ == CONSOLE_READY || state_ == CHUNK_RENDERED)
+            if (state_ == CHUNK_READY)
             {
                switch(DOM.eventGetType(evt))
                {
@@ -183,7 +183,7 @@ public class ChunkOutputWidget extends Composite
          {
             showChunkOutputUnit(units.get(i));
          }
-         emitRenderComplete();
+         onOutputFinished();
       }
       else if (output.getType() == RmdChunkOutput.TYPE_SINGLE_UNIT)
       {
@@ -219,9 +219,6 @@ public class ChunkOutputWidget extends Composite
    
    private void completeUnitRender()
    {
-      if (state_ != CHUNK_RENDERING)
-         return;
-      state_ = CHUNK_RENDERED;
       emitRenderComplete();
    }
    
@@ -248,13 +245,10 @@ public class ChunkOutputWidget extends Composite
          {
             if (DOM.eventGetType(event) != Event.ONLOAD)
                return;
-            if (state_ != CHUNK_RENDERING)
-               return;
             completeUnitRender();
          }
       });
 
-      state_ = CHUNK_RENDERING;
       plot.setUrl(url);
    }
    
@@ -270,14 +264,11 @@ public class ChunkOutputWidget extends Composite
          @Override
          public void execute()
          {
-            if (state_ != CHUNK_RENDERING)
-               return;
             Style bodyStyle = frame.getDocument().getBody().getStyle();
             bodyStyle.setColor(s_color);
             completeUnitRender();
          };
       });
-      state_ = CHUNK_RENDERING;
    }
    
    @Override
@@ -306,7 +297,7 @@ public class ChunkOutputWidget extends Composite
    
    public void onOutputFinished()
    {
-      if (state_ == CONSOLE_PRE_OUTPUT)
+      if (state_ == CHUNK_PRE_OUTPUT)
       {
          // if no output was produced, clear the contents and show the empty
          // indicator
@@ -316,7 +307,7 @@ public class ChunkOutputWidget extends Composite
          root_.clear();
          emitRenderComplete();
       }
-      state_ = CONSOLE_READY;
+      state_ = CHUNK_READY;
       lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
       setOverflowStyle();
       showReadyState();
@@ -331,7 +322,7 @@ public class ChunkOutputWidget extends Composite
    
    private void initializeOutput(int outputType)
    {
-      if (state_ == CONSOLE_PRE_OUTPUT)
+      if (state_ == CHUNK_PRE_OUTPUT)
       {
          // if no output has been emitted yet, clean up all existing output
          if (vconsole_ != null)
@@ -339,9 +330,9 @@ public class ChunkOutputWidget extends Composite
          root_.clear();
          emptyIndicator_.setVisible(false);
          lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
-         state_ = CONSOLE_POST_OUTPUT;
+         state_ = CHUNK_POST_OUTPUT;
       }
-      if (state_ == CONSOLE_POST_OUTPUT)
+      if (state_ == CHUNK_POST_OUTPUT)
       {
          if (lastOutputType_ == outputType)
             return;
@@ -395,14 +386,14 @@ public class ChunkOutputWidget extends Composite
    public void setCodeExecuting(boolean entireChunk)
    {
       // do nothing if code is already executing
-      if (state_ == CONSOLE_PRE_OUTPUT || 
-          state_ == CONSOLE_POST_OUTPUT)
+      if (state_ == CHUNK_PRE_OUTPUT || 
+          state_ == CHUNK_POST_OUTPUT)
       {
          return;
       }
 
       registerConsoleEvents();
-      state_ = CONSOLE_PRE_OUTPUT;
+      state_ = CHUNK_PRE_OUTPUT;
       showBusyState();
    }
    
@@ -476,8 +467,8 @@ public class ChunkOutputWidget extends Composite
    {
       getElement().getStyle().setBackgroundColor(s_busyColor);
       clear_.setVisible(false);
-      interrupt_.setVisible(state_ == CONSOLE_PRE_OUTPUT ||
-                            state_ == CONSOLE_POST_OUTPUT);
+      interrupt_.setVisible(state_ == CHUNK_PRE_OUTPUT ||
+                            state_ == CHUNK_POST_OUTPUT);
    }
 
    private void showReadyState()
@@ -504,10 +495,10 @@ public class ChunkOutputWidget extends Composite
    
    private void completeInterrupt()
    {
-      if (state_ == CONSOLE_PRE_OUTPUT ||
-          state_ == CONSOLE_POST_OUTPUT)
+      if (state_ == CHUNK_PRE_OUTPUT ||
+          state_ == CHUNK_POST_OUTPUT)
       {
-         state_ = CONSOLE_READY;
+         state_ = CHUNK_READY;
       }
       else
       {
@@ -538,12 +529,10 @@ public class ChunkOutputWidget extends Composite
    private static String s_color           = null;
    private static String s_busyColor       = null;
    
-   public final static int CHUNK_EMPTY         = 1;
-   public final static int CHUNK_RENDERING     = 2;
-   public final static int CHUNK_RENDERED      = 3;
-   public final static int CONSOLE_READY       = 4;
-   public final static int CONSOLE_PRE_OUTPUT  = 5;
-   public final static int CONSOLE_POST_OUTPUT = 6;
+   public final static int CHUNK_EMPTY       = 1;
+   public final static int CHUNK_READY       = 2;
+   public final static int CHUNK_PRE_OUTPUT  = 3;
+   public final static int CHUNK_POST_OUTPUT = 4;
    
    public final static int CONSOLE_INPUT  = 0;
    public final static int CONSOLE_OUTPUT = 1;
