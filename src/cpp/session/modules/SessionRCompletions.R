@@ -1415,7 +1415,7 @@ assign(x = ".rs.acCompletionTypes",
    else
       .rs.objectsOnSearchPath()
    
-   objects[["keywords"]] <-  c(
+   objects[["keywords"]] <- c(
       "NULL", "NA", "TRUE", "FALSE", "T", "F", "Inf", "NaN",
       "NA_integer_", "NA_real_", "NA_character_", "NA_complex_"
    )
