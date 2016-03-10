@@ -872,7 +872,9 @@ public class StringUtil
       return false;
    }
    
-   public static int[] subsequenceIndices(String sequence, String query, char[] skips)
+   public static List<Integer> subsequenceIndices(String sequence,
+                                                  String query,
+                                                  char[] skips)
    {
       List<Integer> list = new ArrayList<Integer>();
       
@@ -891,10 +893,7 @@ public class StringUtil
          prevMatchIndex = idx;
       }
       
-      int[] result = new int[list.size()];
-      for (int i = 0; i < list.size(); i++)
-         result[i] = list.get(i);
-      return result;
+      return list;
    }
    
    public static String getExtension(String string, int dots)
