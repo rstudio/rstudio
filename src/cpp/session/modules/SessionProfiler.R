@@ -93,7 +93,7 @@
       htmlFile <- tempfile(fileext = ".html", tmpdir = resources$tempPath)
 
       if (identical(profilerOptions$profvis, NULL)) {
-         if (identical(tools::file_ext(profilerOptions$fileName), ".Rprof")) {
+         if (identical(tools::file_ext(profilerOptions$fileName), "Rprof")) {
             profvis <- profvis::profvis(prof_input = profilerOptions$fileName, split="h")
             htmlwidgets::saveWidget(profvis, htmlFile, selfcontained = TRUE)
          }
