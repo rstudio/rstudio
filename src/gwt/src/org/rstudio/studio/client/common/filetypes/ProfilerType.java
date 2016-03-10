@@ -60,6 +60,6 @@ public class ProfilerType extends EditableFileType
    
    public String getDefaultExtension()
    {
-      return ".Rprof";
+      return ".Rprofvis";
    }
 }

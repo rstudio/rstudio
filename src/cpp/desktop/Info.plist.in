@@ -202,8 +202,8 @@
       <dict>
          <key>CFBundleTypeExtensions</key>
          <array>
-             <string>Rprof</string>
-             <string>rprof</string>
+             <string>Rprofvis</string>
+             <string>rprofvis</string>
          </array>
          <key>CFBundleTypeIconFile</key>
          <string>RSource.icns</string>

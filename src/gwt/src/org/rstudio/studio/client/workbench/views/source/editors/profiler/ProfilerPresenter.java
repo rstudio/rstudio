@@ -212,7 +212,7 @@ public class ProfilerPresenter implements RprofEvent.Handler
          "Open File",
          fileContext_,
          workbenchContext_.getDefaultFileDialogDir(),
-         ".Rprof",
+         ".Rprofvis",
          new ProgressOperationWithInput<FileSystemItem>()
          {
             public void execute(final FileSystemItem input,
