@@ -27,6 +27,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
+#include <session/SessionSourceDatabase.hpp>
 
 #include <iostream>
 
@@ -148,15 +149,16 @@ void ChunkExecContext::onFileOutput(const FilePath& file, int outputType)
       return;
    }
 
-
    // check to see if the file has an accompanying library folder; if so, move
    // it to the global library folder
    FilePath fileLib = file.parent().complete(kChunkLibDir);
    if (fileLib.exists())
    {
       std::vector<FilePath> paths;
+      std::string docPath;
+      source_database::getPath(docId_, &docPath);
       error = fileLib.childrenRecursive(boost::bind(moveLibFile, fileLib,
-            chunkCacheFolder(docId_, chunkId_)
+            chunkCacheFolder(docPath, docId_)
                            .complete(kChunkLibDir), _2, &paths));
       if (error)
          LOG_ERROR(error);

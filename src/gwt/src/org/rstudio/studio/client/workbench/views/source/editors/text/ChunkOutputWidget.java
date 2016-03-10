@@ -255,7 +255,7 @@ public class ChunkOutputWidget extends Composite
    private void showHtmlOutput(String url)
    {
       final ChunkOutputFrame frame = new ChunkOutputFrame();
-      frame.getElement().getStyle().setHeight(100, Unit.PCT);
+      frame.getElement().getStyle().setHeight(500, Unit.PX);
       frame.getElement().getStyle().setWidth(100, Unit.PCT);
       root_.add(frame);
 
@@ -265,6 +265,8 @@ public class ChunkOutputWidget extends Composite
          public void execute()
          {
             Style bodyStyle = frame.getDocument().getBody().getStyle();
+            bodyStyle.setPadding(0, Unit.PX);
+            bodyStyle.setMargin(0, Unit.PX);
             bodyStyle.setColor(s_color);
             completeUnitRender();
          };
