@@ -102,8 +102,7 @@ public class ProfilerEditingTarget implements EditingTarget,
                                 RemoteFileSystemContext fileContext,
                                 WorkbenchContext workbenchContext,
                                 EventBus eventBus,
-                                SourceServerOperations sourceServer,
-                                ProfilerPresenter profilerPresenter)
+                                SourceServerOperations sourceServer)
    {
       presenter_ = presenter;
       commands_ = commands;
@@ -116,7 +115,6 @@ public class ProfilerEditingTarget implements EditingTarget,
       workbenchContext_ = workbenchContext;
       eventBus_ = eventBus;
       sourceServer_ = sourceServer;
-      profilerPresenter_ = profilerPresenter;
       
       if (!initializedEvents_)
       {
@@ -227,7 +225,7 @@ public class ProfilerEditingTarget implements EditingTarget,
          
          if (htmlPath_ == null)
          {
-            profilerPresenter_.buildHtmlPath(new OperationWithInput<ProfileOperationResponse>()
+            presenter_.buildHtmlPath(new OperationWithInput<ProfileOperationResponse>()
             {
                @Override
                public void execute(ProfileOperationResponse response)
@@ -690,7 +688,6 @@ public class ProfilerEditingTarget implements EditingTarget,
    private final WorkbenchContext workbenchContext_;
    private final EventBus eventBus_;
    private Provider<String> defaultNameProvider_;
-   private ProfilerPresenter profilerPresenter_;
    
    private ProfilerType fileType_ = new ProfilerType();
    
