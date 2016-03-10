@@ -48,28 +48,48 @@ private:
    std::string needle_;
 };
 
-bool isSubsequence(std::string const& self,
-                   std::string const& other);
+inline std::vector<char> makeRAutocompletionSkippableCharacters()
+{
+   std::vector<char> instance;
+   instance.push_back('.');
+   instance.push_back('_');
+   return instance;
+}
 
-bool isSubsequence(std::string const& self,
-                   std::string const& other,
-                   bool caseInsensitive);
+inline const std::vector<char>& rAutocompletionSkippableCharacters()
+{
+   static std::vector<char> instance = makeRAutocompletionSkippableCharacters();
+   return instance;
+}
 
-bool isSubsequence(std::string const& self,
-                   std::string const& other,
-                   std::string::size_type other_n,
-                   bool caseInsensitive);
+bool isSubsequence(const std::string& sequence,
+                   const std::string& query,
+                   const std::vector<char>& skip = std::vector<char>());
 
-bool isSubsequence(std::string const& self,
-                   std::string const& other,
-                   std::string::size_type other_n);
+bool isSubsequence(const std::string& sequence,
+                   const std::string& query,
+                   bool caseInsensitive,
+                   const std::vector<char>& skip = std::vector<char>());
 
-std::vector<int> subsequenceIndices(std::string const& sequence,
-                                    std::string const& query);
+bool isSubsequence(const std::string& sequence,
+                   const std::string& query,
+                   std::string::size_type querySize,
+                   const std::vector<char>& skip = std::vector<char>());
 
-bool subsequenceIndices(std::string const& sequence,
-                        std::string const& query,
-                        std::vector<int> *pIndices);
+bool isSubsequence(const std::string& sequence,
+                   const std::string& query,
+                   std::string::size_type querySize,
+                   bool caseInsensitive,
+                   const std::vector<char>& skip = std::vector<char>());
+
+std::vector<int> subsequenceIndices(const std::string& sequence,
+                                    const std::string& query,
+                                    const std::vector<char>& skip = std::vector<char>());
+
+bool subsequenceIndices(const std::string& sequence,
+                        const std::string& query,
+                        std::vector<int> *pIndices,
+                        const std::vector<char>& skip = std::vector<char>());
 
 std::string getExtension(std::string const& str);
 
