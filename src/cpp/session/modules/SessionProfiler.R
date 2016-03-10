@@ -96,6 +96,8 @@
          if (identical(tools::file_ext(profilerOptions$fileName), "Rprof")) {
             profvis <- profvis::profvis(prof_input = profilerOptions$fileName, split="h")
             htmlwidgets::saveWidget(profvis, htmlFile, selfcontained = TRUE)
+
+            file.remove(profilerOptions$fileName)
          }
          else {
             .rs.rpc.copy_profile(profilerOptions$fileName, htmlFile)
@@ -104,6 +106,8 @@
       else {
          profvis <- profilerOptions$profvis
          htmlwidgets::saveWidget(profvis, htmlFile, selfcontained = TRUE)
+
+         file.remove(profilerOptions$profvis$x$message$prof_output)
       }
 
       return(list(
@@ -148,4 +152,20 @@
    ))
 
    .rs.enqueClientEvent("rprof_created", result);
+})
+
+.rs.addJsonRpcHandler("clear_profile", function(filePath)
+{
+   tryCatch({
+      resources <- .rs.profileResources()
+
+      filePrefix <- tools::file_path_sans_ext(basename(filePath))
+      file.remove(file.path(resources$tempPath, paste(filePrefix, ".html", sep = "")))
+      unlink(file.path(resources$tempPath, paste(filePrefix, "_files", sep = "")), recursive = TRUE)
+
+      return(list(
+      ))
+   }, error = function(e) {
+      return(list(error = .rs.scalar(e$message)))
+   })
 })

@@ -78,7 +78,6 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -529,36 +528,15 @@ public class ProfilerEditingTarget implements EditingTarget,
       return "Profile";
    }
    
-   private void deleteFile(String targetFile)
+   private void clearProfileCache()
    {
-      fileServer_.stat(targetFile, new ServerRequestCallback<FileSystemItem>()
+      server_.clearProfile(htmlLocalPath_, new ServerRequestCallback<JavaScriptObject>()
       {
-         @Override
-         public void onResponseReceived(final FileSystemItem fsi)
-         {
-            ArrayList<FileSystemItem> cachedFiles = new ArrayList<FileSystemItem>();
-            cachedFiles.add(fsi);
-            
-            fileServer_.deleteFiles(
-                  cachedFiles,
-                  new ServerRequestCallback<Void>() {
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                     }
-            });
-         }
-
          @Override
          public void onError(ServerError error)
          {
          }
       });
-   }
-   
-   private void clearProfileCache()
-   {
-      deleteFile(htmlLocalPath_);
    }
    
    private void savePropertiesWithPath(String path)
