@@ -30,3 +30,4 @@ CMakeLists.txt.user
 *swp
 .orig
 .vagrant
+.*.Rnb.cached

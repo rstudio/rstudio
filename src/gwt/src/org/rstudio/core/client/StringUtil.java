@@ -829,20 +829,23 @@ public class StringUtil
       return false;
    }
    
-   public static int[] subsequenceIndices(
-         String sequence, String query)
+   public static List<Integer> subsequenceIndices(String sequence, String query)
    {
-      int query_n = query.length();
-      int[] result = new int[query.length()];
+      List<Integer> result = new ArrayList<Integer>();
+      int querySize = query.length();
       
       int prevMatchIndex = -1;
-      for (int i = 0; i < query_n; i++)
+      for (int i = 0; i < querySize; i++)
       {
-         result[i] = sequence.indexOf(query.charAt(i), prevMatchIndex + 1);
-         prevMatchIndex = result[i];
+         int index = sequence.indexOf(query.charAt(i), prevMatchIndex + 1);
+         if (index == -1)
+            continue;
+         
+         result.add(index);
+         prevMatchIndex = index;
       }
-      return result;
       
+      return result;
    }
    
    public static String getExtension(String string, int dots)
