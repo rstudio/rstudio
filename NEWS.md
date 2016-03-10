@@ -6,6 +6,7 @@
 * Added option for display of 'end' fold markers
 * Display function tooltip on mouse over of function name
 * Added option to display function signature tooltip on cursor idle
+* Autocompletion allows mismatch between '.', '\_' in token
 
 ### Data Import
 
