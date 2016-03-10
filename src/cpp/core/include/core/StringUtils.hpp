@@ -62,23 +62,23 @@ inline const std::vector<char>& rAutocompletionSkippableCharacters()
    return instance;
 }
 
-bool isSubsequence(const std::string& self,
-                   const std::string& other,
+bool isSubsequence(const std::string& sequence,
+                   const std::string& query,
                    const std::vector<char>& skip = std::vector<char>());
 
-bool isSubsequence(const std::string& self,
-                   const std::string& other,
+bool isSubsequence(const std::string& sequence,
+                   const std::string& query,
                    bool caseInsensitive,
                    const std::vector<char>& skip = std::vector<char>());
 
-bool isSubsequence(const std::string& self,
-                   const std::string& other,
-                   std::string::size_type other_n,
+bool isSubsequence(const std::string& sequence,
+                   const std::string& query,
+                   std::string::size_type querySize,
                    const std::vector<char>& skip = std::vector<char>());
 
-bool isSubsequence(const std::string& self,
-                   const std::string& other,
-                   std::string::size_type other_n,
+bool isSubsequence(const std::string& sequence,
+                   const std::string& query,
+                   std::string::size_type querySize,
                    bool caseInsensitive,
                    const std::vector<char>& skip = std::vector<char>());
 

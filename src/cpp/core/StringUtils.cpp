@@ -42,18 +42,18 @@ namespace string_utils {
 
 bool isSubsequence(std::string const& sequence,
                    std::string const& query,
-                   std::string::size_type queryN,
+                   std::string::size_type querySize,
                    const std::vector<char>& skip)
 {
    std::string::size_type sequenceN = sequence.length();
 
-   if (queryN == 0)
+   if (querySize == 0)
       return true;
 
-   if (queryN > query.length())
-      queryN = query.length();
+   if (querySize > query.length())
+      querySize = query.length();
 
-   if (!skip.empty() && queryN > sequenceN)
+   if (!skip.empty() && querySize > sequenceN)
       return false;
 
    std::string::size_type sequenceIdx = 0;
@@ -67,7 +67,7 @@ bool isSubsequence(std::string const& sequence,
       while (core::algorithm::contains(skip, queryChar))
       {
          ++queryIdx;
-         if (queryIdx == queryN)
+         if (queryIdx == querySize)
             return true;
          queryChar = query[queryIdx];
       }
@@ -75,7 +75,7 @@ bool isSubsequence(std::string const& sequence,
       if (queryChar == sequenceChar)
       {
          ++queryIdx;
-         if (queryIdx == queryN)
+         if (queryIdx == querySize)
             return true;
       }
       
@@ -124,12 +124,12 @@ std::vector<int> subsequenceIndices(std::string const& sequence,
                                     std::string const& query,
                                     const std::vector<char>& skip)
 {
-   std::string::size_type queryN = query.length();
+   std::string::size_type querySize = query.length();
    std::vector<int> result;
-   result.reserve(queryN);
+   result.reserve(querySize);
 
    std::size_t prevMatchIndex = -1;
-   for (std::string::size_type i = 0; i < queryN; i++)
+   for (std::string::size_type i = 0; i < querySize; i++)
    {
       char ch = query[i];
       if (core::algorithm::contains(skip, ch))
@@ -148,10 +148,10 @@ bool subsequenceIndices(std::string const& sequence,
                         std::vector<int> *pIndices,
                         const std::vector<char>& skip)
 {
-   std::string::size_type queryN = query.length();
+   std::string::size_type querySize = query.length();
    std::string::size_type prevMatchIndex = -1;
    
-   for (std::string::size_type i = 0; i < queryN; i++)
+   for (std::string::size_type i = 0; i < querySize; i++)
    {
       char ch = query[i];
       if (core::algorithm::contains(skip, ch))
