@@ -38,7 +38,6 @@
 #include <core/system/System.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionSourceDatabase.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionUserSettings.hpp>
 
@@ -55,8 +54,9 @@ namespace notebook {
 
 namespace {
 
-// the currently active console ID
+// the currently active console ID and chunk execution context
 std::string s_activeConsole;
+boost::shared_ptr<ChunkExecContext> s_execContext;
 
 void replayChunkOutputs(const std::string& docPath, const std::string& docId,
       const std::string& requestId, const json::Array& chunkOutputs) 
@@ -120,45 +120,43 @@ void emitOutputFinished(const std::string& docId, const std::string& chunkId)
    module_context::enqueClientEvent(event);
 }
 
-void onActiveConsoleChanged(boost::shared_ptr<ChunkExecContext> execContext,
-                            const std::string& consoleId, 
+void onActiveConsoleChanged(const std::string& consoleId, 
                             const std::string& text)
 {
    s_activeConsole = consoleId;
-   if (!execContext)
+   if (!s_execContext)
       return;
 
-   if (consoleId == execContext->chunkId())
+   if (consoleId == s_execContext->chunkId())
    {
-      if (execContext->consoleConnected()) 
+      if (s_execContext->connected()) 
          return;
-      execContext->connect();
+      s_execContext->connect();
    }
-   else if (execContext->consoleConnected())
+   else if (s_execContext->connected())
    {
-      execContext->disconnect();
+      s_execContext->disconnect();
+      s_execContext.reset();
    }
 }
 
-void onChunkExecCompleted(boost::shared_ptr<ChunkExecContext> execContext,
-                          const std::string& docId, 
+void onChunkExecCompleted(const std::string& docId, 
                           const std::string& chunkId,
                           const std::string& contextId)
 {
-   // if this event belongs to the current execution context, destroy it
-   if (execContext &&
-       execContext->docId() == docId &&
-       execContext->chunkId() == chunkId)
-   {
-      execContext.reset();
-   }
-
    emitOutputFinished(docId, chunkId);
+
+   // if this event belonged to the current execution context, destroy it
+   if (s_execContext &&
+       s_execContext->docId() == docId &&
+       s_execContext->chunkId() == chunkId)
+   {
+      s_execContext.reset();
+   }
 }
 
 // called by the client to set the active chunk console
-Error setChunkConsole(boost::shared_ptr<ChunkExecContext> execContext,
-                      const json::JsonRpcRequest& request,
+Error setChunkConsole(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse*)
 {
 
@@ -171,9 +169,9 @@ Error setChunkConsole(boost::shared_ptr<ChunkExecContext> execContext,
    cleanChunkOutput(docId, chunkId, true);
 
    // create the execution context and connect it immediately if necessary
-   execContext.reset(new ChunkExecContext(docId, chunkId));
+   s_execContext.reset(new ChunkExecContext(docId, chunkId));
    if (s_activeConsole == chunkId)
-      execContext->connect();
+      s_execContext->connect();
 
    return Success();
 }
@@ -191,22 +189,15 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   // the current execution context, if any
-   boost::shared_ptr<ChunkExecContext> pExecContext;
-
    module_context::events().onActiveConsoleChanged.connect(
-         bind(onActiveConsoleChanged, pExecContext, _1, _2));
+         onActiveConsoleChanged);
 
-   events().onChunkExecCompleted.connect(boost::bind(
-            onChunkExecCompleted, pExecContext, _1, _2, _3));
-
-   json::JsonRpcFunction setChunkConsoleCtx = bind(
-         setChunkConsole, pExecContext, _1, _2);
+   events().onChunkExecCompleted.connect(onChunkExecCompleted);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "refresh_chunk_output", refreshChunkOutput))
-      (bind(registerRpcMethod, "set_chunk_console", setChunkConsoleCtx))
+      (bind(registerRpcMethod, "set_chunk_console", setChunkConsole))
       (bind(module_context::sourceModuleRFile, "SessionRmdNotebook.R"))
       (bind(initOutput))
       (bind(initCache))

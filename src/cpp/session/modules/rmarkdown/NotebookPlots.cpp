@@ -43,11 +43,6 @@ bool isPlotPath(const FilePath& path)
           string_utils::isPrefixOf(path.stem(), kPlotPrefix);
 }
 
-bool plotFilter(const FileInfo& file)
-{
-   return file.isDirectory() || isPlotPath(FilePath(file.absolutePath()));
-}
-
 void removeGraphicsDevice(const FilePath& plotFolder)
 {
    // turn off the graphics device -- this has the side effect of writing the
@@ -56,7 +51,7 @@ void removeGraphicsDevice(const FilePath& plotFolder)
    if (error)
       LOG_ERROR(error);
 
-   // clean up any stale plots from the folder
+   // collect plots from the folder
    std::vector<FilePath> folderContents;
    error = plotFolder.children(&folderContents);
    if (error)
@@ -67,64 +62,14 @@ void removeGraphicsDevice(const FilePath& plotFolder)
       if (isPlotPath(path))
          events().onPlotOutput(path);
    }
-
-   events().onPlotOutputComplete();
 }
 
-void unregisterMonitor(const std::string&,
-                       const core::system::file_monitor::Handle& handle)
+void onConsolePrompt(const FilePath& plotFolder, const std::string& )
 {
+   removeGraphicsDevice(plotFolder);
+
    module_context::events().onConsolePrompt.disconnect(
-         boost::bind(unregisterMonitor, _1, handle));
-
-   core::system::file_monitor::unregisterMonitor(handle);
-}
-
-void onMonitorRegistered(
-      const core::system::file_monitor::Handle& handle,
-      const tree<FileInfo>& files)
-{
-   // we only want to listen until the next console prompt
-   module_context::events().onConsolePrompt.connect(
-         boost::bind(unregisterMonitor, _1, handle));
-
-   // fire for any plots which were emitted during file monitor registration
-   for (tree<FileInfo>::iterator it = files.begin(); it != files.end(); it++) 
-   {
-      FilePath path(it->absolutePath());
-      if (isPlotPath(path))
-         events().onPlotOutput(path);
-   }
-}
-
-void onMonitorRegError(const FilePath& plotFolder, 
-                       const Error &error)
-{
-   LOG_ERROR(error);
-   removeGraphicsDevice(plotFolder);
-}
-
-void onMonitorUnregistered(const FilePath& plotFolder,
-                           const core::system::file_monitor::Handle& handle)
-{
-   // when the monitor is unregistered, disable the associated graphics
-   // device
-   removeGraphicsDevice(plotFolder);
-}
-
-void onPlotFilesChanged(
-      const std::vector<core::system::FileChangeEvent>& changeEvents)
-{
-   BOOST_FOREACH(const core::system::FileChangeEvent& event, changeEvents)
-   {
-      // we only care about new plots
-      if (event.type() != core::system::FileChangeEvent::FileAdded)
-         continue;
-
-      // notify caller
-      FilePath path(event.fileInfo().absolutePath());
-      events().onPlotOutput(path);
-   }
+         boost::bind(onConsolePrompt, plotFolder, _1));
 }
 
 } // anonymous namespace
@@ -155,8 +100,8 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
    // generate code for creating PNG device
    boost::format fmt("{ require(grDevices, quietly=TRUE); "
                      "  png(file = \"%1%/" kPlotPrefix "%%03d.png\", "
-                     "  width = 7, height = 7, "
-                     "  units=\"in\", res = 96, type = \"cairo-png\", TRUE)"
+                     "  width = 5, height = 5, pointsize = 14, "
+                     "  units=\"in\", res = 96, type = \"cairo-png\")"
                      "}");
 
    // create the PNG device
@@ -165,18 +110,9 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
    if (error)
       return error;
 
-   // set up file monitor callbacks
-   core::system::file_monitor::Callbacks callbacks;
-   callbacks.onRegistered = onMonitorRegistered;
-   callbacks.onUnregistered = boost::bind(onMonitorUnregistered,
-         plotFolder, _1);
-   callbacks.onRegistrationError = boost::bind(onMonitorRegError,
-         plotFolder, _1);
-   callbacks.onFilesChanged = onPlotFilesChanged;
-
-   // create the monitor
-   core::system::file_monitor::registerMonitor(plotFolder, true, plotFilter,
-         callbacks);
+   // complete the capture on the next console prompt
+   module_context::events().onConsolePrompt.connect(
+         boost::bind(onConsolePrompt, plotFolder, _1));
 
    return Success();
 }

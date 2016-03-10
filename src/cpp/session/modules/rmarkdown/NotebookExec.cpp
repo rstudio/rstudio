@@ -20,6 +20,8 @@
 #include "NotebookHtmlWidgets.hpp"
 #include "NotebookCache.hpp"
 
+#include <boost/foreach.hpp>
+
 #include <core/text/CsvParser.hpp>
 #include <core/FileSerializer.hpp>
 
@@ -60,13 +62,14 @@ ChunkExecContext::ChunkExecContext(const std::string& docId,
       const std::string& chunkId):
    docId_(docId), 
    chunkId_(chunkId),
-   consoleConnected_(false),
-   plotsConnected_(false)
+   connected_(false)
 {
 }
 
 ChunkExecContext::~ChunkExecContext()
 {
+   if (connected_)
+      disconnect();
 }
 
 std::string ChunkExecContext::chunkId()
@@ -79,9 +82,9 @@ std::string ChunkExecContext::docId()
    return docId_;
 }
 
-bool ChunkExecContext::consoleConnected()
+bool ChunkExecContext::connected()
 {
-   return consoleConnected_;
+   return connected_;
 }
 
 void ChunkExecContext::connect()
@@ -97,57 +100,38 @@ void ChunkExecContext::connect()
    }
 
    // begin capturing console text
-   module_context::events().onConsolePrompt.connect(
-         boost::bind(&ChunkExecContext::onConsolePrompt, this, _1));
-   module_context::events().onConsoleOutput.connect(
-         boost::bind(&ChunkExecContext::onConsoleOutput, this, _1, _2));
-   module_context::events().onConsoleInput.connect(
-         boost::bind(&ChunkExecContext::onConsoleInput, this, _1));
+   connections_.push_back(module_context::events().onConsolePrompt.connect(
+         boost::bind(&ChunkExecContext::onConsolePrompt, this, _1)));
+   connections_.push_back(module_context::events().onConsoleOutput.connect(
+         boost::bind(&ChunkExecContext::onConsoleOutput, this, _1, _2)));
+   connections_.push_back(module_context::events().onConsoleInput.connect(
+         boost::bind(&ChunkExecContext::onConsoleInput, this, _1)));
 
    // begin capturing plots 
-   events().onPlotOutput.connect(
+   connections_.push_back(events().onPlotOutput.connect(
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, 
-                     kChunkOutputPlot));
-   events().onPlotOutputComplete.connect(
-         boost::bind(&ChunkExecContext::onPlotOutputComplete, this));
+                     kChunkOutputPlot)));
 
    error = beginPlotCapture(outputPath);
    if (error)
       LOG_ERROR(error);
-   else
-      plotsConnected_ = true;
 
    // begin capturing HTML input
-   events().onHtmlOutput.connect(
+   connections_.push_back(events().onHtmlOutput.connect(
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, 
-                     kChunkOutputHtml));
+                     kChunkOutputHtml)));
 
    error = beginWidgetCapture(outputPath, 
          outputPath.parent().complete(kChunkLibDir));
    if (error)
       LOG_ERROR(error);
 
-   consoleConnected_ = true;
-}
-
-void ChunkExecContext::onPlotOutputComplete()
-{
-   // disconnect from plot output events
-   events().onPlotOutput.disconnect(
-         boost::bind(&ChunkExecContext::onFileOutput, this, _1, kChunkOutputPlot));
-   events().onPlotOutputComplete.disconnect(
-         boost::bind(&ChunkExecContext::onPlotOutputComplete, this));
-   plotsConnected_ = false;
-
-   // if the console's not still connected, let the client know
-   if (!consoleConnected_)
-      events().onChunkExecCompleted(docId_, chunkId_, 
-            userSettings().contextId());
+   connected_ = true;
 }
 
 void ChunkExecContext::onConsolePrompt(const std::string& )
 {
-   if (consoleConnected_)
+   if (connected_)
       disconnect();
 }
 
@@ -209,25 +193,17 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
 
 void ChunkExecContext::disconnect()
 {
-   module_context::events().onConsolePrompt.disconnect(
-         boost::bind(&ChunkExecContext::onConsolePrompt, this));
-   module_context::events().onConsoleOutput.disconnect(
-         boost::bind(&ChunkExecContext::onConsoleOutput, this));
-   module_context::events().onConsoleInput.disconnect(
-         boost::bind(&ChunkExecContext::onConsoleInput, this));
-   
-   // disconnect HTML output (plots may still need to accumulate async)
-   events().onHtmlOutput.disconnect(
-         boost::bind(&ChunkExecContext::onFileOutput, this, _1, 
-                     kChunkOutputHtml));
+   // unhook all our event handlers
+   BOOST_FOREACH(const boost::signals::connection connection, connections_) 
+   {
+      connection.disconnect();
+   }
 
-   // if the plots are no longer connected (could happen in the case of error
-   // or early termination) let the client know
-   if (!plotsConnected_)
-      events().onChunkExecCompleted(docId_, chunkId_, 
-         userSettings().contextId());
+   connected_ = false;
 
-   consoleConnected_ = false;
+   events().onChunkExecCompleted(docId_, chunkId_, 
+      userSettings().contextId());
+
 }
 
 void ChunkExecContext::onConsoleOutput(module_context::ConsoleOutputType type, 

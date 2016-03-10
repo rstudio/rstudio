@@ -18,6 +18,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include <boost/signal.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -45,7 +47,7 @@ public:
    // return execution context from events
    std::string chunkId();
    std::string docId();
-   bool consoleConnected();
+   bool connected();
 
 private:
    void onConsoleOutput(module_context::ConsoleOutputType type, 
@@ -54,12 +56,11 @@ private:
    void onConsolePrompt(const std::string&);
    void onConsoleText(int type, const std::string& output, bool truncate);
    void onFileOutput(const core::FilePath& file, int outputType);
-   void onPlotOutputComplete();
 
    std::string docId_;
    std::string chunkId_;
-   bool consoleConnected_;
-   bool plotsConnected_;
+   bool connected_;
+   std::vector<boost::signals::connection> connections_;
 };
 
 } // namespace notebook
