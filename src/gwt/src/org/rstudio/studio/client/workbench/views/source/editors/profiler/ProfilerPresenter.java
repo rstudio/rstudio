@@ -114,8 +114,14 @@ public class ProfilerPresenter implements RprofEvent.Handler
          case STOP:
             enableStoppedCommands();
             break;
+         case CREATE:
+            events_.fireEvent(new OpenProfileEvent(
+               event.getData().getPath(),
+               event.getData().getHtmlPath(),
+               event.getData().getHtmlLocalPath(),
+               true));
+            break;
          default:
-            events_.fireEvent(new OpenProfileEvent(event.getData().getPath(), true));
             break;
       }
    }
@@ -240,38 +246,31 @@ public class ProfilerPresenter implements RprofEvent.Handler
                              final OperationWithInput<Void> onError,
                              final String path)
    {
-      dependencyManager_.withProfvis(profilerDependecyUserAction_, new Command()
+      ProfileOperationRequest request = ProfileOperationRequest.create(path);
+       
+      server_.openProfile(request, 
+            new ServerRequestCallback<ProfileOperationResponse>()
       {
          @Override
-         public void execute()
+         public void onResponseReceived(ProfileOperationResponse response)
          {
-            ProfileOperationRequest request = ProfileOperationRequest.create(path);
-             
-            server_.openProfile(request, 
-                  new ServerRequestCallback<ProfileOperationResponse>()
+            if (response.getErrorMessage() != null)
             {
-               @Override
-               public void onResponseReceived(ProfileOperationResponse response)
-               {
-                  if (response.getErrorMessage() != null)
-                  {
-                     globalDisplay_.showErrorMessage("Profiler Error",
-                           response.getErrorMessage());
-                     onError.execute(null);
-                     return;
-                  }
-                   
-                  continuation.execute(response);
-               }
-         
-               @Override
-               public void onError(ServerError error)
-               {
-                  globalDisplay_.showErrorMessage("Failed to Open Profile",
-                        error.getMessage());
-                  onError.execute(null);
-               }
-            });
+               globalDisplay_.showErrorMessage("Profiler Error",
+                     response.getErrorMessage());
+               onError.execute(null);
+               return;
+            }
+             
+            continuation.execute(response);
+         }
+   
+         @Override
+         public void onError(ServerError error)
+         {
+            globalDisplay_.showErrorMessage("Failed to Open Profile",
+                  error.getMessage());
+            onError.execute(null);
          }
       });
    }

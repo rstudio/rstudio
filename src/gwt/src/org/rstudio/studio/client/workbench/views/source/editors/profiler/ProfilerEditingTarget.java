@@ -234,8 +234,8 @@ public class ProfilerEditingTarget implements EditingTarget,
                @Override
                public void execute(ProfileOperationResponse response)
                {
-                  htmlPath_ = response.getHtmlFile();
-                  htmlLocalPath_ = response.getHtmlLocalFile();
+                  htmlPath_ = response.getHtmlPath();
+                  htmlLocalPath_ = response.getHtmlLocalPath();
                   
                   persistDocumentProperty("htmlPath", htmlPath_);
                   persistDocumentProperty("htmlLocalPath", htmlLocalPath_);
@@ -561,7 +561,6 @@ public class ProfilerEditingTarget implements EditingTarget,
    
    private void clearProfileCache()
    {
-      deleteFile(getPath());
       deleteFile(htmlLocalPath_);
    }
    
@@ -631,7 +630,7 @@ public class ProfilerEditingTarget implements EditingTarget,
                   
                   final String toPath = saveItem.getPath();
                   server_.copyProfile(
-                     getPath(),
+                     htmlLocalPath_,
                      toPath,
                      new ServerRequestCallback<JavaScriptObject>() {
                         @Override
