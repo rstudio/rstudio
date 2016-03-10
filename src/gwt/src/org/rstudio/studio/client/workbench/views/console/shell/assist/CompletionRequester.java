@@ -146,7 +146,11 @@ public class CompletionRequester
       return !(!token.startsWith(".") && item.startsWith("."));
    }
    
-   private CompletionResult narrow(final String token,
+   private static final native String fuzzy(String string) /*-{
+      return string.replace(/(?!^)[._]/g, "");
+   }-*/;
+   
+   private CompletionResult narrow(String token,
                                    final String diff,
                                    CompletionResult cachedResult)
    {
@@ -160,20 +164,19 @@ public class CompletionRequester
       // trailing slashes)
       
       // Transform the token once beforehand for completions.
-      final String tokenSub = token.substring(
-            token.lastIndexOf('/') + 1);
+      final String fuzzyToken = fuzzy(token.substring(token.lastIndexOf('/') + 1));
       
       for (QualifiedName qname : cachedResult.completions)
       {
          // File types are narrowed only by the file name
          if (RCompletionType.isFileType(qname.type))
          {
-            if (StringUtil.isSubsequence(basename(qname.name), tokenSub, true))
+            if (StringUtil.isSubsequence(basename(qname.name), fuzzyToken, true))
                newCompletions.add(qname);
          }
          else
          {
-            if (StringUtil.isSubsequence(qname.name, token, true) &&
+            if (StringUtil.isSubsequence(qname.name, fuzzyToken, true) &&
                 filterStartsWithDot(qname.name, token))
                newCompletions.add(qname) ;
          }
@@ -188,16 +191,16 @@ public class CompletionRequester
             int lhsScore;
             if (RCompletionType.isFileType(lhs.type))
                lhsScore = CodeSearchOracle.scoreMatch(
-                     basename(lhs.name), tokenSub, true);
+                     basename(lhs.name), fuzzyToken, true);
             else
-               lhsScore = CodeSearchOracle.scoreMatch(lhs.name, token, false);
+               lhsScore = CodeSearchOracle.scoreMatch(lhs.name, fuzzyToken, false);
             
             int rhsScore;
             if (RCompletionType.isFileType(rhs.type))
                rhsScore = CodeSearchOracle.scoreMatch(
-                     basename(rhs.name), tokenSub, true);
+                     basename(rhs.name), fuzzyToken, true);
             else
-               rhsScore = CodeSearchOracle.scoreMatch(rhs.name, token, false);
+               rhsScore = CodeSearchOracle.scoreMatch(rhs.name, fuzzyToken, false);
             
             // Place arguments higher (give less penalty)
             if (lhs.type == RCompletionType.ARGUMENT) lhsScore -= 3;
