@@ -24,8 +24,12 @@
    .frame
    {
       border: 1px solid #e5e5e5;
+      border-radius: 3px;
       margin-right: 20px;
+      margin-left: 2px;
+      margin-top: 2px;
       padding-left: 10px;
+      padding-top: 10px;
       transition: background-color 500ms ease;
    }
    

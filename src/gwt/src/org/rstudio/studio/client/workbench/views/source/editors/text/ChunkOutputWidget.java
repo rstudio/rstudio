@@ -305,8 +305,8 @@ public class ChunkOutputWidget extends Composite
          if (vconsole_ != null)
             vconsole_.clear();
          root_.clear();
-         emitRenderComplete();
       }
+      emitRenderComplete();
       state_ = CHUNK_READY;
       lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
       setOverflowStyle();
@@ -435,8 +435,10 @@ public class ChunkOutputWidget extends Composite
    
    private void destroyConsole()
    {
-      vconsole_.clear();
-      console_.removeFromParent();
+      if (vconsole_ != null)
+         vconsole_.clear();
+      if (console_ != null)
+         console_.removeFromParent();
       console_ = null;
    }
    
