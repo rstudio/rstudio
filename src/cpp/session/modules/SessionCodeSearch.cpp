@@ -1274,7 +1274,7 @@ int scoreMatch(std::string const& suggestion,
          char prevChar = suggestion[matchPos - 1];
          if (prevChar == '_' || prevChar == '-' || (!isFile && prevChar == '.'))
          {
-            penalty = j;
+            penalty = j + 1;
          }
       }
 

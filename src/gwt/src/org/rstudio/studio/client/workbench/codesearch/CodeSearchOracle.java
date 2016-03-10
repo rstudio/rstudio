@@ -89,7 +89,7 @@ public class CodeSearchOracle extends SuggestOracle
             if (prevChar == '_' || prevChar == '-' ||
                   (!isFile && prevChar == '.'))
             {
-               penalty = j;
+               penalty = j + 1;
             }
          }
          
