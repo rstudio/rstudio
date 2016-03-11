@@ -250,5 +250,16 @@ public class TokenCursor extends JavaScriptObject
       return false;
    }
    
+   public final boolean isWithinFunctionDefinitionArgumentList()
+   {
+      TokenCursor clone = cloneCursor();
+      do
+      {
+         if (clone.peekBwd(1).valueEquals("function"))
+            return true;
+      } while (clone.findOpeningBracket("(", false));
+      return false;
+   }
+   
 }
 

@@ -998,14 +998,12 @@ var RCodeModel = function(session, tokenizer,
             var tokenCursor = this.getTokenCursor();
             tokenCursor.moveToPosition(position, true);
             var localCursor = tokenCursor.cloneCursor();
-            var bracePos = localCursor.currentPosition();
             
             var startPos;
             if (findAssocFuncToken(localCursor))
             {
                var argsCursor = localCursor.cloneCursor();
                argsCursor.moveToNextToken();
-               var argsStartPos = argsCursor.currentPosition();
 
                var functionName = null;
                if (moveFromFunctionTokenToEndOfFunctionName(localCursor))
@@ -1035,7 +1033,7 @@ var RCodeModel = function(session, tokenizer,
                         localCursor.$row = functionStartPos.row;
                         localCursor.$offset = 0;
                      } else {
-                        localCursor.moveToPosition(functionStartPos);
+                        localCursor.moveToPosition(functionStartPos, true);
                      }
 
                      functionName = this.$doc.getTextRange(new Range(

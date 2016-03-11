@@ -126,7 +126,7 @@ public abstract class
    public abstract AppCommand findUsages();
    public abstract AppCommand editRmdFormatOptions();
    public abstract AppCommand knitWithParameters();
-   public abstract AppCommand renameInFile();
+   public abstract AppCommand renameInScope();
    public abstract AppCommand insertRoxygenSkeleton();
    public abstract AppCommand insertSnippet();
  

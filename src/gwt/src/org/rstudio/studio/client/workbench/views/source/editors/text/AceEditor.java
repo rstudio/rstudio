@@ -1720,6 +1720,16 @@ public class AceEditor implements DocDisplay,
       var Mode = $wnd.require("mode/r_highlight_rules");
       Mode.setHighlightRFunctionCalls(highlight);
    }-*/;
+   
+   public void enableSearchHighlight()
+   {
+      widget_.getEditor().enableSearchHighlight();
+   }
+   
+   public void disableSearchHighlight()
+   {
+      widget_.getEditor().disableSearchHighlight();
+   }
 
    /**
     * Warning: This will be overridden whenever the file type is set
