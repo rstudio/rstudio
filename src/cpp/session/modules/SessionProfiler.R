@@ -168,7 +168,7 @@
 
       profileDir <- file.path(resources$tempPath, paste(filePrefix, "_files", sep = ""))
       if (file.exists(profileDir)) {
-         unlink(profileDir), recursive = TRUE)
+         unlink(profileDir, recursive = TRUE)
       }
 
       return(list(
