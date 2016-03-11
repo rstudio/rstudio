@@ -17,6 +17,7 @@
 #define SESSION_NOTEBOOK_CHUNK_DEFS_HPP
 
 #include <core/json/Json.hpp>
+#include <ctime>
 
 namespace rstudio {
 namespace core {
