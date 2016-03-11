@@ -318,8 +318,10 @@ public class FileTypeRegistry
       register("cleanup", SH, icons.iconSh());
       register("cleanup.win", SH, icons.iconSh());
       register("Makefile", MAKEFILE, icons.iconMakefile());
+      register("Makefile.in", MAKEFILE, icons.iconMakefile());
       register("Makefile.win", MAKEFILE, icons.iconMakefile());
       register("Makevars", MAKEFILE, icons.iconMakefile());
+      register("Makevars.in", MAKEFILE, icons.iconMakefile());
       register("Makevars.win", MAKEFILE, icons.iconMakefile());
       register("TUTORIAL", DCF, icons.iconDCF());
       register("NAMESPACE", NAMESPACE, icons.iconText());
