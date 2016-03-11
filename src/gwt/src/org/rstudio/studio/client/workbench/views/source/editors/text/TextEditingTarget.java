@@ -2575,50 +2575,70 @@ public class TextEditingTarget implements
    }
    
    @Handler
-   void onRenameInFile()
+   void onRenameInScope()
    {
-      int matches = renameHelper_.renameInFile();
-      if (matches > 0)
+      docDisplay_.focus();
+      
+      int matches = renameHelper_.renameInScope();
+      if (matches <= 0)
       {
-         String message = "Found " + matches;
-         if (matches == 1)
-            message += " match";
-         else
-            message += " matches";
-         
-         String selectedItem = docDisplay_.getSelectionValue();
-         message += " for '" + selectedItem + "'";
-         
-         view_.getStatusBar().showMessage(message, new HideMessageHandler()
+         if (!docDisplay_.getSelectionValue().isEmpty())
          {
-            @Override
-            public boolean onNativePreviewEvent(NativePreviewEvent preview)
+            String message = "No matches for '" + docDisplay_.getSelectionValue() + "'";
+            view_.getStatusBar().showMessage(message, 1000);
+         }
+         
+         return;
+      }
+      
+      String message = "Found " + matches;
+      if (matches == 1)
+         message += " match";
+      else
+         message += " matches";
+
+      String selectedItem = docDisplay_.getSelectionValue();
+      message += " for " + selectedItem + ".";
+
+      docDisplay_.disableSearchHighlight();
+      view_.getStatusBar().showMessage(message, new HideMessageHandler()
+      {
+         @Override
+         public boolean onNativePreviewEvent(NativePreviewEvent preview)
+         {
+            int type = preview.getTypeInt();
+            if (docDisplay_.isPopupVisible())
+               return false;
+            
+            // End if the user clicks somewhere
+            if (type == Event.ONCLICK)
             {
-               if (!docDisplay_.isFocused() || !docDisplay_.inMultiSelectMode())
+               docDisplay_.exitMultiSelectMode();
+               docDisplay_.clearSelection();
+               docDisplay_.enableSearchHighlight();
+               return true;
+            }
+
+            // Otherwise, handle key events
+            else if (type == Event.ONKEYDOWN)
+            {
+               switch (preview.getNativeEvent().getKeyCode())
                {
+               case KeyCodes.KEY_ENTER:
+                  preview.cancel();
+               case KeyCodes.KEY_UP:
+               case KeyCodes.KEY_DOWN:
+               case KeyCodes.KEY_ESCAPE:
                   docDisplay_.exitMultiSelectMode();
                   docDisplay_.clearSelection();
+                  docDisplay_.enableSearchHighlight();
                   return true;
                }
-               
-               if (preview.getTypeInt() == Event.ONKEYDOWN)
-               {
-                  switch (preview.getNativeEvent().getKeyCode())
-                  {
-                  case KeyCodes.KEY_ENTER:
-                     preview.cancel();
-                  case KeyCodes.KEY_UP:
-                  case KeyCodes.KEY_DOWN:
-                  case KeyCodes.KEY_ESCAPE:
-                     docDisplay_.exitMultiSelectMode();
-                     docDisplay_.clearSelection();
-                     return true;
-                  }
-               }
-               return false;
             }
-         });
-      }
+            
+            return false;
+         }
+      });
    }
    
    @Handler

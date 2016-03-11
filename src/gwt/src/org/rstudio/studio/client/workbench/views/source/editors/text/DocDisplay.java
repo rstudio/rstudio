@@ -168,6 +168,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setBlinkingCursor(boolean blinking);
    void setHighlightRFunctionCalls(boolean highlight);
    
+   void enableSearchHighlight();
+   void disableSearchHighlight();
+   
    void setUseEmacsKeybindings(boolean use);
    boolean isEmacsModeOn();
    

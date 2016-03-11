@@ -180,7 +180,7 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="extractFunction"/>
          <cmd refid="extractLocalVariable"/>
-         <cmd refid="renameInFile"/>
+         <cmd refid="renameInScope"/>
          <separator/>
          <cmd refid="reflowComment"/>
          <cmd refid="commentUncomment"/>
@@ -535,7 +535,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut value="Ctrl+T" title="Transpose Letters" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut value="Alt+-" title="Insert Assignment Operator"/>
          <shortcut value="Cmd+Shift+M" title="Insert Pipe Operator" />
-         <shortcut refid="renameInFile" value="Cmd+Alt+Shift+M" />
+         <shortcut refid="renameInScope" value="Cmd+Alt+Shift+M" />
          <shortcut refid="insertRoxygenSkeleton" value="Cmd+Shift+Alt+R" title="Insert Roxygen Skeleton" />
          <shortcut refid="insertSnippet" value="Shift+Tab" title="Insert Snippet"/>
       </shortcutgroup>
@@ -1507,10 +1507,10 @@ well as menu structures (for main menu and popup menus).
         desc="Reflow selected comment lines so they wrap evenly"
         context="editor"/>
         
-   <cmd id="renameInFile"
-        label="Rename Symbol in File"
-        menuLabel="Rename in File"
-        desc="Rename symbol in current file"
+   <cmd id="renameInScope"
+        label="Rename Symbol in Scope"
+        menuLabel="Rename in Scope"
+        desc="Rename symbol in current scope"
         context="editor"/>
         
    <cmd id="insertSnippet"

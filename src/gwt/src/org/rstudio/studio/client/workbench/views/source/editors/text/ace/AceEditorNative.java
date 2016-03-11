@@ -554,5 +554,20 @@ public class AceEditorNative extends JavaScriptObject {
       return null;
    }-*/;
    
+   public final native void disableSearchHighlight() /*-{
+      var highlight = this.session.$searchHighlight;
+      if (highlight) {
+         highlight.$update = highlight.update;
+         highlight.update = function() {}
+      }
+   }-*/;
+   
+   public final native void enableSearchHighlight() /*-{
+      var highlight = this.session.$searchHighlight;
+      if (highlight && highlight.$update) {
+         highlight.update = highlight.$update;
+      }
+   }-*/;
+   
    private static boolean uiPrefsSynced_ = false;
 }
