@@ -895,8 +895,23 @@ var RCodeModel = function(session, tokenizer,
          // sections following later in the document.
          else if (isInRMode && /\bsectionhead\b/.test(type))
          {
-            var sectionHeadMatch = /^#+'?[-=#\s]*(.*?)\s*[-=#]+\s*$/.exec(value);
-            var label = sectionHeadMatch[1];
+            // Extract the section name from the header. These
+            // have the form e.g.
+            // 
+            //    # Foo ----
+            //
+            // but note that the section name can be empty, and e.g.
+            // 
+            //    #####
+            //
+            // is accepted for folding purposes.
+            var label = "(Untitled)";
+            var matchStart = /[^#=-\s]/.exec(value);
+            if (matchStart) {
+               label = value.substr(matchStart.index);
+               label = label.replace(/\s*[#=-]+\s*$/, "");
+            }
+
             this.$scopes.onSectionHead(label, position);
          }
 
@@ -1105,8 +1120,9 @@ var RCodeModel = function(session, tokenizer,
 
       var rowTokens = this.$tokens[row];
 
-      if (rowTokens.length == 1 && /\bsectionhead\b/.test(rowTokens[0].type))
-         return rowTokens[0];
+      for (var i = 0; i < rowTokens.length; i++)
+         if (/\bsectionhead\b/.test(rowTokens[i].type))
+            return rowTokens[i];
 
       var depth = 0;
       var unmatchedOpen = null;
@@ -1220,23 +1236,66 @@ var RCodeModel = function(session, tokenizer,
          return;
       }
       else if (/\bsectionhead\b/.test(foldToken.type)) {
-         var match = /([-=#])\1+\s*$/.exec(foldToken.value);
-         if (!match)
-            return;  // this would be surprising
+         
+         // Find the position of the section 'tail'.
+         var line = session.getLine(row);
 
-         pos.column += match.index - 1; // Not actually sure why -1 is needed
-         var tokenIterator3 = new TokenIterator(session, row, 0);
-         var lastRow = row;
-         for (var tok3; tok3 = tokenIterator3.stepForward(); ) {
-            if (/\bsectionhead\b/.test(tok3.type)) {
-               break;
-            }
-            lastRow = tokenIterator3.getCurrentTokenRow();
+         // For unnamed sections, use the end of the line.
+         // Otherwise, consume the '----' tail of the section
+         // header as well.
+         var index;
+         if (/^\s*[#=-]+\s*$/.test(line)) {
+            index = line.length;
+         } else {
+            var match = /[#=-]+\s*$/.exec(line);
+            if (!match)
+               return;
+            index = match.index;
          }
 
-         return Range.fromPoints(
-               pos,
-               {row: lastRow, column: session.getLine(lastRow).length});
+         // Use this index as the column for our opening fold.
+         pos.column = index;
+
+         // Use a token iterator and find the next section head.
+         // We fold up to that section head.
+         var it = new TokenIterator(session, row + 1);
+
+         // This has the effect of ensuring that the next call to
+         // 'stepForward()' places the iterator on the first token
+         // on this row.
+         it.$tokenIndex = -1;
+
+         while (token = it.stepForward())
+         {
+            // Check to see if we've found something that can close
+            // our section head. If so, we're done.
+             if (token.value === "}" ||
+                /\bsectionhead\b/.test(token.type) ||
+                /\bcode(?:begin|end)/.test(token.type))
+             {
+                break;
+             }
+
+             // Walk over matching braces -- this allows us to
+             // e.g. skip function definitions (and hence, any
+             // sub-sections within those functions).
+             if (it.fwdToMatchingToken())
+                continue;
+         }
+
+         // If we discovered another section head, we fold up to
+         // the previous row; otherwise, we fold the whole document.
+         var row = it.getCurrentTokenRow();
+         if (token)
+            row--;
+
+         var startPos = pos;
+         var endPos = {
+            row: row,
+            column: session.getLine(row).length
+         };
+
+         return Range.fromPoints(startPos, endPos);
       }
 
       return;
