@@ -26,6 +26,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
@@ -123,6 +124,22 @@ void logError(path_t path,
               const boost::filesystem::filesystem_error& e,
               const ErrorLocation& errorLocation);
 void addErrorProperties(path_t path, Error* pError) ;
+
+bool copySingleItem(const FilePath& from, const FilePath& to, 
+                    const FilePath& path)
+{
+   std::string relativePath = path.relativePath(from);
+   FilePath target = to.complete(relativePath);
+
+   Error error = path.isDirectory() ?
+                     target.ensureDirectory() :
+                     path.copy(target);
+   if (error)
+      LOG_ERROR(error);
+
+   return true;
+}
+
 }
 
 struct FilePath::Impl
@@ -779,6 +796,15 @@ Error FilePath::createDirectory(const std::string& name) const
       error.addProperty("target-dir", name) ;
       return error ;
    }
+}
+
+Error FilePath::copyDirectoryRecursive(const FilePath& target) const
+{
+   Error error = target.ensureDirectory();
+   if (error)
+      return error;
+
+   return childrenRecursive(boost::bind(copySingleItem, *this, target, _2));
 }
 
 Error FilePath::ensureFile() const

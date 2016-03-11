@@ -37,8 +37,16 @@ public class RmdChunkOutputFinishedEvent
          return this.doc_id;
       }-*/;
       
+      public final native String getChunkId() /*-{
+         return this.chunk_id;
+      }-*/;
+      
       public final native String getRequestId() /*-{
-         return this.output_format;
+         return this.request_id;
+      }-*/;
+      
+      public final native int getType() /*-{
+         return this.type;
       }-*/;
    }
    
@@ -67,4 +75,7 @@ public class RmdChunkOutputFinishedEvent
    private Data data_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
+   
+   public static final int TYPE_REPLAY      = 0;
+   public static final int TYPE_INTERACTIVE = 1;
 }

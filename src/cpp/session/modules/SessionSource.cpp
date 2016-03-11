@@ -14,7 +14,7 @@
  */
 
 #include "SessionSource.hpp"
-#include "rmarkdown/SessionRmdNotebook.hpp"
+#include "rmarkdown/NotebookChunkDefs.hpp"
 
 #include <string>
 #include <map>

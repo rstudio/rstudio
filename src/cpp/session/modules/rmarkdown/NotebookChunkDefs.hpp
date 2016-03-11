@@ -1,5 +1,5 @@
 /*
- * SessionRmdNotebook.hpp
+ * NotebookChunkDefs.hpp
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -13,48 +13,39 @@
  *
  */
 
+#ifndef SESSION_NOTEBOOK_CHUNK_DEFS_HPP
+#define SESSION_NOTEBOOK_CHUNK_DEFS_HPP
 
-#ifndef SESSION_RMARKDOWN_NOTEBOOK_HPP
-#define SESSION_RMARKDOWN_NOTEBOOK_HPP
-
-#include <ctime>
-#include <boost/signals.hpp>
 #include <core/json/Json.hpp>
-
-#define kChunkLibDir "lib"
 
 namespace rstudio {
 namespace core {
-   class Error;
    class FilePath;
+   class Error;
 }
 }
- 
+
 namespace rstudio {
 namespace session {
 namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
-core::Error initialize();
+core::FilePath chunkDefinitionsPath(const std::string& docPath,
+      const std::string& docId, const std::string& contextId);
 
-struct Events : boost::noncopyable
-{
-   // Document {0}, chunk {1} from context id {3} execution completed
-   boost::signal<void(const std::string&, const std::string&,
-                      const std::string&)> 
-                onChunkExecCompleted;
+core::Error getChunkDefs(const std::string& docPath, const std::string& docId, 
+      std::time_t *pDocTime, core::json::Value* pDefs);
 
-   // Document {0}, chunk {1} had console output of type {2} and text {3}
-   boost::signal<void(const std::string&, const std::string&, int, 
-                const std::string&)>
-                onChunkConsoleOutput;
+core::Error getChunkDefs(const std::string& docPath, const std::string& docId, 
+      const std::string& contextId, std::time_t *pDocTime, 
+      core::json::Value* pDefs);
 
-   boost::signal<void(const core::FilePath&)> onPlotOutput;
-   boost::signal<void(const core::FilePath&)> onHtmlOutput;
-};
+core::Error setChunkDefs(const std::string& docPath, const std::string& docId, 
+      std::time_t docTime, const core::json::Array& defs);
 
-Events& events();
+void extractChunkIds(const core::json::Array& chunkOutputs, 
+                     std::vector<std::string> *pIds);
 
 } // namespace notebook
 } // namespace rmarkdown
@@ -62,4 +53,4 @@ Events& events();
 } // namespace session
 } // namespace rstudio
 
-#endif // SESSION_RMARKDOWN_NOTEBOOK_HPP
+#endif

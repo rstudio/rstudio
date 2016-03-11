@@ -36,13 +36,14 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
@@ -68,7 +69,8 @@ public class TextEditingTargetNotebook
                           RmdChunkOutputFinishedEvent.Handler,
                           SendToChunkConsoleEvent.Handler, 
                           ChunkChangeEvent.Handler,
-                          ChunkContextChangeEvent.Handler
+                          ChunkContextChangeEvent.Handler,
+                          ConsolePromptHandler
 {
    private class ChunkExecQueueUnit
    {
@@ -82,7 +84,6 @@ public class TextEditingTargetNotebook
    };
 
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
-                                    TextEditingTargetRMarkdownHelper rmdHelper,
                                     DocDisplay docDisplay,
                                     DocUpdateSentinel docUpdateSentinel,
                                     SourceDocument document)
@@ -92,7 +93,6 @@ public class TextEditingTargetNotebook
       initialChunkDefs_ = document.getChunkDefs();
       outputWidgets_ = new HashMap<String, ChunkOutputWidget>();
       lineWidgets_ = new HashMap<String, LineWidget>();
-      rmdHelper_ = rmdHelper;
       chunkExecQueue_ = new LinkedList<ChunkExecQueueUnit>();
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -175,6 +175,7 @@ public class TextEditingTargetNotebook
       events_.addHandler(SendToChunkConsoleEvent.TYPE, this);
       events_.addHandler(ChunkChangeEvent.TYPE, this);
       events_.addHandler(ChunkContextChangeEvent.TYPE, this);
+      events_.addHandler(ConsolePromptEvent.TYPE, this);
    }
    
    public void executeChunk(Scope chunk, String code)
@@ -219,18 +220,47 @@ public class TextEditingTargetNotebook
       executingChunk_ = unit;
       
       // let the chunk widget know it's started executing
-      outputWidgets_.get(unit.chunkId).setChunkExecuting();
-      rmdHelper_.executeInlineChunk(docUpdateSentinel_.getPath(), 
-            docUpdateSentinel_.getId(), unit.chunkId, "", unit.code,
+      outputWidgets_.get(unit.chunkId).setCodeExecuting(true);
+
+      server_.setChunkConsole(docUpdateSentinel_.getId(), 
+            unit.chunkId, 
+            true,
             new ServerRequestCallback<Void>()
             {
                @Override
+               public void onResponseReceived(Void v)
+               {
+                  console_.consoleInput(unit.code, unit.chunkId, 
+                        new VoidServerRequestCallback());
+               }
+
+               @Override
                public void onError(ServerError error)
                {
-                  executingChunk_ = null;
-                  outputWidgets_.get(unit.chunkId)
-                                .showServerError(error);
-                  processChunkExecQueue();
+                  // if the queue is empty, show an error; if it's not, prompt
+                  // for continuing
+                  if (chunkExecQueue_.isEmpty())
+                     RStudioGinjector.INSTANCE.getGlobalDisplay()
+                       .showErrorMessage("Chunk Execution Failed", 
+                              error.getUserMessage());
+                  else
+                     RStudioGinjector.INSTANCE.getGlobalDisplay()
+                       .showYesNoMessage(
+                        GlobalDisplay.MSG_QUESTION, 
+                        "Continue Execution?", 
+                        "The following error was encountered during chunk " +
+                        "execution: \n\n" + error.getUserMessage() + "\n\n" +
+                        "Do you want to continue executing notebook chunks?", 
+                        false, 
+                        new Operation()
+                        {
+                           @Override
+                           public void execute()
+                           {
+                              processChunkExecQueue();
+                           }
+                        }, 
+                        null, null, "Continue", "Abort", true);
                }
             });
    }
@@ -263,7 +293,7 @@ public class TextEditingTargetNotebook
       
       // have the server start recording output from this chunk
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
-            chunkDef.getChunkId(), new ServerRequestCallback<Void>()
+            chunkDef.getChunkId(), false, new ServerRequestCallback<Void>()
       {
          @Override
          public void onResponseReceived(Void v)
@@ -281,8 +311,7 @@ public class TextEditingTargetNotebook
          }
       });
       
-      outputWidgets_.get(chunkDef.getChunkId()).showConsoleCode(
-            event.getCode());
+      outputWidgets_.get(chunkDef.getChunkId()).setCodeExecuting(false);
    }
    
    @Override
@@ -321,9 +350,19 @@ public class TextEditingTargetNotebook
    @Override
    public void onRmdChunkOutputFinished(RmdChunkOutputFinishedEvent event)
    {
-      if (event.getData().getRequestId() == Integer.toHexString(requestId_)) 
+      RmdChunkOutputFinishedEvent.Data data = event.getData();
+      if (data.getType() == RmdChunkOutputFinishedEvent.TYPE_REPLAY &&
+          data.getRequestId() == Integer.toHexString(requestId_)) 
       {
          state_ = STATE_INITIALIZED;
+      }
+      else if (data.getType() == RmdChunkOutputFinishedEvent.TYPE_INTERACTIVE &&
+               data.getDocId() == docUpdateSentinel_.getId())
+      {
+         if (outputWidgets_.containsKey(data.getChunkId()))
+         {
+            outputWidgets_.get(data.getChunkId()).onOutputFinished();
+         }
       }
    }
 
@@ -370,6 +409,16 @@ public class TextEditingTargetNotebook
       }
    }
    
+   @Override
+   public void onConsolePrompt(ConsolePromptEvent event)
+   {
+      // mark chunk execution as finished
+      if (executingChunk_ != null)
+         executingChunk_ = null;
+      
+      processChunkExecQueue();
+   }
+
    // Private methods --------------------------------------------------------
    
    private void loadInitialChunkOutput()
@@ -547,7 +596,6 @@ public class TextEditingTargetNotebook
    private Queue<ChunkExecQueueUnit> chunkExecQueue_;
    private ChunkExecQueueUnit executingChunk_;
    
-   private final TextEditingTargetRMarkdownHelper rmdHelper_;
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel docUpdateSentinel_;
    private Provider<SourceWindowManager> pSourceWindowManager_;
