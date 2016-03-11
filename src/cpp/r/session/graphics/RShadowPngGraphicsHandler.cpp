@@ -23,6 +23,7 @@
 
 #include <r/RExec.hpp>
 #include <r/session/RSessionUtils.hpp>
+#include <r/session/RGraphics.hpp>
 
 #undef TRUE
 #undef FALSE

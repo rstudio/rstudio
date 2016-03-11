@@ -22,9 +22,10 @@
 #include <core/system/FileMonitor.hpp>
 #include <core/StringUtils.hpp>
 
-#include <r/RExec.hpp>
-
 #include <session/SessionModuleContext.hpp>
+
+#include <r/RExec.hpp>
+#include <r/session/RGraphics.hpp>
 
 #define kPlotPrefix "_rs_chunk_plot_"
 
@@ -100,13 +101,14 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
    // generate code for creating PNG device
    boost::format fmt("{ require(grDevices, quietly=TRUE); "
                      "  png(file = \"%1%/" kPlotPrefix "%%03d.png\", "
-                     "  width = 8, height = 5, pointsize = 12, "
-                     "  units=\"in\", res = 96, type = \"cairo-png\")"
+                     "  width = 8, height = 5, "
+                     "  units=\"in\", res = 96 %2%)"
                      "}");
 
    // create the PNG device
    error = r::exec::executeString(
-         (fmt % plotFolder.absolutePath()).str());
+         (fmt % string_utils::utf8ToSystem(plotFolder.absolutePath())
+              % r::session::graphics::extraBitmapParams()).str());
    if (error)
       return error;
 

@@ -12,6 +12,7 @@
       top: 5px;
       right: 5px;
       cursor: pointer;
+      z-index: 25;
    }
    
    .overflowY .interrupt, 

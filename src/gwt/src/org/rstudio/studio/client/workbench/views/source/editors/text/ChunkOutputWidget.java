@@ -18,6 +18,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsArrayEx;
+import org.rstudio.core.client.widget.FixedRatioImage;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationInterrupt.InterruptHandler;
@@ -37,7 +38,6 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -234,22 +234,16 @@ public class ChunkOutputWidget extends Composite
 
    private void showPlotOutput(String url)
    {
-      final Image plot = new Image();
+      final FixedRatioImage plot = new FixedRatioImage(5, 8);
       root_.add(plot);
-
-      DOM.sinkEvents(plot.getElement(), Event.ONLOAD);
-      DOM.setEventListener(plot.getElement(), new EventListener()
+      plot.setUrl(url, new Command()
       {
          @Override
-         public void onBrowserEvent(Event event)
+         public void execute()
          {
-            if (DOM.eventGetType(event) != Event.ONLOAD)
-               return;
             completeUnitRender();
          }
       });
-
-      plot.setUrl(url);
    }
    
    private void showHtmlOutput(String url)
