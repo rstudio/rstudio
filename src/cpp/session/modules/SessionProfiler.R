@@ -160,8 +160,16 @@
       resources <- .rs.profileResources()
 
       filePrefix <- tools::file_path_sans_ext(basename(filePath))
-      file.remove(file.path(resources$tempPath, paste(filePrefix, ".html", sep = "")))
-      unlink(file.path(resources$tempPath, paste(filePrefix, "_files", sep = "")), recursive = TRUE)
+      
+      profileHtml <- file.path(resources$tempPath, paste(filePrefix, ".html", sep = ""))
+      if (file.exists(profileHtml)) {
+         file.remove(profileHtml)
+      }
+
+      profileDir <- paste(filePrefix, "_files", sep = "")
+      if (file.exists(profileDir)) {
+         unlink(file.path(resources$tempPath, profileDir), recursive = TRUE)
+      }
 
       return(list(
       ))
