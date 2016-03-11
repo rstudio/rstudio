@@ -320,6 +320,7 @@ public class ChunkOutputWidget extends Composite
       initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
       vconsole_.submitAndRender(text, clazz,
             console_.getElement());
+      emitRenderComplete();
    }
    
    private void initializeOutput(int outputType)
@@ -423,8 +424,7 @@ public class ChunkOutputWidget extends Composite
          console_ = new PreWidget();
          console_.getElement().removeAttribute("tabIndex");
          console_.getElement().getStyle().setMarginTop(0, Unit.PX);
-         console_.getElement().getStyle().setPropertyPx("maxHeight", 500);
-         console_.getElement().getStyle().setOverflowY(Overflow.AUTO);
+         console_.getElement().getStyle().setProperty("whiteSpace", "pre-wrap");
       }
       else
       {
