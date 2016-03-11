@@ -191,6 +191,17 @@ public class ChunkOutputWidget extends Composite
       }
    }
    
+   public void syncHeight(boolean scrollToBottom)
+   {
+      int height = root_.getElement().getScrollHeight();
+      if (height == renderedHeight_)
+         return;
+      renderedHeight_ = height;
+      if (scrollToBottom)
+         root_.getElement().setScrollTop(height);
+      onRenderCompleted_.execute(height);
+   }
+
    private String classOfOutput(int type)
    {
       if (type == CONSOLE_ERROR)
@@ -219,19 +230,9 @@ public class ChunkOutputWidget extends Composite
    
    private void completeUnitRender()
    {
-      emitRenderComplete();
+      syncHeight(true);
    }
    
-   private void emitRenderComplete()
-   {
-      int height = root_.getElement().getScrollHeight();
-      if (height == renderedHeight_)
-         return;
-      renderedHeight_ = height;
-      root_.getElement().setScrollTop(height);
-      onRenderCompleted_.execute(height);
-   }
-
    private void showPlotOutput(String url)
    {
       final FixedRatioImage plot = new FixedRatioImage(5, 8);
@@ -302,7 +303,7 @@ public class ChunkOutputWidget extends Composite
             vconsole_.clear();
          root_.clear();
       }
-      emitRenderComplete();
+      syncHeight(true);
       state_ = CHUNK_READY;
       lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
       setOverflowStyle();
@@ -314,7 +315,7 @@ public class ChunkOutputWidget extends Composite
       initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
       vconsole_.submitAndRender(text, clazz,
             console_.getElement());
-      emitRenderComplete();
+      syncHeight(true);
    }
    
    private void initializeOutput(int outputType)

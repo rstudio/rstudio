@@ -25,6 +25,8 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerManager;
@@ -589,8 +591,8 @@ public class TextEditingTargetWidget
    public void onResize() 
    {
       super.onResize();
-      
       manageToolbarSizes();
+      ResizeEvent.fire(this, getOffsetWidth(), getOffsetHeight());
      
    }
 
@@ -979,6 +981,12 @@ public class TextEditingTargetWidget
          EnsureHeightHandler handler)
    {
       return addHandler(handler, EnsureHeightEvent.TYPE);
+   }
+
+   @Override
+   public HandlerRegistration addResizeHandler(ResizeHandler handler)
+   {
+      return addHandler(handler, ResizeEvent.getType());
    }
 
    public void onVisibilityChanged(boolean visible)

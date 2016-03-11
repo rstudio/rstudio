@@ -56,6 +56,8 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
@@ -70,7 +72,8 @@ public class TextEditingTargetNotebook
                           SendToChunkConsoleEvent.Handler, 
                           ChunkChangeEvent.Handler,
                           ChunkContextChangeEvent.Handler,
-                          ConsolePromptHandler
+                          ConsolePromptHandler,
+                          ResizeHandler
 {
    private class ChunkExecQueueUnit
    {
@@ -417,6 +420,16 @@ public class TextEditingTargetNotebook
          executingChunk_ = null;
       
       processChunkExecQueue();
+   }
+
+
+   @Override
+   public void onResize(ResizeEvent arg0)
+   {
+      for (ChunkOutputWidget widget: outputWidgets_.values())
+      {
+         widget.syncHeight(false);
+      }
    }
 
    // Private methods --------------------------------------------------------

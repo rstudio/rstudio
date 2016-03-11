@@ -188,7 +188,8 @@ public class TextEditingTarget implements
    public interface Display extends TextDisplay, 
                                     WarningBarDisplay,
                                     HasEnsureVisibleHandlers,
-                                    HasEnsureHeightHandlers
+                                    HasEnsureHeightHandlers,
+                                    HasResizeHandlers
    {
       HasValue<Boolean> getSourceOnSave();
       void ensureVisible();
@@ -1206,11 +1207,13 @@ public class TextEditingTarget implements
                                           extendedType_,
                                           events_,
                                           session_);
-      
+
       roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
       
+      // create notebook and forward resize events
       notebook_ = new TextEditingTargetNotebook(this, docDisplay_, 
             docUpdateSentinel_, document);
+      view_.addResizeHandler(notebook_);
       
       // ensure that Makefile and Makevars always use tabs
       name_.addValueChangeHandler(new ValueChangeHandler<String>() {

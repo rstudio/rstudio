@@ -229,12 +229,7 @@ FilePath chunkOutputPath(
 FilePath chunkOutputPath(const std::string& docId, const std::string& chunkId)
 {
    std::string docPath;
-   Error error = source_database::getPath(docId, &docPath);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return FilePath();
-   }
+   source_database::getPath(docId, &docPath);
 
    return chunkOutputPath(docPath, docId, chunkId, userSettings().contextId());
 }
