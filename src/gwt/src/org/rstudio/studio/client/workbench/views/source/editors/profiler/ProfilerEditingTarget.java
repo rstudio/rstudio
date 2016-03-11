@@ -40,6 +40,7 @@ import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -239,10 +240,10 @@ public class ProfilerEditingTarget implements EditingTarget,
                   pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
                }
                
-            }, new OperationWithInput<Void>()
+            }, new Operation()
             {
                @Override
-               public void execute(Void input)
+               public void execute()
                {
                   commands_.closeSourceDoc().execute();
                }
@@ -526,13 +527,21 @@ public class ProfilerEditingTarget implements EditingTarget,
    
    private void clearProfileCache()
    {
-      server_.clearProfile(htmlLocalPath_, new ServerRequestCallback<JavaScriptObject>()
+      try
       {
-         @Override
-         public void onError(ServerError error)
+         server_.clearProfile(htmlLocalPath_, new ServerRequestCallback<JavaScriptObject>()
          {
-         }
-      });
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
+      }
+      catch(Exception e)
+      {
+         Debug.logException(e);
+      }
    }
    
    private void savePropertiesWithPath(String path)
@@ -568,6 +577,7 @@ public class ProfilerEditingTarget implements EditingTarget,
             @Override
             public void onError(ServerError error)
             {
+               Debug.logError(error);
                globalDisplay_.showErrorMessage("Failed to Save Profile Properties",
                      error.getMessage());
             }
@@ -618,6 +628,7 @@ public class ProfilerEditingTarget implements EditingTarget,
                         @Override
                         public void onError(ServerError error)
                         {
+                           Debug.logError(error);
                            indicator.onCompleted();
                            globalDisplay_.showErrorMessage("Failed to Save Profile",
                                  error.getMessage());

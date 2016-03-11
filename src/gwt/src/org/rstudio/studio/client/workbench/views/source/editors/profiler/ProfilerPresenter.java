@@ -14,10 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -28,7 +30,6 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -167,6 +168,7 @@ public class ProfilerPresenter implements RprofEvent.Handler
                @Override
                public void onError(ServerError error)
                {
+                  Debug.logError(error);
                   globalDisplay_.showErrorMessage("Failed to Stop Profiler",
                         error.getMessage());
                }
@@ -199,6 +201,7 @@ public class ProfilerPresenter implements RprofEvent.Handler
                @Override
                public void onError(ServerError error)
                {
+                  Debug.logError(error);
                   globalDisplay_.showErrorMessage("Failed to Stop Profiler",
                         error.getMessage());
                }
@@ -243,7 +246,7 @@ public class ProfilerPresenter implements RprofEvent.Handler
    }
    
    public void buildHtmlPath(final OperationWithInput<ProfileOperationResponse> continuation,
-                             final OperationWithInput<Void> onError,
+                             final Operation onError,
                              final String path)
    {
       ProfileOperationRequest request = ProfileOperationRequest.create(path);
@@ -258,7 +261,7 @@ public class ProfilerPresenter implements RprofEvent.Handler
             {
                globalDisplay_.showErrorMessage("Profiler Error",
                      response.getErrorMessage());
-               onError.execute(null);
+               onError.execute();
                return;
             }
              
@@ -268,9 +271,10 @@ public class ProfilerPresenter implements RprofEvent.Handler
          @Override
          public void onError(ServerError error)
          {
+            Debug.logError(error);
             globalDisplay_.showErrorMessage("Failed to Open Profile",
                   error.getMessage());
-            onError.execute(null);
+            onError.execute();
          }
       });
    }
