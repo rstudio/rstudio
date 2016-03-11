@@ -18,12 +18,19 @@
 #include "NotebookCache.hpp"
 #include "NotebookChunkDefs.hpp"
 
+#include <boost/foreach.hpp>
+
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
+
+// The version identifier for the cache format. Changing this invalidates old
+// caches, and should be done only when making breaking changes to the 
+// cache format.
+#define kCacheVersion "1"
 
 using namespace rstudio::core;
 
@@ -123,6 +130,23 @@ void onDocAdded(const std::string& id)
    FilePath cachePath = chunkCacheFolder(path, id);
    FilePath nbPath = docPath.parent().complete(docPath.stem() + ".Rnb");
 
+   // clean up incompatible cache versions (as we're about to invalidate them
+   // by mutating the document without updating them) 
+   if (cachePath.parent().exists())
+   {
+      std::vector<FilePath> versions;
+      cachePath.parent().children(&versions);
+      BOOST_FOREACH(const FilePath& version, versions)
+      {
+         if (version.isDirectory() && version.filename() != kCacheVersion)
+         {
+            error = version.remove();
+            if (error)
+               LOG_ERROR(error);
+         }
+      }
+   }
+
    if (!cachePath.exists() && nbPath.exists())
    {
       // we have a saved representation, but no cache -- populate the cache
@@ -190,7 +214,7 @@ FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId,
       folder = path.parent();
    }
 
-   return folder.childPath(stem + ".Rnb.cached");
+   return folder.childPath(stem + ".Rnb.cached").childPath(kCacheVersion);
 }
 
 Error ensureCacheFolder(const FilePath& folder)
