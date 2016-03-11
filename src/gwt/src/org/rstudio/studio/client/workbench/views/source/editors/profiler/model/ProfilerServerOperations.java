@@ -33,4 +33,7 @@ public interface ProfilerServerOperations
    void copyProfile(String fromPath,
                     String toPath,
                     ServerRequestCallback<JavaScriptObject> requestCallback);
+
+   void clearProfile(String path,
+                     ServerRequestCallback<JavaScriptObject> requestCallback);
 }

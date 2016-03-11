@@ -40,6 +40,7 @@ import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -63,7 +64,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
-import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
@@ -215,8 +215,6 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    public void onActivate()
    {
-      commands_.saveProfileAs().setEnabled(true);
-      
       if (!htmlPathInitialized_) {
          htmlPathInitialized_ = true;
          
@@ -226,13 +224,13 @@ public class ProfilerEditingTarget implements EditingTarget,
          
          if (htmlPath_ == null)
          {
-            buildHtmlPath(new OperationWithInput<ProfileOperationResponse>()
+            presenter_.buildHtmlPath(new OperationWithInput<ProfileOperationResponse>()
             {
                @Override
                public void execute(ProfileOperationResponse response)
                {
-                  htmlPath_ = response.getHtmlFile();
-                  htmlLocalPath_ = response.getHtmlLocalFile();
+                  htmlPath_ = response.getHtmlPath();
+                  htmlLocalPath_ = response.getHtmlLocalPath();
                   
                   persistDocumentProperty("htmlPath", htmlPath_);
                   persistDocumentProperty("htmlLocalPath", htmlLocalPath_);
@@ -242,14 +240,14 @@ public class ProfilerEditingTarget implements EditingTarget,
                   pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
                }
                
-            }, new OperationWithInput<Void>()
+            }, new Operation()
             {
                @Override
-               public void execute(Void input)
+               public void execute()
                {
                   commands_.closeSourceDoc().execute();
                }
-            });
+            }, getPath());
          }
          else
          {
@@ -270,8 +268,6 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    public void onDeactivate()
    {
-      commands_.saveProfileAs().setEnabled(false);
-      
       recordCurrentNavigationPosition();
       
       commandHandlerReg_.removeHandler();
@@ -446,6 +442,7 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    public void onDismiss(int dismissType)
    {
+      clearProfileCache();
       presenter_.detach();
    }
 
@@ -528,6 +525,25 @@ public class ProfilerEditingTarget implements EditingTarget,
       return "Profile";
    }
    
+   private void clearProfileCache()
+   {
+      try
+      {
+         server_.clearProfile(htmlLocalPath_, new ServerRequestCallback<JavaScriptObject>()
+         {
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
+      }
+      catch(Exception e)
+      {
+         Debug.logException(e);
+      }
+   }
+   
    private void savePropertiesWithPath(String path)
    {
       String name = FileSystemItem.getNameFromPath(path);
@@ -541,40 +557,6 @@ public class ProfilerEditingTarget implements EditingTarget,
    private ProfilerContents getContents()
    {
       return doc_.getProperties().cast();
-   }
-
-   private void buildHtmlPath(
-                              final OperationWithInput<ProfileOperationResponse> continuation,
-                              final OperationWithInput<Void> onError)
-   {
-      ProfileOperationRequest request = ProfileOperationRequest
-            .create(getPath());
-      
-      server_.openProfile(request,
-         new ServerRequestCallback<ProfileOperationResponse>()
-         {
-            @Override
-            public void onResponseReceived(ProfileOperationResponse response)
-            {
-               if (response.getErrorMessage() != null)
-               {
-                  globalDisplay_.showErrorMessage("Profiler Error",
-                        response.getErrorMessage());
-                  onError.execute(null);
-                  return;
-               }
-               
-               continuation.execute(response);
-            }
-
-            @Override
-            public void onError(ServerError error)
-            {
-               globalDisplay_.showErrorMessage("Failed to Open Profile",
-                     error.getMessage());
-               onError.execute(null);
-            }
-         });
    }
    
    private void persistDocumentProperty(String property, String value)
@@ -595,6 +577,7 @@ public class ProfilerEditingTarget implements EditingTarget,
             @Override
             public void onError(ServerError error)
             {
+               Debug.logError(error);
                globalDisplay_.showErrorMessage("Failed to Save Profile Properties",
                      error.getMessage());
             }
@@ -628,7 +611,7 @@ public class ProfilerEditingTarget implements EditingTarget,
                   
                   final String toPath = saveItem.getPath();
                   server_.copyProfile(
-                     getPath(),
+                     htmlLocalPath_,
                      toPath,
                      new ServerRequestCallback<JavaScriptObject>() {
                         @Override
@@ -645,6 +628,7 @@ public class ProfilerEditingTarget implements EditingTarget,
                         @Override
                         public void onError(ServerError error)
                         {
+                           Debug.logError(error);
                            indicator.onCompleted();
                            globalDisplay_.showErrorMessage("Failed to Save Profile",
                                  error.getMessage());

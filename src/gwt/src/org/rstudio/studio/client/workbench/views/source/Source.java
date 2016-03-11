@@ -1072,6 +1072,8 @@ public class Source implements InsertSourceHandler,
    public void onShowProfiler(OpenProfileEvent event)
    {
       String profilePath = event.getFilePath();
+      String htmlPath = event.getHtmlPath();
+      String htmlLocalPath = event.getHtmlLocalPath();
       
       // first try to activate existing
       for (int idx = 0; idx < editors_.size(); idx++)
@@ -1092,6 +1094,8 @@ public class Source implements InsertSourceHandler,
             null,
             (JsObject) ProfilerContents.create(
                   profilePath,
+                  htmlPath, 
+                  htmlLocalPath,
                   event.getCreateProfile()).cast(),
             new SimpleRequestCallback<SourceDocument>("Show Profiler")
             {

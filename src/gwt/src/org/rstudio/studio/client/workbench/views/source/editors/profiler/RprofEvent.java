@@ -37,6 +37,14 @@ public class RprofEvent extends GwtEvent<RprofEvent.Handler>
       public final native String getPath() /*-{
          return this.path;
       }-*/;
+
+      public final native String getHtmlPath() /*-{
+         return this.htmlPath;
+      }-*/;
+
+      public final native String getHtmlLocalPath() /*-{
+         return this.htmlLocalPath;
+      }-*/;
    }
    
    public interface Handler extends EventHandler

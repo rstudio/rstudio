@@ -14,10 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -112,8 +115,14 @@ public class ProfilerPresenter implements RprofEvent.Handler
          case STOP:
             enableStoppedCommands();
             break;
+         case CREATE:
+            events_.fireEvent(new OpenProfileEvent(
+               event.getData().getPath(),
+               event.getData().getHtmlPath(),
+               event.getData().getHtmlLocalPath(),
+               true));
+            break;
          default:
-            events_.fireEvent(new OpenProfileEvent(event.getData().getPath(), true));
             break;
       }
    }
@@ -159,6 +168,7 @@ public class ProfilerPresenter implements RprofEvent.Handler
                @Override
                public void onError(ServerError error)
                {
+                  Debug.logError(error);
                   globalDisplay_.showErrorMessage("Failed to Stop Profiler",
                         error.getMessage());
                }
@@ -191,6 +201,7 @@ public class ProfilerPresenter implements RprofEvent.Handler
                @Override
                public void onError(ServerError error)
                {
+                  Debug.logError(error);
                   globalDisplay_.showErrorMessage("Failed to Stop Profiler",
                         error.getMessage());
                }
@@ -204,7 +215,7 @@ public class ProfilerPresenter implements RprofEvent.Handler
          "Open File",
          fileContext_,
          workbenchContext_.getDefaultFileDialogDir(),
-         ".Rprof",
+         ".Rprofvis",
          new ProgressOperationWithInput<FileSystemItem>()
          {
             public void execute(final FileSystemItem input,
@@ -232,6 +243,40 @@ public class ProfilerPresenter implements RprofEvent.Handler
    public void onSaveProfileAs()
    {
       commands_.saveSourceDocAs().execute();
+   }
+   
+   public void buildHtmlPath(final OperationWithInput<ProfileOperationResponse> continuation,
+                             final Operation onError,
+                             final String path)
+   {
+      ProfileOperationRequest request = ProfileOperationRequest.create(path);
+       
+      server_.openProfile(request, 
+            new ServerRequestCallback<ProfileOperationResponse>()
+      {
+         @Override
+         public void onResponseReceived(ProfileOperationResponse response)
+         {
+            if (response.getErrorMessage() != null)
+            {
+               globalDisplay_.showErrorMessage("Profiler Error",
+                     response.getErrorMessage());
+               onError.execute();
+               return;
+            }
+             
+            continuation.execute(response);
+         }
+   
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            globalDisplay_.showErrorMessage("Failed to Open Profile",
+                  error.getMessage());
+            onError.execute();
+         }
+      });
    }
 
    private void enableStartedCommands()

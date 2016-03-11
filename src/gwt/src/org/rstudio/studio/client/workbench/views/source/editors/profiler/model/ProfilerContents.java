@@ -23,9 +23,16 @@ public class ProfilerContents extends JavaScriptObject
    }
    
    public static final native ProfilerContents create(
-      String path, boolean createProfile) /*-{
+      String path, 
+      String htmlPath, 
+      String htmlLocalPath, 
+      boolean createProfile) /*-{
       var contents = new Object();
+
       contents.path = path;
+      contents.htmlPath = htmlPath;
+      contents.htmlLocalPath = htmlLocalPath;
+
       contents.createProfile = createProfile;
       return contents;
    }-*/;

@@ -25,9 +25,14 @@ public class OpenProfileEvent extends GwtEvent<OpenProfileEvent.Handler>
       void onOpenProfileEvent(OpenProfileEvent event);
    }
    
-   public OpenProfileEvent(String filePath, boolean createProfile)
+   public OpenProfileEvent(String filePath,
+                           String htmlPath,
+                           String htmlLocalPath,
+                           boolean createProfile)
    {
       filePath_ = filePath;
+      htmlPath_ = htmlPath;
+      htmlLocalPath_ = htmlLocalPath;
       createProfile_ = createProfile;
    }
    
@@ -47,6 +52,16 @@ public class OpenProfileEvent extends GwtEvent<OpenProfileEvent.Handler>
    {
       return filePath_;
    }
+
+   public String getHtmlPath()
+   {
+      return htmlPath_;
+   }
+   
+   public String getHtmlLocalPath()
+   {
+      return htmlLocalPath_;
+   }
    
    public boolean getCreateProfile()
    {
@@ -55,5 +70,7 @@ public class OpenProfileEvent extends GwtEvent<OpenProfileEvent.Handler>
    
    public static final Type<Handler> TYPE = new Type<Handler>();
    private String filePath_;
+   private String htmlPath_;
+   private String htmlLocalPath_;
    private boolean createProfile_ = false;
 }

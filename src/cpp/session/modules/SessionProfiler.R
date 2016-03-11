@@ -90,14 +90,29 @@
 {
    tryCatch({
       resources <- .rs.profileResources()
-      profvis <- profvis::profvis(prof_input = profilerOptions$fileName, split="h")
-
       htmlFile <- tempfile(fileext = ".html", tmpdir = resources$tempPath)
-      htmlwidgets::saveWidget(profvis, htmlFile, selfcontained = TRUE)
+
+      if (identical(profilerOptions$profvis, NULL)) {
+         if (identical(tools::file_ext(profilerOptions$fileName), "Rprof")) {
+            profvis <- profvis::profvis(prof_input = profilerOptions$fileName, split="h")
+            htmlwidgets::saveWidget(profvis, htmlFile, selfcontained = TRUE)
+
+            file.remove(profilerOptions$fileName)
+         }
+         else {
+            .rs.rpc.copy_profile(profilerOptions$fileName, htmlFile)
+         }
+      }
+      else {
+         profvis <- profilerOptions$profvis
+         htmlwidgets::saveWidget(profvis, htmlFile, selfcontained = TRUE)
+
+         file.remove(profilerOptions$profvis$x$message$prof_output)
+      }
 
       return(list(
-         htmlFile = .rs.scalar(paste("profiles/", basename(htmlFile), sep = "")),
-         htmlLocalFile = .rs.scalar(htmlFile)
+         htmlPath = .rs.scalar(paste("profiles/", basename(htmlFile), sep = "")),
+         htmlLocalPath = .rs.scalar(htmlFile)
       ))
    }, error = function(e) {
       return(list(error = .rs.scalar(e$message)))
@@ -131,7 +146,34 @@
 
 .rs.addFunction("profilePrint", function(x)
 {
-   .rs.enqueClientEvent("rprof_created", list(
-      path = .rs.scalar(x$x$message$prof_output)
-   ));
+   x$x$message$split <- "h"
+   result <- .rs.rpc.open_profile(list(
+      profvis = x
+   ))
+
+   .rs.enqueClientEvent("rprof_created", result);
+})
+
+.rs.addJsonRpcHandler("clear_profile", function(filePath)
+{
+   tryCatch({
+      resources <- .rs.profileResources()
+
+      filePrefix <- tools::file_path_sans_ext(basename(filePath))
+      
+      profileHtml <- file.path(resources$tempPath, paste(filePrefix, ".html", sep = ""))
+      if (file.exists(profileHtml)) {
+         file.remove(profileHtml)
+      }
+
+      profileDir <- file.path(resources$tempPath, paste(filePrefix, "_files", sep = ""))
+      if (file.exists(profileDir)) {
+         unlink(profileDir, recursive = TRUE)
+      }
+
+      return(list(
+      ))
+   }, error = function(e) {
+      return(list(error = .rs.scalar(e$message)))
+   })
 })
