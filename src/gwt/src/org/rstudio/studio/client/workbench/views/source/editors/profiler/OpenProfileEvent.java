@@ -47,7 +47,7 @@ public class OpenProfileEvent extends GwtEvent<OpenProfileEvent.Handler>
    {
       handler.onOpenProfileEvent(this);
    }
-
+   
    public String getFilePath()
    {
       return filePath_;
