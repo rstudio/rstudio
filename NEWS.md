@@ -7,6 +7,7 @@
 * Display function tooltip on mouse over of function name
 * Added option to display function signature tooltip on cursor idle
 * Autocompletion allows mismatch between '.', '\_' in token
+* Improvements to refactoring utility 'Rename in Scope'
 
 ### Data Import
 
