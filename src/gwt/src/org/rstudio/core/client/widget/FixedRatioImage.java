@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.dom.ImageElementEx;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -36,8 +38,8 @@ public class FixedRatioImage extends Composite
    {
    }
 
-   // A fixed-ratio image fills its container's width, but its height is
-   // adjusted so that the image fills the given aspect ratio.
+   // A fixed-ratio image automatically shrinks to fit its container while
+   // preserving its aspect ratio.
    public FixedRatioImage(double height, double width)
    {
       initWidget(uiBinder.createAndBindUi(this));
@@ -57,6 +59,15 @@ public class FixedRatioImage extends Composite
          {
             if (DOM.eventGetType(event) != Event.ONLOAD)
                return;
+
+            ImageElementEx src = source_.getElement().cast();
+
+            // scale the image to its natural size, but not beyond it
+            outer_.getElement().getStyle().setProperty("maxWidth", 
+                  src.naturalWidth() + "px");
+            
+            // load the image from the hidden source element into the background
+            // of the wrapper
             image_.getElement().getStyle().setProperty("backgroundImage", 
                   "url(" + url + ")");
             if (onLoaded != null)
@@ -69,5 +80,6 @@ public class FixedRatioImage extends Composite
    
    @UiField Image source_;
    @UiField HTMLPanel padding_;
+   @UiField HTMLPanel outer_;
    @UiField HTMLPanel image_;
 }

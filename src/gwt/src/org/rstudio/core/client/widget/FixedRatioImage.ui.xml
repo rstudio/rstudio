@@ -25,7 +25,7 @@
    display: none;
 }
 </ui:style>
-<g:HTMLPanel styleName="{style.outer}">
+<g:HTMLPanel styleName="{style.outer}" ui:field="outer_">
    <g:Image styleName="{style.source}" ui:field="source_" 
             visible="false">
    </g:Image>
