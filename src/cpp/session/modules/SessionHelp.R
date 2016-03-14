@@ -17,7 +17,7 @@
 options(help_type = "html")
 
 .rs.addFunction( "httpdPortIsFunction", function() {
-   getRversion() >= "3.2" && .rs.haveRequiredRSvnRev(67550)
+   is.function(tools:::httpdPort)
 })
 
 .rs.addFunction( "httpdPort", function()
