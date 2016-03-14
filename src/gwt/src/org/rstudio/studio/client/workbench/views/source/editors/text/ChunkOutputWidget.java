@@ -19,7 +19,6 @@ import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.ImageElementEx;
 import org.rstudio.core.client.js.JsArrayEx;
-import org.rstudio.core.client.widget.FixedRatioImage;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationInterrupt.InterruptHandler;
