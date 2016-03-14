@@ -149,14 +149,15 @@ public class TextEditingTargetNotebook
                   widget.setFixedWidth(true);
                   docDisplay_.addLineWidget(widget);
                }
+               // if we got chunk content, load initial chunk output from server
+               if (initialChunkDefs_.length() > 0)
+                  loadInitialChunkOutput();
+
                initialChunkDefs_ = null;
                
                // sync to editor style changes
                editingTarget.addEditorThemeStyleChangedHandler(
                                              TextEditingTargetNotebook.this);
-
-               // load initial chunk output from server
-               loadInitialChunkOutput();
             }
          }
       });

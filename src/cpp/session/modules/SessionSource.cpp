@@ -74,12 +74,15 @@ void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
    (*pDocJson)["extended_type"] = module_context::events()
                                    .onDetectSourceExtendedType(pDoc);
 
-   // amend with chunk definitions 
+   // amend with chunk definitions if an R Markdown document
    json::Value chunkDefs;
-   Error error = rmarkdown::notebook::getChunkDefs(pDoc->path(), pDoc->id(),
-         NULL, &chunkDefs);
-   if (error)
-      LOG_ERROR(error);
+   if (pDoc->isRMarkdownDocument())
+   {
+      Error error = rmarkdown::notebook::getChunkDefs(pDoc->path(), pDoc->id(),
+            NULL, &chunkDefs);
+      if (error)
+         LOG_ERROR(error);
+   }
    (*pDocJson)["chunk_definitions"] = chunkDefs;
 }
 
@@ -290,7 +293,7 @@ Error saveDocumentCore(const std::string& contents,
    // document is unrendered (in which case we want to leave the chunk output
    // as-is)
    bool hasChunkOutput = json::isType<json::Array>(jsonChunkOutput);
-   if (hasChunkOutput)
+   if (hasChunkOutput && pDoc->isRMarkdownDocument())
    {
       time_t docTime = pDoc->dirty() ? std::time(NULL) : 
                                        pDoc->lastKnownWriteTime();
