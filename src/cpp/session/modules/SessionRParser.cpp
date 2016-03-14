@@ -1974,9 +1974,14 @@ START:
       checkIncorrectComparison(cursor, status);
       
       // We want to skip over formulas if necessary.
-      if (skipFormulas(cursor, status))
+      while (skipFormulas(cursor, status))
+      {
          if (cursor.isAtEndOfDocument())
             return;
+         
+         if (!cursor.moveToNextSignificantToken())
+            return;
+      }
       
       DEBUG("Start: " << cursor);
       // Move over unary operators -- any sequence is valid,
