@@ -252,15 +252,11 @@ public class ControlFlowAnalyzerTest extends JJSTestBase {
 
     // Returning a JSO from a JSNI method rescues.
     analyzeSnippet("Foo.create_array();").assertOnlyInstantiatedTypes(
-        "int[]", "Object",
-        // Classes rescued due to rescueing classliterals for instantiated arrays.
-        "Class", "String", "Serializable", "Comparable", "CharSequence");
+        "int[]", "Object");
 
     // Returning a JSO from a JSNI method rescues.
     analyzeSnippet("Foo.create_2d_array();").assertOnlyInstantiatedTypes(
-        "int[][]", "Object[]", "Object",
-        // Classes rescued due to rescueing classliterals for instantiated arrays.
-        "Class", "String", "Serializable", "Comparable", "CharSequence");
+        "int[][]", "Object[]", "Object");
   }
 
   private Result analyzeSnippet(String codeSnippet)

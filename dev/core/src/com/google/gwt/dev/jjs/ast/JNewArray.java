@@ -28,27 +28,36 @@ public class JNewArray extends JExpression {
       SourceInfo info, JArrayType arrayType, List<JExpression> dimensionExpressions) {
     // Produce all class literals that will eventually get generated.
     assert dimensionExpressions != null;
-    return new JNewArray(info, arrayType, dimensionExpressions, null);
+    return new JNewArray(info, arrayType, dimensionExpressions, null,
+        new JClassLiteral(info.makeChild(), arrayType.getLeafType()));
   }
 
   public static JNewArray createArrayWithInitializers(SourceInfo info, JArrayType arrayType,
       List<JExpression> initializers) {
     assert initializers != null;
-    return new JNewArray(info, arrayType, null, initializers);
+    return new JNewArray(info, arrayType, null, initializers,
+        new JClassLiteral(info.makeChild(), arrayType.getLeafType()));
   }
 
   private final List<JExpression> dimensionExpressions;
 
   private final List<JExpression> initializers;
 
+  /**
+   * The list of class literals that will be needed to support this expression.
+   */
+  private JClassLiteral leafTypeClassLiteral;
+
   private JArrayType type;
 
   public JNewArray(SourceInfo info, JArrayType type, List<JExpression> dimensionExpressions,
-      List<JExpression> initializers) {
+      List<JExpression> initializers, JClassLiteral leafTypeClassLiteral) {
     super(info);
     this.type = type;
     this.dimensionExpressions = dimensionExpressions;
     this.initializers = initializers;
+    this.leafTypeClassLiteral = leafTypeClassLiteral;
+    assert !(leafTypeClassLiteral.getRefType().isArrayType());
   }
 
   public JArrayType getArrayType() {
@@ -61,6 +70,13 @@ public class JNewArray extends JExpression {
 
   public List<JExpression> getInitializers() {
     return initializers;
+  }
+
+  /**
+   * Return a class literal for the leaf type of the array.
+   */
+  public JClassLiteral getLeafTypeClassLiteral() {
+    return leafTypeClassLiteral;
   }
 
   @Override
@@ -91,6 +107,8 @@ public class JNewArray extends JExpression {
       assert ((dimensionExpressions != null) ^ (initializers != null));
 
       visitor.accept(initializers != null ? initializers : dimensionExpressions);
+
+      leafTypeClassLiteral = (JClassLiteral) visitor.accept(leafTypeClassLiteral);
     }
     visitor.endVisit(this, ctx);
   }

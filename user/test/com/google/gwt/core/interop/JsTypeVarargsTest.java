@@ -287,7 +287,6 @@ public class JsTypeVarargsTest extends GWTTestCase {
     sideEffectCount++;
     return obj;
   }
-
   public void testVarargsCall_sideEffectingInstance() {
     SubclassNativeWithVarargsConstructor object =
         new SubclassNativeWithVarargsConstructor(0, new Object[0]);
@@ -296,16 +295,4 @@ public class JsTypeVarargsTest extends GWTTestCase {
     assertSame(object, doSideEffect(object).varargsMethod(0, params));
     assertSame(1, sideEffectCount);
   }
-
-  static class UninstantiatedClass {
-  }
-
-  @JsMethod(namespace = JsPackage.GLOBAL)
-  public static UninstantiatedClass[] varargJsMethodUninstantiatedVararg(UninstantiatedClass... varargs) {
-    return varargs;
-  }
-
-  public native void testVarargsCall_uninstantiatedVararg() /*-{
-    @GWTTestCase::assertEquals(II)(0, $global.varargJsMethodUninstantiatedVararg().length);
-  }-*/;
 }
