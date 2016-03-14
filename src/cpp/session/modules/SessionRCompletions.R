@@ -821,7 +821,9 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("fuzzyMatches", function(completions, token)
 {
-   token <- gsub("(?!^)[._]", "", token, perl = TRUE)
+   reStrip     <- "(?!^)[._]"
+   token       <- gsub(reStrip, "", token, perl = TRUE)
+   completions <- gsub(reStrip, "", completions, perl = TRUE)
    .rs.startsWith(tolower(completions), tolower(token))
 })
 
