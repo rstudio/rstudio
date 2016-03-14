@@ -20,7 +20,7 @@ cmake -G"MinGW Makefiles" ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
       -DRSTUDIO_PACKAGE_BUILD=1 ^
       ..\..\..
-mingw32-make install
+mingw32-make install %MAKEFLAGS%
 cd ..
 endlocal
 

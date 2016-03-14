@@ -29,7 +29,7 @@ cd "%BUILD_DIR%"
 del CMakeCache.txt
 rmdir /s /q "%BUILD_DIR%\_CPack_Packages"
 cmake -G"MinGW Makefiles" -DRSTUDIO_TARGET=Desktop -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DRSTUDIO_PACKAGE_BUILD=1 ..\..\..
-mingw32-make 
+mingw32-make %MAKEFLAGS%
 cd ..
 
 REM perform 64-bit build and install it into the 32-bit tree
