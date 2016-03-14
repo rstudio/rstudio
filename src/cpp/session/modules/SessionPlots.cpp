@@ -815,6 +815,17 @@ Error manipulatorPlotClicked(const json::JsonRpcRequest& request,
    return Success();
 }
 
+SEXP rs_emitBeforeNewPlot()
+{
+   events().onBeforeNewPlot();
+   return R_NilValue;
+}
+
+SEXP rs_emitNewPlot()
+{
+   events().onNewPlot();
+   return R_NilValue;
+}
 
 
 } // anonymous namespace  
@@ -841,6 +852,12 @@ bool haveCairoPdf()
    return functionSEXP != R_NilValue;
 }
 
+Events& events()
+{
+   static Events instance;
+   return instance;
+}
+
 Error initialize()
 {
    // subscribe to events
@@ -849,6 +866,9 @@ Error initialize()
    module_context::events().onDetectChanges.connect(bind(onDetectChanges, _1));
    module_context::events().onBeforeExecute.connect(bind(onBeforeExecute));
    module_context::events().onBackgroundProcessing.connect(onBackgroundProcessing);
+
+   RS_REGISTER_CALL_METHOD(rs_emitBeforeNewPlot, 0);
+   RS_REGISTER_CALL_METHOD(rs_emitNewPlot, 0);
 
    // connect to onShowManipulator
    using namespace rstudio::r::session;
@@ -874,7 +894,9 @@ Error initialize()
       (bind(registerUriHandler, kGraphics "/plot_zoom_png", handleZoomPngRequest))
       (bind(registerUriHandler, kGraphics "/plot_zoom", handleZoomRequest))
       (bind(registerUriHandler, kGraphics "/plot.png", handlePngRequest))
-      (bind(registerUriHandler, kGraphics, handleGraphicsRequest));
+      (bind(registerUriHandler, kGraphics, handleGraphicsRequest))
+      (bind(module_context::sourceModuleRFile, "SessionPlots.R"));
+
    return initBlock.execute();
 }
          
