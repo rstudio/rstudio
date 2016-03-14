@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -178,6 +180,7 @@ public class ProfilerEditingTarget implements EditingTarget,
          commands.add(commands_.popoutDoc());
       else
          commands.add(commands_.returnDocToMain());
+      commands.add(commands_.printSourceDoc());
       return commands;
    }
    
@@ -252,6 +255,14 @@ public class ProfilerEditingTarget implements EditingTarget,
          else
          {
             view_.showProfilePage(htmlPath_);
+
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               public void execute()
+               {
+                  pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
+               }
+            });
          }
       }
       
@@ -387,6 +398,18 @@ public class ProfilerEditingTarget implements EditingTarget,
    public void revertChanges(Command onCompleted)
    {
       onCompleted.execute();
+   }
+   
+   @Handler
+   void onPrintSourceDoc()
+   {
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         public void execute()
+         {
+            view_.print();
+         }
+      });
    }
    
    private String getAndSetInitialName()

@@ -15,10 +15,11 @@
 package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
@@ -31,7 +32,7 @@ public class ProfilerEditingTargetWidget extends Composite
                                          implements ProfilerPresenter.Display
               
 {
-   private Frame profilePage_;
+   private RStudioFrame profilePage_;
    
    public ProfilerEditingTargetWidget(Commands commands, PublishHtmlSource publishHtmlSource)
    {
@@ -42,7 +43,7 @@ public class ProfilerEditingTargetWidget extends Composite
                                           createToolbar(commands, publishHtmlSource), 
                                           panel);
 
-      profilePage_ = new Frame();
+      profilePage_ = new RStudioFrame();
       profilePage_.setWidth("100%");
       profilePage_.setHeight("100%");
       
@@ -51,6 +52,13 @@ public class ProfilerEditingTargetWidget extends Composite
       panel.setHeight("100%");
       
       initWidget(mainPanel);
+   }
+
+   public void print()
+   {
+      WindowEx window = profilePage_.getWindow();
+      window.focus();
+      window.print();
    }
 
    private Toolbar createToolbar(Commands commands, PublishHtmlSource publishHtmlSource)
