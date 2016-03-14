@@ -1712,11 +1712,8 @@ bool skipFormulas(RTokenCursor& origin, ParseStatus& status)
    RTokenCursor cursor = origin.clone();
    bool foundTilde = false;
 
-   while (true)
+   while (!cursor.isAtEndOfDocument())
    {
-      if (cursor.isAtEndOfDocument())
-         break;
-
       // Initial unary operators
       while (isValidAsUnaryOperator(cursor))
       {
