@@ -636,7 +636,12 @@ public class ControlFlowAnalyzer {
             if (param.isVarargs()) {
               assert method.isJsMethodVarargs();
               // Rescue the (array) type of varargs parameters as the array creation is implicit.
-              rescue((JReferenceType) param.getType(), true);
+              JArrayType paramType = (JArrayType) param.getType().getUnderlyingType();
+              rescue(paramType, true);
+              // Rescue the class literal for the array type as it will be needed when
+              // ImplementJsVarargs inserts the method prelude to support the JS vararg calling
+              // convention.
+              rescue(program.getClassLiteralField(paramType.getLeafType()));
             }
           }
         }
