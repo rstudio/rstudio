@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.ImageElementEx;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.widget.FixedRatioImage;
 import org.rstudio.core.client.widget.PreWidget;
@@ -235,16 +236,31 @@ public class ChunkOutputWidget extends Composite
    
    private void showPlotOutput(String url)
    {
-      final FixedRatioImage plot = new FixedRatioImage(5, 8);
+      final Image plot = new Image();
+      plot.getElement().getStyle().setProperty("height", "auto");
       root_.add(plot);
-      plot.setUrl(url, new Command()
+      
+      DOM.sinkEvents(plot.getElement(), Event.ONLOAD);
+      DOM.setEventListener(plot.getElement(), new EventListener()
       {
          @Override
-         public void execute()
+         public void onBrowserEvent(Event event)
          {
+            if (DOM.eventGetType(event) != Event.ONLOAD)
+               return;
+            
+            ImageElementEx img = plot.getElement().cast();
+
+            // grow the image to fill the container, but not beyond its
+            // natural width
+            img.getStyle().setWidth(100, Unit.PCT);
+            img.getStyle().setProperty("maxWidth", img.naturalWidth() + "px");
+
             completeUnitRender();
          }
       });
+
+      plot.setUrl(url);
    }
    
    private void showHtmlOutput(String url)
