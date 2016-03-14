@@ -15,6 +15,7 @@
 
 #include "SessionRmdNotebook.hpp"
 #include "NotebookPlots.hpp"
+#include "../SessionPlots.hpp"
 
 #include <boost/format.hpp>
 #include <boost/foreach.hpp>
@@ -44,7 +45,30 @@ bool isPlotPath(const FilePath& path)
           string_utils::isPrefixOf(path.stem(), kPlotPrefix);
 }
 
-void removeGraphicsDevice(const FilePath& plotFolder)
+void processPlots(const FilePath& plotFolder, bool fireEvents)
+{
+   // collect plots from the folder
+   std::vector<FilePath> folderContents;
+   Error error = plotFolder.children(&folderContents);
+   if (error)
+      LOG_ERROR(error);
+
+   BOOST_FOREACH(const FilePath& path, folderContents)
+   {
+      if (isPlotPath(path))
+      {
+         if (fireEvents)
+            events().onPlotOutput(path);
+
+         // clean up the plot so it isn't emitted twice
+         error = path.removeIfExists();
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+}
+
+void removeGraphicsDevice(const FilePath& plotFolder, bool hasPlots)
 {
    // turn off the graphics device -- this has the side effect of writing the
    // device's remaining output to files
@@ -52,25 +76,27 @@ void removeGraphicsDevice(const FilePath& plotFolder)
    if (error)
       LOG_ERROR(error);
 
-   // collect plots from the folder
-   std::vector<FilePath> folderContents;
-   error = plotFolder.children(&folderContents);
-   if (error)
-      LOG_ERROR(error);
-
-   BOOST_FOREACH(const FilePath& path, folderContents)
-   {
-      if (isPlotPath(path))
-         events().onPlotOutput(path);
-   }
+   processPlots(plotFolder, hasPlots);
 }
 
-void onConsolePrompt(const FilePath& plotFolder, const std::string& )
+void onNewPlot(const FilePath& plotFolder,
+               boost::shared_ptr<bool> pHasPlots)
 {
-   removeGraphicsDevice(plotFolder);
+   *pHasPlots = true;
+   processPlots(plotFolder, true);
+}
+
+void onConsolePrompt(const FilePath& plotFolder,
+                     boost::shared_ptr<bool> pHasPlots,
+                     const std::string& )
+{
+   removeGraphicsDevice(plotFolder, *pHasPlots);
 
    module_context::events().onConsolePrompt.disconnect(
-         boost::bind(onConsolePrompt, plotFolder, _1));
+         boost::bind(onConsolePrompt, plotFolder, pHasPlots, _1));
+
+   plots::events().onNewPlot.disconnect(
+         boost::bind(onNewPlot, pHasPlots, _1));
 }
 
 } // anonymous namespace
@@ -105,6 +131,11 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
                      "  units=\"in\", res = 96 %2%)"
                      "}");
 
+   // marker for content; this is necessary because on Windows, turning off
+   // the png device writes an empty PNG file even if nothing was plotted, and
+   // we need to avoid treating that file as though it were an actual plot
+   boost::shared_ptr<bool> pHasPlots = boost::make_shared<bool>(false);
+
    // create the PNG device
    error = r::exec::executeString(
          (fmt % string_utils::utf8ToSystem(plotFolder.absolutePath())
@@ -114,7 +145,10 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
 
    // complete the capture on the next console prompt
    module_context::events().onConsolePrompt.connect(
-         boost::bind(onConsolePrompt, plotFolder, _1));
+         boost::bind(onConsolePrompt, plotFolder, pHasPlots, _1));
+
+   plots::events().onNewPlot.connect(
+         boost::bind(onNewPlot, plotFolder, pHasPlots));
 
    return Success();
 }
