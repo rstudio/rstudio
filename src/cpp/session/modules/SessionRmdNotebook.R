@@ -16,7 +16,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addJsonRpcHandler("extract_rmd_from_notebook", function(input, output)
 {
-  if (Encoding(input) == "unknown") Encoding(input) <- "UTF-8"
+  if (Encoding(input) == "unknown")  Encoding(input) <- "UTF-8"
   if (Encoding(output) == "unknown") Encoding(output) <- "UTF-8"
 
    # if 'output' already exists, compare file write times to determine
@@ -180,7 +180,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       stop("No cache directory at path '", cachePath, "'")
    
    rmdPath <- .rs.normalizePath(rmdPath, winslash = "/", mustWork = TRUE)
-   cachePath <- normalizePath(cachePath, winslash = "/", mustWork = TRUE)
+   cachePath <- .rs.normalizePath(cachePath, winslash = "/", mustWork = TRUE)
    rmdContents <- suppressWarnings(readLines(rmdPath))
    
    # Begin collecting the units that form the Rnb data structure
@@ -200,6 +200,18 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # Augment with start, end locations of chunks
    chunkInfo <- .rs.rnb.withChunkLocations(rmdContents, chunkInfo)
    rnbData[["chunk_info"]] <- chunkInfo
+   
+   # Read the chunk data
+   chunkDirs <- file.path(cachePath, names(chunkInfo$chunk_definitions))
+   chunkData <- lapply(chunkDirs, function(dir) {
+      files <- list.files(dir, full.names = TRUE)
+      contents <- lapply(files, function(file) {
+         .rs.readFile(file)
+      })
+      names(contents) <- basename(files)
+      contents
+   })
+   names(chunkData) <- basename(chunkDirs)
    
    # Collect all of the HTML files, alongside their dependencies
    htmlFiles <- list.files(cachePath, pattern = "html$", full.names = TRUE)
