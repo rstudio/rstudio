@@ -212,18 +212,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       contents
    })
    names(chunkData) <- basename(chunkDirs)
-   
-   # Collect all of the HTML files, alongside their dependencies
-   htmlFiles <- list.files(cachePath, pattern = "html$", full.names = TRUE)
-   chunkData <- lapply(htmlFiles, function(file) {
-      dependenciesDir <- paste(tools::file_path_sans_ext(file), "files", sep = "_")
-      dependenciesFiles <- list.files(dependenciesDir, full.names = TRUE, recursive = TRUE)
-      list(
-         html = .rs.readFile(file),
-         deps = lapply(dependenciesFiles, .rs.readFile)
-      )
-   })
-   names(chunkData) <- tools::file_path_sans_ext(basename(htmlFiles))
    rnbData[["chunk_data"]] <- chunkData
    
    # Read in the 'libs' directory.
