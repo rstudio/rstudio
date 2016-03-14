@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 

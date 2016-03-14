@@ -255,6 +255,14 @@ public class ProfilerEditingTarget implements EditingTarget,
          else
          {
             view_.showProfilePage(htmlPath_);
+
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               public void execute()
+               {
+                  pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
+               }
+            });
          }
       }
       
