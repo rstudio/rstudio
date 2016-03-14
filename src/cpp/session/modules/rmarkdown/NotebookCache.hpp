@@ -56,13 +56,13 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
+core::FilePath notebookCacheRoot();
+
 core::FilePath chunkCacheFolder(const std::string& docPath, 
       const std::string& docId, const std::string& contextId);
 
 core::FilePath chunkCacheFolder(const std::string& docPath, 
       const std::string& docId);
-
-core::Error ensureCacheFolder(const core::FilePath& folder);
 
 core::Error initCache();
 

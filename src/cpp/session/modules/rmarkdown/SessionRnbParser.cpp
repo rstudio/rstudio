@@ -278,7 +278,7 @@ core::Error parseRnb(const core::FilePath& rnbFile,
    Error error = readStringFromFile(rnbFile, &contents);
    if (error)
       return error;
-   error = ensureCacheFolder(cacheFolder);
+   error = cacheFolder.ensureDirectory();
    if (error)
       return error;
    std::string header;

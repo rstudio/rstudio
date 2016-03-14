@@ -95,7 +95,7 @@ Error setChunkDefs(const std::string& docPath, const std::string& docId,
       return Success();
 
    // we're going to write something; make sure the parent folder exists
-   Error error = ensureCacheFolder(defFile.parent());
+   Error error = defFile.parent().ensureDirectory();
    if (error)
       return error;
 

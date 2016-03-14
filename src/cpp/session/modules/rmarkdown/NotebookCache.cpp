@@ -17,6 +17,7 @@
 #include "SessionRnbParser.hpp"
 #include "NotebookCache.hpp"
 #include "NotebookChunkDefs.hpp"
+#include "NotebookPaths.hpp"
 
 #include <boost/foreach.hpp>
 
@@ -185,6 +186,11 @@ SEXP rs_populateNotebookCache(SEXP fileSEXP)
 
 } // anonymous namespace
 
+FilePath notebookCacheRoot()
+{ 
+   return module_context::sharedScratchPath().childPath("notebooks");
+}
+
 FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId,
       const std::string& contextId)
 {
@@ -195,8 +201,7 @@ FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId,
    {
       // the doc hasn't been saved, so keep its chunk output in the scratch
       // path
-      folder = unsavedNotebookCache();
-      stem = docId;
+      folder = unsavedNotebookCache().childPath(docId);
    }
    else
    {
@@ -204,34 +209,16 @@ FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId,
       // itself
       FilePath path = module_context::resolveAliasedPath(docPath);
 
-#ifndef _WIN32
-      // on non-Windows, use unix hidden folder 
-      stem = ".";
-#endif
-
-      stem += path.stem();
-      stem += "-" + contextId;
-      folder = path.parent();
+      std::string id;
+      Error error = notebookPathToId(path, contextId, &id);
+      if (error)
+         LOG_ERROR(error);
+      
+      folder = notebookCacheRoot().childPath(contextId + "-" + id + "-" +
+            path.stem());
    }
 
-   return folder.childPath(stem + ".Rnb.cached").childPath(kCacheVersion);
-}
-
-Error ensureCacheFolder(const FilePath& folder)
-{
-   Error error = folder.ensureDirectory();
-   if (error)
-      return error;
-#ifdef _WIN32
-   // on Windows, mark the directory hidden after creating it
-   error = core::system::makeFileHidden(folder);
-   if (error)
-   {
-      // non-fatal
-      LOG_ERROR(error);
-   }
-#endif
-   return error;
+   return folder.childPath(kCacheVersion);
 }
 
 FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
