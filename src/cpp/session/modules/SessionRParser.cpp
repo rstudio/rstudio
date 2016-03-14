@@ -1705,41 +1705,69 @@ void validateFunctionCall(RTokenCursor cursor,
 //
 //    foo$bar$log(1 + y) + log(2 + y) ~ ({1 ~ 2}) ^ 5
 //
+// and so, effectively, this needs to be a mini-parser of R
+// code.
 bool skipFormulas(RTokenCursor& origin, ParseStatus& status)
 {
    RTokenCursor cursor = origin.clone();
-
    bool foundTilde = false;
-   
-   while (cursor.moveToEndOfEvaluation())
+
+   while (!cursor.isAtEndOfDocument())
    {
+      // Initial unary operators
+      while (isValidAsUnaryOperator(cursor))
+      {
+         if (cursor.contentEquals(L"~"))
+            foundTilde = true;
+
+         if (!cursor.moveToNextSignificantToken())
+            break;
+      }
+
+      // Stand-alone bracketed scopes
+      if (isLeftBracket(cursor))
+         if (!cursor.fwdToMatchingToken())
+            return false;
+
+      // Check for end of statement
+      if (cursor.isAtEndOfStatement(status.isInParentheticalScope()))
+         break;
+
+      // Expecting a symbol or right bracket
       if (!cursor.moveToNextSignificantToken())
+         break;
+
+      // Function calls
+      while (isLeftBracket(cursor))
+      {
+         if (!cursor.fwdToMatchingToken())
+            return false;
+
+         if (!cursor.moveToNextSignificantToken())
+            break;
+
+         if (cursor.isAtEndOfStatement(status.isInParentheticalScope()))
+            break;
+      }
+
+      // Binary operator or bust
+      if (!isBinaryOp(cursor))
          break;
 
       if (cursor.contentEquals(L"~"))
          foundTilde = true;
-      
-      while (cursor.fwdToMatchingToken())
-         if (!cursor.moveToNextSignificantToken())
-            break;
-      
-      if (!cursor.moveToNextSignificantToken())
-         break;
-      
-      while (cursor.fwdToMatchingToken())
-         if (!cursor.moveToNextSignificantToken())
-            break;
 
-      if (!isBinaryOp(cursor))
-         break;
-
+      // Step over the operator and start again
       if (!cursor.moveToNextSignificantToken())
          break;
    }
-   
+
    if (foundTilde)
+   {
+      DEBUG("Skipped formula: " << origin.currentToken() << " --> " << cursor.currentToken());
       origin.setOffset(cursor.offset());
-   
+   }
+
    return foundTilde;
 }
 
