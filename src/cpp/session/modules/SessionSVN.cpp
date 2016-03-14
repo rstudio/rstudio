@@ -1770,30 +1770,19 @@ Error augmentSvnIgnore()
       svnIgnore += ".Rhistory\n";
       svnIgnore += ".RData\n";
       svnIgnore += ".Ruserdata\n";
-      svnIgnore += ".*.Rnb.cached\n";
    }
    else
    {
-      // If svn:ignore exists, add .Rproj.user and .Rnb.cached unless already
-      // there
-      std::string amendments;
+      // If svn:ignore exists, add .Rproj.user unless it's already there
+      if (boost::regex_search(svnIgnore, boost::regex("^\\.Rproj\\.user$")))
+         return Success();
 
-      // add extra newline if necessary
       bool addExtraNewline = svnIgnore.size() > 0
                              && svnIgnore[svnIgnore.size() - 1] != '\n';
       if (addExtraNewline)
-         amendments += "\n";
+         svnIgnore += "\n";
 
-      if (!boost::regex_search(svnIgnore, boost::regex("^\\.Rproj\\.user$")))
-         amendments += ".Rproj.user\n";
-      if (!boost::regex_search(svnIgnore, boost::regex("^\\.\\*\\.Rnb\\.cached$")))
-         amendments += ".*.Rnb.cached\n";
-
-      // if no amendments were found, no modifications are necessary
-      if (amendments.length() < 2)
-         return Success();
-
-      svnIgnore += amendments;
+      svnIgnore += ".Rproj.user\n";
    }
 
    // write back svn:ignore

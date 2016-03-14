@@ -342,8 +342,6 @@ private:
                continue;
             if (file.find("/packrat/src/") != std::string::npos)
                continue;
-            if (file.find(".Rnb.cached/") != std::string::npos)
-               continue;
 
             int lineNum = safe_convert::stringTo<int>(std::string(match[2]), -1);
             std::string lineContents = match[3];
