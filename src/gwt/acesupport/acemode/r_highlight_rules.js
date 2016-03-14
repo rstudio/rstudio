@@ -64,7 +64,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       rules["#comment"] = [
          {
             token : "comment.sectionhead",
-            regex : "#+(?!')(?:[^-=#]).*(?:----|====|####)\\s*$",
+            regex : "#+(?!').*(?:----|====|####)\\s*$",
             next  : "start"
          },
          {
