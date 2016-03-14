@@ -184,6 +184,16 @@ SEXP rs_populateNotebookCache(SEXP fileSEXP)
    return r::sexp::create(cacheFolder.absolutePath(), &rProtect);
 }
 
+SEXP rs_chunkCacheFolder(SEXP fileSEXP)
+{
+   std::string file = r::sexp::safeAsString(fileSEXP);
+   FilePath cacheFolder =
+         chunkCacheFolder(file, "", userSettings().contextId());
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(cacheFolder.absolutePath(), &protect);
+}
+
 } // anonymous namespace
 
 FilePath notebookCacheRoot()
@@ -233,6 +243,7 @@ Error initCache()
    source_database::events().onDocAdded.connect(onDocAdded);
 
    RS_REGISTER_CALL_METHOD(rs_populateNotebookCache, 1);
+   RS_REGISTER_CALL_METHOD(rs_chunkCacheFolder, 1);
 
    return Success();
 }
