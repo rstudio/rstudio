@@ -36,6 +36,7 @@
 
 ### Bug Fixes
 
+* Fix for 'httpdPort' detection error sometimes seen with R built from source
 * Autocompletion: avoid errors when retrieving completions in debugger
 * Diagnostics: fix false positive errors with '{' following function calls
 * Improved performance of document tokenization (fix laggy typing)
