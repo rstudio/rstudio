@@ -226,8 +226,11 @@ public class SourceShim extends Composite
    @Override
    public void onEnsureVisibleSourceWindow(EnsureVisibleSourceWindowEvent e)
    {
-      fireEvent(new EnsureVisibleEvent());
-      fireEvent(new EnsureHeightEvent(EnsureHeightEvent.NORMAL));
+      if (source_.getView().getTabCount() > 0)
+      {
+         fireEvent(new EnsureVisibleEvent());
+         fireEvent(new EnsureHeightEvent(EnsureHeightEvent.NORMAL));
+      }
    }
 
    public void forceLoad()
