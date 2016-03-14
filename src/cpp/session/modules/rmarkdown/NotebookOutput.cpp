@@ -159,8 +159,12 @@ Error handleChunkOutputRequest(const http::Request& request,
    }
    else
    {
-      // otherwise, use ETag cache 
-      pResponse->setCacheableBody(target, request);
+      // otherwise, use ETag cache (only for server mode, since Qt doesn't
+      // handle ETag caching; see case 4546)
+      if (options().programMode() == kSessionProgramModeServer)
+         pResponse->setCacheableBody(target, request);
+      else
+         pResponse->setBody(target);
    }
 
    return Success();
