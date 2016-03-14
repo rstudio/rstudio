@@ -6,7 +6,7 @@ if "%1" == "clean" call clean-build.bat
 
 REM Prepend Qt 5.4 SDK Mingw to path
 setlocal
-set PATH=C:\Qt\Qt5.4.0\Tools\mingw491_32\bin;%PATH%
+set PATH=C:\Qt\Qt5.4.1\Tools\mingw491_32\bin;%PATH%
 
 REM Remove Rtools from path
 CALL SET PATH=%PATH:C:\Rtools\bin=%
