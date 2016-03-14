@@ -3,6 +3,8 @@
 ### Editor
 
 * Enabled auto-pairing of backticks (\`\`) in R documents
+* Fixed regression re: folding of unnamed sections, e.g. '#####'
+* Implemented folding for sub-sections in R documents
 * Added option for display of 'end' fold markers
 * Display function tooltip on mouse over of function name
 * Added option to display function signature tooltip on cursor idle
