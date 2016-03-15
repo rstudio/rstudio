@@ -725,9 +725,13 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    saveRDS(file = outputLocation, object = result)
 })
 
-.rs.addFunction("readFile", function(file)
+.rs.addFunction("readFile", function(file, binary = FALSE)
 {
-   readChar(file, file.info(file)$size, TRUE)
+   size <- file.info(file)$size
+   if (binary)
+      readBin(file, "raw", size)
+   else
+      readChar(file, size, TRUE)
 })
 
 .rs.addFunction("fromJSON", function(string)

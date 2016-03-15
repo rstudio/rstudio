@@ -206,7 +206,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    chunkData <- lapply(chunkDirs, function(dir) {
       files <- list.files(dir, full.names = TRUE)
       contents <- lapply(files, function(file) {
-         .rs.readFile(file)
+         .rs.readFile(file, binary = .rs.endsWith(file, "png"))
       })
       names(contents) <- basename(files)
       contents
@@ -285,12 +285,14 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("rnb.fillChunks", function(html, rnbData)
 {
-   filled <- html
-   chunkIdx <- 1
-   for (i in seq_along(filled)) {
-      line <- filled[[i]]
-      if (!(.rs.startsWith(line, "<!-- rnb-chunk-id") && .rs.endsWith(line, "-->")))
-         next
+   indices <- which(
+      .rs.startsWith(html, "<!-- rnb-chunk-id") &
+      .rs.endsWith(html, "-->"))
+   
+   for (chunkIdx in seq_along(indices))
+   {
+      i <- indices[[chunkIdx]]
+      line <- html[i]
       
       chunkId <- sub('<!-- rnb-chunk-id\\s*(\\S+)\\s*-->', '\\1', line)
       chunkData <- rnbData$chunk_data[[chunkId]]
@@ -298,20 +300,31 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       if (is.null(chunkData) || is.null(chunkDefn))
          stop("no chunk with id '", chunkId, "'")
       
-      # inject PNGs etc. as base64 data
-      injected <- .rs.rnb.injectBase64Data(chunkData$html, chunkId, rnbData)
+      # convert to HTML
+      htmlList <- .rs.enumerate(chunkData, function(name, value) {
+         if (.rs.endsWith(name, "csv")) {
+            parsed <- .rs.rnb.parseConsoleData(value)
+            .rs.rnb.consoleDataToHtml(parsed)
+         } else if (.rs.endsWith(name, "png")) {
+            encoded <- caTools::base64encode(value)
+            sprintf("<img src=data:image/png;base64,%s />", encoded)
+         } else {
+            # TODO
+         }
+      })
       
       # insert into document
       injection <- c(
          sprintf("<!-- rnb-chunk-start-%s %s -->", chunkIdx, chunkDefn$chunk_start),
-         paste(injected, collapse = "\n"),
+         paste(unlist(htmlList), collapse = "\n"),
          sprintf("<!-- rnb-chunk-end-%s %s -->", chunkIdx, chunkDefn$chunk_end)
       )
       
-      filled[[i]] <- paste(injection, sep = "\n", collapse = "\n")
+      html[[i]] <- paste(injection, sep = "\n", collapse = "\n")
       chunkIdx <- chunkIdx + 1
    }
-   filled
+   
+   html
 })
 
 .rs.addFunction("rnb.render", function(inputFile,
@@ -398,6 +411,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       header = FALSE,
       stringsAsFactors = FALSE
    )
+   
    names(csvData) <- c("type", "text")
    csvData
 })
@@ -413,20 +427,29 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    )
    
    splat <- lapply(ranges, function(range) {
-      result <- paste(csvData$text[range$start:range$end], collapse = "")
-      result <- .rs.trimWhitespace(result)
+      
+      result <- csvData$text[range$start:range$end]
+      if (!any(nzchar(.rs.trimWhitespace(result))))
+         return(NULL)
+      
       type <- csvData$type[[range$start]]
-      attr(result, ".class") <- if (type == 0)
-         "console-r-stdin"
+      if (type == 1 || type == 2)
+         result <- paste("##", result)
+      
+      pasted <- .rs.trimWhitespace(paste(result, collapse = ""))
+      attr(pasted, ".class") <- if (type == 0)
+         "r console-r-stdin"
       else if (type == 1)
          "console-r-stdout"
       else if (type == 2)
          "console-r-stderr"
-      result
+      
+      pasted
    })
    
-   html <- lapply(splat, function(el) {
-      sprintf("<code><pre class=\"%s\">%s</pre></code>",
+   filtered <- Filter(Negate(is.null), splat)
+   html <- lapply(filtered, function(el) {
+      sprintf("<pre class=\"%s\"><code>%s</code></pre>",
               attr(el, ".class"),
               el)
    })
