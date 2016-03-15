@@ -41,6 +41,33 @@ FilePath cachePath(const std::string& contextId)
    return notebookCacheRoot().childPath("paths-" + contextId);
 }
 
+void cleanNotebookCache()
+{
+   FilePath cache = cachePath(userSettings().contextId());
+   Error error = core::readStringMapFromFile(cache, &s_idCache);
+
+   // TODO: Clean up cache folders that aren't used. Needs some reformulation
+   // of the way we form the folder paths--ATM the paths include only the 
+   // context ID; they need to also include session ID, otherwise we could
+   // nuke a cache folder used by another session
+
+   for (std::map<std::string, std::string>::iterator it = s_idCache.begin();
+        it != s_idCache.end(); 
+        it++)
+   {
+      // clean up cache entries that don't exist
+      if (!FilePath(it->first).exists())
+         s_idCache.erase(it->first);
+   }
+
+   // write out updated cache
+   error = writeStringMapToFile(cache, s_idCache);
+   if (error)
+      LOG_ERROR(error);
+   s_cacheWriteTime = std::time(NULL);
+}
+   
+
 } // anonymous namespace
 
 Error notebookPathToId(const core::FilePath& path, const std::string& contextId,
@@ -63,10 +90,15 @@ Error notebookPathToId(const core::FilePath& path, const std::string& contextId,
       // the cache exists; see if we need to reload
       if (cache.lastWriteTime() > s_cacheWriteTime) 
       {
+         // TODO: this needs to be sensitive to the context ID 
          error = core::readStringMapFromFile(cache, &s_idCache);
          if (error)
             return error;
          s_cacheWriteTime = std::time(NULL);
+
+         // schedule a cache cleanup (no urgency)
+         module_context::scheduleDelayedWork(boost::posix_time::seconds(10),
+            cleanNotebookCache, true);
       }
    }
    
