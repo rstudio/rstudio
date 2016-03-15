@@ -428,30 +428,31 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    splat <- lapply(ranges, function(range) {
       
-      result <- csvData$text[range$start:range$end]
-      if (!any(nzchar(.rs.trimWhitespace(result))))
+      pasted <- paste(csvData$text[range$start:range$end], collapse = "")
+      result <- .rs.trimWhitespace(pasted)
+      if (!nzchar(result))
          return(NULL)
       
       type <- csvData$type[[range$start]]
       if (type == 1 || type == 2)
-         result <- paste("##", result)
+         result <- paste("##", gsub("\n", "\n## ", result, fixed = TRUE))
       
-      pasted <- .rs.trimWhitespace(paste(result, collapse = ""))
-      attr(pasted, ".class") <- if (type == 0)
-         "r console-r-stdin"
-      else if (type == 1)
-         "console-r-stdout"
-      else if (type == 2)
-         "console-r-stderr"
+      attr(result, ".class") <- if (type == 0) "r"
       
-      pasted
+      result
    })
    
    filtered <- Filter(Negate(is.null), splat)
    html <- lapply(filtered, function(el) {
-      sprintf("<pre class=\"%s\"><code>%s</code></pre>",
-              attr(el, ".class"),
-              el)
+      class <- attr(el, ".class")
+      result <- if (!is.null(class)) {
+         sprintf("<pre class=\"%s\"><code>%s</code></pre>",
+                 class,
+                 el)
+      } else {
+         sprintf("<pre><code>%s</code></pre>", el)
+      }
+      result
    })
    
    paste(unlist(html), collapse = "\n")
