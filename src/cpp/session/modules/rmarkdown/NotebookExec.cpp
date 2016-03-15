@@ -42,12 +42,10 @@ namespace notebook {
 namespace {
 
 bool moveLibFile(const FilePath& from, const FilePath& to, 
-      const FilePath& path, std::vector<FilePath> *pPaths)
+      const FilePath& path)
 {
    std::string relativePath = path.relativePath(from);
    FilePath target = to.complete(relativePath);
-
-   pPaths->push_back(path);
 
    Error error = path.isDirectory() ?
                      target.ensureDirectory() :
@@ -102,7 +100,7 @@ void ChunkExecContext::connect()
 
    // begin capturing plots 
    connections_.push_back(events().onPlotOutput.connect(
-         boost::bind(&ChunkExecContext::onFileOutput, this, _1, 
+         boost::bind(&ChunkExecContext::onFileOutput, this, _1, FilePath(), 
                      kChunkOutputPlot)));
 
    error = beginPlotCapture(outputPath);
@@ -111,7 +109,7 @@ void ChunkExecContext::connect()
 
    // begin capturing HTML input
    connections_.push_back(events().onHtmlOutput.connect(
-         boost::bind(&ChunkExecContext::onFileOutput, this, _1, 
+         boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2,
                      kChunkOutputHtml)));
 
    error = beginWidgetCapture(outputPath, 
@@ -136,7 +134,8 @@ void ChunkExecContext::onConsolePrompt(const std::string& )
       disconnect();
 }
 
-void ChunkExecContext::onFileOutput(const FilePath& file, int outputType)
+void ChunkExecContext::onFileOutput(const FilePath& file, 
+      const FilePath& metadata, int outputType)
 {
    OutputPair pair = lastChunkOutput(docId_, chunkId_);
    pair.ordinal++;
@@ -154,20 +153,25 @@ void ChunkExecContext::onFileOutput(const FilePath& file, int outputType)
    FilePath fileLib = file.parent().complete(kChunkLibDir);
    if (fileLib.exists())
    {
-      std::vector<FilePath> paths;
       std::string docPath;
       source_database::getPath(docId_, &docPath);
       error = fileLib.childrenRecursive(boost::bind(moveLibFile, fileLib,
             chunkCacheFolder(docPath, docId_)
-                           .complete(kChunkLibDir), _2, &paths));
+                           .complete(kChunkLibDir), _2));
       if (error)
          LOG_ERROR(error);
-      // TODO: Write this to JSON, too, for accounting
       error = fileLib.remove();
       if (error)
          LOG_ERROR(error);
    }
-   
+
+   // if JSON metadata was provided, write it out
+   if (!metadata.empty())
+   {
+      metadata.move(target.parent().complete(
+               target.stem() + metadata.extension()));
+   }
+
    enqueueChunkOutput(docId_, chunkId_, outputType, target);
    updateLastChunkOutput(docId_, chunkId_, pair);
 }

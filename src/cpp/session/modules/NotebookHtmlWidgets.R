@@ -17,14 +17,29 @@
 {
   assign("print.htmlwidget", function(x, ...) {
     if (require(htmlwidgets, quietly = TRUE)) {
-      output <- tempfile(pattern = "_rs_html_", tmpdir = outputFolder, 
-                         fileext = "html")
+      htmlfile <- tempfile(pattern = "_rs_html_", tmpdir = outputFolder, 
+                         fileext = ".html")
+
+      # extract dependencies (for our own accounting)
+      dependencies <- c(
+        htmlwidgets:::widget_dependencies(class(x)[1], attr(x, "package")), 
+        x$dependencies)
+
+      # write them to JSON 
+      depfile <- tempfile(pattern = "_rs_html_deps_", tmpdir = outputFolder,
+                          fileext = ".json")
+      writeLines(jsonlite::toJSON(lapply(dependencies, unclass), 
+                                  auto_unbox = TRUE),
+                 depfile)
+                  
+      # save the widget to HTML 
       htmlwidgets::saveWidget(
         widget = x, 
-        file = output,
+        file = htmlfile,
         selfcontained = FALSE, 
         libdir = libraryFolder)
-      .Call("rs_recordHtmlWidget", output);
+
+      .Call("rs_recordHtmlWidget", htmlfile, depfile);
     }
   }, envir = as.environment("tools:rstudio"))
 })

@@ -39,10 +39,10 @@ namespace notebook {
 
 namespace {
 
-SEXP rs_recordHtmlWidget(SEXP fileSEXP)
+SEXP rs_recordHtmlWidget(SEXP htmlFileSEXP, SEXP depFileSEXP)
 {
-   std::string file = r::sexp::safeAsString(fileSEXP);
-   events().onHtmlOutput(FilePath(file));
+   events().onHtmlOutput(FilePath(r::sexp::safeAsString(htmlFileSEXP)), 
+                         FilePath(r::sexp::safeAsString(depFileSEXP)));
    return R_NilValue;
 }
 
@@ -77,7 +77,7 @@ core::Error beginWidgetCapture(
 
 core::Error initHtmlWidgets()
 {
-   RS_REGISTER_CALL_METHOD(rs_recordHtmlWidget, 1);
+   RS_REGISTER_CALL_METHOD(rs_recordHtmlWidget, 2);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

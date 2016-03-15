@@ -55,7 +55,8 @@ private:
    void onConsoleInput(const std::string& input);
    void onConsolePrompt(const std::string&);
    void onConsoleText(int type, const std::string& output, bool truncate);
-   void onFileOutput(const core::FilePath& file, int outputType);
+   void onFileOutput(const core::FilePath& file, const core::FilePath& metadata,
+         int outputType);
 
    std::string docId_;
    std::string chunkId_;
