@@ -1657,15 +1657,21 @@
    return(result)
 })
 
+.rs.addFunction("enumerate", function(list, f, ...)
+{
+   lapply(seq_along(list), function(i) {
+      f(names(list)[[i]], list[[i]], ...)
+   })
+})
+
 .rs.addFunction("cutpoints", function(data)
 {
    which(diff(sign(diff(c(data, data[length(data)])))) != 0)
 })
 
-.rs.addFunction("recode", function(data, ...)
+.rs.addFunction("recode", function(data, ..., envir = parent.frame())
 {
    dots <- eval(substitute(alist(...)))
-   envir <- parent.frame()
    
    for (expr in dots)
    {
