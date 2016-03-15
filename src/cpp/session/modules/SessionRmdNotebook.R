@@ -384,3 +384,53 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    cat(html, file = outputFile, sep = "\n")
    outputFile
 })
+
+.rs.addFunction("rnb.cachePathFromNotebookPath", function(rmdPath)
+{
+  .Call(.rs.routines$rs_chunkCacheFolder, rmdPath)
+})
+
+.rs.addFunction("rnb.parseConsoleData", function(data)
+{
+   csvData <- read.csv(
+      text = data,
+      encoding = "UTF-8",
+      header = FALSE,
+      stringsAsFactors = FALSE
+   )
+   names(csvData) <- c("type", "text")
+   csvData
+})
+
+.rs.addFunction("rnb.consoleDataToHtml", function(csvData)
+{
+   cutpoints <- .rs.cutpoints(csvData$type)
+   
+   ranges <- Map(
+      function(start, end) list(start = start, end = end),
+      c(1, cutpoints + 1),
+      c(cutpoints, nrow(csvData))
+   )
+   
+   splat <- lapply(ranges, function(range) {
+      result <- paste(csvData$text[range$start:range$end], collapse = "")
+      result <- .rs.trimWhitespace(result)
+      type <- csvData$type[[range$start]]
+      attr(result, ".class") <- if (type == 0)
+         "console-r-stdin"
+      else if (type == 1)
+         "console-r-stdout"
+      else if (type == 2)
+         "console-r-stderr"
+      result
+   })
+   
+   html <- lapply(splat, function(el) {
+      sprintf("<code><pre class=\"%s\">%s</pre></code>",
+              attr(el, ".class"),
+              el)
+   })
+   
+   paste(unlist(html), collapse = "\n")
+   
+})
