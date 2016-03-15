@@ -446,8 +446,9 @@ public class CompletionRequester
       
       Set<String> visitedItems = new HashSet<String>();
       
-      for (QualifiedName name : completions)
+      for (int i = 0, n = completions.size(); i < n; i++)
       {
+         QualifiedName name = completions.get(n - i - 1);
          if (visitedItems.contains(name.name))
             continue;
          
