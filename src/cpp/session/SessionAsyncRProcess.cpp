@@ -64,7 +64,8 @@ void AsyncRProcess::start(const char* rCommand,
       
       const core::FilePath rTools =  rPath.childPath("Tools.R");
       
-      rSourceFiles.push_back(rTools);
+      // insert at begin as Tools.R needs to be sourced first
+      rSourceFiles.insert(rSourceFiles.begin(), rTools);
    }
 
    // args
@@ -117,11 +118,11 @@ void AsyncRProcess::start(const char* rCommand,
          command << "source('" << it->absolutePath() << "');";
       }
       
-      command << escapedCommand.c_str();
+      command << escapedCommand;
    }
    else
    {
-      command << escapedCommand.c_str();
+      command << escapedCommand;
    }
 
    if (needsQuote)
