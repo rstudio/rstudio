@@ -1068,7 +1068,7 @@ Error FilePath::open_w(boost::shared_ptr<std::ostream>* pStream, bool truncate) 
    #ifdef _WIN32
       using namespace boost::iostreams;
       HANDLE hFile = ::CreateFileW(pImpl_->path.wstring().c_str(),
-                                   GENERIC_WRITE,
+                                   truncate ? GENERIC_WRITE : FILE_APPEND_DATA,
                                    0, // exclusive access
                                    NULL,
                                    truncate ? CREATE_ALWAYS : OPEN_ALWAYS,
