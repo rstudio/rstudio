@@ -1656,3 +1656,26 @@
    
    return(result)
 })
+
+.rs.addFunction("cutpoints", function(data)
+{
+   which(diff(sign(diff(c(data, data[length(data)])))) != 0)
+})
+
+.rs.addFunction("recode", function(data, ...)
+{
+   dots <- eval(substitute(alist(...)))
+   envir <- parent.frame()
+   
+   for (expr in dots)
+   {
+      if (length(expr) != 3)
+         stop("malformed recoding in .rs.recode()", call. = FALSE)
+      
+      lhs <- eval(expr[[2]], envir = envir)
+      rhs <- eval(expr[[3]], envir = envir)
+      data[data == lhs] <- rhs
+   }
+   
+   data
+})
