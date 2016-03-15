@@ -80,7 +80,7 @@
           <include name="tomcat/jsp-api-2.0.jar"/>
           <!-- dependencies needed for JSP support in DevMode: END -->
           <include name="tomcat/tomcat-servlet-api-8.0.28.jar"/>
-          <include name="apache/commons/commons-collections-3.2.1.jar"/>
+          <include name="apache/commons/commons-collections-3.2.2.jar"/>
           <!-- htmlunit dependencies not already included: BEGIN -->
           <include name="apache/http/httpclient-4.5.1.jar"/>
           <include name="apache/http/httpcore-4.4.4.jar"/>
@@ -135,7 +135,7 @@
           <!-- dependencies needed for JSP support in DevMode: END -->
           <zipfileset src="${gwt.tools.lib}/tomcat/tomcat-servlet-api-8.0.28.jar"/>
           <zipfileset
-              src="${gwt.tools.lib}/apache/commons/commons-collections-3.2.1.jar"/>
+              src="${gwt.tools.lib}/apache/commons/commons-collections-3.2.2.jar"/>
           <!-- htmlunit dependencies not already included: BEGIN -->
           <zipfileset src="${gwt.tools.lib}/apache/http/httpclient-4.5.1.jar"/>
           <zipfileset src="${gwt.tools.lib}/apache/http/httpcore-4.4.4.jar"/>
@@ -199,7 +199,7 @@
         <pathelement location="${gwt.tools.lib}/colt/colt-1.2.jar"/>
         <pathelement location="${gwt.tools.lib}/objectweb/asm-5.0.3/lib/asm-all-5.0.3.jar"/>
         <pathelement
-            location="${gwt.tools.lib}/apache/commons/commons-collections-3.2.1.jar"/>
+            location="${gwt.tools.lib}/apache/commons/commons-collections-3.2.2.jar"/>
         <pathelement
             location="${gwt.tools.lib}/eclipse/org.eclipse.jdt.core_3.11.2-CUSTOM-GWT-2.8-20160205.jar"/>
         <pathelement
