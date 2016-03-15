@@ -1047,7 +1047,7 @@ public class TextEditingTarget implements
 
       // if we're not waiting for another set of params to resolve, and we're
       // the active doc, process these params immediately
-      if (paramQueueClear && commandHandlerReg_ != null)
+      if (paramQueueClear && isActiveDocument())
       {
          beginQueuedCollabSession();
       }
@@ -5768,6 +5768,11 @@ public class TextEditingTarget implements
       return StringUtil.isNullOrEmpty(property)
             ? (getTextFileType().isRmd() && prefs_.showDocumentOutlineRmd().getGlobalValue())
             : Integer.parseInt(property) > 0;
+   }
+   
+   public boolean isActiveDocument()
+   {
+      return commandHandlerReg_ != null;
    }
    
    private StatusBar statusBar_;

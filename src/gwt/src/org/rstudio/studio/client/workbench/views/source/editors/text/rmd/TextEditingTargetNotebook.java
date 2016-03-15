@@ -56,6 +56,8 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -97,6 +99,7 @@ public class TextEditingTargetNotebook
       outputWidgets_ = new HashMap<String, ChunkOutputWidget>();
       lineWidgets_ = new HashMap<String, LineWidget>();
       chunkExecQueue_ = new LinkedList<ChunkExecQueueUnit>();
+      editingTarget_ = editingTarget;
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       // initialize the display's default output mode 
@@ -115,6 +118,19 @@ public class TextEditingTargetNotebook
             RStudioGinjector.INSTANCE.getUIPrefs()
                                      .showRmdChunkOutputInline().getValue());
       }
+      
+      docDisplay_.addEditorFocusHandler(new FocusHandler()
+      {
+         @Override
+         public void onFocus(FocusEvent arg0)
+         {
+            if (queuedResize_ != null)
+            {
+               onResize(queuedResize_);
+               queuedResize_ = null;
+            }
+         }
+      });
       
       // listen for future changes to the preference and sync accordingly
       docUpdateSentinel_.addPropertyValueChangeHandler(CHUNK_OUTPUT_TYPE, 
@@ -425,8 +441,17 @@ public class TextEditingTargetNotebook
 
 
    @Override
-   public void onResize(ResizeEvent arg0)
+   public void onResize(ResizeEvent event)
    {
+      // queue resize rather than processing it right away if we're not the
+      // active document--in addition to being wasteful we're likely to compute
+      // incorrect sizes
+      if (!editingTarget_.isActiveDocument())
+      {
+         queuedResize_ = event;
+         return;
+      }
+      
       for (ChunkOutputWidget widget: outputWidgets_.values())
       {
          widget.syncHeight(false);
@@ -612,6 +637,7 @@ public class TextEditingTargetNotebook
    
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel docUpdateSentinel_;
+   private final TextEditingTarget editingTarget_;
    private Provider<SourceWindowManager> pSourceWindowManager_;
 
    private RMarkdownServerOperations server_;
@@ -623,6 +649,7 @@ public class TextEditingTargetNotebook
    private static int nextRequestId_ = 0;
    private int requestId_ = 0;
    private String contextId_ = "";
+   private ResizeEvent queuedResize_ = null;
    
    private int state_ = STATE_NONE;
 
