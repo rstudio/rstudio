@@ -38,6 +38,8 @@ namespace notebook {
 
 core::Error initialize();
 
+std::string notebookCtxId();
+
 struct Events : boost::noncopyable
 {
    // Document {0}, chunk {1} from context id {3} execution completed

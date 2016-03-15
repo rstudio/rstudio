@@ -33,13 +33,13 @@ namespace rmarkdown {
 namespace notebook {
 
 core::FilePath chunkDefinitionsPath(const std::string& docPath,
-      const std::string& docId, const std::string& contextId);
+      const std::string& docId, const std::string& nbCtxId);
 
 core::Error getChunkDefs(const std::string& docPath, const std::string& docId, 
       std::time_t *pDocTime, core::json::Value* pDefs);
 
 core::Error getChunkDefs(const std::string& docPath, const std::string& docId, 
-      const std::string& contextId, std::time_t *pDocTime, 
+      const std::string& nbCtxId, std::time_t *pDocTime, 
       core::json::Value* pDefs);
 
 core::Error setChunkDefs(const std::string& docPath, const std::string& docId, 

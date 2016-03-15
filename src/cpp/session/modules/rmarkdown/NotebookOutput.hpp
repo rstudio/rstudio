@@ -65,7 +65,7 @@ void updateLastChunkOutput(const std::string& docId,
 // compute chunk output folder paths
 core::FilePath chunkOutputPath(
       const std::string& docPath, const std::string& docId,
-      const std::string& chunkId, const std::string& contextId);
+      const std::string& chunkId, const std::string& nbCtxId);
 core::FilePath chunkOutputPath(const std::string& docId, 
       const std::string& chunkId);
 
@@ -85,7 +85,7 @@ void enqueueChunkOutput(const std::string& docId,
       const core::FilePath& path);
 core::Error enqueueChunkOutput(
       const std::string& docPath, const std::string& docId,
-      const std::string& chunkId, const std::string& contextId);
+      const std::string& chunkId, const std::string& nbCtxId);
 
 core::Error initOutput();
 

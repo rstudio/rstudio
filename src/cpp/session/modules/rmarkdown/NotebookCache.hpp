@@ -59,7 +59,7 @@ namespace notebook {
 core::FilePath notebookCacheRoot();
 
 core::FilePath chunkCacheFolder(const std::string& docPath, 
-      const std::string& docId, const std::string& contextId);
+      const std::string& docId, const std::string& nbCtxId);
 
 core::FilePath chunkCacheFolder(const std::string& docPath, 
       const std::string& docId);

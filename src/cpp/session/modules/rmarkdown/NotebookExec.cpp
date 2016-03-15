@@ -208,8 +208,7 @@ void ChunkExecContext::disconnect()
 
    connected_ = false;
 
-   events().onChunkExecCompleted(docId_, chunkId_, 
-      userSettings().contextId());
+   events().onChunkExecCompleted(docId_, chunkId_, notebookCtxId());
 
 }
 

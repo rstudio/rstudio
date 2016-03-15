@@ -48,7 +48,7 @@ void onDocRemoved(const std::string& docId, const std::string& docPath)
 
    FilePath cacheFolder = chunkCacheFolder(docPath, docId);
    FilePath defFile = chunkDefinitionsPath(docPath, docId, 
-         userSettings().contextId());
+         notebookCtxId());
    if (!docPath.empty() && defFile.exists())
    {
       // for saved documents, we want to keep the cache folder around even when
@@ -174,7 +174,7 @@ SEXP rs_populateNotebookCache(SEXP fileSEXP)
 {
    std::string file = r::sexp::safeAsString(fileSEXP);
    FilePath cacheFolder = 
-      chunkCacheFolder(file, "", userSettings().contextId());
+      chunkCacheFolder(file, "", notebookCtxId());
    Error error = parseRnb(module_context::resolveAliasedPath(file), 
                           cacheFolder);
    if (error) 
@@ -202,7 +202,7 @@ FilePath notebookCacheRoot()
 }
 
 FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId,
-      const std::string& contextId)
+      const std::string& nbCtxId)
 {
    FilePath folder;
    std::string stem;
@@ -220,11 +220,11 @@ FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId,
       FilePath path = module_context::resolveAliasedPath(docPath);
 
       std::string id;
-      Error error = notebookPathToId(path, contextId, &id);
+      Error error = notebookPathToId(path, nbCtxId, &id);
       if (error)
          LOG_ERROR(error);
       
-      folder = notebookCacheRoot().childPath(contextId + "-" + id + "-" +
+      folder = notebookCacheRoot().childPath(nbCtxId + "-" + id + "-" +
             path.stem());
    }
 
@@ -233,7 +233,7 @@ FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId,
 
 FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
 {
-   return chunkCacheFolder(docPath, docId, userSettings().contextId());
+   return chunkCacheFolder(docPath, docId, notebookCtxId());
 }
 
 Error initCache()

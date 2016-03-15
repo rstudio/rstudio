@@ -71,10 +71,10 @@ void cleanChunks(const FilePath& cacheDir,
 
 FilePath chunkDefinitionsPath(const std::string& docPath,
                               const std::string& docId,
-                              const std::string& contextId)
+                              const std::string& nbCtxId)
 {
    std::string fileName = std::string() + "chunks.json";
-   return chunkCacheFolder(docPath, docId, contextId).childPath(fileName);
+   return chunkCacheFolder(docPath, docId, nbCtxId).childPath(fileName);
 }
 
 Error setChunkDefs(const std::string& docPath, const std::string& docId,
@@ -87,7 +87,7 @@ Error setChunkDefs(const std::string& docPath, const std::string& docId,
 
    // ensure we have a place to write the sidecar file
    FilePath defFile = chunkDefinitionsPath(docPath, docId, 
-         userSettings().contextId());
+         notebookCtxId());
 
    // if there are no old chunk definitions and we aren't adding any new ones,
    // no work to do
@@ -104,7 +104,7 @@ Error setChunkDefs(const std::string& docPath, const std::string& docId,
    std::vector<std::string> chunkIds;
    json::Value oldDefs;
    std::string oldContent;
-   error = getChunkDefs(docPath, docId, userSettings().contextId(), NULL, 
+   error = getChunkDefs(docPath, docId, notebookCtxId(), NULL, 
          &oldDefs);
    if (error)
       LOG_ERROR(error);
@@ -133,11 +133,11 @@ Error setChunkDefs(const std::string& docPath, const std::string& docId,
 }
 
 Error getChunkDefs(const std::string& docPath, const std::string& docId,
-                   const std::string& contextId, time_t *pDocTime, 
+                   const std::string& nbCtxId, time_t *pDocTime, 
                    core::json::Value* pDefs)
 {
    Error error;
-   FilePath defs = chunkDefinitionsPath(docPath, docId, contextId);
+   FilePath defs = chunkDefinitionsPath(docPath, docId, nbCtxId);
    if (!defs.exists())
       return Success();
 
@@ -186,7 +186,7 @@ Error getChunkDefs(const std::string& docPath, const std::string& docId,
 Error getChunkDefs(const std::string& docPath, const std::string& docId,
                    time_t *pDocTime, core::json::Value* pDefs)
 {
-   return getChunkDefs(docPath, docId, userSettings().contextId(), 
+   return getChunkDefs(docPath, docId, notebookCtxId(), 
                        pDocTime, pDefs);
 }
 

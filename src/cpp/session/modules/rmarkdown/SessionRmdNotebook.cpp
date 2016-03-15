@@ -67,7 +67,7 @@ void replayChunkOutputs(const std::string& docPath, const std::string& docId,
    // find all the chunks and play them back to the client
    BOOST_FOREACH(const std::string& chunkId, chunkIds)
    {
-      enqueueChunkOutput(docPath, docId, chunkId, userSettings().contextId());
+      enqueueChunkOutput(docPath, docId, chunkId, notebookCtxId());
    }
 
    json::Object result;
@@ -84,19 +84,19 @@ Error refreshChunkOutput(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
    // extract path to doc to be refreshed
-   std::string docPath, docId, contextId, requestId;
-   Error error = json::readParams(request.params, &docPath, &docId, &contextId,
+   std::string docPath, docId, nbCtxId, requestId;
+   Error error = json::readParams(request.params, &docPath, &docId, &nbCtxId,
          &requestId);
    if (error)
       return error;
 
    // use our own context ID if none supplied
-   if (contextId.empty())
-      contextId = userSettings().contextId();
+   if (nbCtxId.empty())
+      nbCtxId = notebookCtxId();
 
    json::Object result;
    json::Value chunkDefs; 
-   error = getChunkDefs(docPath, docId, contextId, NULL, &chunkDefs);
+   error = getChunkDefs(docPath, docId, nbCtxId, NULL, &chunkDefs);
 
    // schedule the work to play back the chunks
    if (!error && chunkDefs.type() == json::ArrayType) 
@@ -142,7 +142,7 @@ void onActiveConsoleChanged(const std::string& consoleId,
 
 void onChunkExecCompleted(const std::string& docId, 
                           const std::string& chunkId,
-                          const std::string& contextId)
+                          const std::string& nbCtxId)
 {
    emitOutputFinished(docId, chunkId);
 
@@ -182,6 +182,20 @@ Events& events()
 {
    static Events instance;
    return instance;
+}
+
+// a notebook context is scoped to both a user and a session (which are only
+// guaranteed unique per user); it must be unique since there are currently no
+// concurrency mechanisms in place to guard multi-session writes to the file.
+// the notebook context ID may be shared with other users/sessions for read 
+// access during collaborative editing, but only a notebook context's own 
+// session should write to it.
+std::string notebookCtxId()
+{
+   std::string sessionId = module_context::activeSession().id();
+   return userSettings().contextId() + 
+          (sessionId.empty() ? "" : "-") + 
+          sessionId;
 }
 
 Error initialize()

@@ -13,6 +13,7 @@
  *
  */
 
+#include "SessionRmdNotebook.hpp"
 #include "NotebookCache.hpp"
 #include "NotebookOutput.hpp"
 
@@ -192,7 +193,7 @@ OutputPair lastChunkOutput(const std::string& docId,
    std::string docPath;
    source_database::getPath(docId, &docPath);
    FilePath outputPath = chunkOutputPath(docPath, docId, chunkId, 
-         userSettings().contextId());
+         notebookCtxId());
 
    // scan the directory for output
    std::vector<FilePath> outputPaths;
@@ -224,10 +225,10 @@ OutputPair lastChunkOutput(const std::string& docId,
 
 FilePath chunkOutputPath(
       const std::string& docPath, const std::string& docId,
-      const std::string& chunkId, const std::string& contextId)
+      const std::string& chunkId, const std::string& nbCtxId)
 
 {
-   return chunkCacheFolder(docPath, docId, contextId).childPath(chunkId);
+   return chunkCacheFolder(docPath, docId, nbCtxId).childPath(chunkId);
 }
 
 FilePath chunkOutputPath(const std::string& docId, const std::string& chunkId)
@@ -235,7 +236,7 @@ FilePath chunkOutputPath(const std::string& docId, const std::string& chunkId)
    std::string docPath;
    source_database::getPath(docId, &docPath);
 
-   return chunkOutputPath(docPath, docId, chunkId, userSettings().contextId());
+   return chunkOutputPath(docPath, docId, chunkId, notebookCtxId());
 }
 
 FilePath chunkOutputFile(const std::string& docId, 
@@ -280,9 +281,9 @@ void enqueueChunkOutput(const std::string& docId,
 
 Error enqueueChunkOutput(
       const std::string& docPath, const std::string& docId,
-      const std::string& chunkId, const std::string& contextId)
+      const std::string& chunkId, const std::string& nbCtxId)
 {
-   FilePath outputPath = chunkOutputPath(docPath, docId, chunkId, contextId);
+   FilePath outputPath = chunkOutputPath(docPath, docId, chunkId, nbCtxId);
 
    // scan the directory for output
    std::vector<FilePath> outputPaths;

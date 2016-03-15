@@ -13,6 +13,7 @@
  *
  */
 
+#include "SessionRmdNotebook.hpp"
 #include "NotebookCache.hpp"
 #include "NotebookPaths.hpp"
 
@@ -36,14 +37,14 @@ namespace {
 std::map<std::string, std::string> s_idCache;
 std::time_t s_cacheWriteTime = 0;
 
-FilePath cachePath(const std::string& contextId)
+FilePath cachePath(const std::string& nbCtxId)
 {
-   return notebookCacheRoot().childPath("paths-" + contextId);
+   return notebookCacheRoot().childPath("paths-" + nbCtxId);
 }
 
 void cleanNotebookCache()
 {
-   FilePath cache = cachePath(userSettings().contextId());
+   FilePath cache = cachePath(notebookCtxId());
    Error error = core::readStringMapFromFile(cache, &s_idCache);
 
    // TODO: Clean up cache folders that aren't used. Needs some reformulation
@@ -70,11 +71,11 @@ void cleanNotebookCache()
 
 } // anonymous namespace
 
-Error notebookPathToId(const core::FilePath& path, const std::string& contextId,
+Error notebookPathToId(const core::FilePath& path, const std::string& nbCtxId,
       std::string *pId)
 {
    Error error;
-   FilePath cache = cachePath(contextId);
+   FilePath cache = cachePath(nbCtxId);
    if (!cache.exists())
    {
       // create folder to host cache if necessary
