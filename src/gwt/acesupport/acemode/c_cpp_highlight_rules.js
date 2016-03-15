@@ -122,11 +122,11 @@ var c_cppHighlightRules = function() {
             next : "comment"
          }, {
             token : "string", // single line
-            regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
+            regex : '(?:R|L|u8|u|U)?["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
          }, {
             token : "string", // multi line string start
             merge : true,
-            regex : '["].*\\\\$',
+            regex : '(?:R|L|u8|u|U)?["].*\\\\$',
             next : "qqstring"
          }, {
             token : "string", // single line

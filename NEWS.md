@@ -26,6 +26,7 @@
 
 * Provide autocompletion of header paths
 * Update C++ unit testing library (catch) to v1.3.3 (fix gcc >=5 compilation errors)
+* Syntax highlighting of raw, wide, unicode string literals (e.g R"hello")
 
 ### Miscellaneous
 
