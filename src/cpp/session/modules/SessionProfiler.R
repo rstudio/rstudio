@@ -107,7 +107,10 @@
          profvis <- profilerOptions$profvis
          htmlwidgets::saveWidget(profvis, htmlFile, selfcontained = TRUE)
 
-         file.remove(profilerOptions$profvis$x$message$prof_output)
+         if (resources$tempPath == substr(profilerOptions$profvis$x$message$prof_output, 1, nchar(resources$tempPath)))
+         {
+            file.remove(profilerOptions$profvis$x$message$prof_output)
+         }
       }
 
       return(list(
