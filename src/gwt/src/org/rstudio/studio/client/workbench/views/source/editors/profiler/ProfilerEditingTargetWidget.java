@@ -65,6 +65,7 @@ public class ProfilerEditingTargetWidget extends Composite
    {
       Toolbar toolbar = new EditingTargetToolbar(commands, true);
       
+      toolbar.addLeftWidget(commands.gotoProfileSource().createToolbarButton());
       toolbar.addLeftWidget(commands.saveProfileAs().createToolbarButton());
       
       toolbar.addRightWidget(

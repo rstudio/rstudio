@@ -324,6 +324,7 @@ public abstract class
    public abstract AppCommand saveProfileAs();
    public abstract AppCommand openProfile();
    public abstract AppCommand profileHelp();
+   public abstract AppCommand gotoProfileSource();
    
    // Tools
    public abstract AppCommand showShellDialog();

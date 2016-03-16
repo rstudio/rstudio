@@ -4568,6 +4568,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CLEAR_PROFILE, params, requestCallback);
    }
 
+   public void profileSources(String path,
+                              ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      sendRequest(RPC_SCOPE, PROFILE_SOURCES, params, requestCallback);
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private boolean listeningForEvents_;
@@ -4929,4 +4937,5 @@ public class RemoteServer implements Server
    private static final String OPEN_PROFILE = "open_profile";
    private static final String COPY_PROFILE = "copy_profile";
    private static final String CLEAR_PROFILE = "clear_profile";
+   private static final String PROFILE_SOURCES = "profile_sources";
 }

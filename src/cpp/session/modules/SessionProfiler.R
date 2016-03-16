@@ -177,3 +177,15 @@
       return(list(error = .rs.scalar(e$message)))
    })
 })
+
+.rs.addJsonRpcHandler("profile_sources", function(filePath)
+{
+   tryCatch({
+      fixedPath <- filePath
+      exists <- file.exists(fixedPath)
+
+      return(.rs.scalar(if (exists) fixedPath else ""))
+   }, error = function(e) {
+      return(list(error = .rs.scalar(e$message)))
+   })
+})
