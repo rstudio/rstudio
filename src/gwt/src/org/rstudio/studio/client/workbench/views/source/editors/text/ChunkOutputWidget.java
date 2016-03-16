@@ -121,7 +121,7 @@ public class ChunkOutputWidget extends Composite
          }
       });
       
-      DOM.sinkEvents(frame_.getElement(), Event.ONMOUSEOVER | Event.ONMOUSEOUT);
+      DOM.sinkEvents(frame_.getElement(), Event.ONMOUSEOVER);
       DOM.setEventListener(frame_.getElement(), new EventListener()
       {
          @Override
@@ -137,14 +137,6 @@ public class ChunkOutputWidget extends Composite
                         clear_.getElement().getStyle().setOpacity(1);
                      else 
                         clear_.getElement().getStyle().setOpacity(0.5);
-                     break;
-                  
-                  case Event.ONMOUSEOUT:
-                     if (Element.as(evt.getEventTarget()) == 
-                         clear_.getElement())
-                        clear_.getElement().getStyle().setOpacity(0.5);
-                     else
-                        clear_.getElement().getStyle().clearOpacity();
                      break;
                }
             }
