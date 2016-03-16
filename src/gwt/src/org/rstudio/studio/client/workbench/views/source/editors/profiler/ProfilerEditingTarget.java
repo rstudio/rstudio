@@ -729,7 +729,7 @@ public class ProfilerEditingTarget implements EditingTarget,
                   {
                      globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
                            "Error while opening profiler source",
-                           "Could not find reference to: " + selectedPath_);
+                           "The source file " + selectedPath_ + " does not exist.");
                   }
                }
             }
