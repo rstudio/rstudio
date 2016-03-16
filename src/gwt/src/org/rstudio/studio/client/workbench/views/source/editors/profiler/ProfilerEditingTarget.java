@@ -46,7 +46,6 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -55,6 +54,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileType;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.ProfilerType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
@@ -105,7 +105,8 @@ public class ProfilerEditingTarget implements EditingTarget,
                                 RemoteFileSystemContext fileContext,
                                 WorkbenchContext workbenchContext,
                                 EventBus eventBus,
-                                SourceServerOperations sourceServer)
+                                SourceServerOperations sourceServer,
+                                FileTypeRegistry fileTypeRegistry)
    {
       presenter_ = presenter;
       commands_ = commands;
@@ -118,6 +119,7 @@ public class ProfilerEditingTarget implements EditingTarget,
       workbenchContext_ = workbenchContext;
       eventBus_ = eventBus;
       sourceServer_ = sourceServer;
+      fileTypeRegistry_ = fileTypeRegistry;
       
       if (!initializedEvents_)
       {
@@ -218,6 +220,16 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    public void onActivate()
    {
+      activeProfilerEditingTarger_ = this;
+      
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         public void execute()
+         {
+            commands_.gotoProfileSource().setEnabled(hasValidPath_);
+         }
+      });
+      
       if (!htmlPathInitialized_) {
          htmlPathInitialized_ = true;
          
@@ -279,6 +291,11 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    public void onDeactivate()
    {
+      if (activeProfilerEditingTarger_ == this)
+      {
+         activeProfilerEditingTarger_ = null;
+      }
+      
       recordCurrentNavigationPosition();
       
       commandHandlerReg_.removeHandler();
@@ -542,6 +559,14 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       saveNewFile(isUserSaved_ ? getPath() : null);
    }
+   
+   @Handler
+   public void onGotoProfileSource()
+   {
+      FilePosition filePosition = FilePosition.create(selectedLine_, 0);
+      fileTypeRegistry_.editFile(FileSystemItem.createFile(selectedPath_),
+                                 filePosition);
+   }
 
    public String getDefaultNamePrefix()
    {
@@ -671,16 +696,61 @@ public class ProfilerEditingTarget implements EditingTarget,
       };
    }
    
-   private static void onMessage(String message, String file, int line)
-   {  
+   private void onMessage(final String message,
+                          final String file,
+                          final String details,
+                          final int line)
+   {
       if (message == "sourcefile")
       {
-         FilePosition filePosition = FilePosition.create(line, 0);
-         CodeNavigationTarget navigationTarget = new CodeNavigationTarget(file, filePosition);
-         
-         RStudioGinjector.INSTANCE.getFileTypeRegistry().editFile(
-               FileSystemItem.createFile(navigationTarget.getFile()),
-               filePosition);
+         server_.profileSources(file, new ServerRequestCallback<String>()
+         {
+            @Override
+            public void onResponseReceived(String response)
+            {
+               selectedPath_ = file;
+               selectedLine_ = line;
+               hasValidPath_ = !StringUtil.isNullOrEmpty(response);
+               
+               commands_.gotoProfileSource().setEnabled(hasValidPath_);
+               
+               if (details == "open")
+               {
+                  if (hasValidPath_)
+                  {
+                     FilePosition filePosition = FilePosition.create(line, 0);
+                     CodeNavigationTarget navigationTarget = new CodeNavigationTarget(file, filePosition);
+                     
+                     fileTypeRegistry_.editFile(
+                           FileSystemItem.createFile(navigationTarget.getFile()),
+                           filePosition);
+                  }
+                  else
+                  {
+                     globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
+                           "Error while opening profiler source",
+                           "The source file " + selectedPath_ + " does not exist.");
+                  }
+               }
+            }
+            
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
+      }
+   }
+   
+   public static void onGlobalMessage(final String message,
+                                final String file,
+                                final String details,
+                                final int line)
+   {
+      if (activeProfilerEditingTarger_ != null)
+      {
+         activeProfilerEditingTarger_.onMessage(message, file, details, line);
       }
    }
 
@@ -699,7 +769,7 @@ public class ProfilerEditingTarget implements EditingTarget,
             null, 0));
    }
 
-   private static native void initializeEvents() /*-{
+   private native static void initializeEvents() /*-{
       var handler = $entry(function(e) {
          if (typeof e.data != 'object')
             return;
@@ -708,7 +778,7 @@ public class ProfilerEditingTarget implements EditingTarget,
          if (e.data.source != "profvis")
             return;
             
-         @org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerEditingTarget::onMessage(Ljava/lang/String;Ljava/lang/String;I)(e.data.message, e.data.file, e.data.line);
+         @org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerEditingTarget::onGlobalMessage(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)(e.data.message, e.data.file, e.data.details, e.data.line);
       });
       $wnd.addEventListener("message", handler, true);
    }-*/;
@@ -730,6 +800,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    private final WorkbenchContext workbenchContext_;
    private final EventBus eventBus_;
    private Provider<String> defaultNameProvider_;
+   private final FileTypeRegistry fileTypeRegistry_;
    
    private ProfilerType fileType_ = new ProfilerType();
    
@@ -745,4 +816,9 @@ public class ProfilerEditingTarget implements EditingTarget,
    private String htmlPath_;
    private String htmlLocalPath_;
    private boolean isUserSaved_;
+   
+   private static ProfilerEditingTarget activeProfilerEditingTarger_;
+   private String selectedPath_;
+   private int selectedLine_;
+   private Boolean hasValidPath_ = false;
 }

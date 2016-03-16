@@ -1079,7 +1079,7 @@ public class Source implements InsertSourceHandler,
       for (int idx = 0; idx < editors_.size(); idx++)
       {
          String path = editors_.get(idx).getPath();
-         if (profilePath.equals(path))
+         if (path != null && profilePath.equals(path))
          {
             ensureVisible(false);
             view_.selectTab(idx);

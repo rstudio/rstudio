@@ -32,7 +32,8 @@ public class ProfilerContents extends JavaScriptObject
       contents.path = path;
       contents.htmlPath = htmlPath;
       contents.htmlLocalPath = htmlLocalPath;
-
+      
+      contents.isUserSaved = createProfile ? null : "saved";
       contents.createProfile = createProfile;
       return contents;
    }-*/;

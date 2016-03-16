@@ -2632,6 +2632,11 @@ well as menu structures (for main menu and popup menus).
         desc="Profile the current line or selection"
         context="r"/>
 
+   <cmd id="gotoProfileSource"
+        label="Go To Profile Sources"
+        buttonLabel=""
+        desc="Open sources associated with the selection"/>
+
    <cmd id="profileCodeWithoutFocus"
         rebindable="false"/>
 
