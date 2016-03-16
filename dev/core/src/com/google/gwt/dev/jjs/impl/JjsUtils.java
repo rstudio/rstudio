@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.PrecompileTaskOptions;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.jjs.ast.HasJsInfo.JsMemberType;
 import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.HasType;
 import com.google.gwt.dev.jjs.ast.JArrayType;
@@ -385,7 +386,7 @@ public class JjsUtils {
    * Returns true if the method is a synthetic accidental override that trivially dispatches to its
    * same name super.
    */
-  public static boolean isUnnecessarySyntheticAccidentalOverride(JMethod method) {
+  public static boolean isJsMemberUnnecessaryAccidentalOverride(JMethod method) {
     // Assumptions on synthethic overrides, if any of these change.
     assert !method.isSyntheticAccidentalOverride() || !method.exposesPackagePrivateMethod();
 
@@ -393,16 +394,16 @@ public class JjsUtils {
       return false;
     }
 
-    boolean overridesConcreteMethod = Iterables.any(method.getOverriddenMethods(),
+    boolean overridesConcreteJsMethod = Iterables.any(method.getOverriddenMethods(),
         new Predicate<JMethod>() {
           @Override
           public boolean apply(JMethod method) {
-            return !method.isAbstract();
+            return !method.isAbstract() && method.getJsMemberType() != JsMemberType.NONE;
           }
         });
-    // A synthetic accidental  override is unnecessary iff it retains the same property
-    // name (polyname) as the the concrete method it overrides.
-    return overridesConcreteMethod && !method.exposesNonJsMember();
+    // A synthetic accidental override is unnecessary if its due to a JsMethod that does not expose
+    // a non JsMember.
+    return overridesConcreteJsMethod && !method.exposesNonJsMember();
   }
 
   /**

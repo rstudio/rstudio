@@ -584,7 +584,7 @@ public class JsInteropRestrictionChecker {
       @Override
       public boolean visit(JMethod x, Context ctx) {
         // Skip unnecessary synthetic override, as they will not be generated.
-        return !JjsUtils.isUnnecessarySyntheticAccidentalOverride(x);
+        return !JjsUtils.isJsMemberUnnecessaryAccidentalOverride(x);
       }
 
       @Override
