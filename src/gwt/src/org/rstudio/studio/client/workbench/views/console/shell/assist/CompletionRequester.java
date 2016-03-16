@@ -53,6 +53,7 @@ import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionConte
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -456,6 +457,7 @@ public class CompletionRequester
          visitedItems.add(name.name);
       }
       
+      Collections.reverse(result);
       return result;
    }
    
