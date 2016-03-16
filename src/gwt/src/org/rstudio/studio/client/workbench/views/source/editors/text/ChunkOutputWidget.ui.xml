@@ -6,7 +6,7 @@
    <ui:with field="res" type="org.rstudio.core.client.theme.res.ThemeResources"/>
 
    <ui:style type="org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget.ChunkStyle">
-   .interrupt, .clear, .busy
+   .interrupt, .clear
    {
       position: absolute;
       top: 5px;
@@ -15,9 +15,8 @@
       z-index: 25;
    }
    
-   .overflowY .interrupt, 
+   .overflowY .interrupt,
    .overflowY .clear
-   .overflowY .busy
    {
       right: 25px;
    }

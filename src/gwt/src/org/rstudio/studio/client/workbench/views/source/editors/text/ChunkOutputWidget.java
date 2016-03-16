@@ -509,12 +509,12 @@ public class ChunkOutputWidget extends Composite
       boolean hasOverflow = ele.getScrollHeight() > ele.getOffsetHeight();
       if (hasOverflow && !root_.getElement().hasClassName(style.overflowY()))
       {
-         root_.getElement().addClassName(style.overflowY());
+         frame_.getElement().addClassName(style.overflowY());
       }
       else if (!hasOverflow && 
                root_.getElement().hasClassName(style.overflowY()))
       {
-         root_.getElement().removeClassName(style.overflowY());
+         frame_.getElement().removeClassName(style.overflowY());
       }
    }
    
