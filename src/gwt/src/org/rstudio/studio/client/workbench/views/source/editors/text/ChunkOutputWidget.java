@@ -23,6 +23,7 @@ import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationInterrupt.InterruptHandler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
 import org.rstudio.studio.client.server.ServerError;
@@ -55,7 +56,8 @@ import com.google.gwt.user.client.ui.Widget;
 public class ChunkOutputWidget extends Composite
                                implements ConsoleWriteOutputHandler,
                                           ConsoleWriteErrorHandler,
-                                          ConsolePromptHandler
+                                          ConsolePromptHandler,
+                                          RestartStatusEvent.Handler
 {
 
    private static ChunkOutputWidgetUiBinder uiBinder = GWT
@@ -145,6 +147,9 @@ public class ChunkOutputWidget extends Composite
 
       interrupt_.setResource(RStudioGinjector.INSTANCE.getCommands()
             .interruptR().getImageResource());
+      
+      EventBus events = RStudioGinjector.INSTANCE.getEventBus();
+      events.addHandler(RestartStatusEvent.TYPE, this);
    }
    
    public void showChunkOutputUnit(RmdChunkOutputUnit unit)
@@ -299,6 +304,20 @@ public class ChunkOutputWidget extends Composite
       unregisterConsoleEvents();
    }
    
+   @Override
+   public void onRestartStatus(RestartStatusEvent event)
+   {
+      if (event.getStatus() != RestartStatusEvent.RESTART_COMPLETED)
+         return;
+      
+      // when R is restarted, we're not going to get any more output, so act
+      // as though the server told us it's done
+      if (state_ != CHUNK_READY)
+      {
+         onOutputFinished();
+      }
+   }
+
    public void onOutputFinished()
    {
       if (state_ == CHUNK_PRE_OUTPUT)
