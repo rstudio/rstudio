@@ -72,6 +72,7 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
@@ -771,6 +772,31 @@ public class TextEditingTargetRMarkdownHelper
       });
    }
    
+   /**
+    * For a chunk like:
+    * 
+    * ```{r cars, echo=FALSE}
+    * ```
+    * 
+    * returns the text "r cars, echo=FALSE".
+    * 
+    * @param chunk Scope representing the chunk
+    * @return Range representing the contents of the chunk's {} options block
+    */
+   public static String getRmdChunkOptionText(Scope chunk, DocDisplay display)
+   {
+      if (chunk == null)
+         return null;
+
+      assert chunk.isChunk();
+
+      Position start = Position.create(chunk.getPreamble().getRow(), 
+            chunk.getPreamble().getColumn() + 4); // 4 = length of "```{"
+      Position end = Position.create(chunk.getPreamble().getRow(), 
+            display.getLine(start.getRow()).length() - 1);
+      return display.getCode(start, end);
+   }
+
    // Private methods ---------------------------------------------------------
    
    

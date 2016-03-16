@@ -160,9 +160,10 @@ Error setChunkConsole(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse*)
 {
 
-   std::string docId, chunkId;
+   std::string docId, chunkId, options;
    bool replace = false;
-   Error error = json::readParams(request.params, &docId, &chunkId, &replace);
+   Error error = json::readParams(request.params, &docId, &chunkId, &options,
+         &replace);
    if (error)
       return error;
 

@@ -67,6 +67,7 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
                            String requestId, 
                            ServerRequestCallback<Void> requestCallback);
    
-   void setChunkConsole(String docId, String chunkId, boolean replace,
+   void setChunkConsole(String docId, String chunkId, String options, 
+                        boolean replace,
                         ServerRequestCallback<Void> requestCallback);
 }

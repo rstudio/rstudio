@@ -44,6 +44,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutput
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
@@ -79,12 +80,15 @@ public class TextEditingTargetNotebook
 {
    private class ChunkExecQueueUnit
    {
-      public ChunkExecQueueUnit(String chunkIdIn, String codeIn)
+      public ChunkExecQueueUnit(String chunkIdIn, String codeIn, 
+            String optionsIn)
       {
          chunkId = chunkIdIn;
+         options = optionsIn;
          code = codeIn;
       }
       public String chunkId;
+      public String options;
       public String code;
    };
 
@@ -198,7 +202,7 @@ public class TextEditingTargetNotebook
       events_.addHandler(ConsolePromptEvent.TYPE, this);
    }
    
-   public void executeChunk(Scope chunk, String code)
+   public void executeChunk(Scope chunk, String code, String options)
    {
       // maximize the source window if it's paired with the console
       pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
@@ -208,7 +212,7 @@ public class TextEditingTargetNotebook
 
       // find or create a matching chunk definition 
       final ChunkDefinition chunkDef = getChunkDefAtRow(row);
-
+      
       // check to see if this chunk is already in the execution queue--if so
       // just update the code and leave it queued
       for (ChunkExecQueueUnit unit: chunkExecQueue_)
@@ -216,12 +220,14 @@ public class TextEditingTargetNotebook
          if (unit.chunkId == chunkDef.getChunkId())
          {
             unit.code = code;
+            unit.options = options;
             return;
          }
       }
 
       // put it in the queue 
-      chunkExecQueue_.add(new ChunkExecQueueUnit(chunkDef.getChunkId(), code));
+      chunkExecQueue_.add(new ChunkExecQueueUnit(chunkDef.getChunkId(), code,
+            options));
       
       // TODO: decorate chunk in some way so that it's clear the chunk is 
       // queued for execution
@@ -244,6 +250,7 @@ public class TextEditingTargetNotebook
 
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
             unit.chunkId, 
+            unit.options,
             true,
             new ServerRequestCallback<Void>()
             {
@@ -257,6 +264,15 @@ public class TextEditingTargetNotebook
                @Override
                public void onError(ServerError error)
                {
+                  // don't leave the chunk hung in execution state
+                  if (executingChunk_ != null)
+                  {
+                     ChunkOutputWidget w = outputWidgets_.get(
+                           executingChunk_.chunkId);
+                     if (w != null)
+                        w.onOutputFinished();
+                  }
+
                   // if the queue is empty, show an error; if it's not, prompt
                   // for continuing
                   if (chunkExecQueue_.isEmpty())
@@ -310,10 +326,13 @@ public class TextEditingTargetNotebook
       
       // create or update the chunk at the given row
       final ChunkDefinition chunkDef = getChunkDefAtRow(event.getRow());
+      String options = TextEditingTargetRMarkdownHelper.getRmdChunkOptionText(
+            event.getScope(), docDisplay_);
       
       // have the server start recording output from this chunk
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
-            chunkDef.getChunkId(), false, new ServerRequestCallback<Void>()
+            chunkDef.getChunkId(), options, false, 
+            new ServerRequestCallback<Void>()
       {
          @Override
          public void onResponseReceived(Void v)

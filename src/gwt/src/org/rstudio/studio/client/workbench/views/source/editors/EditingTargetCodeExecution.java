@@ -164,7 +164,7 @@ public class EditingTargetCodeExecution
          if (scope != null)
          {
             events_.fireEvent(new SendToChunkConsoleEvent(docId_, 
-                  scope.getEnd().getRow(), code));
+                  scope, code));
             return;
          }
       }

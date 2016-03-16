@@ -4124,10 +4124,13 @@ public class TextEditingTarget implements
             {
                codeExecution_.setLastExecuted(range.getStart(), range.getEnd());
                String code = scopeHelper_.getSweaveChunkText(chunk);
+               String options = 
+                     TextEditingTargetRMarkdownHelper.getRmdChunkOptionText(
+                           chunk, docDisplay_);
                if (fileType_.isRmd() && 
                    docDisplay_.showChunkOutputInline())
                {
-                  notebook_.executeChunk(chunk, code);
+                  notebook_.executeChunk(chunk, code, options);
                }
                else
                {
