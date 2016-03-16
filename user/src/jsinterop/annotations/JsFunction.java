@@ -30,14 +30,14 @@ import java.lang.annotation.Target;
  * However there are some additional limitations that are imposed to make this practical and
  * efficient:
  * <li>A class may not implement more than one @JsFunction type. This restriction allows the
- * compiler to construct a one-to-one mapping to the JavaScript function generated and the SAM to be
- * invoked in Java and to preserve referential equality.
+ * compiler to construct a one-to-one mapping between the Java class and the generated JavaScript
+ * function and preserve referential equality.
  * <li>A JsFunction interface cannot extend any other interfaces.
  * <li>A JsFunction interface cannot have defender methods.
  * <li>A class that implements a @JsFunction type (directly or indirectly) cannot be a @JsType.
  * <p>
- * As a best practice, we recommend marking @JsFunction interfaces also with @FunctionalInterface to
- * get improved checking in IDEs.
+ * As a best practice, we also recommend marking @JsFunction interfaces with @FunctionalInterface
+ * to get improved checking in IDEs.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

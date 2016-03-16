@@ -22,11 +22,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * JsConstructor marks a constructor so that it will be the constructor function for the JavaScript
+ * JsConstructor marks a constructor that is the constructor function for the JavaScript
  * type.
  * <p>
- * Note that, there could be only one JsConstructor in a type and all other constructors should be
- * delegating to it.
+ * Note that there can only be one JsConstructor in a type; all other constructors must delegate
+ * to it.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.CONSTRUCTOR)

@@ -22,8 +22,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * JsProperty marks a field in a type as a method that will be directly translated into a JavaScript
- * property without any obfuscation to its name.
+ * JsProperty marks a field or method that is translated directly into a JavaScript property
+ * preserving its name.
  * <p>
  * If it is applied to a method, it will be treated as a property accessor. As a result, instead of
  * translating method calls to JsProperty methods as method calls in JS, they will be translated as
@@ -38,8 +38,8 @@ import java.lang.annotation.Target;
  * <li> {@code @JsProperty setX(int y)} translates as <tt>this.x=y</tt>
  * </ul>
  * <p>
- * Note that, while non-static member are slotted in the prototype, static members will be defined
- * under the constructor function of the type.
+ * Note: In JavaScript, instance members are defined on the prototype and class members are defined
+ * on the constructor function of the type.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.FIELD})

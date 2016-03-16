@@ -22,11 +22,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * JsMethod marks a method in a type as a method that will be directly translated into a JavaScript
- * method without any obfuscation to its name.
+ * JsMethod marks a method that will be directly translated into a JavaScript method preserving
+ * its name.
  * <p>
- * Note that, while instance members are slotted in the prototype, class members will be defined
- * under the constructor function of the type.
+ * Note: In JavaScript, instance members are defined on the prototype and class members are defined
+ * on the constructor function of the type.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
