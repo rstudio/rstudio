@@ -27,6 +27,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
@@ -76,7 +77,8 @@ public class TextEditingTargetNotebook
                           ChunkChangeEvent.Handler,
                           ChunkContextChangeEvent.Handler,
                           ConsolePromptHandler,
-                          ResizeHandler
+                          ResizeHandler,
+                          InterruptStatusEvent.Handler
 {
    private class ChunkExecQueueUnit
    {
@@ -200,6 +202,7 @@ public class TextEditingTargetNotebook
       events_.addHandler(ChunkChangeEvent.TYPE, this);
       events_.addHandler(ChunkContextChangeEvent.TYPE, this);
       events_.addHandler(ConsolePromptEvent.TYPE, this);
+      events_.addHandler(InterruptStatusEvent.TYPE, this);
    }
    
    public void executeChunk(Scope chunk, String code, String options)
@@ -475,6 +478,16 @@ public class TextEditingTargetNotebook
       {
          widget.syncHeight(false);
       }
+   }
+
+   @Override
+   public void onInterruptStatus(InterruptStatusEvent event)
+   {
+      if (event.getStatus() != InterruptStatusEvent.INTERRUPT_INITIATED)
+         return;
+      
+      // when the user interrupts R, clear any pending chunk executions
+      chunkExecQueue_.clear();
    }
 
    // Private methods --------------------------------------------------------

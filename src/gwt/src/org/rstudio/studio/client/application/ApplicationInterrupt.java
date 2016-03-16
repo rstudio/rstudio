@@ -21,6 +21,7 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.ReloadEvent;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -77,10 +78,14 @@ public class ApplicationInterrupt
          };
          interruptUnresponsiveTimer_.schedule(10000);
          
+         eventBus_.fireEvent(new InterruptStatusEvent(
+               InterruptStatusEvent.INTERRUPT_INITIATED));
          server_.interrupt(new VoidServerRequestCallback() {
             @Override
             public void onSuccess()
             {
+               eventBus_.fireEvent(new InterruptStatusEvent(
+                     InterruptStatusEvent.INTERRUPT_COMPLETED));
                finishInterrupt(handler);
             }
             
