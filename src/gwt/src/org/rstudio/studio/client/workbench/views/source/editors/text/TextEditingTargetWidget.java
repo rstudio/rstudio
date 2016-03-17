@@ -854,7 +854,7 @@ public class TextEditingTargetWidget
    {
       rmdFormatButton_.setVisible(visible);
       knitDocumentButton_.getElement().getStyle().setMarginRight(
-            visible ? 4 : 8, Unit.PX);
+            visible ? 0 : 8, Unit.PX);
    }
    
    @Override
