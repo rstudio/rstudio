@@ -1056,6 +1056,40 @@ public class StringUtil
    public static final HashMap<String, String> COMPLEMENTS =
          makeComplementsMap();
    
+   /**
+    * Computes a 32-bit CRC checksum from an arbitrary string.
+    * 
+    * @param str The string on which to compute the checksum
+    * @return The checksum value, as a hexadecimal string
+    */
+   public static final native String crc32(String str)/*-{
+      // based on: https://stackoverflow.com/questions/18638900/javascript-crc32
+      var genCrc32Table = function() 
+      {
+         var c, crcTable = [];
+         for (var n = 0; n < 256; n++) 
+         {
+            c = n;
+            for (var k = 0; k < 8; k++)
+            {
+                c = ((c&1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+            }
+            crcTable[n] = c;
+         }
+         return crcTable;
+      }
+
+      var crcTable = $wnd.rs_crc32Table || ($wnd.rs_crc32Table = genCrc32Table());
+      var crc = 0 ^ (-1);
+
+      for (var i = 0; i < str.length; i++ ) 
+      {
+         crc = (crc >>> 8) ^ crcTable[(crc ^ str.charCodeAt(i)) & 0xFF];
+      }
+
+      return ((crc ^ (-1)) >>> 0).toString(16);
+   }-*/;
+   
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");
    private static final DateTimeFormat DATE_FORMAT
