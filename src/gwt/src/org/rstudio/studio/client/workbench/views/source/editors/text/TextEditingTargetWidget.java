@@ -1008,31 +1008,31 @@ public class TextEditingTargetWidget
          rmdViewerPaneMenuItem_ = new UIPrefMenuItem<Integer>(
                uiPrefs_.rmdViewerType(),
                RmdOutput.RMD_VIEWER_TYPE_PANE, 
-               "View in Pane", uiPrefs_);
+               "Preview in Viewer Pane", uiPrefs_);
       if (rmdViewerWindowMenuItem_ == null)
          rmdViewerWindowMenuItem_ = new UIPrefMenuItem<Integer>(
                uiPrefs_.rmdViewerType(),
                RmdOutput.RMD_VIEWER_TYPE_WINDOW, 
-               "View in Window", uiPrefs_);
+               "Preview in Window", uiPrefs_);
       
       ToolbarPopupMenu menu = rmdOptionsButton_.getMenu();
       menu.clearItems();
       if (show)
       {
-         menu.addItem(rmdViewerPaneMenuItem_);
          menu.addItem(rmdViewerWindowMenuItem_);
+         menu.addItem(rmdViewerPaneMenuItem_);
          menu.addSeparator();
       }
       
       if (uiPrefs_.showRmdChunkOutputInline().getValue())
       {
          menu.addItem(new DocPropMenuItem(
-               "Show chunk output inline", docUpdateSentinel_, 
+               "Chunk Output Inline", docUpdateSentinel_, 
                true, 
                TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE, 
                TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE));
          menu.addItem(new DocPropMenuItem(
-               "Show chunk output in console", docUpdateSentinel_, 
+               "Chunk Output in Console", docUpdateSentinel_, 
                false, 
                TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE, 
                TextEditingTargetNotebook.CHUNK_OUTPUT_CONSOLE));
