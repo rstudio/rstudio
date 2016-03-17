@@ -33,6 +33,10 @@
    height: 300px;
 }
 
+.contents table {
+   outline: none;
+}
+
 .contents td {
    cursor: default;
    white-space: nowrap;
