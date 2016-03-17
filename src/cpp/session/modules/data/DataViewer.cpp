@@ -919,7 +919,9 @@ void onClientInit()
 #endif
 }
 
-void onDocPendingRemove(const std::string &id)
+void onDocPendingRemove(
+        const std::string &id,
+        boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    // see if the document has a path (if it does, it can't be a data viewer
    // item)
@@ -928,23 +930,13 @@ void onDocPendingRemove(const std::string &id)
    if (!path.empty())
       return;
 
-   // retrieve document from source database
-   boost::shared_ptr<source_database::SourceDocument> pDoc(
-         new source_database::SourceDocument());
-   Error error = source_database::get(id, pDoc);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-
    // see if it has a cache key we need to remove (if not, no work to do)
    std::string cacheKey = pDoc->getProperty("cacheKey");
    if (cacheKey.empty())
       return;
 
    // remove cache env object and backing file
-   error = removeCacheKey(cacheKey);
+   Error error = removeCacheKey(cacheKey);
    if (error)
       LOG_ERROR(error);
 }

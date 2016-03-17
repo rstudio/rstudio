@@ -65,32 +65,24 @@ void handleProfilerResReq(const http::Request& request,
    pResponse->setCacheableFile(profileResource, request);
 }
 
-void onDocPendingRemove(const std::string &id)
+void onDocPendingRemove(
+        const std::string &id,
+        boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   // retrieve document from source database
-   boost::shared_ptr<source_database::SourceDocument> pDoc(
-               new source_database::SourceDocument());
-   Error error = source_database::get(id, pDoc);
-   if (error)
-   {
-      LOG_ERROR(error);
-         return;
-   }
-
    // check to see if there is html cached data
    std::string htmlLocalPath = pDoc->getProperty("htmlLocalPath");
    if (htmlLocalPath.empty())
       return;
 
-   r::sexp::Protect rProtect;
    r::exec::RFunction rFunction(".rs.rpc.clear_profile");
    rFunction.addParam(htmlLocalPath);
 
-   SEXP resultSEXP;
-   error = rFunction.call(&resultSEXP, &rProtect);
-
-   LOG_ERROR(error);
+   Error error = rFunction.call();
+   if (error)
+   {
+      LOG_ERROR(error);
       return;
+   }
 }
 
 Error initialize()

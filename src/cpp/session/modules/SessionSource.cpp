@@ -707,9 +707,19 @@ Error closeDocument(const json::JsonRpcRequest& request,
    // get the path (it's okay if this fails, unsaved docs don't have a path)
    std::string path;
    source_database::getPath(id, &path);
+
+   // retrieve document from source database
+   boost::shared_ptr<source_database::SourceDocument> pDoc(
+               new source_database::SourceDocument());
+   error = source_database::get(id, pDoc);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
    
    // do any cleanup necessary prior to removal
-   source_database::events().onDocPendingRemove(id);
+   source_database::events().onDocPendingRemove(id, pDoc);
 
    // actually remove from the source database
    error = source_database::remove(id);
