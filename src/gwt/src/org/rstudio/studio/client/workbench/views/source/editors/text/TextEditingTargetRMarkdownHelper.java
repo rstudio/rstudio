@@ -942,6 +942,20 @@ public class TextEditingTargetRMarkdownHelper
       return result;
    }
       
+   public List<String> getOutputFormats(String yaml)
+   {
+      try
+      {  
+         YamlTree tree = new YamlTree(yaml);
+         return getOutputFormats(tree);   
+      }
+      catch (Exception e)
+      {
+         Debug.log("Warning: Exception thrown while parsing YAML:\n" + yaml);
+      }
+      return null;
+   }
+   
    private List<String> getOutputFormats(YamlTree tree)
    {
       List<String> outputs = tree.getChildKeys(RmdFrontMatter.OUTPUT_KEY);

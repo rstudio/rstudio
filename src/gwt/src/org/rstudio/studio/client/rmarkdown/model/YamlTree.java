@@ -118,7 +118,7 @@ public class YamlTree
       
       private String getKey(String line)
       {
-         RegExp keyReg = RegExp.compile("^\\s*([^:]+):");
+         RegExp keyReg = RegExp.compile("^\\s*(.+):(?!:)");
          MatchResult result = keyReg.exec(line);
          if (result == null)
             return "";

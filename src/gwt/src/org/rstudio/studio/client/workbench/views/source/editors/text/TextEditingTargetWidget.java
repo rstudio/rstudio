@@ -759,21 +759,22 @@ public class TextEditingTargetWidget
    
    @Override
    public void setFormatOptions(TextFileType fileType,
+                                boolean canEditFormatOptions,
                                 List<String> options, 
                                 List<String> values, 
                                 List<String> extensions, 
                                 String selectedOption)
-   {
-      boolean haveFormatOptions = options.size() > 0;
-      
-      if (!haveFormatOptions)
+   { 
+      if (!canEditFormatOptions)
       {
          setFormatText("");
       }
-      setRmdFormatButtonVisible(haveFormatOptions);
-      rmdFormatButton_.setEnabled(haveFormatOptions);
       
-      if (haveFormatOptions)
+      boolean haveMultipleFormats = options.size() > 0;
+      setRmdFormatButtonVisible(haveMultipleFormats);
+      rmdFormatButton_.setEnabled(haveMultipleFormats);
+      
+      if (haveMultipleFormats)
       {
          rmdFormatButton_.clearMenu();
          int parenPos = selectedOption.indexOf('(');
@@ -784,8 +785,10 @@ public class TextEditingTargetWidget
          String prefix = fileType.isPlainMarkdown() ? "Preview " : "Knit to ";
          for (int i = 0; i < Math.min(options.size(), values.size()); i++)
          {
-            ImageResource img = fileTypeRegistry_.getIconForFilename("output." + 
-                        extensions.get(i));
+            String ext = extensions.get(i);
+            ImageResource img = ext != null ? 
+                  fileTypeRegistry_.getIconForFilename("output." + ext) :
+                  fileTypeRegistry_.getIconForFilename("Makefile");
             final String valueName = values.get(i);
             ScheduledCommand cmd = new ScheduledCommand()
             {
@@ -803,7 +806,7 @@ public class TextEditingTargetWidget
          }
       }
       
-      showRmdViewerMenuItems(true, haveFormatOptions, fileType.isRmd(), false);
+      showRmdViewerMenuItems(true, canEditFormatOptions, fileType.isRmd(), false);
      
       if (publishButton_ != null)
          publishButton_.setIsStatic(true);
