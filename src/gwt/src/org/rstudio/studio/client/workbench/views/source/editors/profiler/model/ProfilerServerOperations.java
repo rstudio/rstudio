@@ -37,6 +37,6 @@ public interface ProfilerServerOperations
    void clearProfile(String path,
                      ServerRequestCallback<JavaScriptObject> requestCallback);
 
-   void profileSources(String path,
+   void profileSources(String path, String normPath,
                        ServerRequestCallback<String> requestCallback);
 }

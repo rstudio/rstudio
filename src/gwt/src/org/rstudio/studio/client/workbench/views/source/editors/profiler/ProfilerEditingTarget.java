@@ -698,12 +698,13 @@ public class ProfilerEditingTarget implements EditingTarget,
    
    private void onMessage(final String message,
                           final String file,
+                          final String normPath,
                           final String details,
                           final int line)
    {
       if (message == "sourcefile")
       {
-         server_.profileSources(file, new ServerRequestCallback<String>()
+         server_.profileSources(file, normPath, new ServerRequestCallback<String>()
          {
             @Override
             public void onResponseReceived(String response)
@@ -719,7 +720,7 @@ public class ProfilerEditingTarget implements EditingTarget,
                   if (hasValidPath_)
                   {
                      FilePosition filePosition = FilePosition.create(line, 0);
-                     CodeNavigationTarget navigationTarget = new CodeNavigationTarget(file, filePosition);
+                     CodeNavigationTarget navigationTarget = new CodeNavigationTarget(response, filePosition);
                      
                      fileTypeRegistry_.editFile(
                            FileSystemItem.createFile(navigationTarget.getFile()),
@@ -745,12 +746,14 @@ public class ProfilerEditingTarget implements EditingTarget,
    
    public static void onGlobalMessage(final String message,
                                 final String file,
+                                final String normPath,
                                 final String details,
                                 final int line)
    {
       if (activeProfilerEditingTarger_ != null)
       {
-         activeProfilerEditingTarger_.onMessage(message, file, details, line);
+         
+         activeProfilerEditingTarger_.onMessage(message, file, normPath, details, line);
       }
    }
 
@@ -778,7 +781,13 @@ public class ProfilerEditingTarget implements EditingTarget,
          if (e.data.source != "profvis")
             return;
             
-         @org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerEditingTarget::onGlobalMessage(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)(e.data.message, e.data.file, e.data.details, e.data.line);
+         @org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerEditingTarget::onGlobalMessage(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)(
+            e.data.message,
+            e.data.file,
+            e.data.normpath,
+            e.data.details,
+            e.data.line
+         );
       });
       $wnd.addEventListener("message", handler, true);
    }-*/;
