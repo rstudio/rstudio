@@ -210,13 +210,12 @@ public class TextEditingTarget implements
       void debug_dumpContents();
       void debug_importDump();
       
-      void setIsShinyFormat(boolean isPresentation);
+      void setIsShinyFormat(boolean showOutputOptions, boolean isPresentation);
       void setFormatOptions(TextFileType fileType,
                             List<String> options, 
                             List<String> values, 
                             List<String> extensions, 
                             String selected);
-      void setFormatOptionsVisible(boolean visible);
       HandlerRegistration addRmdFormatChangedHandler(
             RmdOutputFormatChangedEvent.Handler handler);
       
@@ -3488,43 +3487,58 @@ public class TextEditingTarget implements
       return rmarkdownHelper_.getTemplateFormat(yaml);
    }
    
+   private boolean isRuntimeShiny()
+   {
+      String yaml = getRmdFrontMatter();
+      if (yaml == null)
+         return false;
+      return rmarkdownHelper_.isRuntimeShiny(yaml);
+      
+      
+   }
+   
    private void updateRmdFormatList()
    {
-      RmdSelectedTemplate selTemplate = getSelectedTemplate();
-      if (selTemplate == null)
-      {
-         view_.setFormatOptionsVisible(false);
-         return;
-      }
-      
-      else if (selTemplate.isShiny)
-      {
-         view_.setIsShinyFormat(selTemplate.format != null &&
-                                selTemplate.format.endsWith(
-                                      RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX));
-         return;
-      }
-      
-      // we know which template this doc is using--populate the format list
-      // with the formats available in the template
       String formatUiName = "";
-      JsArray<RmdTemplateFormat> formats = selTemplate.template.getFormats();
       List<String> formatList = new ArrayList<String>();
       List<String> valueList = new ArrayList<String>();
       List<String> extensionList = new ArrayList<String>();
-      for (int i = 0; i < formats.length(); i++)
+      
+      RmdSelectedTemplate selTemplate = getSelectedTemplate();
+      if (selTemplate != null && selTemplate.isShiny)
       {
-         String uiName = formats.get(i).getUiName();
-         formatList.add(uiName);
-         valueList.add(formats.get(i).getName());
-         extensionList.add(formats.get(i).getExtension());
-         if (formats.get(i).getName().equals(selTemplate.format))
-         {
-            formatUiName = uiName;
-         }
+         view_.setIsShinyFormat(selTemplate.format != null,
+                                selTemplate.format != null &&
+                                selTemplate.format.endsWith(
+                                      RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX));
       }
-      view_.setFormatOptions(fileType_, formatList, valueList, extensionList,
-                             formatUiName);
+      // could be runtime: shiny with a custom format
+      else if (isRuntimeShiny())
+      {
+         view_.setIsShinyFormat(false,  // no output options b/c no template
+                                false); // not a presentation (unknown format)
+      }
+      else
+      {
+         if (selTemplate != null)
+         {
+            JsArray<RmdTemplateFormat> formats = selTemplate.template.getFormats();
+            for (int i = 0; i < formats.length(); i++)
+            {
+               String uiName = formats.get(i).getUiName();
+               formatList.add(uiName);
+               valueList.add(formats.get(i).getName());
+               extensionList.add(formats.get(i).getExtension());
+               if (formats.get(i).getName().equals(selTemplate.format))
+               {
+                  formatUiName = uiName;
+               }
+            }
+         }
+         
+         view_.setFormatOptions(fileType_, formatList, valueList, extensionList,
+               formatUiName);
+      }
    }
    
    private void setRmdFormat(String formatName)
