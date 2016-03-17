@@ -535,7 +535,7 @@ public class TextEditingTargetWidget
       
       knitDocumentButton_.setVisible(canKnitToHTML);
       
-      rmdFormatButton_.setVisible(isRMarkdown2);
+      setRmdFormatButtonVisible(isRMarkdown2);
       rmdOptionsButton_.setVisible(isRMarkdown2);
       rmdOptionsButton_.setEnabled(isRMarkdown2);
      
@@ -764,87 +764,58 @@ public class TextEditingTargetWidget
                                 List<String> extensions, 
                                 String selectedOption)
    {
-      rmdFormatButton_.clearMenu();
-      int parenPos = selectedOption.indexOf('(');
-      boolean hasSubFormat = false;
-      if (parenPos != -1)
-      {
-         selectedOption = selectedOption.substring(0, parenPos).trim();
-         hasSubFormat = true;
-      }
-      setFormatText(selectedOption);
-      String prefix = fileType.isPlainMarkdown() ? "Preview " : "Knit to ";
-      for (int i = 0; i < Math.min(options.size(), values.size()); i++)
-      {
-         ImageResource img = fileTypeRegistry_.getIconForFilename("output." + 
-                     extensions.get(i));
-         final String valueName = values.get(i);
-         ScheduledCommand cmd = new ScheduledCommand()
-         {
-            @Override
-            public void execute()
-            {
-               handlerManager_.fireEvent(
-                     new RmdOutputFormatChangedEvent(valueName));
-            }
-         };
-         MenuItem item = ImageMenuItem.create(img, 
-                                              prefix + options.get(i), 
-                                              cmd, 2);
-         rmdFormatButton_.addMenuItem(item, values.get(i));
-      }
+      boolean haveFormatOptions = options.size() > 0;
       
-      if (session_.getSessionInfo().getKnitParamsAvailable())
+      if (!haveFormatOptions)
       {
-         final AppCommand knitWithParams = commands_.knitWithParameters();
-         if (fileType.isRmd())
+         setFormatText("");
+      }
+      setRmdFormatButtonVisible(haveFormatOptions);
+      rmdFormatButton_.setEnabled(haveFormatOptions);
+      
+      if (haveFormatOptions)
+      {
+         rmdFormatButton_.clearMenu();
+         int parenPos = selectedOption.indexOf('(');
+         if (parenPos != -1)
+            selectedOption = selectedOption.substring(0, parenPos).trim();
+ 
+         setFormatText(selectedOption);
+         String prefix = fileType.isPlainMarkdown() ? "Preview " : "Knit to ";
+         for (int i = 0; i < Math.min(options.size(), values.size()); i++)
          {
-            rmdFormatButton_.addSeparator();
+            ImageResource img = fileTypeRegistry_.getIconForFilename("output." + 
+                        extensions.get(i));
+            final String valueName = values.get(i);
             ScheduledCommand cmd = new ScheduledCommand()
             {
                @Override
                public void execute()
                {
-                  knitWithParams.execute();
+                  handlerManager_.fireEvent(
+                        new RmdOutputFormatChangedEvent(valueName));
                }
             };
-            MenuItem item = new MenuItem(knitWithParams.getMenuHTML(false),
-                                         true,
-                                         cmd); 
-            rmdFormatButton_.addMenuItem(item, 
-                                         knitWithParams.getMenuLabel(false));
+            MenuItem item = ImageMenuItem.create(img, 
+                                                 prefix + options.get(i), 
+                                                 cmd, 2);
+            rmdFormatButton_.addMenuItem(item, values.get(i));
          }
       }
       
-      if (!hasSubFormat && selectedOption.equals("HTML"))
-         showRmdViewerMenuItems(true, false);
-      else
-         showRmdViewerMenuItems(false, false);
-      setFormatOptionsVisible(true);
+      showRmdViewerMenuItems(true, haveFormatOptions, fileType.isRmd(), false);
+     
       if (publishButton_ != null)
          publishButton_.setIsStatic(true);
       isShiny_ = false;
    }
-
-   @Override
-   public void setFormatOptionsVisible(boolean visible)
-   {
-      if (!visible)
-      {
-         setFormatText("");
-      }
-      rmdFormatButton_.setVisible(visible);
-      rmdOptionsButton_.setVisible(visible);
-      rmdFormatButton_.setEnabled(visible);
-      rmdOptionsButton_.setEnabled(visible);
-   }
    
    @Override
-   public void setIsShinyFormat(boolean isPresentation)
+   public void setIsShinyFormat(boolean showOutputOptions, boolean isPresentation)
    {
-      rmdFormatButton_.setVisible(false);
+      setRmdFormatButtonVisible(false);
       
-      showRmdViewerMenuItems(!isPresentation, true);
+      showRmdViewerMenuItems(!isPresentation, showOutputOptions, true, true);
    
       String docType = isPresentation ? "Presentation" : "Document";
       
@@ -855,9 +826,17 @@ public class TextEditingTargetWidget
                   commands_.knitDocument().getShortcutPrettyHtml()) + ")");
       knitDocumentButton_.setText(knitCommandText_);
       knitDocumentButton_.setLeftImage(StandardIcons.INSTANCE.run());
+      
       isShiny_ = true;
       if (publishButton_ != null)
          publishButton_.setIsStatic(false);
+   }
+   
+   private void setRmdFormatButtonVisible(boolean visible)
+   {
+      rmdFormatButton_.setVisible(visible);
+      knitDocumentButton_.getElement().getStyle().setMarginRight(
+            visible ? 0 : 8, Unit.PX);
    }
    
    @Override
@@ -1002,7 +981,7 @@ public class TextEditingTargetWidget
             RmdOutputFormatChangedEvent.TYPE, handler);
    }
    
-   private void showRmdViewerMenuItems(boolean show, boolean isShinyDoc)
+   private void showRmdViewerMenuItems(boolean show, boolean showOutputOptions, boolean isRmd, boolean isShinyDoc)
    {
       if (rmdViewerPaneMenuItem_ == null)
          rmdViewerPaneMenuItem_ = new UIPrefMenuItem<Integer>(
@@ -1014,6 +993,12 @@ public class TextEditingTargetWidget
                uiPrefs_.rmdViewerType(),
                RmdOutput.RMD_VIEWER_TYPE_WINDOW, 
                "Preview in Window", uiPrefs_);
+      if (rmdViewerNoPreviewMenuItem_ == null)
+         rmdViewerNoPreviewMenuItem_ = new UIPrefMenuItem<Integer>(
+               uiPrefs_.rmdViewerType(),
+               RmdOutput.RMD_VIEWER_TYPE_NONE,
+               "(No Preview)", uiPrefs_);
+      
       
       ToolbarPopupMenu menu = rmdOptionsButton_.getMenu();
       menu.clearItems();
@@ -1021,6 +1006,7 @@ public class TextEditingTargetWidget
       {
          menu.addItem(rmdViewerWindowMenuItem_);
          menu.addItem(rmdViewerPaneMenuItem_);
+         menu.addItem(rmdViewerNoPreviewMenuItem_);
          menu.addSeparator();
       }
       
@@ -1039,7 +1025,29 @@ public class TextEditingTargetWidget
          menu.addSeparator();
       }
       
-      menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
+      if (showOutputOptions)
+         menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
+      
+      if (session_.getSessionInfo().getKnitParamsAvailable())
+      {
+         final AppCommand knitWithParams = commands_.knitWithParameters();
+         if (isRmd && !isShinyDoc)
+         {
+            menu.addSeparator();
+            ScheduledCommand cmd = new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  knitWithParams.execute();
+               }
+            };
+            MenuItem item = new MenuItem(knitWithParams.getMenuHTML(false),
+                                         true,
+                                         cmd); 
+            menu.addItem(item);
+         }
+      }
    }
    
    private final TextEditingTarget target_;
@@ -1079,6 +1087,7 @@ public class TextEditingTargetWidget
    private RSConnectPublishButton publishButton_;
    private MenuItem rmdViewerPaneMenuItem_;
    private MenuItem rmdViewerWindowMenuItem_;
+   private MenuItem rmdViewerNoPreviewMenuItem_;
    private HandlerManager handlerManager_;
    
    private Widget texSeparatorWidget_;

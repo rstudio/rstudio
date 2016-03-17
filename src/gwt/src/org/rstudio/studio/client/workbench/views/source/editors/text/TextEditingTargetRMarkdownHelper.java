@@ -488,6 +488,27 @@ public class TextEditingTargetRMarkdownHelper
       return null;
    }
    
+   public boolean isRuntimeShiny(String yaml)
+   {
+      // This is in the editor load path, so guard against exceptions and log
+      // any we find without bringing down the editor. 
+      try
+      {  
+         YamlTree tree = new YamlTree(yaml);
+         
+         if (tree.getKeyValue(RmdFrontMatter.KNIT_KEY).length() > 0)
+            return false;
+         
+         return tree.getKeyValue(
+             RmdFrontMatter.RUNTIME_KEY).equals(RmdFrontMatter.SHINY_RUNTIME);
+      }
+      catch (Exception e)
+      {
+         Debug.log("Warning: Exception thrown while parsing YAML:\n" + yaml);
+      }
+      return false;
+   }
+   
    // Parses YAML, adds the given format option with any transferable
    // defaults, and returns the resulting YAML
    public void setOutputFormat(String yaml, final String format, 
