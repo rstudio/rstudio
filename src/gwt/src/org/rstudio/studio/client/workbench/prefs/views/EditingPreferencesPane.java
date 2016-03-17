@@ -205,7 +205,7 @@ public class EditingPreferencesPane extends PreferencesPane
             new String[] {
                   "Sections Only",
                   "Sections and Named Chunks",
-                  "Sections and Chunks"
+                  "Sections and All Chunks"
             },
             new String[] {
                   UIPrefsAccessor.DOC_OUTLINE_SHOW_SECTIONS_ONLY,

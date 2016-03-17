@@ -546,7 +546,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<String> shownSectionsInDocumentOutline()
    {
-      return string("shown_sections_in_document_outline", DOC_OUTLINE_SHOW_ALL);
+      return string("doc_outline_show", DOC_OUTLINE_SHOW_SECTIONS_ONLY);
    }
 
    public PrefValue<Boolean> showProfiler()
