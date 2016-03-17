@@ -181,13 +181,18 @@
    })
 })
 
-.rs.addJsonRpcHandler("profile_sources", function(filePath)
+.rs.addJsonRpcHandler("profile_sources", function(filePath, normPath)
 {
    tryCatch({
-      fixedPath <- filePath
-      exists <- file.exists(fixedPath)
+      validPath <- ""
+      paths <- c(filePath, normPath)
+      found <- file.exists(paths)
+      
+      if (any(found == TRUE)) {
+         validPath <- paths[[which(found == TRUE)]]
+      }
 
-      return(.rs.scalar(if (exists) fixedPath else ""))
+      return(.rs.scalar(validPath))
    }, error = function(e) {
       return(list(error = .rs.scalar(e$message)))
    })

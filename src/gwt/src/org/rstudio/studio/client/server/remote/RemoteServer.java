@@ -4569,11 +4569,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CLEAR_PROFILE, params, requestCallback);
    }
 
-   public void profileSources(String path,
+   public void profileSources(String path, String normPath,
                               ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
+      params.set(1, new JSONString(normPath));
       sendRequest(RPC_SCOPE, PROFILE_SOURCES, params, requestCallback);
    }
 
