@@ -47,6 +47,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
@@ -149,6 +150,15 @@ public class TextEditingTargetNotebook
          }
       });
       
+      docDisplay_.addValueChangeHandler(new ValueChangeHandler<Void>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Void> arg0)
+         {
+            validateSetupChunk_ = true;
+         }
+      });
+      
       // single shot rendering of chunk output line widgets
       // (we wait until after the first render to ensure that
       // ace places the line widgets correctly)
@@ -215,6 +225,14 @@ public class TextEditingTargetNotebook
 
       // find or create a matching chunk definition 
       final ChunkDefinition chunkDef = getChunkDefAtRow(row);
+      if (chunkDef == null)
+         return;
+      
+      // ensure the setup chunk has been executed (unless of course this is the
+      // setup chunk itself)
+      if (chunk.getChunkLabel() == null ||
+          chunk.getChunkLabel().toLowerCase() != "setup")
+         ensureSetupChunkExecuted();
       
       // check to see if this chunk is already in the execution queue--if so
       // just update the code and leave it queued
@@ -661,6 +679,41 @@ public class TextEditingTargetNotebook
       }
    }
    
+   private void ensureSetupChunkExecuted()
+   {
+      // no reason to do work if we don't need to re-validate the setup chunk
+      if (!validateSetupChunk_ && setupCrc32_.length() > 0)
+         return;
+      validateSetupChunk_ = false;
+
+      // find the setup chunk
+      JsArray<Scope> scopes = docDisplay_.getScopeTree();
+      for (int i = 0; i < scopes.length(); i++)
+      {
+         if (scopes.get(i).isChunk())
+            continue;
+         
+         String chunkLabel = scopes.get(i).getChunkLabel();
+         if (chunkLabel == null)
+            continue;
+         
+         else if (chunkLabel.toLowerCase() == "setup")
+         {
+            // hash the contents and see if they match the last executed setup
+            // chunk
+            String setupCode = docDisplay_.getCode(
+                  scopes.get(i).getBodyStart(),
+                  Position.create(scopes.get(i).getEnd().getRow(), 0));
+            String crc32 = StringUtil.crc32(setupCode);
+            if (crc32 != setupCrc32_)
+            {
+               executeChunk(scopes.get(i), setupCode, "");
+               setupCrc32_ = crc32;
+            }
+         }
+      }
+   }
+   
    private JsArray<ChunkDefinition> initialChunkDefs_;
    private HashMap<String, ChunkOutputWidget> outputWidgets_;
    private HashMap<String, LineWidget> lineWidgets_;
@@ -682,6 +735,8 @@ public class TextEditingTargetNotebook
    private int requestId_ = 0;
    private String contextId_ = "";
    private ResizeEvent queuedResize_ = null;
+   private boolean validateSetupChunk_ = false;
+   private String setupCrc32_ = "";
    
    private int state_ = STATE_NONE;
 
