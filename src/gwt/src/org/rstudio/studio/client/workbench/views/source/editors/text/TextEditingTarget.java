@@ -3554,15 +3554,6 @@ public class TextEditingTarget implements
             }
          }
          
-         // if we end up with only one format then don't show the menu
-         if (formatList.size() == 1)
-         {
-            formatList.clear();
-            valueList.clear();
-            extensionList.clear();
-            formatUiName = "";
-         }
-         
          view_.setFormatOptions(fileType_, 
                                 selTemplate != null, // can edit format options
                                 formatList, 

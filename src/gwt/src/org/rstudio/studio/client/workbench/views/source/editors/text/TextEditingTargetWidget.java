@@ -770,41 +770,56 @@ public class TextEditingTargetWidget
          setFormatText("");
       }
       
-      boolean haveMultipleFormats = options.size() > 0;
-      setRmdFormatButtonVisible(haveMultipleFormats);
-      rmdFormatButton_.setEnabled(haveMultipleFormats);
-      
-      if (haveMultipleFormats)
-      {
-         rmdFormatButton_.clearMenu();
-         int parenPos = selectedOption.indexOf('(');
+      setRmdFormatButtonVisible(true);
+      rmdFormatButton_.setEnabled(true);
+      rmdFormatButton_.clearMenu();
+      int parenPos = selectedOption.indexOf('(');
          if (parenPos != -1)
             selectedOption = selectedOption.substring(0, parenPos).trim();
  
          setFormatText(selectedOption);
          String prefix = fileType.isPlainMarkdown() ? "Preview " : "Knit to ";
-         for (int i = 0; i < Math.min(options.size(), values.size()); i++)
+      for (int i = 0; i < Math.min(options.size(), values.size()); i++)
+      {
+         String ext = extensions.get(i);
+         ImageResource img = ext != null ? 
+               fileTypeRegistry_.getIconForFilename("output." + ext) :
+               fileTypeRegistry_.getIconForFilename("Makefile");
+         final String valueName = values.get(i);
+         ScheduledCommand cmd = new ScheduledCommand()
          {
-            String ext = extensions.get(i);
-            ImageResource img = ext != null ? 
-                  fileTypeRegistry_.getIconForFilename("output." + ext) :
-                  fileTypeRegistry_.getIconForFilename("Makefile");
-            final String valueName = values.get(i);
-            ScheduledCommand cmd = new ScheduledCommand()
+            @Override
+            public void execute()
             {
-               @Override
-               public void execute()
-               {
-                  handlerManager_.fireEvent(
-                        new RmdOutputFormatChangedEvent(valueName));
-               }
-            };
-            MenuItem item = ImageMenuItem.create(img, 
-                                                 prefix + options.get(i), 
-                                                 cmd, 2);
-            rmdFormatButton_.addMenuItem(item, values.get(i));
-         }
+               handlerManager_.fireEvent(
+                     new RmdOutputFormatChangedEvent(valueName));
+            }
+         };
+         MenuItem item = ImageMenuItem.create(img, 
+                                              prefix + options.get(i), 
+                                              cmd, 2);
+         rmdFormatButton_.addMenuItem(item, values.get(i));
       }
+      
+      if (session_.getSessionInfo().getKnitParamsAvailable())
+      {
+         final AppCommand knitWithParams = commands_.knitWithParameters();
+         rmdFormatButton_.addSeparator();
+         ScheduledCommand cmd = new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               knitWithParams.execute();
+            }
+         };
+         MenuItem item = new MenuItem(knitWithParams.getMenuHTML(false),
+                                      true,
+                                      cmd); 
+         rmdFormatButton_.addMenuItem(item, knitWithParams.getMenuLabel(false));
+      
+      }
+      
       
       showRmdViewerMenuItems(true, canEditFormatOptions, fileType.isRmd(), false);
      
@@ -839,7 +854,7 @@ public class TextEditingTargetWidget
    {
       rmdFormatButton_.setVisible(visible);
       knitDocumentButton_.getElement().getStyle().setMarginRight(
-            visible ? 0 : 8, Unit.PX);
+            visible ? 4 : 8, Unit.PX);
    }
    
    @Override
@@ -1030,27 +1045,6 @@ public class TextEditingTargetWidget
       
       if (showOutputOptions)
          menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
-      
-      if (session_.getSessionInfo().getKnitParamsAvailable())
-      {
-         final AppCommand knitWithParams = commands_.knitWithParameters();
-         if (isRmd && !isShinyDoc)
-         {
-            menu.addSeparator();
-            ScheduledCommand cmd = new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  knitWithParams.execute();
-               }
-            };
-            MenuItem item = new MenuItem(knitWithParams.getMenuHTML(false),
-                                         true,
-                                         cmd); 
-            menu.addItem(item);
-         }
-      }
    }
    
    private final TextEditingTarget target_;
