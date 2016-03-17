@@ -193,10 +193,7 @@ Events& events()
 // session should write to it.
 std::string notebookCtxId()
 {
-   std::string sessionId = module_context::activeSession().id();
-   return userSettings().contextId() + 
-          (sessionId.empty() ? "" : "-") + 
-          sessionId;
+   return userSettings().contextId() + module_context::activeSession().id();
 }
 
 Error initialize()

@@ -19,6 +19,8 @@
 #include <core/json/Json.hpp>
 #include <ctime>
 
+#define kNotebookChunkDefFilename "chunks.json"
+
 namespace rstudio {
 namespace core {
    class FilePath;

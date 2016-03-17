@@ -25,6 +25,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 
+#include <core/Algorithm.hpp>
+
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
@@ -32,6 +34,8 @@
 // caches, and should be done only when making breaking changes to the 
 // cache format.
 #define kCacheVersion "1"
+
+#define kCacheAgeThresholdMs 1000 * 60 * 60 * 24 * 2
 
 using namespace rstudio::core;
 
@@ -41,6 +45,80 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 namespace {
+
+// it's much faster to load a notebook from its cache than it is to rehydrate
+// it from its .Rnb, so we keep it around even if the document is closed (as
+// it's somewhat common to open and close a document periodically over the 
+// course of working on a project, and it's nice when it opens quickly).
+//
+// however, we don't want to keep the cache around *forever* just in case we
+// might need it, as it can be quite large. as a compromise, an unused cache
+// hangs around for a couple of days, then gets automatically swept up by this
+// function.
+void cleanUnusedCaches()
+{
+   FilePath cacheRoot = notebookCacheRoot();
+   if (!cacheRoot.exists())
+      return;
+
+   std::vector<FilePath> caches;
+   Error error = cacheRoot.children(&caches);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   std::string nbCtxId = notebookCtxId();
+   BOOST_FOREACH(const FilePath cache, caches)
+   {
+      // make sure this looks like a notebook cache
+      if (!cache.isDirectory())
+         continue;
+      std::vector<std::string> parts = core::algorithm::split(
+            cache.stem(), "-");
+      if (parts.size() != 3)
+         continue;
+
+      // ignore caches from other contexts
+      if (parts[0] != nbCtxId)
+         continue;
+
+      // get the path of the notebook associated with the cache
+      FilePath path;
+      error = notebookIdToPath(parts[1], nbCtxId, &path);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+
+      // is this document still open? if so, leave the cache alone.
+      std::string id;
+      source_database::getId(module_context::createAliasedPath(
+               FileInfo(path)), &id);
+      if (!id.empty())
+      {
+         continue;
+      }
+
+      // check the write time on the chunk defs file (updated when the doc is
+      // mutated or saved)
+      FilePath chunkDefs = cache.complete(kCacheVersion)
+                                .complete(kNotebookChunkDefFilename);
+      if (!chunkDefs.exists())
+         continue;
+      if ((std::time(NULL) - chunkDefs.lastWriteTime()) > kCacheAgeThresholdMs) 
+      {
+         // the cache is old and the document hasn't been opened in a while --
+         // remove it.
+         continue;
+         error = cache.remove();
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+}
 
 void onDocRemoved(const std::string& docId, const std::string& docPath)
 {
@@ -244,6 +322,9 @@ Error initCache()
 
    RS_REGISTER_CALL_METHOD(rs_populateNotebookCache, 1);
    RS_REGISTER_CALL_METHOD(rs_chunkCacheFolder, 1);
+
+   module_context::scheduleDelayedWork(boost::posix_time::seconds(30),
+      cleanUnusedCaches, true);
 
    return Success();
 }

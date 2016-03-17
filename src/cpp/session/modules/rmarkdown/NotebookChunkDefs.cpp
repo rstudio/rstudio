@@ -73,7 +73,7 @@ FilePath chunkDefinitionsPath(const std::string& docPath,
                               const std::string& docId,
                               const std::string& nbCtxId)
 {
-   std::string fileName = std::string() + "chunks.json";
+   std::string fileName = std::string() + kNotebookChunkDefFilename;
    return chunkCacheFolder(docPath, docId, nbCtxId).childPath(fileName);
 }
 
