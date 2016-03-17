@@ -22,6 +22,13 @@
 * Enable data import preview to be cancelled
 * Enable data import to cache web files
 
+### R Markdown
+
+* Show custom formats in Knit menu
+* Show options menu and Knit w/ Params for custom formats
+* Use "Run Document" for custom formats with runtime: shiny
+* Add option to suppress Knit preview entirely
+
 ### C / C++
 
 * Provide autocompletion of header paths

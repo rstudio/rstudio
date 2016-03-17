@@ -212,6 +212,7 @@ public class TextEditingTarget implements
       
       void setIsShinyFormat(boolean showOutputOptions, boolean isPresentation);
       void setFormatOptions(TextFileType fileType,
+                            boolean canEditFormatOptions,
                             List<String> options, 
                             List<String> values, 
                             List<String> extensions, 
@@ -3487,14 +3488,15 @@ public class TextEditingTarget implements
       return rmarkdownHelper_.getTemplateFormat(yaml);
    }
    
-   private boolean isRuntimeShiny()
+   private List<String> getOutputFormats()
    {
       String yaml = getRmdFrontMatter();
       if (yaml == null)
-         return false;
-      return rmarkdownHelper_.isRuntimeShiny(yaml);
-      
-      
+         return new ArrayList<String>();
+      List<String> formats = rmarkdownHelper_.getOutputFormats(yaml);
+      if (formats == null)
+         formats = new ArrayList<String>();
+      return formats;  
    }
    
    private void updateRmdFormatList()
@@ -3513,7 +3515,7 @@ public class TextEditingTarget implements
                                       RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX));
       }
       // could be runtime: shiny with a custom format
-      else if (isRuntimeShiny())
+      else if (isShinyDoc())
       {
          view_.setIsShinyFormat(false,  // no output options b/c no template
                                 false); // not a presentation (unknown format)
@@ -3535,20 +3537,59 @@ public class TextEditingTarget implements
                }
             }
          }
+             
+         // add formats not in the selected template 
+         List<String> outputFormats = getOutputFormats();
+         for (String format : outputFormats)
+         {
+            if (!valueList.contains(format))
+            {
+               String uiName = format;
+               int nsLoc = uiName.indexOf("::");
+               if (nsLoc != -1)
+                  uiName = uiName.substring(nsLoc + 2);
+               formatList.add(uiName);
+               valueList.add(format);
+               extensionList.add(null);
+            }
+         }
          
-         view_.setFormatOptions(fileType_, formatList, valueList, extensionList,
-               formatUiName);
+         // if we end up with only one format then don't show the menu
+         if (formatList.size() == 1)
+         {
+            formatList.clear();
+            valueList.clear();
+            extensionList.clear();
+            formatUiName = "";
+         }
+         
+         view_.setFormatOptions(fileType_, 
+                                selTemplate != null, // can edit format options
+                                formatList, 
+                                valueList, 
+                                extensionList,
+                                formatUiName);
       }
    }
    
    private void setRmdFormat(String formatName)
    {
+      // match based on selected template
       RmdSelectedTemplate selTemplate = getSelectedTemplate();
-      if (selTemplate == null)
-         return;
-      
-      // if this is the current format, we don't need to change the front matter
-      if (selTemplate.format.equals(formatName))
+      if (selTemplate != null)
+      {
+         // if this is the current format, we don't need to change the front matter
+         if (selTemplate.format.equals(formatName))
+         {
+            renderRmd();
+            return;
+         }
+      }
+       
+      // look for other formats, if the target format name already 
+      // matches the first format then just render and return
+      List<String> outputFormats = getOutputFormats();
+      if (outputFormats.size() > 0 && outputFormats.get(0).equals(formatName))
       {
          renderRmd();
          return;
@@ -4593,8 +4634,10 @@ public class TextEditingTarget implements
    {
       try
       {
-         RmdSelectedTemplate template = getSelectedTemplate();
-         return (template != null) && template.isShiny;
+         String yaml = getRmdFrontMatter();
+         if (yaml == null)
+            return false;
+         return rmarkdownHelper_.isRuntimeShiny(yaml);  
       }
       catch(Exception e)
       {
