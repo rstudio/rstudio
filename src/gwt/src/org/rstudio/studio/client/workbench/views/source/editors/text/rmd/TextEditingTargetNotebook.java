@@ -86,15 +86,17 @@ public class TextEditingTargetNotebook
    private class ChunkExecQueueUnit
    {
       public ChunkExecQueueUnit(String chunkIdIn, String codeIn, 
-            String optionsIn)
+            String optionsIn, String setupCrc32In)
       {
          chunkId = chunkIdIn;
          options = optionsIn;
          code = codeIn;
+         setupCrc32 = setupCrc32In;
       }
       public String chunkId;
       public String options;
       public String code;
+      public String setupCrc32;
    };
 
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
@@ -108,6 +110,7 @@ public class TextEditingTargetNotebook
       outputWidgets_ = new HashMap<String, ChunkOutputWidget>();
       lineWidgets_ = new HashMap<String, LineWidget>();
       chunkExecQueue_ = new LinkedList<ChunkExecQueueUnit>();
+      setupCrc32_ = docUpdateSentinel_.getProperty(LAST_SETUP_CRC32);
       editingTarget_ = editingTarget;
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -233,7 +236,10 @@ public class TextEditingTargetNotebook
       
       // ensure the setup chunk has been executed (unless of course this is the
       // setup chunk itself)
-      if (!isSetupChunkScope(chunk))
+      String setupCrc32 = "";
+      if (isSetupChunkScope(chunk))
+         setupCrc32 = setupCrc32_;
+      else
          ensureSetupChunkExecuted();
       
       // check to see if this chunk is already in the execution queue--if so
@@ -244,13 +250,14 @@ public class TextEditingTargetNotebook
          {
             unit.code = code;
             unit.options = options;
+            unit.setupCrc32 = setupCrc32;
             return;
          }
       }
 
       // put it in the queue 
       chunkExecQueue_.add(new ChunkExecQueueUnit(chunkDef.getChunkId(), code,
-            options));
+            options, setupCrc32));
       
       // TODO: decorate chunk in some way so that it's clear the chunk is 
       // queued for execution
@@ -282,6 +289,10 @@ public class TextEditingTargetNotebook
                {
                   console_.consoleInput(unit.code, unit.chunkId, 
                         new VoidServerRequestCallback());
+
+                  // if this was the setup chunk, mark it
+                  if (!StringUtil.isNullOrEmpty(unit.setupCrc32))
+                     writeSetupCrc32(unit.setupCrc32);
                }
 
                @Override
@@ -513,9 +524,11 @@ public class TextEditingTargetNotebook
    @Override
    public void onRestartStatus(RestartStatusEvent event)
    {
-      if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
+      // if we had recorded a run of the setup chunk prior to restart, clear it
+      if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED &&
+          !StringUtil.isNullOrEmpty(setupCrc32_))
       {
-         setupCrc32_ = "";
+         writeSetupCrc32("");
       }
    }
 
@@ -711,8 +724,8 @@ public class TextEditingTargetNotebook
             String crc32 = StringUtil.crc32(setupCode);
             if (crc32 != setupCrc32_)
             {
-               executeChunk(scopes.get(i), setupCode, "");
                setupCrc32_ = crc32;
+               executeChunk(scopes.get(i), setupCode, "");
             }
          }
       }
@@ -725,6 +738,12 @@ public class TextEditingTargetNotebook
       if (scope.getChunkLabel() == null)
          return false;
       return scope.getChunkLabel().toLowerCase() == "setup";
+   }
+   
+   private void writeSetupCrc32(String crc32)
+   {
+      setupCrc32_ = crc32;
+      docUpdateSentinel_.setProperty(LAST_SETUP_CRC32, crc32);
    }
    
    private JsArray<ChunkDefinition> initialChunkDefs_;
@@ -768,4 +787,6 @@ public class TextEditingTargetNotebook
    public final static String CHUNK_OUTPUT_TYPE    = "chunk_output_type";
    public final static String CHUNK_OUTPUT_INLINE  = "inline";
    public final static String CHUNK_OUTPUT_CONSOLE = "console";
+   
+   private final static String LAST_SETUP_CRC32 = "last_setup_crc32";
 }
