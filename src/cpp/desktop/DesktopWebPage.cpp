@@ -52,6 +52,9 @@ WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
    settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
    settings()->setAttribute(QWebSettings::JavascriptCanOpenWindows, true);
    settings()->setAttribute(QWebSettings::LocalStorageEnabled, true);
+   QString storagePath = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+   settings()->setOfflineStoragePath(storagePath);
+   settings()->enablePersistentStorage(storagePath);
 
    setNetworkAccessManager(new NetworkAccessManager(sharedSecret, parent));
    defaultSaveDir_ = QDir::home();
