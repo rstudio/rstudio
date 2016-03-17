@@ -42,21 +42,16 @@ FilePath cachePath(const std::string& nbCtxId)
    return notebookCacheRoot().childPath("paths-" + nbCtxId);
 }
 
-void cleanNotebookCache()
+void cleanNotebookPathMap()
 {
    FilePath cache = cachePath(notebookCtxId());
    Error error = core::readStringMapFromFile(cache, &s_idCache);
-
-   // TODO: Clean up cache folders that aren't used. Needs some reformulation
-   // of the way we form the folder paths--ATM the paths include only the 
-   // context ID; they need to also include session ID, otherwise we could
-   // nuke a cache folder used by another session
 
    for (std::map<std::string, std::string>::iterator it = s_idCache.begin();
         it != s_idCache.end(); 
         it++)
    {
-      // clean up cache entries that don't exist
+      // clean up cache entries that refer to files that don't exist
       if (!FilePath(it->first).exists())
          s_idCache.erase(it->first);
    }
@@ -67,12 +62,8 @@ void cleanNotebookCache()
       LOG_ERROR(error);
    s_cacheWriteTime = std::time(NULL);
 }
-   
 
-} // anonymous namespace
-
-Error notebookPathToId(const core::FilePath& path, const std::string& nbCtxId,
-      std::string *pId)
+Error synchronizeCache(const std::string& nbCtxId)
 {
    Error error;
    FilePath cache = cachePath(nbCtxId);
@@ -97,11 +88,23 @@ Error notebookPathToId(const core::FilePath& path, const std::string& nbCtxId,
             return error;
          s_cacheWriteTime = std::time(NULL);
 
-         // schedule a cache cleanup (no urgency)
+         // schedule a path map cleanup (no urgency)
          module_context::scheduleDelayedWork(boost::posix_time::seconds(10),
-            cleanNotebookCache, true);
+            cleanNotebookPathMap, true);
       }
    }
+   return Success();
+}
+
+
+} // anonymous namespace
+
+Error notebookPathToId(const core::FilePath& path, const std::string& nbCtxId,
+      std::string *pId)
+{
+   Error error = synchronizeCache(nbCtxId);
+   if (error)
+      return error;
    
    // check to see if the path is already in our lookup table
    std::map<std::string, std::string>::iterator it = 
@@ -132,13 +135,35 @@ Error notebookPathToId(const core::FilePath& path, const std::string& nbCtxId,
 
    // insert the new ID and update caches
    s_idCache[path.absolutePath()] = id;
-   error = writeStringMapToFile(cache, s_idCache);
+   error = writeStringMapToFile(cachePath(nbCtxId), s_idCache);
    if (error)
       return error;
    s_cacheWriteTime = std::time(NULL);
    *pId = id;
 
    return Success();
+}
+
+core::Error notebookIdToPath(const std::string& id, 
+      const std::string& nbCtxId, core::FilePath* pPath)
+{
+   Error error = synchronizeCache(nbCtxId);
+   if (error)
+      return error;
+   
+   for (std::map<std::string, std::string>::iterator it = s_idCache.begin();
+        it != s_idCache.end();
+        it++)
+   {
+      if (it->second == id)
+      {
+         *pPath = FilePath(it->first);
+         return Success();
+      }
+   }
+
+   return systemError(boost::system::errc::no_such_file_or_directory,
+                      ERROR_LOCATION);
 }
 
 } // namespace notebook

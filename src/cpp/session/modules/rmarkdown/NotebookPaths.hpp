@@ -32,6 +32,9 @@ namespace notebook {
 core::Error notebookPathToId(const core::FilePath& path, 
       const std::string& nbCtxId, std::string* pId);
 
+core::Error notebookIdToPath(const std::string& id, 
+      const std::string& nbCtxId, core::FilePath* pPath);
+
 } // namespace notebook
 } // namespace rmarkdown
 } // namespace modules
