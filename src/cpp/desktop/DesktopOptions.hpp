@@ -85,8 +85,6 @@ public:
    core::FilePath scratchTempDir(core::FilePath defaultPath=core::FilePath());
    void cleanUpScratchTempDir();
 
-   bool webkitDevTools();
-
    bool runDiagnostics() { return runDiagnostics_; }
 
 private:
