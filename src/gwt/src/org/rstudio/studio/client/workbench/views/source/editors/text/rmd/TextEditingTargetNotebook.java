@@ -232,24 +232,28 @@ public class TextEditingTargetNotebook
       // get the row that ends the chunk
       int row = chunk.getEnd().getRow();
 
-      // find or create a matching chunk definition 
-      final ChunkDefinition chunkDef = getChunkDefAtRow(row);
-      if (chunkDef == null)
-         return;
-      
-      // ensure the setup chunk has been executed (unless of course this is the
-      // setup chunk itself)
+      String chunkId = "";
       String setupCrc32 = "";
       if (isSetupChunkScope(chunk))
+      {
          setupCrc32 = setupCrc32_;
+         chunkId = SETUP_CHUNK_ID;
+      }
       else
+      {
+         // find or create a matching chunk definition 
+         ChunkDefinition chunkDef = getChunkDefAtRow(row);
+         if (chunkDef == null)
+            return;
+         chunkId = chunkDef.getChunkId();
          ensureSetupChunkExecuted();
+      }
       
       // check to see if this chunk is already in the execution queue--if so
       // just update the code and leave it queued
       for (ChunkExecQueueUnit unit: chunkExecQueue_)
       {
-         if (unit.chunkId == chunkDef.getChunkId())
+         if (unit.chunkId == chunkId)
          {
             unit.code = code;
             unit.options = options;
@@ -259,7 +263,7 @@ public class TextEditingTargetNotebook
       }
 
       // put it in the queue 
-      chunkExecQueue_.add(new ChunkExecQueueUnit(chunkDef.getChunkId(), code,
+      chunkExecQueue_.add(new ChunkExecQueueUnit(chunkId, code,
             options, setupCrc32));
       
       // TODO: decorate chunk in some way so that it's clear the chunk is 
@@ -279,7 +283,8 @@ public class TextEditingTargetNotebook
       executingChunk_ = unit;
       
       // let the chunk widget know it's started executing
-      outputWidgets_.get(unit.chunkId).setCodeExecuting(true);
+      if (outputWidgets_.containsKey(unit.chunkId))
+         outputWidgets_.get(unit.chunkId).setCodeExecuting(true);
 
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
             unit.chunkId, 
@@ -387,7 +392,8 @@ public class TextEditingTargetNotebook
          }
       });
       
-      outputWidgets_.get(chunkDef.getChunkId()).setCodeExecuting(false);
+      if (outputWidgets_.containsKey(chunkDef.getChunkId()))
+         outputWidgets_.get(chunkDef.getChunkId()).setCodeExecuting(false);
    }
    
    @Override
@@ -799,4 +805,5 @@ public class TextEditingTargetNotebook
    public final static String CHUNK_OUTPUT_CONSOLE = "console";
    
    private final static String LAST_SETUP_CRC32 = "last_setup_crc32";
+   private final static String SETUP_CHUNK_ID = "csetup_chunk";
 }

@@ -286,6 +286,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("syntax_color_console", false);
    }
    
+   public PrefValue<Boolean> scrollPastEndOfDocument()
+   {
+      return bool("scroll_past_end_of_document", false);
+   }
+   
    public PrefValue<Boolean> highlightRFunctionCalls()
    {
       return bool("highlight_r_function_calls", false);

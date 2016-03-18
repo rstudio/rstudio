@@ -5622,6 +5622,11 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.setShowIndentGuides(arg);
                }}));
+      releaseOnDismiss.add(prefs.scrollPastEndOfDocument().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.setScrollPastEndOfDocument(arg);
+               }}));
       releaseOnDismiss.add(prefs.highlightRFunctionCalls().bind(
             new CommandWithArg<Boolean>() {
                public void execute(Boolean arg) {
