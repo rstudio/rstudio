@@ -442,9 +442,6 @@ public class ShortcutManager implements NativePreviewHandler,
       int keyCode = keys.getKeyCode();
       int modifiers = keys.getModifier();
       
-      if (keyCode == KeyCodes.KEY_BACKSPACE)
-         event.preventDefault();
-      
       boolean isSaveQuitKey =
             keyCode == KeyCodes.KEY_S ||
             keyCode == KeyCodes.KEY_W;
