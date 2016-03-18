@@ -43,7 +43,6 @@ import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.DiagnosticsHelpLink;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.workbench.prefs.model.EditingPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -127,23 +126,7 @@ public class EditingPreferencesPane extends PreferencesPane
       
       lessSpaced(keyboardPanel);
       editingPanel.add(keyboardPanel);
-      
-      foldMode_ = new SelectWidget(
-            "Fold Style:",
-            new String[] {
-                  "Start Only",
-                  "Start and End"
-            },
-            new String[] {
-                  FoldStyle.FOLD_MARK_BEGIN_ONLY,
-                  FoldStyle.FOLD_MARK_BEGIN_AND_END
-            },
-            false,
-            true,
-            false);
-      
-      editingPanel.add(foldMode_);
-      
+       
       Label executionLabel = headerLabel("Execution");
       editingPanel.add(executionLabel);
       executionLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
@@ -180,7 +163,6 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(panel);
       
       
-      
       VerticalPanel displayPanel = new VerticalPanel();
       displayPanel.add(headerLabel("General"));
       displayPanel.add(checkboxPref("Highlight selected word", prefs.highlightSelectedWord()));
@@ -193,48 +175,23 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref("Blinking cursor", prefs_.blinkingCursor()));
       displayPanel.add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
       displayPanel.add(checkboxPref("Allow scroll past end of document", prefs_.scrollPastEndOfDocument()));
-      displayPanel.add(checkboxPref("Highlight R function calls", prefs_.highlightRFunctionCalls()));
-      
-      Label rMarkdownLabel = headerLabel("R Markdown");
-      rMarkdownLabel.getElement().getStyle().setPaddingTop(14, Unit.PX);
-      displayPanel.add(rMarkdownLabel);
-      displayPanel.add(checkboxPref("Show inline toolbar for R code chunks", prefs_.showInlineToolbarForRCodeChunks()));
-      displayPanel.add(checkboxPref("Show document outline by default", prefs_.showDocumentOutlineRmd()));
-      
-      docOutlineDisplay_ = new SelectWidget(
-            "Show in Document Outline: ",
+      displayPanel.add(extraSpaced(checkboxPref("Highlight R function calls", prefs_.highlightRFunctionCalls())));
+       
+      foldMode_ = new SelectWidget(
+            "Fold Style:",
             new String[] {
-                  "Sections Only",
-                  "Sections and Named Chunks",
-                  "Sections and All Chunks"
+                  "Start Only",
+                  "Start and End"
             },
             new String[] {
-                  UIPrefsAccessor.DOC_OUTLINE_SHOW_SECTIONS_ONLY,
-                  UIPrefsAccessor.DOC_OUTLINE_SHOW_SECTIONS_AND_NAMED_CHUNKS,
-                  UIPrefsAccessor.DOC_OUTLINE_SHOW_ALL
+                  FoldStyle.FOLD_MARK_BEGIN_ONLY,
+                  FoldStyle.FOLD_MARK_BEGIN_AND_END
             },
             false,
             true,
             false);
-      displayPanel.add(docOutlineDisplay_);
       
-      rmdViewerMode_ = new SelectWidget(
-            "Show output preview in: ",
-            new String[] {
-                  "Window",
-                  "Viewer Pane",
-                  "(None)"
-            },
-            new String[] {
-                  new Integer(RmdOutput.RMD_VIEWER_TYPE_WINDOW).toString(),
-                  new Integer(RmdOutput.RMD_VIEWER_TYPE_PANE).toString(),
-                  new Integer(RmdOutput.RMD_VIEWER_TYPE_NONE).toString()
-            },
-            false,
-            true,
-            false);
-      displayPanel.add(rmdViewerMode_);
-      
+      displayPanel.add(foldMode_);
       
       VerticalPanel savePanel = new VerticalPanel();
       
@@ -492,8 +449,6 @@ public class EditingPreferencesPane extends PreferencesPane
       
       foldMode_.setValue(prefs_.foldStyle().getValue());
       delimiterSurroundWidget_.setValue(prefs_.surroundSelection().getValue());
-      docOutlineDisplay_.setValue(prefs_.shownSectionsInDocumentOutline().getValue().toString());
-      rmdViewerMode_.setValue(prefs_.rmdViewerType().getValue().toString());
    }
    
    @Override
@@ -522,13 +477,7 @@ public class EditingPreferencesPane extends PreferencesPane
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_EMACS);
       else
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
-      
-      prefs_.shownSectionsInDocumentOutline().setGlobalValue(
-            docOutlineDisplay_.getValue());
-      
-      prefs_.rmdViewerType().setGlobalValue(Integer.decode(
-            rmdViewerMode_.getValue()));
-      
+           
       prefs_.foldStyle().setGlobalValue(foldMode_.getValue());
       prefs_.surroundSelection().setGlobalValue(delimiterSurroundWidget_.getValue());
       
@@ -579,10 +528,8 @@ public class EditingPreferencesPane extends PreferencesPane
    private final SelectWidget showCompletions_;
    private final SelectWidget showCompletionsOther_;
    private final SelectWidget editorMode_;
-   private final SelectWidget rmdViewerMode_;
    private final SelectWidget foldMode_;
    private final SelectWidget delimiterSurroundWidget_;
-   private final SelectWidget docOutlineDisplay_;
    private final TextBoxWithButton encoding_;
    private String encodingValue_;
    
