@@ -15,6 +15,7 @@
  */
 package com.google.gwt.emultest;
 
+import com.google.gwt.emultest.java8.util.ComparatorTest;
 import com.google.gwt.emultest.java8.util.DoubleSummaryStatisticsTest;
 import com.google.gwt.emultest.java8.util.IntSummaryStatisticsTest;
 import com.google.gwt.emultest.java8.util.LongSummaryStatisticsTest;
@@ -37,6 +38,7 @@ public class EmulJava8Suite {
     GWTTestSuite suite = new GWTTestSuite("Tests for com.google.gwt.emul.java8");
 
     //-- java.util
+    suite.addTestSuite(ComparatorTest.class);
     suite.addTestSuite(OptionalTest.class);
     suite.addTestSuite(OptionalIntTest.class);
     suite.addTestSuite(OptionalLongTest.class);
