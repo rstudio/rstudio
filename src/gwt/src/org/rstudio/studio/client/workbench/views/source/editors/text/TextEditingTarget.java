@@ -212,6 +212,7 @@ public class TextEditingTarget implements
       
       void setIsShinyFormat(boolean showOutputOptions, boolean isPresentation);
       void setFormatOptions(TextFileType fileType,
+                            boolean showRmdFormatMenu,
                             boolean canEditFormatOptions,
                             List<String> options, 
                             List<String> values, 
@@ -3555,6 +3556,7 @@ public class TextEditingTarget implements
          }
          
          view_.setFormatOptions(fileType_, 
+                                getCustomKnit().length() == 0,
                                 selTemplate != null, // can edit format options
                                 formatList, 
                                 valueList, 
@@ -4634,6 +4636,22 @@ public class TextEditingTarget implements
       {
          Debug.log(e.getMessage());
          return false;
+      }
+   }
+   
+   private String getCustomKnit()
+   {
+      try
+      {
+         String yaml = getRmdFrontMatter();
+         if (yaml == null)
+            return new String();
+         return rmarkdownHelper_.getCustomKnit(yaml);  
+      }
+      catch(Exception e)
+      {
+         Debug.log(e.getMessage());
+         return new String();
       }
    }
    

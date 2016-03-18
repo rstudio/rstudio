@@ -509,6 +509,23 @@ public class TextEditingTargetRMarkdownHelper
       return false;
    }
    
+   public String getCustomKnit(String yaml)
+   {
+      // This is in the editor load path, so guard against exceptions and log
+      // any we find without bringing down the editor. 
+      try
+      {  
+         YamlTree tree = new YamlTree(yaml);
+         String knit = tree.getKeyValue(RmdFrontMatter.KNIT_KEY);
+         return knit;
+      }
+      catch (Exception e)
+      {
+         Debug.log("Warning: Exception thrown while parsing YAML:\n" + yaml);
+      }
+      return new String();
+   }
+   
    // Parses YAML, adds the given format option with any transferable
    // defaults, and returns the resulting YAML
    public void setOutputFormat(String yaml, final String format, 

@@ -759,6 +759,7 @@ public class TextEditingTargetWidget
    
    @Override
    public void setFormatOptions(TextFileType fileType,
+                                boolean showRmdFormatMenu,
                                 boolean canEditFormatOptions,
                                 List<String> options, 
                                 List<String> values, 
@@ -770,8 +771,8 @@ public class TextEditingTargetWidget
          setFormatText("");
       }
       
-      setRmdFormatButtonVisible(true);
-      rmdFormatButton_.setEnabled(true);
+      setRmdFormatButtonVisible(showRmdFormatMenu);
+      rmdFormatButton_.setEnabled(showRmdFormatMenu);
       rmdFormatButton_.clearMenu();
       int parenPos = selectedOption.indexOf('(');
          if (parenPos != -1)
