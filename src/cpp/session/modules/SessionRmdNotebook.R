@@ -428,12 +428,14 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    splat <- lapply(ranges, function(range) {
       
-      pasted <- paste(csvData$text[range$start:range$end], collapse = "")
+      type <- csvData$type[[range$start]]
+      collapse <- if (type == 0) "\n" else ""
+      
+      pasted <- paste(csvData$text[range$start:range$end], collapse = collapse)
       result <- .rs.trimWhitespace(pasted)
       if (!nzchar(result))
          return(NULL)
       
-      type <- csvData$type[[range$start]]
       if (type == 1 || type == 2)
          result <- paste("##", gsub("\n", "\n## ", result, fixed = TRUE))
       
