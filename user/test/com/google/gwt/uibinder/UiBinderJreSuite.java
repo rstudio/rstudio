@@ -54,6 +54,7 @@ import com.google.gwt.uibinder.rebind.GwtResourceEntityResolverTest;
 import com.google.gwt.uibinder.rebind.HandlerEvaluatorTest;
 import com.google.gwt.uibinder.rebind.TokenatorTest;
 import com.google.gwt.uibinder.rebind.TypeOracleUtilsTest;
+import com.google.gwt.uibinder.rebind.UiBinderParserUiImportTest;
 import com.google.gwt.uibinder.rebind.UiBinderParserUiWithTest;
 import com.google.gwt.uibinder.rebind.UiRendererEventValidationTest;
 import com.google.gwt.uibinder.rebind.UiRendererValidationTest;
@@ -84,6 +85,7 @@ public class UiBinderJreSuite {
     suite.addTestSuite(DesignTimeUtilsTest.class);
     suite.addTestSuite(TypeOracleUtilsTest.class);
     suite.addTestSuite(UiBinderParserUiWithTest.class);
+    suite.addTestSuite(UiBinderParserUiImportTest.class);
     suite.addTestSuite(UiRendererEventValidationTest.class);
     suite.addTestSuite(UiRendererValidationTest.class);
     suite.addTestSuite(HtmlTemplatesTest.class);
