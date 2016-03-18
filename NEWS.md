@@ -41,6 +41,7 @@
 * Always provide file completions for top-level current directory
 * Prevent wrapping of text in Files pane display
 * Indicate when object details in environment pane have been truncated
+* Improved keyboard navigation in browser file widgets
 
 ### Bug Fixes
 
