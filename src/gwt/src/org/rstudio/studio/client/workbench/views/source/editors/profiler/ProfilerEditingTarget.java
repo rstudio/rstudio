@@ -689,9 +689,9 @@ public class ProfilerEditingTarget implements EditingTarget,
             @Override
             public void onResponseReceived(String response)
             {
-               selectedPath_ = file;
                selectedLine_ = line;
                hasValidPath_ = !StringUtil.isNullOrEmpty(response);
+               selectedPath_ = hasValidPath_ ? response : file;
                
                commands_.gotoProfileSource().setEnabled(hasValidPath_);
                
