@@ -76,7 +76,19 @@ void removeGraphicsDevice(const FilePath& plotFolder, bool hasPlots)
    if (error)
       LOG_ERROR(error);
 
+#ifdef _WIN32
+   // on Windows, turning off the PNG device writes an empty PNG file if no 
+   // plot output occurs; we avoid treating that empty file as an actual plot
+   // by only emitting an event if a plot occurred.
+   //
+   // TODO: not all plot libraries cause the new plot hooks to invoke, so this
+   // heuristic may cause us to miss a plot on Windows; we may need some
+   // mechanism by which we can determine whether the device or its output is
+   // empty.
    processPlots(plotFolder, hasPlots);
+#else
+   processPlots(plotFolder, true);
+#endif
 }
 
 void onNewPlot(const FilePath& plotFolder,
