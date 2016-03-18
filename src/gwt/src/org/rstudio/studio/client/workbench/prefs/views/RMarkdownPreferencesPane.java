@@ -70,6 +70,12 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             true,
             false);
       add(rmdViewerMode_);
+
+      if (prefs_.showRmdChunkOutputInline().getValue())
+      {
+         add(checkboxPref("Execute setup chunk automatically in notebooks", 
+                          prefs_.autoRunSetupChunk()));
+      }
    }
 
    @Override
