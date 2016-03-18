@@ -482,7 +482,6 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    public void onDismiss(int dismissType)
    {
-      clearProfileCache();
       presenter_.detach();
    }
 
@@ -571,25 +570,6 @@ public class ProfilerEditingTarget implements EditingTarget,
    public String getDefaultNamePrefix()
    {
       return "Profile";
-   }
-   
-   private void clearProfileCache()
-   {
-      try
-      {
-         server_.clearProfile(htmlLocalPath_, new ServerRequestCallback<JavaScriptObject>()
-         {
-            @Override
-            public void onError(ServerError error)
-            {
-               Debug.logError(error);
-            }
-         });
-      }
-      catch(Exception e)
-      {
-         Debug.logException(e);
-      }
    }
    
    private void savePropertiesWithPath(String path)
