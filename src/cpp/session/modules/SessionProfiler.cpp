@@ -66,7 +66,6 @@ void handleProfilerResReq(const http::Request& request,
 }
 
 void onDocPendingRemove(
-        const std::string &id,
         boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    // check to see if there is html cached data

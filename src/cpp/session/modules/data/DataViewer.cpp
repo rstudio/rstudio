@@ -920,13 +920,12 @@ void onClientInit()
 }
 
 void onDocPendingRemove(
-        const std::string &id,
         boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    // see if the document has a path (if it does, it can't be a data viewer
    // item)
    std::string path;
-   source_database::getPath(id, &path);
+   source_database::getPath(pDoc->id(), &path);
    if (!path.empty())
       return;
 
