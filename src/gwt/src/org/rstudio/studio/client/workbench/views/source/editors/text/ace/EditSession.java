@@ -154,7 +154,15 @@ public class EditSession extends JavaScriptObject
    public native final JsArray<AceFold> getAllFolds() /*-{
       return this.getAllFolds();
    }-*/;
+   
+   public native final AceFold getFoldAt(Position position) /*-{
+      return this.getFoldAt(position.row, position.column);
+   }-*/;
 
+   public native final AceFold getFoldAt(int row, int column) /*-{
+      return this.getFoldAt(row, column);
+   }-*/;
+   
    public native final void addFold(String placeholder, Range range) /*-{
       this.addFold(placeholder, range);
    }-*/;

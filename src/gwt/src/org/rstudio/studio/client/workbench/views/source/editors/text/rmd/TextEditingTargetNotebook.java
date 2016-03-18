@@ -39,6 +39,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
@@ -206,12 +207,14 @@ public class TextEditingTargetNotebook
          RMarkdownServerOperations server,
          ConsoleServerOperations console,
          Session session,
+         UIPrefs prefs,
          Provider<SourceWindowManager> pSourceWindowManager)
    {
       events_ = events;
       server_ = server;
       console_ = console;
       session_ = session;
+      prefs_ = prefs;
       pSourceWindowManager_ = pSourceWindowManager;
       
       events_.addHandler(RmdChunkOutputEvent.TYPE, this);
@@ -714,8 +717,12 @@ public class TextEditingTargetNotebook
    
    private void ensureSetupChunkExecuted()
    {
+      // ignore if disabled
+      if (!prefs_.autoRunSetupChunk().getValue())
+         return;
+
       // no reason to do work if we don't need to re-validate the setup chunk
-      if (!validateSetupChunk_ && setupCrc32_.length() > 0)
+      if (!validateSetupChunk_ && !StringUtil.isNullOrEmpty(setupCrc32_))
          return;
       validateSetupChunk_ = false;
 
@@ -772,6 +779,7 @@ public class TextEditingTargetNotebook
    private final TextEditingTarget editingTarget_;
    private Session session_;
    private Provider<SourceWindowManager> pSourceWindowManager_;
+   private UIPrefs prefs_;
 
    private RMarkdownServerOperations server_;
    private ConsoleServerOperations console_;
