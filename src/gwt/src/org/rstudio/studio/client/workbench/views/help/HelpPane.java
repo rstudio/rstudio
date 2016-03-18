@@ -42,6 +42,7 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.ElementEx;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
@@ -95,14 +96,14 @@ public class HelpPane extends WorkbenchPane
    @Override 
    protected Widget createMainWidget()
    {
-      frame_ = new RStudioFrame() ;
+      frame_ = new RStudioFrame();
       frame_.setSize("100%", "100%");
-      frame_.setStylePrimaryName("rstudio-HelpFrame") ;
+      frame_.setStylePrimaryName("rstudio-HelpFrame");
       ElementIds.assignElementId(frame_.getElement(), ElementIds.HELP_FRAME);
 
       return new AutoGlassPanel(frame_);
    }
-
+   
    @Override
    public void onResize()
    {
@@ -200,23 +201,23 @@ public class HelpPane extends WorkbenchPane
          WindowEx.get().focus();
          findTextBox_.focus();
          findTextBox_.selectAll();
+         return;
       }
       
+      // don't let backspace perform browser back
+      DomUtils.preventBackspaceCausingBrowserBack(e);
+      
       // delegate to the shortcut manager
-      else
+      NativeKeyDownEvent evt = new NativeKeyDownEvent(e);
+      ShortcutManager.INSTANCE.onKeyDown(evt);
+      if (evt.isCanceled())
       {
-         NativeKeyDownEvent evt = new NativeKeyDownEvent(e);
-         ShortcutManager.INSTANCE.onKeyDown(evt);
-         if (evt.isCanceled())
-         {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // since this is a shortcut handled by the main window
-            // we set focus to it
-            WindowEx.get().focus();
-         }
-         
+         e.preventDefault();
+         e.stopPropagation();
+
+         // since this is a shortcut handled by the main window
+         // we set focus to it
+         WindowEx.get().focus();
       }
    }
    
@@ -573,6 +574,7 @@ public class HelpPane extends WorkbenchPane
                   frame_.setUrl(targetUrl_);
                   replaceFrameUrl(frame_.getIFrame().cast(), targetUrl_);
                }
+               
                return false;
             }
             else
