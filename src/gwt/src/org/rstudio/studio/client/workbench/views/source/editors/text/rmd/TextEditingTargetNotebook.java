@@ -715,7 +715,7 @@ public class TextEditingTargetNotebook
    private void ensureSetupChunkExecuted()
    {
       // no reason to do work if we don't need to re-validate the setup chunk
-      if (!validateSetupChunk_ && setupCrc32_.length() > 0)
+      if (!validateSetupChunk_ && !StringUtil.isNullOrEmpty(setupCrc32_))
          return;
       validateSetupChunk_ = false;
 
