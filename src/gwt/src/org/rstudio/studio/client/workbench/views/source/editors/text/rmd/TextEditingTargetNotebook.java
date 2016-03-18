@@ -17,8 +17,10 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Set;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
@@ -53,6 +55,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWid
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkContextChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
@@ -551,6 +554,20 @@ public class TextEditingTargetNotebook
       if (state_ != STATE_NONE)
          return;
       
+      // start listening for fold change events 
+      docDisplay_.addFoldChangeHandler(new FoldChangeEvent.Handler()
+      {
+         @Override
+         public void onFoldChange(FoldChangeEvent event)
+         {
+            // the Ace line widget manage emits a 'changeFold' event when a line
+            // widget is destroyed; this is our only signal that it's been
+            // removed, so when it happens, we need to synchronize the notebook
+            // state in this class with the state in the document.
+            syncLineWidgets();
+         }
+      });
+
       state_ = STATE_INITIALIZING;
       requestId_ = nextRequestId_++;
       server_.refreshChunkOutput(
@@ -766,6 +783,40 @@ public class TextEditingTargetNotebook
    {
       setupCrc32_ = crc32;
       docUpdateSentinel_.setProperty(LAST_SETUP_CRC32, crc32);
+   }
+   
+   private void syncLineWidgets()
+   {
+      // no work to do if we don't have any output widgets
+      if (outputWidgets_.size() == 0)
+        return;
+      
+      JsArray<LineWidget> widgets = docDisplay_.getLineWidgets();
+      Set<String> newChunkIds = new HashSet<String>();
+      for (int i = 0; i < widgets.length(); i++)
+      {
+         // only handle our own line widget type
+         LineWidget widget = widgets.get(i);
+         if (!widget.getType().equals(ChunkDefinition.LINE_WIDGET_TYPE))
+            continue;
+         
+         ChunkDefinition def = widget.getData();
+         if (def != null && !StringUtil.isNullOrEmpty(def.getChunkId()))
+         {
+            newChunkIds.add(def.getChunkId());
+         }
+      }
+      
+      // remove all the chunk IDs that are actually in the document; any that
+      // are remaining are stale and need to be cleaned up
+      Set<String> oldChunkIds = new HashSet<String>();
+      oldChunkIds.addAll(outputWidgets_.keySet());
+      oldChunkIds.removeAll(newChunkIds);
+      for (String chunkId: oldChunkIds)
+      {
+         lineWidgets_.remove(chunkId);
+         outputWidgets_.remove(chunkId);
+      }
    }
    
    private JsArray<ChunkDefinition> initialChunkDefs_;
