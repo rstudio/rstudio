@@ -38,6 +38,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
@@ -204,11 +205,13 @@ public class TextEditingTargetNotebook
    public void initialize(EventBus events, 
          RMarkdownServerOperations server,
          ConsoleServerOperations console,
+         Session session,
          Provider<SourceWindowManager> pSourceWindowManager)
    {
       events_ = events;
       server_ = server;
       console_ = console;
+      session_ = session;
       pSourceWindowManager_ = pSourceWindowManager;
       
       events_.addHandler(RmdChunkOutputEvent.TYPE, this);
@@ -716,12 +719,18 @@ public class TextEditingTargetNotebook
       {
          if (isSetupChunkScope(scopes.get(i)))
          {
-            // hash the contents and see if they match the last executed setup
-            // chunk
+            // extract the body of the chunk
             String setupCode = docDisplay_.getCode(
                   scopes.get(i).getBodyStart(),
                   Position.create(scopes.get(i).getEnd().getRow(), 0));
-            String crc32 = StringUtil.crc32(setupCode);
+            
+            // hash the body and prefix with the virtual session ID (so all
+            // hashes are automatically invalidated when the session changes)
+            String crc32 = session_.getSessionInfo().getSessionId() +
+                  StringUtil.crc32(setupCode);
+            
+            // compare with previously known hash; if it differs, re-run the
+            // setup chunk
             if (crc32 != setupCrc32_)
             {
                setupCrc32_ = crc32;
@@ -755,6 +764,7 @@ public class TextEditingTargetNotebook
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel docUpdateSentinel_;
    private final TextEditingTarget editingTarget_;
+   private Session session_;
    private Provider<SourceWindowManager> pSourceWindowManager_;
 
    private RMarkdownServerOperations server_;
