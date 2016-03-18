@@ -22,6 +22,7 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTMLTable;
@@ -41,7 +42,8 @@ import org.rstudio.core.client.widget.ScrollPanelWithClick;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class DirectoryContentsWidget
       extends Composite
@@ -87,6 +89,16 @@ public class DirectoryContentsWidget
 
       progressPanel_ = new SimplePanelWithProgress();
       progressPanel_.setWidget(null);
+      
+      buffer_ = new StringBuilder();
+      bufferTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            buffer_.setLength(0);
+         }
+      };
 
       initWidget(progressPanel_);
 
@@ -123,8 +135,7 @@ public class DirectoryContentsWidget
 
                if (doubleClick_.checkForDoubleClick(event.getNativeEvent()))
                {
-                  SelectionCommitEvent.fire(DirectoryContentsWidget.this,
-                                            getSelectedItem());
+                  commitSelection(getSelectedItem());
                }
             }
             else
@@ -142,7 +153,20 @@ public class DirectoryContentsWidget
       {
          public void onKeyDown(KeyDownEvent event)
          {
-            switch (event.getNativeKeyCode())
+            bufferTimer_.schedule(1000);
+            int keyCode = event.getNativeKeyCode();
+            
+            if (keyCode >= 'a' && keyCode <= 'z' ||
+                keyCode >= 'A' && keyCode <= 'Z' ||
+                keyCode >= '0' && keyCode <= '9' ||
+                keyCode == '.' || keyCode == '_' || keyCode == '-')
+            {
+               buffer_.append((char) keyCode);
+               selectBufferMatch();
+               return;
+            }
+            
+            switch (keyCode)
             {
                case KeyCodes.KEY_DOWN:
                   moveBy(event, 1);
@@ -162,6 +186,11 @@ public class DirectoryContentsWidget
                   if (table_.getRowCount() > 0)
                      setSelectedRow(0);
                   break;
+               case KeyCodes.KEY_BACKSPACE:
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onBackspace();
+                  break;
                case KeyCodes.KEY_END:
                   event.preventDefault();
                   event.stopPropagation();
@@ -171,8 +200,7 @@ public class DirectoryContentsWidget
                case KeyCodes.KEY_ENTER:
                   event.preventDefault();
                   event.stopPropagation();
-                  SelectionCommitEvent.fire(DirectoryContentsWidget.this,
-                                            getSelectedItem());
+                  commitSelection(getSelectedItem());
                   break;
             }
          }
@@ -201,6 +229,42 @@ public class DirectoryContentsWidget
             event.preventDefault();
          }
       });
+   }
+   
+   private void commitSelection(FileSystemItem item)
+   {
+      buffer_.setLength(0);
+      SelectionCommitEvent.fire(DirectoryContentsWidget.this, item);
+   }
+   
+   private void onBackspace()
+   {
+      if (!items_.containsKey(".."))
+         return;
+      
+      FileSystemItem item = items_.get("..");
+      commitSelection(item);
+   }
+   
+   private void selectBufferMatch()
+   {
+      if (buffer_.length() == 0)
+         return;
+      
+      String string = buffer_.toString().toLowerCase();
+      int i = 0;
+      
+      for (Map.Entry<String, FileSystemItem> entry : items_.entrySet())
+      {
+         String fileName = entry.getKey().toLowerCase();
+         if (fileName.startsWith(string))
+         {
+            setSelectedRow(i);
+            return;
+         }
+         
+         i++;
+      }
    }
 
    private void moveSelection(int offset)
@@ -396,8 +460,8 @@ public class DirectoryContentsWidget
          focusImpl_.blur(table_.getElement());
    }
 
-   private HashMap<String, FileSystemItem> items_ =
-         new HashMap<String, FileSystemItem>();
+   private Map<String, FileSystemItem> items_ =
+         new LinkedHashMap<String, FileSystemItem>();
    private final DoubleClickState doubleClick_ = new DoubleClickState();
    private Integer selectedRow_;
    private String selectedValue_;
@@ -409,6 +473,8 @@ public class DirectoryContentsWidget
    private static final int COL_SIZE = 2;
    private static final int COL_TIMESTAMP = 3;
    private final FileDialogStyles styles_ = FileDialogResources.INSTANCE.styles();
+   private final StringBuilder buffer_;
+   private final Timer bufferTimer_;
 
    private final FocusImpl focusImpl_ = FocusImpl.getFocusImplForPanel();
    private final FileSystemContext context_;

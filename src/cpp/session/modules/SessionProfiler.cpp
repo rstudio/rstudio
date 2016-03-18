@@ -65,10 +65,31 @@ void handleProfilerResReq(const http::Request& request,
    pResponse->setCacheableFile(profileResource, request);
 }
 
+void onDocPendingRemove(
+        boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   // check to see if there is html cached data
+   std::string htmlLocalPath = pDoc->getProperty("htmlLocalPath");
+   if (htmlLocalPath.empty())
+      return;
+
+   r::exec::RFunction rFunction(".rs.rpc.clear_profile");
+   rFunction.addParam(htmlLocalPath);
+
+   Error error = rFunction.call();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+}
+
 Error initialize()
 {  
    ExecBlock initBlock ;
    
+   source_database::events().onDocPendingRemove.connect(onDocPendingRemove);
+
    initBlock.addFunctions()
       (boost::bind(module_context::sourceModuleRFile, "SessionProfiler.R"))
       (boost::bind(module_context::registerUriHandler, "/" kProfilesUrlPath "/", handleProfilerResReq));
@@ -76,7 +97,6 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_profilesPath, 0);
 
    return initBlock.execute();
-
 }
 
 } // namespace profiler

@@ -109,6 +109,7 @@ public class FileBrowserWidget extends Composite
       directory_.setContents(
             host_.ls(),
             parsedDir.length > 1 ? parsedDir[parsedDir.length-2] : null);
+      setDirectoryFocus(true);
    }
 
    public void cd(String path)

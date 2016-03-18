@@ -189,7 +189,7 @@
       found <- file.exists(paths)
       
       if (any(found == TRUE)) {
-         validPath <- paths[[which(found == TRUE)]]
+         validPath <- paths[[which(found == TRUE)[[1]]]]
       }
 
       return(.rs.scalar(validPath))
