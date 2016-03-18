@@ -274,6 +274,11 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          syntaxColorConsole().setGlobalValue(
                              newUiPrefs.syntaxColorConsole().getGlobalValue());
          
+         // enable scroll past end of document
+         scrollPastEndOfDocument().setGlobalValue(
+                             newUiPrefs.scrollPastEndOfDocument().getGlobalValue());
+         
+         // highlight R function calls
          highlightRFunctionCalls().setGlobalValue(
                              newUiPrefs.highlightRFunctionCalls().getGlobalValue());
          

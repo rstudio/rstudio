@@ -1709,6 +1709,11 @@ public class AceEditor implements DocDisplay,
       getSession().setUseSoftTabs(on);
    }
    
+   public void setScrollPastEndOfDocument(boolean enable)
+   {
+      widget_.getEditor().getRenderer().setScrollPastEnd(enable);
+   }
+   
    public void setHighlightRFunctionCalls(boolean highlight)
    {
       _setHighlightRFunctionCallsImpl(highlight);
