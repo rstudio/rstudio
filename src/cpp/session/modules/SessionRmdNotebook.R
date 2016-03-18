@@ -62,6 +62,16 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    caTools::base64decode(rmdEncoded, character())
 })
 
+.rs.addFunction("reRmdChunkBegin", function()
+{
+   "^[\t >]*```+\\s*\\{[.]?([a-zA-Z]+.*)\\}\\s*$"
+})
+
+.rs.addFunction("reRmdChunkEnd", function()
+{
+   "^[\t >]*```+\\s*$"
+})
+
 .rs.addFunction("injectHTMLComments", function(contents,
                                                location,
                                                inject)
@@ -94,8 +104,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                                            envir = .GlobalEnv)
 {
    find_chunks <- function(contents) {
-      chunkStarts <- grep("^\\s*```{", contents, perl = TRUE)
-      chunkEnds <- grep("^\\s*```\\s*$", contents, perl = TRUE)
+      chunkStarts <- grep(.rs.reRmdChunkBegin(), contents, perl = TRUE)
+      chunkEnds <- grep(.rs.reRmdChunkEnd(), contents, perl = TRUE)
       chunkRanges <- Map(list, start = chunkStarts, end = chunkEnds)
       lapply(chunkRanges, function(range) {
          list(start = range$start,
@@ -153,7 +163,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("rnb.withChunkLocations", function(rmdContents, chunkInfo)
 {
-   chunkLocs <- grep("^\\s*```{", rmdContents, perl = TRUE)
+   chunkLocs <- grep(.rs.reRmdChunkBegin(), rmdContents, perl = TRUE)
    for (i in seq_along(chunkInfo$chunk_definitions)) {
       info <- chunkInfo$chunk_definitions[[i]]
       
@@ -275,6 +285,23 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       masked <- c(
          masked[1:(range$start - 1)],
          paste("<!-- rnb-chunk-id", range$id, "-->"),
+         masked[(range$end + 1):length(masked)]
+      )
+   }
+   
+   # mask any remaining chunks (these are chunks which
+   # have no associated output in the cache; ie, they
+   # were not executed)
+   #
+   # TODO: respect chunk options here (e.g. 'include = TRUE')
+   chunkStarts <- grep(.rs.reRmdChunkBegin(), masked, perl = TRUE)
+   chunkEnds   <- grep(.rs.reRmdChunkEnd(), masked, perl = TRUE)
+   ranges <- mapply(function(x, y) list(start = x, end = y),
+                    chunkStarts, chunkEnds, SIMPLIFY = FALSE)
+   
+   for (range in rev(ranges)) {
+      masked <- c(
+         masked[1:(range$start - 1)],
          masked[(range$end + 1):length(masked)]
       )
    }
