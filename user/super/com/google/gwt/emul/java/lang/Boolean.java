@@ -124,21 +124,21 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
 
   // CHECKSTYLE_OFF: Utility Methods for unboxed Boolean.
   @JsMethod(name = "$create__boolean")
-  static Boolean $createBoolean(boolean x) {
+  private static Boolean $createBoolean(boolean x) {
     return createNative(x);
   }
 
   @JsMethod(name = "$create__java_lang_String")
-  static Boolean $createBoolean(String x) {
+  private static Boolean $createBoolean(String x) {
     return createNative(Boolean.parseBoolean(x));
   }
 
-  static native Boolean createNative(boolean x) /*-{
+  private static native Boolean createNative(boolean x) /*-{
     return x;
   }-*/;
 
   @JsMethod
-  static boolean $isInstance(Object instance) {
+  private static boolean $isInstance(Object instance) {
     return "boolean".equals(JsUtils.typeOf(instance));
   }
   //CHECKSTYLE_ON: End utility methods

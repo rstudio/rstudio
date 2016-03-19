@@ -370,21 +370,21 @@ public final class Double extends Number implements Comparable<Double> {
 
   // CHECKSTYLE_OFF: Utility Methods for unboxed Double.
   @JsMethod(name = "$create__double")
-  static Double $createDouble(double x) {
+  private static Double $createDouble(double x) {
     return createNative(x);
   }
 
   @JsMethod(name = "$create__java_lang_String")
-  static Double $createDouble(String s) {
+  private static Double $createDouble(String s) {
     return createNative(Double.parseDouble(s));
   }
 
-  static native Double createNative(double x) /*-{
+  private static native Double createNative(double x) /*-{
     return x;
   }-*/;
 
   @JsMethod
-  static boolean $isInstance(Object instance) {
+  private static boolean $isInstance(Object instance) {
     return "number".equals(JsUtils.typeOf(instance));
   }
   //CHECKSTYLE_ON: End utility methods
