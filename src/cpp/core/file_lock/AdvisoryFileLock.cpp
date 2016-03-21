@@ -13,6 +13,8 @@
  *
  */
 
+#include <sstream>
+
 #include <core/FileLock.hpp>
 
 #include <boost/scope_exit.hpp>
@@ -24,6 +26,17 @@
 #include <core/StringUtils.hpp>
 
 #include <core/BoostErrors.hpp>
+
+#define DEBUG(__X__)                                                           \
+   do                                                                          \
+   {                                                                           \
+      if (::rstudio::core::FileLock::isLoggingEnabled())                       \
+      {                                                                        \
+         std::stringstream ss;                                                 \
+         ss << "(PID " << ::getpid() << "): " << __X__;                        \
+         LOG_DEBUG_MESSAGE(ss.str());                                          \
+      }                                                                        \
+   } while (0)
 
 // we define BOOST_USE_WINDOWS_H on mingw64 to work around some
 // incompatabilities. however, this prevents the interprocess headers
@@ -105,6 +118,7 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
 
       if (lock.try_lock())
       {
+         DEBUG("Acquired lock: " << lockFilePath.absolutePath());
          // set members
          pImpl_->lockFilePath = lockFilePath;
          pImpl_->lock.swap(lock);
@@ -113,6 +127,7 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
       }
       else
       {
+         DEBUG("Failed to acquire lock: " << lockFilePath.absolutePath());
          return systemError(boost::system::errc::no_lock_available,
                             ERROR_LOCATION);
       }
@@ -153,6 +168,7 @@ Error AdvisoryFileLock::release()
    {
       pImpl_->lock.unlock();
       pImpl_->lock = BoostFileLock();
+      DEBUG("Released lock: " << pImpl_->lockFilePath.absolutePath());
       pImpl_->lockFilePath = FilePath();
       return Success();
    }
