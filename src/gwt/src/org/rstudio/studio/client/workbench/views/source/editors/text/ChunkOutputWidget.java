@@ -21,8 +21,8 @@ import org.rstudio.core.client.dom.ImageElementEx;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.ApplicationInterrupt.InterruptHandler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
@@ -62,7 +62,8 @@ public class ChunkOutputWidget extends Composite
                                implements ConsoleWriteOutputHandler,
                                           ConsoleWriteErrorHandler,
                                           ConsolePromptHandler,
-                                          RestartStatusEvent.Handler
+                                          RestartStatusEvent.Handler,
+                                          InterruptStatusEvent.Handler
 {
 
    private static ChunkOutputWidgetUiBinder uiBinder = GWT
@@ -102,29 +103,6 @@ public class ChunkOutputWidget extends Composite
       
       onRenderCompleted_ = onRenderCompleted;
       
-      DOM.sinkEvents(interrupt_.getElement(), Event.ONCLICK);
-      DOM.setEventListener(interrupt_.getElement(), new EventListener()
-      {
-         @Override
-         public void onBrowserEvent(Event evt)
-         {
-            switch(DOM.eventGetType(evt))
-            {
-            case Event.ONCLICK:
-               RStudioGinjector.INSTANCE.getApplicationInterrupt().interruptR(
-                     new InterruptHandler()
-                     {
-                        @Override
-                        public void onInterruptFinished()
-                        {
-                           completeInterrupt();
-                        }
-                     });
-               break;
-            };
-         }
-      });
-      
       DOM.sinkEvents(clear_.getElement(), Event.ONCLICK);
       DOM.setEventListener(clear_.getElement(), new EventListener()
       {
@@ -156,11 +134,9 @@ public class ChunkOutputWidget extends Composite
          }
       });
       
-      interrupt_.setResource(RStudioGinjector.INSTANCE.getCommands()
-            .interruptR().getImageResource());
-      
       EventBus events = RStudioGinjector.INSTANCE.getEventBus();
       events.addHandler(RestartStatusEvent.TYPE, this);
+      events.addHandler(InterruptStatusEvent.TYPE, this);
    }
    
    public void showChunkOutputUnit(RmdChunkOutputUnit unit)
@@ -331,6 +307,24 @@ public class ChunkOutputWidget extends Composite
       {
          onOutputFinished();
       }
+   }
+
+   @Override
+   public void onInterruptStatus(InterruptStatusEvent event)
+   {
+      if (event.getStatus() != InterruptStatusEvent.INTERRUPT_COMPLETED)
+         return;
+      
+      if (state_ == CHUNK_PRE_OUTPUT ||
+          state_ == CHUNK_POST_OUTPUT)
+      {
+         state_ = CHUNK_READY;
+      }
+      else
+      {
+         return;
+      }
+      showReadyState();
    }
 
    public void onOutputFinished()
@@ -510,15 +504,12 @@ public class ChunkOutputWidget extends Composite
    {
       getElement().getStyle().setBackgroundColor(s_busyColor);
       clear_.setVisible(false);
-      interrupt_.setVisible(state_ == CHUNK_PRE_OUTPUT ||
-                            state_ == CHUNK_POST_OUTPUT);
    }
 
    private void showReadyState()
    {
       getElement().getStyle().setBackgroundColor(s_backgroundColor);
       clear_.setVisible(true);
-      interrupt_.setVisible(false);
    }
    
    private void setOverflowStyle()
@@ -538,16 +529,6 @@ public class ChunkOutputWidget extends Composite
    
    private void completeInterrupt()
    {
-      if (state_ == CHUNK_PRE_OUTPUT ||
-          state_ == CHUNK_POST_OUTPUT)
-      {
-         state_ = CHUNK_READY;
-      }
-      else
-      {
-         return;
-      }
-      showReadyState();
    }
    
    private void toggleExpansionState()
@@ -588,7 +569,6 @@ public class ChunkOutputWidget extends Composite
       }
    }
    
-   @UiField Image interrupt_;
    @UiField Image clear_;
    @UiField Image expand_;
    @UiField Label emptyIndicator_;
@@ -603,7 +583,6 @@ public class ChunkOutputWidget extends Composite
    private int expansionState_ = EXPANDED;
    private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    private int renderedHeight_ = 0;
-   
    
    private CommandWithArg<Integer> onRenderCompleted_;
    private final String chunkId_;
