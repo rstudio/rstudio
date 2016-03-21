@@ -47,6 +47,10 @@ bool isPlotPath(const FilePath& path)
 
 void processPlots(const FilePath& plotFolder, bool fireEvents)
 {
+   // ensure plot folder exists
+   if (!plotFolder.exists())
+      return;
+
    // collect plots from the folder
    std::vector<FilePath> folderContents;
    Error error = plotFolder.children(&folderContents);
