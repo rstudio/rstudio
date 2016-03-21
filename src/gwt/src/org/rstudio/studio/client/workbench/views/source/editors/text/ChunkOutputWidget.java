@@ -426,12 +426,11 @@ public class ChunkOutputWidget extends Composite
    {
       s_backgroundColor = editorStyle.getBackgroundColor();
       s_color = editorStyle.getColor();
-      s_outlineColor = DomUtils.extractCssValue("ace_print-margin", 
-            "backgroundColor");
       JsArrayString classes = JsArrayString.createArray().cast();
       classes.push("ace_marker-layer");
       classes.push("ace_foreign_line");
       s_busyColor = DomUtils.extractCssValue(classes, "backgroundColor");
+      s_outlineColor = s_busyColor;
    }
    
    private void initConsole()
