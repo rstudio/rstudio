@@ -9,14 +9,14 @@
    .clear, .expand
    {
       position: absolute;
-      top: 9px;
+      top: 7px;
       cursor: pointer;
       z-index: 25;
    }
    
    .clear
    {
-      right: 9px;
+      right: 7px;
    }
    
    .expand 
@@ -25,7 +25,7 @@
       transition: transform 400ms ease;
    }
    
-   .collapsed
+   .collapsed .expand
    {
       transition: transform 400ms ease;
       transform: rotate(180deg);
@@ -50,6 +50,14 @@
       overflow: hidden;
    }
    
+   .outer
+   {
+      padding-bottom: 10px;
+      position: relative;
+   }
+
+   }
+   
    .root
    {
       overflow: auto;
@@ -67,19 +75,44 @@
       text-align: center;
       font-style: italic;
    }
+   
+   .collapsed
+   {
+   }
+   
+   .expander
+   {
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      display: none;
+      z-index: 25;
+   }
+
+   .collapsed .expander
+   {
+      display: block;
+      width: 90%;
+      height: 25px;
+      cursor: pointer;
+   }
    </ui:style>
-   <g:HTMLPanel ui:field="frame_" styleName="{style.frame}">
-     <g:Image styleName="{style.clear}"
-              ui:field="clear_"
-              resource="{res.removeChunkIcon}"></g:Image>
-     <g:Image styleName="{style.expand}" 
-              resource="{res.collapseChunkIcon}"
-              ui:field="expand_"></g:Image>
-     <g:Label styleName="{style.empty}" 
-              ui:field="emptyIndicator_"
-              text="No output produced."
-              visible="false"></g:Label>
-     <g:HTMLPanel styleName="{style.root}" ui:field="root_">
-     </g:HTMLPanel>
+   <g:HTMLPanel styleName="{style.outer}">
+      <g:HTMLPanel styleName="{style.expander}"
+               ui:field="expander_"></g:HTMLPanel>
+      <g:HTMLPanel ui:field="frame_" styleName="{style.frame}">
+        <g:Image styleName="{style.clear}"
+                 ui:field="clear_"
+                 resource="{res.removeChunkIcon}"></g:Image>
+        <g:Image styleName="{style.expand}" 
+                 resource="{res.collapseChunkIcon}"
+                 ui:field="expand_"></g:Image>
+        <g:Label styleName="{style.empty}" 
+                 ui:field="emptyIndicator_"
+                 text="No output produced."
+                 visible="false"></g:Label>
+        <g:HTMLPanel styleName="{style.root}" ui:field="root_">
+        </g:HTMLPanel>
+      </g:HTMLPanel>
    </g:HTMLPanel>
 </ui:UiBinder> 

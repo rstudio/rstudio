@@ -119,8 +119,7 @@ public class ChunkOutputWidget extends Composite
          }
       });
       
-      DOM.sinkEvents(expand_.getElement(), Event.ONCLICK);
-      DOM.setEventListener(expand_.getElement(), new EventListener()
+      EventListener toggleExpansion = new EventListener()
       {
          @Override
          public void onBrowserEvent(Event evt)
@@ -132,7 +131,13 @@ public class ChunkOutputWidget extends Composite
                break;
             };
          }
-      });
+      };
+
+      DOM.sinkEvents(expander_.getElement(), Event.ONCLICK);
+      DOM.setEventListener(expander_.getElement(), toggleExpansion);
+      
+      DOM.sinkEvents(expand_.getElement(), Event.ONCLICK);
+      DOM.setEventListener(expand_.getElement(), toggleExpansion);
       
       EventBus events = RStudioGinjector.INSTANCE.getEventBus();
       events.addHandler(RestartStatusEvent.TYPE, this);
@@ -187,6 +192,7 @@ public class ChunkOutputWidget extends Composite
       renderedHeight_ = height;
       if (scrollToBottom)
          root_.getElement().setScrollTop(height);
+      frame_.getElement().getStyle().setHeight(height, Unit.PX);
       onRenderCompleted_.execute(height);
    }
 
@@ -315,16 +321,7 @@ public class ChunkOutputWidget extends Composite
       if (event.getStatus() != InterruptStatusEvent.INTERRUPT_COMPLETED)
          return;
       
-      if (state_ == CHUNK_PRE_OUTPUT ||
-          state_ == CHUNK_POST_OUTPUT)
-      {
-         state_ = CHUNK_READY;
-      }
-      else
-      {
-         return;
-      }
-      showReadyState();
+      completeInterrupt();
    }
 
    public void onOutputFinished()
@@ -399,7 +396,7 @@ public class ChunkOutputWidget extends Composite
    {
       if (!isEditorStyleCached())
          return;
-      Style frameStyle = getElement().getStyle();
+      Style frameStyle = frame_.getElement().getStyle();
       frameStyle.setBorderColor(s_outlineColor);
       emptyIndicator_.getElement().getStyle().setColor(s_color);
 
@@ -413,7 +410,7 @@ public class ChunkOutputWidget extends Composite
             bodyStyle.setColor(s_color);
          }
       }
-      getElement().getStyle().setBackgroundColor(s_backgroundColor);
+      frame_.getElement().getStyle().setBackgroundColor(s_backgroundColor);
    }
    
    public void setCodeExecuting(boolean entireChunk)
@@ -529,21 +526,36 @@ public class ChunkOutputWidget extends Composite
    
    private void completeInterrupt()
    {
+      if (state_ == CHUNK_PRE_OUTPUT ||
+          state_ == CHUNK_POST_OUTPUT)
+      {
+         state_ = CHUNK_READY;
+      }
+      else
+      {
+         return;
+      }
+      showReadyState();
    }
    
    private void toggleExpansionState()
    {
+      // cancel any previously running expand/collapse timer
+      if (collapseTimer_ != null && collapseTimer_.isRunning())
+          collapseTimer_.cancel();
+
       if (expansionState_ == EXPANDED)
       {
-         expand_.getElement().addClassName(style.collapsed());
+         getElement().addClassName(style.collapsed());
+
          // remove scrollbars
          root_.getElement().getStyle().setOverflow(Overflow.HIDDEN);
-         root_.getElement().getStyle().setOpacity(0.2);
+         root_.getElement().getStyle().setOpacity(0);
          frame_.getElement().getStyle().setProperty("transition", 
                "height " + ANIMATION_DUR + "ms ease");
          frame_.getElement().getStyle().setHeight(
                TextEditingTargetNotebook.MIN_CHUNK_HEIGHT, Unit.PX);
-         new Timer()
+         collapseTimer_ = new Timer()
          {
             @Override
             public void run()
@@ -553,20 +565,28 @@ public class ChunkOutputWidget extends Composite
                      TextEditingTargetNotebook.MIN_CHUNK_HEIGHT);
             }
             
-         }.schedule(ANIMATION_DUR);
+         };
          expansionState_ = COLLAPSED;
       }
       else
       {
-         expand_.getElement().removeClassName(style.collapsed());
+         getElement().removeClassName(style.collapsed());
+
          // restore scrollbars if necessary
          root_.getElement().getStyle().clearOverflow();
          root_.getElement().getStyle().clearOpacity();
-         frame_.getElement().getStyle().clearHeight();
-         frame_.getElement().getStyle().clearProperty("transition");
          expansionState_ = EXPANDED;
          syncHeight(true);
+         collapseTimer_ = new Timer()
+         {
+            @Override
+            public void run()
+            {
+               frame_.getElement().getStyle().clearProperty("transition");
+            }
+         };
       }
+      collapseTimer_.schedule(ANIMATION_DUR);
    }
    
    @UiField Image clear_;
@@ -575,6 +595,7 @@ public class ChunkOutputWidget extends Composite
    @UiField HTMLPanel root_;
    @UiField ChunkStyle style;
    @UiField HTMLPanel frame_;
+   @UiField HTMLPanel expander_;
    
    private PreWidget console_;
    private VirtualConsole vconsole_;
@@ -585,6 +606,7 @@ public class ChunkOutputWidget extends Composite
    private int renderedHeight_ = 0;
    
    private CommandWithArg<Integer> onRenderCompleted_;
+   private Timer collapseTimer_ = null;
    private final String chunkId_;
 
    private static String s_outlineColor    = null;
