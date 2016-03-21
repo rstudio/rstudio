@@ -25,6 +25,16 @@
 #include <set>
 #include <vector>
 
+// #define RSTUDIO_ENABLE_DEBUG_MACROS
+#define RSTUDIO_DEBUG_LABEL "linklock"
+#include <core/Macros.hpp>
+
+#ifdef RSTUDIO_ENABLE_DEBUG_MACROS
+# define DEBUG_PID(__X__) DEBUG("[PID: " << ::getpid() << "]: " << __X__);
+#else
+# define DEBUG_PID(__X__)
+#endif
+
 #include <core/SafeConvert.hpp>
 #include <core/Algorithm.hpp>
 #include <core/Thread.hpp>
@@ -140,6 +150,7 @@ public:
       {
          BOOST_FOREACH(const FilePath& lockFilePath, registration_)
          {
+            DEBUG_PID("Bumping write time: " << lockFilePath.absolutePath());
             lockFilePath.setLastWriteTime();
          }
       }
@@ -155,6 +166,7 @@ public:
             Error error = lockFilePath.removeIfExists();
             if (error)
                LOG_ERROR(error);
+            DEBUG_PID("Clearing lock: " << lockFilePath.absolutePath());
          }
          registration_.clear();
       }
@@ -202,16 +214,20 @@ Error writeLockFile(const FilePath& lockFilePath)
    // attempt to link to the desired location -- ignore return value
    // and just stat our original link after, as that's a more reliable
    // indicator of success on old NFS systems
-   ::link(
+   int status = ::link(
             proxyPath.absolutePathNative().c_str(),
             lockFilePath.absolutePathNative().c_str());
+   
+   // Log errors (remove this if it is too noisy on NFS)
+   if (status == -1)
+      LOG_ERROR(systemError(errno, ERROR_LOCATION));
 
    struct stat info;
    int errc = ::stat(proxyPath.absolutePathNative().c_str(), &info);
    if (errc)
    {
       // log the error since it isn't expected and could get swallowed
-      // upstream by a caller ignore lock_not_available errors
+      // upstream by a caller ignoring lock_not_available errors
       Error error = systemError(errno, ERROR_LOCATION);
       LOG_ERROR(error);
       return error;
@@ -271,6 +287,7 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
       {
          // note that multiple processes may attempt to remove this
          // file at the same time, so errors shouldn't be fatal
+         DEBUG_PID("Removing stale lockfile: " << lockFilePath.absolutePath());
          Error error = lockFilePath.remove();
          if (error)
             LOG_ERROR(error);
@@ -279,6 +296,7 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
       // ... it's not stale -- someone else has the lock, cannot proceed
       else
       {
+         DEBUG_PID("No lock available: " << lockFilePath.absolutePath());
          return systemError(boost::system::errc::no_lock_available,
                             ERROR_LOCATION);
       }
@@ -294,6 +312,7 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    error = writeLockFile(lockFilePath);
    if (error)
    {
+      DEBUG_PID("Failed to acquire lock (lost race?): " << lockFilePath.absolutePath());
       return systemError(boost::system::errc::no_lock_available,
                          error,
                          ERROR_LOCATION);
@@ -305,12 +324,14 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    // register our lock (for refresh)
    pImpl_->lockFilePath = lockFilePath;
    lockRegistration().registerLock(lockFilePath);
+   DEBUG_PID("Acquired lock: " << lockFilePath.absolutePath());
    return Success();
 }
 
 Error LinkBasedFileLock::release()
 {
    const FilePath& lockFilePath = pImpl_->lockFilePath;
+   DEBUG_PID("Released lock: " << lockFilePath.absolutePath());
    
    Error error = lockFilePath.remove();
    if (error)
@@ -323,11 +344,13 @@ Error LinkBasedFileLock::release()
 
 void LinkBasedFileLock::refresh()
 {
+   DEBUG_PID("Refreshing locks...");
    lockRegistration().refreshLocks();
 }
 
 void LinkBasedFileLock::cleanUp()
 {
+   DEBUG_PID("Cleaning stale locks...");
    lockRegistration().clearLocks();
 }
 
