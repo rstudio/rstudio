@@ -34,7 +34,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
-
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -127,12 +126,20 @@ public class SignatureToolTipManager
                public void execute()
                {
                   // Check to see if the cursor has moved outside of the anchored region.
-                  if (anchor_ != null &&
-                      toolTip_.isShowing() &&
-                      !anchor_.getRange().contains(event.getPosition()))
+                  if (anchor_ != null && toolTip_.isShowing())
                   {
-                     anchor_ = null;
-                     toolTip_.hide();
+                     Position position = event.getPosition();
+                     if (anchor_.getRange().contains(position))
+                     {
+                        // Update the tooltip position if the cursor changes rows.
+                        if (position.getRow() > tooltipPosition_.getRow())
+                           setTooltipPosition(position);
+                     }
+                     else
+                     {
+                        anchor_ = null;
+                        toolTip_.hide();
+                     }
                   }
                }
             });
@@ -147,7 +154,7 @@ public class SignatureToolTipManager
             if (!event.isAttached())
             {
                coordinates_ = null;
-               position_ = null;
+               completionPosition_ = null;
                anchor_ = null;
             }
          }
@@ -399,11 +406,11 @@ public class SignatureToolTipManager
       // If we already have an active tooltip for the current position,
       // then bail.
       if (toolTip_.isShowing() &&
-          cursor.currentPosition().isEqualTo(position_))
+          cursor.currentPosition().isEqualTo(completionPosition_))
       {
          return;
       }
-      position_ = cursor.currentPosition();
+      completionPosition_ = cursor.currentPosition();
       
       // Double check that we're in the correct spot for a function call.
       // The cursor should lie upon an identifier, and the next token should
@@ -468,8 +475,14 @@ public class SignatureToolTipManager
       // Default to displaying before cursor; however, display above
       // if doing so would place the tooltip too close (or off) of
       // the window.
-      final Rectangle bounds = docDisplay_.getPositionBounds(position);
       toolTip_.setText(signature);
+      setTooltipPosition(position);
+   }
+   
+   private void setTooltipPosition(Position position)
+   {
+      final Rectangle bounds = docDisplay_.getPositionBounds(position);
+      tooltipPosition_ = position;
       toolTip_.setPopupPositionAndShow(new PositionCallback()
       {
          @Override
@@ -498,7 +511,8 @@ public class SignatureToolTipManager
    
    private HandlerRegistration preview_;
    private MouseCoordinates coordinates_;
-   private Position position_;
+   private Position completionPosition_;
+   private Position tooltipPosition_;
    private AnchoredSelection anchor_;
    private boolean ready_;
 
