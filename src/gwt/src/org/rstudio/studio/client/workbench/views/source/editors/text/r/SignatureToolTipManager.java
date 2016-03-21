@@ -133,7 +133,16 @@ public class SignatureToolTipManager
                      {
                         // Update the tooltip position if the cursor changes rows.
                         if (position.getRow() > tooltipPosition_.getRow())
-                           setTooltipPosition(position);
+                        {
+                           // Allow tooltip to nudge right (but not left)
+                           int newColumn = Math.max(
+                                 tooltipPosition_.getColumn(),
+                                 position.getColumn());
+                           
+                           setTooltipPosition(Position.create(
+                                 position.getRow(),
+                                 newColumn));
+                        }
                      }
                      else
                      {
