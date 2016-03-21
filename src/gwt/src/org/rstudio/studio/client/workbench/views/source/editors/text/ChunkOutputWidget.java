@@ -40,6 +40,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ClientBundle;
@@ -230,7 +231,12 @@ public class ChunkOutputWidget extends Composite
    private void showPlotOutput(String url)
    {
       final Image plot = new Image();
+
+      // set to auto height and hidden -- we need the image to load so we can 
+      // compute its natural width before showing it
       plot.getElement().getStyle().setProperty("height", "auto");
+      plot.getElement().getStyle().setDisplay(Display.NONE);
+
       root_.add(plot);
       
       DOM.sinkEvents(plot.getElement(), Event.ONLOAD);
@@ -248,6 +254,9 @@ public class ChunkOutputWidget extends Composite
             // natural width
             img.getStyle().setWidth(100, Unit.PCT);
             img.getStyle().setProperty("maxWidth", img.naturalWidth() + "px");
+
+            // show the image
+            plot.getElement().getStyle().setDisplay(Display.BLOCK);
 
             completeUnitRender();
          }
