@@ -298,6 +298,7 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="interruptR"/>
          <cmd refid="restartR"/>
+         <cmd refid="suspendSession"/>
          <separator/>
          <cmd refid="terminateR"/>
          <separator/>
@@ -2400,6 +2401,12 @@ well as menu structures (for main menu and popup menus).
         desc="Open a new R session"
         windowMode="main"/>
 
+   <cmd id="suspendSession"
+        label="Suspend R Session"
+        menuLabel="_Suspend R Session"
+        rebindable="false"
+        windowMode="main"/>
+        
    <cmd id="quitSession"
         label="Quit the Current R Session"
         menuLabel="_Quit Session..."
