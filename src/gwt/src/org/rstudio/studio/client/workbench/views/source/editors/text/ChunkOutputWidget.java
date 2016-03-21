@@ -40,7 +40,9 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
@@ -67,6 +69,18 @@ public class ChunkOutputWidget extends Composite
          extends UiBinder<Widget, ChunkOutputWidget>
    {
       
+   }
+   
+   public interface Resources extends ClientBundle
+   {
+      @Source("ExpandChunkIcon.png")
+      ImageResource expandChunkIcon();
+      
+      @Source("CollapseChunkIcon.png")
+      ImageResource collapseChunkIcon();
+
+      @Source("RemoveChunkIcon.png")
+      ImageResource removeChunkIcon();
    }
    
    public interface ChunkStyle extends CssResource
@@ -123,28 +137,6 @@ public class ChunkOutputWidget extends Composite
          }
       });
       
-      DOM.sinkEvents(frame_.getElement(), Event.ONMOUSEOVER);
-      DOM.setEventListener(frame_.getElement(), new EventListener()
-      {
-         @Override
-         public void onBrowserEvent(Event evt)
-         {
-            if (state_ == CHUNK_READY)
-            {
-               switch(DOM.eventGetType(evt))
-               {
-                  case Event.ONMOUSEOVER:
-                     if (Element.as(evt.getEventTarget()) == 
-                         clear_.getElement())
-                        clear_.getElement().getStyle().setOpacity(1);
-                     else 
-                        clear_.getElement().getStyle().setOpacity(0.5);
-                     break;
-               }
-            }
-         }
-      });
-
       interrupt_.setResource(RStudioGinjector.INSTANCE.getCommands()
             .interruptR().getImageResource());
       
