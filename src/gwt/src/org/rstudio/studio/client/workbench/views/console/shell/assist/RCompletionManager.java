@@ -227,7 +227,7 @@ public class RCompletionManager implements CompletionManager
                if (toolTip != null && toolTip.isShowing())
                {
                   wasSigtipShowing_ = true;
-                  toolTip.hide();
+                  toolTip.setVisible(false);
                }
                else
                {
@@ -237,7 +237,7 @@ public class RCompletionManager implements CompletionManager
             else
             {
                if (toolTip != null && wasSigtipShowing_)
-                  toolTip.show();
+                  toolTip.setVisible(true);
             }
          }
       }));
