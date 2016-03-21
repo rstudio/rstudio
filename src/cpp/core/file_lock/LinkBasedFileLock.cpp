@@ -345,13 +345,11 @@ Error LinkBasedFileLock::release()
 
 void LinkBasedFileLock::refresh()
 {
-   DEBUG("Refreshing locks...");
    lockRegistration().refreshLocks();
 }
 
 void LinkBasedFileLock::cleanUp()
 {
-   DEBUG("Cleaning up lock registry...");
    lockRegistration().clearLocks();
 }
 
