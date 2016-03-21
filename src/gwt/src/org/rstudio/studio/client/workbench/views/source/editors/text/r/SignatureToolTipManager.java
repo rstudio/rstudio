@@ -249,7 +249,7 @@ public class SignatureToolTipManager
    }
    
    private final native boolean isBoringFunction(String name) /*-{
-      var boring = ["c", "list"];
+      var boring = ["c", "list", ".rs.addFunction", ".rs.addJsonRpcHandler"];
       return boring.some(function(x) { return x === name; });
    }-*/;
    
