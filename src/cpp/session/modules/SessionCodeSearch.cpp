@@ -71,8 +71,13 @@ namespace {
 
 bool isWithinIgnoredDirectory(const FilePath& filePath)
 {
+   // we only index (and ignore) directories within the current project
+   if (!projects::projectContext().hasProject())
+      return false;
+   
+   FilePath projDir = projects::projectContext().directory();
    for (FilePath parentPath = filePath.parent();
-        !parentPath.empty();
+        !parentPath.empty() && parentPath != projDir;
         parentPath = parentPath.parent())
    {
       // cmake build directory
