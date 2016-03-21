@@ -33,12 +33,14 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErro
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
@@ -49,6 +51,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
@@ -86,6 +89,7 @@ public class ChunkOutputWidget extends Composite
    public interface ChunkStyle extends CssResource
    {
       String overflowY();
+      String collapsed();
    }
 
    public ChunkOutputWidget(String chunkId,
@@ -137,6 +141,21 @@ public class ChunkOutputWidget extends Composite
          }
       });
       
+      DOM.sinkEvents(expand_.getElement(), Event.ONCLICK);
+      DOM.setEventListener(expand_.getElement(), new EventListener()
+      {
+         @Override
+         public void onBrowserEvent(Event evt)
+         {
+            switch(DOM.eventGetType(evt))
+            {
+            case Event.ONCLICK:
+               toggleExpansionState();
+               break;
+            };
+         }
+      });
+      
       interrupt_.setResource(RStudioGinjector.INSTANCE.getCommands()
             .interruptR().getImageResource());
       
@@ -182,6 +201,10 @@ public class ChunkOutputWidget extends Composite
    
    public void syncHeight(boolean scrollToBottom)
    {
+      // don't sync if we're collapsed
+      if (expansionState_ != EXPANDED)
+         return;
+      
       int height = root_.getElement().getScrollHeight();
       if (height == renderedHeight_)
          return;
@@ -523,8 +546,47 @@ public class ChunkOutputWidget extends Composite
       showReadyState();
    }
    
+   private void toggleExpansionState()
+   {
+      if (expansionState_ == EXPANDED)
+      {
+         expand_.getElement().addClassName(style.collapsed());
+         // remove scrollbars
+         root_.getElement().getStyle().setOverflow(Overflow.HIDDEN);
+         root_.getElement().getStyle().setOpacity(0.2);
+         frame_.getElement().getStyle().setProperty("transition", 
+               "height " + ANIMATION_DUR + "ms ease");
+         frame_.getElement().getStyle().setHeight(
+               TextEditingTargetNotebook.MIN_CHUNK_HEIGHT, Unit.PX);
+         new Timer()
+         {
+            @Override
+            public void run()
+            {
+               renderedHeight_ = TextEditingTargetNotebook.MIN_CHUNK_HEIGHT;
+               onRenderCompleted_.execute(
+                     TextEditingTargetNotebook.MIN_CHUNK_HEIGHT);
+            }
+            
+         }.schedule(ANIMATION_DUR);
+         expansionState_ = COLLAPSED;
+      }
+      else
+      {
+         expand_.getElement().removeClassName(style.collapsed());
+         // restore scrollbars if necessary
+         root_.getElement().getStyle().clearOverflow();
+         root_.getElement().getStyle().clearOpacity();
+         frame_.getElement().getStyle().clearHeight();
+         frame_.getElement().getStyle().clearProperty("transition");
+         expansionState_ = EXPANDED;
+         syncHeight(true);
+      }
+   }
+   
    @UiField Image interrupt_;
    @UiField Image clear_;
+   @UiField Image expand_;
    @UiField Label emptyIndicator_;
    @UiField HTMLPanel root_;
    @UiField ChunkStyle style;
@@ -534,8 +596,10 @@ public class ChunkOutputWidget extends Composite
    private VirtualConsole vconsole_;
    
    private int state_ = CHUNK_EMPTY;
+   private int expansionState_ = EXPANDED;
    private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    private int renderedHeight_ = 0;
+   
    
    private CommandWithArg<Integer> onRenderCompleted_;
    private final String chunkId_;
@@ -544,6 +608,10 @@ public class ChunkOutputWidget extends Composite
    private static String s_backgroundColor = null;
    private static String s_color           = null;
    private static String s_busyColor       = null;
+   
+   private final static int EXPANDED   = 0;
+   private final static int COLLAPSED  = 1;
+   private final static int ANIMATION_DUR = 400;
    
    public final static int CHUNK_EMPTY       = 1;
    public final static int CHUNK_READY       = 2;

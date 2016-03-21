@@ -6,19 +6,40 @@
    <ui:with field="res" type="org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget.Resources"/>
 
    <ui:style type="org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget.ChunkStyle">
-   .interrupt, .clear
+   .interrupt, .clear, .expand
    {
       position: absolute;
-      top: 8px;
-      right: 8px;
+      top: 9px;
       cursor: pointer;
       z-index: 25;
+   }
+   
+   .interrupt, .clear
+   {
+      right: 9px;
+   }
+   
+   .expand 
+   {
+      right: 28px;
+      transition: transform 400ms ease;
+   }
+   
+   .collapsed
+   {
+      transition: transform 400ms ease;
+      transform: rotate(180deg);
    }
    
    .overflowY .interrupt,
    .overflowY .clear
    {
       right: 25px;
+   }
+   
+   .overflowY .expand
+   {
+      right: 44px;
    }
 
    .frame
@@ -27,12 +48,14 @@
       padding-left: 10px;
       padding-top: 10px;
       transition: background-color 500ms ease;
+      overflow: hidden;
    }
    
    .root
    {
       overflow: auto;
       max-height: 750px;
+      transition: opacity 400ms ease;
    }
    
    .empty
@@ -49,11 +72,13 @@
    <g:HTMLPanel ui:field="frame_" styleName="{style.frame}">
      <g:Image styleName="{style.clear}"
               ui:field="clear_"
-              visible="false"
               resource="{res.removeChunkIcon}"></g:Image>
      <g:Image styleName="{style.interrupt}" 
               ui:field="interrupt_"
               visible="false"></g:Image>
+     <g:Image styleName="{style.expand}" 
+              resource="{res.collapseChunkIcon}"
+              ui:field="expand_"></g:Image>
      <g:Label styleName="{style.empty}" 
               ui:field="emptyIndicator_"
               text="No output produced."
