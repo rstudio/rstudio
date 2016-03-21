@@ -140,10 +140,12 @@ void FileLock::initialize(const Settings& settings)
    
    if (loggingEnabled)
    {
-      std::cerr << "Initialized file locks." << std::endl;
-      std::cerr << "Type: "    << lockTypeToString(FileLock::s_defaultType) << std::endl;
-      std::cerr << "Timeout: " << FileLock::s_timeoutInterval.total_seconds() << std::endl;
-      std::cerr << "Refresh: " << FileLock::s_refreshRate.total_seconds() << std::endl;
+      std::stringstream ss;
+      ss << "(" << ::getpid() << "): Initialized file locks." << std::endl;
+      ss << "Type: "    << lockTypeToString(FileLock::s_defaultType) << std::endl;
+      ss << "Timeout: " << FileLock::s_timeoutInterval.total_seconds() << std::endl;
+      ss << "Refresh: " << FileLock::s_refreshRate.total_seconds() << std::endl;
+      LOG_INFO_MESSAGE(ss.str());
    }
    
    s_isInitialized = true;

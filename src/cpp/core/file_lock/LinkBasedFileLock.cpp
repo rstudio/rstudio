@@ -42,7 +42,9 @@
    {                                                                           \
       if (::rstudio::core::FileLock::isLoggingEnabled())                       \
       {                                                                        \
-         std::cerr << "(PID " << ::getpid() << "): " << __X__ << std::endl;    \
+         std::stringstream ss;                                                 \
+         ss << "(PID " << ::getpid() << "): " << __X__;                        \
+         LOG_DEBUG_MESSAGE(ss.str());                                          \
       }                                                                        \
    } while (0)
 
