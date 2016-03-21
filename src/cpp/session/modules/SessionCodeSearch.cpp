@@ -69,18 +69,32 @@ namespace code_search {
 
 namespace {
 
-bool isInCmakeBuildDirectory(const FilePath& filePath)
+bool isWithinIgnoredDirectory(const FilePath& filePath)
 {
-   FilePath parentPath = filePath.parent();
-   while (!parentPath.empty()
-          && parentPath != projects::projectContext().directory())
+   // we only index (and ignore) directories within the current project
+   if (!projects::projectContext().hasProject())
+      return false;
+   
+   FilePath projDir = projects::projectContext().directory();
+   for (FilePath parentPath = filePath.parent();
+        !parentPath.empty() && parentPath != projDir;
+        parentPath = parentPath.parent())
    {
-      // if this directory contains a 'cmake_install' file, filter it out
-      if (parentPath.complete("cmake_install.cmake").exists())
+      // cmake build directory
+      if (parentPath.childPath("cmake_install.cmake").exists())
          return true;
-
-      parentPath = parentPath.parent();
+      
+      std::string filename = parentPath.filename();
+      
+      // node_modules
+      if (filename == "node_modules")
+         return true;
+      
+      // packrat
+      if (filename == "packrat" && parentPath.childPath("packrat/packrat.lock").exists())
+         return true;
    }
+   
    return false;
 }
 
@@ -805,7 +819,7 @@ private:
       FilePath filePath(fileInfo.absolutePath());
 
       // filter certain directories (e.g. those that exist in build directories)
-      if (isInCmakeBuildDirectory(filePath))
+      if (isWithinIgnoredDirectory(filePath))
          return;
 
       if (isIndexableSourceFile(fileInfo))
@@ -835,16 +849,10 @@ private:
 
       // attempt to add the entry
       Entry entry(fileInfo, pIndex);
+      pEntries_->insertEntry(entry);
 
-      if (!filePath.isWithin(projects::projectContext().directory().complete("packrat")) &&
-          !isInCmakeBuildDirectory(filePath))
-      {
-         pEntries_->insertEntry(entry);
-
-         // kick off an update
-         r_packages::AsyncPackageInformationProcess::update();
-      }
-
+      // kick off an update
+      r_packages::AsyncPackageInformationProcess::update();
    }
 
    void removeIndexEntry(const FileInfo& fileInfo)
@@ -1002,7 +1010,7 @@ bool sourceDatabaseFilter(const r_util::RSourceIndex& index)
       // get file path
       FilePath docPath = module_context::resolveAliasedPath(index.context());
       return docPath.isWithin(projects::projectContext().directory()) &&
-            !docPath.isWithin(projects::projectContext().directory().complete("packrat"));
+            !isWithinIgnoredDirectory(docPath);
    }
    else
    {
