@@ -424,6 +424,10 @@ public class ChunkOutputWidget extends Composite
    
    public void setCodeExecuting(boolean entireChunk)
    {
+      // expand if currently collapsed
+      if (expansionState_ == COLLAPSED)
+         toggleExpansionState();
+
       // do nothing if code is already executing
       if (state_ == CHUNK_PRE_OUTPUT || 
           state_ == CHUNK_POST_OUTPUT)
