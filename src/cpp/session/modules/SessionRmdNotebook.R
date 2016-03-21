@@ -282,10 +282,17 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    })
    
    for (range in rev(chunkRanges)) {
-      masked <- c(
-         masked[1:(range$start - 1)],
-         paste("<!-- rnb-chunk-id", range$id, "-->"),
+      
+      beforeText <- if (range$start > 1)
+         masked[1:(range$start - 1)]
+      
+      afterText  <- if (range$end < length(masked))
          masked[(range$end + 1):length(masked)]
+      
+      masked <- c(
+         beforeText,
+         paste("<!-- rnb-chunk-id", range$id, "-->"),
+         afterText
       )
    }
    
