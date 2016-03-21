@@ -46,13 +46,7 @@
 # marshalled as scalar types instead of arrays
 .rs.addFunction("scalar", function(obj)
 {
-   class(obj) <- 'rs.scalar'
-   return(obj)
-})
-
-.rs.addFunction("nullOrScalar", function(obj)
-{
-   if (!identical(obj, NULL))
+   if (!is.null(obj))
       class(obj) <- 'rs.scalar'
    return(obj)
 })
