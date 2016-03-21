@@ -43,6 +43,7 @@ import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
+import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -95,6 +96,9 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       
       // bind to commands
       binder.bind(commands, this);
+      
+      // only enable suspendSession() in devmode
+      commands.suspendSession().setVisible(SuperDevMode.isActive());
       
       // subscribe to events
       eventBus.addHandler(SaveActionChangedEvent.TYPE, this);   
@@ -438,6 +442,12 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                                  SuspendOptions.createSaveMinimal(saveChanges),
                                  null));  
 
+   }
+   
+   @Handler
+   public void onSuspendSession()
+   {
+      server_.suspendSession(true, new VoidServerRequestCallback());
    }
    
    @Override

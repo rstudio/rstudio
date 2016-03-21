@@ -373,6 +373,7 @@ public abstract class
 
    // Application
    public abstract AppCommand newSession();
+   public abstract AppCommand suspendSession();
    public abstract AppCommand quitSession();
    public abstract AppCommand updateCredentials();
    public abstract AppCommand diagnosticsReport();
