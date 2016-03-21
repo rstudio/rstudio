@@ -134,8 +134,13 @@ void FileLock::initialize(const Settings& settings)
    double refreshRate = getFieldPositive(settings, "refresh-rate", kDefaultRefreshRate);
    FileLock::s_refreshRate = boost::posix_time::seconds(refreshRate);
    
-   DEBUG_BLOCK("lock initialization")
+   // logging
+   bool loggingEnabled = settings.getBool("enable-logging", false);
+   FileLock::s_loggingEnabled = loggingEnabled;
+   
+   if (loggingEnabled)
    {
+      std::cerr << "Initialized file locks." << std::endl;
       std::cerr << "Type: "    << lockTypeToString(FileLock::s_defaultType) << std::endl;
       std::cerr << "Timeout: " << FileLock::s_timeoutInterval.total_seconds() << std::endl;
       std::cerr << "Refresh: " << FileLock::s_refreshRate.total_seconds() << std::endl;
@@ -148,6 +153,7 @@ void FileLock::initialize(const Settings& settings)
 FileLock::LockType FileLock::s_defaultType(FileLock::LOCKTYPE_LINKBASED);
 boost::posix_time::seconds FileLock::s_timeoutInterval(kDefaultTimeoutInterval);
 boost::posix_time::seconds FileLock::s_refreshRate(kDefaultRefreshRate);
+bool FileLock::s_loggingEnabled(false);
 
 boost::shared_ptr<FileLock> FileLock::create(LockType type)
 {

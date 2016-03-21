@@ -25,16 +25,6 @@
 #include <set>
 #include <vector>
 
-// #define RSTUDIO_ENABLE_DEBUG_MACROS
-#define RSTUDIO_DEBUG_LABEL "linklock"
-#include <core/Macros.hpp>
-
-#ifdef RSTUDIO_ENABLE_DEBUG_MACROS
-# define DEBUG_PID(__X__) DEBUG("[PID: " << ::getpid() << "]: " << __X__);
-#else
-# define DEBUG_PID(__X__)
-#endif
-
 #include <core/SafeConvert.hpp>
 #include <core/Algorithm.hpp>
 #include <core/Thread.hpp>
@@ -46,6 +36,15 @@
 
 #include <boost/foreach.hpp>
 #include <boost/system/error_code.hpp>
+
+#define DEBUG(__X__)                                                           \
+   do                                                                          \
+   {                                                                           \
+      if (::rstudio::core::FileLock::isLoggingEnabled())                       \
+      {                                                                        \
+         std::cerr << "(PID " << ::getpid() << "): " << __X__ << std::endl;    \
+      }                                                                        \
+   } while (0)
 
 namespace rstudio {
 namespace core {
@@ -150,7 +149,7 @@ public:
       {
          BOOST_FOREACH(const FilePath& lockFilePath, registration_)
          {
-            DEBUG_PID("Bumping write time: " << lockFilePath.absolutePath());
+            DEBUG("Bumping write time: " << lockFilePath.absolutePath());
             lockFilePath.setLastWriteTime();
          }
       }
@@ -166,7 +165,7 @@ public:
             Error error = lockFilePath.removeIfExists();
             if (error)
                LOG_ERROR(error);
-            DEBUG_PID("Clearing lock: " << lockFilePath.absolutePath());
+            DEBUG("Clearing lock: " << lockFilePath.absolutePath());
          }
          registration_.clear();
       }
@@ -287,7 +286,7 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
       {
          // note that multiple processes may attempt to remove this
          // file at the same time, so errors shouldn't be fatal
-         DEBUG_PID("Removing stale lockfile: " << lockFilePath.absolutePath());
+         DEBUG("Removing stale lockfile: " << lockFilePath.absolutePath());
          Error error = lockFilePath.remove();
          if (error)
             LOG_ERROR(error);
@@ -296,7 +295,7 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
       // ... it's not stale -- someone else has the lock, cannot proceed
       else
       {
-         DEBUG_PID("No lock available: " << lockFilePath.absolutePath());
+         DEBUG("No lock available: " << lockFilePath.absolutePath());
          return systemError(boost::system::errc::no_lock_available,
                             ERROR_LOCATION);
       }
@@ -312,7 +311,7 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    error = writeLockFile(lockFilePath);
    if (error)
    {
-      DEBUG_PID("Failed to acquire lock (lost race?): " << lockFilePath.absolutePath());
+      DEBUG("Failed to acquire lock (lost race?): " << lockFilePath.absolutePath());
       return systemError(boost::system::errc::no_lock_available,
                          error,
                          ERROR_LOCATION);
@@ -324,14 +323,14 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    // register our lock (for refresh)
    pImpl_->lockFilePath = lockFilePath;
    lockRegistration().registerLock(lockFilePath);
-   DEBUG_PID("Acquired lock: " << lockFilePath.absolutePath());
+   DEBUG("Acquired lock: " << lockFilePath.absolutePath());
    return Success();
 }
 
 Error LinkBasedFileLock::release()
 {
    const FilePath& lockFilePath = pImpl_->lockFilePath;
-   DEBUG_PID("Released lock: " << lockFilePath.absolutePath());
+   DEBUG("Released lock: " << lockFilePath.absolutePath());
    
    Error error = lockFilePath.remove();
    if (error)
@@ -344,13 +343,13 @@ Error LinkBasedFileLock::release()
 
 void LinkBasedFileLock::refresh()
 {
-   DEBUG_PID("Refreshing locks...");
+   DEBUG("Refreshing locks...");
    lockRegistration().refreshLocks();
 }
 
 void LinkBasedFileLock::cleanUp()
 {
-   DEBUG_PID("Cleaning up lock registry...");
+   DEBUG("Cleaning up lock registry...");
    lockRegistration().clearLocks();
 }
 
