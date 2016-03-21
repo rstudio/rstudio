@@ -350,7 +350,7 @@ void LinkBasedFileLock::refresh()
 
 void LinkBasedFileLock::cleanUp()
 {
-   DEBUG_PID("Cleaning stale locks...");
+   DEBUG_PID("Cleaning up lock registry...");
    lockRegistration().clearLocks();
 }
 
