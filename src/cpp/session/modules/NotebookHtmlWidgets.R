@@ -15,36 +15,41 @@
 
 .rs.addFunction("initHtmlCapture", function(outputFolder, libraryFolder)
 {
-  assign("print.htmlwidget", function(x, ...) {
-    if (require(htmlwidgets, quietly = TRUE)) {
-      htmlfile <- tempfile(pattern = "_rs_html_", tmpdir = outputFolder, 
-                         fileext = ".html")
-
+   assign("print.htmlwidget", function(x, ...) {
+      
+      if (!requireNamespace("htmlwidgets", quietly = TRUE))
+         stop("print.htmlwidget called without 'htmlwidgets' available")
+      
+      htmlfile <- tempfile(pattern = "_rs_html_",
+                           tmpdir = outputFolder, 
+                           fileext = ".html")
+      
       # extract dependencies (for our own accounting)
       dependencies <- c(
-        htmlwidgets:::widget_dependencies(class(x)[1], attr(x, "package")), 
-        x$dependencies)
-
+         htmlwidgets:::widget_dependencies(class(x)[1], attr(x, "package")), 
+         x$dependencies
+      )
+      
       # write them to JSON 
-      depfile <- tempfile(pattern = "_rs_html_deps_", tmpdir = outputFolder,
+      depfile <- tempfile(pattern = "_rs_html_deps_",
+                          tmpdir = outputFolder,
                           fileext = ".json")
-      writeLines(jsonlite::toJSON(lapply(dependencies, unclass), 
-                                  auto_unbox = TRUE),
-                 depfile)
-                  
+      
+      cat(.rs.toJSON(dependencies), file = depfile, sep = "\n")
+      
       # save the widget to HTML 
       htmlwidgets::saveWidget(
-        widget = x, 
-        file = htmlfile,
-        selfcontained = FALSE, 
-        libdir = libraryFolder)
-
-      .Call("rs_recordHtmlWidget", htmlfile, depfile);
-    }
-  }, envir = as.environment("tools:rstudio"))
+         widget = x, 
+         file = htmlfile,
+         selfcontained = FALSE, 
+         libdir = libraryFolder
+      )
+      .Call(.rs.routines$rs_recordHtmlWidget, htmlfile, depfile)
+      
+   }, envir = as.environment("tools:rstudio"))
 })
 
 .rs.addFunction("releaseHtmlCapture", function()
 {
-  rm("print.htmlwidget", envir = as.environment("tools:rstudio"))
+   rm("print.htmlwidget", envir = as.environment("tools:rstudio"))
 })
