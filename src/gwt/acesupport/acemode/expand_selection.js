@@ -30,7 +30,7 @@ var Utils = require("mode/utils");
 
    var self = this;
 
-   var $debuggingEnabled = true;
+   var $debuggingEnabled = false;
    function debuglog(/*...*/)
    {
       if ($debuggingEnabled)
