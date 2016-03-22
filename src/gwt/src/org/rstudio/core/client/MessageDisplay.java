@@ -331,4 +331,11 @@ public abstract class MessageDisplay
             "Cancel",
             true);
    }
+   
+   public void showNotYetImplemented()
+   {
+      showMessage(MSG_INFO, 
+                 "Not Yet Implemetned", 
+                 "This feature has not yet been implemented.");
+   }
 }

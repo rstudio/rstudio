@@ -328,25 +328,25 @@ public class TextEditingTargetWidget
 
       //toolbar.addRightSeparator();
      
-      toolbar.addRightWidget(chunksRunButton_ = commands_.executeCode().createToolbarButton(false));
       ToolbarPopupMenu chunksMenu = new ToolbarPopupMenu();
       chunksMenu.addItem(commands_.executeCode().createMenuItem(false));
-      if (uiPrefs_.showRmdChunkOutputInline().getValue())
-      {
-         chunksMenu.addSeparator();
-         chunksMenu.addItem(new UIPrefMenuItem<Boolean>(
-               uiPrefs_.autoRunSetupChunk(), true, "Run Setup Chunk Automatically", 
-               uiPrefs_));
-      }
       chunksMenu.addSeparator();
-      chunksMenu.addItem(commands_.executeSetupChunk().createMenuItem(false));
-      chunksMenu.addItem(commands_.executePreviousChunks().createMenuItem(false));
       chunksMenu.addItem(commands_.executeCurrentChunk().createMenuItem(false));
       chunksMenu.addItem(commands_.executeNextChunk().createMenuItem(false));
       chunksMenu.addSeparator();
+      chunksMenu.addItem(commands_.executeSetupChunk().createMenuItem(false));
+      chunksMenu.addItem(runSetupChunkOptionMenu_= new UIPrefMenuItem<Boolean>(
+            uiPrefs_.autoRunSetupChunk(), true, "Run Setup Chunk Automatically", 
+            uiPrefs_));
+      chunksMenu.addSeparator();
+      chunksMenu.addItem(commands_.executePreviousChunks().createMenuItem(false));
+      chunksMenu.addItem(commands_.executeSubsequentChunks().createMenuItem(false));
+      chunksMenu.addSeparator();
       chunksMenu.addItem(commands_.executeAllCode().createMenuItem(false));
       chunksButton_ = new ToolbarButton(
-                       chunksMenu, 
+                       "Run",
+                       commands_.executeCode().getImageResource(),
+                       chunksMenu,
                        true);
       toolbar.addRightWidget(chunksButton_);
       
@@ -535,8 +535,11 @@ public class TextEditingTargetWidget
       texToolbarButton_.setVisible(canCompilePdf);
       compilePdfButton_.setVisible(canCompilePdf);
       chunksButton_.setVisible(canExecuteChunks);
-      chunksRunButton_.setVisible(canExecuteChunks);
       
+      runSetupChunkOptionMenu_.setVisible(
+            canKnitToHTML &&
+            uiPrefs_.showRmdChunkOutputInline().getValue());
+                    
       notebookSeparatorWidget_.setVisible(canCompileNotebook);
       notebookToolbarButton_.setVisible(canCompileNotebook);
       
@@ -624,7 +627,6 @@ public class TextEditingTargetWidget
       else
          srcOnSaveLabel_.setText(width < 450 ? "Source" : "Source on Save");
       sourceButton_.setText(width < 400 ? "" : sourceCommandText_);
-      chunksRunButton_.setText(width < 400 ? "" : "Run");
    }
    
    
@@ -1086,10 +1088,10 @@ public class TextEditingTargetWidget
    private ToolbarButton goToPrevButton_;
    private ToolbarButton goToNextButton_;
    private ToolbarButton runButton_;
-   private ToolbarButton chunksRunButton_;
    private ToolbarButton runLastButton_;
    private ToolbarButton sourceButton_;
    private ToolbarButton sourceMenuButton_;
+   private UIPrefMenuItem<Boolean> runSetupChunkOptionMenu_;
    private ToolbarButton chunksButton_;
    private ToolbarButton shinyLaunchButton_;
    private ToolbarButton rmdOptionsButton_;

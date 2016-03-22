@@ -1213,7 +1213,7 @@ public class TextEditingTarget implements
       
       // create notebook and forward resize events
       notebook_ = new TextEditingTargetNotebook(this, docDisplay_, 
-            docUpdateSentinel_, document);
+            docUpdateSentinel_, document, releaseOnDismiss_);
       view_.addResizeHandler(notebook_);
       
       // ensure that Makefile and Makevars always use tabs
@@ -1928,6 +1928,13 @@ public class TextEditingTarget implements
    public HashSet<AppCommand> getSupportedCommands()
    {
       return fileType_.getSupportedCommands(commands_);
+   }
+   
+   @Override
+   public void manageCommands()
+   {
+      if (fileType_.isRmd())
+         notebook_.manageCommands();
    }
    
    @Override
@@ -4031,6 +4038,12 @@ public class TextEditingTarget implements
       executePreviousChunks(null);
    }
    
+   @Handler
+   void onExecuteSubsequentChunks()
+   {
+      globalDisplay_.showNotYetImplemented();
+   }
+   
    public void executePreviousChunks(final Position position)
    {
       if (docDisplay_.showChunkOutputInline())
@@ -4908,6 +4921,31 @@ public class TextEditingTarget implements
          }
       });  
    }
+   
+   @Handler
+   void onRestartRClearOutput()
+   {
+      globalDisplay_.showNotYetImplemented();
+   }
+   
+   @Handler
+   void onRestartRRunAllChunks()
+   {
+      globalDisplay_.showNotYetImplemented();
+   }
+   
+   @Handler
+   void onNotebookCollapseAllOutput()
+   {
+      globalDisplay_.showNotYetImplemented();
+   }
+   
+   @Handler
+   void onNotebookExpandAllOutput()
+   {
+      globalDisplay_.showNotYetImplemented();
+   }
+   
 
    @Handler
    void onSynctexSearch()

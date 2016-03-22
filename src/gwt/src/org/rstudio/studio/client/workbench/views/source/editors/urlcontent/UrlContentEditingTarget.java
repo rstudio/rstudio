@@ -146,6 +146,11 @@ public class UrlContentEditingTarget implements EditingTarget
    }
    
    @Override
+   public void manageCommands()
+   {
+   }
+   
+   @Override
    public boolean canCompilePdf()
    {
       return false;
