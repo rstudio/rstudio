@@ -10,6 +10,7 @@
 * Added option to display function signature tooltip on cursor idle
 * Autocompletion allows mismatch between '.', '\_' in token
 * Improvements to refactoring utility 'Rename in Scope'
+* Expand selection command learns how to expand to current statement
 
 ### Data Import
 

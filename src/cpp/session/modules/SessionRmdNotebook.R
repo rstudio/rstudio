@@ -346,7 +346,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
             encoded <- caTools::base64encode(value)
             sprintf("<img src=data:image/png;base64,%s />", encoded)
          } else if (.rs.endsWith(name, "html")) {
-            
             # parse and record JSON dependencies
             jsonPath <- .rs.withChangedExtension(name, "json")
             jsonString <- chunkData[[jsonPath]]
@@ -399,13 +398,21 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                                        envir = .GlobalEnv)
 {
    renderOutput <- tempfile("rnb-render-output-", fileext = ".html")
-   outputFormat <- rmarkdown::html_document(self_contained = TRUE,
-                                            keep_md = TRUE)
+   
+   # Dynamically construct call to 'html_document' to handle
+   # available arguments
+   outputFormat <- .rs.evalWithAvailableArguments(
+      rmarkdown::html_document,
+      list(
+         self_contained = TRUE,
+         keep_md = TRUE,
+         toc = TRUE
+      )
+   )
    
    rmarkdown::render(input = inputFile,
                      output_format = outputFormat,
                      output_file = renderOutput,
-                     output_options = list(self_contained = TRUE),
                      encoding = "UTF-8",
                      envir = envir,
                      quiet = TRUE)
@@ -462,6 +469,19 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # write to file
    cat(html, file = outputFile, sep = "\n")
    outputFile
+})
+
+.rs.addFunction("createNotebookFromCache", function(rmdPath, outputPath = NULL)
+{
+   if (is.null(outputPath))
+      outputPath <- .rs.withChangedExtension(rmdPath, "Rnb")
+   
+   cachePath <- .rs.rnb.cachePathFromNotebookPath(rmdPath)
+   if (!file.exists(cachePath))
+      stop("no cache data associated with '", rmdPath, "'")
+   
+   rnbData <- .rs.readRnbCache(rmdPath, cachePath)
+   .rs.createNotebookFromCacheData(rnbData, outputPath)
 })
 
 .rs.addFunction("rnb.cachePathFromNotebookPath", function(rmdPath)
