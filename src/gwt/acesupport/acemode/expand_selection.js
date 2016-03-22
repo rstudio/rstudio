@@ -346,7 +346,11 @@ var Utils = require("mode/utils");
       do
       {
          if (fwdIt.fwdToMatchingToken())
+         {
+            saved = fwdIt.getCurrentToken();
+            fwdCandidatePosition = fwdIt.getCurrentTokenPosition();
             continue;
+         }
 
          var token = fwdIt.getCurrentToken();
          debuglog(token);
