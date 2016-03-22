@@ -349,6 +349,8 @@ public class TextFileType extends EditableFileType
          results.add(commands.knitWithParameters());
          results.add(commands.restartRClearOutput());
          results.add(commands.restartRRunAllChunks());
+         results.add(commands.notebookCollapseAllOutput());
+         results.add(commands.notebookExpandAllOutput());
       }
       if (canKnitToHTML() || canCompileNotebook())
       {
@@ -372,6 +374,7 @@ public class TextFileType extends EditableFileType
          results.add(commands.insertChunk());
          results.add(commands.executeSetupChunk());
          results.add(commands.executePreviousChunks());
+         results.add(commands.executeSubsequentChunks());
          results.add(commands.executeCurrentChunk());
          results.add(commands.executeNextChunk());
       }

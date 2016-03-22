@@ -298,6 +298,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.insertSection());
       dynamicCommands_.add(commands.executeSetupChunk());
       dynamicCommands_.add(commands.executePreviousChunks());
+      dynamicCommands_.add(commands.executeSubsequentChunks());
       dynamicCommands_.add(commands.executeCurrentChunk());
       dynamicCommands_.add(commands.executeNextChunk());
       dynamicCommands_.add(commands.sourceActiveDocument());
@@ -349,6 +350,8 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.saveProfileAs());
       dynamicCommands_.add(commands.restartRClearOutput());
       dynamicCommands_.add(commands.restartRRunAllChunks());
+      dynamicCommands_.add(commands.notebookCollapseAllOutput());
+      dynamicCommands_.add(commands.notebookExpandAllOutput());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);

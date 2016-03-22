@@ -4038,6 +4038,12 @@ public class TextEditingTarget implements
       executePreviousChunks(null);
    }
    
+   @Handler
+   void onExecuteSubsequentChunks()
+   {
+      globalDisplay_.showNotYetImplemented();
+   }
+   
    public void executePreviousChunks(final Position position)
    {
       if (docDisplay_.showChunkOutputInline())
@@ -4924,6 +4930,18 @@ public class TextEditingTarget implements
    
    @Handler
    void onRestartRRunAllChunks()
+   {
+      globalDisplay_.showNotYetImplemented();
+   }
+   
+   @Handler
+   void onNotebookCollapseAllOutput()
+   {
+      globalDisplay_.showNotYetImplemented();
+   }
+   
+   @Handler
+   void onNotebookExpandAllOutput()
    {
       globalDisplay_.showNotYetImplemented();
    }

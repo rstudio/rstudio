@@ -290,6 +290,11 @@ public class TextEditingTargetNotebook
       commands_.restartRClearOutput().setVisible(inlineOutput);
       commands_.restartRRunAllChunks().setEnabled(inlineOutput);
       commands_.restartRRunAllChunks().setVisible(inlineOutput);
+      commands_.notebookCollapseAllOutput().setEnabled(inlineOutput);
+      commands_.notebookCollapseAllOutput().setVisible(inlineOutput);
+      commands_.notebookExpandAllOutput().setEnabled(inlineOutput);
+      commands_.notebookExpandAllOutput().setVisible(inlineOutput);
+      
    }
    
    private void processChunkExecQueue()

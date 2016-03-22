@@ -341,6 +341,7 @@ public class TextEditingTargetWidget
       chunksMenu.addSeparator();
       chunksMenu.addItem(commands_.executeSetupChunk().createMenuItem(false));
       chunksMenu.addItem(commands_.executePreviousChunks().createMenuItem(false));
+      chunksMenu.addItem(commands_.executeSubsequentChunks().createMenuItem(false));
       chunksMenu.addItem(commands_.executeCurrentChunk().createMenuItem(false));
       chunksMenu.addItem(commands_.executeNextChunk().createMenuItem(false));
       chunksMenu.addSeparator();

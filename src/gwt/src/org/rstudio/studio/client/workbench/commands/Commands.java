@@ -62,6 +62,7 @@ public abstract class
    public abstract AppCommand insertChunk();
    public abstract AppCommand insertSection();
    public abstract AppCommand executePreviousChunks();
+   public abstract AppCommand executeSubsequentChunks();
    public abstract AppCommand executeCurrentChunk();
    public abstract AppCommand executeNextChunk();
    public abstract AppCommand executeSetupChunk();
@@ -126,6 +127,8 @@ public abstract class
    public abstract AppCommand findUsages();
    public abstract AppCommand editRmdFormatOptions();
    public abstract AppCommand knitWithParameters();
+   public abstract AppCommand notebookExpandAllOutput();
+   public abstract AppCommand notebookCollapseAllOutput();
    public abstract AppCommand renameInScope();
    public abstract AppCommand insertRoxygenSkeleton();
    public abstract AppCommand insertSnippet();
