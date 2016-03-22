@@ -1213,7 +1213,7 @@ public class TextEditingTarget implements
       
       // create notebook and forward resize events
       notebook_ = new TextEditingTargetNotebook(this, docDisplay_, 
-            docUpdateSentinel_, document);
+            docUpdateSentinel_, document, releaseOnDismiss_);
       view_.addResizeHandler(notebook_);
       
       // ensure that Makefile and Makevars always use tabs

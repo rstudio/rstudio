@@ -109,10 +109,12 @@ public class TextEditingTargetNotebook
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
                                     DocDisplay docDisplay,
                                     DocUpdateSentinel docUpdateSentinel,
-                                    SourceDocument document)
+                                    SourceDocument document,
+                                    ArrayList<HandlerRegistration> releaseOnDismiss)
    {
       docDisplay_ = docDisplay;
       docUpdateSentinel_ = docUpdateSentinel;  
+      releaseOnDismiss_ = releaseOnDismiss;
       initialChunkDefs_ = document.getChunkDefs();
       outputWidgets_ = new HashMap<String, ChunkOutputWidget>();
       lineWidgets_ = new HashMap<String, LineWidget>();
@@ -200,7 +202,6 @@ public class TextEditingTargetNotebook
          ConsoleServerOperations console,
          Session session,
          UIPrefs prefs,
-         ArrayList<HandlerRegistration> releaseOnDismiss,
          Commands commands,
          Provider<SourceWindowManager> pSourceWindowManager)
    {
@@ -223,7 +224,7 @@ public class TextEditingTargetNotebook
       
       // subscribe to global rmd output inline preference and sync
       // again when it changes
-      releaseOnDismiss.add(
+      releaseOnDismiss_.add(
          prefs_.showRmdChunkOutputInline().addValueChangeHandler(
             new ValueChangeHandler<Boolean>() {
                @Override
@@ -293,8 +294,7 @@ public class TextEditingTargetNotebook
       commands_.notebookCollapseAllOutput().setEnabled(inlineOutput);
       commands_.notebookCollapseAllOutput().setVisible(inlineOutput);
       commands_.notebookExpandAllOutput().setEnabled(inlineOutput);
-      commands_.notebookExpandAllOutput().setVisible(inlineOutput);
-      
+      commands_.notebookExpandAllOutput().setVisible(inlineOutput); 
    }
    
    private void processChunkExecQueue()
@@ -868,6 +868,7 @@ public class TextEditingTargetNotebook
    
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel docUpdateSentinel_;
+   ArrayList<HandlerRegistration> releaseOnDismiss_;
    private final TextEditingTarget editingTarget_;
    private Session session_;
    private Provider<SourceWindowManager> pSourceWindowManager_;
