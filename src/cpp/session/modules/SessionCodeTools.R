@@ -1685,3 +1685,11 @@
    
    data
 })
+
+.rs.addFunction("evalWithAvailableArguments", function(fn, args)
+{
+   filtered <- args[names(args) %in% names(formals(fn))]
+   call <- c(substitute(fn), args)
+   mode(call) <- "call"
+   eval(call, envir = parent.frame())
+})

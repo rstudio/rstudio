@@ -399,13 +399,21 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                                        envir = .GlobalEnv)
 {
    renderOutput <- tempfile("rnb-render-output-", fileext = ".html")
-   outputFormat <- rmarkdown::html_document(self_contained = TRUE,
-                                            keep_md = TRUE)
+   
+   # Dynamically construct call to 'html_document' to handle
+   # available arguments
+   outputFormat <- .rs.evalWithAvailableArguments(
+      rmarkdown::html_document,
+      list(
+         self_contained = TRUE,
+         keep_md = TRUE,
+         toc = TRUE
+      )
+   )
    
    rmarkdown::render(input = inputFile,
                      output_format = outputFormat,
                      output_file = renderOutput,
-                     output_options = list(self_contained = TRUE),
                      encoding = "UTF-8",
                      envir = envir,
                      quiet = TRUE)
