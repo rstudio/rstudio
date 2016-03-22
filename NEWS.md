@@ -41,10 +41,10 @@
 ### Profiler
 
 * Add profiler menu and profiling indicators
-* Add start-profiling and stop-profiling command
+* Add start-profiling and stop-profiling commands
 * Add save-profile, load-profile for new rprofvis files
 * Add profile-this-code command to execute code in the profiler
-* Add go-to-sources, profiler-help and publish comments
+* Add go-to-sources, profiler-help and publish commands
 
 ### Miscellaneous
 
