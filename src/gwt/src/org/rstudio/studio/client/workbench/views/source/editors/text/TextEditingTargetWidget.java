@@ -786,7 +786,10 @@ public class TextEditingTargetWidget
       if (parenPos != -1)
           selectedOption = selectedOption.substring(0, parenPos).trim();
  
-      setFormatText(selectedOption);
+      // don't show format text (but leave the code in for now in case
+      // we change our mind)
+      // setFormatText(selectedOption);
+      setFormatText("");
       
       String prefix = fileType.isPlainMarkdown() ? "Preview " : "Knit to ";
       
