@@ -781,12 +781,15 @@ public class TextEditingTargetWidget
       setRmdFormatButtonVisible(showRmdFormatMenu);
       rmdFormatButton_.setEnabled(showRmdFormatMenu);
       rmdFormatButton_.clearMenu();
+      
       int parenPos = selectedOption.indexOf('(');
-         if (parenPos != -1)
-            selectedOption = selectedOption.substring(0, parenPos).trim();
+      if (parenPos != -1)
+          selectedOption = selectedOption.substring(0, parenPos).trim();
  
-         setFormatText(selectedOption);
-         String prefix = fileType.isPlainMarkdown() ? "Preview " : "Knit to ";
+      setFormatText(selectedOption);
+      
+      String prefix = fileType.isPlainMarkdown() ? "Preview " : "Knit to ";
+      
       for (int i = 0; i < Math.min(options.size(), values.size()); i++)
       {
          String ext = extensions.get(i);
