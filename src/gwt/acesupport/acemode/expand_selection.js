@@ -82,7 +82,7 @@ var Utils = require("mode/utils");
 
    var reIdentifier = /['"\w.]/;
 
-   function moveToStartOfStatement(iterator)
+   function moveToStartOfStatement(iterator, delimiters)
    {
       var lookahead = iterator.getCurrentToken();
       var row = iterator.getCurrentTokenRow();
@@ -102,8 +102,7 @@ var Utils = require("mode/utils");
          {
             if (reIdentifier.test(token.value) ||
                 Utils.isOpeningBracket(token.value) ||
-                token.value === ";" ||
-                token.value === ",")
+                Utils.contains(delimiters, token.value))
             {
                if (!iterator.moveToNextSignificantToken())
                   return false;
@@ -120,7 +119,7 @@ var Utils = require("mode/utils");
       return true;
    }
 
-   function moveToEndOfStatement(iterator)
+   function moveToEndOfStatement(iterator, delimiters)
    {
       var lookbehind = iterator.getCurrentToken();
       var row = iterator.getCurrentTokenRow();
@@ -140,8 +139,7 @@ var Utils = require("mode/utils");
          {
             if (reIdentifier.test(token.value) ||
                 Utils.isClosingBracket(token.value) ||
-                token.value === ";" ||
-                token.value === ",")
+                Utils.contains(delimiters, token.value))
             {
                if (!iterator.moveToPreviousSignificantToken())
                   return false;
@@ -369,13 +367,23 @@ var Utils = require("mode/utils");
       if (!fwdIt.moveToPosition(range.end))
          return null;
 
-      debuglog(bwdIt.getCurrentToken(), fwdIt.getCurrentToken());
-
-      if (!moveToStartOfStatement(bwdIt))
+      if (!moveToStartOfStatement(bwdIt, [";", ",", "=", "<-", "<<-"]))
          return null;
 
-      if (!moveToEndOfStatement(fwdIt))
+      if (!moveToEndOfStatement(fwdIt, [";", ","]))
          return null;
+
+      var bwdPos = bwdIt.getCurrentTokenPosition();
+      var fwdPos = fwdIt.getCurrentTokenPosition();
+
+      if (bwdPos.row === range.start.row &&
+          bwdPos.column === range.start.column &&
+          fwdPos.row === range.end.row &&
+          fwdPos.column <= range.end.column)
+      {
+         if (!moveToStartOfStatement(bwdIt, [";", ","]))
+            return null;
+      }
 
       var start = bwdIt.getCurrentTokenPosition();
       var end   = fwdIt.getCurrentTokenPosition();
