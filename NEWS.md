@@ -40,21 +40,11 @@
 
 ### Profiler
 
-* Add profiler menu to enable access to profiler commands
-* Add start-profiling command
-* Add stop-profiling command
-* Add save-profile command using new Rprofvis files
-* Add load-profile command to reopen saved Rprofvis files
+* Add profiler menu and profiling indicators
+* Add start-profiling and stop-profiling command
+* Add save-profile, load-profile for new rprofvis files
 * Add profile-this-code command to execute code in the profiler
-* Add go-to-sources command to reopen source code from profile results
-* Add profiler-help command to open profiling documentation
-* Add profiling status indicators in console and profiling toolbar
-* Add support to publish a profile to rpubs and other services
-* Add Rprofvis OS file associations
-* Package profvis for offline installation
-* Integrate with profvis to display profiler results
-* Integrate with rprof to display profiling status accordingly
-* Improved console size defaults while profiling
+* Add go-to-sources, profiler-help and publish comments
 
 ### Miscellaneous
 
