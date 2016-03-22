@@ -361,10 +361,6 @@ var Utils = require("mode/utils");
 
    addExpansionRule("statement", false, function(editor, session, selection, range) {
 
-      var text = editor.getSelectedText();
-      if (text.indexOf("=") !== -1 || text.indexOf("<-") !== -1)
-         return null;
-
       var bwdIt = new TokenIterator(session);
       if (!bwdIt.moveToPosition(range.start, true))
          return null;
