@@ -135,7 +135,8 @@ var Utils = require("mode/utils");
             return true;
          }
 
-         if (reIdentifier.test(lookbehind.value))
+         if (reIdentifier.test(lookbehind.value) ||
+             Utils.isClosingBracket(lookbehind.value))
          {
             if (reIdentifier.test(token.value) ||
                 Utils.isClosingBracket(token.value) ||
