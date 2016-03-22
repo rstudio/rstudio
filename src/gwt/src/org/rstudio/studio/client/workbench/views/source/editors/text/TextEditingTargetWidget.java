@@ -331,19 +331,20 @@ public class TextEditingTargetWidget
       toolbar.addRightWidget(chunksRunButton_ = commands_.executeCode().createToolbarButton(false));
       ToolbarPopupMenu chunksMenu = new ToolbarPopupMenu();
       chunksMenu.addItem(commands_.executeCode().createMenuItem(false));
+      chunksMenu.addSeparator();
+      chunksMenu.addItem(commands_.executeCurrentChunk().createMenuItem(false));
+      chunksMenu.addItem(commands_.executeNextChunk().createMenuItem(false));
+      chunksMenu.addSeparator();
+      chunksMenu.addItem(commands_.executeSetupChunk().createMenuItem(false));
       if (uiPrefs_.showRmdChunkOutputInline().getValue())
       {
-         chunksMenu.addSeparator();
          chunksMenu.addItem(new UIPrefMenuItem<Boolean>(
                uiPrefs_.autoRunSetupChunk(), true, "Run Setup Chunk Automatically", 
                uiPrefs_));
       }
       chunksMenu.addSeparator();
-      chunksMenu.addItem(commands_.executeSetupChunk().createMenuItem(false));
       chunksMenu.addItem(commands_.executePreviousChunks().createMenuItem(false));
       chunksMenu.addItem(commands_.executeSubsequentChunks().createMenuItem(false));
-      chunksMenu.addItem(commands_.executeCurrentChunk().createMenuItem(false));
-      chunksMenu.addItem(commands_.executeNextChunk().createMenuItem(false));
       chunksMenu.addSeparator();
       chunksMenu.addItem(commands_.executeAllCode().createMenuItem(false));
       chunksButton_ = new ToolbarButton(
