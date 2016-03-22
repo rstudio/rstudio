@@ -1009,7 +1009,7 @@
       }
       else if (is.logical(object))
       {
-
+         object <- ifelse(object, "true", "false")
          object[is.na(object)] <- 'null'
       }
       
