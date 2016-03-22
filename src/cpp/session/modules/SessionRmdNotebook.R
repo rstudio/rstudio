@@ -464,6 +464,19 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    outputFile
 })
 
+.rs.addFunction("createNotebookFromCache", function(rmdPath, outputPath = NULL)
+{
+   if (is.null(outputPath))
+      outputPath <- .rs.withChangedExtension(rmdPath, "Rnb")
+   
+   cachePath <- .rs.rnb.cachePathFromNotebookPath(rmdPath)
+   if (!file.exists(cachePath))
+      stop("no cache data associated with '", rmdPath, "'")
+   
+   rnbData <- .rs.readRnbCache(rmdPath, cachePath)
+   .rs.createNotebookFromCacheData(rnbData, outputPath)
+})
+
 .rs.addFunction("rnb.cachePathFromNotebookPath", function(rmdPath)
 {
   .Call(.rs.routines$rs_chunkCacheFolder, rmdPath)
