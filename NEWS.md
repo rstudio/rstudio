@@ -38,6 +38,14 @@
 * Update C++ unit testing library (catch) to v1.3.3 (fix gcc >=5 compilation errors)
 * Syntax highlighting of raw, wide, unicode string literals (e.g R"hello")
 
+### Profiler
+
+* Add profiler menu and profiling indicators
+* Add start-profiling and stop-profiling commands
+* Add save-profile, load-profile for new rprofvis files
+* Add profile-this-code command to execute code in the profiler
+* Add go-to-sources, profiler-help and publish commands
+
 ### Miscellaneous
 
 * Implement gt/gT bindings in Vim mode to switch to next/previous tab

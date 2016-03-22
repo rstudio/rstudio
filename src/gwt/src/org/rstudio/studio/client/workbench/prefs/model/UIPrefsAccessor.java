@@ -558,11 +558,6 @@ public class UIPrefsAccessor extends Prefs
    {
       return string("doc_outline_show", DOC_OUTLINE_SHOW_SECTIONS_ONLY);
    }
-
-   public PrefValue<Boolean> showProfiler()
-   {
-      return bool("show_profiler", false);
-   }
    
    private String getDefaultPdfPreview()
    {
