@@ -323,6 +323,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       .rs.startsWith(html, "<!-- rnb-chunk-id") &
       .rs.endsWith(html, "-->"))
    
+   # Record htmlwidget dependencies as we fill chunks
+   jsonDependencies <- list()
+   
    for (chunkIdx in seq_along(indices))
    {
       i <- indices[[chunkIdx]]
@@ -342,8 +345,15 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          } else if (.rs.endsWith(name, "png")) {
             encoded <- caTools::base64encode(value)
             sprintf("<img src=data:image/png;base64,%s />", encoded)
-         } else {
-            # TODO
+         } else if (.rs.endsWith(name, "html")) {
+            
+            # parse and record JSON dependencies
+            jsonPath <- .rs.withChangedExtension(name, "json")
+            jsonString <- chunkData[[jsonPath]]
+            jsonDependencies <<- c(jsonDependencies, .rs.fromJSON(jsonString))
+            
+            # emit body of HTML content
+            .rs.extractHTMLBodyElement(value)
          }
       })
       
@@ -357,6 +367,28 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       html[[i]] <- paste(injection, sep = "\n", collapse = "\n")
       chunkIdx <- chunkIdx + 1
    }
+   
+   # Inject JSON dependency information into document
+   # TODO: Resolve duplicates
+   htmlDeps <- lapply(jsonDependencies, function(dep) {
+      injection <- character()
+      
+      jsPath <- file.path(dep$src$file, dep$script)
+      if (file.exists(jsPath))
+      {
+         scriptHtml <- sprintf("<script src=\"%s\"></script>", jsPath)
+         injection <- c(injection, scriptHtml)
+      }
+      
+      paste(injection, collapse = "\n")
+   })
+   
+   bodyIdx <- tail(grep("^\\s*</body>\\s*$", html, perl = TRUE), n = 1)
+   html[bodyIdx] <- paste(
+      paste(htmlDeps, collapse = "\n"),
+      "</body>",
+      sep = "\n"
+   )
    
    html
 })
