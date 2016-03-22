@@ -9,8 +9,7 @@
    .clear, .expand
    {
       position: absolute;
-      top: 3px;
-      padding: 4px;
+      top: 7px;
       cursor: pointer;
       z-index: 25;
    }
@@ -18,7 +17,6 @@
    .clear
    {
       right: 7px;
-      padding: 4px;
    }
    
    .expand 
@@ -45,7 +43,7 @@
 
    .frame
    {
-      border: 3px solid #e5e5e5;
+      border: 2px solid #e5e5e5;
       padding-left: 10px;
       padding-top: 10px;
       transition: background-color 500ms ease;
