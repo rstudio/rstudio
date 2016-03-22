@@ -79,7 +79,7 @@
       }
 
       return(list(
-         fileName = .rs.nullOrScalar(profilerOptions$fileName)
+         fileName = .rs.scalar(profilerOptions$fileName)
       ))
    }, error = function(e) {
       return(list(error = .rs.scalar(e$message)))
