@@ -328,7 +328,6 @@ public class TextEditingTargetWidget
 
       //toolbar.addRightSeparator();
      
-      toolbar.addRightWidget(chunksRunButton_ = commands_.executeCode().createToolbarButton(false));
       ToolbarPopupMenu chunksMenu = new ToolbarPopupMenu();
       chunksMenu.addItem(commands_.executeCode().createMenuItem(false));
       chunksMenu.addSeparator();
@@ -348,7 +347,9 @@ public class TextEditingTargetWidget
       chunksMenu.addSeparator();
       chunksMenu.addItem(commands_.executeAllCode().createMenuItem(false));
       chunksButton_ = new ToolbarButton(
-                       chunksMenu, 
+                       "Run",
+                       commands_.executeCode().getImageResource(),
+                       chunksMenu,
                        true);
       toolbar.addRightWidget(chunksButton_);
       
@@ -537,7 +538,6 @@ public class TextEditingTargetWidget
       texToolbarButton_.setVisible(canCompilePdf);
       compilePdfButton_.setVisible(canCompilePdf);
       chunksButton_.setVisible(canExecuteChunks);
-      chunksRunButton_.setVisible(canExecuteChunks);
       
       notebookSeparatorWidget_.setVisible(canCompileNotebook);
       notebookToolbarButton_.setVisible(canCompileNotebook);
@@ -626,7 +626,6 @@ public class TextEditingTargetWidget
       else
          srcOnSaveLabel_.setText(width < 450 ? "Source" : "Source on Save");
       sourceButton_.setText(width < 400 ? "" : sourceCommandText_);
-      chunksRunButton_.setText(width < 400 ? "" : "Run");
    }
    
    
@@ -1088,7 +1087,6 @@ public class TextEditingTargetWidget
    private ToolbarButton goToPrevButton_;
    private ToolbarButton goToNextButton_;
    private ToolbarButton runButton_;
-   private ToolbarButton chunksRunButton_;
    private ToolbarButton runLastButton_;
    private ToolbarButton sourceButton_;
    private ToolbarButton sourceMenuButton_;
