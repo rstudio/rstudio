@@ -346,7 +346,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
             encoded <- caTools::base64encode(value)
             sprintf("<img src=data:image/png;base64,%s />", encoded)
          } else if (.rs.endsWith(name, "html")) {
-            
             # parse and record JSON dependencies
             jsonPath <- .rs.withChangedExtension(name, "json")
             jsonString <- chunkData[[jsonPath]]

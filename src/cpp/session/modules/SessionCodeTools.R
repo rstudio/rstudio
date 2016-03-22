@@ -966,7 +966,9 @@
 ## NOTE: lists are considered as objects if they are named, and as arrays if
 ## they are not. If you have an empty list that you want to treat as an object,
 ## you must give it a names attribute.
-.rs.addFunction("toJSON", function(object)
+##
+## Unbox will automatically unbox any 1-length non-list vectors.
+.rs.addFunction("toJSON", function(object, unbox = FALSE)
 {
    AsIs <- inherits(object, "AsIs") || inherits(object, ".rs.scalar")
    if (is.list(object))
@@ -974,7 +976,7 @@
       if (is.null(names(object)))
       {
          return(paste('[', paste(lapply(seq_along(object), function(i) {
-            .rs.toJSON(object[[i]])
+            .rs.toJSON(object[[i]], unbox = unbox)
          }), collapse = ','), ']', sep = '', collapse=','))
       }
       else
@@ -984,17 +986,22 @@
                   '"',
                   .rs.jsonEscapeString(enc2utf8(names(object)[[i]])),
                   '":',
-                  .rs.toJSON(object[[i]])
+                  .rs.toJSON(object[[i]], unbox = unbox)
             )
          }), collapse = ','), '}', sep = '', collapse = ','))
       }
    }
    else
    {
+      n <- length(object)
+      
       # NOTE: For type safety we cannot unmarshal NULL as '{}' as e.g. jsonlite does.
-      if (!length(object))
+      if (n == 0)
       {
-         return('[]')
+         if (unbox)
+            return(NULL)
+         else
+            return('[]')
       }
       else if (is.character(object) || is.factor(object))
       {
@@ -1013,8 +1020,8 @@
          object[is.na(object)] <- 'null'
       }
       
-      if (AsIs)
-         return(object)
+      if (AsIs || (unbox && n == 1))
+         return(paste(object))
       else
          return(paste('[', paste(object, collapse = ','), ']', sep = '', collapse = ','))
    }

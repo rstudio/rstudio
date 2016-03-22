@@ -35,7 +35,7 @@
                           tmpdir = outputFolder,
                           fileext = ".json")
       
-      cat(.rs.toJSON(dependencies), file = depfile, sep = "\n")
+      cat(.rs.toJSON(dependencies, unbox = TRUE), file = depfile, sep = "\n")
       
       # save the widget to HTML 
       htmlwidgets::saveWidget(
