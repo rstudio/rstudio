@@ -297,10 +297,12 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="newSession"/>
          <separator/>
          <cmd refid="interruptR"/>
-         <cmd refid="restartR"/>
+         <cmd refid="terminateR"/>
          <cmd refid="suspendSession"/>
          <separator/>
-         <cmd refid="terminateR"/>
+         <cmd refid="restartR"/>
+         <cmd refid="restartRClearOutput"/>
+         <cmd refid="restartRRunAllChunks"/>
          <separator/>
          <menu label="Set _Working Directory">
             <cmd refid="setWorkingDirToProjectDir"/>
@@ -1841,6 +1843,18 @@ well as menu structures (for main menu and popup menus).
         label="Restart R Session"
         menuLabel="_Restart R"
         desc="Restart R"
+        windowMode="main"/>
+        
+  <cmd id="restartRClearOutput"
+        label="Restart R Session and Clear Chunk Output"
+        menuLabel="Restart R and Clear Output"
+        desc="Restart R session and clear chunk output"
+        windowMode="main"/>
+        
+   <cmd id="restartRRunAllChunks"
+        label="Restart R Session and Run All Chunks"
+        menuLabel="Restart R and Run All Chunks"
+        desc="Restart R session and run all chunks"
         windowMode="main"/>
         
    <cmd id="terminateR"

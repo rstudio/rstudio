@@ -60,6 +60,7 @@ public interface EditingTarget extends IsWidget,
    String getExtendedFileType();
    
    HashSet<AppCommand> getSupportedCommands();
+   void manageCommands();
    boolean canCompilePdf();
    
    void verifyCppPrerequisites();

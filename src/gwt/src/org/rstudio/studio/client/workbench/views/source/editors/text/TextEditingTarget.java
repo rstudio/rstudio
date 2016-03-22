@@ -1931,6 +1931,13 @@ public class TextEditingTarget implements
    }
    
    @Override
+   public void manageCommands()
+   {
+      if (fileType_.isRmd())
+         notebook_.manageCommands();
+   }
+   
+   @Override
    public boolean canCompilePdf()
    {
       return fileType_.canCompilePDF();
@@ -4908,6 +4915,19 @@ public class TextEditingTarget implements
          }
       });  
    }
+   
+   @Handler
+   void onRestartRClearOutput()
+   {
+      globalDisplay_.showNotYetImplemented();
+   }
+   
+   @Handler
+   void onRestartRRunAllChunks()
+   {
+      globalDisplay_.showNotYetImplemented();
+   }
+   
 
    @Handler
    void onSynctexSearch()

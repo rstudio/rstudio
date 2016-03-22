@@ -40,6 +40,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
@@ -71,6 +72,7 @@ import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -119,22 +121,9 @@ public class TextEditingTargetNotebook
       editingTarget_ = editingTarget;
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      // initialize the display's default output mode 
-      String outputType = 
-            document.getProperties().getAsString(CHUNK_OUTPUT_TYPE);
-      if (!outputType.isEmpty() && outputType != "undefined")
-      {
-         // if the document property is set, apply it directly
-         docDisplay_.setShowChunkOutputInline(
-               outputType == CHUNK_OUTPUT_INLINE);
-      }
-      else
-      {
-         // otherwise, use the global preference to set the value
-         docDisplay_.setShowChunkOutputInline(
-            RStudioGinjector.INSTANCE.getUIPrefs()
-                                     .showRmdChunkOutputInline().getValue());
-      }
+      // initialize the display's default output mode based on 
+      // global and per-document preferences
+      syncOutputMode();    
       
       docDisplay_.addEditorFocusHandler(new FocusHandler()
       {
@@ -211,6 +200,8 @@ public class TextEditingTargetNotebook
          ConsoleServerOperations console,
          Session session,
          UIPrefs prefs,
+         ArrayList<HandlerRegistration> releaseOnDismiss,
+         Commands commands,
          Provider<SourceWindowManager> pSourceWindowManager)
    {
       events_ = events;
@@ -218,6 +209,7 @@ public class TextEditingTargetNotebook
       console_ = console;
       session_ = session;
       prefs_ = prefs;
+      commands_ = commands;
       pSourceWindowManager_ = pSourceWindowManager;
       
       events_.addHandler(RmdChunkOutputEvent.TYPE, this);
@@ -228,6 +220,18 @@ public class TextEditingTargetNotebook
       events_.addHandler(ConsolePromptEvent.TYPE, this);
       events_.addHandler(InterruptStatusEvent.TYPE, this);
       events_.addHandler(RestartStatusEvent.TYPE, this);
+      
+      // subscribe to global rmd output inline preference and sync
+      // again when it changes
+      releaseOnDismiss.add(
+         prefs_.showRmdChunkOutputInline().addValueChangeHandler(
+            new ValueChangeHandler<Boolean>() {
+               @Override
+               public void onValueChange(ValueChangeEvent<Boolean> event)
+               {
+                  syncOutputMode();
+               }
+            }));
    }
    
    public void executeChunk(Scope chunk, String code, String options)
@@ -277,6 +281,15 @@ public class TextEditingTargetNotebook
       
       // initiate queue processing
       processChunkExecQueue();
+   }
+   
+   public void manageCommands()
+   {
+      boolean inlineOutput = docDisplay_.showChunkOutputInline();   
+      commands_.restartRClearOutput().setEnabled(inlineOutput);
+      commands_.restartRClearOutput().setVisible(inlineOutput);
+      commands_.restartRRunAllChunks().setEnabled(inlineOutput);
+      commands_.restartRRunAllChunks().setVisible(inlineOutput);
    }
    
    private void processChunkExecQueue()
@@ -684,6 +697,9 @@ public class TextEditingTargetNotebook
    {
       docDisplay_.setShowChunkOutputInline(mode == CHUNK_OUTPUT_INLINE);
 
+      // manage commands
+      manageCommands();
+         
       // if we don't have any inline output, we're done
       if (lineWidgets_.size() == 0 || mode != CHUNK_OUTPUT_CONSOLE)
          return;
@@ -714,6 +730,26 @@ public class TextEditingTargetNotebook
             "Remove Output", 
             "Keep Output", 
             false);
+   }
+   
+   // set the output mode based on the global pref (or our local 
+   // override of it, if any)
+   private void syncOutputMode()
+   {
+      String outputType = docUpdateSentinel_.getProperty(CHUNK_OUTPUT_TYPE);
+      if (!StringUtil.isNullOrEmpty(outputType) && outputType != "undefined")
+      {
+         // if the document property is set, apply it directly
+         docDisplay_.setShowChunkOutputInline(
+               outputType == CHUNK_OUTPUT_INLINE);
+      }
+      else
+      {
+         // otherwise, use the global preference to set the value
+         docDisplay_.setShowChunkOutputInline(
+            RStudioGinjector.INSTANCE.getUIPrefs()
+                                     .showRmdChunkOutputInline().getValue());
+      }
    }
    
    private void populateChunkDefs(JsArray<ChunkDefinition> defs)
@@ -831,6 +867,7 @@ public class TextEditingTargetNotebook
    private Session session_;
    private Provider<SourceWindowManager> pSourceWindowManager_;
    private UIPrefs prefs_;
+   private Commands commands_;
 
    private RMarkdownServerOperations server_;
    private ConsoleServerOperations console_;

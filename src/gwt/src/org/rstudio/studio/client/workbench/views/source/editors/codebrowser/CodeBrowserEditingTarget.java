@@ -435,6 +435,11 @@ public class CodeBrowserEditingTarget implements EditingTarget
          commands.add(commands_.returnDocToMain());
       return commands;
    }
+   
+   @Override
+   public void manageCommands()
+   {
+   }
 
    @Override
    public boolean canCompilePdf()

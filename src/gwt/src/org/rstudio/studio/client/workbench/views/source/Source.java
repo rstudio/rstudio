@@ -347,6 +347,8 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.profileCode());
       dynamicCommands_.add(commands.profileCodeWithoutFocus());
       dynamicCommands_.add(commands.saveProfileAs());
+      dynamicCommands_.add(commands.restartRClearOutput());
+      dynamicCommands_.add(commands.restartRRunAllChunks());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
@@ -3332,6 +3334,10 @@ public class Source implements InsertSourceHandler,
       manageMultiTabCommands();
       
       activeCommands_ = newCommands;
+      
+      // give the active editor a chance to manage commands
+      if (activeEditor_ != null)
+         activeEditor_.manageCommands();
 
       assert verifyNoUnsupportedCommands(newCommands)
             : "Unsupported commands detected (please add to Source.dynamicCommands_)";

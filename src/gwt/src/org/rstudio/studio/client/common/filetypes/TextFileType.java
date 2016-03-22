@@ -347,6 +347,8 @@ public class TextFileType extends EditableFileType
       {
          results.add(commands.editRmdFormatOptions());
          results.add(commands.knitWithParameters());
+         results.add(commands.restartRClearOutput());
+         results.add(commands.restartRRunAllChunks());
       }
       if (canKnitToHTML() || canCompileNotebook())
       {
