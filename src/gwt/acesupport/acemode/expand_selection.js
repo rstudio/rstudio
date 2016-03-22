@@ -30,7 +30,7 @@ var Utils = require("mode/utils");
 
    var self = this;
 
-   var $debuggingEnabled = false;
+   var $debuggingEnabled = true;
    function debuglog(/*...*/)
    {
       if ($debuggingEnabled)
@@ -80,6 +80,85 @@ var Utils = require("mode/utils");
          return false;
    }
 
+   var reIdentifier = /['"\w.]/;
+
+   function moveToStartOfStatement(iterator)
+   {
+      var lookahead = iterator.getCurrentToken();
+      var row = iterator.getCurrentTokenRow();
+      while (iterator.moveToPreviousSignificantToken())
+      {
+         var token = iterator.getCurrentToken();
+         if (row !== iterator.getCurrentTokenRow() &&
+             token.type.indexOf("keyword.operator") !== 0)
+         {
+            if (!iterator.moveToNextSignificantToken())
+               return false;
+
+            return true;
+         }
+
+         if (reIdentifier.test(lookahead.value))
+         {
+            if (reIdentifier.test(token.value) ||
+                Utils.isOpeningBracket(token.value) ||
+                token.value === ";" ||
+                token.value === ",")
+            {
+               if (!iterator.moveToNextSignificantToken())
+                  return false;
+
+               return true;
+            }
+         }
+
+         iterator.bwdToMatchingToken();
+         lookahead = iterator.getCurrentToken();
+         row = iterator.getCurrentTokenRow();
+      }
+
+      return true;
+   }
+
+   function moveToEndOfStatement(iterator)
+   {
+      var lookbehind = iterator.getCurrentToken();
+      var row = iterator.getCurrentTokenRow();
+      while (iterator.moveToNextSignificantToken())
+      {
+         var token = iterator.getCurrentToken();
+         if (row !== iterator.getCurrentTokenRow() &&
+             lookbehind.type.indexOf("keyword.operator") !== 0)
+         {
+            if (!iterator.moveToPreviousSignificantToken())
+               return false;
+
+            return true;
+         }
+
+         if (reIdentifier.test(lookbehind.value))
+         {
+            if (reIdentifier.test(token.value) ||
+                Utils.isClosingBracket(token.value) ||
+                token.value === ";" ||
+                token.value === ",")
+            {
+               if (!iterator.moveToPreviousSignificantToken())
+                  return false;
+
+               return true;
+            }
+         }
+
+         iterator.fwdToMatchingToken();
+         lookbehind = iterator.getCurrentToken();
+         row = iterator.getCurrentTokenRow();
+      }
+
+      return true;
+   }
+
+
    var $handlersAttached = false;
    function ensureOnChangeHandlerAttached()
    {
@@ -97,22 +176,6 @@ var Utils = require("mode/utils");
          self.off("change", self.$onClearSelectionHistory);
          $handlersAttached = false;
       }
-   }
-
-   function indexOfFirstNonWhitespaceChar(line, ifNotFound)
-   {
-      var index = line.search(/\S/);
-      if (index === -1)
-         return ifNotFound;
-      return index;
-   }
-
-   function indexOfLastNonWhitespaceChar(line, ifNotFound)
-   {
-      var index = line.search(/\S/);
-      if (index === -1)
-         return ifNotFound;
-      return line.trim().length + index;
    }
 
    this.$onClearSelectionHistory = function()
@@ -310,81 +373,19 @@ var Utils = require("mode/utils");
       if (!fwdIt.moveToPosition(range.end))
          return null;
 
-      var bwdCandidatePosition = null;
-      debuglog("Searching backwards for statement start");
-      while (bwdIt.moveToPreviousSignificantToken())
-      {
-         if (bwdIt.bwdToMatchingToken())
-            continue;
+      debuglog(bwdIt.getCurrentToken(), fwdIt.getCurrentToken());
 
-         var token = bwdIt.getCurrentToken();
-         debuglog(token);
-
-         if (bwdCandidatePosition)
-         {
-            var success =
-                   Utils.isBracket(token.value) ||
-                   token.value === ";" ||
-                   token.value === "," ||
-                   token.value === "=" ||
-                   token.value === "<-" ||
-                   /[\w.]/.test(token.value);
-
-            if (success)
-               break;
-         }
-
-         var isCandidate = /[\w.]/.test(token.value);
-         bwdCandidatePosition = isCandidate ? bwdIt.getCurrentTokenPosition() : null;
-      }
-
-      if (!bwdCandidatePosition)
+      if (!moveToStartOfStatement(bwdIt))
          return null;
 
-      var fwdCandidatePosition = null;
-      debuglog("Searching forwards for statement end");
-      do
-      {
-         if (fwdIt.fwdToMatchingToken())
-         {
-            saved = fwdIt.getCurrentToken();
-            fwdCandidatePosition = fwdIt.getCurrentTokenPosition();
-            continue;
-         }
-
-         var token = fwdIt.getCurrentToken();
-         debuglog(token);
-
-         if (fwdCandidatePosition)
-         {
-            var success =
-                   Utils.isBracket(token.value) ||
-                   token.value === ";" ||
-                   token.value === "," ||
-                   /[\w.]/.test(token.value);
-
-            if (success)
-            {
-               fwdCandidatePosition.column += saved.value.length;
-               break;
-            }
-         }
-
-         var saved = token;
-         var isCandidate = /[\w.]/.test(token.value);
-         fwdCandidatePosition = isCandidate ? fwdIt.getCurrentTokenPosition() : null;
-
-      } while (fwdIt.moveToNextSignificantToken())
-
-      if (!fwdCandidatePosition)
+      if (!moveToEndOfStatement(fwdIt))
          return null;
 
-      debuglog("Found statement bounds");
-      return Range.fromPoints(
-         bwdCandidatePosition,
-         fwdCandidatePosition
-      );
+      var start = bwdIt.getCurrentTokenPosition();
+      var end   = fwdIt.getCurrentTokenPosition();
+      end.column += fwdIt.getCurrentTokenValue().length;
 
+      return Range.fromPoints(start, end);
    });
 
    addExpansionRule("scope", false, function(editor, session, selection, range) {

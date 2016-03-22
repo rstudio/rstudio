@@ -490,7 +490,6 @@ var Range = require("ace/range").Range;
 
       return false;
    };
-   
 
 }).call(TokenIterator.prototype);
 
