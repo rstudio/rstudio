@@ -137,6 +137,38 @@ var Range = require("ace/range").Range;
       
    };
 
+   this.moveToNextSignificantToken = function()
+   {
+      if (!this.moveToNextToken())
+         return false;
+
+      var token = this.getCurrentToken();
+      while (/^\s+$/.test(token.value) || /\bcomment\b/.test(token.type))
+      {
+         if (!this.moveToNextToken())
+            return false;
+         token = this.getCurrentToken();
+      }
+
+      return true;
+   };
+
+   this.moveToPreviousSignificantToken = function()
+   {
+      if (!this.moveToPreviousToken())
+         return false;
+
+      var token = this.getCurrentToken();
+      while (/^\s+$/.test(token.value) || /\bcomment\b/.test(token.type))
+      {
+         if (!this.moveToPreviousToken())
+            return false;
+         token = this.getCurrentToken();
+      }
+
+      return true;
+   };
+
    this.moveToStartOfRow = function()
    {
       this.$tokenIndex = 0;
@@ -422,6 +454,43 @@ var Range = require("ace/range").Range;
       }
       return false;
    };
+
+   this.findTokenBwd = function(value, skipMatching)
+   {
+      skipMatching = !!skipMatching;
+
+      do
+      {
+         if (skipMatching && this.bwdToMatchingToken())
+            continue;
+
+         var token = this.getCurrentToken();
+         if (token.value === value)
+            return true;
+
+      } while (this.moveToPreviousToken());
+
+      return false;
+   };
+
+   this.findTokenFwd = function(value, skipMatching)
+   {
+      skipMatching = !!skipMatching;
+
+      do
+      {
+         if (skipMatching && this.fwdToMatchingToken())
+            continue;
+
+         var token = this.getCurrentToken();
+         if (token.value === value)
+            return true;
+
+      } while (this.moveToNextToken());
+
+      return false;
+   };
+   
 
 }).call(TokenIterator.prototype);
 

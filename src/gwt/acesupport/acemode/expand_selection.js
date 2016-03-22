@@ -80,28 +80,6 @@ var Utils = require("mode/utils");
          return false;
    }
 
-   function isSingleLineString(string)
-   {
-      if (string.length < 2)
-         return false;
-
-      var firstChar = string[0];
-      if (firstChar !== "'" && firstChar !== "\"")
-         return false;
-
-      var lastChar = string[string.length - 1];
-      if (lastChar !== firstChar)
-         return false;
-
-      var isEscaped = string[string.length - 2] === "\\" &&
-                      string[string.length - 3] !== "\\";
-
-      if (isEscaped)
-         return false;
-
-      return true;
-   }
-
    var $handlersAttached = false;
    function ensureOnChangeHandlerAttached()
    {
@@ -179,28 +157,29 @@ var Utils = require("mode/utils");
       });
    }
 
-   addExpansionRule("word", true, function(editor, session, selection, range) {
-
-      var candidate = session.getWordRange(range.start.row, range.start.column);
-      if (candidate)
-      {
-         var text = session.getTextRange(candidate);
-         if (text.trim().length !== 0)
-            return candidate;
+   addExpansionRule("string", true, function(editor, session, selection, range) {
+      var token = session.getTokenAt(range.start.row, range.start.column + 1);
+      if (token && /\bstring\b/.test(token.type)) {
+         return new Range(
+            range.start.row,
+            token.column + 1,
+            range.start.row,
+            token.column + token.value.length - 1
+         );
       }
 
       return null;
-
    });
 
-   addExpansionRule("string", true, function(editor, session, selection, range) {
+   addExpansionRule("token", true, function(editor, session, selection, range) {
 
-      // If the current token is a string and the current selection lies within
-      // the string, then expand to select the string.
-      var iterator = new TokenIterator(session);
-      var token = iterator.moveToPosition(range.start, true);
-      if (token && token.type === "string" && isSingleLineString(token.value))
-         return iterator.getCurrentTokenRange();
+      var token = session.getTokenAt(range.start.row, range.start.column + 1);
+      if (token && /[\d\w]/.test(token.value)) {
+         return new Range(
+            range.start.row, token.column,
+            range.start.row, token.column + token.value.length
+         );
+      }
 
       return null;
 
@@ -269,46 +248,6 @@ var Utils = require("mode/utils");
 
    });
 
-   addExpansionRule("nonBlankLines", false, function(editor, session, selection, range) {
-
-      // Only apply in Markdown mode for now.
-      var mode = session.getMode();
-      if (mode.getLanguageMode)
-      {
-         for (var row = range.start.row; row <= range.end.row; row++)
-         {
-            var lang = mode.getLanguageMode({row: row, column: 0});
-            if (lang !== "Markdown")
-               return null;
-         }
-      }
-
-      var startRow = range.start.row;
-      var endRow = range.end.row;
-
-      var n = session.getLength();
-
-      while (startRow >= 0 && session.getLine(startRow).trim().length > 0)
-         startRow--;
-
-      while (endRow < n && session.getLine(endRow).trim().length > 0)
-         endRow++;
-
-      if (session.getLine(startRow).trim().length === 0)
-         startRow++;
-
-      if (session.getLine(endRow).trim().length === 0)
-         endRow--;
-
-      if (startRow >= endRow)
-         return null;
-
-      var startCol = indexOfFirstNonWhitespaceChar(session.getLine(startRow), 0);
-      var endCol = indexOfLastNonWhitespaceChar(session.getLine(endRow), 0);
-      return new Range(startRow, startCol, endRow, endCol);
-
-   });
-
    addExpansionRule("matching", false, function(editor, session, selection, range) {
 
       // Look for matching bracket pairs. Note that this block does not
@@ -317,6 +256,9 @@ var Utils = require("mode/utils");
       // selection to fill both the start and end rows.
       var iterator = new TokenIterator(session);
       var token = iterator.moveToPosition(range.start);
+      if (token == null)
+         return null;
+
       do
       {
          if (token == null)
@@ -351,6 +293,93 @@ var Utils = require("mode/utils");
       while ((token = iterator.stepBackward()))
 
       return null;
+
+   });
+
+   addExpansionRule("statement", false, function(editor, session, selection, range) {
+
+      var text = editor.getSelectedText();
+      if (text.indexOf("=") !== -1 || text.indexOf("<-") !== -1)
+         return null;
+
+      var bwdIt = new TokenIterator(session);
+      if (!bwdIt.moveToPosition(range.start, true))
+         return null;
+
+      var fwdIt = new TokenIterator(session);
+      if (!fwdIt.moveToPosition(range.end))
+         return null;
+
+      var bwdCandidatePosition = null;
+      debuglog("Searching backwards for statement start");
+      while (bwdIt.moveToPreviousSignificantToken())
+      {
+         if (bwdIt.bwdToMatchingToken())
+            continue;
+
+         var token = bwdIt.getCurrentToken();
+         debuglog(token);
+
+         if (bwdCandidatePosition)
+         {
+            var success =
+                   Utils.isBracket(token.value) ||
+                   token.value === ";" ||
+                   token.value === "," ||
+                   token.value === "=" ||
+                   token.value === "<-" ||
+                   /[\w.]/.test(token.value);
+
+            if (success)
+               break;
+         }
+
+         var isCandidate = /[\w.]/.test(token.value);
+         bwdCandidatePosition = isCandidate ? bwdIt.getCurrentTokenPosition() : null;
+      }
+
+      if (!bwdCandidatePosition)
+         return null;
+
+      var fwdCandidatePosition = null;
+      debuglog("Searching forwards for statement end");
+      do
+      {
+         if (fwdIt.fwdToMatchingToken())
+            continue;
+
+         var token = fwdIt.getCurrentToken();
+         debuglog(token);
+
+         if (fwdCandidatePosition)
+         {
+            var success =
+                   Utils.isBracket(token.value) ||
+                   token.value === ";" ||
+                   token.value === "," ||
+                   /[\w.]/.test(token.value);
+
+            if (success)
+            {
+               fwdCandidatePosition.column += saved.value.length;
+               break;
+            }
+         }
+
+         var saved = token;
+         var isCandidate = /[\w.]/.test(token.value);
+         fwdCandidatePosition = isCandidate ? fwdIt.getCurrentTokenPosition() : null;
+
+      } while (fwdIt.moveToNextSignificantToken())
+
+      if (!fwdCandidatePosition)
+         return null;
+
+      debuglog("Found statement bounds");
+      return Range.fromPoints(
+         bwdCandidatePosition,
+         fwdCandidatePosition
+      );
 
    });
 
@@ -436,7 +465,10 @@ var Utils = require("mode/utils");
 
             // Check to see if we should apply it immediately.
             if (candidate && rule.immediate && isExpansionOf(candidate, initialRange))
+            {
+               debuglog("Accepting immediate expansion: '" + rule.name + "'");
                return this.$acceptSelection(selection, candidate, initialRange);
+            }
 
             // Otherwise, add it to the list of candidates for later filtering.
             if (candidate && isExpansionOf(candidate, initialRange))
