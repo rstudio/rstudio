@@ -275,6 +275,7 @@ public class AceEditor implements DocDisplay,
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       backgroundTokenizer_ = new BackgroundTokenizer(this);
+      vim_ = new Vim(this);
       
       widget_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
@@ -1087,7 +1088,21 @@ public class AceEditor implements DocDisplay,
    {
       getSession().getSelection().setSelectionRange(range);
    }
-
+   
+   public void setSelectionRanges(JsArray<Range> ranges)
+   {
+      int n = ranges.length();
+      if (n == 0)
+         return;
+      
+      if (vim_.isActive())
+         vim_.exitVisualMode();
+      
+      setSelectionRange(ranges.get(0));
+      for (int i = 1; i < n; i++)
+         getNativeSelection().addRange(ranges.get(i), false);
+   }
+   
    public int getLength(int row)
    {
       return getSession().getDocument().getLine(row).length();
@@ -1813,7 +1828,7 @@ public class AceEditor implements DocDisplay,
    {
       return useVimMode_;
    }
-
+   
    @Override
    public boolean isVimInInsertMode()
    {
@@ -3088,6 +3103,7 @@ public class AceEditor implements DocDisplay,
    private boolean showChunkOutputInline_ = false;
    private BackgroundTokenizer backgroundTokenizer_;
    private AceEditorFocusTracker tracker_;
+   private final Vim vim_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {

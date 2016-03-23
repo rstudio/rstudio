@@ -22,20 +22,25 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.logical.shared.*;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers;
+import com.google.gwt.event.logical.shared.HasSelectionHandlers;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -78,8 +83,8 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
-import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.events.GetEditorContextEvent.DocumentSelection;
+import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
 import org.rstudio.studio.client.events.SetSelectionRangesEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
@@ -4010,10 +4015,52 @@ public class Source implements InsertSourceHandler,
       }
    }
    
-   @Override
-   public void onSetSelectionRanges(SetSelectionRangesEvent event)
+   private void dispatchEditorEvent(final String id,
+                                    final CommandWithArg<DocDisplay> command)
    {
-      Debug.logToRConsole("Hello!");
+      InputEditorDisplay console = consoleEditorProvider_.getConsoleEditor();
+
+      boolean isConsoleEvent = false;
+      if (console != null)
+      {
+         isConsoleEvent =
+               (StringUtil.isNullOrEmpty(id) && console.isFocused()) ||
+               "#console".equals(id);
+      }
+      if (isConsoleEvent)
+      {
+         command.execute((DocDisplay) console);
+      }
+      else
+      {
+         withTarget(id, new CommandWithArg<TextEditingTarget>()
+         {
+            @Override
+            public void execute(TextEditingTarget target)
+            {
+               command.execute(target.getDocDisplay());
+            }
+         });
+      }
+      
+   }
+   
+   @Override
+   public void onSetSelectionRanges(final SetSelectionRangesEvent event)
+   {
+      dispatchEditorEvent(event.getData().getId(), new CommandWithArg<DocDisplay>()
+      {
+         @Override
+         public void execute(DocDisplay docDisplay)
+         {
+            JsArray<Range> ranges = event.getData().getRanges();
+            if (ranges.length() == 0)
+               return;
+            
+            AceEditor editor = (AceEditor) docDisplay;
+            editor.setSelectionRanges(ranges);
+         }
+      });
    }
    
    @Override
@@ -4058,35 +4105,18 @@ public class Source implements InsertSourceHandler,
             GetEditorContextEvent.SelectionData.create(),
             new VoidServerRequestCallback());
    }
-
+   
    @Override
    public void onReplaceRanges(final ReplaceRangesEvent event)
    {
-      InputEditorDisplay console = consoleEditorProvider_.getConsoleEditor();
-      final String id = event.getData().getId();
-
-      boolean isConsoleEvent = false;
-      if (console != null)
+      dispatchEditorEvent(event.getData().getId(), new CommandWithArg<DocDisplay>()
       {
-         isConsoleEvent =
-               (StringUtil.isNullOrEmpty(id) && console.isFocused()) ||
-               "#console".equals(id);
-      }
-      if (isConsoleEvent)
-      {
-         doReplaceRanges(event, (DocDisplay) console);
-      }
-      else
-      {
-         withTarget(id, new CommandWithArg<TextEditingTarget>()
-               {
-            @Override
-            public void execute(TextEditingTarget target)
-            {
-               doReplaceRanges(event, target.getDocDisplay());
-            }
-               });
-      }
+         @Override
+         public void execute(DocDisplay docDisplay)
+         {
+            doReplaceRanges(event, docDisplay);
+         }
+      });
    }
    
    private void doReplaceRanges(ReplaceRangesEvent event, DocDisplay docDisplay)

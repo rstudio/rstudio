@@ -14,10 +14,28 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Window;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
 
-import org.rstudio.core.client.*;
+import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.Pair;
+import org.rstudio.core.client.Point;
+import org.rstudio.core.client.SerializedCommand;
+import org.rstudio.core.client.SerializedCommandQueue;
+import org.rstudio.core.client.Size;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowCloseMonitor;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -37,7 +55,9 @@ import org.rstudio.studio.client.common.satellite.events.AllSatellitesClosingEve
 import org.rstudio.studio.client.common.satellite.events.SatelliteClosedEvent;
 import org.rstudio.studio.client.common.satellite.events.SatelliteFocusedEvent;
 import org.rstudio.studio.client.common.satellite.model.SatelliteWindowGeometry;
-import org.rstudio.studio.client.events.*;
+import org.rstudio.studio.client.events.GetEditorContextDispatchEvent;
+import org.rstudio.studio.client.events.ReplaceRangesDispatchEvent;
+import org.rstudio.studio.client.events.SetSelectionRangesDispatchEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -51,39 +71,14 @@ import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
-import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserCreatedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
-import org.rstudio.studio.client.workbench.views.source.events.CollabEditEndedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
-import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.DocFocusedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.DocTabClosedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.EnsureVisibleSourceWindowEvent;
-import org.rstudio.studio.client.workbench.views.source.events.MaximizeSourceWindowEvent;
-import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
-import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedHandler;
+import org.rstudio.studio.client.workbench.views.source.events.*;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams;
 
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.dom.client.BlurEvent;
-import com.google.gwt.event.dom.client.BlurHandler;
-import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.FocusHandler;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.view.client.SetSelectionModel;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.Singleton;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 @Singleton
 public class SourceWindowManager implements PopoutDocEvent.Handler,

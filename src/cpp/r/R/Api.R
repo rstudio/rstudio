@@ -150,36 +150,9 @@
    invisible(NULL)
 })
 
-.rs.addApiFunction("insertText", function(location, text, id = "") {
-   
+.rs.addFunction("validateAndTransformLocation", function(location)
+{
    invalidRangeMsg <- "'ranges' should be a list of 4-element integer vectors"
-   invalidTextMsg <- "'text' should be a character vector"
-   invalidLengthMsg <- "'text' should either be length 1, or same length as 'ranges'"
-
-   if (is.null(id))
-      id <- ""
-   
-   if (!is.character(id))
-      stop("'id' must be NULL or a character vector of length one")
-   
-   # allow calls of the form:
-   #    
-   #    insertText("foo")
-   #    insertText(text = "foo")
-   #    
-   # in such cases, we replace the current selection. we pass an empty range
-   # and let upstream interpret this as a request to replace the current
-   # selection.
-   
-   if (missing(text) && is.character(location)) {
-      text <- location
-      location <- list()
-   } else if (missing(location) && is.character(text)) {
-      text <- text
-      location <- list()
-   } else if (length(location) == 0) {
-      return()
-   }
    
    # allow a single range (then validate that it's a true range after)
    if (!is.list(location) || inherits(location, "document_range"))
@@ -217,6 +190,40 @@
       result
    })
    
+   ranges
+})
+
+.rs.addApiFunction("insertText", function(location, text, id = "") {
+   
+   invalidTextMsg <- "'text' should be a character vector"
+   invalidLengthMsg <- "'text' should either be length 1, or same length as 'ranges'"
+
+   if (is.null(id))
+      id <- ""
+   
+   if (!is.character(id))
+      stop("'id' must be NULL or a character vector of length one")
+   
+   # allow calls of the form:
+   #    
+   #    insertText("foo")
+   #    insertText(text = "foo")
+   #    
+   # in such cases, we replace the current selection. we pass an empty range
+   # and let upstream interpret this as a request to replace the current
+   # selection.
+   
+   if (missing(text) && is.character(location)) {
+      text <- location
+      location <- list()
+   } else if (missing(location) && is.character(text)) {
+      text <- text
+      location <- list()
+   } else if (length(location) == 0) {
+      return()
+   }
+   
+   ranges <- .rs.validateAndTransformLocation(location)
    if (!is.character(text))
       stop(invalidTextMsg, call. = FALSE)
    
@@ -241,6 +248,7 @@
 
 .rs.addApiFunction("setSelectionRanges", function(ranges, id = "")
 {
+   ranges <- .rs.validateAndTransformLocation(ranges)
    data <- list(ranges = ranges, id = .rs.scalar(id))
    .rs.enqueClientEvent("set_selection_ranges", data)
    invisible(data)
