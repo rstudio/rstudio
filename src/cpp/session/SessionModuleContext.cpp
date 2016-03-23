@@ -280,17 +280,22 @@ SEXP rs_sourceDiagnostics()
    return R_NilValue;
 }
 
-SEXP rs_packageLoaded(SEXP pkgnameSEXP)
+SEXP rs_packageLoaded(SEXP pkgnameSEXP, SEXP pkgversionSEXP)
 {
-   std::string pkgname = r::sexp::safeAsString(pkgnameSEXP);
-
+   std::string pkgname    = r::sexp::safeAsString(pkgnameSEXP);
+   std::string pkgversion = r::sexp::safeAsString(pkgversionSEXP);
+   
    // fire server event
    events().onPackageLoaded(pkgname);
 
    // fire client event
+   json::Object jsonData;
+   jsonData["package_name"] = pkgname;
+   jsonData["package_version"] = pkgversion;
+
    ClientEvent packageLoadedEvent(
             client_events::kPackageLoaded,
-            json::Value(pkgname));
+            jsonData);
    enqueClientEvent(packageLoadedEvent);
 
    return R_NilValue;
@@ -2153,7 +2158,7 @@ Error initialize()
    R_CallMethodDef methodDef11;
    methodDef11.name = "rs_packageLoaded" ;
    methodDef11.fun = (DL_FUNC) rs_packageLoaded;
-   methodDef11.numArgs = 1;
+   methodDef11.numArgs = 2;
    r::routines::addCallMethod(methodDef11);
 
    // register rs_packageUnloaded

@@ -14,25 +14,40 @@
  */
 package org.rstudio.studio.client.common.debugging.events;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class PackageLoadedEvent
         extends GwtEvent<PackageLoadedEvent.Handler>
 {
+   public static class Data extends JavaScriptObject
+   {
+      protected Data() {}
+      
+      public final native String getPackageName()    /*-{ return this["package_name"]; }-*/;
+      public final native String getPackageVersion() /*-{ return this["package_version"]; }-*/;
+   }
+   
    public interface Handler extends EventHandler
    {
       void onPackageLoaded(PackageLoadedEvent event);
    }
 
-   public PackageLoadedEvent(String packageName)
+   public PackageLoadedEvent(Data data)
    {
-      packageName_ = packageName;
+      packageName_ = data.getPackageName();
+      packageVersion_ = data.getPackageVersion();
    }
    
    public String getPackageName()
    {
       return packageName_;
+   }
+   
+   public String getPackageVersion()
+   {
+      return packageVersion_;
    }
    
    @Override
@@ -49,5 +64,6 @@ public class PackageLoadedEvent
 
    public static final Type<Handler> TYPE = new Type<Handler>();
    
-   private String packageName_;   
+   private final String packageName_;
+   private final String packageVersion_;
 }
