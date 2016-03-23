@@ -424,6 +424,15 @@ public class AceEditor implements DocDisplay,
             }
          }
       });
+      
+      widget_.addFocusHandler(new FocusHandler()
+      {
+         @Override
+         public void onFocus(FocusEvent event)
+         {
+            tracker_.setLastFocusedEditor(AceEditor.this);
+         }
+      });
    }
    
    public void yankBeforeCursor()
@@ -524,13 +533,15 @@ public class AceEditor implements DocDisplay,
                    UIPrefs uiPrefs,
                    CollabEditor collab,
                    Commands commands,
-                   EventBus events)
+                   EventBus events,
+                   AceEditorFocusTracker tracker)
    {
       server_ = server;
       uiPrefs_ = uiPrefs;
       collab_ = collab;
       commands_ = commands;
       events_ = events;
+      tracker_ = tracker;
    }
 
    public TextFileType getFileType()
@@ -3076,6 +3087,7 @@ public class AceEditor implements DocDisplay,
    private AceInfoBar infoBar_;
    private boolean showChunkOutputInline_ = false;
    private BackgroundTokenizer backgroundTokenizer_;
+   private AceEditorFocusTracker tracker_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {

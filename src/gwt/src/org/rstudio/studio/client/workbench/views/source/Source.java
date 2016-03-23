@@ -121,6 +121,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditing
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.OpenProfileEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorFocusTracker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
@@ -247,7 +248,8 @@ public class Source implements InsertSourceHandler,
                  RnwWeaveRegistry rnwWeaveRegistry,
                  ChunkIconsManager chunkIconsManager,
                  DependencyManager dependencyManager,
-                 SourceWindowManager windowManager)
+                 SourceWindowManager windowManager,
+                 AceEditorFocusTracker editorFocusTracker)
    {
       commands_ = commands;
       view_ = view;
@@ -269,6 +271,7 @@ public class Source implements InsertSourceHandler,
       chunkIconsManager_ = chunkIconsManager;
       dependencyManager_ = dependencyManager;
       windowManager_ = windowManager;
+      editorFocusTracker_ = editorFocusTracker;
       
       vimCommands_ = new SourceVimCommands();
       
@@ -599,7 +602,7 @@ public class Source implements InsertSourceHandler,
                   
                   if (type == GetEditorContextEvent.TYPE_ACTIVE_EDITOR)
                   {
-                     if (consoleEditorHadFocusLast_ || activeEditor_ == null)
+                     if (consoleEditorHadFocusLast() || activeEditor_ == null)
                         type = GetEditorContextEvent.TYPE_CONSOLE_EDITOR;
                      else
                         type = GetEditorContextEvent.TYPE_SOURCE_EDITOR;
@@ -723,15 +726,16 @@ public class Source implements InsertSourceHandler,
       
       // handle chunk options event
       handleChunkOptionsEvent();
+   }
+   
+   private boolean consoleEditorHadFocusLast()
+   {
+      AceEditor editor = editorFocusTracker_.getLastFocusedEditor();
+      if (editor == null)
+         return false;
       
-      consoleEditorProvider_.getConsoleEditor().addFocusHandler(new FocusHandler()
-      {
-         @Override
-         public void onFocus(FocusEvent event)
-         {
-            consoleEditorHadFocusLast_ = true;
-         }
-      });
+      String id = editor.getWidget().getElement().getId();
+      return "rstudio_console_input".equals(id);
    }
    
    private void withTarget(String id,
@@ -3249,7 +3253,6 @@ public class Source implements InsertSourceHandler,
       if (event.getSelectedItem() >= 0)
       {
          activeEditor_ = editors_.get(event.getSelectedItem());
-         consoleEditorHadFocusLast_ = false;
          activeEditor_.onActivate();
          
          // let any listeners know this tab was activated
@@ -4137,13 +4140,12 @@ public class Source implements InsertSourceHandler,
    private Timer debugSelectionTimer_ = null;
    
    private final SourceWindowManager windowManager_;
+   private final AceEditorFocusTracker editorFocusTracker_;
 
    // If positive, a new tab is about to be created
    private int newTabPending_;
    
    private ChunkIconsManager chunkIconsManager_;
    private DependencyManager dependencyManager_;
-   
-   private boolean consoleEditorHadFocusLast_ = false;
    
 }
