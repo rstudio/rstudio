@@ -69,18 +69,32 @@ namespace code_search {
 
 namespace {
 
-bool isInCmakeBuildDirectory(const FilePath& filePath)
+bool isWithinIgnoredDirectory(const FilePath& filePath)
 {
-   FilePath parentPath = filePath.parent();
-   while (!parentPath.empty()
-          && parentPath != projects::projectContext().directory())
+   // we only index (and ignore) directories within the current project
+   if (!projects::projectContext().hasProject())
+      return false;
+   
+   FilePath projDir = projects::projectContext().directory();
+   for (FilePath parentPath = filePath.parent();
+        !parentPath.empty() && parentPath != projDir;
+        parentPath = parentPath.parent())
    {
-      // if this directory contains a 'cmake_install' file, filter it out
-      if (parentPath.complete("cmake_install.cmake").exists())
+      // cmake build directory
+      if (parentPath.childPath("cmake_install.cmake").exists())
          return true;
-
-      parentPath = parentPath.parent();
+      
+      std::string filename = parentPath.filename();
+      
+      // node_modules
+      if (filename == "node_modules")
+         return true;
+      
+      // packrat
+      if (filename == "packrat" && parentPath.childPath("packrat.lock").exists())
+         return true;
    }
+   
    return false;
 }
 
@@ -805,7 +819,7 @@ private:
       FilePath filePath(fileInfo.absolutePath());
 
       // filter certain directories (e.g. those that exist in build directories)
-      if (isInCmakeBuildDirectory(filePath))
+      if (isWithinIgnoredDirectory(filePath))
          return;
 
       if (isIndexableSourceFile(fileInfo))
@@ -835,16 +849,10 @@ private:
 
       // attempt to add the entry
       Entry entry(fileInfo, pIndex);
+      pEntries_->insertEntry(entry);
 
-      if (!filePath.isWithin(projects::projectContext().directory().complete("packrat")) &&
-          !isInCmakeBuildDirectory(filePath))
-      {
-         pEntries_->insertEntry(entry);
-
-         // kick off an update
-         r_packages::AsyncPackageInformationProcess::update();
-      }
-
+      // kick off an update
+      r_packages::AsyncPackageInformationProcess::update();
    }
 
    void removeIndexEntry(const FileInfo& fileInfo)
@@ -1002,7 +1010,7 @@ bool sourceDatabaseFilter(const r_util::RSourceIndex& index)
       // get file path
       FilePath docPath = module_context::resolveAliasedPath(index.context());
       return docPath.isWithin(projects::projectContext().directory()) &&
-            !docPath.isWithin(projects::projectContext().directory().complete("packrat"));
+            !isWithinIgnoredDirectory(docPath);
    }
    else
    {
@@ -1247,23 +1255,13 @@ int scoreMatch(std::string const& suggestion,
    if (suggestion == query)
       return 0;
    
-   int query_n = query.length();
-
-   // Call a version of subsequence indices that returns false if the query is not
-   // actually a subsequence
-   std::vector<int> matches;
-   bool success = string_utils::subsequenceIndices(
-            boost::algorithm::to_lower_copy(suggestion),
-            boost::algorithm::to_lower_copy(query),
-            &matches);
+   std::vector<int> matches =
+         string_utils::subsequenceIndices(suggestion, query);
    
-   if (!success)
-      return -1;
-
    int totalPenalty = 0;
 
    // Loop over the matches and assign a score
-   for (int j = 0; j < query_n; j++)
+   for (int j = 0, n = matches.size(); j < n; j++)
    {
       int matchPos = matches[j];
       int penalty = matchPos;
@@ -1274,7 +1272,7 @@ int scoreMatch(std::string const& suggestion,
          char prevChar = suggestion[matchPos - 1];
          if (prevChar == '_' || prevChar == '-' || (!isFile && prevChar == '.'))
          {
-            penalty = j;
+            penalty = j + 1;
          }
       }
 
@@ -1297,6 +1295,9 @@ int scoreMatch(std::string const& suggestion,
    // Penalize files
    if (isFile)
       ++totalPenalty;
+   
+   // Penalize unmatched characters
+   totalPenalty += (query.size() - matches.size()) * query.size();
 
    return totalPenalty;
 }

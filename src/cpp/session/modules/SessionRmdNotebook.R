@@ -16,7 +16,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addJsonRpcHandler("extract_rmd_from_notebook", function(input, output)
 {
-  if (Encoding(input) == "unknown") Encoding(input) <- "UTF-8"
+  if (Encoding(input) == "unknown")  Encoding(input) <- "UTF-8"
   if (Encoding(output) == "unknown") Encoding(output) <- "UTF-8"
 
    # if 'output' already exists, compare file write times to determine
@@ -62,67 +62,14 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    caTools::base64decode(rmdEncoded, character())
 })
 
-.rs.addFunction("executeSingleChunk", function(options,
-                                               content,
-                                               libDir,
-                                               headerFile,
-                                               outputFile) 
+.rs.addFunction("reRmdChunkBegin", function()
 {
-  # presume paths are UTF-8 encoded unless specified otherwise
-  if (Encoding(libDir) == "unknown") Encoding(libDir) <- "UTF-8"
-  if (Encoding(headerFile) == "unknown") Encoding(headerFile) <- "UTF-8"
-  if (Encoding(outputFile) == "unknown") Encoding(outputFile) <- "UTF-8"
+   "^[\t >]*```+\\s*\\{[.]?([a-zA-Z]+.*)\\}\\s*$"
+})
 
-  # create a temporary file stub to send to R Markdown
-  chunkFile <- tempfile(fileext = ".Rmd")
-  chunk <- paste(paste("```{r", options, "echo=FALSE}"),
-                 content,
-                 "```\n", 
-                 sep = "\n");
-  writeLines(chunk, con = chunkFile)
-  on.exit(unlink(chunkFile), add = TRUE)
-  
-  # render chunks directly in .GlobalEnv
-  # TODO: use .rs.getActiveFrame()? use sandbox env
-  # that has .GlobalEnv as parent?
-  envir <- .GlobalEnv
-                 
-  # begin capturing the error stream (and clean up when we're done)
-  errorFile <- tempfile()
-  on.exit(unlink(errorFile), add = TRUE)
-  errorCon <- file(errorFile, open = "wt")
-  sink(errorCon, type = "message")
-  on.exit(sink(type = "message"), add = TRUE)
-  on.exit(close(errorCon), add = TRUE)
-
-  # render the stub to the given file
-  errorMessage <- ""
-  errorText <- ""
-  tryCatch({
-    capture.output(rmarkdown::render(
-      input = normalizePath(chunkFile, winslash = "/"), 
-      output_format = rmarkdown::html_document(
-        theme = NULL,
-        highlight = NULL,
-        template = NULL, 
-        self_contained = FALSE,
-        includes = list(
-          in_header = headerFile),
-        lib_dir = libDir),
-      output_file = normalizePath(outputFile, winslash = "/", mustWork = FALSE),
-      encoding = "UTF-8",
-      envir = envir,
-      quiet = TRUE))
-  }, error = function(e) {
-    # capture any error message returned
-    errorMessage <<- paste("Error:", e$message)
-
-    # flush the error stream and send it as well
-    errorText <<- paste(readLines(errorFile), collapse = "\n")
-  })
-
-  list(message = errorMessage, 
-       text    = errorText)
+.rs.addFunction("reRmdChunkEnd", function()
+{
+   "^[\t >]*```+\\s*$"
 })
 
 .rs.addFunction("injectHTMLComments", function(contents,
@@ -157,8 +104,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                                            envir = .GlobalEnv)
 {
    find_chunks <- function(contents) {
-      chunkStarts <- grep("^\\s*```{", contents, perl = TRUE)
-      chunkEnds <- grep("^\\s*```\\s*$", contents, perl = TRUE)
+      chunkStarts <- grep(.rs.reRmdChunkBegin(), contents, perl = TRUE)
+      chunkEnds <- grep(.rs.reRmdChunkEnd(), contents, perl = TRUE)
       chunkRanges <- Map(list, start = chunkStarts, end = chunkEnds)
       lapply(chunkRanges, function(range) {
          list(start = range$start,
@@ -216,7 +163,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("rnb.withChunkLocations", function(rmdContents, chunkInfo)
 {
-   chunkLocs <- grep("^\\s*```{", rmdContents, perl = TRUE)
+   chunkLocs <- grep(.rs.reRmdChunkBegin(), rmdContents, perl = TRUE)
    for (i in seq_along(chunkInfo$chunk_definitions)) {
       info <- chunkInfo$chunk_definitions[[i]]
       
@@ -243,7 +190,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       stop("No cache directory at path '", cachePath, "'")
    
    rmdPath <- .rs.normalizePath(rmdPath, winslash = "/", mustWork = TRUE)
-   cachePath <- normalizePath(cachePath, winslash = "/", mustWork = TRUE)
+   cachePath <- .rs.normalizePath(cachePath, winslash = "/", mustWork = TRUE)
    rmdContents <- suppressWarnings(readLines(rmdPath))
    
    # Begin collecting the units that form the Rnb data structure
@@ -264,17 +211,17 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    chunkInfo <- .rs.rnb.withChunkLocations(rmdContents, chunkInfo)
    rnbData[["chunk_info"]] <- chunkInfo
    
-   # Collect all of the HTML files, alongside their dependencies
-   htmlFiles <- list.files(cachePath, pattern = "html$", full.names = TRUE)
-   chunkData <- lapply(htmlFiles, function(file) {
-      dependenciesDir <- paste(tools::file_path_sans_ext(file), "files", sep = "_")
-      dependenciesFiles <- list.files(dependenciesDir, full.names = TRUE, recursive = TRUE)
-      list(
-         html = .rs.readFile(file),
-         deps = lapply(dependenciesFiles, .rs.readFile)
-      )
+   # Read the chunk data
+   chunkDirs <- file.path(cachePath, names(chunkInfo$chunk_definitions))
+   chunkData <- lapply(chunkDirs, function(dir) {
+      files <- list.files(dir, full.names = TRUE)
+      contents <- lapply(files, function(file) {
+         .rs.readFile(file, binary = .rs.endsWith(file, "png"))
+      })
+      names(contents) <- basename(files)
+      contents
    })
-   names(chunkData) <- tools::file_path_sans_ext(basename(htmlFiles))
+   names(chunkData) <- basename(chunkDirs)
    rnbData[["chunk_data"]] <- chunkData
    
    # Read in the 'libs' directory.
@@ -335,9 +282,33 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    })
    
    for (range in rev(chunkRanges)) {
+      
+      beforeText <- if (range$start > 1)
+         masked[1:(range$start - 1)]
+      
+      afterText  <- if (range$end < length(masked))
+         masked[(range$end + 1):length(masked)]
+      
+      masked <- c(
+         beforeText,
+         paste("<!-- rnb-chunk-id", range$id, "-->"),
+         afterText
+      )
+   }
+   
+   # mask any remaining chunks (these are chunks which
+   # have no associated output in the cache; ie, they
+   # were not executed)
+   #
+   # TODO: respect chunk options here (e.g. 'include = TRUE')
+   chunkStarts <- grep(.rs.reRmdChunkBegin(), masked, perl = TRUE)
+   chunkEnds   <- grep(.rs.reRmdChunkEnd(), masked, perl = TRUE)
+   ranges <- mapply(function(x, y) list(start = x, end = y),
+                    chunkStarts, chunkEnds, SIMPLIFY = FALSE)
+   
+   for (range in rev(ranges)) {
       masked <- c(
          masked[1:(range$start - 1)],
-         paste("<!-- rnb-chunk-id", range$id, "-->"),
          masked[(range$end + 1):length(masked)]
       )
    }
@@ -348,12 +319,17 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("rnb.fillChunks", function(html, rnbData)
 {
-   filled <- html
-   chunkIdx <- 1
-   for (i in seq_along(filled)) {
-      line <- filled[[i]]
-      if (!(.rs.startsWith(line, "<!-- rnb-chunk-id") && .rs.endsWith(line, "-->")))
-         next
+   indices <- which(
+      .rs.startsWith(html, "<!-- rnb-chunk-id") &
+      .rs.endsWith(html, "-->"))
+   
+   # Record htmlwidget dependencies as we fill chunks
+   jsonDependencies <- list()
+   
+   for (chunkIdx in seq_along(indices))
+   {
+      i <- indices[[chunkIdx]]
+      line <- html[i]
       
       chunkId <- sub('<!-- rnb-chunk-id\\s*(\\S+)\\s*-->', '\\1', line)
       chunkData <- rnbData$chunk_data[[chunkId]]
@@ -361,20 +337,59 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       if (is.null(chunkData) || is.null(chunkDefn))
          stop("no chunk with id '", chunkId, "'")
       
-      # inject PNGs etc. as base64 data
-      injected <- .rs.rnb.injectBase64Data(chunkData$html, chunkId, rnbData)
+      # convert to HTML
+      htmlList <- .rs.enumerate(chunkData, function(name, value) {
+         if (.rs.endsWith(name, "csv")) {
+            parsed <- .rs.rnb.parseConsoleData(value)
+            .rs.rnb.consoleDataToHtml(parsed)
+         } else if (.rs.endsWith(name, "png")) {
+            encoded <- caTools::base64encode(value)
+            sprintf("<img src=data:image/png;base64,%s />", encoded)
+         } else if (.rs.endsWith(name, "html")) {
+            # parse and record JSON dependencies
+            jsonPath <- .rs.withChangedExtension(name, "json")
+            jsonString <- chunkData[[jsonPath]]
+            jsonDependencies <<- c(jsonDependencies, .rs.fromJSON(jsonString))
+            
+            # emit body of HTML content
+            .rs.extractHTMLBodyElement(value)
+         }
+      })
       
       # insert into document
       injection <- c(
          sprintf("<!-- rnb-chunk-start-%s %s -->", chunkIdx, chunkDefn$chunk_start),
-         paste(injected, collapse = "\n"),
+         paste(unlist(htmlList), collapse = "\n"),
          sprintf("<!-- rnb-chunk-end-%s %s -->", chunkIdx, chunkDefn$chunk_end)
       )
       
-      filled[[i]] <- paste(injection, sep = "\n", collapse = "\n")
+      html[[i]] <- paste(injection, sep = "\n", collapse = "\n")
       chunkIdx <- chunkIdx + 1
    }
-   filled
+   
+   # Inject JSON dependency information into document
+   # TODO: Resolve duplicates
+   htmlDeps <- lapply(jsonDependencies, function(dep) {
+      injection <- character()
+      
+      jsPath <- file.path(dep$src$file, dep$script)
+      if (file.exists(jsPath))
+      {
+         scriptHtml <- sprintf("<script src=\"%s\"></script>", jsPath)
+         injection <- c(injection, scriptHtml)
+      }
+      
+      paste(injection, collapse = "\n")
+   })
+   
+   bodyIdx <- tail(grep("^\\s*</body>\\s*$", html, perl = TRUE), n = 1)
+   html[bodyIdx] <- paste(
+      paste(htmlDeps, collapse = "\n"),
+      "</body>",
+      sep = "\n"
+   )
+   
+   html
 })
 
 .rs.addFunction("rnb.render", function(inputFile,
@@ -383,13 +398,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                                        envir = .GlobalEnv)
 {
    renderOutput <- tempfile("rnb-render-output-", fileext = ".html")
-   outputFormat <- rmarkdown::html_document(self_contained = TRUE,
-                                            keep_md = TRUE)
-   
+   outputOptions <- list(self_contained = TRUE,
+                         keep_md = TRUE)
    rmarkdown::render(input = inputFile,
-                     output_format = outputFormat,
                      output_file = renderOutput,
-                     output_options = list(self_contained = TRUE),
+                     output_options = outputOptions,
                      encoding = "UTF-8",
                      envir = envir,
                      quiet = TRUE)
@@ -446,4 +459,80 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # write to file
    cat(html, file = outputFile, sep = "\n")
    outputFile
+})
+
+.rs.addFunction("createNotebookFromCache", function(rmdPath, outputPath = NULL)
+{
+   if (is.null(outputPath))
+      outputPath <- .rs.withChangedExtension(rmdPath, "Rnb")
+   
+   cachePath <- .rs.rnb.cachePathFromNotebookPath(rmdPath)
+   if (!file.exists(cachePath))
+      stop("no cache data associated with '", rmdPath, "'")
+   
+   rnbData <- .rs.readRnbCache(rmdPath, cachePath)
+   .rs.createNotebookFromCacheData(rnbData, outputPath)
+})
+
+.rs.addFunction("rnb.cachePathFromNotebookPath", function(rmdPath)
+{
+  .Call(.rs.routines$rs_chunkCacheFolder, rmdPath)
+})
+
+.rs.addFunction("rnb.parseConsoleData", function(data)
+{
+   csvData <- read.csv(
+      text = data,
+      encoding = "UTF-8",
+      header = FALSE,
+      stringsAsFactors = FALSE
+   )
+   
+   names(csvData) <- c("type", "text")
+   csvData
+})
+
+.rs.addFunction("rnb.consoleDataToHtml", function(csvData)
+{
+   cutpoints <- .rs.cutpoints(csvData$type)
+   
+   ranges <- Map(
+      function(start, end) list(start = start, end = end),
+      c(1, cutpoints + 1),
+      c(cutpoints, nrow(csvData))
+   )
+   
+   splat <- lapply(ranges, function(range) {
+      
+      type <- csvData$type[[range$start]]
+      collapse <- if (type == 0) "\n" else ""
+      
+      pasted <- paste(csvData$text[range$start:range$end], collapse = collapse)
+      result <- .rs.trimWhitespace(pasted)
+      if (!nzchar(result))
+         return(NULL)
+      
+      if (type == 1 || type == 2)
+         result <- paste("##", gsub("\n", "\n## ", result, fixed = TRUE))
+      
+      attr(result, ".class") <- if (type == 0) "r"
+      
+      result
+   })
+   
+   filtered <- Filter(Negate(is.null), splat)
+   html <- lapply(filtered, function(el) {
+      class <- attr(el, ".class")
+      result <- if (!is.null(class)) {
+         sprintf("<pre class=\"%s\"><code>%s</code></pre>",
+                 class,
+                 el)
+      } else {
+         sprintf("<pre><code>%s</code></pre>", el)
+      }
+      result
+   })
+   
+   paste(unlist(html), collapse = "\n")
+   
 })

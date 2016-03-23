@@ -793,7 +793,7 @@
 .rs.addJsonRpcHandler("get_args", function(name, src)
 {
    if (identical(src, ""))
-      src <- NULL
+      src <- .GlobalEnv
    
    result <- .rs.getSignature(.rs.getAnywhere(name, src))
    result <- sub("function ", "", result)
@@ -966,7 +966,9 @@
 ## NOTE: lists are considered as objects if they are named, and as arrays if
 ## they are not. If you have an empty list that you want to treat as an object,
 ## you must give it a names attribute.
-.rs.addFunction("toJSON", function(object)
+##
+## Unbox will automatically unbox any 1-length non-list vectors.
+.rs.addFunction("toJSON", function(object, unbox = FALSE)
 {
    AsIs <- inherits(object, "AsIs") || inherits(object, ".rs.scalar")
    if (is.list(object))
@@ -974,7 +976,7 @@
       if (is.null(names(object)))
       {
          return(paste('[', paste(lapply(seq_along(object), function(i) {
-            .rs.toJSON(object[[i]])
+            .rs.toJSON(object[[i]], unbox = unbox)
          }), collapse = ','), ']', sep = '', collapse=','))
       }
       else
@@ -984,15 +986,24 @@
                   '"',
                   .rs.jsonEscapeString(enc2utf8(names(object)[[i]])),
                   '":',
-                  .rs.toJSON(object[[i]])
+                  .rs.toJSON(object[[i]], unbox = unbox)
             )
          }), collapse = ','), '}', sep = '', collapse = ','))
       }
    }
    else
    {
+      n <- length(object)
+      
       # NOTE: For type safety we cannot unmarshal NULL as '{}' as e.g. jsonlite does.
-      if (!length(object))
+      if (is.null(object))
+      {
+         if (unbox)
+            return('null')
+         else
+            return('[]')
+      }
+      else if (n == 0)
       {
          return('[]')
       }
@@ -1009,12 +1020,12 @@
       }
       else if (is.logical(object))
       {
-
+         object <- ifelse(object, "true", "false")
          object[is.na(object)] <- 'null'
       }
       
-      if (AsIs)
-         return(object)
+      if (AsIs || (unbox && n == 1))
+         return(paste(object))
       else
          return(paste('[', paste(object, collapse = ','), ']', sep = '', collapse = ','))
    }
@@ -1655,4 +1666,41 @@
       result[[i]] <- .rs.scalar(result[[i]])
    
    return(result)
+})
+
+.rs.addFunction("enumerate", function(list, f, ...)
+{
+   lapply(seq_along(list), function(i) {
+      f(names(list)[[i]], list[[i]], ...)
+   })
+})
+
+.rs.addFunction("cutpoints", function(data)
+{
+   which(diff(sign(diff(c(data, data[length(data)])))) != 0)
+})
+
+.rs.addFunction("recode", function(data, ..., envir = parent.frame())
+{
+   dots <- eval(substitute(alist(...)))
+   
+   for (expr in dots)
+   {
+      if (length(expr) != 3)
+         stop("malformed recoding in .rs.recode()", call. = FALSE)
+      
+      lhs <- eval(expr[[2]], envir = envir)
+      rhs <- eval(expr[[3]], envir = envir)
+      data[data == lhs] <- rhs
+   }
+   
+   data
+})
+
+.rs.addFunction("evalWithAvailableArguments", function(fn, args)
+{
+   filtered <- args[names(args) %in% names(formals(fn))]
+   call <- c(substitute(fn), args)
+   mode(call) <- "call"
+   eval(call, envir = parent.frame())
 })

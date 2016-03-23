@@ -336,6 +336,9 @@ var CppCodeModel = function(session, tokenizer,
             var sectionHeadMatch = /^\/\/'?[-=#\s]*(.*?)\s*[-=#]+\s*$/.exec(
                   tokenCursor.currentValue());
 
+            if (!sectionHeadMatch)
+               continue;
+
             var label = "" + sectionHeadMatch[1];
             if (label.length == 0)
                label = "(Untitled)";

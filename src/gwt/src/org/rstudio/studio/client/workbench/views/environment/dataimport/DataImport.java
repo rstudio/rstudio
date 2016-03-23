@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.dom.DomUtils;
@@ -457,6 +458,7 @@ public class DataImport extends Composite
             @Override
             public void onError(ServerError error)
             {
+               Debug.logError(error);
             }
          });
       }
@@ -519,6 +521,7 @@ public class DataImport extends Composite
                      @Override
                      public void onError(ServerError error)
                      {
+                        Debug.logError(error);
                         progressIndicator_.onError(error.getMessage());
                      }
                   });
@@ -574,6 +577,7 @@ public class DataImport extends Composite
                @Override
                public void onError(ServerError error)
                {
+                  Debug.logError(error);
                   cleanPreviewResources();
                   gridViewer_.setData(null);
                   progressIndicator_.onError(error.getMessage());
@@ -627,6 +631,7 @@ public class DataImport extends Composite
          @Override
          public void onError(ServerError error)
          {
+            Debug.logError(error);
             globalDisplay_.showErrorMessage(codePreviewErrorMessage_, error.getMessage());
          }
       });

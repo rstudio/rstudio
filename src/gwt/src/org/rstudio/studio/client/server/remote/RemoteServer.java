@@ -165,7 +165,6 @@ import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 import org.rstudio.studio.client.workbench.views.source.model.CppSourceLocation;
-import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -636,25 +635,29 @@ public class RemoteServer implements Server
    }
    
    public void getCppCompletions(
+                  String line,
                   String docPath,
-                  int line, 
+                  String docId,
+                  int row, 
                   int column,
                   String userText,
                   ServerRequestCallback<CppCompletionResult> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(docPath));
-      params.set(1, new JSONNumber(line));
-      params.set(2, new JSONNumber(column));
-      params.set(3,  new JSONString(userText));
-      sendRequest(RPC_SCOPE, "get_cpp_completions", params, requestCallback);
+      params.set(0, new JSONString(line));
+      params.set(1, new JSONString(docPath));
+      params.set(2, new JSONString(docId));
+      params.set(3, new JSONNumber(row));
+      params.set(4, new JSONNumber(column));
+      params.set(5,  new JSONString(userText));
+      sendRequest(RPC_SCOPE, GET_CPP_COMPLETIONS, params, requestCallback);
    }
    
    public void getCppDiagnostics(
                  String docPath,
                  ServerRequestCallback<JsArray<CppDiagnostic>> requestCallback)
    {
-      sendRequest(RPC_SCOPE, "get_cpp_diagnostics", docPath, requestCallback);
+      sendRequest(RPC_SCOPE, GET_CPP_DIAGNOSTICS, docPath, requestCallback);
    }
    
    public void printCppCompletions(String docId, 
@@ -1764,19 +1767,6 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, REMOVE_CACHED_DATA, cacheKey, requestCallback);
    }
 
-   public void duplicateDataView(String caption, String envName,
-         String objName, String cacheKey,
-         ServerRequestCallback<DataItem> requestCallback)
-   {
-      
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(caption));
-      params.set(1, new JSONString(envName));
-      params.set(2, new JSONString(objName));
-      params.set(3, new JSONString(cacheKey));
-      sendRequest(RPC_SCOPE, DUPLICATE_DATA_VIEW, params, requestCallback);
-   }
-   
    public void ensureFileExists(String path,
                                 ServerRequestCallback<Boolean> requestCallback)
    {
@@ -4188,23 +4178,6 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void executeInlineChunk(String docPath, String docId, String chunkId, 
-         String options, String content, 
-         ServerRequestCallback<Void> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(docPath == null ? "" : docPath));
-      params.set(1, new JSONString(docId));
-      params.set(2, new JSONString(chunkId));
-      params.set(3, new JSONString(options));
-      params.set(4, new JSONString(content));
-      sendRequest(RPC_SCOPE,
-            "execute_inline_chunk",
-            params,
-            requestCallback);
-   }
-
-   @Override
    public void refreshChunkOutput(String docPath, String docId, 
          String contextId, String requestId, 
          ServerRequestCallback<Void> requestCallback)
@@ -4221,12 +4194,14 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void setChunkConsole(String docId, String chunkId,
-         ServerRequestCallback<Void> requestCallback)
+   public void setChunkConsole(String docId, String chunkId, String options,
+         boolean replace, ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(docId));
       params.set(1, new JSONString(chunkId));
+      params.set(2, new JSONString(options));
+      params.set(3, JSONBoolean.getInstance(replace));
       sendRequest(RPC_SCOPE,
             "set_chunk_console",
             params,
@@ -4577,6 +4552,32 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, OPEN_PROFILE, params, requestCallback);
    }
 
+   public void copyProfile(String fromPath, String toPath,
+                           ServerRequestCallback<JavaScriptObject> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(fromPath));
+      params.set(1, new JSONString(toPath));
+      sendRequest(RPC_SCOPE, COPY_PROFILE, params, requestCallback);
+   }
+
+   public void clearProfile(String path,
+                           ServerRequestCallback<JavaScriptObject> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      sendRequest(RPC_SCOPE, CLEAR_PROFILE, params, requestCallback);
+   }
+
+   public void profileSources(String path, String normPath,
+                              ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      params.set(1, new JSONString(normPath));
+      sendRequest(RPC_SCOPE, PROFILE_SOURCES, params, requestCallback);
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private boolean listeningForEvents_;
@@ -4729,7 +4730,6 @@ public class RemoteServer implements Server
    private static final String GET_CHUNK_OPTIONS = "get_chunk_options";
    private static final String SET_DOC_ORDER = "set_doc_order";
    private static final String REMOVE_CACHED_DATA = "remove_cached_data";
-   private static final String DUPLICATE_DATA_VIEW = "duplicate_data_view";
    private static final String ENSURE_FILE_EXISTS = "ensure_file_exists";
    private static final String GET_SOURCE_DOCUMENT = "get_source_document";
    
@@ -4842,6 +4842,9 @@ public class RemoteServer implements Server
    private static final String BEGIN_FIND = "begin_find";
    private static final String STOP_FIND = "stop_find";
    
+   private static final String GET_CPP_COMPLETIONS = "get_cpp_completions";
+   private static final String GET_CPP_DIAGNOSTICS = "get_cpp_diagnostics";
+   
    private static final String GET_CPP_CAPABILITIES = "get_cpp_capabilities";
    private static final String INSTALL_BUILD_TOOLS = "install_build_tools";
    private static final String START_BUILD = "start_build";
@@ -4934,4 +4937,7 @@ public class RemoteServer implements Server
    private static final String START_PROFILING = "start_profiling";
    private static final String STOP_PROFILING = "stop_profiling";
    private static final String OPEN_PROFILE = "open_profile";
+   private static final String COPY_PROFILE = "copy_profile";
+   private static final String CLEAR_PROFILE = "clear_profile";
+   private static final String PROFILE_SOURCES = "profile_sources";
 }

@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.rmarkdown.events;
 
+import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -26,10 +28,10 @@ public class SendToChunkConsoleEvent
       void onSendToChunkConsole(SendToChunkConsoleEvent event);
    }
 
-   public SendToChunkConsoleEvent(String docId, int row, String code)
+   public SendToChunkConsoleEvent(String docId, Scope scope, String code)
    {
       docId_ = docId;
-      row_ = row;
+      scope_ = scope;
       code_ = code;
    }
 
@@ -40,7 +42,12 @@ public class SendToChunkConsoleEvent
    
    public int getRow() 
    {
-      return row_;
+      return scope_.getEnd().getRow();
+   }
+   
+   public Scope getScope()
+   {
+      return scope_;
    }
    
    public String getCode()
@@ -61,7 +68,7 @@ public class SendToChunkConsoleEvent
    }
    
    private final String docId_;
-   private final int row_;
+   private Scope scope_;
    private final String code_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();

@@ -15,19 +15,47 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class RprofEvent extends GwtEvent<RprofEvent.Handler>
 {
+   public enum RprofEventType
+   {
+      START,
+      STOP,
+      CREATE
+   }
+   
+   public static class Data extends JavaScriptObject
+   {
+      protected Data()
+      {  
+      }
+      
+      public final native String getPath() /*-{
+         return this.path;
+      }-*/;
+
+      public final native String getHtmlPath() /*-{
+         return this.htmlPath;
+      }-*/;
+
+      public final native String getHtmlLocalPath() /*-{
+         return this.htmlLocalPath;
+      }-*/;
+   }
+   
    public interface Handler extends EventHandler
    {
       void onRprofEvent(RprofEvent event);
    }
    
-   public RprofEvent(boolean started)
+   public RprofEvent(RprofEventType type, RprofEvent.Data data)
    {
-      started_ = started;
+      type_ = type;
+      data_ = data;
    }
    
    @Override
@@ -42,11 +70,17 @@ public class RprofEvent extends GwtEvent<RprofEvent.Handler>
       handler.onRprofEvent(this);
    }
    
-   public boolean getStarted()
+   public RprofEventType getEventType()
    {
-      return started_;
+      return type_;
+   }
+   
+   public RprofEvent.Data getData()
+   {
+      return data_;
    }
    
    public static final Type<Handler> TYPE = new Type<Handler>();
-   private boolean started_;
+   private RprofEventType type_;
+   private RprofEvent.Data data_;
 }

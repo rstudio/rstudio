@@ -298,6 +298,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.insertSection());
       dynamicCommands_.add(commands.executeSetupChunk());
       dynamicCommands_.add(commands.executePreviousChunks());
+      dynamicCommands_.add(commands.executeSubsequentChunks());
       dynamicCommands_.add(commands.executeCurrentChunk());
       dynamicCommands_.add(commands.executeNextChunk());
       dynamicCommands_.add(commands.sourceActiveDocument());
@@ -336,7 +337,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.editRmdFormatOptions());
       dynamicCommands_.add(commands.reformatCode());
       dynamicCommands_.add(commands.showDiagnosticsActiveDocument());
-      dynamicCommands_.add(commands.renameInFile());
+      dynamicCommands_.add(commands.renameInScope());
       dynamicCommands_.add(commands.insertRoxygenSkeleton());
       dynamicCommands_.add(commands.expandSelection());
       dynamicCommands_.add(commands.shrinkSelection());
@@ -344,6 +345,13 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.knitWithParameters());
       dynamicCommands_.add(commands.goToNextSection());
       dynamicCommands_.add(commands.goToPrevSection());
+      dynamicCommands_.add(commands.profileCode());
+      dynamicCommands_.add(commands.profileCodeWithoutFocus());
+      dynamicCommands_.add(commands.saveProfileAs());
+      dynamicCommands_.add(commands.restartRClearOutput());
+      dynamicCommands_.add(commands.restartRRunAllChunks());
+      dynamicCommands_.add(commands.notebookCollapseAllOutput());
+      dynamicCommands_.add(commands.notebookExpandAllOutput());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
@@ -1069,12 +1077,14 @@ public class Source implements InsertSourceHandler,
    public void onShowProfiler(OpenProfileEvent event)
    {
       String profilePath = event.getFilePath();
+      String htmlPath = event.getHtmlPath();
+      String htmlLocalPath = event.getHtmlLocalPath();
       
       // first try to activate existing
       for (int idx = 0; idx < editors_.size(); idx++)
       {
          String path = editors_.get(idx).getPath();
-         if (profilePath.equals(path))
+         if (path != null && profilePath.equals(path))
          {
             ensureVisible(false);
             view_.selectTab(idx);
@@ -1087,7 +1097,11 @@ public class Source implements InsertSourceHandler,
       server_.newDocument(
             FileTypeRegistry.PROFILER.getTypeId(),
             null,
-            (JsObject) ProfilerContents.create(profilePath).cast(),
+            (JsObject) ProfilerContents.create(
+                  profilePath,
+                  htmlPath, 
+                  htmlLocalPath,
+                  event.getCreateProfile()).cast(),
             new SimpleRequestCallback<SourceDocument>("Show Profiler")
             {
                @Override
@@ -1098,7 +1112,6 @@ public class Source implements InsertSourceHandler,
             });
    }
    
-
    @Handler
    public void onNewSourceDoc()
    {
@@ -2910,12 +2923,13 @@ public class Source implements InsertSourceHandler,
 
    private EditingTarget addTab(SourceDocument doc, Integer position)
    {
+      final String defaultNamePrefix = editingTargetSource_.getDefaultNamePrefix(doc);
       final EditingTarget target = editingTargetSource_.getEditingTarget(
             doc, fileContext_, new Provider<String>()
             {
                public String get()
                {
-                  return getNextDefaultName();
+                  return getNextDefaultName(defaultNamePrefix);
                }
             });
       
@@ -3002,20 +3016,25 @@ public class Source implements InsertSourceHandler,
       return target;
    }
 
-   private String getNextDefaultName()
+   private String getNextDefaultName(String defaultNamePrefix)
    {
+      if (StringUtil.isNullOrEmpty(defaultNamePrefix))
+      {
+         defaultNamePrefix = "Untitled";
+      }
+      
       int max = 0;
       for (EditingTarget target : editors_)
       {
          String name = target.getName().getValue();
-         max = Math.max(max, getUntitledNum(name));
+         max = Math.max(max, getUntitledNum(name, defaultNamePrefix));
       }
 
-      return "Untitled" + (max + 1);
+      return defaultNamePrefix + (max + 1);
    }
 
-   private native final int getUntitledNum(String name) /*-{
-      var match = /^Untitled([0-9]{1,5})$/.exec(name);
+   private native final int getUntitledNum(String name, String prefix) /*-{
+      var match = (new RegExp("^" + prefix + "([0-9]{1,5})$")).exec(name);
       if (!match)
          return 0;
       return parseInt(match[1]);
@@ -3318,6 +3337,10 @@ public class Source implements InsertSourceHandler,
       manageMultiTabCommands();
       
       activeCommands_ = newCommands;
+      
+      // give the active editor a chance to manage commands
+      if (activeEditor_ != null)
+         activeEditor_.manageCommands();
 
       assert verifyNoUnsupportedCommands(newCommands)
             : "Unsupported commands detected (please add to Source.dynamicCommands_)";

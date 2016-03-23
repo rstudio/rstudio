@@ -19,30 +19,35 @@ public class TextEditingTargetRenameHelper
    {
       editor_ = (AceEditor) docDisplay;
       state_ = new Stack<Integer>();
-      newFnArgNames_ = new HashSet<String>();
+      protectedNamesList_ = new ArrayList<Set<String>>();
       ranges_ = new ArrayList<Range>();
    }
    
-   public int renameInFile()
+   public int renameInScope()
    {
       init();
       TextFileType type = editor_.getFileType();
       if (type.isR() || type.isRhtml() || type.isRmd() || type.isRnw() || type.isRpres())
-         return renameInFileR();
-      return -1;
+         return renameInScopeR();
+      
+      return 0;
    }
    
-   private int renameInFileR()
+   private int renameInScopeR()
    {
-      Position position = editor_.hasSelection() ?
+      Position startPosition = editor_.hasSelection() ?
             editor_.getSelectionStart() :
             editor_.getCursorPosition();
             
       TokenCursor cursor = editor_.getSession().getMode().getCodeModel().getTokenCursor();
-      if (!cursor.moveToPosition(position, true))
-         return -1;
+      if (!cursor.moveToPosition(startPosition, true))
+         return 0;
       
-      editor_.setCursorPosition(position);
+      if (cursor.isRightBracket())
+         if (!cursor.moveToPreviousToken())
+            return 0;
+      
+      editor_.setCursorPosition(cursor.currentPosition());
       
       // Ensure the scope tree is built, since we use that for determining
       // the scope for the current refactor.
@@ -51,9 +56,20 @@ public class TextEditingTargetRenameHelper
       // Validate that we're looking at an R identifier
       String targetValue = cursor.currentValue();
       String targetType = cursor.currentType();
-
-      if (!cursor.hasType("identifier", "keyword", "constant.language"))
-         return -1;
+      
+      boolean isRefactorable =
+            cursor.hasType("identifier", "constant.language", "string") ||
+            cursor.typeEquals("keyword");
+      
+      if (!isRefactorable)
+         return 0;
+      
+      // If we're refactoring a string, just do it through the whole document.
+      if (cursor.typeEquals("string"))
+      {
+         editor_.selectAll(cursor.currentValue());
+         return editor_.getNativeSelection().getAllRanges().length;
+      }
       
       // Check to see if we're refactoring the name of an argument in a function call,
       // e.g.
@@ -63,7 +79,7 @@ public class TextEditingTargetRenameHelper
       //
       // If this is the case, then we want to search for all calls of this
       // form and rename just that argument.
-      if (cursor.peekFwd(1).valueEquals("="))
+      if (cursor.peekFwd(1).valueEquals("=") && cursor.isWithinFunctionCall())
       {
          String argName = cursor.currentValue();
          TokenCursor clone = cursor.cloneCursor();
@@ -79,33 +95,79 @@ public class TextEditingTargetRenameHelper
          }
       }
       
-      // Check to see if this is the name of a function argument. If so, we only want
-      // to rename within that scope.
-      Scope scope = editor_.getCurrentScope();
+      // Determine the appropriate refactoring scope.
+      //
+      // Algorithm:
+      //
+      //    1. Get the function scope.
+      //    2. If we have an argument of the same name, or function
+      //       of the same name, rename in that scope.
+      //    3. Otherwise, walk forward from the start of that scope,
+      //       looking for assignments.
+      //    4. If we discover an assignment, rename in that scope
+      //       from that position.
+      //    5. Repeat while not at top level.
+      //
+      // TODO: if renaming a function argument, we should also rename
+      //       named usages of that function argument where possible.
+      Scope scope = editor_.getScopeAtPosition(cursor.currentPosition());
+      
+      // If the cursor is on the name of a function, then pop up one scope.
+      // We want to consider scopes as 'within' the braces, but the 'preamble'
+      // of a scope begins with the function identifier.
+      if (cursor.peekFwd(1).isLeftAssign() &&
+          cursor.peekFwd(2).valueEquals("function") &&
+          !scope.isTopLevel())
+      {
+         scope = scope.getParentScope();
+      }
       
       while (!scope.isTopLevel())
       {
          if (scope.isFunction())
          {
-            boolean isCursorOnFunctionDefn =
-                  cursor.peek(1).isLeftAssign() &&
-                  cursor.peek(2).getValue().equals("function");
+            ScopeFunction scopeFn = (ScopeFunction) scope;
             
-            if (!isCursorOnFunctionDefn)
+            String fnName = scopeFn.getFunctionName();
+            if (fnName.equals(targetValue))
+               return renameVariablesInScope(scope, targetValue, targetType);
+            
+            JsArrayString fnArgs = scopeFn.getFunctionArgs();
+            for (int i = 0; i < fnArgs.length(); i++)
+               if (fnArgs.get(i).equals(targetValue))
+                  return renameVariablesInScope(scope, targetValue, targetType);
+         }
+         
+         if (!cursor.moveToPosition(scope.getBodyStart(), true))
+            continue;
+         
+         while (cursor.moveToNextToken())
+         {
+            if (cursor.fwdToMatchingToken())
+               continue;
+            
+            if (cursor.currentPosition().isAfterOrEqualTo(scope.getEnd()) ||
+                cursor.currentPosition().isAfterOrEqualTo(startPosition))
             {
-               ScopeFunction scopeFunction = (ScopeFunction) scope;
-               JsArrayString args = scopeFunction.getFunctionArgs();
-               for (int i = 0; i < args.length(); i++)
-                  if (args.get(i).equals(targetValue))
-                     return renameVariablesInScope(scope, targetValue, targetType);
+               break;
+            }
+            
+            if (cursor.peekFwd(1).isLeftAssign() &&
+                !cursor.peekBwd(1).isExtractionOperator())
+            {
+               return renameVariablesInScope(
+                     scope,
+                     cursor.currentPosition(),
+                     targetValue,
+                     targetType);
             }
          }
+         
          scope = scope.getParentScope();
       }
       
-      // Otherwise, just rename the variable within the current scope.
       return renameVariablesInScope(
-            editor_.getCurrentScope(),
+            scope,
             targetValue,
             targetType);
    }
@@ -158,18 +220,25 @@ public class TextEditingTargetRenameHelper
       
    }
    
-   private int renameVariablesInScope(Scope scope, String targetValue, String targetType)
+   private int renameVariablesInScope(Scope scope,
+                                      String targetValue,
+                                      String targetType)
    {
-      Position startPos = scope.getPreamble();
+      return renameVariablesInScope(scope, scope.getPreamble(), targetValue, targetType);
+   }
+   
+   private int renameVariablesInScope(Scope scope,
+                                      Position startPos,
+                                      String targetValue,
+                                      String targetType)
+   {
       Position endPos = scope.getEnd();
       
-      // NOTE: Top-level scope does not have 'end' position
-      if (scope.isTopLevel())
+      if (endPos == null)
          endPos = Position.create(editor_.getSession().getLength(), 0);
       
       TokenCursor cursor = editor_.getSession().getMode().getCodeModel().getTokenCursor();
-      if (!cursor.moveToPosition(startPos, true))
-         return 0;
+      cursor.moveToPosition(startPos, true);
       
       // Workaround 'moveToPosition' not handling forward searches (yet)
       if (cursor.getRow() < startPos.getRow())
@@ -201,7 +270,9 @@ public class TextEditingTargetRenameHelper
             
             // Update protected names for braces.
             if (cursor.valueEquals("{"))
-               updateProtectedNames(cursor.currentPosition(), scope, false);
+               pushProtectedNames(cursor.currentPosition(), scope);
+            
+            continue;
          }
          
          // Right brackets pop the stack.
@@ -209,19 +280,36 @@ public class TextEditingTargetRenameHelper
          {
             popState();
             if (cursor.valueEquals("}"))
-               updateProtectedNames(cursor.currentPosition(), scope, true);
+               popProtectedNames(cursor.currentPosition());
+            
+            continue;
+         }
+         
+         // Protect a name if it's the target of an assignment in a child scope.
+         if (cursor.hasType("identifier") &&
+             cursor.peekFwd(1).isLeftAssign() &&
+             !cursor.peekBwd(1).isExtractionOperator())
+         {
+            Scope candidate = editor_.getScopeAtPosition(cursor.currentPosition());
+            if (cursor.peekFwd(2).valueEquals("function") && !candidate.isTopLevel())
+               candidate = candidate.getParentScope();
+            
+            if (candidate != scope)
+            {
+               addProtectedName(cursor.currentValue());
+               continue;
+            }
          }
          
          // Bail if we've reached the end of the scope.
          if (cursor.currentPosition().isAfterOrEqualTo(endPos))
             break;
          
-         if (cursor.currentType().equals(targetType) &&
-             cursor.currentValue().equals(targetValue))
+         if (cursor.currentValue().equals(targetValue))
          {
             // Skip 'protected' names. These are names that have been overwritten
             // either as assignments, or exist as names to newly defined functions.
-            if (newFnArgNames_.contains(cursor.currentValue()))
+            if (isProtectedName(cursor.currentValue()))
                continue;
             
             // Don't rename the argument names for named function calls.
@@ -290,6 +378,8 @@ public class TextEditingTargetRenameHelper
    {
       ranges_.clear();
       state_.clear();
+      protectedNamesList_.clear();
+      protectedNamesList_.add(new HashSet<String>());
    }
    
    private int peekState()
@@ -319,32 +409,44 @@ public class TextEditingTargetRenameHelper
       return Range.fromPoints(startPos, endPos);
    }
    
-   private void updateProtectedNames(Position position,
-                                     Scope parentScope,
-                                     boolean excludeCurrentState)
+   private boolean isProtectedName(String name)
    {
-      newFnArgNames_.clear();
+      for (int i = 0; i < protectedNamesList_.size(); i++)
+         if (protectedNamesList_.get(i).contains(name))
+            return true;
       
+      return false;
+   }
+   
+   private void addProtectedName(String name)
+   {
+      protectedNamesList_.get(protectedNamesList_.size() - 1).add(name);
+   }
+   
+   private void pushProtectedNames(Position position, Scope parentScope)
+   {
+      protectedNamesList_.add(new HashSet<String>());
       Scope scope = editor_.getScopeAtPosition(position);
-      if (excludeCurrentState)
-         scope = scope.getParentScope();
-      
-      while (scope != parentScope && !(scope.isTopLevel()))
+      if (scope.isFunction() && scope != parentScope)
       {
-         if (scope.isFunction())
-         {
-            JsArrayString argNames = ((ScopeFunction) scope).getFunctionArgs();
-            for (int i = 0; i < argNames.length(); i++)
-               newFnArgNames_.add(argNames.get(i));
-         }
-         scope = scope.getParentScope();
+         JsArrayString argNames = ((ScopeFunction) scope).getFunctionArgs();
+         for (int i = 0; i < argNames.length(); i++)
+            addProtectedName(argNames.get(i));
       }
+   }
+   
+   private void popProtectedNames(Position position)
+   {
+      if (protectedNamesList_.size() <= 1)
+         return;
+      
+      protectedNamesList_.remove(protectedNamesList_.size() - 1);
    }
    
    private final AceEditor editor_;
    private final List<Range> ranges_;
    private final Stack<Integer> state_;
-   private final Set<String> newFnArgNames_;
+   private final List<Set<String>> protectedNamesList_;
    
    private static final int STATE_TOP_LEVEL = 1;
    private static final int STATE_DEFAULT = 2;

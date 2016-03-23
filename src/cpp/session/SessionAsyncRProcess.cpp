@@ -64,7 +64,8 @@ void AsyncRProcess::start(const char* rCommand,
       
       const core::FilePath rTools =  rPath.childPath("Tools.R");
       
-      rSourceFiles.push_back(rTools);
+      // insert at begin as Tools.R needs to be sourced first
+      rSourceFiles.insert(rSourceFiles.begin(), rTools);
    }
 
    // args
@@ -102,6 +103,11 @@ void AsyncRProcess::start(const char* rCommand,
    if (needsQuote)
       command << "\"";
 
+   std::string escapedCommand = rCommand;
+
+   if (needsQuote)
+      boost::algorithm::replace_all(escapedCommand, "\"", "\\\"");
+    
    if (rSourceFiles.size())
    {
       // add in the r source files requested
@@ -112,11 +118,11 @@ void AsyncRProcess::start(const char* rCommand,
          command << "source('" << it->absolutePath() << "');";
       }
       
-      command << rCommand;
+      command << escapedCommand;
    }
    else
    {
-      command << rCommand;
+      command << escapedCommand;
    }
 
    if (needsQuote)

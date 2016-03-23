@@ -101,6 +101,17 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
                   RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX);
    }
    
+   public final boolean isHtmlDashboard()
+   {
+      return (isShinyDocument() || isHtml()) && getFormatName().endsWith(
+            RmdOutputFormat.OUTPUT_DASHBOARD_SUFFIX);
+   }
+   
+   public final boolean getRestoreAnchor()
+   {
+      return isHtmlPresentation() || isHtmlDashboard();
+   }
+   
    // indicates whether this result represents the same *output* document as
    // another result (must match name and type)
    public final boolean equals(RmdRenderResult other)

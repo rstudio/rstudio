@@ -321,7 +321,9 @@ public class TextFileType extends EditableFileType
          results.add(commands.commentUncomment());
          results.add(commands.reflowComment());
          results.add(commands.reformatCode());
-         results.add(commands.renameInFile());
+         results.add(commands.renameInScope());
+         results.add(commands.profileCode());
+         results.add(commands.profileCodeWithoutFocus());
       }
       
       if (canExecuteAllCode())
@@ -339,11 +341,17 @@ public class TextFileType extends EditableFileType
          results.add(commands.executeToCurrentLine());
          results.add(commands.executeFromCurrentLine());
          results.add(commands.executeCurrentSection());
+         results.add(commands.profileCode());
       }
       if (canKnitToHTML())
       {
          results.add(commands.editRmdFormatOptions());
          results.add(commands.knitWithParameters());
+         results.add(commands.restartRClearOutput());
+         results.add(commands.restartRRunAllChunks());
+         results.add(commands.notebookCollapseAllOutput());
+         results.add(commands.notebookExpandAllOutput());
+         results.add(commands.executeSetupChunk());
       }
       if (canKnitToHTML() || canCompileNotebook())
       {
@@ -365,8 +373,8 @@ public class TextFileType extends EditableFileType
       if (canExecuteChunks())
       {
          results.add(commands.insertChunk());
-         results.add(commands.executeSetupChunk());
          results.add(commands.executePreviousChunks());
+         results.add(commands.executeSubsequentChunks());
          results.add(commands.executeCurrentChunk());
          results.add(commands.executeNextChunk());
       }

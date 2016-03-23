@@ -15,7 +15,9 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardHelper;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
@@ -61,6 +63,10 @@ public class CppCompletionUtils
       // get the current line of code
       String line = docDisplay.getCurrentLine();
       
+      // is this an '#include' line?
+      Pattern reInclude = Pattern.create("^\\s*#+\\s*include", "");
+      boolean isInclude = reInclude.test(line);
+      
       // get the cursor position
       Position position = docDisplay.getCursorPosition();
       
@@ -79,10 +85,21 @@ public class CppCompletionUtils
                
       // walk backwards across C++ identifer symbols 
       int col = inputCol;
-      while ((col >= 0) && 
-            CppCompletionUtils.isCppIdentifierChar(line.charAt(col)))
+      if (isInclude)
       {
-         col--;
+         while (col >= 0 &&
+               !StringUtil.isOneOf(line.charAt(col), '/', '<', '"'))
+         {
+            col--;
+         }
+      }
+      else
+      {
+         while ((col >= 0) && 
+               CppCompletionUtils.isCppIdentifierChar(line.charAt(col)))
+         {
+            col--;
+         }
       }
      
       // record source position
@@ -108,19 +125,31 @@ public class CppCompletionUtils
                                        CompletionPosition.Scope.Namespace);
       }
       
+      // directory
+      else if (isInclude && ch == '/')
+      {
+         return new CompletionPosition(startPos,
+                                       "", // no user test (get all completions)
+                                       CompletionPosition.Scope.File);
+      }
+      
       // minimum character threshold
       else if ((alwaysComplete || explicit) &&                     // either always completing or explicit
                ((inputCol - col) >= (explicit ? 1 : autoChars)) && // meets the character threshold
-               (ch != '"'))                                        // not a quote character
+               (isInclude || ch != '"'))                           // not a quote character
       {
          // calculate user text (up to two characters of additional
          // server side filter)
          String userText = line.substring(
                col + 1, Math.min(col + 3, position.getColumn()));
-           
+         
+         CompletionPosition.Scope scope = isInclude
+               ? CompletionPosition.Scope.File
+               : CompletionPosition.Scope.Global;
+               
          return new CompletionPosition(startPos,
                                        userText,
-                                       CompletionPosition.Scope.Global);
+                                       scope);
       }
       else
       {

@@ -38,18 +38,7 @@ namespace notebook {
 
 core::Error initialize();
 
-core::Error ensureCacheFolder(const core::FilePath& cacheFolder);
-
-core::Error getChunkDefs(const std::string& docPath, const std::string& docId, 
-      std::time_t *pDocTime, core::json::Value* pDefs);
-
-core::Error setChunkDefs(const std::string& docPath, const std::string& docId, 
-      std::time_t docTime, const core::json::Array& defs);
-
-core::Error extractTagAttrs(const std::string& tag,
-                            const std::string& attr,
-                            const std::string& contents,
-                            std::vector<std::string>* pValues);
+std::string notebookCtxId();
 
 struct Events : boost::noncopyable
 {
@@ -62,6 +51,9 @@ struct Events : boost::noncopyable
    boost::signal<void(const std::string&, const std::string&, int, 
                 const std::string&)>
                 onChunkConsoleOutput;
+
+   boost::signal<void(const core::FilePath&)> onPlotOutput;
+   boost::signal<void(const core::FilePath&, const core::FilePath&)> onHtmlOutput;
 };
 
 Events& events();

@@ -120,6 +120,11 @@ public class Token extends JavaScriptObject
       );
    }-*/;
    
+   public final String asString()
+   {
+      return "'" + getType() + "' -> '" + getValue() + "'";
+   }
+   
    // NOTE: Tokens attached to a document should be considered immutable;
    // use setters only when applying to a tokenized line separate from an
    // active editor!

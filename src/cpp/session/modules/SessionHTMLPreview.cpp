@@ -488,11 +488,12 @@ Error previewHTML(const json::JsonRpcRequest& request,
                                        "requires_knit", &knit,
                                        "is_notebook", &isNotebook);
 
-   if (isNotebook)
-      file = deriveNotebookPath(file);
-
    if (error)
       return error;
+
+   if (isNotebook)
+      file = deriveNotebookPath(file);
+   
    FilePath filePath = module_context::resolveAliasedPath(file);
 
    // if we have a preview already running then just return false

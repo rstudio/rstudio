@@ -26,6 +26,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DisplayChunkOptionsEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunksEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -133,6 +134,18 @@ public class ChunkIconsManager
       return engine.equals("r") || engine.equals("rscript");
    }
    
+   private boolean chunkLiesWithinFoldedMarkdownSection(Element el, AceEditorNative editor)
+   {
+      Position pos = toDocumentPosition(el, editor);
+      AceFold fold = editor.getSession().getFoldAt(pos.getRow() + 1, 0);
+      if (fold == null)
+         return false;
+      
+      Position foldPos = fold.getStart();
+      String state = editor.getSession().getState(foldPos.getRow());
+      return !"r-start".equals(state);
+   }
+   
    private void manageChunkIcons(AceEditorNative editor)
    {
       Element container = editor.getContainer();
@@ -165,6 +178,9 @@ public class ChunkIconsManager
             continue;
          
          if (!DomUtils.isVisibleVert(container, el))
+            continue;
+         
+         if (chunkLiesWithinFoldedMarkdownSection(el, editor))
             continue;
          
          if (el.getChildCount() > 0)

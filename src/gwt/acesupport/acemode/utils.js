@@ -174,6 +174,17 @@ var Unicode = require("ace/unicode").packages;
       ">" : "<"
    };
 
+   this.isBracket = function(string, allowArrow)
+   {
+      if (!!allowArrow && (string === "<" || string === ">"))
+         return true;
+
+      return string === "{" || string === "}" ||
+             string === "(" || string === ")" ||
+             string === "[" || string === "]";
+             
+   };
+
    this.isOpeningBracket = function(string, allowArrow)
    {
       return string === "{" ||

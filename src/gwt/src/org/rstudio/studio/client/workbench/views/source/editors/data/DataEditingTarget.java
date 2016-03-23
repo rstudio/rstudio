@@ -19,21 +19,18 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
-import org.rstudio.studio.client.common.satellite.SatelliteManager;
-import org.rstudio.studio.client.dataviewer.DataViewerSatellite;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.events.DataViewChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
@@ -53,11 +50,10 @@ public class DataEditingTarget extends UrlContentEditingTarget
    public DataEditingTarget(SourceServerOperations server,
                             Commands commands,
                             GlobalDisplay globalDisplay,
-                            EventBus events,
-                            SatelliteManager satelliteManager)
+                            EventBus events)
    {
       super(server, commands, globalDisplay, events);
-      satelliteManager_ = satelliteManager;
+      events_ = events;
       isActive_ = true;
       events.addHandler(DataViewChangedEvent.TYPE, this);
    }
@@ -187,33 +183,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
    @Override
    public void popoutDoc()
    {
-      DataItem item = getDataItem();
-      if (item.getCacheKey() != null && item.getCacheKey().length() > 0)
-      {
-         // if we have a cache key, duplicate it
-         server_.duplicateDataView(item.getCaption(), item.getEnvironment(), 
-                                   item.getObject(), item.getCacheKey(), 
-               new ServerRequestCallback<DataItem>() {
-                  @Override
-                  public void onResponseReceived(DataItem item)
-                  {
-                     satelliteManager_.openSatellite(DataViewerSatellite.NAME, item, 
-                                                     new Size(750, 850));
-                  }
-
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     globalDisplay_.showErrorMessage("View Failed", 
-                           error.getMessage());
-                  }
-         });
-      }
-      else
-      {
-         // no cache key, just show the content directly
-         globalDisplay_.showHtmlFile(item.getContentUrl());
-      }
+      events_.fireEvent(new PopoutDocEvent(getId(), null));
    }
 
    protected String getCacheKey()
@@ -263,26 +233,9 @@ public class DataEditingTarget extends UrlContentEditingTarget
             });
    }
 
-   @Override
-   public void onDismiss(int dismissType)
-   {
-      if (dismissType == EditingTarget.DISMISS_TYPE_CLOSE)
-      {
-         server_.removeCachedData(getCacheKey(),
-            new ServerRequestCallback<org.rstudio.studio.client.server.Void>()
-            {
-               @Override
-               public void onError(ServerError error)
-               {
-                  Debug.logError(error);
-               }
-            });
-      }
-   }
-
    private SimplePanelWithProgress progressPanel_;
    private DataEditingTargetWidget view_;
-   private final SatelliteManager satelliteManager_;
+   private final EventBus events_;
    private boolean isActive_;
    private QueuedRefreshType queuedRefresh_;
 }

@@ -60,6 +60,7 @@ public interface EditingTarget extends IsWidget,
    String getExtendedFileType();
    
    HashSet<AppCommand> getSupportedCommands();
+   void manageCommands();
    boolean canCompilePdf();
    
    void verifyCppPrerequisites();
@@ -137,6 +138,8 @@ public interface EditingTarget extends IsWidget,
     * Any bigger than this, and the user should be warned before opening
     */
    long getLargeFileSize();
+   
+   String getDefaultNamePrefix();
    
    public final static int DISMISS_TYPE_CLOSE = 0;
    public final static int DISMISS_TYPE_MOVE = 1;

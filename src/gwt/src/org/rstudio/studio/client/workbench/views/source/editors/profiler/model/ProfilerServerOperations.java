@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.profiler.model;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
+import com.google.gwt.core.client.JavaScriptObject;
+
 
 public interface ProfilerServerOperations
 {
@@ -27,4 +29,14 @@ public interface ProfilerServerOperations
 
    void openProfile(ProfileOperationRequest profilerRequest,
                     ServerRequestCallback<ProfileOperationResponse> requestCallback);
+   
+   void copyProfile(String fromPath,
+                    String toPath,
+                    ServerRequestCallback<JavaScriptObject> requestCallback);
+
+   void clearProfile(String path,
+                     ServerRequestCallback<JavaScriptObject> requestCallback);
+
+   void profileSources(String path, String normPath,
+                       ServerRequestCallback<String> requestCallback);
 }

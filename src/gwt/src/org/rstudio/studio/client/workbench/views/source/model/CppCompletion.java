@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.code.CodeIcons;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -59,6 +61,8 @@ public class CppCompletion extends JavaScriptObject
    public static final int ENUM_VALUE = 9;
    public static final int KEYWORD = 10;
    public static final int MACRO = 11;
+   public static final int FILE = 12;
+   public static final int DIRECTORY = 13;
    
    public static final int SNIPPET = 99;
    
@@ -94,11 +98,15 @@ public class CppCompletion extends JavaScriptObject
          return icons.macro();
       case SNIPPET:
          return icons.snippet();
+      case FILE:
+         return REGISTRY.getIconForFilename(getTypedText());
+      case DIRECTORY:
+         return icons.folder();
       default:
          return icons.keyword();
       }
    }
-    
+   
    public final boolean hasParameters()
    {
       if (getType() == FUNCTION)
@@ -122,4 +130,7 @@ public class CppCompletion extends JavaScriptObject
    public native final JsArray<CppCompletionText> getText() /*-{
       return this.text;
    }-*/;
+   
+   private static final FileTypeRegistry REGISTRY =
+         RStudioGinjector.INSTANCE.getFileTypeRegistry();
 }

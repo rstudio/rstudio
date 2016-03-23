@@ -31,7 +31,6 @@ import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.dataviewer.DataTable;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
-import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
@@ -117,18 +116,7 @@ public class DataEditingTargetWidget extends Composite
    private Toolbar createToolbar(DataItem dataItem, Styles styles)
    {
 
-      Toolbar toolbar = new EditingTargetToolbar(commands_);
-      if (SourceWindowManager.isMainSourceWindow())
-      {
-         toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
-      }
-      else
-      {
-         toolbar.addLeftWidget(
-               commands_.returnDocToMain().createToolbarButton());
-      }
-      toolbar.addLeftSeparator();
-      
+      Toolbar toolbar = new EditingTargetToolbar(commands_, true);
       table_.initToolbar(toolbar);
 
       return toolbar;

@@ -6,11 +6,16 @@ if "%1" == "clean" call clean-build.bat
 
 REM Prepend Qt 5.4 SDK Mingw to path
 setlocal
-set PATH=C:\Qt\Qt5.4.0\Tools\mingw491_32\bin;%PATH%
+set PATH=C:\Qt\Qt5.4.1\Tools\mingw491_32\bin;%PATH%
 
 REM Remove Rtools from path
 CALL SET PATH=%PATH:C:\Rtools\bin=%
 CALL SET PATH=%PATH:C:\Rtools\gcc-4.6.3\bin=%
+
+REM Remove Git from PATH (otherwise cmake complains about
+REM finding 'sh.exe')
+CALL set PATH=%PATH:C:\Program Files (x86)\Git\bin=%
+CALL set PATH=%PATH:C:\Program Files\Git\bin=%
 
 REM Establish build dir
 set BUILD_DIR=build
@@ -24,7 +29,7 @@ cd "%BUILD_DIR%"
 del CMakeCache.txt
 rmdir /s /q "%BUILD_DIR%\_CPack_Packages"
 cmake -G"MinGW Makefiles" -DRSTUDIO_TARGET=Desktop -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DRSTUDIO_PACKAGE_BUILD=1 ..\..\..
-mingw32-make 
+mingw32-make %MAKEFLAGS%
 cd ..
 
 REM perform 64-bit build and install it into the 32-bit tree

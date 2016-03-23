@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-16 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -155,6 +155,13 @@ set (SESSION_SOURCE_FILES
    modules/rmarkdown/SessionRMarkdown.cpp
    modules/rmarkdown/SessionRmdNotebook.cpp
    modules/rmarkdown/SessionRnbParser.cpp
+   modules/rmarkdown/NotebookCache.cpp
+   modules/rmarkdown/NotebookChunkDefs.cpp
+   modules/rmarkdown/NotebookExec.cpp
+   modules/rmarkdown/NotebookHtmlWidgets.cpp
+   modules/rmarkdown/NotebookOutput.cpp
+   modules/rmarkdown/NotebookPaths.cpp
+   modules/rmarkdown/NotebookPlots.cpp
    modules/rmarkdown/RMarkdownPresentation.cpp
    modules/shiny/SessionShiny.cpp
    modules/tex/SessionCompilePdf.cpp

@@ -53,7 +53,6 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.spelling.SpellChecker;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
-import org.rstudio.studio.client.dataviewer.DataViewerSatellite;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.projects.ui.newproject.CodeFilesList;
@@ -79,6 +78,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
+import org.rstudio.studio.client.workbench.ui.ConsoleTabPanel;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
@@ -98,7 +98,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
-import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
+import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
+import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.SetupChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
@@ -140,7 +141,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(LocalRepositoriesWidget localRepositoriesWidget);
    void injectMembers(CppCompletionRequest request);
    void injectMembers(CppCompletionManager completionManager);
-   void injectMembers(RCompletionToolTip toolTip);
+   void injectMembers(SignatureToolTipManager manager);
    void injectMembers(PathBreadcrumbWidget pathBreadcrumbWidget);
    void injectMembers(LintManager manager);
    void injectMembers(CompletionRequester requester);
@@ -171,6 +172,8 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(DataImportDialog dataImportDialog);
    void injectMembers(DataImport dataImport);
    void injectMembers(DataImportOptionsUiCsv dataImport);
+   void injectMembers(CppCompletion completion);
+   void injectMembers(ConsoleTabPanel consoleTabPanel);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
@@ -184,7 +187,6 @@ public interface RStudioGinjector extends Ginjector
    RmdOutputSatellite getRmdOutputSatellite();
    RmdOutputFramePane getRmdOutputFramePane();
    RmdOutputFrameSatellite getRmdOutputFrameSatellite();
-   DataViewerSatellite getDataViewerSatellite();
    EventBus getEventBus();
    GlobalDisplay getGlobalDisplay();
    RemoteFileSystemContext getRemoteFileSystemContext();

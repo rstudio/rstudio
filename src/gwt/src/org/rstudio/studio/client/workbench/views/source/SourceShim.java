@@ -49,7 +49,8 @@ import org.rstudio.studio.client.workbench.views.source.events.*;
 @Singleton
 public class SourceShim extends Composite
    implements IsWidget, HasEnsureVisibleHandlers, HasEnsureHeightHandlers, BeforeShowCallback,
-              ProvidesResize, RequiresResize, RequiresVisibilityChanged, MaximizeSourceWindowEvent.Handler
+              ProvidesResize, RequiresResize, RequiresVisibilityChanged, MaximizeSourceWindowEvent.Handler,
+              EnsureVisibleSourceWindowEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, AsyncSource> {}
 
@@ -189,6 +190,7 @@ public class SourceShim extends Composite
       events.addHandler(InsertSourceEvent.TYPE, asyncSource);
       events.addHandler(SnippetsChangedEvent.TYPE, asyncSource);
       events.addHandler(MaximizeSourceWindowEvent.TYPE, this);
+      events.addHandler(EnsureVisibleSourceWindowEvent.TYPE, this);
       asyncSource_ = asyncSource;
 
       events.fireEvent(new DocTabsChangedEvent(new String[0],
@@ -217,7 +219,18 @@ public class SourceShim extends Composite
    @Override
    public void onMaximizeSourceWindow(MaximizeSourceWindowEvent e)
    {
+      fireEvent(new EnsureVisibleEvent());
       fireEvent(new EnsureHeightEvent(EnsureHeightEvent.MAXIMIZED));
+   }
+   
+   @Override
+   public void onEnsureVisibleSourceWindow(EnsureVisibleSourceWindowEvent e)
+   {
+      if (source_.getView().getTabCount() > 0)
+      {
+         fireEvent(new EnsureVisibleEvent());
+         fireEvent(new EnsureHeightEvent(EnsureHeightEvent.NORMAL));
+      }
    }
 
    public void forceLoad()

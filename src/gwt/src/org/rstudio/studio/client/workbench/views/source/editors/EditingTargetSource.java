@@ -32,6 +32,7 @@ public interface EditingTargetSource
    EditingTarget getEditingTarget(SourceDocument document,
                                   RemoteFileSystemContext fileContext,
                                   Provider<String> defaultNameProvider);
+   String getDefaultNamePrefix(SourceDocument doc);
 
    public static class Impl implements EditingTargetSource
    {
@@ -71,12 +72,8 @@ public interface EditingTargetSource
                                    final RemoteFileSystemContext fileContext,
                                    final Provider<String> defaultNameProvider)
       {
-         FileType type = registry_.getTypeByTypeName(document.getType());
-         if (type == null)
-         {
-            Debug.log("Unknown document type: " + document.getType());
-            type = FileTypeRegistry.TEXT;
-         }
+         FileType type = getTypeFromDocument(document);
+         
          final FileType finalType = type;
          EditingTarget target = getEditingTarget(type);
          target.initialize(document,
@@ -84,6 +81,26 @@ public interface EditingTargetSource
                            finalType,
                            defaultNameProvider);
          return target;
+      }
+      
+      public String getDefaultNamePrefix(SourceDocument document)
+      {
+         FileType type = getTypeFromDocument(document);
+         EditingTarget target = getEditingTarget(type);
+         
+         return target.getDefaultNamePrefix();
+      }
+      
+      private FileType getTypeFromDocument(SourceDocument document)
+      {
+         FileType type = registry_.getTypeByTypeName(document.getType());
+         if (type == null)
+         {
+            Debug.log("Unknown document type: " + document.getType());
+            type = FileTypeRegistry.TEXT;
+         }
+         
+         return type;
       }
 
       private final FileTypeRegistry registry_;

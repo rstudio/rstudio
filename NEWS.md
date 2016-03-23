@@ -3,6 +3,14 @@
 ### Editor
 
 * Enabled auto-pairing of backticks (\`\`) in R documents
+* Fixed regression re: folding of unnamed sections, e.g. '#####'
+* Implemented folding for sub-sections in R documents
+* Added option for display of 'end' fold markers
+* Display function tooltip on mouse over of function name
+* Added option to display function signature tooltip on cursor idle
+* Autocompletion allows mismatch between '.', '\_' in token
+* Improvements to refactoring utility 'Rename in Scope'
+* Expand selection command learns how to expand to current statement
 
 ### Data Import
 
@@ -15,18 +23,45 @@
 * Enable data import preview to be cancelled
 * Enable data import to cache web files
 
+### R Markdown
+
+* Show custom formats in Knit menu
+* Show options menu and Knit w/ Params for custom formats
+* Use "Run Document" for custom formats with runtime: shiny
+* Add option to suppress Knit preview entirely
+* Add R Markdown pane to global options dialog
+* Enhance R Markdown preview to work well with bookdown
+
+### C / C++
+
+* Provide autocompletion of header paths
+* Update C++ unit testing library (catch) to v1.3.3 (fix gcc >=5 compilation errors)
+* Syntax highlighting of raw, wide, unicode string literals (e.g R"hello")
+
+### Profiler
+
+* Add profiler menu and profiling indicators
+* Add start-profiling and stop-profiling commands
+* Add save-profile, load-profile for new rprofvis files
+* Add profile-this-code command to execute code in the profiler
+* Add go-to-sources, profiler-help and publish commands
+
 ### Miscellaneous
 
-* Update C++ unit testing library (catch) to v1.3.3 (fix gcc >=5 compilation errors)
 * Implement gt/gT bindings in Vim mode to switch to next/previous tab
 * Always provide file completions for top-level current directory
 * Prevent wrapping of text in Files pane display
+* Indicate when object details in environment pane have been truncated
+* Improved keyboard navigation in browser file widgets
 
 ### Bug Fixes
 
+* R Markdown: hide chunk toolbar when chunk is hidden by folded Markdown section
+* SVN: avoid recursive revert when reverting changes to modified directory properties
+* Fix for 'httpdPort' detection error sometimes seen with R built from source
 * Autocompletion: avoid errors when retrieving completions in debugger
 * Diagnostics: fix false positive errors with '{' following function calls
-* Avoid over-eager re-rendering + tokenization of documents
+* Improved performance of document tokenization (fix laggy typing)
 * Fix block commenting of Sweave chunks
 * Fix highlighting of escaped '$' in inline Mathjax expressions
 * Fix editor preview vanishing on zoom level change
@@ -49,5 +84,8 @@
 * Fix copy, cut, paste handling when Emacs mode enabled
 * Avoid perturbing RNG state when invoking View()
 * Fix unlinked directories in Files pane when other users' folders are browseable
+* Prevent lines terminated by \r\n from entering editor (cause of many subtle problems)
+* Fix error message when invoking View() on an object with no columns
+
 
 

@@ -682,6 +682,17 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
    sessionInfo["r_addins"] = modules::r_addins::addinRegistryAsJson();
 
+   std::string sessionId = module_context::activeSession().id();
+   if (sessionId.empty())
+   {
+      // create virtual session ID if we don't have an explicitly assigned ID
+      sessionId = resumed ?
+         rsession::persistentState().virtualSessionId() :
+         rsession::persistentState().newVirtualSessionId();
+
+   }
+   sessionInfo["session_id"] = sessionId;
+
    module_context::events().onSessionInfo(&sessionInfo);
 
    // send response  (we always set kEventsPending to false so that the client

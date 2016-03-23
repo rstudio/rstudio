@@ -54,9 +54,20 @@ public class UIPrefMenuItem <T> extends CheckableMenuItem
    }
 
    @Override
+   @SuppressWarnings({ "unchecked" })
    public void onInvoked()
    {
-      prefValue_.setGlobalValue(targetValue_, true);
+      if (targetValue_ instanceof Boolean)
+      {
+         // for boolean values, the menu item acts like a toggle
+         Boolean newValue = !(Boolean)prefValue_.getValue();
+         prefValue_.setGlobalValue((T)newValue, true);
+      }
+      else
+      {
+         // for other value types the menu item always sets to the target value
+         prefValue_.setGlobalValue(targetValue_, true);
+      }
       uiPrefs_.writeUIPrefs();
    }
 

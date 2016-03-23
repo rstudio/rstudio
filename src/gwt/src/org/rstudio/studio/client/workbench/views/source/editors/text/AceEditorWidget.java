@@ -93,7 +93,6 @@ public class AceEditorWidget extends Composite
       editor_ = AceEditorNative.createEditor(getElement());
       editor_.manageDefaultKeybindings();
       editor_.getRenderer().setHScrollBarAlwaysVisible(false);
-      editor_.getRenderer().setScrollPastEnd(true);
       editor_.setShowPrintMargin(false);
       editor_.setPrintMarginColumn(0);
       editor_.setHighlightActiveLine(false);

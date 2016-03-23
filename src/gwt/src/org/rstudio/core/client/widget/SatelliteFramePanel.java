@@ -46,6 +46,11 @@ public abstract class SatelliteFramePanel <T extends RStudioFrame>
    {
       if (appFrame_ != null)
       {
+         // first set the frame to about:blank so that the 
+         // javascript "unload" event is triggered (this is
+         // used by bookdown to save/restore scroll position)
+         appFrame_.setUrl("about:blank");
+         
          rootPanel_.remove(appFrame_);
          appFrame_ = null;
       }

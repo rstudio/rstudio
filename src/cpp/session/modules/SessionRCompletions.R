@@ -335,6 +335,19 @@ assign(x = ".rs.acCompletionTypes",
       }
    }
    
+   # Order completions by depth
+   matches <- gregexpr("/", paths, fixed = TRUE)
+   depth <- vapply(matches, function(match) {
+      if (identical(c(match), -1L))
+         0
+      else
+         length(match)
+   }, numeric(1))
+   
+   idx <- order(depth)
+   paths <- paths[idx]
+   type <- type[idx]
+   
    .rs.makeCompletions(token = token,
                        results = paths,
                        type = type,
@@ -808,6 +821,9 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("fuzzyMatches", function(completions, token)
 {
+   reStrip     <- "(?!^)[._]"
+   token       <- gsub(reStrip, "", token, perl = TRUE)
+   completions <- gsub(reStrip, "", completions, perl = TRUE)
    .rs.startsWith(tolower(completions), tolower(token))
 })
 
@@ -1396,7 +1412,10 @@ assign(x = ".rs.acCompletionTypes",
 .rs.addFunction("getCompletionsSearchPath", function(token,
                                                      overrideInsertParens = FALSE)
 {
-   objects <- .rs.objectsOnSearchPath(token, TRUE)
+   objects <- if (.rs.startsWith(token, "."))
+      .rs.objectsOnSearchPath(".")
+   else
+      .rs.objectsOnSearchPath()
    
    objects[["keywords"]] <- c(
       "NULL", "NA", "TRUE", "FALSE", "T", "F", "Inf", "NaN",
@@ -1758,7 +1777,12 @@ assign(x = ".rs.acCompletionTypes",
    if (length(string) && 
        string[[1]] %in% c(".Call", ".C", ".Fortran", ".External") &&
        numCommas[[1]] == 0)
-      return(.rs.getCompletionsNativeRoutine(token, string[[1]]))
+   {
+      completions <- .rs.appendCompletions(
+         .rs.getCompletionsNativeRoutine(token, string[[1]]),
+         .rs.getCompletionsSearchPath(token))
+      return(completions)
+   }
    
    # data
    if (.rs.acContextTypes$FUNCTION %in% type &&

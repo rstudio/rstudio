@@ -50,7 +50,7 @@ class SectionChooser extends SimplePanel implements
    public void addSection(ImageResource icon, String name)
    {
       Image img = new Image(icon.getSafeUri());
-      img.setSize("36px", "25px");
+      img.setSize("29px", "20px");
       Label label = new Label(name, false);
       final ClickableVerticalPanel panel = new ClickableVerticalPanel();
       panel.setHorizontalAlignment(VerticalPanel.ALIGN_CENTER);

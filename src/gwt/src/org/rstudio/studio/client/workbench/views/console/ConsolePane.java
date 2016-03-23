@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.console;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -77,6 +78,12 @@ public class ConsolePane extends WorkbenchPane
    {
       return consoleInterruptButton_;
    }
+   
+   @Override
+   public IsWidget getProfilerInterruptButton()
+   {
+      return profilerInterruptButton_;
+   }
 
    public int getCharacterWidth()
    {
@@ -92,27 +99,22 @@ public class ConsolePane extends WorkbenchPane
       toolbar.addLeftWidget(workingDir_);
       toolbar.addLeftWidget(commands_.goToWorkingDir().createToolbarButton());
       consoleInterruptButton_ = commands_.interruptR().createToolbarButton();
+      
+      profilerInterruptButton_ = ConsoleInterruptProfilerButton.CreateProfilerButton();
+      profilerInterruptButton_.setVisible(false);
+
+      toolbar.addRightWidget(profilerInterruptButton_);
       toolbar.addRightWidget(consoleInterruptButton_);
+      
       return toolbar;
    }
    
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      SecondaryToolbar toolbar = new SecondaryToolbar(true);
-      toolbar.addLeftWidget(commands_.debugStep().createToolbarButton()); 
-      if (session_.getSessionInfo().getHaveAdvancedStepCommands())
-      {
-         toolbar.addLeftSeparator();
-         toolbar.addLeftWidget(commands_.debugStepInto().createToolbarButton());
-         toolbar.addLeftSeparator();
-         toolbar.addLeftWidget(commands_.debugFinish().createToolbarButton());
-      }
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.debugContinue().createToolbarButton());
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.debugStop().createToolbarButton());    
-      return toolbar;
+      secondaryToolbar_ = new SecondaryToolbar(true);
+       
+      return secondaryToolbar_;
    }
 
    @Override
@@ -148,18 +150,48 @@ public class ConsolePane extends WorkbenchPane
    public void setDebugMode(boolean debugMode)
    {
       debugMode_ = debugMode;
-      setSecondaryToolbarVisible(debugMode_);
+      loadDebugToolsIntoSecondaryToolbar();
+   }
+
+   @Override
+   public void setProfilerMode(boolean profilerMode)
+   {
+      profilerMode_ = profilerMode;
+      loadDebugToolsIntoSecondaryToolbar();
+      
+      Scheduler.get().scheduleFinally(new ScheduledCommand()
+      {
+         public void execute()
+         {
+            ensureCursorVisible();
+         }
+      });
+   }
+   
+   private void loadDebugToolsIntoSecondaryToolbar()
+   {      
+      setSecondaryToolbarVisible(debugMode_ || profilerMode_);
+      secondaryToolbar_.removeAllWidgets();
       
       if (debugMode_)
       {
-         Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-            @Override
-            public void execute()
-            {
-               if (shell_ != null)
-                  shell_.getDisplay().ensureInputVisible();
-            }
-         });
+         secondaryToolbar_.addLeftWidget(commands_.debugStep().createToolbarButton()); 
+         if (session_.getSessionInfo().getHaveAdvancedStepCommands())
+         {
+            secondaryToolbar_.addLeftSeparator();
+            secondaryToolbar_.addLeftWidget(commands_.debugStepInto().createToolbarButton());
+            secondaryToolbar_.addLeftSeparator();
+            secondaryToolbar_.addLeftWidget(commands_.debugFinish().createToolbarButton());
+         }
+         secondaryToolbar_.addLeftSeparator();
+         secondaryToolbar_.addLeftWidget(commands_.debugContinue().createToolbarButton());
+         secondaryToolbar_.addLeftSeparator();
+         secondaryToolbar_.addLeftWidget(commands_.debugStop().createToolbarButton());
+      }
+      
+      if (profilerMode_)
+      {
+         secondaryToolbar_.addLeftWidget(commands_.stopProfiler().createToolbarButton()); 
       }
    }
    
@@ -169,5 +201,8 @@ public class ConsolePane extends WorkbenchPane
    private Session session_;
    private Label workingDir_;
    private ToolbarButton consoleInterruptButton_;
+   private Image profilerInterruptButton_;
    private boolean debugMode_;
+   private boolean profilerMode_;
+   private SecondaryToolbar secondaryToolbar_;
 }

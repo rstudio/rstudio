@@ -23,13 +23,42 @@ public class ProfilerContents extends JavaScriptObject
    }
    
    public static final native ProfilerContents create(
-      String path) /*-{
+      String path, 
+      String htmlPath, 
+      String htmlLocalPath, 
+      boolean createProfile) /*-{
       var contents = new Object();
+
       contents.path = path;
+      contents.htmlPath = htmlPath;
+      contents.htmlLocalPath = htmlLocalPath;
+      
+      contents.isUserSaved = createProfile ? null : "saved";
+      contents.createProfile = createProfile;
       return contents;
    }-*/;
    
    public final native String getPath() /*-{
       return this.path;
+   }-*/;
+   
+   public final native String getHtmlPath() /*-{
+      return this.htmlPath;
+   }-*/;
+   
+   public final native boolean getCreateProfile() /*-{
+      return this.createProfile;
+   }-*/;
+   
+   public final native String getName() /*-{
+      return this.name;
+   }-*/;
+   
+   public final native String getHtmlLocalPath() /*-{
+      return this.htmlLocalPath;
+   }-*/;
+   
+   public final native boolean isUserSaved() /*-{
+      return this.isUserSaved == "saved";
    }-*/;
 }

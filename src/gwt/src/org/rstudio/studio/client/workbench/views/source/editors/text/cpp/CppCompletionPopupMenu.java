@@ -289,6 +289,11 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
       return 180;
    }
    
+   public CompletionPosition getCompletionPosition()
+   {
+      return completionPosition_;
+   }
+   
    private final DocDisplay docDisplay_;
    private final CompletionPosition completionPosition_;
    private JsArray<CppCompletion> completions_;

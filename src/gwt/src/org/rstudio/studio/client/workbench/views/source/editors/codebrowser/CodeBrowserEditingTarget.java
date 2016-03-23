@@ -435,6 +435,11 @@ public class CodeBrowserEditingTarget implements EditingTarget
          commands.add(commands_.returnDocToMain());
       return commands;
    }
+   
+   @Override
+   public void manageCommands()
+   {
+   }
 
    @Override
    public boolean canCompilePdf()
@@ -708,6 +713,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Override
    public void endCollabSession()
    {
+   }
+
+   @Override
+   public String getDefaultNamePrefix()
+   {
+      return null;
    }
 
    // Private methods --------------------------------------------------------

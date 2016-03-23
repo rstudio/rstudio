@@ -86,6 +86,7 @@ public:
    static LockType getDefaultType() { return s_defaultType; }
    static boost::posix_time::seconds getTimeoutInterval() { return s_timeoutInterval; }
    static boost::posix_time::seconds getRefreshRate() { return s_refreshRate; }
+   static bool isLoggingEnabled() { return s_loggingEnabled; }
    static bool isNoLockAvailable(const Error& error)
    {
       return error.code() == boost::system::errc::no_lock_available;
@@ -95,6 +96,7 @@ protected:
    static LockType s_defaultType;
    static boost::posix_time::seconds s_timeoutInterval;
    static boost::posix_time::seconds s_refreshRate;
+   static bool s_loggingEnabled;
 };
 
 class AdvisoryFileLock : public FileLock

@@ -430,8 +430,15 @@ public class AceEditorNative extends JavaScriptObject {
    
    public final void retokenizeDocument()
    {
+      resetTokenizer();
       tokenizeUpToRow(getSession().getLength() - 1);
    }
+   
+   public final native void resetTokenizer() /*-{
+      var session = this.getSession();
+      var tokenizer = session.bgTokenizer;
+      tokenizer.currentLine = 0;
+   }-*/;
    
    public final native void tokenizeUpToRow(int row) /*-{
       var session = this.getSession();
@@ -550,22 +557,27 @@ public class AceEditorNative extends JavaScriptObject {
    // This element may either be a child of the parent Ace container,
    // or the element itself.
    public static final native AceEditorNative getEditor(Element el) /*-{
-      
-      // Avoid over-aggressive lookups -- nesting tends not to be
-      // too deep in Ace instances
-      for (var i = 0; i < 5; i++) {
-         
-         if (el == null)
-            return null;
-            
+      while (el != null) {
          if (el.env && el.env.editor)
             return el.env.editor;
-            
          el = el.parentNode;
       }
-      
       return null;
+   }-*/;
    
+   public final native void disableSearchHighlight() /*-{
+      var highlight = this.session.$searchHighlight;
+      if (highlight) {
+         highlight.$update = highlight.update;
+         highlight.update = function() {}
+      }
+   }-*/;
+   
+   public final native void enableSearchHighlight() /*-{
+      var highlight = this.session.$searchHighlight;
+      if (highlight && highlight.$update) {
+         highlight.update = highlight.$update;
+      }
    }-*/;
    
    private static boolean uiPrefsSynced_ = false;

@@ -31,7 +31,11 @@ public class ProfileOperationResponse extends JavaScriptObject
       return this.fileName;
    }-*/;
    
-   public final native String getHtmlFile() /*-{
-      return this.htmlFile;
+   public final native String getHtmlPath() /*-{
+      return this.htmlPath;
+   }-*/;
+   
+   public final native String getHtmlLocalPath() /*-{
+      return this.htmlLocalPath;
    }-*/;
 }

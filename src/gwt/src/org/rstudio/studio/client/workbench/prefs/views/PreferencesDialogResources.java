@@ -37,4 +37,5 @@ public interface PreferencesDialogResources extends ClientBundle
    ImageResource iconAppearance();
    ImageResource iconPanes();
    ImageResource iconPackages();
+   ImageResource iconRMarkdown();
 }

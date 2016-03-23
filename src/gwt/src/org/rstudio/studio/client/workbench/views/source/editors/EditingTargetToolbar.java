@@ -16,19 +16,31 @@ package org.rstudio.studio.client.workbench.views.source.editors;
 
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Widget;
 
 public class EditingTargetToolbar extends Toolbar
 {
-   public EditingTargetToolbar(Commands commands)
+   public EditingTargetToolbar(Commands commands, boolean includePopout)
    {
       addLeftWidget(commands.sourceNavigateBack().createToolbarButton());
       Widget forwardButton = commands.sourceNavigateForward().createToolbarButton();
       forwardButton.getElement().getStyle().setMarginLeft(-6, Unit.PX);
       addLeftWidget(forwardButton);
       addLeftSeparator();
+      if (includePopout)
+      {
+         if (SourceWindowManager.isMainSourceWindow())
+         {
+            addLeftWidget(commands.popoutDoc().createToolbarButton());
+         }
+         else
+         {
+            addLeftWidget(commands.returnDocToMain().createToolbarButton());
+         }
+         addLeftSeparator();
+      }
    }
-
 }
