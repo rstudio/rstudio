@@ -616,9 +616,13 @@ public class TextEditingTargetNotebook
             {
                if (!outputWidgets_.containsKey(chunkId))
                   return;
-               outputWidgets_.get(chunkId).getElement().getStyle().setHeight(
-                     Math.max(MIN_CHUNK_HEIGHT, 
-                          Math.min(arg.intValue(), MAX_CHUNK_HEIGHT)), Unit.PX);
+               ChunkOutputWidget widget = outputWidgets_.get(chunkId);
+               int height = 
+                     widget.getExpansionState() == ChunkOutputWidget.COLLAPSED ?
+                        CHUNK_COLLAPSED_HEIGHT :
+                        Math.max(MIN_CHUNK_HEIGHT, 
+                          Math.min(arg.intValue(), MAX_CHUNK_HEIGHT));
+               widget.getElement().getStyle().setHeight(height, Unit.PX);
                if (!lineWidgets_.containsKey(chunkId))
                   return;
                docDisplay_.onLineWidgetChanged(lineWidgets_.get(chunkId));
@@ -904,7 +908,8 @@ public class TextEditingTargetNotebook
    // chunk state synchronized
    private final static int STATE_INITIALIZED = 0;
    
-   public final static int MIN_CHUNK_HEIGHT = 10;
+   public final static int MIN_CHUNK_HEIGHT = 40;
+   public final static int CHUNK_COLLAPSED_HEIGHT = 10;
    public final static int MAX_CHUNK_HEIGHT = 650;
    
    public final static String CHUNK_OUTPUT_TYPE    = "chunk_output_type";

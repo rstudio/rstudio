@@ -105,6 +105,9 @@ public class ChunkOutputWidget extends Composite
       initWidget(uiBinder.createAndBindUi(this));
       applyCachedEditorStyle();
       
+      frame_.getElement().getStyle().setHeight(
+            TextEditingTargetNotebook.MIN_CHUNK_HEIGHT, Unit.PX);
+      
       onRenderCompleted_ = onRenderCompleted;
       
       DOM.sinkEvents(clear_.getElement(), Event.ONCLICK);
@@ -190,7 +193,8 @@ public class ChunkOutputWidget extends Composite
       if (expansionState_ != EXPANDED)
          return;
       
-      int height = root_.getElement().getScrollHeight();
+      int height = Math.max(TextEditingTargetNotebook.MIN_CHUNK_HEIGHT, 
+            root_.getElement().getScrollHeight());
       if (height == renderedHeight_)
          return;
       renderedHeight_ = height;
@@ -198,6 +202,11 @@ public class ChunkOutputWidget extends Composite
          root_.getElement().setScrollTop(height);
       frame_.getElement().getStyle().setHeight(height, Unit.PX);
       onRenderCompleted_.execute(height);
+   }
+
+   public int getExpansionState()
+   {
+      return expansionState_;
    }
 
    private String classOfOutput(int type)
@@ -529,6 +538,7 @@ public class ChunkOutputWidget extends Composite
       root_.getElement().getStyle().setOpacity(0.2);
 
       clear_.setVisible(false);
+      expand_.setVisible(false);
    }
 
    private void showReadyState()
@@ -542,6 +552,7 @@ public class ChunkOutputWidget extends Composite
       }
       root_.getElement().getStyle().setOpacity(1);
       clear_.setVisible(true);
+      expand_.setVisible(true);
    }
    
    private void setOverflowStyle()
@@ -589,15 +600,15 @@ public class ChunkOutputWidget extends Composite
          frame_.getElement().getStyle().setProperty("transition", 
                "height " + ANIMATION_DUR + "ms ease");
          frame_.getElement().getStyle().setHeight(
-               TextEditingTargetNotebook.MIN_CHUNK_HEIGHT, Unit.PX);
+               TextEditingTargetNotebook.CHUNK_COLLAPSED_HEIGHT, Unit.PX);
          collapseTimer_ = new Timer()
          {
             @Override
             public void run()
             {
-               renderedHeight_ = TextEditingTargetNotebook.MIN_CHUNK_HEIGHT;
-               onRenderCompleted_.execute(
-                     TextEditingTargetNotebook.MIN_CHUNK_HEIGHT);
+               renderedHeight_ = 
+                     TextEditingTargetNotebook.CHUNK_COLLAPSED_HEIGHT;
+               onRenderCompleted_.execute(renderedHeight_);
             }
             
          };
@@ -649,8 +660,8 @@ public class ChunkOutputWidget extends Composite
    private static String s_backgroundColor = null;
    private static String s_color           = null;
    
-   private final static int EXPANDED   = 0;
-   private final static int COLLAPSED  = 1;
+   public final static int EXPANDED   = 0;
+   public final static int COLLAPSED  = 1;
    private final static int ANIMATION_DUR = 400;
    
    public final static int CHUNK_EMPTY       = 1;
