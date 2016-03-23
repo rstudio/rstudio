@@ -561,6 +561,30 @@ public class AceEditorWidget extends Composite
       breakpoints_.clear();
    }
    
+   public void setChunkLineExecState(int start, int end, int state)
+   {
+      for (int i = start; i <= end; i++)
+      {
+         switch (state)
+         {
+         case ChunkOutputWidget.LINE_RESTING:
+            editor_.getRenderer().removeGutterDecoration(
+                  rowFromLine(i), "ace_chunk-queued-line");
+            editor_.getRenderer().removeGutterDecoration(
+                  rowFromLine(i), "ace_chunk-executed-line");
+            break;
+         case ChunkOutputWidget.LINE_QUEUED:
+            editor_.getRenderer().addGutterDecoration(
+                  rowFromLine(i), "ace_chunk-queued-line");
+            break;
+         case ChunkOutputWidget.LINE_EXECUTED:
+            editor_.getRenderer().addGutterDecoration(
+                  rowFromLine(i), "ace_chunk-executed-line");
+            break;
+         }
+      }
+   }
+   
    public boolean hasBreakpoints()
    {
       return breakpoints_.size() > 0;

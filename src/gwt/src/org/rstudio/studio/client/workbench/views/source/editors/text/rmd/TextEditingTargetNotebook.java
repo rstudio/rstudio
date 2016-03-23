@@ -45,6 +45,8 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
@@ -86,6 +88,7 @@ public class TextEditingTargetNotebook
                           ChunkChangeEvent.Handler,
                           ChunkContextChangeEvent.Handler,
                           ConsolePromptHandler,
+                          ConsoleWriteInputHandler,
                           ResizeHandler,
                           InterruptStatusEvent.Handler,
                           RestartStatusEvent.Handler
@@ -99,11 +102,13 @@ public class TextEditingTargetNotebook
          options = optionsIn;
          code = codeIn;
          setupCrc32 = setupCrc32In;
+         pos = 0;
       }
       public String chunkId;
       public String options;
       public String code;
       public String setupCrc32;
+      public int pos;
    };
 
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
@@ -221,6 +226,7 @@ public class TextEditingTargetNotebook
       events_.addHandler(ChunkChangeEvent.TYPE, this);
       events_.addHandler(ChunkContextChangeEvent.TYPE, this);
       events_.addHandler(ConsolePromptEvent.TYPE, this);
+      events_.addHandler(ConsoleWriteInputEvent.TYPE, this);
       events_.addHandler(InterruptStatusEvent.TYPE, this);
       events_.addHandler(RestartStatusEvent.TYPE, this);
       
@@ -260,6 +266,10 @@ public class TextEditingTargetNotebook
             return;
          chunkId = chunkDef.getChunkId();
          ensureSetupChunkExecuted();
+      
+         // decorate the gutter to show the chunk is queued
+         docDisplay_.setChunkLineExecState(chunk.getBodyStart().getRow() + 1,
+               chunk.getEnd().getRow(), ChunkOutputWidget.LINE_QUEUED);
       }
       
       // check to see if this chunk is already in the execution queue--if so
@@ -312,7 +322,7 @@ public class TextEditingTargetNotebook
       // let the chunk widget know it's started executing
       if (outputWidgets_.containsKey(unit.chunkId))
          outputWidgets_.get(unit.chunkId).setCodeExecuting(true);
-
+      
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
             unit.chunkId, 
             unit.options,
@@ -340,6 +350,7 @@ public class TextEditingTargetNotebook
                            executingChunk_.chunkId);
                      if (w != null)
                         w.onOutputFinished();
+                     cleanChunkExecState(executingChunk_.chunkId);
                   }
 
                   // if the queue is empty, show an error; if it's not, prompt
@@ -433,8 +444,11 @@ public class TextEditingTargetNotebook
       // mark chunk execution as finished
       if (executingChunk_ != null &&
           event.getOutput().getChunkId() == executingChunk_.chunkId)
+      {
+         cleanChunkExecState(executingChunk_.chunkId);
          executingChunk_ = null;
-
+      }
+      
       // if nothing at all was returned, this means the chunk doesn't exist on
       // the server, so clean it up here.
       if (event.getOutput().isEmpty())
@@ -523,11 +537,52 @@ public class TextEditingTargetNotebook
    {
       // mark chunk execution as finished
       if (executingChunk_ != null)
+      {
+         cleanChunkExecState(executingChunk_.chunkId);
          executingChunk_ = null;
+      }
       
       processChunkExecQueue();
    }
 
+   @Override
+   public void onConsoleWriteInput(ConsoleWriteInputEvent event)
+   {
+      if (executingChunk_ == null)
+         return;
+      // get the code for the executing chunk
+      if (!lineWidgets_.containsKey(executingChunk_.chunkId))
+         return;
+      Scope chunk = docDisplay_.getCurrentChunk(Position.create(
+            lineWidgets_.get(executingChunk_.chunkId).getRow(), 0));
+      String code = docDisplay_.getCode(chunk.getBodyStart(), chunk.getEnd());
+      
+      // find the line just emitted (start looking from the current position)
+      int idx = code.indexOf(event.getInput(), executingChunk_.pos);
+      if (idx < 0)
+         return;
+      
+      // if we found it, count the number of lines moved over
+      int previousLines = 0, newLines = 0;
+      for (int i = 0; i <= idx; i++)
+      {
+         if (code.charAt(i) == '\n')
+         {
+            if (i >= executingChunk_.pos)
+               newLines++;
+            previousLines++;
+         }
+      }
+      
+      // update display 
+      docDisplay_.setChunkLineExecState(
+            chunk.getBodyStart().getRow() + previousLines + 1, 
+            chunk.getBodyStart().getRow() + previousLines + newLines + 1,
+            ChunkOutputWidget.LINE_EXECUTED);
+      
+      // advance internal input indicator past the text just emitted
+      executingChunk_.pos = idx + event.getInput().length();
+   }
 
    @Override
    public void onResize(ResizeEvent event)
@@ -865,6 +920,21 @@ public class TextEditingTargetNotebook
       {
          lineWidgets_.remove(chunkId);
          outputWidgets_.remove(chunkId);
+      }
+   }
+   
+   private void cleanChunkExecState(String chunkId)
+   {
+      if (!lineWidgets_.containsKey(chunkId))
+         return;
+      Scope chunk = docDisplay_.getCurrentChunk(Position.create(
+            lineWidgets_.get(chunkId).getRow(), 0));
+      if (chunk != null)
+      {
+         docDisplay_.setChunkLineExecState(
+               chunk.getBodyStart().getRow(), 
+               chunk.getEnd().getRow(), 
+               ChunkOutputWidget.LINE_RESTING);
       }
    }
    
