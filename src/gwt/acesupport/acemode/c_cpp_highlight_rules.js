@@ -93,7 +93,7 @@ var c_cppHighlightRules = function() {
       });
 
    reOperator = ["new\\s*\\[\\]", "delete\\s*\\[\\]"].concat(reOperator);
-   reOperator = "operator\\s*(?:" + reOperator.join("|") + ")|operator\\s+[\\w_]+";
+   reOperator = "operator\\s*(?:" + reOperator.join("|") + ")|operator\\s+[\\w_]+(?:&&|&|\\*)?";
 
    // regexp must not have capturing parentheses. Use (?:) instead.
    // regexps are ordered -> the first match is used
