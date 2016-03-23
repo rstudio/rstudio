@@ -91,7 +91,7 @@ bool isWithinIgnoredDirectory(const FilePath& filePath)
          return true;
       
       // packrat
-      if (filename == "packrat" && parentPath.childPath("packrat/packrat.lock").exists())
+      if (filename == "packrat" && parentPath.childPath("packrat.lock").exists())
          return true;
    }
    
