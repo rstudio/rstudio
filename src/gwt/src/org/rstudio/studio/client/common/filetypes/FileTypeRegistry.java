@@ -328,6 +328,7 @@ public class FileTypeRegistry
       register("*.rhistory", RHISTORY, icons.iconRhistory());
       register("*.rproj", RPROJECT, icons.iconRproject());
       register("*.rnw", SWEAVE, icons.iconRsweave());
+      register("*.rtex", SWEAVE, icons.iconRsweave());
       register("*.snw", SWEAVE, icons.iconRsweave());
       register("*.nw", SWEAVE, icons.iconRsweave());
       register("*.tex", TEX, icons.iconTex());
