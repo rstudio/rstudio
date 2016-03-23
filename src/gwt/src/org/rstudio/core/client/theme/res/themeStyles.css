@@ -284,12 +284,12 @@ pre {
 
 .ace_chunk-queued-line
 {
-   background: linear-gradient(to left, rgba(24, 163, 82, 0) 0px, rgba(24, 163, 82, 0) 3px, rgba(24, 163, 82, 0.3) 3px, rgba(24, 163, 82, 0.3) 9px, rgba(24, 163, 82, 0) 9px, rgba(24, 163, 82, 0) 100%);
+   background: linear-gradient(to left, rgba(24, 163, 82, 0) 0px, rgba(24, 163, 82, 0) 3px, rgba(24, 163, 82, 0.3) 3px, rgba(24, 163, 82, 0.3) 10px, rgba(24, 163, 82, 0) 10px, rgba(24, 163, 82, 0) 100%);
 }
 
 .ace_chunk-executed-line
 {
-   background: linear-gradient(to left, rgba(24, 163, 82, 0) 0px, rgba(24, 163, 82, 0) 3px, rgba(24, 163, 82, 1) 3px, rgba(24, 163, 82, 1) 9px, rgba(24, 163, 82, 0) 9px, rgba(24, 163, 82, 0) 100%);
+   background: linear-gradient(to left, rgba(24, 163, 82, 0) 0px, rgba(24, 163, 82, 0) 3px, rgba(24, 163, 82, 1) 3px, rgba(24, 163, 82, 1) 10px, rgba(24, 163, 82, 0) 10px, rgba(24, 163, 82, 0) 100%);
 }
 
 
