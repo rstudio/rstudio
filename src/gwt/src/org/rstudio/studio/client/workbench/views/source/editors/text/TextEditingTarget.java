@@ -227,6 +227,8 @@ public class TextEditingTarget implements
       void initWidgetSize();
       
       void toggleDocumentOutline();
+      
+      void setNotebookUIVisible(boolean visible);
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -1212,7 +1214,7 @@ public class TextEditingTarget implements
       roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
       
       // create notebook and forward resize events
-      notebook_ = new TextEditingTargetNotebook(this, docDisplay_, 
+      notebook_ = new TextEditingTargetNotebook(this, view_, docDisplay_,
             docUpdateSentinel_, document, releaseOnDismiss_);
       view_.addResizeHandler(notebook_);
       

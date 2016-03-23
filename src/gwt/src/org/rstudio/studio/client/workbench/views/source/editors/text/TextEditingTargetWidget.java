@@ -535,11 +535,7 @@ public class TextEditingTargetWidget
       texToolbarButton_.setVisible(canCompilePdf);
       compilePdfButton_.setVisible(canCompilePdf);
       chunksButton_.setVisible(canExecuteChunks);
-      
-      runSetupChunkOptionMenu_.setVisible(
-            canKnitToHTML &&
-            uiPrefs_.showRmdChunkOutputInline().getValue());
-                    
+                         
       notebookSeparatorWidget_.setVisible(canCompileNotebook);
       notebookToolbarButton_.setVisible(canCompileNotebook);
       
@@ -585,6 +581,12 @@ public class TextEditingTargetWidget
    {
       return extendedType_ != null &&
              extendedType_.startsWith(SourceDocument.XT_SHINY_PREFIX);
+   }
+   
+   @Override
+   public void setNotebookUIVisible(boolean visible)
+   {
+      runSetupChunkOptionMenu_.setVisible(visible);
    }
 
    public HasValue<Boolean> getSourceOnSave()

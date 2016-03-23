@@ -107,6 +107,7 @@ public class TextEditingTargetNotebook
    };
 
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
+                                    TextEditingTarget.Display editingDisplay,
                                     DocDisplay docDisplay,
                                     DocUpdateSentinel docUpdateSentinel,
                                     SourceDocument document,
@@ -121,6 +122,7 @@ public class TextEditingTargetNotebook
       chunkExecQueue_ = new LinkedList<ChunkExecQueueUnit>();
       setupCrc32_ = docUpdateSentinel_.getProperty(LAST_SETUP_CRC32);
       editingTarget_ = editingTarget;
+      editingDisplay_ = editingDisplay;
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       // initialize the display's default output mode based on 
@@ -295,6 +297,7 @@ public class TextEditingTargetNotebook
       commands_.notebookCollapseAllOutput().setVisible(inlineOutput);
       commands_.notebookExpandAllOutput().setEnabled(inlineOutput);
       commands_.notebookExpandAllOutput().setVisible(inlineOutput); 
+      editingDisplay_.setNotebookUIVisible(inlineOutput);
    }
    
    private void processChunkExecQueue()
@@ -747,6 +750,7 @@ public class TextEditingTargetNotebook
          // if the document property is set, apply it directly
          docDisplay_.setShowChunkOutputInline(
                outputType == CHUNK_OUTPUT_INLINE);
+         
       }
       else
       {
@@ -870,6 +874,7 @@ public class TextEditingTargetNotebook
    private final DocUpdateSentinel docUpdateSentinel_;
    ArrayList<HandlerRegistration> releaseOnDismiss_;
    private final TextEditingTarget editingTarget_;
+   private final TextEditingTarget.Display editingDisplay_;
    private Session session_;
    private Provider<SourceWindowManager> pSourceWindowManager_;
    private UIPrefs prefs_;
