@@ -14,12 +14,14 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.ImageElementEx;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.widget.PreWidget;
+import org.rstudio.core.client.widget.ProgressSpinner;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InterruptStatusEvent;
@@ -92,6 +94,7 @@ public class ChunkOutputWidget extends Composite
    {
       String overflowY();
       String collapsed();
+      String spinner();
    }
 
    public ChunkOutputWidget(String chunkId,
@@ -448,8 +451,7 @@ public class ChunkOutputWidget extends Composite
       JsArrayString classes = JsArrayString.createArray().cast();
       classes.push("ace_marker-layer");
       classes.push("ace_foreign_line");
-      s_busyColor = DomUtils.extractCssValue(classes, "backgroundColor");
-      s_outlineColor = s_busyColor;
+      s_outlineColor = DomUtils.extractCssValue(classes, "backgroundColor");
    }
    
    private void initConsole()
@@ -508,13 +510,37 @@ public class ChunkOutputWidget extends Composite
    
    private void showBusyState()
    {
-      getElement().getStyle().setBackgroundColor(s_busyColor);
+      if (spinner_ != null)
+      {
+         spinner_.removeFromParent();
+         spinner_.detach();
+         spinner_ = null;
+      }
+      // create a black or white spinner as appropriate
+      ColorUtil.RGBColor bgColor = 
+            ColorUtil.RGBColor.fromCss(s_backgroundColor);
+      spinner_ = new ProgressSpinner(
+            bgColor.isDark() ? ProgressSpinner.COLOR_WHITE :
+                               ProgressSpinner.COLOR_BLACK);
+
+      spinner_.getElement().addClassName(style.spinner());
+      frame_.add(spinner_);
+      spinner_.getElement().getStyle().setOpacity(1);
+      root_.getElement().getStyle().setOpacity(0.2);
+
       clear_.setVisible(false);
    }
 
    private void showReadyState()
    {
       getElement().getStyle().setBackgroundColor(s_backgroundColor);
+      if (spinner_ != null)
+      {
+         spinner_.removeFromParent();
+         spinner_.detach();
+         spinner_ = null;
+      }
+      root_.getElement().getStyle().setOpacity(1);
       clear_.setVisible(true);
    }
    
@@ -608,6 +634,7 @@ public class ChunkOutputWidget extends Composite
    
    private PreWidget console_;
    private VirtualConsole vconsole_;
+   private ProgressSpinner spinner_;
    
    private int state_ = CHUNK_EMPTY;
    private int expansionState_ = EXPANDED;
@@ -621,7 +648,6 @@ public class ChunkOutputWidget extends Composite
    private static String s_outlineColor    = null;
    private static String s_backgroundColor = null;
    private static String s_color           = null;
-   private static String s_busyColor       = null;
    
    private final static int EXPANDED   = 0;
    private final static int COLLAPSED  = 1;

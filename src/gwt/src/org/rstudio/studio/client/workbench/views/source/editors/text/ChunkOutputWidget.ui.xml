@@ -48,7 +48,6 @@
       border: 2px solid #e5e5e5;
       padding-left: 10px;
       padding-top: 10px;
-      transition: background-color 500ms ease;
       overflow: hidden;
    }
    
@@ -97,6 +96,19 @@
       width: 90%;
       height: 25px;
       cursor: pointer;
+   }
+   
+   .spinner
+   {
+      display: block;
+      left: 50%;
+      top: 50%;
+      position: absolute;
+      z-index: 25;
+      width: 30px;
+      height: 30px;
+      opacity: 0;
+      transition: opacity 400ms ease;
    }
    </ui:style>
    <g:HTMLPanel styleName="{style.outer}">
