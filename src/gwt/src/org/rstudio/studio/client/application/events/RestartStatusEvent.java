@@ -1,7 +1,7 @@
 /*
  * RestartStatusEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,10 +14,13 @@
  */
 package org.rstudio.studio.client.application.events;
 
-import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
+import org.rstudio.core.client.js.JavaScriptSerializable;
 
-public class RestartStatusEvent extends GwtEvent<RestartStatusEvent.Handler>
+import com.google.gwt.event.shared.EventHandler;
+
+@JavaScriptSerializable
+public class RestartStatusEvent 
+             extends CrossWindowEvent<RestartStatusEvent.Handler>
 {
    public final static int RESTART_INITIATED = 0;
    public final static int RESTART_COMPLETED = 1;
@@ -25,6 +28,10 @@ public class RestartStatusEvent extends GwtEvent<RestartStatusEvent.Handler>
    public interface Handler extends EventHandler
    {
       void onRestartStatus(RestartStatusEvent event);
+   }
+
+   public RestartStatusEvent()
+   {
    }
 
    public RestartStatusEvent(int status)
@@ -50,6 +57,6 @@ public class RestartStatusEvent extends GwtEvent<RestartStatusEvent.Handler>
    }
    
    
-   private final int status_; 
+   private int status_; 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

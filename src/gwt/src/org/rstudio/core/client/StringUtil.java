@@ -829,20 +829,23 @@ public class StringUtil
       return false;
    }
    
-   public static int[] subsequenceIndices(
-         String sequence, String query)
+   public static List<Integer> subsequenceIndices(String sequence, String query)
    {
-      int query_n = query.length();
-      int[] result = new int[query.length()];
+      List<Integer> result = new ArrayList<Integer>();
+      int querySize = query.length();
       
       int prevMatchIndex = -1;
-      for (int i = 0; i < query_n; i++)
+      for (int i = 0; i < querySize; i++)
       {
-         result[i] = sequence.indexOf(query.charAt(i), prevMatchIndex + 1);
-         prevMatchIndex = result[i];
+         int index = sequence.indexOf(query.charAt(i), prevMatchIndex + 1);
+         if (index == -1)
+            continue;
+         
+         result.add(index);
+         prevMatchIndex = index;
       }
-      return result;
       
+      return result;
    }
    
    public static String getExtension(String string, int dots)
@@ -1015,6 +1018,22 @@ public class StringUtil
       return string.substring(0, truncatedSize) + suffix;
    }
    
+   public static boolean isOneOf(String string, String... candidates)
+   {
+      for (String candidate : candidates)
+         if (candidate.equals(string))
+            return true;
+      return false;
+   }
+   
+   public static boolean isOneOf(char ch, char... candidates)
+   {
+      for (char candidate : candidates)
+         if (ch == candidate)
+            return true;
+      return false;
+   }
+
    public static final String makeRandomId(int length) 
    {
       String alphanum = "0123456789abcdefghijklmnopqrstuvwxyz";
@@ -1036,6 +1055,40 @@ public class StringUtil
    
    public static final HashMap<String, String> COMPLEMENTS =
          makeComplementsMap();
+   
+   /**
+    * Computes a 32-bit CRC checksum from an arbitrary string.
+    * 
+    * @param str The string on which to compute the checksum
+    * @return The checksum value, as a hexadecimal string
+    */
+   public static final native String crc32(String str)/*-{
+      // based on: https://stackoverflow.com/questions/18638900/javascript-crc32
+      var genCrc32Table = function() 
+      {
+         var c, crcTable = [];
+         for (var n = 0; n < 256; n++) 
+         {
+            c = n;
+            for (var k = 0; k < 8; k++)
+            {
+                c = ((c&1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+            }
+            crcTable[n] = c;
+         }
+         return crcTable;
+      }
+
+      var crcTable = $wnd.rs_crc32Table || ($wnd.rs_crc32Table = genCrc32Table());
+      var crc = 0 ^ (-1);
+
+      for (var i = 0; i < str.length; i++ ) 
+      {
+         crc = (crc >>> 8) ^ crcTable[(crc ^ str.charCodeAt(i)) & 0xFF];
+      }
+
+      return ((crc ^ (-1)) >>> 0).toString(16);
+   }-*/;
    
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");

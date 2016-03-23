@@ -266,26 +266,26 @@ inline core::r_util::ProjectId toProjectId(const std::string& projectDir,
    }
 
 #ifndef _WIN32
-   // if we don't have a user ID as part of the project ID, there may be 
-   // more work to do
-   if (id.length() == kProjectIdLen)
+   // if this project belongs to someone else, try to look up its shared
+   // project ID 
+   struct stat st;
+   if (::stat(projectDir.c_str(), &st) == 0 &&
+       st.st_uid != ::geteuid())
    {
-      // if this project belongs to someone else, try to look up its shared
-      // project ID 
-      struct stat st;
-      if (::stat(projectDir.c_str(), &st) == 0 &&
-          st.st_uid != ::geteuid())
+      // fix it up to a shared project ID if we have one. this could happen
+      // if e.g. a project is opened as an unshared project and later opened
+      // as a shared one.
+      std::string sharedId = sharedProjectId(sharedStoragePath, projectDir);
+
+      if (!sharedId.empty())
       {
-         // fix it up to a shared project ID if we have one. this could happen
-         // if e.g. a project is opened as an unshared project and later opened
-         // as a shared one.
-         std::string sharedId = sharedProjectId(sharedStoragePath, projectDir);
-         if (!sharedId.empty())
+         // if we already had a local project ID, sync to the shared one
+         if (id.length() == kProjectIdLen)
          {
             idMap.erase(it);
             it = idMap.end();
-            id = sharedId;
          }
+         id = sharedId;
       }
    }
 #endif

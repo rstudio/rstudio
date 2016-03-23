@@ -26,6 +26,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
@@ -123,6 +124,22 @@ void logError(path_t path,
               const boost::filesystem::filesystem_error& e,
               const ErrorLocation& errorLocation);
 void addErrorProperties(path_t path, Error* pError) ;
+
+bool copySingleItem(const FilePath& from, const FilePath& to, 
+                    const FilePath& path)
+{
+   std::string relativePath = path.relativePath(from);
+   FilePath target = to.complete(relativePath);
+
+   Error error = path.isDirectory() ?
+                     target.ensureDirectory() :
+                     path.copy(target);
+   if (error)
+      LOG_ERROR(error);
+
+   return true;
+}
+
 }
 
 struct FilePath::Impl
@@ -452,7 +469,7 @@ MimeType s_mimeTypes[] =
    { "gitignore", "text/plain"},
    { "Rbuildignore", "text/plain"},
    { "Rprofile", "text/x-r-source"},
-   { "rprof",   "text/x-r-profile" },
+   { "rprofvis",   "text/x-r-profile" },
 
    { "tif",   "image/tiff" },
    { "tiff",  "image/tiff" },
@@ -781,6 +798,15 @@ Error FilePath::createDirectory(const std::string& name) const
    }
 }
 
+Error FilePath::copyDirectoryRecursive(const FilePath& target) const
+{
+   Error error = target.ensureDirectory();
+   if (error)
+      return error;
+
+   return childrenRecursive(boost::bind(copySingleItem, *this, target, _2));
+}
+
 Error FilePath::ensureFile() const
 {
    // nothing to do if the file already exists
@@ -1042,7 +1068,7 @@ Error FilePath::open_w(boost::shared_ptr<std::ostream>* pStream, bool truncate) 
    #ifdef _WIN32
       using namespace boost::iostreams;
       HANDLE hFile = ::CreateFileW(pImpl_->path.wstring().c_str(),
-                                   GENERIC_WRITE,
+                                   truncate ? GENERIC_WRITE : FILE_APPEND_DATA,
                                    0, // exclusive access
                                    NULL,
                                    truncate ? CREATE_ALWAYS : OPEN_ALWAYS,

@@ -129,19 +129,22 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       // get the URL to load
       String url = getDocumentUrl();
 
-      // check for an anchor implied by a preview_slide field
-      String anchor = "";
-      if (params.getResult().getPreviewSlide() > 0)
-         anchor = String.valueOf(params.getResult().getPreviewSlide());
-            
-      // check for an explicit anchor if there wasn't one implied
-      // by the preview_slide
-      if (anchor.length() == 0)
-         anchor = params.getAnchor();
-      
-      // add the anchor if necessary
-      if (anchor.length() > 0)
-         url += "#" + anchor;
+      // restore anchor if necessary
+      if (params.getResult().getRestoreAnchor())
+      {
+         String anchor = "";
+         if (params.getResult().getPreviewSlide() > 0)
+            anchor = String.valueOf(params.getResult().getPreviewSlide());
+               
+         // check for an explicit anchor if there wasn't one implied
+         // by the preview_slide
+         if (anchor.length() == 0)
+            anchor = params.getAnchor();
+         
+         // add the anchor if necessary
+         if (anchor.length() > 0)
+            url += "#" + anchor;
+      }
       
       showUrl(url);
    }
@@ -320,9 +323,14 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       // recompute the URL (we can't pick up the URL from the document since 
       // it may have encoding problems--see case 3994)
       String url = getDocumentUrl();
-      String anchor = getAnchor();
-      if (anchor.length() > 0)
-         url += "#" + anchor;
+      
+      // restore anchor if necessary
+      if (outputParms_ != null && outputParms_.getResult().getRestoreAnchor())
+      {
+         String anchor = getAnchor();
+         if (anchor.length() > 0)
+            url += "#" + anchor;
+      }
       
       // re-initialize the shiny frame with the URL (so it waits for the new 
       // window object to become available after refresh)

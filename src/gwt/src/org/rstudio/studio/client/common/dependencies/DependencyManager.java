@@ -89,7 +89,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
          "Packrat",
          userAction,
          new Dependency[] {
-            Dependency.cranPackage("packrat", "0.4.6", true)
+            Dependency.cranPackage("packrat", "0.4.7", true)
          },
          false,
          new CommandWithArg<Boolean>()
@@ -114,11 +114,11 @@ public class DependencyManager implements InstallShinyEvent.Handler
       deps.add(Dependency.cranPackage("RCurl", "1.95"));
       deps.add(Dependency.cranPackage("RJSONIO", "1.0"));
       deps.add(Dependency.cranPackage("PKI", "0.1"));
-      deps.add(Dependency.cranPackage("rstudioapi", "0.2"));
+      deps.add(Dependency.cranPackage("rstudioapi", "0.5"));
       deps.add(Dependency.cranPackage("yaml", "2.1.5"));
       if (requiresRmarkdown)
          deps.addAll(rmarkdownDependencies());
-      deps.add(Dependency.cranPackage("packrat", "0.4.6", true));
+      deps.add(Dependency.cranPackage("packrat", "0.4.7", true));
       deps.add(Dependency.embeddedPackage("rsconnect"));
       
       withDependencies(
@@ -226,7 +226,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
                                     "0.13", // shiny version
                                     "0.3"); // htmltools version
       deps.add(Dependency.cranPackage("miniUI", "0.1.1", true));
-      deps.add(Dependency.cranPackage("rstudioapi", "0.4", true));
+      deps.add(Dependency.cranPackage("rstudioapi", "0.5", true));
       
       withDependencies(   
         "Checking installed packages",
@@ -542,7 +542,13 @@ public class DependencyManager implements InstallShinyEvent.Handler
         "Preparing Profiler",
         userAction, 
         new Dependency[] {
+           Dependency.cranPackage("stringr", "0.6"),
+           Dependency.cranPackage("jsonlite", "0.9.16"),
+           Dependency.cranPackage("htmltools", "0.3"),
+           Dependency.cranPackage("yaml", "2.1.5"),
+           Dependency.cranPackage("htmlwidgets", "0.6", true),
            Dependency.embeddedPackage("profvis")
+          
         }, 
         false,
         new CommandWithArg<Boolean>()

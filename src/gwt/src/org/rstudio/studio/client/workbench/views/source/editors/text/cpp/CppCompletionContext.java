@@ -15,12 +15,12 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
-import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.CommandWith2Args;
 
 public interface CppCompletionContext
 {
    boolean isCompletionEnabled();
-   void withUpdatedDoc(CommandWithArg<String> onUpdated);
+   void withUpdatedDoc(CommandWith2Args<String, String> onUpdated);
    void cppCompletionOperation(CppCompletionOperation operation);
    String getDocPath();
 }

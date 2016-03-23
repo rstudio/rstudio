@@ -189,6 +189,9 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          allowTabMultilineCompletion().setGlobalValue(
                                  newUiPrefs.allowTabMultilineCompletion().getGlobalValue());
          
+         showFunctionTooltipOnIdle().setGlobalValue(
+                                 newUiPrefs.showFunctionTooltipOnIdle().getGlobalValue());
+         
          surroundSelection().setGlobalValue(
                                  newUiPrefs.surroundSelection().getGlobalValue());
          
@@ -259,6 +262,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          focusConsoleAfterExec().setGlobalValue(
                          newUiPrefs.focusConsoleAfterExec().getGlobalValue());
          
+         // fold style
+         foldStyle().setGlobalValue(
+               newUiPrefs.foldStyle().getGlobalValue());
+         
          // save before sourcing
          saveBeforeSourcing().setGlobalValue(
                          newUiPrefs.saveBeforeSourcing().getGlobalValue());
@@ -267,6 +274,11 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          syntaxColorConsole().setGlobalValue(
                              newUiPrefs.syntaxColorConsole().getGlobalValue());
          
+         // enable scroll past end of document
+         scrollPastEndOfDocument().setGlobalValue(
+                             newUiPrefs.scrollPastEndOfDocument().getGlobalValue());
+         
+         // highlight R function calls
          highlightRFunctionCalls().setGlobalValue(
                              newUiPrefs.highlightRFunctionCalls().getGlobalValue());
          
@@ -437,10 +449,6 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // show improved data import dialog
          useDataImport().setGlobalValue(
                newUiPrefs.useDataImport().getGlobalValue());
-
-         // show profiler
-         showProfiler().setGlobalValue(
-               newUiPrefs.showProfiler().getGlobalValue());
       }
       else if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
       {

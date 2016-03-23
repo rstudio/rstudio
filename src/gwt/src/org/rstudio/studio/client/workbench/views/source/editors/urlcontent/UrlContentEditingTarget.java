@@ -146,6 +146,11 @@ public class UrlContentEditingTarget implements EditingTarget
    }
    
    @Override
+   public void manageCommands()
+   {
+   }
+   
+   @Override
    public boolean canCompilePdf()
    {
       return false;
@@ -424,6 +429,11 @@ public class UrlContentEditingTarget implements EditingTarget
    public void fireEvent(GwtEvent<?> event)
    {
       assert false : "Not implemented";
+   }
+
+   public String getDefaultNamePrefix()
+   {
+      return null;
    }
 
    private ContentItem getContentItem()

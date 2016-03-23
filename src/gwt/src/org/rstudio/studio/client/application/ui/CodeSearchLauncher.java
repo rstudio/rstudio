@@ -43,8 +43,12 @@ public class CodeSearchLauncher
    @Handler
    public void onGoToFileFunction()
    {
-      new CodeSearchDialog(pCodeSearch_).showModal();  
+      if (dialog_ != null)
+         dialog_.closeDialog();
+      dialog_ = new CodeSearchDialog(pCodeSearch_);
+      dialog_.showModal();
    }
    
    private final Provider<CodeSearch> pCodeSearch_;
+   private CodeSearchDialog dialog_;
 }

@@ -374,10 +374,5 @@ void Options::cleanUpScratchTempDir()
       temp.removeIfExists();
 }
 
-bool Options::webkitDevTools()
-{
-   return settings_.value(QString::fromUtf8("webkitDevTools"), false).toBool();
-}
-
 } // namespace desktop
 } // namespace rstudio

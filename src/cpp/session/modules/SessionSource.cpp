@@ -14,7 +14,7 @@
  */
 
 #include "SessionSource.hpp"
-#include "rmarkdown/SessionRmdNotebook.hpp"
+#include "rmarkdown/NotebookChunkDefs.hpp"
 
 #include <string>
 #include <map>
@@ -74,12 +74,15 @@ void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
    (*pDocJson)["extended_type"] = module_context::events()
                                    .onDetectSourceExtendedType(pDoc);
 
-   // amend with chunk definitions 
+   // amend with chunk definitions if an R Markdown document
    json::Value chunkDefs;
-   Error error = rmarkdown::notebook::getChunkDefs(pDoc->path(), pDoc->id(),
-         NULL, &chunkDefs);
-   if (error)
-      LOG_ERROR(error);
+   if (pDoc->isRMarkdownDocument())
+   {
+      Error error = rmarkdown::notebook::getChunkDefs(pDoc->path(), pDoc->id(),
+            NULL, &chunkDefs);
+      if (error)
+         LOG_ERROR(error);
+   }
    (*pDocJson)["chunk_definitions"] = chunkDefs;
 }
 
@@ -290,7 +293,7 @@ Error saveDocumentCore(const std::string& contents,
    // document is unrendered (in which case we want to leave the chunk output
    // as-is)
    bool hasChunkOutput = json::isType<json::Array>(jsonChunkOutput);
-   if (hasChunkOutput)
+   if (hasChunkOutput && pDoc->isRMarkdownDocument())
    {
       time_t docTime = pDoc->dirty() ? std::time(NULL) : 
                                        pDoc->lastKnownWriteTime();
@@ -704,7 +707,22 @@ Error closeDocument(const json::JsonRpcRequest& request,
    // get the path (it's okay if this fails, unsaved docs don't have a path)
    std::string path;
    source_database::getPath(id, &path);
-   
+
+   // retrieve document from source database
+   boost::shared_ptr<source_database::SourceDocument> pDoc(
+               new source_database::SourceDocument());
+   error = source_database::get(id, pDoc);
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+   else
+   {
+      // do any cleanup necessary prior to removal
+      source_database::events().onDocPendingRemove(pDoc);
+   }
+
+   // actually remove from the source database
    error = source_database::remove(id);
    if (error)
       return error;

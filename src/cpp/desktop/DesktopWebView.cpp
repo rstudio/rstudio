@@ -63,8 +63,6 @@ WebView::WebView(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
    pWebInspector_->setPage(pWebPage_);
 
    page()->setForwardUnsupportedContent(true);
-   if (desktop::options().webkitDevTools())
-      page()->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
 
    connect(page(), SIGNAL(downloadRequested(QNetworkRequest)),
            this, SLOT(downloadRequested(QNetworkRequest)));

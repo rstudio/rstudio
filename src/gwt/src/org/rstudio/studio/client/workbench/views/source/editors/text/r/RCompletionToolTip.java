@@ -1,7 +1,22 @@
+/*
+ * RCompletionToolTip.java
+ *
+ * Copyright (C) 2009-15 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 package org.rstudio.studio.client.workbench.views.source.editors.text.r;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -9,11 +24,13 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionToolTip;
-
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
@@ -24,13 +41,41 @@ public class RCompletionToolTip extends CppCompletionToolTip
 {
    public RCompletionToolTip(DocDisplay docDisplay)
    {
-      // save references
       docDisplay_ = docDisplay;
+      handlers_ = new HandlerRegistrations();
 
       // set the max width
       setMaxWidth(Window.getClientWidth() - 200);
-      
       getElement().getStyle().setZIndex(10000);
+      
+      addAttachHandler(new AttachEvent.Handler()
+      {
+         @Override
+         public void onAttachOrDetach(AttachEvent event)
+         {
+            if (event.isAttached())
+               attachHandlers();
+            else
+               detachHandlers();
+         }
+      });
+   }
+   
+   private void attachHandlers()
+   {
+      handlers_.add(docDisplay_.addBlurHandler(new BlurHandler()
+      {
+         @Override
+         public void onBlur(BlurEvent event)
+         {
+            hide();
+         }
+      }));
+   }
+   
+   private void detachHandlers()
+   {
+      handlers_.removeHandler();
    }
    
    public boolean previewKeyDown(NativeEvent event)
@@ -126,6 +171,20 @@ public class RCompletionToolTip extends CppCompletionToolTip
          setWidth(getOffsetWidth() + "px");
    }
    
+   public void resolvePositionAndShow(String signature,
+                                      Position displayPos)
+   {
+      resolvePositionAndShow(signature, docDisplay_.getPositionBounds(displayPos));
+   }
+   
+   public void resolvePositionAndShow(String signature, Range activeRange)
+   {
+      setAnchor(activeRange.getStart(), activeRange.getEnd());
+      resolvePositionAndShow(
+            signature,
+            docDisplay_.getPositionBounds(activeRange.getStart()));
+   }
+   
    private void resolvePositionRelativeTo(final int left,
                                           final int top)
    {
@@ -160,7 +219,6 @@ public class RCompletionToolTip extends CppCompletionToolTip
 
    }
    
-   @SuppressWarnings("unused")
    private void setAnchor(Position start, Position end)
    {
       int startCol = start.getColumn();
@@ -168,6 +226,8 @@ public class RCompletionToolTip extends CppCompletionToolTip
          start.setColumn(start.getColumn() - 1);
       
       end.setColumn(end.getColumn() + 1);
+      if (anchor_ != null)
+         anchor_.detach();
       anchor_ = docDisplay_.createAnchoredSelection(start, end);
    }
    
@@ -177,6 +237,8 @@ public class RCompletionToolTip extends CppCompletionToolTip
       start = Position.create(start.getRow(), start.getColumn() - 1);
       Position end = docDisplay_.getSelectionEnd();
       end = Position.create(end.getRow(), end.getColumn() + 1);
+      if (anchor_ != null)
+         anchor_.detach();
       anchor_ = docDisplay_.createAnchoredSelection(start, end);
    }
    
@@ -184,6 +246,12 @@ public class RCompletionToolTip extends CppCompletionToolTip
    protected void onLoad()
    {
       super.onLoad();
+      if (nativePreviewReg_ != null)
+      {
+         nativePreviewReg_.removeHandler();
+         nativePreviewReg_ = null;
+      }
+      
       nativePreviewReg_ = Event.addNativePreviewHandler(new NativePreviewHandler()
       {
          public void onPreviewNativeEvent(NativePreviewEvent e)
@@ -208,6 +276,8 @@ public class RCompletionToolTip extends CppCompletionToolTip
                         if (cursorPos.isBeforeOrEqualTo(anchorRange.getStart()) ||
                               cursorPos.isAfterOrEqualTo(anchorRange.getEnd()))
                         {
+                           anchor_.detach();
+                           anchor_ = null;
                            hide();
                         }
                      }
@@ -222,11 +292,22 @@ public class RCompletionToolTip extends CppCompletionToolTip
    protected void onUnload()
    {
       super.onUnload();
-      nativePreviewReg_.removeHandler();
+      if (nativePreviewReg_ != null)
+      {
+         nativePreviewReg_.removeHandler();
+         nativePreviewReg_ = null;
+      }
+   }
+   
+   public String getSignature()
+   {
+      return getLabel();
    }
    
    private final DocDisplay docDisplay_;
+   private final HandlerRegistrations handlers_;
+   
    private HandlerRegistration nativePreviewReg_;
    private AnchoredSelection anchor_;
-
+   
 }

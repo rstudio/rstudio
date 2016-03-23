@@ -62,6 +62,22 @@
     colLabels <- character()
   }
 
+  # the first column is always the row names
+  rowNameCol <- list(
+      col_name        = .rs.scalar(""),
+      col_type        = .rs.scalar("rownames"),
+      col_min         = .rs.scalar(0),
+      col_max         = .rs.scalar(0),
+      col_search_type = .rs.scalar("none"),
+      col_label       = .rs.scalar(""),
+      col_vals        = "",
+      col_type_r      = .rs.scalar(""))
+
+  # if there are no columns, bail out
+  if (length(colNames) == 0) {
+    return(rowNameCol)
+  }
+
   # truncate to maximum displayed number of columns
   colNames <- colNames[1:min(length(colNames), maxCols)]
 
@@ -148,16 +164,7 @@
       col_type_r      = .rs.scalar(col_type_r)
     )
   })
-  c(list(list(
-      col_name        = .rs.scalar(""),
-      col_type        = .rs.scalar("rownames"),
-      col_min         = .rs.scalar(0),
-      col_max         = .rs.scalar(0),
-      col_search_type = .rs.scalar("none"),
-      col_label       = .rs.scalar(""),
-      col_vals        = "",
-      col_type_r      = .rs.scalar("")
-    )), colAttrs)
+  c(list(rowNameCol), colAttrs)
 })
 
 .rs.addFunction("formatRowNames", function(x, start, len) 

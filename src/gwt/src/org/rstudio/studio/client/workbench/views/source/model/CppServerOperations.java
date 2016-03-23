@@ -35,8 +35,10 @@ public interface CppServerOperations extends BuildServerOperations
                 ServerRequestCallback<Void> requestCallback);
    
    void getCppCompletions(
+                String line,
                 String docPath, 
-                int line, 
+                String docId,
+                int row, 
                 int column,
                 String userText,
                 ServerRequestCallback<CppCompletionResult> requestCallback);

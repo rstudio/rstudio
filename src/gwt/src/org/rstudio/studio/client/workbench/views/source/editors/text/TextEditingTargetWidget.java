@@ -25,6 +25,8 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerManager;
@@ -65,7 +67,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
-import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
@@ -228,13 +229,7 @@ public class TextEditingTargetWidget
 
    private Toolbar createToolbar(TextFileType fileType)
    {
-      Toolbar toolbar = new EditingTargetToolbar(commands_);
-       
-      toolbar.addLeftSeparator();
-      if (SourceWindowManager.isMainSourceWindow())
-         toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
-      toolbar.addLeftWidget(commands_.returnDocToMain().createToolbarButton());
-      toolbar.addLeftSeparator();
+      Toolbar toolbar = new EditingTargetToolbar(commands_, true);
 
       toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
       sourceOnSave_.getElement().getStyle().setMarginRight(0, Unit.PX);
@@ -333,18 +328,25 @@ public class TextEditingTargetWidget
 
       //toolbar.addRightSeparator();
      
-      toolbar.addRightWidget(chunksRunButton_ = commands_.executeCode().createToolbarButton(false));
       ToolbarPopupMenu chunksMenu = new ToolbarPopupMenu();
       chunksMenu.addItem(commands_.executeCode().createMenuItem(false));
       chunksMenu.addSeparator();
-      chunksMenu.addItem(commands_.executeSetupChunk().createMenuItem(false));
-      chunksMenu.addItem(commands_.executePreviousChunks().createMenuItem(false));
       chunksMenu.addItem(commands_.executeCurrentChunk().createMenuItem(false));
       chunksMenu.addItem(commands_.executeNextChunk().createMenuItem(false));
       chunksMenu.addSeparator();
+      chunksMenu.addItem(commands_.executeSetupChunk().createMenuItem(false));
+      chunksMenu.addItem(runSetupChunkOptionMenu_= new UIPrefMenuItem<Boolean>(
+            uiPrefs_.autoRunSetupChunk(), true, "Run Setup Chunk Automatically", 
+            uiPrefs_));
+      chunksMenu.addSeparator();
+      chunksMenu.addItem(commands_.executePreviousChunks().createMenuItem(false));
+      chunksMenu.addItem(commands_.executeSubsequentChunks().createMenuItem(false));
+      chunksMenu.addSeparator();
       chunksMenu.addItem(commands_.executeAllCode().createMenuItem(false));
       chunksButton_ = new ToolbarButton(
-                       chunksMenu, 
+                       "Run",
+                       commands_.executeCode().getImageResource(),
+                       chunksMenu,
                        true);
       toolbar.addRightWidget(chunksButton_);
       
@@ -460,7 +462,7 @@ public class TextEditingTargetWidget
          menu.addSeparator();
          menu.addItem(commands_.extractFunction().createMenuItem(false));
          menu.addItem(commands_.extractLocalVariable().createMenuItem(false));
-         menu.addItem(commands_.renameInFile().createMenuItem(false));
+         menu.addItem(commands_.renameInScope().createMenuItem(false));
          menu.addSeparator();
          menu.addItem(commands_.reflowComment().createMenuItem(false));
          menu.addItem(commands_.commentUncomment().createMenuItem(false));
@@ -471,6 +473,8 @@ public class TextEditingTargetWidget
          menu.addSeparator();
          menu.addItem(commands_.showDiagnosticsActiveDocument().createMenuItem(false));
          menu.addItem(commands_.showDiagnosticsProject().createMenuItem(false));
+         menu.addSeparator();
+         menu.addItem(commands_.profileCode().createMenuItem(false));
          codeTransform_ = new ToolbarButton("", icon, menu);
          codeTransform_.setTitle("Code Tools");
       }
@@ -531,14 +535,13 @@ public class TextEditingTargetWidget
       texToolbarButton_.setVisible(canCompilePdf);
       compilePdfButton_.setVisible(canCompilePdf);
       chunksButton_.setVisible(canExecuteChunks);
-      chunksRunButton_.setVisible(canExecuteChunks);
-      
+                         
       notebookSeparatorWidget_.setVisible(canCompileNotebook);
       notebookToolbarButton_.setVisible(canCompileNotebook);
       
       knitDocumentButton_.setVisible(canKnitToHTML);
       
-      rmdFormatButton_.setVisible(isRMarkdown2);
+      setRmdFormatButtonVisible(isRMarkdown2);
       rmdOptionsButton_.setVisible(isRMarkdown2);
       rmdOptionsButton_.setEnabled(isRMarkdown2);
      
@@ -579,6 +582,12 @@ public class TextEditingTargetWidget
       return extendedType_ != null &&
              extendedType_.startsWith(SourceDocument.XT_SHINY_PREFIX);
    }
+   
+   @Override
+   public void setNotebookUIVisible(boolean visible)
+   {
+      runSetupChunkOptionMenu_.setVisible(visible);
+   }
 
    public HasValue<Boolean> getSourceOnSave()
    {
@@ -594,8 +603,8 @@ public class TextEditingTargetWidget
    public void onResize() 
    {
       super.onResize();
-      
       manageToolbarSizes();
+      ResizeEvent.fire(this, getOffsetWidth(), getOffsetHeight());
      
    }
 
@@ -620,7 +629,6 @@ public class TextEditingTargetWidget
       else
          srcOnSaveLabel_.setText(width < 450 ? "Source" : "Source on Save");
       sourceButton_.setText(width < 400 ? "" : sourceCommandText_);
-      chunksRunButton_.setText(width < 400 ? "" : "Run");
    }
    
    
@@ -762,25 +770,39 @@ public class TextEditingTargetWidget
    
    @Override
    public void setFormatOptions(TextFileType fileType,
+                                boolean showRmdFormatMenu,
+                                boolean canEditFormatOptions,
                                 List<String> options, 
                                 List<String> values, 
                                 List<String> extensions, 
                                 String selectedOption)
-   {
-      rmdFormatButton_.clearMenu();
-      int parenPos = selectedOption.indexOf('(');
-      boolean hasSubFormat = false;
-      if (parenPos != -1)
+   { 
+      if (!canEditFormatOptions)
       {
-         selectedOption = selectedOption.substring(0, parenPos).trim();
-         hasSubFormat = true;
+         setFormatText("");
       }
-      setFormatText(selectedOption);
+      
+      setRmdFormatButtonVisible(showRmdFormatMenu);
+      rmdFormatButton_.setEnabled(showRmdFormatMenu);
+      rmdFormatButton_.clearMenu();
+      
+      int parenPos = selectedOption.indexOf('(');
+      if (parenPos != -1)
+          selectedOption = selectedOption.substring(0, parenPos).trim();
+ 
+      // don't show format text (but leave the code in for now in case
+      // we change our mind)
+      // setFormatText(selectedOption);
+      setFormatText("");
+      
       String prefix = fileType.isPlainMarkdown() ? "Preview " : "Knit to ";
+      
       for (int i = 0; i < Math.min(options.size(), values.size()); i++)
       {
-         ImageResource img = fileTypeRegistry_.getIconForFilename("output." + 
-                     extensions.get(i));
+         String ext = extensions.get(i);
+         ImageResource img = ext != null ? 
+               fileTypeRegistry_.getIconForFilename("output." + ext) :
+               fileTypeRegistry_.getIconForFilename("Makefile");
          final String valueName = values.get(i);
          ScheduledCommand cmd = new ScheduledCommand()
          {
@@ -800,54 +822,36 @@ public class TextEditingTargetWidget
       if (session_.getSessionInfo().getKnitParamsAvailable())
       {
          final AppCommand knitWithParams = commands_.knitWithParameters();
-         if (fileType.isRmd())
+         rmdFormatButton_.addSeparator();
+         ScheduledCommand cmd = new ScheduledCommand()
          {
-            rmdFormatButton_.addSeparator();
-            ScheduledCommand cmd = new ScheduledCommand()
+            @Override
+            public void execute()
             {
-               @Override
-               public void execute()
-               {
-                  knitWithParams.execute();
-               }
-            };
-            MenuItem item = new MenuItem(knitWithParams.getMenuHTML(false),
-                                         true,
-                                         cmd); 
-            rmdFormatButton_.addMenuItem(item, 
-                                         knitWithParams.getMenuLabel(false));
-         }
+               knitWithParams.execute();
+            }
+         };
+         MenuItem item = new MenuItem(knitWithParams.getMenuHTML(false),
+                                      true,
+                                      cmd); 
+         rmdFormatButton_.addMenuItem(item, knitWithParams.getMenuLabel(false));
+      
       }
       
-      if (!hasSubFormat && selectedOption.equals("HTML"))
-         showRmdViewerMenuItems(true, false);
-      else
-         showRmdViewerMenuItems(false, false);
-      setFormatOptionsVisible(true);
+      
+      showRmdViewerMenuItems(true, canEditFormatOptions, fileType.isRmd(), false);
+     
       if (publishButton_ != null)
          publishButton_.setIsStatic(true);
       isShiny_ = false;
    }
-
-   @Override
-   public void setFormatOptionsVisible(boolean visible)
-   {
-      if (!visible)
-      {
-         setFormatText("");
-      }
-      rmdFormatButton_.setVisible(visible);
-      rmdOptionsButton_.setVisible(visible);
-      rmdFormatButton_.setEnabled(visible);
-      rmdOptionsButton_.setEnabled(visible);
-   }
    
    @Override
-   public void setIsShinyFormat(boolean isPresentation)
+   public void setIsShinyFormat(boolean showOutputOptions, boolean isPresentation)
    {
-      rmdFormatButton_.setVisible(false);
+      setRmdFormatButtonVisible(false);
       
-      showRmdViewerMenuItems(!isPresentation, true);
+      showRmdViewerMenuItems(!isPresentation, showOutputOptions, true, true);
    
       String docType = isPresentation ? "Presentation" : "Document";
       
@@ -858,9 +862,17 @@ public class TextEditingTargetWidget
                   commands_.knitDocument().getShortcutPrettyHtml()) + ")");
       knitDocumentButton_.setText(knitCommandText_);
       knitDocumentButton_.setLeftImage(StandardIcons.INSTANCE.run());
+      
       isShiny_ = true;
       if (publishButton_ != null)
          publishButton_.setIsStatic(false);
+   }
+   
+   private void setRmdFormatButtonVisible(boolean visible)
+   {
+      rmdFormatButton_.setVisible(visible);
+      knitDocumentButton_.getElement().getStyle().setMarginRight(
+            visible ? 0 : 8, Unit.PX);
    }
    
    @Override
@@ -986,6 +998,12 @@ public class TextEditingTargetWidget
       return addHandler(handler, EnsureHeightEvent.TYPE);
    }
 
+   @Override
+   public HandlerRegistration addResizeHandler(ResizeHandler handler)
+   {
+      return addHandler(handler, ResizeEvent.getType());
+   }
+
    public void onVisibilityChanged(boolean visible)
    {
       editor_.onVisibilityChanged(visible);
@@ -999,44 +1017,52 @@ public class TextEditingTargetWidget
             RmdOutputFormatChangedEvent.TYPE, handler);
    }
    
-   private void showRmdViewerMenuItems(boolean show, boolean isShinyDoc)
+   private void showRmdViewerMenuItems(boolean show, boolean showOutputOptions, boolean isRmd, boolean isShinyDoc)
    {
       if (rmdViewerPaneMenuItem_ == null)
          rmdViewerPaneMenuItem_ = new UIPrefMenuItem<Integer>(
                uiPrefs_.rmdViewerType(),
                RmdOutput.RMD_VIEWER_TYPE_PANE, 
-               "View in Pane", uiPrefs_);
+               "Preview in Viewer Pane", uiPrefs_);
       if (rmdViewerWindowMenuItem_ == null)
          rmdViewerWindowMenuItem_ = new UIPrefMenuItem<Integer>(
                uiPrefs_.rmdViewerType(),
                RmdOutput.RMD_VIEWER_TYPE_WINDOW, 
-               "View in Window", uiPrefs_);
+               "Preview in Window", uiPrefs_);
+      if (rmdViewerNoPreviewMenuItem_ == null)
+         rmdViewerNoPreviewMenuItem_ = new UIPrefMenuItem<Integer>(
+               uiPrefs_.rmdViewerType(),
+               RmdOutput.RMD_VIEWER_TYPE_NONE,
+               "(No Preview)", uiPrefs_);
+      
       
       ToolbarPopupMenu menu = rmdOptionsButton_.getMenu();
       menu.clearItems();
       if (show)
       {
-         menu.addItem(rmdViewerPaneMenuItem_);
          menu.addItem(rmdViewerWindowMenuItem_);
+         menu.addItem(rmdViewerPaneMenuItem_);
+         menu.addItem(rmdViewerNoPreviewMenuItem_);
          menu.addSeparator();
       }
       
       if (uiPrefs_.showRmdChunkOutputInline().getValue())
       {
          menu.addItem(new DocPropMenuItem(
-               "Show chunk output inline", docUpdateSentinel_, 
+               "Chunk Output Inline", docUpdateSentinel_, 
                true, 
                TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE, 
                TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE));
          menu.addItem(new DocPropMenuItem(
-               "Show chunk output in console", docUpdateSentinel_, 
+               "Chunk Output in Console", docUpdateSentinel_, 
                false, 
                TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE, 
                TextEditingTargetNotebook.CHUNK_OUTPUT_CONSOLE));
          menu.addSeparator();
       }
       
-      menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
+      if (showOutputOptions)
+         menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
    }
    
    private final TextEditingTarget target_;
@@ -1064,10 +1090,10 @@ public class TextEditingTargetWidget
    private ToolbarButton goToPrevButton_;
    private ToolbarButton goToNextButton_;
    private ToolbarButton runButton_;
-   private ToolbarButton chunksRunButton_;
    private ToolbarButton runLastButton_;
    private ToolbarButton sourceButton_;
    private ToolbarButton sourceMenuButton_;
+   private UIPrefMenuItem<Boolean> runSetupChunkOptionMenu_;
    private ToolbarButton chunksButton_;
    private ToolbarButton shinyLaunchButton_;
    private ToolbarButton rmdOptionsButton_;
@@ -1076,6 +1102,7 @@ public class TextEditingTargetWidget
    private RSConnectPublishButton publishButton_;
    private MenuItem rmdViewerPaneMenuItem_;
    private MenuItem rmdViewerWindowMenuItem_;
+   private MenuItem rmdViewerNoPreviewMenuItem_;
    private HandlerManager handlerManager_;
    
    private Widget texSeparatorWidget_;

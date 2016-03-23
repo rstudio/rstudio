@@ -188,7 +188,8 @@ public class TextEditingTarget implements
    public interface Display extends TextDisplay, 
                                     WarningBarDisplay,
                                     HasEnsureVisibleHandlers,
-                                    HasEnsureHeightHandlers
+                                    HasEnsureHeightHandlers,
+                                    HasResizeHandlers
    {
       HasValue<Boolean> getSourceOnSave();
       void ensureVisible();
@@ -209,13 +210,14 @@ public class TextEditingTarget implements
       void debug_dumpContents();
       void debug_importDump();
       
-      void setIsShinyFormat(boolean isPresentation);
+      void setIsShinyFormat(boolean showOutputOptions, boolean isPresentation);
       void setFormatOptions(TextFileType fileType,
+                            boolean showRmdFormatMenu,
+                            boolean canEditFormatOptions,
                             List<String> options, 
                             List<String> values, 
                             List<String> extensions, 
                             String selected);
-      void setFormatOptionsVisible(boolean visible);
       HandlerRegistration addRmdFormatChangedHandler(
             RmdOutputFormatChangedEvent.Handler handler);
       
@@ -225,6 +227,8 @@ public class TextEditingTarget implements
       void initWidgetSize();
       
       void toggleDocumentOutline();
+      
+      void setNotebookUIVisible(boolean visible);
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -422,14 +426,6 @@ public class TextEditingTarget implements
       docDisplay_.setCppCompletionContext(cppCompletionContext_);
       docDisplay_.setRCompletionContext(rContext_);
       scopeHelper_ = new TextEditingTargetScopeHelper(docDisplay_);
-      scopeTimer_ = new Timer()
-      {
-         @Override
-         public void run()
-         {
-            doUpdateCurrentScope();
-         }
-      };
       
       addRecordNavigationPositionHandler(releaseOnDismiss_, 
                                          docDisplay_, 
@@ -594,6 +590,15 @@ public class TextEditingTarget implements
          public void onFindRequested(FindRequestedEvent event)
          {
             view_.showFindReplace(event.getDefaultForward());
+         }
+      });
+      
+      docDisplay_.addScopeTreeReadyHandler(new ScopeTreeReadyEvent.Handler()
+      {
+         @Override
+         public void onScopeTreeReady(ScopeTreeReadyEvent event)
+         {
+            updateCurrentScope();
          }
       });
       
@@ -1045,7 +1050,7 @@ public class TextEditingTarget implements
 
       // if we're not waiting for another set of params to resolve, and we're
       // the active doc, process these params immediately
-      if (paramQueueClear && commandHandlerReg_ != null)
+      if (paramQueueClear && isActiveDocument())
       {
          beginQueuedCollabSession();
       }
@@ -1205,11 +1210,13 @@ public class TextEditingTarget implements
                                           extendedType_,
                                           events_,
                                           session_);
-      
+
       roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
       
-      notebook_ = new TextEditingTargetNotebook(this, rmarkdownHelper_,
-                              docDisplay_, docUpdateSentinel_, document);
+      // create notebook and forward resize events
+      notebook_ = new TextEditingTargetNotebook(this, view_, docDisplay_,
+            docUpdateSentinel_, document, releaseOnDismiss_);
+      view_.addResizeHandler(notebook_);
       
       // ensure that Makefile and Makevars always use tabs
       name_.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -1217,8 +1224,10 @@ public class TextEditingTarget implements
          public void onValueChange(ValueChangeEvent<String> event)
          {
             if ("Makefile".equals(event.getValue()) ||
+                "Makefile.in".equals(event.getValue()) ||
                 "Makefile.win".equals(event.getValue()) ||
                 "Makevars".equals(event.getValue()) ||
+                "Makevars.in".equals(event.getValue()) ||
                 "Makevars.win".equals(event.getValue()))
             {
                docDisplay_.setUseSoftTabs(false);
@@ -1627,11 +1636,13 @@ public class TextEditingTarget implements
          public void onCursorChanged(CursorChangedEvent event)
          {
             updateStatusBarPosition();
+            if (docDisplay_.isScopeTreeReady(event.getPosition().getRow()))
+               updateCurrentScope();
+               
          }
       });
       updateStatusBarPosition();
       updateStatusBarLanguage();
-
       
       // build file type menu dynamically (so it can change according
       // to whether e.g. knitr is installed)
@@ -1829,8 +1840,6 @@ public class TextEditingTarget implements
       statusBar_.getLanguage().setValue(fileType_.getLabel());
       boolean canShowScope = fileType_.canShowScopeTree();
       statusBar_.setScopeVisible(canShowScope);
-      if (canShowScope)
-         updateCurrentScope();
    }
 
    private void updateStatusBarPosition()
@@ -1838,18 +1847,13 @@ public class TextEditingTarget implements
       Position pos = docDisplay_.getCursorPosition();
       statusBar_.getPosition().setValue((pos.getRow() + 1) + ":" +
                                         (pos.getColumn() + 1));
-      
-      if (fileType_.canShowScopeTree())
-         updateCurrentScope();
    }
   
    private void updateCurrentScope()
    {
-      scopeTimer_.schedule(docDisplay_.getSuggestedScopeUpdateDelay());
-   }
-   
-   private void doUpdateCurrentScope()
-   {
+      if (fileType_ == null || !fileType_.canShowScopeTree())
+         return;
+      
       // special handing for presentations since we extract
       // the slide structure in a different manner than 
       // the editor scope trees
@@ -1926,6 +1930,13 @@ public class TextEditingTarget implements
    public HashSet<AppCommand> getSupportedCommands()
    {
       return fileType_.getSupportedCommands(commands_);
+   }
+   
+   @Override
+   public void manageCommands()
+   {
+      if (fileType_.isRmd())
+         notebook_.manageCommands();
    }
    
    @Override
@@ -2577,50 +2588,70 @@ public class TextEditingTarget implements
    }
    
    @Handler
-   void onRenameInFile()
+   void onRenameInScope()
    {
-      int matches = renameHelper_.renameInFile();
-      if (matches > 0)
+      docDisplay_.focus();
+      
+      int matches = renameHelper_.renameInScope();
+      if (matches <= 0)
       {
-         String message = "Found " + matches;
-         if (matches == 1)
-            message += " match";
-         else
-            message += " matches";
-         
-         String selectedItem = docDisplay_.getSelectionValue();
-         message += " for '" + selectedItem + "'";
-         
-         view_.getStatusBar().showMessage(message, new HideMessageHandler()
+         if (!docDisplay_.getSelectionValue().isEmpty())
          {
-            @Override
-            public boolean onNativePreviewEvent(NativePreviewEvent preview)
+            String message = "No matches for '" + docDisplay_.getSelectionValue() + "'";
+            view_.getStatusBar().showMessage(message, 1000);
+         }
+         
+         return;
+      }
+      
+      String message = "Found " + matches;
+      if (matches == 1)
+         message += " match";
+      else
+         message += " matches";
+
+      String selectedItem = docDisplay_.getSelectionValue();
+      message += " for " + selectedItem + ".";
+
+      docDisplay_.disableSearchHighlight();
+      view_.getStatusBar().showMessage(message, new HideMessageHandler()
+      {
+         @Override
+         public boolean onNativePreviewEvent(NativePreviewEvent preview)
+         {
+            int type = preview.getTypeInt();
+            if (docDisplay_.isPopupVisible())
+               return false;
+            
+            // End if the user clicks somewhere
+            if (type == Event.ONCLICK)
             {
-               if (!docDisplay_.isFocused() || !docDisplay_.inMultiSelectMode())
+               docDisplay_.exitMultiSelectMode();
+               docDisplay_.clearSelection();
+               docDisplay_.enableSearchHighlight();
+               return true;
+            }
+
+            // Otherwise, handle key events
+            else if (type == Event.ONKEYDOWN)
+            {
+               switch (preview.getNativeEvent().getKeyCode())
                {
+               case KeyCodes.KEY_ENTER:
+                  preview.cancel();
+               case KeyCodes.KEY_UP:
+               case KeyCodes.KEY_DOWN:
+               case KeyCodes.KEY_ESCAPE:
                   docDisplay_.exitMultiSelectMode();
                   docDisplay_.clearSelection();
+                  docDisplay_.enableSearchHighlight();
                   return true;
                }
-               
-               if (preview.getTypeInt() == Event.ONKEYDOWN)
-               {
-                  switch (preview.getNativeEvent().getKeyCode())
-                  {
-                  case KeyCodes.KEY_ENTER:
-                     preview.cancel();
-                  case KeyCodes.KEY_UP:
-                  case KeyCodes.KEY_DOWN:
-                  case KeyCodes.KEY_ESCAPE:
-                     docDisplay_.exitMultiSelectMode();
-                     docDisplay_.clearSelection();
-                     return true;
-                  }
-               }
-               return false;
             }
-         });
-      }
+            
+            return false;
+         }
+      });
    }
    
    @Handler
@@ -3467,53 +3498,100 @@ public class TextEditingTarget implements
       return rmarkdownHelper_.getTemplateFormat(yaml);
    }
    
+   private List<String> getOutputFormats()
+   {
+      String yaml = getRmdFrontMatter();
+      if (yaml == null)
+         return new ArrayList<String>();
+      List<String> formats = rmarkdownHelper_.getOutputFormats(yaml);
+      if (formats == null)
+         formats = new ArrayList<String>();
+      return formats;  
+   }
+   
    private void updateRmdFormatList()
    {
-      RmdSelectedTemplate selTemplate = getSelectedTemplate();
-      if (selTemplate == null)
-      {
-         view_.setFormatOptionsVisible(false);
-         return;
-      }
-      
-      else if (selTemplate.isShiny)
-      {
-         view_.setIsShinyFormat(selTemplate.format != null &&
-                                selTemplate.format.endsWith(
-                                      RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX));
-         return;
-      }
-      
-      // we know which template this doc is using--populate the format list
-      // with the formats available in the template
       String formatUiName = "";
-      JsArray<RmdTemplateFormat> formats = selTemplate.template.getFormats();
       List<String> formatList = new ArrayList<String>();
       List<String> valueList = new ArrayList<String>();
       List<String> extensionList = new ArrayList<String>();
-      for (int i = 0; i < formats.length(); i++)
+      
+      RmdSelectedTemplate selTemplate = getSelectedTemplate();
+      if (selTemplate != null && selTemplate.isShiny)
       {
-         String uiName = formats.get(i).getUiName();
-         formatList.add(uiName);
-         valueList.add(formats.get(i).getName());
-         extensionList.add(formats.get(i).getExtension());
-         if (formats.get(i).getName().equals(selTemplate.format))
-         {
-            formatUiName = uiName;
-         }
+         view_.setIsShinyFormat(selTemplate.format != null,
+                                selTemplate.format != null &&
+                                selTemplate.format.endsWith(
+                                      RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX));
       }
-      view_.setFormatOptions(fileType_, formatList, valueList, extensionList,
-                             formatUiName);
+      // could be runtime: shiny with a custom format
+      else if (isShinyDoc())
+      {
+         view_.setIsShinyFormat(false,  // no output options b/c no template
+                                false); // not a presentation (unknown format)
+      }
+      else
+      {
+         if (selTemplate != null)
+         {
+            JsArray<RmdTemplateFormat> formats = selTemplate.template.getFormats();
+            for (int i = 0; i < formats.length(); i++)
+            {
+               String uiName = formats.get(i).getUiName();
+               formatList.add(uiName);
+               valueList.add(formats.get(i).getName());
+               extensionList.add(formats.get(i).getExtension());
+               if (formats.get(i).getName().equals(selTemplate.format))
+               {
+                  formatUiName = uiName;
+               }
+            }
+         }
+             
+         // add formats not in the selected template 
+         List<String> outputFormats = getOutputFormats();
+         for (String format : outputFormats)
+         {
+            if (!valueList.contains(format))
+            {
+               String uiName = format;
+               int nsLoc = uiName.indexOf("::");
+               if (nsLoc != -1)
+                  uiName = uiName.substring(nsLoc + 2);
+               formatList.add(uiName);
+               valueList.add(format);
+               extensionList.add(null);
+            }
+         }
+         
+         view_.setFormatOptions(fileType_, 
+                                getCustomKnit().length() == 0,
+                                selTemplate != null, // can edit format options
+                                formatList, 
+                                valueList, 
+                                extensionList,
+                                formatUiName);
+      }
    }
    
    private void setRmdFormat(String formatName)
    {
+      // match based on selected template
       RmdSelectedTemplate selTemplate = getSelectedTemplate();
-      if (selTemplate == null)
-         return;
-      
-      // if this is the current format, we don't need to change the front matter
-      if (selTemplate.format.equals(formatName))
+      if (selTemplate != null)
+      {
+         // if this is the current format, we don't need to change the front matter
+         if (selTemplate.format.equals(formatName))
+         {
+            renderRmd();
+            return;
+         }
+      }
+       
+      // look for other formats, if the target format name already 
+      // matches the first format then just render and return
+      List<String> outputFormats = getOutputFormats();
+      if (outputFormats.size() > 0 && outputFormats.get(0).equals(formatName))
       {
          renderRmd();
          return;
@@ -3706,6 +3784,12 @@ public class TextEditingTarget implements
    void onExecuteCodeWithoutFocus()
    {
       codeExecution_.executeSelection(false);
+   }
+
+   @Handler
+   void onProfileCodeWithoutFocus()
+   {
+      codeExecution_.executeSelection(false, false, "profvis::profvis");
    }
    
    @Handler
@@ -3956,6 +4040,12 @@ public class TextEditingTarget implements
       executePreviousChunks(null);
    }
    
+   @Handler
+   void onExecuteSubsequentChunks()
+   {
+      globalDisplay_.showNotYetImplemented();
+   }
+   
    public void executePreviousChunks(final Position position)
    {
       if (docDisplay_.showChunkOutputInline())
@@ -4038,6 +4128,11 @@ public class TextEditingTarget implements
          }
       }
    }
+
+   public String getDefaultNamePrefix()
+   {
+      return null;
+   }
    
    private boolean isRChunk(Scope scope)
    {
@@ -4092,10 +4187,13 @@ public class TextEditingTarget implements
             {
                codeExecution_.setLastExecuted(range.getStart(), range.getEnd());
                String code = scopeHelper_.getSweaveChunkText(chunk);
+               String options = 
+                     TextEditingTargetRMarkdownHelper.getRmdChunkOptionText(
+                           chunk, docDisplay_);
                if (fileType_.isRmd() && 
                    docDisplay_.showChunkOutputInline())
                {
-                  notebook_.executeChunk(chunk, code);
+                  notebook_.executeChunk(chunk, code, options);
                }
                else
                {
@@ -4241,6 +4339,11 @@ public class TextEditingTarget implements
       sourceActiveDocument(true);
    }
    
+   @Handler
+   void onProfileCode()
+   {
+      codeExecution_.executeSelection(true, true, "profvis::profvis");
+   }
   
    private void sourceActiveDocument(final boolean echo)
    {
@@ -4539,13 +4642,31 @@ public class TextEditingTarget implements
    {
       try
       {
-         RmdSelectedTemplate template = getSelectedTemplate();
-         return (template != null) && template.isShiny;
+         String yaml = getRmdFrontMatter();
+         if (yaml == null)
+            return false;
+         return rmarkdownHelper_.isRuntimeShiny(yaml);  
       }
       catch(Exception e)
       {
          Debug.log(e.getMessage());
          return false;
+      }
+   }
+   
+   private String getCustomKnit()
+   {
+      try
+      {
+         String yaml = getRmdFrontMatter();
+         if (yaml == null)
+            return new String();
+         return rmarkdownHelper_.getCustomKnit(yaml);  
+      }
+      catch(Exception e)
+      {
+         Debug.log(e.getMessage());
+         return new String();
       }
    }
    
@@ -4802,6 +4923,31 @@ public class TextEditingTarget implements
          }
       });  
    }
+   
+   @Handler
+   void onRestartRClearOutput()
+   {
+      globalDisplay_.showNotYetImplemented();
+   }
+   
+   @Handler
+   void onRestartRRunAllChunks()
+   {
+      globalDisplay_.showNotYetImplemented();
+   }
+   
+   @Handler
+   void onNotebookCollapseAllOutput()
+   {
+      globalDisplay_.showNotYetImplemented();
+   }
+   
+   @Handler
+   void onNotebookExpandAllOutput()
+   {
+      globalDisplay_.showNotYetImplemented();
+   }
+   
 
    @Handler
    void onSynctexSearch()
@@ -5047,6 +5193,12 @@ public class TextEditingTarget implements
       {
          docDisplay_.unfoldAll();
       }
+   }
+   
+   @Handler
+   void onToggleEditorTokenInfo()
+   {
+      docDisplay_.toggleTokenInfo();
    }
    
    boolean useScopeTreeFolding()
@@ -5347,13 +5499,14 @@ public class TextEditingTarget implements
       }
 
       @Override
-      public void withUpdatedDoc(final CommandWithArg<String> onUpdated)
+      public void withUpdatedDoc(final CommandWith2Args<String, String> onUpdated)
       {
          docUpdateSentinel_.withSavedDoc(new Command() {
             @Override
             public void execute()
             {
-               onUpdated.execute(docUpdateSentinel_.getPath());
+               onUpdated.execute(docUpdateSentinel_.getPath(),
+                                 docUpdateSentinel_.getId());
             }
          });
 
@@ -5364,9 +5517,9 @@ public class TextEditingTarget implements
       {
          if (isCompletionEnabled())
          {
-            withUpdatedDoc(new CommandWithArg<String>() {
+            withUpdatedDoc(new CommandWith2Args<String, String>() {
                @Override
-               public void execute(String docPath)
+               public void execute(String docPath, String docId)
                {
                   Position pos = docDisplay_.getSelectionStart();
                   
@@ -5509,6 +5662,11 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.setShowIndentGuides(arg);
                }}));
+      releaseOnDismiss.add(prefs.scrollPastEndOfDocument().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.setScrollPastEndOfDocument(arg);
+               }}));
       releaseOnDismiss.add(prefs.highlightRFunctionCalls().bind(
             new CommandWithArg<Boolean>() {
                public void execute(Boolean arg) {
@@ -5566,9 +5724,14 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.forceImmediateRender();
                }}));
+      releaseOnDismiss.add(prefs.foldStyle().bind(
+            new CommandWithArg<String>() {
+               public void execute(String style)
+               {
+                  docDisplay.setFoldStyle(style);
+               }}));
       releaseOnDismiss.add(prefs.surroundSelection().bind(
             new CommandWithArg<String>() {
-               @Override
                public void execute(String string)
                {
                   docDisplay.setSurroundSelectionPref(string);
@@ -5721,6 +5884,11 @@ public class TextEditingTarget implements
             : Integer.parseInt(property) > 0;
    }
    
+   public boolean isActiveDocument()
+   {
+      return commandHandlerReg_ != null;
+   }
+   
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;
    private final UIPrefs prefs_;
@@ -5764,7 +5932,6 @@ public class TextEditingTarget implements
    private final LintManager lintManager_;
    private final TextEditingTargetRenameHelper renameHelper_;
    private CollabEditStartParams queuedCollabParams_;
-   private final Timer scopeTimer_;
    
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =

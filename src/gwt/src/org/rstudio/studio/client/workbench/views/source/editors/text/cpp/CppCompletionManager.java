@@ -16,8 +16,10 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 
-import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.CommandWith2Args;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Invalidation;
+import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
@@ -48,9 +50,7 @@ public class CppCompletionManager implements CompletionManager
 {
    public void onPaste(PasteEvent event)
    {
-      CppCompletionPopupMenu popup = getCompletionPopup();
-      if (popup != null)
-         popup.hide();
+      hideCompletionPopup();
    }
    
    public CppCompletionManager(DocDisplay docDisplay,
@@ -64,15 +64,15 @@ public class CppCompletionManager implements CompletionManager
       completionContext_ = completionContext;
       rCompletionManager_ = rCompletionManager;
       snippets_ = new SnippetHelper((AceEditor) docDisplay_, completionContext.getDocPath());
-      docDisplay_.addClickHandler(new ClickHandler()
+      handlers_ = new HandlerRegistrations();
+      
+      handlers_.add(docDisplay_.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
          {
             terminateCompletionRequest();
          }
-      });
-      
-      
+      }));
    }
  
    @Inject
@@ -102,6 +102,13 @@ public class CppCompletionManager implements CompletionManager
       }
    }
    
+   @Override
+   public void detach()
+   {
+      handlers_.removeHandler();
+      snippets_.detach();
+      rCompletionManager_.detach();
+   }
    
    // perform completion at the current cursor location
    @Override
@@ -257,10 +264,17 @@ public class CppCompletionManager implements CompletionManager
          }
          
          // tab accepts the current selection (popup handles Enter)
-         else if (event.getKeyCode() == KeyCodes.KEY_TAB)
+         else if (keyCode == KeyCodes.KEY_TAB)
          {
             popup.acceptSelected();
             return true;
+         }
+         
+         // allow '.' when showing file completions
+         else if (popup.getCompletionPosition().getScope() == CompletionPosition.Scope.File &&
+                  KeyboardHelper.isPeriodKeycode(keyCode))
+         {
+            return false;
          }
          
          // non c++ identifier keys (that aren't navigational) close the popup
@@ -356,6 +370,7 @@ public class CppCompletionManager implements CompletionManager
                                                      positionExplicit,
                                                      alwaysComplete,
                                                      autoChars);
+      
       if (completionPosition == null)
       {
          terminateCompletionRequest();
@@ -388,20 +403,22 @@ public class CppCompletionManager implements CompletionManager
       final Invalidation.Token invalidationToken = 
             completionRequestInvalidation_.getInvalidationToken();
       
-      completionContext_.withUpdatedDoc(new CommandWithArg<String>() {
+      completionContext_.withUpdatedDoc(new CommandWith2Args<String, String>() {
 
          @Override
-         public void execute(String docPath)
+         public void execute(String docPath, String docId)
          {
             if (invalidationToken.isInvalid())
                return;
             
             request_ = new CppCompletionRequest(
                docPath,
+               docId,
                completionPosition,
                docDisplay_,
                invalidationToken,
                explicit,
+               CppCompletionManager.this,
                new Command() {
                   @Override
                   public void execute()
@@ -454,6 +471,13 @@ public class CppCompletionManager implements CompletionManager
       return popup;
    }
    
+   private void hideCompletionPopup()
+   {
+      CppCompletionPopupMenu popup = getCompletionPopup();
+      if (popup != null)
+         popup.hide();
+   }
+   
    private boolean isCompletionPopupVisible()
    {
       CppCompletionPopupMenu popup = getCompletionPopup();
@@ -488,6 +512,7 @@ public class CppCompletionManager implements CompletionManager
    private final Invalidation completionRequestInvalidation_ = new Invalidation();
    private final SnippetHelper snippets_;
    
+   private final HandlerRegistrations handlers_;
   
 
 }

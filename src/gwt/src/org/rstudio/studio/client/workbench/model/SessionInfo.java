@@ -54,6 +54,10 @@ public class SessionInfo extends JavaScriptObject
       return this.userIdentity;
    }-*/;
 
+   public final native String getSessionId() /*-{
+      return this.session_id;
+   }-*/;
+
    public final native JsArray<RnwWeave> getRnwWeaveTypes() /*-{
       return this.rnw_weave_types;
    }-*/;
@@ -442,5 +446,4 @@ public class SessionInfo extends JavaScriptObject
    public final native RAddins getAddins() /*-{
       return this.r_addins;
    }-*/;
-   
 }

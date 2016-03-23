@@ -81,6 +81,6 @@ public class RmdPreviewParams extends JavaScriptObject
          return new Size(960, 700 + chromeHeight);
       
       // default size (html_document and others)
-      return new Size(1020, 1000 + chromeHeight);
+      return new Size(1100, 1000 + chromeHeight);
    }
 }

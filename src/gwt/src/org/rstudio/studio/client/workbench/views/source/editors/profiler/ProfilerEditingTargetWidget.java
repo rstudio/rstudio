@@ -15,11 +15,15 @@
 package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
@@ -28,18 +32,18 @@ public class ProfilerEditingTargetWidget extends Composite
                                          implements ProfilerPresenter.Display
               
 {
-   private Frame profilePage_;
+   private RStudioFrame profilePage_;
    
-   public ProfilerEditingTargetWidget(Commands commands)
+   public ProfilerEditingTargetWidget(Commands commands, PublishHtmlSource publishHtmlSource)
    {
       VerticalPanel panel = new VerticalPanel();
 
 
       PanelWithToolbars mainPanel = new PanelWithToolbars(
-                                          createToolbar(commands), 
+                                          createToolbar(commands, publishHtmlSource), 
                                           panel);
 
-      profilePage_ = new Frame();
+      profilePage_ = new RStudioFrame();
       profilePage_.setWidth("100%");
       profilePage_.setHeight("100%");
       
@@ -50,12 +54,27 @@ public class ProfilerEditingTargetWidget extends Composite
       initWidget(mainPanel);
    }
 
-   private Toolbar createToolbar(Commands commands)
+   public void print()
    {
-      Toolbar toolbar = new EditingTargetToolbar(commands);
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands.startProfiler().createToolbarButton());
-      toolbar.addLeftWidget(commands.stopProfiler().createToolbarButton());
+      WindowEx window = profilePage_.getWindow();
+      window.focus();
+      window.print();
+   }
+
+   private Toolbar createToolbar(Commands commands, PublishHtmlSource publishHtmlSource)
+   {
+      Toolbar toolbar = new EditingTargetToolbar(commands, true);
+      
+      toolbar.addLeftWidget(commands.gotoProfileSource().createToolbarButton());
+      toolbar.addLeftWidget(commands.saveProfileAs().createToolbarButton());
+      
+      toolbar.addRightWidget(
+            publishButton_ = new RSConnectPublishButton(
+                  RSConnect.CONTENT_TYPE_DOCUMENT, true, null));
+      
+      publishButton_.setPublishHtmlSource(publishHtmlSource);
+      publishButton_.setContentType(RSConnect.CONTENT_TYPE_HTML);
+      
       return toolbar;
    }
    
@@ -68,4 +87,11 @@ public class ProfilerEditingTargetWidget extends Composite
    {
       profilePage_.setUrl(path);
    }
+   
+   public String getUrl()
+   {
+      return profilePage_.getUrl();
+   }
+   
+   private RSConnectPublishButton publishButton_;
 }

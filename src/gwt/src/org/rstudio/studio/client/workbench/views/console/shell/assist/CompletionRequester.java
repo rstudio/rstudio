@@ -53,6 +53,7 @@ import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionConte
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -146,6 +147,10 @@ public class CompletionRequester
       return !(!token.startsWith(".") && item.startsWith("."));
    }
    
+   private static final native String fuzzy(String string) /*-{
+      return string.replace(/(?!^)[._]/g, "");
+   }-*/;
+   
    private CompletionResult narrow(final String token,
                                    final String diff,
                                    CompletionResult cachedResult)
@@ -160,20 +165,20 @@ public class CompletionRequester
       // trailing slashes)
       
       // Transform the token once beforehand for completions.
-      final String tokenSub = token.substring(
-            token.lastIndexOf('/') + 1);
+      final String tokenSub   = token.substring(token.lastIndexOf('/') + 1);
+      final String tokenFuzzy = fuzzy(tokenSub);
       
       for (QualifiedName qname : cachedResult.completions)
       {
          // File types are narrowed only by the file name
          if (RCompletionType.isFileType(qname.type))
          {
-            if (StringUtil.isSubsequence(basename(qname.name), tokenSub, true))
+            if (StringUtil.isSubsequence(basename(qname.name), tokenFuzzy, true))
                newCompletions.add(qname);
          }
          else
          {
-            if (StringUtil.isSubsequence(qname.name, token, true) &&
+            if (StringUtil.isSubsequence(qname.name, tokenFuzzy, true) &&
                 filterStartsWithDot(qname.name, token))
                newCompletions.add(qname) ;
          }
@@ -442,8 +447,9 @@ public class CompletionRequester
       
       Set<String> visitedItems = new HashSet<String>();
       
-      for (QualifiedName name : completions)
+      for (int i = 0, n = completions.size(); i < n; i++)
       {
+         QualifiedName name = completions.get(n - i - 1);
          if (visitedItems.contains(name.name))
             continue;
          
@@ -451,6 +457,7 @@ public class CompletionRequester
          visitedItems.add(name.name);
       }
       
+      Collections.reverse(result);
       return result;
    }
    

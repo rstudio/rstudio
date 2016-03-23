@@ -165,6 +165,8 @@ Display& display();
 
 const boost::system::error_category& rGraphicsCategory() ;
 
+std::string extraBitmapParams();
+
 namespace errc {
    
 inline boost::system::error_code make_error_code( errc_t e )

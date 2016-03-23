@@ -505,6 +505,11 @@ Error initialize()
          return error;
    }
 
+   // initialize profile resources
+   error = r::exec::RFunction(".rs.profileResources").call();
+   if (error)
+      return error;
+
    // complete embedded r initialization
    error = r::session::completeEmbeddedRInitialization(s_options.useInternet2);
    if (error)
@@ -1707,7 +1712,7 @@ bool isPackratModeOn()
 
 bool isDevtoolsDevModeOn()
 {
-   bool isDevtoolsDevModeOn;
+   bool isDevtoolsDevModeOn = false;
    Error error = r::exec::RFunction(".rs.devModeOn").call(&isDevtoolsDevModeOn);
    if (error)
       LOG_ERROR(error);

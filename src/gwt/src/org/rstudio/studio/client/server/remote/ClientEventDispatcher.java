@@ -772,11 +772,16 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.RprofStarted))
          {
-            eventBus_.fireEvent(new RprofEvent(true));
+            eventBus_.fireEvent(new RprofEvent(RprofEvent.RprofEventType.START, null));
          }
          else if (type.equals(ClientEvent.RprofStopped))
          {
-            eventBus_.fireEvent(new RprofEvent(false));
+            eventBus_.fireEvent(new RprofEvent(RprofEvent.RprofEventType.STOP, null));
+         }
+         else if (type.equals(ClientEvent.RprofCreated))
+         {
+            RprofEvent.Data data = event.getData();
+            eventBus_.fireEvent(new RprofEvent(RprofEvent.RprofEventType.CREATE, data));
          }
          else
          {

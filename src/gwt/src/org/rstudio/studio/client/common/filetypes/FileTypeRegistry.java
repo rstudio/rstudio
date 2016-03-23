@@ -318,14 +318,17 @@ public class FileTypeRegistry
       register("cleanup", SH, icons.iconSh());
       register("cleanup.win", SH, icons.iconSh());
       register("Makefile", MAKEFILE, icons.iconMakefile());
+      register("Makefile.in", MAKEFILE, icons.iconMakefile());
       register("Makefile.win", MAKEFILE, icons.iconMakefile());
       register("Makevars", MAKEFILE, icons.iconMakefile());
+      register("Makevars.in", MAKEFILE, icons.iconMakefile());
       register("Makevars.win", MAKEFILE, icons.iconMakefile());
       register("TUTORIAL", DCF, icons.iconDCF());
       register("NAMESPACE", NAMESPACE, icons.iconText());
       register("*.rhistory", RHISTORY, icons.iconRhistory());
       register("*.rproj", RPROJECT, icons.iconRproject());
       register("*.rnw", SWEAVE, icons.iconRsweave());
+      register("*.rtex", SWEAVE, icons.iconRsweave());
       register("*.snw", SWEAVE, icons.iconRsweave());
       register("*.nw", SWEAVE, icons.iconRsweave());
       register("*.tex", TEX, icons.iconTex());
@@ -394,7 +397,7 @@ public class FileTypeRegistry
       register("*.rs", RUST, icons.iconRust());
       register("*.scala", SCALA, icons.iconScala());
       register("*.snippets", SNIPPETS, icons.iconSnippets());
-      register("*.rprof", PROFILER, icons.iconRprofile());
+      register("*.Rprofvis", PROFILER, icons.iconRprofile());
 
       registerIcon(".jpg", icons.iconPng());
       registerIcon(".jpeg", icons.iconPng());

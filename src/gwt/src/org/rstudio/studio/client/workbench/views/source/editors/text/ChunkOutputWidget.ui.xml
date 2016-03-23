@@ -3,48 +3,131 @@
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
    xmlns:txt="urn:import:org.rstudio.studio.client.workbench.views.source.editors.text">
    
-   <ui:with field="res" type="org.rstudio.core.client.theme.res.ThemeResources"/>
+   <ui:with field="res" type="org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget.Resources"/>
 
    <ui:style type="org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget.ChunkStyle">
-   .interrupt, .clear, .busy
+   .clear, .expand
    {
       position: absolute;
-      top: 5px;
-      right: 5px;
+      top: 2px;
+      padding: 5px;
       cursor: pointer;
-   }
-   
-   .overflowY .interrupt, 
-   .overflowY .clear
-   .overflowY .busy
-   {
-      right: 25px;
-   }
-
-   .frame
-   {
-      border: 1px solid #e5e5e5;
-      margin-right: 20px;
-      padding-left: 10px;
-      transition: background-color 500ms ease;
+      z-index: 25;
    }
    
    .clear
    {
-      opacity: 0.0;
-      transition: opacity 500ms ease;
+      right: 10px;
+      padding: 5px;
+   }
+   
+   .expand 
+   {
+      right: 31px;
+      transition: transform 400ms ease;
+   }
+   
+   .collapsed .expand
+   {
+      transition: transform 400ms ease;
+      transform: rotate(180deg);
+   }
+   
+   .overflowY .clear
+   {
+      right: 25px;
+   }
+   
+   .overflowY .expand
+   {
+      right: 44px;
+   }
+
+   .frame
+   {
+      border: 2px solid #e5e5e5;
+      padding-left: 10px;
+      padding-top: 10px;
+      overflow: hidden;
+   }
+   
+   .outer
+   {
+      padding-bottom: 10px;
+      position: relative;
+   }
+
+   }
+   
+   .root
+   {
+      overflow: auto;
+      max-height: 750px;
+      transition: opacity 400ms ease;
+   }
+   
+   .empty
+   {
+      margin-top: 20px;
+      margin-left: auto;
+      margin-right: auto;
+      overflow: hidden;
+      opacity: 0.50;
+      text-align: center;
+      font-style: italic;
+   }
+   
+   .collapsed
+   {
+   }
+   
+   .expander
+   {
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      display: none;
+      z-index: 25;
+   }
+
+   .collapsed .expander
+   {
+      display: block;
+      width: 90%;
+      height: 25px;
+      cursor: pointer;
+   }
+   
+   .spinner
+   {
+      display: block;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      z-index: 25;
+      width: 30px;
+      height: 30px;
+      opacity: 0;
+      margin: -15px 0 0 -15px;
+      transition: opacity 400ms ease;
    }
    </ui:style>
-   <g:HTMLPanel styleName="{style.frame}" ui:field="root_">
-     <g:Image styleName="{style.clear}"
-              ui:field="clear_"
-              visible="false"
-              resource="{res.removePackage}"></g:Image>
-     <g:Image styleName="{style.interrupt}" 
-              ui:field="interrupt_"
-              visible="false"></g:Image>
-     <g:Image styleName="{style.busy}" 
-              ui:field="busy_"
-              visible="false"></g:Image>
+   <g:HTMLPanel styleName="{style.outer}">
+      <g:HTMLPanel styleName="{style.expander}"
+               ui:field="expander_"></g:HTMLPanel>
+      <g:HTMLPanel ui:field="frame_" styleName="{style.frame}">
+        <g:Image styleName="{style.clear}"
+                 ui:field="clear_"
+                 resource="{res.removeChunkIcon}"></g:Image>
+        <g:Image styleName="{style.expand}" 
+                 resource="{res.collapseChunkIcon}"
+                 ui:field="expand_"></g:Image>
+        <g:Label styleName="{style.empty}" 
+                 ui:field="emptyIndicator_"
+                 text="No output produced."
+                 visible="false"></g:Label>
+        <g:HTMLPanel styleName="{style.root}" ui:field="root_">
+        </g:HTMLPanel>
+      </g:HTMLPanel>
    </g:HTMLPanel>
 </ui:UiBinder> 

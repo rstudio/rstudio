@@ -147,6 +147,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
         type = session::client_events::kRprofStarted;
       else if (name == "rprof_stopped")
         type = session::client_events::kRprofStopped;
+      else if (name == "rprof_created")
+        type = session::client_events::kRprofCreated;
 
       if (type != -1)
       {
@@ -1047,7 +1049,7 @@ bool isPackageInstalled(const std::string& packageName)
 {
    r::session::utils::SuppressOutputInScope suppressOutput;
 
-   bool installed;
+   bool installed = false;
    r::exec::RFunction func(".rs.isPackageInstalled", packageName);
    Error error = func.call(&installed);
    return !error ? installed : false;
@@ -1058,7 +1060,7 @@ bool isPackageVersionInstalled(const std::string& packageName,
 {
    r::session::utils::SuppressOutputInScope suppressOutput;
 
-   bool installed;
+   bool installed = false;
    r::exec::RFunction func(".rs.isPackageVersionInstalled",
                            packageName, version);
    Error error = func.call(&installed);

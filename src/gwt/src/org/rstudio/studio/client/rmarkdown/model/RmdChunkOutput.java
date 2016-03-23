@@ -14,9 +14,6 @@
  */
 package org.rstudio.studio.client.rmarkdown.model;
 
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.js.JsArrayEx;
-
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
@@ -33,16 +30,27 @@ public class RmdChunkOutput extends JavaScriptObject
       return this.doc_id;
    }-*/;
 
-   public final native String getUrl() /*-{
-      return this.url || "";
+   public final native JsArray<RmdChunkOutputUnit> getUnits() /*-{
+      return this.chunk_outputs || [];
    }-*/;
    
-   public final native JsArray<JsArrayEx> getConsole() /*-{
-      return this.console || [];
+   public final native RmdChunkOutputUnit getUnit() /*-{
+      return this.chunk_output;
    }-*/;
+   
+   public final int getType() 
+   {
+      if (getUnit() == null)
+         return TYPE_MULTIPLE_UNIT;
+      return TYPE_SINGLE_UNIT;
+   }
    
    public final boolean isEmpty() 
    {
-      return StringUtil.isNullOrEmpty(getUrl()) && getConsole().length() == 0;
+      return (getUnits() == null || getUnits().length() == 0) &&
+             getUnit() == null;
    }
+   
+   public static final int TYPE_SINGLE_UNIT   = 0;
+   public static final int TYPE_MULTIPLE_UNIT = 1;
 }

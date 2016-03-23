@@ -18,20 +18,26 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class ConsoleExecutePendingInputEvent extends GwtEvent<ConsoleExecutePendingInputEvent.Handler>
-{
+{  
    public interface Handler extends EventHandler
    {
       void onExecutePendingInput(ConsoleExecutePendingInputEvent event);
    }
-
-   public ConsoleExecutePendingInputEvent()
+   
+   public ConsoleExecutePendingInputEvent(String commandId)
    {
+      commandId_ = commandId;
    }
 
    @Override
    public Type<Handler> getAssociatedType()
    {
       return TYPE;
+   }
+   
+   public String getCommandId()
+   {
+      return commandId_;
    }
 
    @Override
@@ -41,4 +47,5 @@ public class ConsoleExecutePendingInputEvent extends GwtEvent<ConsoleExecutePend
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();
+   private String commandId_;
 }

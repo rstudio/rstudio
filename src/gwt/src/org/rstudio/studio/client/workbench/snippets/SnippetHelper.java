@@ -22,6 +22,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Pattern;
@@ -58,10 +59,11 @@ public class SnippetHelper
       native_ = editor.getWidget().getEditor();
       manager_ = getSnippetManager();
       path_ = path;
+      handlers_ = new HandlerRegistrations();
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      editor_.getWidget().addEditorLoadedHandler(new EditorLoadedHandler()
+      handlers_.add(editor_.getWidget().addEditorLoadedHandler(new EditorLoadedHandler()
       {
          @Override
          public void onEditorLoaded(EditorLoadedEvent event)
@@ -69,7 +71,12 @@ public class SnippetHelper
             if (editor_.getFileType() != null)
                ensureSnippetsLoaded();
          }
-      });
+      }));
+   }
+   
+   public void detach()
+   {
+      handlers_.removeHandler();
    }
    
    @Inject
@@ -432,6 +439,7 @@ public class SnippetHelper
    private final AceEditorNative native_;
    private final SnippetManager manager_;
    private final String path_;
+   private final HandlerRegistrations handlers_;
    
    private static boolean customCppSnippetsLoaded_;
    private static boolean customRSnippetsLoaded_;

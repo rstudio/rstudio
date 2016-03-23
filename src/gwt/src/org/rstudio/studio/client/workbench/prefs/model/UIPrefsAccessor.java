@@ -25,6 +25,7 @@ import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
+import org.rstudio.studio.client.workbench.views.source.editors.text.FoldStyle;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -124,6 +125,11 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> allowTabMultilineCompletion()
    {
       return bool("tab_multiline_completion", false);
+   }
+   
+   public PrefValue<Boolean> showFunctionTooltipOnIdle()
+   {
+      return bool("show_help_tooltip_on_idle", false);
    }
    
    public static final String EDITOR_SURROUND_SELECTION_NEVER               = "never";
@@ -265,6 +271,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("focus_console_after_exec", false);
    }
    
+   public PrefValue<String> foldStyle()
+   {
+      return string("fold_style", FoldStyle.FOLD_MARK_BEGIN_ONLY);
+   }
+   
    public PrefValue<Boolean> saveBeforeSourcing()
    {
       return bool("save_before_sourcing", true);
@@ -273,6 +284,11 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> syntaxColorConsole()
    {
       return bool("syntax_color_console", false);
+   }
+   
+   public PrefValue<Boolean> scrollPastEndOfDocument()
+   {
+      return bool("scroll_past_end_of_document", false);
    }
    
    public PrefValue<Boolean> highlightRFunctionCalls()
@@ -529,14 +545,18 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_doc_outline_rmd", false);
    }
    
-   public PrefValue<Boolean> showUnnamedEntriesInDocumentOutline()
+   public PrefValue<Boolean> autoRunSetupChunk()
    {
-      return bool("show_unnamed_chunks_in_document_outline", true);
+      return bool("auto_run_setup_chunk", true);
    }
-
-   public PrefValue<Boolean> showProfiler()
+   
+   public static final String DOC_OUTLINE_SHOW_SECTIONS_ONLY = "show_sections_only";
+   public static final String DOC_OUTLINE_SHOW_SECTIONS_AND_NAMED_CHUNKS = "show_sections_and_chunks";
+   public static final String DOC_OUTLINE_SHOW_ALL = "show_all";
+   
+   public PrefValue<String> shownSectionsInDocumentOutline()
    {
-      return bool("show_profiler", false);
+      return string("doc_outline_show", DOC_OUTLINE_SHOW_SECTIONS_ONLY);
    }
    
    private String getDefaultPdfPreview()

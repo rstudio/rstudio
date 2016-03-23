@@ -26,6 +26,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
@@ -59,6 +60,7 @@ import org.rstudio.studio.client.workbench.views.source.events.DocFocusedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.EnsureVisibleSourceWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.events.MaximizeSourceWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
@@ -98,7 +100,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             CollabEditEndedEvent.Handler,
                                             ReplaceRangesDispatchEvent.Handler,
                                             GetEditorContextDispatchEvent.Handler,
-                                            DocFocusedEvent.Handler
+                                            DocFocusedEvent.Handler,
+                                            RestartStatusEvent.Handler
 {
    @Inject
    public SourceWindowManager(
@@ -142,6 +145,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          events_.addHandler(CollabEditStartedEvent.TYPE, this);
          events_.addHandler(CollabEditEndedEvent.TYPE, this);
          events_.addHandler(DocFocusedEvent.TYPE, this);
+         events_.addHandler(RestartStatusEvent.TYPE, this);
 
          JsArray<SourceDocument> docs = 
                session.getSessionInfo().getSourceDocuments();
@@ -507,6 +511,36 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       return null;
    }
 
+   public void maximizeSourcePaneIfNecessary()
+   {
+      if (SourceWindowManager.isMainSourceWindow())
+      {
+         // see if the Source and Console are paired
+         PaneConfig paneConfig = uiPrefs_.paneConfig().getValue();
+         if (paneConfig == null)
+            paneConfig = PaneConfig.createDefault();
+         if (hasSourceAndConsolePaired(paneConfig.getPanes()))
+         {
+            events_.fireEvent(new MaximizeSourceWindowEvent());
+         }  
+      }
+   }
+   
+   public void ensureVisibleSourcePaneIfNecessary()
+   {
+      if (SourceWindowManager.isMainSourceWindow())
+      {
+         // see if the Source and Console are paired
+         PaneConfig paneConfig = uiPrefs_.paneConfig().getValue();
+         if (paneConfig == null)
+            paneConfig = PaneConfig.createDefault();
+         if (hasSourceAndConsolePaired(paneConfig.getPanes()))
+         {
+            events_.fireEvent(new EnsureVisibleSourceWindowEvent());
+         }  
+      }
+   }
+
    // Event handlers ----------------------------------------------------------
    
    @Override
@@ -723,24 +757,15 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       });
    }
    
-   public void maximizeSourcePaneIfNecessary()
+   @Override
+   public void onRestartStatus(RestartStatusEvent event)
    {
-      if (SourceWindowManager.isMainSourceWindow())
-      {
-         // see if the Source and Console are paired
-         PaneConfig paneConfig = uiPrefs_.paneConfig().getValue();
-         if (paneConfig == null)
-            paneConfig = PaneConfig.createDefault();
-         if (hasSourceAndConsolePaired(paneConfig.getPanes()))
-         {
-            events_.fireEvent(new MaximizeSourceWindowEvent());
-         }  
-      }
+      fireEventToAllSourceWindows(event);
    }
 
    // Private methods ---------------------------------------------------------
    
-   public void fireEventToSourceWindow(String windowId, 
+   private void fireEventToSourceWindow(String windowId, 
          CrossWindowEvent<?> evt,
          boolean focus)
    {
