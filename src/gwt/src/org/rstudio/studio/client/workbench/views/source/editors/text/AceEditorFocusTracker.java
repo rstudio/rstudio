@@ -1,5 +1,5 @@
 /*
- * AceEditor.java
+ * AceEditorFocusTracker.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
