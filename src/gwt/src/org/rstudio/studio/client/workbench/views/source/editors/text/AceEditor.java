@@ -431,7 +431,7 @@ public class AceEditor implements DocDisplay,
          @Override
          public void onFocus(FocusEvent event)
          {
-            tracker_.setLastFocusedEditor(AceEditor.this);
+            AceEditorFocusTracker.setLastFocusedEditor(AceEditor.this);
          }
       });
    }

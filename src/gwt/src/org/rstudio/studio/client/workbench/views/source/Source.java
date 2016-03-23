@@ -280,7 +280,6 @@ public class Source implements InsertSourceHandler,
       chunkIconsManager_ = chunkIconsManager;
       dependencyManager_ = dependencyManager;
       windowManager_ = windowManager;
-      editorFocusTracker_ = editorFocusTracker;
       
       vimCommands_ = new SourceVimCommands();
       
@@ -658,7 +657,7 @@ public class Source implements InsertSourceHandler,
    
    private boolean consoleEditorHadFocusLast()
    {
-      AceEditor editor = editorFocusTracker_.getLastFocusedEditor();
+      AceEditor editor = AceEditorFocusTracker.getLastFocusedEditor();
       if (editor == null)
          return false;
       
@@ -4172,7 +4171,6 @@ public class Source implements InsertSourceHandler,
    private Timer debugSelectionTimer_ = null;
    
    private final SourceWindowManager windowManager_;
-   private final AceEditorFocusTracker editorFocusTracker_;
 
    // If positive, a new tab is about to be created
    private int newTabPending_;

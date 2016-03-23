@@ -14,24 +14,36 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import com.google.inject.Singleton;
+import com.google.gwt.user.client.Window;
 
-@Singleton
 public class AceEditorFocusTracker
 {
-   public AceEditorFocusTracker()
+   public static final void setLastFocusedEditor(AceEditor editor)
    {
+      setLastFocusedEditor(editor, getMainWindow());
    }
    
-   public void setLastFocusedEditor(AceEditor editor)
+   public static final AceEditor getLastFocusedEditor()
    {
-      editor_ = editor;
+      return getLastFocusedEditor(getMainWindow());
    }
    
-   public AceEditor getLastFocusedEditor()
-   {
-      return editor_;
-   }
+   private static final native void setLastFocusedEditor(
+         AceEditor editor,
+         Window wnd)
+   /*-{
+      wnd.$lastFocusedEditor = editor;
+   }-*/;
    
-   private AceEditor editor_;
+   private static final native AceEditor getLastFocusedEditor(Window wnd)
+   /*-{
+      return wnd.$lastFocusedEditor;
+   }-*/;
+   
+   private static final native Window getMainWindow() /*-{
+      var wnd = $wnd;
+      if (wnd.opener)
+         wnd = wnd.opener;
+      return wnd;
+   }-*/;
 }
