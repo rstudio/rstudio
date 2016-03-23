@@ -150,6 +150,7 @@ const int kChunkOutputFinished = 126;
 const int kRprofStarted = 127;
 const int kRprofStopped = 128;
 const int kRprofCreated = 129;
+const int kSetSelectionRanges = 130;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -409,6 +410,8 @@ std::string ClientEvent::typeName() const
          return "rprof_stopped";
       case client_events::kRprofCreated:
          return "rprof_created";
+      case client_events::kSetSelectionRanges:
+         return "set_selection_ranges";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

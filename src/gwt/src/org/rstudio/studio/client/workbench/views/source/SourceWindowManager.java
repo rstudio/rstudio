@@ -80,6 +80,7 @@ import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.view.client.SetSelectionModel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -100,6 +101,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             CollabEditEndedEvent.Handler,
                                             ReplaceRangesDispatchEvent.Handler,
                                             GetEditorContextDispatchEvent.Handler,
+                                            SetSelectionRangesDispatchEvent.Handler,
                                             DocFocusedEvent.Handler,
                                             RestartStatusEvent.Handler
 {
@@ -131,6 +133,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       {
          // most event handlers only make sense on the main window
          events_.addHandler(ReplaceRangesDispatchEvent.TYPE, this);
+         events_.addHandler(SetSelectionRangesDispatchEvent.TYPE, this);
          events_.addHandler(GetEditorContextDispatchEvent.TYPE, this);
          events_.addHandler(PopoutDocEvent.TYPE, this);
          events_.addHandler(DocTabDragStartedEvent.TYPE, this);
@@ -545,6 +548,16 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    
    @Override
    public void onReplaceRangesDispatch(ReplaceRangesDispatchEvent event)
+   {
+      String id = getLastFocusedSourceWindowId();
+      if (StringUtil.isNullOrEmpty(id))
+         events_.fireEvent(event.getEvent());
+      else
+         fireEventToSourceWindow(id, event.getEvent(), false);
+   }
+   
+   @Override
+   public void onSetSelectionRangesDispatch(SetSelectionRangesDispatchEvent event)
    {
       String id = getLastFocusedSourceWindowId();
       if (StringUtil.isNullOrEmpty(id))

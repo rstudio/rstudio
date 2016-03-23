@@ -81,6 +81,7 @@ import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.events.GetEditorContextEvent.DocumentSelection;
 import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
+import org.rstudio.studio.client.events.SetSelectionRangesEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
@@ -176,7 +177,10 @@ public class Source implements InsertSourceHandler,
                              DocTabDragInitiatedEvent.Handler,
                              PopoutDocInitiatedEvent.Handler,
                              DebugModeChangedEvent.Handler,
-                             OpenProfileEvent.Handler
+                             OpenProfileEvent.Handler,
+                             ReplaceRangesEvent.Handler,
+                             SetSelectionRangesEvent.Handler,
+                             GetEditorContextEvent.Handler
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -554,90 +558,9 @@ public class Source implements InsertSourceHandler,
       events.addHandler(DocTabDragInitiatedEvent.TYPE, this);
       events.addHandler(PopoutDocInitiatedEvent.TYPE, this);
       events.addHandler(DebugModeChangedEvent.TYPE, this);
-      
-      events.addHandler(
-            ReplaceRangesEvent.TYPE,
-            new ReplaceRangesEvent.Handler()
-            {
-               @Override
-               public void onReplaceRanges(final ReplaceRangesEvent event)
-               {
-                  InputEditorDisplay console = consoleEditorProvider_.getConsoleEditor();
-                  final String id = event.getData().getId();
-                  
-                  boolean isConsoleEvent = false;
-                  if (console != null)
-                  {
-                     isConsoleEvent =
-                           (StringUtil.isNullOrEmpty(id) && console.isFocused()) ||
-                           "#console".equals(id);
-                  }
-                  if (isConsoleEvent)
-                  {
-                     doReplaceRanges(event, (DocDisplay) console);
-                  }
-                  else
-                  {
-                     withTarget(id, new CommandWithArg<TextEditingTarget>()
-                     {
-                        @Override
-                        public void execute(TextEditingTarget target)
-                        {
-                           doReplaceRanges(event, target.getDocDisplay());
-                        }
-                     });
-                  }
-               }
-            });
-      
-      events.addHandler(
-            GetEditorContextEvent.TYPE,
-            new GetEditorContextEvent.Handler()
-            {
-               @Override
-               public void onGetEditorContext(GetEditorContextEvent event)
-               {
-                  GetEditorContextEvent.Data data = event.getData();
-                  int type = data.getType();
-                  
-                  if (type == GetEditorContextEvent.TYPE_ACTIVE_EDITOR)
-                  {
-                     if (consoleEditorHadFocusLast() || activeEditor_ == null)
-                        type = GetEditorContextEvent.TYPE_CONSOLE_EDITOR;
-                     else
-                        type = GetEditorContextEvent.TYPE_SOURCE_EDITOR;
-                  }
-                  
-                  if (type == GetEditorContextEvent.TYPE_CONSOLE_EDITOR)
-                  {
-                     InputEditorDisplay editor = consoleEditorProvider_.getConsoleEditor();
-                     if (editor != null && editor instanceof DocDisplay)
-                     {
-                        getEditorContext("#console", "", (DocDisplay) editor);
-                        return;
-                     }
-                  }
-                  else if (type == GetEditorContextEvent.TYPE_SOURCE_EDITOR)
-                  {
-                     EditingTarget target = activeEditor_;
-                     if (target != null && target instanceof TextEditingTarget)
-                     {
-                        getEditorContext(
-                              target.getId(),
-                              target.getPath(),
-                              ((TextEditingTarget) target).getDocDisplay());
-                        return;
-                     }
-                  }
-                  
-                  // We need to ensure a 'getEditorContext' event is always
-                  // returned as we have a 'wait-for' event on the server side
-                  server_.getEditorContextCompleted(
-                        GetEditorContextEvent.SelectionData.create(),
-                        new VoidServerRequestCallback());
-               }
-            });
-      
+      events.addHandler(ReplaceRangesEvent.TYPE, this);
+      events.addHandler(GetEditorContextEvent.TYPE, this);
+      events.addHandler(SetSelectionRangesEvent.TYPE, this);
       events.addHandler(OpenProfileEvent.TYPE, this);
 
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
@@ -4084,6 +4007,85 @@ public class Source implements InsertSourceHandler,
             onEditorLocated.execute(editors_.get(i));
             break;
          }
+      }
+   }
+   
+   @Override
+   public void onSetSelectionRanges(SetSelectionRangesEvent event)
+   {
+      Debug.logToRConsole("Hello!");
+   }
+   
+   @Override
+   public void onGetEditorContext(GetEditorContextEvent event)
+   {
+      GetEditorContextEvent.Data data = event.getData();
+      int type = data.getType();
+
+      if (type == GetEditorContextEvent.TYPE_ACTIVE_EDITOR)
+      {
+         if (consoleEditorHadFocusLast() || activeEditor_ == null)
+            type = GetEditorContextEvent.TYPE_CONSOLE_EDITOR;
+         else
+            type = GetEditorContextEvent.TYPE_SOURCE_EDITOR;
+      }
+
+      if (type == GetEditorContextEvent.TYPE_CONSOLE_EDITOR)
+      {
+         InputEditorDisplay editor = consoleEditorProvider_.getConsoleEditor();
+         if (editor != null && editor instanceof DocDisplay)
+         {
+            getEditorContext("#console", "", (DocDisplay) editor);
+            return;
+         }
+      }
+      else if (type == GetEditorContextEvent.TYPE_SOURCE_EDITOR)
+      {
+         EditingTarget target = activeEditor_;
+         if (target != null && target instanceof TextEditingTarget)
+         {
+            getEditorContext(
+                  target.getId(),
+                  target.getPath(),
+                  ((TextEditingTarget) target).getDocDisplay());
+            return;
+         }
+      }
+
+      // We need to ensure a 'getEditorContext' event is always
+      // returned as we have a 'wait-for' event on the server side
+      server_.getEditorContextCompleted(
+            GetEditorContextEvent.SelectionData.create(),
+            new VoidServerRequestCallback());
+   }
+
+   @Override
+   public void onReplaceRanges(final ReplaceRangesEvent event)
+   {
+      InputEditorDisplay console = consoleEditorProvider_.getConsoleEditor();
+      final String id = event.getData().getId();
+
+      boolean isConsoleEvent = false;
+      if (console != null)
+      {
+         isConsoleEvent =
+               (StringUtil.isNullOrEmpty(id) && console.isFocused()) ||
+               "#console".equals(id);
+      }
+      if (isConsoleEvent)
+      {
+         doReplaceRanges(event, (DocDisplay) console);
+      }
+      else
+      {
+         withTarget(id, new CommandWithArg<TextEditingTarget>()
+               {
+            @Override
+            public void execute(TextEditingTarget target)
+            {
+               doReplaceRanges(event, target.getDocDisplay());
+            }
+               });
       }
    }
    

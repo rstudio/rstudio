@@ -53,6 +53,8 @@ import org.rstudio.studio.client.events.GetEditorContextDispatchEvent;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.events.ReplaceRangesDispatchEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
+import org.rstudio.studio.client.events.SetSelectionRangesDispatchEvent;
+import org.rstudio.studio.client.events.SetSelectionRangesEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
@@ -782,6 +784,12 @@ public class ClientEventDispatcher
          {
             RprofEvent.Data data = event.getData();
             eventBus_.fireEvent(new RprofEvent(RprofEvent.RprofEventType.CREATE, data));
+         }
+         else if (type.equals(ClientEvent.SetSelectionRanges))
+         {
+            SetSelectionRangesEvent.Data data = event.getData();
+            SetSelectionRangesEvent payload = new SetSelectionRangesEvent(data);
+            eventBus_.fireEvent(new SetSelectionRangesDispatchEvent(payload));
          }
          else
          {

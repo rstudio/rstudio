@@ -239,7 +239,16 @@
    invisible(data)
 })
 
-# NOTE: Kept for backwards compatibility.
+.rs.addApiFunction("setSelectionRanges", function(ranges, id = "")
+{
+   data <- list(ranges = ranges, id = .rs.scalar(id))
+   .rs.enqueClientEvent("set_selection_ranges", data)
+   invisible(data)
+})
+
+# NOTE: Kept for backwards compatibility with older versions
+# of the 'rstudioapi' package -- it is superceded by
+# '.rs.getLastActiveEditorContext()'.
 .rs.addApiFunction("getActiveDocumentContext", function() {
    .Call(.rs.routines$rs_getEditorContext, 0L)
 })

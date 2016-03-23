@@ -137,6 +137,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kJumpToFunction;
       else if (name == "replace_ranges")
          type = session::client_events::kReplaceRanges;
+      else if (name == "set_selection_ranges")
+         type = session::client_events::kSetSelectionRanges;
       else if (name == "send_to_console")
          type = session::client_events::kSendToConsole;
       else if (name == "get_editor_context")
