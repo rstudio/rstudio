@@ -21,6 +21,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.HasAllKeyHandlers;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressEvent;
@@ -39,6 +40,7 @@ import org.rstudio.core.client.dom.impl.DomUtilsImpl;
 import org.rstudio.core.client.dom.impl.NodeRelativePosition;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.application.Desktop;
 
 /**
  * Helper methods that are mostly useful for interacting with 
@@ -914,6 +916,26 @@ public class DomUtils
       JsArrayString classes = JsArrayString.createArray().cast();
       classes.push(className);
       return extractCssValue(classes, propertyName);
+   }
+   
+   public static final boolean preventBackspaceCausingBrowserBack(NativeEvent event)
+   {
+      if (Desktop.isDesktop())
+         return false;
+      
+      if (event.getKeyCode() != KeyCodes.KEY_BACKSPACE)
+         return false;
+      
+      EventTarget target = event.getEventTarget();
+      if (target == null)
+         return false;
+      
+      Element elementTarget = Element.as(target);
+      if (!elementTarget.getNodeName().equals("BODY"))
+         return false;
+      
+      event.preventDefault();
+      return true;
    }
    
    public static final native String extractCssValue(JsArrayString className, 
