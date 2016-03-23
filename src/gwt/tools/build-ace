@@ -2,7 +2,7 @@
 
 # indirection to ensure correct 'nodejs' executable
 # is discovered / used
-if test -n `which nodejs`; then
+if command -v nodejs 2> /dev/null; then
     NODEJS=nodejs
 else
     NODEJS=node
