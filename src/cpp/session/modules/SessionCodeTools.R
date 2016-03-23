@@ -996,12 +996,16 @@
       n <- length(object)
       
       # NOTE: For type safety we cannot unmarshal NULL as '{}' as e.g. jsonlite does.
-      if (n == 0)
+      if (is.null(object))
       {
          if (unbox)
-            return(NULL)
+            return('null')
          else
             return('[]')
+      }
+      else if (n == 0)
+      {
+         return('[]')
       }
       else if (is.character(object) || is.factor(object))
       {
