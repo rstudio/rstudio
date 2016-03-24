@@ -672,8 +672,4 @@ public class ChunkOutputWidget extends Composite
    public final static int CONSOLE_INPUT  = 0;
    public final static int CONSOLE_OUTPUT = 1;
    public final static int CONSOLE_ERROR  = 2;
-   
-   public final static int LINE_RESTING  = 0;
-   public final static int LINE_QUEUED   = 1;
-   public final static int LINE_EXECUTED = 2;
 }

@@ -50,6 +50,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInpu
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExecState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
@@ -271,7 +272,7 @@ public class TextEditingTargetNotebook
       
          // decorate the gutter to show the chunk is queued
          docDisplay_.setChunkLineExecState(chunk.getBodyStart().getRow() + 1,
-               chunk.getEnd().getRow(), ChunkOutputWidget.LINE_QUEUED);
+               chunk.getEnd().getRow(), ChunkRowExecState.LINE_QUEUED);
       }
       
       // check to see if this chunk is already in the execution queue--if so
@@ -577,7 +578,7 @@ public class TextEditingTargetNotebook
       int start = chunk.getBodyStart().getRow() + 
                   executingChunk_.linesExecuted;
       docDisplay_.setChunkLineExecState(start + 1, start + lines,
-            ChunkOutputWidget.LINE_EXECUTED);
+            ChunkRowExecState.LINE_EXECUTED);
       
       // advance internal input indicator past the text just emitted
       executingChunk_.pos = idx + event.getInput().length();
@@ -934,7 +935,7 @@ public class TextEditingTargetNotebook
          docDisplay_.setChunkLineExecState(
                chunk.getBodyStart().getRow(), 
                chunk.getEnd().getRow(), 
-               ChunkOutputWidget.LINE_RESTING);
+               ChunkRowExecState.LINE_RESTING);
       }
    }
    

@@ -565,22 +565,41 @@ public class AceEditorWidget extends Composite
    {
       for (int i = start; i <= end; i++)
       {
-         switch (state)
+         // clean old line exec state
+         for (int j = 0; j < lineExecState_.size(); j++)
          {
-         case ChunkOutputWidget.LINE_RESTING:
-            editor_.getRenderer().removeGutterDecoration(
-                  rowFromLine(i), "ace_chunk-queued-line");
-            editor_.getRenderer().removeGutterDecoration(
-                  rowFromLine(i), "ace_chunk-executed-line");
-            break;
-         case ChunkOutputWidget.LINE_QUEUED:
+            int row = lineExecState_.get(j).getRow();
+            if (row == i)
+            {
+               editor_.getRenderer().removeGutterDecoration(
+                     rowFromLine(i), lineExecState_.get(j).getClazz());
+               lineExecState_.get(j).getAnchor().detach();
+               lineExecState_.remove(j);
+               break;
+            }
+         }
+         // draw new state
+         if (state != ChunkRowExecState.LINE_RESTING)
+         {
+            final ChunkRowExecState rowState = new ChunkRowExecState(
+                  editor_.getSession().getDocument(), i, state);
+            rowState.getAnchor().addOnChangeHandler(new Command()
+            {
+               @Override
+               public void execute()
+               {
+                  if (rowState.getRow() == rowState.getAnchor().getRow())
+                     return;
+                  editor_.getRenderer().removeGutterDecoration(rowFromLine(
+                     rowState.getRow()), rowState.getClazz());
+                  editor_.getRenderer().addGutterDecoration(rowFromLine(
+                     rowState.getAnchor().getRow()), rowState.getClazz());
+                  rowState.setRow(rowState.getAnchor().getRow());
+               }
+            });
             editor_.getRenderer().addGutterDecoration(
-                  rowFromLine(i), "ace_chunk-queued-line");
-            break;
-         case ChunkOutputWidget.LINE_EXECUTED:
-            editor_.getRenderer().addGutterDecoration(
-                  rowFromLine(i), "ace_chunk-executed-line");
-            break;
+                  rowFromLine(i), rowState.getClazz());
+            lineExecState_.add(rowState);
          }
       }
    }
@@ -1072,9 +1091,10 @@ public class AceEditorWidget extends Composite
    private boolean inOnChangeHandler_ = false;
    private boolean isRendered_ = false;
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
-   
    private ArrayList<AnchoredAceAnnotation> annotations_ =
          new ArrayList<AnchoredAceAnnotation>();
+   private ArrayList<ChunkRowExecState> lineExecState_ = 
+         new ArrayList<ChunkRowExecState>();
    private LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
    
    private EventBus events_;
