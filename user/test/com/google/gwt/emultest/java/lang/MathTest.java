@@ -16,6 +16,8 @@
 
 package com.google.gwt.emultest.java.lang;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.math.BigInteger;
@@ -157,6 +159,25 @@ public class MathTest extends GWTTestCase {
         assertFalse(expectedSuccess);
       }
     }
+  }
+
+  public void testFloor() {
+    double v = Math.floor(0.5);
+    assertEquals(0, v, 0);
+    v = Math.floor(Double.POSITIVE_INFINITY);
+    assertEquals(Double.POSITIVE_INFINITY, v, 0);
+    v = Math.floor(Double.NEGATIVE_INFINITY);
+    assertEquals(Double.NEGATIVE_INFINITY, v, 0);
+    v = Math.floor(Double.NaN);
+    assertEquals(Double.NaN, v, 0);
+  }
+
+  @DoNotRunWith(Platform.HtmlUnitBug)
+  public void testFloor_DoubleMaxValue() {
+    double v = Math.floor(Double.MAX_VALUE);
+    assertEquals(Double.MAX_VALUE, v, 0);
+    v = Math.floor(-Double.MAX_VALUE);
+    assertEquals(-Double.MAX_VALUE, v, 0);
   }
 
   public void testFloorDiv() {
@@ -374,6 +395,83 @@ public class MathTest extends GWTTestCase {
       } catch (ArithmeticException e) {
         assertFalse(expectedSuccess);
       }
+    }
+  }
+
+  public void testRound() {
+    long v = Math.round(0.5);
+    assertEquals(1L, v);
+    v = Math.round(Double.POSITIVE_INFINITY);
+    assertEquals(Long.MAX_VALUE, v, 0);
+    v = Math.round(Double.NEGATIVE_INFINITY);
+    assertEquals(Long.MIN_VALUE, v, 0);
+    v = Math.round(Double.NaN);
+    assertEquals(0, v, 0);
+  }
+
+  @DoNotRunWith(Platform.HtmlUnitBug)
+  public void testRound_DoubleMaxValue() {
+    long v = Math.round(Double.MAX_VALUE);
+    assertEquals(Double.MAX_VALUE, v, 0);
+    v = Math.round(-Double.MAX_VALUE);
+    assertEquals(-Double.MAX_VALUE, v, 0);
+  }
+
+  public void testRint() {
+    final double twoTo52 = 1L << 52;
+    // format: value to be round and expected value
+    final double[] testValues = {
+        0, 0,
+        0.5, 0,
+        0.75, 1,
+        1.5, 2,
+        1.75, 2,
+        -0, -0,
+        -0.5, -0,
+        -1.25, -1,
+        -1.5, -2,
+        -2.5, -2,
+        twoTo52, twoTo52,
+        twoTo52 - 0.25, twoTo52,
+        twoTo52 + 0.25, twoTo52,
+        twoTo52 + 0.5, twoTo52,
+        twoTo52 - 0.5, twoTo52,
+        twoTo52 + 0.75, twoTo52 + 1,
+        twoTo52 - 0.75, twoTo52 - 1,
+        -twoTo52, -twoTo52,
+        -twoTo52 + 0.25, -twoTo52,
+        -twoTo52 - 0.25, -twoTo52,
+        -twoTo52 + 0.5, -twoTo52,
+        -twoTo52 - 0.5, -twoTo52,
+        -twoTo52 + 0.75, -twoTo52 + 1,
+        -twoTo52 - 0.75, -twoTo52 - 1,
+        Double.MIN_VALUE, 0,
+        Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY,
+        Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY,
+        Double.NaN, Double.NaN,
+    };
+    for (int i = 0; i < testValues.length;) {
+      double v = testValues[i++];
+      double expected = testValues[i++];
+      double actual = Math.rint(v);
+      assertEquals("value: " + v + ", expected: " + expected + ", actual: " + actual,
+          expected, actual, 0);
+    }
+  }
+
+  @DoNotRunWith(Platform.HtmlUnitBug)
+  public void testRint_DoubleMaxValue() {
+    // format: value to be round and expected value
+    final double[] testValues = {
+        Double.MAX_VALUE, Double.MAX_VALUE,
+        -Double.MAX_VALUE, -Double.MAX_VALUE,
+    };
+    for (int i = 0; i < testValues.length;) {
+      double v = testValues[i++];
+      double expected = testValues[i++];
+      double actual = Math.rint(v);
+      assertEquals("value: " + v + ", expected: " + expected + ", actual: " + actual,
+          expected, actual, 0);
     }
   }
 

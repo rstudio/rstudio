@@ -84,7 +84,8 @@ public class Assert {
   @DoNotInline
   public static void assertEquals(String str, double obj1, double obj2,
       double delta) {
-    if (obj1 == obj2) {
+    // Handles special cases like NaN
+    if (Double.compare(obj1, obj2) == 0) {
       return;
     } else if (Math.abs(obj1 - obj2) <= delta) {
       return;
@@ -96,7 +97,8 @@ public class Assert {
   @DoNotInline
   public static void assertEquals(String str, float obj1, float obj2,
       float delta) {
-    if (obj1 == obj2) {
+        // Handles special cases like NaN
+    if (Float.compare(obj1, obj2) == 0) {
       return;
     } else if (Math.abs(obj1 - obj2) <= delta) {
       return;

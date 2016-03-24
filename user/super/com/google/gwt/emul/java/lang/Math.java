@@ -269,15 +269,12 @@ public final class Math {
     return NativeMath.random();
   }
 
-  public static double rint(double d) {
-    if (Double.isNaN(d)) {
-      return d;
-    } else if (Double.isInfinite(d)) {
-      return d;
-    } else if (d == 0.0d) {
-      return d;
+  public static double rint(double x) {
+    double mod2 = x % 2;
+    if ((mod2 == -1.5) || (mod2 == 0.5)) {
+      return NativeMath.floor(x);
     } else {
-      return round(d);
+      return NativeMath.round(x);
     }
   }
 
