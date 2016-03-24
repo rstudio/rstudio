@@ -237,6 +237,11 @@ private:
          options.workingDir = buildTargetPath;
          executeMakefileBuild(type, buildTargetPath, options, cb);
       }
+      else if (config.buildType == r_util::kBuildTypeWebsite)
+      {
+         options.workingDir = buildTargetPath;
+         executeWebsiteBuild(type, buildTargetPath, options, cb);
+      }
       else if (config.buildType == r_util::kBuildTypeCustom)
       {
          options.workingDir = buildTargetPath.parent();
@@ -754,10 +759,10 @@ private:
                                                      buildCb);
    }
 
-   bool devtoolsExecute(const std::string& command,
-                        const FilePath& packagePath,
-                        core::system::ProcessOptions pkgOptions,
-                        const core::system::ProcessCallbacks& cb)
+   bool rExecute(const std::string& command,
+                 const FilePath& workingDir,
+                 core::system::ProcessOptions pkgOptions,
+                 const core::system::ProcessCallbacks& cb)
    {
       // Find the path to R
       FilePath rProgramPath;
@@ -769,7 +774,7 @@ private:
       }
 
       // execute within the package directory
-      pkgOptions.workingDir = packagePath;
+      pkgOptions.workingDir = workingDir;
 
       // build args
       std::vector<std::string> args;
@@ -785,8 +790,18 @@ private:
                pkgOptions,
                cb);
 
-      usedDevtools_ = true;
+      return true;
+   }
 
+   bool devtoolsExecute(const std::string& command,
+                        const FilePath& packagePath,
+                        core::system::ProcessOptions pkgOptions,
+                        const core::system::ProcessCallbacks& cb)
+   {
+      if (!rExecute(command, packagePath, pkgOptions, cb))
+         return false;
+
+      usedDevtools_ = true;
       return true;
    }
 
@@ -1064,6 +1079,16 @@ private:
                            cb);
    }
 
+
+   void executeWebsiteBuild(const std::string& type,
+                            const FilePath& websitePath,
+                            const core::system::ProcessOptions& options,
+                            const core::system::ProcessCallbacks& cb)
+   {
+      std::string command = "rmarkdown::render_site()";
+      enqueCommandString(command);
+      rExecute(command, websitePath, options, cb);
+   }
 
    void terminateWithErrorStatus(int exitStatus)
    {
