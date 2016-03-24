@@ -29,6 +29,8 @@ import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.user.client.*;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.UIObject;
 
 import org.rstudio.core.client.BrowseCap;
@@ -40,6 +42,7 @@ import org.rstudio.core.client.dom.impl.DomUtilsImpl;
 import org.rstudio.core.client.dom.impl.NodeRelativePosition;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.application.Desktop;
 
 /**
@@ -961,4 +964,45 @@ public class DomUtils
       $doc.body.removeChild(root);
       return result;
    }-*/;
+
+   public static int getCharacterWidth(Element ele, String style)
+   {
+      // create width checker label and add it to the root panel
+      Label widthChecker = new Label();
+      widthChecker.setStylePrimaryName(style);
+      FontSizer.applyNormalFontSize(widthChecker);
+      RootPanel.get().add(widthChecker, -1000, -1000);
+      
+      // put the text into the label, measure it, and remove it
+      String text = new String("abcdefghijklmnopqrstuvwzyz0123456789");
+      widthChecker.setText(text);
+      int labelWidth = widthChecker.getOffsetWidth();
+      RootPanel.get().remove(widthChecker);
+      
+      // compute the points per character 
+      float pointsPerCharacter = (float)labelWidth / (float)text.length();
+      
+      // compute client width
+      int clientWidth = ele.getClientWidth();
+      int offsetWidth = ele.getOffsetWidth();
+      if (clientWidth == offsetWidth)
+      {
+         // if the two widths are the same then there are no scrollbars.
+         // however, we know there will eventually be a scrollbar so we 
+         // should offset by an estimated amount
+         // (is there a more accurate way to estimate this?)
+         clientWidth -= ESTIMATED_SCROLLBAR_WIDTH;
+      }
+      
+      // compute character width (add pad so characters aren't flush to right)
+      final int RIGHT_CHARACTER_PAD = 2;
+      int width = Math.round((float)clientWidth / pointsPerCharacter) - 
+            RIGHT_CHARACTER_PAD;
+
+      // enforce a minimum width
+      final int MINIMUM_WIDTH = 30;
+      return Math.max(width, MINIMUM_WIDTH);
+   }
+
+   public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;
 }

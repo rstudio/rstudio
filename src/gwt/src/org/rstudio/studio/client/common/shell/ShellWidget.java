@@ -694,45 +694,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
       return input_.addKeyPressHandler(handler) ;
    }
    
+   
    public int getCharacterWidth()
    {
-      // create width checker label and add it to the root panel
-      Label widthChecker = new Label();
-      widthChecker.setStylePrimaryName(styles_.console());
-      FontSizer.applyNormalFontSize(widthChecker);
-      RootPanel.get().add(widthChecker, -1000, -1000);
-      
-      // put the text into the label, measure it, and remove it
-      String text = new String("abcdefghijklmnopqrstuvwzyz0123456789");
-      widthChecker.setText(text);
-      int labelWidth = widthChecker.getOffsetWidth();
-      RootPanel.get().remove(widthChecker);
-      
-      // compute the points per character 
-      float pointsPerCharacter = (float)labelWidth / (float)text.length();
-      
-      // compute client width
-      int clientWidth = getElement().getClientWidth();
-      int offsetWidth = getOffsetWidth();
-      if (clientWidth == offsetWidth)
-      {
-         // if the two widths are the same then there are no scrollbars.
-         // however, we know there will eventually be a scrollbar so we 
-         // should offset by an estimated amount
-         // (is there a more accurate way to estimate this?)
-         clientWidth -= ESTIMATED_SCROLLBAR_WIDTH;
-      }
-      
-      // compute character width (add pad so characters aren't flush to right)
-      final int RIGHT_CHARACTER_PAD = 2;
-      int width = Math.round((float)clientWidth / pointsPerCharacter) - 
-            RIGHT_CHARACTER_PAD;
-
-      // enforce a minimum width
-      final int MINIMUM_WIDTH = 30;
-      return Math.max(width, MINIMUM_WIDTH);
+      return DomUtils.getCharacterWidth(getElement(), styles_.console());
    }
-
+   
    public boolean isPromptEmpty()
    {
       return StringUtil.isNullOrEmpty(prompt_.getText());
@@ -801,6 +768,4 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private boolean clearErrors_ = false;
 
    private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;
-
-   public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;
 }
