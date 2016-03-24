@@ -1006,7 +1006,7 @@ public class TextEditingTargetNotebook
    // chunk state synchronized
    private final static int STATE_INITIALIZED = 0;
    
-   public final static int MIN_CHUNK_HEIGHT = 40;
+   public final static int MIN_CHUNK_HEIGHT = 25;
    public final static int CHUNK_COLLAPSED_HEIGHT = 10;
    public final static int MAX_CHUNK_HEIGHT = 650;
    
