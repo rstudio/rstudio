@@ -375,7 +375,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       jsPath <- file.path(dep$src$file, dep$script)
       if (file.exists(jsPath))
       {
-         scriptHtml <- sprintf("<script src=\"%s\"></script>", jsPath)
+         contents <- .rs.readFile(jsPath, binary = TRUE)
+         encoded <- caTools::base64encode(contents)
+         scriptHtml <- sprintf("<script src=\"data:application/x-javascript;base64,%s\"></script>", encoded)
          injection <- c(injection, scriptHtml)
       }
       
