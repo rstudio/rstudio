@@ -15,7 +15,10 @@
 
 .rs.addFunction("valueFromStr", function(val)
 {
-   capture.output(try({ str(val) }, silent = TRUE));
+   .rs.withTimeLimit(1, fail = "<truncated>", {
+      capture.output(try(str(val), silent = TRUE))
+   })
+   
 })
 
 .rs.addFunction("valueAsString", function(val)
