@@ -160,6 +160,14 @@ public class NativeJsTypeTest extends GWTTestCase {
     public final boolean hasM() {
       return hasOwnProperty("m");
     }
+
+    public int k;
+
+    @JsOverlay
+    public final NativeJsTypeWithOverlay setK(int k) {
+      this.k = k;
+      return this;
+    }
   }
 
   private native NativeJsTypeWithOverlay createNativeJsTypeWithOverlay() /*-{
@@ -171,6 +179,7 @@ public class NativeJsTypeTest extends GWTTestCase {
     assertTrue(object.hasM());
     assertTrue(NativeJsTypeWithOverlay.hasM(object));
     assertEquals(2, NativeJsTypeWithOverlay.x);
+    assertEquals(42, object.setK(3).setK(42).k);
   }
 
   @JsType(isNative = true)
