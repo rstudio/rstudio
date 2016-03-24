@@ -338,22 +338,33 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          stop("no chunk with id '", chunkId, "'")
       
       # convert to HTML
-      htmlList <- .rs.enumerate(chunkData, function(name, value) {
-         if (.rs.endsWith(name, "csv")) {
+      htmlList <- .rs.enumerate(chunkData, function(fileName, value) {
+         if (.rs.endsWith(fileName, "csv")) {
             parsed <- .rs.rnb.parseConsoleData(value)
-            .rs.rnb.consoleDataToHtml(parsed, chunkId, name)
-         } else if (.rs.endsWith(name, "png")) {
+            .rs.rnb.consoleDataToHtml(parsed, chunkId, fileName)
+         } else if (.rs.endsWith(fileName, "png")) {
             encoded <- caTools::base64encode(value)
             fmt <- "<img data-chunk-id=\"%s\" data-chunk-filename=\"%s\" src=data:image/png;base64,%s />"
-            sprintf(fmt, chunkId, name, encoded)
-         } else if (.rs.endsWith(name, "html")) {
+            sprintf(fmt, chunkId, fileName, encoded)
+         } else if (.rs.endsWith(fileName, "html")) {
             # parse and record JSON dependencies
-            jsonPath <- .rs.withChangedExtension(name, "json")
+            jsonPath <- .rs.withChangedExtension(fileName, "json")
             jsonString <- chunkData[[jsonPath]]
             jsDependencies <<- c(jsDependencies, .rs.fromJSON(jsonString))
             
             # emit body of HTML content
-            .rs.extractHTMLBodyElement(value)
+            bodyEl <- .rs.extractHTMLBodyElement(value)
+            
+            # base64 encode original contents for easy extraction later
+            # (for re-hydrating the cache)
+            encoded <- caTools::base64encode(bodyEl)
+            fmt <- paste0("<div ",
+                          "data-chunk-id=\"%s\" ",
+                          "data-chunk-filename=\"%s\" ",
+                          "data-chunk-contents=\"%s\">",
+                          "%s",
+                          "</div>")
+            sprintf(fmt, chunkId, fileName, encoded, bodyEl)
          }
       })
       
