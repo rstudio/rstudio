@@ -67,6 +67,7 @@ import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.EventBasedChangeTracker;
@@ -263,6 +264,7 @@ public class AceEditor implements DocDisplay,
    @Inject
    public AceEditor()
    {
+      id_ = StringUtil.makeRandomId(16);
       widget_ = new AceEditorWidget();
       snippets_ = new SnippetHelper(this);
       editorEventListeners_ = new ArrayList<HandlerRegistration>();
@@ -431,7 +433,9 @@ public class AceEditor implements DocDisplay,
          @Override
          public void onFocus(FocusEvent event)
          {
-            AceEditorFocusTracker.setLastFocusedEditor(AceEditor.this);
+            MainWindowObject.set(
+                  MainWindowObject.LAST_FOCUSED_EDITOR,
+                  AceEditor.this.getWidget().getElement().getId());
          }
       });
    }
@@ -534,15 +538,13 @@ public class AceEditor implements DocDisplay,
                    UIPrefs uiPrefs,
                    CollabEditor collab,
                    Commands commands,
-                   EventBus events,
-                   AceEditorFocusTracker tracker)
+                   EventBus events)
    {
       server_ = server;
       uiPrefs_ = uiPrefs;
       collab_ = collab;
       commands_ = commands;
       events_ = events;
-      tracker_ = tracker;
    }
 
    public TextFileType getFileType()
@@ -3102,7 +3104,7 @@ public class AceEditor implements DocDisplay,
    private AceInfoBar infoBar_;
    private boolean showChunkOutputInline_ = false;
    private BackgroundTokenizer backgroundTokenizer_;
-   private AceEditorFocusTracker tracker_;
+   private final String id_;
    private final Vim vim_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)

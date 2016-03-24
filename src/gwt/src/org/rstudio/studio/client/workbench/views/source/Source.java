@@ -96,6 +96,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.ConsoleEditorProvider;
+import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
@@ -127,7 +128,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditing
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.OpenProfileEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorFocusTracker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
@@ -257,8 +257,7 @@ public class Source implements InsertSourceHandler,
                  RnwWeaveRegistry rnwWeaveRegistry,
                  ChunkIconsManager chunkIconsManager,
                  DependencyManager dependencyManager,
-                 SourceWindowManager windowManager,
-                 AceEditorFocusTracker editorFocusTracker)
+                 SourceWindowManager windowManager)
    {
       commands_ = commands;
       view_ = view;
@@ -657,11 +656,10 @@ public class Source implements InsertSourceHandler,
    
    private boolean consoleEditorHadFocusLast()
    {
-      AceEditor editor = AceEditorFocusTracker.getLastFocusedEditor();
-      if (editor == null)
-         return false;
+      MainWindowObject.Data<String> data =
+            MainWindowObject.get(MainWindowObject.LAST_FOCUSED_EDITOR);
       
-      String id = editor.getWidget().getElement().getId();
+      String id = data.getData();
       return "rstudio_console_input".equals(id);
    }
    
