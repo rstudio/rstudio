@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.workbench;
 
-import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
-
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Window;
 
@@ -26,32 +24,12 @@ import com.google.gwt.user.client.Window;
  */
 public class MainWindowObject
 {
-   public static class Data<T> extends JavaScriptObject
-   {
-      protected Data() {}
-      
-      public static final <T> Data<T> create(T data)
-      {
-         return createImpl(SourceWindowManager.getSourceWindowId(), data);
-      }
-      
-      private static final native <T> Data<T> createImpl(String windowId, T data) /*-{
-         return {
-            "windowId": windowId,
-            "data": data
-         };
-      }-*/;
-      
-      public final native String getWindowId() /*-{ return this["windowId"]; }-*/;
-      public final native T getData()          /*-{ return this["data"]; }-*/;
-   }
-   
    public static final <T> void set(String key, T value)
    {
-      setImpl(key, value, SourceWindowManager.getSourceWindowId(), RSTUDIO);
+      setImpl(key, value, RSTUDIO);
    }
    
-   public static final <T> Data<T> get(String key)
+   public static final <T> T get(String key)
    {
       return getImpl(key, RSTUDIO);
    }
@@ -60,17 +38,13 @@ public class MainWindowObject
    
    private static final native <T> void setImpl(String key,
                                                 T value,
-                                                String windowId,
                                                 JavaScriptObject object)
    /*-{
-      object[key] = {
-         "data": value,
-         "windowId": windowId
-      };
+      object[key] = value;
    }-*/;
    
-   private static final native <T> Data<T> getImpl(String key,
-                                                   JavaScriptObject object)
+   private static final native <T> T getImpl(String key,
+                                             JavaScriptObject object)
    /*-{
       return object[key];
    }-*/;
@@ -82,11 +56,6 @@ public class MainWindowObject
       return wnd;
    }-*/;
    
-   private static final native void ensureRStudioObjectInitialized(Window wnd) /*-{
-      if (wnd.$RStudio == null)
-         wnd.$RStudio = {};
-   }-*/;
-   
    private static final native JavaScriptObject getRStudioObject(Window wnd) /*-{
       if (wnd.$RStudio == null)
          wnd.$RStudio = {};
@@ -96,5 +65,6 @@ public class MainWindowObject
    private static final Window MAIN_WINDOW = getMainWindow();
    private static final JavaScriptObject RSTUDIO = getRStudioObject(MAIN_WINDOW);
    
-   public static final String LAST_FOCUSED_EDITOR = "editor";
+   public static final String LAST_FOCUSED_EDITOR        = "last_focused_editor";
+   public static final String LAST_FOCUSED_SOURCE_WINDOW = "last_focused_source_window";
 }
