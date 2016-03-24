@@ -16,15 +16,16 @@
 package java.lang;
 
 /**
- * Encapsulates an action for later execution. <a
- * href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Runnable.html">[Sun
- * docs]</a>
- * 
+ * Encapsulates an action for later execution.
+ * See <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Runnable.html">
+ * the official Java API doc</a> for details.
+ *
  * <p>
  * This interface is provided only for JRE compatibility. GWT does not support
  * multithreading.
  * </p>
  */
+@FunctionalInterface
 public interface Runnable {
   void run();
 }

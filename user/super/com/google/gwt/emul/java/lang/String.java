@@ -16,6 +16,7 @@
 
 package java.lang;
 
+import static javaemul.internal.InternalPreconditions.checkNotNull;
 import static javaemul.internal.InternalPreconditions.checkStringBounds;
 
 import java.io.Serializable;
@@ -24,6 +25,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Comparator;
 import java.util.Locale;
+import java.util.StringJoiner;
 
 import javaemul.internal.ArrayHelper;
 import javaemul.internal.EmulatedCharset;
@@ -108,6 +110,26 @@ public final class String implements Comparable<String>, CharSequence,
 
   public static String copyValueOf(char[] v, int offset, int count) {
     return valueOf(v, offset, count);
+  }
+
+  public static String join(CharSequence delimiter, CharSequence... elements) {
+    checkNotNull(delimiter, "delimiter");
+    checkNotNull(elements, "elements");
+    StringJoiner joiner = new StringJoiner(delimiter);
+    for (CharSequence e : elements) {
+      joiner.add(e);
+    }
+    return joiner.toString();
+  }
+
+  public static String join(CharSequence delimiter, Iterable<? extends CharSequence> elements) {
+    checkNotNull(delimiter, "delimiter");
+    checkNotNull(elements, "elements");
+    StringJoiner joiner = new StringJoiner(delimiter);
+    for (CharSequence e : elements) {
+      joiner.add(e);
+    }
+    return joiner.toString();
   }
 
   public static String valueOf(boolean x) {

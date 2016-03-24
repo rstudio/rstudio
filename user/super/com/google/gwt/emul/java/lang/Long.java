@@ -31,6 +31,7 @@ public final class Long extends Number implements Comparable<Long> {
   public static final long MAX_VALUE = 0x7fffffffffffffffL;
   public static final long MIN_VALUE = 0x8000000000000000L;
   public static final int SIZE = 64;
+  public static final int BYTES = SIZE / Byte.SIZE;
   public static final Class<Long> TYPE = long.class;
 
   public static int bitCount(long i) {
@@ -54,9 +55,6 @@ public final class Long extends Number implements Comparable<Long> {
     return valueOf(decode.payload, decode.radix);
   }
 
-  /**
-   * @skip Here for shared implementation with Arrays.hashCode
-   */
   public static int hashCode(long l) {
     return (int) l;
   }
@@ -72,6 +70,14 @@ public final class Long extends Number implements Comparable<Long> {
 
   public static long lowestOneBit(long i) {
     return i & -i;
+  }
+
+  public static long max(long a, long b) {
+    return Math.max(a, b);
+  }
+
+  public static long min(long a, long b) {
+    return Math.min(a, b);
   }
 
   public static int numberOfLeadingZeros(long i) {
@@ -143,6 +149,10 @@ public final class Long extends Number implements Comparable<Long> {
     } else {
       return 1;
     }
+  }
+
+  public static long sum(long a, long b) {
+    return a + b;
   }
 
   public static String toBinaryString(long value) {

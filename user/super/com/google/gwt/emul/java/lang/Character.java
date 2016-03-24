@@ -128,6 +128,7 @@ public final class Character implements Comparable<Character>, Serializable {
   public static final int MAX_CODE_POINT = 0x10FFFF;
 
   public static final int SIZE = 16;
+  public static final int BYTES = SIZE / Byte.SIZE;
 
   public static int charCount(int codePoint) {
     return codePoint >= MIN_SUPPLEMENTARY_CODE_POINT ? 2 : 1;
@@ -217,11 +218,6 @@ public final class Character implements Comparable<Character>, Serializable {
     return forDigit(digit);
   }
 
-  /**
-   * @skip
-   *
-   * public for shared implementation with Arrays.hashCode
-   */
   public static int hashCode(char c) {
     return c;
   }

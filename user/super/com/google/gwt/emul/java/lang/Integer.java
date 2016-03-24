@@ -23,6 +23,7 @@ public final class Integer extends Number implements Comparable<Integer> {
   public static final int MAX_VALUE = 0x7fffffff;
   public static final int MIN_VALUE = 0x80000000;
   public static final int SIZE = 32;
+  public static final int BYTES = SIZE / Byte.SIZE;
   public static final Class<Integer> TYPE = int.class;
 
   /**
@@ -71,11 +72,6 @@ public final class Integer extends Number implements Comparable<Integer> {
     return Integer.valueOf(__decodeAndValidateInt(s, MIN_VALUE, MAX_VALUE));
   }
 
-  /**
-   * @skip
-   * 
-   * Here for shared implementation with Arrays.hashCode
-   */
   public static int hashCode(int i) {
     return i;
   }
@@ -96,6 +92,14 @@ public final class Integer extends Number implements Comparable<Integer> {
 
   public static int lowestOneBit(int i) {
     return i & -i;
+  }
+
+  public static int max(int a, int b) {
+    return Math.max(a, b);
+  }
+
+  public static int min(int a, int b) {
+    return Math.min(a, b);
   }
 
   public static int numberOfLeadingZeros(int i) {
@@ -195,6 +199,10 @@ public final class Integer extends Number implements Comparable<Integer> {
     } else {
       return 1;
     }
+  }
+
+  public static int sum(int a, int b) {
+    return a + b;
   }
 
   public static String toBinaryString(int value) {

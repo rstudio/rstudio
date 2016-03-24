@@ -71,6 +71,20 @@ public final class Math {
     return NativeMath.asin(x);
   }
 
+  public static int addExact(int x, int y) {
+    int r = x + y;
+    // "Hacker's Delight" 2-12 Overflow if both arguments have the opposite sign of the result
+    throwOverflowIf(((x ^ r) & (y ^ r)) < 0);
+    return r;
+  }
+
+  public static long addExact(long x, long y) {
+    long r = x + y;
+    // "Hacker's Delight" 2-12 Overflow if both arguments have the opposite sign of the result
+    throwOverflowIf(((x ^ r) & (y ^ r)) < 0);
+    return r;
+  }
+
   public static double atan(double x) {
     return NativeMath.atan(x);
   }
@@ -107,6 +121,16 @@ public final class Math {
     return (Math.exp(x) + Math.exp(-x)) / 2.0;
   }
 
+  public static int decrementExact(int x) {
+    throwOverflowIf(x == Integer.MIN_VALUE);
+    return x - 1;
+  }
+
+  public static long decrementExact(long x) {
+    throwOverflowIf(x == Long.MIN_VALUE);
+    return x - 1;
+  }
+
   public static double exp(double x) {
     return NativeMath.exp(x);
   }
@@ -128,8 +152,46 @@ public final class Math {
     return NativeMath.floor(x);
   }
 
+  public static int floorDiv(int dividend, int divisor) {
+    throwDivByZeroIf(divisor == 0);
+    int r = dividend / divisor;
+    // if the signs are different and modulo not zero, round down
+    if ((dividend ^ divisor) < 0 && (r * divisor != dividend)) {
+      r--;
+    }
+    return r;
+  }
+
+  public static long floorDiv(long dividend, long divisor) {
+    throwDivByZeroIf(divisor == 0);
+    long r = dividend / divisor;
+    // if the signs are different and modulo not zero, round down
+    if ((dividend ^ divisor) < 0 && (r * divisor != dividend)) {
+      r--;
+    }
+    return r;
+  }
+
+  public static int floorMod(int dividend, int divisor) {
+    return dividend - floorDiv(dividend, divisor) * divisor;
+  }
+
+  public static long floorMod(long dividend, long divisor) {
+    return dividend - floorDiv(dividend, divisor) * divisor;
+  }
+
   public static double hypot(double x, double y) {
     return sqrt(x * x + y * y);
+  }
+
+  public static int incrementExact(int x) {
+    throwOverflowIf(x == Integer.MAX_VALUE);
+    return x + 1;
+  }
+
+  public static long incrementExact(long x) {
+    throwOverflowIf(x == Long.MAX_VALUE);
+    return x + 1;
   }
 
   public static double log(double x) {
@@ -176,6 +238,29 @@ public final class Math {
     return x < y ? x : y;
   }
 
+  public static int multiplyExact(int x, int y) {
+    long r = (long) x * (long) y;
+    int ir = (int) r;
+    throwOverflowIf(ir != r);
+    return ir;
+  }
+
+  public static long multiplyExact(long x, long y) {
+    long r = x * y;
+    throwOverflowIf((x == Long.MIN_VALUE && y == -1) || (y != 0 && (r / y != x)));
+    return r;
+  }
+
+  public static int negateExact(int x) {
+    throwOverflowIf(x == Integer.MIN_VALUE);
+    return -x;
+  }
+
+  public static long negateExact(long x) {
+    throwOverflowIf(x == Long.MIN_VALUE);
+    return -x;
+  }
+
   public static double pow(double x, double exp) {
     return NativeMath.pow(x, exp);
   }
@@ -208,6 +293,22 @@ public final class Math {
   private static native int unsafeCastToInt(double d) /*-{
     return d;
   }-*/;
+
+  public static int subtractExact(int x, int y) {
+    int r = x - y;
+    // "Hacker's Delight" Overflow if the arguments have different signs and
+    // the sign of the result is different than the sign of x
+    throwOverflowIf(((x ^ y) & (x ^ r)) < 0);
+    return r;
+  }
+
+  public static long subtractExact(long x, long y) {
+    long r = x - y;
+    // "Hacker's Delight" Overflow if the arguments have different signs and
+    // the sign of the result is different than the sign of x
+    throwOverflowIf(((x ^ y) & (x ^ r)) < 0);
+    return r;
+  }
 
   public static double scalb(double d, int scaleFactor) {
     if (scaleFactor >= 31 || scaleFactor <= -31) {
@@ -268,8 +369,26 @@ public final class Math {
     return x * PI_UNDER_180;
   }
 
+  public static int toIntExact(long x) {
+    int ix = (int) x;
+    throwOverflowIf(ix != x);
+    return ix;
+  }
+
   public static double toRadians(double x) {
     return x * PI_OVER_180;
+  }
+
+  private static void throwDivByZeroIf(boolean condition) {
+    if (condition) {
+      throw new ArithmeticException("div by zero");
+    }
+  }
+
+  private static void throwOverflowIf(boolean condition) {
+    if (condition) {
+      throw new ArithmeticException("overflow");
+    }
   }
 
   @JsType(isNative = true, name = "Math", namespace = JsPackage.GLOBAL)

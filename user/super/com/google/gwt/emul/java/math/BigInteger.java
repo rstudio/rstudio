@@ -615,7 +615,7 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
    *         does not fit in a {@code byte}.
    */
   public byte byteValueExact() {
-    if (numberLength <= 1 && bitLength() <= 7) {
+    if (numberLength <= 1 && bitLength() < Byte.SIZE) {
       return byteValue();
     }
     throw new ArithmeticException("out of byte range");
@@ -923,7 +923,7 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
    *         does not fit in an {@code int}.
    */
   public int intValueExact() {
-    if (numberLength <= 1 && bitLength() <= 31) {
+    if (numberLength <= 1 && bitLength() < Integer.SIZE) {
       return intValue();
     }
     throw new ArithmeticException("out of int range");
@@ -965,7 +965,7 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
    *         does not fit in a {@code long}.
    */
   public long longValueExact() {
-    if (numberLength <= 2 && bitLength() <= 63) {
+    if (numberLength <= 2 && bitLength() < Long.SIZE) {
       return longValue();
     }
     throw new ArithmeticException("out of long range");
@@ -1304,7 +1304,7 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
    *         does not fit in a {@code short}.
    */
   public short shortValueExact() {
-    if (numberLength <= 1 && bitLength() <= 15) {
+    if (numberLength <= 1 && bitLength() < Short.SIZE) {
       return shortValue();
     }
     throw new ArithmeticException("out of short range");
