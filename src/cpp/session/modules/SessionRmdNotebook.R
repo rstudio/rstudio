@@ -324,7 +324,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       .rs.endsWith(html, "-->"))
    
    # Record htmlwidget dependencies as we fill chunks
-   jsonDependencies <- list()
+   jsDependencies <- list()
    
    for (chunkIdx in seq_along(indices))
    {
@@ -341,7 +341,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       htmlList <- .rs.enumerate(chunkData, function(name, value) {
          if (.rs.endsWith(name, "csv")) {
             parsed <- .rs.rnb.parseConsoleData(value)
-            .rs.rnb.consoleDataToHtml(parsed)
+            .rs.rnb.consoleDataToHtml(parsed, chunkId, name)
          } else if (.rs.endsWith(name, "png")) {
             encoded <- caTools::base64encode(value)
             sprintf("<img src=data:image/png;base64,%s />", encoded)
@@ -349,7 +349,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
             # parse and record JSON dependencies
             jsonPath <- .rs.withChangedExtension(name, "json")
             jsonString <- chunkData[[jsonPath]]
-            jsonDependencies <<- c(jsonDependencies, .rs.fromJSON(jsonString))
+            jsDependencies <<- c(jsDependencies, .rs.fromJSON(jsonString))
             
             # emit body of HTML content
             .rs.extractHTMLBodyElement(value)
@@ -369,7 +369,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    # Inject JSON dependency information into document
    # TODO: Resolve duplicates
-   htmlDeps <- lapply(jsonDependencies, function(dep) {
+   htmlDeps <- lapply(jsDependencies, function(dep) {
       injection <- character()
       
       jsPath <- file.path(dep$src$file, dep$script)
@@ -512,7 +512,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    csvData
 })
 
-.rs.addFunction("rnb.consoleDataToHtml", function(csvData)
+.rs.addFunction("rnb.consoleDataToHtml", function(csvData, chunkId, fileName)
 {
    cutpoints <- .rs.cutpoints(csvData$type)
    
@@ -543,12 +543,12 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    filtered <- Filter(Negate(is.null), splat)
    html <- lapply(filtered, function(el) {
       class <- attr(el, ".class")
-      result <- if (!is.null(class)) {
-         sprintf("<pre class=\"%s\"><code>%s</code></pre>",
-                 class,
-                 el)
+      result <- if (is.null(class)) {
+         fmt <- "<pre data-chunk-id=\"%s\" data-chunk-filename=\"%s\"><code>%s</code></pre>"
+         sprintf(fmt, chunkId, fileName, el)
       } else {
-         sprintf("<pre><code>%s</code></pre>", el)
+         fmt <- "<pre data-chunk-id=\"%s\" data-chunk-filename=\"%s\" class=\"%s\"><code>%s</code></pre>"
+         sprintf(fmt, chunkId, fileName, class, el)
       }
       result
    })
