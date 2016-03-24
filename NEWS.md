@@ -58,6 +58,7 @@
 
 * R Markdown: hide chunk toolbar when chunk is hidden by folded Markdown section
 * SVN: avoid recursive revert when reverting changes to modified directory properties
+* Fix hang caused by large, heavily-nested S4 objects
 * Fix for 'httpdPort' detection error sometimes seen with R built from source
 * Autocompletion: avoid errors when retrieving completions in debugger
 * Diagnostics: fix false positive errors with '{' following function calls
