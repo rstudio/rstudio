@@ -23,6 +23,7 @@ import java.util.Queue;
 import java.util.Set;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.layout.FadeOutAnimation;
@@ -331,6 +332,23 @@ public class TextEditingTargetNotebook
       if (outputWidgets_.containsKey(unit.chunkId))
          outputWidgets_.get(unit.chunkId).setCodeExecuting(true);
       syncWidth(unit.chunkId);
+      
+      // check to see if the row beneath the chunk is visible -- if it's not, 
+      // scroll it into view
+      if (lineWidgets_.containsKey(unit.chunkId))
+      {
+         LineWidget w = lineWidgets_.get(unit.chunkId);
+         
+         if (docDisplay_.getLastVisibleRow() < (w.getRow() + 1))
+         {
+            Scope chunk = docDisplay_.getCurrentChunk(
+                  Position.create(w.getRow(), 1));
+            Rectangle bounds = docDisplay_.getPositionBounds(
+                  chunk.getPreamble());
+            docDisplay_.scrollToY(docDisplay_.getScrollTop() + 
+                  (bounds.getTop() - (docDisplay_.getBounds().getTop() + 60)));
+         }
+      }
       
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
             unit.chunkId, 

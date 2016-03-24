@@ -358,6 +358,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void forceImmediateRender();
    boolean isPositionVisible(Position position);
+   int getLastVisibleRow();
    
    void showInfoBar(String message);
    
