@@ -344,7 +344,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
             .rs.rnb.consoleDataToHtml(parsed, chunkId, name)
          } else if (.rs.endsWith(name, "png")) {
             encoded <- caTools::base64encode(value)
-            sprintf("<img src=data:image/png;base64,%s />", encoded)
+            fmt <- "<img data-chunk-id=\"%s\" data-chunk-filename=\"%s\" src=data:image/png;base64,%s />"
+            sprintf(fmt, chunkId, name, encoded)
          } else if (.rs.endsWith(name, "html")) {
             # parse and record JSON dependencies
             jsonPath <- .rs.withChangedExtension(name, "json")
@@ -535,6 +536,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       if (type == 1 || type == 2)
          result <- paste("##", gsub("\n", "\n## ", result, fixed = TRUE))
       
+      attr(result, "type") <- type
       attr(result, ".class") <- if (type == 0) "r"
       
       result
@@ -542,13 +544,14 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    filtered <- Filter(Negate(is.null), splat)
    html <- lapply(filtered, function(el) {
+      type  <- attr(el, "type")
       class <- attr(el, ".class")
       result <- if (is.null(class)) {
-         fmt <- "<pre data-chunk-id=\"%s\" data-chunk-filename=\"%s\"><code>%s</code></pre>"
-         sprintf(fmt, chunkId, fileName, el)
+         fmt <- "<pre data-chunk-id=\"%s\" data-chunk-filename=\"%s\" data-chunk-type=\"%s\"><code>%s</code></pre>"
+         sprintf(fmt, chunkId, fileName, type, el)
       } else {
-         fmt <- "<pre data-chunk-id=\"%s\" data-chunk-filename=\"%s\" class=\"%s\"><code>%s</code></pre>"
-         sprintf(fmt, chunkId, fileName, class, el)
+         fmt <- "<pre data-chunk-id=\"%s\" data-chunk-filename=\"%s\" data-chunk-type=\"%s\" class=\"%s\"><code>%s</code></pre>"
+         sprintf(fmt, chunkId, fileName, type, class, el)
       }
       result
    })
