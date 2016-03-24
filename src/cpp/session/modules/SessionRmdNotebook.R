@@ -397,10 +397,28 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                                        rmdContents = .rs.readFile(inputFile),
                                        envir = .GlobalEnv)
 {
+   # TODO: Move to 'rmarkdown' package when appropriate
+   html_notebook <- function(toc = TRUE,
+                             toc_float = TRUE,
+                             code_folding = "show",
+                             theme = "cerulean",
+                             highlight = "textmate",
+                             ...)
+   {
+      rmarkdown::html_document(toc = toc,
+                               toc_float = toc_float,
+                               code_folding = code_folding,
+                               theme = theme,
+                               highlight = highlight,
+                               ...)
+   }
+   
+   outputFormat <- html_notebook()
    renderOutput <- tempfile("rnb-render-output-", fileext = ".html")
-   outputOptions <- list(self_contained = TRUE,
-                         keep_md = TRUE)
+   outputOptions <- list(self_contained = TRUE, keep_md = TRUE)
+   
    rmarkdown::render(input = inputFile,
+                     output_format = outputFormat,
                      output_file = renderOutput,
                      output_options = outputOptions,
                      encoding = "UTF-8",
