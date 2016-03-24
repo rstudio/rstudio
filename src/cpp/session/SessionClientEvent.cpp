@@ -137,8 +137,6 @@ const int kShinyGadgetDialog = 112;
 const int kRmdParamsReady = 113;
 const int kRegisterUserCommand = 114;
 const int kRmdRSConnectDeploymentFailed = 115;
-const int kReplaceRanges = 117;
-const int kGetEditorContext = 118;
 const int kSendToConsole = 119;
 const int kUserFollowStarted = 120;
 const int kUserFollowEnded = 121;
@@ -150,7 +148,7 @@ const int kChunkOutputFinished = 126;
 const int kRprofStarted = 127;
 const int kRprofStopped = 128;
 const int kRprofCreated = 129;
-const int kSetSelectionRanges = 130;
+const int kEditorCommand = 131;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -384,10 +382,6 @@ std::string ClientEvent::typeName() const
          return "rmd_params_ready";
       case client_events::kRegisterUserCommand:
          return "register_user_command";
-      case client_events::kReplaceRanges:
-         return "replace_ranges";
-      case client_events::kGetEditorContext:
-         return "get_editor_context";
       case client_events::kSendToConsole:
          return "send_to_console";
       case client_events::kUserFollowStarted:
@@ -410,8 +404,8 @@ std::string ClientEvent::typeName() const
          return "rprof_stopped";
       case client_events::kRprofCreated:
          return "rprof_created";
-      case client_events::kSetSelectionRanges:
-         return "set_selection_ranges";
+      case client_events::kEditorCommand:
+         return "editor_command";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

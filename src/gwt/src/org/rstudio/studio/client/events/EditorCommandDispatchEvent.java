@@ -1,5 +1,5 @@
 /*
- * ReplaceRangesDispatchEvent.java
+ * EditorCommandDispatchEvent.java
  *
  * Copyright (C) 2009-13 by RStudio, Inc.
  *
@@ -20,24 +20,19 @@ import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
 @JavaScriptSerializable
-public class ReplaceRangesDispatchEvent extends CrossWindowEvent<ReplaceRangesDispatchEvent.Handler>
+public class EditorCommandDispatchEvent extends CrossWindowEvent<EditorCommandDispatchEvent.Handler>
 {
-   public interface Handler extends EventHandler
-   {
-      void onReplaceRangesDispatch(ReplaceRangesDispatchEvent event);
-   }
-   
-   public ReplaceRangesDispatchEvent()
+   public EditorCommandDispatchEvent()
    {
       this(null);
    }
    
-   public ReplaceRangesDispatchEvent(ReplaceRangesEvent event)
+   public EditorCommandDispatchEvent(EditorCommandEvent event)
    {
       event_ = event;
    }
    
-   public ReplaceRangesEvent getEvent()
+   public EditorCommandEvent getEvent()
    {
       return event_;
    }
@@ -48,9 +43,14 @@ public class ReplaceRangesDispatchEvent extends CrossWindowEvent<ReplaceRangesDi
       return false;
    }
    
-   private final ReplaceRangesEvent event_;
+   private final EditorCommandEvent event_;
    
    // Boilerplate ----
+   
+   public interface Handler extends EventHandler
+   {
+      void onEditorCommandDispatch(EditorCommandDispatchEvent event);
+   }
    
    @Override
    public Type<Handler> getAssociatedType()
@@ -61,7 +61,7 @@ public class ReplaceRangesDispatchEvent extends CrossWindowEvent<ReplaceRangesDi
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onReplaceRangesDispatch(this);
+      handler.onEditorCommandDispatch(this);
    }
    
    public static final Type<Handler> TYPE = new Type<Handler>();

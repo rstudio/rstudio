@@ -21,6 +21,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
@@ -49,12 +50,8 @@ import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.common.synctex.events.SynctexEditFileEvent;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
-import org.rstudio.studio.client.events.GetEditorContextDispatchEvent;
-import org.rstudio.studio.client.events.GetEditorContextEvent;
-import org.rstudio.studio.client.events.ReplaceRangesDispatchEvent;
-import org.rstudio.studio.client.events.ReplaceRangesEvent;
-import org.rstudio.studio.client.events.SetSelectionRangesDispatchEvent;
-import org.rstudio.studio.client.events.SetSelectionRangesEvent;
+import org.rstudio.studio.client.events.EditorCommandDispatchEvent;
+import org.rstudio.studio.client.events.EditorCommandEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
@@ -721,18 +718,6 @@ public class ClientEventDispatcher
             RegisterUserCommandEvent.Data data = event.getData();
             eventBus_.fireEvent(new RegisterUserCommandEvent(data));
          }
-         else if (type.equals(ClientEvent.ReplaceRanges))
-         {
-            ReplaceRangesEvent.Data data = event.getData();
-            ReplaceRangesEvent payload = new ReplaceRangesEvent(data);
-            eventBus_.fireEvent(new ReplaceRangesDispatchEvent(payload));
-         }
-         else if (type.equals(ClientEvent.GetEditorContext))
-         {
-            GetEditorContextEvent.Data data = event.getData();
-            GetEditorContextEvent payload = new GetEditorContextEvent(data);
-            eventBus_.fireEvent(new GetEditorContextDispatchEvent(payload));
-         }
          else if (type.equals(ClientEvent.SendToConsole))
          {
             SendToConsoleEvent.Data data = event.getData();
@@ -785,11 +770,11 @@ public class ClientEventDispatcher
             RprofEvent.Data data = event.getData();
             eventBus_.fireEvent(new RprofEvent(RprofEvent.RprofEventType.CREATE, data));
          }
-         else if (type.equals(ClientEvent.SetSelectionRanges))
+         else if (type.equals(ClientEvent.EditorCommand))
          {
-            SetSelectionRangesEvent.Data data = event.getData();
-            SetSelectionRangesEvent payload = new SetSelectionRangesEvent(data);
-            eventBus_.fireEvent(new SetSelectionRangesDispatchEvent(payload));
+            EditorCommandEvent.Data data = event.getData();
+            EditorCommandEvent payload = new EditorCommandEvent(data);
+            eventBus_.fireEvent(new EditorCommandDispatchEvent(payload));
          }
          else
          {

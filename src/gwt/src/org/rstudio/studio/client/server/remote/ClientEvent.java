@@ -128,8 +128,6 @@ class ClientEvent extends JavaScriptObject
    public static final String ShinyGadgetDialog = "shiny_gadget_dialog";
    public static final String RmdParamsReady = "rmd_params_ready";
    public static final String RegisterUserCommand = "register_user_command";
-   public static final String ReplaceRanges = "replace_ranges";
-   public static final String GetEditorContext = "get_editor_context";
    public static final String SendToConsole = "send_to_console";
    public static final String UserFollowStarted = "user_follow_started";
    public static final String UserFollowEnded = "user_follow_ended";
@@ -141,7 +139,7 @@ class ClientEvent extends JavaScriptObject
    public static final String RprofStarted = "rprof_started";
    public static final String RprofStopped = "rprof_stopped";
    public static final String RprofCreated = "rprof_created";
-   public static final String SetSelectionRanges = "set_selection_ranges";
+   public static final String EditorCommand = "editor_command";
 
    protected ClientEvent()
    {

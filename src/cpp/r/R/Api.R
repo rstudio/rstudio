@@ -193,6 +193,12 @@
    ranges
 })
 
+.rs.addFunction("enqueEditorClientEvent", function(type, data)
+{
+   eventData = list(type = .rs.scalar(type), data = data)
+   .rs.enqueClientEvent("editor_command", eventData)
+})
+
 .rs.addApiFunction("insertText", function(location, text, id = "") {
    
    invalidTextMsg <- "'text' should be a character vector"
@@ -242,7 +248,7 @@
    }
    
    data <- list(ranges = ranges, text = text, id = .rs.scalar(id))
-   .rs.enqueClientEvent("replace_ranges", data)
+   .rs.enqueEditorClientEvent("replace_ranges", data)
    invisible(data)
 })
 
@@ -250,7 +256,7 @@
 {
    ranges <- .rs.validateAndTransformLocation(ranges)
    data <- list(ranges = ranges, id = .rs.scalar(id))
-   .rs.enqueClientEvent("set_selection_ranges", data)
+   .rs.enqueEditorClientEvent("set_selection_ranges", data)
    invisible(data)
 })
 

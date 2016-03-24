@@ -21,6 +21,7 @@ import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
@@ -55,9 +56,11 @@ import org.rstudio.studio.client.common.satellite.events.AllSatellitesClosingEve
 import org.rstudio.studio.client.common.satellite.events.SatelliteClosedEvent;
 import org.rstudio.studio.client.common.satellite.events.SatelliteFocusedEvent;
 import org.rstudio.studio.client.common.satellite.model.SatelliteWindowGeometry;
-import org.rstudio.studio.client.events.GetEditorContextDispatchEvent;
-import org.rstudio.studio.client.events.ReplaceRangesDispatchEvent;
-import org.rstudio.studio.client.events.SetSelectionRangesDispatchEvent;
+import org.rstudio.studio.client.events.EditorCommandDispatchEvent;
+import org.rstudio.studio.client.events.EditorCommandEvent;
+import org.rstudio.studio.client.events.GetEditorContextEvent;
+import org.rstudio.studio.client.events.ReplaceRangesEvent;
+import org.rstudio.studio.client.events.SetSelectionRangesEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -94,9 +97,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             ShinyApplicationStatusEvent.Handler,
                                             CollabEditStartedEvent.Handler,
                                             CollabEditEndedEvent.Handler,
-                                            ReplaceRangesDispatchEvent.Handler,
-                                            GetEditorContextDispatchEvent.Handler,
-                                            SetSelectionRangesDispatchEvent.Handler,
+                                            EditorCommandDispatchEvent.Handler,
                                             DocFocusedEvent.Handler,
                                             RestartStatusEvent.Handler
 {
@@ -127,9 +128,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       if (isMainSourceWindow())
       {
          // most event handlers only make sense on the main window
-         events_.addHandler(ReplaceRangesDispatchEvent.TYPE, this);
-         events_.addHandler(SetSelectionRangesDispatchEvent.TYPE, this);
-         events_.addHandler(GetEditorContextDispatchEvent.TYPE, this);
+         events_.addHandler(EditorCommandDispatchEvent.TYPE, this);
          events_.addHandler(PopoutDocEvent.TYPE, this);
          events_.addHandler(DocTabDragStartedEvent.TYPE, this);
          events_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
@@ -538,39 +537,44 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          }  
       }
    }
+   
+   private <T extends EventHandler>
+   void fireEventToLastFocusedSourceWindow(CrossWindowEvent<T> event)
+   {
+      String id = getLastFocusedSourceWindowId();
+      if (StringUtil.isNullOrEmpty(id))
+         events_.fireEvent(event);
+      else
+         fireEventToSourceWindow(id, event, false);
+   }
 
    // Event handlers ----------------------------------------------------------
    
    @Override
-   public void onReplaceRangesDispatch(ReplaceRangesDispatchEvent event)
+   public void onEditorCommandDispatch(EditorCommandDispatchEvent dispatchEvent)
    {
-      String id = getLastFocusedSourceWindowId();
-      if (StringUtil.isNullOrEmpty(id))
-         events_.fireEvent(event.getEvent());
+      EditorCommandEvent event = dispatchEvent.getEvent();
+      
+      String type = event.getType();
+      if (type.equals(EditorCommandEvent.TYPE_EDITOR_CONTEXT))
+      {
+         GetEditorContextEvent.Data data = event.getData();
+         fireEventToLastFocusedSourceWindow(new GetEditorContextEvent(data));
+      }
+      else if (type.equals(EditorCommandEvent.TYPE_REPLACE_RANGES))
+      {
+         ReplaceRangesEvent.Data data = event.getData();
+         fireEventToLastFocusedSourceWindow(new ReplaceRangesEvent(data));
+      }
+      else if (type.equals(EditorCommandEvent.TYPE_SET_SELECTION_RANGES))
+      {
+         SetSelectionRangesEvent.Data data = event.getData();
+         fireEventToLastFocusedSourceWindow(new SetSelectionRangesEvent(data));
+      }
       else
-         fireEventToSourceWindow(id, event.getEvent(), false);
+         assert false: "Unrecognized editor event type '" + type + "'";
    }
    
-   @Override
-   public void onSetSelectionRangesDispatch(SetSelectionRangesDispatchEvent event)
-   {
-      String id = getLastFocusedSourceWindowId();
-      if (StringUtil.isNullOrEmpty(id))
-         events_.fireEvent(event.getEvent());
-      else
-         fireEventToSourceWindow(id, event.getEvent(), false);
-   }
-
-   @Override
-   public void onGetEditorContextDispatch(GetEditorContextDispatchEvent event)
-   {
-      String id = getLastFocusedSourceWindowId();
-      if (StringUtil.isNullOrEmpty(id))
-         events_.fireEvent(event.getEvent());
-      else
-         fireEventToSourceWindow(id, event.getEvent(), false);
-   }
-
    @Override
    public void onPopoutDoc(final PopoutDocEvent evt)
    {

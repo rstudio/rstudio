@@ -29,13 +29,8 @@ public class GetEditorContextEvent extends CrossWindowEvent<GetEditorContextEven
    {
       protected Data() {}
       
-      public static final native Data create() /*-{
-         return {
-            "type": 0
-         };
-      }-*/;
-      
-      public final native int getType() /*-{ return this["type"]; }-*/;
+      public static final native Data create() /*-{ return 0; }-*/;
+      public final native int getType() /*-{ return this; }-*/;
    }
    
    public static class DocumentSelection extends JavaScriptObject

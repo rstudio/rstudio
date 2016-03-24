@@ -78,10 +78,12 @@ SEXP rs_getEditorContext(SEXP typeSEXP)
 {
    int type = r::sexp::asInteger(typeSEXP);
    
-   // prepare context event
    json::Object eventData;
-   eventData["type"] = type;
-   ClientEvent editorContextEvent(client_events::kGetEditorContext, eventData);
+   eventData["type"] = "editor_context";
+   eventData["data"] = type;
+   
+   // send the event
+   ClientEvent editorContextEvent(client_events::kEditorCommand, eventData);
    
    // wait for event to complete
    json::JsonRpcRequest request;
