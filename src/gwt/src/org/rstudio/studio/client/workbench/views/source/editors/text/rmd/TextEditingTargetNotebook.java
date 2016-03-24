@@ -103,12 +103,14 @@ public class TextEditingTargetNotebook
          code = codeIn;
          setupCrc32 = setupCrc32In;
          pos = 0;
+         linesExecuted = 0;
       }
       public String chunkId;
       public String options;
       public String code;
       public String setupCrc32;
       public int pos;
+      public int linesExecuted;
    };
 
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
@@ -563,25 +565,23 @@ public class TextEditingTargetNotebook
          return;
       
       // if we found it, count the number of lines moved over
-      int previousLines = 0, newLines = 0;
-      for (int i = 0; i <= idx; i++)
+      int lines = 0;
+      int end = idx + event.getInput().length();
+      for (int i = executingChunk_.pos; i < end; i++)
       {
          if (code.charAt(i) == '\n')
-         {
-            if (i >= executingChunk_.pos)
-               newLines++;
-            previousLines++;
-         }
+            lines++;
       }
       
       // update display 
-      docDisplay_.setChunkLineExecState(
-            chunk.getBodyStart().getRow() + previousLines + 1, 
-            chunk.getBodyStart().getRow() + previousLines + newLines + 1,
+      int start = chunk.getBodyStart().getRow() + 
+                  executingChunk_.linesExecuted;
+      docDisplay_.setChunkLineExecState(start + 1, start + lines,
             ChunkOutputWidget.LINE_EXECUTED);
       
       // advance internal input indicator past the text just emitted
       executingChunk_.pos = idx + event.getInput().length();
+      executingChunk_.linesExecuted += lines;
    }
 
    @Override

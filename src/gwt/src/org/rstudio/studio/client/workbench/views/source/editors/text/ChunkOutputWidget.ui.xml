@@ -105,10 +105,10 @@
       top: 50%;
       left: 50%;
       z-index: 25;
-      width: 30px;
-      height: 30px;
+      width: 20px;
+      height: 20px;
       opacity: 0;
-      margin: -15px 0 0 -15px;
+      margin: -10px 0 0 -10px;
       transition: opacity 400ms ease;
    }
    </ui:style>
