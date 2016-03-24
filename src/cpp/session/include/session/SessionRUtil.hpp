@@ -31,12 +31,6 @@ namespace rstudio {
 namespace session {
 namespace r_utils {
 
-bool hasYamlHeader(const core::FilePath& filePath);
-bool hasYamlHeader(const std::string& content);
-
-std::string extractYamlHeader(const core::FilePath& filePath);
-std::string extractYamlHeader(const std::string& content);
-
 core::Error extractRCode(const std::string& fileContents,
                          const std::string& documentType,
                          std::string* pCode);
