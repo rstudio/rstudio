@@ -2349,6 +2349,11 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.hasBreakpoints();
    }
+   
+   public void setChunkLineExecState(int start, int end, int state)
+   {
+      widget_.setChunkLineExecState(start, end, state);
+   }
 
    private void navigate(SourcePosition srcPosition, boolean addToHistory)
    {

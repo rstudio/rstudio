@@ -561,6 +561,49 @@ public class AceEditorWidget extends Composite
       breakpoints_.clear();
    }
    
+   public void setChunkLineExecState(int start, int end, int state)
+   {
+      for (int i = start; i <= end; i++)
+      {
+         // clean old line exec state
+         for (int j = 0; j < lineExecState_.size(); j++)
+         {
+            int row = lineExecState_.get(j).getRow();
+            if (row == i)
+            {
+               editor_.getRenderer().removeGutterDecoration(
+                     rowFromLine(i), lineExecState_.get(j).getClazz());
+               lineExecState_.get(j).getAnchor().detach();
+               lineExecState_.remove(j);
+               break;
+            }
+         }
+         // draw new state
+         if (state != ChunkRowExecState.LINE_RESTING)
+         {
+            final ChunkRowExecState rowState = new ChunkRowExecState(
+                  editor_.getSession().getDocument(), i, state);
+            rowState.getAnchor().addOnChangeHandler(new Command()
+            {
+               @Override
+               public void execute()
+               {
+                  if (rowState.getRow() == rowState.getAnchor().getRow())
+                     return;
+                  editor_.getRenderer().removeGutterDecoration(rowFromLine(
+                     rowState.getRow()), rowState.getClazz());
+                  editor_.getRenderer().addGutterDecoration(rowFromLine(
+                     rowState.getAnchor().getRow()), rowState.getClazz());
+                  rowState.setRow(rowState.getAnchor().getRow());
+               }
+            });
+            editor_.getRenderer().addGutterDecoration(
+                  rowFromLine(i), rowState.getClazz());
+            lineExecState_.add(rowState);
+         }
+      }
+   }
+   
    public boolean hasBreakpoints()
    {
       return breakpoints_.size() > 0;
@@ -1048,9 +1091,10 @@ public class AceEditorWidget extends Composite
    private boolean inOnChangeHandler_ = false;
    private boolean isRendered_ = false;
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
-   
    private ArrayList<AnchoredAceAnnotation> annotations_ =
          new ArrayList<AnchoredAceAnnotation>();
+   private ArrayList<ChunkRowExecState> lineExecState_ = 
+         new ArrayList<ChunkRowExecState>();
    private LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
    
    private EventBus events_;

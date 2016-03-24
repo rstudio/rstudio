@@ -29,61 +29,18 @@
 
 #include <boost/regex.hpp>
 
+#include <core/YamlUtil.hpp>
+
 #include "modules/shiny/SessionShiny.hpp"
 
 namespace rstudio {
 
 using namespace core;
+using namespace core::yaml;
 
 namespace session {
 namespace r_utils {
 
-namespace {
-
-boost::regex& reYaml()
-{
-   static boost::regex instance("^[\\s\\n]*---\\s*(.*?)---\\s*(?:$|\\n)");
-   return instance;
-}
-
-} // anonymous namespace
-
-bool hasYamlHeader(const FilePath& filePath)
-{
-   std::string contents;
-   Error error = readStringFromFile(filePath, &contents);
-   if (error)
-      LOG_ERROR(error);
-   
-   return hasYamlHeader(contents);
-}
-
-bool hasYamlHeader(const std::string& content)
-{
-   return boost::regex_search(content.begin(), content.end(), reYaml());
-}
-
-std::string extractYamlHeader(const FilePath& filePath)
-{
-   std::string contents;
-   Error error = readStringFromFile(filePath, &contents);
-   if (error)
-      LOG_ERROR(error);
-   
-   return extractYamlHeader(contents);
-}
-
-std::string extractYamlHeader(const std::string& content)
-{
-   std::string result;
-   boost::smatch match;
-   
-   if (boost::regex_search(content.begin(), content.end(), match, reYaml()))
-      if (match.size() >= 1)
-         result = match[1];
-   
-   return result;
-}
 
 namespace {
 

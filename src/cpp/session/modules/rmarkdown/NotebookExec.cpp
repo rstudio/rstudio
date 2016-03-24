@@ -25,6 +25,8 @@
 #include <core/text/CsvParser.hpp>
 #include <core/FileSerializer.hpp>
 
+#include <r/ROptions.hpp>
+
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionSourceDatabase.hpp>
@@ -58,9 +60,11 @@ bool moveLibFile(const FilePath& from, const FilePath& to,
 } // anonymous namespace
 
 ChunkExecContext::ChunkExecContext(const std::string& docId, 
-      const std::string& chunkId):
+      const std::string& chunkId, const std::string& options, int width):
    docId_(docId), 
    chunkId_(chunkId),
+   width_(width),
+   prevWidth_(0),
    connected_(false)
 {
 }
@@ -116,6 +120,10 @@ void ChunkExecContext::connect()
          outputPath.parent().complete(kChunkLibDir));
    if (error)
       LOG_ERROR(error);
+
+   // reset width
+   prevWidth_ = r::options::getOptionWidth();
+   r::options::setOptionWidth(width_);
 
    // begin capturing console text
    connections_.push_back(module_context::events().onConsolePrompt.connect(
@@ -200,6 +208,9 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
 
 void ChunkExecContext::disconnect()
 {
+   // restore width value
+   r::options::setOptionWidth(prevWidth_);
+
    // unhook all our event handlers
    BOOST_FOREACH(const boost::signals::connection connection, connections_) 
    {

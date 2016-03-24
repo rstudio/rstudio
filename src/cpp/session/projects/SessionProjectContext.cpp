@@ -522,6 +522,8 @@ void ProjectContext::updateBuildTargetPath()
          buildTarget = config().packagePath;
       else if (config().buildType == r_util::kBuildTypeMakefile)
          buildTarget = config().makefilePath;
+      else if (config().buildType == r_util::kBuildTypeWebsite)
+         buildTarget = config().websitePath;
       else if (config().buildType == r_util::kBuildTypeCustom)
          buildTarget = config().customScriptPath;
 

@@ -30,6 +30,7 @@
 #include <core/Exec.hpp>
 #include <core/Error.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/YamlUtil.hpp>
 
 #include <session/SessionRUtil.hpp>
 #include <session/SessionUserSettings.hpp>
@@ -166,7 +167,7 @@ void addInferredSymbols(const FilePath& filePath,
    }
    
    // make 'params' implicitly available if we have a YAML header
-   if (r_utils::hasYamlHeader(filePath))
+   if (yaml::hasYamlHeader(filePath))
       pSymbols->insert("params");
    
    // make 'input', 'output' implicitly available in Shiny documents

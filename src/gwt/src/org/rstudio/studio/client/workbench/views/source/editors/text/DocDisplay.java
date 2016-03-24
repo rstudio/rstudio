@@ -376,6 +376,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    boolean showChunkOutputInline();
    void setShowChunkOutputInline(boolean show);
    JsArray<ChunkDefinition> getChunkDefs();
+   void setChunkLineExecState(int start, int end, int state);
 
    Position getDocumentEnd();
    

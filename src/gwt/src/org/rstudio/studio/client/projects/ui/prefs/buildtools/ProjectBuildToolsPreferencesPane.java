@@ -59,6 +59,9 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
       buildToolsPanels_.put(RProjectConfig.BUILD_TYPE_MAKEFILE, 
                             new BuildToolsMakefilePanel());
       
+      buildToolsPanels_.put(RProjectConfig.BUILD_TYPE_WEBSITE, 
+                            new BuildToolsWebsitePanel());
+      
       buildToolsPanels_.put(RProjectConfig.BUILD_TYPE_CUSTOM, 
                             new BuildToolsCustomPanel());
    }
@@ -136,10 +139,12 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
                new String[]{"(" + RProjectConfig.BUILD_TYPE_NONE + ")", 
                              RProjectConfig.BUILD_TYPE_PACKAGE, 
                              RProjectConfig.BUILD_TYPE_MAKEFILE,
+                             RProjectConfig.BUILD_TYPE_WEBSITE,
                              RProjectConfig.BUILD_TYPE_CUSTOM},
                new String[]{RProjectConfig.BUILD_TYPE_NONE, 
                             RProjectConfig.BUILD_TYPE_PACKAGE, 
                             RProjectConfig.BUILD_TYPE_MAKEFILE,
+                            RProjectConfig.BUILD_TYPE_WEBSITE,
                             RProjectConfig.BUILD_TYPE_CUSTOM},
                false,
                true,
