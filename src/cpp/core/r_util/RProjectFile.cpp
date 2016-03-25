@@ -210,12 +210,14 @@ void setBuildPackageDefaults(const std::string& packagePath,
 
 bool isWebsiteDirectory(const FilePath& projectDir)
 {
-   // look for an index.Rmd
-   FilePath indexRmd = projectDir.childPath("index.Rmd");
-   if (indexRmd.exists())
+   // look for an index.Rmd or index.md
+   FilePath indexFile = projectDir.childPath("index.Rmd");
+   if (!indexFile.exists())
+      indexFile = projectDir.childPath("index.md");
+   if (indexFile.exists())
    {
       static const boost::regex reSite("^site:.*$");
-      std::string yaml = yaml::extractYamlHeader(indexRmd);
+      std::string yaml = yaml::extractYamlHeader(indexFile);
       return boost::regex_search(yaml.begin(), yaml.end(), reSite);
    }
    else
