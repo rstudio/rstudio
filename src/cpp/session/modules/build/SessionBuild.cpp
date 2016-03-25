@@ -1087,14 +1087,34 @@ private:
    {
       if (options_.previewWebsite)
       {
-         FilePath indexFile = websitePath.childPath("index.html");
-         successFunction_ = boost::bind(module_context::showFile,
-                                        indexFile, "_website_preview");
+         successFunction_ = boost::bind(&Build::showWebsitePreview,
+                                        Build::shared_from_this(),
+                                        websitePath);
       }
 
       std::string command = "rmarkdown::render_site()";
       enqueCommandString(command);
       rExecute(command, websitePath, options, cb);
+   }
+
+   void showWebsitePreview(const FilePath& websitePath)
+   {
+      // determine the output dir
+      r::exec::RFunction websiteOutputDir(".rs.websiteOutputDir",
+            string_utils::utf8ToSystem(websitePath.absolutePath()));
+      std::string outputDir;
+      Error error = websiteOutputDir.call(&outputDir);
+      if (error)
+      {
+         std::string msg = "Error attempting to determine website "
+                           "output directory: " + r::endUserErrorMessage(error);
+         terminateWithError(msg);
+      }
+      else
+      {
+         FilePath indexFile = FilePath(outputDir).childPath("index.html");
+         module_context::showFile(indexFile, "_website_preview");
+      }
    }
 
    void terminateWithErrorStatus(int exitStatus)
