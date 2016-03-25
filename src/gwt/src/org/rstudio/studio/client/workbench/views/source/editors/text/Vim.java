@@ -31,12 +31,16 @@ public class Vim
    
    public void exitVisualMode() { exitVisualMode(editor_, vim_); }
    private final native void exitVisualMode(AceEditorNative editor, VimAPI vim) /*-{
-      return vim.exitVisualMode(editor.state.cm);
+      var vimState = editor.state.cm.state.vim;
+      if (vimState.visualMode)
+         vim.exitVisualMode(editor.state.cm);
    }-*/;
    
    public void exitInsertMode() { exitInsertMode(editor_, vim_); }
    private final native void exitInsertMode(AceEditorNative editor, VimAPI vim) /*-{
-      return vim.exitInsertMode(editor.state.cm);
+      var vimState = editor.state.cm.state.vim;
+      if (vimState.insertMode)
+         vim.exitInsertMode(editor.state.cm);
    }-*/;
    
    private final AceEditorNative editor_;
