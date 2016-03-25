@@ -75,6 +75,10 @@ public class SignatureToolTipManager
             if (coordinates_ == null && !uiPrefs_.showFunctionTooltipOnIdle().getGlobalValue())
                return;
             
+            // Bail if the tooltip is already showing from a non-mouse event.
+            if (!isMouseDrivenEvent() && toolTip_.isShowing())
+               return;
+            
             resolveActiveFunctionAndDisplayToolTip();
          }
       };
