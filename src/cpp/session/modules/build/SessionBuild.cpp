@@ -1085,6 +1085,13 @@ private:
                             const core::system::ProcessOptions& options,
                             const core::system::ProcessCallbacks& cb)
    {
+      if (options_.previewWebsite)
+      {
+         FilePath indexFile = websitePath.childPath("index.html");
+         successFunction_ = boost::bind(module_context::showFile,
+                                        indexFile, "_website_preview");
+      }
+
       std::string command = "rmarkdown::render_site()";
       enqueCommandString(command);
       rExecute(command, websitePath, options, cb);

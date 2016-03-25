@@ -16,15 +16,21 @@
 
 package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
+import org.rstudio.studio.client.projects.model.RProjectBuildOptions;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
+
+import com.google.gwt.user.client.ui.CheckBox;
 
 public class BuildToolsWebsitePanel extends BuildToolsPanel
 {
    public BuildToolsWebsitePanel()
    {
       pathSelector_ = new DirectorySelector("Website directory:");
-      add(pathSelector_);      
+      add(pathSelector_);    
+      chkPreviewAfterBuilding_ = checkBox("Preview site after building");
+      chkPreviewAfterBuilding_.addStyleName(RES.styles().previewWebsite());
+      add(chkPreviewAfterBuilding_);
    }
 
    @Override
@@ -32,6 +38,9 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
    {
       RProjectConfig config = options.getConfig();
       pathSelector_.setText(config.getWebsitePath());  
+      
+      RProjectBuildOptions buildOptions = options.getBuildOptions();
+      chkPreviewAfterBuilding_.setValue(buildOptions.getPreviewWebsite());
    }
 
    @Override
@@ -39,7 +48,12 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
    {
       RProjectConfig config = options.getConfig();
       config.setWebsitePath(pathSelector_.getText());
+      
+      RProjectBuildOptions buildOptions = options.getBuildOptions();
+      buildOptions.setPreviewWebsite(chkPreviewAfterBuilding_.getValue());
    }
 
    private PathSelector pathSelector_;
+   
+   private CheckBox chkPreviewAfterBuilding_;
 }
