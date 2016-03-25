@@ -18,7 +18,7 @@
 * Profile menu enables easy stop/start of profiling or profiling of selected lines.
 * Save and load of previous profiling sessions
 
-### Source Editing
+### Source Editor
 
 * Enabled auto-pairing of backticks (\`\`) in R documents
 * Fixed regression re: folding of unnamed sections, e.g. '#####'
