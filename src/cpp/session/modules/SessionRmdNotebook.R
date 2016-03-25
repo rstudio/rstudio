@@ -340,12 +340,16 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       # convert to HTML
       htmlList <- .rs.enumerate(chunkData, function(fileName, value) {
          if (.rs.endsWith(fileName, "csv")) {
-            parsed <- .rs.rnb.parseConsoleData(value)
-            .rs.rnb.consoleDataToHtml(parsed, chunkId, fileName)
+            .rs.rnb.consoleDataToHtml(value, chunkId, fileName)
          } else if (.rs.endsWith(fileName, "png")) {
-            encoded <- .rs.base64encode(value)
-            fmt <- "<img data-chunk-id=\"%s\" data-chunk-filename=\"%s\" src=data:image/png;base64,%s />"
-            sprintf(fmt, chunkId, fileName, encoded)
+            
+            tagAttributes <- list(
+               "data-chunk-id" = chunkId,
+               "data-chunk-filename" = fileName,
+               "src" = sprintf("data:image/png;base64,%s", .rs.base64encode(value))
+            )
+            
+            sprintf("<img %s />", .rs.listToHtmlAttributes(tagAttributes))
          } else if (.rs.endsWith(fileName, "html")) {
             
             # parse and record JSON dependencies
@@ -528,14 +532,15 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    csvData
 })
 
-.rs.addFunction("rnb.consoleDataToHtml", function(csvData, chunkId, fileName)
+.rs.addFunction("rnb.consoleDataToHtml", function(data, chunkId, fileName)
 {
+   csvData <- .rs.rnb.parseConsoleData(data)
    cutpoints <- .rs.cutpoints(csvData$type)
    
    ranges <- Map(
       function(start, end) list(start = start, end = end),
-      c(1, cutpoints + 1),
-      c(cutpoints, nrow(csvData))
+      c(1, cutpoints),
+      c(cutpoints - 1, nrow(csvData))
    )
    
    splat <- lapply(ranges, function(range) {
@@ -559,15 +564,26 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    filtered <- Filter(Negate(is.null), splat)
    html <- lapply(filtered, function(el) {
-      type  <- attr(el, "type")
+      
       class <- attr(el, ".class")
-      result <- if (is.null(class)) {
-         fmt <- "<pre data-chunk-id=\"%s\" data-chunk-filename=\"%s\" data-chunk-type=\"%s\"><code>%s</code></pre>"
-         sprintf(fmt, chunkId, fileName, type, el)
-      } else {
-         fmt <- "<pre data-chunk-id=\"%s\" data-chunk-filename=\"%s\" data-chunk-type=\"%s\" class=\"%s\"><code>%s</code></pre>"
-         sprintf(fmt, chunkId, fileName, type, class, el)
-      }
+      type  <- attr(el, "type")
+      
+      tagAttributes <- list(
+         "data-chunk-id"       = chunkId,
+         "data-chunk-filename" = fileName,
+         "data-chunk-type"     = type,
+         "data-chunk-data"     = .rs.base64encode(data)
+      )
+      
+      if (!is.null(class))
+         tagAttributes["class"] <- class
+      
+      result <- sprintf(
+         "<pre %s><code>%s</code></pre>",
+         .rs.listToHtmlAttributes(tagAttributes),
+         el
+      )
+      
       result
    })
    
@@ -583,4 +599,44 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 .rs.addFunction("base64decode", function(data, type = character())
 {
    caTools::base64decode(data, type)
+})
+
+.rs.addFunction("scrapeHtmlDataAttributes", function(line)
+{
+   reData <- '(data-[^=]+="[^"]+")'
+   reMatches <- gregexpr(reData, line, perl = TRUE)[[1]]
+   
+   starts <- attr(reMatches, "capture.start")
+   ends   <- starts + attr(reMatches, "capture.length") - 1
+   stripped <- substring(line, starts, ends)
+   parsed <- .rs.transposeList(strsplit(stripped, "=", fixed = TRUE))
+   
+   data <- sub('"([^"]*)"', "\\1", parsed[[2]])
+   names(data) <- parsed[[1]]
+   data
+})
+
+.rs.addFunction("listToHtmlAttributes", function(list)
+{
+   paste(
+      names(list),
+      .rs.surround(unlist(list), with = "\""),
+      sep = "=",
+      collapse = " "
+   )
+})
+
+.rs.addFunction("hydrateCacheFromNotebook", function(rnbPath, cachePath)
+{
+   rnbContents <- readLines(rnbPath)
+   
+   for (i in seq_along(rnbContents))
+   {
+      line <- rnbContents[[i]]
+      if (!grepl("data-chunk-id", line))
+         next
+      
+      dataAttributes <- .rs.scrapeHtmlDataAttributes(line)
+   }
+   
 })

@@ -1677,7 +1677,8 @@
 
 .rs.addFunction("cutpoints", function(data)
 {
-   which(diff(sign(diff(c(data, data[length(data)])))) != 0)
+   diffed <- diff(c(data[1], data))
+   which(diffed != 0)
 })
 
 .rs.addFunction("recode", function(data, ..., envir = parent.frame())
@@ -1703,4 +1704,9 @@
    call <- c(substitute(fn), args)
    mode(call) <- "call"
    eval(call, envir = parent.frame())
+})
+
+.rs.addFunction("transposeList", function(list)
+{
+   do.call(Map, c(c, list, USE.NAMES = FALSE))
 })
