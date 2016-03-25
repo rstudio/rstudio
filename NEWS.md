@@ -40,11 +40,10 @@
 
 ### Profiler
 
-* Add profiler menu and profiling indicators
-* Add start-profiling and stop-profiling commands
-* Add save-profile, load-profile for new rprofvis files
-* Add profile-this-code command to execute code in the profiler
-* Add go-to-sources, profiler-help and publish commands
+* Profiling features based on the [profvis](https://github.com/rstudio/profvis) package
+* Visualize profiling results within the IDE
+* Profile menu enables easy stop/start of profiling or profiling of selected lines.
+* Save and load of previous profiling sessions
 
 ### Miscellaneous
 
