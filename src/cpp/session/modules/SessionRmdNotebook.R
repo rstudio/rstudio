@@ -59,7 +59,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       
    reDocument <- paste('<!--', tag, '(\\S+) -->')
    rmdEncoded <- sub(reDocument, "\\1", contents[idx])
-   caTools::base64decode(rmdEncoded, character())
+   .rs.base64decode(rmdEncoded)
 })
 
 .rs.addFunction("reRmdChunkBegin", function()
@@ -343,10 +343,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
             parsed <- .rs.rnb.parseConsoleData(value)
             .rs.rnb.consoleDataToHtml(parsed, chunkId, fileName)
          } else if (.rs.endsWith(fileName, "png")) {
-            encoded <- caTools::base64encode(value)
+            encoded <- .rs.base64encode(value)
             fmt <- "<img data-chunk-id=\"%s\" data-chunk-filename=\"%s\" src=data:image/png;base64,%s />"
             sprintf(fmt, chunkId, fileName, encoded)
          } else if (.rs.endsWith(fileName, "html")) {
+            
             # parse and record JSON dependencies
             jsonPath <- .rs.withChangedExtension(fileName, "json")
             jsonString <- chunkData[[jsonPath]]
@@ -357,14 +358,17 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
             
             # base64 encode original contents for easy extraction later
             # (for re-hydrating the cache)
-            encoded <- caTools::base64encode(bodyEl)
+            htmlEncoded <- .rs.base64encode(value)
+            jsonEncoded <- .rs.base64encode(jsonString)
+            
             fmt <- paste0("<div ",
                           "data-chunk-id=\"%s\" ",
                           "data-chunk-filename=\"%s\" ",
-                          "data-chunk-contents=\"%s\">",
-                          "%s",
+                          "data-chunk-html=\"%s\" ",
+                          "data-chunk-json=\"%s\">",
+                          "\n%s\n",
                           "</div>")
-            sprintf(fmt, chunkId, fileName, encoded, bodyEl)
+            sprintf(fmt, chunkId, fileName, htmlEncoded, jsonEncoded, bodyEl)
          }
       })
       
@@ -388,7 +392,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       if (file.exists(jsPath))
       {
          contents <- .rs.readFile(jsPath, binary = TRUE)
-         encoded <- caTools::base64encode(contents)
+         encoded <- .rs.base64encode(contents)
          scriptHtml <- sprintf("<script src=\"data:application/x-javascript;base64,%s\"></script>", encoded)
          injection <- c(injection, scriptHtml)
       }
@@ -444,7 +448,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    rnbContents <- readLines(renderOutput, warn = FALSE)
    
    # generate base64-encoded versions of .Rmd source, .md sidecar
-   rmdEncoded <- caTools::base64encode(paste(rmdContents, collapse = "\n"))
+   rmdEncoded <- .rs.base64encode(paste(rmdContents, collapse = "\n"))
    
    # inject document contents into rendered file
    # (i heard you like documents, so i put a document in your document)
@@ -498,7 +502,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    if (is.null(outputPath))
       outputPath <- .rs.withChangedExtension(rmdPath, "Rnb")
    
-   cachePath <- .rs.rnb.cachePathFromNotebookPath(rmdPath)
+   cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)
    if (!file.exists(cachePath))
       stop("no cache data associated with '", rmdPath, "'")
    
@@ -506,7 +510,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .rs.createNotebookFromCacheData(rnbData, outputPath)
 })
 
-.rs.addFunction("rnb.cachePathFromNotebookPath", function(rmdPath)
+.rs.addFunction("rnb.cachePathFromRmdPath", function(rmdPath)
 {
   .Call(.rs.routines$rs_chunkCacheFolder, rmdPath)
 })
@@ -569,4 +573,14 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    paste(unlist(html), collapse = "\n")
    
+})
+
+.rs.addFunction("base64encode", function(data)
+{
+   caTools::base64encode(data)
+})
+
+.rs.addFunction("base64decode", function(data, type = character())
+{
+   caTools::base64decode(data, type)
 })
