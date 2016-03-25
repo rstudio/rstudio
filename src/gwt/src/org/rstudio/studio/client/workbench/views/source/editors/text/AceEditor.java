@@ -264,7 +264,6 @@ public class AceEditor implements DocDisplay,
    @Inject
    public AceEditor()
    {
-      id_ = StringUtil.makeRandomId(16);
       widget_ = new AceEditorWidget();
       snippets_ = new SnippetHelper(this);
       editorEventListeners_ = new ArrayList<HandlerRegistration>();
@@ -3109,7 +3108,6 @@ public class AceEditor implements DocDisplay,
    private AceInfoBar infoBar_;
    private boolean showChunkOutputInline_ = false;
    private BackgroundTokenizer backgroundTokenizer_;
-   private final String id_;
    private final Vim vim_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
