@@ -96,7 +96,7 @@ var MarkdownHighlightRules = function() {
             regex : "(\\[)(" + escaped("]") + ")(\\]\s*\\[)("+ escaped("]") + ")(\\])"
         }, { // link by url
             token : ["text", "keyword", "text", "markup.underline", "string", "text"],
-            regex : "(\\[)(" +                                        // [
+            regex : "(\\[)(" +                                    // [
                 escaped("]") +                                    // link text
                 ")(\\]\\()"+                                      // ](
                 '((?:[^\\)\\s\\\\]|\\\\.|\\s(?=[^"]))*)' +        // href
@@ -162,14 +162,6 @@ var MarkdownHighlightRules = function() {
         }, { // link by reference
             token : ["text", "keyword", "text", "constant", "text"],
             regex : "(\\[)((?:[[^\\]]*\\]|[^\\[\\]])*)(\\][ ]?(?:\\n[ ]*)?\\[)(.*?)(\\])"
-        }, { // link by url
-            token : ["text", "keyword", "text", "markup.underline", "string", "text"],
-            regex : "(\\[)"+
-                "(\\[[^\\]]*\\]|[^\\[\\]]*)"+
-                "(\\]\\([ \\t]*)"+
-                "(<?(?:(?:[^\\(]*?\\([^\\)]*?\\)\\S*?)|(?:.*?))>?)"+
-                "((?:[ \t]*\"(?:.*?)\"[ \\t]*)?)"+
-                "(\\))"
         }, { // HR *
             token : "constant",
             regex : "^[ ]{0,2}(?:[ ]?\\*[ ]?){3,}\\s*$"

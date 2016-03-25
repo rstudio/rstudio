@@ -38,6 +38,7 @@
 * Add option to suppress Knit preview entirely
 * Add R Markdown pane to global options dialog
 * Enhance R Markdown preview to work well with bookdown
+* Fixed highlighting with multiple Markdown links on one line
 
 ### C/C++
 
