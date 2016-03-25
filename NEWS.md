@@ -1,17 +1,5 @@
 ## v0.99c - Release Notes
 
-### Editor
-
-* Enabled auto-pairing of backticks (\`\`) in R documents
-* Fixed regression re: folding of unnamed sections, e.g. '#####'
-* Implemented folding for sub-sections in R documents
-* Added option for display of 'end' fold markers
-* Display function tooltip on mouse over of function name
-* Added option to display function signature tooltip on cursor idle
-* Autocompletion allows mismatch between '.', '\_' in token
-* Improvements to refactoring utility 'Rename in Scope'
-* Expand selection command learns how to expand to current statement
-
 ### Data Import
 
 * Import dataset from text via readr
@@ -23,6 +11,25 @@
 * Enable data import preview to be cancelled
 * Enable data import to cache web files
 
+### Profiler
+
+* Profiling features based on the [profvis](https://github.com/rstudio/profvis) package
+* Visualize profiling results within the IDE
+* Profile menu enables easy stop/start of profiling or profiling of selected lines.
+* Save and load of previous profiling sessions
+
+### Source Editing
+
+* Enabled auto-pairing of backticks (\`\`) in R documents
+* Fixed regression re: folding of unnamed sections, e.g. '#####'
+* Implemented folding for sub-sections in R documents
+* Added option for display of 'end' fold markers
+* Display function tooltip on mouse over of function name
+* Added option to display function signature tooltip on cursor idle
+* Autocompletion allows mismatch between '.', '\_' in token
+* Improvements to refactoring utility 'Rename in Scope'
+* Expand selection command learns how to expand to current statement
+
 ### R Markdown
 
 * Show custom formats in Knit menu
@@ -32,18 +39,11 @@
 * Add R Markdown pane to global options dialog
 * Enhance R Markdown preview to work well with bookdown
 
-### C / C++
+### C/C++
 
 * Provide autocompletion of header paths
 * Update C++ unit testing library (catch) to v1.3.3 (fix gcc >=5 compilation errors)
 * Syntax highlighting of raw, wide, unicode string literals (e.g R"hello")
-
-### Profiler
-
-* Profiling features based on the [profvis](https://github.com/rstudio/profvis) package
-* Visualize profiling results within the IDE
-* Profile menu enables easy stop/start of profiling or profiling of selected lines.
-* Save and load of previous profiling sessions
 
 ### Miscellaneous
 
