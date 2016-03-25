@@ -35,7 +35,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErro
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputHandler;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -106,7 +106,7 @@ public class ChunkOutputWidget extends Composite
       applyCachedEditorStyle();
       
       frame_.getElement().getStyle().setHeight(
-            TextEditingTargetNotebook.MIN_CHUNK_HEIGHT, Unit.PX);
+            ChunkOutputUi.MIN_CHUNK_HEIGHT, Unit.PX);
       
       onRenderCompleted_ = onRenderCompleted;
       
@@ -193,7 +193,7 @@ public class ChunkOutputWidget extends Composite
       if (expansionState_ != EXPANDED)
          return;
       
-      int height = Math.max(TextEditingTargetNotebook.MIN_CHUNK_HEIGHT, 
+      int height = Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, 
             root_.getElement().getScrollHeight());
       if (height == renderedHeight_)
          return;
@@ -600,14 +600,14 @@ public class ChunkOutputWidget extends Composite
          frame_.getElement().getStyle().setProperty("transition", 
                "height " + ANIMATION_DUR + "ms ease");
          frame_.getElement().getStyle().setHeight(
-               TextEditingTargetNotebook.CHUNK_COLLAPSED_HEIGHT, Unit.PX);
+               ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT, Unit.PX);
          collapseTimer_ = new Timer()
          {
             @Override
             public void run()
             {
                renderedHeight_ = 
-                     TextEditingTargetNotebook.CHUNK_COLLAPSED_HEIGHT;
+                     ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT;
                onRenderCompleted_.execute(renderedHeight_);
             }
             

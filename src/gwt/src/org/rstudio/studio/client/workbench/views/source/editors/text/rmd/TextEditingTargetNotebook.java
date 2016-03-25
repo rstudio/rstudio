@@ -22,12 +22,10 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.layout.FadeOutAnimation;
-import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -71,7 +69,6 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
@@ -128,8 +125,7 @@ public class TextEditingTargetNotebook
       docUpdateSentinel_ = docUpdateSentinel;  
       releaseOnDismiss_ = releaseOnDismiss;
       initialChunkDefs_ = document.getChunkDefs();
-      outputWidgets_ = new HashMap<String, ChunkOutputWidget>();
-      lineWidgets_ = new HashMap<String, LineWidget>();
+      outputs_ = new HashMap<String, ChunkOutputUi>();
       chunkExecQueue_ = new LinkedList<ChunkExecQueueUnit>();
       setupCrc32_ = docUpdateSentinel_.getProperty(LAST_SETUP_CRC32);
       editingTarget_ = editingTarget;
@@ -188,15 +184,7 @@ public class TextEditingTargetNotebook
             {
                for (int i = 0; i<initialChunkDefs_.length(); i++)
                {
-                  ChunkDefinition chunkOutput = initialChunkDefs_.get(i);
-                  LineWidget widget = LineWidget.create(
-                        ChunkDefinition.LINE_WIDGET_TYPE,
-                        chunkOutput.getRow(), 
-                        elementForChunkDef(chunkOutput), 
-                        chunkOutput);
-                  lineWidgets_.put(chunkOutput.getChunkId(), widget);
-                  widget.setFixedWidth(true);
-                  docDisplay_.addLineWidget(widget);
+                  createChunkOutput(initialChunkDefs_.get(i));
                }
                // if we got chunk content, load initial chunk output from server
                if (initialChunkDefs_.length() > 0)
@@ -298,9 +286,6 @@ public class TextEditingTargetNotebook
       chunkExecQueue_.add(new ChunkExecQueueUnit(chunkId, code,
             options, setupCrc32));
       
-      // TODO: decorate chunk in some way so that it's clear the chunk is 
-      // queued for execution
-      
       // initiate queue processing
       processChunkExecQueue();
    }
@@ -329,20 +314,16 @@ public class TextEditingTargetNotebook
       executingChunk_ = unit;
       
       // let the chunk widget know it's started executing
-      if (outputWidgets_.containsKey(unit.chunkId))
-         outputWidgets_.get(unit.chunkId).setCodeExecuting(true);
-      syncWidth(unit.chunkId);
-      
-      // check to see if the row beneath the chunk is visible -- if it's not, 
-      // scroll it into view
-      if (lineWidgets_.containsKey(unit.chunkId))
+      if (outputs_.containsKey(unit.chunkId))
       {
-         LineWidget w = lineWidgets_.get(unit.chunkId);
-         
-         if (docDisplay_.getLastVisibleRow() < (w.getRow() + 1))
+         ChunkOutputUi output = outputs_.get(unit.chunkId);
+
+         output.getOutputWidget().setCodeExecuting(true);
+         syncWidth(unit.chunkId);
+      
+         if (docDisplay_.getLastVisibleRow() < (output.getCurrentRow() + 1))
          {
-            Scope chunk = docDisplay_.getCurrentChunk(
-                  Position.create(w.getRow(), 1));
+            Scope chunk = output.getScope();
             Rectangle bounds = docDisplay_.getPositionBounds(
                   chunk.getPreamble());
             docDisplay_.scrollToY(docDisplay_.getScrollTop() + 
@@ -374,10 +355,11 @@ public class TextEditingTargetNotebook
                   // don't leave the chunk hung in execution state
                   if (executingChunk_ != null)
                   {
-                     ChunkOutputWidget w = outputWidgets_.get(
-                           executingChunk_.chunkId);
-                     if (w != null)
-                        w.onOutputFinished();
+                     if (outputs_.containsKey(executingChunk_.chunkId))
+                     {
+                        outputs_.get(executingChunk_.chunkId)
+                                .getOutputWidget().onOutputFinished();
+                     }
                      cleanChunkExecState(executingChunk_.chunkId);
                   }
 
@@ -419,9 +401,9 @@ public class TextEditingTargetNotebook
       ChunkOutputWidget.cacheEditorStyle(event.getEditorContent(),
             editorStyle_);
       
-      for (ChunkOutputWidget widget: outputWidgets_.values())
+      for (ChunkOutputUi output: outputs_.values())
       {
-         widget.applyCachedEditorStyle();
+         output.getOutputWidget().applyCachedEditorStyle();
       }
    }
    
@@ -459,8 +441,9 @@ public class TextEditingTargetNotebook
          }
       });
       
-      if (outputWidgets_.containsKey(chunkDef.getChunkId()))
-         outputWidgets_.get(chunkDef.getChunkId()).setCodeExecuting(false);
+      if (outputs_.containsKey(chunkDef.getChunkId()))
+         outputs_.get(chunkDef.getChunkId()).getOutputWidget()
+                                            .setCodeExecuting(false);
    }
    
    @Override
@@ -490,9 +473,10 @@ public class TextEditingTargetNotebook
 
       // show output in matching chunk
       String chunkId = event.getOutput().getChunkId();
-      if (outputWidgets_.containsKey(chunkId))
+      if (outputs_.containsKey(chunkId))
       {
-         outputWidgets_.get(chunkId).showChunkOutput(event.getOutput());
+         outputs_.get(chunkId).getOutputWidget()
+                              .showChunkOutput(event.getOutput());
       }
       
       // process next chunk in execution queue
@@ -511,9 +495,10 @@ public class TextEditingTargetNotebook
       else if (data.getType() == RmdChunkOutputFinishedEvent.TYPE_INTERACTIVE &&
                data.getDocId() == docUpdateSentinel_.getId())
       {
-         if (outputWidgets_.containsKey(data.getChunkId()))
+         if (outputs_.containsKey(data.getChunkId()))
          {
-            outputWidgets_.get(data.getChunkId()).onOutputFinished();
+            outputs_.get(data.getChunkId()).getOutputWidget()
+                                           .onOutputFinished();
          }
       }
    }
@@ -527,16 +512,8 @@ public class TextEditingTargetNotebook
       switch(event.getChangeType())
       {
          case ChunkChangeEvent.CHANGE_CREATE:
-            ChunkDefinition chunkDef = ChunkDefinition.create(event.getRow(), 
-                  1, true, event.getChunkId());
-            LineWidget widget = LineWidget.create(
-                                  ChunkDefinition.LINE_WIDGET_TYPE,
-                                  event.getRow(), 
-                                  elementForChunkDef(chunkDef), 
-                                  chunkDef);
-            widget.setFixedWidth(true);
-            docDisplay_.addLineWidget(widget);
-            lineWidgets_.put(chunkDef.getChunkId(), widget);
+            createChunkOutput(ChunkDefinition.create(event.getRow(), 
+                  1, true, event.getChunkId()));
             break;
          case ChunkChangeEvent.CHANGE_REMOVE:
             removeChunk(event.getChunkId());
@@ -580,10 +557,9 @@ public class TextEditingTargetNotebook
       if (executingChunk_ == null)
          return;
       // get the code for the executing chunk
-      if (!lineWidgets_.containsKey(executingChunk_.chunkId))
+      if (!outputs_.containsKey(executingChunk_.chunkId))
          return;
-      Scope chunk = docDisplay_.getCurrentChunk(Position.create(
-            lineWidgets_.get(executingChunk_.chunkId).getRow(), 0));
+      Scope chunk = outputs_.get(executingChunk_.chunkId).getScope();
       String code = docDisplay_.getCode(chunk.getBodyStart(), chunk.getEnd());
       
       // find the line just emitted (start looking from the current position)
@@ -623,9 +599,9 @@ public class TextEditingTargetNotebook
          return;
       }
       
-      for (ChunkOutputWidget widget: outputWidgets_.values())
+      for (ChunkOutputUi output: outputs_.values())
       {
-         widget.syncHeight(false);
+         output.getOutputWidget().syncHeight(false);
       }
    }
 
@@ -681,53 +657,6 @@ public class TextEditingTargetNotebook
             new VoidServerRequestCallback());
    }
    
-   private Element elementForChunkDef(final ChunkDefinition def)
-   {
-      ChunkOutputWidget widget;
-      final String chunkId = def.getChunkId();
-      if (outputWidgets_.containsKey(chunkId))
-      {
-         widget = outputWidgets_.get(chunkId);
-      }
-      else
-      {
-         widget = new ChunkOutputWidget(chunkId, new CommandWithArg<Integer>()
-         {
-            @Override
-            public void execute(Integer arg)
-            {
-               if (!outputWidgets_.containsKey(chunkId))
-                  return;
-               ChunkOutputWidget widget = outputWidgets_.get(chunkId);
-               int height = 
-                     widget.getExpansionState() == ChunkOutputWidget.COLLAPSED ?
-                        CHUNK_COLLAPSED_HEIGHT :
-                        Math.max(MIN_CHUNK_HEIGHT, 
-                          Math.min(arg.intValue(), MAX_CHUNK_HEIGHT));
-               widget.getElement().getStyle().setHeight(height, Unit.PX);
-               if (!lineWidgets_.containsKey(chunkId))
-                  return;
-               docDisplay_.onLineWidgetChanged(lineWidgets_.get(chunkId));
-            }
-         },
-         new Command()
-         {
-            @Override
-            public void execute()
-            {
-               events_.fireEvent(new ChunkChangeEvent(
-                     docUpdateSentinel_.getId(), chunkId, 0, 
-                     ChunkChangeEvent.CHANGE_REMOVE));
-            }
-         });
-         widget.getElement().addClassName(ThemeStyles.INSTANCE.selectableText());
-         widget.getElement().getStyle().setHeight(MIN_CHUNK_HEIGHT, Unit.PX);
-         outputWidgets_.put(def.getChunkId(), widget);
-      }
-      
-      return widget.getElement();
-   }
-   
    private ChunkDefinition getChunkDefAtRow(int row)
    {
       ChunkDefinition chunkDef;
@@ -758,23 +687,19 @@ public class TextEditingTargetNotebook
    // invoked elsewhere
    private void removeChunk(final String chunkId)
    {
-      final LineWidget widget = lineWidgets_.get(chunkId);
-      if (widget == null)
+      final ChunkOutputUi output = outputs_.get(chunkId);
+      if (output == null)
          return;
       
       ArrayList<Widget> widgets = new ArrayList<Widget>();
-      widgets.add(outputWidgets_.get(chunkId));
+      widgets.add(output.getOutputWidget());
       FadeOutAnimation anim = new FadeOutAnimation(widgets, new Command()
       {
          @Override
          public void execute()
          {
-            // remove the widget from the document
-            docDisplay_.removeLineWidget(widget);
-            
-            // remove it from our internal cache
-            lineWidgets_.remove(chunkId);
-            outputWidgets_.remove(chunkId);
+            output.remove();
+            outputs_.remove(chunkId);
          }
       });
       anim.run(400);
@@ -782,9 +707,11 @@ public class TextEditingTargetNotebook
    
    private void removeAllChunks()
    {
-      docDisplay_.removeAllLineWidgets();
-      lineWidgets_.clear();
-      outputWidgets_.clear();
+      for (String chunkId: outputs_.keySet())
+      {
+         outputs_.get(chunkId).remove();
+      }
+      outputs_.clear();
    }
    
    private void changeOutputMode(String mode)
@@ -795,7 +722,7 @@ public class TextEditingTargetNotebook
       manageCommands();
          
       // if we don't have any inline output, we're done
-      if (lineWidgets_.size() == 0 || mode != CHUNK_OUTPUT_CONSOLE)
+      if (outputs_.size() == 0 || mode != CHUNK_OUTPUT_CONSOLE)
          return;
       
       // if we do have inline output, offer to clean it up
@@ -851,16 +778,15 @@ public class TextEditingTargetNotebook
    {
       for (int i = 0; i < defs.length(); i++)
       {
-         ChunkDefinition chunkOutput = defs.get(i);
-         LineWidget widget = LineWidget.create(
-               ChunkDefinition.LINE_WIDGET_TYPE,
-               chunkOutput.getRow(), 
-               elementForChunkDef(chunkOutput), 
-               chunkOutput);
-         lineWidgets_.put(chunkOutput.getChunkId(), widget);
-         widget.setFixedWidth(true);
-         docDisplay_.addLineWidget(widget);
+         createChunkOutput(defs.get(i));
       }
+   }
+   
+   private void createChunkOutput(ChunkDefinition def)
+   {
+      outputs_.put(def.getChunkId(), 
+                   new ChunkOutputUi(docUpdateSentinel_.getId(), docDisplay_,
+                                     def));
    }
    
    private void ensureSetupChunkExecuted()
@@ -919,7 +845,7 @@ public class TextEditingTargetNotebook
    private void syncLineWidgets()
    {
       // no work to do if we don't have any output widgets
-      if (outputWidgets_.size() == 0)
+      if (outputs_.size() == 0)
         return;
       
       JsArray<LineWidget> widgets = docDisplay_.getLineWidgets();
@@ -941,21 +867,25 @@ public class TextEditingTargetNotebook
       // remove all the chunk IDs that are actually in the document; any that
       // are remaining are stale and need to be cleaned up
       Set<String> oldChunkIds = new HashSet<String>();
-      oldChunkIds.addAll(outputWidgets_.keySet());
+      oldChunkIds.addAll(outputs_.keySet());
       oldChunkIds.removeAll(newChunkIds);
       for (String chunkId: oldChunkIds)
       {
-         lineWidgets_.remove(chunkId);
-         outputWidgets_.remove(chunkId);
+         // ignore moving widgets -- ACE doesn't have a way to move a line 
+         // widget from one row to another, but we occasionally need to do this
+         // to keep the output pinned to the end of the chunk
+         if (outputs_.get(chunkId).moving())
+            continue;
+         outputs_.get(chunkId).remove();
+         outputs_.remove(chunkId);
       }
    }
    
    private void cleanChunkExecState(String chunkId)
    {
-      if (!lineWidgets_.containsKey(chunkId))
+      if (!outputs_.containsKey(chunkId))
          return;
-      Scope chunk = docDisplay_.getCurrentChunk(Position.create(
-            lineWidgets_.get(chunkId).getRow(), 0));
+      Scope chunk = outputs_.get(chunkId).getScope();
       if (chunk != null)
       {
          docDisplay_.setChunkLineExecState(
@@ -967,11 +897,11 @@ public class TextEditingTargetNotebook
    
    private void syncWidth(String chunkId)
    {
-      if (!outputWidgets_.containsKey(chunkId))
+      if (!outputs_.containsKey(chunkId))
          return;
       
       // check the width and see if it's already synced
-      Element ele = outputWidgets_.get(chunkId).getElement();
+      Element ele = outputs_.get(chunkId).getOutputWidget().getElement();
       int width = ele.getOffsetWidth();
       if (pixelWidth_ == width)
          return;
@@ -983,8 +913,7 @@ public class TextEditingTargetNotebook
    }
    
    private JsArray<ChunkDefinition> initialChunkDefs_;
-   private HashMap<String, ChunkOutputWidget> outputWidgets_;
-   private HashMap<String, LineWidget> lineWidgets_;
+   private HashMap<String, ChunkOutputUi> outputs_;
    private Queue<ChunkExecQueueUnit> chunkExecQueue_;
    private ChunkExecQueueUnit executingChunk_;
    
@@ -1023,10 +952,6 @@ public class TextEditingTargetNotebook
    
    // chunk state synchronized
    private final static int STATE_INITIALIZED = 0;
-   
-   public final static int MIN_CHUNK_HEIGHT = 25;
-   public final static int CHUNK_COLLAPSED_HEIGHT = 10;
-   public final static int MAX_CHUNK_HEIGHT = 650;
    
    public final static String CHUNK_OUTPUT_TYPE    = "chunk_output_type";
    public final static String CHUNK_OUTPUT_INLINE  = "inline";

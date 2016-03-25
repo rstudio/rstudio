@@ -30,6 +30,7 @@ public class Anchor extends JavaScriptObject
    }-*/;
 
    public native final void detach() /*-{
+      this.removeAllListeners("change");
       this.detach();
    }-*/;
    
