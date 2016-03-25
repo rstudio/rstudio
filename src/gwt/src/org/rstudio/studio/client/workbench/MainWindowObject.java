@@ -66,5 +66,6 @@ public class MainWindowObject
    private static final JavaScriptObject RSTUDIO = getRStudioObject(MAIN_WINDOW);
    
    public static final String LAST_FOCUSED_EDITOR        = "last_focused_editor";
+   public static final String LAST_FOCUSED_WINDOW        = "last_focused_window";
    public static final String LAST_FOCUSED_SOURCE_WINDOW = "last_focused_source_window";
 }

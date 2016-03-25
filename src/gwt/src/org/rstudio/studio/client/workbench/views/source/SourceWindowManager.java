@@ -60,6 +60,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
@@ -85,6 +86,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             ShinyApplicationStatusEvent.Handler,
                                             CollabEditStartedEvent.Handler,
                                             CollabEditEndedEvent.Handler,
+                                            DocFocusedEvent.Handler,
                                             EditorCommandDispatchEvent.Handler,
                                             RestartStatusEvent.Handler
 {
@@ -128,6 +130,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          events_.addHandler(DocTabClosedEvent.TYPE, this);
          events_.addHandler(CollabEditStartedEvent.TYPE, this);
          events_.addHandler(CollabEditEndedEvent.TYPE, this);
+         events_.addHandler(DocFocusedEvent.TYPE, this);
          events_.addHandler(RestartStatusEvent.TYPE, this);
 
          JsArray<SourceDocument> docs = 
@@ -212,7 +215,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          public void onFocus(FocusEvent event)
          {
             MainWindowObject.set(
-                  MainWindowObject.LAST_FOCUSED_SOURCE_WINDOW,
+                  MainWindowObject.LAST_FOCUSED_WINDOW,
                   getSourceWindowId());
          }
       });
@@ -267,6 +270,11 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    public String getLastFocusedSourceWindowId()
    {
       return MainWindowObject.get(MainWindowObject.LAST_FOCUSED_SOURCE_WINDOW);
+   }
+   
+   public String getLastFocusedWindowId()
+   {
+      return MainWindowObject.get(MainWindowObject.LAST_FOCUSED_WINDOW);
    }
    
    public int getSourceWindowOrdinal()
@@ -537,9 +545,9 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    }
    
    private <T extends EventHandler>
-   void fireEventToLastFocusedSourceWindow(CrossWindowEvent<T> event)
+   void fireEventToLastFocusedWindow(CrossWindowEvent<T> event)
    {
-      String id = getLastFocusedSourceWindowId();
+      String id = getLastFocusedWindowId();
       if (StringUtil.isNullOrEmpty(id))
          events_.fireEvent(event);
       else
@@ -557,17 +565,17 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       if (type.equals(EditorCommandEvent.TYPE_EDITOR_CONTEXT))
       {
          GetEditorContextEvent.Data data = event.getData();
-         fireEventToLastFocusedSourceWindow(new GetEditorContextEvent(data));
+         fireEventToLastFocusedWindow(new GetEditorContextEvent(data));
       }
       else if (type.equals(EditorCommandEvent.TYPE_REPLACE_RANGES))
       {
          ReplaceRangesEvent.Data data = event.getData();
-         fireEventToLastFocusedSourceWindow(new ReplaceRangesEvent(data));
+         fireEventToLastFocusedWindow(new ReplaceRangesEvent(data));
       }
       else if (type.equals(EditorCommandEvent.TYPE_SET_SELECTION_RANGES))
       {
          SetSelectionRangesEvent.Data data = event.getData();
-         fireEventToLastFocusedSourceWindow(new SetSelectionRangesEvent(data));
+         fireEventToLastFocusedWindow(new SetSelectionRangesEvent(data));
       }
       else
          assert false: "Unrecognized editor event type '" + type + "'";
@@ -745,6 +753,28 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             break;
          }
       }
+   }
+   
+   @Override
+   public void onDocFocused(final DocFocusedEvent event)
+   {
+      // defer to ensure that the containing window gets focus too
+      Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            // ignore this event if it's from main window but the main window
+            // doesn't have focus
+            if (!mainWindowFocused_ && event.isFromMainWindow())
+               return;
+            String id = event.isFromMainWindow()
+                  ? ""
+                  : sourceWindowId(event.originWindowName());
+
+            MainWindowObject.set(MainWindowObject.LAST_FOCUSED_SOURCE_WINDOW, id);
+         }
+      });
    }
    
    @Override
