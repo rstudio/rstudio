@@ -42,8 +42,8 @@ extern const int kLineEndingsUseDefault;
 extern const char * const kBuildTypeNone;
 extern const char * const kBuildTypePackage;
 extern const char * const kBuildTypeMakefile;
-extern const char * const kBuildTypeCustom;
 extern const char * const kBuildTypeWebsite;
+extern const char * const kBuildTypeCustom;
 
 std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val);
 
