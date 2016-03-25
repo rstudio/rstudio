@@ -135,18 +135,16 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kRmdParamsReady;
       else if (name == "jump_to_function")
          type = session::client_events::kJumpToFunction;
-      else if (name == "replace_ranges")
-         type = session::client_events::kReplaceRanges;
       else if (name == "send_to_console")
          type = session::client_events::kSendToConsole;
-      else if (name == "get_active_document_context")
-         type = session::client_events::kGetActiveDocumentContext;
       else if (name == "rprof_started")
         type = session::client_events::kRprofStarted;
       else if (name == "rprof_stopped")
         type = session::client_events::kRprofStopped;
       else if (name == "rprof_created")
         type = session::client_events::kRprofCreated;
+      else if (name == "editor_command")
+         type = session::client_events::kEditorCommand;
 
       if (type != -1)
       {

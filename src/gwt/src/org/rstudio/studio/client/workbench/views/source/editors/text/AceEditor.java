@@ -67,6 +67,7 @@ import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.EventBasedChangeTracker;
@@ -275,6 +276,7 @@ public class AceEditor implements DocDisplay,
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       backgroundTokenizer_ = new BackgroundTokenizer(this);
+      vim_ = new Vim(this);
       
       widget_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
@@ -422,6 +424,17 @@ public class AceEditor implements DocDisplay,
                   completionManager_ = null;
                }
             }
+         }
+      });
+      
+      widget_.addFocusHandler(new FocusHandler()
+      {
+         @Override
+         public void onFocus(FocusEvent event)
+         {
+            MainWindowObject.set(
+                  MainWindowObject.LAST_FOCUSED_EDITOR,
+                  AceEditor.this.getWidget().getElement().getId());
          }
       });
    }
@@ -1076,7 +1089,21 @@ public class AceEditor implements DocDisplay,
    {
       getSession().getSelection().setSelectionRange(range);
    }
-
+   
+   public void setSelectionRanges(JsArray<Range> ranges)
+   {
+      int n = ranges.length();
+      if (n == 0)
+         return;
+      
+      if (vim_.isActive())
+         vim_.exitVisualMode();
+      
+      setSelectionRange(ranges.get(0));
+      for (int i = 1; i < n; i++)
+         getNativeSelection().addRange(ranges.get(i), false);
+   }
+   
    public int getLength(int row)
    {
       return getSession().getDocument().getLine(row).length();
@@ -1802,7 +1829,7 @@ public class AceEditor implements DocDisplay,
    {
       return useVimMode_;
    }
-
+   
    @Override
    public boolean isVimInInsertMode()
    {
@@ -3086,6 +3113,7 @@ public class AceEditor implements DocDisplay,
    private AceInfoBar infoBar_;
    private boolean showChunkOutputInline_ = false;
    private BackgroundTokenizer backgroundTokenizer_;
+   private final Vim vim_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {

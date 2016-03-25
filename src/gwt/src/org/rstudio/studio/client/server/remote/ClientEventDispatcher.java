@@ -49,10 +49,8 @@ import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.common.synctex.events.SynctexEditFileEvent;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
-import org.rstudio.studio.client.events.GetActiveDocumentContextDispatchEvent;
-import org.rstudio.studio.client.events.GetActiveDocumentContextEvent;
-import org.rstudio.studio.client.events.ReplaceRangesDispatchEvent;
-import org.rstudio.studio.client.events.ReplaceRangesEvent;
+import org.rstudio.studio.client.events.EditorCommandDispatchEvent;
+import org.rstudio.studio.client.events.EditorCommandEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
@@ -719,17 +717,6 @@ public class ClientEventDispatcher
             RegisterUserCommandEvent.Data data = event.getData();
             eventBus_.fireEvent(new RegisterUserCommandEvent(data));
          }
-         else if (type.equals(ClientEvent.ReplaceRanges))
-         {
-            ReplaceRangesEvent.Data data = event.getData();
-            ReplaceRangesEvent payload = new ReplaceRangesEvent(data);
-            eventBus_.fireEvent(new ReplaceRangesDispatchEvent(payload));
-         }
-         else if (type.equals(ClientEvent.GetActiveDocumentContext))
-         {
-            GetActiveDocumentContextEvent payload = new GetActiveDocumentContextEvent();
-            eventBus_.fireEvent(new GetActiveDocumentContextDispatchEvent(payload));
-         }
          else if (type.equals(ClientEvent.SendToConsole))
          {
             SendToConsoleEvent.Data data = event.getData();
@@ -781,6 +768,12 @@ public class ClientEventDispatcher
          {
             RprofEvent.Data data = event.getData();
             eventBus_.fireEvent(new RprofEvent(RprofEvent.RprofEventType.CREATE, data));
+         }
+         else if (type.equals(ClientEvent.EditorCommand))
+         {
+            EditorCommandEvent.Data data = event.getData();
+            EditorCommandEvent payload = new EditorCommandEvent(data);
+            eventBus_.fireEvent(new EditorCommandDispatchEvent(payload));
          }
          else
          {
