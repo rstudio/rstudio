@@ -18,11 +18,15 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Text;
+import com.google.inject.Inject;
 
 /**
  * Simulates a console that behaves like the R console, specifically with
@@ -32,6 +36,13 @@ public class VirtualConsole
 {
    public VirtualConsole()
    {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+   }
+   
+   @Inject
+   private void initialize(UIPrefs prefs)
+   {
+      prefs_ = prefs;
    }
    
    public boolean submit(String data)
@@ -169,7 +180,21 @@ public class VirtualConsole
    @Override
    public String toString()
    {
-      return o.toString();
+      String output = o.toString();
+      
+      int maxLength = prefs_.truncateLongLinesInConsoleHistory().getGlobalValue();
+      if (maxLength == 0)
+         return output;
+      
+      JsArrayString splat = StringUtil.split(output, "\n");
+      for (int i = 0; i < splat.length(); i++)
+      {
+         if (splat.get(i).length() > maxLength)
+            splat.set(i, splat.get(i).substring(0, maxLength) + "... <truncated>");
+      }
+      
+      String joined = splat.join("\n");
+      return joined;
    }
    
    public int getLength()
@@ -267,4 +292,7 @@ public class VirtualConsole
    private int pos_ = 0;
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
    private static final Pattern CONTROL_SPECIAL = Pattern.create("[\r\b\f]");
+   
+   // Injected ----
+   private UIPrefs prefs_;
 }

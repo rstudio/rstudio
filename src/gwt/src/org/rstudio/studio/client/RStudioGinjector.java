@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;
 
+import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.command.AddinCommandBinding;
 import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
@@ -174,6 +175,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(DataImportOptionsUiCsv dataImport);
    void injectMembers(CppCompletion completion);
    void injectMembers(ConsoleTabPanel consoleTabPanel);
+   void injectMembers(VirtualConsole console);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

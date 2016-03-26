@@ -193,6 +193,9 @@ public class EditingPreferencesPane extends PreferencesPane
       
       displayPanel.add(foldMode_);
       
+      displayPanel.add(headerLabel("Console"));
+      displayPanel.add(numericPref("Truncate long lines in console history", prefs_.truncateLongLinesInConsoleHistory()));
+      
       VerticalPanel savePanel = new VerticalPanel();
       
       savePanel.add(headerLabel("General"));
