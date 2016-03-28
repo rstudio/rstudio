@@ -24,13 +24,13 @@
    .expand 
    {
       right: 31px;
-      transition: transform 400ms ease;
+      transition: transform 400ms ease, -webkit-transform 400ms ease;
    }
    
    .collapsed .expand
    {
-      transition: transform 400ms ease;
       transform: rotate(180deg);
+      -webkit-transform: rotate(180deg);
    }
    
    .overflowY .clear
