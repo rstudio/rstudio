@@ -360,7 +360,7 @@ public class TextEditingTargetWidget
       {
          toolbar.addRightSeparator();
          publishButton_ = new RSConnectPublishButton(
-               RSConnect.CONTENT_TYPE_APP, false, null);
+               RSConnect.CONTENT_TYPE_APP, false, null, true);
          toolbar.addRightWidget(publishButton_);
       }
       
