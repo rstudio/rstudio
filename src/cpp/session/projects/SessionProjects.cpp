@@ -297,21 +297,15 @@ json::Object projectBuildContextJson()
    json::Array formatsJson;
    if (projectContext().config().buildType == r_util::kBuildTypeWebsite)
    {
-      FilePath buildTargetPath = projectContext().buildTargetPath();
-      FilePath indexFile = buildTargetPath.childPath("index.Rmd");
-      if (!indexFile.exists())
-         indexFile = buildTargetPath.childPath("index.md");
-      if (indexFile.exists())
-      {
-         r::exec::RFunction getFormats(".rs.getAllOutputFormats");
-         getFormats.addParam(string_utils::utf8ToSystem(indexFile.absolutePath()));
-         getFormats.addParam(projectContext().defaultEncoding());
-         std::vector<std::string> formats;
-         Error error = getFormats.call(&formats);
-         if (error)
-            LOG_ERROR(error);
-         formatsJson = json::toJsonArray(formats);
-      }
+      r::exec::RFunction getFormats(".rs.getAllOutputFormats");
+      getFormats.addParam(string_utils::utf8ToSystem(
+              projectContext().buildTargetPath().absolutePath()));
+      getFormats.addParam(projectContext().defaultEncoding());
+      std::vector<std::string> formats;
+      Error error = getFormats.call(&formats);
+      if (error)
+         LOG_ERROR(error);
+      formatsJson = json::toJsonArray(formats);
    }
    contextJson["website_output_formats"] = formatsJson;
    return contextJson;

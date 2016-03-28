@@ -236,8 +236,40 @@
   return(.rs.getRmdOutputInfo(target))
 })
 
-.rs.addFunction("getAllOutputFormats", function(input, encoding) {
-   rmarkdown:::enumerate_output_formats(input = input,
-                                        envir = parent.frame(),
-                                        encoding = encoding)
+.rs.addFunction("inputDirToIndexFile", function(input_dir) {
+   index <- file.path(input_dir, "index.Rmd")
+   if (file.exists(index))
+      index
+   else {
+      index <- file.path(input_dir, "index.md")
+      if (file.exists(index))
+         index
+      else
+         NULL
+   }
 })
+
+.rs.addFunction("getAllOutputFormats", function(input_dir, encoding) {
+   index <- .rs.inputDirToIndexFile(input_dir)
+   if (!is.null(index))
+      rmarkdown:::enumerate_output_formats(input = index,
+                                           envir = parent.frame(),
+                                           encoding = encoding)
+   else
+      character()
+})
+
+.rs.addFunction("isBookdownWebsite", function(input_dir, encoding) {
+   index <- .rs.inputDirToIndexFile(input_dir)
+   if (!is.null(index)) {
+      
+      formats <- rmarkdown:::enumerate_output_formats(input = index,
+                                                      envir = parent.frame(),
+                                                      encoding = encoding)
+      any(grepl("^bookdown", formats))
+   }
+   else
+      FALSE
+})
+
+

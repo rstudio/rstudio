@@ -39,6 +39,8 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionAsyncRProcess.hpp>
 
+#include <session/projects/SessionProjects.hpp>
+
 #include "RMarkdownPresentation.hpp"
 
 #define kRmdOutput "rmd_output"
@@ -1121,6 +1123,26 @@ bool knitParamsAvailable()
 {
    return module_context::isPackageVersionInstalled("rmarkdown", "0.7.3") &&
           module_context::isPackageVersionInstalled("knitr", "1.10.18");
+}
+
+bool isBookdownWebsite()
+{
+   if (!rmarkdownPackageAvailable())
+      return false;
+
+   if (projects::projectContext().config().buildType !=
+       r_util::kBuildTypeWebsite)
+      return false;
+
+   bool isBookdown = false;
+   std::string buildDir = string_utils::systemToUtf8(
+            projects::projectContext().buildTargetPath().absolutePath());
+   std::string encoding = projects::projectContext().defaultEncoding();
+   Error error = r::exec::RFunction(".rs.isBookdownWebsite", buildDir, encoding)
+                                                       .call(&isBookdown);
+   if (error)
+      LOG_ERROR(error);
+   return isBookdown;
 }
 
 bool rmarkdownPackageAvailable()

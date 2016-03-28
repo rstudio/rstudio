@@ -31,7 +31,7 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
 {
    public BuildToolsWebsitePanel()
    {
-      pathSelector_ = new DirectorySelector("Website directory:");
+      pathSelector_ = new DirectorySelector("Site directory:");
       add(pathSelector_);    
        
       websiteOutputFormat_ = new SelectWidget("Output format(s):",
@@ -57,6 +57,9 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
       RProjectBuildContext buildContext = options.getBuildContext();
       if (buildContext.isBookdownSite())
       {
+         // change caption
+         chkPreviewAfterBuilding_.setText("Preview book after building");
+         
          // get all available output formats
          JsArrayString formatsJson = buildContext.getWebsiteOutputFormats();
          ArrayList<String> formatNames = new ArrayList<String>();

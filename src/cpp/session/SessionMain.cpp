@@ -568,6 +568,12 @@ void handleClientInit(const boost::function<void()>& initFunction,
       std::string type = projects::projectContext().config().buildType;
       sessionInfo["build_tools_type"] = type;
 
+      if (type == r_util::kBuildTypeWebsite)
+      {
+         sessionInfo["build_tools_bookdown_website"] =
+                              modules::rmarkdown::isBookdownWebsite();
+      }
+
       FilePath buildTargetDir = projects::projectContext().buildTargetPath();
       if (!buildTargetDir.empty())
       {

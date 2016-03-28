@@ -31,6 +31,8 @@ bool rmarkdownPackageAvailable();
 
 bool knitParamsAvailable();
 
+bool isBookdownWebsite();
+
 core::Error initialize();
 
 } // namespace rmarkdown

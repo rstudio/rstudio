@@ -52,12 +52,23 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
    {
       Toolbar toolbar = new Toolbar();
       
+      SessionInfo sessionInfo =  session_.getSessionInfo();
+      String type = sessionInfo.getBuildToolsType();
+      
       // always include build all
-      toolbar.addLeftWidget(commands_.buildAll().createToolbarButton());
+      ToolbarButton buildAllButton = commands_.buildAll().createToolbarButton();
+      if (type.equals(SessionInfo.BUILD_TOOLS_WEBSITE))
+      {
+         if (sessionInfo.getBuildToolsBookdownWebsite())
+            buildAllButton.setText("Build Book");
+         else
+            buildAllButton.setText("Build Website");
+      }
+      toolbar.addLeftWidget(buildAllButton);
       toolbar.addLeftSeparator();
       
       // packages get check package
-      String type = session_.getSessionInfo().getBuildToolsType();
+     
       if (type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
       {
          toolbar.addLeftWidget(commands_.checkPackage().createToolbarButton());
