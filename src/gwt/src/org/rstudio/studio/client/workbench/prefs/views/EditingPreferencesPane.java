@@ -193,6 +193,12 @@ public class EditingPreferencesPane extends PreferencesPane
       
       displayPanel.add(foldMode_);
       
+      displayPanel.add(headerLabel("Console"));
+      NumericValueWidget limitLengthPref =
+            numericPref("Limit length of lines displayed in console to:", prefs_.truncateLongLinesInConsoleHistory());
+      limitLengthPref.setWidth("36px");
+      displayPanel.add(limitLengthPref);
+      
       VerticalPanel savePanel = new VerticalPanel();
       
       savePanel.add(headerLabel("General"));
