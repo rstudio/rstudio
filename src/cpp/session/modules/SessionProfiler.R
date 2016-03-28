@@ -56,7 +56,7 @@
       resources <- .rs.profileResources()
       fileName <- tempfile(fileext = ".Rprof", tmpdir = resources$tempPath)
 
-      Rprof(filename = fileName, line.profiling = TRUE)
+      Rprof(filename = fileName, line.profiling = TRUE, memory.profiling = TRUE)
 
       return(list(
          fileName = .rs.scalar(fileName)
