@@ -240,10 +240,20 @@ public class TextEditingTargetNotebook
             }));
    }
    
+   public void onActivate()
+   {
+      executedSinceActivate_ = false;
+   }
+   
    public void executeChunk(Scope chunk, String code, String options)
    {
-      // maximize the source window if it's paired with the console
-      pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
+      // maximize the source window if it's paired with the console and this
+      // is the first chunk we've executed since we were activated
+      if (!executedSinceActivate_)
+      {
+         pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
+         executedSinceActivate_ = true;
+      }
       
       // get the row that ends the chunk
       int row = chunk.getEnd().getRow();
@@ -957,6 +967,7 @@ public class TextEditingTargetNotebook
    private String setupCrc32_ = "";
    private int charWidth_ = 65;
    private int pixelWidth_ = 0;
+   private boolean executedSinceActivate_ = false;
    
    private int state_ = STATE_NONE;
 
@@ -967,7 +978,7 @@ public class TextEditingTargetNotebook
    private final static int STATE_INITIALIZING = 0;
    
    // chunk state synchronized
-   private final static int STATE_INITIALIZED = 0;
+   private final static int STATE_INITIALIZED = 1;
    
    public final static String CHUNK_OUTPUT_TYPE    = "chunk_output_type";
    public final static String CHUNK_OUTPUT_INLINE  = "inline";

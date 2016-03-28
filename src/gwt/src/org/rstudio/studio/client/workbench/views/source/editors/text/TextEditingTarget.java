@@ -2022,6 +2022,10 @@ public class TextEditingTarget implements
                   docUpdateSentinel_.getPath() != null);
          }
       });
+      
+      // let the notebook know we activated (if necessary)
+      if (notebook_ != null)
+         notebook_.onActivate();
 
       view_.onActivate();
    }
