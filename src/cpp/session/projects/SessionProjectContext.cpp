@@ -705,6 +705,23 @@ Error ProjectContext::writeBuildOptions(const RProjectBuildOptions& options)
    return Success();
 }
 
+void ProjectContext::setWebsiteOutputFormat(
+                           const std::string& websiteOutputFormat)
+{
+   core::Settings optionsFile;
+   Error error = buildOptionsFile(&optionsFile);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   optionsFile.set("website_output_format", websiteOutputFormat);
+
+   buildOptions_.websiteOutputFormat = websiteOutputFormat;
+
+}
+
 bool ProjectContext::isPackageProject()
 {
    return r_util::isPackageDirectory(directory());

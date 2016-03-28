@@ -33,6 +33,7 @@ public interface BuildServerOperations
    // to indicate that the build could not be started because another
    // build is currently in progress
    void startBuild(String type,
+                   String subType,
                    ServerRequestCallback<Boolean> requestCallback);
    
    // terminate any running build
@@ -41,4 +42,7 @@ public interface BuildServerOperations
    
    // get the devtools::load_all path
    void devtoolsLoadAllPath(ServerRequestCallback<String> requestCallback);
+   
+   // get bookdown output formats
+   void getBookdownFormats(ServerRequestCallback<BookdownFormats> requestCallback);
 }

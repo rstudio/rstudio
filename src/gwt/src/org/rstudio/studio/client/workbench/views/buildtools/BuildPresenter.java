@@ -72,6 +72,8 @@ public class BuildPresenter extends BasePresenter
       
       HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
       
+      HasSelectionCommitHandlers<String> buildSubType();
+          
       HasClickHandlers stopButton();
    }
    
@@ -195,6 +197,15 @@ public class BuildPresenter extends BasePresenter
             fileTypeRegistry_.editFile(fsi, target.getPosition());
          }
       });
+      
+      view_.buildSubType().addSelectionCommitHandler(
+         new SelectionCommitHandler<String>() {
+            @Override
+            public void onSelectionCommit(SelectionCommitEvent<String> event)
+            {
+               startBuild("build-all", event.getSelectedItem());
+            }
+      });
 
       view_.stopButton().addClickHandler(new ClickHandler() {
          @Override
@@ -291,8 +302,12 @@ public class BuildPresenter extends BasePresenter
       startBuild("clean-all");
    }
    
-    
    private void startBuild(final String type)
+   {
+      startBuild(type, "");
+   }
+   
+   private void startBuild(final String type, final String subType)
    {
       // attempt to start a build (this will be a silent no-op if there
       // is already a build running)
@@ -300,7 +315,7 @@ public class BuildPresenter extends BasePresenter
          @Override
          public void execute()
          {
-            server_.startBuild(type, new SimpleRequestCallback<Boolean>() {
+            server_.startBuild(type, subType, new SimpleRequestCallback<Boolean>() {
                @Override
                public void onResponseReceived(Boolean response)
                {

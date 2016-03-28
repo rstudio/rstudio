@@ -294,20 +294,7 @@ json::Object projectBuildContextJson()
    json::Object contextJson;
    contextJson["roxygen2_installed"] = isMinimumRoxygenInstalled();
    contextJson["devtools_installed"] = isMinimumDevtoolsInstalled();
-   json::Array formatsJson;
-   if (projectContext().config().buildType == r_util::kBuildTypeWebsite)
-   {
-      r::exec::RFunction getFormats(".rs.getAllOutputFormats");
-      getFormats.addParam(string_utils::utf8ToSystem(
-              projectContext().buildTargetPath().absolutePath()));
-      getFormats.addParam(projectContext().defaultEncoding());
-      std::vector<std::string> formats;
-      Error error = getFormats.call(&formats);
-      if (error)
-         LOG_ERROR(error);
-      formatsJson = json::toJsonArray(formats);
-   }
-   contextJson["website_output_formats"] = formatsJson;
+   contextJson["website_output_formats"] = websiteOutputFormatsJson();
    return contextJson;
 }
 
@@ -755,6 +742,24 @@ Error initialize()
 ProjectContext& projectContext()
 {
    return s_projectContext;
+}
+
+json::Array websiteOutputFormatsJson()
+{
+   json::Array formatsJson;
+   if (projectContext().config().buildType == r_util::kBuildTypeWebsite)
+   {
+      r::exec::RFunction getFormats(".rs.getAllOutputFormats");
+      getFormats.addParam(string_utils::utf8ToSystem(
+              projectContext().buildTargetPath().absolutePath()));
+      getFormats.addParam(projectContext().defaultEncoding());
+      std::vector<std::string> formats;
+      Error error = getFormats.call(&formats);
+      if (error)
+         LOG_ERROR(error);
+      formatsJson = json::toJsonArray(formats);
+   }
+   return formatsJson;
 }
 
 } // namespace projects

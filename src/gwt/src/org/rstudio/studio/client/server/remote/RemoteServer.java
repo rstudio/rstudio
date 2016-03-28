@@ -137,6 +137,7 @@ import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
+import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
@@ -3521,9 +3522,13 @@ public class RemoteServer implements Server
    
    @Override
    public void startBuild(String type,
+                          String subType,
                           ServerRequestCallback<Boolean> requestCallback)
    {
-      sendRequest(RPC_SCOPE, START_BUILD, type, requestCallback);
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(type));
+      params.set(1, new JSONString(subType));
+      sendRequest(RPC_SCOPE, START_BUILD, params, requestCallback);
    }
 
    @Override
@@ -3537,6 +3542,13 @@ public class RemoteServer implements Server
                               ServerRequestCallback<String> requestCallback)
    {
       sendRequest(RPC_SCOPE, DEVTOOLS_LOAD_ALL_PATH, requestCallback);
+   }
+   
+   @Override
+   public void getBookdownFormats(
+                  ServerRequestCallback<BookdownFormats> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "get_bookdown_formats", requestCallback);
    }
    
    @Override

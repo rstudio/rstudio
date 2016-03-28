@@ -172,10 +172,11 @@ class Build : boost::noncopyable,
               public boost::enable_shared_from_this<Build>
 {
 public:
-   static boost::shared_ptr<Build> create(const std::string& type)
+   static boost::shared_ptr<Build> create(const std::string& type,
+                                          const std::string& subType)
    {
       boost::shared_ptr<Build> pBuild(new Build());
-      pBuild->start(type);
+      pBuild->start(type, subType);
       return pBuild;
    }
 
@@ -186,7 +187,7 @@ private:
    {
    }
 
-   void start(const std::string& type)
+   void start(const std::string& type, const std::string& subType)
    {
       ClientEvent event(client_events::kBuildStarted);
       module_context::enqueClientEvent(event);
@@ -214,11 +215,12 @@ private:
                                 _1);
 
       // execute build
-      executeBuild(type, cb);
+      executeBuild(type, subType, cb);
    }
 
 
    void executeBuild(const std::string& type,
+                     const std::string& subType,
                      const core::system::ProcessCallbacks& cb)
    {
       // options
@@ -240,7 +242,7 @@ private:
       else if (config.buildType == r_util::kBuildTypeWebsite)
       {
          options.workingDir = buildTargetPath;
-         executeWebsiteBuild(type, buildTargetPath, options, cb);
+         executeWebsiteBuild(type, subType, buildTargetPath, options, cb);
       }
       else if (config.buildType == r_util::kBuildTypeCustom)
       {
@@ -1081,6 +1083,7 @@ private:
 
 
    void executeWebsiteBuild(const std::string& type,
+                            const std::string& subType,
                             const FilePath& websitePath,
                             const core::system::ProcessOptions& options,
                             const core::system::ProcessCallbacks& cb)
@@ -1090,6 +1093,13 @@ private:
          successFunction_ = boost::bind(&Build::showWebsitePreview,
                                         Build::shared_from_this(),
                                         websitePath);
+      }
+
+      // if there is a subType then use it to set the output format
+      if (!subType.empty())
+      {
+         projects::projectContext().setWebsiteOutputFormat(subType);
+         options_.websiteOutputFormat = subType;
       }
 
       boost::format fmt("rmarkdown::render_site(%1%)");
@@ -1450,8 +1460,8 @@ Error startBuild(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
    // get type
-   std::string type;
-   Error error = json::readParam(request.params, 0, &type);
+   std::string type, subType;
+   Error error = json::readParams(request.params, &type, &subType);
    if (error)
       return error;
 
@@ -1462,7 +1472,7 @@ Error startBuild(const json::JsonRpcRequest& request,
    }
    else
    {
-      s_pBuild = Build::create(type);
+      s_pBuild = Build::create(type, subType);
       pResponse->setResult(true);
    }
 
@@ -1686,6 +1696,17 @@ SEXP rs_installPackage(SEXP pkgPathSEXP, SEXP libPathSEXP)
    return R_NilValue;
 }
 
+Error getBookdownFormats(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
+{
+   json::Object responseJson;
+   responseJson["output_format"] = projects::projectContext().buildOptions().websiteOutputFormat;
+   responseJson["website_output_formats"] = projects::websiteOutputFormatsJson();
+   pResponse->setResult(responseJson);
+   return Success();
+}
+
+
 
 } // anonymous namespace
 
@@ -1798,6 +1819,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_cpp_capabilities", getCppCapabilities))
       (bind(registerRpcMethod, "install_build_tools", installBuildTools))
       (bind(registerRpcMethod, "devtools_load_all_path", devtoolsLoadAllPath))
+      (bind(registerRpcMethod, "get_bookdown_formats", getBookdownFormats))
       (bind(sourceModuleRFile, "SessionBuild.R"))
       (bind(source_cpp::initialize));
    return initBlock.execute();

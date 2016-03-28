@@ -48,7 +48,8 @@ public class BuildCommands
       }
       
       // remove makefile commands if this isn't a makefile
-      if (type.equals(SessionInfo.BUILD_TOOLS_CUSTOM))
+      if (type.equals(SessionInfo.BUILD_TOOLS_CUSTOM) ||
+          type.equals(SessionInfo.BUILD_TOOLS_WEBSITE))
       {
          commands.rebuildAll().remove();
       }

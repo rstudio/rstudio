@@ -122,6 +122,9 @@ public:
    core::Error readBuildOptions(RProjectBuildOptions* pOptions);
    core::Error writeBuildOptions(const RProjectBuildOptions& options);
 
+   // update the website output type
+   void setWebsiteOutputFormat(const std::string& websiteOutputFormat);
+
    // code which needs to rely on the encoding should call this method
    // rather than getting the encoding off of the config (because the
    // config could have been created on another system with an encoding
@@ -222,6 +225,7 @@ private:
 
 ProjectContext& projectContext();
 
+core::json::Array websiteOutputFormatsJson();
 
 } // namespace projects
 } // namesapce session
