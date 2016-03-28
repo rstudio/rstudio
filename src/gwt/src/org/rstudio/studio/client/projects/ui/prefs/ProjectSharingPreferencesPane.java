@@ -41,6 +41,6 @@ public class ProjectSharingPreferencesPane extends ProjectPreferencesPane
    @Override
    public boolean onApply(RProjectOptions prefs)
    {
-      return true;
+      return false;
    }
 }
