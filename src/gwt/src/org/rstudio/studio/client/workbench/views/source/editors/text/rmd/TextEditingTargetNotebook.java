@@ -263,12 +263,12 @@ public class TextEditingTargetNotebook
             return;
          chunkId = chunkDef.getChunkId();
          ensureSetupChunkExecuted();
-      
-         // decorate the gutter to show the chunk is queued
-         docDisplay_.setChunkLineExecState(chunk.getBodyStart().getRow() + 1,
-               chunk.getEnd().getRow(), ChunkRowExecState.LINE_QUEUED);
       }
       
+      // decorate the gutter to show the chunk is queued
+      docDisplay_.setChunkLineExecState(chunk.getBodyStart().getRow() + 1,
+            chunk.getEnd().getRow(), ChunkRowExecState.LINE_QUEUED);
+
       // check to see if this chunk is already in the execution queue--if so
       // just update the code and leave it queued
       for (ChunkExecQueueUnit unit: chunkExecQueue_)
@@ -556,10 +556,10 @@ public class TextEditingTargetNotebook
    {
       if (executingChunk_ == null)
          return;
-      // get the code for the executing chunk
-      if (!outputs_.containsKey(executingChunk_.chunkId))
+      Scope chunk = getChunkScope(executingChunk_.chunkId);
+      if (chunk == null)
          return;
-      Scope chunk = outputs_.get(executingChunk_.chunkId).getScope();
+
       String code = docDisplay_.getCode(chunk.getBodyStart(), chunk.getEnd());
       
       // find the line just emitted (start looking from the current position)
@@ -883,9 +883,7 @@ public class TextEditingTargetNotebook
    
    private void cleanChunkExecState(String chunkId)
    {
-      if (!outputs_.containsKey(chunkId))
-         return;
-      Scope chunk = outputs_.get(chunkId).getScope();
+      Scope chunk = getChunkScope(chunkId);
       if (chunk != null)
       {
          docDisplay_.setChunkLineExecState(
@@ -910,6 +908,24 @@ public class TextEditingTargetNotebook
       pixelWidth_ = width;
       charWidth_ = DomUtils.getCharacterWidth(ele, 
             ConsoleResources.INSTANCE.consoleStyles().console());
+   }
+   
+   private Scope getChunkScope(String chunkId)
+   {
+      if (chunkId == SETUP_CHUNK_ID)
+      {
+         JsArray<Scope> scopes = docDisplay_.getScopeTree();
+         for (int i = 0; i < scopes.length(); i++)
+         {
+            if (isSetupChunkScope(scopes.get(i)))
+               return scopes.get(i);
+         }
+      }
+      else if (outputs_.containsKey(chunkId))
+      {
+         return outputs_.get(chunkId).getScope();
+      }
+      return null;
    }
    
    private JsArray<ChunkDefinition> initialChunkDefs_;
