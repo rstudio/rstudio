@@ -312,6 +312,10 @@ public class TextEditingTargetRenameHelper
             if (isProtectedName(cursor.currentValue()))
                continue;
             
+            // Skip variables following an 'extraction' operator.
+            if (cursor.peekBwd(1).isExtractionOperator())
+               continue;
+            
             // Don't rename the argument names for named function calls.
             // For example, if we're refactoring a variable named 'bar', we
             // only want to refactor the underlined pieces:
