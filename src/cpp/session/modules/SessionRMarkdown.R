@@ -236,3 +236,8 @@
   return(.rs.getRmdOutputInfo(target))
 })
 
+.rs.addFunction("getAllOutputFormats", function(input, encoding) {
+   rmarkdown:::enumerate_output_formats(input = input,
+                                        envir = parent.frame(),
+                                        encoding = encoding)
+})

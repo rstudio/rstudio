@@ -246,7 +246,7 @@ json::Object projectBuildOptionsJson()
    json::Object buildOptionsJson;
    buildOptionsJson["makefile_args"] = buildOptions.makefileArgs;
    buildOptionsJson["preview_website"] = buildOptions.previewWebsite;
-
+   buildOptionsJson["website_output_format"] = buildOptions.websiteOutputFormat;
    json::Object autoRoxJson;
    autoRoxJson["run_on_check"] = buildOptions.autoRoxygenizeForCheck;
    autoRoxJson["run_on_package_builds"] =
@@ -294,6 +294,26 @@ json::Object projectBuildContextJson()
    json::Object contextJson;
    contextJson["roxygen2_installed"] = isMinimumRoxygenInstalled();
    contextJson["devtools_installed"] = isMinimumDevtoolsInstalled();
+   json::Array formatsJson;
+   if (projectContext().config().buildType == r_util::kBuildTypeWebsite)
+   {
+      FilePath buildTargetPath = projectContext().buildTargetPath();
+      FilePath indexFile = buildTargetPath.childPath("index.Rmd");
+      if (!indexFile.exists())
+         indexFile = buildTargetPath.childPath("index.md");
+      if (indexFile.exists())
+      {
+         r::exec::RFunction getFormats(".rs.getAllOutputFormats");
+         getFormats.addParam(string_utils::utf8ToSystem(indexFile.absolutePath()));
+         getFormats.addParam(projectContext().defaultEncoding());
+         std::vector<std::string> formats;
+         Error error = getFormats.call(&formats);
+         if (error)
+            LOG_ERROR(error);
+         formatsJson = json::toJsonArray(formats);
+      }
+   }
+   contextJson["website_output_formats"] = formatsJson;
    return contextJson;
 }
 
@@ -362,6 +382,7 @@ Error rProjectBuildOptionsFromJson(const json::Object& optionsJson,
        optionsJson,
        "makefile_args", &(pOptions->makefileArgs),
        "preview_website", &(pOptions->previewWebsite),
+       "website_output_format", &(pOptions->websiteOutputFormat),
        "auto_roxygenize_options", &autoRoxJson);
    if (error)
       return error;

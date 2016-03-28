@@ -42,6 +42,14 @@ public class RProjectBuildOptions extends JavaScriptObject
    public native final void setPreviewWebsite(boolean preview) /*-{
       this.preview_website = preview;
    }-*/;
+   
+   public native final String getWebsiteOutputFormat() /*-{
+      return this.website_output_format;
+   }-*/;
+
+   public native final void setWebsiteOutputFormat(String format) /*-{
+      this.website_output_format = format;
+   }-*/;   
   
    public native final RProjectAutoRoxygenizeOptions getAutoRogyginizeOptions() /*-{
       return this.auto_roxygenize_options;

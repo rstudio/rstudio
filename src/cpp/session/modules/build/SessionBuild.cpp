@@ -1092,7 +1092,11 @@ private:
                                         websitePath);
       }
 
-      std::string command = "rmarkdown::render_site()";
+      boost::format fmt("rmarkdown::render_site(%1%)");
+      std::string format;
+      if (options_.websiteOutputFormat != "all")
+         format = "output_format = '" + options_.websiteOutputFormat + "'";
+      std::string command = boost::str(fmt % format);
       enqueCommandString(command);
       rExecute(command, websitePath, options, cb);
    }

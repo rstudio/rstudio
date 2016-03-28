@@ -663,6 +663,7 @@ Error ProjectContext::readBuildOptions(RProjectBuildOptions* pOptions)
 
    pOptions->makefileArgs = optionsFile.get("makefile_args");
    pOptions->previewWebsite = optionsFile.getBool("preview_website", true);
+   pOptions->websiteOutputFormat = optionsFile.get("website_output_format", "all");
    pOptions->autoRoxygenizeForCheck = optionsFile.getBool(
                                        "auto_roxygenize_for_check",
                                        true);
@@ -689,6 +690,7 @@ Error ProjectContext::writeBuildOptions(const RProjectBuildOptions& options)
    optionsFile.beginUpdate();
    optionsFile.set("makefile_args", options.makefileArgs);
    optionsFile.set("preview_website", options.previewWebsite);
+   optionsFile.set("website_output_format", options.websiteOutputFormat);
    optionsFile.set("auto_roxygenize_for_check",
                    options.autoRoxygenizeForCheck);
    optionsFile.set("auto_roxygenize_for_build_package",
