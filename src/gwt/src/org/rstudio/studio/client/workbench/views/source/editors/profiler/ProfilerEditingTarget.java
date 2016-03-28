@@ -265,7 +265,20 @@ public class ProfilerEditingTarget implements EditingTarget,
                @Override
                public void execute()
                {
-                  commands_.closeSourceDoc().execute();
+                  server_.clearProfile(getPath(), new ServerRequestCallback<JavaScriptObject>()
+                  {
+                     @Override
+                     public void onResponseReceived(JavaScriptObject response)
+                     {
+                        commands_.closeSourceDoc().execute();
+                     }
+                     
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                     }
+                  });
                }
             }, getPath());
          }

@@ -164,6 +164,11 @@
 
       filePrefix <- tools::file_path_sans_ext(basename(filePath))
       
+      rprofFile <- file.path(resources$tempPath, paste(filePrefix, ".Rprof", sep = ""))
+      if (file.exists(rprofFile)) {
+         file.remove(rprofFile)
+      }
+
       profileHtml <- file.path(resources$tempPath, paste(filePrefix, ".html", sep = ""))
       if (file.exists(profileHtml)) {
          file.remove(profileHtml)

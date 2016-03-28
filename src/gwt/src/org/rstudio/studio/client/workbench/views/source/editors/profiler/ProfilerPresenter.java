@@ -19,13 +19,17 @@ import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.QuitEvent;
+import org.rstudio.studio.client.application.events.QuitHandler;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
@@ -36,8 +40,10 @@ import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -50,6 +56,7 @@ import com.google.inject.Singleton;
 public class ProfilerPresenter implements RprofEvent.Handler
 {
    private final ProfilerServerOperations server_;
+   private final SourceServerOperations sourceServer_;
    private final Commands commands_;
    private final DependencyManager dependencyManager_;
    private final HandlerRegistrations handlerRegistrations_ = new HandlerRegistrations();
@@ -60,6 +67,7 @@ public class ProfilerPresenter implements RprofEvent.Handler
    private final RemoteFileSystemContext fileContext_;
    private final WorkbenchContext workbenchContext_;
    private final FileTypeRegistry fileTypeRegistry_;
+   private String currentDocId_;
    
    final String profilerDependecyUserAction_ = "Preparing profiler";
    
@@ -84,7 +92,8 @@ public class ProfilerPresenter implements RprofEvent.Handler
                             FileDialogs fileDialogs,
                             RemoteFileSystemContext fileContext,
                             WorkbenchContext workbenchContext,
-                            FileTypeRegistry fileTypeRegistry)
+                            FileTypeRegistry fileTypeRegistry,
+                            SourceServerOperations sourceServer)
    {
       server_ = server;
       commands_ = commands;
@@ -96,6 +105,7 @@ public class ProfilerPresenter implements RprofEvent.Handler
       fileContext_ = fileContext;
       workbenchContext_ = workbenchContext;
       fileTypeRegistry_ = fileTypeRegistry;
+      sourceServer_ = sourceServer;
       
       binder.bind(commands, this);
 
@@ -120,7 +130,9 @@ public class ProfilerPresenter implements RprofEvent.Handler
                event.getData().getPath(),
                event.getData().getHtmlPath(),
                event.getData().getHtmlLocalPath(),
-               true));
+               true,
+               currentDocId_));
+            currentDocId_ = null;
             break;
          default:
             break;
@@ -163,6 +175,29 @@ public class ProfilerPresenter implements RprofEvent.Handler
                   pSourceWindowManager_.get().ensureVisibleSourcePaneIfNecessary();
 
                   response_ = response;
+                  
+                  sourceServer_.newDocument(
+                     FileTypeRegistry.PROFILER.getTypeId(),
+                     null,
+                     (JsObject) ProfilerContents.create(
+                           response.getFileName(),
+                           null,
+                           null,
+                           true).cast(),
+                     new SimpleRequestCallback<SourceDocument>("Show Profiler")
+                     {
+                        @Override
+                        public void onResponseReceived(SourceDocument response)
+                        {
+                           currentDocId_ = response.getId();
+                        }
+                        
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           Debug.logError(error);
+                        }
+                     });
                }
 
                @Override

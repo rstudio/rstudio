@@ -1029,7 +1029,27 @@ public class Source implements InsertSourceHandler,
       
       // create new profiler 
       ensureVisible(true);
-      server_.newDocument(
+
+      if (event.getDocId() != null)
+      {
+         server_.getSourceDocument(event.getDocId(), new ServerRequestCallback<SourceDocument>()
+         {
+            @Override
+            public void onResponseReceived(SourceDocument response)
+            {
+               addTab(response);
+            }
+            
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
+      }
+      else
+      {
+         server_.newDocument(
             FileTypeRegistry.PROFILER.getTypeId(),
             null,
             (JsObject) ProfilerContents.create(
@@ -1044,7 +1064,14 @@ public class Source implements InsertSourceHandler,
                {
                   addTab(response);
                }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
             });
+      }
    }
    
    @Handler
