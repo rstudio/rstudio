@@ -53,6 +53,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JsArray;
@@ -670,6 +671,23 @@ public class RSConnectPublishButton extends Composite
 
       if (manuallyHidden_)
          return false;
+      
+      // websites
+      SessionInfo sessionInfo = session_.getSessionInfo();
+      String buildType = sessionInfo.getBuildToolsType();
+      if (buildType.equals(SessionInfo.BUILD_TOOLS_WEBSITE))
+      {
+         // if this is an Rmd with a content path
+         if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT &&
+             !StringUtil.isNullOrEmpty(contentPath_))
+         {
+            // ...and if the content path is within the website dir,
+            // then don't show the publish button
+            String websiteDir = sessionInfo.getBuildTargetDir();
+            if (contentPath_.startsWith(websiteDir))
+               return false;
+         }
+      }
 
       // looks like we should be visible
       return true;
