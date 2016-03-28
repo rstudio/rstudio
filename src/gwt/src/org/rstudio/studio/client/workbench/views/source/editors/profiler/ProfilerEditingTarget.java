@@ -761,7 +761,7 @@ public class ProfilerEditingTarget implements EditingTarget,
       var handler = $entry(function(e) {
          if (typeof e.data != 'object')
             return;
-         if (!e.origin.startsWith($wnd.location.origin))
+         if (e.origin.substr(0, e.origin.length) != $wnd.location.origin)
             return;
          if (e.data.source != "profvis")
             return;
