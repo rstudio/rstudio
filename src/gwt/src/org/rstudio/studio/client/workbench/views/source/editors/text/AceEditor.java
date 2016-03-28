@@ -2709,7 +2709,7 @@ public class AceEditor implements DocDisplay,
    {
       return popupVisible_;
    }
-
+   
    public void selectAll(String needle)
    {
       widget_.getEditor().findAll(needle);

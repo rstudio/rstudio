@@ -136,6 +136,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Search;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.VimMarks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
@@ -4983,6 +4984,38 @@ public class TextEditingTarget implements
       int line = selPos.getRow() + 1;
       int column = selPos.getColumn() + 1;
       return SourceLocation.create(file, line, column, fromClick);
+   }
+   
+   @Handler
+   void onQuickAddNext()
+   {
+      if (!(docDisplay_ instanceof AceEditor))
+         return;
+      
+      AceEditor editor = (AceEditor) docDisplay_;
+      if (editor.getNativeSelection().isEmpty())
+      {
+         editor.getNativeSelection().selectWord();
+         return;
+      }
+      
+      String needle = editor.getSelectionValue();
+      Search search = Search.create(
+            needle,
+            false,
+            true,
+            true,
+            true,
+            editor.getCursorPosition(),
+            null,
+            false);
+      
+      Range range = search.find(editor.getSession());
+      if (range == null)
+         return;
+      
+      editor.getNativeSelection().addRange(range, false);
+      editor.centerSelection();
    }
 
    @Handler
