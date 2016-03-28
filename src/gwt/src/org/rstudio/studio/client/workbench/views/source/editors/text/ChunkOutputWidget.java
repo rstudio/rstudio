@@ -108,9 +108,13 @@ public class ChunkOutputWidget extends Composite
       initWidget(uiBinder.createAndBindUi(this));
       expansionState_ = new Value<Integer>(expansionState);
       applyCachedEditorStyle();
+      if (expansionState_.getValue() == COLLAPSED)
+         setCollapsedStyles();
       
       frame_.getElement().getStyle().setHeight(
-            ChunkOutputUi.MIN_CHUNK_HEIGHT, Unit.PX);
+            expansionState_.getValue() == COLLAPSED ? 
+                  ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT :
+                  ChunkOutputUi.MIN_CHUNK_HEIGHT, Unit.PX);
       
       onRenderCompleted_ = onRenderCompleted;
       
@@ -567,7 +571,10 @@ public class ChunkOutputWidget extends Composite
          spinner_.detach();
          spinner_ = null;
       }
-      root_.getElement().getStyle().setOpacity(1);
+
+      if (expansionState_.getValue() == EXPANDED)
+         root_.getElement().getStyle().setOpacity(1);
+
       clear_.setVisible(true);
       expand_.setVisible(true);
    }
@@ -609,15 +616,10 @@ public class ChunkOutputWidget extends Composite
 
       if (expansionState_.getValue() == EXPANDED)
       {
-         getElement().addClassName(style.collapsed());
-
          // remove scrollbars
-         root_.getElement().getStyle().setOverflow(Overflow.HIDDEN);
-         root_.getElement().getStyle().setOpacity(0);
          frame_.getElement().getStyle().setProperty("transition", 
                "height " + ANIMATION_DUR + "ms ease");
-         frame_.getElement().getStyle().setHeight(
-               ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT, Unit.PX);
+         setCollapsedStyles();
          collapseTimer_ = new Timer()
          {
             @Override
@@ -633,11 +635,7 @@ public class ChunkOutputWidget extends Composite
       }
       else
       {
-         getElement().removeClassName(style.collapsed());
-
-         // restore scrollbars if necessary
-         root_.getElement().getStyle().clearOverflow();
-         root_.getElement().getStyle().clearOpacity();
+         clearCollapsedStyles();
          expansionState_.setValue(EXPANDED, true);
          syncHeight(true);
          collapseTimer_ = new Timer()
@@ -650,6 +648,22 @@ public class ChunkOutputWidget extends Composite
          };
       }
       collapseTimer_.schedule(ANIMATION_DUR);
+   }
+   
+   private void setCollapsedStyles()
+   {
+      getElement().addClassName(style.collapsed());
+      root_.getElement().getStyle().setOverflow(Overflow.HIDDEN);
+      root_.getElement().getStyle().setOpacity(0);
+      frame_.getElement().getStyle().setHeight(
+            ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT, Unit.PX);
+   }
+   
+   private void clearCollapsedStyles()
+   {
+      getElement().removeClassName(style.collapsed());
+      root_.getElement().getStyle().clearOverflow();
+      root_.getElement().getStyle().clearOpacity();
    }
    
    @UiField Image clear_;

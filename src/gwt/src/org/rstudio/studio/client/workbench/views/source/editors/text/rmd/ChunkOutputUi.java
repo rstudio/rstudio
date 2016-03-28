@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
@@ -73,14 +72,12 @@ public class ChunkOutputUi
       
       // sync the widget's expanded/collapsed state to the underlying chunk
       // definition (which is persisted)
-         Debug.devlog("initial state: " + def.getExpansionState());
       outputWidget_.addExpansionStateChangeHandler(
             new ValueChangeHandler<Integer>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<Integer> event)
          {
-            Debug.devlog("set expansion state to: " + event.getValue());
             def_.setExpansionState(event.getValue());
          }
       });
