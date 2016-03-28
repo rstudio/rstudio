@@ -47,8 +47,8 @@ public class MainWindowObject
       object[key] = value;
    }-*/;
    
-   private static final native <T> T getImpl(String key,
-                                             JavaScriptObject object)
+   private static final native JavaScriptObject getImpl(String key,
+                                                JavaScriptObject object)
    /*-{
       return object[key];
    }-*/;
