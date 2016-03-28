@@ -148,7 +148,7 @@ public class TextEditingTargetRenameHelper
                continue;
             
             if (cursor.currentPosition().isAfterOrEqualTo(scope.getEnd()) ||
-                cursor.currentPosition().isAfterOrEqualTo(startPosition))
+                cursor.currentPosition().isAfter(startPosition))
             {
                break;
             }
