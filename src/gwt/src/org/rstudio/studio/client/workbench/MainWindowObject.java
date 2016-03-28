@@ -29,9 +29,13 @@ public class MainWindowObject
       setImpl(key, value, RSTUDIO);
    }
    
+   @SuppressWarnings("unchecked")
    public static final <T> T get(String key)
    {
-      return getImpl(key, RSTUDIO);
+      // work around cast errors with older JDK (1.6)
+      JavaScriptObject object = getImpl(key, RSTUDIO);
+      T casted = (T) object;
+      return casted;
    }
    
    // Private ----
