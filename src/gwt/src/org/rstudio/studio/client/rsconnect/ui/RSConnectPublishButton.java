@@ -53,7 +53,6 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JsArray;
@@ -84,20 +83,12 @@ public class RSConnectPublishButton extends Composite
       }
    }
 
-   
    public RSConnectPublishButton(int contentType, boolean showCaption,
          AppCommand boundCommand)
-   {
-      this(contentType, showCaption, boundCommand, false);
-   }
-   
-   public RSConnectPublishButton(int contentType, boolean showCaption,
-         AppCommand boundCommand, boolean inSourceEditor)
    {
       contentType_ = contentType;
       showCaption_ = showCaption;
       boundCommand_ = boundCommand;
-      inSourceEditor_ = inSourceEditor;
       
       // create root widget
       HorizontalPanel panel = new HorizontalPanel();
@@ -679,25 +670,6 @@ public class RSConnectPublishButton extends Composite
 
       if (manuallyHidden_)
          return false;
-      
-      // websites
-      if (session_.getSessionInfo().getBuildToolsType().equals(
-                                          SessionInfo.BUILD_TOOLS_WEBSITE))
-      {
-         if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT)
-         {
-            // can only publish websites to RSConnect
-            if (!pUiPrefs_.get().enableRStudioConnect().getGlobalValue())
-               return false;
-            
-            // don't show publish button in the editor
-            if (inSourceEditor_)
-               return false;
-            
-            
-         }
-      }
-      
 
       // looks like we should be visible
       return true;
@@ -865,8 +837,6 @@ public class RSConnectPublishButton extends Composite
    private RSConnectDeploymentRecord publishAfterRmdRender_ = null;
    
    private final AppCommand boundCommand_;
-   
-   private final boolean inSourceEditor_;
 
    private RSConnectDeploymentRecord defaultRec_;
    
