@@ -78,10 +78,10 @@
          stop("markers message field is unspecified or invalid", call. = FALSE)
       
       # normalize paths
-      cols$file <- .rs.normalizePath(cols$file, mustWork = TRUE)
+      markers$file <- .rs.normalizePath(markers$file, mustWork = TRUE)
       
       # check for html
-      cols$messageHTML <- .rs.scalar(inherits(cols$message, "html"))
+      markers$messageHTML <- inherits(markers$message, "html")
       
    } else if (is.list(markers)) {
       markers <- lapply(markers, function(marker) {
