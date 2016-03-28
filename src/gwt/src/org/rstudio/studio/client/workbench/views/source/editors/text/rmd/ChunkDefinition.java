@@ -74,7 +74,8 @@ public class ChunkDefinition extends JavaScriptObject
       return getRow() == other.getRow() &&
              getRowCount() == other.getRowCount() &&
              getVisible() == other.getVisible() &&
-             getChunkId() == other.getChunkId();
+             getChunkId() == other.getChunkId() &&
+             getExpansionState() == other.getExpansionState();
    }
    
    
