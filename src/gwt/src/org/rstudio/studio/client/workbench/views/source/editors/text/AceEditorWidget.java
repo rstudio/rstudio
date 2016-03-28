@@ -44,6 +44,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.events.BeginPasteEvent;
 import org.rstudio.studio.client.events.EndPasteEvent;
@@ -565,41 +566,40 @@ public class AceEditorWidget extends Composite
    {
       for (int i = start; i <= end; i++)
       {
-         // clean old line exec state
          for (int j = 0; j < lineExecState_.size(); j++)
          {
             int row = lineExecState_.get(j).getRow();
             if (row == i)
             {
-               editor_.getRenderer().removeGutterDecoration(
-                     rowFromLine(i), lineExecState_.get(j).getClazz());
-               lineExecState_.get(j).getAnchor().detach();
-               lineExecState_.remove(j);
+               if (state == ChunkRowExecState.LINE_QUEUED)
+               {
+                  // we're queuing a line that still has state -- detach it
+                  // immediately
+                  lineExecState_.get(j).detach();
+               }
+               else
+               {
+                  lineExecState_.get(j).setState(state);
+               }
                break;
             }
          }
-         // draw new state
-         if (state != ChunkRowExecState.LINE_RESTING)
+
+         if (state == ChunkRowExecState.LINE_QUEUED)
          {
-            final ChunkRowExecState rowState = new ChunkRowExecState(
-                  editor_.getSession().getDocument(), i, state);
-            rowState.getAnchor().addOnChangeHandler(new Command()
-            {
-               @Override
-               public void execute()
-               {
-                  if (rowState.getRow() == rowState.getAnchor().getRow())
-                     return;
-                  editor_.getRenderer().removeGutterDecoration(rowFromLine(
-                     rowState.getRow()), rowState.getClazz());
-                  editor_.getRenderer().addGutterDecoration(rowFromLine(
-                     rowState.getAnchor().getRow()), rowState.getClazz());
-                  rowState.setRow(rowState.getAnchor().getRow());
-               }
-            });
-            editor_.getRenderer().addGutterDecoration(
-                  rowFromLine(i), rowState.getClazz());
-            lineExecState_.add(rowState);
+            // queued state: introduce to the editor
+            final Value<ChunkRowExecState> execState = 
+                  new Value<ChunkRowExecState>(null);
+            execState.setValue(
+                  new ChunkRowExecState(editor_, i, state, new Command()
+                        {
+                           @Override
+                           public void execute()
+                           {
+                              lineExecState_.remove(execState.getValue());
+                           }
+                        }));
+            lineExecState_.add(execState.getValue());
          }
       }
    }

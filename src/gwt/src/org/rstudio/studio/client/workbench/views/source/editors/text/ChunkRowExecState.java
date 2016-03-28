@@ -14,16 +14,37 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Document;
+
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 
 public class ChunkRowExecState
 {
-   public ChunkRowExecState(Document document, int row, int state)
+   public ChunkRowExecState(final AceEditorNative editor, int row, int state,
+         Command onRemoved)
    {
-      anchor_ = Anchor.createAnchor(document, row, 0);
+      anchor_ = Anchor.createAnchor(editor.getSession().getDocument(), row, 0);
+      editor_ = editor;
       row_ = row;
       state_ = state;
+      onRemoved_ = onRemoved;
+      anchor_.addOnChangeHandler(new Command()
+      {
+         @Override
+         public void execute()
+         {
+            if (getRow() == anchor_.getRow())
+               return;
+            editor.getRenderer().removeGutterDecoration(
+               getRow() - 1, getClazz());
+            row_ = anchor_.getRow();
+            addClazz();
+         }
+      });
+
+      editor.getRenderer().addGutterDecoration(getRow() - 1, getClazz());
    }
    
    public int getRow()
@@ -35,9 +56,18 @@ public class ChunkRowExecState
       row_ = row;
    }
 
-   public Anchor getAnchor()
+   public void detach()
    {
-      return anchor_;
+      resetTimer();
+      editor_.getRenderer().removeGutterDecoration(getRow() - 1, 
+            LINE_QUEUED_CLASS);
+      editor_.getRenderer().removeGutterDecoration(getRow() - 1, 
+            LINE_EXECUTED_CLASS);
+      editor_.getRenderer().removeGutterDecoration(getRow() - 1, 
+            LINE_RESTING_CLASS);
+      anchor_.detach();
+      if (onRemoved_ != null)
+         onRemoved_.execute();
    }
    
    public int getState()
@@ -53,16 +83,77 @@ public class ChunkRowExecState
          return LINE_QUEUED_CLASS;
       case LINE_EXECUTED:
          return LINE_EXECUTED_CLASS;
+      case LINE_RESTING:
+         return LINE_RESTING_CLASS;
       }
       return "";
+   }
+   
+   public void setState(int state)
+   {
+      state_ = state;
+      if (state_ ==  LINE_RESTING)
+      {
+         timer_ = new Timer()
+         {
+            @Override
+            public void run()
+            {
+               addClazz();
+               scheduleDismiss();
+            }
+         };
+         timer_.schedule(LINGER_MS);
+      }
+      else
+      {
+         addClazz();
+      }
+   }
+   
+   private void addClazz()
+   {
+      editor_.getRenderer().addGutterDecoration(getRow() - 1, getClazz());
+   }
+   
+   private void scheduleDismiss()
+   {
+      resetTimer();
+      timer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            detach();
+         }
+      };
+      timer_.schedule(FADE_MS);
+   }
+   
+   private void resetTimer()
+   {
+      if (timer_ != null && timer_.isRunning())
+      {
+         timer_.cancel();
+         timer_ = null;
+      }
    }
 
    private int row_;
    private int state_;
-   private Anchor anchor_;
+
+   private final Anchor anchor_;
+   private final AceEditorNative editor_;
+   private final Command onRemoved_;
+   
+   private Timer timer_;
+   
+   private final static int LINGER_MS = 250;
+   private final static int FADE_MS   = 400;
 
    public final static String LINE_QUEUED_CLASS = "ace_chunk-queued-line";
    public final static String LINE_EXECUTED_CLASS = "ace_chunk-executed-line";
+   public final static String LINE_RESTING_CLASS = "ace_chunk-resting-line";
    
    public final static int LINE_RESTING  = 0;
    public final static int LINE_QUEUED   = 1;
