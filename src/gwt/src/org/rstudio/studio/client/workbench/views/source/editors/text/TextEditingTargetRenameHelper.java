@@ -2,6 +2,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.JsArrayString;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -90,8 +91,8 @@ public class TextEditingTargetRenameHelper
                break;
             
             String functionName = clone.currentValue();
-            return renameFunctionArgument(functionName, argName);
-            
+            if (!functionName.equals("function"))
+               return renameFunctionArgument(functionName, argName);
          }
       }
       
@@ -291,6 +292,11 @@ public class TextEditingTargetRenameHelper
              !cursor.peekBwd(1).isExtractionOperator())
          {
             Scope candidate = editor_.getScopeAtPosition(cursor.currentPosition());
+            
+            // Skip default arguments for nested functions
+            if (peekState() == STATE_FUNCTION_DEFINITION && scope != candidate)
+               continue;
+            
             if (cursor.peekFwd(2).valueEquals("function") && !candidate.isTopLevel())
                candidate = candidate.getParentScope();
             
@@ -314,6 +320,11 @@ public class TextEditingTargetRenameHelper
             
             // Skip variables following an 'extraction' operator.
             if (cursor.peekBwd(1).isExtractionOperator())
+               continue;
+            
+            // Skip default arguments for nested functions
+            Scope candidate = editor_.getScopeAtPosition(cursor.currentPosition());
+            if (peekState() == STATE_FUNCTION_DEFINITION && scope != candidate)
                continue;
             
             // Don't rename the argument names for named function calls.
