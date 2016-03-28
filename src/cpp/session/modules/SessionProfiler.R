@@ -179,6 +179,11 @@
          unlink(profileDir, recursive = TRUE)
       }
 
+      rsconnectDir <- file.path(resources$tempPath, "rsconnect", "documents", paste(filePrefix, ".html", sep = ""))
+      if (dir.exists(rsconnectDir)) {
+         unlink(rsconnectDir, recursive = TRUE)
+      }
+
       return(list(
       ))
    }, error = function(e) {
