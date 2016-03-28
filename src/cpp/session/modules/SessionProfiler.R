@@ -90,7 +90,7 @@
 {
    tryCatch({
       resources <- .rs.profileResources()
-      htmlFile <- normalizePath(tempfile(fileext = ".html", tmpdir = resources$tempPath), winslash = "/")
+      suppressWarnings(htmlFile <- normalizePath(tempfile(fileext = ".html", tmpdir = resources$tempPath), winslash = "/"))
 
       if (identical(profilerOptions$profvis, NULL)) {
          if (identical(tools::file_ext(profilerOptions$fileName), "Rprof")) {
