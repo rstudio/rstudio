@@ -28,11 +28,13 @@ public class ChunkDefinition extends JavaScriptObject
    public static native final ChunkDefinition create(int row,
                                                  int rowCount,
                                                  boolean visible,
+                                                 int expansionState,
                                                  String chunkId) /*-{
       return {
         row: row,
         row_count: rowCount,
         visible: visible,
+        expansion_state: expansionState,
         chunk_id: chunkId
       };
    }-*/;
@@ -40,7 +42,7 @@ public class ChunkDefinition extends JavaScriptObject
    public final ChunkDefinition withRow(int row)
    {
       return ChunkDefinition.create(row, getRowCount(), getVisible(), 
-            getChunkId());
+            getExpansionState(), getChunkId());
    }
    
    public native final int getRow()  /*-{
@@ -55,10 +57,17 @@ public class ChunkDefinition extends JavaScriptObject
       return this.visible;
    }-*/;   
    
+   public native final int getExpansionState() /*-{
+      return this.expansion_state || 0;
+   }-*/;
+   
    public native final String getChunkId() /*-{
       return this.chunk_id;
    }-*/;
    
+   public native final void setExpansionState(int state) /*-{
+      this.expansion_state = state;
+   }-*/;
    
    public final boolean equalTo(ChunkDefinition other)
    {

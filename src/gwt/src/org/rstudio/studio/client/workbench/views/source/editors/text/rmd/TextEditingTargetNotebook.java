@@ -523,7 +523,7 @@ public class TextEditingTargetNotebook
       {
          case ChunkChangeEvent.CHANGE_CREATE:
             createChunkOutput(ChunkDefinition.create(event.getRow(), 
-                  1, true, event.getChunkId()));
+                  1, true, ChunkOutputWidget.EXPANDED, event.getChunkId()));
             break;
          case ChunkChangeEvent.CHANGE_REMOVE:
             removeChunk(event.getChunkId());
@@ -682,6 +682,7 @@ public class TextEditingTargetNotebook
       else
       {
          chunkDef = ChunkDefinition.create(row, 1, true, 
+               ChunkOutputWidget.EXPANDED,
                "c" + StringUtil.makeRandomId(12));
          
          events_.fireEvent(new ChunkChangeEvent(

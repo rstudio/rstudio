@@ -26,6 +26,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
+import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
 import org.rstudio.studio.client.server.ServerError;
@@ -45,6 +46,8 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
@@ -97,12 +100,13 @@ public class ChunkOutputWidget extends Composite
       String spinner();
    }
 
-   public ChunkOutputWidget(String chunkId,
+   public ChunkOutputWidget(String chunkId, int expansionState,
          CommandWithArg<Integer> onRenderCompleted,
          final Command onChunkCleared)
    {
       chunkId_ = chunkId;
       initWidget(uiBinder.createAndBindUi(this));
+      expansionState_ = new Value<Integer>(expansionState);
       applyCachedEditorStyle();
       
       frame_.getElement().getStyle().setHeight(
@@ -167,7 +171,20 @@ public class ChunkOutputWidget extends Composite
          break;
       }
    }
+   
+   public int getExpansionState()
+   {
+      return expansionState_.getValue();
+   }
 
+   // Public methods ----------------------------------------------------------
+   
+   public HandlerRegistration addExpansionStateChangeHandler(
+         ValueChangeHandler<Integer> handler)
+   {
+      return expansionState_.addValueChangeHandler(handler);
+   }
+    
    public void showChunkOutput(RmdChunkOutput output)
    {
       if (output.getType() == RmdChunkOutput.TYPE_MULTIPLE_UNIT)
@@ -190,7 +207,7 @@ public class ChunkOutputWidget extends Composite
    public void syncHeight(boolean scrollToBottom)
    {
       // don't sync if we're collapsed
-      if (expansionState_ != EXPANDED)
+      if (expansionState_.getValue() != EXPANDED)
          return;
       
       int height = Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, 
@@ -204,10 +221,142 @@ public class ChunkOutputWidget extends Composite
       onRenderCompleted_.execute(height);
    }
 
-   public int getExpansionState()
+   
+   public static boolean isEditorStyleCached()
    {
-      return expansionState_;
+      return s_backgroundColor != null &&
+             s_color != null &&
+             s_outlineColor != null;
    }
+   
+   public void onOutputFinished()
+   {
+      if (state_ == CHUNK_PRE_OUTPUT)
+      {
+         // if no output was produced, clear the contents and show the empty
+         // indicator
+         emptyIndicator_.setVisible(true);
+         if (vconsole_ != null)
+            vconsole_.clear();
+         root_.clear();
+      }
+      syncHeight(true);
+      state_ = CHUNK_READY;
+      lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
+      setOverflowStyle();
+      showReadyState();
+   }
+
+   public void setCodeExecuting(boolean entireChunk)
+   {
+      // expand if currently collapsed
+      if (expansionState_.getValue() == COLLAPSED)
+         toggleExpansionState();
+
+      // do nothing if code is already executing
+      if (state_ == CHUNK_PRE_OUTPUT || 
+          state_ == CHUNK_POST_OUTPUT)
+      {
+         return;
+      }
+
+      registerConsoleEvents();
+      state_ = CHUNK_PRE_OUTPUT;
+      showBusyState();
+   }
+   
+   public static void cacheEditorStyle(Element editorContainer, 
+         Style editorStyle)
+   {
+      s_backgroundColor = editorStyle.getBackgroundColor();
+      s_color = editorStyle.getColor();
+      JsArrayString classes = JsArrayString.createArray().cast();
+      classes.push("ace_marker-layer");
+      classes.push("ace_foreign_line");
+      s_outlineColor = DomUtils.extractCssValue(classes, "backgroundColor");
+   }
+   
+   public void showServerError(ServerError error)
+   {
+      // consider: less obtrusive error message 
+      RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+            "Chunk Execution Error", error.getMessage());
+      
+      // treat as an interrupt (don't clear output)
+      completeInterrupt();
+   }
+   
+   public void applyCachedEditorStyle()
+   {
+      if (!isEditorStyleCached())
+         return;
+      Style frameStyle = frame_.getElement().getStyle();
+      frameStyle.setBorderColor(s_outlineColor);
+      emptyIndicator_.getElement().getStyle().setColor(s_color);
+
+      // apply the style to any frames in the output
+      for (Widget w: root_)
+      {
+         if (w instanceof ChunkOutputFrame)
+         {
+            ChunkOutputFrame frame = (ChunkOutputFrame)w;
+            Style bodyStyle = frame.getDocument().getBody().getStyle();
+            bodyStyle.setColor(s_color);
+         }
+      }
+      frame_.getElement().getStyle().setBackgroundColor(s_backgroundColor);
+   }
+   
+   // Event handlers ----------------------------------------------------------
+
+   @Override
+   public void onConsoleWriteOutput(ConsoleWriteOutputEvent event)
+   {
+      if (event.getConsole() != chunkId_)
+         return;
+      renderConsoleOutput(event.getOutput(), classOfOutput(CONSOLE_OUTPUT));
+   }
+   
+   @Override
+   public void onConsoleWriteError(ConsoleWriteErrorEvent event)
+   {
+      if (event.getConsole() != chunkId_)
+         return;
+      renderConsoleOutput(event.getError(), classOfOutput(CONSOLE_ERROR));
+   }
+   
+   @Override
+   public void onConsolePrompt(ConsolePromptEvent event)
+   {
+      // stop listening to the console once the prompt appears, but don't 
+      // clear up output until we receive the output finished event
+      unregisterConsoleEvents();
+   }
+   
+   @Override
+   public void onRestartStatus(RestartStatusEvent event)
+   {
+      if (event.getStatus() != RestartStatusEvent.RESTART_COMPLETED)
+         return;
+      
+      // when R is restarted, we're not going to get any more output, so act
+      // as though the server told us it's done
+      if (state_ != CHUNK_READY)
+      {
+         onOutputFinished();
+      }
+   }
+
+   @Override
+   public void onInterruptStatus(InterruptStatusEvent event)
+   {
+      if (event.getStatus() != InterruptStatusEvent.INTERRUPT_COMPLETED)
+         return;
+      
+      completeInterrupt();
+   }
+
+   // Private methods ---------------------------------------------------------
 
    private String classOfOutput(int type)
    {
@@ -298,71 +447,6 @@ public class ChunkOutputWidget extends Composite
       });
    }
    
-   @Override
-   public void onConsoleWriteOutput(ConsoleWriteOutputEvent event)
-   {
-      if (event.getConsole() != chunkId_)
-         return;
-      renderConsoleOutput(event.getOutput(), classOfOutput(CONSOLE_OUTPUT));
-   }
-   
-   @Override
-   public void onConsoleWriteError(ConsoleWriteErrorEvent event)
-   {
-      if (event.getConsole() != chunkId_)
-         return;
-      renderConsoleOutput(event.getError(), classOfOutput(CONSOLE_ERROR));
-   }
-   
-   @Override
-   public void onConsolePrompt(ConsolePromptEvent event)
-   {
-      // stop listening to the console once the prompt appears, but don't 
-      // clear up output until we receive the output finished event
-      unregisterConsoleEvents();
-   }
-   
-   @Override
-   public void onRestartStatus(RestartStatusEvent event)
-   {
-      if (event.getStatus() != RestartStatusEvent.RESTART_COMPLETED)
-         return;
-      
-      // when R is restarted, we're not going to get any more output, so act
-      // as though the server told us it's done
-      if (state_ != CHUNK_READY)
-      {
-         onOutputFinished();
-      }
-   }
-
-   @Override
-   public void onInterruptStatus(InterruptStatusEvent event)
-   {
-      if (event.getStatus() != InterruptStatusEvent.INTERRUPT_COMPLETED)
-         return;
-      
-      completeInterrupt();
-   }
-
-   public void onOutputFinished()
-   {
-      if (state_ == CHUNK_PRE_OUTPUT)
-      {
-         // if no output was produced, clear the contents and show the empty
-         // indicator
-         emptyIndicator_.setVisible(true);
-         if (vconsole_ != null)
-            vconsole_.clear();
-         root_.clear();
-      }
-      syncHeight(true);
-      state_ = CHUNK_READY;
-      lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
-      setOverflowStyle();
-      showReadyState();
-   }
-
    private void renderConsoleOutput(String text, String clazz)
    {
       initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
@@ -403,66 +487,6 @@ public class ChunkOutputWidget extends Composite
       lastOutputType_ = outputType;
    }
 
-   public void showServerError(ServerError error)
-   {
-      // consider: less obtrusive error message 
-      RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-            "Chunk Execution Error", error.getMessage());
-      
-      // treat as an interrupt (don't clear output)
-      completeInterrupt();
-   }
-   
-   public void applyCachedEditorStyle()
-   {
-      if (!isEditorStyleCached())
-         return;
-      Style frameStyle = frame_.getElement().getStyle();
-      frameStyle.setBorderColor(s_outlineColor);
-      emptyIndicator_.getElement().getStyle().setColor(s_color);
-
-      // apply the style to any frames in the output
-      for (Widget w: root_)
-      {
-         if (w instanceof ChunkOutputFrame)
-         {
-            ChunkOutputFrame frame = (ChunkOutputFrame)w;
-            Style bodyStyle = frame.getDocument().getBody().getStyle();
-            bodyStyle.setColor(s_color);
-         }
-      }
-      frame_.getElement().getStyle().setBackgroundColor(s_backgroundColor);
-   }
-   
-   public void setCodeExecuting(boolean entireChunk)
-   {
-      // expand if currently collapsed
-      if (expansionState_ == COLLAPSED)
-         toggleExpansionState();
-
-      // do nothing if code is already executing
-      if (state_ == CHUNK_PRE_OUTPUT || 
-          state_ == CHUNK_POST_OUTPUT)
-      {
-         return;
-      }
-
-      registerConsoleEvents();
-      state_ = CHUNK_PRE_OUTPUT;
-      showBusyState();
-   }
-   
-   public static void cacheEditorStyle(Element editorContainer, 
-         Style editorStyle)
-   {
-      s_backgroundColor = editorStyle.getBackgroundColor();
-      s_color = editorStyle.getColor();
-      JsArrayString classes = JsArrayString.createArray().cast();
-      classes.push("ace_marker-layer");
-      classes.push("ace_foreign_line");
-      s_outlineColor = DomUtils.extractCssValue(classes, "backgroundColor");
-   }
-   
    private void initConsole()
    {
       if (vconsole_ == null)
@@ -508,13 +532,6 @@ public class ChunkOutputWidget extends Composite
       events.removeHandler(ConsoleWriteOutputEvent.TYPE, this);
       events.removeHandler(ConsoleWriteErrorEvent.TYPE, this);
       events.removeHandler(ConsolePromptEvent.TYPE, this);
-   }
-   
-   public static boolean isEditorStyleCached()
-   {
-      return s_backgroundColor != null &&
-             s_color != null &&
-             s_outlineColor != null;
    }
    
    private void showBusyState()
@@ -590,7 +607,7 @@ public class ChunkOutputWidget extends Composite
       if (collapseTimer_ != null && collapseTimer_.isRunning())
           collapseTimer_.cancel();
 
-      if (expansionState_ == EXPANDED)
+      if (expansionState_.getValue() == EXPANDED)
       {
          getElement().addClassName(style.collapsed());
 
@@ -612,7 +629,7 @@ public class ChunkOutputWidget extends Composite
             }
             
          };
-         expansionState_ = COLLAPSED;
+         expansionState_.setValue(COLLAPSED, true);
       }
       else
       {
@@ -621,7 +638,7 @@ public class ChunkOutputWidget extends Composite
          // restore scrollbars if necessary
          root_.getElement().getStyle().clearOverflow();
          root_.getElement().getStyle().clearOpacity();
-         expansionState_ = EXPANDED;
+         expansionState_.setValue(EXPANDED, true);
          syncHeight(true);
          collapseTimer_ = new Timer()
          {
@@ -648,13 +665,13 @@ public class ChunkOutputWidget extends Composite
    private ProgressSpinner spinner_;
    
    private int state_ = CHUNK_EMPTY;
-   private int expansionState_ = EXPANDED;
    private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    private int renderedHeight_ = 0;
    
    private CommandWithArg<Integer> onRenderCompleted_;
    private Timer collapseTimer_ = null;
    private final String chunkId_;
+   private final Value<Integer> expansionState_;
 
    private static String s_outlineColor    = null;
    private static String s_backgroundColor = null;
@@ -662,6 +679,7 @@ public class ChunkOutputWidget extends Composite
    
    public final static int EXPANDED   = 0;
    public final static int COLLAPSED  = 1;
+
    private final static int ANIMATION_DUR = 400;
    
    public final static int CHUNK_EMPTY       = 1;

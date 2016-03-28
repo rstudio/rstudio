@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
@@ -27,6 +28,8 @@ import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
 
 public class ChunkOutputUi
@@ -36,11 +39,13 @@ public class ChunkOutputUi
       display_ = display;
       chunkId_ = def.getChunkId();
       docId_ = docId;
+      def_ = def;
       startAnchor_ = display_.createAnchor(
             Position.create(def.getRow(), 0));
       createEndAnchor();
 
       outputWidget_ = new ChunkOutputWidget(def.getChunkId(), 
+            def.getExpansionState(),
             new CommandWithArg<Integer>()
       {
          @Override
@@ -65,6 +70,21 @@ public class ChunkOutputUi
                                        ChunkChangeEvent.CHANGE_REMOVE));
          }
       });
+      
+      // sync the widget's expanded/collapsed state to the underlying chunk
+      // definition (which is persisted)
+         Debug.devlog("initial state: " + def.getExpansionState());
+      outputWidget_.addExpansionStateChangeHandler(
+            new ValueChangeHandler<Integer>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Integer> event)
+         {
+            Debug.devlog("set expansion state to: " + event.getValue());
+            def_.setExpansionState(event.getValue());
+         }
+      });
+      
       Element ele = outputWidget_.getElement();
       ele.addClassName(ThemeStyles.INSTANCE.selectableText());
       ele.getStyle().setHeight(MIN_CHUNK_HEIGHT, Unit.PX);
@@ -173,6 +193,7 @@ public class ChunkOutputUi
    private final DocDisplay display_;
    private final String chunkId_;
    private final String docId_;
+   private final ChunkDefinition def_;
 
    private Anchor endAnchor_;
    private boolean attached_ = false;
