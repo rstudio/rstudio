@@ -54,6 +54,11 @@ public class NumericValueWidget extends Composite
    {
       textBox_.setValue(value, fireEvents);
    }
+   
+   public void setWidth(String width)
+   {
+      textBox_.setWidth(width);
+   }
 
    public HandlerRegistration addValueChangeHandler(ValueChangeHandler<String> handler)
    {
