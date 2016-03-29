@@ -14,9 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.GlobalDisplay;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;

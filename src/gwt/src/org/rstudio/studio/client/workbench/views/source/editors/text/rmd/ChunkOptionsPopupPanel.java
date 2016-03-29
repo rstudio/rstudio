@@ -32,7 +32,6 @@ import org.rstudio.core.client.widget.ThemedCheckBox;
 import org.rstudio.core.client.widget.TriStateCheckBox;
 import org.rstudio.core.client.widget.TriStateCheckBox.State;
 import org.rstudio.studio.client.common.HelpLink;
-import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 

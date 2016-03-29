@@ -101,7 +101,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppComp
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.SetupChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
@@ -152,7 +151,6 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(RSConnectPublishButton publishButton);
    void injectMembers(RSConnectDeploy deploy);
    void injectMembers(AceEditorWidget widget);
-   void injectMembers(ChunkIconsManager manager);
    void injectMembers(WebApplicationHeaderOverlay headerOverlay);
    void injectMembers(DocumentOutlineWidget widget);
    void injectMembers(SetupChunkOptionsPopupPanel panel);

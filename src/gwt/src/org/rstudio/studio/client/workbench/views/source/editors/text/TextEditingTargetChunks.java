@@ -17,9 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.Debug;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi;
 
 import com.google.gwt.core.client.JsArray;
