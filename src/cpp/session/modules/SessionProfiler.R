@@ -56,7 +56,7 @@
       resources <- .rs.profileResources()
       fileName <- tempfile(fileext = ".Rprof", tmpdir = resources$tempPath)
 
-      Rprof(filename = fileName, line.profiling = TRUE)
+      Rprof(filename = fileName, line.profiling = TRUE, memory.profiling = TRUE)
 
       return(list(
          fileName = .rs.scalar(fileName)
@@ -90,7 +90,7 @@
 {
    tryCatch({
       resources <- .rs.profileResources()
-      htmlFile <- normalizePath(tempfile(fileext = ".html", tmpdir = resources$tempPath), winslash = "/")
+      htmlFile <- normalizePath(tempfile(fileext = ".html", tmpdir = resources$tempPath), winslash = "/", mustWork = FALSE)
 
       if (identical(profilerOptions$profvis, NULL)) {
          if (identical(tools::file_ext(profilerOptions$fileName), "Rprof")) {
@@ -164,6 +164,11 @@
 
       filePrefix <- tools::file_path_sans_ext(basename(filePath))
       
+      rprofFile <- file.path(resources$tempPath, paste(filePrefix, ".Rprof", sep = ""))
+      if (file.exists(rprofFile)) {
+         file.remove(rprofFile)
+      }
+
       profileHtml <- file.path(resources$tempPath, paste(filePrefix, ".html", sep = ""))
       if (file.exists(profileHtml)) {
          file.remove(profileHtml)
@@ -172,6 +177,11 @@
       profileDir <- file.path(resources$tempPath, paste(filePrefix, "_files", sep = ""))
       if (file.exists(profileDir)) {
          unlink(profileDir, recursive = TRUE)
+      }
+
+      rsconnectDir <- file.path(resources$tempPath, "rsconnect", "documents", paste(filePrefix, ".html", sep = ""))
+      if (.rs.dirExists(rsconnectDir)) {
+         unlink(rsconnectDir, recursive = TRUE)
       }
 
       return(list(

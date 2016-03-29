@@ -39,7 +39,17 @@ public class ProfilerType extends EditableFileType
                         EventBus eventBus)
    {
       eventBus.fireEvent(new OpenProfileEvent(
-            file.getPath(), null, null, false));
+            file.getPath(), null, null, false, null));
+   }
+   
+   public void openFile(FileSystemItem file,
+                        FilePosition position,
+                        int navMethod,
+                        EventBus eventBus,
+                        String docId)
+   {
+      eventBus.fireEvent(new OpenProfileEvent(
+            file.getPath(), null, null, false, docId));
    }
 
    @Override
