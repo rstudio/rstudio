@@ -137,7 +137,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
         "R Markdown",
         userAction, 
         rmarkdownDependenciesArray(), 
-        false,
+        true, // we want to update to the embedded versoin if needed
         new CommandWithArg<Boolean>()
         {
          @Override
