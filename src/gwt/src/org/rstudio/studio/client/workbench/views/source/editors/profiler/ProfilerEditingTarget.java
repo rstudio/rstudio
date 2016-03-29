@@ -265,7 +265,21 @@ public class ProfilerEditingTarget implements EditingTarget,
                @Override
                public void execute()
                {
-                  commands_.closeSourceDoc().execute();
+                  server_.clearProfile(getPath(), new ServerRequestCallback<JavaScriptObject>()
+                  {
+                     @Override
+                     public void onResponseReceived(JavaScriptObject response)
+                     {
+                        commands_.closeSourceDoc().execute();
+                     }
+                     
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                        commands_.closeSourceDoc().execute();
+                     }
+                  });
                }
             }, getPath());
          }
@@ -761,7 +775,7 @@ public class ProfilerEditingTarget implements EditingTarget,
       var handler = $entry(function(e) {
          if (typeof e.data != 'object')
             return;
-         if (!e.origin.startsWith($wnd.location.origin))
+         if (e.origin.substr(0, e.origin.length) != $wnd.location.origin)
             return;
          if (e.data.source != "profvis")
             return;
