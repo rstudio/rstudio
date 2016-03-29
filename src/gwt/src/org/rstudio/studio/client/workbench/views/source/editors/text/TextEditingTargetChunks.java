@@ -16,11 +16,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi;
-
-import com.google.gwt.core.client.JsArray;
 
 public class TextEditingTargetChunks
 {
@@ -41,14 +38,26 @@ public class TextEditingTargetChunks
    
    private void initializeWidgets()
    {
-      JsArray<Scope> scopes = target_.getDocDisplay().getScopeTree();
-      for (int i = 0; i < scopes.length(); i++)
+      ScopeList scopes = new ScopeList(target_.getDocDisplay());
+      for (Scope scope: scopes)
       {
-         Scope scope = scopes.get(i);
          if (!scope.isChunk())
             continue;
 
-         Debug.logObject(scope);
+         // see if we've already drawn a toolbar for this chunk
+         boolean hasToolbar = false;
+         for (ChunkContextUi toolbar: toolbars_)
+         {
+            if (toolbar.getPreambleRow() == scope.getPreamble().getRow())
+            {
+               hasToolbar = true; 
+               break;
+            }
+         }
+         if (hasToolbar)
+            continue;
+         
+         // no toolbar yet, add a new one
          ChunkContextUi ui = new ChunkContextUi(target_, scope);
          toolbars_.add(ui);
       }

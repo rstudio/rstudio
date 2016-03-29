@@ -37,6 +37,11 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
       widget_.setFixedWidth(true); 
       target.getDocDisplay().addLineWidget(widget_);
    }
+   
+   public int getPreambleRow()
+   {
+      return widget_.getRow();
+   }
 
    @Override
    public void runPreviousChunks()
