@@ -47,7 +47,6 @@ import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
@@ -368,43 +367,6 @@ public class AceEditor implements DocDisplay,
          {
             lastModifiedTime_ = System.currentTimeMillis();
             clearDebugLineHighlight();
-         }
-      });
-      
-      addCapturingKeyDownHandler(new KeyDownHandler()
-      {
-         @Override
-         public void onKeyDown(KeyDownEvent event)
-         {
-            if (isVimModeOn() && !isVimInInsertMode())
-               return;
-            
-            if (isEmacsModeOn())
-               return;
-            
-            int modifier = KeyboardShortcut.getModifierValue(event.getNativeEvent());
-            boolean isCtrl = modifier == KeyboardShortcut.CTRL;
-            if (isCtrl)
-            {
-               switch (event.getNativeKeyCode())
-               {
-               case KeyCodes.KEY_K:
-                  event.stopPropagation();
-                  event.preventDefault();
-                  yankAfterCursor();
-                  break;
-               case KeyCodes.KEY_U:
-                  event.stopPropagation();
-                  event.preventDefault();
-                  yankBeforeCursor();
-                  break;
-               case KeyCodes.KEY_Y:
-                  event.stopPropagation();
-                  event.preventDefault();
-                  pasteLastYank();
-                  break;
-               }
-            }
          }
       });
       
