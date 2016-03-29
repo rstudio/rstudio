@@ -37,6 +37,7 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.ScrollPanelWithClick;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
@@ -49,7 +50,10 @@ public class DirectoryContentsWidget
       extends Composite
    implements HasSelectionHandlers<FileSystemItem>,
               HasSelectionCommitHandlers<FileSystemItem>,
-              HasFocusHandlers, HasBlurHandlers
+              HasFocusHandlers,
+              HasBlurHandlers,
+              CanFocus
+              
 {
 
    private static class FlexTableEx extends FlexTable
@@ -458,6 +462,11 @@ public class DirectoryContentsWidget
          focusImpl_.focus(table_.getElement());
       else
          focusImpl_.blur(table_.getElement());
+   }
+   
+   public void focus()
+   {
+      setFocus(true);
    }
 
    private Map<String, FileSystemItem> items_ =

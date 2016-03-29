@@ -14,16 +14,26 @@
  */
 package org.rstudio.core.client.files.filedialog;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.CanFocus;
 
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockPanel;
+import com.google.gwt.user.client.ui.Focusable;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
@@ -190,6 +200,9 @@ public class FileBrowserWidget extends Composite
       filename_.setStylePrimaryName(styles.filename());
       filenamePanel.add(filename_);
       filenamePanel.setCellWidth(filename_, "100%");
+      
+      focusMap_ = new FocusMap();
+      focusMap_.add(filename_, directory_);
 
       return filenamePanel;
    }
@@ -200,4 +213,86 @@ public class FileBrowserWidget extends Composite
    private FileSystemContext context_;
    private String initialFilename_;
    private Host host_;
+   private FocusMap focusMap_;
+   
+   private static class FocusMap
+   {
+      public FocusMap()
+      {
+         fwd_ = new HashMap<Widget, Widget>();
+         bwd_ = new HashMap<Widget, Widget>();
+         registration_ = new HashSet<Widget>();
+      }
+      
+      public final void add(Widget source, Widget target)
+      {
+         fwd_.put(source, target);
+         bwd_.put(target, source);
+         listen(source, target);
+      }
+      
+      public final Widget get(Widget widget, boolean forward)
+      {
+         Widget target = forward
+               ? fwd_.get(widget)
+               : bwd_.get(widget);
+         return target;
+      }
+      
+      private final void listen(Widget... widgets)
+      {
+         for (Widget widget : widgets)
+            register(widget);
+      }
+      
+      private void register(final Widget widget)
+      {
+         if (registration_.contains(widget))
+            return;
+         
+         registration_.add(widget);
+         widget.addDomHandler(new KeyDownHandler()
+         {
+            @Override
+            public void onKeyDown(KeyDownEvent event)
+            {
+               if (event.getNativeKeyCode() == KeyCodes.KEY_TAB)
+               {
+                  boolean forward = !event.isShiftKeyDown();
+                  Widget target = get(widget, forward);
+                  if (target == null)
+                     return;
+                  
+                  if (target instanceof CanFocus)
+                  {
+                     event.stopPropagation();
+                     event.preventDefault();
+                     focus((CanFocus) target);
+                  }
+                  else if (target instanceof Focusable)
+                  {
+                     event.stopPropagation();
+                     event.preventDefault();
+                     focus((Focusable) target);
+                  }
+               }
+            }
+         }, KeyDownEvent.getType());
+      }
+      
+      private void focus(CanFocus focusable)
+      {
+         focusable.focus();
+      }
+      
+      private void focus(Focusable focusable)
+      {
+         focusable.setFocus(true);
+      }
+      
+      private final Map<Widget, Widget> fwd_;
+      private final Map<Widget, Widget> bwd_;
+      private final Set<Widget> registration_;
+   }
+   
 }
