@@ -119,6 +119,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    boolean inMultiSelectMode();
    void exitMultiSelectMode();
    
+   void quickAddNext();
+   
    void clearSelection();
    void replaceSelection(String code);
    void replaceRange(Range range, String text);

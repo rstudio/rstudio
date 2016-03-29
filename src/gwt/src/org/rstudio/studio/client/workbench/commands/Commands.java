@@ -93,6 +93,7 @@ public abstract class
    public abstract AppCommand vcsFileRevert();
    public abstract AppCommand popoutDoc();
    public abstract AppCommand returnDocToMain();
+   public abstract AppCommand quickAddNext();
    public abstract AppCommand findReplace();
    public abstract AppCommand findNext();
    public abstract AppCommand findPrevious();

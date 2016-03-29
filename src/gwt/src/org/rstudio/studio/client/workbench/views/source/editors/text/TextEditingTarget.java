@@ -4975,7 +4975,12 @@ public class TextEditingTarget implements
       int column = selPos.getColumn() + 1;
       return SourceLocation.create(file, line, column, fromClick);
    }
-
+   
+   @Handler
+   void onQuickAddNext()
+   {
+      docDisplay_.quickAddNext();
+   }
    @Handler
    void onFindReplace()
    {
