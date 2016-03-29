@@ -180,6 +180,14 @@ public class ChunkOutputWidget extends Composite
    {
       return expansionState_.getValue();
    }
+   
+   public void setExpansionState(int state)
+   {
+      if (state == expansionState_.getValue())
+         return;
+      else
+         toggleExpansionState();
+   }
 
    // Public methods ----------------------------------------------------------
    
