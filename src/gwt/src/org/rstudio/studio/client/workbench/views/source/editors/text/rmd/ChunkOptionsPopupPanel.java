@@ -33,6 +33,7 @@ import org.rstudio.core.client.widget.TriStateCheckBox;
 import org.rstudio.core.client.widget.TriStateCheckBox.State;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
 import com.google.gwt.core.client.GWT;
@@ -113,7 +114,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
                 keyCode == KeyCodes.KEY_ENTER)
             {
                ChunkOptionsPopupPanel.this.hide();
-               widget_.getEditor().focus();
+               display_.focus();
                return;
             }
          }
@@ -129,7 +130,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
                 keyCode == KeyCodes.KEY_ENTER)
             {
                ChunkOptionsPopupPanel.this.hide();
-               widget_.getEditor().focus();
+               display_.focus();
                return;
             }
             
@@ -442,9 +443,9 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
          select(OUTPUT_SKIP_THIS_CHUNK);
    }
    
-   public void init(AceEditorWidget widget, Position position)
+   public void init(DocDisplay display, Position position)
    {
-      widget_ = widget;
+      display_ = display;
       position_ = position;
       chunkOptions_.clear();
       originalChunkOptions_.clear();
@@ -507,7 +508,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    private void hideAndFocusEditor()
    {
       hide();
-      widget_.getEditor().focus();
+      display_.focus();
    }
    
    private FlowPanel verticalSpacer(int sizeInPixels)
@@ -577,7 +578,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    protected HashMap<String, String> chunkOptions_;
    protected HashMap<String, String> originalChunkOptions_;
    
-   protected AceEditorWidget widget_;
+   protected DocDisplay display_;
    protected Position position_;
    
    private static final String OUTPUT_USE_DOCUMENT_DEFAULT =

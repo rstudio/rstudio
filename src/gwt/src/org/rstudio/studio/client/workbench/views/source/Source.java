@@ -648,9 +648,6 @@ public class Source implements InsertSourceHandler,
       
       // add vim commands
       initVimCommands();
-      
-      // handle chunk options event
-      handleChunkOptionsEvent();
    }
    
    private boolean consoleEditorHadFocusLast()
@@ -3971,37 +3968,6 @@ public class Source implements InsertSourceHandler,
    public EditingTarget getActiveEditor()
    {
       return activeEditor_;
-   }
-   
-   public void handleChunkOptionsEvent()
-   {
-      events_.addHandler(
-            DisplayChunkOptionsEvent.TYPE,
-            new DisplayChunkOptionsEvent.Handler()
-            {
-               
-               @Override
-               public void onDisplayChunkOptions(DisplayChunkOptionsEvent event)
-               {
-                  // Ensure the source pane (not the console) is activated
-                  if (activeEditor_ == null)
-                     return;
-                  
-                  // Ensure we have an Ace Editor
-                  if (!(activeEditor_ instanceof TextEditingTarget))
-                     return;
-                  
-                  TextEditingTarget target = (TextEditingTarget) activeEditor_;
-                  AceEditor editor = (AceEditor) target.getDocDisplay();
-                  if (editor == null)
-                     return;
-                  
-                  NativeEvent nativeEvent = event.getNativeEvent();
-                  chunkIconsManager_.displayChunkOptions(
-                        editor,
-                        nativeEvent);
-               }
-            });
    }
    
    public void onOpenProfileEvent(OpenProfileEvent event)

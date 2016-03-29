@@ -1218,7 +1218,7 @@ public class TextEditingTarget implements
             docUpdateSentinel_, document, releaseOnDismiss_);
       view_.addResizeHandler(notebook_);
       
-      chunks_ = new TextEditingTargetChunks(docDisplay_);
+      chunks_ = new TextEditingTargetChunks(this);
       
       // ensure that Makefile and Makevars always use tabs
       name_.addValueChangeHandler(new ValueChangeHandler<String>() {

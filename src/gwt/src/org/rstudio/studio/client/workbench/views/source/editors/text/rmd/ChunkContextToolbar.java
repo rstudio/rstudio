@@ -15,9 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunksEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
@@ -42,6 +40,13 @@ public class ChunkContextToolbar extends Composite
    {
    }
    
+   public interface Host
+   {
+      void runPreviousChunks();
+      void runChunk();
+      void showOptions(int x, int y);
+   }
+   
    public interface Resources extends ClientBundle
    {
       ImageResource runChunk();
@@ -54,13 +59,14 @@ public class ChunkContextToolbar extends Composite
    
    public final static Resources RES = GWT.create(Resources.class);
 
-   public ChunkContextToolbar(boolean dark, boolean runPrevious, boolean run)
+   public ChunkContextToolbar(Host host, boolean dark, boolean runPrevious, 
+         boolean run)
    {
+      host_ = host;
       initWidget(uiBinder.createAndBindUi(this));
-
-      options_.setResource(dark ? RES.chunkOptionsDark() :
-                                  RES.chunkOptionsLight());
       
+      initOptions(dark);
+
       if (runPrevious)
          initRunPrevious(dark);
       else
@@ -70,6 +76,25 @@ public class ChunkContextToolbar extends Composite
          initRun();
       else
          run_.setVisible(false);
+   }
+   
+   private void initOptions(boolean dark)
+   {
+      options_.setResource(dark ? RES.chunkOptionsDark() :
+                                  RES.chunkOptionsLight());
+      
+      DOM.sinkEvents(options_.getElement(), Event.ONCLICK);
+      DOM.setEventListener(options_.getElement(), new EventListener()
+      {
+         @Override
+         public void onBrowserEvent(Event event)
+         {
+            if (DOM.eventGetType(event) == Event.ONCLICK)
+            {
+               host_.showOptions(event.getClientX(), event.getClientY());
+            }
+         }
+      });
    }
    
    private void initRun()
@@ -82,8 +107,7 @@ public class ChunkContextToolbar extends Composite
          {
             if (DOM.eventGetType(event) == Event.ONCLICK)
             {
-               RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
-                     GlobalDisplay.MSG_INFO, "NYI", "Run (NYI)");
+               host_.runChunk();
             }
          }
       });
@@ -101,16 +125,17 @@ public class ChunkContextToolbar extends Composite
          {
             if (DOM.eventGetType(event) == Event.ONCLICK)
             {
-               RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
-                     GlobalDisplay.MSG_INFO, "NYI", "Run Previous (NYI)");
+               host_.runPreviousChunks();
             }
          }
       });
    }
-
+   
    @UiField Image options_;
    @UiField Image runPrevious_;
    @UiField Image run_;
+   
+   private final Host host_;
    
    public final static String LINE_WIDGET_TYPE = "ChunkToolbar";
 }

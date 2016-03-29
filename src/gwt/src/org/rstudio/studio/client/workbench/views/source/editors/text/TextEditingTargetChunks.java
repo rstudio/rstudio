@@ -14,20 +14,24 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextToolbar;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi;
 
 import com.google.gwt.core.client.JsArray;
 
 public class TextEditingTargetChunks
 {
-   public TextEditingTargetChunks(DocDisplay display)
+   public TextEditingTargetChunks(TextEditingTarget target)
    {
-      display_ = display;
-      Debug.devlog("init chunk display");
-      display.addScopeTreeReadyHandler(new ScopeTreeReadyEvent.Handler()
+      target_ = target;
+      toolbars_ = new ArrayList<ChunkContextUi>();
+      target.getDocDisplay().addScopeTreeReadyHandler(
+            new ScopeTreeReadyEvent.Handler()
       {
          @Override
          public void onScopeTreeReady(ScopeTreeReadyEvent event)
@@ -35,12 +39,11 @@ public class TextEditingTargetChunks
             initializeWidgets();
          }
       });
-      
    }
    
    private void initializeWidgets()
    {
-      JsArray<Scope> scopes = display_.getScopeTree();
+      JsArray<Scope> scopes = target_.getDocDisplay().getScopeTree();
       for (int i = 0; i < scopes.length(); i++)
       {
          Scope scope = scopes.get(i);
@@ -48,16 +51,11 @@ public class TextEditingTargetChunks
             continue;
 
          Debug.logObject(scope);
-         Debug.log("adding toolbar");
-         ChunkContextToolbar toolbar = new ChunkContextToolbar(false, true, true);
-         toolbar.setHeight("0px"); 
-         LineWidget w = LineWidget.create(
-               ChunkContextToolbar.LINE_WIDGET_TYPE, 
-               scope.getPreamble().getRow(), toolbar.getElement());
-         w.setFixedWidth(true); 
-         display_.addLineWidget(w);
+         ChunkContextUi ui = new ChunkContextUi(target_, scope);
+         toolbars_.add(ui);
       }
    }
    
-   private final DocDisplay display_;
+   private final TextEditingTarget target_;
+   private final ArrayList<ChunkContextUi> toolbars_;
 }

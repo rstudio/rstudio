@@ -32,7 +32,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Rendere
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.events.AfterAceRenderEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.resources.client.ClientBundle;
@@ -195,37 +194,6 @@ public class ChunkIconsManager
       
       NativeEvent event = (NativeEvent) object;
       events_.fireEvent(new DisplayChunkOptionsEvent(event));
-   }
-   
-   public void displayChunkOptions(AceEditor editor, NativeEvent event)
-   {
-      // Translate the 'pageX' + 'pageY' position to document position
-      int pageX = event.getClientX();
-      int pageY = event.getClientY();
-      
-      Renderer renderer = editor.getWidget().getEditor().getRenderer();
-      Position position = renderer.screenToTextCoordinates(pageX, pageY);
-      
-      if (optionsPanel_ != null)
-         optionsPanel_ = null;
-      
-      Element el = event.getEventTarget().cast();
-      /*
-      if (el.hasClassName(RES.styles().setupChunk()))
-         optionsPanel_ = new SetupChunkOptionsPopupPanel();
-      else
-         optionsPanel_ = new DefaultChunkOptionsPopupPanel();
-         */
-      
-      optionsPanel_.init(editor.getWidget(), position);
-      optionsPanel_.show();
-      optionsPanel_.focus();
-      PopupPositioner.setPopupPosition(
-            optionsPanel_,
-            pageX,
-            pageY,
-            10);
-      
    }
    
    private ChunkOptionsPopupPanel optionsPanel_;

@@ -38,6 +38,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
@@ -115,6 +116,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    // This returns null for most file types, but for Sweave it returns "R" or
    // "TeX". Use SweaveFileType constants to test for these values.
    String getLanguageMode(Position position);
+   String getModeId();
    
    boolean inMultiSelectMode();
    void exitMultiSelectMode();
@@ -308,6 +310,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
                             Position end);
 
    String getTextForRange(Range range);
+   TokenIterator getTokenIterator(Position pos);
 
    Anchor createAnchor(Position pos);
    

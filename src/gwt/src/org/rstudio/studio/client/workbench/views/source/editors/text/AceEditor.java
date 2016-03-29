@@ -1437,6 +1437,12 @@ public class AceEditor implements DocDisplay,
    {
       return getSession().getMode().getLanguageMode(position);
    }
+   
+   @Override
+   public String getModeId()
+   {
+     return getSession().getMode().getId();
+   }
 
    public void replaceCode(String code)
    {
@@ -2915,6 +2921,15 @@ public class AceEditor implements DocDisplay,
    public boolean isPositionVisible(Position position)
    {
       return widget_.getEditor().isRowFullyVisible(position.getRow());
+   }
+   
+   public TokenIterator getTokenIterator(Position pos)
+   {
+      if (pos == null)
+         return TokenIterator.create(getSession());
+      else
+         return TokenIterator.create(getSession(),
+               pos.getRow(), pos.getColumn());
    }
 
    @Override
