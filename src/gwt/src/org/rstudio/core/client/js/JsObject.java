@@ -167,7 +167,7 @@ public class JsObject extends JavaScriptObject
             for (var i = 0; i < obj.length; i++) {
                cloned[i] = cloneObj(obj[i]);
             }
-         } else if (obj instanceof Object) {
+         } else if (Object.prototype.toString.call(obj) == "[object Object]") {
             cloned = {};
             for (var attrib in obj)
                if (obj.hasOwnProperty(attrib))

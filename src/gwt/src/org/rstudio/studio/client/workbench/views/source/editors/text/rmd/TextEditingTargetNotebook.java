@@ -22,6 +22,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -124,7 +125,7 @@ public class TextEditingTargetNotebook
       docDisplay_ = docDisplay;
       docUpdateSentinel_ = docUpdateSentinel;  
       releaseOnDismiss_ = releaseOnDismiss;
-      initialChunkDefs_ = document.getChunkDefs();
+      initialChunkDefs_ = JsArrayUtil.deepCopy(document.getChunkDefs());
       outputs_ = new HashMap<String, ChunkOutputUi>();
       chunkExecQueue_ = new LinkedList<ChunkExecQueueUnit>();
       setupCrc32_ = docUpdateSentinel_.getProperty(LAST_SETUP_CRC32);
