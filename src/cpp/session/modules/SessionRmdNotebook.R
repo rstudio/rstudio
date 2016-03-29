@@ -556,38 +556,39 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       if (type == 1 || type == 2)
          result <- paste("##", gsub("\n", "\n## ", result, fixed = TRUE))
       
-      attr(result, "type") <- type
       attr(result, ".class") <- if (type == 0) "r"
-      
       result
    })
    
    filtered <- Filter(Negate(is.null), splat)
    html <- lapply(filtered, function(el) {
-      
       class <- attr(el, ".class")
-      type  <- attr(el, "type")
-      
-      tagAttributes <- list(
-         "data-chunk-id"       = chunkId,
-         "data-chunk-filename" = fileName,
-         "data-chunk-type"     = type,
-         "data-chunk-data"     = .rs.base64encode(data)
-      )
-      
-      if (!is.null(class))
-         tagAttributes["class"] <- class
-      
-      result <- sprintf(
-         "<pre %s><code>%s</code></pre>",
-         .rs.listToHtmlAttributes(tagAttributes),
-         el
-      )
-      
+      result <- if (is.null(class)) {
+         sprintf(
+            "<pre><code>%s</code></pre>",
+            el
+         )
+      } else {
+         sprintf(
+            "<pre class=\"%s\"><code>%s</code></pre>",
+            class,
+            el
+         )
+      }
       result
    })
    
-   paste(unlist(html), collapse = "\n")
+   attrs <- .rs.listToHtmlAttributes(list(
+      "data-chunk-id"       = chunkId,
+      "data-chunk-filename" = fileName,
+      "data-chunk-data"     = .rs.base64encode(data)
+   ))
+   
+   paste(
+      paste("<!--", attrs, "-->"),
+      paste(unlist(html), collapse = "\n"),
+      sep = "\n"
+   )
    
 })
 
