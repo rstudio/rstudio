@@ -22,8 +22,11 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.widget.Operation;
@@ -94,6 +97,9 @@ public class TextEditingTargetNotebook
                           InterruptStatusEvent.Handler,
                           RestartStatusEvent.Handler
 {
+   public interface Binder
+   extends CommandBinder<Commands, TextEditingTargetNotebook> {}
+
    private class ChunkExecQueueUnit
    {
       public ChunkExecQueueUnit(String chunkIdIn, String codeIn, 
@@ -124,7 +130,7 @@ public class TextEditingTargetNotebook
       docDisplay_ = docDisplay;
       docUpdateSentinel_ = docUpdateSentinel;  
       releaseOnDismiss_ = releaseOnDismiss;
-      initialChunkDefs_ = document.getChunkDefs();
+      initialChunkDefs_ = JsArrayUtil.deepCopy(document.getChunkDefs());
       outputs_ = new HashMap<String, ChunkOutputUi>();
       chunkExecQueue_ = new LinkedList<ChunkExecQueueUnit>();
       setupCrc32_ = docUpdateSentinel_.getProperty(LAST_SETUP_CRC32);
@@ -207,6 +213,7 @@ public class TextEditingTargetNotebook
          Session session,
          UIPrefs prefs,
          Commands commands,
+         Binder binder,
          Provider<SourceWindowManager> pSourceWindowManager)
    {
       events_ = events;
@@ -215,6 +222,7 @@ public class TextEditingTargetNotebook
       session_ = session;
       prefs_ = prefs;
       commands_ = commands;
+      binder.bind(commands, this);
       pSourceWindowManager_ = pSourceWindowManager;
       
       events_.addHandler(RmdChunkOutputEvent.TYPE, this);
@@ -313,92 +321,19 @@ public class TextEditingTargetNotebook
       commands_.notebookExpandAllOutput().setVisible(inlineOutput); 
       editingDisplay_.setNotebookUIVisible(inlineOutput);
    }
+
+   // Command handlers --------------------------------------------------------
    
-   private void processChunkExecQueue()
+   @Handler
+   public void onNotebookCollapseAllOutput()
    {
-      if (chunkExecQueue_.isEmpty() || executingChunk_ != null)
-         return;
-      
-      // begin chunk execution
-      final ChunkExecQueueUnit unit = chunkExecQueue_.remove();
-      executingChunk_ = unit;
-      
-      // let the chunk widget know it's started executing
-      if (outputs_.containsKey(unit.chunkId))
-      {
-         ChunkOutputUi output = outputs_.get(unit.chunkId);
+      setAllExpansionStates(ChunkOutputWidget.COLLAPSED);
+   }
 
-         output.getOutputWidget().setCodeExecuting(true);
-         syncWidth(unit.chunkId);
-      
-         if (docDisplay_.getLastVisibleRow() < (output.getCurrentRow() + 1))
-         {
-            Scope chunk = output.getScope();
-            Rectangle bounds = docDisplay_.getPositionBounds(
-                  chunk.getPreamble());
-            docDisplay_.scrollToY(docDisplay_.getScrollTop() + 
-                  (bounds.getTop() - (docDisplay_.getBounds().getTop() + 60)));
-         }
-      }
-      
-      server_.setChunkConsole(docUpdateSentinel_.getId(), 
-            unit.chunkId, 
-            unit.options,
-            charWidth_,
-            true,
-            new ServerRequestCallback<Void>()
-            {
-               @Override
-               public void onResponseReceived(Void v)
-               {
-                  console_.consoleInput(unit.code, unit.chunkId, 
-                        new VoidServerRequestCallback());
-
-                  // if this was the setup chunk, mark it
-                  if (!StringUtil.isNullOrEmpty(unit.setupCrc32))
-                     writeSetupCrc32(unit.setupCrc32);
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  // don't leave the chunk hung in execution state
-                  if (executingChunk_ != null)
-                  {
-                     if (outputs_.containsKey(executingChunk_.chunkId))
-                     {
-                        outputs_.get(executingChunk_.chunkId)
-                                .getOutputWidget().onOutputFinished();
-                     }
-                     cleanChunkExecState(executingChunk_.chunkId);
-                  }
-
-                  // if the queue is empty, show an error; if it's not, prompt
-                  // for continuing
-                  if (chunkExecQueue_.isEmpty())
-                     RStudioGinjector.INSTANCE.getGlobalDisplay()
-                       .showErrorMessage("Chunk Execution Failed", 
-                              error.getUserMessage());
-                  else
-                     RStudioGinjector.INSTANCE.getGlobalDisplay()
-                       .showYesNoMessage(
-                        GlobalDisplay.MSG_QUESTION, 
-                        "Continue Execution?", 
-                        "The following error was encountered during chunk " +
-                        "execution: \n\n" + error.getUserMessage() + "\n\n" +
-                        "Do you want to continue executing notebook chunks?", 
-                        false, 
-                        new Operation()
-                        {
-                           @Override
-                           public void execute()
-                           {
-                              processChunkExecQueue();
-                           }
-                        }, 
-                        null, null, "Continue", "Abort", true);
-               }
-            });
+   @Handler
+   public void onNotebookExpandAllOutput()
+   {
+      setAllExpansionStates(ChunkOutputWidget.EXPANDED);
    }
    
    // Event handlers ----------------------------------------------------------
@@ -637,6 +572,93 @@ public class TextEditingTargetNotebook
    }
 
    // Private methods --------------------------------------------------------
+   
+   private void processChunkExecQueue()
+   {
+      if (chunkExecQueue_.isEmpty() || executingChunk_ != null)
+         return;
+      
+      // begin chunk execution
+      final ChunkExecQueueUnit unit = chunkExecQueue_.remove();
+      executingChunk_ = unit;
+      
+      // let the chunk widget know it's started executing
+      if (outputs_.containsKey(unit.chunkId))
+      {
+         ChunkOutputUi output = outputs_.get(unit.chunkId);
+
+         output.getOutputWidget().setCodeExecuting(true);
+         syncWidth(unit.chunkId);
+      
+         if (docDisplay_.getLastVisibleRow() < (output.getCurrentRow() + 1))
+         {
+            Scope chunk = output.getScope();
+            Rectangle bounds = docDisplay_.getPositionBounds(
+                  chunk.getPreamble());
+            docDisplay_.scrollToY(docDisplay_.getScrollTop() + 
+                  (bounds.getTop() - (docDisplay_.getBounds().getTop() + 60)));
+         }
+      }
+      
+      server_.setChunkConsole(docUpdateSentinel_.getId(), 
+            unit.chunkId, 
+            unit.options,
+            charWidth_,
+            true,
+            new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onResponseReceived(Void v)
+               {
+                  console_.consoleInput(unit.code, unit.chunkId, 
+                        new VoidServerRequestCallback());
+
+                  // if this was the setup chunk, mark it
+                  if (!StringUtil.isNullOrEmpty(unit.setupCrc32))
+                     writeSetupCrc32(unit.setupCrc32);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  // don't leave the chunk hung in execution state
+                  if (executingChunk_ != null)
+                  {
+                     if (outputs_.containsKey(executingChunk_.chunkId))
+                     {
+                        outputs_.get(executingChunk_.chunkId)
+                                .getOutputWidget().onOutputFinished();
+                     }
+                     cleanChunkExecState(executingChunk_.chunkId);
+                  }
+
+                  // if the queue is empty, show an error; if it's not, prompt
+                  // for continuing
+                  if (chunkExecQueue_.isEmpty())
+                     RStudioGinjector.INSTANCE.getGlobalDisplay()
+                       .showErrorMessage("Chunk Execution Failed", 
+                              error.getUserMessage());
+                  else
+                     RStudioGinjector.INSTANCE.getGlobalDisplay()
+                       .showYesNoMessage(
+                        GlobalDisplay.MSG_QUESTION, 
+                        "Continue Execution?", 
+                        "The following error was encountered during chunk " +
+                        "execution: \n\n" + error.getUserMessage() + "\n\n" +
+                        "Do you want to continue executing notebook chunks?", 
+                        false, 
+                        new Operation()
+                        {
+                           @Override
+                           public void execute()
+                           {
+                              processChunkExecQueue();
+                           }
+                        }, 
+                        null, null, "Continue", "Abort", true);
+               }
+            });
+   }
    
    private void loadInitialChunkOutput()
    {
@@ -937,6 +959,14 @@ public class TextEditingTargetNotebook
          return outputs_.get(chunkId).getScope();
       }
       return null;
+   }
+   
+   private void setAllExpansionStates(int state)
+   {
+      for (ChunkOutputUi output: outputs_.values())
+      {
+         output.getOutputWidget().setExpansionState(state);
+      }
    }
    
    private JsArray<ChunkDefinition> initialChunkDefs_;

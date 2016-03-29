@@ -17,6 +17,8 @@ package org.rstudio.core.client;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.js.JsObject;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -132,5 +134,14 @@ public class JsArrayUtil
       for (int i = 0; i < array.length(); i++)
          copy.push(array.get(i));
       return copy;
+   }
+   
+   @SuppressWarnings("unchecked")
+   public static final <T extends JavaScriptObject> JsArray<T> deepCopy(JsArray<T> array)
+   {
+      JsObject original = (JsObject) array.cast();
+      JsObject clone = original.clone();
+      JsArray<T> cloneArray = (JsArray<T>) clone.cast();
+      return cloneArray;
    }
 }

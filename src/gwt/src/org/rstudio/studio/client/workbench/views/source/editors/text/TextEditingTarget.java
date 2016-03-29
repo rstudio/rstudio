@@ -4941,19 +4941,6 @@ public class TextEditingTarget implements
    }
    
    @Handler
-   void onNotebookCollapseAllOutput()
-   {
-      globalDisplay_.showNotYetImplemented();
-   }
-   
-   @Handler
-   void onNotebookExpandAllOutput()
-   {
-      globalDisplay_.showNotYetImplemented();
-   }
-   
-
-   @Handler
    void onSynctexSearch()
    {
       doSynctexSearch(true);
