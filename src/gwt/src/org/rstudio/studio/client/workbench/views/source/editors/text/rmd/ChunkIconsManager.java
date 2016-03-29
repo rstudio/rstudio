@@ -1,7 +1,7 @@
 /*
  * ChunkIconsManager.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,14 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
+
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -37,12 +35,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceT
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -67,16 +61,13 @@ public class ChunkIconsManager
    
    @Inject
    private void initialize(EventBus events,
-                           Commands commands,
                            UIPrefs uiPrefs,
                            AceThemes themes)
    {
       events_ = events;
-      commands_ = commands;
       uiPrefs_ = uiPrefs;
-      themes_ = themes;
    }
-   
+  
    private boolean isPseudoMarker(Element el)
    {
       return el.getOffsetHeight() == 0 || el.getOffsetWidth() == 0;
@@ -85,7 +76,7 @@ public class ChunkIconsManager
    private boolean shouldDisplayIcons(AceEditorNative editor)
    {
       String id = editor.getSession().getMode().getId();
-      return id.equals("mode/rmarkdown");  // also Rpres
+      return id.equals("mode/RMarkdown");  // also Rpres
    }
    
    private Position toDocumentPosition(Element el, AceEditorNative editor)
@@ -152,13 +143,6 @@ public class ChunkIconsManager
       if (container == null)
          return;
       
-      Element[] icons = DomUtils.getElementsByClassName(
-            container,
-            ThemeStyles.INSTANCE.inlineChunkToolbar());
-      
-      for (Element icon : icons)
-         icon.removeFromParent();
-      
       if (!uiPrefs_.showInlineToolbarForRCodeChunks().getValue())
          return;
       
@@ -183,10 +167,7 @@ public class ChunkIconsManager
          if (chunkLiesWithinFoldedMarkdownSection(el, editor))
             continue;
          
-         if (el.getChildCount() > 0)
-            el.removeAllChildren();
-         
-         addToolbar(el, isSetupChunk(el, editor), editor);
+         ensureToolbar(el, isSetupChunk(el, editor), editor);
       }
    }
    
@@ -202,130 +183,22 @@ public class ChunkIconsManager
       return line.contains("r setup");
    }
    
-   private void addToolbar(Element el, boolean isSetupChunk, AceEditorNative editor)
+   private void ensureToolbar(Element el, boolean isSetupChunk, AceEditorNative editor)
    {
-      FlowPanel toolbarPanel = new FlowPanel();
-      toolbarPanel.addStyleName(ThemeStyles.INSTANCE.inlineChunkToolbar());
-    
-      boolean isDark = themes_.isDark(
-            themes_.getEffectiveThemeName(uiPrefs_.theme().getValue()));
-      
-      Image optionsIcon = createOptionsIcon(isDark, isSetupChunk);
-      optionsIcon.getElement().getStyle().setMarginRight(9, Unit.PX);
-      toolbarPanel.add(optionsIcon);
 
-      // Note that 'run current chunk' currently only operates within Rmd
-      if (editor.getSession().getMode().getId().equals("mode/rmarkdown"))
-      {
-         if (!isSetupChunk)
-         {
-            Image runPreviousIcon = createRunPreviousIcon(isDark);
-            runPreviousIcon.getElement().getStyle().setMarginRight(8, Unit.PX);
-            toolbarPanel.add(runPreviousIcon);
-         }
-
-         Image runIcon = createRunIcon();
-         toolbarPanel.add(runIcon);
-      }
-      
-      display(toolbarPanel, el);
    }
    
-   private void display(Widget panel, Element underlyingMarker)
-   {
-      // Bail if the underlying marker isn't wide enough
-      if (underlyingMarker.getOffsetWidth() < 250)
-         return;
-      
-      // Get the 'virtual' parent -- this is the Ace scroller that houses all
-      // of the Ace content, where we want our icons to live. We need them
-      // to live here so that they properly hide when the user scrolls and
-      // e.g. markers are only partially visible.
-      Element virtualParent = DomUtils.getParent(underlyingMarker, 3);
-      
-      // We'd prefer to use 'getOffsetTop()' here, but that seems to give
-      // some janky dimensions due to how the Ace layers are ... layered,
-      // so we manually compute it.
-      int top =
-            underlyingMarker.getAbsoluteTop() -
-            virtualParent.getAbsoluteTop();
-      
-      panel.getElement().getStyle().setTop(top, Unit.PX);
-      virtualParent.appendChild(panel.getElement());
-   }
-   
-   private Image createRunIcon()
-   {
-      Image icon = new Image(ThemeResources.INSTANCE.runChunk());
-      icon.addStyleName(ThemeStyles.INSTANCE.highlightIcon());
-      icon.setTitle(commands_.executeCurrentChunk().getTooltip());
-      bindNativeClickToExecuteChunk(this, icon.getElement());
-      return icon;
-   }
-   
-   private Image createRunPreviousIcon(boolean dark)
-   {
-      Image icon = new Image(dark ? 
-            ThemeResources.INSTANCE.runPreviousChunksDark() :
-            ThemeResources.INSTANCE.runPreviousChunksLight());
-      icon.addStyleName(ThemeStyles.INSTANCE.highlightIcon());
-           
-      icon.setTitle(commands_.executePreviousChunks().getTooltip());
-      bindNativeClickToExecutePreviousChunks(this, icon.getElement());
-      return icon;
-   }
-   
-   private Image createOptionsIcon(boolean dark, boolean setupChunk)
-   {
-      Image icon = new Image(dark ? 
-            ThemeResources.INSTANCE.chunkOptionsDark() :
-            ThemeResources.INSTANCE.chunkOptionsLight());
-      icon.addStyleName(ThemeStyles.INSTANCE.highlightIcon());
-      
-      if (setupChunk)
-         icon.addStyleName(RES.styles().setupChunk());
-         
-      icon.setTitle("Modify chunk options");
-      bindNativeClickToOpenOptions(this, icon.getElement());
-      return icon;
-   }
-   
-   private static final native void bindNativeClickToExecutePreviousChunks(
-                                   ChunkIconsManager manager, Element element) 
-   /*-{
-      element.addEventListener("click", $entry(function(evt) {
-         manager.@org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager::fireExecutePreviousChunksEvent(Ljava/lang/Object;)(evt);
-      }));
-   }-*/;
-
-   
-   private static final native void bindNativeClickToExecuteChunk(ChunkIconsManager manager,
-                                                                  Element element) 
-   /*-{
-      element.addEventListener("click", $entry(function(evt) {
-         manager.@org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager::fireExecuteChunkEvent(Ljava/lang/Object;)(evt);
-      }));
-   }-*/;
-   
-   private static final native void bindNativeClickToOpenOptions(ChunkIconsManager manager,
-                                                                 Element element) 
-   /*-{
-      element.addEventListener("click", $entry(function(evt) {
-         manager.@org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager::fireDisplayChunkOptionsEvent(Ljava/lang/Object;)(evt);
-      }));
-   }-*/;
-   
-   private final void fireExecuteChunkEvent(Object object)
+   public final void fireExecuteChunkEvent(Object object)
    {
       fireExecuteChunksEvent(ExecuteChunksEvent.Scope.Current, object);
    }
    
-   private final void fireExecutePreviousChunksEvent(Object object)
+   public final void fireExecutePreviousChunksEvent(Object object)
    {
       fireExecuteChunksEvent(ExecuteChunksEvent.Scope.Previous, object);
    }
    
-   private final void fireExecuteChunksEvent(ExecuteChunksEvent.Scope scope,
+   public final void fireExecuteChunksEvent(ExecuteChunksEvent.Scope scope,
                                              Object object)
    {
       if (!(object instanceof NativeEvent))
@@ -337,7 +210,7 @@ public class ChunkIconsManager
                                                event.getClientY()));
    }
    
-   private final void fireDisplayChunkOptionsEvent(Object object)
+   public final void fireDisplayChunkOptionsEvent(Object object)
    {
       if (!(object instanceof NativeEvent))
          return;
@@ -359,10 +232,12 @@ public class ChunkIconsManager
          optionsPanel_ = null;
       
       Element el = event.getEventTarget().cast();
+      /*
       if (el.hasClassName(RES.styles().setupChunk()))
          optionsPanel_ = new SetupChunkOptionsPopupPanel();
       else
          optionsPanel_ = new DefaultChunkOptionsPopupPanel();
+         */
       
       optionsPanel_.init(editor.getWidget(), position);
       optionsPanel_.show();
@@ -377,26 +252,11 @@ public class ChunkIconsManager
    
    private ChunkOptionsPopupPanel optionsPanel_;
    
-   private Commands commands_;
    private EventBus events_;
    private UIPrefs uiPrefs_;
-   private AceThemes themes_;
    
    public interface Styles extends CssResource
    {
       String setupChunk();
    }
-   
-   public interface Resources extends ClientBundle
-   {
-      @Source("ChunkIconsManager.css")
-      Styles styles();
-   }
-   
-   private static Resources RES = GWT.create(Resources.class);
-   static {
-      RES.styles().ensureInjected();
-   }
-   
-
 }

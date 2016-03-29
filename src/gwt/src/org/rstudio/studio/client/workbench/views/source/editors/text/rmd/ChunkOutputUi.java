@@ -90,7 +90,7 @@ public class ChunkOutputUi
             def.getRow(), ele, def);
       lineWidget_.setFixedWidth(true);
       display_.addLineWidget(lineWidget_);
-
+      
       attached_ = true;
    }
    

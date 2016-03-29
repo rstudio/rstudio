@@ -1,7 +1,7 @@
 /*
  * TextEditingTarget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1217,6 +1217,8 @@ public class TextEditingTarget implements
       notebook_ = new TextEditingTargetNotebook(this, view_, docDisplay_,
             docUpdateSentinel_, document, releaseOnDismiss_);
       view_.addResizeHandler(notebook_);
+      
+      chunks_ = new TextEditingTargetChunks(docDisplay_);
       
       // ensure that Makefile and Makevars always use tabs
       name_.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -5924,6 +5926,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetScopeHelper scopeHelper_;
    private TextEditingTargetSpelling spelling_;
    private TextEditingTargetNotebook notebook_;
+   private TextEditingTargetChunks chunks_;
    private BreakpointManager breakpointManager_;
    private final LintManager lintManager_;
    private final TextEditingTargetRenameHelper renameHelper_;

@@ -1,0 +1,44 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+   xmlns:g="urn:import:com.google.gwt.user.client.ui">
+   <ui:with field="res" type="org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextToolbar.Resources" />
+   <ui:style>
+   .wrapper
+   {
+      position: absolute;
+      overflow: visible;
+      height: 0px;
+      padding: 0px;
+      margin: 0px;
+   }
+   
+   .toolbar
+   {
+      top: -10px;
+      position: absolute;
+      right: 10px;
+   }
+   
+   .button
+   {
+      margin-right: 8px;
+      cursor: pointer;
+   }
+
+   .button:hover 
+   {
+      background-color: rgba(160, 160, 160, 0.25);
+      box-shadow: 0 0 3px rgb(160, 160, 160);
+   }
+
+   </ui:style>
+   <g:HTMLPanel styleName="{style.wrapper}">
+     <g:FlowPanel styleName="{style.toolbar}">
+        <g:Image styleName="{style.button}" title="Modify chunk options"
+                 ui:field="options_"></g:Image>
+        <g:Image styleName="{style.button}" ui:field="runPrevious_"></g:Image>
+        <g:Image styleName="{style.button}" resource="{res.runChunk}"
+                 ui:field="run_"></g:Image>
+     </g:FlowPanel>
+   </g:HTMLPanel>
+</ui:UiBinder> 
