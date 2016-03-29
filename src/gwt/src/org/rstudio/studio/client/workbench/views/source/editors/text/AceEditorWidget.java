@@ -60,7 +60,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceMouseEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AnchoredRange;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunksEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidgetManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -503,11 +502,6 @@ public class AceEditorWidget extends Composite
    public HandlerRegistration addAceClickHandler(AceClickEvent.Handler handler)
    {
       return addHandler(handler, AceClickEvent.TYPE);
-   }
-   
-   public HandlerRegistration addExecuteChunkHandler(ExecuteChunksEvent.Handler handler)
-   {
-      return addHandler(handler, ExecuteChunksEvent.TYPE);
    }
    
    public void forceResize()

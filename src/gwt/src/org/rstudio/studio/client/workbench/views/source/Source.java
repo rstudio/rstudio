@@ -132,7 +132,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunksEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
@@ -478,29 +477,6 @@ public class Source implements InsertSourceHandler,
          public void onSynctexStatusChanged(SynctexStatusChangedEvent event)
          {
             manageSynctexCommands();
-         }
-      });
-      
-      events.addHandler(ExecuteChunksEvent.TYPE, new ExecuteChunksEvent.Handler()
-      {
-         @Override
-         public void onExecuteChunks(ExecuteChunksEvent event)
-         {
-            if (activeEditor_ == null)
-               return;
-            
-            if (!(activeEditor_ instanceof TextEditingTarget))
-               return;
-            
-            TextEditingTarget target = (TextEditingTarget) activeEditor_;
-            Position position = Position.create(event.getRow(), 0);
-            
-            if (event.getScope() == ExecuteChunksEvent.Scope.Current)
-               target.executeChunk(position);
-            else if (event.getScope() == ExecuteChunksEvent.Scope.Previous)
-               target.executePreviousChunks(position);
-            
-            target.focus();
          }
       });
       
