@@ -14,11 +14,19 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunksEvent;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
@@ -54,12 +62,50 @@ public class ChunkContextToolbar extends Composite
                                   RES.chunkOptionsLight());
       
       if (runPrevious)
-         runPrevious_.setResource(dark ? RES.runPreviousChunksDark() :
-                                         RES.runPreviousChunksLight());
+         initRunPrevious(dark);
       else
          runPrevious_.setVisible(false);
       
-      run_.setVisible(run);
+      if (run)
+         initRun();
+      else
+         run_.setVisible(false);
+   }
+   
+   private void initRun()
+   {
+      DOM.sinkEvents(run_.getElement(), Event.ONCLICK);
+      DOM.setEventListener(run_.getElement(), new EventListener()
+      {
+         @Override
+         public void onBrowserEvent(Event event)
+         {
+            if (DOM.eventGetType(event) == Event.ONCLICK)
+            {
+               RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
+                     GlobalDisplay.MSG_INFO, "NYI", "Run (NYI)");
+            }
+         }
+      });
+   }
+   
+   private void initRunPrevious(boolean dark)
+   {
+      runPrevious_.setResource(dark ? RES.runPreviousChunksDark() :
+                                      RES.runPreviousChunksLight());
+      DOM.sinkEvents(runPrevious_.getElement(), Event.ONCLICK);
+      DOM.setEventListener(runPrevious_.getElement(), new EventListener()
+      {
+         @Override
+         public void onBrowserEvent(Event event)
+         {
+            if (DOM.eventGetType(event) == Event.ONCLICK)
+            {
+               RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
+                     GlobalDisplay.MSG_INFO, "NYI", "Run Previous (NYI)");
+            }
+         }
+      });
    }
 
    @UiField Image options_;

@@ -498,8 +498,7 @@ public class Source implements InsertSourceHandler,
                return;
             
             TextEditingTarget target = (TextEditingTarget) activeEditor_;
-            Position position =
-                  target.screenCoordinatesToDocumentPosition(0, event.getPageY());
+            Position position = Position.create(event.getRow(), 0);
             
             if (event.getScope() == ExecuteChunksEvent.Scope.Current)
                target.executeChunk(position);

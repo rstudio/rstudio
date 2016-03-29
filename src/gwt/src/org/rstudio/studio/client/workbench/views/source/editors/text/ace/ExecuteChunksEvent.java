@@ -30,16 +30,14 @@ public class ExecuteChunksEvent extends GwtEvent<ExecuteChunksEvent.Handler>
       void onExecuteChunks(ExecuteChunksEvent event);
    }
 
-   public ExecuteChunksEvent(Scope scope, int pageX, int pageY)
+   public ExecuteChunksEvent(Scope scope, int row)
    {
       scope_ = scope;
-      pageX_ = pageX;
-      pageY_ = pageY;
+      row_ = row;
    }
    
    public Scope getScope() { return scope_; }
-   public int getPageX() { return pageX_; }
-   public int getPageY() { return pageY_; }
+   public int getRow() { return row_; }
    
    @Override
    public Type<Handler> getAssociatedType()
@@ -54,8 +52,7 @@ public class ExecuteChunksEvent extends GwtEvent<ExecuteChunksEvent.Handler>
    }
 
    private final Scope scope_;
-   private final int pageX_;
-   private final int pageY_;
+   private final int row_;
    
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

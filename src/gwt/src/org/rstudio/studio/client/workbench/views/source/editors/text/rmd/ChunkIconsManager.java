@@ -188,28 +188,6 @@ public class ChunkIconsManager
 
    }
    
-   public final void fireExecuteChunkEvent(Object object)
-   {
-      fireExecuteChunksEvent(ExecuteChunksEvent.Scope.Current, object);
-   }
-   
-   public final void fireExecutePreviousChunksEvent(Object object)
-   {
-      fireExecuteChunksEvent(ExecuteChunksEvent.Scope.Previous, object);
-   }
-   
-   public final void fireExecuteChunksEvent(ExecuteChunksEvent.Scope scope,
-                                             Object object)
-   {
-      if (!(object instanceof NativeEvent))
-         return;
-      
-      NativeEvent event = (NativeEvent) object;
-      events_.fireEvent(new ExecuteChunksEvent(scope, 
-                                               event.getClientX(), 
-                                               event.getClientY()));
-   }
-   
    public final void fireDisplayChunkOptionsEvent(Object object)
    {
       if (!(object instanceof NativeEvent))
