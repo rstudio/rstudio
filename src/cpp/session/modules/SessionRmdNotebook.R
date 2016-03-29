@@ -389,7 +389,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    # Inject JSON dependency information into document
    # TODO: Resolve duplicates
-   htmlDeps <- lapply(jsDependencies, function(dep) {
+   htmlDeps <- unlist(lapply(jsDependencies, function(dep) {
       injection <- character()
       
       jsPath <- file.path(dep$src$file, dep$script)
@@ -402,13 +402,13 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       }
       
       paste(injection, collapse = "\n")
-   })
+   }))
    
    bodyIdx <- tail(grep("^\\s*</body>\\s*$", html, perl = TRUE), n = 1)
-   html[bodyIdx] <- paste(
-      paste(htmlDeps, collapse = "\n"),
-      "</body>",
-      sep = "\n"
+   html <- c(
+      html[1:(bodyIdx - 1)],
+      htmlDeps,
+      html[bodyIdx:length(html)]
    )
    
    html
@@ -496,9 +496,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # replace chunk placeholders with their actual data
    html <- .rs.rnb.fillChunks(html, rnbData)
    
-   # write to file
-   cat(html, file = outputFile, sep = "\n")
-   outputFile
+   html
 })
 
 .rs.addFunction("createNotebookFromCache", function(rmdPath, outputPath = NULL)
@@ -511,7 +509,37 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       stop("no cache data associated with '", rmdPath, "'")
    
    rnbData <- .rs.readRnbCache(rmdPath, cachePath)
-   .rs.createNotebookFromCacheData(rnbData, outputPath)
+   html <- .rs.createNotebookFromCacheData(rnbData, outputPath)
+   
+   # inject cache data
+   html <- .rs.rnb.injectCacheData(html, cachePath)
+   
+   # write to file
+   cat(html, file = outputPath, sep = "\n")
+   outputPath
+})
+
+.rs.addFunction("rnb.injectCacheData", function(html, cachePath)
+{
+   files <- list.files(cachePath, recursive = TRUE)
+   contents <- unlist(lapply(files, function(file) {
+      fullPath <- file.path(cachePath, file)
+      contents <- .rs.readFile(fullPath, binary = TRUE)
+      encoded  <- .rs.base64encode(contents)
+      paste(file, encoded, sep = ":")
+   }))
+   
+   injection <- paste(
+      "<!-- rnb-cache-data-begin",
+      paste(paste("   ", contents), collapse = "\n"),
+      "rnb-cache-data-end -->",
+      sep = "\n"
+   )
+   
+   idx <- grep("</body>", html)
+   html <- c(html[1:(idx - 1)], injection, html[idx:length(html)])
+   
+   html
 })
 
 .rs.addFunction("rnb.cachePathFromRmdPath", function(rmdPath)
@@ -578,18 +606,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       result
    })
    
-   attrs <- .rs.listToHtmlAttributes(list(
-      "data-chunk-id"       = chunkId,
-      "data-chunk-filename" = fileName,
-      "data-chunk-data"     = .rs.base64encode(data)
-   ))
-   
-   paste(
-      paste("<!--", attrs, "-->"),
-      paste(unlist(html), collapse = "\n"),
-      sep = "\n"
-   )
-   
+   paste(unlist(html), collapse = "\n")
 })
 
 .rs.addFunction("base64encode", function(data)
@@ -626,57 +643,37 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    )
 })
 
-.rs.addFunction("hydrateCacheFromNotebook", function(rnbPath, cachePath)
+.rs.addFunction("hydrateCacheFromNotebook", function(rnbPath, cachePath = NULL)
 {
-   rnbContents <- readLines(rnbPath)
-   if (!file.exists(cachePath))
-      if (!dir.create(cachePath, recursive = TRUE))
-         stop("failed to create cache path: '", cachePath, "'")
-   
-   for (i in seq_along(rnbContents))
-   {
-      line <- rnbContents[[i]]
-      if (!grepl("data-chunk-id", line))
-         next
-      
-      dataAttributes <- .rs.scrapeHtmlDataAttributes(line)
-      
-      # generate the chunk folder from the ID
-      chunkPath <- file.path(cachePath, dataAttributes$`data-chunk-id`)
-      if (file.exists(chunkPath))
-         unlink(chunkPath, recursive = TRUE)
-      
-      if (!dir.create(chunkPath, recursive = TRUE))
-         stop("failed to create chunk data path: '", chunkPath, "'")
-      
-      # get the chunk filename
-      fileName <- dataAttributes$`data-chunk-filename`
-      if (.rs.endsWith(fileName, "csv"))
-      {
-         filePath <- file.path(chunkPath, fileName)
-         decoded <- .rs.base64decode(dataAttributes$`data-chunk-data`)
-         cat(decoded, file = filePath, append = TRUE)
-      }
-      else if (.rs.endsWith(fileName, "png"))
-      {
-         filePath <- file.path(chunkPath, fileName)
-         data <- substring(dataAttributes$src, nchar("data:image/png;base64,") + 1)
-         decoded <- .rs.base64decode(data, type = raw())
-         writeBin(decoded, con = filePath, useBytes = TRUE)
-      }
-      else if (.rs.endsWith(fileName, "html"))
-      {
-         htmlPath <- file.path(chunkPath, fileName)
-         htmlData <- .rs.base64decode(dataAttributes$`data-chunk-html`, raw())
-         writeBin(htmlData, con = htmlPath, useBytes = TRUE)
-         
-         jsonPath <- file.path(chunkPath, .rs.withChangedExtension(fileName, "json"))
-         jsonData <- .rs.base64decode(dataAttributes$`data-chunk-json`, raw())
-         writeBin(jsonData, con = jsonPath, useBytes = TRUE)
-      }
-      
+   if (is.null(cachePath)) {
+      rmdPath <- .rs.withChangedExtension(rnbPath, "Rmd")
+      cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)
    }
    
-   cachePath
+   rnbContents <- readLines(rnbPath)
+   startIdx <- grep("<!-- rnb-cache-data-begin", rnbContents) + 1
+   endIdx   <- grep("rnb-cache-data-end -->", rnbContents) - 1
+   
+   status <- lapply(startIdx:endIdx, function(i) {
+      line <- rnbContents[[i]]
+      colonIdx <- regexpr(":", line, fixed = TRUE)
+      fileName <- .rs.trimWhitespace(substring(line, 1, colonIdx - 1))
+      fileContents <- substring(line, colonIdx + 1)
+      
+      targetPath <- file.path(cachePath, fileName)
+      parentPath <- dirname(targetPath)
+      if (!dir.exists(parentPath))
+         if (!dir.create(parentPath, recursive = TRUE))
+            stop("failed to create cache path '", parentPath, "'")
+      
+      decoded <- .rs.base64decode(fileContents, raw())
+      writeBin(decoded, con = targetPath)
+      list(name = fileName, status = file.exists(targetPath))
+   })
+   
+   names   <- unlist(lapply(status, "[[", "name"))
+   success <- unlist(lapply(status, "[[", "status"))
+   names(success) <- names
+   success
    
 })
