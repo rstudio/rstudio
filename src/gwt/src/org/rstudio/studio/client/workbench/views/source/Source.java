@@ -1044,6 +1044,7 @@ public class Source implements InsertSourceHandler,
             public void onError(ServerError error)
             {
                Debug.logError(error);
+               globalDisplay_.showErrorMessage("Source Document Error", error.getUserMessage());
             }
          });
       }
@@ -1069,6 +1070,7 @@ public class Source implements InsertSourceHandler,
                public void onError(ServerError error)
                {
                   Debug.logError(error);
+                  globalDisplay_.showErrorMessage("Source Document Error", error.getUserMessage());
                }
             });
       }

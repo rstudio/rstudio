@@ -90,7 +90,7 @@
 {
    tryCatch({
       resources <- .rs.profileResources()
-      suppressWarnings(htmlFile <- normalizePath(tempfile(fileext = ".html", tmpdir = resources$tempPath), winslash = "/"))
+      htmlFile <- normalizePath(tempfile(fileext = ".html", tmpdir = resources$tempPath), winslash = "/", mustWork = FALSE)
 
       if (identical(profilerOptions$profvis, NULL)) {
          if (identical(tools::file_ext(profilerOptions$fileName), "Rprof")) {
@@ -180,7 +180,7 @@
       }
 
       rsconnectDir <- file.path(resources$tempPath, "rsconnect", "documents", paste(filePrefix, ".html", sep = ""))
-      if (dir.exists(rsconnectDir)) {
+      if (.rs.dirExists(rsconnectDir)) {
          unlink(rsconnectDir, recursive = TRUE)
       }
 

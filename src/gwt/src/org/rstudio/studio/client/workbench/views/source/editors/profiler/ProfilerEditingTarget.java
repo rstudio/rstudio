@@ -277,6 +277,7 @@ public class ProfilerEditingTarget implements EditingTarget,
                      public void onError(ServerError error)
                      {
                         Debug.logError(error);
+                        commands_.closeSourceDoc().execute();
                      }
                   });
                }
