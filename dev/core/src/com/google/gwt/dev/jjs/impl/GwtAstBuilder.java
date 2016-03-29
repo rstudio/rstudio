@@ -1725,6 +1725,9 @@ public class GwtAstBuilder {
        * [x] denotes optional, depending on context of whether outer this scope is needed.
        */
 
+      // Resolve the reference expression to make sure the declaring class of the method is resolved
+      // to the right type.
+      x.resolve(blockScope);
       // Calculate what type this reference is going to bind to, and what single abstract method
       TypeBinding binding = x.expectedType();
       MethodBinding samBinding = binding.getSingleAbstractMethod(blockScope, false).original();
