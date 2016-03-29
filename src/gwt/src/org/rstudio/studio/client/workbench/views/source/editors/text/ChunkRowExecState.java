@@ -35,22 +35,39 @@ public class ChunkRowExecState
          @Override
          public void execute()
          {
+            // no work if anchor hasn't changed rows
             if (getRow() == anchor_.getRow())
                return;
-            editor.getRenderer().removeGutterDecoration(
-               getRow() - 1, getClazz());
+            
+            // if we're just cleaning up this line, finish the cleanup 
+            // immediately rather than trying to shift 
+            if (state_ == LINE_RESTING)
+            {
+               detach();
+               return;
+            }
+
+            // remove all cumulative state from the old line and reapply to
+            // the new line
+            removeClazz();
             row_ = anchor_.getRow();
-            addClazz();
+            for (int i = LINE_QUEUED; i <= state_; i++)
+            {
+               addClazz(i);
+            }
          }
       });
 
-      editor.getRenderer().addGutterDecoration(getRow() - 1, getClazz());
+      addClazz(state_);
    }
    
+   // Public methods ----------------------------------------------------------
+
    public int getRow()
    {
       return row_;
    }
+
    public void setRow(int row)
    {
       row_ = row;
@@ -59,12 +76,7 @@ public class ChunkRowExecState
    public void detach()
    {
       resetTimer();
-      editor_.getRenderer().removeGutterDecoration(getRow() - 1, 
-            LINE_QUEUED_CLASS);
-      editor_.getRenderer().removeGutterDecoration(getRow() - 1, 
-            LINE_EXECUTED_CLASS);
-      editor_.getRenderer().removeGutterDecoration(getRow() - 1, 
-            LINE_RESTING_CLASS);
+      removeClazz();
       anchor_.detach();
       if (onRemoved_ != null)
          onRemoved_.execute();
@@ -75,9 +87,9 @@ public class ChunkRowExecState
       return state_;
    }
    
-   public String getClazz()
+   public static String getClazz(int state)
    {
-      switch (state_)
+      switch (state)
       {
       case LINE_QUEUED:
          return LINE_QUEUED_CLASS;
@@ -92,14 +104,14 @@ public class ChunkRowExecState
    public void setState(int state)
    {
       state_ = state;
-      if (state_ ==  LINE_RESTING)
+      if (state_ == LINE_RESTING)
       {
          timer_ = new Timer()
          {
             @Override
             public void run()
             {
-               addClazz();
+               addClazz(state_);
                scheduleDismiss();
             }
          };
@@ -107,13 +119,24 @@ public class ChunkRowExecState
       }
       else
       {
-         addClazz();
+         addClazz(state_);
       }
    }
    
-   private void addClazz()
+   // Private methods ---------------------------------------------------------
+   
+   private void addClazz(int state)
    {
-      editor_.getRenderer().addGutterDecoration(getRow() - 1, getClazz());
+      editor_.getRenderer().addGutterDecoration(getRow() - 1, getClazz(state));
+   }
+   
+   private void removeClazz()
+   {
+      for (int i = LINE_QUEUED; i <= state_; i++)
+      {
+         editor_.getRenderer().removeGutterDecoration(
+            getRow() - 1, getClazz(i));
+      }
    }
    
    private void scheduleDismiss()
@@ -151,11 +174,11 @@ public class ChunkRowExecState
    private final static int LINGER_MS = 250;
    private final static int FADE_MS   = 400;
 
-   public final static String LINE_QUEUED_CLASS = "ace_chunk-queued-line";
+   public final static String LINE_QUEUED_CLASS   = "ace_chunk-queued-line";
    public final static String LINE_EXECUTED_CLASS = "ace_chunk-executed-line";
-   public final static String LINE_RESTING_CLASS = "ace_chunk-resting-line";
+   public final static String LINE_RESTING_CLASS  = "ace_chunk-resting-line";
    
-   public final static int LINE_RESTING  = 0;
-   public final static int LINE_QUEUED   = 1;
-   public final static int LINE_EXECUTED = 2;
+   public final static int LINE_QUEUED   = 0;
+   public final static int LINE_EXECUTED = 1;
+   public final static int LINE_RESTING  = 2;
 }

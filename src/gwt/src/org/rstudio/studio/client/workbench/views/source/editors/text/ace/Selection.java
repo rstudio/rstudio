@@ -22,6 +22,10 @@ import org.rstudio.core.client.CommandWithArg;
 public class Selection extends JavaScriptObject
 {
    protected Selection() {}
+   
+   public native final void selectWord() /*-{
+      this.selectWord();
+   }-*/;
 
    public native final Range getRange() /*-{
       return this.getRange();
