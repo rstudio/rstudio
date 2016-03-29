@@ -922,6 +922,34 @@ public class AceEditor implements DocDisplay,
          return null;
       }
    }
+   
+   @Override
+   public void quickAddNext()
+   {
+      if (getNativeSelection().isEmpty())
+      {
+         getNativeSelection().selectWord();
+         return;
+      }
+      
+      String needle = getSelectionValue();
+      Search search = Search.create(
+            needle,
+            false,
+            true,
+            true,
+            true,
+            getCursorPosition(),
+            null,
+            false);
+      
+      Range range = search.find(getSession());
+      if (range == null)
+         return;
+      
+      getNativeSelection().addRange(range, false);
+      centerSelection();
+   }
 
    @Override
    public void insertCode(InputEditorPosition position, String content)
