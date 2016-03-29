@@ -216,9 +216,19 @@ bool isWebsiteDirectory(const FilePath& projectDir)
       indexFile = projectDir.childPath("index.md");
    if (indexFile.exists())
    {
-      static const boost::regex reSite("^site:.*$");
-      std::string yaml = yaml::extractYamlHeader(indexFile);
-      return boost::regex_search(yaml.begin(), yaml.end(), reSite);
+      // look for _site.yml
+      FilePath siteFile = projectDir.childPath("_site.yml");
+      if (siteFile.exists())
+      {
+         return true;
+      }
+      // no _site.yml, is there a custom site generator?
+      else
+      {
+         static const boost::regex reSite("^site:.*$");
+         std::string yaml = yaml::extractYamlHeader(indexFile);
+         return boost::regex_search(yaml.begin(), yaml.end(), reSite);
+      }
    }
    else
    {
