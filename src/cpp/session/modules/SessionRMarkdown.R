@@ -72,8 +72,14 @@
         ""
      })
   }
-  else
-    ""
+  else {
+    # return render_site if we are in a website
+    siteGenerator <- rmarkdown::site_generator(file)
+     if (!is.null(siteGenerator))
+        "rmarkdown::render_site"
+     else
+        ""
+  }
 })
 
 # given an input file, return the associated output file, and attempt to deduce
