@@ -603,17 +603,16 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("scrapeHtmlDataAttributes", function(line)
 {
-   reData <- '(data-[^=]+="[^"]+")'
-   reMatches <- gregexpr(reData, line, perl = TRUE)[[1]]
-   
-   starts <- attr(reMatches, "capture.start")
-   ends   <- starts + attr(reMatches, "capture.length") - 1
+   reData <- '([[:alnum:]_-]+)[[:space:]]*=[[:space:]]*"(\\\\.|[^"])+"'
+   reMatches <- gregexpr(reData, line)[[1]]
+   starts <- c(reMatches)
+   ends   <- starts + attr(reMatches, "match.length") - 1
    stripped <- substring(line, starts, ends)
-   parsed <- .rs.transposeList(strsplit(stripped, "=", fixed = TRUE))
-   
-   data <- sub('"([^"]*)"', "\\1", parsed[[2]])
-   names(data) <- parsed[[1]]
-   data
+   equalsIndex <- regexpr("=", stripped, fixed = TRUE)
+   lhs <- substring(stripped, 1, equalsIndex - 1)
+   rhs <- substring(stripped, equalsIndex + 2, nchar(stripped) - 1)
+   names(rhs) <- lhs
+   as.list(rhs)
 })
 
 .rs.addFunction("listToHtmlAttributes", function(list)
@@ -629,6 +628,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 .rs.addFunction("hydrateCacheFromNotebook", function(rnbPath, cachePath)
 {
    rnbContents <- readLines(rnbPath)
+   if (!file.exists(cachePath))
+      if (!dir.create(cachePath, recursive = TRUE))
+         stop("failed to create cache path: '", cachePath, "'")
    
    for (i in seq_along(rnbContents))
    {
@@ -637,6 +639,43 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          next
       
       dataAttributes <- .rs.scrapeHtmlDataAttributes(line)
+      
+      # generate the chunk folder from the ID
+      chunkPath <- file.path(cachePath, dataAttributes$`data-chunk-id`)
+      if (file.exists(chunkPath))
+         unlink(chunkPath, recursive = TRUE)
+      
+      if (!dir.create(chunkPath, recursive = TRUE))
+         stop("failed to create chunk data path: '", chunkPath, "'")
+      
+      # get the chunk filename
+      fileName <- dataAttributes$`data-chunk-filename`
+      if (.rs.endsWith(fileName, "csv"))
+      {
+         filePath <- file.path(chunkPath, fileName)
+         decoded <- .rs.base64decode(dataAttributes$`data-chunk-data`)
+         cat(decoded, file = filePath, append = TRUE)
+      }
+      else if (.rs.endsWith(fileName, "png"))
+      {
+         filePath <- file.path(chunkPath, fileName)
+         data <- substring(dataAttributes$src, nchar("data:image/png;base64,") + 1)
+         decoded <- .rs.base64decode(data, type = raw())
+         writeBin(decoded, con = filePath, useBytes = TRUE)
+      }
+      else if (.rs.endsWith(fileName, "html"))
+      {
+         htmlPath <- file.path(chunkPath, fileName)
+         htmlData <- .rs.base64decode(dataAttributes$`data-chunk-html`, raw())
+         writeBin(htmlData, con = htmlPath, useBytes = TRUE)
+         
+         jsonPath <- file.path(chunkPath, .rs.withChangedExtension(fileName, "json"))
+         jsonData <- .rs.base64decode(dataAttributes$`data-chunk-json`, raw())
+         writeBin(jsonData, con = jsonPath, useBytes = TRUE)
+      }
+      
    }
+   
+   cachePath
    
 })
