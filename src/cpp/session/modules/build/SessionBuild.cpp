@@ -1242,6 +1242,19 @@ private:
 
    void onCompleted(int exitStatus)
    {
+      // if the user killed the build, ensure we clean up an existing 00LOCK dir
+      if (exitStatus == SIGTERM && projects::projectContext().isPackageProject())
+      {
+         std::vector<core::FilePath> libPaths = module_context::getLibPaths();
+         std::string pkgName = projects::projectContext().packageInfo().name();
+         std::string lockName = std::string("00LOCK-") + pkgName;
+         BOOST_FOREACH(const FilePath& libPath, libPaths)
+         {
+            FilePath lockPath = libPath.childPath(lockName);
+            lockPath.removeIfExists();
+         }
+      }
+      
       using namespace module_context;
 
       // call the error parser if one has been specified
