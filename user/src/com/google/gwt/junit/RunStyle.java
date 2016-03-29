@@ -18,8 +18,6 @@ package com.google.gwt.junit;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.Set;
 
@@ -65,11 +63,7 @@ public abstract class RunStyle {
    * @return the host name of the local system
    */
   public String getLocalHostName() {
-    try {
-      return InetAddress.getLocalHost().getHostAddress();
-    } catch (UnknownHostException e) {
-      throw new RuntimeException("Unable to determine my ip address", e);
-    }
+    return "localhost";
   }
 
   /**
