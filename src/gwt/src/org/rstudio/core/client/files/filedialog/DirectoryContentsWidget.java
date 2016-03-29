@@ -157,15 +157,18 @@ public class DirectoryContentsWidget
       {
          public void onKeyDown(KeyDownEvent event)
          {
-            bufferTimer_.schedule(1000);
+            bufferTimer_.schedule(700);
             int keyCode = event.getNativeKeyCode();
             
-            if (keyCode >= 'a' && keyCode <= 'z' ||
-                keyCode >= 'A' && keyCode <= 'Z' ||
+            if (keyCode >= 'A' && keyCode <= 'Z' ||
                 keyCode >= '0' && keyCode <= '9' ||
                 keyCode == '.' || keyCode == '_' || keyCode == '-')
             {
-               buffer_.append((char) keyCode);
+               char ch = (char) keyCode;
+               if (keyCode >= 'A' && keyCode <= 'Z' && !event.isShiftKeyDown())
+                  ch = Character.toLowerCase(ch);
+               
+               buffer_.append(ch);
                selectBufferMatch();
                return;
             }
@@ -255,9 +258,24 @@ public class DirectoryContentsWidget
       if (buffer_.length() == 0)
          return;
       
-      String string = buffer_.toString().toLowerCase();
+      // Check for case-sensitive match
+      String string = buffer_.toString();
       int i = 0;
+      for (Map.Entry<String, FileSystemItem> entry : items_.entrySet())
+      {
+         String fileName = entry.getKey();
+         if (fileName.startsWith(string))
+         {
+            setSelectedRow(i);
+            return;
+         }
+         
+         i++;
+      }
       
+      // Check for case-insensitive match
+      string = string.toLowerCase();
+      i = 0;
       for (Map.Entry<String, FileSystemItem> entry : items_.entrySet())
       {
          String fileName = entry.getKey().toLowerCase();
@@ -269,6 +287,7 @@ public class DirectoryContentsWidget
          
          i++;
       }
+      
    }
 
    private void moveSelection(int offset)
