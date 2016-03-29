@@ -38,10 +38,19 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
       target.getDocDisplay().addLineWidget(widget_);
    }
    
+   // Public methods ----------------------------------------------------------
+
    public int getPreambleRow()
    {
       return widget_.getRow();
    }
+   
+   public void setState(int state)
+   {
+      toolbar_.setState(state);
+   }
+
+   // ChunkContextToolbar.Host implementation ---------------------------------
 
    @Override
    public void runPreviousChunks()

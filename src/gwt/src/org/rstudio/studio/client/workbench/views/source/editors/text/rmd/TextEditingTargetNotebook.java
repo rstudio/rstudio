@@ -58,6 +58,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExe
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -121,6 +122,7 @@ public class TextEditingTargetNotebook
    };
 
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
+                                    TextEditingTargetChunks chunks,
                                     TextEditingTarget.Display editingDisplay,
                                     DocDisplay docDisplay,
                                     DocUpdateSentinel docUpdateSentinel,
@@ -135,6 +137,7 @@ public class TextEditingTargetNotebook
       chunkExecQueue_ = new LinkedList<ChunkExecQueueUnit>();
       setupCrc32_ = docUpdateSentinel_.getProperty(LAST_SETUP_CRC32);
       editingTarget_ = editingTarget;
+      chunks_ = chunks;
       editingDisplay_ = editingDisplay;
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -303,6 +306,8 @@ public class TextEditingTargetNotebook
       // put it in the queue 
       chunkExecQueue_.add(new ChunkExecQueueUnit(chunkId, code,
             options, setupCrc32));
+      chunks_.setChunkState(chunk.getPreamble().getRow(), 
+            ChunkContextToolbar.STATE_QUEUED);
       
       // initiate queue processing
       processChunkExecQueue();
@@ -979,6 +984,7 @@ public class TextEditingTargetNotebook
    ArrayList<HandlerRegistration> releaseOnDismiss_;
    private final TextEditingTarget editingTarget_;
    private final TextEditingTarget.Display editingDisplay_;
+   private final TextEditingTargetChunks chunks_;
    private Session session_;
    private Provider<SourceWindowManager> pSourceWindowManager_;
    private UIPrefs prefs_;

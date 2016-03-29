@@ -50,6 +50,7 @@ public class ChunkContextToolbar extends Composite
       ImageResource runChunkPending();
       ImageResource runPreviousChunksLight();
       ImageResource runPreviousChunksDark();
+      ImageResource interruptChunk();
       ImageResource chunkOptionsLight();
       ImageResource chunkOptionsDark();
    }
@@ -60,6 +61,7 @@ public class ChunkContextToolbar extends Composite
          boolean run)
    {
       host_ = host;
+      state_ = STATE_RESTING;
       initWidget(uiBinder.createAndBindUi(this));
       
       initOptions(dark);
@@ -74,6 +76,27 @@ public class ChunkContextToolbar extends Composite
       else
          run_.setVisible(false);
    }
+
+   // Public methods ----------------------------------------------------------
+
+   public void setState(int state)
+   {
+      switch(state)
+      {
+      case STATE_RESTING:
+         run_.setResource(RES.runChunk());
+         break;
+      case STATE_QUEUED:
+         run_.setResource(RES.runChunkPending());
+         break;
+      case STATE_EXECUTING:
+         run_.setResource(RES.interruptChunk());
+         break;
+      }
+      state_ = state;
+   }
+   
+   // Private methods ---------------------------------------------------------
    
    private void initOptions(boolean dark)
    {
@@ -96,6 +119,7 @@ public class ChunkContextToolbar extends Composite
    
    private void initRun()
    {
+      setState(state_);
       DOM.sinkEvents(run_.getElement(), Event.ONCLICK);
       DOM.setEventListener(run_.getElement(), new EventListener()
       {
@@ -133,6 +157,11 @@ public class ChunkContextToolbar extends Composite
    @UiField Image run_;
    
    private final Host host_;
+   private int state_;
    
+   public final static int STATE_QUEUED    = 0;
+   public final static int STATE_EXECUTING = 1;
+   public final static int STATE_RESTING   = 2;
+
    public final static String LINE_WIDGET_TYPE = "ChunkToolbar";
 }

@@ -1214,11 +1214,11 @@ public class TextEditingTarget implements
       roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
       
       // create notebook and forward resize events
-      notebook_ = new TextEditingTargetNotebook(this, view_, docDisplay_,
-            docUpdateSentinel_, document, releaseOnDismiss_);
+      chunks_ = new TextEditingTargetChunks(this);
+      notebook_ = new TextEditingTargetNotebook(this, chunks_, view_, 
+            docDisplay_, docUpdateSentinel_, document, releaseOnDismiss_);
       view_.addResizeHandler(notebook_);
       
-      chunks_ = new TextEditingTargetChunks(this);
       
       // ensure that Makefile and Makevars always use tabs
       name_.addValueChangeHandler(new ValueChangeHandler<String>() {

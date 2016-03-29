@@ -35,6 +35,21 @@ public class TextEditingTargetChunks
          }
       });
    }
+
+   // Public methods ----------------------------------------------------------
+   
+   public void setChunkState(int preambleRow, int state)
+   {
+      for (ChunkContextUi toolbar: toolbars_)
+      {
+         if (toolbar.getPreambleRow() == preambleRow)
+         {
+            toolbar.setState(state);
+         }
+      }
+   }
+   
+   // Private methods ---------------------------------------------------------
    
    private void initializeWidgets()
    {
