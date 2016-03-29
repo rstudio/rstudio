@@ -29,7 +29,7 @@
 * Autocompletion allows mismatch between '.', '\_' in token
 * Improvements to refactoring utility 'Rename in Scope'
 * Expand selection command learns how to expand to current statement
-* Implemented (as unbound command) Sublime Text style 'Quick Add Next'
+* Added (as unbound command) Sublime Text style 'Quick Add Next'
 
 ### R Markdown
 
