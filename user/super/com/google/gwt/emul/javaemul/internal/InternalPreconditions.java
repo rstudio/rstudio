@@ -237,10 +237,10 @@ public final class InternalPreconditions {
    */
   public static void checkState(boolean expression) {
     if (API_CHECK) {
-      checkCritcalState(expression);
+      checkCriticalState(expression);
     } else if (CHECKED_MODE) {
       try {
-        checkCritcalState(expression);
+        checkCriticalState(expression);
       } catch (Exception e) {
         throw new AssertionError(e);
       }
@@ -254,7 +254,7 @@ public final class InternalPreconditions {
    * For cases where failing fast is pretty important and not failing early could cause bugs that
    * are much harder to debug.
    */
-  public static void checkCritcalState(boolean expression) {
+  public static void checkCriticalState(boolean expression) {
     if (!expression) {
       throw new IllegalStateException();
     }
@@ -433,7 +433,7 @@ public final class InternalPreconditions {
   /**
    * Checks that bounds are correct.
    *
-   * @throw StringIndexOutOfBoundsException if the range is not legal
+   * @throws StringIndexOutOfBoundsException if the range is not legal
    */
   public static void checkStringBounds(int start, int end, int size) {
     if (start < 0) {
