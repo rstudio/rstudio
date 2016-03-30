@@ -495,7 +495,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 {
    encoded <- if (.rs.endsWith(file, ".png"))
    {
-      "#id"
+      "@src"
    }
    else
    {
@@ -631,9 +631,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    )
 })
 
-.rs.addFunction("rnb.hydrateFromId", function(id,
-                                              rnbContents,
-                                              targetPath)
+.rs.addFunction("rnb.hydrateFromAttribute", function(id,
+                                                     attribute,
+                                                     rnbContents,
+                                                     targetPath)
 {
    target <- sprintf('data-rnb-id="%s"', id)
    idx <- grep(target, rnbContents, fixed = TRUE)
@@ -643,8 +644,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    line <- rnbContents[[idx]]
    scraped <- .rs.scrapeHtmlAttributes(line)
-   src <- scraped$src
-   data <- substring(src, nchar("data:image/png;base64,") + 1)
+   element <- scraped[[attribute]]
+   data <- sub("^.*;base64,", "", element)
    decoded <- .rs.base64decode(data, raw())
    writeBin(decoded, con = targetPath)
    
@@ -684,9 +685,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       targetPath <- file.path(cachePath, filePath)
       .rs.ensureDirectory(dirname(targetPath))
       
-      if (encodedContents == "#id") {
-         .rs.rnb.hydrateFromId(
+      if (.rs.startsWith(encodedContents, "@")) {
+         .rs.rnb.hydrateFromAttribute(
             filePath,
+            substring(encodedContents, 2),
             rnbContents,
             targetPath)
       } else {
