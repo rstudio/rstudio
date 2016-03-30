@@ -31,6 +31,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    contents <- .rs.extractFromNotebook("rnb-document-source", input)
    cat(contents, file = output, sep = "\n")
+   
+   cachePath <- .rs.rnb.cachePathFromRmdPath(output)
+   .rs.hydrateCacheFromNotebook(input, output)
 
    .rs.scalar(TRUE)
 })
@@ -249,27 +252,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .rs.trimWhitespace(contents)
 })
 
-.rs.addFunction("rnb.injectBase64Data", function(html, chunkId, rnbData)
-{
-   # we'll be calling pandoc in the cache dir, so make sure
-   # we save our original dir
-   owd <- getwd()
-   on.exit(setwd(owd), add = TRUE)
-   setwd(rnbData$cache_path)
-   
-   # use pandoc to render the HTML fragment, thereby injecting
-   # base64-encoded dependencies
-   input  <- "rnb-base64-inject-input.html"
-   output <- "rnb-base64-inject-output.html"
-   
-   cat(html, file = input, sep = "\n")
-   opts <- c("--self-contained")
-   rmarkdown:::pandoc_convert(input, output = output, options = opts)
-   
-   result <- .rs.readFile(output)
-   .rs.extractHTMLBodyElement(result)
-})
-
 .rs.addFunction("rnb.maskChunks", function(contents, chunkInfo)
 {
    masked <- contents
@@ -377,11 +359,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       })
       
       # insert into document
-      injection <- c(
-         sprintf("<!-- rnb-chunk-start-%s %s -->", chunkIdx, chunkDefn$chunk_start),
-         paste(unlist(htmlList), collapse = "\n"),
-         sprintf("<!-- rnb-chunk-end-%s %s -->", chunkIdx, chunkDefn$chunk_end)
-      )
+      injection <- paste(unlist(htmlList), collapse = "\n")
       
       html[[i]] <- paste(injection, sep = "\n", collapse = "\n")
       chunkIdx <- chunkIdx + 1
@@ -458,7 +436,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # (i heard you like documents, so i put a document in your document)
    rnbContents <- .rs.injectHTMLComments(
       rnbContents,
-      "<head>",
+      "</body>",
       list("rnb-document-source" = rmdEncoded)
    )
    
