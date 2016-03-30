@@ -14,12 +14,14 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
+import org.rstudio.studio.client.workbench.views.source.editors.text.PinnedLineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
@@ -27,34 +29,38 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 
 public class ChunkContextUi implements ChunkContextToolbar.Host
 {
-   public ChunkContextUi(TextEditingTarget target, Scope chunk)
+   public ChunkContextUi(TextEditingTarget target, Scope chunk, 
+         CommandWithArg<LineWidget> onRemoved)
    {
       target_ = target;
       int preambleRow = chunk.getPreamble().getRow();
       toolbar_ = new ChunkContextToolbar(this, false, 
             !isSetupChunk(preambleRow), isRunnableChunk(preambleRow));
       toolbar_.setHeight("0px"); 
-      widget_ = LineWidget.create(
-            ChunkContextToolbar.LINE_WIDGET_TYPE, 
-            chunk.getPreamble().getRow(), toolbar_.getElement());
-      widget_.setFixedWidth(true); 
-      target.getDocDisplay().addLineWidget(widget_);
+      lineWidget_ = new PinnedLineWidget(
+            ChunkContextToolbar.LINE_WIDGET_TYPE, target_.getDocDisplay(), 
+            toolbar_, preambleRow, null, onRemoved);
    }
    
    // Public methods ----------------------------------------------------------
 
    public int getPreambleRow()
    {
-      return widget_.getRow();
+      return lineWidget_.getRow();
    }
    
    public void setState(int state)
    {
       toolbar_.setState(state);
    }
+   
+   public LineWidget getLineWidget()
+   {
+      return lineWidget_.getLineWidget();
+   }
 
    // ChunkContextToolbar.Host implementation ---------------------------------
-
+   
    @Override
    public void runPreviousChunks()
    {
@@ -70,7 +76,7 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
    @Override
    public void showOptions(int x, int y)
    {
-      ChunkOptionsPopupPanel panel = isSetupChunk(widget_.getRow()) ?
+      ChunkOptionsPopupPanel panel = isSetupChunk(lineWidget_.getRow()) ?
          new SetupChunkOptionsPopupPanel() :
          new DefaultChunkOptionsPopupPanel();
       
@@ -101,7 +107,7 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
                @Override
                public void execute()
                {
-                  target_.dequeueChunk(widget_.getRow());
+                  target_.dequeueChunk(lineWidget_.getRow());
                }
             }, 
             null,  // cancel operation 
@@ -113,7 +119,7 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
    
    private Position chunkPosition()
    {
-      return Position.create(widget_.getRow(), 0);
+      return Position.create(lineWidget_.getRow(), 0);
    }
    
    private boolean isSetupChunk(int row)
@@ -161,5 +167,5 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
    
    private final TextEditingTarget target_;
    private final ChunkContextToolbar toolbar_;
-   private final LineWidget widget_;
+   private final PinnedLineWidget lineWidget_;
 }

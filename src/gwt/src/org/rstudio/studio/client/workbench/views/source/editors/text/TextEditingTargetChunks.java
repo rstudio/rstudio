@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi;
 
@@ -59,23 +61,48 @@ public class TextEditingTargetChunks
          if (!scope.isChunk())
             continue;
 
-         // see if we've already drawn a toolbar for this chunk
-         boolean hasToolbar = false;
-         for (ChunkContextUi toolbar: toolbars_)
-         {
-            if (toolbar.getPreambleRow() == scope.getPreamble().getRow())
-            {
-               hasToolbar = true; 
-               break;
-            }
-         }
-         if (hasToolbar)
-            continue;
-         
-         // no toolbar yet, add a new one
-         ChunkContextUi ui = new ChunkContextUi(target_, scope);
-         toolbars_.add(ui);
+         insertChunkToolbar(scope);
       }
+   }
+   
+   private void onWidgetRemoved(LineWidget widget)
+   {
+      // remove the widget from our internal list
+      for (ChunkContextUi toolbar: toolbars_)
+      {
+         if (toolbar.getLineWidget() == widget)
+         {
+            toolbars_.remove(toolbar);
+            break;
+         }
+      }
+   }
+   
+   private void insertChunkToolbar(Scope chunk)
+   {
+      // see if we've already drawn a toolbar for this chunk
+      boolean hasToolbar = false;
+      for (ChunkContextUi toolbar: toolbars_)
+      {
+         if (toolbar.getPreambleRow() == chunk.getPreamble().getRow())
+         {
+            hasToolbar = true; 
+            break;
+         }
+      }
+      if (hasToolbar)
+         return;
+         
+      ChunkContextUi ui = new ChunkContextUi(target_, chunk, 
+            new CommandWithArg<LineWidget>()
+      {
+         @Override
+         public void execute(LineWidget widget)
+         {
+            onWidgetRemoved(widget);
+         }
+      });
+      toolbars_.add(ui);
    }
    
    private final TextEditingTarget target_;
