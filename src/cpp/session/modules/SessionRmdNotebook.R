@@ -331,8 +331,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          } else if (.rs.endsWith(fileName, "png")) {
             
             tagAttributes <- list(
-               "data-chunk-id" = chunkId,
-               "data-chunk-filename" = fileName,
+               "data-rnb-id" = file.path(chunkId, fileName),
                "src" = sprintf("data:image/png;base64,%s", .rs.base64encode(value))
             )
             
@@ -346,20 +345,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
             
             # emit body of HTML content
             bodyEl <- .rs.extractHTMLBodyElement(value)
-            
-            # base64 encode original contents for easy extraction later
-            # (for re-hydrating the cache)
-            htmlEncoded <- .rs.base64encode(value)
-            jsonEncoded <- .rs.base64encode(jsonString)
-            
-            fmt <- paste0("<div ",
-                          "data-chunk-id=\"%s\" ",
-                          "data-chunk-filename=\"%s\" ",
-                          "data-chunk-html=\"%s\" ",
-                          "data-chunk-json=\"%s\">",
-                          "\n%s\n",
-                          "</div>")
-            sprintf(fmt, chunkId, fileName, htmlEncoded, jsonEncoded, bodyEl)
+            paste("<div>", bodyEl, "</div>", sep = "\n")
          }
       })
       
@@ -509,7 +495,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 {
    encoded <- if (.rs.endsWith(file, ".png"))
    {
-      paste('#image("', dirname(file), '")', sep = "")
+      "#id"
    }
    else
    {
@@ -645,34 +631,22 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    )
 })
 
-.rs.addFunction("rnb.hydrateFromFunction", function(fn,
-                                                    rnbContents,
-                                                    targetPath)
+.rs.addFunction("rnb.hydrateFromId", function(id,
+                                              rnbContents,
+                                              targetPath)
 {
-   parsed <- try(parse(text = fn, keep.source = FALSE)[[1]], silent = TRUE)
-   if (inherits(parsed, "try-error"))
-      return(FALSE)
+   target <- sprintf('data-rnb-id="%s"', id)
+   idx <- grep(target, rnbContents, fixed = TRUE)
    
-   if (parsed[[1]] == "image") {
-      
-      id <- parsed[[2]]
-      target <- sprintf('data-chunk-id="%s"', id)
-      idx <- grep(target, rnbContents, fixed = TRUE)
-      
-      if (length(idx) == 0)
-         stop("failed to discover element with chunk id '", id, "'")
-      
-      line <- rnbContents[[idx]]
-      scraped <- .rs.scrapeHtmlAttributes(line)
-      src <- scraped$src
-      data <- substring(src, nchar("data:image/png;base64,") + 1)
-      decoded <- .rs.base64decode(data, raw())
-      writeBin(decoded, con = targetPath)
-      
-   } else {
-      formatted <- paste(format(parsed), collapse = "\n")
-      stop("unimplemented hydration scheme: ", formatted)
-   }
+   if (length(idx) != 1)
+      stop("failed to discover element with chunk id '", id, "'")
+   
+   line <- rnbContents[[idx]]
+   scraped <- .rs.scrapeHtmlAttributes(line)
+   src <- scraped$src
+   data <- substring(src, nchar("data:image/png;base64,") + 1)
+   decoded <- .rs.base64decode(data, raw())
+   writeBin(decoded, con = targetPath)
    
    TRUE
 })
@@ -710,9 +684,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       targetPath <- file.path(cachePath, filePath)
       .rs.ensureDirectory(dirname(targetPath))
       
-      if (.rs.startsWith(encodedContents, "#")) {
-         .rs.rnb.hydrateFromFunction(
-            substring(encodedContents, 2),
+      if (encodedContents == "#id") {
+         .rs.rnb.hydrateFromId(
+            filePath,
             rnbContents,
             targetPath)
       } else {
