@@ -326,6 +326,28 @@ public class TextEditingTargetNotebook
       commands_.notebookExpandAllOutput().setVisible(inlineOutput); 
       editingDisplay_.setNotebookUIVisible(inlineOutput);
    }
+   
+   public void dequeueChunk(int preambleRow)
+   {
+      // clean up the toolbar on the chunk
+      chunks_.setChunkState(preambleRow, ChunkContextToolbar.STATE_RESTING);
+      
+      // find the chunk's ID
+      String chunkId = getRowChunkId(preambleRow);
+      if (StringUtil.isNullOrEmpty(chunkId))
+         return;
+      
+      // clear from the execution queue and update display
+      for (ChunkExecQueueUnit unit: chunkExecQueue_)
+      {
+         if (unit.chunkId == chunkId)
+         {
+            chunkExecQueue_.remove(unit);
+            cleanChunkExecState(unit.chunkId);
+            break;
+         }
+      }
+   }
 
    // Command handlers --------------------------------------------------------
    
@@ -974,6 +996,27 @@ public class TextEditingTargetNotebook
       {
          return outputs_.get(chunkId).getScope();
       }
+      return null;
+   }
+   
+   private String getRowChunkId(int preambleRow)
+   {
+      // find the chunk corresponding to the row
+      for (ChunkOutputUi output: outputs_.values())
+      {
+         if (output.getScope().getPreamble().getRow() == preambleRow)
+            return output.getChunkId();
+      }
+      
+      // no row mapped -- how about the setup chunk?
+      JsArray<Scope> scopes = docDisplay_.getScopeTree();
+      for (int i = 0; i < scopes.length(); i++)
+      {
+         if (isSetupChunkScope(scopes.get(i)) && 
+             scopes.get(i).getPreamble().getRow() == preambleRow)
+            return SETUP_CHUNK_ID;
+      }
+      
       return null;
    }
    

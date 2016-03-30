@@ -101,6 +101,11 @@ public class ChunkOutputUi
       return lineWidget_.getRow();
    }
    
+   public String getChunkId()
+   {
+      return def_.getChunkId();
+   }
+   
    public Scope getScope()
    {
       return display_.getCurrentChunk(Position.create(getCurrentRow(), 1));

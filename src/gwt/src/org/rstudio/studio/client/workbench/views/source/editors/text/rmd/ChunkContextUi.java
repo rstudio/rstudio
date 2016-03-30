@@ -16,6 +16,9 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
@@ -77,6 +80,35 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
       PopupPositioner.setPopupPosition(panel, x, y, 10);
    }
    
+   @Override
+   public void interruptChunk()
+   {
+      RStudioGinjector.INSTANCE.getApplicationInterrupt().interruptR(null);
+   }
+
+   @Override
+   public void dequeueChunk()
+   {
+      RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
+            GlobalDisplay.MSG_QUESTION, 
+            "Chunk Pending Execution", 
+            "The code in this chunk is scheduled to run later, when other " +
+            "chunks have finished executing.", 
+            false, // include cancel
+            null,  // yes operation,
+            new Operation() 
+            {
+               @Override
+               public void execute()
+               {
+                  target_.dequeueChunk(widget_.getRow());
+               }
+            }, 
+            null,  // cancel operation 
+            "OK", 
+            "Don't Run", true);
+   }
+
    // Private methods ---------------------------------------------------------
    
    private Position chunkPosition()

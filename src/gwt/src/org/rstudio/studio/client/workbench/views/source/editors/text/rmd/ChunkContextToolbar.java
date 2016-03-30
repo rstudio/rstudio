@@ -42,6 +42,8 @@ public class ChunkContextToolbar extends Composite
       void runPreviousChunks();
       void runChunk();
       void showOptions(int x, int y);
+      void interruptChunk();
+      void dequeueChunk();
    }
    
    public interface Resources extends ClientBundle
@@ -128,7 +130,18 @@ public class ChunkContextToolbar extends Composite
          {
             if (DOM.eventGetType(event) == Event.ONCLICK)
             {
-               host_.runChunk();
+               switch(state_)
+               {
+               case STATE_RESTING:
+                  host_.runChunk();
+                  break;
+               case STATE_QUEUED:
+                  host_.dequeueChunk();
+                  break;
+               case STATE_EXECUTING:
+                  host_.interruptChunk();
+                  break;
+               }
             }
          }
       });

@@ -140,6 +140,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.VimMark
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar.HideMessageHandler;
@@ -4013,6 +4014,11 @@ public class TextEditingTarget implements
    {
       docDisplay_.getScopeTree();
       executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(position), false);
+   }
+   
+   public void dequeueChunk(int row)
+   {
+      notebook_.dequeueChunk(row);
    }
    
    @Handler
