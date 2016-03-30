@@ -17,5 +17,4 @@
 /**
  * Classes used to provide information about RPC for a GWT application.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.user.linker.rpc;

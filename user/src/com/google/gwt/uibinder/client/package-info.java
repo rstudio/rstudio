@@ -38,5 +38,4 @@
  * @see <a href="http://code.google.com/webtoolkit/doc/latest/DevGuideUiBinder.html">Declarative Layout with UiBinder</a>
  * @see <a href="http://code.google.com/webtoolkit/doc/latest/DevGuideUiBinderI18n.html">Internationalization - UiBinder</A>
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.uibinder.client;

@@ -17,5 +17,4 @@
 /**
  * A regular expression package based on the capabilities of Javascript's RegExp.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.regexp.shared;

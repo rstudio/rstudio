@@ -17,5 +17,4 @@
 /**
  * Classes for HTML Canvas 2D support.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.canvas.client;

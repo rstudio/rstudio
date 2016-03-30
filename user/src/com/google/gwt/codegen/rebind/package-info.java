@@ -17,5 +17,4 @@
 /**
  * Classes used by code generation, specific to GWT generators.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.codegen.rebind;

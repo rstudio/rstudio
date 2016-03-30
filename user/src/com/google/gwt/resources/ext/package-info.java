@@ -18,5 +18,4 @@
  * This package contains extension hooks for adding new resource types to
  * ClientBundle. 
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.resources.ext;

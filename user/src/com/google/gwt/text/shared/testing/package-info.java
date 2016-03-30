@@ -17,5 +17,4 @@
 /**
  * Classes used for testing text parsing and rendering.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.text.shared.testing;

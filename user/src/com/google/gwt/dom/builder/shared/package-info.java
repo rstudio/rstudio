@@ -19,5 +19,4 @@
  *
  * @since GWT 2.4
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.dom.builder.shared;

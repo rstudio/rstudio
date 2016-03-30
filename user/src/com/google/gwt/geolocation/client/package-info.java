@@ -19,5 +19,4 @@
  * Support for the HTML5 Geolocation API.
  * </p>
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.geolocation.client;

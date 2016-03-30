@@ -21,5 +21,4 @@
  * RemoteService, and ServiceDefTarget. The other classes in this package are used
  * primarily in implementing RPC proxies.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.user.client.rpc;

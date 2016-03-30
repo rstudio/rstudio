@@ -24,8 +24,10 @@ import java.lang.annotation.Target;
  * A dummy annotation applied to package-info.java to force it to generate a
  * class file; this prevents javac from thinking package-info.java is always
  * stale.
+ * @deprecated not needed anymore,
  */
 @Target(ElementType.PACKAGE)
 @Retention(RetentionPolicy.CLASS)
+@Deprecated
 public @interface PreventSpuriousRebuilds {
 }

@@ -14,5 +14,4 @@
  * the License.
  */
 @jsinterop.annotations.JsPackage(namespace = "woo")
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.core.interop;

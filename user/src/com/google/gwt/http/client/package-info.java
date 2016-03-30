@@ -68,5 +68,4 @@
  * The following example demonstrates how to allow an HTTP request other than a GET or a POST to be made.  <em>Beware: if you plan on supporting Safari, you cannot use this scheme.</em>
  * {@example com.google.gwt.examples.http.client.RequestBuilderForAnyHTTPMethodTypeExample}
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.http.client;

@@ -18,6 +18,5 @@
  * Classes used by the request factory to manage proxies, user logins, and
  * authentication.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.web.bindery.requestfactory.gwt.ui.client;
 

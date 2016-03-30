@@ -21,5 +21,4 @@
  * by the class in {@link com.google.gwt.i18n.client} to format currency, date,
  * time, and numeric strings. 
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.i18n.client.constants;

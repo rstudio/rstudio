@@ -19,5 +19,4 @@
  * within this package do not use JSNI and do not have static (even indirect)
  * dependencies upon types which use JSNI.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.event.shared;

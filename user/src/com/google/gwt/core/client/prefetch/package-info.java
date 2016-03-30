@@ -17,5 +17,4 @@
 /**
  * Classes allowing prefetching of resources.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.core.client.prefetch;

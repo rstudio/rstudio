@@ -17,5 +17,4 @@
 /**
  * Classes used for testing core GWT functionality.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.core.client.testing;

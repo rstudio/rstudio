@@ -21,5 +21,4 @@
  * history, the browser window, DOM manipulation, and event handling.  It also
  * contains convenience classes such as Timer and Random.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.user.client;

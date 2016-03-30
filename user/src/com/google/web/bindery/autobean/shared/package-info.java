@@ -26,6 +26,5 @@
  * @see com.google.web.bindery.autobean.shared.AutoBeanFactory
  * @see com.google.web.bindery.autobean.vm.AutoBeanFactorySource
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.web.bindery.autobean.shared;
 

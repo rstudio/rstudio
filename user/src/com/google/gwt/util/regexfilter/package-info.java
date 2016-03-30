@@ -17,5 +17,4 @@
 /**
  * Classes used to implement filtering by a sequence of regular expressions preceded by + or - signs.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.util.regexfilter;

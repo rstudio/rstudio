@@ -17,5 +17,4 @@
 /**
  * Classes used for testing the GWT event bus.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.event.shared.testing;

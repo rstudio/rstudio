@@ -17,5 +17,4 @@
 /**
  * This package contains i18n generators.  The class in this package are not meant to be used directly.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.i18n.rebind;

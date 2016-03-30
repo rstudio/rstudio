@@ -17,5 +17,4 @@
 /**
  * The date picker widget and associated types.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.user.datepicker.client;

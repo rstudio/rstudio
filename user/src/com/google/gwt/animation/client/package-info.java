@@ -19,5 +19,4 @@
  *
  * This package contains classes that provide animation support for various GWT components.  
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.animation.client;

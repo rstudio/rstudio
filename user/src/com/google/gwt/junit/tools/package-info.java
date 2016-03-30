@@ -20,5 +20,4 @@
  * This package contains classes that interact with the popular JUnit testing
  * framework.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.junit.tools;

@@ -17,5 +17,4 @@
 /**
  * Classes for laying out container elements.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.layout.client;

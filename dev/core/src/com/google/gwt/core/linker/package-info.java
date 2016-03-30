@@ -17,5 +17,4 @@
 /**
  * A package containing implementations of the GWT bootstrap linkers.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.core.linker;

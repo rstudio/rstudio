@@ -17,5 +17,4 @@
 /**
  * Classes that parse XML attribute values, turning them into valid Java expressions.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.uibinder.attributeparsers;

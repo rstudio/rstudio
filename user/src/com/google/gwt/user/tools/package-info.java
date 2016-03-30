@@ -17,5 +17,4 @@
 /**
  * Classes used to create a GWT application skeleton.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.user.tools;

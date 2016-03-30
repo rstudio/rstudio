@@ -17,5 +17,4 @@
 /**
  * Classes to process command-line arguments for GWT command-line tools.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.user.tools.util;

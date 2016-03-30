@@ -20,5 +20,4 @@
  * message catalog systems which use different algorithms to compute keys for
  * message aggregation. 
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.i18n.server.keygen;

@@ -17,5 +17,4 @@
 /**
  * Classes and modules used in building JUnit tests.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.junit.client;

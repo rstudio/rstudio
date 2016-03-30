@@ -20,5 +20,4 @@
  * The classes in this package support parsing XML documents and creating
  * new XML documents.  The implementation uses the underlying browser.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.xml.client;

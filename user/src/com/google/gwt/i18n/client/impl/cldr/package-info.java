@@ -20,5 +20,4 @@
  * 
  * The classes currently here were hand-written based on the CLDR data.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.i18n.client.impl.cldr;

@@ -20,6 +20,5 @@
  * 
  * @since GWT 2.3
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.web.bindery.requestfactory.vm;
 

@@ -17,5 +17,4 @@
 /**
  * A package containing an annotation used to mark package-info.java classes.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.util;

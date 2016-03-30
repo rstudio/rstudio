@@ -21,5 +21,4 @@
  * applications and libraries. GWT internationalization support provides a
  * variety of techniques to internationalize strings, typed values, and classes.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.i18n.client;

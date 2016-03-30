@@ -17,5 +17,4 @@
 /**
  * A linker that precompresses the public artifacts that it sees.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.precompress.linker;

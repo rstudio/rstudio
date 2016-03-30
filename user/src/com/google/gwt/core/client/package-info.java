@@ -20,5 +20,4 @@
  * The classes in this package represent concepts fundamental to GWT, such as
  * module entry points, and interfacing with JavaScript.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.core.client;

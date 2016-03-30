@@ -23,6 +23,5 @@
  *      href="http://code.google.com/p/google-web-toolkit/wiki/AutoBean">AutoBean
  *      wiki page</a>
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.web.bindery.autobean.vm;
 

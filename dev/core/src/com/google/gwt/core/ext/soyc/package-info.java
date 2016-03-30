@@ -20,5 +20,4 @@
  * analysis turned on, these types are available via XML files in the extras
  * output.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.core.ext.soyc;

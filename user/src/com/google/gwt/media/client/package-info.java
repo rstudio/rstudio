@@ -18,5 +18,4 @@
  * <p>
  * Widgets for HTML Audio and Video support.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.media.client;

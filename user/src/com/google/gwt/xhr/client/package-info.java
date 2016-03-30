@@ -17,5 +17,4 @@
 /**
  * Classes to support Javascript's XMLHttpRequest.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.xhr.client;

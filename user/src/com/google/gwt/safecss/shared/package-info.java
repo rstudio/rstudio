@@ -17,5 +17,4 @@
 /**
  * Shared classes for creating safe CSS style content.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.safecss.shared;

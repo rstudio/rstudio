@@ -20,5 +20,4 @@
  * These classes parse strings of JSON encoded values into Java accessible
  * objects.  They also support programmatically building JSON strings.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.json.client;

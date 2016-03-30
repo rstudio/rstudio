@@ -17,5 +17,4 @@
 /**
  * Shared classes for creating safe HTML content.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.safehtml.shared;

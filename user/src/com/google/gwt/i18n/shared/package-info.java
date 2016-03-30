@@ -18,5 +18,4 @@
  * This package contains i18n classes and interfaces shared between client and
  * server.  
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.i18n.shared;

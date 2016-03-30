@@ -17,5 +17,4 @@
 /**
  * Types related to DOM events.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.event.dom.client;

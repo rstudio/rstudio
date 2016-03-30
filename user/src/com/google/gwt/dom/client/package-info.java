@@ -29,5 +29,4 @@
  * Consequently, these DOM classes are efficient enough to be used directly when maximum performance is required 
  * and are lightweight enough to serve as the basic building blocks upon which widget libraries may be constructed.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.dom.client;

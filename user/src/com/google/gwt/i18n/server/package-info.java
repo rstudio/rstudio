@@ -17,5 +17,4 @@
 /**
  * This package contains server-side i18n classes and interfaces.  
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.i18n.server;

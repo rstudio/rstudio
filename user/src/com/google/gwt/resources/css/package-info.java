@@ -17,5 +17,4 @@
 /**
  * Support package for manipulating CSS resources.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.resources.css;

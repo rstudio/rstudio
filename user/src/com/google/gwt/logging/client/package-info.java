@@ -17,5 +17,4 @@
 /**
  * Log handlers and related classes for java.util.logging support in GWT.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.logging.client;

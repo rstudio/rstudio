@@ -21,5 +21,4 @@
  * panels and event interfaces. These classes form the bulk of the client-side
  * libraries used by GWT applications.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.user.client.ui;

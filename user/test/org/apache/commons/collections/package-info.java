@@ -20,5 +20,4 @@
  * this package has been <b>heavily</b> modified, so replace it with a
  * new version only if you wish to do all the modifications again.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package org.apache.commons.collections;

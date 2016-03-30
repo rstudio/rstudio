@@ -21,6 +21,5 @@
  * generators} will use the classes in this package for introspection of the
  * code being compiled.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.dev.javac.typemodel;
 

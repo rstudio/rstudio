@@ -17,5 +17,4 @@
 /**
  * Classes used for testing the bean editor support.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.editor.client.testing;

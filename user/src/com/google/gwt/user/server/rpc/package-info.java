@@ -44,5 +44,4 @@
  * {@link com.google.gwt.user.server.rpc.RemoteServiceServlet#doUnexpectedFailure(java.lang.Throwable) RemoteServiceServlet.doUnexpectedFailure(java.lang.Throwable)}.
  * </p>
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.user.server.rpc;

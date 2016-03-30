@@ -20,5 +20,4 @@
  *
  * @since GWT 2.1
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.view.client;

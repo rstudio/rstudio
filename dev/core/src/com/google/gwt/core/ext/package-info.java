@@ -20,5 +20,4 @@
  * com.google.gwt.core.ext.Generator generators} or {@link
  * com.google.gwt.core.ext.Linker linkers}.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.core.ext;
