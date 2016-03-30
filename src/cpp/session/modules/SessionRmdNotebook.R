@@ -389,7 +389,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    # Inject JSON dependency information into document
    # TODO: Resolve duplicates
-   htmlDeps <- lapply(jsDependencies, function(dep) {
+   htmlDeps <- unlist(lapply(jsDependencies, function(dep) {
       injection <- character()
       
       jsPath <- file.path(dep$src$file, dep$script)
@@ -402,13 +402,13 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       }
       
       paste(injection, collapse = "\n")
-   })
+   }))
    
    bodyIdx <- tail(grep("^\\s*</body>\\s*$", html, perl = TRUE), n = 1)
-   html[bodyIdx] <- paste(
-      paste(htmlDeps, collapse = "\n"),
-      "</body>",
-      sep = "\n"
+   html <- c(
+      html[1:(bodyIdx - 1)],
+      htmlDeps,
+      html[bodyIdx:length(html)]
    )
    
    html
@@ -496,9 +496,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # replace chunk placeholders with their actual data
    html <- .rs.rnb.fillChunks(html, rnbData)
    
-   # write to file
-   cat(html, file = outputFile, sep = "\n")
-   outputFile
+   html
 })
 
 .rs.addFunction("createNotebookFromCache", function(rmdPath, outputPath = NULL)
@@ -511,7 +509,37 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       stop("no cache data associated with '", rmdPath, "'")
    
    rnbData <- .rs.readRnbCache(rmdPath, cachePath)
-   .rs.createNotebookFromCacheData(rnbData, outputPath)
+   html <- .rs.createNotebookFromCacheData(rnbData, outputPath)
+   
+   # inject cache data
+   html <- .rs.rnb.injectCacheData(html, cachePath)
+   
+   # write to file
+   cat(html, file = outputPath, sep = "\n")
+   outputPath
+})
+
+.rs.addFunction("rnb.injectCacheData", function(html, cachePath)
+{
+   files <- list.files(cachePath, recursive = TRUE)
+   contents <- unlist(lapply(files, function(file) {
+      fullPath <- file.path(cachePath, file)
+      contents <- .rs.readFile(fullPath, binary = TRUE)
+      encoded  <- .rs.base64encode(contents)
+      paste(file, encoded, sep = ":")
+   }))
+   
+   injection <- paste(
+      "<!-- rnb-cache-data-begin",
+      paste(paste("   ", contents), collapse = "\n"),
+      "rnb-cache-data-end -->",
+      sep = "\n"
+   )
+   
+   idx <- grep("</body>", html)
+   html <- c(html[1:(idx - 1)], injection, html[idx:length(html)])
+   
+   html
 })
 
 .rs.addFunction("rnb.cachePathFromRmdPath", function(rmdPath)
@@ -556,39 +584,29 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       if (type == 1 || type == 2)
          result <- paste("##", gsub("\n", "\n## ", result, fixed = TRUE))
       
-      attr(result, "type") <- type
       attr(result, ".class") <- if (type == 0) "r"
-      
       result
    })
    
    filtered <- Filter(Negate(is.null), splat)
    html <- lapply(filtered, function(el) {
-      
       class <- attr(el, ".class")
-      type  <- attr(el, "type")
-      
-      tagAttributes <- list(
-         "data-chunk-id"       = chunkId,
-         "data-chunk-filename" = fileName,
-         "data-chunk-type"     = type,
-         "data-chunk-data"     = .rs.base64encode(data)
-      )
-      
-      if (!is.null(class))
-         tagAttributes["class"] <- class
-      
-      result <- sprintf(
-         "<pre %s><code>%s</code></pre>",
-         .rs.listToHtmlAttributes(tagAttributes),
-         el
-      )
-      
+      result <- if (is.null(class)) {
+         sprintf(
+            "<pre><code>%s</code></pre>",
+            el
+         )
+      } else {
+         sprintf(
+            "<pre class=\"%s\"><code>%s</code></pre>",
+            class,
+            el
+         )
+      }
       result
    })
    
    paste(unlist(html), collapse = "\n")
-   
 })
 
 .rs.addFunction("base64encode", function(data)
@@ -603,17 +621,16 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("scrapeHtmlDataAttributes", function(line)
 {
-   reData <- '(data-[^=]+="[^"]+")'
-   reMatches <- gregexpr(reData, line, perl = TRUE)[[1]]
-   
-   starts <- attr(reMatches, "capture.start")
-   ends   <- starts + attr(reMatches, "capture.length") - 1
+   reData <- '([[:alnum:]_-]+)[[:space:]]*=[[:space:]]*"(\\\\.|[^"])+"'
+   reMatches <- gregexpr(reData, line)[[1]]
+   starts <- c(reMatches)
+   ends   <- starts + attr(reMatches, "match.length") - 1
    stripped <- substring(line, starts, ends)
-   parsed <- .rs.transposeList(strsplit(stripped, "=", fixed = TRUE))
-   
-   data <- sub('"([^"]*)"', "\\1", parsed[[2]])
-   names(data) <- parsed[[1]]
-   data
+   equalsIndex <- regexpr("=", stripped, fixed = TRUE)
+   lhs <- substring(stripped, 1, equalsIndex - 1)
+   rhs <- substring(stripped, equalsIndex + 2, nchar(stripped) - 1)
+   names(rhs) <- lhs
+   as.list(rhs)
 })
 
 .rs.addFunction("listToHtmlAttributes", function(list)
@@ -626,17 +643,37 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    )
 })
 
-.rs.addFunction("hydrateCacheFromNotebook", function(rnbPath, cachePath)
+.rs.addFunction("hydrateCacheFromNotebook", function(rnbPath, cachePath = NULL)
 {
-   rnbContents <- readLines(rnbPath)
-   
-   for (i in seq_along(rnbContents))
-   {
-      line <- rnbContents[[i]]
-      if (!grepl("data-chunk-id", line))
-         next
-      
-      dataAttributes <- .rs.scrapeHtmlDataAttributes(line)
+   if (is.null(cachePath)) {
+      rmdPath <- .rs.withChangedExtension(rnbPath, "Rmd")
+      cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)
    }
+   
+   rnbContents <- readLines(rnbPath)
+   startIdx <- grep("<!-- rnb-cache-data-begin", rnbContents) + 1
+   endIdx   <- grep("rnb-cache-data-end -->", rnbContents) - 1
+   
+   status <- lapply(startIdx:endIdx, function(i) {
+      line <- rnbContents[[i]]
+      colonIdx <- regexpr(":", line, fixed = TRUE)
+      fileName <- .rs.trimWhitespace(substring(line, 1, colonIdx - 1))
+      fileContents <- substring(line, colonIdx + 1)
+      
+      targetPath <- file.path(cachePath, fileName)
+      parentPath <- dirname(targetPath)
+      if (!dir.exists(parentPath))
+         if (!dir.create(parentPath, recursive = TRUE))
+            stop("failed to create cache path '", parentPath, "'")
+      
+      decoded <- .rs.base64decode(fileContents, raw())
+      writeBin(decoded, con = targetPath)
+      list(name = fileName, status = file.exists(targetPath))
+   })
+   
+   names   <- unlist(lapply(status, "[[", "name"))
+   success <- unlist(lapply(status, "[[", "status"))
+   names(success) <- names
+   success
    
 })
