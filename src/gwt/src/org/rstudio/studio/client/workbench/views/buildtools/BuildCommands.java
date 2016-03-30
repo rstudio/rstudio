@@ -54,7 +54,8 @@ public class BuildCommands
          commands.rebuildAll().remove();
       }
       
-      if (!type.equals(SessionInfo.BUILD_TOOLS_MAKEFILE))
+      if (type.equals(SessionInfo.BUILD_TOOLS_CUSTOM) ||
+          type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
       {
          commands.cleanAll().remove();
       }
