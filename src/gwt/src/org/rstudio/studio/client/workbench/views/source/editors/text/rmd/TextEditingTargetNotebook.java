@@ -584,6 +584,10 @@ public class TextEditingTargetNotebook
          return;
       
       // when the user interrupts R, clear any pending chunk executions
+      for (ChunkExecQueueUnit unit: chunkExecQueue_)
+      {
+         cleanChunkExecState(unit.chunkId);
+      }
       chunkExecQueue_.clear();
    }
 
