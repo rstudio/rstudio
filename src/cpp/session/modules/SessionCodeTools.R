@@ -1531,9 +1531,6 @@
    if (is.na(pos))
       return()
    
-   if (exists(".rs.routines", pos))
-      return()
-   
    routineEnv <- new.env(parent = emptyenv())
    routines <- tryCatch(
       getDLLRegisteredRoutines("(embedding)"),
