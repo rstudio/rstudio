@@ -1137,6 +1137,16 @@ private:
       }
       else
       {
+         // NOTE: This doesn't really work because it just shows a raw
+         // file path (which won't work in server mode). The behavior is
+         // also annoying because it spawns an external browser per
+         // website build (which quickly gets unweildy). What we really
+         // need to do is figure out how to use the standard Rmd preview
+         // infrastructure for this preview (perhaps by doing a "fake"
+         // render which just gets everything in the right state
+         // on the client and server). For now we've disabled this in the
+         // UI so it can't ever be hit by users.
+
          FilePath indexFile = FilePath(outputDir).childPath("index.html");
          module_context::showFile(indexFile, "_website_preview");
       }

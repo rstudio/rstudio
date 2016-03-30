@@ -63,7 +63,7 @@ struct RProjectVcsOptions
 struct RProjectBuildOptions
 {
    RProjectBuildOptions() :
-      previewWebsite(true),
+      previewWebsite(false),
       websiteOutputFormat(),
       autoRoxygenizeForCheck(true),
       autoRoxygenizeForBuildPackage(true),
