@@ -14,10 +14,10 @@
  */
 package org.rstudio.core.client.files.filedialog;
 
+import org.rstudio.core.client.FocusMap;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
-
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.KeyUpHandler;
@@ -190,6 +190,9 @@ public class FileBrowserWidget extends Composite
       filename_.setStylePrimaryName(styles.filename());
       filenamePanel.add(filename_);
       filenamePanel.setCellWidth(filename_, "100%");
+      
+      focusMap_ = new FocusMap();
+      focusMap_.add(filename_, directory_);
 
       return filenamePanel;
    }
@@ -200,4 +203,6 @@ public class FileBrowserWidget extends Composite
    private FileSystemContext context_;
    private String initialFilename_;
    private Host host_;
+   private FocusMap focusMap_;
+   
 }
