@@ -75,7 +75,7 @@
 
 .rs.addFunction("lintRFile", function(filePath)
 {
-   .Call(.rs.routines$rs_lintRFile, filePath)
+   .rs.Call("rs_lintRFile", filePath)
 })
 
 .rs.addFunction("showLintMarkers", function(lint, filePath)
@@ -154,7 +154,7 @@
 
 .rs.addFunction("lintDirectory", function(directory = .rs.getProjectDirectory())
 {
-   .Call(.rs.routines$rs_lintDirectory, directory)
+   .rs.Call("rs_lintDirectory", directory)
 })
 
 .rs.addJsonRpcHandler("analyze_project", function(directory = .rs.getProjectDirectory())

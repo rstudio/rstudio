@@ -15,6 +15,6 @@
 
 .rs.addFunction( "askForPassword", function(prompt)
 {
-    .Call(.rs.routines$rs_askForPassword, prompt)
+    .rs.Call("rs_askForPassword", prompt)
 })
 

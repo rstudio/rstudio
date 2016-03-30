@@ -532,7 +532,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("rnb.cachePathFromRmdPath", function(rmdPath)
 {
-  .Call(.rs.routines$rs_chunkCacheFolder, rmdPath)
+  .rs.Call("rs_chunkCacheFolder", rmdPath)
 })
 
 .rs.addFunction("rnb.parseConsoleData", function(data)

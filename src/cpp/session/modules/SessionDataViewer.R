@@ -601,7 +601,7 @@
 
 .rs.addFunction("addCachedData", function(obj, objName) 
 {
-   cacheKey <- .Call(.rs.routines$rs_generateShortUuid)
+   cacheKey <- .rs.Call("rs_generateShortUuid")
    .rs.assignCachedData(cacheKey, obj, objName)
    cacheKey
 })

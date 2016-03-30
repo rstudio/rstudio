@@ -104,6 +104,10 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
   .libPaths(libPaths)
 })
 
+.rs.addFunction("Call", function(routine, ...)
+{
+   .Call(routine, ..., PACKAGE = "(embedding)")
+})
 
 # try to determine if devtools::dev_mode is on
 .rs.addFunction( "devModeOn", function(){
@@ -174,7 +178,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 
 .rs.addGlobalFunction( "RStudioGD", function()
 {
-   .Call(.rs.routines$rs_createGD)
+   .rs.Call("rs_createGD")
 })
 
 # set our graphics device as the default and cause it to be created/set
@@ -288,7 +292,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 # generate a uuid
 .rs.addFunction( "createUUID", function()
 {
-  .Call(.rs.routines$rs_createUUID)
+  .rs.Call("rs_createUUID")
 })
 
 # check the current R architecture
@@ -306,7 +310,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
       else
          fileTitle <- header[[i]]
 
-      .Call(.rs.routines$rs_showFile, fileTitle, files[[i]], delete.file)
+      .rs.Call("rs_showFile", fileTitle, files[[i]], delete.file)
    }
 })
 
@@ -736,7 +740,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 
 .rs.addFunction("fromJSON", function(string)
 {
-   .Call(.rs.routines$rs_fromJSON, string)
+   .rs.Call("rs_fromJSON", string)
 })
 
 .rs.addFunction("stringBuilder", function()

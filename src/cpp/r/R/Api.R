@@ -264,19 +264,19 @@
 # of the 'rstudioapi' package -- it is superceded by
 # '.rs.getLastActiveEditorContext()'.
 .rs.addApiFunction("getActiveDocumentContext", function() {
-   .Call(.rs.routines$rs_getEditorContext, 0L)
+   .rs.Call("rs_getEditorContext", 0L)
 })
 
 .rs.addApiFunction("getLastActiveEditorContext", function() {
-   .Call(.rs.routines$rs_getEditorContext, 0L)
+   .rs.Call("rs_getEditorContext", 0L)
 })
 
 .rs.addApiFunction("getConsoleEditorContext", function() {
-   .Call(.rs.routines$rs_getEditorContext, 1L)
+   .rs.Call("rs_getEditorContext", 1L)
 })
 
 .rs.addApiFunction("getSourceEditorContext", function() {
-   .Call(.rs.routines$rs_getEditorContext, 2L)
+   .rs.Call("rs_getEditorContext", 2L)
 })
 
 .rs.addApiFunction("getActiveProject", function() {
