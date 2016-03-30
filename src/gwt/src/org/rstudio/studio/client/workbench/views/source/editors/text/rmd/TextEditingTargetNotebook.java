@@ -289,6 +289,8 @@ public class TextEditingTargetNotebook
       // decorate the gutter to show the chunk is queued
       docDisplay_.setChunkLineExecState(chunk.getBodyStart().getRow() + 1,
             chunk.getEnd().getRow(), ChunkRowExecState.LINE_QUEUED);
+      chunks_.setChunkState(chunk.getPreamble().getRow(), 
+            ChunkContextToolbar.STATE_QUEUED);
 
       // check to see if this chunk is already in the execution queue--if so
       // just update the code and leave it queued
@@ -306,8 +308,6 @@ public class TextEditingTargetNotebook
       // put it in the queue 
       chunkExecQueue_.add(new ChunkExecQueueUnit(chunkId, code,
             options, setupCrc32));
-      chunks_.setChunkState(chunk.getPreamble().getRow(), 
-            ChunkContextToolbar.STATE_QUEUED);
       
       // initiate queue processing
       processChunkExecQueue();
@@ -603,6 +603,14 @@ public class TextEditingTargetNotebook
             docDisplay_.scrollToY(docDisplay_.getScrollTop() + 
                   (bounds.getTop() - (docDisplay_.getBounds().getTop() + 60)));
          }
+      }
+      
+      // draw UI on chunk
+      Scope chunk = getChunkScope(executingChunk_.chunkId);
+      if (chunk != null)
+      {
+         chunks_.setChunkState(chunk.getPreamble().getRow(), 
+               ChunkContextToolbar.STATE_EXECUTING);
       }
       
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
@@ -928,6 +936,9 @@ public class TextEditingTargetNotebook
                chunk.getBodyStart().getRow(), 
                chunk.getEnd().getRow(), 
                ChunkRowExecState.LINE_RESTING);
+
+         chunks_.setChunkState(chunk.getPreamble().getRow(), 
+               ChunkContextToolbar.STATE_RESTING);
       }
    }
    
