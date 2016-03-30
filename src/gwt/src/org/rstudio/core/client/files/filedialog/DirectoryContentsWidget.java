@@ -37,6 +37,7 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.ScrollPanelWithClick;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
@@ -49,7 +50,8 @@ public class DirectoryContentsWidget
       extends Composite
    implements HasSelectionHandlers<FileSystemItem>,
               HasSelectionCommitHandlers<FileSystemItem>,
-              HasFocusHandlers, HasBlurHandlers
+              HasFocusHandlers, HasBlurHandlers,
+              CanFocus
 {
 
    private static class FlexTableEx extends FlexTable
@@ -153,15 +155,18 @@ public class DirectoryContentsWidget
       {
          public void onKeyDown(KeyDownEvent event)
          {
-            bufferTimer_.schedule(1000);
+            bufferTimer_.schedule(700);
             int keyCode = event.getNativeKeyCode();
             
-            if (keyCode >= 'a' && keyCode <= 'z' ||
-                keyCode >= 'A' && keyCode <= 'Z' ||
+            if (keyCode >= 'A' && keyCode <= 'Z' ||
                 keyCode >= '0' && keyCode <= '9' ||
                 keyCode == '.' || keyCode == '_' || keyCode == '-')
             {
-               buffer_.append((char) keyCode);
+               char ch = (char) keyCode;
+               if (keyCode >= 'A' && keyCode <= 'Z' && !event.isShiftKeyDown())
+                  ch = Character.toLowerCase(ch);
+               
+               buffer_.append(ch);
                selectBufferMatch();
                return;
             }
@@ -246,25 +251,52 @@ public class DirectoryContentsWidget
       commitSelection(item);
    }
    
+   private interface StringTransformer
+   {
+      public String transform(String string);
+   }
+   
+   private static class IdentityStringTransformer implements StringTransformer
+   {
+      public String transform(String string) { return string; }
+   }
+   
+   private static class LowerCaseStringTransformer implements StringTransformer
+   {
+      public String transform(String string) { return string.toLowerCase(); }
+   }
+   
+   private boolean selectBufferMatchImpl(String buffer, StringTransformer transformer)
+   {
+      String string = transformer.transform(buffer);
+      int i = 0;
+      
+      for (Map.Entry<String, FileSystemItem> entry : items_.entrySet())
+      {
+         String fileName = transformer.transform(entry.getKey());
+         if (fileName.startsWith(string))
+         {
+            setSelectedRow(i);
+            return true;
+         }
+         
+         i++;
+      }
+      
+      return false;
+   }
+   
    private void selectBufferMatch()
    {
       if (buffer_.length() == 0)
          return;
       
-      String string = buffer_.toString().toLowerCase();
-      int i = 0;
+      String buffer = buffer_.toString();
+      if (selectBufferMatchImpl(buffer, new IdentityStringTransformer()))
+         return;
       
-      for (Map.Entry<String, FileSystemItem> entry : items_.entrySet())
-      {
-         String fileName = entry.getKey().toLowerCase();
-         if (fileName.startsWith(string))
-         {
-            setSelectedRow(i);
-            return;
-         }
-         
-         i++;
-      }
+      if (selectBufferMatchImpl(buffer, new LowerCaseStringTransformer()))
+         return;
    }
 
    private void moveSelection(int offset)
@@ -459,7 +491,12 @@ public class DirectoryContentsWidget
       else
          focusImpl_.blur(table_.getElement());
    }
-
+   
+   public void focus()
+   {
+      setFocus(true);
+   }
+   
    private Map<String, FileSystemItem> items_ =
          new LinkedHashMap<String, FileSystemItem>();
    private final DoubleClickState doubleClick_ = new DoubleClickState();
