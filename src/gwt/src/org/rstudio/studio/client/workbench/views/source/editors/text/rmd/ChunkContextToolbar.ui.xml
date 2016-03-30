@@ -19,10 +19,19 @@
       right: 5px;
    }
    
-   .button
+   .button, .prevButton
+   {
+      cursor: pointer;
+   }
+   
+   .button 
    {
       margin-right: 8px;
-      cursor: pointer;
+   }
+   
+   .prevButton
+   {
+      margin-right: 5px;
    }
 
    .button:hover 
@@ -36,7 +45,7 @@
      <g:FlowPanel styleName="{style.toolbar}">
         <g:Image styleName="{style.button}" title="Modify chunk options"
                  ui:field="options_"></g:Image>
-        <g:Image styleName="{style.button}" ui:field="runPrevious_"></g:Image>
+        <g:Image styleName="{style.prevButton}" ui:field="runPrevious_"></g:Image>
         <g:Image styleName="{style.button}" resource="{res.runChunk}"
                  ui:field="run_"></g:Image>
      </g:FlowPanel>
