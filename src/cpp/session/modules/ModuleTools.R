@@ -15,22 +15,22 @@
 
 .rs.addFunction("enqueClientEvent", function(type, data = NULL)
 {
-   .Call(.rs.routines$rs_enqueClientEvent, type, data)
+   .rs.Call("rs_enqueClientEvent", type, data)
 })
 
 .rs.addFunction("showErrorMessage", function(title, message)
 {
-   .Call(.rs.routines$rs_showErrorMessage, title, message)
+   .rs.Call("rs_showErrorMessage", title, message)
 })
 
 .rs.addFunction("logErrorMessage", function(message)
 {
-   .Call(.rs.routines$rs_logErrorMessage, message)
+   .rs.Call("rs_logErrorMessage", message)
 })
 
 .rs.addFunction("logWarningMessage", function(message)
 {
-   .Call(.rs.routines$rs_logWarningMessage, message)
+   .rs.Call("rs_logWarningMessage", message)
 })
 
 .rs.addFunction("getSignature", function(obj)
@@ -212,7 +212,7 @@
 {
   pkgDir <- find.package(name)
   .rs.forceUnloadPackage(name)
-  .Call(.rs.routines$rs_installPackage,  archive, dirname(pkgDir))
+  .rs.Call("rs_installPackage",  archive, dirname(pkgDir))
 })
 
 
@@ -257,13 +257,13 @@
 .rs.addFunction("restartR", function(afterRestartCommand = "") {
    afterRestartCommand <- paste(as.character(afterRestartCommand),
                                 collapse = "\n")
-   .Call(.rs.routines$rs_restartR, afterRestartCommand)
+   .rs.Call("rs_restartR", afterRestartCommand)
 })
 
 .rs.addFunction("readUiPref", function(prefName) {
   if (missing(prefName) || is.null(prefName))
     stop("No preference name supplied")
-  .Call(.rs.routines$rs_readUiPref, prefName)
+  .rs.Call("rs_readUiPref", prefName)
 })
 
 
@@ -272,7 +272,7 @@
     stop("No preference name supplied")
   if (missing(value))
     stop("No value supplied")
-  invisible(.Call(.rs.routines$rs_writeUiPref, prefName, .rs.scalar(value)))
+  invisible(.rs.Call("rs_writeUiPref", prefName, .rs.scalar(value)))
 })
 
 .rs.addFunction("setUsingMingwGcc49", function(usingMingwGcc49) {

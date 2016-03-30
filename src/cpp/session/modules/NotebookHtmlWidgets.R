@@ -44,7 +44,7 @@
          selfcontained = FALSE, 
          libdir = libraryFolder
       )
-      .Call(.rs.routines$rs_recordHtmlWidget, htmlfile, depfile)
+      .rs.Call("rs_recordHtmlWidget", htmlfile, depfile)
       
    }, envir = as.environment("tools:rstudio"))
 })

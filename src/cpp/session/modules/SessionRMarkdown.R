@@ -38,7 +38,7 @@
 {
   pkgDir <- find.package("rmarkdown")
   .rs.forceUnloadPackage("rmarkdown")
-  .Call(.rs.routines$rs_installPackage,  archive, dirname(pkgDir))
+  .rs.Call("rs_installPackage",  archive, dirname(pkgDir))
 })
 
 .rs.addFunction("getCustomRenderFunction", function(file) {

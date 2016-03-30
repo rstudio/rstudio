@@ -77,7 +77,7 @@ assign(".rs.userCommands", new.env(parent = emptyenv()), envir = .rs.toolsEnv())
    
    shortcuts <- unlist(lapply(shortcuts, .rs.normalizeKeyboardShortcut))
    .rs.userCommands[[name]] <- fn
-   .Call(.rs.routines$rs_registerUserCommand, .rs.scalar(name), shortcuts)
+   .rs.Call("rs_registerUserCommand", .rs.scalar(name), shortcuts)
    
    TRUE
 })
