@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.Operation;
@@ -30,7 +29,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 public class ChunkContextUi implements ChunkContextToolbar.Host
 {
    public ChunkContextUi(TextEditingTarget target, Scope chunk, 
-         CommandWithArg<LineWidget> onRemoved)
+         PinnedLineWidget.Host lineWidgetHost)
    {
       target_ = target;
       int preambleRow = chunk.getPreamble().getRow();
@@ -39,7 +38,7 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
       toolbar_.setHeight("0px"); 
       lineWidget_ = new PinnedLineWidget(
             ChunkContextToolbar.LINE_WIDGET_TYPE, target_.getDocDisplay(), 
-            toolbar_, preambleRow, null, onRemoved);
+            toolbar_, preambleRow, null, lineWidgetHost);
    }
    
    // Public methods ----------------------------------------------------------

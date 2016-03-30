@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
@@ -28,18 +27,27 @@ import com.google.gwt.user.client.ui.Widget;
 public class PinnedLineWidget
              implements FoldChangeEvent.Handler
 {
+   public interface Host
+   {
+      void onLineWidgetRemoved(LineWidget widget);
+   }
+
    public PinnedLineWidget(String type, DocDisplay display, Widget widget, 
-         int row, JavaScriptObject data, CommandWithArg<LineWidget> onRemoved)
+         int row, JavaScriptObject data, Host host)
    {
       display_ = display;
       widget_ = widget;
       moving_ = false;
-      onRemoved_ = onRemoved;
+      host_ = host;
 
       lineWidget_ = LineWidget.create(type, row, widget_.getElement(), data);
       lineWidget_.setFixedWidth(true); 
       display_.addLineWidget(lineWidget_);
 
+      // the Ace line widget manage emits a 'changeFold' event when a line
+      // widget is destroyed; this is our only signal that it's been
+      // removed, so when it happens, we need check to see if the widget
+      // has been removed
       registrations_ = new HandlerRegistrations(
          display_.addFoldChangeHandler(this));
 
@@ -74,14 +82,10 @@ public class PinnedLineWidget
    @Override
    public void onFoldChange(FoldChangeEvent event)
    {
-      LineWidget w = display_.getLineWidgetForRow(lineWidget_.getRow());
-      if (w == null)
-      {
-         // ensure widget is detached
-         widget_.getElement().removeFromParent();
-         detachAnchors();
-         onRemoved_.execute(lineWidget_);
-      }
+      // the FoldChangeEvent is fired at the moment that Ace removes the line
+      // widget, but before our anchors are updated. set a flag so we know to
+      // check for an attached widget next time.
+      checkForRemove_ = true;
    }
 
    // Private methods ---------------------------------------------------------
@@ -95,6 +99,13 @@ public class PinnedLineWidget
    
    private void syncEndAnchor()
    {
+      if (checkForRemove_)
+      {
+         checkForRemove_ = false;
+         if (checkForRemoval())
+            return;
+      }
+
       int delta = endAnchor_.getRow() - startAnchor_.getRow();
       if (delta == 0)
       {
@@ -139,14 +150,29 @@ public class PinnedLineWidget
          }
       });
    }
+
+   private boolean checkForRemoval()
+   {
+      LineWidget w = display_.getLineWidgetForRow(lineWidget_.getRow());
+      if (w == null)
+      {
+         // ensure widget is detached
+         widget_.getElement().removeFromParent();
+         detachAnchors();
+         host_.onLineWidgetRemoved(lineWidget_);
+         return true;
+      }
+      return false;
+   }
    
    private final DocDisplay display_;
    private final Anchor startAnchor_;
    private final LineWidget lineWidget_;
    private final Widget widget_;
-   private final CommandWithArg<LineWidget> onRemoved_;
+   private final Host host_;
    private final HandlerRegistrations registrations_;
 
    private boolean moving_;
+   private boolean checkForRemove_;
    private Anchor endAnchor_;
 }

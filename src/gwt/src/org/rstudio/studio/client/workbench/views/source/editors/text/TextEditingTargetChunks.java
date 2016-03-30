@@ -16,12 +16,12 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi;
 
 public class TextEditingTargetChunks
+             implements PinnedLineWidget.Host
 {
    public TextEditingTargetChunks(TextEditingTarget target)
    {
@@ -39,6 +39,20 @@ public class TextEditingTargetChunks
    }
 
    // Public methods ----------------------------------------------------------
+   
+   @Override
+   public void onLineWidgetRemoved(LineWidget widget)
+   {
+      // remove the widget from our internal list
+      for (ChunkContextUi toolbar: toolbars_)
+      {
+         if (toolbar.getLineWidget() == widget)
+         {
+            toolbars_.remove(toolbar);
+            break;
+         }
+      }
+   }
    
    public void setChunkState(int preambleRow, int state)
    {
@@ -65,19 +79,6 @@ public class TextEditingTargetChunks
       }
    }
    
-   private void onWidgetRemoved(LineWidget widget)
-   {
-      // remove the widget from our internal list
-      for (ChunkContextUi toolbar: toolbars_)
-      {
-         if (toolbar.getLineWidget() == widget)
-         {
-            toolbars_.remove(toolbar);
-            break;
-         }
-      }
-   }
-   
    private void insertChunkToolbar(Scope chunk)
    {
       // see if we've already drawn a toolbar for this chunk
@@ -93,15 +94,7 @@ public class TextEditingTargetChunks
       if (hasToolbar)
          return;
          
-      ChunkContextUi ui = new ChunkContextUi(target_, chunk, 
-            new CommandWithArg<LineWidget>()
-      {
-         @Override
-         public void execute(LineWidget widget)
-         {
-            onWidgetRemoved(widget);
-         }
-      });
+      ChunkContextUi ui = new ChunkContextUi(target_, chunk, this);
       toolbars_.add(ui);
    }
    
