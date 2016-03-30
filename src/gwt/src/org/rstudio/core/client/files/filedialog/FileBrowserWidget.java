@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.files.filedialog;
 
+import org.rstudio.core.client.FocusTransitionManager;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -183,16 +184,16 @@ public class FileBrowserWidget extends Composite
       Label filenameLabel = new Label(nameLabel + ":", false);
       filenameLabel.setStylePrimaryName(styles.filenameLabel());
       filenamePanel.add(filenameLabel);
-
+      
       filename_ = new TextBox();
       if (initialFilename_ != null)
          filename_.setText(initialFilename_);
       filename_.setStylePrimaryName(styles.filename());
       filenamePanel.add(filename_);
       filenamePanel.setCellWidth(filename_, "100%");
-      
-      filename_.setTabIndex(1);
-      directory_.getFlexTable().getElement().setTabIndex(1);
+
+      ftm_ = new FocusTransitionManager();
+      ftm_.add(filename_, directory_);
 
       return filenamePanel;
    }
@@ -203,4 +204,5 @@ public class FileBrowserWidget extends Composite
    private FileSystemContext context_;
    private String initialFilename_;
    private Host host_;
+   private FocusTransitionManager ftm_;
 }

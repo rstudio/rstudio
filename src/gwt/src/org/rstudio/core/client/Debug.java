@@ -41,6 +41,11 @@ public class Debug
       logToConsole(message) ;
    }
    
+   public static void logWarning(String warning)
+   {
+      printStackTrace("WARNING: " + warning);
+   }
+   
    public static native void logObject(Object object) /*-{
       if (typeof(console) != "undefined")
       {
@@ -60,7 +65,7 @@ public class Debug
       Debug.log(label + '=' + value);
       return value;
    }
-
+   
    public static void printStackTrace(String label)
    {
       StringBuffer buf = new StringBuffer(label + "\n");

@@ -28,6 +28,7 @@ import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTMLTable;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.impl.FocusImpl;
+
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -36,6 +37,7 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.ScrollPanelWithClick;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
@@ -48,7 +50,8 @@ public class DirectoryContentsWidget
       extends Composite
    implements HasSelectionHandlers<FileSystemItem>,
               HasSelectionCommitHandlers<FileSystemItem>,
-              HasFocusHandlers, HasBlurHandlers
+              HasFocusHandlers, HasBlurHandlers,
+              CanFocus
 {
 
    private static class FlexTableEx extends FlexTable
@@ -489,11 +492,11 @@ public class DirectoryContentsWidget
          focusImpl_.blur(table_.getElement());
    }
    
-   public FlexTable getFlexTable()
+   public void focus()
    {
-      return table_;
+      setFocus(true);
    }
-
+   
    private Map<String, FileSystemItem> items_ =
          new LinkedHashMap<String, FileSystemItem>();
    private final DoubleClickState doubleClick_ = new DoubleClickState();
