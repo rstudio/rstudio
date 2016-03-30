@@ -33,7 +33,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    cat(contents, file = output, sep = "\n")
    
    cachePath <- .rs.rnb.cachePathFromRmdPath(output)
-   .rs.hydrateCacheFromNotebook(input, output)
+   .rs.hydrateCacheFromNotebook(input, cachePath)
 
    .rs.scalar(TRUE)
 })
@@ -98,7 +98,12 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       sprintf('<!-- %s %s -->', names(inject)[i], inject[[i]])
    }), collapse = "\n")
    
-   contents[[idx]] <- paste(contents[[idx]], injection, "", sep = "\n")
+   contents <- c(
+      contents[1:idx],
+      injection,
+      contents[(idx + 1):length(contents)]
+   )
+   
    contents
 })
 
@@ -490,21 +495,37 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    html <- .rs.createNotebookFromCacheData(rnbData, outputPath)
    
    # inject cache data
-   html <- .rs.rnb.injectCacheData(html, cachePath)
+   html <- .rs.rnb.injectCacheData(html, rnbData, cachePath)
    
    # write to file
    cat(html, file = outputPath, sep = "\n")
    outputPath
 })
 
-.rs.addFunction("rnb.injectCacheData", function(html, cachePath)
+.rs.addFunction("rnb.generateEncodedCacheResource", function(file,
+                                                             html,
+                                                             rnbData,
+                                                             cachePath)
+{
+   encoded <- if (.rs.endsWith(file, ".png"))
+   {
+      paste('#image("', dirname(file), '")', sep = "")
+   }
+   else
+   {
+      fullPath <- file.path(cachePath, file)
+      contents <- .rs.readFile(fullPath, binary = TRUE)
+      .rs.base64encode(contents)
+   }
+   
+   paste(file, encoded, sep = ":")
+})
+
+.rs.addFunction("rnb.injectCacheData", function(html, rnbData, cachePath)
 {
    files <- list.files(cachePath, recursive = TRUE)
    contents <- unlist(lapply(files, function(file) {
-      fullPath <- file.path(cachePath, file)
-      contents <- .rs.readFile(fullPath, binary = TRUE)
-      encoded  <- .rs.base64encode(contents)
-      paste(file, encoded, sep = ":")
+      .rs.rnb.generateEncodedCacheResource(file, html, rnbData, cachePath)
    }))
    
    injection <- paste(
@@ -515,7 +536,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    )
    
    idx <- grep("</body>", html)
-   html <- c(html[1:(idx - 1)], injection, html[idx:length(html)])
+   html <- c(
+      html[1:idx],
+      injection,
+      html[(idx + 1):length(html)])
    
    html
 })
@@ -597,7 +621,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    caTools::base64decode(data, type)
 })
 
-.rs.addFunction("scrapeHtmlDataAttributes", function(line)
+.rs.addFunction("scrapeHtmlAttributes", function(line)
 {
    reData <- '([[:alnum:]_-]+)[[:space:]]*=[[:space:]]*"(\\\\.|[^"])+"'
    reMatches <- gregexpr(reData, line)[[1]]
@@ -621,6 +645,51 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    )
 })
 
+.rs.addFunction("rnb.hydrateFromFunction", function(fn,
+                                                    rnbContents,
+                                                    targetPath)
+{
+   parsed <- try(parse(text = fn, keep.source = FALSE)[[1]], silent = TRUE)
+   if (inherits(parsed, "try-error"))
+      return(FALSE)
+   
+   if (parsed[[1]] == "image") {
+      
+      id <- parsed[[2]]
+      target <- sprintf('data-chunk-id="%s"', id)
+      idx <- grep(target, rnbContents, fixed = TRUE)
+      
+      if (length(idx) == 0)
+         stop("failed to discover element with chunk id '", id, "'")
+      
+      line <- rnbContents[[idx]]
+      scraped <- .rs.scrapeHtmlAttributes(line)
+      src <- scraped$src
+      data <- substring(src, nchar("data:image/png;base64,") + 1)
+      decoded <- .rs.base64decode(data, raw())
+      writeBin(decoded, con = targetPath)
+      
+   } else {
+      formatted <- paste(format(parsed), collapse = "\n")
+      stop("unimplemented hydration scheme: ", formatted)
+   }
+   
+   TRUE
+})
+
+.rs.addFunction("rnb.hydrateFromBase64", function(encodedContents,
+                                                  targetPath)
+{
+   parentPath <- dirname(targetPath)
+   if (!dir.exists(parentPath))
+      if (!dir.create(parentPath, recursive = TRUE))
+         stop("failed to create cache path '", parentPath, "'")
+   
+   decoded <- .rs.base64decode(encodedContents, raw())
+   writeBin(decoded, con = targetPath)
+   TRUE
+})
+
 .rs.addFunction("hydrateCacheFromNotebook", function(rnbPath, cachePath = NULL)
 {
    if (is.null(cachePath)) {
@@ -633,25 +702,27 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    endIdx   <- grep("rnb-cache-data-end -->", rnbContents) - 1
    
    status <- lapply(startIdx:endIdx, function(i) {
+      
       line <- rnbContents[[i]]
       colonIdx <- regexpr(":", line, fixed = TRUE)
-      fileName <- .rs.trimWhitespace(substring(line, 1, colonIdx - 1))
-      fileContents <- substring(line, colonIdx + 1)
+      filePath <- .rs.trimWhitespace(substring(line, 1, colonIdx - 1))
+      encodedContents <- substring(line, colonIdx + 1)
+      targetPath <- file.path(cachePath, filePath)
+      .rs.ensureDirectory(dirname(targetPath))
       
-      targetPath <- file.path(cachePath, fileName)
-      parentPath <- dirname(targetPath)
-      if (!dir.exists(parentPath))
-         if (!dir.create(parentPath, recursive = TRUE))
-            stop("failed to create cache path '", parentPath, "'")
+      if (.rs.startsWith(encodedContents, "#")) {
+         .rs.rnb.hydrateFromFunction(
+            substring(encodedContents, 2),
+            rnbContents,
+            targetPath)
+      } else {
+         .rs.rnb.hydrateFromBase64(
+            encodedContents,
+            targetPath)
+      }
       
-      decoded <- .rs.base64decode(fileContents, raw())
-      writeBin(decoded, con = targetPath)
-      list(name = fileName, status = file.exists(targetPath))
    })
    
-   names   <- unlist(lapply(status, "[[", "name"))
-   success <- unlist(lapply(status, "[[", "status"))
-   names(success) <- names
-   success
+   cachePath
    
 })

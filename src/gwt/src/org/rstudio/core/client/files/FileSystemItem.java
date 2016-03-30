@@ -89,6 +89,9 @@ public class FileSystemItem extends JavaScriptObject
    public static String getExtensionFromPath(String path)
    {
       String filename = getNameFromPath(path);
+      if (filename.endsWith(".nb.html"))
+         return ".nb.html";
+      
       int lastDotIndex = filename.lastIndexOf('.');
       if (lastDotIndex != -1)
          return filename.substring(lastDotIndex);

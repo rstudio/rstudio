@@ -790,10 +790,31 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 
 .rs.addFunction("withChangedExtension", function(path, ext)
 {
-   paste(tools::file_path_sans_ext(path), ext, sep = ".")
+   ext <- sub("^\\.+", "", ext)
+   if (.rs.endsWith(path, ".nb.html"))
+      paste(substring(path, 1, nchar(path) - 8), ext, sep = ".")
+   else if (.rs.endsWith(path, ".tar.gz"))
+      paste(substring(path, 1, nchar(path) - 7), ext, sep = ".")
+   else
+      paste(tools::file_path_sans_ext(path), ext, sep = ".")
 })
 
 .rs.addFunction("dirExists", function(path)
 {
    utils::file_test('-d', path)
+})
+
+.rs.addFunction("ensureDirectory", function(path)
+{
+   if (file.exists(path)) {
+      if (!utils::file_test("-d", path))
+         stop("file at path '", path, "' exists but is not a directory")
+      return(TRUE)
+   }
+   
+   success <- dir.create(path, recursive = TRUE)
+   if (!success)
+      stop("failed to create directory at path '", path, "'")
+   
+   TRUE
 })

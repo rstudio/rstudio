@@ -99,7 +99,7 @@ public class FileTypeRegistry
    
    public static final RWebContentFileType RNOTEBOOK =
          new RWebContentFileType("r_notebook", "R Notebook", EditorLanguage.LANG_RMARKDOWN,
-                                 ".Rnb", ICONS.iconRnotebook(), true);
+                                 ".nb.html", ICONS.iconRnotebook(), true);
 
    public static final RWebContentFileType RPRESENTATION = new RPresentationFileType();
 
@@ -346,7 +346,7 @@ public class FileTypeRegistry
       register("*.json", JSON, icons.iconJavascript());
       register("*.rmd", RMARKDOWN, icons.iconRmarkdown());
       register("*.rmarkdown", RMARKDOWN, icons.iconRmarkdown());
-      register("*.rnb", RNOTEBOOK, icons.iconRnotebook());
+      register("*.nb.html", RNOTEBOOK, icons.iconRnotebook());
       register("*.rpres", RPRESENTATION, icons.iconRpresentation());
       register("*.md", MARKDOWN, icons.iconMarkdown());
       register("*.mdtxt", MARKDOWN, icons.iconMarkdown());
