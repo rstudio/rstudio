@@ -190,6 +190,9 @@ public class FileBrowserWidget extends Composite
       filename_.setStylePrimaryName(styles.filename());
       filenamePanel.add(filename_);
       filenamePanel.setCellWidth(filename_, "100%");
+      
+      filename_.setTabIndex(1);
+      directory_.getFlexTable().getElement().setTabIndex(1);
 
       return filenamePanel;
    }

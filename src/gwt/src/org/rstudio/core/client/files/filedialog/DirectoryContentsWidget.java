@@ -459,6 +459,11 @@ public class DirectoryContentsWidget
       else
          focusImpl_.blur(table_.getElement());
    }
+   
+   public FlexTable getFlexTable()
+   {
+      return table_;
+   }
 
    private Map<String, FileSystemItem> items_ =
          new LinkedHashMap<String, FileSystemItem>();
