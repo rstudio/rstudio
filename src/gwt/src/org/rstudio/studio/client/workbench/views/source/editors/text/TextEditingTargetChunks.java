@@ -71,7 +71,6 @@ public class TextEditingTargetChunks
          }
       }
    }
-   
 
    @Override
    public void onEditorModeChanged(EditorModeChangedEvent event)
@@ -247,10 +246,12 @@ public class TextEditingTargetChunks
    
    private boolean dark_;
    private boolean initialized_;
-   private int renderPass_;
    private AceThemes themes_;
 
    private int lastRow_;
    
+   // renderPass_ need only be unique from one pass through the scope tree to
+   // the next; we wrap it at 255 to avoid the possibility of overflow
+   private int renderPass_;
    private final static int RENDER_PASS_MOD = 255;
 }

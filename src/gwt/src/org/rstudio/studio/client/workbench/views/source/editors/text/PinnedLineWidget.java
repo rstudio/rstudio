@@ -46,9 +46,11 @@ public class PinnedLineWidget
    {
       display_ = display;
       widget_ = widget;
-      moving_ = false;
       host_ = host;
+      
       lastWidgetRow_ = row;
+      moving_ = false;
+      shiftPending_ = false;
 
       lineWidget_ = LineWidget.create(type, row, widget_.getElement(), data);
       lineWidget_.setFixedWidth(true); 
@@ -111,6 +113,8 @@ public class PinnedLineWidget
    
    private void syncEndAnchor()
    {
+      // if a fold change occurred since the last time the anchor moved, check
+      // to see if this widget needs to be removed entirely 
       if (checkForRemove_)
       {
          checkForRemove_ = false;
@@ -147,7 +151,6 @@ public class PinnedLineWidget
       {
          lastWidgetRow_ = lineWidget_.getRow();
       }
-      
 
       if (delta == 0)
       {
