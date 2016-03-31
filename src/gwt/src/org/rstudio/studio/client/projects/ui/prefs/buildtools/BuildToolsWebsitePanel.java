@@ -42,6 +42,11 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
       
       chkPreviewAfterBuilding_ = checkBox("Preview site after building");
       chkPreviewAfterBuilding_.addStyleName(RES.styles().previewWebsite());
+      
+      // NOTE: we've disabled preview after buidling (see SessionBuild.cpp
+      // for comment on why)
+      chkPreviewAfterBuilding_.setVisible(false);
+
       add(chkPreviewAfterBuilding_); 
    }
 

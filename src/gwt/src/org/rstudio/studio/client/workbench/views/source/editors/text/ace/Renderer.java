@@ -155,11 +155,11 @@ public class Renderer extends JavaScriptObject
    }-*/;
    
    public native final void addGutterDecoration(int line, String clazz) /*-{
-      this.addGutterDecoration(line, clazz);
+      this.session.addGutterDecoration(line, clazz);
    }-*/;
    
    public native final void removeGutterDecoration(int line, String clazz) /*-{
-      this.removeGutterDecoration(line, clazz);
+      this.session.removeGutterDecoration(line, clazz);
    }-*/;
    
    public final native void alignCursor(Position position, double ratio) /*-{

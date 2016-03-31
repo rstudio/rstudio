@@ -1088,25 +1088,36 @@ private:
                             const core::system::ProcessOptions& options,
                             const core::system::ProcessCallbacks& cb)
    {
-      if (options_.previewWebsite)
+      std::string command;
+
+      if (type == "build-all")
       {
-         successFunction_ = boost::bind(&Build::showWebsitePreview,
-                                        Build::shared_from_this(),
-                                        websitePath);
+         if (options_.previewWebsite)
+         {
+            successFunction_ = boost::bind(&Build::showWebsitePreview,
+                                           Build::shared_from_this(),
+                                           websitePath);
+         }
+
+         // if there is a subType then use it to set the output format
+         if (!subType.empty())
+         {
+            projects::projectContext().setWebsiteOutputFormat(subType);
+            options_.websiteOutputFormat = subType;
+         }
+
+         boost::format fmt("rmarkdown::render_site(%1%)");
+         std::string format;
+         if (options_.websiteOutputFormat != "all")
+            format = "output_format = '" + options_.websiteOutputFormat + "'";
+         command = boost::str(fmt % format);
+      }
+      else if (type == "clean-all")
+      {
+         command = "rmarkdown::clean_site()";
       }
 
-      // if there is a subType then use it to set the output format
-      if (!subType.empty())
-      {
-         projects::projectContext().setWebsiteOutputFormat(subType);
-         options_.websiteOutputFormat = subType;
-      }
-
-      boost::format fmt("rmarkdown::render_site(%1%)");
-      std::string format;
-      if (options_.websiteOutputFormat != "all")
-         format = "output_format = '" + options_.websiteOutputFormat + "'";
-      std::string command = boost::str(fmt % format);
+      // execute command
       enqueCommandString(command);
       rExecute(command, websitePath, options, cb);
    }
@@ -1126,6 +1137,16 @@ private:
       }
       else
       {
+         // NOTE: This doesn't really work because it just shows a raw
+         // file path (which won't work in server mode). The behavior is
+         // also annoying because it spawns an external browser per
+         // website build (which quickly gets unweildy). What we really
+         // need to do is figure out how to use the standard Rmd preview
+         // infrastructure for this preview (perhaps by doing a "fake"
+         // render which just gets everything in the right state
+         // on the client and server). For now we've disabled this in the
+         // UI so it can't ever be hit by users.
+
          FilePath indexFile = FilePath(outputDir).childPath("index.html");
          module_context::showFile(indexFile, "_website_preview");
       }

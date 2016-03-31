@@ -67,10 +67,14 @@ public class BuildPane extends WorkbenchPane
       
       SessionInfo sessionInfo =  session_.getSessionInfo();
       String type = sessionInfo.getBuildToolsType();
+      boolean pkg = type.equals(SessionInfo.BUILD_TOOLS_PACKAGE);
+      boolean makefile = type.equals(SessionInfo.BUILD_TOOLS_MAKEFILE);
+      boolean website = type.equals(SessionInfo.BUILD_TOOLS_WEBSITE);
+      
       
       // always include build all
       ToolbarButton buildAllButton = commands_.buildAll().createToolbarButton();
-      if (type.equals(SessionInfo.BUILD_TOOLS_WEBSITE))
+      if (website)
       {
          if (sessionInfo.getBuildToolsBookdownWebsite())
          {
@@ -94,26 +98,26 @@ public class BuildPane extends WorkbenchPane
       toolbar.addLeftSeparator();
       
       // packages get check package
-      if (type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
+      if (pkg)
       {
          toolbar.addLeftWidget(commands_.checkPackage().createToolbarButton());
          toolbar.addLeftSeparator();
       }
       
       // create more menu
-      if (type.equals(SessionInfo.BUILD_TOOLS_MAKEFILE) ||
-          type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
+      if (makefile || website || pkg)
       {
          ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
-         if (type.equals(SessionInfo.BUILD_TOOLS_MAKEFILE))
+         if (makefile || website)
          {
-            moreMenu.addItem(commands_.rebuildAll().createMenuItem(false));
+            if (makefile)
+               moreMenu.addItem(commands_.rebuildAll().createMenuItem(false));
             moreMenu.addItem(commands_.cleanAll().createMenuItem(false));
             moreMenu.addSeparator();
          }
          
          // packages get additional commands 
-         else if (type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
+         else if (pkg)
          {
             moreMenu.addItem(commands_.devtoolsLoadAll().createMenuItem(false));
             moreMenu.addItem(commands_.rebuildAll().createMenuItem(false));
@@ -136,14 +140,6 @@ public class BuildPane extends WorkbenchPane
                                       StandardIcons.INSTANCE.more_actions(),
                                       moreMenu);
          toolbar.addLeftWidget(moreButton);
-      }
-      else
-      {
-         ToolbarButton optionsButton = 
-                 commands_.buildToolsProjectSetup().createToolbarButton(false);
-         optionsButton.setText("");
-         optionsButton.setLeftImage(StandardIcons.INSTANCE.options());
-         toolbar.addLeftWidget(optionsButton);
       }
       
       // connect compile panel
