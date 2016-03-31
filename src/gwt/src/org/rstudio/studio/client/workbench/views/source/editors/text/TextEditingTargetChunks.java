@@ -54,6 +54,7 @@ public class TextEditingTargetChunks
       }
    }
    
+
    public void setChunkState(int preambleRow, int state)
    {
       for (ChunkContextUi toolbar: toolbars_)
@@ -75,11 +76,11 @@ public class TextEditingTargetChunks
          if (!scope.isChunk())
             continue;
 
-         insertChunkToolbar(scope);
+         syncChunkToolbar(scope);
       }
    }
    
-   private void insertChunkToolbar(Scope chunk)
+   private void syncChunkToolbar(Scope chunk)
    {
       // see if we've already drawn a toolbar for this chunk
       boolean hasToolbar = false;

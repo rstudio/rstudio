@@ -24,6 +24,15 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 
+/*
+ * A pinned line widget binds an Ace LineWidget to a GWT widget. It provides
+ * two features needed by most usages of LineWidgets:
+ * 
+ * - The LineWidget is "pinned" to its original line; a pair of anchors detects
+ *   when the widget has been shifted by editing, and restores it to its
+ *   original position.
+ * - A notification is emitted to the host when Ace removes the LineWidget.
+ */
 public class PinnedLineWidget
              implements FoldChangeEvent.Handler
 {
@@ -39,6 +48,7 @@ public class PinnedLineWidget
       widget_ = widget;
       moving_ = false;
       host_ = host;
+      lastWidgetRow_ = row;
 
       lineWidget_ = LineWidget.create(type, row, widget_.getElement(), data);
       lineWidget_.setFixedWidth(true); 
@@ -63,12 +73,15 @@ public class PinnedLineWidget
    
    public int getRow()
    {
+      if (shiftPending_)
+         return lastWidgetRow_;
       return lineWidget_.getRow();
    }
    
    public void detach()
    {
       detachAnchors();
+      registrations_.removeHandler();
       display_.removeLineWidget(lineWidget_);
    }
    
@@ -94,7 +107,6 @@ public class PinnedLineWidget
    {
       startAnchor_.detach();
       endAnchor_.detach();
-      registrations_.removeHandler();
    }
    
    private void syncEndAnchor()
@@ -107,9 +119,39 @@ public class PinnedLineWidget
       }
 
       int delta = endAnchor_.getRow() - startAnchor_.getRow();
+      
+      if (shiftPending_)
+      {
+         // ignore if the shift hasn't happened yet
+         if (lineWidget_.getRow() == lastWidgetRow_)
+            return;
+
+         // if a shift was pending, detach the anchors and move the widget to
+         // its original position (below)
+         shiftPending_ = false;
+         detachAnchors();
+         startAnchor_ = display_.createAnchor(Position.create(
+               lastWidgetRow_, 0));
+         delta = 2;
+      }
+      else if (startAnchor_.getRow() == lineWidget_.getRow() && 
+               endAnchor_.getRow()   == lineWidget_.getRow())
+      {
+         // if the entire row of content is swapped out, the line widget can get
+         // moved inappropriately; prior to this occurring, the anchors and the
+         // widget collapse onto a single line. 
+         shiftPending_ = true;
+         return;
+      } 
+      else
+      {
+         lastWidgetRow_ = lineWidget_.getRow();
+      }
+      
+
       if (delta == 0)
       {
-         // this happens if the line beneath the chunk output is deleted; when
+         // this happens if the line beneath the line widget is deleted; when
          // it happens, our anchors wind up on the same line, so reset the
          // end anchor
          endAnchor_.detach();
@@ -166,13 +208,16 @@ public class PinnedLineWidget
    }
    
    private final DocDisplay display_;
-   private final Anchor startAnchor_;
    private final LineWidget lineWidget_;
    private final Widget widget_;
    private final Host host_;
    private final HandlerRegistrations registrations_;
+   private int lastWidgetRow_;
+
+   private Anchor endAnchor_;
+   private Anchor startAnchor_;
 
    private boolean moving_;
    private boolean checkForRemove_;
-   private Anchor endAnchor_;
+   private boolean shiftPending_;
 }
