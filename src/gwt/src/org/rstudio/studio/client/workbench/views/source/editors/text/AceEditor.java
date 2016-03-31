@@ -86,6 +86,7 @@ import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent.ExecutionPolicy;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
@@ -399,6 +400,28 @@ public class AceEditor implements DocDisplay,
                   AceEditor.this.getWidget().getElement().getId());
          }
       });
+      
+      events_.addHandler(
+            AceEditorCommandEvent.TYPE,
+            new AceEditorCommandEvent.Handler()
+            {
+               @Override
+               public void onEditorCommand(AceEditorCommandEvent event)
+               {
+                  if (event.getExecutionPolicy() == ExecutionPolicy.FOCUSED &&
+                      !AceEditor.this.isFocused())
+                  {
+                     return;
+                  }
+                  
+                  switch (event.getCommand())
+                  {
+                  case PASTE_LAST_YANK:    pasteLastYank();
+                  case YANK_BEFORE_CURSOR: yankBeforeCursor();
+                  case YANK_AFTER_CURSOR:  yankAfterCursor();
+                  }
+               }
+            });
    }
    
    public void yankBeforeCursor()

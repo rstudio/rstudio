@@ -897,63 +897,6 @@ public class TextEditingTarget implements
    }
    
    @Handler
-   void onYankBeforeCursor()
-   {
-      withCurrentlyFocusedEditor(new CommandWithArg<DocDisplay>()
-      {
-         @Override
-         public void execute(DocDisplay docDisplay)
-         {
-            if (docDisplay.isVimModeOn() && !docDisplay.isVimInInsertMode())
-               return;
-            
-            if (docDisplay.isEmacsModeOn())
-               return;
-            
-            docDisplay.yankBeforeCursor();
-         }
-      });
-   }
-   
-   @Handler
-   void onYankAfterCursor()
-   {
-      withCurrentlyFocusedEditor(new CommandWithArg<DocDisplay>()
-      {
-         @Override
-         public void execute(DocDisplay docDisplay)
-         {
-            if (docDisplay.isVimModeOn() && !docDisplay.isVimInInsertMode())
-               return;
-            
-            if (docDisplay.isEmacsModeOn())
-               return;
-            
-            docDisplay.yankAfterCursor();
-         }
-      });
-   }
-   
-   @Handler
-   void onPasteLastYank()
-   {
-      withCurrentlyFocusedEditor(new CommandWithArg<DocDisplay>()
-      {
-         @Override
-         public void execute(DocDisplay docDisplay)
-         {
-            if (docDisplay.isVimModeOn() && !docDisplay.isVimInInsertMode())
-               return;
-            
-            if (docDisplay.isEmacsModeOn())
-               return;
-            
-            docDisplay.pasteLastYank();
-         }
-      });
-   }
-   
-   @Handler
    void onSwitchFocusSourceConsole()
    {
       if (docDisplay_.isFocused())
