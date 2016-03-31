@@ -21,10 +21,10 @@ import com.google.gwt.core.ext.linker.ModuleMetricsArtifact;
 import com.google.gwt.core.ext.linker.PrecompilationMetricsArtifact;
 import com.google.gwt.core.ext.soyc.impl.SizeMapRecorder;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.dev.util.collect.Lists;
-import com.google.gwt.dev.util.collect.Sets;
 import com.google.gwt.soyc.io.OutputDirectory;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -208,27 +208,31 @@ public class MakeTopLevelHtmlForPerm {
      */
     private void printDependency(PrintWriter outFile,
         Map<String, String> dependencies, String method, String depMethod) {
-      String nameArray = "[" + frozen.get(getPackageSubstring(method)) + ","
-          + frozen.get(getClassSubstring(method)) + ","
-          + frozen.get(getMethodSubstring(method)) + "]";
+      String nameArray = methodDependencyString(method);
       outFile.print("b(" + nameArray + ",");
       outFile.print("[");
+      Set<String> visited = Sets.newHashSet();
+      String separator = "";
       while (depMethod != null) {
         String nextDep = dependencies.get(depMethod);
         // The bottom of the stack frame is not interesting.
         if (nextDep != null) {
-          String packageString = getPackageSubstring(depMethod);
-          String classString = getClassSubstring(depMethod);
-          String methodString = getMethodSubstring(depMethod);
-          outFile.print("[" + frozen.get(packageString) + ","
-              + frozen.get(classString) + "," + frozen.get(methodString) + "]");
+          if (!visited.add(nextDep)) {
+            break;
+          }
+          outFile.print(separator);
+          outFile.print(methodDependencyString(depMethod));
+          separator = ",";
         }
         depMethod = nextDep;
-        if (nextDep != null && dependencies.get(nextDep) != null) {
-          outFile.print(",");
-        }
       }
       outFile.print("]);");
+    }
+
+    private String methodDependencyString(String method) {
+      return "[" + frozen.get(getPackageSubstring(method)) + ","
+          + frozen.get(getClassSubstring(method)) + ","
+          + frozen.get(getMethodSubstring(method)) + "]";
     }
 
     /**
@@ -1365,8 +1369,8 @@ public class MakeTopLevelHtmlForPerm {
 
   private String[] getGeneratedTypes(ModuleMetricsArtifact moduleMetrics,
       PrecompilationMetricsArtifact precompilationMetrics) {
-    List<String> initialTypes = Lists.create(moduleMetrics.getInitialTypes());
-    Set<String> generatedTypes = Sets.create(precompilationMetrics.getFinalTypeOracleTypes());
+    List<String> initialTypes = Lists.newArrayList(moduleMetrics.getInitialTypes());
+    Set<String> generatedTypes = Sets.newHashSet(precompilationMetrics.getFinalTypeOracleTypes());
     generatedTypes.removeAll(initialTypes);
     String[] results = generatedTypes.toArray(new String[generatedTypes.size()]);
     Arrays.sort(results);
@@ -1390,8 +1394,8 @@ public class MakeTopLevelHtmlForPerm {
 
   private String[] getUnreferencedTypes(
       PrecompilationMetricsArtifact precompilationMetrics) {
-    List<String> astTypes = Lists.create(precompilationMetrics.getAstTypes());
-    Set<String> unreferencedTypes = Sets.create(precompilationMetrics.getFinalTypeOracleTypes());
+    List<String> astTypes = Lists.newArrayList(precompilationMetrics.getAstTypes());
+    Set<String> unreferencedTypes = Sets.newHashSet(precompilationMetrics.getFinalTypeOracleTypes());
     unreferencedTypes.removeAll(astTypes);
     String[] results = unreferencedTypes.toArray(new String[unreferencedTypes.size()]);
     Arrays.sort(results);
@@ -1658,6 +1662,12 @@ public class MakeTopLevelHtmlForPerm {
     outFile.close();
   }
 
+  private static void internMethod(HtmlInterner interner,  String method) {
+    interner.intern(getPackageSubstring(method));
+    interner.intern(getClassSubstring(method));
+    interner.intern(getMethodSubstring(method));
+  }
+
   /**
    * Produces an HTML file that displays dependencies.
    *
@@ -1671,18 +1681,9 @@ public class MakeTopLevelHtmlForPerm {
 
     HtmlInterner interner = new HtmlInterner();
 
-    for (String reportMethod : dependencies.keySet()) {
-      interner.intern(getPackageSubstring(reportMethod));
-      interner.intern(getClassSubstring(reportMethod));
-      interner.intern(getMethodSubstring(reportMethod));
-
-      String depMethod = dependencies.get(reportMethod);
-      while (depMethod != null) {
-        interner.intern(getPackageSubstring(depMethod));
-        interner.intern(getClassSubstring(depMethod));
-        interner.intern(getMethodSubstring(depMethod));
-        depMethod = dependencies.get(depMethod);
-      }
+    for (Entry<String, String> dependencyEntry : dependencies.entrySet()) {
+      internMethod(interner, dependencyEntry.getKey());
+      internMethod(interner, dependencyEntry.getValue());
     }
     interner.freeze();
 
