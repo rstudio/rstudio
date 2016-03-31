@@ -68,15 +68,11 @@ public class ChunkContextToolbar extends Composite
       
       initOptions(dark);
 
-      if (runPrevious)
-         initRunPrevious(dark);
-      else
-         runPrevious_.setVisible(false);
+      initRunPrevious(dark);
+      runPrevious_.setVisible(runPrevious);
       
-      if (run)
-         initRun();
-      else
-         run_.setVisible(false);
+      initRun();
+      run_.setVisible(run);
    }
 
    // Public methods ----------------------------------------------------------
@@ -96,6 +92,11 @@ public class ChunkContextToolbar extends Composite
          break;
       }
       state_ = state;
+   }
+   
+   public void setRunPrevious(boolean visible)
+   {
+      runPrevious_.setVisible(visible);
    }
    
    // Private methods ---------------------------------------------------------
