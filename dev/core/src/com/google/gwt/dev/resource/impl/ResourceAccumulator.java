@@ -22,11 +22,13 @@ import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
@@ -135,14 +137,18 @@ class ResourceAccumulator {
   }
 
   private void onNewPath(Path path) throws IOException {
-    if (Files.isHidden(path)) {
-      return;
-    }
+    try {
+      if (Files.isHidden(path)) {
+        return;
+      }
 
-    if (Files.isRegularFile(path)) {
-      onNewFile(path);
-    } else {
-      onNewDirectory(path);
+      if (Files.isRegularFile(path)) {
+        onNewFile(path);
+      } else {
+        onNewDirectory(path);
+      }
+    } catch (NoSuchFileException | FileNotFoundException e) {
+      // ignore: might happen, e.g., for temporary files used for "safe writes" by IDEs/editors
     }
   }
 
