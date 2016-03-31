@@ -416,9 +416,9 @@ public class AceEditor implements DocDisplay,
                   
                   switch (event.getCommand())
                   {
-                  case PASTE_LAST_YANK:    pasteLastYank();
-                  case YANK_BEFORE_CURSOR: yankBeforeCursor();
-                  case YANK_AFTER_CURSOR:  yankAfterCursor();
+                  case PASTE_LAST_YANK:    pasteLastYank();    break;
+                  case YANK_BEFORE_CURSOR: yankBeforeCursor(); break;
+                  case YANK_AFTER_CURSOR:  yankAfterCursor();  break;
                   }
                }
             });
