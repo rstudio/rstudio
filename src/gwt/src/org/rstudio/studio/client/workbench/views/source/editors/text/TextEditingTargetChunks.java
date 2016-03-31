@@ -16,9 +16,17 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
+
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.inject.Inject;
 
 public class TextEditingTargetChunks
              implements PinnedLineWidget.Host
@@ -36,6 +44,7 @@ public class TextEditingTargetChunks
             initializeWidgets();
          }
       });
+      RStudioGinjector.INSTANCE.injectMembers(this);
    }
 
    // Public methods ----------------------------------------------------------
@@ -68,6 +77,34 @@ public class TextEditingTargetChunks
    
    // Private methods ---------------------------------------------------------
    
+   @Inject
+   private void initialize(UIPrefs prefs, AceThemes themes)
+   {
+      themes_ = themes;
+      dark_ = themes_.isDark(themes_.getEffectiveThemeName(
+            prefs.theme().getValue()));
+      prefs.theme().addValueChangeHandler(new ValueChangeHandler<String>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> theme)
+         {
+            // recompute dark state
+            boolean isDark = themes_.isDark(
+                  themes_.getEffectiveThemeName(theme.getValue()));
+            
+            // redraw all the toolbars if necessary
+            if (isDark != dark_)
+            {
+               dark_ = isDark;
+               for (ChunkContextUi toolbar: toolbars_)
+                  toolbar.detach();
+               toolbars_.clear();
+               initializeWidgets();
+            }
+         }
+      });
+   }
+   
    private void initializeWidgets()
    {
       ScopeList scopes = new ScopeList(target_.getDocDisplay());
@@ -95,10 +132,13 @@ public class TextEditingTargetChunks
       if (hasToolbar)
          return;
          
-      ChunkContextUi ui = new ChunkContextUi(target_, chunk, this);
+      ChunkContextUi ui = new ChunkContextUi(target_, dark_, chunk, this);
       toolbars_.add(ui);
    }
    
    private final TextEditingTarget target_;
    private final ArrayList<ChunkContextUi> toolbars_;
+   
+   private boolean dark_;
+   private AceThemes themes_;
 }

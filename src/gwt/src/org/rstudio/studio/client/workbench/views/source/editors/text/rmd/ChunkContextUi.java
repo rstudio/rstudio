@@ -28,12 +28,12 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 
 public class ChunkContextUi implements ChunkContextToolbar.Host
 {
-   public ChunkContextUi(TextEditingTarget target, Scope chunk, 
+   public ChunkContextUi(TextEditingTarget target, boolean dark, Scope chunk, 
          PinnedLineWidget.Host lineWidgetHost)
    {
       target_ = target;
       int preambleRow = chunk.getPreamble().getRow();
-      toolbar_ = new ChunkContextToolbar(this, false, 
+      toolbar_ = new ChunkContextToolbar(this, dark, 
             !isSetupChunk(preambleRow), isRunnableChunk(preambleRow));
       toolbar_.setHeight("0px"); 
       lineWidget_ = new PinnedLineWidget(
@@ -56,6 +56,11 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
    public LineWidget getLineWidget()
    {
       return lineWidget_.getLineWidget();
+   }
+   
+   public void detach()
+   {
+      lineWidget_.detach();
    }
 
    // ChunkContextToolbar.Host implementation ---------------------------------
