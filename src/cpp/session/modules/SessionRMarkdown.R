@@ -247,8 +247,13 @@
    index <- file.path(input_dir, "index.Rmd")
    if (file.exists(index))
       index
-   else
-      NULL
+   else {
+      index <- file.path(input_dir, "index.md")
+      if (file.exists(index))
+         index
+      else
+         NULL
+   }
 })
 
 .rs.addFunction("getAllOutputFormats", function(input_dir, encoding) {
